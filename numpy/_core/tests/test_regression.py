@@ -3,6 +3,7 @@ import gc
 import pickle
 import sys
 import tempfile
+import warnings
 from io import BytesIO
 from itertools import chain
 from os import path
@@ -27,8 +28,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
-    suppress_warnings,
 )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 
@@ -1619,9 +1618,9 @@ class TestRegression:
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1 + 2j)
-            assert_warns(ComplexWarning, float, x)
-            with suppress_warnings() as sup:
-                sup.filter(ComplexWarning)
+            pytest.warns(ComplexWarning, float, x)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):

@@ -8,6 +8,7 @@ import sys
 import textwrap
 import threading
 import traceback
+import warnings
 
 import pytest
 
@@ -42,7 +43,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    suppress_warnings,
 )
 
 try:
@@ -1318,8 +1318,9 @@ class _TestNormGeneral(_TestNormBase):
             self.check_dtype(at, an)
             assert_almost_equal(an, 0.0)
 
-            with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning, "divide by zero encountered")
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore', "divide by zero encountered", RuntimeWarning)
                 an = norm(at, -1)
                 self.check_dtype(at, an)
                 assert_almost_equal(an, 0.0)
@@ -1481,8 +1482,9 @@ class _TestNorm2D(_TestNormBase):
             self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
-            with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning, "divide by zero encountered")
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    'ignore', "divide by zero encountered", RuntimeWarning)
                 an = norm(at, -1)
                 self.check_dtype(at, an)
                 assert_almost_equal(an, 1.0)

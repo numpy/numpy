@@ -9,7 +9,6 @@ import pytest
 import numpy as np
 from numpy.ma.core import MaskedArrayFutureWarning
 from numpy.ma.testutils import assert_equal
-from numpy.testing import assert_warns
 
 
 class TestArgsort:
@@ -23,7 +22,7 @@ class TestArgsort:
 
         # argsort has a bad default for >1d arrays
         arr_2d = np.array([[1, 2], [3, 4]]).view(cls)
-        result = assert_warns(
+        result = pytest.warns(
             np.ma.core.MaskedArrayFutureWarning, argsort, arr_2d)
         assert_equal(result, argsort(arr_2d, axis=None))
 
@@ -53,10 +52,10 @@ class TestMinimumMaximum:
         ma_max = np.ma.maximum.reduce
 
         # check that the default axis is still None, but warns on 2d arrays
-        result = assert_warns(MaskedArrayFutureWarning, ma_max, data2d)
+        result = pytest.warns(MaskedArrayFutureWarning, ma_max, data2d)
         assert_equal(result, ma_max(data2d, axis=None))
 
-        result = assert_warns(MaskedArrayFutureWarning, ma_min, data2d)
+        result = pytest.warns(MaskedArrayFutureWarning, ma_min, data2d)
         assert_equal(result, ma_min(data2d, axis=None))
 
         # no warnings on 1d, as both new and old defaults are equivalent

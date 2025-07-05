@@ -717,7 +717,6 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     inf
     >>> np.nansum([1, np.nan, -np.inf])
     -inf
-    >>> from numpy.testing import suppress_warnings
     >>> with np.errstate(invalid="ignore"):
     ...     np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
     np.float64(nan)

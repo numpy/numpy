@@ -26,7 +26,6 @@ from numpy.testing import (
     assert_equal,
     assert_no_warnings,
     assert_raises,
-    suppress_warnings,
 )
 from numpy.testing._private.utils import requires_memory
 
@@ -686,8 +685,8 @@ class TestUfunc:
                         tgt = float(x) / float(y)
                         rtol = max(np.finfo(dtout).resolution, 1e-15)
                         # The value of tiny for double double is NaN
-                        with suppress_warnings() as sup:
-                            sup.filter(UserWarning)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter('ignore', UserWarning)
                             if not np.isnan(np.finfo(dtout).tiny):
                                 atol = max(np.finfo(dtout).tiny, 3e-308)
                             else:
@@ -706,8 +705,8 @@ class TestUfunc:
                     tgt = complex(x) / complex(y)
                     rtol = max(np.finfo(dtout).resolution, 1e-15)
                     # The value of tiny for double double is NaN
-                    with suppress_warnings() as sup:
-                        sup.filter(UserWarning)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore', UserWarning)
                         if not np.isnan(np.finfo(dtout).tiny):
                             atol = max(np.finfo(dtout).tiny, 3e-308)
                         else:
