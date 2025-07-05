@@ -4234,7 +4234,7 @@ class TestQuantile:
         result = np.quantile(a, 0.5, axis=(0, 1))
         assert result.shape == (2,)
         assert np.all(np.isnan(result))
-    
+
     def test_quantile_int_overflow(self):
         # Signed integer overflow
         a = np.array([32767, -1], dtype=np.int16)
