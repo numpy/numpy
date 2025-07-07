@@ -2031,7 +2031,9 @@ def cond(x, p=None):
     if r.ndim == 0:
         r = r[()]
 
-    return r
+    # Return the absolute value, since the condition number is
+    # always a non-negative real number.
+    return abs(r)
 
 
 def _matrix_rank_dispatcher(A, tol=None, hermitian=None, *, rtol=None):
