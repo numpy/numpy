@@ -277,14 +277,30 @@ def svd(
 def svd(
     a: _ArrayLikeInt_co,
     full_matrices: bool = ...,
-    compute_uv: L[False] = ...,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = ...,
+) -> NDArray[float64]: ...
+@overload
+def svd(
+    a: _ArrayLikeInt_co,
+    full_matrices: bool,
+    compute_uv: L[False],
     hermitian: bool = ...,
 ) -> NDArray[float64]: ...
 @overload
 def svd(
     a: _ArrayLikeComplex_co,
     full_matrices: bool = ...,
-    compute_uv: L[False] = ...,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = ...,
+) -> NDArray[floating]: ...
+@overload
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool,
+    compute_uv: L[False],
     hermitian: bool = ...,
 ) -> NDArray[floating]: ...
 
