@@ -149,7 +149,8 @@ pi = np.pi
 num_dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
 num_ids = [dt_.char for dt_ in num_dts]
 
-WARNING_MESSAGE = "setting an item on a masked array which has a shared mask will not copy"
+WARNING_MESSAGE = ("setting an item on a masked array which has a shared "
+                   "mask will not copy")
 WARNING_MARK_SPEC = f"ignore:.*{WARNING_MESSAGE}:numpy.ma.core.MaskedArrayFutureWarning"
 
 class TestMaskedArray:
