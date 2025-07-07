@@ -2332,7 +2332,7 @@ class vectorize:
 
     cache : bool, optional
         If `True`, then cache the first function call that determines the number
-        of outputs if `otypes` is not provided.
+        of outputs if `otypes` and `signature` are not provided.
 
     signature : string, optional
         Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
@@ -2356,7 +2356,7 @@ class vectorize:
     The `vectorize` function is provided primarily for convenience, not for
     performance. The implementation is essentially a for loop.
 
-    If `otypes` is not specified, then a call to the function with the
+    If `otypes` and `signature` are not specified, then a call to the function with the
     first argument will be used to determine the number of outputs.  The
     results of this call will be cached if `cache` is `True` to prevent
     calling the function twice.  However, to implement the cache, the
