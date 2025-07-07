@@ -1177,7 +1177,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         offset: SupportsIndex = ...,
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: None = ...,
     ) -> Any: ...
     @overload
@@ -1186,7 +1186,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         offset: SupportsIndex = ...,
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         *,
         out: _ArrayT,
     ) -> _ArrayT: ...
@@ -1196,7 +1196,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         offset: SupportsIndex,
         axis1: SupportsIndex,
         axis2: SupportsIndex,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         out: _ArrayT,
     ) -> _ArrayT: ...
 

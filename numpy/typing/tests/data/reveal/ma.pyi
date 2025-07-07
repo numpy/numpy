@@ -394,6 +394,7 @@ assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
 
 assert_type(MAR_f8.trace(), Any)
 assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.trace(out=MAR_subclass, dtype=None), MaskedArraySubclass)
 
 assert_type(MAR_f8.round(), MaskedArray[np.float64])
 assert_type(MAR_f8.round(out=MAR_subclass), MaskedArraySubclass)
