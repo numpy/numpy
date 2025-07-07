@@ -36,9 +36,7 @@ from numpy.testing import (
     assert_no_warnings,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
     break_cycles,
-    suppress_warnings,
     tempdir,
     temppath,
 )
@@ -336,8 +334,9 @@ class TestSavezLoad(RoundtripTest):
             # goes to zero.  Python running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
             # collector, so we catch the warnings.
-            with suppress_warnings() as sup:
-                sup.filter(ResourceWarning)  # TODO: specify exact message
+            with warnings.catch_warnings():
+                # TODO: specify exact message
+                warnings.simplefilter('ignore', ResourceWarning)
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
@@ -1446,8 +1445,8 @@ class TestFromTxt(LoadTxtBase):
         assert_equal(test, ctrl)
 
     def test_skip_footer_with_invalid(self):
-        with suppress_warnings() as sup:
-            sup.filter(ConversionWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ConversionWarning)
             basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
             # Footer too small to get rid of all invalid values
             assert_raises(ValueError, np.genfromtxt,
@@ -1845,8 +1844,8 @@ M   33  21.99
 
     def test_empty_file(self):
         # Test that an empty file raises the proper warning.
-        with suppress_warnings() as sup:
-            sup.filter(message="genfromtxt: Empty input file:")
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message="genfromtxt: Empty input file:")
             data = TextIO()
             test = np.genfromtxt(data)
             assert_equal(test, np.array([]))
@@ -1991,7 +1990,7 @@ M   33  21.99
 
         def f():
             return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
-        mtest = assert_warns(ConversionWarning, f)
+        mtest = pytest.warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -2012,7 +2011,7 @@ M   33  21.99
 
         def f():
             return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
-        mtest = assert_warns(ConversionWarning, f)
+        mtest = pytest.warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
@@ -2424,8 +2423,8 @@ M   33  21.99
         assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=4)
 
         # Test with invalid not raise
-        with suppress_warnings() as sup:
-            sup.filter(ConversionWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ConversionWarning)
 
             test = np.genfromtxt(TextIO(data), max_rows=4, invalid_raise=False)
             control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])

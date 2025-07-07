@@ -139,32 +139,24 @@ from numpy.ma.testutils import (
     assert_not_equal,
     fail_if_equal,
 )
-from numpy.testing import (
-    IS_WASM,
-    assert_raises,
-    assert_warns,
-    suppress_warnings,
-    temppath,
-)
+from numpy.testing import IS_WASM, assert_raises, temppath
 from numpy.testing._private.utils import requires_memory
 
 pi = np.pi
-
-
-suppress_copy_mask_on_assignment = suppress_warnings()
-suppress_copy_mask_on_assignment.filter(
-    numpy.ma.core.MaskedArrayFutureWarning,
-    "setting an item on a masked array which has a shared mask will not copy")
 
 
 # For parametrized numeric testing
 num_dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
 num_ids = [dt_.char for dt_ in num_dts]
 
+WARNING_MESSAGE = ("setting an item on a masked array which has a shared "
+                   "mask will not copy")
+WARNING_MARK_SPEC = f"ignore:.*{WARNING_MESSAGE}:numpy.ma.core.MaskedArrayFutureWarning"
 
 class TestMaskedArray:
     # Base test class for MaskedArrays.
 
+    # message for warning filters
     def setup_method(self):
         # Base data definition.
         x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
@@ -492,7 +484,7 @@ class TestMaskedArray:
         x[...] = value
         x[[0, 1, 2]] = value
 
-    @suppress_copy_mask_on_assignment
+    @pytest.mark.filterwarnings(WARNING_MARK_SPEC)
     def test_copy(self):
         # Tests of some subtle points of copying and sizing.
         n = [0, 0, 1, 0, 0]
@@ -511,9 +503,9 @@ class TestMaskedArray:
         y1a = array(y1)
         # Default for masked array is not to copy; see gh-10318.
         assert_(y1a._data.__array_interface__ ==
-                        y1._data.__array_interface__)
+                y1._data.__array_interface__)
         assert_(y1a._mask.__array_interface__ ==
-                        y1._mask.__array_interface__)
+                y1._mask.__array_interface__)
 
         y2 = array(x1, mask=m3)
         assert_(y2._data.__array_interface__ == x1.__array_interface__)
@@ -612,7 +604,7 @@ class TestMaskedArray:
         # assert_equal(format(masked, " <5"), "--   ")
 
         # Expect a FutureWarning for using format_spec with MaskedElement
-        with assert_warns(FutureWarning):
+        with pytest.warns(FutureWarning):
             with_format_string = format(masked, " >5")
         assert_equal(with_format_string, "--")
 
@@ -793,8 +785,9 @@ class TestMaskedArray:
         assert_equal(1.0, float(array([[1]])))
         assert_raises(TypeError, float, array([1, 1]))
 
-        with suppress_warnings() as sup:
-            sup.filter(UserWarning, 'Warning: converting a masked element')
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', 'Warning: converting a masked element', UserWarning)
             assert_(np.isnan(float(array([1], mask=[1]))))
 
             a = array([1, 2, 3], mask=[1, 0, 0])
@@ -847,14 +840,17 @@ class TestMaskedArray:
         assert_(z[1] is not masked)
         assert_(z[2] is masked)
 
-    @suppress_copy_mask_on_assignment
     def test_oddfeatures_3(self):
-        # Tests some generic features
-        atest = array([10], mask=True)
-        btest = array([20])
-        idx = atest.mask
-        atest[idx] = btest[idx]
-        assert_equal(atest, [20])
+        msg = "setting an item on a masked array which has a shared mask will not copy"
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', msg, numpy.ma.core.MaskedArrayFutureWarning)
+            # Tests some generic features
+            atest = array([10], mask=True)
+            btest = array([20])
+            idx = atest.mask
+            atest[idx] = btest[idx]
+            assert_equal(atest, [20])
 
     def test_filled_with_object_dtype(self):
         a = np.ma.masked_all(1, dtype='O')
@@ -2004,6 +2000,7 @@ class TestMaskedArrayArithmetic:
         ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill)
         assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
 
+    @pytest.mark.filterwarnings("ignore:.*Comparison to `None`.*:FutureWarning")
     def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
         # anyway. Note that pep8 will flag these tests.
@@ -2011,23 +2008,21 @@ class TestMaskedArrayArithmetic:
         # test will fail (and have to be changed accordingly).
 
         # With partial mask
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "Comparison to `None`")
-            a = array([None, 1], mask=[0, 1])
-            assert_equal(a == None, array([True, False], mask=[0, 1]))  # noqa: E711
-            assert_equal(a.data == None, [True, False])  # noqa: E711
-            assert_equal(a != None, array([False, True], mask=[0, 1]))  # noqa: E711
-            # With nomask
-            a = array([None, 1], mask=False)
-            assert_equal(a == None, [True, False])  # noqa: E711
-            assert_equal(a != None, [False, True])  # noqa: E711
-            # With complete mask
-            a = array([None, 2], mask=True)
-            assert_equal(a == None, array([False, True], mask=True))  # noqa: E711
-            assert_equal(a != None, array([True, False], mask=True))  # noqa: E711
-            # Fully masked, even comparison to None should return "masked"
-            a = masked
-            assert_equal(a == None, masked)  # noqa: E711
+        a = array([None, 1], mask=[0, 1])
+        assert_equal(a == None, array([True, False], mask=[0, 1]))  # noqa: E711
+        assert_equal(a.data == None, [True, False])  # noqa: E711
+        assert_equal(a != None, array([False, True], mask=[0, 1]))  # noqa: E711
+        # With nomask
+        a = array([None, 1], mask=False)
+        assert_equal(a == None, [True, False])  # noqa: E711
+        assert_equal(a != None, [False, True])  # noqa: E711
+        # With complete mask
+        a = array([None, 2], mask=True)
+        assert_equal(a == None, array([False, True], mask=True))  # noqa: E711
+        assert_equal(a != None, array([True, False], mask=True))  # noqa: E711
+        # Fully masked, even comparison to None should return "masked"
+        a = masked
+        assert_equal(a == None, masked)  # noqa: E711
 
     def test_eq_with_scalar(self):
         a = array(1)
@@ -2383,16 +2378,15 @@ class TestFillingValues:
         assert_equal(x.fill_value, 999.)
         assert_equal(x._fill_value, np.array(999.))
 
+    @pytest.mark.filterwarnings("ignore:.*Numpy has detected.*:FutureWarning")
     def test_subarray_fillvalue(self):
         # gh-10483   test multi-field index fill value
         fields = array([(1, 1, 1)],
                       dtype=[('i', int), ('s', '|S8'), ('f', float)])
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "Numpy has detected")
-            subfields = fields[['i', 'f']]
-            assert_equal(tuple(subfields.fill_value), (999999, 1.e+20))
-            # test comparison does not raise:
-            subfields[1:] == subfields[:-1]
+        subfields = fields[['i', 'f']]
+        assert_equal(tuple(subfields.fill_value), (999999, 1.e+20))
+        # test comparison does not raise:
+        subfields[1:] == subfields[:-1]
 
     def test_fillvalue_exotic_dtype(self):
         # Tests yet more exotic flexible dtypes
@@ -3138,14 +3132,14 @@ class TestMaskedArrayInPlaceArithmetic:
 
     def test_inplace_division_scalar_type(self):
         # Test of inplace division
-        for t in self.othertypes:
-            with suppress_warnings() as sup:
-                sup.record(UserWarning)
-
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            for t in self.othertypes:
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 x = arange(10, dtype=t) * t(2)
                 xm = arange(10, dtype=t) * t(2)
                 xm[2] = masked
+                nwarns = 0
 
                 # May get a DeprecationWarning or a TypeError.
                 #
@@ -3159,28 +3153,29 @@ class TestMaskedArrayInPlaceArithmetic:
                 try:
                     x /= t(2)
                     assert_equal(x, y)
-                except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e), stacklevel=1)
+                except (DeprecationWarning, TypeError):
+                    nwarns += 1
                 try:
                     xm /= t(2)
                     assert_equal(xm, y)
-                except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e), stacklevel=1)
+                except (DeprecationWarning, TypeError):
+                    nwarns += 1
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
+                    assert_equal(nwarns, 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
+                    assert_equal(nwarns, 0, f'Failed on type={t}.')
 
     def test_inplace_division_array_type(self):
         # Test of inplace division
-        for t in self.othertypes:
-            with suppress_warnings() as sup:
-                sup.record(UserWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+            for t in self.othertypes:
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
                 a[-1] = masked
+                nwarns = 0
 
                 # May get a DeprecationWarning or a TypeError.
                 #
@@ -3194,8 +3189,8 @@ class TestMaskedArrayInPlaceArithmetic:
                 try:
                     x /= a
                     assert_equal(x, y / a)
-                except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e), stacklevel=1)
+                except (DeprecationWarning, TypeError):
+                    nwarns += 1
                 try:
                     xm /= a
                     assert_equal(xm, y / a)
@@ -3203,13 +3198,13 @@ class TestMaskedArrayInPlaceArithmetic:
                         xm.mask,
                         mask_or(mask_or(m, a.mask), (a == t(0)))
                     )
-                except (DeprecationWarning, TypeError) as e:
-                    warnings.warn(str(e), stacklevel=1)
+                except (DeprecationWarning, TypeError):
+                    nwarns += 1
 
                 if issubclass(t, np.integer):
-                    assert_equal(len(sup.log), 2, f'Failed on type={t}.')
+                    assert_equal(nwarns, 2, f'Failed on type={t}.')
                 else:
-                    assert_equal(len(sup.log), 0, f'Failed on type={t}.')
+                    assert_equal(nwarns, 0, f'Failed on type={t}.')
 
     def test_inplace_pow_type(self):
         # Test keeping data w/ (inplace) power
@@ -3508,7 +3503,7 @@ class TestMaskedArrayMethods:
         b = a.view()
         assert_(np.may_share_memory(a.mask, b.mask))
 
-    @suppress_copy_mask_on_assignment
+    @pytest.mark.filterwarnings(WARNING_MARK_SPEC)
     def test_put(self):
         # Tests put.
         d = arange(5)
@@ -4226,7 +4221,7 @@ class TestMaskedArrayMathMethods:
             assert_almost_equal(np.sqrt(mXvar0[k]),
                                 mX[:, k].compressed().std())
 
-    @suppress_copy_mask_on_assignment
+    @pytest.mark.filterwarnings(WARNING_MARK_SPEC)
     def test_varstd_specialcases(self):
         # Test a special case for var
         nout = np.array(-1, dtype=float)
@@ -5582,7 +5577,7 @@ class TestMaskedConstant:
 
     def test_coercion_float(self):
         a_f = np.zeros((), float)
-        assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
+        pytest.warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)
         assert_(np.isnan(a_f[()]))
 
     @pytest.mark.xfail(reason="See gh-9750")

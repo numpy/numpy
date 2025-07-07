@@ -291,7 +291,6 @@ from numpy.testing import (
     assert_array_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
 )
 from numpy.testing._private.utils import requires_memory
 
@@ -1008,7 +1007,7 @@ def test_unicode_field_names(tmpdir):
 
     # notifies the user that 3.0 is selected
     with open(fname, 'wb') as f:
-        with assert_warns(UserWarning):
+        with pytest.warns(UserWarning):
             format.write_array(f, arr, version=None)
 
 def test_header_growth_axis():
@@ -1041,7 +1040,7 @@ def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
-    with assert_warns(UserWarning):
+    with pytest.warns(UserWarning):
         np.save(buf, arr)
     buf.seek(0)
 
