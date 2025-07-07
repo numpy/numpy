@@ -124,6 +124,7 @@ assert_type(np.diagonal(AR_f4), npt.NDArray[np.float32])
 assert_type(np.trace(AR_b), Any)
 assert_type(np.trace(AR_f4), Any)
 assert_type(np.trace(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.trace(AR_f4, out=AR_subclass, dtype=None), NDArraySubclass)
 
 assert_type(np.ravel(b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(f4), np.ndarray[tuple[int], np.dtype[np.float32]])

@@ -440,7 +440,7 @@ def trace(
     /,
     *,
     offset: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
 ) -> Any: ...
 
 @overload
