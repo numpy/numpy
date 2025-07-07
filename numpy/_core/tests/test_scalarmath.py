@@ -368,17 +368,7 @@ class TestModulus:
             assert_(rem >= -b, f'dt: {dt}')
 
         # Check nans, inf
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "invalid value encountered in remainder", RuntimeWarning)
-            warnings.filterwarnings(
-                'ignore', "divide by zero encountered in remainder", RuntimeWarning)
-            warnings.filterwarnings(
-                'ignore', "divide by zero encountered in floor_divide", RuntimeWarning)
-            warnings.filterwarnings(
-                'ignore', "divide by zero encountered in divmod", RuntimeWarning)
-            warnings.filterwarnings(
-                'ignore', "invalid value encountered in divmod", RuntimeWarning)
+        with warnings.catch_warnings(), np.errstate(all='ignore'):
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
