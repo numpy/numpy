@@ -2011,6 +2011,7 @@ def cond(x, p=None):
         # contain nans in the entries where inversion failed.
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
+        result_t = _realType(result_t)  # condition number is always real
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
@@ -2031,9 +2032,7 @@ def cond(x, p=None):
     if r.ndim == 0:
         r = r[()]
 
-    # Return the absolute value, since the condition number is
-    # always a non-negative real number.
-    return abs(r)
+    return r
 
 
 def _matrix_rank_dispatcher(A, tol=None, hermitian=None, *, rtol=None):
