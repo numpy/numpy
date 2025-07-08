@@ -117,8 +117,20 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def __new__(
         subtype,
         shape: _ShapeLike,
+        itemsize: SupportsIndex | SupportsInt,
+        unicode: L[True],
+        buffer: _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: _ShapeLike = ...,
+        order: _OrderKACF = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt = ...,
-        unicode: L[True] = ...,
+        *,
+        unicode: L[True],
         buffer: _SupportsBuffer = ...,
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
