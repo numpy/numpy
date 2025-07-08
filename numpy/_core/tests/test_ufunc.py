@@ -2129,7 +2129,8 @@ class TestUfunc:
         assert np.add(y, x) is ArrayPriorityMinus1000
         assert np.add(x, xb) is ArrayPriorityMinus1000
         assert np.add(xb, x) is ArrayPriorityMinus1000b
-        assert np.add(np.zeros(2), ArrayPriorityMinus0(2)) is ArrayPriorityMinus0
+        y_minus0 = np.zeros(2).view(ArrayPriorityMinus0)
+        assert np.add(np.zeros(2), y_minus0) is ArrayPriorityMinus0
         assert type(np.add(xb, x, np.zeros(2))) is np.ndarray
 
     @pytest.mark.parametrize("a", (
