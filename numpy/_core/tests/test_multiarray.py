@@ -8849,6 +8849,14 @@ def test_interface_no_shape():
     assert_equal(np.array(ArrayLike()), 1)
 
 
+def test_interface_no_shape_error():
+    class ArrayLike:
+        __array_interface__ = {"data": None, "typestr": "f8"}
+
+    with pytest.raises(ValueError, match="Missing __array_interface__ shape"):
+        np.array(ArrayLike())
+
+
 def test_array_interface_itemsize():
     # See gh-6361
     my_dtype = np.dtype({'names': ['A', 'B'], 'formats': ['f4', 'f4'],
