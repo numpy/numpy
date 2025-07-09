@@ -1,0 +1,152 @@
+# Editor temporary/working/backup files #
+#########################################
+.#*
+[#]*#
+*~
+*$
+*.bak
+*.diff
+.idea/
+*.iml
+*.ipr
+*.iws
+*.org
+.project
+pmip
+*.rej
+.settings/
+.*.sw[nop]
+.sw[nop]
+*.tmp
+*.vim
+.vscode
+tags
+cscope.out
+# gnu global
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+.cache
+.mypy_cache/
+
+# Compiled source #
+###################
+*.a
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.o.d
+*.py[ocd]
+*.so
+*.mod
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.bz2
+*.bzip2
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.tbz2
+*.tgz
+*.zip
+
+# Python files #
+################
+# meson build/installation directories
+build
+build-*
+# meson python output
+.mesonpy-native-file.ini
+# sphinx build directory
+_build
+# dist directory is where sdist/wheel end up
+dist
+doc/build
+doc/docenv
+doc/cdoc/build
+# Egg metadata
+*.egg-info
+# The shelf plugin uses this dir
+./.shelf
+.cache
+pip-wheel-metadata
+.python-version
+# virtual envs
+numpy-dev/
+venv/
+
+# Paver generated files #
+#########################
+/release
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# Patches #
+###########
+*.patch
+*.diff
+
+# Do not ignore the following patches: #
+########################################
+!tools/ci/emscripten/0001-do-not-set-meson-environment-variable-pyodide-gh-4502.patch
+
+# OS generated files #
+######################
+.DS_Store*
+.VolumeIcon.icns
+.fseventsd
+Icon?
+.gdb_history
+ehthumbs.db
+Thumbs.db
+.directory
+
+# pytest generated files #
+##########################
+/.pytest_cache
+
+# doc build generated files #
+#############################
+doc/source/savefig/
+doc/source/**/generated/
+doc/source/release/notes-towncrier.rst
+doc/source/.jupyterlite.doit.db
+
+# Things specific to this project #
+###################################
+benchmarks/results
+benchmarks/html
+benchmarks/env
+benchmarks/numpy
+benchmarks/_asv_compare.conf.json
+test.obj
+tools/swig/test/Array_wrap.cxx
+tools/swig/test/Farray_wrap.cxx
+tools/swig/test/Farray.py
+tools/swig/test/Flat_wrap.cxx
+tools/swig/test/Flat.py
+tools/swig/test/Fortran_wrap.cxx
+tools/swig/test/Fortran.py
+tools/swig/test/Matrix_wrap.cxx
+tools/swig/test/Matrix.py
+tools/swig/test/Tensor_wrap.cxx
+tools/swig/test/Tensor.py
+tools/swig/test/Vector.py
+tools/swig/test/Vector_wrap.cxx
+tools/swig/test/Array.py
+.openblas
+numpy/_distributor_init_local.py

@@ -1,0 +1,53 @@
+
+Contributors
+============
+
+A total of 15 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Abhinav Reddy +
+* Anirudh Subramanian
+* Antonio Larrosa +
+* Charles Harris
+* Chunlin Fang
+* Eric Wieser
+* Etienne Guesnet +
+* Kevin Sheppard
+* Matti Picus
+* Raghuveer Devulapalli
+* Roman Yurchak
+* Ross Barnowski
+* Sayed Adel
+* Sebastian Berg
+* Tyler Reddy
+
+Pull requests merged
+====================
+
+A total of 25 pull requests were merged for this release.
+
+* `#16649 <https://github.com/numpy/numpy/pull/16649>`__: MAINT, CI: disable Shippable cache
+* `#16652 <https://github.com/numpy/numpy/pull/16652>`__: MAINT: Replace `PyUString_GET_SIZE` with `PyUnicode_GetLength`.
+* `#16654 <https://github.com/numpy/numpy/pull/16654>`__: REL: Fix outdated docs link
+* `#16656 <https://github.com/numpy/numpy/pull/16656>`__: BUG: raise IEEE exception on AIX
+* `#16672 <https://github.com/numpy/numpy/pull/16672>`__: BUG: Fix bug in AVX complex absolute while processing array of...
+* `#16693 <https://github.com/numpy/numpy/pull/16693>`__: TST: Add extra debugging information to CPU features detection
+* `#16703 <https://github.com/numpy/numpy/pull/16703>`__: BLD: Add CPU entry for Emscripten / WebAssembly
+* `#16705 <https://github.com/numpy/numpy/pull/16705>`__: TST: Disable Python 3.9-dev testing.
+* `#16714 <https://github.com/numpy/numpy/pull/16714>`__: MAINT: Disable use_hugepages in case of ValueError
+* `#16724 <https://github.com/numpy/numpy/pull/16724>`__: BUG: Fix PyArray_SearchSorted signature.
+* `#16768 <https://github.com/numpy/numpy/pull/16768>`__: MAINT: Fixes for deprecated functions in scalartypes.c.src
+* `#16772 <https://github.com/numpy/numpy/pull/16772>`__: MAINT: Remove unneeded call to PyUnicode_READY
+* `#16776 <https://github.com/numpy/numpy/pull/16776>`__: MAINT: Fix deprecated functions in scalarapi.c
+* `#16779 <https://github.com/numpy/numpy/pull/16779>`__: BLD, ENH: Add RPATH support for AIX
+* `#16780 <https://github.com/numpy/numpy/pull/16780>`__: BUG: Fix default fallback in genfromtxt
+* `#16784 <https://github.com/numpy/numpy/pull/16784>`__: BUG: Added missing return after raising error in methods.c
+* `#16795 <https://github.com/numpy/numpy/pull/16795>`__: BLD: update cython to 0.29.21
+* `#16832 <https://github.com/numpy/numpy/pull/16832>`__: MAINT: setuptools 49.2.0 emits a warning, avoid it
+* `#16872 <https://github.com/numpy/numpy/pull/16872>`__: BUG: Validate output size in bin- and multinomial
+* `#16875 <https://github.com/numpy/numpy/pull/16875>`__: BLD, MAINT: Pin setuptools
+* `#16904 <https://github.com/numpy/numpy/pull/16904>`__: DOC: Reconstruct Testing Guideline.
+* `#16905 <https://github.com/numpy/numpy/pull/16905>`__: TST, BUG: Re-raise MemoryError exception in test_large_zip's...
+* `#16906 <https://github.com/numpy/numpy/pull/16906>`__: BUG,DOC: Fix bad MPL kwarg.
+* `#16916 <https://github.com/numpy/numpy/pull/16916>`__: BUG: Fix string/bytes to complex assignment
+* `#16922 <https://github.com/numpy/numpy/pull/16922>`__: REL: Prepare for NumPy 1.19.1 release

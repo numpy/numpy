@@ -1,0 +1,22 @@
+module adder
+    implicit none
+contains
+
+#:def add_subroutine(dtype_prefix, dtype)
+    subroutine ${dtype_prefix}$add(a, b, c, n)
+        integer, intent(in) :: n
+        ${dtype}$, intent(in) :: a(n), b(n)
+        ${dtype}$ :: c(n)
+        integer :: j
+        do j = 1, n
+            c(j) = a(j) + b(j)
+        end do
+    end subroutine ${dtype_prefix}$add
+
+#:enddef
+
+#:for dtype_prefix, dtype in [('i', 'integer'), ('s', 'real'), ('d', 'real(kind=8)'), ('c', 'complex'), ('z', 'double complex')]
+    @:add_subroutine(${dtype_prefix}$, ${dtype}$)
+#:endfor
+
+end module adder

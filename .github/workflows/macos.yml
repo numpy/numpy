@@ -1,0 +1,154 @@
+name: macOS tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+
+permissions:
+   contents: read  # to fetch code (actions/checkout)
+
+env:
+  CCACHE_DIR: "${{ github.workspace }}/.ccache"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  x86_conda:
+    name: macOS x86-64 conda
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-13
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - name:  Prepare cache dirs and timestamps
+      id:    prep-ccache
+      shell: bash -l {0}
+      run: |
+        mkdir -p "${CCACHE_DIR}"
+        echo "dir=$CCACHE_DIR" >> $GITHUB_OUTPUT
+        NOW=$(date -u +"%F-%T")
+        echo "timestamp=${NOW}" >> $GITHUB_OUTPUT
+        echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+
+    - name: Setup compiler cache
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      id:    cache-ccache
+      with:
+        path: ${{ steps.prep-ccache.outputs.dir }}
+        key:  ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-${{ steps.prep-ccache.outputs.timestamp }}
+        restore-keys: |
+          ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
+
+    - name: Setup Miniforge
+      uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge
+        channel-priority: true
+        activate-environment: numpy-dev
+        use-only-tar-bz2: false
+        miniforge-variant: Miniforge3
+        miniforge-version: latest
+        use-mamba: true
+
+    # Updates if `environment.yml` or the date changes. The latter is needed to
+    # ensure we re-solve once a day (since we don't lock versions). Could be
+    # replaced by a conda-lock based approach in the future.
+    - name: Cache conda environment
+      uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      env:
+        # Increase this value to reset cache if environment.yml has not changed
+        CACHE_NUMBER: 1
+      with:
+        path: ${{ env.CONDA }}/envs/numpy-dev
+        key:
+          ${{ runner.os }}--${{ steps.prep-ccache.outputs.today }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+      id: envcache
+
+    - name: Update Conda Environment
+      run: mamba env update -n numpy-dev -f environment.yml
+      if: steps.envcache.outputs.cache-hit != 'true'
+
+    - name: Build and Install NumPy
+      shell: bash -l {0}
+      run: |
+        conda activate numpy-dev
+        CC="ccache $CC" spin build -j2 -- -Dallow-noblas=false
+
+    - name: Run test suite (full)
+      shell: bash -l {0}
+      run: |
+        conda activate numpy-dev
+        export OMP_NUM_THREADS=2
+        spin test -j2 -m full
+
+    - name: Ccache statistics
+      shell: bash -l {0}
+      run: |
+        conda activate numpy-dev
+        ccache -s
+
+
+  accelerate:
+    name: Accelerate - ${{ matrix.build_runner[1] }} - ${{ matrix.version }}
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ${{ matrix.build_runner[0] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build_runner:
+          - [ macos-13, "macos_x86_64" ]
+          - [ macos-14, "macos_arm64" ]
+        version: ["3.11", "3.14t-dev"]
+
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: ${{ matrix.version }}
+
+    - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
+      if: ${{ matrix.build_runner[0] == 'macos-13' }}
+      with:
+        xcode-version: '14.3'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/setuptools_requirement.txt
+        pip install pytest pytest-xdist pytest-timeout hypothesis
+
+    - name: Build against Accelerate (LP64)
+      run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test (linalg only)
+      run: spin test -j2 -- numpy/linalg --timeout=600 --durations=10
+
+    - name: Build NumPy against Accelerate (ILP64)
+      run: |
+        rm -r build build-install
+        spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
+
+    - name: Test (fast tests)
+      run: spin test -j2 -- --timeout=600 --durations=10

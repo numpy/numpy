@@ -1,0 +1,9 @@
+Provisional NEPs (provisionally accepted; interface may change)
+---------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+{% for nep, tags in neps.items() if tags['Status'] == 'Provisional' %}
+   {{ tags['Title'] }} <{{ tags['Filename'] }}>
+{% endfor %}

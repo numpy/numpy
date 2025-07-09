@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+.navbar-brand img {
+  height: 75px;
+}
+
+.navbar-brand {
+  height: 75px;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: medium;
+}
+
+/* Making sure the navbar shows correctly in one line
+   Reduces the space between the top-left logo and the navbar section titles */
+
+.col-lg-3 {
+  width: 15%;
+}
+
+/* Version switcher from PyData Sphinx Theme */
+
+.version-switcher__menu a.list-group-item {
+  font-size: small;
+}
+
+button.btn.version-switcher__button,
+button.btn.version-switcher__button:hover {
+  color: black;
+  font-size: small;
+}
+
+/* Main index page overview cards */
+
+.sd-card .sd-card-img-top {
+  height: 60px;
+  width: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+}
+
+/* Main index page overview images */
+
+html[data-theme=dark] .sd-card img[src*='.svg'] {
+  filter: invert(0.82) brightness(0.8) contrast(1.2);
+}
+
+/* Legacy admonition */
+
+div.admonition-legacy {
+  border-color: var(--pst-color-warning);
+}
+
+div.admonition-legacy>.admonition-title::after {
+  color: var(--pst-color-warning);
+}
+
+div.admonition-legacy>.admonition-title {
+  background-color: var(--pst-color-warning-bg);
+}
+
+/* Buttons for JupyterLite-enabled interactive examples */
+
+.try_examples_button {
+  color: white;
+  background-color: var(--pst-color-info);
+  border: none;
+  padding: 5px 10px;
+  border-radius: 0.25rem;
+  margin-top: 3px;  /* better alignment under admonitions */
+  margin-bottom: 5px !important; /* fix uneven button sizes under admonitions */
+  box-shadow: 0 2px 5px rgba(108, 108, 108, 0.2);
+  font-weight: bold;
+  font-size: small;
+}
+
+/* Use more accessible colours for text in dark mode */
+[data-theme=dark] .try_examples_button {
+  color: black;
+}
+
+.try_examples_button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.try_examples_button_container {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Better gaps for examples buttons under admonitions */
+
+.try_examples_outer_iframe {
+  margin-top: 0.4em;
+}

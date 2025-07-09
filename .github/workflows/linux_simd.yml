@@ -1,0 +1,289 @@
+name: Linux SIMD tests
+
+# This file is meant for testing different SIMD-related build options and
+# optimization levels. See `meson_options.txt` for the available build options.
+#
+# Jobs and their purposes:
+#
+# - baseline_only:
+#   Focuses on completing as quickly as possible and acts as a filter for other, more resource-intensive jobs.
+#   Utilizes only the default baseline targets (e.g., SSE3 on X86_64) without enabling any runtime dispatched features.
+#
+# - old_gcc:
+#   Tests the oldest supported GCC version with default CPU/baseline/dispatch settings.
+#
+# - without_optimizations:
+#   Completely disables all SIMD optimizations and other compiler optimizations such as loop unrolling.
+#
+# - native:
+#   Tests against the host CPU features set as the baseline without enabling any runtime dispatched features.
+#   Intended to assess the entire NumPy codebase against host flags, even for code sections lacking handwritten SIMD intrinsics.
+#
+# - without_avx512/avx2/fma3:
+#   Uses runtime SIMD dispatching but disables AVX2, FMA3, and AVX512.
+#   Intended to evaluate 128-bit SIMD extensions without FMA support.
+#
+# - without_avx512:
+#   Uses runtime SIMD dispatching but disables AVX512.
+#   Intended to evaluate 128-bit/256-bit SIMD extensions.
+#
+# - intel_sde:
+#   Executes only the SIMD tests for various AVX512 SIMD extensions under the Intel Software Development Emulator (SDE).
+#
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+
+env:
+  TERM: xterm-256color
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  baseline_only:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: '3.11'
+    - uses: ./.github/meson_actions
+      name: Build/Test
+
+  old_gcc:
+    if: github.event_name != 'push'
+    needs: [baseline_only]
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true"
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: '3.11'
+
+    - name: Install GCC9/10
+      run: |
+        echo "deb http://archive.ubuntu.com/ubuntu focal main universe" | sudo tee /etc/apt/sources.list.d/focal.list
+        sudo apt update
+        sudo apt install -y g++-9 g++-10
+
+    - name: Enable gcc-9
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
+
+    - uses: ./.github/meson_actions
+      name: Build/Test against gcc-9
+
+    - name: Enable gcc-10
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 2
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 2
+
+    - uses: ./.github/meson_actions
+      name: Build/Test against gcc-10
+
+  arm64_simd:
+    if: github.repository == 'numpy/numpy'
+    needs: [baseline_only]
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "baseline only"
+            args: "-Dallow-noblas=true -Dcpu-dispatch=none"
+          - name: "with ASIMD"
+            args: "-Dallow-noblas=true -Dcpu-baseline=asimd"
+          - name: "native"
+            args: "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none"
+    name: "ARM64 SIMD - ${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+    - name: Build
+      run: |
+        spin build -- ${{ matrix.config.args }}
+    - name: Test
+      run: |
+        spin test -- --timeout=600 --durations=10
+
+  specialize:
+    needs: [baseline_only]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        BUILD_PROP:
+          - [
+            "without optimizations",
+            "-Dallow-noblas=true -Ddisable-optimization=true",
+            "3.12"
+          ]
+          - [
+            "native",
+            "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none",
+            "3.11"
+          ]
+          - [
+            "without avx512",
+            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3",
+            "3.11"
+          ]
+          - [
+            "without avx512/avx2/fma3",
+            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
+            "3.11"
+          ]
+
+    env:
+      MESON_ARGS: ${{ matrix.BUILD_PROP[1] }}
+
+    name: "${{ matrix.BUILD_PROP[0] }}"
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: "${{ matrix.BUILD_PROP[2] }}"
+    - uses: ./.github/meson_actions
+      name: Build/Test
+
+  intel_sde_avx512:
+    needs: [baseline_only]
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: '3.11'
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+
+    - name: Build
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: SIMD tests (SKX)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -skx -- python -c "import numpy; numpy.show_config()" &&
+        sde -skx -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
+
+    - name: linalg/ufunc/umath tests (TGL)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -tgl -- python -c "import numpy; numpy.show_config()" &&
+        sde -tgl -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
+                                     $NUMPY_SITE/numpy/_core/tests/test_multiarray.py \
+                                     $NUMPY_SITE/numpy/linalg/tests/test_*
+
+
+  intel_sde_spr:
+    needs: [baseline_only]
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: '3.11'
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+
+    - name: Build
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_spr
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: SIMD tests (SPR)
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -spr -- python -c "import numpy; numpy.show_config()" &&
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_simd*
+
+    - name: linalg/ufunc/umath tests on Intel SPR
+      run: |
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -spr -- python -c "import numpy; numpy.show_config()" &&
+        sde -spr -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
+                                     $NUMPY_SITE/numpy/_core/tests/test_multiarray.py \
+                                     $NUMPY_SITE/numpy/linalg/tests/test_*

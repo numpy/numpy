@@ -1,0 +1,14 @@
+>>> import numpy.f2py
+>>> r = numpy.f2py.run_main(['-m','scalar','doc/source/f2py/scalar.f'])
+Reading fortran codes...
+        Reading file 'doc/source/f2py/scalar.f' (format:fix,strict)
+Post-processing...
+        Block: scalar
+                        Block: FOO
+Building modules...
+        Building module "scalar"...
+        Wrote C/API module "scalar" to file "./scalarmodule.c"
+>>> print(r)
+{'scalar': {'h': ['/home/users/pearu/src_cvs/f2py/src/fortranobject.h'],
+	 'csrc': ['./scalarmodule.c', 
+                  '/home/users/pearu/src_cvs/f2py/src/fortranobject.c']}}

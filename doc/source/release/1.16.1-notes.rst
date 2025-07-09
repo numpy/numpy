@@ -1,0 +1,107 @@
+==========================
+NumPy 1.16.1 Release Notes
+==========================
+
+The NumPy 1.16.1 release fixes bugs reported against the 1.16.0 release, and
+also backports several enhancements from master that seem appropriate for a
+release series that is the last to support Python 2.7. The wheels on PyPI are
+linked with OpenBLAS v0.3.4+,  which should fix the known threading issues
+found in previous OpenBLAS versions.
+
+Downstream developers building this release should use Cython >= 0.29.2 and, if
+using OpenBLAS, OpenBLAS > v0.3.4.
+
+If you are installing using pip, you may encounter a problem with older
+installed versions of NumPy that pip did not delete becoming mixed with the
+current version, resulting in an ``ImportError``. That problem is particularly
+common on Debian derived distributions due to a modified pip.  The fix is to
+make sure all previous NumPy versions installed by pip have been removed. See
+`#12736 <https://github.com/numpy/numpy/issues/12736>`__ for discussion of the
+issue. Note that previously this problem resulted in an ``AttributeError``.
+
+
+Contributors
+============
+
+A total of 16 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Antoine Pitrou
+* Arcesio Castaneda Medina +
+* Charles Harris
+* Chris Markiewicz +
+* Christoph Gohlke
+* Christopher J. Markiewicz +
+* Daniel Hrisca +
+* EelcoPeacs +
+* Eric Wieser
+* Kevin Sheppard
+* Matti Picus
+* OBATA Akio +
+* Ralf Gommers
+* Sebastian Berg
+* Stephan Hoyer
+* Tyler Reddy
+
+
+Enhancements
+============
+
+* `#12767 <https://github.com/numpy/numpy/pull/12767>`__: ENH: add mm->q floordiv
+* `#12768 <https://github.com/numpy/numpy/pull/12768>`__: ENH: port np.core.overrides to C for speed
+* `#12769 <https://github.com/numpy/numpy/pull/12769>`__: ENH: Add np.ctypeslib.as_ctypes_type(dtype), improve `np.ctypeslib.as_ctypes`
+* `#12773 <https://github.com/numpy/numpy/pull/12773>`__: ENH: add "max difference" messages to np.testing.assert_array_equal...
+* `#12820 <https://github.com/numpy/numpy/pull/12820>`__: ENH: Add mm->qm divmod
+* `#12890 <https://github.com/numpy/numpy/pull/12890>`__: ENH: add _dtype_ctype to namespace for freeze analysis
+
+
+Compatibility notes
+===================
+
+* The changed error message emitted by array comparison testing functions may
+  affect doctests. See below for detail.
+
+* Casting from double and single denormals to float16 has been corrected.  In
+  some rare cases, this may result in results being rounded up instead of down,
+  changing the last bit (ULP) of the result.
+
+
+New Features
+============
+
+divmod operation is now supported for two ``timedelta64`` operands
+------------------------------------------------------------------
+The divmod operator now handles two ``np.timedelta64`` operands, with
+type signature ``mm->qm``.
+
+
+Improvements
+============
+
+Further improvements to ``ctypes`` support in ``np.ctypeslib``
+--------------------------------------------------------------
+A new `numpy.ctypeslib.as_ctypes_type` function has been added, which can be
+used to converts a `dtype` into a best-guess `ctypes` type. Thanks to this
+new function, `numpy.ctypeslib.as_ctypes` now supports a much wider range of
+array types, including structures, booleans, and integers of non-native
+endianness.
+
+Array comparison assertions include maximum differences
+-------------------------------------------------------
+Error messages from array comparison tests such as
+`np.testing.assert_allclose` now include "max absolute difference" and
+"max relative difference," in addition to the previous "mismatch" percentage.
+This information makes it easier to update absolute and relative error
+tolerances.
+
+
+Changes
+=======
+
+``timedelta64 % 0`` behavior adjusted to return ``NaT``
+-------------------------------------------------------
+The modulus operation with two ``np.timedelta64`` operands now returns
+``NaT`` in the case of division by zero, rather than returning zero
+
+
+

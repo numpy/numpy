@@ -1,0 +1,44 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.21.3 Release Notes
+==========================
+
+NumPy 1.21.3 is a maintenance release that fixes a few bugs discovered after
+1.21.2. It also provides 64 bit Python 3.10.0 wheels. Note a few oddities about
+Python 3.10:
+
+* There are no 32 bit wheels for Windows, Mac, or Linux.
+* The Mac Intel builds are only available in universal2 wheels.
+
+The Python versions supported in this release are 3.7-3.10. If you want to
+compile your own version using gcc-11, you will need to use gcc-11.2+ to avoid
+problems.
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Aaron Meurer
+* Bas van Beek
+* Charles Harris
+* Developer-Ecosystem-Engineering +
+* Kevin Sheppard
+* Sebastian Berg
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#19745 <https://github.com/numpy/numpy/pull/19745>`__: ENH: Add dtype-support to 3 ```generic``/``ndarray`` methods
+* `#19955 <https://github.com/numpy/numpy/pull/19955>`__: BUG: Resolve Divide by Zero on Apple silicon + test failures...
+* `#19958 <https://github.com/numpy/numpy/pull/19958>`__: MAINT: Mark type-check-only ufunc subclasses as ufunc aliases...
+* `#19994 <https://github.com/numpy/numpy/pull/19994>`__: BUG: np.tan(np.inf) test failure
+* `#20080 <https://github.com/numpy/numpy/pull/20080>`__: BUG: Correct incorrect advance in PCG with emulated int128
+* `#20081 <https://github.com/numpy/numpy/pull/20081>`__: BUG: Fix NaT handling in the PyArray_CompareFunc for datetime...
+* `#20082 <https://github.com/numpy/numpy/pull/20082>`__: DOC: Ensure that we add documentation also as to the dict for...
+* `#20106 <https://github.com/numpy/numpy/pull/20106>`__: BUG: core: result_type(0, np.timedelta64(4)) would seg. fault.

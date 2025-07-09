@@ -1,0 +1,48 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.22.3 Release Notes
+==========================
+
+NumPy 1.22.3 is a maintenance release that fixes bugs discovered after the
+1.22.2 release. The most noticeable fixes may be those for DLPack. One that may
+cause some problems is disallowing strings as inputs to logical ufuncs. It is
+still undecided how strings should be treated in those functions and it was
+thought best to simply disallow them until a decision was reached. That should
+not cause problems with older code.
+
+The Python versions supported for this release are 3.8-3.10. Note that the Mac
+wheels are now based on OS X 10.14 rather than 10.9 that was used in previous
+NumPy release cycles. 10.14 is the oldest release supported by Apple.
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* @GalaxySnail +
+* Alexandre de Siqueira
+* Bas van Beek
+* Charles Harris
+* Melissa Weber Mendonça
+* Ross Barnowski
+* Sebastian Berg
+* Tirth Patel
+* Matthieu Darbois
+
+Pull requests merged
+====================
+
+A total of 10 pull requests were merged for this release.
+
+* `#21048 <https://github.com/numpy/numpy/pull/21048>`__: MAINT: Use "3.10" instead of "3.10-dev" on travis.
+* `#21106 <https://github.com/numpy/numpy/pull/21106>`__: TYP,MAINT: Explicitly allow sequences of array-likes in ``np.concatenate``
+* `#21137 <https://github.com/numpy/numpy/pull/21137>`__: BLD,DOC: skip broken ipython 8.1.0
+* `#21138 <https://github.com/numpy/numpy/pull/21138>`__: BUG, ENH: np._from_dlpack: export correct device information
+* `#21139 <https://github.com/numpy/numpy/pull/21139>`__: BUG: Fix numba DUFuncs added loops getting picked up
+* `#21140 <https://github.com/numpy/numpy/pull/21140>`__: BUG: Fix unpickling an empty ndarray with a non-zero dimension...
+* `#21141 <https://github.com/numpy/numpy/pull/21141>`__: BUG: use ThreadPoolExecutor instead of ThreadPool
+* `#21142 <https://github.com/numpy/numpy/pull/21142>`__: API: Disallow strings in logical ufuncs
+* `#21143 <https://github.com/numpy/numpy/pull/21143>`__: MAINT, DOC: Fix SciPy intersphinx link
+* `#21148 <https://github.com/numpy/numpy/pull/21148>`__: BUG,ENH: np._from_dlpack: export arrays with any strided size-1...

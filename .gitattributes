@@ -1,0 +1,108 @@
+# Highlight our custom templating language as C, since it's hopefully better
+# than nothing. This also affects repo statistics.
+*.c.src   text linguist-language=C
+*.inc.src text linguist-language=C
+*.h.src   text linguist-language=C
+*.pyx.in  text linguist-language=Python
+*.pxd.in  text linguist-language=Python
+
+# Mark some files as vendored
+numpy/linalg/lapack_lite/f2c.c linguist-vendored
+numpy/linalg/lapack_lite/f2c.h linguist-vendored
+numpy/_core/include/numpy/libdivide/* linguist-vendored
+numpy/_core/src/umath/svml/* linguist-vendored
+numpy/_core/src/common/dlpack/dlpack.h linguist-vendored
+
+# Mark some files as generated
+numpy/linalg/lapack_lite/f2c_*.c linguist-generated
+numpy/linalg/lapack_lite/lapack_lite_names.h linguist-generated
+
+# version generated from pyproject.toml during build
+numpy/version.py linguist-generated
+
+# Configuration files
+*.ini text
+*.cfg text
+./numpy/_core/npymath.ini.in text
+./numpy/_core/mlib.ini.in text
+
+# Python sources
+*.py    text diff=python
+*.pxd   text diff=python
+*.pyx   text diff=python
+*.pyi   text diff=python
+
+# C/C++ sources
+*.c     text diff=c
+*.h     text diff=c
+*.cc    text diff=cpp
+*.cxx   text diff=cpp
+*.cpp   text diff=cpp
+*.hpp   text diff=cpp
+*.hh    text diff=cpp
+
+# Fortran sources
+*.f     text diff=fortran
+*.for   text diff=fortran
+*.f90   text diff=fortran
+*.f95   text diff=fortran
+*.f03   text diff=fortran
+
+# JavaScript
+*.js    text
+
+# F2py
+./doc/source/f2py/*.pyf text
+./doc/source/f2py/*.dat text
+
+# Documents
+*.md    text diff=markdown
+*.txt   text
+*.rst   text
+*.pdf   binary
+*.css   text diff=css
+*.html  text diff=html
+
+# Graphics
+*.png   binary
+*.ico   binary
+*.dia   binary
+*.gif   binary
+*.odg   binary
+*.fig   text
+*.svg   text
+# SVG is treated as an asset (binary) by default. If you want
+# to treat it as binary, use the following line instead.
+# *.svg    binary
+
+# Scripts
+*.sh    text eol=lf
+*.sed   text
+# These are explicitly windows files and should use crlf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Serialisation
+*.json  text
+*.toml  text
+*.xml   text
+*.yaml  text
+*.yml   text
+
+# Data files
+*.csv   text
+*.pkl   binary
+*.fits  binary
+*.npy   binary
+*.npz   binary
+
+# Misc.
+*.swg   text
+*.patch text
+./doc/neps/index.rst.tmpl text
+./benchmarks/asv_compare.conf.json.tpl text
+./tools/swig/test/*.i text
+./doc/source/dev/gitwash/git_links.inc text
+./doc/source/reference/simd/*.inc text
+./numpy/_core/src/_simd/*.inc text diff=c
+

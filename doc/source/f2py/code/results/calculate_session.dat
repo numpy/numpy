@@ -1,0 +1,6 @@
+>>> import foo
+>>> foo.calculate(range(5), lambda x: x*x)
+array([  0.,   1.,   4.,   9.,  16.])
+>>> import math
+>>> foo.calculate(range(5), math.exp)
+array([  1.        ,   2.71828183,   7.3890561,  20.08553692,  54.59815003])

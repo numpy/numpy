@@ -1,0 +1,12 @@
+!    -*- f90 -*-
+python module fib2 ! in 
+    interface  ! in :fib2
+        subroutine fib(a,n) ! in :fib2:fib1.f
+            real*8 dimension(n) :: a
+            integer optional,check(len(a)>=n),depend(a) :: n=len(a)
+        end subroutine fib
+    end interface 
+end python module fib2
+
+! This file was auto-generated with f2py (version:2.28.198-1366).
+! See http://cens.ioc.ee/projects/f2py2e/

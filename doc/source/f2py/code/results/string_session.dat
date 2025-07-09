@@ -1,0 +1,30 @@
+>>> import mystring
+>>> print(mystring.foo.__doc__)
+foo(a,b,c,d)
+
+Wrapper for ``foo``.
+
+Parameters
+----------
+a : input string(len=5)
+b : in/output rank-0 array(string(len=5),'c')
+c : input string(len=-1)
+d : in/output rank-0 array(string(len=-1),'c')
+
+>>> from numpy import array
+>>> a = array(b'123\0\0')
+>>> b = array(b'123\0\0')
+>>> c = array(b'123')
+>>> d = array(b'123')
+>>> mystring.foo(a, b, c, d)
+ A=123
+ B=123
+ C=123
+ D=123
+ CHANGE A,B,C,D
+ A=A23
+ B=B23
+ C=C23
+ D=D23
+>>> a[()], b[()], c[()], d[()]
+(b'123', b'B23', b'123', b'D2')

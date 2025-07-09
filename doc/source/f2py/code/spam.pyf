@@ -1,0 +1,19 @@
+!    -*- f90 -*-
+python module spam
+    usercode '''
+  static char doc_spam_system[] = "Execute a shell command.";
+  static PyObject *spam_system(PyObject *self, PyObject *args)
+  {
+    char *command;
+    int sts;
+
+    if (!PyArg_ParseTuple(args, "s", &command))
+        return NULL;
+    sts = system(command);
+    return Py_BuildValue("i", sts);
+  }
+    '''
+    pymethoddef '''
+    {"system",  spam_system, METH_VARARGS, doc_spam_system},
+    '''
+end python module spam

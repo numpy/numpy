@@ -1,0 +1,81 @@
+name: Test on Cygwin
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  cygwin_build_test:
+    runs-on: windows-latest
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+      - name: Install Cygwin
+        uses: egor-tensin/setup-cygwin@d2c752bab416d4b0662591bd366fc2686297c82d # v4
+        with:
+          platform: x86_64
+          install-dir: 'C:\tools\cygwin'
+          packages: >-
+            python39=3.9.16-1 python39-devel=3.9.16-1 python39-pip python-pip-wheel
+            python-setuptools-wheel liblapack-devel liblapack0 gcc-fortran
+            gcc-g++ git dash cmake ninja
+      - name: Set Windows PATH
+        uses: egor-tensin/cleanup-path@f04bc953e6823bf491cc0bdcff959c630db1b458 # v4.0.1
+        with:
+          dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
+      - name: Verify that bash is Cygwin bash
+        run: |
+          command bash
+          bash -c "uname -svrmo"
+      - name: Tell Cygwin's git about this repository.
+        run: |
+          dash -c "which git; /usr/bin/git config --system --add safe.directory /cygdrive/d/a/numpy/numpy"
+      - name: Verify python version
+        # Make sure it's the Cygwin one, not a Windows one
+        run: |
+          dash -c "which python3.9; /usr/bin/python3.9 --version -V"
+      - name: Build NumPy wheel
+        run: |
+          dash -c "/usr/bin/python3.9 -m pip install build pytest hypothesis pytest-xdist Cython meson"
+          dash -c "/usr/bin/python3.9 -m build . --wheel -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack -Csetup-args=-Dcpu-dispatch=none -Csetup-args=-Dcpu-baseline=native"
+      - name: Install NumPy from wheel
+        run: |
+          bash -c "/usr/bin/python3.9 -m pip install dist/numpy-*cp39*.whl"
+      - name: Rebase NumPy compiled extensions
+        run: |
+          dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
+      - name: Run NumPy test suite
+        shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
+        run: |
+          cd tools
+          /usr/bin/python3.9 -m pytest --pyargs numpy -n2 -m "not slow"
+      - name: Upload wheel if tests fail
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: numpy-cygwin-wheel
+          path: dist/numpy-*cp39*.whl
+      - name: Check the extension modules on failure
+        if: failure()
+        run: |
+          dash -c "/usr/bin/python3.9 -m pip show numpy"
+          dash -c "/usr/bin/python3.9 -m pip show -f numpy | grep .dll"
+          dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
+          dash "list_dlls_unix.sh" 3.9
+      - name: Print installed package versions on failure
+        if: failure()
+        run: |
+          cygcheck -c

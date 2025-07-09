@@ -1,0 +1,32 @@
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Christoph Gohlke
+* Matti Picus
+* Raghuveer Devulapalli
+* Sebastian Berg
+* Simon Graham +
+* Veniamin Petrenko +
+* Bernie Gray +
+
+Pull requests merged
+====================
+
+A total of 11 pull requests were merged for this release.
+
+* `#17756 <https://github.com/numpy/numpy/pull/17756>`__: BUG: Fix segfault due to out of bound pointer in floatstatus...
+* `#17774 <https://github.com/numpy/numpy/pull/17774>`__: BUG: fix np.timedelta64('nat').__format__ throwing an exception
+* `#17775 <https://github.com/numpy/numpy/pull/17775>`__: BUG: Fixed file handle leak in array_tofile.
+* `#17786 <https://github.com/numpy/numpy/pull/17786>`__: BUG: Raise recursion error during dimension discovery
+* `#17917 <https://github.com/numpy/numpy/pull/17917>`__: BUG: Fix subarray dtype used with too large count in fromfile
+* `#17918 <https://github.com/numpy/numpy/pull/17918>`__: BUG: 'bool' object has no attribute 'ndim'
+* `#17919 <https://github.com/numpy/numpy/pull/17919>`__: BUG: ensure _UFuncNoLoopError can be pickled
+* `#17924 <https://github.com/numpy/numpy/pull/17924>`__: BLD: use BUFFERSIZE=20 in OpenBLAS
+* `#18026 <https://github.com/numpy/numpy/pull/18026>`__: BLD: update to OpenBLAS 0.3.13
+* `#18036 <https://github.com/numpy/numpy/pull/18036>`__: BUG: make a variable volatile to work around clang compiler bug
+* `#18114 <https://github.com/numpy/numpy/pull/18114>`__: REL: Prepare for the NumPy 1.19.5 release.

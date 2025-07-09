@@ -1,0 +1,22 @@
+name: Feature request
+description: Check instructions for submitting your idea on the mailing list first.
+title: "ENH: <Please write a comprehensive title after the 'ENH: ' prefix>"
+
+body:
+- type: markdown
+  attributes:
+    value: >
+      If you're looking to request a new feature or change in functionality,
+      including adding or changing the meaning of arguments to an existing
+      function, please post your idea on the
+      [numpy-discussion mailing list](https://mail.python.org/mailman/listinfo/numpy-discussion)
+      to explain your reasoning in addition to opening an issue or pull request.
+      You can also check out our
+      [Contributor Guide](https://github.com/numpy/numpy/blob/main/doc/source/dev/index.rst)
+      if you need more information.
+
+- type: textarea
+  attributes:
+    label: "Proposed new feature or change:"
+  validations:
+    required: true

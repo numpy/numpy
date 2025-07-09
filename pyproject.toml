@@ -1,0 +1,236 @@
+[build-system]
+build-backend = "mesonpy"
+requires = [
+    "meson-python>=0.15.0",
+    "Cython>=3.0.6",  # keep in sync with version check in meson.build
+]
+
+[project]
+name = "numpy"
+version = "2.4.0.dev0"
+# TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
+license = {file = "LICENSE.txt"}
+
+description = "Fundamental package for array computing in Python"
+authors = [{name = "Travis E. Oliphant et al."}]
+maintainers = [
+    {name = "NumPy Developers", email="numpy-discussion@python.org"},
+]
+requires-python = ">=3.11"
+readme = "README.md"
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Programming Language :: C',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Topic :: Software Development',
+    'Topic :: Scientific/Engineering',
+    'Typing :: Typed',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: Unix',
+    'Operating System :: MacOS',
+]
+
+[project.scripts]
+f2py = 'numpy.f2py.f2py2e:main'
+numpy-config = 'numpy._configtool:main'
+
+[project.entry-points.pkg_config]
+numpy = 'numpy._core.lib.pkgconfig'
+
+[project.entry-points.array_api]
+numpy = 'numpy'
+
+[project.entry-points.pyinstaller40]
+hook-dirs = 'numpy:_pyinstaller_hooks_dir'
+
+[project.urls]
+homepage = "https://numpy.org"
+documentation = "https://numpy.org/doc/"
+source = "https://github.com/numpy/numpy"
+download = "https://pypi.org/project/numpy/#files"
+tracker = "https://github.com/numpy/numpy/issues"
+"release notes" = "https://numpy.org/doc/stable/release"
+
+[tool.towncrier]
+    single_file = false
+    filename = "doc/source/release/notes-towncrier.rst"
+    directory = "doc/release/upcoming_changes/"
+    issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
+    template = "doc/release/upcoming_changes/template.rst"
+    underlines = "~="
+    all_bullets = false
+
+
+    [[tool.towncrier.type]]
+        directory = "highlight"
+        name = "Highlights"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "new_function"
+        name = "New functions"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "python_removal"
+        name = "NumPy 2.0 Python API removals"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "deprecation"
+        name = "Deprecations"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "future"
+        name = "Future Changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "expired"
+        name = "Expired deprecations"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "compatibility"
+        name = "Compatibility notes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "c_api"
+        name = "C API changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "c_api_removal"
+        name = "NumPy 2.0 C API removals"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "new_feature"
+        name = "New Features"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "improvement"
+        name = "Improvements"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "performance"
+        name = "Performance improvements and changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "change"
+        name = "Changes"
+        showcontent = true
+
+
+[tool.cibuildwheel]
+# Note: the below skip command doesn't do much currently, the platforms to
+# build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
+# `tools/ci/cirrus_wheels.yml`.
+build-frontend = "build"
+skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
+before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
+before-test = "pip install -r {project}/requirements/test_requirements.txt"
+test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
+enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
+
+# The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
+[tool.cibuildwheel.config-settings]
+setup-args = ["-Duse-ilp64=true", "-Dallow-noblas=false"]
+build-dir = "build"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+musllinux-x86_64-image = "musllinux_1_2"
+musllinux-aarch64-image = "musllinux_1_2"
+
+[tool.cibuildwheel.pyodide]
+before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
+# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
+repair-wheel-command = ""
+test-command = "python -m pytest --pyargs numpy -m 'not slow'"
+
+[tool.cibuildwheel.pyodide.config-settings]
+build-dir = "build"
+setup-args = ["--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross", "-Dblas=none", "-Dlapack=none"]
+
+[tool.cibuildwheel.linux.environment]
+# RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
+RUNNER_OS="Linux"
+# /project will be the $PWD equivalent inside the docker used to build the wheel
+PKG_CONFIG_PATH="/project/.openblas"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/project/.openblas/lib"
+
+[tool.cibuildwheel.macos]
+# universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
+# note that universal2 wheels are not built, they're listed in the tool.cibuildwheel.skip
+# section
+# Not clear why the DYLD_LIBRARY_PATH is not passed through from the environment
+repair-wheel-command = [
+  "export DYLD_LIBRARY_PATH=$PWD/.openblas/lib",
+  "echo DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH",
+  "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
+]
+
+[tool.cibuildwheel.windows]
+config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=false"], build-dir="build"}
+repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
+# This does not work, use CIBW_ENVIRONMENT_WINDOWS
+environment = {PKG_CONFIG_PATH="./.openblas"}
+
+[[tool.cibuildwheel.overrides]]
+select = ["*-win32"]
+config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=true"], build-dir="build"}
+repair-wheel-command = ""
+
+
+[tool.meson-python]
+meson = 'vendored-meson/meson/meson.py'
+
+[tool.meson-python.args]
+install = ['--tags=runtime,python-runtime,tests,devel']
+
+[tool.spin]
+package = 'numpy'
+
+[tool.spin.meson]
+cli = 'vendored-meson/meson/meson.py'
+
+[tool.spin.commands]
+"Build" = [
+  ".spin/cmds.py:build",
+  ".spin/cmds.py:test",
+  ".spin/cmds.py:mypy",
+  ".spin/cmds.py:config_openblas",
+  ".spin/cmds.py:lint",
+]
+"Environments" = [
+  "spin.cmds.meson.run",
+  ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python",
+  "spin.cmds.meson.gdb",
+  "spin.cmds.meson.lldb"
+]
+"Documentation" = [
+  ".spin/cmds.py:docs",
+  ".spin/cmds.py:changelog",
+  ".spin/cmds.py:notes",
+  ".spin/cmds.py:check_docs",
+  ".spin/cmds.py:check_tutorials",
+]
+"Metrics" = [".spin/cmds.py:bench"]

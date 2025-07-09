@@ -1,0 +1,55 @@
+=========================
+NumPy 1.7.2 Release Notes
+=========================
+
+This is a bugfix only release in the 1.7.x series.
+It supports Python 2.4 - 2.7 and 3.1 - 3.3 and is the last series that
+supports Python 2.4 - 2.5.
+
+
+Issues fixed
+============
+
+* gh-3153: Do not reuse nditer buffers when not filled enough
+* gh-3192: f2py crashes with UnboundLocalError exception
+* gh-442: Concatenate with axis=None now requires equal number of array elements
+* gh-2485: Fix for astype('S') string truncate issue
+* gh-3312: bug in count_nonzero
+* gh-2684: numpy.ma.average casts complex to float under certain conditions
+* gh-2403: masked array with named components does not behave as expected
+* gh-2495: np.ma.compress treated inputs in wrong order
+* gh-576: add __len__ method to ma.mvoid
+* gh-3364: reduce performance regression of mmap slicing
+* gh-3421: fix non-swapping strided copies in GetStridedCopySwap
+* gh-3373: fix small leak in datetime metadata initialization
+* gh-2791: add platform specific python include directories to search paths
+* gh-3168: fix undefined function and add integer divisions
+* gh-3301: memmap does not work with TemporaryFile in python3
+* gh-3057: distutils.misc_util.get_shared_lib_extension returns wrong debug extension
+* gh-3472: add module extensions to load_library search list
+* gh-3324: Make comparison function (gt, ge, ...) respect __array_priority__
+* gh-3497: np.insert behaves incorrectly with argument 'axis=-1'
+* gh-3541: make preprocessor tests consistent in halffloat.c
+* gh-3458: array_ass_boolean_subscript() writes 'non-existent' data to array
+* gh-2892: Regression in ufunc.reduceat with zero-sized index array
+* gh-3608: Regression when filling struct from tuple
+* gh-3701: add support for Python 3.4 ast.NameConstant
+* gh-3712: do not assume that GIL is enabled in xerbla
+* gh-3712: fix LAPACK error handling in lapack_litemodule
+* gh-3728: f2py fix decref on wrong object
+* gh-3743: Hash changed signature in Python 3.3
+* gh-3793: scalar int hashing broken on 64 bit python3
+* gh-3160: SandboxViolation easyinstalling 1.7.0 on Mac OS X 10.8.3
+* gh-3871: npy_math.h has invalid isinf for Solaris with SUNWspro12.2
+* gh-2561: Disable check for oldstyle classes in python3
+* gh-3900: Ensure NotImplemented is passed on in MaskedArray ufunc's
+* gh-2052: del scalar subscript causes segfault
+* gh-3832: fix a few uninitialized uses and memleaks
+* gh-3971: f2py changed string.lowercase to string.ascii_lowercase for python3
+* gh-3480: numpy.random.binomial raised ValueError for n == 0
+* gh-3992: hypot(inf, 0) shouldn't raise a warning, hypot(inf, inf) wrong result
+* gh-4018: Segmentation fault dealing with very large arrays
+* gh-4094: fix NaT handling in _strided_to_strided_string_to_datetime
+* gh-4051: fix uninitialized use in _strided_to_strided_string_to_datetime
+* gh-4123: lexsort segfault
+* gh-4141: Fix a few issues that show up with python 3.4b1

@@ -1,0 +1,52 @@
+# To use:
+#
+#   $ conda env create -f environment.yml  # `mamba` works too for this command
+#   $ conda activate numpy-dev
+#
+name: numpy-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12  # need to pin to avoid issues with builds
+  - cython>=3.0
+  - compilers
+  - openblas
+  - nomkl
+  - setuptools==65.5.1
+  - ninja
+  - pkg-config
+  - meson-python
+  - spin==0.13
+  - ccache
+  # For testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - hypothesis
+  # For type annotations
+  - typing_extensions>=4.5.0
+  - mypy=1.16.1
+  - orjson  # makes mypy faster
+  # For building docs
+  - sphinx>=4.5.0
+  - sphinx-copybutton
+  - sphinx-design
+  - numpydoc=1.4.0
+  - ipython
+  - scipy
+  - pandas
+  - matplotlib
+  - pydata-sphinx-theme>=0.15.2
+  - doxygen
+  - towncrier
+  - jupyterlite-sphinx>=0.18.0
+  # see https://github.com/jupyterlite/pyodide-kernel#compatibility
+  - jupyterlite-pyodide-kernel==0.5.2 # supports Pyodide 0.27.1
+  # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
+  - breathe>4.33.0
+  # For linting
+  - ruff=0.12.0
+  - gitpython
+  # Used in some tests
+  - cffi
+  - tzdata

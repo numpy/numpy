@@ -1,0 +1,55 @@
+steps:
+- script: git submodule update --init
+  displayName: 'Fetch submodules'
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: $(PYTHON_VERSION)
+    addToPath: true
+    architecture: $(PYTHON_ARCH)
+
+- script: python -m pip install --upgrade pip wheel
+  displayName: 'Install tools'
+
+- script: python -m pip install -r requirements/test_requirements.txt
+  displayName: 'Install dependencies; some are optional to avoid test skips'
+
+- powershell: |
+    choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+  displayName: 'Install utilities'
+
+- powershell: |
+    # Note: ensure the `pip install .` command remains the last one here,
+    # to avoid "green on failure" issues
+    If ( Test-Path env:DISABLE_BLAS ) {
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none" -Csetup-args="-Dallow-noblas=true"
+    }
+    elseif ( Test-Path env:_USE_BLAS_ILP64 ) {
+        pip install -r requirements/ci_requirements.txt
+        spin config-openblas --with-scipy-openblas=64
+        $env:PKG_CONFIG_PATH="$pwd/.openblas"
+        python -m pip install . -v -Csetup-args="--vsenv"
+    } else {
+        pip install -r requirements/ci_requirements.txt
+        spin config-openblas --with-scipy-openblas=32
+        $env:PKG_CONFIG_PATH="$pwd/.openblas"
+        python -m pip install . -v -Csetup-args="--vsenv" 
+    }
+  displayName: 'Build NumPy'
+
+- powershell: |
+    cd tools  # avoid root dir to not pick up source tree
+    # Get a gfortran onto the path for f2py tests
+    $env:PATH = "c:\\rtools43\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+    If ( $env:TEST_MODE -eq "full" ) {
+      pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
+    } else {
+      pytest --pyargs numpy -m "not slow" -rsx --junitxml=junit/test-results.xml
+    }
+  displayName: 'Run NumPy Test Suite'
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    failTaskOnFailedTests: true
+    testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'

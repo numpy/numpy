@@ -1,0 +1,64 @@
+Travis Oliphant for the NumPy core, the NumPy guide, various
+    bug-fixes and code contributions.
+Paul Dubois, who implemented the original Masked Arrays.
+Pearu Peterson for f2py, numpy.distutils and help with code
+    organization.
+Robert Kern for mtrand, bug fixes, help with distutils, code
+    organization, strided tricks and much more.
+Eric Jones for planning and code contributions.
+Fernando Perez for code snippets, ideas, bugfixes, and testing.
+Ed Schofield for matrix.py patches, bugfixes, testing, and docstrings.
+Robert Cimrman for array set operations and numpy.distutils help.
+John Hunter for code snippets from matplotlib.
+Chris Hanley for help with records.py, testing, and bug fixes.
+Travis Vaught for administration, community coordination and
+    marketing.
+Joe Cooper, Jeff Strunk for administration.
+Eric Firing for bugfixes.
+Arnd Baecker for 64-bit testing.
+David Cooke for many code improvements including the auto-generated C-API,
+    and optimizations.
+Andrew Straw for help with the web-page, documentation, packaging and
+    testing.
+Alexander Belopolsky (Sasha) for Masked array bug-fixes and tests,
+    rank-0 array improvements, scalar math help and other code additions.
+Francesc Altet for unicode, work on nested record arrays, and bug-fixes.
+Tim Hochberg for getting the build working on MSVC, optimization
+    improvements, and code review.
+Charles (Chuck) Harris for the sorting code originally written for
+    Numarray and for improvements to polyfit, many bug fixes, delving
+    into the C code, release management, and documentation.
+David Huard for histogram improvements including 2-D and d-D code and
+    other bug-fixes.
+Stefan van der Walt for numerous bug-fixes, testing and documentation.
+Albert Strasheim for documentation, bug-fixes, regression tests and
+    Valgrind expertise.
+David Cournapeau for build support, doc-and-bug fixes, and code
+    contributions including fast_clipping.
+Jarrod Millman for release management, community coordination, and code
+    clean up.
+Chris Burns for work on memory mapped arrays and bug-fixes.
+Pauli Virtanen for documentation, bug-fixes, lookfor and the
+    documentation editor.
+A.M. Archibald for no-copy-reshape code, strided array tricks,
+    documentation and bug-fixes.
+Pierre Gerard-Marchant for rewriting masked array functionality.
+Roberto de Almeida for the buffered array iterator.
+Alan McIntyre for updating the NumPy test framework to use nose, improve
+    the test coverage, and enhancing the test system documentation.
+Joe Harrington for administering the 2008 Documentation Sprint.
+Mark Wiebe for the new NumPy iterator, the float16 data type, improved
+    low-level data type operations, and other NumPy core improvements.
+
+NumPy is based on the Numeric (Jim Hugunin, Paul Dubois, Konrad
+Hinsen, and David Ascher) and NumArray (Perry Greenfield, J Todd
+Miller, Rick White and Paul Barrett) projects.  We thank them for
+paving the way ahead.
+
+Institutions
+------------
+
+Enthought for providing resources and finances for development of NumPy.
+UC Berkeley for providing travel money and hosting numerous sprints.
+The University of Central Florida for funding the 2008 Documentation Marathon.
+The University of Stellenbosch for hosting the buildbot.

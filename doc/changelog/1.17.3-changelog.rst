@@ -1,0 +1,32 @@
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Allan Haldane
+* Charles Harris
+* Kevin Sheppard
+* Matti Picus
+* Ralf Gommers
+* Sebastian Berg
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 12 pull requests were merged for this release.
+
+* `#14456 <https://github.com/numpy/numpy/pull/14456>`__: MAINT: clean up pocketfft modules inside numpy.fft namespace.
+* `#14463 <https://github.com/numpy/numpy/pull/14463>`__: BUG: random.hypergeometic assumes npy_long is npy_int64, hung...
+* `#14502 <https://github.com/numpy/numpy/pull/14502>`__: BUG: random: Revert gh-14458 and refix gh-14557.
+* `#14504 <https://github.com/numpy/numpy/pull/14504>`__: BUG: add a specialized loop for boolean matmul.
+* `#14506 <https://github.com/numpy/numpy/pull/14506>`__: MAINT: Update pytest version for Python 3.8
+* `#14512 <https://github.com/numpy/numpy/pull/14512>`__: DOC: random: fix doc linking, was referencing private submodules.
+* `#14513 <https://github.com/numpy/numpy/pull/14513>`__: BUG,MAINT: Some fixes and minor cleanup based on clang analysis
+* `#14515 <https://github.com/numpy/numpy/pull/14515>`__: BUG: Fix randint when range is 2**32
+* `#14519 <https://github.com/numpy/numpy/pull/14519>`__: MAINT: remove the entropy c-extension module
+* `#14563 <https://github.com/numpy/numpy/pull/14563>`__: DOC: remove note about Pocketfft license file (non-existing here).
+* `#14578 <https://github.com/numpy/numpy/pull/14578>`__: BUG: random: Create a legacy implementation of random.binomial.
+* `#14687 <https://github.com/numpy/numpy/pull/14687>`__: BUG: properly define PyArray_DescrCheck

@@ -1,0 +1,27 @@
+=========================
+NumPy 1.7.1 Release Notes
+=========================
+
+This is a bugfix only release in the 1.7.x series.
+It supports Python 2.4 - 2.7 and 3.1 - 3.3 and is the last series that
+supports Python 2.4 - 2.5.
+
+
+Issues fixed
+============
+
+* gh-2973: Fix `1` is printed during numpy.test()
+* gh-2983: BUG: gh-2969: Backport memory leak fix 80b3a34.
+* gh-3007: Backport gh-3006
+* gh-2984: Backport fix complex polynomial fit
+* gh-2982: BUG: Make nansum work with booleans.
+* gh-2985: Backport large sort fixes
+* gh-3039: Backport object take
+* gh-3105: Backport nditer fix op axes initialization
+* gh-3108: BUG: npy-pkg-config ini files were missing after Bento build.
+* gh-3124: BUG: PyArray_LexSort allocates too much temporary memory.
+* gh-3131: BUG: Exported f2py_size symbol prevents linking multiple f2py modules.
+* gh-3117: Backport gh-2992
+* gh-3135: DOC: Add mention of PyArray_SetBaseObject stealing a reference
+* gh-3134: DOC: Fix typo in fft docs (the indexing variable is 'm', not 'n').
+* gh-3136: Backport #3128

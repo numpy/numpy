@@ -1,0 +1,6 @@
+subroutine zadd(a,b,c,n) ! in :add:add.f
+   double complex dimension(n) :: a
+   double complex dimension(n) :: b
+   double complex intent(out),dimension(n) :: c
+   integer intent(hide),depend(a) :: n=len(a)
+end subroutine zadd

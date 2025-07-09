@@ -1,0 +1,29 @@
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Charles Harris
+* Isuru Fernando
+* Matthew Brett
+* Sayed Adel
+* Sebastian Berg
+* 傅立业（Chris Fu） +
+
+Pull requests merged
+====================
+
+A total of 9 pull requests were merged for this release.
+
+* `#20278 <https://github.com/numpy/numpy/pull/20278>`__: BUG: Fix shadowed reference of ``dtype`` in type stub
+* `#20293 <https://github.com/numpy/numpy/pull/20293>`__: BUG: Fix headers for universal2 builds
+* `#20294 <https://github.com/numpy/numpy/pull/20294>`__: BUG: ``VOID_nonzero`` could sometimes mutate alignment flag
+* `#20295 <https://github.com/numpy/numpy/pull/20295>`__: BUG: Do not use nonzero fastpath on unaligned arrays
+* `#20296 <https://github.com/numpy/numpy/pull/20296>`__: BUG: Distutils patch to allow for 2 as a minor version (!)
+* `#20297 <https://github.com/numpy/numpy/pull/20297>`__: BUG, SIMD: Fix 64-bit/8-bit integer division by a scalar
+* `#20298 <https://github.com/numpy/numpy/pull/20298>`__: BUG, SIMD: Workaround broadcasting SIMD 64-bit integers on MSVC...
+* `#20300 <https://github.com/numpy/numpy/pull/20300>`__: REL: Prepare for the NumPy 1.21.4 release.
+* `#20302 <https://github.com/numpy/numpy/pull/20302>`__: TST: Fix a ``Arrayterator`` typing test failure

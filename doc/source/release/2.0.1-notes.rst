@@ -1,0 +1,74 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.0.1 Release Notes
+==========================
+
+NumPy 2.0.1 is a maintenance release that fixes bugs and regressions
+discovered after the 2.0.0 release. NumPy 2.0.1 is the last planned
+release in the 2.0.x series, 2.1.0rc1 should be out shortly.
+
+The Python versions supported by this release are 3.9-3.12.
+
+Improvements
+============
+
+``np.quantile`` with method ``closest_observation`` chooses nearest even order statistic
+----------------------------------------------------------------------------------------
+This changes the definition of nearest for border cases from the nearest odd
+order statistic to nearest even order statistic. The numpy implementation now
+matches other reference implementations.
+
+(`gh-26656 <https://github.com/numpy/numpy/pull/26656>`__)
+
+Contributors
+============
+
+A total of 15 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* @vahidmech +
+* Alex Herbert +
+* Charles Harris
+* Giovanni Del Monte +
+* Leo Singer
+* Lysandros Nikolaou
+* Matti Picus
+* Nathan Goldbaum
+* Patrick J. Roddy +
+* Raghuveer Devulapalli
+* Ralf Gommers
+* Rostan Tabet +
+* Sebastian Berg
+* Tyler Reddy
+* Yannik Wicke +
+
+Pull requests merged
+====================
+
+A total of 24 pull requests were merged for this release.
+
+* `#26711 <https://github.com/numpy/numpy/pull/26711>`__: MAINT: prepare 2.0.x for further development
+* `#26792 <https://github.com/numpy/numpy/pull/26792>`__: TYP: fix incorrect import in ``ma/extras.pyi`` stub
+* `#26793 <https://github.com/numpy/numpy/pull/26793>`__: DOC: Mention '1.25' legacy printing mode in ``set_printoptions``
+* `#26794 <https://github.com/numpy/numpy/pull/26794>`__: DOC: Remove mention of NaN and NAN aliases from constants
+* `#26821 <https://github.com/numpy/numpy/pull/26821>`__: BLD: Fix x86-simd-sort build failure on openBSD
+* `#26822 <https://github.com/numpy/numpy/pull/26822>`__: BUG: Ensure output order follows input in numpy.fft
+* `#26823 <https://github.com/numpy/numpy/pull/26823>`__: TYP: fix missing sys import in numeric.pyi
+* `#26832 <https://github.com/numpy/numpy/pull/26832>`__: DOC: remove hack to override _add_newdocs_scalars (#26826)
+* `#26835 <https://github.com/numpy/numpy/pull/26835>`__: BUG: avoid side-effect of 'include complex.h'
+* `#26836 <https://github.com/numpy/numpy/pull/26836>`__: BUG: fix max_rows and chunked string/datetime reading in ``loadtxt``
+* `#26837 <https://github.com/numpy/numpy/pull/26837>`__: BUG: fix PyArray_ImportNumPyAPI under -Werror=strict-prototypes
+* `#26856 <https://github.com/numpy/numpy/pull/26856>`__: DOC: Update some documentation
+* `#26868 <https://github.com/numpy/numpy/pull/26868>`__: BUG: fancy indexing copy
+* `#26869 <https://github.com/numpy/numpy/pull/26869>`__: BUG: Mismatched allocation domains in ``PyArray_FillWithScalar``
+* `#26870 <https://github.com/numpy/numpy/pull/26870>`__: BUG: Handle --f77flags and --f90flags for meson [wheel build]
+* `#26887 <https://github.com/numpy/numpy/pull/26887>`__: BUG: Fix new DTypes and new string promotion when signature is...
+* `#26888 <https://github.com/numpy/numpy/pull/26888>`__: BUG: remove numpy.f2py from excludedimports
+* `#26959 <https://github.com/numpy/numpy/pull/26959>`__: BUG: Quantile closest_observation to round to nearest even order
+* `#26960 <https://github.com/numpy/numpy/pull/26960>`__: BUG: Fix off-by-one error in amount of characters in strip
+* `#26961 <https://github.com/numpy/numpy/pull/26961>`__: API: Partially revert unique with return_inverse
+* `#26962 <https://github.com/numpy/numpy/pull/26962>`__: BUG,MAINT: Fix utf-8 character stripping memory access
+* `#26963 <https://github.com/numpy/numpy/pull/26963>`__: BUG: Fix out-of-bound minimum offset for in1d table method
+* `#26971 <https://github.com/numpy/numpy/pull/26971>`__: BUG: fix f2py tests to work with v2 API
+* `#26995 <https://github.com/numpy/numpy/pull/26995>`__: BUG: Add object cast to avoid warning with limited API
