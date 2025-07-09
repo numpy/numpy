@@ -133,8 +133,8 @@ def fftfreq(n, d=1.0, device=None):
 
     Given a window length `n` and a sample spacing `d`::
 
-      f = [0, 1, ...,   n/2-1,     -n/2, ..., -1] / (d*n)   if n is even
-      f = [0, 1, ..., (n-1)/2, -(n-1)/2, ..., -1] / (d*n)   if n is odd
+      f = [0, 1, ...,   n//2-1,     -n//2, ..., -1] / (d*n)   if n is even
+      f = [0, 1, ..., (n-1)//2, -(n-1)//2, ..., -1] / (d*n)   if n is odd
 
     Parameters
     ----------
@@ -189,8 +189,8 @@ def rfftfreq(n, d=1.0, device=None):
 
     Given a window length `n` and a sample spacing `d`::
 
-      f = [0, 1, ...,     n/2-1,     n/2] / (d*n)   if n is even
-      f = [0, 1, ..., (n-1)/2-1, (n-1)/2] / (d*n)   if n is odd
+      f = [0, 1, ...,     n//2-1,     n//2] / (d*n)   if n is even
+      f = [0, 1, ..., (n-1)//2-1, (n-1)//2] / (d*n)   if n is odd
 
     Unlike `fftfreq` (but like `scipy.fftpack.rfftfreq`)
     the Nyquist frequency component is considered to be positive.
