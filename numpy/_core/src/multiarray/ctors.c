@@ -2229,12 +2229,10 @@ PyArray_FromInterface(PyObject *origin)
         /* Shape must be specified when 'data' is specified */
         int result = PyDict_ContainsString(iface, "data");
         if (result < 0) {
-            Py_DECREF(attr);
             return NULL;
         }
         else if (result == 1) {
             Py_DECREF(iface);
-            Py_DECREF(attr);
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ shape");
             return NULL;
