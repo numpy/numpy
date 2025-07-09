@@ -8873,6 +8873,8 @@ class TestArrayInterface:
         (f, {'strides': ()}, 0.5),
         (f, {'strides': (2,)}, ValueError),
         (f, {'strides': 16}, TypeError),
+        # This fails due to going into the buffer protocol path
+        (f, {'data': None, 'shape': ()}, TypeError),
         ])
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
@@ -8891,11 +8893,48 @@ class TestArrayInterface:
             post_cnt = sys.getrefcount(np.dtype('f8'))
             assert_equal(pre_cnt, post_cnt)
 
-def test_interface_no_shape():
+
+def test_interface_empty_shape():
     class ArrayLike:
         array = np.array(1)
         __array_interface__ = array.__array_interface__
     assert_equal(np.array(ArrayLike()), 1)
+
+
+def test_interface_no_shape_error():
+    class ArrayLike:
+        __array_interface__ = {"data": None, "typestr": "f8"}
+
+    with pytest.raises(ValueError, match="Missing __array_interface__ shape"):
+        np.array(ArrayLike())
+
+
+@pytest.mark.parametrize("iface", [
+    {"typestr": "f8", "shape": (0, 1)},
+    {"typestr": "(0,)f8,", "shape": (1, 3)},
+])
+def test_interface_nullptr(iface):
+    iface.update({"data": (0, True)})
+
+    class ArrayLike:
+        __array_interface__ = iface
+
+    arr = np.asarray(ArrayLike())
+    # Note, we currently set the base anyway, but we do an allocation
+    # (because NumPy doesn't like NULL data pointers everywhere).
+    assert arr.shape == iface["shape"]
+    assert arr.dtype == np.dtype(iface["typestr"])
+    assert arr.base is not None
+    assert arr.flags.owndata
+
+
+def test_interface_nullptr_size_check():
+    # Note that prior to NumPy 2.4 the below took the scalar path (if shape had size 1)
+    class ArrayLike:
+        __array_interface__ = {"data": (0, True), "typestr": "f8", "shape": ()}
+
+    with pytest.raises(ValueError, match="data is NULL but array contains data"):
+        np.array(ArrayLike())
 
 
 def test_array_interface_itemsize():

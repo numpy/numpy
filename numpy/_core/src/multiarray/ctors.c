@@ -2141,6 +2141,7 @@ PyArray_FromInterface(PyObject *origin)
     Py_ssize_t i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
+    int use_scalar_assign = 0;
 
     if (PyArray_LookupSpecial_OnInstance(
             origin, npy_interned_str.array_interface, &iface) < 0) {
@@ -2229,12 +2230,10 @@ PyArray_FromInterface(PyObject *origin)
         /* Shape must be specified when 'data' is specified */
         int result = PyDict_ContainsString(iface, "data");
         if (result < 0) {
-            Py_DECREF(attr);
             return NULL;
         }
         else if (result == 1) {
             Py_DECREF(iface);
-            Py_DECREF(attr);
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ shape");
             return NULL;
@@ -2277,7 +2276,10 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Case for data access through pointer */
-    if (attr && PyTuple_Check(attr)) {
+    if (attr == NULL) {
+        use_scalar_assign = 1;
+    }
+    else if (PyTuple_Check(attr)) {
         PyObject *dataptr;
         if (PyTuple_GET_SIZE(attr) != 2) {
             PyErr_SetString(PyExc_TypeError,
@@ -2309,7 +2311,7 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Case for data access through buffer */
-    else if (attr) {
+    else {
         if (attr != Py_None) {
             base = attr;
         }
@@ -2366,18 +2368,32 @@ PyArray_FromInterface(PyObject *origin)
     if (ret == NULL) {
         goto fail;
     }
-    if (data == NULL) {
+    if (use_scalar_assign) {
+        /* 
+         * NOTE(seberg): I honestly doubt anyone is using this scalar path and we
+         * could probably just deprecate (or just remove it in a 3.0 version).
+         */
         if (PyArray_SIZE(ret) > 1) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot coerce scalar to array with size > 1");
             Py_DECREF(ret);
             goto fail;
         }
-        if (PyArray_SETITEM(ret, PyArray_DATA(ret), origin) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(ret), PyArray_DATA(ret), origin) < 0) {
             Py_DECREF(ret);
             goto fail;
         }
     }
+    else if (data == NULL && PyArray_NBYTES(ret) != 0) {
+        /* Caller should ensure this, but <2.4 used the above scalar coerction path */
+        PyErr_SetString(PyExc_ValueError,
+                "data is NULL but array contains data, in older versions of NumPy "
+                "this may have used the scalar path.  To get the scalar path "
+                "you must leave the data field undefined.");
+        Py_DECREF(ret);
+        goto fail;
+    }
+
     result = PyDict_GetItemStringRef(iface, "strides", &attr);
     if (result == -1){
         return NULL;
