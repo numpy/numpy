@@ -93,7 +93,7 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         *out_kwd_obj = NULL;
         return -1;
     }
-    int result = PyDict_GetItemStringRef(kwds, "out", out_kwd_obj); // noqa: borrowed-ref OK
+    int result = PyDict_GetItemStringRef(kwds, "out", out_kwd_obj);
     if (result == -1) {
         return -1;
     }

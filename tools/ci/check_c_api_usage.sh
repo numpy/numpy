@@ -4,11 +4,14 @@ set -e
 # List of suspicious function calls:
 SUSPICIOUS_FUNCS=(
     "PyList_GetItem"
-    "PyList_GET_ITEM"
     "PyDict_GetItem"
     "PyDict_GetItemWithError"
-    "PyDict_Next"
     "PyDict_GetItemString"
+    "PyDict_SetDefault"
+    "PyDict_Next"
+    "PyWeakref_GetObject"
+    "PyWeakref_GET_OBJECT"
+    "PyList_GET_ITEM"
     "_PyDict_GetItemStringWithError"
     "PySequence_Fast"
 )
@@ -44,7 +47,7 @@ for file in $ALL_FILES; do
                 code_line=$(cut -d: -f2- <<< "$line")
 
                 # Skip if line contains noqa
-                if [[ "$code_line" == *"noqa: borrowed-ref OK"* ]]; then
+                if [[ "$code_line" == *"noqa: borrowed-ref OK"* || "$code_line" == *"noqa: borrowed-ref - manual fix needed"* ]]; then
                     continue
                 fi
 
@@ -81,7 +84,7 @@ done
 if [[ $FAIL -eq 1 ]]; then
     echo "C API borrow-ref linter found issues."
 else
-    echo "C API borrow-ref linter found no issues."
+    echo "C API borrow-ref linter found no issues." > $OUTPUT
 fi
 
 cat "$OUTPUT"
