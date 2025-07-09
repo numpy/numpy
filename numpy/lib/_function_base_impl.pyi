@@ -615,6 +615,7 @@ _MethodKind = L[
     "nearest",
 ]
 
+# NOTE: keep in sync with `quantile`
 @overload
 def percentile(
     a: _ArrayLikeFloat_co,
@@ -772,9 +773,163 @@ def percentile(
     weights: _ArrayLikeFloat_co | None = ...,
 ) -> _ArrayT: ...
 
-# NOTE: Not an alias, but they do have identical signatures
-# (that we can reuse)
-quantile = percentile
+# NOTE: keep in sync with `percentile`
+@overload
+def quantile(
+    a: _ArrayLikeFloat_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> floating: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> complexfloating: ...
+@overload
+def quantile(
+    a: _ArrayLikeTD64_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> timedelta64: ...
+@overload
+def quantile(
+    a: _ArrayLikeDT64_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> datetime64: ...
+@overload
+def quantile(
+    a: _ArrayLikeObject_co,
+    q: _FloatLike_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> Any: ...
+@overload
+def quantile(
+    a: _ArrayLikeFloat_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[floating]: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[complexfloating]: ...
+@overload
+def quantile(
+    a: _ArrayLikeTD64_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[timedelta64]: ...
+@overload
+def quantile(
+    a: _ArrayLikeDT64_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[datetime64]: ...
+@overload
+def quantile(
+    a: _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: L[False] = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[object_]: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None = ...,
+    out: None = ...,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: bool = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> Any: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: bool = ...,
+    *,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> _ArrayT: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None = ...,
+    *,
+    out: _ArrayT,
+    overwrite_input: bool = ...,
+    method: _MethodKind = ...,
+    keepdims: bool = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> _ArrayT: ...
 
 _ScalarT_fm = TypeVar(
     "_ScalarT_fm",

@@ -6,6 +6,8 @@ from copy import deepcopy
 from fractions import Fraction
 from functools import reduce
 
+import pytest
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import numpy.polynomial.polyutils as pu
@@ -16,7 +18,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
 )
 
 
@@ -656,7 +657,7 @@ class TestMisc:
         assert_equal(p.coef, [2.])
         p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=0)
         assert_almost_equal(p.coef, [2.05])
-        with assert_warns(pu.RankWarning):
+        with pytest.warns(pu.RankWarning):
             p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=1)
 
     def test_result_type(self):

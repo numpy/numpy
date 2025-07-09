@@ -531,7 +531,7 @@ def trace(
     offset: SupportsIndex = ...,
     axis1: SupportsIndex = ...,
     axis2: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     out: None = ...,
 ) -> Any: ...
 @overload
@@ -540,7 +540,7 @@ def trace(
     offset: SupportsIndex,
     axis1: SupportsIndex,
     axis2: SupportsIndex,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
@@ -549,7 +549,7 @@ def trace(
     offset: SupportsIndex = ...,
     axis1: SupportsIndex = ...,
     axis2: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     *,
     out: _ArrayT,
 ) -> _ArrayT: ...

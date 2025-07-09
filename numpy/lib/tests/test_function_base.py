@@ -61,8 +61,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
-    suppress_warnings,
 )
 
 np_floats = [np.half, np.single, np.double, np.longdouble]
@@ -2473,10 +2471,10 @@ class TestCorrCoef:
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
             warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            sup.filter(DeprecationWarning)
+            pytest.warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
+            warnings.simplefilter('ignore', DeprecationWarning)
             # ddof has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
             assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
@@ -2485,11 +2483,11 @@ class TestCorrCoef:
 
     def test_bias(self):
         # bias raises DeprecationWarning
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
             warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
-            assert_warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            sup.filter(DeprecationWarning)
+            pytest.warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
+            pytest.warns(DeprecationWarning, corrcoef, self.A, bias=0)
+            warnings.simplefilter('ignore', DeprecationWarning)
             # bias has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 

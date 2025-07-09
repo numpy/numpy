@@ -453,3 +453,23 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
+
+class TestDTypeAlignBool(_VisibleDeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-07
+    # NOTE: As you can see, finalizing this deprecation breaks some (very) old
+    # pickle files.  This may be fine, but needs to be done with some care since
+    # it breaks all of them and not just some.
+    # (Maybe it should be a 3.0 or only after warning more explicitly around pickles.)
+    message = r"dtype\(\): align should be passed as Python or NumPy boolean but got "
+
+    def test_deprecated(self):
+        # in particular integers should be rejected because one may think they mean
+        # alignment, or pass them accidentally as a subarray shape (meaning to pass
+        # a tuple).
+        self.assert_deprecated(lambda: np.dtype("f8", align=3))
+
+    @pytest.mark.parametrize("align", [True, False, np.True_, np.False_])
+    def test_not_deprecated(self, align):
+        # if the user passes a bool, it is accepted.
+        self.assert_not_deprecated(lambda: np.dtype("f8", align=align))

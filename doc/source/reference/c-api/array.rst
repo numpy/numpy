@@ -3814,7 +3814,7 @@ In this case, the helper C files typically do not have a canonical place
 where ``PyArray_ImportNumPyAPI`` should be called (although it is OK and
 fast to call it often).
 
-To solve this, NumPy provides the following pattern that the the main
+To solve this, NumPy provides the following pattern that the main
 file is modified to define ``PY_ARRAY_UNIQUE_SYMBOL`` before the include:
 
 .. code-block:: c

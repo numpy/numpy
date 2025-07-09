@@ -1,6 +1,7 @@
 import hashlib
 import os.path
 import sys
+import warnings
 
 import pytest
 
@@ -17,8 +18,6 @@ from numpy.testing import (
     assert_equal,
     assert_no_warnings,
     assert_raises,
-    assert_warns,
-    suppress_warnings,
 )
 
 random = Generator(MT19937())
@@ -1463,8 +1462,8 @@ class TestRandomDist:
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov)
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov,
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov)
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov,
                      method='eigh')
         assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
                       method='cholesky')
@@ -1491,10 +1490,9 @@ class TestRandomDist:
                           method='cholesky')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             random.multivariate_normal(mean, cov, method=method)
-            w = sup.record(RuntimeWarning)
-            assert len(w) == 0
 
         mu = np.zeros(2)
         cov = np.eye(2)

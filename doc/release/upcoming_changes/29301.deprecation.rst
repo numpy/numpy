@@ -1,0 +1,7 @@
+``align=`` must be passed as boolean to ``np.dtype()``
+------------------------------------------------------
+When creating a new ``dtype`` a ``VisibleDeprecationWarning`` will be
+given if ``align=`` is not a boolean.
+This is mainly to prevent accidentally passing a subarray align flag where it
+has no effect, such as ``np.dtype("f8", 3)`` instead of ``np.dtype(("f8", 3))``.
+We strongly suggest to always pass ``align=`` as a keyword argument.

@@ -15,7 +15,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
 )
 from numpy.testing._private.utils import run_threaded
 
@@ -736,7 +735,7 @@ class TestPrintOptions:
         assert_equal(str(x), "1")
 
         # check `style` arg raises
-        assert_warns(DeprecationWarning, np.array2string,
+        pytest.warns(DeprecationWarning, np.array2string,
                                          np.array(1.), style=repr)
         # but not in legacy mode
         np.array2string(np.array(1.), style=repr, legacy='1.13')

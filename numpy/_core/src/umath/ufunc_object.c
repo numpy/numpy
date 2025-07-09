@@ -4319,10 +4319,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     /* Check number of arguments */
     if (NPY_UNLIKELY((len_args < nin) || (len_args > nop))) {
+        const char *verb = (len_args == 1) ? "was" : "were";
         PyErr_Format(PyExc_TypeError,
-                "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                ufunc_get_name_cstr(ufunc) , nin, nop, len_args);
+            "%s() takes from %d to %d positional arguments but "
+            "%zd %s given",
+            ufunc_get_name_cstr(ufunc), nin, nop, len_args, verb);
         goto fail;
     }
 
@@ -4939,7 +4940,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         function, arg_typenums, data);
 
     if (result == 0) {
-        cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
+        cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref OK
         if (cobj == NULL && PyErr_Occurred()) {
             result = -1;
         }
@@ -5070,7 +5071,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      */
     int add_new_loop = 1;
     for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
-        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j); // noqa: borrowed-ref - manual fix needed
+        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j); // noqa: borrowed-ref OK
         PyObject *existing_tuple = PyTuple_GET_ITEM(item, 0);
 
         int cmp = PyObject_RichCompareBool(existing_tuple, signature_tuple, Py_EQ);
@@ -5112,7 +5113,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     funcdata->nargs = 0;
 
     /* Get entry for this user-defined type*/
-    cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
+    cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref OK
     if (cobj == NULL && PyErr_Occurred()) {
         goto fail;
     }

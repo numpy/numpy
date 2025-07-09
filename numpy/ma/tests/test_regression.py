@@ -1,10 +1,7 @@
+import warnings
+
 import numpy as np
-from numpy.testing import (
-    assert_,
-    assert_allclose,
-    assert_array_equal,
-    suppress_warnings,
-)
+from numpy.testing import assert_, assert_allclose, assert_array_equal
 
 
 class TestRegression:
@@ -67,8 +64,9 @@ class TestRegression:
         x = np.ma.masked_equal([1, 2, 3, 4, 5], 4)
         y = np.array([2, 2.5, 3.1, 3, 5])
         # this test can be removed after deprecation.
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             r0 = np.ma.corrcoef(x, y, ddof=0)
             r1 = np.ma.corrcoef(x, y, ddof=1)
             # ddof should not have an effect (it gets cancelled out)

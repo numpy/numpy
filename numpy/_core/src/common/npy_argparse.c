@@ -243,16 +243,18 @@ static int
 raise_incorrect_number_of_positional_args(const char *funcname,
         const _NpyArgParserCache *cache, Py_ssize_t len_args)
 {
+    const char *verb = (len_args == 1) ? "was" : "were";
     if (cache->npositional == cache->nrequired) {
         PyErr_Format(PyExc_TypeError,
-                "%s() takes %d positional arguments but %zd were given",
-                funcname, cache->npositional, len_args);
+                "%s() takes %d positional arguments but %zd %s given",
+                funcname, cache->npositional, len_args, verb);
     }
     else {
         PyErr_Format(PyExc_TypeError,
                 "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                funcname, cache->nrequired, cache->npositional, len_args);
+                "%zd %s given",
+                funcname, cache->nrequired, cache->npositional,
+                len_args, verb);
     }
     return -1;
 }

@@ -469,7 +469,7 @@ implemented.
 
 The signature of ``__array_ufunc__`` is::
 
-    def __array_ufunc__(ufunc, method, *inputs, **kwargs):
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 
 - *ufunc* is the ufunc object that was called.
 - *method* is a string indicating how the Ufunc was called, either

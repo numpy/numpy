@@ -1033,7 +1033,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     Py_DECREF(out_kwd_obj);
     /* check where if it exists */
-    where_obj = PyDict_GetItemWithError(kwds, npy_interned_str.where); // noqa: borrowed-ref - manual fix needed
+    where_obj = PyDict_GetItemWithError(kwds, npy_interned_str.where); // noqa: borrowed-ref OK
     if (where_obj == NULL) {
         if (PyErr_Occurred()) {
             return -1;
@@ -1733,7 +1733,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
         return -1;
     }
     while(iter->index < iter->size) {
-        theobject = PyList_GET_ITEM(list, iter->index); // noqa: borrowed-ref - manual fix needed
+        theobject = PyList_GET_ITEM(list, iter->index); // noqa: borrowed-ref OK
         setitem(theobject, iter->dataptr, self);
         PyArray_ITER_NEXT(iter);
     }

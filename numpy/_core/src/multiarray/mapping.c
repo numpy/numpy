@@ -2110,8 +2110,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
-        // TODO: the heuristic used here to determine the src_dtype might be subtly wrong
-        // for non-REFCHK user DTypes. See gh-27057 for the prior discussion about this.
         if (PyArray_GetDTypeTransferFunction(
                 1, itemsize, itemsize,
                 descr, PyArray_DESCR(self),

@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from numpy._core.multiarray import get_handler_name
-from numpy.testing import IS_EDITABLE, IS_WASM, assert_warns, extbuild
+from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
 
 
 @pytest.fixture
@@ -432,7 +432,7 @@ def test_switch_owner(get_module, policy):
         # The policy should be NULL, so we have to assume we can call
         # "free".  A warning is given if the policy == "1"
         if policy:
-            with assert_warns(RuntimeWarning) as w:
+            with pytest.warns(RuntimeWarning) as w:
                 del a
                 gc.collect()
         else:

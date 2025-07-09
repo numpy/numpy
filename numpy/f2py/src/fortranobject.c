@@ -365,7 +365,7 @@ fortran_getattr(PyFortranObject *fp, char *name)
     if (fp->dict != NULL) {
         // python 3.13 added PyDict_GetItemRef
 #if PY_VERSION_HEX < 0x030D0000
-        PyObject *v = _PyDict_GetItemStringWithError(fp->dict, name); // noqa: borrowed-ref - manual fix needed
+        PyObject *v = _PyDict_GetItemStringWithError(fp->dict, name); // noqa: borrowed-ref OK
         if (v == NULL && PyErr_Occurred()) {
             return NULL;
         }
