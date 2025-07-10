@@ -3577,7 +3577,7 @@ def size(a, axis=None):
         Axis or axes along which the elements are counted.  By default, give
         the total number of elements.
 
-        .. versionchanged:: 2.3.1
+        .. versionchanged:: 2.4
            Extended to accept multiple axes.
 
     Returns
