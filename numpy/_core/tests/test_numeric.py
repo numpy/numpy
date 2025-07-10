@@ -291,6 +291,10 @@ class TestNonarrayArgs:
         assert_(np.size(A) == 6)
         assert_(np.size(A, 0) == 2)
         assert_(np.size(A, 1) == 3)
+        assert_(np.size(A, ()) == 1)
+        assert_(np.size(A, (0,)) == 2)
+        assert_(np.size(A, (1,)) == 3)
+        assert_(np.size(A, (0, 1)) == 6)
 
     def test_squeeze(self):
         A = [[[1, 1, 1], [2, 2, 2], [3, 3, 3]]]

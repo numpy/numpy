@@ -2,6 +2,7 @@
 
 """
 import functools
+import math
 import types
 import warnings
 
@@ -3569,9 +3570,12 @@ def size(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
-        Axis along which the elements are counted.  By default, give
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which the elements are counted.  By default, give
         the total number of elements.
+
+        .. versionchanged:: 2.4
+           Extended to accept multiple axes.
 
     Returns
     -------
@@ -3590,10 +3594,12 @@ def size(a, axis=None):
     >>> a = np.array([[1,2,3],[4,5,6]])
     >>> np.size(a)
     6
-    >>> np.size(a,1)
+    >>> np.size(a,axis=1)
     3
-    >>> np.size(a,0)
+    >>> np.size(a,axis=0)
     2
+    >>> np.size(a,axis=(0,1))
+    6
 
     """
     if axis is None:
@@ -3602,10 +3608,10 @@ def size(a, axis=None):
         except AttributeError:
             return asarray(a).size
     else:
-        try:
-            return a.shape[axis]
-        except AttributeError:
-            return asarray(a).shape[axis]
+        _shape = shape(a)
+        from .numeric import normalize_axis_tuple
+        axis = normalize_axis_tuple(axis, len(_shape), allow_duplicate=False)
+        return math.prod(_shape[ax] for ax in axis)
 
 
 def _round_dispatcher(a, decimals=None, out=None):
