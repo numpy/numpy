@@ -347,6 +347,6 @@ def test_npystring_allocators_other_dtype(install_temp):
 
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
                     reason='no checks module on win-arm64')
-def test_npy_uintp_type_enum():
+def test_npy_uintp_type_enum(install_temp):
     import checks
     assert checks.check_npy_uintp_type_enum()
