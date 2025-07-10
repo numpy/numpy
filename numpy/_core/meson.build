@@ -873,6 +873,7 @@ foreach gen_mtargets : [
     'src/npysort/highway_qsort.dispatch.cpp',
     use_highway ? [
       ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
+      RVV,
     ] : []
   ],
   [
@@ -880,6 +881,7 @@ foreach gen_mtargets : [
     'src/npysort/highway_qsort_16bit.dispatch.cpp',
     use_highway ? [
       ASIMDHP, VSX2,  # VXE FIXME: disable VXE due to runtime segfault
+      RVV,
     ] : []
   ],
 ]
