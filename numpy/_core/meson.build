@@ -522,6 +522,7 @@ endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
 endif
+message(f'Long double format: @longdouble_format@')
 cdata.set10('HAVE_LDOUBLE_' + longdouble_format, true)
 
 if cc.has_header('endian.h')
