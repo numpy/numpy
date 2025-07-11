@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 
+#include <Python.h>
+
 #include <structmember.h>
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
