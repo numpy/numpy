@@ -2611,6 +2611,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
+    /* Take reference to output array to return later */
+    Py_XINCREF(out);
+
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
@@ -2729,9 +2732,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                 goto fail;
             }
         }
-    }
-    else {
-        Py_INCREF(out);
     }
 
     npy_intp fixed_strides[3];
@@ -3035,6 +3035,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         return NULL;
     }
 
+    /* Take reference to output array to return later */
+    Py_XINCREF(out);
+
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
@@ -3148,9 +3151,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         if (out == NULL) {
             out = op[0];
+            Py_XINCREF(out);
         }
-
-        Py_INCREF(out);
     }
     else {
         /*
