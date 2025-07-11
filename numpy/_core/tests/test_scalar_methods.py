@@ -244,3 +244,52 @@ def test_array_wrap(scalar):
     arr1d = np.array([3], dtype=np.int8)
     assert scalar.__array_wrap__(arr1d) is arr1d
     assert scalar.__array_wrap__(arr1d, None, True) is arr1d
+
+
+class TestFloatFromNumber:
+
+    class MyFloat:
+        def __float__(self):
+            return np.pi
+
+    @pytest.mark.parametrize("float_code", np.typecodes["Float"])
+    @pytest.mark.parametrize(
+        "input_code", np.typecodes["AllInteger"] + np.typecodes["Float"]
+    )
+    @pytest.mark.parametrize(
+        "input_value, expected",
+        [
+            (0, 0.0),
+            (1, 1.0),
+            (-123, -123.0),
+            (1.5, 1.5),
+            (-2.5, -2.5),
+            (np.pi, np.pi),
+        ],
+    )
+    def test_from_number(self, float_code, input_code, input_value, expected):
+        cls = np.dtype(float_code).type
+        input_type = np.dtype(input_code).type
+
+        input_value, expected = (
+            (abs(input_value), abs(expected))
+            if input_code in np.typecodes["UnsignedInteger"]
+            else (input_value, expected)
+        )
+
+        result = cls.from_number(input_type(input_value))
+        assert result == cls(input_type(expected))
+        assert isinstance(result, cls)
+
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    def test_from_number_custom_class(self, code):
+        cls = np.dtype(code).type
+        assert cls.from_number(TestFloatFromNumber.MyFloat()) == cls(
+            TestFloatFromNumber.MyFloat().__float__()
+        )
+
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    def test_from_number_exceptions(self, code):
+        cls = np.dtype(code).type
+        with pytest.raises(TypeError):
+            cls.from_number("numpy")
