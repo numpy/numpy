@@ -3755,6 +3755,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     return wrapped_result;
 
 fail:
+    Py_XDECREF(out);
+
     Py_XDECREF(signature[0]);
     Py_XDECREF(signature[1]);
     Py_XDECREF(signature[2]);
