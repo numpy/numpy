@@ -430,6 +430,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
 
     if (out != NULL) {
+        Py_DECREF(out);
         result = out;
     }
     Py_INCREF(result);

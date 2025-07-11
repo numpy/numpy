@@ -2611,9 +2611,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    /* Take a reference to out for later returning */
-    Py_XINCREF(out);
-
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
@@ -3034,9 +3031,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     if (_get_bufsize_errmask(&buffersize, &errormask) < 0) {
         return NULL;
     }
-
-    /* Take a reference to out for later returning */
-    Py_XINCREF(out);
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
