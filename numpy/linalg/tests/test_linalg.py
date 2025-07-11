@@ -2205,8 +2205,7 @@ class TestTensorinv:
         ((24, 8, 3), 1),
         ])
     def test_tensorinv_shape(self, shape, ind):
-        a = np.eye(24)
-        a.shape = shape
+        a = np.eye(24).reshape(shape)
         ainv = linalg.tensorinv(a=a, ind=ind)
         expected = a.shape[ind:] + a.shape[:ind]
         actual = ainv.shape
@@ -2216,15 +2215,13 @@ class TestTensorinv:
         0, -2,
         ])
     def test_tensorinv_ind_limit(self, ind):
-        a = np.eye(24)
-        a.shape = (4, 6, 8, 3)
+        a = np.eye(24).reshape((4, 6, 8, 3))
         with assert_raises(ValueError):
             linalg.tensorinv(a=a, ind=ind)
 
     def test_tensorinv_result(self):
         # mimic a docstring example
-        a = np.eye(24)
-        a.shape = (24, 8, 3)
+        a = np.eye(24).reshape((24, 8, 3))
         ainv = linalg.tensorinv(a, ind=1)
         b = np.ones(24)
         assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))

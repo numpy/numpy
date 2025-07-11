@@ -216,11 +216,11 @@ class TestMaskedArray:
         # Test of basic array creation and properties in 2 dimensions.
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         for s in [(4, 3), (6, 2)]:
-            x.shape = s
-            y.shape = s
-            xm.shape = s
-            ym.shape = s
-            xf.shape = s
+            x = x.reshape(s)
+            y = y.reshape(s)
+            xm = xm.reshape(s)
+            ym = ym.reshape(s)
+            xf = xf.reshape(s)
 
             assert_(not isMaskedArray(x))
             assert_(isMaskedArray(xm))
@@ -246,7 +246,12 @@ class TestMaskedArray:
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
         # Concatenation along an axis
         s = (3, 4)
-        x.shape = y.shape = xm.shape = ym.shape = s
+        x = x.reshape(s)
+        y = y.reshape(s)
+        xm = xm.reshape(s)
+        ym = ym.reshape(s)
+        xf = xf.reshape(s)
+
         assert_equal(xm.mask, np.reshape(m1, s))
         assert_equal(ym.mask, np.reshape(m2, s))
         xmym = concatenate((xm, ym), 1)
@@ -762,8 +767,7 @@ class TestMaskedArray:
 
     def test_pickling_keepalignment(self):
         # Tests pickling w/ F_CONTIGUOUS arrays
-        a = arange(10)
-        a.shape = (-1, 2)
+        a = arange(10).reshape( (-1, 2))
         b = a.T
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             test = pickle.loads(pickle.dumps(b, protocol=proto))
@@ -1176,8 +1180,7 @@ class TestMaskedArrayArithmetic:
             assert_equal(np.divide(x, y), divide(xm, ym))
 
     def test_divide_on_different_shapes(self):
-        x = arange(6, dtype=float)
-        x.shape = (2, 3)
+        x = arange(6, dtype=float).reshape((2, 3))
         y = arange(3, dtype=float)
 
         z = x / y
