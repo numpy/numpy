@@ -2611,7 +2611,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    /* Take reference to output array to return later */
+    /* Take a reference to out for later returning */
     Py_XINCREF(out);
 
     PyArray_Descr *descrs[3];
@@ -3035,7 +3035,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         return NULL;
     }
 
-    /* Take reference to output array to return later */
+    /* Take a reference to out for later returning */
     Py_XINCREF(out);
 
     PyArray_Descr *descrs[3];
