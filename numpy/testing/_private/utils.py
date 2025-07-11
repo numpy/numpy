@@ -771,16 +771,20 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         y_id = func(y)
         # We include work-arounds here to handle three types of slightly
         # pathological ndarray subclasses:
-        # (1) all() on `masked` array scalars can return masked arrays, so we
-        #     use != True
+        # (1) all() on fully masked arrays returns np.ma.masked, so we use != True
+        #     (np.ma.masked != True evaluates as np.ma.masked, which is falsy).
         # (2) __eq__ on some ndarray subclasses returns Python booleans
-        #     instead of element-wise comparisons, so we cast to np.bool() and
-        #     use isinstance(..., bool) checks
+        #     instead of element-wise comparisons, so we cast to np.bool() in
+        #     that case (or in case __eq__ returns some other value with no
+        #     all() method).
         # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
-        # We are not committed to supporting such subclasses, but it's nice to
+        # We are not committed to supporting cases (2) and (3), but it's nice to
         # support them if possible.
-        if np.bool(x_id == y_id).all() != True:
+        result = x_id == y_id
+        if not hasattr(result, "all") or not callable(result.all):
+            result = np.bool(result)
+        if result.all() != True:
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
@@ -790,6 +794,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
+        # np.ma.masked is also handled and converted to np.False_ (even if the other
+        # array has nans/infs etc.; that's OK given the handling later of fully-masked
+        # results).
         if isinstance(x_id, bool) or x_id.ndim == 0:
             return np.bool(x_id)
         elif isinstance(y_id, bool) or y_id.ndim == 0:
