@@ -72,3 +72,21 @@ jobs:
     - name: Run Mypy
       run: |
         spin mypy
+  # This job checks for suspicious C API usage that may break nogil compatibility.
+  # It scans PR diffs for dangerous borrowed-referenced calls and fails if any are found.
+  lint-capi:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    name: "C API Borrowed Ref Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Run API Borrowed Ref Linter 
+        run: |
+          pip install -r requirements/build_requirements.txt
+          pip install -r requirements/test_requirements.txt
+          pip install ruff
+          spin lint

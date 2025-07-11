@@ -2114,7 +2114,7 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
     if (!PyList_Check(descr) || PyList_GET_SIZE(descr) != 1) {
         return 0;
     }
-    PyObject *tuple = PyList_GET_ITEM(descr, 0);
+    PyObject *tuple = PyList_GET_ITEM(descr, 0); // noqa: borrowed-ref - manual fix needed
     if (!(PyTuple_Check(tuple) && PyTuple_GET_SIZE(tuple) == 2)) {
         return 0;
     }

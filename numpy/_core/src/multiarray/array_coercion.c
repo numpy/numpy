@@ -1148,7 +1148,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
   force_sequence_due_to_char_dtype:
 
     /* Ensure we have a sequence (required for PyPy) */
-    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    seq = PySequence_Fast(obj, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
     if (seq == NULL) {
         /*
          * Specifically do not fail on things that look like a dictionary,
