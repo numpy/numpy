@@ -85,10 +85,9 @@ jobs:
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-13, macosx_x86_64, openblas]
-
-          # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
           - [macos-13, macosx_x86_64, accelerate]
-          - [macos-14, macosx_arm64, accelerate]  # always use accelerate
+          - [macos-14, macosx_arm64, openblas]
+          - [macos-14, macosx_arm64, accelerate]
           - [windows-2022, win_amd64, ""]
           - [windows-2022, win32, ""]
           - [windows-11-arm, win_arm64, ""]
