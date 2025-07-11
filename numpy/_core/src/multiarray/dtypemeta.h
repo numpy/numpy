@@ -67,6 +67,12 @@ typedef struct {
      * parameters, if any, as the operand dtype.
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
+
+    /* DType sorting methods. */
+    PyArrayDTypeMeta_GetSortFunction *get_sort_function;
+    PyArrayDTypeMeta_GetArgSortFunction *get_argsort_function;
+    PyArray_SortCompareFunc *sort_compare;
+
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
@@ -89,7 +95,11 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
+#define NPY_NUM_DTYPE_SLOTS 14
+#else
 #define NPY_NUM_DTYPE_SLOTS 11
+#endif
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -291,6 +301,43 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                 Py_XSETREF(descr, _new_);  \
         } while(0)
 
+static inline int
+PyArray_GetSortFunction(PyArray_Descr *descr, 
+    NPY_SORTKIND which, PyArray_SortFuncWithContext **out_sort,
+    NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
+{
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function == NULL) {
+        return -1;
+    }
+
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(
+        descr, which, out_sort, out_auxdata, out_flags) == NULL) {
+        return -1;
+    }
+    return 0;
+}
+
+static inline int
+PyArray_GetArgSortFunction(PyArray_Descr *descr, 
+    NPY_SORTKIND which, PyArray_ArgSortFuncWithContext **out_argsort,
+    NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
+{
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function == NULL) {
+        return -1;
+    }
+
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(
+        descr, which, out_argsort, out_auxdata, out_flags) == NULL) {
+        return -1;
+    }
+    return 0;
+}
+
+static inline PyArray_SortCompareFunc *
+PyArray_GetSortCompareFunction(PyArray_Descr *descr)
+{
+    return NPY_DT_SLOTS(NPY_DTYPE(descr))->sort_compare;
+}
 
 // Get the pointer to the PyArray_DTypeMeta for the type associated with the typenum.
 static inline PyArray_DTypeMeta *

@@ -1873,6 +1873,36 @@ described below.
    pointer. Currently this is used for zero-filling and clearing arrays storing
    embedded references.
 
+.. c:type:: int (PyArray_SortFuncWithContext)( \
+                 PyArrayMethod_SortContext *context, void *data, \
+                 npy_intp num, NpyAuxData *auxdata)
+    
+    A function to sort a buffer of data. The *data* is a pointer to the
+    beginning of the contiguous buffer containing *num* elements. A function
+    of this type is returned by the `get_sort_function` function in the DType
+    slots, where *context* is passed in containing the descriptor for the
+    array. Returns 0 on success, -1 on failure.
+
+.. c:type:: int (PyArray_ArgSortFuncWithContext)( \
+                 PyArrayMethod_SortContext *context, void *data, \
+                 npy_intp *tosort, npy_intp num, NpyAuxData *auxdata)
+
+    A function to arg-sort a buffer of data. The *data* is a pointer to the
+    beginning of the buffer containing *num* elements. The *tosort* is a
+    pointer to an array of indices that will be filled in with the
+    indices of the sorted elements. A function of this type is returned by
+    the `get_argsort_function` function in the DType slots, where
+    *context* is passed in containing the descriptor for the array.
+    Returns 0 on success, -1 on failure.
+
+.. c:type:: NPY_COMPARE_RESULT (PyArray_SortCompareFunc) ( \
+                 const void *a, const void *b, PyArray_Descr *descr)
+    
+    A function to compare two elements of an array for sorting. The *a* and *b*
+    pointers point to the elements to compare, and *descr* is the descriptor for
+    the array. Returns a value of type :c:type:`NPY_COMPARE_RESULT` indicating
+    the result of the comparison, including whether each element is unordered.
+
 API Functions and Typedefs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -3521,6 +3551,40 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    force newly created arrays to have a newly created descriptor
    instance, no matter what input descriptor is provided by a user.
 
+.. c:macro:: NPY_DT_get_sort_function
+
+.. c:type:: int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, \
+        npy_intp sort_kind, PyArray_SortFuncWithContext **out_sort, \
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
+
+    .. versionadded:: 2.4
+
+    If defined, sets a custom sorting function for the DType for each of
+    the sort kinds numpy implements. Currently, sorts are always descending
+    and always use nulls to the end, and this must be checked in the
+    implementation. Returns 0 on success.
+
+.. c:macro:: NPY_DT_get_argsort_function
+
+.. c:type:: int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, \
+        npy_intp sort_kind, PyArray_ArgSortFuncWithContext **out_argsort, \
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
+
+    .. versionadded:: 2.4
+
+    If defined, sets a custom argsorting function for the DType for each of
+    the sort kinds numpy implements. Currently, sorts are always descending
+    and always use nulls to the end, and this must be checked in the
+    implementation. Returns 0 on success.
+
+.. c:macro:: NPY_DT_sort_compare
+
+    .. versionadded:: 2.4
+
+    If defined, sets a custom comparison function for the DType for use in
+    sorting, which will replace `NPY_DT_PyArray_ArrFuncs_compare`. Implements
+    ``PyArray_CompareFunc``.
+
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3547,6 +3611,8 @@ DType API slots but for now we have exposed the legacy
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_compare
 
    Computes a comparison for `numpy.sort`, implements ``PyArray_CompareFunc``.
+   If `NPY_DT_sort_compare` is defined, it will be used instead. This slot may
+   be deprecated in the future.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argmax
 
@@ -3590,13 +3656,17 @@ DType API slots but for now we have exposed the legacy
 
    An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
    defining custom sorting implementations for each of the sorting
-   algorithms numpy implements.
+   algorithms numpy implements. If `NPY_DT_get_sort_function` is
+   defined, it will be used instead. This slot may be deprecated in the
+   future.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
 
    An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
    allows defining custom argsorting implementations for each of the
-   sorting algorithms numpy implements.
+   sorting algorithms numpy implements. If `NPY_DT_get_argsort_function`
+   is defined, it will be used instead. This slot may be deprecated in
+   the future.
 
 Macros and Static Inline Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4340,6 +4410,40 @@ Enumerated Types
        :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
        of several stable sorting algorithms depending on the data type.
 
+.. c:enum:: NPY_SORT_NAN_POSITION
+
+   An enum used to indicate the position of NaN values in sorting.
+
+   .. c:enumerator:: NPY_SORT_NAN_TO_START
+
+      Indicates that NaN values should be sorted to the start.
+
+   .. c:enumerator:: NPY_SORT_NAN_TO_END
+
+      Indicates that NaN values should be sorted to the end.
+
+.. c:enum:: NPY_COMPARE_RESULT
+
+    An enum used to indicate the result of a comparison operation.
+    The unordered comparisons are used to indicate that the
+    comparison is not well-defined for one or both of the operands,
+    such as when comparing NaN values.
+
+    .. c:enumerator:: NPY_LESS
+    
+    .. c:enumerator:: NPY_EQUAL
+
+    .. c:enumerator:: NPY_GREATER
+
+    .. c:enumerator:: NPY_UNORDERED_LEFT
+
+    .. c:enumerator:: NPY_UNORDERED_RIGHT
+
+    .. c:enumerator:: NPY_UNORDERED_BOTH
+
+    .. c:enumerator:: NPY_COMPARE_ERROR
+
+        Indicates that an error occurred during the comparison operation.
 
 .. c:enum:: NPY_SCALARKIND
 

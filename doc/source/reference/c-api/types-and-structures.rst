@@ -792,6 +792,41 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       An array of slots for the method. Slot IDs must be one of the values
       below.
 
+.. _arraymethod-sort-context:
+
+PyArrayMethod_SortContext
+-------------------------
+
+.. c:type:: PyArrayMethod_SortContext
+
+   A struct used to provide context for sorting methods.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyArray_Descr *descriptor;
+          PyArray_SortCompareFunc *compare;
+          npy_bool descending;
+          NPY_SORT_NAN_POSITION nan_position;
+      } PyArrayMethod_SortContext
+
+    .. c:member:: PyArray_Descr *descriptor
+
+       The descriptor for the data type being sorted.
+
+    .. c:member:: PyArray_SortCompareFunc *compare
+
+       A pointer to the comparison function used for sorting. This function
+       can be NULL if the sort is not based on a comparison function.
+
+    .. c:member:: npy_bool descending
+
+       A flag indicating whether the sort is descending.
+
+    .. c:member:: NPY_SORT_NAN_POSITION nan_position
+
+       The position of NaN values in the sort order.
+
 .. _dtypemeta:
 
 PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
