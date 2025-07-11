@@ -2730,6 +2730,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             }
         }
     }
+    else {
+        Py_INCREF(out);
+    }
 
     npy_intp fixed_strides[3];
     if (need_outer_iterator) {
@@ -3145,8 +3148,9 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         if (out == NULL) {
             out = op[0];
-            Py_INCREF(out);
         }
+
+        Py_INCREF(out);
     }
     else {
         /*
@@ -3721,6 +3725,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (ret == NULL) {
         goto fail;
     }
+    
+    Py_XDECREF(out);
 
     Py_DECREF(signature[0]);
     Py_DECREF(signature[1]);
