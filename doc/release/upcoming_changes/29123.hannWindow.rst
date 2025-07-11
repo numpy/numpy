@@ -1,0 +1,1 @@
+* `np.hanning` is deprecated. Use `np.hann` instead.
