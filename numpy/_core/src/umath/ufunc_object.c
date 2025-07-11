@@ -3151,7 +3151,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         if (out == NULL) {
             out = op[0];
-            Py_XINCREF(out);
+            Py_INCREF(out);
         }
     }
     else {
