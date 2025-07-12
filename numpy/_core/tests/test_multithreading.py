@@ -293,3 +293,37 @@ def test_nonzero(dtype):
                     assert expected_warning in str(ex)
 
     run_threaded(func, max_workers=10, pass_count=True, outer_iterations=5)
+
+
+def test_multiter_arg_locking():
+    # should complete without failing or generating an error about an array size
+    # changing
+
+    b = threading.Barrier(5)
+    done = 0
+    arrs = []
+
+    def broadcast_arrs():
+        nonlocal done
+        b.wait()
+        try:
+            for i in range(100):
+                np.broadcast(arrs)
+        finally:
+            done += 1
+
+    def mutate_list():
+        b.wait()
+        while done < 4:
+            if len(arrs) > 10:
+                arrs.pop(0)
+            elif len(arrs) <= 10:
+                arrs.extend([np.array([1, 2, 3]) for _ in range(1000)])
+
+    arrs = [np.array([1, 2, 3]) for _ in range(1000)]
+
+    tasks = [threading.Thread(target=broadcast_arrs) for _ in range(4)]
+    tasks.append(threading.Thread(target=mutate_list))
+
+    [t.start() for t in tasks]
+    [t.join() for t in tasks]
