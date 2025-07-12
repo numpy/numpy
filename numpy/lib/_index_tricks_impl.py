@@ -683,12 +683,6 @@ class ndindex:
     (2, 0, 0)
     (2, 1, 0)
 
-     Notes
-    -----
-    As of NumPy 2.4.0.dev0, this iterator is implemented using `itertools.product`
-    from Python's standard library. This change provides significant improvements
-    in both performance and memory efficiency, particularly for large iteration
-    spaces, while maintaining the original behavior and interface.
      """
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
