@@ -398,15 +398,15 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         in-place (False). The in-place operation only occurs if
         casting to an array does not require a copy.
         Default is True.
-    nan : int, float, optional
-        Value to be used to fill NaN values. If no value is passed
+    nan : array_like, int, float, bool, optional
+        Values to be used to fill NaN values. If no values are passed
         then NaN values will be replaced with 0.0.
-    posinf : int, float, optional
-        Value to be used to fill positive infinity values. If no value is
+    posinf : array_like, int, float, bool, optional
+        Values to be used to fill positive infinity values. If no values are
         passed then positive infinity values will be replaced with a very
         large number.
-    neginf : int, float, optional
-        Value to be used to fill negative infinity values. If no value is
+    neginf : array_like, int, float, bool, optional
+        Values to be used to fill negative infinity values. If no values are
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
 
@@ -445,6 +445,9 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     >>> np.nan_to_num(x, nan=-9999, posinf=33333333, neginf=33333333)
     array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03,
            -1.2800000e+02,  1.2800000e+02])
+    >>> np.nan_to_num(x, nan=[11, 12, -9999, 13, 14], posinf=[33333333, 11, 12, 13, 14], neginf=[11, 33333333, 12, 13, 14])
+    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03, -1.2800000e+02,
+            1.2800000e+02])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
          -1.28000000e+002,   1.28000000e+002])
@@ -454,6 +457,8 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
              0.00000000e+000 +1.79769313e+308j])
     >>> np.nan_to_num(y, nan=111111, posinf=222222)
     array([222222.+111111.j, 111111.     +0.j, 111111.+222222.j])
+    >>> np.nan_to_num(y, nan=[11, 12, 13], posinf=[21, 22, 23])
+    array([21.+11.j, 12. +0.j, 13.+23.j])
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
