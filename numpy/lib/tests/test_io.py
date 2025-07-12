@@ -2577,6 +2577,15 @@ M   33  21.99
 
         assert_array_equal(a, b)
 
+    def test_usecols_all_names_different_order(self):
+        # Test that columns are well assigned, even when all column names are
+        # in usecols, in different orders too.
+        txt = TextIO("A B\n1 2")
+        cols = ("B", "A")
+        data = np.genfromtxt(txt, names=True, usecols=cols)
+
+        assert_array_equal(data["A"], np.array([1.]))
+        assert_array_equal(data["B"], np.array([2.]))
 
 class TestPathUsage:
     # Test that pathlib.Path can be used
