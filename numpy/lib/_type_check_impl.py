@@ -445,7 +445,10 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     >>> np.nan_to_num(x, nan=-9999, posinf=33333333, neginf=33333333)
     array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03,
            -1.2800000e+02,  1.2800000e+02])
-    >>> np.nan_to_num(x, nan=[11, 12, -9999, 13, 14], posinf=[33333333, 11, 12, 13, 14], neginf=[11, 33333333, 12, 13, 14])
+    >>> nan = np.array([11, 12, -9999, 13, 14])
+    >>> posinf = np.array([33333333, 11, 12, 13, 14])
+    >>> neginf = np.array([11, 33333333, 12, 13, 14])
+    >>> np.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf)
     array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03, -1.2800000e+02,
             1.2800000e+02])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
@@ -457,7 +460,10 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
              0.00000000e+000 +1.79769313e+308j])
     >>> np.nan_to_num(y, nan=111111, posinf=222222)
     array([222222.+111111.j, 111111.     +0.j, 111111.+222222.j])
-    >>> np.nan_to_num(y, nan=[11, 12, 13], posinf=[21, 22, 23])
+    >>> nan = np.array([11, 12, 13])
+    >>> posinf = np.array([21, 22, 23])
+    >>> neginf = np.array([31, 32, 33])
+    >>> np.nan_to_num(y, nan=nan, posinf=posinf, neginf=neginf)
     array([21.+11.j, 12. +0.j, 13.+23.j])
     """
     x = _nx.array(x, subok=True, copy=copy)
