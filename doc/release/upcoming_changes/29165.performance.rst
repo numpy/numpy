@@ -1,0 +1,6 @@
+Rewrite of `np.ndindex` using `itertools.product`
+--------------------------------------------------
+The `numpy.ndindex` function now uses `itertools.product` internally, 
+providing significant improvements in both performance and memory efficiency,
+particularly for large iteration spaces, while maintaining the original behavior and interface.
+

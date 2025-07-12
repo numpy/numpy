@@ -10,7 +10,8 @@ class NdindexBenchmark:
     """
 
     # These are the different input shapes to test.
-    # Each tuple in this list will be passed as the 'shape' parameter to the benchmark methods.
+    # Each tuple in this list will be passed as the 'shape' parameter
+    # to the benchmark methods.
     params = [
         (10, 10), (20, 20), (50, 50),        # 2D shapes
         (10, 10, 10), (20, 30, 40),          # 3D shapes
