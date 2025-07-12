@@ -165,9 +165,6 @@ abs(array)
 ~array
 
 # Other methods
-
-array = np.array([1, 2])
-
 array.transpose()
 
 array @ array
