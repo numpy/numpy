@@ -197,6 +197,40 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, b)
         self._test_equal(b, a)
 
+    # Also provides test cases for gh-11121
+    def test_masked_scalar(self):
+        # Test masked scalar vs. plain/masked scalar
+        for a_val, b_val, b_masked in itertools.product(
+            [3., np.nan, np.inf],
+            [3., 4., np.nan, np.inf, -np.inf],
+            [False, True],
+        ):
+            a = np.ma.MaskedArray(a_val, mask=True)
+            b = np.ma.MaskedArray(b_val, mask=True) if b_masked else np.array(b_val)
+            self._test_equal(a, b)
+            self._test_equal(b, a)
+
+        # Test masked scalar vs. plain array
+        for a_val, b_val in itertools.product(
+            [3., np.nan, -np.inf],
+            itertools.product([3., 4., np.nan, np.inf, -np.inf], repeat=2),
+        ):
+            a = np.ma.MaskedArray(a_val, mask=True)
+            b = np.array(b_val)
+            self._test_equal(a, b)
+            self._test_equal(b, a)
+
+        # Test masked scalar vs. masked array
+        for a_val, b_val, b_mask in itertools.product(
+            [3., np.nan, np.inf],
+            itertools.product([3., 4., np.nan, np.inf, -np.inf], repeat=2),
+            itertools.product([False, True], repeat=2),
+        ):
+            a = np.ma.MaskedArray(a_val, mask=True)
+            b = np.ma.MaskedArray(b_val, mask=b_mask)
+            self._test_equal(a, b)
+            self._test_equal(b, a)
+
     def test_subclass_that_overrides_eq(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
