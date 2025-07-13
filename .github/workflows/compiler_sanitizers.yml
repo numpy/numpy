@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - maintenance/**
+  workflow_dispatch:
 
 defaults:
   run:
