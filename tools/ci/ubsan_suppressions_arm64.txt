@@ -35,6 +35,7 @@ float-cast-overflow:_core/src/multiarray/lowlevel_strided_loops.c.src
 function:_core/src/common/cblasfuncs.c
 function:_core/src/common/npy_argparse.c
 function:_core/src/multiarray/ctors.c
+function:_core/src/multiarray/convert_datatype.c
 function:_core/src/multiarray/dtype_transfer.c
 function:_core/src/multiarray/scalarapi.c
 function:_core/src/multiarray/scalartypes.c.src
