@@ -38,6 +38,7 @@ function:_core/src/multiarray/ctors.c
 function:_core/src/multiarray/convert_datatype.c
 function:_core/src/multiarray/dtype_transfer.c
 function:_core/src/multiarray/dtype_traversal.c
+function:_core/src/multiarray/getset.c
 function:_core/src/multiarray/scalarapi.c
 function:_core/src/multiarray/scalartypes.c.src
 
