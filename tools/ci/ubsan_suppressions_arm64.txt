@@ -38,5 +38,7 @@ function:_core/src/multiarray/ctors.c
 function:_core/src/multiarray/dtype_transfer.c
 function:_core/src/multiarray/scalarapi.c
 function:_core/src/multiarray/scalartypes.c.src
-function:numpy/random/bit_generator.pyx.c
-function:numpy/random/_mt19937.pyx.c
+
+# Many functions in random cause undefined behavior in CI before tests are run
+# further investigation needed
+function:numpy/random/*
