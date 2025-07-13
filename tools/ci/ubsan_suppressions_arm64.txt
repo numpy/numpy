@@ -39,3 +39,4 @@ function:_core/src/multiarray/dtype_transfer.c
 function:_core/src/multiarray/scalarapi.c
 function:_core/src/multiarray/scalartypes.c.src
 function:numpy/random/bit_generator.pyx.c
+function:numpy/random/_mt19937.pyx.c
