@@ -131,8 +131,8 @@ jobs:
           echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
       - name: Build Python with address sanitizer
         run: |
-          pyenv install 3.14
-          pyenv global 3.14
+          pyenv install 3.14.0b4
+          pyenv global 3.14.0b4
       - name: Install dependencies
         run: |
           pip install -r requirements/build_requirements.txt
