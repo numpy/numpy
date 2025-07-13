@@ -144,5 +144,5 @@ jobs:
         run: |
           # pass -s to pytest to see UBSAN errors and warnings, otherwise pytest captures them
           # Ignore test_casting_floatingpoint_errors on macOS for now - causes crash inside UBSAN
-          UBSAN_OPTIONS=halt_on_error=1:suppressions=${HOME}/work/numpy/tools/ci/ubsan_suppressions_arm64.txt \
+          UBSAN_OPTIONS=halt_on_error=1:suppressions=tools/ci/ubsan_suppressions_arm64.txt \
           spin test -- -k "not test_casting_floatingpoint_errors" -v --timeout=600 --durations=10
