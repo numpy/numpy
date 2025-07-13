@@ -1500,6 +1500,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
         Py_DECREF(fast_seq);
         return multiiter_wrong_number_of_args();
     }
+    Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(args)
     ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
     Py_DECREF(fast_seq);
     Py_END_CRITICAL_SECTION_SEQUENCE_FAST()

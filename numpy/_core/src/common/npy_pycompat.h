@@ -17,23 +17,30 @@
 // PySequence_Fast() is provided to the macro, not the *result* of
 // PySequence_Fast(), which would require an extra test to determine if the
 // lock must be acquired.
-# define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original)              \
+#define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original)               \
     {                                                                   \
-        PyObject *_orig_seq = (PyOject *)(original);                    \
-        const int _should_lock_cs = PyList_CheckExact(_orig_seq);      \
+        PyObject *_orig_seq = (PyObject *)(original);                   \
+        const int _should_lock_cs = PyList_CheckExact(_orig_seq);       \
         PyCriticalSection _cs;                                          \
         if (_should_lock_cs) {                                          \
             PyCriticalSection_Begin(&_cs, _orig_seq);                   \
         }
 
-#    define Py_END_CRITICAL_SECTION_SEQUENCE_FAST() \
-        if (_should_lock_cs) {                      \
-            PyCriticalSection_End(&_cs);            \
-        }                                           \
+#define Py_END_CRITICAL_SECTION_SEQUENCE_FAST()         \
+        if (_should_lock_cs) {                          \
+            PyCriticalSection_End(&_cs);                \
+        }                                               \
     }
+#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj)     \
+    PyCriticalSection _py_cs;                           \
+    PyCriticalSection_Begin(&_py_cs, (PyObject *)(op))
+#define NPY_END_CRITICAL_SECTION_NO_BRACKETS() PyCriticalSection_End(&_py_cs)
+
 #else
 #define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) {
 #define Py_END_CRITICAL_SECTION_SEQUENCE_FAST() }
+#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj)
+#define NPY_END_CRITICAL_SECTION_NO_BRACKETS()
 #endif
 
 

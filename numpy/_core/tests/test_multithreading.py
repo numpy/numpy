@@ -295,7 +295,16 @@ def test_nonzero(dtype):
     run_threaded(func, max_workers=10, pass_count=True, outer_iterations=5)
 
 
-def test_multiter_arg_locking():
+def np_broadcast(arrs):
+    for i in range(100):
+        np.broadcast(arrs)
+
+def create_array(arrs):
+    for i in range(100):
+        np.array(arrs)
+
+@pytest.mark.parametrize("kernel", (np_broadcast, create_array))
+def test_arg_locking(kernel):
     # should complete without failing or generating an error about an array size
     # changing
 
@@ -307,8 +316,7 @@ def test_multiter_arg_locking():
         nonlocal done
         b.wait()
         try:
-            for i in range(100):
-                np.broadcast(arrs)
+            kernel(arrs)
         finally:
             done += 1
 

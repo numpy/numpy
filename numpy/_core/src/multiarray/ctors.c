@@ -1560,12 +1560,14 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         copy = 1;
     }
 
+    NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj);
+
     ndim = PyArray_DiscoverDTypeAndShape(
             op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
             copy, &was_copied_by__array__);
 
     if (ndim < 0) {
-        return NULL;
+        goto fail;
     }
 
     /* If the cache is NULL, then the object is considered a scalar */
@@ -1580,14 +1582,14 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                 "object of too small depth for desired array");
         Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto fail;
     }
     if (max_depth != 0 && ndim > max_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto fail;
     }
 
     /* Got the correct parameters, but the cache may already hold the result */
@@ -1602,9 +1604,9 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         if (was_copied_by__array__ == 1) {
             flags = flags & ~NPY_ARRAY_ENSURECOPY;
         }
-        PyObject *res = PyArray_FromArray(arr, dtype, flags);
+        ret = (PyArrayObject *)PyArray_FromArray(arr, dtype, flags);
         npy_unlink_coercion_cache(cache);
-        return res;
+        goto success;
     }
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&
             !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
@@ -1619,13 +1621,13 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          * provide a dtype (newtype is NULL).
          */
         assert(ndim == 0);
-
-        return PyArray_NewFromDescrAndBase(
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, dtype,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)op)->obval,
                 ((PyVoidScalarObject *)op)->flags,
                 NULL, op);
+        goto success;
     }
     /*
      * If we got this far, we definitely have to create a copy, since we are
@@ -1635,7 +1637,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
         Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto fail;
     }
 
     if (cache == NULL && in_descr != NULL &&
@@ -1662,7 +1664,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          * have a better solution at some point):
          * https://github.com/pandas-dev/pandas/issues/35481
          */
-        return PyArray_FromScalar(op, dtype);
+        ret = (PyArrayObject *)PyArray_FromScalar(op, dtype);
+        goto success;
     }
 
     /* There was no array (or array-like) passed in directly. */
@@ -1671,7 +1674,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                         "WRITEBACKIFCOPY used for non-array input.");
         Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto fail;
     }
 
     /* Create a new array and copy the data */
@@ -1682,7 +1685,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     if (ret == NULL) {
         npy_free_coercion_cache(cache);
         Py_DECREF(dtype);
-        return NULL;
+        goto fail;
     }
     if (ndim == PyArray_NDIM(ret)) {
         /*
@@ -1701,10 +1704,10 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         if (PyArray_Pack(dtype, PyArray_BYTES(ret), op) < 0) {
             Py_DECREF(dtype);
             Py_DECREF(ret);
-            return NULL;
+            goto fail;
         }
         Py_DECREF(dtype);
-        return (PyObject *)ret;
+        goto success;
     }
     assert(ndim != 0);
     assert(op == cache->converted_obj);
@@ -1717,16 +1720,21 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
 
-    int success = PyArray_AssignFromCache(ret, cache);
+    int succeed = PyArray_AssignFromCache(ret, cache);
 
     ((PyArrayObject_fields *)ret)->nd = out_ndim;
     ((PyArrayObject_fields *)ret)->descr = out_descr;
     Py_DECREF(dtype);
-    if (success < 0) {
+    if (succeed < 0) {
         Py_DECREF(ret);
-        return NULL;
     }
+  success:
+    NPY_END_CRITICAL_SECTION_NO_BRACKETS();
     return (PyObject *)ret;
+
+  fail:
+    NPY_END_CRITICAL_SECTION_NO_BRACKETS();
+    return NULL;
 }
 
 /*
