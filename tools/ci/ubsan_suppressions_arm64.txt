@@ -32,4 +32,4 @@ pointer-overflow:numpy/random/bit_generator.pyx.c
 float-cast-overflow:_core/src/multiarray/lowlevel_strided_loops.c.src
 
 # flagged in CI
-function:_core/src/multiarray/scalartypes.c.src:gentype_free
+function:_core/src/multiarray/scalartypes.c.src
