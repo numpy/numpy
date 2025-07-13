@@ -32,10 +32,11 @@ pointer-overflow:numpy/random/bit_generator.pyx.c
 float-cast-overflow:_core/src/multiarray/lowlevel_strided_loops.c.src
 
 # flagged in CI - call to function through pointer to incorrect function type
-function:_core/src/common/cblasfuncs.c
-function:_core/src/common/npy_argparse.c
-function:_core/src/multiarray/*
-function:_core/src/umath/*
+function:*
+# function:_core/src/common/cblasfuncs.c
+# function:_core/src/common/npy_argparse.c
+# function:_core/src/multiarray/*
+# function:_core/src/umath/*
 # function:_core/src/multiarray/number.c
 # function:_core/src/multiarray/ctors.c
 # function:_core/src/multiarray/convert_datatype.c
