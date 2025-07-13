@@ -531,7 +531,7 @@ def trace(
     offset: SupportsIndex = ...,
     axis1: SupportsIndex = ...,
     axis2: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     out: None = ...,
 ) -> Any: ...
 @overload
@@ -540,7 +540,7 @@ def trace(
     offset: SupportsIndex,
     axis1: SupportsIndex,
     axis2: SupportsIndex,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
@@ -549,7 +549,7 @@ def trace(
     offset: SupportsIndex = ...,
     axis1: SupportsIndex = ...,
     axis2: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     *,
     out: _ArrayT,
 ) -> _ArrayT: ...
@@ -576,7 +576,7 @@ def ravel(
 @overload
 def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dtype]: ...
 
-def nonzero(a: _ArrayLike[Any]) -> tuple[NDArray[intp], ...]: ...
+def nonzero(a: _ArrayLike[Any]) -> tuple[np.ndarray[tuple[int], np.dtype[intp]], ...]: ...
 
 # this prevents `Any` from being returned with Pyright
 @overload
@@ -1397,7 +1397,7 @@ def cumulative_prod(
 
 def ndim(a: ArrayLike) -> int: ...
 
-def size(a: ArrayLike, axis: int | None = ...) -> int: ...
+def size(a: ArrayLike, axis: int | tuple[int, ...] | None = ...) -> int: ...
 
 @overload
 def around(

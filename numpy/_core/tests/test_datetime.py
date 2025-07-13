@@ -1,5 +1,6 @@
 import datetime
 import pickle
+import warnings
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytest
@@ -13,8 +14,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
-    suppress_warnings,
 )
 
 try:
@@ -858,18 +857,20 @@ class TestDateTime:
                          delta)
 
         # Check that loading pickles from 1.6 works
-        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n"\
-              b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n"\
-              b"I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(pkl), np.dtype('<M8[7D]'))
-        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n"\
-              b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n"\
-              b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(pkl), np.dtype('<M8[W]'))
-        pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n"\
-              b"(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n"\
-              b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
-        assert_equal(pickle.loads(pkl), np.dtype('>M8[us]'))
+        with pytest.warns(np.exceptions.VisibleDeprecationWarning,
+                match=r".*align should be passed"):
+            pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n"\
+                b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n"\
+                b"I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
+            assert_equal(pickle.loads(pkl), np.dtype('<M8[7D]'))
+            pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n"\
+                b"(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n"\
+                b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+            assert_equal(pickle.loads(pkl), np.dtype('<M8[W]'))
+            pkl = b"cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n"\
+                b"(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n"\
+                b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+            assert_equal(pickle.loads(pkl), np.dtype('>M8[us]'))
 
     def test_setstate(self):
         "Verify that datetime dtype __setstate__ can handle bad arguments"
@@ -1280,8 +1281,9 @@ class TestDateTime:
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
         # NaTs
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in multiply")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "invalid value encountered in multiply", RuntimeWarning)
             nat = np.timedelta64('NaT')
 
             def check(a, b, res):
@@ -1342,7 +1344,7 @@ class TestDateTime:
          np.timedelta64(-1)),
         ])
     def test_timedelta_floor_div_warnings(self, op1, op2):
-        with assert_warns(RuntimeWarning):
+        with pytest.warns(RuntimeWarning):
             actual = op1 // op2
             assert_equal(actual, 0)
             assert_equal(actual.dtype, np.int64)
@@ -1426,9 +1428,9 @@ class TestDateTime:
          np.timedelta64(-1)),
         ])
     def test_timedelta_divmod_warnings(self, op1, op2):
-        with assert_warns(RuntimeWarning):
+        with pytest.warns(RuntimeWarning):
             expected = (op1 // op2, op1 % op2)
-        with assert_warns(RuntimeWarning):
+        with pytest.warns(RuntimeWarning):
             actual = divmod(op1, op2)
         assert_equal(actual, expected)
 
@@ -1480,8 +1482,9 @@ class TestDateTime:
             assert_raises(TypeError, np.divide, 1.5, dta)
 
         # NaTs
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,  r".*encountered in divide")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', r".*encountered in divide", RuntimeWarning)
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -2043,7 +2046,7 @@ class TestDateTime:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
-        with assert_warns(RuntimeWarning):
+        with pytest.warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
             assert_equal(actual, np.timedelta64('NaT'))
 

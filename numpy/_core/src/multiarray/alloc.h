@@ -75,7 +75,7 @@ _npy_init_workspace(
 
 /*
  * Helper definition macro for a small work/scratchspace.
- * The `NAME` is the C array to to be defined of with the type `TYPE`.
+ * The `NAME` is the C array to be defined of with the type `TYPE`.
  *
  * The usage pattern for this is:
  *

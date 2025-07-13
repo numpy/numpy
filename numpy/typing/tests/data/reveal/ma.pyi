@@ -373,6 +373,11 @@ assert_type(MAR_b.shrink_mask(), MaskedArray[np.bool_])
 assert_type(MAR_i8.hardmask, bool)
 assert_type(MAR_i8.sharedmask, bool)
 
+assert_type(MAR_2d_f4.anom(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(MAR_2d_f4.anom(axis=0, dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_f4.anom(0, np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_f4.anom(0, 'float16'), np.ma.MaskedArray[tuple[int, int], np.dtype])
+
 assert_type(MAR_b.transpose(), MaskedArray[np.bool])
 assert_type(MAR_2d_f4.transpose(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.transpose(1, 0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
@@ -380,8 +385,25 @@ assert_type(MAR_2d_f4.transpose((1, 0)), np.ma.MaskedArray[tuple[int, int], np.d
 assert_type(MAR_b.T, MaskedArray[np.bool])
 assert_type(MAR_2d_f4.T, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 
-assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
+assert_type(MAR_2d_f4.dot(1), MaskedArray[Any])
+assert_type(MAR_2d_f4.dot([1]), MaskedArray[Any])
+assert_type(MAR_2d_f4.dot(1, out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], ...])
 assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
+
+assert_type(MAR_f8.trace(), Any)
+assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.trace(out=MAR_subclass, dtype=None), MaskedArraySubclass)
+
+assert_type(MAR_f8.round(), MaskedArray[np.float64])
+assert_type(MAR_f8.round(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.cumprod(), MaskedArray[Any])
+assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.cumsum(), MaskedArray[Any])
+assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
 
 # Masked Array addition
 
@@ -884,3 +906,87 @@ assert_type(AR_LIKE_f // MAR_o, Any)
 assert_type(AR_LIKE_td64 // MAR_o, Any)
 assert_type(AR_LIKE_dt64 // MAR_o, Any)
 assert_type(AR_LIKE_o // MAR_o, Any)
+
+# Masked Array power
+
+assert_type(MAR_b ** AR_LIKE_u, MaskedArray[np.uint32])
+assert_type(MAR_b ** AR_LIKE_i, MaskedArray[np.signedinteger])
+assert_type(MAR_b ** AR_LIKE_f, MaskedArray[np.floating])
+assert_type(MAR_b ** AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_b ** AR_LIKE_o, Any)
+
+assert_type(AR_LIKE_u ** MAR_b, MaskedArray[np.uint32])
+assert_type(AR_LIKE_i ** MAR_b, MaskedArray[np.signedinteger])
+assert_type(AR_LIKE_f ** MAR_b, MaskedArray[np.floating])
+assert_type(AR_LIKE_c ** MAR_b, MaskedArray[np.complexfloating])
+assert_type(AR_LIKE_o ** MAR_b, Any)
+
+assert_type(MAR_u4 ** AR_LIKE_b, MaskedArray[np.uint32])
+assert_type(MAR_u4 ** AR_LIKE_u, MaskedArray[np.unsignedinteger])
+assert_type(MAR_u4 ** AR_LIKE_i, MaskedArray[np.signedinteger])
+assert_type(MAR_u4 ** AR_LIKE_f, MaskedArray[np.floating])
+assert_type(MAR_u4 ** AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_u4 ** AR_LIKE_o, Any)
+
+assert_type(AR_LIKE_b ** MAR_u4 , MaskedArray[np.uint32])
+assert_type(AR_LIKE_u ** MAR_u4 , MaskedArray[np.unsignedinteger])
+assert_type(AR_LIKE_i ** MAR_u4 , MaskedArray[np.signedinteger])
+assert_type(AR_LIKE_f ** MAR_u4 , MaskedArray[np.floating])
+assert_type(AR_LIKE_c ** MAR_u4 , MaskedArray[np.complexfloating])
+assert_type(AR_LIKE_o ** MAR_u4 , Any)
+
+assert_type(MAR_i8 ** AR_LIKE_b, MaskedArray[np.int64])
+assert_type(MAR_i8 ** AR_LIKE_u, MaskedArray[np.signedinteger])
+assert_type(MAR_i8 ** AR_LIKE_i, MaskedArray[np.signedinteger])
+assert_type(MAR_i8 ** AR_LIKE_f, MaskedArray[np.floating])
+assert_type(MAR_i8 ** AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_i8 ** AR_LIKE_o, Any)
+assert_type(MAR_i8 ** AR_LIKE_b, MaskedArray[np.int64])
+
+assert_type(AR_LIKE_u ** MAR_i8 , MaskedArray[np.signedinteger])
+assert_type(AR_LIKE_i ** MAR_i8 , MaskedArray[np.signedinteger])
+assert_type(AR_LIKE_f ** MAR_i8 , MaskedArray[np.floating])
+assert_type(AR_LIKE_c ** MAR_i8 , MaskedArray[np.complexfloating])
+assert_type(AR_LIKE_o ** MAR_i8 , Any)
+
+assert_type(MAR_f8 ** AR_LIKE_b, MaskedArray[np.float64])
+assert_type(MAR_f8 ** AR_LIKE_u, MaskedArray[np.float64])
+assert_type(MAR_f8 ** AR_LIKE_i, MaskedArray[np.float64])
+assert_type(MAR_f8 ** AR_LIKE_f, MaskedArray[np.float64])
+assert_type(MAR_f8 ** AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_f8 ** AR_LIKE_o, Any)
+
+assert_type(AR_LIKE_b ** MAR_f8, MaskedArray[np.float64])
+assert_type(AR_LIKE_u ** MAR_f8, MaskedArray[np.float64])
+assert_type(AR_LIKE_i ** MAR_f8, MaskedArray[np.float64])
+assert_type(AR_LIKE_f ** MAR_f8, MaskedArray[np.float64])
+assert_type(AR_LIKE_c ** MAR_f8, MaskedArray[np.complexfloating])
+assert_type(AR_LIKE_o ** MAR_f8, Any)
+
+assert_type(MAR_c16 ** AR_LIKE_b, MaskedArray[np.complex128])
+assert_type(MAR_c16 ** AR_LIKE_u, MaskedArray[np.complex128])
+assert_type(MAR_c16 ** AR_LIKE_i, MaskedArray[np.complex128])
+assert_type(MAR_c16 ** AR_LIKE_f, MaskedArray[np.complex128])
+assert_type(MAR_c16 ** AR_LIKE_c, MaskedArray[np.complex128])
+assert_type(MAR_c16 ** AR_LIKE_o, Any)
+
+assert_type(AR_LIKE_b ** MAR_c16, MaskedArray[np.complex128])
+assert_type(AR_LIKE_u ** MAR_c16, MaskedArray[np.complex128])
+assert_type(AR_LIKE_i ** MAR_c16, MaskedArray[np.complex128])
+assert_type(AR_LIKE_f ** MAR_c16, MaskedArray[np.complex128])
+assert_type(AR_LIKE_c ** MAR_c16, MaskedArray[np.complex128])
+assert_type(AR_LIKE_o ** MAR_c16, Any)
+
+assert_type(MAR_o ** AR_LIKE_b, Any)
+assert_type(MAR_o ** AR_LIKE_u, Any)
+assert_type(MAR_o ** AR_LIKE_i, Any)
+assert_type(MAR_o ** AR_LIKE_f, Any)
+assert_type(MAR_o ** AR_LIKE_c, Any)
+assert_type(MAR_o ** AR_LIKE_o, Any)
+
+assert_type(AR_LIKE_b ** MAR_o, Any)
+assert_type(AR_LIKE_u ** MAR_o, Any)
+assert_type(AR_LIKE_i ** MAR_o, Any)
+assert_type(AR_LIKE_f ** MAR_o, Any)
+assert_type(AR_LIKE_c ** MAR_o, Any)
+assert_type(AR_LIKE_o ** MAR_o, Any)
