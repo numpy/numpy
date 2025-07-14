@@ -9,7 +9,7 @@ NPY_VISIBILITY_HIDDEN int
 npy_cpu_dispatch_tracer_init(PyObject *mod)
 {
     if (npy_static_pydata.cpu_dispatch_registry != NULL) {
-        PyErr_Format(PyExc_RuntimeError, "CPU dispatcher tracer already initlized");
+        PyErr_Format(PyExc_RuntimeError, "CPU dispatcher tracer already initialized");
         return -1;
     }
     PyObject *mod_dict = PyModule_GetDict(mod);
