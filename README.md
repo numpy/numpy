@@ -17,7 +17,7 @@ https://doi.org/10.1038/s41586-020-2649-2)
 [![Typing](https://img.shields.io/pypi/types/numpy)](https://pypi.org/project/numpy/)
 
 
-NumPy is the fundamental package for scientific computing with Python.
+NumPy is a fundamental package for scientific computing with Python.
 
 - **Website:** https://numpy.org
 - **Documentation:** https://numpy.org/doc
@@ -30,13 +30,13 @@ NumPy is the fundamental package for scientific computing with Python.
 It provides:
 
 - a powerful N-dimensional array object
-- sophisticated (broadcasting) functions
+- sophisticated functions with broadcasting support
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
 
 Testing:
 
-NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
+NumPy requires `pytest` and `hypothesis`. After installation, tests can be run using:
 
     python -c "import numpy, sys; sys.exit(numpy.test() is False)"
 
@@ -52,13 +52,13 @@ with others in a way that makes our community thrive.
 Call for Contributions
 ----------------------
 
-The NumPy project welcomes your expertise and enthusiasm!
+The NumPy project welcomes your expertise, enthusiasm, and contributions!
 
 Small improvements or fixes are always appreciated. If you are considering larger contributions
 to the source code, please contact us through the [mailing
 list](https://mail.python.org/mailman/listinfo/numpy-discussion) first.
 
-Writing code isn’t the only way to contribute to NumPy. You can also:
+Writing code isn't the only way to contribute to NumPy. You can also:
 - review pull requests
 - help us stay on top of new and old issues
 - develop tutorials, presentations, and other educational materials
