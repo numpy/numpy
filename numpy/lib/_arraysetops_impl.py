@@ -290,7 +290,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
-    if axis is None or (axis == 0 and ar.ndim == 1):
+    if ar.ndim == 1 or axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
                         sorted=sorted)
@@ -1259,3 +1259,4 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
+ 
