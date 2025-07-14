@@ -1736,7 +1736,7 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             size_t num_codepoints = inbuf.num_codepoints();
             npy_intp width = (npy_intp)*(npy_int64*)in2;
 
-            if (num_codepoints > (size_t)width) {
+            if ((npy_intp)num_codepoints > width) {
                 width = num_codepoints;
             }
 
@@ -1866,8 +1866,8 @@ zfill_strided_loop(PyArrayMethod_Context *context,
         {
             Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
             size_t in_codepoints = inbuf.num_codepoints();
-            size_t width = (size_t)*(npy_int64 *)in2;
-            if (in_codepoints > width) {
+            npy_intp width = (npy_intp)*(npy_int64*)in2;
+            if ((npy_intp)in_codepoints > width) {
                 width = in_codepoints;
             }
             // number of leading one-byte characters plus the size of the
