@@ -290,7 +290,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
-    if axis is None:
+    if axis is None or (axis == 0 and ar.ndim == 1):
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
                         sorted=sorted)
