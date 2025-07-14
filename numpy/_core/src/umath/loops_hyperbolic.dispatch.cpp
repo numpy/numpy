@@ -74,7 +74,7 @@ using namespace np::simd;
  */
 
 template <typename vtype, typename type_t>
-HWY_INLINE vtype load_vector(type_t* src, npy_intp ssrc, npy_intp len){
+HWY_ATTR HWY_INLINE vtype load_vector(type_t* src, npy_intp ssrc, npy_intp len){
     auto D   = hn::DFromV<vtype>();
     using DI = hn::RebindToSigned<decltype(D)>;
     DI di;
@@ -100,7 +100,7 @@ HWY_INLINE vtype load_vector(type_t* src, npy_intp ssrc, npy_intp len){
 }
 
 template <typename vtype, typename type_t>
-HWY_INLINE void store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
+HWY_ATTR HWY_INLINE void store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
     auto D   = hn::DFromV<vtype>();
     using DI = hn::RebindToSigned<decltype(D)>;
     DI di;
@@ -126,7 +126,7 @@ HWY_INLINE void store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len
 }
 
 #if NPY_HWY_F64
-[[maybe_unused]] HWY_INLINE Vec<double> lut_16_f64(const double * lut, Vec<uint64_t> idx){
+[[maybe_unused]] HWY_ATTR HWY_INLINE Vec<double> lut_16_f64(const double * lut, Vec<uint64_t> idx){
     if constexpr(hn::MaxLanes(_Tag<double>()) == 8){
         const Vec<double> lut0 = hn::Load(_Tag<double>(), lut);
         const Vec<double> lut1 = hn::Load(_Tag<double>(), lut + 8);
@@ -149,7 +149,7 @@ HWY_INLINE void store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len
     }
 }
 
-HWY_INLINE static void
+HWY_ATTR static void
 simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
 {
     static const npy_uint64 NPY_DECL_ALIGNED(kMaxLanes<uint8_t>) lut18x16[] = {
@@ -478,12 +478,12 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 
 #endif // NPY_HWY_F64
 
-HWY_INLINE void zip_f32_lanes(Vec<float> a, Vec<float> b, Vec<float>& lower, Vec<float>& upper) {
+HWY_ATTR HWY_INLINE void zip_f32_lanes(Vec<float> a, Vec<float> b, Vec<float>& lower, Vec<float>& upper) {
     lower = hn::InterleaveLower(_Tag<float>(), a, b);
     upper = hn::InterleaveUpper(_Tag<float>(), a, b);
 }
 
-[[maybe_unused]] HWY_INLINE Vec<float> lut_32_f32(const float * lut, Vec<uint32_t> idx){
+[[maybe_unused]] HWY_ATTR HWY_INLINE Vec<float> lut_32_f32(const float * lut, Vec<uint32_t> idx){
     if constexpr(hn::MaxLanes(_Tag<float>()) == 16){
         const Vec<float> lut0 = hn::Load(_Tag<float>(), lut);
         const Vec<float> lut1 = hn::Load(_Tag<float>(), lut + 16);
@@ -506,7 +506,7 @@ HWY_INLINE void zip_f32_lanes(Vec<float> a, Vec<float> b, Vec<float>& lower, Vec
     }
 }
 
-HWY_INLINE static void
+HWY_ATTR static void
 simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
 {
     static const npy_uint32 NPY_DECL_ALIGNED(kMaxLanes<uint8_t>) lut8x32[] = {
@@ -709,7 +709,7 @@ struct tanh_ops;
 template<>
 struct tanh_ops<float> {
 #if NPY_HWY_FMA
-    static HWY_INLINE void simd_func(const float *src, npy_intp src_stride, float *dst, npy_intp dst_stride, npy_intp len) {
+    static HWY_ATTR void simd_func(const float *src, npy_intp src_stride, float *dst, npy_intp dst_stride, npy_intp len) {
         simd_tanh_f32(src, src_stride, dst, dst_stride, len);
     }
 #endif
@@ -721,7 +721,7 @@ struct tanh_ops<float> {
 template<>
 struct tanh_ops<double> {
 #if (NPY_HWY_FMA && NPY_HWY_F64)
-    static HWY_INLINE void simd_func(const double *src, npy_intp src_stride, double *dst, npy_intp dst_stride, npy_intp len) {
+    static HWY_ATTR void simd_func(const double *src, npy_intp src_stride, double *dst, npy_intp dst_stride, npy_intp len) {
         simd_tanh_f64(src, src_stride, dst, dst_stride, len);
     }
 #endif
