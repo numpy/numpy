@@ -18,14 +18,8 @@ extern "C" {
  */
 
 static inline int
-compare_from_context(const void *a, const void *b, void *context)
+compare_result_to_int(NPY_COMPARE_RESULT result, NPY_SORT_NAN_POSITION nan_position)
 {
-    PyArrayMethod_SortContext *sort_context = (PyArrayMethod_SortContext *)context;
-    PyArray_SortCompareFunc *cmp = sort_context->compare;
-    int nan_position = sort_context->nan_position;
-
-    NPY_COMPARE_RESULT result = cmp(a, b, sort_context->descriptor);
-
     if (result == NPY_LESS) {
         return -1;
     }
@@ -63,6 +57,31 @@ compare_from_context(const void *a, const void *b, void *context)
     /* This should never happen, but just in case */
     PyErr_SetString(PyExc_RuntimeError, "Unexpected comparison result in sort function");
     return NPY_MIN_INT;  /* Indicate an error */
+}
+
+static inline int
+compare_from_context(const void *a, const void *b, void *context)
+{
+    PyArrayMethod_SortContext *sort_context = (PyArrayMethod_SortContext *)context;
+    PyArray_SortCompareFunc *cmp = sort_context->compare;
+
+    int descending = sort_context->descending;
+    NPY_SORT_NAN_POSITION nan_position = sort_context->nan_position;
+
+    NPY_COMPARE_RESULT result = cmp(a, b, sort_context->descriptor);
+
+    if (result == NPY_COMPARE_ERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "Unexpected comparison result in sort function");
+        return NPY_MIN_INT;  /* Indicate an error */
+    }
+
+    int cmp_result = compare_result_to_int(result, nan_position);
+
+    if (descending) {
+        cmp_result = -cmp_result;
+    }
+
+    return cmp_result;
 }
 
 static inline void
