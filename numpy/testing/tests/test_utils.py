@@ -612,6 +612,18 @@ class TestArrayAlmostEqual(_GenericTest):
         assert_raises(AssertionError,
                       lambda: self._assert_func(a, b))
 
+    def test_complex_inf(self):
+        a = np.array([np.inf + 1.j, 2. + 1.j, 3. + 1.j])
+        b = a.copy()
+        self._assert_func(a, b)
+        b[1] = 3. + 1.j
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Mismatch at index:\n'
+                        ' [1]: (2+1j) (ACTUAL), (3+1j) (DESIRED)\n'
+                        'Max absolute difference among violations: 1.\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
+
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = np.ma.masked_array([[1., 2.], [0., 4.]],
