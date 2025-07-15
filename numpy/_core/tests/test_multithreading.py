@@ -295,6 +295,7 @@ def test_nonzero(dtype):
     run_threaded(func, max_workers=10, pass_count=True, outer_iterations=5)
 
 
+# These are all implemented using PySequence_Fast, which needs locking to be safe
 def np_broadcast(arrs):
     for i in range(100):
         np.broadcast(arrs)
@@ -303,7 +304,11 @@ def create_array(arrs):
     for i in range(100):
         np.array(arrs)
 
-@pytest.mark.parametrize("kernel", (np_broadcast, create_array))
+def create_nditer(arrs):
+    for i in range(1000):
+        np.nditer(arrs)
+
+@pytest.mark.parametrize("kernel", (np_broadcast, create_array, create_nditer))
 def test_arg_locking(kernel):
     # should complete without failing or generating an error about an array size
     # changing
@@ -312,7 +317,7 @@ def test_arg_locking(kernel):
     done = 0
     arrs = []
 
-    def broadcast_arrs():
+    def read_arrs():
         nonlocal done
         b.wait()
         try:
@@ -330,7 +335,7 @@ def test_arg_locking(kernel):
 
     arrs = [np.array([1, 2, 3]) for _ in range(1000)]
 
-    tasks = [threading.Thread(target=broadcast_arrs) for _ in range(4)]
+    tasks = [threading.Thread(target=read_arrs) for _ in range(4)]
     tasks.append(threading.Thread(target=mutate_list))
 
     [t.start() for t in tasks]
