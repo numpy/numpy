@@ -405,6 +405,15 @@ assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
 assert_type(MAR_f8.cumsum(), MaskedArray[Any])
 assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
 
+assert_type(MAR_f8.view(), MaskedArray[np.float64])
+assert_type(MAR_f8.view(dtype=np.float32), MaskedArray[np.float32])
+assert_type(MAR_f8.view(dtype=np.dtype(np.float32)), MaskedArray[np.float32])
+assert_type(MAR_f8.view(dtype=np.float32, fill_value=0), MaskedArray[np.float32])
+assert_type(MAR_f8.view(type=np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_f8.view(dtype=np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_f8.view(dtype='float32'), MaskedArray[Any])
+assert_type(MAR_f8.view(dtype='float32', type=np.ndarray), np.ndarray[Any, Any])
+
 # Masked Array addition
 
 assert_type(MAR_b + AR_LIKE_u, MaskedArray[np.uint32])
