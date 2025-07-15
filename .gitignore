@@ -43,23 +43,6 @@ GTAGS
 *.so
 *.mod
 
-# Packages #
-############
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.bz2
-*.bzip2
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.tbz2
-*.tgz
-*.zip
-
 # Python files #
 ################
 # meson build/installation directories
