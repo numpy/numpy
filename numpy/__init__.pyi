@@ -1857,7 +1857,6 @@ class _ArrayOrScalarCommon:
         where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
 
-    # keep in sync with `MaskedArray.sum`
     @overload
     def sum(
         self,
@@ -1893,7 +1892,6 @@ class _ArrayOrScalarCommon:
         where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
 
-    # keep in sync with `MaskedArray.prod`
     @overload
     def prod(
         self,
@@ -1929,7 +1927,6 @@ class _ArrayOrScalarCommon:
         where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
 
-    # keep in sync with `MaskedArray.mean`
     @overload
     def mean(
         self,
