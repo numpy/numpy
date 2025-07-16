@@ -1329,6 +1329,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: None = None,
         ddof: float = 0,
         keepdims: bool = False,
+        mean: _ArrayLikeNumber_co = ...,
     ) -> Any: ...
     @overload
     def var(
@@ -1338,6 +1339,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: _ArrayT,
         ddof: float = 0,
         keepdims: bool = False,
+        mean: _ArrayLikeNumber_co = ...,
     ) -> _ArrayT: ...
     @overload
     def var(
@@ -1348,6 +1350,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: _ArrayT,
         ddof: float = 0,
         keepdims: bool = False,
+        mean: _ArrayLikeNumber_co = ...,
     ) -> _ArrayT: ...
 
     # keep in sync with `ndarray.std`
@@ -1359,6 +1362,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: None = None,
         ddof: float = 0,
         keepdims: bool = False,
+        mean: _ArrayLikeNumber_co = ...,
     ) -> Any: ...
     @overload
     def std(
@@ -1368,6 +1372,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: _ArrayT,
         ddof: float = 0,
         keepdims: bool = False,
+        mean: _ArrayLikeNumber_co = ...,
     ) -> _ArrayT: ...
     @overload
     def std(
@@ -1378,6 +1383,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: _ArrayT,
         ddof: float = 0,
         keepdims: bool = False,
+        mean: _ArrayLikeNumber_co = ...,
     ) -> _ArrayT: ...
 
     # Keep in sync with `ndarray.round`

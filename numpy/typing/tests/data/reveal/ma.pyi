@@ -750,12 +750,12 @@ assert_type(MAR_f8.sum(out=MAR_subclass), MaskedArraySubclass)
 
 assert_type(MAR_f8.std(), Any)
 assert_type(MAR_f8.std(axis=0), Any)
-assert_type(MAR_f8.std(keepdims=True), Any)
+assert_type(MAR_f8.std(keepdims=True, mean=0.), Any)
 assert_type(MAR_f8.std(out=MAR_subclass), MaskedArraySubclass)
 
 assert_type(MAR_f8.var(), Any)
 assert_type(MAR_f8.var(axis=0), Any)
-assert_type(MAR_f8.var(keepdims=True), Any)
+assert_type(MAR_f8.var(keepdims=True, mean=0.), Any)
 assert_type(MAR_f8.var(out=MAR_subclass), MaskedArraySubclass)
 
 assert_type(MAR_f8.mean(), Any)
