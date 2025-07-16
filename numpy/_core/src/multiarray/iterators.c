@@ -501,31 +501,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     npy_intp dtype_size = dtype->elsize;
     NPY_cast_info cast_info = {.func = NULL};
 
-    if (PyTuple_Check(ind) && PyTuple_GET_SIZE(ind) == 0) {
-        Py_INCREF(self->ao);
-        return (PyObject *)self->ao;
-    }
-
-    if (PyBool_Check(ind)) {
-        int istrue = PyObject_IsTrue(ind);
-        if (istrue < 0) {
-            return NULL;
-        }
-
-        if (istrue) {
-            return PyArray_ToScalar(self->dataptr, self->ao);
-        }
-
-        npy_intp ii = 0;
-        Py_INCREF(dtype);
-        ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
-                                   dtype,
-                                   1, &ii,
-                                   NULL, NULL, 0,
-                                   (PyObject *)self->ao);
-        return ret;
-    }
-
     /* Prepare the indices */
     index_type = prepare_index_noarray(1, &self->size, ind, indices, &index_num,
         &ndim, &fancy_ndim, 1, 1);
@@ -552,6 +527,26 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         ret = iter_subscript(self, ind);
         Py_DECREF(ind);
         goto finish;
+    }
+
+    // Single boolean index
+    else if (indices[0].type == HAS_0D_BOOL) {
+        DEPRECATE("Indexing flat iterators with a 0-dimensional boolean index is "
+                  "deprecated and may be removed in a future version.");
+        if (indices[0].value) {
+            ret = PyArray_ToScalar(self->dataptr, self->ao);
+            goto finish;
+        }
+        else { /* empty array */
+            npy_intp ii = 0;
+            Py_INCREF(dtype);
+            ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
+                                       dtype,
+                                       1, &ii,
+                                       NULL, NULL, 0,
+                                       (PyObject *)self->ao);
+            goto finish;
+        }
     }
 
     PyArray_ITER_RESET(self);
@@ -780,6 +775,11 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     // Single ellipsis index
     else if (index_type == HAS_ELLIPSIS) {
+        if (PyTuple_Check(ind)) {
+            PyErr_SetString(PyExc_TypeError, "Assigning to a flat iterator with a 0-D index is not supported");
+            goto finish;
+        }
+
         ind = PySlice_New(NULL, NULL, NULL);
         if (ind == NULL) {
             goto finish;
@@ -792,6 +792,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     // Single boolean index
     else if (indices[0].type == HAS_0D_BOOL) {
+        DEPRECATE("Indexing flat iterators with a 0-dimensional boolean index is "
+                  "deprecated and may be removed in a future version.");
         ret = 0;
         if (indices[0].value) {
             ret = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);

@@ -1545,8 +1545,8 @@ class TestFlatiterIndexing:
         assert_array_equal(a, np.arange(9).reshape((3, 3)))
 
         a = np.arange(9).reshape((3, 3))
-        a.flat[()] = 70
-        assert_array_equal(a, np.full((3, 3), 70))
+        with pytest.raises(TypeError):
+            a.flat[()] = 70
 
         a = np.arange(9).reshape((3, 3))
         a.flat[...] = 80
@@ -1554,11 +1554,13 @@ class TestFlatiterIndexing:
 
     def test_flatiter_indexing_boolean(self):
         a = np.arange(9).reshape((3, 3))
-        a.flat[True] = 10
+        with pytest.warns(DeprecationWarning):
+            a.flat[True] = 10
         assert_array_equal(a, np.array([[10, 1, 2], [3, 4, 5], [6, 7, 8]]))
 
         a = np.arange(9).reshape((3, 3))
-        a.flat[False] = 20
+        with pytest.warns(DeprecationWarning):
+            a.flat[False] = 20
         assert_array_equal(a, np.arange(9).reshape((3, 3)))
 
         a = np.arange(9).reshape((3, 3))
