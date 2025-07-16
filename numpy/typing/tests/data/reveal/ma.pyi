@@ -743,6 +743,31 @@ assert_type(AR_LIKE_td64 * MAR_o, Any)  # type: ignore[assert-type]
 assert_type(AR_LIKE_dt64 * MAR_o, Any)  # type: ignore[assert-type]
 assert_type(AR_LIKE_o * MAR_o, Any)  # type: ignore[assert-type]
 
+assert_type(MAR_f8.sum(), Any)
+assert_type(MAR_f8.sum(axis=0), Any)
+assert_type(MAR_f8.sum(keepdims=True), Any)
+assert_type(MAR_f8.sum(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.std(), Any)
+assert_type(MAR_f8.std(axis=0), Any)
+assert_type(MAR_f8.std(keepdims=True, mean=0.), Any)
+assert_type(MAR_f8.std(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.var(), Any)
+assert_type(MAR_f8.var(axis=0), Any)
+assert_type(MAR_f8.var(keepdims=True, mean=0.), Any)
+assert_type(MAR_f8.var(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.mean(), Any)
+assert_type(MAR_f8.mean(axis=0), Any)
+assert_type(MAR_f8.mean(keepdims=True), Any)
+assert_type(MAR_f8.mean(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.prod(), Any)
+assert_type(MAR_f8.prod(axis=0), Any)
+assert_type(MAR_f8.prod(keepdims=True), Any)
+assert_type(MAR_f8.prod(out=MAR_subclass), MaskedArraySubclass)
+
 # MaskedArray "true" division
 
 assert_type(MAR_f8 / b, MaskedArray[np.float64])
