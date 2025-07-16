@@ -984,13 +984,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_minmax.dispatch.h',
-    src_file.process('src/umath/loops_minmax.dispatch.c.src'),
+    'src/umath/loops_minmax.dispatch.cpp',
     [
       ASIMD, NEON,
       AVX512_SKX, AVX2, SSE2,
       VSX2,
       VXE, VX,
       LSX,
+      RVV,
     ]
   ],
   [
