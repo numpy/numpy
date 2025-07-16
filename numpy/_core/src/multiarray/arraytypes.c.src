@@ -881,7 +881,7 @@ VOID_getitem(void *input, void *vap)
             npy_intp offset;
             PyArray_Descr *new;
             key = PyTuple_GET_ITEM(names, i);
-            tup = PyDict_GetItem(descr->fields, key);
+            tup = PyDict_GetItem(descr->fields, key); // noqa: borrowed-ref OK
             if (_unpack_field(tup, &new, &offset) < 0) {
                 Py_DECREF(ret);
                 return NULL;
@@ -973,7 +973,7 @@ _setup_field(int i, _PyArray_LegacyDescr *descr, PyArrayObject *arr,
     npy_intp offset;
 
     key = PyTuple_GET_ITEM(descr->names, i);
-    tup = PyDict_GetItem(descr->fields, key);
+    tup = PyDict_GetItem(descr->fields, key); // noqa: borrowed-ref OK
     if (_unpack_field(tup, &new, &offset) < 0) {
         return -1;
     }
@@ -2274,7 +2274,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) { // noqa: borrowed-ref OK
             npy_intp offset;
             PyArray_Descr *new;
             if (NPY_TITLE_KEY(key, value)) {
@@ -2359,7 +2359,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) { // noqa: borrowed-ref OK
             npy_intp offset;
 
             PyArray_Descr * new;
@@ -2679,7 +2679,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
 
         _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)PyArray_DESCR(ap);
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) { // noqa: borrowed-ref OK
             PyArray_Descr * new;
             npy_intp offset;
             if (NPY_TITLE_KEY(key, value)) {
@@ -3041,7 +3041,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         PyArray_Descr *new;
         npy_intp offset;
         key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(PyDataType_FIELDS(descr), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(descr), key); // noqa: borrowed-ref OK
         if (_unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }

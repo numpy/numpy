@@ -588,7 +588,7 @@ npyiter_prepare_ops(PyObject *op_in, PyObject **out_owner, PyObject ***out_objs)
 {
     /* Take ownership of op_in (either a tuple/list or single element): */
     if (PyTuple_Check(op_in) || PyList_Check(op_in)) {
-        PyObject *seq = PySequence_Fast(op_in, "failed accessing item list");
+        PyObject *seq = PySequence_Fast(op_in, "failed accessing item list"); // noqa: borrowed-ref - manual fix needed
         if (op_in == NULL) {
             Py_DECREF(op_in);
             return -1;

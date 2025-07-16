@@ -184,7 +184,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -246,7 +246,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
             int offset;
             Py_ssize_t pos = 0;
 
-            while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
+            while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) { // noqa: borrowed-ref OK
                 if (NPY_TITLE_KEY(key, value)) {
                     continue;
                 }
@@ -480,7 +480,7 @@ _fill_with_none(char *optr, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }

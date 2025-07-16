@@ -130,7 +130,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
      * dimension_from_scalar as soon as possible.
      */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
-        seq_obj = PySequence_Fast(obj,
+        seq_obj = PySequence_Fast(obj, // noqa: borrowed-ref - manual fix needed
                "expected a sequence of integers or a single integer.");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */
@@ -1135,7 +1135,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     PyObject *seq_obj = NULL;
     if (!PyLong_CheckExact(seq) && PySequence_Check(seq)) {
-        seq_obj = PySequence_Fast(seq,
+        seq_obj = PySequence_Fast(seq, // noqa: borrowed-ref - manual fix needed
             "expected a sequence of integers or a single integer");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */

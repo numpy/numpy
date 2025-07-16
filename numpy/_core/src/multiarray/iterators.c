@@ -1489,7 +1489,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
         return NULL;
     }
 
-    fast_seq = PySequence_Fast(args, "");  // needed for pypy
+    fast_seq = PySequence_Fast(args, "");  // needed for pypy // noqa: borrowed-ref - manual fix needed
     if (fast_seq == NULL) {
         return NULL;
     }
