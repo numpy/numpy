@@ -1,0 +1,3 @@
+New function `shifted`
+----------------------
+This function shifts array elements along a given axis, leaving a fill value behind.
