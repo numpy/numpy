@@ -1,12 +1,18 @@
 import itertools
+import warnings
 
 import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_raises, suppress_warnings, assert_raises_regex, assert_allclose
-    )
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
@@ -449,8 +455,8 @@ class TestEinsum:
                          np.outer(a, b))
 
         # Suppress the complex warnings for the 'as f8' tests
-        with suppress_warnings() as sup:
-            sup.filter(np.exceptions.ComplexWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', np.exceptions.ComplexWarning)
 
             # matvec(a,b) / a.dot(b) where a is matrix, b is vector
             for n in range(1, 17):
@@ -764,7 +770,7 @@ class TestEinsum:
                 return 42
 
         objMult = np.array([Mult()])
-        objNULL = np.ndarray(buffer = b'\0' * np.intp(0).itemsize, shape=1, dtype=object)
+        objNULL = np.ndarray(buffer=b'\0' * np.intp(0).itemsize, shape=1, dtype=object)
 
         with pytest.raises(TypeError):
             np.einsum("i,j", [1], objNULL)
@@ -1240,7 +1246,7 @@ class TestEinsumPath:
         assert_almost_equal(noopt, opt)
 
     def test_path_type_input_internal_trace(self):
-        #gh-20962
+        # gh-20962
         path_test = self.build_operands('cab,cdd->ab')
         exp_path = ['einsum_path', (1,), (0, 1)]
 
@@ -1266,7 +1272,7 @@ class TestEinsumPath:
             RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
     def test_spaces(self):
-        #gh-10794
+        # gh-10794
         arr = np.array([[1]])
         for sp in itertools.product(['', ' '], repeat=4):
             # no error for any spacing
@@ -1279,7 +1285,7 @@ def test_overlap():
     # sanity check
     c = np.einsum('ij,jk->ik', a, b)
     assert_equal(c, d)
-    #gh-10080, out overlaps one of the operands
+    # gh-10080, out overlaps one of the operands
     c = np.einsum('ij,jk->ik', a, b, out=b)
     assert_equal(c, d)
 

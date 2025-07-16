@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 
-
 _byteorderconv = np._core.records._byteorderconv
 
 
@@ -117,7 +116,8 @@ class MaskedRecords(ma.MaskedArray):
                 elif nm == nd:
                     mask = np.reshape(mask, self.shape)
                 else:
-                    msg = f"Mask and data not compatible: data size is {nd}, mask size is {nm}."
+                    msg = (f"Mask and data not compatible: data size is {nd},"
+                           " mask size is {nm}.")
                     raise ma.MAError(msg)
             if not keep_mask:
                 self.__setmask__(mask)
@@ -149,7 +149,6 @@ class MaskedRecords(ma.MaskedArray):
         self._update_from(obj)
         if _dict['_baseclass'] == np.ndarray:
             _dict['_baseclass'] = np.recarray
-        return
 
     @property
     def _data(self):

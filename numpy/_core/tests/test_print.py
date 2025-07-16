@@ -1,13 +1,11 @@
 import sys
+from io import StringIO
 
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, IS_MUSL
 from numpy._core.tests._locales import CommaDecimalPointLocale
-
-
-from io import StringIO
+from numpy.testing import IS_MUSL, assert_, assert_equal
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 

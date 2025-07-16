@@ -33,17 +33,17 @@ import os
 import re
 import sys
 import warnings
-import docutils.core
 from argparse import ArgumentParser
 
+import docutils.core
 from docutils.parsers.rst import directives
-
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
 
 # Enable specific Sphinx directives
-from sphinx.directives.other import SeeAlso, Only
+from sphinx.directives.other import Only, SeeAlso
+
 directives.register_directive('seealso', SeeAlso)
 directives.register_directive('only', Only)
 
@@ -423,16 +423,16 @@ def validate_rst_syntax(text, name, dots=True):
 
     docutils.core.publish_doctree(
         text, token,
-        settings_overrides = {'halt_level': 5,
-                                  'traceback': True,
-                                  'default_reference_context': 'title-reference',
-                                  'default_role': 'emphasis',
-                                  'link_base': '',
-                                  'resolve_name': resolve,
-                                  'stylesheet_path': '',
-                                  'raw_enabled': 0,
-                                  'file_insertion_enabled': 0,
-                                  'warning_stream': error_stream})
+        settings_overrides={'halt_level': 5,
+                            'traceback': True,
+                            'default_reference_context': 'title-reference',
+                            'default_role': 'emphasis',
+                            'link_base': '',
+                            'resolve_name': resolve,
+                            'stylesheet_path': '',
+                            'raw_enabled': 0,
+                            'file_insertion_enabled': 0,
+                            'warning_stream': error_stream})
 
     # Print errors, disregarding unimportant ones
     error_msg = error_stream.getvalue()
@@ -560,12 +560,13 @@ def main(argv):
     if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
 
-    module_names = list(args.module_names)
-    for name in module_names:
-        if name in OTHER_MODULE_DOCS:
-            name = OTHER_MODULE_DOCS[name]
-            if name not in module_names:
-                module_names.append(name)
+    module_names = args.module_names + [
+        OTHER_MODULE_DOCS[name]
+        for name in args.module_names
+        if name in OTHER_MODULE_DOCS
+    ]
+    # remove duplicates while maintaining order
+    module_names = list(dict.fromkeys(module_names))
 
     dots = True
     success = True

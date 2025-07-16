@@ -318,7 +318,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->len = (npy_intp) view.len;
 
     /*
-     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * Both of the deprecated functions PyObject_AsWriteBuffer and
      * PyObject_AsReadBuffer that this code replaces release the buffer. It is
      * up to the object that supplies the buffer to guarantee that the buffer
      * sticks around after the release.
@@ -438,15 +438,11 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    if (PyObject_IsTrue(object)) {
-        *val = NPY_TRUE;
-    }
-    else {
-        *val = NPY_FALSE;
-    }
-    if (PyErr_Occurred()) {
+    int bool_val = PyObject_IsTrue(object);
+    if (bool_val == -1) {
         return NPY_FAIL;
     }
+    *val = (npy_bool)bool_val;
     return NPY_SUCCEED;
 }
 
@@ -460,15 +456,11 @@ PyArray_OptionalBoolConverter(PyObject *object, int *val)
     if (object == Py_None) {
         return NPY_SUCCEED;
     }
-    if (PyObject_IsTrue(object)) {
-        *val = 1;
-    }
-    else {
-        *val = 0;
-    }
-    if (PyErr_Occurred()) {
+    int bool_val = PyObject_IsTrue(object);
+    if (bool_val == -1) {
         return NPY_FAIL;
     }
+    *val = (npy_bool)bool_val;
     return NPY_SUCCEED;
 }
 
@@ -1215,11 +1207,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_INT64;
                     break;
-#ifdef NPY_INT128
-                case 16:
-                    newtype = NPY_INT128;
-                    break;
-#endif
             }
             break;
 
@@ -1237,11 +1224,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_UINT64;
                     break;
-#ifdef NPY_INT128
-                case 16:
-                    newtype = NPY_UINT128;
-                    break;
-#endif
             }
             break;
 

@@ -167,9 +167,8 @@ import pickle
 import warnings
 
 import numpy
-from numpy.lib._utils_impl import drop_metadata
 from numpy._utils import set_module
-
+from numpy.lib._utils_impl import drop_metadata
 
 __all__ = []
 
@@ -724,7 +723,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass to pickle.dump, excluding
         'protocol'. These are only useful when pickling objects in object
-        arrays on Python 3 to Python 2 compatible format.
+        arrays to Python 2 compatible format.
 
     Raises
     ------
@@ -769,14 +768,13 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
                     buffersize=buffersize, order='F'):
                 fp.write(chunk.tobytes('C'))
+    elif isfileobj(fp):
+        array.tofile(fp)
     else:
-        if isfileobj(fp):
-            array.tofile(fp)
-        else:
-            for chunk in numpy.nditer(
-                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='C'):
-                fp.write(chunk.tobytes('C'))
+        for chunk in numpy.nditer(
+                array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                buffersize=buffersize, order='C'):
+            fp.write(chunk.tobytes('C'))
 
 
 @set_module("numpy.lib.format")
@@ -794,8 +792,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
         Whether to allow writing pickled data. Default: False
     pickle_kwargs : dict
         Additional keyword arguments to pass to pickle.load. These are only
-        useful when loading object arrays saved on Python 2 when using
-        Python 3.
+        useful when loading object arrays saved on Python 2.
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.

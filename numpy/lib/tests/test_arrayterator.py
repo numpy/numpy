@@ -1,9 +1,9 @@
-from operator import mul
 from functools import reduce
+from operator import mul
 
 import numpy as np
-from numpy.random import randint
 from numpy.lib import Arrayterator
+from numpy.random import randint
 from numpy.testing import assert_
 
 

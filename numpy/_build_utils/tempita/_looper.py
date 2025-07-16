@@ -150,7 +150,7 @@ class loop_pos:
                 return getattr(item, getter)() != getattr(other, getter)()
             else:
                 return getattr(item, getter) != getattr(other, getter)
-        elif hasattr(getter, '__call__'):
+        elif callable(getter):
             return getter(item) != getter(other)
         else:
             return item[getter] != other[getter]

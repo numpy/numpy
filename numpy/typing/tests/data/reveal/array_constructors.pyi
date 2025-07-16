@@ -39,6 +39,8 @@ assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
+# https://github.com/numpy/numpy/issues/29245
+assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
@@ -51,7 +53,7 @@ assert_type(np.empty([1, 5, 6], dtype='c16'), npt.NDArray[Any])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
-assert_type(np.concatenate([A, A]), npt.NDArray[Any])
+assert_type(np.concatenate([A, A]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.concatenate([[1], A]), npt.NDArray[Any])
 assert_type(np.concatenate([[1], [1]]), npt.NDArray[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])
@@ -107,18 +109,18 @@ assert_type(np.frombuffer(A), npt.NDArray[np.float64])
 assert_type(np.frombuffer(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.frombuffer(A, dtype="c16"), npt.NDArray[Any])
 
-assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.signedinteger[Any]]])
-assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.signedinteger[Any]]])
-assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.signedinteger[Any]]])
-assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.floating[Any]]])
-assert_type(np.arange(start=0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.floating[Any]]])
+assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.signedinteger]])
+assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.signedinteger]])
+assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.signedinteger]])
+assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.floating]])
+assert_type(np.arange(start=0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.floating]])
 assert_type(np.arange(np.timedelta64(0)), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
 assert_type(np.arange(0, np.timedelta64(10)), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
 assert_type(np.arange(np.datetime64("0"), np.datetime64("10")), np.ndarray[tuple[int], np.dtype[np.datetime64]])
 assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
-assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[Any]])
-assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype])
+assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype])
 
 assert_type(np.require(A), npt.NDArray[np.float64])
 assert_type(np.require(B), SubClass[np.float64])
@@ -132,22 +134,22 @@ assert_type(np.require(B, requirements="W"), SubClass[np.float64])
 assert_type(np.require(B, requirements="A"), SubClass[np.float64])
 assert_type(np.require(C), npt.NDArray[Any])
 
-assert_type(np.linspace(0, 10), npt.NDArray[np.floating[Any]])
-assert_type(np.linspace(0, 10j), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.linspace(0, 10), npt.NDArray[np.float64])
+assert_type(np.linspace(0, 10j), npt.NDArray[np.complexfloating])
 assert_type(np.linspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.linspace(0, 10, dtype=int), npt.NDArray[Any])
-assert_type(np.linspace(0, 10, retstep=True), tuple[npt.NDArray[np.floating[Any]], np.floating[Any]])
-assert_type(np.linspace(0j, 10, retstep=True), tuple[npt.NDArray[np.complexfloating[Any, Any]], np.complexfloating[Any, Any]])
+assert_type(np.linspace(0, 10, retstep=True), tuple[npt.NDArray[np.float64], np.float64])
+assert_type(np.linspace(0j, 10, retstep=True), tuple[npt.NDArray[np.complexfloating], np.complexfloating])
 assert_type(np.linspace(0, 10, retstep=True, dtype=np.int64), tuple[npt.NDArray[np.int64], np.int64])
 assert_type(np.linspace(0j, 10, retstep=True, dtype=int), tuple[npt.NDArray[Any], Any])
 
-assert_type(np.logspace(0, 10), npt.NDArray[np.floating[Any]])
-assert_type(np.logspace(0, 10j), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.logspace(0, 10), npt.NDArray[np.float64])
+assert_type(np.logspace(0, 10j), npt.NDArray[np.complexfloating])
 assert_type(np.logspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.logspace(0, 10, dtype=int), npt.NDArray[Any])
 
-assert_type(np.geomspace(0, 10), npt.NDArray[np.floating[Any]])
-assert_type(np.geomspace(0, 10j), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.geomspace(0, 10), npt.NDArray[np.float64])
+assert_type(np.geomspace(0, 10j), npt.NDArray[np.complexfloating])
 assert_type(np.geomspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.geomspace(0, 10, dtype=int), npt.NDArray[Any])
 
@@ -191,9 +193,9 @@ assert_type(np.full(_shape_2d, i8), np.ndarray[tuple[int, int], np.dtype[np.int6
 assert_type(np.full(_shape_like, i8), npt.NDArray[np.int64])
 assert_type(np.full(_shape_like, 42), npt.NDArray[Any])
 assert_type(np.full(_size, i8, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.full(_size, i8, dtype=float), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.full(_size, i8, dtype=float), np.ndarray[tuple[int], np.dtype])
 assert_type(np.full(_shape_like, 42, dtype=float), npt.NDArray[Any])
-assert_type(np.full(_shape_0d, i8, dtype=object), np.ndarray[tuple[()], np.dtype[Any]])
+assert_type(np.full(_shape_0d, i8, dtype=object), np.ndarray[tuple[()], np.dtype])
 
 assert_type(np.indices([1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.indices([1, 2, 3], sparse=True), tuple[npt.NDArray[np.int_], ...])
@@ -220,22 +222,22 @@ assert_type(np.atleast_3d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_3d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_3d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 
-assert_type(np.vstack([A, A]), npt.NDArray[np.float64])
+assert_type(np.vstack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.vstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.vstack([A, C]), npt.NDArray[Any])
 assert_type(np.vstack([C, C]), npt.NDArray[Any])
 
-assert_type(np.hstack([A, A]), npt.NDArray[np.float64])
+assert_type(np.hstack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.hstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 
-assert_type(np.stack([A, A]), npt.NDArray[np.float64])
+assert_type(np.stack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.stack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.stack([A, C]), npt.NDArray[Any])
 assert_type(np.stack([C, C]), npt.NDArray[Any])
-assert_type(np.stack([A, A], axis=0), npt.NDArray[np.float64])
+assert_type(np.stack([A, A], axis=0), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 
-assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])
+assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.block(C), npt.NDArray[Any])
 
 if sys.version_info >= (3, 12):

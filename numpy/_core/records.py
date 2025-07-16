@@ -6,9 +6,9 @@ import warnings
 from collections import Counter
 from contextlib import nullcontext
 
-from .._utils import set_module
-from . import numeric as sb
-from . import numerictypes as nt
+from numpy._utils import set_module
+
+from . import numeric as sb, numerictypes as nt
 from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype
@@ -228,7 +228,7 @@ class record(nt.void):
             try:
                 dt = obj.dtype
             except AttributeError:
-                #happens if field is Object type
+                # happens if field is Object type
                 return obj
             if dt.names is not None:
                 return obj.view((self.__class__, obj.dtype))
@@ -243,11 +243,10 @@ class record(nt.void):
         res = fielddict.get(attr, None)
         if res:
             return self.setfield(val, *res[:2])
+        elif getattr(self, attr, None):
+            return nt.void.__setattr__(self, attr, val)
         else:
-            if getattr(self, attr, None):
-                return nt.void.__setattr__(self, attr, val)
-            else:
-                raise AttributeError(f"'record' object has no attribute '{attr}'")
+            raise AttributeError(f"'record' object has no attribute '{attr}'")
 
     def __getitem__(self, indx):
         obj = nt.void.__getitem__(self, indx)

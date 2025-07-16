@@ -1,30 +1,30 @@
 from collections.abc import Sequence
-from typing import TypeAlias, TypeVar, Any, overload, Literal
+from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
-from numpy import number, _OrderKACF
+from numpy import _OrderKACF, number
 from numpy._typing import (
     NDArray,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUInt_co,
     _DTypeLikeBool,
-    _DTypeLikeUInt,
-    _DTypeLikeInt,
-    _DTypeLikeFloat,
     _DTypeLikeComplex,
     _DTypeLikeComplex_co,
+    _DTypeLikeFloat,
+    _DTypeLikeInt,
     _DTypeLikeObject,
+    _DTypeLikeUInt,
 )
 
 __all__ = ["einsum", "einsum_path"]
 
 _ArrayT = TypeVar(
     "_ArrayT",
-    bound=NDArray[np.bool | number[Any]],
+    bound=NDArray[np.bool | number],
 )
 
 _OptimizeKind: TypeAlias = bool | Literal["greedy", "optimal"] | Sequence[Any] | None
@@ -43,7 +43,7 @@ def einsum(
     /,
     *operands: _ArrayLikeBool_co,
     out: None = ...,
-    dtype: None | _DTypeLikeBool = ...,
+    dtype: _DTypeLikeBool | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -54,7 +54,7 @@ def einsum(
     /,
     *operands: _ArrayLikeUInt_co,
     out: None = ...,
-    dtype: None | _DTypeLikeUInt = ...,
+    dtype: _DTypeLikeUInt | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -65,7 +65,7 @@ def einsum(
     /,
     *operands: _ArrayLikeInt_co,
     out: None = ...,
-    dtype: None | _DTypeLikeInt = ...,
+    dtype: _DTypeLikeInt | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -76,7 +76,7 @@ def einsum(
     /,
     *operands: _ArrayLikeFloat_co,
     out: None = ...,
-    dtype: None | _DTypeLikeFloat = ...,
+    dtype: _DTypeLikeFloat | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -87,7 +87,7 @@ def einsum(
     /,
     *operands: _ArrayLikeComplex_co,
     out: None = ...,
-    dtype: None | _DTypeLikeComplex = ...,
+    dtype: _DTypeLikeComplex | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -98,7 +98,7 @@ def einsum(
     /,
     *operands: Any,
     casting: _CastingUnsafe,
-    dtype: None | _DTypeLikeComplex_co = ...,
+    dtype: _DTypeLikeComplex_co | None = ...,
     out: None = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
@@ -109,7 +109,7 @@ def einsum(
     /,
     *operands: _ArrayLikeComplex_co,
     out: _ArrayT,
-    dtype: None | _DTypeLikeComplex_co = ...,
+    dtype: _DTypeLikeComplex_co | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -121,7 +121,7 @@ def einsum(
     *operands: Any,
     out: _ArrayT,
     casting: _CastingUnsafe,
-    dtype: None | _DTypeLikeComplex_co = ...,
+    dtype: _DTypeLikeComplex_co | None = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
 ) -> _ArrayT: ...
@@ -132,7 +132,7 @@ def einsum(
     /,
     *operands: _ArrayLikeObject_co,
     out: None = ...,
-    dtype: None | _DTypeLikeObject = ...,
+    dtype: _DTypeLikeObject | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -143,7 +143,7 @@ def einsum(
     /,
     *operands: Any,
     casting: _CastingUnsafe,
-    dtype: None | _DTypeLikeObject = ...,
+    dtype: _DTypeLikeObject | None = ...,
     out: None = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
@@ -154,7 +154,7 @@ def einsum(
     /,
     *operands: _ArrayLikeObject_co,
     out: _ArrayT,
-    dtype: None | _DTypeLikeObject = ...,
+    dtype: _DTypeLikeObject | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -166,7 +166,7 @@ def einsum(
     *operands: Any,
     out: _ArrayT,
     casting: _CastingUnsafe,
-    dtype: None | _DTypeLikeObject = ...,
+    dtype: _DTypeLikeObject | None = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
 ) -> _ArrayT: ...

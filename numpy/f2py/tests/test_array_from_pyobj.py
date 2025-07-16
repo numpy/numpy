@@ -1,12 +1,13 @@
-import sys
 import copy
 import platform
-import pytest
+import sys
 from pathlib import Path
 
-import numpy as np
+import pytest
 
+import numpy as np
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
+
 from . import util
 
 wrap = None
@@ -33,7 +34,7 @@ def setup_module():
         src = [
             get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
+        wrap = util.build_meson(src, module_name="test_array_from_pyobj_ext")
 
 
 def flags_info(arr):

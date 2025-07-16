@@ -1,15 +1,12 @@
-from __future__ import annotations
-
 import importlib.util
 import os
 import re
 import shutil
+import textwrap
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import pytest
-from numpy.typing.mypy_plugin import _EXTENDED_PRECISION_LIST
-
 
 # Only trigger a full `mypy` run if this environment variable is set
 # Note that these tests tend to take over a minute even on a macOS M1 CPU,
@@ -34,6 +31,7 @@ else:
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
     # We need this as annotation, but it's located in a private namespace.
     # As a compromise, do *not* import it during runtime
     from _pytest.mark.structures import ParameterSet
@@ -99,9 +97,9 @@ def run_mypy() -> None:
             directory,
         ])
         if stderr:
-            pytest.fail(f"Unexpected mypy standard error\n\n{stderr}")
+            pytest.fail(f"Unexpected mypy standard error\n\n{stderr}", False)
         elif exit_code not in {0, 1}:
-            pytest.fail(f"Unexpected mypy exit code: {exit_code}\n\n{stdout}")
+            pytest.fail(f"Unexpected mypy exit code: {exit_code}\n\n{stdout}", False)
 
         str_concat = ""
         filename: str | None = None
@@ -118,98 +116,47 @@ def run_mypy() -> None:
                 filename = None
 
 
-def get_test_cases(directory: str) -> Iterator[ParameterSet]:
-    for root, _, files in os.walk(directory):
-        for fname in files:
-            short_fname, ext = os.path.splitext(fname)
-            if ext in (".pyi", ".py"):
+def get_test_cases(*directories: str) -> "Iterator[ParameterSet]":
+    for directory in directories:
+        for root, _, files in os.walk(directory):
+            for fname in files:
+                short_fname, ext = os.path.splitext(fname)
+                if ext not in (".pyi", ".py"):
+                    continue
+
                 fullpath = os.path.join(root, fname)
                 yield pytest.param(fullpath, id=short_fname)
 
 
+_FAIL_INDENT = " " * 4
+_FAIL_SEP = "\n" + "_" * 79 + "\n\n"
+
+_FAIL_MSG_REVEAL = """{}:{} - reveal mismatch:
+
+{}"""
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
-@pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
-def test_success(path) -> None:
+@pytest.mark.parametrize("path", get_test_cases(PASS_DIR, FAIL_DIR))
+def test_pass(path) -> None:
     # Alias `OUTPUT_MYPY` so that it appears in the local namespace
     output_mypy = OUTPUT_MYPY
-    if path in output_mypy:
-        msg = "Unexpected mypy output\n\n"
-        msg += "\n".join(_strip_filename(v)[1] for v in output_mypy[path])
-        raise AssertionError(msg)
 
+    if path not in output_mypy:
+        return
 
-@pytest.mark.slow
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
-@pytest.mark.parametrize("path", get_test_cases(FAIL_DIR))
-def test_fail(path: str) -> None:
-    __tracebackhide__ = True
+    relpath = os.path.relpath(path)
 
-    with open(path) as fin:
-        lines = fin.readlines()
+    # collect any reported errors, and clean up the output
+    messages = []
+    for message in output_mypy[path]:
+        lineno, content = _strip_filename(message)
+        content = content.removeprefix("error:").lstrip()
+        messages.append(f"{relpath}:{lineno} - {content}")
 
-    errors = defaultdict(lambda: "")
-
-    output_mypy = OUTPUT_MYPY
-    assert path in output_mypy
-
-    for error_line in output_mypy[path]:
-        lineno, error_line = _strip_filename(error_line)
-        errors[lineno] += f'{error_line}\n'
-
-    for i, line in enumerate(lines):
-        lineno = i + 1
-        if (
-            line.startswith('#')
-            or (" E:" not in line and lineno not in errors)
-        ):
-            continue
-
-        target_line = lines[lineno - 1]
-        if "# E:" in target_line:
-            expression, _, marker = target_line.partition("  # E: ")
-            error = errors[lineno].strip()
-            expected_error = marker.strip()
-            _test_fail(path, expression, error, expected_error, lineno)
-        else:
-            pytest.fail(
-                f"Unexpected mypy output at line {lineno}\n\n{errors[lineno]}"
-            )
-
-
-_FAIL_MSG1 = """Extra error at line {}
-
-Expression: {}
-Extra error: {!r}
-"""
-
-_FAIL_MSG2 = """Error mismatch at line {}
-
-Expression: {}
-Expected error: {}
-Observed error: {!r}
-"""
-
-
-def _test_fail(
-    path: str,
-    expression: str,
-    error: str,
-    expected_error: None | str,
-    lineno: int,
-) -> None:
-    if expected_error is None:
-        raise AssertionError(_FAIL_MSG1.format(lineno, expression, error))
-    elif expected_error not in error:
-        raise AssertionError(_FAIL_MSG2.format(
-            lineno, expression, expected_error, error
-        ))
-
-
-_REVEAL_MSG = """Reveal mismatch at line {}
-
-{}
-"""
+    if messages:
+        pytest.fail("\n".join(messages), pytrace=False)
 
 
 @pytest.mark.slow
@@ -225,9 +172,19 @@ def test_reveal(path: str) -> None:
     if path not in output_mypy:
         return
 
+    relpath = os.path.relpath(path)
+
+    # collect any reported errors, and clean up the output
+    failures = []
     for error_line in output_mypy[path]:
-        lineno, error_line = _strip_filename(error_line)
-        raise AssertionError(_REVEAL_MSG.format(lineno, error_line))
+        lineno, error_msg = _strip_filename(error_line)
+        error_msg = textwrap.indent(error_msg, _FAIL_INDENT)
+        reason = _FAIL_MSG_REVEAL.format(relpath, lineno, error_msg)
+        failures.append(reason)
+
+    if failures:
+        reasons = _FAIL_SEP.join(failures)
+        pytest.fail(reasons, pytrace=False)
 
 
 @pytest.mark.slow
@@ -246,41 +203,3 @@ def test_code_runs(path: str) -> None:
 
     test_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(test_module)
-
-
-LINENO_MAPPING = {
-    6: "uint128",
-    7: "uint256",
-    9: "int128",
-    10: "int256",
-    12: "float80",
-    13: "float96",
-    14: "float128",
-    15: "float256",
-    17: "complex160",
-    18: "complex192",
-    19: "complex256",
-    20: "complex512",
-}
-
-
-@pytest.mark.slow
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
-def test_extended_precision() -> None:
-    path = os.path.join(MISC_DIR, "extended_precision.pyi")
-    output_mypy = OUTPUT_MYPY
-    assert path in output_mypy
-
-    with open(path) as f:
-        expression_list = f.readlines()
-
-    for _msg in output_mypy[path]:
-        lineno, msg = _strip_filename(_msg)
-        expression = expression_list[lineno - 1].rstrip("\n")
-
-        if LINENO_MAPPING[lineno] in _EXTENDED_PRECISION_LIST:
-            raise AssertionError(_REVEAL_MSG.format(lineno, msg))
-        elif "error" not in msg:
-            _test_fail(
-                path, expression, msg, 'Expression is of type "Any"', lineno
-            )

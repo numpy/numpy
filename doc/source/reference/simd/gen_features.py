@@ -2,7 +2,9 @@
 Generate CPU features tables from CCompilerOpt
 """
 from os import path
+
 from numpy.distutils.ccompiler_opt import CCompilerOpt
+
 
 class FakeCCompilerOpt(CCompilerOpt):
     # disable caching no need for it

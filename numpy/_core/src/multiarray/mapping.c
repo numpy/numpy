@@ -1966,6 +1966,15 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) != 0) {
         Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
     }
+    for (i = 0; i < index_num; ++i) {
+        if (indices[i].object != NULL && PyArray_Check(indices[i].object) &&
+            solve_may_share_memory(self, (PyArrayObject *)indices[i].object, 1) != 0) {
+                Py_SETREF(indices[i].object, PyArray_Copy((PyArrayObject*)indices[i].object));
+                if (indices[i].object == NULL) {
+                    goto fail;
+                }
+        }
+    }
 
     /*
      * Special case for very simple 1-d fancy indexing, which however
@@ -2098,8 +2107,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
-        // TODO: the heuristic used here to determine the src_dtype might be subtly wrong
-        // for non-REFCHK user DTypes. See gh-27057 for the prior discussion about this.
         if (PyArray_GetDTypeTransferFunction(
                 1, itemsize, itemsize,
                 descr, PyArray_DESCR(self),
@@ -3001,6 +3008,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         if (extra_op == NULL) {
             goto fail;
         }
+        // extra_op_dtype might have been replaced, so get a new reference
+        extra_op_dtype = PyArray_DESCR(extra_op);
     }
 
     /*

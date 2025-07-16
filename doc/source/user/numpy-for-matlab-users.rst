@@ -676,8 +676,7 @@ are only a handful of key differences between the two.
 
    -  For ``array``, **``*`` means element-wise multiplication**, while
       **``@`` means matrix multiplication**; they have associated functions
-      ``multiply()`` and ``dot()``.  (Before Python 3.5, ``@`` did not exist
-      and one had to use ``dot()`` for matrix multiplication).
+      ``multiply()`` and ``dot()``.
    -  For ``matrix``, **``*`` means matrix multiplication**, and for
       element-wise multiplication one has to use the ``multiply()`` function.
 
@@ -810,7 +809,7 @@ Links
 =====
 
 Another somewhat outdated MATLAB/NumPy cross-reference can be found at
-http://mathesaurus.sf.net/
+https://mathesaurus.sf.net/
 
 An extensive list of tools for scientific work with Python can be
 found in the `topical software page <https://projects.scipy.org/topical-software.html>`__.

@@ -21,8 +21,8 @@ FT = TypeVar("FT", bound=Callable[..., Any])
 def func() -> int: ...
 
 def func2(
-    x: npt.NDArray[np.number[Any]],
-    y: npt.NDArray[np.number[Any]],
+    x: npt.NDArray[np.number],
+    y: npt.NDArray[np.number],
 ) -> npt.NDArray[np.bool]: ...
 
 assert_type(np.testing.KnownFailureException(), np.testing.KnownFailureException)
@@ -76,7 +76,7 @@ assert_type(np.testing.assert_(2, msg=lambda: "test"), None)
 if sys.platform == "win32" or sys.platform == "cygwin":
     assert_type(np.testing.memusage(), int)
 elif sys.platform == "linux":
-    assert_type(np.testing.memusage(), None | int)
+    assert_type(np.testing.memusage(), int | None)
 
 assert_type(np.testing.jiffies(), int)
 

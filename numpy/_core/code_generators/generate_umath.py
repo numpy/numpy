@@ -3,10 +3,10 @@ Generate the code to build all the internal ufuncs. At the base is the defdict:
 a dictionary ofUfunc classes. This is fed to make_code to generate
 __umath_generated.c
 """
+import argparse
 import os
 import re
 import textwrap
-import argparse
 
 # identity objects
 Zero = "PyLong_FromLong(0)"
@@ -226,6 +226,7 @@ class Ufunc:
 # String-handling utilities to avoid locale-dependence.
 
 import string
+
 UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
                               bytes(string.ascii_uppercase, "ascii"))
 
@@ -259,16 +260,16 @@ def english_upper(s):
     return uppered
 
 
-#each entry in defdict is a Ufunc object.
+# each entry in defdict is a Ufunc object.
 
-#name: [string of chars for which it is defined,
-#       string of characters using func interface,
-#       tuple of strings giving funcs for data,
-#       (in, out), or (instr, outstr) giving the signature as character codes,
-#       identity,
-#       docstring,
-#       output specification (optional)
-#       ]
+# name: [string of chars for which it is defined,
+#        string of characters using func interface,
+#        tuple of strings giving funcs for data,
+#        (in, out), or (instr, outstr) giving the signature as character codes,
+#        identity,
+#        docstring,
+#        output specification (optional)
+#        ]
 
 chartoname = {
     '?': 'bool',
@@ -396,7 +397,7 @@ defdict = {
           TD(O, f='PyNumber_Multiply'),
           indexed=intfltcmplx
           ),
-#'true_divide' : aliased to divide in umathmodule.c:initumath
+# 'true_divide' : aliased to divide in umathmodule.c:initumath
 'floor_divide':
     Ufunc(2, 1, None,  # One is only a unit to the right, not the left
           docstrings.get('numpy._core.umath.floor_divide'),
@@ -1382,7 +1383,7 @@ arity_lookup = {
     }
 }
 
-#for each name
+# for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
 # 3) add function.
@@ -1403,7 +1404,7 @@ def make_arrays(funcdict):
         sub = 0
 
         for k, t in enumerate(uf.type_descriptions):
-            cfunc_alias = t.cfunc_alias if t.cfunc_alias else name
+            cfunc_alias = t.cfunc_alias or name
             cfunc_fname = None
             if t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])
@@ -1479,9 +1480,7 @@ def make_arrays(funcdict):
 
     for dname, funcs in dispdict.items():
         code2list.append(textwrap.dedent(f"""
-            #ifndef NPY_DISABLE_OPTIMIZATION
             #include "{dname}.dispatch.h"
-            #endif
         """))
         for (ufunc_name, func_idx, cfunc_name, inout) in funcs:
             code2list.append(textwrap.dedent(f"""\
@@ -1572,7 +1571,7 @@ def make_ufuncs(funcdict):
                 typenum=f"NPY_{english_upper(chartoname[c])}",
                 count=uf.nin + uf.nout,
                 name=name,
-                funcname = f"{english_upper(chartoname[c])}_{name}_indexed",
+                funcname=f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
 
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)

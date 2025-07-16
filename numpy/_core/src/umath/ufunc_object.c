@@ -3727,6 +3727,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (ret == NULL) {
         goto fail;
     }
+    
+    Py_XDECREF(out);
 
     Py_DECREF(signature[0]);
     Py_DECREF(signature[1]);
@@ -3753,6 +3755,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     return wrapped_result;
 
 fail:
+    Py_XDECREF(out);
+
     Py_XDECREF(signature[0]);
     Py_XDECREF(signature[1]);
     Py_XDECREF(signature[2]);
@@ -4319,10 +4323,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     /* Check number of arguments */
     if (NPY_UNLIKELY((len_args < nin) || (len_args > nop))) {
+        const char *verb = (len_args == 1) ? "was" : "were";
         PyErr_Format(PyExc_TypeError,
-                "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                ufunc_get_name_cstr(ufunc) , nin, nop, len_args);
+            "%s() takes from %d to %d positional arguments but "
+            "%zd %s given",
+            ufunc_get_name_cstr(ufunc), nin, nop, len_args, verb);
         goto fail;
     }
 

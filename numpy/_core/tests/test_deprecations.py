@@ -3,25 +3,15 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
+import contextlib
 import warnings
+
 import pytest
-import tempfile
-import re
 
 import numpy as np
-from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles, temppath
-    )
-
-from numpy._core._multiarray_tests import fromstring_null_term_c_api
 import numpy._core._struct_ufunc_tests as struct_ufunc
-
-try:
-    import pytz
-    _has_pytz = True
-except ImportError:
-    _has_pytz = False
+from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
+from numpy.testing import assert_raises, temppath
 
 
 class _DeprecationTestCase:
@@ -88,10 +78,12 @@ class _DeprecationTestCase:
         if exceptions is np._NoValue:
             exceptions = (self.warning_cls,)
 
-        try:
+        if function_fails:
+            context_manager = contextlib.suppress(Exception)
+        else:
+            context_manager = contextlib.nullcontext()
+        with context_manager:
             function(*args, **kwargs)
-        except (Exception if function_fails else ()):
-            pass
 
         # just in case, clear the registry
         num_found = 0
@@ -345,13 +337,13 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy.lib._utils_impl import safe_eval
-        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
-        from numpy.lib._function_base_impl import disp
-        from numpy.lib._shape_base_impl import get_array_wrap
-        from numpy._core.numerictypes import maximum_sctype
-        from numpy.lib.tests.test_io import TextIO
         from numpy import in1d, row_stack, trapz
+        from numpy._core.numerictypes import maximum_sctype
+        from numpy.lib._function_base_impl import disp
+        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
+        from numpy.lib._shape_base_impl import get_array_wrap
+        from numpy.lib._utils_impl import safe_eval
+        from numpy.lib.tests.test_io import TextIO
 
         self.assert_deprecated(lambda: safe_eval("None"))
 
@@ -414,6 +406,13 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
 
+class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
+    message = "Setting the .*on a NumPy array has been deprecated.*"
+
+    def test_deprecated_strides_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
+
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
@@ -449,8 +448,35 @@ class TestDeprecatedSaveFixImports(_DeprecationTestCase):
 class TestAddNewdocUFunc(_DeprecationTestCase):
     # Deprecated in Numpy 2.2, 2024-11
     def test_deprecated(self):
+        doc = struct_ufunc.add_triplet.__doc__
+        # gh-26718
+        # This test mutates the C-level docstring pointer for add_triplet,
+        # which is permanent once set. Skip when re-running tests.
+        if doc is not None and "new docs" in doc:
+            pytest.skip("Cannot retest deprecation, otherwise ValueError: "
+                "Cannot change docstring of ufunc with non-NULL docstring")
         self.assert_deprecated(
             lambda: np._core.umath._add_newdoc_ufunc(
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
+
+class TestDTypeAlignBool(_VisibleDeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-07
+    # NOTE: As you can see, finalizing this deprecation breaks some (very) old
+    # pickle files.  This may be fine, but needs to be done with some care since
+    # it breaks all of them and not just some.
+    # (Maybe it should be a 3.0 or only after warning more explicitly around pickles.)
+    message = r"dtype\(\): align should be passed as Python or NumPy boolean but got "
+
+    def test_deprecated(self):
+        # in particular integers should be rejected because one may think they mean
+        # alignment, or pass them accidentally as a subarray shape (meaning to pass
+        # a tuple).
+        self.assert_deprecated(lambda: np.dtype("f8", align=3))
+
+    @pytest.mark.parametrize("align", [True, False, np.True_, np.False_])
+    def test_not_deprecated(self, align):
+        # if the user passes a bool, it is accepted.
+        self.assert_not_deprecated(lambda: np.dtype("f8", align=align))

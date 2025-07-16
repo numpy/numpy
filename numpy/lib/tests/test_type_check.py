@@ -1,11 +1,17 @@
 import numpy as np
 from numpy import (
-    common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
-    nan_to_num, isrealobj, iscomplexobj, real_if_close
-    )
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises
-    )
+    common_type,
+    iscomplex,
+    iscomplexobj,
+    isneginf,
+    isposinf,
+    isreal,
+    isrealobj,
+    mintypecode,
+    nan_to_num,
+    real_if_close,
+)
+from numpy.testing import assert_, assert_array_equal, assert_equal
 
 
 def assert_all(x):

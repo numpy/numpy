@@ -6,23 +6,24 @@ Utility functions for
 - determining paths to tests
 
 """
+import atexit
+import concurrent.futures
+import contextlib
 import glob
 import os
-import sys
-import subprocess
-import tempfile
 import shutil
-import atexit
-import pytest
-import contextlib
-import numpy
-import concurrent.futures
-
-from pathlib import Path
-from numpy._utils import asunicode
-from numpy.testing import temppath, IS_WASM
+import subprocess
+import sys
+import tempfile
 from importlib import import_module
+from pathlib import Path
+
+import pytest
+
+import numpy
+from numpy._utils import asunicode
 from numpy.f2py._backends._meson import MesonBackend
+from numpy.testing import IS_WASM, temppath
 
 #
 # Check if compilers are available at all...
@@ -384,7 +385,7 @@ class F2PyTest:
         if self.module is not None:
             return
 
-        codes = self.sources if self.sources else []
+        codes = self.sources or []
         if self.code:
             codes.append(self.suffix)
 

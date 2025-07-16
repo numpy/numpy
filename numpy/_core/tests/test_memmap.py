@@ -1,18 +1,34 @@
-import sys
-import os
 import mmap
-import pytest
+import os
+import sys
+import warnings
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryFile
 
-from numpy import (
-    memmap, sum, average, prod, ndarray, isscalar, add, subtract, multiply)
+import pytest
 
-from numpy import arange, allclose, asarray
+from numpy import (
+    add,
+    allclose,
+    arange,
+    asarray,
+    average,
+    isscalar,
+    memmap,
+    multiply,
+    ndarray,
+    prod,
+    subtract,
+    sum,
+)
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, suppress_warnings, IS_PYPY,
-    break_cycles
-    )
+    IS_PYPY,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    break_cycles,
+)
+
 
 class TestMemmap:
     def setup_method(self):
@@ -151,8 +167,9 @@ class TestMemmap:
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
         fp[:] = self.data
 
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "np.average currently does not preserve")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "np.average currently does not preserve", FutureWarning)
             for unary_op in [sum, average, prod]:
                 result = unary_op(fp)
                 assert_(isscalar(result))

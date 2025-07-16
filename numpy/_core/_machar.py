@@ -7,9 +7,8 @@ Author: Pearu Peterson, September 2003
 """
 __all__ = ['MachAr']
 
-from .fromnumeric import any
 from ._ufunc_config import errstate
-from .._utils import set_module
+from .fromnumeric import any
 
 # Need to speed this up...especially for longdouble
 

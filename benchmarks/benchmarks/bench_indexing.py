@@ -1,11 +1,11 @@
-from .common import (
-    Benchmark, get_square_, get_indexes_, get_indexes_rand_, TYPES1)
-
-from os.path import join as pjoin
 import shutil
-from numpy import memmap, float32, array
-import numpy as np
+from os.path import join as pjoin
 from tempfile import mkdtemp
+
+import numpy as np
+from numpy import array, float32, memmap
+
+from .common import TYPES1, Benchmark, get_indexes_, get_indexes_rand_, get_square_
 
 
 class Indexing(Benchmark):

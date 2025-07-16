@@ -20,9 +20,7 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
-from numpy._core._multiarray_umath import _array_converter
-from numpy._core._multiarray_umath import _unique_hash
-
+from numpy._core._multiarray_umath import _array_converter, _unique_hash
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -370,7 +368,8 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         conv = _array_converter(ar)
         ar_, = conv
 
-        if (hash_unique := _unique_hash(ar_)) is not NotImplemented:
+        if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
+            is not NotImplemented:
             if sorted:
                 hash_unique.sort()
             # We wrap the result back in case it was a subclass of numpy.ndarray.

@@ -1,6 +1,7 @@
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_array_equal
+from numpy.testing import assert_, assert_array_equal, assert_equal
+
 
 def buffer_length(arr):
     if isinstance(arr, str):
@@ -133,7 +134,8 @@ class CreateValues:
 
     def test_valuesMD(self):
         # Check creation of multi-dimensional objects with values
-        ua = np.array([[[self.ucs_value * self.ulen] * 2] * 3] * 4, dtype=f'U{self.ulen}')
+        data = [[[self.ucs_value * self.ulen] * 2] * 3] * 4
+        ua = np.array(data, dtype=f'U{self.ulen}')
         self.content_check(ua, ua[0, 0, 0], 4 * self.ulen * 2 * 3 * 4)
         self.content_check(ua, ua[-1, -1, -1], 4 * self.ulen * 2 * 3 * 4)
 

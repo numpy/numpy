@@ -1,14 +1,14 @@
-from typing import Any, overload, TypeAlias
+from typing import TypeAlias, overload
 
 import numpy as np
 from numpy._typing import (
     NDArray,
-    _ArrayLikeStr_co as U_co,
+    _AnyShape,
+    _ArrayLikeAnyString_co as UST_co,
     _ArrayLikeBytes_co as S_co,
     _ArrayLikeInt_co as i_co,
+    _ArrayLikeStr_co as U_co,
     _ArrayLikeString_co as T_co,
-    _ArrayLikeAnyString_co as UST_co,
-    _Shape,
     _SupportsArray,
 )
 
@@ -58,11 +58,12 @@ __all__ = [
     "translate",
     "upper",
     "zfill",
+    "slice",
 ]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | _StringDTypeArray
+_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_AnyShape, np.dtype[np.str_]] | _StringDTypeArray
 
 @overload
 def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
@@ -497,4 +498,18 @@ def translate(
     a: T_co,
     table: str,
     deletechars: str | None = None,
+) -> _StringDTypeOrUnicodeArray: ...
+
+#
+@overload
+def slice(a: U_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.str_]: ...  # type: ignore[overload-overlap]
+@overload
+def slice(a: S_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.bytes_]: ...
+@overload
+def slice(
+    a: _StringDTypeSupportsArray, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
+) -> _StringDTypeArray: ...
+@overload
+def slice(
+    a: T_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
 ) -> _StringDTypeOrUnicodeArray: ...

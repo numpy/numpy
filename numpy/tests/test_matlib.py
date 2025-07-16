@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.matlib
-from numpy.testing import assert_array_equal, assert_
+from numpy.testing import assert_, assert_array_equal
+
 
 def test_empty():
     x = numpy.matlib.empty((2,))

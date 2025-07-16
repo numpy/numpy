@@ -217,4 +217,4 @@ path using a hash. This needs to be added to the ``PATH`` variable.
 .. _are outdated: https://github.com/conda-forge/conda-forge.github.io/issues/1044
 .. _now deprecated: https://github.com/numpy/numpy/pull/20875
 .. _LLVM Flang: https://releases.llvm.org/11.0.0/tools/flang/docs/ReleaseNotes.html
-.. _SciPy's documentation: http://scipy.github.io/devdocs/building/index.html#system-level-dependencies
+.. _SciPy's documentation: https://scipy.github.io/devdocs/building/index.html#system-level-dependencies

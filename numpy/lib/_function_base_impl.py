@@ -7,30 +7,56 @@ import warnings
 
 import numpy as np
 import numpy._core.numeric as _nx
-from numpy._core import transpose, overrides
-from numpy._core.numeric import (
-    ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
-    ndarray, take, dot, where, intp, integer, isscalar, absolute
-    )
-from numpy._core.umath import (
-    pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract, minimum
-    )
-from numpy._core.fromnumeric import (
-    ravel, nonzero, partition, mean, any, sum
-    )
-from numpy._core.numerictypes import typecodes
-from numpy.lib._twodim_base_impl import diag
-from numpy._core.multiarray import (
-    _place, bincount, normalize_axis_index, _monotonicity,
-    interp as compiled_interp, interp_complex as compiled_interp_complex
-    )
+from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
+from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
+from numpy._core.multiarray import (
+    _monotonicity,
+    _place,
+    bincount,
+    interp as compiled_interp,
+    interp_complex as compiled_interp_complex,
+    normalize_axis_index,
+)
+from numpy._core.numeric import (
+    absolute,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    concatenate,
+    dot,
+    empty,
+    integer,
+    intp,
+    isscalar,
+    ndarray,
+    ones,
+    take,
+    where,
+    zeros_like,
+)
+from numpy._core.numerictypes import typecodes
+from numpy._core.umath import (
+    add,
+    arctan2,
+    cos,
+    exp,
+    frompyfunc,
+    less_equal,
+    minimum,
+    mod,
+    not_equal,
+    pi,
+    sin,
+    sqrt,
+    subtract,
+)
 from numpy._utils import set_module
 
 # needed in this module for compatibility
 from numpy.lib._histograms_impl import histogram, histogramdd  # noqa: F401
-
+from numpy.lib._twodim_base_impl import diag
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -996,7 +1022,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
            the corresponding dimension
         4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
-        If `axis` is given, the number of varargs must equal the number of axes specified in the axis parameter.
+        If `axis` is given, the number of varargs must equal the number of axes
+        specified in the axis parameter.
         Default: 1. (see Examples below).
 
     edge_order : {1, 2}, optional
@@ -1292,7 +1319,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
+                                                + c * f[tuple(slice4)]
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -1327,7 +1355,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
+                                                        + c * f[tuple(slice4)]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1344,7 +1373,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
+                                                        + c * f[tuple(slice4)]
 
         outvals.append(out)
 
@@ -2137,7 +2167,6 @@ def disp(mesg, device=None, linefeed=True):
     else:
         device.write(f'{mesg}')
     device.flush()
-    return
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
@@ -2434,8 +2463,8 @@ class vectorize:
                  excluded=None, cache=False, signature=None):
 
         if (pyfunc != np._NoValue) and (not callable(pyfunc)):
-            #Splitting the error message to keep
-            #the length below 79 characters.
+            # Splitting the error message to keep
+            # the length below 79 characters.
             part1 = "When used as a decorator, "
             part2 = "only accepts keyword arguments."
             raise TypeError(part1 + part2)
@@ -2549,6 +2578,7 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
+            args = [asarray(a) for a in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2594,8 +2624,9 @@ class vectorize:
         elif not args:
             res = func()
         else:
-            args = [asanyarray(a, dtype=object) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
+            # gh-29196: `dtype=object` should eventually be removed
+            args = [asanyarray(a, dtype=object) for a in args]
             outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
@@ -3865,11 +3896,10 @@ def _ureduce(a, func, keepdims=False, **kwargs):
     if axis is not None:
         axis = _nx.normalize_axis_tuple(axis, nd)
 
-        if keepdims:
-            if out is not None:
-                index_out = tuple(
-                    0 if i in axis else slice(None) for i in range(nd))
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+        if keepdims and out is not None:
+            index_out = tuple(
+                0 if i in axis else slice(None) for i in range(nd))
+            kwargs['out'] = out[(Ellipsis, ) + index_out]
 
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
@@ -3882,11 +3912,9 @@ def _ureduce(a, func, keepdims=False, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
-    else:
-        if keepdims:
-            if out is not None:
-                index_out = (0, ) * nd
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+    elif keepdims and out is not None:
+        index_out = (0, ) * nd
+        kwargs['out'] = out[(Ellipsis, ) + index_out]
 
     r = func(a, **kwargs)
 
@@ -4560,9 +4588,8 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    else:
-        if not (q.min() >= 0 and q.max() <= 1):
-            return False
+    elif not (q.min() >= 0 and q.max() <= 1):
+        return False
     return True
 
 
@@ -4691,14 +4718,14 @@ def _inverted_cdf(n, quantiles):
 
 
 def _quantile_ureduce_func(
-        a: np.array,
-        q: np.array,
-        weights: np.array,
-        axis: int | None = None,
-        out=None,
-        overwrite_input: bool = False,
-        method="linear",
-) -> np.array:
+    a: np.ndarray,
+    q: np.ndarray,
+    weights: np.ndarray,
+    axis: int | None = None,
+    out: np.ndarray | None = None,
+    overwrite_input: bool = False,
+    method: str = "linear",
+) -> np.ndarray:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
         # semantics. For now, keep the supported dimensions the same as it was
@@ -4712,14 +4739,13 @@ def _quantile_ureduce_func(
         else:
             arr = a
             wgt = weights
+    elif axis is None:
+        axis = 0
+        arr = a.flatten()
+        wgt = None if weights is None else weights.flatten()
     else:
-        if axis is None:
-            axis = 0
-            arr = a.flatten()
-            wgt = None if weights is None else weights.flatten()
-        else:
-            arr = a.copy()
-            wgt = weights
+        arr = a.copy()
+        wgt = weights
     result = _quantile(arr,
                        quantiles=q,
                        axis=axis,
@@ -4765,13 +4791,13 @@ def _get_indexes(arr, virtual_indexes, valid_values_count):
 
 
 def _quantile(
-        arr: np.array,
-        quantiles: np.array,
-        axis: int = -1,
-        method="linear",
-        out=None,
-        weights=None,
-):
+    arr: "np.typing.ArrayLike",
+    quantiles: np.ndarray,
+    axis: int = -1,
+    method: str = "linear",
+    out: np.ndarray | None = None,
+    weights: "np.typing.ArrayLike | None" = None,
+) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce

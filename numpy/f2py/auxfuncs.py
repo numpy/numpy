@@ -9,13 +9,12 @@ terms of the NumPy (BSD style) LICENSE.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 import pprint
-import sys
 import re
+import sys
 import types
 from functools import reduce
 
-from . import __version__
-from . import cfuncs
+from . import __version__, cfuncs
 from .cfuncs import errmess
 
 __all__ = [
@@ -43,7 +42,7 @@ __all__ = [
     'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
     'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
-    'process_f2cmap_dict', 'containscommon'
+    'process_f2cmap_dict', 'containscommon', 'containsderivedtypes'
 ]
 
 
@@ -570,6 +569,20 @@ def containscommon(rout):
     return 0
 
 
+def hasderivedtypes(rout):
+    return ('block' in rout) and rout['block'] == 'type'
+
+
+def containsderivedtypes(rout):
+    if hasderivedtypes(rout):
+        return 1
+    if hasbody(rout):
+        for b in rout['body']:
+            if hasderivedtypes(b):
+                return 1
+    return 0
+
+
 def containsmodule(block):
     if ismodule(block):
         return 1
@@ -708,9 +721,8 @@ def getcallprotoargument(rout, cb_map={}):
                 pass
             elif isstring(var):
                 pass
-            else:
-                if not isattr_value(var):
-                    ctype = ctype + '*'
+            elif not isattr_value(var):
+                ctype = ctype + '*'
             if (isstring(var)
                  or isarrayofstrings(var)  # obsolete?
                  or isstringarray(var)):
@@ -923,7 +935,7 @@ def getuseblocks(pymod):
                 all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
     return all_uses
 
-def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose=False):
     """
     Update the Fortran-to-C type mapping dictionary with new mappings and
     return a list of successfully mapped C types.
@@ -983,11 +995,10 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
                 if verbose:
                     outmess(f'\tMapping "{k}(kind={k1})" to "{v1}\"\n')
                 f2cmap_mapped.append(v1)
-            else:
-                if verbose:
-                    errmess(
-                        "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                        % (k, k1, v1, v1, list(c2py_map.keys()))
-                    )
+            elif verbose:
+                errmess(
+                    "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
+                    % (k, k1, v1, v1, list(c2py_map.keys()))
+                )
 
     return f2cmap_all, f2cmap_mapped

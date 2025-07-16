@@ -1,18 +1,27 @@
-import numpy as np
 import functools
 import sys
+
 import pytest
 
+import numpy as np
 from numpy import (
-    apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
-    put_along_axis
-    )
+    apply_along_axis,
+    apply_over_axes,
+    array_split,
+    column_stack,
+    dsplit,
+    dstack,
+    expand_dims,
+    hsplit,
+    kron,
+    put_along_axis,
+    split,
+    take_along_axis,
+    tile,
+    vsplit,
+)
 from numpy.exceptions import AxisError
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
-    )
-
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 IS_64BIT = sys.maxsize > 2**32
 

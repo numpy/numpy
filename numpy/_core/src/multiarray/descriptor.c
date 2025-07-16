@@ -1029,17 +1029,13 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
 static PyArray_Descr *
 _convert_from_field_dict(PyObject *obj, int align)
 {
-    PyObject *_numpy_internal;
-    PyArray_Descr *res;
-
-    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
-    if (_numpy_internal == NULL) {
+    if (npy_cache_import_runtime(
+            "numpy._core._internal", "_usefields", &npy_runtime_imports._usefields) < 0) {
         return NULL;
     }
-    res = (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
-            "_usefields", "Oi", obj, align);
-    Py_DECREF(_numpy_internal);
-    return res;
+
+    return (PyArray_Descr *)PyObject_CallFunctionObjArgs(
+        npy_runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
 }
 
 /*
@@ -2095,7 +2091,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_PYSSIZET, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-#if NPY_ULONGLONG == NPY_UINT64
+#if NPY_SIZEOF_LONGLONG == 8
         T_ULONGLONG, offsetof(PyArray_Descr, flags), READONLY, NULL},
 #else
     #error Assuming long long is 64bit, if not replace with getter function.
@@ -2116,6 +2112,10 @@ arraydescr_subdescr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
+    if (!PyDataType_ISLEGACY(NPY_DTYPE(self))) {
+        return (PyObject *) Py_TYPE(self)->tp_str((PyObject *)self);
+    }
+
     char basic_ = self->kind;
     char endian = self->byteorder;
     int size = self->elsize;
@@ -2550,7 +2550,9 @@ arraydescr_new(PyTypeObject *subtype,
         return NULL;
     }
 
-    PyObject *odescr, *metadata=NULL;
+    PyObject *odescr;
+    PyObject *oalign = NULL;
+    PyObject *metadata = NULL;
     PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
     npy_bool copy = NPY_FALSE;
@@ -2558,12 +2560,31 @@ arraydescr_new(PyTypeObject *subtype,
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O!:dtype", kwlist,
                 &odescr,
-                PyArray_BoolConverter, &align,
+                &oalign,
                 PyArray_BoolConverter, &copy,
                 &PyDict_Type, &metadata)) {
         return NULL;
+    }
+
+    if (oalign != NULL) {
+        /*
+         * In the future, reject non Python (or NumPy) boolean, including integers to avoid any
+         * possibility of thinking that an integer alignment makes sense here.
+         */
+        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool)) {
+            /* Deprecated 2025-07-01: NumPy 2.4 */
+            if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
+                        "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
+                        "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
+                        oalign) < 0) {
+                return NULL;
+            }
+        }
+        if (!PyArray_BoolConverter(oalign, &align)) {
+            return NULL;
+        }
     }
 
     conv = _convert_from_any(odescr, align);
