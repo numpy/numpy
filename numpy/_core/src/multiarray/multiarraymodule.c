@@ -2764,7 +2764,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
     npy_intp i, size;
     PyObject *item;
 
-    obj = PySequence_Fast(obj, "the subscripts for each operand must "
+    obj = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref - manual fix needed
                                "be a list or a tuple");
     if (obj == NULL) {
         return -1;

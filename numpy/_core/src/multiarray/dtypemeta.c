@@ -693,7 +693,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
         int maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
             PyObject *name = PyTuple_GET_ITEM(self->names, i);
-            PyObject *tuple = PyDict_GetItem(self->fields, name);
+            PyObject *tuple = PyDict_GetItem(self->fields, name); // noqa: borrowed-ref OK
             PyObject *new_tuple = PyTuple_New(PyTuple_GET_SIZE(tuple));
             PyArray_Descr *field_descr = NPY_DT_CALL_ensure_canonical(
                     (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0));

@@ -346,7 +346,7 @@ get_fields_traverse_function(
         int offset;
 
         key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(dtype->fields, key);
+        tup = PyDict_GetItem(dtype->fields, key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return -1;
