@@ -1276,12 +1276,16 @@ class TestLoadTxt(LoadTxtBase):
             (1, ["ignored\n", "1,2\n", "\n", "3,4\n"]),
             # "Bad" lines that do not end in newlines:
             (1, ["ignored", "1,2", "", "3,4"]),
-            (1, StringIO("ignored\n1,2\n\n3,4")),
+            (1, lambda: StringIO("ignored\n1,2\n\n3,4")),
             # Same as above, but do not skip any lines:
             (0, ["-1,0\n", "1,2\n", "\n", "3,4\n"]),
             (0, ["-1,0", "1,2", "", "3,4"]),
-            (0, StringIO("-1,0\n1,2\n\n3,4"))])
+            (0, lambda: StringIO("-1,0\n1,2\n\n3,4"))])
     def test_max_rows_empty_lines(self, skip, data):
+        # gh-26718 re-instantiate StringIO objects each time
+        if callable(data):
+            data = data()
+
         with pytest.warns(UserWarning,
                     match=f"Input line 3.*max_rows={3 - skip}"):
             res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
