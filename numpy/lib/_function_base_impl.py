@@ -129,7 +129,7 @@ _QuantileMethods = {
     # `_compute_virtual_index(n, quantiles, 1, 1)`.
     # They are mathematically equivalent.
     'linear': {
-        'get_virtual_index': lambda n, quantiles: (n - 1) * quantiles,
+        'get_virtual_index': lambda n, quantiles: (n - np.int64(1)) * quantiles,
         'fix_gamma': lambda gamma, _: gamma,
     },
     'median_unbiased': {
@@ -4277,9 +4277,7 @@ def percentile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    # Use dtype of array if possible (e.g., if q is a python int or float)
-    # by making the divisor have the dtype of the data array.
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
+    q = np.true_divide(q, 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -4538,11 +4536,7 @@ def quantile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    # Use dtype of array if possible (e.g., if q is a python int or float).
-    if isinstance(q, (int, float)) and a.dtype.kind == "f":
-        q = np.asanyarray(q, dtype=a.dtype)
-    else:
-        q = np.asanyarray(q)
+    q = np.asanyarray(q)
 
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -4635,7 +4629,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4656,7 +4650,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
+    return np.asanyarray(gamma, dtype=dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -4875,7 +4869,16 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
+            if arr.dtype.kind in "iu":
+                gtype = None
+            elif arr.dtype.kind == "f":
+                # make sure the return value matches the input array type
+                gtype = arr.dtype
+            else:
+                gtype = virtual_indexes.dtype
+
+            gamma = _get_gamma(virtual_indexes, previous_indexes,
+                               method_props, gtype)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
             gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
