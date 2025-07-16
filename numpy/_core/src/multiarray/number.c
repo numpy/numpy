@@ -363,7 +363,12 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
     }
 
     PyArrayObject *a1 = (PyArrayObject *)o1;
-    if (!(PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1))) {
+    if (PyArray_ISOBJECT(a1)) {
+        return 1;
+    }
+    if (!is_square && !PyArray_ISFLOAT(a1) && !PyArray_ISCOMPLEX(a1)) {
+        // we special-case squaring for any array type
+        // gh-29388
         return 1;
     }
 
