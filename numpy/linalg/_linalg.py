@@ -532,12 +532,12 @@ def tensorinv(a, ind=2):
 
 # Matrix inversion
 
-def _unary_dispatcher(a):
+def _unary_dispatcher(a, *, noerr=None):
     return (a,)
 
 
 @array_function_dispatch(_unary_dispatcher)
-def inv(a):
+def inv(a, *, noerr=False):
     """
     Compute the inverse of a matrix.
 
@@ -548,6 +548,10 @@ def inv(a):
     ----------
     a : (..., M, M) array_like
         Matrix to be inverted.
+    noerr : bool, optional
+        If True, do not raise a LinAlgError when a matrix is singular.
+        Instead, return a matrix with NaN values for the singular matrices.
+        Default is False.
 
     Returns
     -------
@@ -620,6 +624,25 @@ def inv(a):
            [-0.5  ,  0.625,  0.25 ],
            [ 0.   ,  0.   ,  1.   ]])
 
+    Using the `noerr` parameter to handle singular matrices in a stack:
+
+    >>> a = np.array([
+    ...     [[1.0, 0.0], [0.0, 1.0]],  # invertible
+    ...     [[1.0, 1.0], [1.0, 1.0]],  # singular
+    ...     [[2.0, 1.0], [1.0, 2.0]]   # invertible
+    ... ])
+    >>> # Without noerr, a LinAlgError is raised
+    >>> try:
+    ...     inv(a)
+    ... except np.linalg.LinAlgError:
+    ...     print("LinAlgError raised")
+    LinAlgError raised
+    >>> # With noerr=True, NaN values are returned for singular matrices
+    >>> result = inv(a, noerr=True)
+    >>> # Check which matrices were singular
+    >>> np.isnan(result).any(axis=(1, 2))
+    array([False,  True, False])
+
     To detect ill-conditioned matrices, you can use `numpy.linalg.cond` to
     compute its *condition number* [1]_. The larger the condition number, the
     more ill-conditioned the matrix is. As a rule of thumb, if the condition
@@ -646,9 +669,13 @@ def inv(a):
     t, result_t = _commonType(a)
 
     signature = 'D->D' if isComplexType(t) else 'd->d'
-    with errstate(call=_raise_linalgerror_singular, invalid='call',
-                  over='ignore', divide='ignore', under='ignore'):
-        ainv = _umath_linalg.inv(a, signature=signature)
+    if noerr:
+        with errstate(all='ignore'):
+            ainv = _umath_linalg.inv(a, signature=signature)
+    else:
+        with errstate(call=_raise_linalgerror_singular, invalid='call',
+                      over='ignore', divide='ignore', under='ignore'):
+            ainv = _umath_linalg.inv(a, signature=signature)
     return wrap(ainv.astype(result_t, copy=False))
 
 
