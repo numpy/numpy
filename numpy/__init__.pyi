@@ -2569,7 +2569,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         copy: builtins.bool | _CopyMode = ...,
     ) -> ndarray[_ShapeT_co, dtype]: ...
 
-    # Keep in sync with `MaskedArray.view`
     @overload  # ()
     def view(self, /) -> Self: ...
     @overload  # (dtype: T)
