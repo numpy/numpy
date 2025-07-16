@@ -1963,7 +1963,6 @@ class _ArrayOrScalarCommon:
         where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
 
-    # keep in sync with `MaskedArray.std`
     @overload
     def std(
         self,
@@ -2004,7 +2003,6 @@ class _ArrayOrScalarCommon:
         correction: float = ...,
     ) -> _ArrayT: ...
 
-    # keep in sync with `MaskedArray.var`
     @overload
     def var(
         self,

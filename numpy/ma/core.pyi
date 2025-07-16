@@ -1320,7 +1320,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def anom(self, axis: SupportsIndex | None, dtype: DTypeLike) -> MaskedArray[_ShapeT_co, dtype]: ...
 
-    # keep in sync with `ndarray.var`
     @overload
     def var(
         self,
@@ -1353,7 +1352,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> _ArrayT: ...
 
-    # keep in sync with `ndarray.std`
     @overload
     def std(
         self,
