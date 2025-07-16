@@ -28,78 +28,6 @@
 #define ELLIPSIS_INDEX -2
 #define SINGLE_INDEX -3
 
-/*
- * Tries to convert 'o' into an npy_intp interpreted as an
- * index. Returns 1 if it was successful, 0 otherwise. Does
- * not set an exception.
- */
-static int
-coerce_index(PyObject *o, npy_intp *v)
-{
-    *v = PyArray_PyIntAsIntp(o);
-
-    if ((*v) == -1 && PyErr_Occurred()) {
-        PyErr_Clear();
-        return 0;
-    }
-    return 1;
-}
-
-/*
- * This function converts one element of the indexing tuple
- * into a step size and a number of steps, returning the
- * starting index. Non-slices are signalled in 'n_steps',
- * as NEWAXIS_INDEX, ELLIPSIS_INDEX, or SINGLE_INDEX.
- */
-NPY_NO_EXPORT npy_intp
-parse_index_entry(PyObject *op, npy_intp *step_size,
-                  npy_intp *n_steps, npy_intp max,
-                  int axis, int check_index)
-{
-    npy_intp i;
-
-    if (op == Py_None) {
-        *n_steps = NEWAXIS_INDEX;
-        i = 0;
-    }
-    else if (op == Py_Ellipsis) {
-        *n_steps = ELLIPSIS_INDEX;
-        i = 0;
-    }
-    else if (PySlice_Check(op)) {
-        npy_intp stop;
-        if (PySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
-            goto fail;
-        }
-        if (*n_steps <= 0) {
-            *n_steps = 0;
-            *step_size = 1;
-            i = 0;
-        }
-    }
-    else if (coerce_index(op, &i)) {
-        *n_steps = SINGLE_INDEX;
-        *step_size = 0;
-        if (check_index) {
-            if (check_and_adjust_index(&i, max, axis, NULL) < 0) {
-                goto fail;
-            }
-        }
-    }
-    else {
-        PyErr_SetString(PyExc_IndexError,
-                        "each index entry must be either a "
-                        "slice, an integer, Ellipsis, or "
-                        "newaxis");
-        goto fail;
-    }
-    return i;
-
- fail:
-    return -1;
-}
-
-
 /*********************** Element-wise Array Iterator ***********************/
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
@@ -690,7 +618,9 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     if (index_type == HAS_FANCY) {
-        ret = iter_subscript_int(self, (PyArrayObject *) indices[0].object, &cast_info);
+        ret = iter_subscript_int(self,
+                                 (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP),
+                                 &cast_info);
         goto finish;
     }
 
@@ -840,7 +770,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (index_type < 0) {
         goto finish;
     }
-
     else if (indices[0].type == HAS_NEWAXIS) {
         PyErr_SetString(PyExc_IndexError,
             "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
@@ -881,7 +810,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         PyArray_ITER_RESET(self);
         if (ret < 0) {
             PyErr_SetString(PyExc_ValueError,
-                            "Error setting single item of flat iterator.");
+                            "Error setting single item of array.");
         }
         goto finish;
     }
@@ -945,7 +874,10 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     if (index_type == HAS_FANCY) {
-        ret = iter_ass_sub_int(self, (PyArrayObject *) indices[0].object, val_it, &cast_info);
+        ret = iter_ass_sub_int(self,
+                               (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP),
+                               val_it,
+                               &cast_info);
         goto finish;
     }
 

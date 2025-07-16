@@ -233,6 +233,31 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
     return unpack_scalar(index, result, result_n);
 }
 
+/**
+ * Prepare an npy_index_object from the python slicing object.
+ *
+ * This function handles all index preparations with the exception
+ * of field access. It fills the array of index_info structs correctly.
+ * It already handles the boolean array special case for fancy indexing,
+ * i.e. if the index type is boolean, it is exactly one matching boolean
+ * array. If the index type is fancy, the boolean array is already
+ * converted to integer arrays. There is (as before) no checking of the
+ * boolean dimension.
+ *
+ * Checks everything but the bounds.
+ *
+ * @param array_ndims The number of dimensions of the array being indexed (1 for iterators)
+ * @param array_dims The dimensions of the array being indexed (self->size for iterators)
+ * @param index the index object
+ * @param indices index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param num number of indices found
+ * @param ndim dimension of the indexing result
+ * @param out_fancy_ndim dimension of the fancy/advanced indices part
+ * @param allow_boolean whether to allow the boolean special case
+ * @param is_flatiter_object Whether the object indexed is an iterator
+ *
+ * @returns the index_type or -1 on failure and fills the number of indices.
+ */
 NPY_NO_EXPORT int
 prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
               npy_index_info *indices, int *num, int *ndim, int *out_fancy_ndim,
@@ -704,29 +729,6 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
     return -1;
 }
 
-/**
- * Prepare an npy_index_object from the python slicing object.
- *
- * This function handles all index preparations with the exception
- * of field access. It fills the array of index_info structs correctly.
- * It already handles the boolean array special case for fancy indexing,
- * i.e. if the index type is boolean, it is exactly one matching boolean
- * array. If the index type is fancy, the boolean array is already
- * converted to integer arrays. There is (as before) no checking of the
- * boolean dimension.
- *
- * Checks everything but the bounds.
- *
- * @param self the array being indexed
- * @param index the index object
- * @param indices index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
- * @param num number of indices found
- * @param ndim dimension of the indexing result
- * @param out_fancy_ndim dimension of the fancy/advanced indices part
- * @param allow_boolean whether to allow the boolean special case
- *
- * @returns the index_type or -1 on failure and fills the number of indices.
- */
 NPY_NO_EXPORT int
 prepare_index(PyArrayObject *self, PyObject *index,
               npy_index_info *indices,

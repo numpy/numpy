@@ -1593,6 +1593,14 @@ class TestFlatiterIndexing:
         with pytest.raises(IndexError, match="boolean index did not match indexed flat iterator"):
             a.flat[[True, True]] = 50
 
+    def test_flatiter_indexing_fancy_int16_dtype(self):
+        a = np.arange(9).reshape((3, 3))
+        indices = np.array([1, 3, 5], dtype=np.int16)
+        assert_array_equal(a.flat[indices], np.array([1, 3, 5]))
+
+        a.flat[indices] = 10
+        assert_array_equal(a, np.array([[0, 10, 2], [10, 4, 10], [6, 7, 8]]))
+
     def test_flatiter_indexing_not_supported_newaxis_mutlidimensional_float(self):
         a = np.arange(9).reshape((3, 3))
         with pytest.raises(IndexError, match=r"only integers, slices \(`:`\), ellipsis \(`\.\.\.`\) "
