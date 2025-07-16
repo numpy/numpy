@@ -332,6 +332,8 @@ static int
 fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 {
     PyObject *fastop = NULL;
+    int is_square = 0;
+
     if (PyLong_CheckExact(o2)) {
         int overflow = 0;
         long exp = PyLong_AsLongAndOverflow(o2, &overflow);
@@ -344,6 +346,7 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
         }
         else if (exp == 2) {
             fastop = n_ops.square;
+            is_square = 1;
         }
         else {
             return 1;
