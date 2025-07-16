@@ -4218,7 +4218,7 @@ class TestBinop:
     def test_pow_calls_square_structured_dtype(self):
         # gh-29388
         dt = np.dtype([('a', 'i4'), ('b', 'i4')])
-        a = np.array([(1, 2), (3, 4)], dtype= dt)
+        a = np.array([(1, 2), (3, 4)], dtype=dt)
         with pytest.raises(TypeError, match="ufunc 'square' not supported"):
             a ** 2
 
