@@ -1328,8 +1328,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: float = 0,
-        keepdims: bool = False,
-        mean: _ArrayLikeNumber_co = ...,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> Any: ...
     @overload
     def var(
@@ -1338,8 +1338,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None,
         out: _ArrayT,
         ddof: float = 0,
-        keepdims: bool = False,
-        mean: _ArrayLikeNumber_co = ...,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> _ArrayT: ...
     @overload
     def var(
@@ -1349,8 +1349,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         *,
         out: _ArrayT,
         ddof: float = 0,
-        keepdims: bool = False,
-        mean: _ArrayLikeNumber_co = ...,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> _ArrayT: ...
 
     # keep in sync with `ndarray.std`
@@ -1361,8 +1361,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None = None,
         out: None = None,
         ddof: float = 0,
-        keepdims: bool = False,
-        mean: _ArrayLikeNumber_co = ...,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> Any: ...
     @overload
     def std(
@@ -1371,8 +1371,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         dtype: DTypeLike | None,
         out: _ArrayT,
         ddof: float = 0,
-        keepdims: bool = False,
-        mean: _ArrayLikeNumber_co = ...,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> _ArrayT: ...
     @overload
     def std(
@@ -1382,8 +1382,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         *,
         out: _ArrayT,
         ddof: float = 0,
-        keepdims: bool = False,
-        mean: _ArrayLikeNumber_co = ...,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
     ) -> _ArrayT: ...
 
     # Keep in sync with `ndarray.round`
