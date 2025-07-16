@@ -32,20 +32,19 @@ class DiffLinter:
         return res.returncode, res.stdout
 
     def run_lint(self, fix: bool) -> None:
-        rc = 0
 
         # Ruff Linter
         retcode, ruff_errors = self.run_ruff(fix)
         ruff_errors and print(ruff_errors)
 
-        rc |= retcode
+        if retcode:
+            sys.exit(retcode)
 
         # C API Borrowed-ref Linter
         retcode, c_API_errors = self.run_check_c_api()
         c_API_errors and print(c_API_errors)
 
-        rc |= retcode
-        sys.exit(rc)
+        sys.exit(retcode)
 
     def run_check_c_api(self) -> tuple[int, str]:
         # Running borrowed ref checker
