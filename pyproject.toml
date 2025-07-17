@@ -1,15 +1,15 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.15.0",
+    "meson-python>=0.18.0",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
 [project]
 name = "numpy"
 version = "2.4.0.dev0"
-# TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
-license = {file = "LICENSE.txt"}
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
@@ -22,7 +22,6 @@ classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: BSD License',
     'Programming Language :: C',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
