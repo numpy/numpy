@@ -171,8 +171,12 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        with pytest.raises(TypeError):
-            cls[Any]
+        if cls == np.bool:
+            # np.bool allows subscript
+            assert cls[Any]
+        else:
+            with pytest.raises(TypeError):
+                cls[Any]
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:

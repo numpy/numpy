@@ -2436,6 +2436,23 @@ numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
     return Py_GenericAlias(cls, args);
 }
 
+
+static PyObject *
+booleantype_class_getitem_abc(PyObject *cls, PyObject *args)
+{
+    const Py_ssize_t args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    int args_len_expected = 1;
+
+    if ((args_len > args_len_expected) || (args_len == 0)) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > args_len_expected ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    return Py_GenericAlias(cls, args);
+}
+
+
 /*
  * Use for concrete np.number subclasses, making them act as if they
  * were subtyped from e.g. np.signedinteger[object], thus lacking any
@@ -2841,6 +2858,16 @@ static PyMethodDef numbertype_methods[] = {
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
+
+
+static PyMethodDef booleantype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)booleantype_class_getitem_abc,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}  /* sentinel */
+};
+
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -4561,6 +4588,7 @@ initialize_numeric_types(void)
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
     PyBoolArrType_Type.tp_repr = genbool_type_repr;
+    PyBoolArrType_Type.tp_methods = booleantype_methods;
 
 
     /**begin repeat
