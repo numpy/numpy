@@ -1490,7 +1490,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
                         "keyword arguments not accepted.");
         return NULL;
     }
-    fast_seq = PySequence_Fast(args, "");  // noqa: borrowed-ref ok
+    fast_seq = PySequence_Fast(args, "");  // noqa: borrowed-ref OK
     if (fast_seq == NULL) {
         return NULL;
     }

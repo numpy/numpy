@@ -1115,7 +1115,7 @@ array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kw
         PyErr_SetString(PyExc_TypeError, "kwargs must be a dict.");
         return NULL;
     }
-    types = PySequence_Fast( // noqa: borrowed-ref ok
+    types = PySequence_Fast( // noqa: borrowed-ref OK
         types,
         "types argument to ndarray.__array_function__ must be iterable");
     if (types == NULL) {
