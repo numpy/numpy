@@ -33,7 +33,7 @@ class TestRegression:
                      1.51971555e-15 + 0.j,
                      -1.51308713e-15 + 0.j])
         a = arange(13 * 13, dtype=float64)
-        a.shape = (13, 13)
+        a = a.reshape((13, 13))
         a = a % 17
         va, ve = linalg.eig(a)
         va.sort()
