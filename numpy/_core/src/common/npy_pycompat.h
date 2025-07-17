@@ -45,7 +45,7 @@
     if (_##cs_name##_should_lock_cs) {                                  \
         PyCriticalSection_Begin(&_##cs_name, _##cs_name##_orig_seq);    \
     }
-#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj, cs_name)    \
+#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(op, cs_name)     \
     PyCriticalSection _py_cs_##cs_name;                         \
     PyCriticalSection_Begin(&_py_cs_##cs_name, (PyObject *)(op))
 #define NPY_END_CRITICAL_SECTION_NO_BRACKETS(cs_name) PyCriticalSection_End(&_py_cs_##cs_name)

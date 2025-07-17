@@ -1005,17 +1005,20 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     if (nin < 0) {
         return -1;
     }
-    fast = PySequence_Fast(args, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
+    fast = PySequence_Fast(args, "Could not convert object to sequence"); // noqa: borrowed-ref ok
     if (fast == NULL) {
         return -1;
     }
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(fast, array_ufunc_cs);
     in_objs = PySequence_Fast_ITEMS(fast);
     for (i = 0; i < nin; ++i) {
         if (PyUFunc_HasOverride(in_objs[i])) {
             Py_DECREF(fast);
+            NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(array_ufunc_cs);
             return 1;
         }
     }
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(array_ufunc_cs);
     Py_DECREF(fast);
     if (kwds == NULL) {
         return 0;
@@ -1115,14 +1118,15 @@ array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kw
         PyErr_SetString(PyExc_TypeError, "kwargs must be a dict.");
         return NULL;
     }
-    types = PySequence_Fast( // noqa: borrowed-ref - manual fix needed
+    types = PySequence_Fast( // noqa: borrowed-ref ok
         types,
         "types argument to ndarray.__array_function__ must be iterable");
     if (types == NULL) {
         return NULL;
     }
-
+    Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(types);
     result = array_function_method_impl(func, types, args, kwargs);
+    Py_END_CRITICAL_SECTION_SEQUENCE_FAST();
     Py_DECREF(types);
     return result;
 }
