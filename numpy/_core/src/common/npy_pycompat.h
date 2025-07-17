@@ -13,23 +13,23 @@
 // PySequence_Fast(), which would require an extra test to determine if the
 // lock must be acquired.
 //
-// These tweaked versions of macros defined in CPython in
+// These are tweaked versions of macros defined in CPython in
 // pycore_critical_section.h, originally added in CPython commit baf347d91643.
 // They're defined in terms of the NPY_*_CRITICAL_SECTION_NO_BRACKETS to avoid
 // repition and should behave identically to the versions in CPython. Once the
 // macros are expanded, The only difference relative to those versions is the
 // use of public C API symbols that are equivalent to the ones used in the
 // corresponding CPython definitions.
-#define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original)               \
+#define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original)              \
     {                                                                   \
     NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(               \
             original, npy_cs_fast)
-#define Py_END_CRITICAL_SECTION_SEQUENCE_FAST()                         \
+#define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST()                        \
         NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(npy_cs_fast) \
     }
 
 // These macros are more flexible than the versions in the public CPython C API,
-// but that comes at a cost. Here are some limitations:
+// but that comes at a cost. Here are some differences and limitations:
 //
 // * cs_name is a named label for the critical section. If you must nest
 //   critical sections, do *not* use the same name for multiple nesting
@@ -55,9 +55,9 @@
     }
 #else
 #define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original)
-#define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) {
+#define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) {
 #define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original)
-#define Py_END_CRITICAL_SECTION_SEQUENCE_FAST() }
+#define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST() }
 #define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj)
 #define NPY_END_CRITICAL_SECTION_NO_BRACKETS()
 #endif

@@ -997,29 +997,26 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int i;
     int nin, nout;
     PyObject *out_kwd_obj;
-    PyObject *fast;
-    PyObject **in_objs, **out_objs, *where_obj;
+    PyObject **out_objs, *where_obj;
 
     /* check inputs */
     nin = PyTuple_Size(args);
     if (nin < 0) {
         return -1;
     }
-    fast = PySequence_Fast(args, "Could not convert object to sequence"); // noqa: borrowed-ref ok
-    if (fast == NULL) {
-        return -1;
-    }
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(fast, array_ufunc_cs);
-    in_objs = PySequence_Fast_ITEMS(fast);
     for (i = 0; i < nin; ++i) {
-        if (PyUFunc_HasOverride(in_objs[i])) {
-            Py_DECREF(fast);
-            NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(array_ufunc_cs);
+#if defined(PYPY_VERSION) || defined(Py_LIMITED_API)
+        PyObject *obj = PyTuple_GetItem(args, i);
+        if (obj == NULL) {
+            return -1;
+        }
+#else
+        PyObject *obj = PyTuple_GET_ITEM(args, i);
+#endif
+        if (PyUFunc_HasOverride(obj)) {
             return 1;
         }
     }
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(array_ufunc_cs);
-    Py_DECREF(fast);
     if (kwds == NULL) {
         return 0;
     }
@@ -1124,9 +1121,9 @@ array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kw
     if (types == NULL) {
         return NULL;
     }
-    Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(types);
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(types);
     result = array_function_method_impl(func, types, args, kwargs);
-    Py_END_CRITICAL_SECTION_SEQUENCE_FAST();
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     Py_DECREF(types);
     return result;
 }
