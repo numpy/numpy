@@ -961,13 +961,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_hyperbolic.dispatch.h',
-    src_file.process('src/umath/loops_hyperbolic.dispatch.cpp.src'),
+    'src/umath/loops_hyperbolic.dispatch.cpp',
     [
       AVX512_SKX, [AVX2, FMA3],
       VSX4, VSX2,
       NEON_VFPV4,
       VXE,
       LSX,
+      RVV,
     ]
   ],
   [
