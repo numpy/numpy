@@ -800,50 +800,75 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
     if zipfile_kwargs is None:
         zipfile_kwargs = {}
 
-    # Apply default compression for compressed variant if user did not specify
-    if compress and "compression" not in zipfile_kwargs:
-        zipfile_kwargs["compression"] = zipfile.ZIP_DEFLATED
+    # Default behaviour: use DEFLATED for the compressed variant, STORED
+    # otherwise – unless the user explicitly asked for something else.
+    comp = zipfile_kwargs.get("compression")
+    if comp is None:
+        comp = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+    else:
+        # Translate textual aliases such as ``"deflated"`` to their integer
+        # counterparts.  Accepting the textual form mirrors the behaviour of
+        # ``zipfile.ZipFile`` and provides a more friendly public API.
+        if isinstance(comp, str):
+            _str_to_const = {
+                "stored": zipfile.ZIP_STORED,
+                "deflated": zipfile.ZIP_DEFLATED,
+            }
+            if hasattr(zipfile, "ZIP_BZIP2"):
+                _str_to_const["bzip2"] = zipfile.ZIP_BZIP2
+            if hasattr(zipfile, "ZIP_LZMA"):
+                _str_to_const["lzma"] = zipfile.ZIP_LZMA
 
-    # If the user provided a human-readable compression string, map it to the
-    # corresponding ``zipfile`` constant.
-    comp = zipfile_kwargs.get("compression", None)
-    if isinstance(comp, str):
-        _comp_map = {
-            "stored": zipfile.ZIP_STORED,
-            "deflated": zipfile.ZIP_DEFLATED,
-        }
-        if hasattr(zipfile, "ZIP_BZIP2"):
-            _comp_map["bzip2"] = zipfile.ZIP_BZIP2
-        if hasattr(zipfile, "ZIP_LZMA"):
-            _comp_map["lzma"] = zipfile.ZIP_LZMA
-        lower = comp.lower()
-        if lower not in _comp_map:
-            raise ValueError(
-                f"Unknown compression method: {comp!r}. Valid options: {list(_comp_map.keys())}"
+            key = comp.lower()
+            if key not in _str_to_const:
+                raise ValueError(
+                    f"Unknown compression method: {comp!r}. Valid options: {list(_str_to_const)}"
+                )
+            comp = _str_to_const[key]
+        elif isinstance(comp, int):
+            # Verify that the provided integer constant is supported by the
+            # runtime Python build.
+            _valid_ints = {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
+            if hasattr(zipfile, "ZIP_BZIP2"):
+                _valid_ints.add(zipfile.ZIP_BZIP2)
+            if hasattr(zipfile, "ZIP_LZMA"):
+                _valid_ints.add(zipfile.ZIP_LZMA)
+
+            if comp not in _valid_ints:
+                raise ValueError(
+                    f"Unknown compression method: {comp}. Valid options: {sorted(_valid_ints)}"
+                )
+        else:
+            raise TypeError(
+                "compression must be an int (zipfile constant) or a str specifying the method"
             )
-        zipfile_kwargs["compression"] = _comp_map[lower]
 
-    # Basic validation for compresslevel
-    if "compresslevel" in zipfile_kwargs:
-        cl = zipfile_kwargs["compresslevel"]
+    # Persist the (possibly normalised) compression constant back into kwargs
+    zipfile_kwargs["compression"] = comp
+
+    # Validate ``compresslevel`` – ignore if the user passed ``None``.
+    cl = zipfile_kwargs.pop("compresslevel", None)
+    if cl is not None:
         if not isinstance(cl, int):
-            raise ValueError("compresslevel must be an integer")
+            raise ValueError("compresslevel must be an integer or None")
 
-        comp_const = zipfile_kwargs.get("compression", zipfile.ZIP_DEFLATED)
-        # ZIP_STORED doesn't support compresslevel
-        if comp_const == zipfile.ZIP_STORED:
-            raise ValueError("compresslevel is not applicable when using ZIP_STORED.")
+        if comp == zipfile.ZIP_STORED:
+            raise ValueError(
+                "compresslevel is not applicable when using ZIP_STORED."
+            )
 
-        # Determine valid range for supported compression types
-        def _range(minv, maxv):
+        def _in_range(minv: int, maxv: int) -> bool:
             return minv <= cl <= maxv
 
-        if comp_const == zipfile.ZIP_DEFLATED and not _range(0, 9):
-            raise ValueError("For DEFLATED, compresslevel must be in 0-9.")
-        if hasattr(zipfile, "ZIP_BZIP2") and comp_const == zipfile.ZIP_BZIP2 and not _range(1, 9):
-            raise ValueError("For BZIP2, compresslevel must be in 1-9.")
-        if hasattr(zipfile, "ZIP_LZMA") and comp_const == zipfile.ZIP_LZMA and not _range(0, 9):
-            raise ValueError("For LZMA, compresslevel must be in 0-9.")
+        if comp == zipfile.ZIP_DEFLATED and not _in_range(0, 9):
+            raise ValueError("For DEFLATED, compresslevel must be between 0 and 9.")
+        if hasattr(zipfile, "ZIP_BZIP2") and comp == zipfile.ZIP_BZIP2 and not _in_range(1, 9):
+            raise ValueError("For BZIP2, compresslevel must be between 1 and 9.")
+        if hasattr(zipfile, "ZIP_LZMA") and comp == zipfile.ZIP_LZMA and not _in_range(0, 9):
+            raise ValueError("For LZMA, compresslevel must be between 0 and 9.")
+
+        # Store the validated compresslevel back into kwargs
+        zipfile_kwargs["compresslevel"] = cl
 
     # Create the ZipFile object
     zipf = zipfile_factory(file, mode="w", **zipfile_kwargs)
