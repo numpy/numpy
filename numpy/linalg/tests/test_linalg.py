@@ -793,14 +793,27 @@ class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestCond(CondCases):
-    def test_basic_nonsvd(self):
+    @pytest.mark.parametrize('is_complex', [False, True])
+    def test_basic_nonsvd(self, is_complex):
         # Smoketest the non-svd norms
         A = array([[1., 0, 1], [0, -2., 0], [0, 0, 3.]])
+        if is_complex:
+            # Since A is linearly scaled, the condition number should not change
+            A = A * (1 + 1j)
         assert_almost_equal(linalg.cond(A, inf), 4)
         assert_almost_equal(linalg.cond(A, -inf), 2 / 3)
         assert_almost_equal(linalg.cond(A, 1), 4)
         assert_almost_equal(linalg.cond(A, -1), 0.5)
         assert_almost_equal(linalg.cond(A, 'fro'), np.sqrt(265 / 12))
+
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    @pytest.mark.parametrize('norm_ord', [1, -1, 2, -2, 'fro', np.inf, -np.inf])
+    def test_cond_dtypes(self, dtype, norm_ord):
+        # Check that the condition number is computed in the same dtype
+        # as the input matrix
+        A = array([[1., 0, 1], [0, -2., 0], [0, 0, 3.]], dtype=dtype)
+        out_type = get_real_dtype(dtype)
+        assert_equal(linalg.cond(A, p=norm_ord).dtype, out_type)
 
     def test_singular(self):
         # Singular matrices have infinite condition number for
