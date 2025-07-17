@@ -1,0 +1,1 @@
+Extend ``numpy.pad`` to accept a dictionary for the ``pad_width`` argument.
