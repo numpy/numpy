@@ -607,6 +607,13 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         goto finish;
     }
 
+    if (!PyArray_Check(ind) && !PyArrayIter_Check(ind)) {
+        PyErr_SetString(PyExc_IndexError,
+            "Non-array indices are not supported because they can lead to unexpected behavior. "
+            "This is expected to change in future versions.");
+        goto finish;
+    }
+
     if (index_type == HAS_BOOL) {
         ret = iter_subscript_Bool(self, (PyArrayObject *) indices[0].object, &cast_info);
         goto finish;
@@ -776,7 +783,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     // Single ellipsis index
     else if (index_type == HAS_ELLIPSIS) {
         if (PyTuple_Check(ind)) {
-            PyErr_SetString(PyExc_TypeError, "Assigning to a flat iterator with a 0-D index is not supported");
+            PyErr_SetString(PyExc_IndexError, "Assigning to a flat iterator with a 0-D index is not supported");
             goto finish;
         }
 
@@ -867,6 +874,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         }
         PyArray_ITER_RESET(self);
         ret = 0;
+        goto finish;
+    }
+
+    if (!PyArray_Check(ind) && !PyArrayIter_Check(ind)) {
+        PyErr_SetString(PyExc_IndexError,
+            "Non-array indices are not supported because they can lead to unexpected behavior. "
+            "This is expected to change in future versions.");
         goto finish;
     }
 
