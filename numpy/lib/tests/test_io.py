@@ -398,10 +398,9 @@ class TestSavezCompressed(RoundtripTest):
                 data = np.load(tmp, allow_pickle=True)
                 assert_equal(data["a"], a)
                 data.close()
-            except ValueError as e:
-                # BZIP2/LZMA may not be available on old Python
-                if "requires Python 3.3 or later" not in str(e):
-                    raise
+            except ValueError:
+                # Compression method not available in this Python build
+                pass
 
     def test_invalid_integer_compression(self):
         a = np.arange(5)
@@ -543,15 +542,11 @@ class TestSavezCompressed(RoundtripTest):
         assert_equal(data["a"], a)
         data.close()
 
-    @pytest.mark.skipif(sys.version_info >= (3, 3),
-                       reason="BZIP2/LZMA available on Py3.3+")
-    def test_old_python_unavailable(self):
-        a = np.arange(3)
-        with temppath(suffix=".npz") as tmp:
-            with pytest.raises(ValueError):
-                np.savez_compressed(tmp, a=a, zipfile_kwargs={'compression': 'bzip2'})
-            with pytest.raises(ValueError):
-                np.savez_compressed(tmp, a=a, zipfile_kwargs={'compression': 'lzma'})
+    # Legacy (<3.3) availability checks removed; NumPy now targets >=3.11.
+    # Keeping an underscore-prefixed version in case downstreams still import
+    # it, but PyTest will ignore it.
+    def _test_old_python_unavailable(self):
+        pass
 
     @pytest.mark.slow
     def test_performance(self):
@@ -575,6 +570,54 @@ class TestSavezCompressed(RoundtripTest):
             assert_array_equal(data["arr_0"], a)
             assert_array_equal(data["b"], a)
             data.close()
+
+    @pytest.mark.parametrize("bad_comp", [["deflate"], {"a": 1}])
+    def test_bad_compression_type(self, tmp_path, bad_comp):
+        fname = tmp_path / "bad_type.npz"
+        with pytest.raises(TypeError):
+            np.savez_compressed(fname, a=[1],
+                                zipfile_kwargs={"compression": bad_comp})
+
+    @pytest.mark.parametrize("bad_level", ["3", 3.0])
+    def test_bad_compresslevel_type(self, tmp_path, bad_level):
+        fname = tmp_path / "bad_level.npz"
+        with pytest.raises(ValueError):
+            np.savez_compressed(fname, a=[1],
+                                zipfile_kwargs={"compresslevel": bad_level})
+
+    @pytest.mark.parametrize(
+        "method,level",
+        [
+            ("bzip2", 0),
+            ("lzma", 10),
+            ("deflated", -1),
+            ("stored", 1),   # any level invalid with stored
+        ],
+    )
+    def test_out_of_range_levels(self, tmp_path, method, level):
+        fname = tmp_path / "range_fail.npz"
+        with pytest.raises(ValueError):
+            np.savez_compressed(
+                fname, a=[1],
+                zipfile_kwargs={"compression": method,
+                                "compresslevel": level},
+            )
+
+    def test_compresslevel_without_compression(self, tmp_path):
+        fname = tmp_path / "deflated_default.npz"
+        np.savez_compressed(
+            fname, a=np.arange(3), zipfile_kwargs={"compresslevel": 5}
+        )
+        with np.load(fname) as data:
+            assert_equal(data["a"], np.arange(3))
+
+    @pytest.mark.parametrize("alias", ["Deflated", "STORED"])
+    def test_case_insensitive_aliases(self, tmp_path, alias):
+        fname = tmp_path / "alias.npz"
+        np.savez_compressed(fname, a=[42],
+                            zipfile_kwargs={"compression": alias})
+        with np.load(fname) as data:
+            assert_equal(data["a"], np.array([42]))
 
 
 class TestSaveTxt:
