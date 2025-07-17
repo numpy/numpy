@@ -9,9 +9,10 @@ Key fixes and improvements:
 
 * Stricter index validation
 
-  ``arr.flat[[True, True]]`` and ``arr.flat[[1.0, 1.0]]`` were incorrectly
-  treated as ``arr.flat[[1, 1]]``. They now raise an `IndexError`` (unless
-  ``arr.flat[[True, Truee]]`` is a valid boolean index)
+  Complicated non-array indices like ``arr.flat[[True, True]]`` and
+  ``arr.flat[[1.0, 1.0]]`` were incorrectly
+  treated as ``arr.flat[[1, 1]]``. They now raise an `IndexError`. Array
+  indices should be used instead.
 
 * Consistent error types:
 
