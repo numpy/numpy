@@ -332,7 +332,6 @@ static int
 fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 {
     PyObject *fastop = NULL;
-    int is_square = 0;
 
     if (PyLong_CheckExact(o2)) {
         int overflow = 0;
@@ -346,7 +345,6 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
         }
         else if (exp == 2) {
             fastop = n_ops.square;
-            is_square = 1;
         }
         else {
             return 1;
@@ -369,7 +367,7 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
     if (PyArray_ISOBJECT(a1)) {
         return 1;
     }
-    if (!is_square && !PyArray_ISFLOAT(a1) && !PyArray_ISCOMPLEX(a1)) {
+    if (fastop != n_ops.square && !PyArray_ISFLOAT(a1) && !PyArray_ISCOMPLEX(a1)) {
         // we special-case squaring for any array type
         // gh-29388
         return 1;
