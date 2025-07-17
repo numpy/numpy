@@ -1351,7 +1351,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         npy_intp offset;
 
         /* get the field offset and dtype */
-        tup = PyDict_GetItemWithError(PyDataType_FIELDS(PyArray_DESCR(arr)), ind);
+        tup = PyDict_GetItemWithError(PyDataType_FIELDS(PyArray_DESCR(arr)), ind); // noqa: borrowed-ref OK
         if (tup == NULL && PyErr_Occurred()) {
             return 0;
         }

@@ -1368,7 +1368,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
          * Get axes tuple for operand. If not a tuple already, make it one if
          * there is only one axis (its content is checked later).
          */
-        op_axes_tuple = PyList_GET_ITEM(axes, iop);
+        op_axes_tuple = PyList_GET_ITEM(axes, iop); // noqa: borrowed-ref - manual fix needed
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
@@ -4944,7 +4944,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         function, arg_typenums, data);
 
     if (result == 0) {
-        cobj = PyDict_GetItemWithError(ufunc->userloops, key);
+        cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref OK
         if (cobj == NULL && PyErr_Occurred()) {
             result = -1;
         }
@@ -5075,7 +5075,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      */
     int add_new_loop = 1;
     for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
-        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j);
+        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j); // noqa: borrowed-ref OK
         PyObject *existing_tuple = PyTuple_GET_ITEM(item, 0);
 
         int cmp = PyObject_RichCompareBool(existing_tuple, signature_tuple, Py_EQ);
@@ -5117,7 +5117,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     funcdata->nargs = 0;
 
     /* Get entry for this user-defined type*/
-    cobj = PyDict_GetItemWithError(ufunc->userloops, key);
+    cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref OK
     if (cobj == NULL && PyErr_Occurred()) {
         goto fail;
     }

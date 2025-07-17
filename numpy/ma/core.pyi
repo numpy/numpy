@@ -1206,7 +1206,34 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def dot(self, b: ArrayLike, out: _ArrayT, strict: bool = ...) -> _ArrayT: ...
 
-    def sum(self, axis=..., dtype=..., out=..., keepdims=...): ...
+    @overload
+    def sum(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def sum(
+        self,
+        /,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def sum(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
 
     # Keep in sync with `ndarray.cumsum`
     @overload  # out: None (default)
@@ -1216,7 +1243,35 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
-    def prod(self, axis=..., dtype=..., out=..., keepdims=...): ...
+    @overload
+    def prod(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def prod(
+        self,
+        /,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def prod(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
     product: Any
 
     # Keep in sync with `ndarray.cumprod`
@@ -1227,7 +1282,33 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
-    def mean(self, axis=..., dtype=..., out=..., keepdims=...): ...
+    @overload
+    def mean(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def mean(
+        self,
+        /,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def mean(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
 
     @overload
     def anom(self, axis: SupportsIndex | None = None, dtype: None = None) -> Self: ...
@@ -1236,8 +1317,69 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def anom(self, axis: SupportsIndex | None, dtype: DTypeLike) -> MaskedArray[_ShapeT_co, dtype]: ...
 
-    def var(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
-    def std(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
+    @overload
+    def var(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        ddof: float = 0,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def var(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def var(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
+    @overload
+    def std(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        ddof: float = 0,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def std(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def std(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: bool | _NoValueType = ...,
+        mean: _ArrayLikeNumber_co | _NoValueType = ...,
+    ) -> _ArrayT: ...
 
     # Keep in sync with `ndarray.round`
     @overload  # out=None (default)
