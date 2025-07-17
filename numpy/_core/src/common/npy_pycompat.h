@@ -6,40 +6,53 @@
 
 #define Npy_HashDouble _Py_HashDouble
 
-// These are slightly tweaked versions of macros defined in CPython in
-// pycore_critical_section.h, originally added in CPython commit baf347d91643.
-//
-// The tweaks are only to use public CPython C API symbols
-
 #ifdef Py_GIL_DISABLED
 // Specialized version of critical section locking to safely use
 // PySequence_Fast APIs without the GIL. For performance, the argument *to*
 // PySequence_Fast() is provided to the macro, not the *result* of
 // PySequence_Fast(), which would require an extra test to determine if the
 // lock must be acquired.
-#define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original)  \
-    PyObject *_orig_seq = (PyObject *)(original);                       \
-    const int _should_lock_cs = PyList_CheckExact(_orig_seq);           \
-    PyCriticalSection _cs;                                              \
-    if (_should_lock_cs) {                                              \
-        PyCriticalSection_Begin(&_cs, _orig_seq);                       \
-    }
-
+//
+// These tweaked versions of macros defined in CPython in
+// pycore_critical_section.h, originally added in CPython commit baf347d91643.
+// They're defined in terms of the NPY_*_CRITICAL_SECTION_NO_BRACKETS to avoid
+// repition and should behave identically to the versions in CPython. Once the
+// macros are expanded, The only difference relative to those versions is the
+// use of public C API symbols that are equivalent to the ones used in the
+// corresponding CPython definitions.
 #define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original)               \
     {                                                                   \
-        NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original)
-#define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS()    \
-    if (_should_lock_cs) {                                      \
-        PyCriticalSection_End(&_cs);                            \
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(               \
+            original, npy_cs_fast)
+#define Py_END_CRITICAL_SECTION_SEQUENCE_FAST()                         \
+        NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(npy_cs_fast) \
     }
-#define Py_END_CRITICAL_SECTION_SEQUENCE_FAST()                 \
-        NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS()
-    }
-#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj)     \
-    PyCriticalSection _py_cs;                           \
-    PyCriticalSection_Begin(&_py_cs, (PyObject *)(op))
-#define NPY_END_CRITICAL_SECTION_NO_BRACKETS() PyCriticalSection_End(&_py_cs)
 
+// These macros are more flexible than the versions in the public CPython C API,
+// but that comes at a cost. Here are some limitations:
+//
+// * cs_name is a named label for the critical section. If you must nest
+//   critical sections, do *not* use the same name for multiple nesting
+//   critical sections.
+// * The beginning and ending macros must happen within the same scope
+//   and the compiler won't necessarily enforce that.
+// * The macros ending critical sections accept a named label.
+#define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original, cs_name) \
+    PyObject *_##cs_name##_orig_seq = (PyObject *)(original);           \
+    const int _##cs_name##_should_lock_cs =                             \
+            PyList_CheckExact(_##cs_name##_orig_seq);                   \
+    PyCriticalSection _##cs_name;                                       \
+    if (_##cs_name##_should_lock_cs) {                                  \
+        PyCriticalSection_Begin(&_##cs_name, _##cs_name##_orig_seq);    \
+    }
+#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj, cs_name)    \
+    PyCriticalSection _py_cs_##cs_name;                         \
+    PyCriticalSection_Begin(&_py_cs_##cs_name, (PyObject *)(op))
+#define NPY_END_CRITICAL_SECTION_NO_BRACKETS(cs_name) PyCriticalSection_End(&_py_cs_##cs_name)
+#define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(cs_name)     \
+    if (_##cs_name##_should_lock_cs) {                                  \
+        PyCriticalSection_End(&_##cs_name);                             \
+    }
 #else
 #define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original)
 #define Py_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) {

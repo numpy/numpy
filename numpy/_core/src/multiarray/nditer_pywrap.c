@@ -726,7 +726,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     int post_alloc_fail = 0;
     int nop;
 
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(op_in);
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(op_in, nditer_cs);
 
     nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
@@ -761,7 +761,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         post_alloc_fail = 1;
     }
 
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS();
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(nditer_cs);
 
     if (pre_alloc_fail) {
         goto pre_alloc_fail;

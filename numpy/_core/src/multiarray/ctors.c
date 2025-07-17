@@ -1560,7 +1560,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         copy = 1;
     }
 
-    NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj);
+    NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj, array_creation_cs);
 
     ndim = PyArray_DiscoverDTypeAndShape(
             op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
@@ -1729,11 +1729,11 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         Py_DECREF(ret);
     }
   success:
-    NPY_END_CRITICAL_SECTION_NO_BRACKETS();
+    NPY_END_CRITICAL_SECTION_NO_BRACKETS(array_creation_cs);
     return (PyObject *)ret;
 
   fail:
-    NPY_END_CRITICAL_SECTION_NO_BRACKETS();
+    NPY_END_CRITICAL_SECTION_NO_BRACKETS(array_creation_cs);
     return NULL;
 }
 
