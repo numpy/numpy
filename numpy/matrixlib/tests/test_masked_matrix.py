@@ -116,7 +116,7 @@ class TestMaskedMatrix:
         # Test setting
         test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
         testflat = test.flat
-        testflat[:] = testflat[[2, 1, 0]]
+        testflat[:] = testflat[np.array([2, 1, 0])]
         assert_equal(test, control)
         testflat[0] = 9
         # test that matrices keep the correct shape (#4615)
