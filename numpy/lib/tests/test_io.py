@@ -390,7 +390,11 @@ class TestSavezCompressed(RoundtripTest):
         a = np.arange(7)
         with temppath(suffix=".npz") as tmp:
             try:
-                np.savez_compressed(tmp, a=a, zipfile_kwargs={'compression': compression_const})
+                np.savez_compressed(
+                    tmp,
+                    a=a,
+                    zipfile_kwargs={'compression': compression_const},
+                )
                 data = np.load(tmp, allow_pickle=True)
                 assert_equal(data["a"], a)
                 data.close()
@@ -413,10 +417,18 @@ class TestSavezCompressed(RoundtripTest):
         with temppath(suffix=".npz") as tmp:
             # String method
             with pytest.raises(ValueError):
-                np.savez_compressed(tmp, a=a, zipfile_kwargs={'compression': method, 'compresslevel': 1})
+                np.savez_compressed(
+                    tmp,
+                    a=a,
+                    zipfile_kwargs={'compression': method, 'compresslevel': 1},
+                )
             # Integer constant
             with pytest.raises(ValueError):
-                np.savez_compressed(tmp, a=a, zipfile_kwargs={'compression': const, 'compresslevel': 1})
+                np.savez_compressed(
+                    tmp,
+                    a=a,
+                    zipfile_kwargs={'compression': const, 'compresslevel': 1},
+                )
 
     def roundtrip(self, *args, **kwargs):
         # Delegate to the RoundtripTest harness using savez_compressed
@@ -432,7 +444,12 @@ class TestSavezCompressed(RoundtripTest):
         a = np.arange(10)
         b = np.eye(3)
         with temppath(suffix=".npz") as tmp:
-            np.savez_compressed(tmp, a=a, b=b, zipfile_kwargs={'compression': method, 'compresslevel': level})
+            np.savez_compressed(
+                tmp,
+                a=a,
+                b=b,
+                zipfile_kwargs={'compression': method, 'compresslevel': level},
+            )
             data = np.load(tmp, allow_pickle=True)
             assert_equal(data["a"], a)
             assert_equal(data["b"], b)
@@ -446,7 +463,11 @@ class TestSavezCompressed(RoundtripTest):
     def test_compression_levels(self, method, level):
         a = np.arange(100)
         with temppath(suffix=".npz") as tmp:
-            np.savez_compressed(tmp, a=a, zipfile_kwargs={'compression': method, 'compresslevel': level})
+            np.savez_compressed(
+                tmp,
+                a=a,
+                zipfile_kwargs={'compression': method, 'compresslevel': level},
+            )
             data = np.load(tmp, allow_pickle=True)
             assert_equal(data["a"], a)
             data.close()
@@ -463,7 +484,11 @@ class TestSavezCompressed(RoundtripTest):
                                 struct=struct,
                                 obj=obj,
                                 strs=strs,
-                                zipfile_kwargs={'compression': 'bzip2', 'compresslevel': 5})
+                                zipfile_kwargs={
+                                    'compression': 'bzip2',
+                                    'compresslevel': 5,
+                                },
+                            )
             data = np.load(tmp, allow_pickle=True)
             assert data["empty"].size == 0
             assert_array_equal(data["struct"], struct)
@@ -495,7 +520,11 @@ class TestSavezCompressed(RoundtripTest):
             with pytest.raises(exc):
                 np.savez_compressed(tmp,
                                     a=a,
-                                    zipfile_kwargs={'compression': method, 'compresslevel': level})
+                                    zipfile_kwargs={
+                                        'compression': method,
+                                        'compresslevel': level,
+                                    },
+                                )
 
     def test_file_handle_and_pathlib(self):
         a = np.arange(20)
@@ -537,7 +566,11 @@ class TestSavezCompressed(RoundtripTest):
         with temppath(suffix=".npz") as tmp:
             # positional + keyword + None opts
             np.savez_compressed(tmp, a, b=a,
-                                zipfile_kwargs={'compression': 'lzma', 'compresslevel': None})
+                                zipfile_kwargs={
+                                    'compression': 'lzma',
+                                    'compresslevel': None,
+                                },
+                            )
             data = np.load(tmp, allow_pickle=True)
             assert_array_equal(data["arr_0"], a)
             assert_array_equal(data["b"], a)

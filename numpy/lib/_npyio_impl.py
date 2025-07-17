@@ -822,7 +822,8 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
             key = comp.lower()
             if key not in _str_to_const:
                 raise ValueError(
-                    f"Unknown compression method: {comp!r}. Valid options: {list(_str_to_const)}"
+                    f"Unknown compression method: {comp!r}. "
+                    f"Valid options: {list(_str_to_const)}"
                 )
             comp = _str_to_const[key]
         elif isinstance(comp, int):
@@ -836,11 +837,13 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
 
             if comp not in _valid_ints:
                 raise ValueError(
-                    f"Unknown compression method: {comp}. Valid options: {sorted(_valid_ints)}"
+                    f"Unknown compression method: {comp}. "
+                    f"Valid options: {sorted(_valid_ints)}"
                 )
         else:
             raise TypeError(
-                "compression must be an int (zipfile constant) or a str specifying the method"
+                "compression must be an int (zipfile constant) or a str "
+                "specifying the method"
             )
 
     # Persist the (possibly normalised) compression constant back into kwargs
@@ -862,9 +865,11 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
 
         if comp == zipfile.ZIP_DEFLATED and not _in_range(0, 9):
             raise ValueError("For DEFLATED, compresslevel must be between 0 and 9.")
-        if hasattr(zipfile, "ZIP_BZIP2") and comp == zipfile.ZIP_BZIP2 and not _in_range(1, 9):
+        if (hasattr(zipfile, "ZIP_BZIP2") and comp == zipfile.ZIP_BZIP2
+                and not _in_range(1, 9)):
             raise ValueError("For BZIP2, compresslevel must be between 1 and 9.")
-        if hasattr(zipfile, "ZIP_LZMA") and comp == zipfile.ZIP_LZMA and not _in_range(0, 9):
+        if (hasattr(zipfile, "ZIP_LZMA") and comp == zipfile.ZIP_LZMA
+                and not _in_range(0, 9)):
             raise ValueError("For LZMA, compresslevel must be between 0 and 9.")
 
         # Store the validated compresslevel back into kwargs
