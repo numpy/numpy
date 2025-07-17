@@ -2425,6 +2425,7 @@ class TestMaximum(_FilterInvalids):
         assert_equal(np.maximum(arr1[:4:], arr2[::2]), np.array([-2.0, np.nan, 10.0, 1.0]))
         assert_equal(np.maximum(arr1[::3], arr2[:3:]), np.array([-2.0, 0.0, np.nan]))
         assert_equal(np.maximum(arr1[:6:2], arr2[::3], out=out[::3]), np.array([-2.0, 10., np.nan]))
+
         assert_equal(out, out_maxtrue)
 
     def test_precision(self):
@@ -2448,6 +2449,9 @@ class TestMaximum(_FilterInvalids):
                 assert_equal(np.maximum([v1], [v2]), [expected])
                 assert_equal(np.maximum.reduce([v1, v2]), expected)
 
+    def test_maximum_too_many_args(self):
+        with pytest.raises(TypeError, match=r"np\.maximum\(\) takes exactly 2 input arguments \(3 given\)"):
+            np.maximum(1, 2, 3)
 
 class TestMinimum(_FilterInvalids):
     def test_reduce(self):

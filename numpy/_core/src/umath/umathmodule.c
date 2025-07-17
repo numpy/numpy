@@ -40,6 +40,7 @@
 
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
+PyUFuncObject *UFUNC_MAXIMUM = NULL;
 
 static int
 object_ufunc_type_resolver(PyUFuncObject *ufunc,
@@ -278,6 +279,7 @@ int initumath(PyObject *m)
     if (_PyArray_SetNumericOps(d) < 0) {
         return -1;
     }
+    UFUNC_MAXIMUM = (PyUFuncObject *)PyDict_GetItemString(d, "maximum");
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
