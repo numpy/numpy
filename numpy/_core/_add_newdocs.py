@@ -6280,7 +6280,27 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
     """))
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('type',
-    """The type object used to instantiate a scalar of this data-type."""))
+    """
+    The type object used to instantiate a scalar of this data-type.
+
+    For specific data types such as numpy.int32, numpy.float64, this attribute provides
+    the Python class corresponding to the scalar values of the array elements.
+
+    For the base class `numpy.dtype` and certain abstract `dtype` types,
+    this attribute is `None`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> dt = np.dtype(float)
+    >>> dt.type
+    <class 'numpy.float64'>
+
+    >>> dt = np.dtype('i4')
+    >>> dt.type
+    <class 'numpy.int32'>
+
+    """))
 
 ##############################################################################
 #
