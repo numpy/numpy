@@ -620,9 +620,13 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     if (index_type == HAS_FANCY) {
-        ret = iter_subscript_int(self,
-                                 (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP),
-                                 &cast_info);
+        PyArrayObject *cast_array =
+            (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP);
+        if (cast_array == NULL) {
+            goto finish;
+        }
+        ret = iter_subscript_int(self, cast_array, &cast_info);
+        Py_DECREF(cast_array);
         goto finish;
     }
 
@@ -890,10 +894,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     if (index_type == HAS_FANCY) {
-        ret = iter_ass_sub_int(self,
-                               (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP),
-                               val_it,
-                               &cast_info);
+        PyArrayObject *cast_array =
+            (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP);
+        if (cast_array == NULL) {
+            goto finish;
+        }
+        ret = iter_ass_sub_int(self, cast_array, val_it, &cast_info);
+        Py_DECREF(cast_array);
         goto finish;
     }
 
