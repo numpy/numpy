@@ -1494,16 +1494,15 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
     if (fast_seq == NULL) {
         return NULL;
     }
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(args, multiter_cs)
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(args)
     n = PySequence_Fast_GET_SIZE(fast_seq);
     if (n > NPY_MAXARGS) {
-        Py_DECREF(fast_seq);
-        NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(multiter_cs)
-        return multiiter_wrong_number_of_args();
+        ret = multiiter_wrong_number_of_args();
+    } else {
+        ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
     }
-    ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
     Py_DECREF(fast_seq);
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(multiter_cs)
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST()
     return ret;
 }
 

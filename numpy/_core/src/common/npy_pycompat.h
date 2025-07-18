@@ -36,7 +36,8 @@
 //   critical sections.
 // * The beginning and ending macros must happen within the same scope
 //   and the compiler won't necessarily enforce that.
-// * The macros ending critical sections accept a named label.
+// * The macros ending critical sections accept a named label. The label
+//   must match the opening critical section.
 #define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(original, cs_name) \
     PyObject *_##cs_name##_orig_seq = (PyObject *)(original);           \
     const int _##cs_name##_should_lock_cs =                             \
@@ -45,10 +46,6 @@
     if (_##cs_name##_should_lock_cs) {                                  \
         PyCriticalSection_Begin(&_##cs_name, _##cs_name##_orig_seq);    \
     }
-#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(op, cs_name)     \
-    PyCriticalSection _py_cs_##cs_name;                         \
-    PyCriticalSection_Begin(&_py_cs_##cs_name, (PyObject *)(op))
-#define NPY_END_CRITICAL_SECTION_NO_BRACKETS(cs_name) PyCriticalSection_End(&_py_cs_##cs_name)
 #define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(cs_name)     \
     if (_##cs_name##_should_lock_cs) {                                  \
         PyCriticalSection_End(&_##cs_name);                             \
@@ -58,8 +55,6 @@
 #define NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(original) {
 #define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(cs_name)
 #define NPY_END_CRITICAL_SECTION_SEQUENCE_FAST() }
-#define NPY_BEGIN_CRITICAL_SECTION_NO_BRACKETS(obj, cs_name)
-#define NPY_END_CRITICAL_SECTION_NO_BRACKETS(cs_name)
 #endif
 
 

@@ -2760,7 +2760,7 @@ fail:
 static int
 einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 {
-    int ellipsis = 0, subindex = 0;
+    int ellipsis = 0, subindex = 0, ret = -1;
     npy_intp i, size;
     PyObject *item;
 
@@ -2770,7 +2770,7 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
         return -1;
     }
 
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(obj, einsum_cs);
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
 
     size = PySequence_Size(obj);
 
@@ -2781,12 +2781,12 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (ellipsis) {
                 PyErr_SetString(PyExc_ValueError,
                         "each subscripts list may have only one ellipsis");
-                goto fail;
+                goto cleanup;
             }
             if (subindex + 3 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                goto fail;
+                goto cleanup;
             }
             subscripts[subindex++] = '.';
             subscripts[subindex++] = '.';
@@ -2801,14 +2801,14 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 PyErr_SetString(PyExc_TypeError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
-                goto fail;
+                goto cleanup;
             }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                goto fail;
+                goto cleanup;
             }
 
             if (s < 0) {
@@ -2827,21 +2827,19 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscript is not within the valid range [0, 52)");
-                goto fail;
+                goto cleanup;
             }
         }
-
     }
 
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(einsum_cs);
+    ret = subindex;
+
+  cleanup:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     Py_DECREF(obj);
 
-    return subindex;
-
-fail:
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(einsum_cs);
-    Py_DECREF(obj);
-    return -1;
+    return ret;
 
 }
 

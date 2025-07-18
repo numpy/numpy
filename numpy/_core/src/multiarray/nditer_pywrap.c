@@ -731,14 +731,14 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
         pre_alloc_fail = 1;
-        nop = 0;
+        goto cleanup;
     }
 
     /* allocate workspace for Python objects (operands and dtypes) */
     NPY_ALLOC_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
     if (op == NULL) {
         pre_alloc_fail = 1;
-        nop = 0;
+        goto cleanup;
     }
     memset(op, 0, sizeof(PyObject *) * 2 * nop);
     op_request_dtypes = (PyArray_Descr **)(op + nop);
@@ -754,12 +754,16 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
      */
     if (op_flags == NULL || op_axes_storage == NULL || op_axes == NULL) {
         post_alloc_fail = 1;
+        goto cleanup;
     }
 
     /* op and op_flags */
     if (npyiter_convert_ops(nop, op_objs, op_flags_in, op, op_flags) != 1) {
         post_alloc_fail = 1;
+        goto cleanup;
     }
+
+cleanup:
 
     NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(nditer_cs);
 
