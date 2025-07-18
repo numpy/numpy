@@ -758,17 +758,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def isvstring(x):
         return x.dtype.char == "T"
 
-    def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
-        """Handling nan/inf.
-
-        Combine results of running func on x and y, checking that they are True
-        at the same locations.
-
-        """
-        __tracebackhide__ = True  # Hide traceback for py.test
-
-        x_id = func(x)
-        y_id = func(y)
+    def robust_any_difference(x, y):
         # We include work-arounds here to handle three types of slightly
         # pathological ndarray subclasses:
         # (1) all() on fully masked arrays returns np.ma.masked, so we use != True
@@ -781,10 +771,23 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting cases (2) and (3), but it's nice to
         # support them if possible.
-        result = x_id == y_id
+        result = x == y
         if not hasattr(result, "all") or not callable(result.all):
             result = np.bool(result)
-        if result.all() != True:
+        return result.all() != True
+
+    def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
+        """Handling nan/inf.
+
+        Combine results of running func on x and y, checking that they are True
+        at the same locations.
+
+        """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
+        x_id = func(x)
+        y_id = func(y)
+        if robust_any_difference(x_id, y_id):
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
@@ -818,11 +821,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             assert infs_mask.all()
 
-        # For details on the work-arounds employed here, see func_assert_same_pos above
-        result = x == y
-        if not hasattr(result, "all") or not callable(result.all):
-            result = np.bool(result)
-        if result.all() != True:
+        if robust_any_difference(x, y):
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\ninf values mismatch:',
