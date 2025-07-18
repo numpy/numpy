@@ -943,13 +943,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_comparison.dispatch.h',
-    src_file.process('src/umath/loops_comparison.dispatch.c.src'),
+    'src/umath/loops_comparison.dispatch.cpp',
     [
-      AVX512_SKX, AVX512F, AVX2, SSE42, SSE2,
+      AVX512_SKX, AVX2, SSE42, SSE2,
       VSX3, VSX2,
       NEON,
-      VXE, VX,
+      VXE,
       LSX,
+      RVV,
     ]
   ],
   [
