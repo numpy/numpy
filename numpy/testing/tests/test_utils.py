@@ -612,6 +612,18 @@ class TestArrayAlmostEqual(_GenericTest):
         assert_raises(AssertionError,
                       lambda: self._assert_func(a, b))
 
+    def test_complex_inf(self):
+        a = np.array([np.inf + 1.j, 2. + 1.j, 3. + 1.j])
+        b = a.copy()
+        self._assert_func(a, b)
+        b[1] = 3. + 1.j
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Mismatch at index:\n'
+                        ' [1]: (2+1j) (ACTUAL), (3+1j) (DESIRED)\n'
+                        'Max absolute difference among violations: 1.\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
+
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = np.ma.masked_array([[1., 2.], [0., 4.]],
@@ -1283,9 +1295,19 @@ class TestAssertAllclose:
         # Should not raise:
         assert_allclose(a, b, equal_nan=True)
 
+        a = np.array([complex(np.nan, np.inf)])
+        b = np.array([complex(np.nan, np.inf)])
+        assert_allclose(a, b, equal_nan=True)
+        b = np.array([complex(np.nan, -np.inf)])
+        assert_allclose(a, b, equal_nan=True)
+
     def test_not_equal_nan(self):
         a = np.array([np.nan])
         b = np.array([np.nan])
+        assert_raises(AssertionError, assert_allclose, a, b, equal_nan=False)
+
+        a = np.array([complex(np.nan, np.inf)])
+        b = np.array([complex(np.nan, np.inf)])
         assert_raises(AssertionError, assert_allclose, a, b, equal_nan=False)
 
     def test_equal_nan_default(self):
@@ -1336,6 +1358,33 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError):
             assert_allclose(x, x.astype(np.float32), strict=True)
 
+    def test_infs(self):
+        a = np.array([np.inf])
+        b = np.array([np.inf])
+        assert_allclose(a, b)
+
+        b = np.array([3.])
+        expected_msg = 'inf location mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+
+        b = np.array([-np.inf])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+        b = np.array([complex(np.inf, 1.)])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+
+        a = np.array([complex(np.inf, 1.)])
+        b = np.array([complex(np.inf, 1.)])
+        assert_allclose(a, b)
+
+        b = np.array([complex(np.inf, 2.)])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
 
 class TestArrayAlmostEqualNulp:
 
