@@ -264,10 +264,12 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.datetime64('NaT')), 'NaT')
         assert_equal(repr(np.datetime64('NaT')),
-                     "np.datetime64('NaT')")
+                     "np.datetime64('NaT','generic')")
         assert_equal(str(np.datetime64('2011-02')), '2011-02')
         assert_equal(repr(np.datetime64('2011-02')),
                      "np.datetime64('2011-02')")
+        assert_equal(repr(np.datetime64('NaT').astype(np.dtype("datetime64[ns]"))),
+                     "np.datetime64('NaT','ns')")
 
         # None gets constructed as NaT
         assert_equal(np.datetime64(None), np.datetime64('NaT'))
