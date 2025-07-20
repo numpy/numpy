@@ -952,6 +952,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         error2 = abs(y - x)
                         np.minimum(error, error2, out=error)
 
+                    if invalids is np.True_:
+                        # Avoids unintentionally adding a dimension
+                        invalids = np.ones_like(error, dtype=bool)
                     reduced_error = error[invalids]
                     max_abs_error = max(reduced_error)
                     remarks.append('Max absolute difference among violations: '
