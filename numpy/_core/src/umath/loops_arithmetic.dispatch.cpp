@@ -169,6 +169,7 @@ T floor_div(T n, T d) {
     }
     return r;
 }
+
 // General divide implementation for arrays
 template <typename T>
 void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
@@ -178,30 +179,40 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
     bool raise_overflow = false;
     bool raise_divbyzero = false;
     const auto vec_zero = hn::Zero(d);
+    const auto vec_one = hn::Set(d, static_cast<T>(1));
     const auto vec_min_val = hn::Set(d, std::numeric_limits<T>::min());
     const auto vec_neg_one = hn::Set(d, static_cast<T>(-1));
-    
+
     size_t i = 0;
     for (; i + N <= static_cast<size_t>(len); i += N) {
         const auto vec_a = hn::LoadU(d, src1 + i);
         const auto vec_b = hn::LoadU(d, src2 + i);
+        
         const auto b_is_zero = hn::Eq(vec_b, vec_zero);
         const auto a_is_min = hn::Eq(vec_a, vec_min_val);
         const auto b_is_neg_one = hn::Eq(vec_b, vec_neg_one);
         const auto overflow_cond = hn::And(a_is_min, b_is_neg_one);
-        auto vec_div = hn::Div(vec_a, vec_b);
-        const auto vec_mul = hn::Mul(vec_div, vec_b);
+        
+        const auto safe_div_mask = hn::Not(hn::Or(b_is_zero, overflow_cond));
+        const auto safe_b = hn::IfThenElse(hn::Or(b_is_zero, overflow_cond), vec_one, vec_b);
+        
+        auto vec_div = hn::Div(vec_a, safe_b);
+        
+        const auto vec_mul = hn::Mul(vec_div, safe_b);
         const auto has_remainder = hn::Ne(vec_a, vec_mul);
         const auto a_sign = hn::Lt(vec_a, vec_zero);
-        const auto b_sign = hn::Lt(vec_b, vec_zero);
+        const auto b_sign = hn::Lt(safe_b, vec_zero);
         const auto different_signs = hn::Xor(a_sign, b_sign);
-        auto adjustment = hn::And(different_signs, has_remainder);
-        vec_div = hn::IfThenElse(adjustment, 
-                                 hn::Sub(vec_div, hn::Set(d, static_cast<T>(1))), 
-                                 vec_div);
+        const auto needs_adjustment = hn::And(safe_div_mask, 
+                                             hn::And(different_signs, has_remainder));
+        
+        vec_div = hn::MaskedSubOr(vec_div, needs_adjustment, vec_div, vec_one);
+        
         vec_div = hn::IfThenElse(b_is_zero, vec_zero, vec_div);
         vec_div = hn::IfThenElse(overflow_cond, vec_min_val, vec_div);
+        
         hn::StoreU(vec_div, d, dst + i);
+        
         if (!raise_divbyzero && !hn::AllFalse(d, b_is_zero)) {
             raise_divbyzero = true;
         }
@@ -209,10 +220,11 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
             raise_overflow = true;
         }
     }
+    
     for (; i < static_cast<size_t>(len); i++) {
         T a = src1[i];
         T b = src2[i];
-        
+
         if (b == 0) {
             dst[i] = 0;
             raise_divbyzero = true;
@@ -225,35 +237,41 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
             dst[i] = floor_div(a, b);
         }
     }
-    
+
     set_float_status(raise_overflow, raise_divbyzero);
 }
+
 // Unsigned division for arrays
 template <typename T>
 void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
     using D = hn::ScalableTag<T>;
     const D d;
     const size_t N = hn::Lanes(d);
-    
     bool raise_divbyzero = false;
     const auto vec_zero = hn::Zero(d);
-    
+    const auto vec_one = hn::Set(d, static_cast<T>(1));
+
     size_t i = 0;
     for (; i + N <= static_cast<size_t>(len); i += N) {
         const auto vec_a = hn::LoadU(d, src1 + i);
         const auto vec_b = hn::LoadU(d, src2 + i);
+        
         const auto b_is_zero = hn::Eq(vec_b, vec_zero);
-        auto vec_div = hn::Div(vec_a, vec_b);
+
+        const auto safe_b = hn::IfThenElse(b_is_zero, vec_one, vec_b);
+        auto vec_div = hn::Div(vec_a, safe_b);
         vec_div = hn::IfThenElse(b_is_zero, vec_zero, vec_div);
         hn::StoreU(vec_div, d, dst + i);
         if (!raise_divbyzero && !hn::AllFalse(d, b_is_zero)) {
             raise_divbyzero = true;
         }
     }
+    
+    // Handle remaining elements
     for (; i < static_cast<size_t>(len); i++) {
         T a = src1[i];
         T b = src2[i];
-        
+
         if (b == 0) {
             dst[i] = 0;
             raise_divbyzero = true;
@@ -261,10 +279,8 @@ void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
             dst[i] = a / b;
         }
     }
-    
     set_float_status(false, raise_divbyzero);
 }
-
 
 // Dispatch functions for signed integer division
 template <typename T>
