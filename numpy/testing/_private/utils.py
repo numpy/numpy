@@ -947,6 +947,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         error2 = abs(y - x)
                         np.minimum(error, error2, out=error)
 
+                    if not hasattr(error, "__getitem__"):
+                        # Show max differences in case error is numeric but not
+                        # subscriptable. Occurs with 0-dim numeric object arrays.
+                        error = np.asanyarray(error)
                     reduced_error = error[invalids]
                     max_abs_error = max(reduced_error)
                     if getattr(error, 'dtype', object_) == object_:
