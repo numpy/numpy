@@ -1,0 +1,5 @@
+Show unit information in ``__repr__`` for ``datetime64("NaT")``
+------------------------------------------------------------------
+When a `datetime64` object is "Not a Time" (NaT), its ``__repr__`` method now
+includes the time unit of the datetime64 type. This makes it consistent with
+the behavior of a `timedelta64` object.
