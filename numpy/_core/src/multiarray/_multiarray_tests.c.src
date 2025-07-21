@@ -644,7 +644,7 @@ incref_elide_l(PyObject *dummy, PyObject *args)
     }
     /* get item without increasing refcount, item may still be on the python
      * stack but above the inaccessible top */
-    r = PyList_GetItem(arg, 4);
+    r = PyList_GetItem(arg, 4); // noqa: borrowed-ref OK
     res = PyNumber_Add(r, r);
 
     return res;
@@ -863,7 +863,7 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     if (classes == NULL) {
         goto fail;
     }
-    Py_SETREF(classes, PySequence_Fast(classes, NULL));
+    Py_SETREF(classes, PySequence_Fast(classes, NULL)); // noqa: borrowed-ref OK
     if (classes == NULL) {
         goto fail;
     }
@@ -883,7 +883,7 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         PyObject *to_dtype, *cast_obj;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(NPY_DT_SLOTS(from_dtype)->castingimpls,
+        while (PyDict_Next(NPY_DT_SLOTS(from_dtype)->castingimpls, // noqa: borrowed-ref OK
                            &pos, &to_dtype, &cast_obj)) {
             if (cast_obj == Py_None) {
                 continue;
@@ -965,7 +965,7 @@ identityhash_tester(PyObject *NPY_UNUSED(mod),
     }
 
     /* Replace the sequence with a guaranteed fast-sequence */
-    sequence = PySequence_Fast(sequence, "converting sequence.");
+    sequence = PySequence_Fast(sequence, "converting sequence."); // noqa: borrowed-ref OK
     if (sequence == NULL) {
         goto finish;
     }

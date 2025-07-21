@@ -4240,7 +4240,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True, mean=np._NoValue)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4518,7 +4518,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True, mean=np._NoValue)
 
     Returns the variance of the array elements, along given axis.
 

@@ -268,7 +268,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             int ret;
 
             name = PyTuple_GET_ITEM(ldescr->names, k);
-            item = PyDict_GetItem(ldescr->fields, name);
+            item = PyDict_GetItem(ldescr->fields, name); // noqa: borrowed-ref OK
 
             child = (PyArray_Descr*)PyTuple_GetItem(item, 0);
             offset_obj = PyTuple_GetItem(item, 1);

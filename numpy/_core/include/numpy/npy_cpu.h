@@ -20,6 +20,7 @@
  *              NPY_CPU_RISCV64
  *              NPY_CPU_RISCV32
  *              NPY_CPU_LOONGARCH
+ *              NPY_CPU_SW_64
  *              NPY_CPU_WASM
  */
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_CPU_H_
@@ -111,6 +112,8 @@
     #endif
 #elif defined(__loongarch_lp64)
     #define NPY_CPU_LOONGARCH64
+#elif defined(__sw_64__)
+    #define NPY_CPU_SW_64
 #elif defined(__EMSCRIPTEN__) || defined(__wasm__)
     /* __EMSCRIPTEN__ is defined by emscripten: an LLVM-to-Web compiler */
     /* __wasm__ is defined by clang when targeting wasm */
