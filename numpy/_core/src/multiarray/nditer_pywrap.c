@@ -730,7 +730,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     NPY_DEFINE_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS);
     NPY_DEFINE_WORKSPACE(op_axes, int *, 8);
 
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(op_in, nditer_cs);
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(op_in);
 
     nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
@@ -767,9 +767,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         goto cleanup;
     }
 
-cleanup:
+cleanup:;
 
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(nditer_cs);
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
 
     if (pre_alloc_fail) {
         goto pre_alloc_fail;
