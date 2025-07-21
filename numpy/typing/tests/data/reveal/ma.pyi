@@ -406,7 +406,7 @@ assert_type(MAR_f8.cumsum(), MaskedArray[Any])
 assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
 
 def invalid_resize() -> None:
-    assert_type(MAR_f8.resize((1,1)), NoReturn)
+    assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
 
 # Masked Array addition
 
