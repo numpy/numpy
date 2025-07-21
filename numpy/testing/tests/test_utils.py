@@ -108,11 +108,13 @@ class TestArrayEqual(_GenericTest):
         x = np.array(473963742225900817127911193656584771)
         y = np.array(18535119325151578301457182298393896)
 
-        with pytest.raises(AssertionError) as exc_info:
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: '
+                        '455428622900749238826454011358190875\n'
+                        'Max relative difference among violations: '
+                        '24.571119015281806\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
-        msg = str(exc_info.value)
-        assert_('Mismatched elements: 1 / 1 (100%)\n'
-                in msg)
 
         y = x
         self._assert_func(x, y)
