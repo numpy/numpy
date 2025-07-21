@@ -1494,7 +1494,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
     if (fast_seq == NULL) {
         return NULL;
     }
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(fast_seq)
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(args)
     n = PySequence_Fast_GET_SIZE(fast_seq);
     if (n > NPY_MAXARGS) {
         ret = multiiter_wrong_number_of_args();
