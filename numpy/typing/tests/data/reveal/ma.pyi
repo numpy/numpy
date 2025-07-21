@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, TypeAlias, TypeVar, assert_type, NoReturn
 
 import numpy as np
 from numpy import dtype, generic
@@ -416,6 +416,9 @@ assert_type(MAR_f8.view(dtype='float32'), MaskedArray[Any])
 assert_type(MAR_f8.view(dtype='float32', type=np.ndarray), np.ndarray[Any, Any])
 assert_type(MAR_2d_f4.view(dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
 assert_type(MAR_2d_f4.view(dtype=np.dtype(np.float16)), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
+
+def invalid_resize() -> None:
+    assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
 
 # Masked Array addition
 
