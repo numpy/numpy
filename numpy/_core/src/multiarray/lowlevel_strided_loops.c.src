@@ -770,12 +770,12 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  *          npy_float, npy_double, npy_longdouble#
  * #type2max = 0,
  *          UCHAR_MAX, USHRT_MAX, UINT_MAX, ULONG_MAX, ULLONG_MAX,
- *           CHAR_MAX,  SHRT_MAX,  INT_MAX,  LONG_MAX,  LLONG_MAX,
+ *          SCHAR_MAX,  SHRT_MAX,  INT_MAX,  LONG_MAX,  LLONG_MAX,
  *          65500, FLT_MAX, DBL_MAX, LDBL_MAX,
  *          FLT_MAX, DBL_MAX, LDBL_MAX#
  * #type2min = 0,
  *          0, 0, 0, 0, 0,
- *           CHAR_MIN,  SHRT_MIN,  INT_MIN,  LONG_MIN,  LLONG_MIN,
+ *          SCHAR_MIN,  SHRT_MIN,  INT_MIN,  LONG_MIN,  LLONG_MIN,
  *          -65500, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
  *          -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  * #is_bool2 = 1, 0*17#
