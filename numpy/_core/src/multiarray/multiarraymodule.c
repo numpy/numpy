@@ -2760,15 +2760,18 @@ fail:
 static int
 einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 {
-    int ellipsis = 0, subindex = 0;
+    int ellipsis = 0, subindex = 0, ret = -1;
     npy_intp i, size;
     PyObject *item;
 
-    obj = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref - manual fix needed
+    obj = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref OK
                                "be a list or a tuple");
     if (obj == NULL) {
         return -1;
     }
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
     size = PySequence_Size(obj);
 
     for (i = 0; i < size; ++i) {
@@ -2778,14 +2781,12 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (ellipsis) {
                 PyErr_SetString(PyExc_ValueError,
                         "each subscripts list may have only one ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             if (subindex + 3 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             subscripts[subindex++] = '.';
             subscripts[subindex++] = '.';
@@ -2800,16 +2801,14 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 PyErr_SetString(PyExc_TypeError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
 
             if (s < 0) {
@@ -2828,16 +2827,20 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscript is not within the valid range [0, 52)");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
         }
-
     }
 
+    ret = subindex;
+
+  cleanup:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     Py_DECREF(obj);
 
-    return subindex;
+    return ret;
+
 }
 
 /*

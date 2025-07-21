@@ -20,6 +20,7 @@
 #include "common.h"
 #include "conversion_utils.h"
 #include "ctors.h"
+#include "npy_pycompat.h"
 
 /* Functions not part of the public NumPy C API */
 npy_bool npyiter_has_writeback(NpyIter *iter);
@@ -588,7 +589,7 @@ npyiter_prepare_ops(PyObject *op_in, PyObject **out_owner, PyObject ***out_objs)
 {
     /* Take ownership of op_in (either a tuple/list or single element): */
     if (PyTuple_Check(op_in) || PyList_Check(op_in)) {
-        PyObject *seq = PySequence_Fast(op_in, "failed accessing item list"); // noqa: borrowed-ref - manual fix needed
+        PyObject *seq = PySequence_Fast(op_in, "failed accessing item list"); // noqa: borrowed-ref OK
         if (op_in == NULL) {
             Py_DECREF(op_in);
             return -1;
@@ -719,19 +720,28 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     /* Need nop to set up workspaces */
     PyObject **op_objs = NULL;
-    PyObject *op_in_owned = NULL;  /* Sequence/object owning op_objs. */
-    int nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
+    PyObject *op_in_owned = NULL; /* Sequence/object owning op_objs. */
+    PyArray_Descr **op_request_dtypes = NULL;
+    int pre_alloc_fail = 0;
+    int post_alloc_fail = 0;
+    int nop;
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(op_in, nditer_cs);
+
+    nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
-        goto pre_alloc_fail;
+        pre_alloc_fail = 1;
+        goto cleanup;
     }
 
     /* allocate workspace for Python objects (operands and dtypes) */
     NPY_ALLOC_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
     if (op == NULL) {
-        goto pre_alloc_fail;
+        pre_alloc_fail = 1;
+        goto cleanup;
     }
     memset(op, 0, sizeof(PyObject *) * 2 * nop);
-    PyArray_Descr **op_request_dtypes = (PyArray_Descr **)(op + nop);
+    op_request_dtypes = (PyArray_Descr **)(op + nop);
 
     /* And other workspaces (that do not need to clean up their content) */
     NPY_ALLOC_WORKSPACE(op_flags, npy_uint32, 8, nop);
@@ -743,11 +753,25 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
      * (NPY_ALLOC_WORKSPACE has to be done before a goto fail currently.)
      */
     if (op_flags == NULL || op_axes_storage == NULL || op_axes == NULL) {
-        goto finish;
+        post_alloc_fail = 1;
+        goto cleanup;
     }
 
     /* op and op_flags */
     if (npyiter_convert_ops(nop, op_objs, op_flags_in, op, op_flags) != 1) {
+        post_alloc_fail = 1;
+        goto cleanup;
+    }
+
+cleanup:
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(nditer_cs);
+
+    if (pre_alloc_fail) {
+        goto pre_alloc_fail;
+    }
+
+    if (post_alloc_fail) {
         goto finish;
     }
 

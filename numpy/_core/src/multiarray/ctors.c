@@ -1539,7 +1539,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
      * This is the main code to make a NumPy array from a Python
      * Object.  It is called from many different places.
      */
-    PyArrayObject *arr = NULL, *ret;
+    PyArrayObject *arr = NULL, *ret = NULL;
     PyArray_Descr *dtype = NULL;
     coercion_cache_obj *cache = NULL;
     int ndim = 0;
@@ -1560,12 +1560,14 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         copy = 1;
     }
 
+    Py_BEGIN_CRITICAL_SECTION(op);
+
     ndim = PyArray_DiscoverDTypeAndShape(
             op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
             copy, &was_copied_by__array__);
 
     if (ndim < 0) {
-        return NULL;
+        goto cleanup;
     }
 
     /* If the cache is NULL, then the object is considered a scalar */
@@ -1578,16 +1580,14 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     if (min_depth != 0 && ndim < min_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object of too small depth for desired array");
-        Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto cleanup;
     }
     if (max_depth != 0 && ndim > max_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
-        Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto cleanup;
     }
 
     /* Got the correct parameters, but the cache may already hold the result */
@@ -1602,9 +1602,11 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         if (was_copied_by__array__ == 1) {
             flags = flags & ~NPY_ARRAY_ENSURECOPY;
         }
-        PyObject *res = PyArray_FromArray(arr, dtype, flags);
+        // PyArray_FromArray steals a reference to the dtype
+        Py_INCREF(dtype);
+        ret = (PyArrayObject *)PyArray_FromArray(arr, dtype, flags);
         npy_unlink_coercion_cache(cache);
-        return res;
+        goto cleanup;
     }
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&
             !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
@@ -1619,13 +1621,15 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          * provide a dtype (newtype is NULL).
          */
         assert(ndim == 0);
-
-        return PyArray_NewFromDescrAndBase(
+        // PyArray_NewFromDescrAndBase steals a reference to the dtype
+        Py_INCREF(dtype);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, dtype,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)op)->obval,
                 ((PyVoidScalarObject *)op)->flags,
                 NULL, op);
+        goto cleanup;
     }
     /*
      * If we got this far, we definitely have to create a copy, since we are
@@ -1633,9 +1637,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
      */
     if (flags & NPY_ARRAY_ENSURENOCOPY) {
         PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
-        Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto cleanup;
     }
 
     if (cache == NULL && in_descr != NULL &&
@@ -1662,16 +1665,18 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
          * have a better solution at some point):
          * https://github.com/pandas-dev/pandas/issues/35481
          */
-        return PyArray_FromScalar(op, dtype);
+        // PyArray_FromScalar steals a reference to dtype
+        Py_INCREF(dtype);
+        ret = (PyArrayObject *)PyArray_FromScalar(op, dtype);
+        goto cleanup;
     }
 
     /* There was no array (or array-like) passed in directly. */
     if (flags & NPY_ARRAY_WRITEBACKIFCOPY) {
         PyErr_SetString(PyExc_TypeError,
                         "WRITEBACKIFCOPY used for non-array input.");
-        Py_DECREF(dtype);
         npy_free_coercion_cache(cache);
-        return NULL;
+        goto cleanup;
     }
 
     /* Create a new array and copy the data */
@@ -1681,8 +1686,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
             flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
     if (ret == NULL) {
         npy_free_coercion_cache(cache);
-        Py_DECREF(dtype);
-        return NULL;
+        goto cleanup;
     }
     if (ndim == PyArray_NDIM(ret)) {
         /*
@@ -1699,12 +1703,10 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         assert(ndim == 0);
 
         if (PyArray_Pack(dtype, PyArray_BYTES(ret), op) < 0) {
-            Py_DECREF(dtype);
-            Py_DECREF(ret);
-            return NULL;
+            Py_CLEAR(ret);
+            goto cleanup;
         }
-        Py_DECREF(dtype);
-        return (PyObject *)ret;
+        goto cleanup;
     }
     assert(ndim != 0);
     assert(op == cache->converted_obj);
@@ -1717,15 +1719,18 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
 
-    int success = PyArray_AssignFromCache(ret, cache);
+    int succeed = PyArray_AssignFromCache(ret, cache);
 
     ((PyArrayObject_fields *)ret)->nd = out_ndim;
     ((PyArrayObject_fields *)ret)->descr = out_descr;
-    Py_DECREF(dtype);
-    if (success < 0) {
-        Py_DECREF(ret);
-        return NULL;
+    if (succeed < 0) {
+        Py_CLEAR(ret);
     }
+
+cleanup:;
+
+    Py_XDECREF(dtype);
+    Py_END_CRITICAL_SECTION();
     return (PyObject *)ret;
 }
 
