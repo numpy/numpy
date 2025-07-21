@@ -27,6 +27,7 @@ AR_LIKE_dt64: list[np.datetime64]
 AR_LIKE_o: list[np.object_]
 AR_number: NDArray[np.number]
 
+MAR_c8: MaskedArray[np.complex64]
 MAR_c16: MaskedArray[np.complex128]
 MAR_b: MaskedArray[np.bool]
 MAR_f4: MaskedArray[np.float32]
@@ -398,6 +399,13 @@ assert_type(MAR_f8.trace(out=MAR_subclass, dtype=None), MaskedArraySubclass)
 
 assert_type(MAR_f8.round(), MaskedArray[np.float64])
 assert_type(MAR_f8.round(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_i8.reshape(None), MaskedArray[np.int64])
+assert_type(MAR_f8.reshape(-1), np.ma.MaskedArray[tuple[int], np.dtype[np.float64]])
+assert_type(MAR_c8.reshape(2, 3, 4, 5), np.ma.MaskedArray[tuple[int, int, int, int], np.dtype[np.complex64]])
+assert_type(MAR_td64.reshape(()), np.ma.MaskedArray[tuple[()], np.dtype[np.timedelta64]])
+assert_type(MAR_s.reshape([]), np.ma.MaskedArray[tuple[()], np.dtype[np.str_]])
+assert_type(MAR_V.reshape((480, 720, 4)), np.ma.MaskedArray[tuple[int, int, int], np.dtype[np.void]])
 
 assert_type(MAR_f8.cumprod(), MaskedArray[Any])
 assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
