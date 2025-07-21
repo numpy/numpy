@@ -198,15 +198,17 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
         
         auto vec_div = hn::Div(vec_a, safe_b);
         
-        const auto vec_mul = hn::Mul(vec_div, safe_b);
-        const auto has_remainder = hn::Ne(vec_a, vec_mul);
-        const auto a_sign = hn::Lt(vec_a, vec_zero);
-        const auto b_sign = hn::Lt(safe_b, vec_zero);
-        const auto different_signs = hn::Xor(a_sign, b_sign);
-        const auto needs_adjustment = hn::And(safe_div_mask, 
-                                             hn::And(different_signs, has_remainder));
-        
-        vec_div = hn::MaskedSubOr(vec_div, needs_adjustment, vec_div, vec_one);
+        if (!hn::AllFalse(d, safe_div_mask)) {
+            const auto vec_mul = hn::Mul(vec_div, safe_b);
+            const auto has_remainder = hn::Ne(vec_a, vec_mul);
+            const auto a_sign = hn::Lt(vec_a, vec_zero);
+            const auto b_sign = hn::Lt(vec_b, vec_zero);
+            const auto different_signs = hn::Xor(a_sign, b_sign);
+            const auto needs_adjustment = hn::And(safe_div_mask,
+                                                 hn::And(has_remainder, different_signs));
+            
+            vec_div = hn::MaskedSubOr(vec_div, needs_adjustment, vec_div, vec_one);
+        }
         
         vec_div = hn::IfThenElse(b_is_zero, vec_zero, vec_div);
         vec_div = hn::IfThenElse(overflow_cond, vec_min_val, vec_div);
@@ -221,6 +223,7 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
         }
     }
     
+    // Handle remaining elements
     for (; i < static_cast<size_t>(len); i++) {
         T a = src1[i];
         T b = src2[i];
@@ -234,10 +237,15 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
             raise_overflow = true;
         } 
         else {
-            dst[i] = floor_div(a, b);
+            T r = a / b;
+            if (((a > 0) != (b > 0)) && ((r * b) != a)) {
+                --r;
+            }
+            dst[i] = r;
         }
     }
-
+    
+    npy_clear_floatstatus();
     set_float_status(raise_overflow, raise_divbyzero);
 }
 
@@ -255,13 +263,17 @@ void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
     for (; i + N <= static_cast<size_t>(len); i += N) {
         const auto vec_a = hn::LoadU(d, src1 + i);
         const auto vec_b = hn::LoadU(d, src2 + i);
-        
-        const auto b_is_zero = hn::Eq(vec_b, vec_zero);
 
+        const auto b_is_zero = hn::Eq(vec_b, vec_zero);
+        
         const auto safe_b = hn::IfThenElse(b_is_zero, vec_one, vec_b);
+        
         auto vec_div = hn::Div(vec_a, safe_b);
+        
         vec_div = hn::IfThenElse(b_is_zero, vec_zero, vec_div);
+        
         hn::StoreU(vec_div, d, dst + i);
+        
         if (!raise_divbyzero && !hn::AllFalse(d, b_is_zero)) {
             raise_divbyzero = true;
         }
@@ -279,6 +291,8 @@ void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
             dst[i] = a / b;
         }
     }
+    
+    npy_clear_floatstatus();
     set_float_status(false, raise_divbyzero);
 }
 
