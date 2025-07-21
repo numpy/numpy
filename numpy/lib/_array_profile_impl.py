@@ -92,26 +92,3 @@ def array_profile(arr, return_dict=False):
  
 """)
     return None
-
-# Test with a simple array
-a = np.array([[1, 2, 3], [4, 5, 6]])
-print("Testing with array:")
-print(a)
-print("\nArray profile:")
-array_profile(a)
-
-# Test with a float array
-b = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
-print("\nTesting with float array:")
-print(b)
-print("\nArray profile:")
-array_profile(b)
-
-# Test with an array containing NaN
-c = np.array([1, 2, np.nan, 4, 5])
-print("\nTesting with array containing NaN:")
-print(c)
-print("\nArray profile:")
-array_profile(c)
-
-print("\nAll tests completed successfully!")
