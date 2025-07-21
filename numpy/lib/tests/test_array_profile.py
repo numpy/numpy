@@ -5,8 +5,6 @@ Tests for array_profile function.
 import numpy as np
 from numpy.testing import assert_equal, assert_almost_equal
 import pytest
-import io
-import sys
 
 
 class TestArrayProfile:
@@ -68,18 +66,13 @@ class TestArrayProfile:
         assert_equal(result['max_value'], 'N/A')
         assert_equal(result['mean'], 'N/A')
 
-    def test_print_output(self):
+    def test_print_output(self, capsys):
         """Test that the printed output contains expected information."""
-        # Redirect stdout to capture print output
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
-        
         np.array_profile(self.a)
         
-        # Reset stdout
-        sys.stdout = sys.__stdout__
+        captured = capsys.readouterr()
+        output = captured.out
         
-        output = captured_output.getvalue()
         assert "Array Profile" in output
         assert "Shape        : (2, 3)" in output
         assert "Dimensions   : 2" in output
