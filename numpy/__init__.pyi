@@ -2569,6 +2569,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         copy: builtins.bool | _CopyMode = ...,
     ) -> ndarray[_ShapeT_co, dtype]: ...
 
+    #
     @overload  # ()
     def view(self, /) -> Self: ...
     @overload  # (dtype: T)
