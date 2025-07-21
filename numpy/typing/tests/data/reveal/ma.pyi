@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, TypeAlias, TypeVar, assert_type, NoReturn
 
 import numpy as np
 from numpy import dtype, generic
@@ -404,6 +404,9 @@ assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
 
 assert_type(MAR_f8.cumsum(), MaskedArray[Any])
 assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
+
+def invalid_resize() -> None:
+    assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
 
 # Masked Array addition
 

@@ -3,7 +3,16 @@
 
 from _typeshed import Incomplete
 from collections.abc import Sequence
-from typing import Any, Literal, NoReturn, Self, SupportsIndex, TypeAlias, overload
+from typing import (
+    Any,
+    Literal,
+    Never,
+    NoReturn,
+    Self,
+    SupportsIndex,
+    TypeAlias,
+    overload,
+)
 from typing_extensions import TypeIs, TypeVar
 
 import numpy as np
@@ -1073,7 +1082,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     def ravel(self, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
     def reshape(self, *s, **kwargs): ...
-    def resize(self, newshape, refcheck=..., order=...): ...
+    def resize(self, newshape: Never, refcheck: bool = True, order: bool = False) -> NoReturn: ...
     def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
     def ids(self) -> tuple[int, int]: ...
     def iscontiguous(self) -> bool: ...
