@@ -107,6 +107,7 @@ NPY_cast_info_copy(NPY_cast_info *cast_info, NPY_cast_info *original)
     Py_XINCREF(cast_info->descriptors[1]);
     cast_info->context.caller = original->context.caller;
     Py_XINCREF(cast_info->context.caller);
+    cast_info->context.flags = original->context.flags;
     cast_info->context.method = original->context.method;
     Py_XINCREF(cast_info->context.method);
     if (original->auxdata == NULL) {
