@@ -44,11 +44,13 @@ from . import (
 # numpy.lib namespace members
 from ._arrayterator_impl import Arrayterator
 from ._version import NumpyVersion
+from ._index_tricks_impl import ndindex
+
 
 __all__ = [
     "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
     "format", "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
-    "stride_tricks", "tracemalloc_domain",
+    "stride_tricks", "tracemalloc_domain", "ndindex",
 ]
 
 add_newdoc.__module__ = "numpy.lib"
