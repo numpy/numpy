@@ -1398,7 +1398,16 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def round(self, /, decimals: SupportsIndex = 0, *, out: _ArrayT) -> _ArrayT: ...
 
-    def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+    def argsort(
+        self,
+        axis: SupportsIndex | _NoValueType = ...,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        endwith: bool = True,
+        fill_value: _ScalarLike_co | None = None,
+        *,
+        stable: bool | None = None,
+    ) -> _MaskedArray[Any]: ...
 
     # Keep in-sync with np.ma.argmin
     @overload  # type: ignore[override]
@@ -1703,7 +1712,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     #
     def __reduce__(self): ...
-    def __deepcopy__(self, memo=...): ...
+    def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
