@@ -75,6 +75,7 @@ from numpy._typing import (
     _Shape,
     _ShapeLike,
 )
+from numpy._typing._dtype_like import _VoidDTypeLike
 
 __all__ = [
     "MAError",
@@ -450,19 +451,44 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload  # ()
     def view(self, /, dtype: None = None, type: None = None, fill_value: _ScalarLike_co | None = None) -> Self: ...
     @overload  # (dtype: DTypeT)
-    def view(self, /, dtype: _DTypeT | _HasDType[_DTypeT], type: None = None, fill_value: _ScalarLike_co | None = None) -> MaskedArray[_ShapeT_co, _DTypeT]: ...
+    def view(
+        self,
+        /,
+        dtype: _DTypeT | _HasDType[_DTypeT],
+        type: None = None,
+        fill_value: _ScalarLike_co | None = None
+    ) -> MaskedArray[_ShapeT_co, _DTypeT]: ...
     @overload  # (dtype: dtype[ScalarT])
-    def view(self, /, dtype: _DTypeLike[_ScalarT], type: None = None, fill_value: _ScalarLike_co | None = None) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    def view(
+        self,
+        /,
+        dtype: _DTypeLike[_ScalarT],
+        type: None = None,
+        fill_value: _ScalarLike_co | None = None
+    ) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
     @overload  # ([dtype: _, ]*, type: ArrayT)
-    def view(self, /, dtype: DTypeLike | None = None, *, type: type[_ArrayT], fill_value: _ScalarLike_co | None = None) -> _ArrayT: ...
+    def view(
+        self,
+        /,
+        dtype: DTypeLike | None = None,
+        *,
+        type: type[_ArrayT],
+        fill_value: _ScalarLike_co | None = None
+    ) -> _ArrayT: ...
     @overload  # (dtype: _, type: ArrayT)
     def view(self, /, dtype: DTypeLike | None, type: type[_ArrayT], fill_value: _ScalarLike_co | None = None) -> _ArrayT: ...
     @overload  # (dtype: ArrayT, /)
     def view(self, /, dtype: type[_ArrayT], type: None = None, fill_value: _ScalarLike_co | None = None) -> _ArrayT: ...
     @overload  # (dtype: ?)
-    def view(self, /, dtype: DTypeLike, type: None = None, fill_value: _ScalarLike_co | None = None) -> MaskedArray[_ShapeT_co, dtype]: ...
-    @overload  # (dtype: ?, type: ArrayT)
-    def view(self, /, dtype: DTypeLike, type: type[_ArrayT], fill_value: _ScalarLike_co | None = None) -> _ArrayT: ...
+    def view(
+        self,
+        /,
+        # `_VoidDTypeLike | str | None` is like `DTypeLike` but without `_DTypeLike[Any]` to avoid
+        # overlaps with previous overloads.
+        dtype: _VoidDTypeLike | str | None,
+        type: None = None,
+        fill_value: _ScalarLike_co | None = None
+    ) -> MaskedArray[_ShapeT_co, dtype]: ...
 
     def __getitem__(self, indx): ...
     def __setitem__(self, indx, value): ...
