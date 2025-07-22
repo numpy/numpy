@@ -5612,7 +5612,14 @@ def insert(arr, obj, values, axis=None):
                              f"with size {N}")
         if (index < 0):
             index += N
-
+        # np.insert fails with datetime64 and string input combination #29339
+        if isinstance(values, np.ndarray):
+            if np.issubdtype(values.dtype, np.datetime64) and \
+            np.issubdtype(arr.dtype, np.str_):
+                if values.ndim == 0:
+                    values = values.item()
+                else:
+                    values = values.astype(str)
         # There are some object array corner cases here, but we cannot avoid
         # that:
         values = array(values, copy=None, ndmin=arr.ndim, dtype=arr.dtype)

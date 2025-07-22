@@ -1344,6 +1344,13 @@ class TestGradient:
         res = np.gradient(([1, 2], [2, 3]))
         assert type(res) is tuple
 
+    def test_insert_0d_datetime64_into_string_scalar(self):
+        # np.insert fails with datetime64 and string input combination #29339
+        arr = '5'
+        val_0d = np.array(np.datetime64('2025-10-10'))  # 0-d array
+        result_0d = np.insert(arr, 0, val_0d)
+        expected_0d = np.array(['2025-10-10', '5'], dtype='<U10')
+        assert_array_equal(result_0d, expected_0d)
 
 class TestAngle:
 
