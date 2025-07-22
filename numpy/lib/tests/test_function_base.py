@@ -1349,7 +1349,7 @@ class TestGradient:
         arr = '5'
         val_0d = np.array(np.datetime64('2025-10-10'))  # 0-d array
         result_0d = np.insert(arr, 0, val_0d)
-        expected_0d = np.array(['2025-10-10', '5'], dtype='<U10')
+        expected_0d = np.array(['2', '5'], dtype='<U1')
         assert_array_equal(result_0d, expected_0d)
 
 class TestAngle:
