@@ -93,10 +93,15 @@ _npy_init_workspace(
  * With some caches, it may be possible to malloc/calloc very quickly in which
  * case we should not hesitate to replace this pattern.
  */
-#define NPY_ALLOC_WORKSPACE(NAME, TYPE, fixed_size, size)  \
+#define NPY_DEFINE_WORKSPACE(NAME, TYPE, fixed_size)        \
     TYPE NAME##_static[fixed_size];                        \
-    TYPE *NAME;                                            \
+    TYPE *NAME;
+#define NPY_INIT_WORKSPACE(NAME, TYPE, fixed_size, size)   \
     _npy_init_workspace((void **)&NAME, NAME##_static, (fixed_size), sizeof(TYPE), (size))
+
+#define NPY_ALLOC_WORKSPACE(NAME, TYPE, fixed_size, size)  \
+    NPY_DEFINE_WORKSPACE(NAME, TYPE, fixed_size)            \
+    NPY_INIT_WORKSPACE(NAME, TYPE, fixed_size, size)
 
 
 static inline void

@@ -725,8 +725,12 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     int pre_alloc_fail = 0;
     int post_alloc_fail = 0;
     int nop;
+    NPY_DEFINE_WORKSPACE(op, PyArrayObject *, 2 * 8);
+    NPY_DEFINE_WORKSPACE(op_flags, npy_uint32, 8);
+    NPY_DEFINE_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS);
+    NPY_DEFINE_WORKSPACE(op_axes, int *, 8);
 
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(op_in, nditer_cs);
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(op_in);
 
     nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
@@ -735,7 +739,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* allocate workspace for Python objects (operands and dtypes) */
-    NPY_ALLOC_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
+    NPY_INIT_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
     if (op == NULL) {
         pre_alloc_fail = 1;
         goto cleanup;
@@ -744,9 +748,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     op_request_dtypes = (PyArray_Descr **)(op + nop);
 
     /* And other workspaces (that do not need to clean up their content) */
-    NPY_ALLOC_WORKSPACE(op_flags, npy_uint32, 8, nop);
-    NPY_ALLOC_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS, nop * NPY_MAXDIMS);
-    NPY_ALLOC_WORKSPACE(op_axes, int *, 8, nop);
+    NPY_INIT_WORKSPACE(op_flags, npy_uint32, 8, nop);
+    NPY_INIT_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS, nop * NPY_MAXDIMS);
+    NPY_INIT_WORKSPACE(op_axes, int *, 8, nop);
     /*
      * Trying to allocate should be OK if one failed, check for error now
      * that we can use `goto finish` to clean up everything.
@@ -763,9 +767,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         goto cleanup;
     }
 
-cleanup:
+cleanup:;
 
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST_NO_BRACKETS(nditer_cs);
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
 
     if (pre_alloc_fail) {
         goto pre_alloc_fail;
