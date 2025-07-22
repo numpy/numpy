@@ -3922,7 +3922,9 @@ static npy_hash_t
     dtype = PyArray_DescrFromScalar(obj);
     meta = get_datetime_metadata_from_dtype(dtype);
 
-    return @lname@_hash(meta, val);
+    npy_hash_t res = @lname@_hash(meta, val);
+    Py_DECREF(dtype);
+    return res;
 }
 /**end repeat**/
 
