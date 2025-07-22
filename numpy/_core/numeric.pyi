@@ -577,6 +577,7 @@ __all__ = [
     "seterrcall",
     "shape",
     "shares_memory",
+    "shifted",
     "short",
     "sign",
     "signbit",
@@ -1110,6 +1111,13 @@ def roll(
     shift: _ShapeLike,
     axis: _ShapeLike | None = ...,
 ) -> NDArray[Any]: ...
+
+def shifted(
+    a: ArrayLike[_ScalarT],
+    shift: _ShapeLike,
+    axis: _ShapeLike | None = ...,
+    fill_value: Any = 0,
+) -> NDArray[_ScalarT]: ...
 
 def rollaxis(
     a: NDArray[_ScalarT],

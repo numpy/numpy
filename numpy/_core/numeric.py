@@ -78,7 +78,7 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll', 'shifted',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
@@ -1247,6 +1247,7 @@ def roll(a, shift, axis=None):
     --------
     rollaxis : Roll the specified axis backwards, until it lies in a
                given position.
+    shifted : Shift array elements along a given axis.
 
     Notes
     -----
@@ -1319,6 +1320,113 @@ def roll(a, shift, axis=None):
             result[res_index] = a[arr_index]
 
         return result
+
+
+def _construct_ndim_tuple(a, value, axis, default=0):
+    # Constructs a tuple of length a.ndim based on the given value and axis.
+    lst = [default] * a.ndim
+    if isinstance(value, tuple):
+        if isinstance(axis, tuple):
+            for s, a in zip(value, axis, strict=True):
+                lst[a] = s
+        else:
+            raise ValueError(
+                "If 'value' is a tuple, 'axis' must be a tuple of equal length."
+            )
+    elif isinstance(value, int):
+        if isinstance(axis, tuple):
+            for a in axis:
+                lst[a] = value
+        elif isinstance(axis, int):
+            lst[axis] = value
+        else:
+            raise TypeError(f"Invalid {axis=}.")
+    else:
+        raise TypeError(f"Invalid {value=}.")
+    return tuple(lst)
+
+
+def _shifted_dispatcher(a, shift, axis=None, fill_value=None):
+    return (a,)
+
+
+@array_function_dispatch(_shifted_dispatcher)
+def shifted(a, shift, axis=None, fill_value=None):
+    """
+    Shift array elements along a given axis, leaving a fill value behind.
+
+    Parameters
+    ----------
+
+    a : array_like
+        Input array.
+    shift : int or tuple of ints
+        The number of places by which elements are shifted.  If a tuple,
+        then `axis` must be a tuple of the same size, and each of the
+        given axes is shifted by the corresponding number.  If an int
+        while `axis` is a tuple of ints, then the same value is used for
+        all given axes.
+    axis : int or tuple of ints, optional
+        Axis or axes along which elements are shifted.  By default, the
+        array is flattened before shifting, after which the original
+        shape is restored.
+    fill_value : scalar
+        Value to leave behind for displaced elements. Zero by default.
+
+    Returns
+    -------
+    res : ndarray
+        Output array, with the same shape as `a`.
+
+    See Also
+    --------
+    roll : Roll array elements along a given axis.
+
+    Notes
+    -----
+    Supports shifting multiple dimensions simultaneously.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.arange(1, 6)
+    >>> a
+    array([1, 2, 3, 4, 5])
+    >>> np.shifted(a, 2)
+    array([0, 0, 1, 2, 3])
+    >>> np.shifted(a, -2)
+    array([3, 4, 5, 0, 0])
+    >>> a = np.arange(1, 10).reshape((3, 3))
+    >>> a
+    array([[1, 2, 3],
+           [4, 5, 6],
+           [7, 8, 9]])
+    >>> np.shifted(a, (1, -2), (0, 1))
+    array([[0, 0, 0],
+           [3, 0, 0],
+           [6, 0, 0]])
+    """
+    a = asanyarray(a)
+    if axis is None:
+        return shifted(a.ravel(), shift, 0).reshape(a.shape)
+
+    shifts = _construct_ndim_tuple(a, shift, axis)
+    del shift, axis
+
+    src = tuple(
+        slice(None, size - shift) if shift >= 0 else slice(-shift, None)
+        for shift, size in zip(shifts, a.shape, strict=True)
+    )
+    dst = tuple(
+        slice(shift, None) if shift >= 0 else slice(None, size + shift)
+        for shift, size in zip(shifts, a.shape, strict=True)
+    )
+    if fill_value is None:
+        b = zeros_like(a)
+    else:
+        b = full_like(a, fill_value)
+    b[dst] = a[src]
+    return b
 
 
 def _rollaxis_dispatcher(a, axis, start=None):
