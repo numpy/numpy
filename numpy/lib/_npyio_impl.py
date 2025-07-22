@@ -261,7 +261,7 @@ class NpzFile(Mapping):
                         max_header_size=self.max_header_size
                     )
                 else:
-                    return bytes.read(key)
+                    return bytes.read()
 
     def __contains__(self, key):
         return (key in self._files)
