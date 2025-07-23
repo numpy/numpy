@@ -407,9 +407,9 @@ assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
 
 assert_type(MAR_f8.__deepcopy__(), MaskedArray[np.float64])
 
-assert_type(MAR_f8.argsort(), MaskedArray[Any])
-assert_type(MAR_f8.argsort(axis=0, kind='heap', order=('x', 'y')), MaskedArray[Any])
-assert_type(MAR_f8.argsort(endwith=True, fill_value=1.5, stable=False), MaskedArray[Any])
+assert_type(MAR_f8.argsort(), MaskedArray[np.intp])
+assert_type(MAR_f8.argsort(axis=0, kind='heap', order=('x', 'y')), MaskedArray[np.intp])
+assert_type(MAR_f8.argsort(endwith=True, fill_value=1.5, stable=False), MaskedArray[np.intp])
 
 def invalid_resize() -> None:
     assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
