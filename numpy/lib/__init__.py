@@ -46,7 +46,7 @@ from ._arrayterator_impl import Arrayterator
 from ._index_tricks_impl import ndindex
 from ._version import NumpyVersion
 
-ndindex.__module__ = "numpy"
+ndindex.__module__ = "numpy.lib"
 
 __all__ = [
     "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
