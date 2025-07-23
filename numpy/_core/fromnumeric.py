@@ -170,7 +170,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
         Ni, Nk = a.shape[:axis], a.shape[axis+1:]
         for ii in ndindex(Ni):
-            for kk in ndindex(Nj):
+            for kk in ndindex(Nk):
                 out[ii + s_[...,] + kk] = a[ii + s_[:,] + kk][indices]
 
     For this reason, it is equivalent to (but faster than) the following use

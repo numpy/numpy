@@ -141,3 +141,5 @@ MAR_c //= 2  # type: ignore[misc]
 MAR_td64 **= 2  # type: ignore[misc]
 
 MAR_1d_f8.swapaxes(axis1=1, axis2=0)  # type: ignore[call-arg]
+
+MAR_1d_f8.argsort(axis=(1,0))  # type: ignore[arg-type]

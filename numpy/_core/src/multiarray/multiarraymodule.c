@@ -2762,20 +2762,20 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 {
     int ellipsis = 0, subindex = 0, ret = -1;
     npy_intp i, size;
-    PyObject *item;
+    PyObject *item, *seq;
 
-    obj = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref OK
+    seq = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref OK
                                "be a list or a tuple");
-    if (obj == NULL) {
+    if (seq == NULL) {
         return -1;
     }
 
     NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
 
-    size = PySequence_Size(obj);
+    size = PySequence_Size(seq);
 
     for (i = 0; i < size; ++i) {
-        item = PySequence_Fast_GET_ITEM(obj, i);
+        item = PySequence_Fast_GET_ITEM(seq, i);
         /* Ellipsis */
         if (item == Py_Ellipsis) {
             if (ellipsis) {
@@ -2837,10 +2837,9 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
   cleanup:;
 
     NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
-    Py_DECREF(obj);
+    Py_DECREF(seq);
 
     return ret;
-
 }
 
 /*

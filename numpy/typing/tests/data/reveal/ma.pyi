@@ -413,6 +413,24 @@ assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
 assert_type(MAR_f8.cumsum(), MaskedArray[Any])
 assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
 
+assert_type(MAR_f8.view(), MaskedArray[np.float64])
+assert_type(MAR_f8.view(dtype=np.float32), MaskedArray[np.float32])
+assert_type(MAR_f8.view(dtype=np.dtype(np.float32)), MaskedArray[np.float32])
+assert_type(MAR_f8.view(dtype=np.float32, fill_value=0), MaskedArray[np.float32])
+assert_type(MAR_f8.view(type=np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_f8.view(None, np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_f8.view(dtype=np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_f8.view(dtype='float32'), MaskedArray[Any])
+assert_type(MAR_f8.view(dtype='float32', type=np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_2d_f4.view(dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
+assert_type(MAR_2d_f4.view(dtype=np.dtype(np.float16)), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
+
+assert_type(MAR_f8.__deepcopy__(), MaskedArray[np.float64])
+
+assert_type(MAR_f8.argsort(), MaskedArray[np.intp])
+assert_type(MAR_f8.argsort(axis=0, kind='heap', order=('x', 'y')), MaskedArray[np.intp])
+assert_type(MAR_f8.argsort(endwith=True, fill_value=1.5, stable=False), MaskedArray[np.intp])
+
 def invalid_resize() -> None:
     assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
 
