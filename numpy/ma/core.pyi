@@ -1406,7 +1406,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         endwith: bool = True,
         fill_value: _ScalarLike_co | None = None,
         *,
-        stable: bool | None = None,
+        stable: bool = False,
     ) -> _MaskedArray[Any]: ...
 
     # Keep in-sync with np.ma.argmin
