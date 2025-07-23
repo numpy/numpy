@@ -8,10 +8,12 @@ from typing import (
     Literal,
     Never,
     NoReturn,
+    Protocol,
     Self,
     SupportsIndex,
     TypeAlias,
     overload,
+    type_check_only,
 )
 from typing_extensions import TypeIs, TypeVar
 
@@ -274,6 +276,7 @@ _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=Tr
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
+_ArrayT_co = TypeVar("_ArrayT_co", bound=ndarray[Any, Any], covariant=True)
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
@@ -294,6 +297,10 @@ _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
+
+@type_check_only
+class _SupportsArray(Protocol[_ArrayT_co]):
+    def __array__(self, /) -> _ArrayT_co: ...
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
@@ -455,7 +462,68 @@ class MaskedIterator:
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
-    def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
+    @overload
+    def __new__(
+        cls,
+        data: _ArrayLike[_ScalarT],
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: None = None,
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: Any,
+        mask: _ArrayLikeBool_co,
+        dtype: _DTypeLike[_ScalarT],
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    @overload
+    def __new__(
+        cls,
+        data: Any = None,
+        mask: _ArrayLikeBool_co = nomask,
+        *,
+        dtype: _DTypeLike[_ScalarT],
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    @overload
+    def __new__(
+        cls,
+        data: Any = None,
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: DTypeLike = None,
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[Any]: ...
+
     def __array_finalize__(self, obj): ...
     def __array_wrap__(self, obj, context=..., return_scalar=...): ...
 
