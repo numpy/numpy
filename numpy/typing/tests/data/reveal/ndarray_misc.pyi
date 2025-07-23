@@ -70,8 +70,8 @@ assert_type(AR_f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(axis=0), Any)
 assert_type(AR_f8.argmin(out=AR_i8), npt.NDArray[np.intp])
 
-assert_type(f8.argsort(), npt.NDArray[Any])
-assert_type(AR_f8.argsort(), npt.NDArray[Any])
+assert_type(f8.argsort(), npt.NDArray[np.intp])
+assert_type(AR_f8.argsort(), npt.NDArray[np.intp])
 
 assert_type(f8.astype(np.int64).choose([()]), npt.NDArray[Any])
 assert_type(AR_f8.choose([0]), npt.NDArray[Any])

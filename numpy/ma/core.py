@@ -5628,7 +5628,7 @@ class MaskedArray(ndarray):
             is used.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
-        order : list, optional
+        order : str or list of str, optional
             When `a` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
             specified.
