@@ -3911,7 +3911,6 @@ static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     PyArray_DatetimeMetaData *meta;
-    PyArray_Descr *dtype;
     npy_@lname@ val = PyArrayScalar_VAL(obj, @name@);
 
     if (val == NPY_DATETIME_NAT) {
