@@ -825,7 +825,7 @@ class TestCasting:
             np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
     @pytest.mark.parametrize("from_dtype",
             np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
-    def test_same_value(self, from_dtype, to_dtype):
+    def test_same_value_overflow(self, from_dtype, to_dtype):
         if from_dtype == to_dtype:
             return
         top1 = 0
@@ -875,3 +875,59 @@ class TestCasting:
                 warnings.simplefilter("always", RuntimeWarning)
                 unaligned.astype(to_dtype, casting='same_value')
             assert len(w) < 2
+
+    @pytest.mark.parametrize("to_dtype",
+            np.typecodes["AllInteger"])
+    @pytest.mark.parametrize("from_dtype",
+            np.typecodes["AllFloat"])
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    def test_same_value_float_to_int(self, from_dtype, to_dtype):
+        # Should not raise, since the values can round trip
+        arr1 = np.arange(10, dtype=from_dtype)
+        aligned = np.empty(arr1.itemsize * arr1.size + 1, 'uint8')
+        unaligned = aligned[1:].view(arr1.dtype)
+        unaligned[:] = arr1
+        arr2 = np.arange(10, dtype=to_dtype)
+        assert_array_equal(arr1.astype(to_dtype, casting='same_value'), arr2)
+        assert_array_equal(unaligned.astype(to_dtype, casting='same_value'), arr2)
+
+        # Should raise, since values cannot round trip
+        arr1_66 = arr1 + 0.666
+        unaligned_66 = unaligned + 0.66
+        with pytest.raises(ValueError):
+            arr1_66.astype(to_dtype, casting='same_value')
+        with pytest.raises(ValueError):
+            unaligned_66.astype(to_dtype, casting='same_value')
+
+    @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    def test_same_value_naninf(self, value):
+        # These work
+        np.array([value], dtype=np.half).astype(np.cdouble, casting='same_value')
+        np.array([value], dtype=np.half).astype(np.double, casting='same_value')
+        np.array([value], dtype=np.float32).astype(np.cdouble, casting='same_value')
+        np.array([value], dtype=np.float32).astype(np.double, casting='same_value')
+        np.array([value], dtype=np.float32).astype(np.half, casting='same_value')
+        np.array([value], dtype=np.complex64).astype(np.half, casting='same_value')
+        # These fail
+        with pytest.raises(ValueError):
+            np.array([value], dtype=np.half).astype(np.int64, casting='same_value')
+        with pytest.raises(ValueError):
+            np.array([value], dtype=np.complex64).astype(np.int64, casting='same_value')
+        with pytest.raises(ValueError):
+            np.array([value], dtype=np.float32).astype(np.int64, casting='same_value')
+
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    def test_same_value_complex(self):
+        # This works
+        np.array([complex(1, 1)], dtype=np.cdouble).astype(np.complex64, casting='same_value')
+        # Casting with a non-zero imag part fails
+        with pytest.raises(ValueError):
+            np.array([complex(1, 1)], dtype=np.cdouble).astype(np.float32, casting='same_value')
+
+    def _test_same_value_scalar(self):
+        # Not implemented yet
+        i = np.array(123, dtype=np.int64)
+        f = np.array(123, dtype=np.float64)
+        assert i.astype(np.float64, casting='same_value') == f
+        assert f.astype(np.int64, casting='same_value') == f
