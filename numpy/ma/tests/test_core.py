@@ -1807,7 +1807,7 @@ class TestMaskedArrayArithmetic:
                 el_by_el = [m1[name] != m2[name] for name in dt.names]
                 assert_equal(array(el_by_el, dtype=bool).any(), ne_expected)
 
-    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('dt', ['S', 'U', 'T'])
     @pytest.mark.parametrize('fill', [None, 'A'])
     def test_eq_for_strings(self, dt, fill):
         # Test the equality of structured arrays
@@ -1839,7 +1839,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
-    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('dt', ['S', 'U', 'T'])
     @pytest.mark.parametrize('fill', [None, 'A'])
     def test_ne_for_strings(self, dt, fill):
         # Test the equality of structured arrays
@@ -1989,16 +1989,25 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
+    @pytest.mark.parametrize('dt', ['S', 'U', 'T'])
     @pytest.mark.parametrize('op',
             [operator.le, operator.lt, operator.ge, operator.gt])
     @pytest.mark.parametrize('fill', [None, "N/A"])
-    def test_comparisons_strings(self, op, fill):
+    def test_comparisons_strings(self, dt, op, fill):
         # See gh-21770, mask propagation is broken for strings (and some other
         # cases) so we explicitly test strings here.
         # In principle only == and != may need special handling...
-        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill)
-        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill)
+        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
+        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
         assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
+
+        if isinstance(fill, str):
+            fill = np.array(fill, dtype=dt)
+
+        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
+        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
+        assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
+
 
     @pytest.mark.filterwarnings("ignore:.*Comparison to `None`.*:FutureWarning")
     def test_eq_with_None(self):
