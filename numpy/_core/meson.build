@@ -1068,7 +1068,7 @@ foreach gen_mtargets : [
       VSX2,
       VX,
       LSX,
-      RVV,
+      RVV
     ]
   ],
   [
