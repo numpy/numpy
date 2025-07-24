@@ -87,9 +87,7 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
     }
 
     if (casting == NPY_SAME_VALUE_CASTING) {
-        /* cast_info.context.flags |= NPY_SAME_VALUE_CASTING; */
-        PyErr_SetString(PyExc_NotImplementedError, "'same_value' casting not implemented yet");
-        return -1;
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
     }
 
     npy_intp strides[2] = {0, dst_strides_it[0]};
@@ -187,9 +185,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
     if (casting == NPY_SAME_VALUE_CASTING) {
-        /* cast_info.context.flags |= NPY_SAME_VALUE_CASTING; */
-        PyErr_SetString(PyExc_NotImplementedError, "'same_value' casting not implemented yet");
-        return -1;
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
     }
 
     npy_intp strides[2] = {0, dst_strides_it[0]};

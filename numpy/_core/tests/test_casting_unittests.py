@@ -899,6 +899,21 @@ class TestCasting:
         with pytest.raises(ValueError):
             unaligned_66.astype(to_dtype, casting='same_value')
 
+    @pytest.mark.parametrize("to_dtype",
+            np.typecodes["AllInteger"])
+    @pytest.mark.parametrize("from_dtype",
+            np.typecodes["AllFloat"])
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    def test_same_value_float_to_int_scalar(self, from_dtype, to_dtype):
+        # Should not raise, since the values can round trip
+        s1 = np.array(10, dtype=from_dtype)
+        assert s1.astype(to_dtype, casting='same_value') == 10
+
+        # Should raise, since values cannot round trip
+        s1_66 = s1 + 0.666
+        with pytest.raises(ValueError):
+            s1_66.astype(to_dtype, casting='same_value')
+
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_same_value_naninf(self, value):
