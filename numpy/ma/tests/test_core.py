@@ -2008,7 +2008,6 @@ class TestMaskedArrayArithmetic:
         ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
         assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
 
-
     @pytest.mark.filterwarnings("ignore:.*Comparison to `None`.*:FutureWarning")
     def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
@@ -5696,6 +5695,33 @@ def test_append_masked_array_along_axis():
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
+
+
+def test_string_dtype_fill_value_on_construction():
+    # Regression test for gh-29421: allow string fill_value on StringDType masked arrays
+    dt = np.dtypes.StringDType()
+    data = np.array(['A', 'test', 'variable', ''], dtype=dt)
+    mask = [True, False, True, True]
+    # Prior to the fix, this would TypeError; now it should succeed
+    arr = np.ma.MaskedArray(data, mask=mask, fill_value='FILL', dtype=dt)
+    assert isinstance(arr.fill_value, str)
+    assert arr.fill_value == 'FILL'
+    filled = arr.filled()
+    # Masked positions should be replaced by 'FILL'
+    assert filled.tolist() == ['FILL', 'test', 'FILL', 'FILL']
+
+
+def test_setting_fill_value_attribute():
+    # Regression test for gh-29421: setting .fill_value post-construction works too
+    dt = np.dtypes.StringDType()
+    arr = np.ma.MaskedArray(['x', 'longstring', 'mid'], mask=[False, True, False], dtype=dt)
+    # Setting the attribute should not raise
+    arr.fill_value = 'Z'
+    assert arr.fill_value == 'Z'
+    # And filled() should use the new fill_value
+    assert arr.filled()[0] == 'x'
+    assert arr.filled()[1] == 'Z'
+    assert arr.filled()[2] == 'mid'
 
 
 def test_ufunc_with_output():
