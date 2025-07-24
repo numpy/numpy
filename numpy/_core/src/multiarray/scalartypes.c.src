@@ -3922,7 +3922,6 @@ static npy_hash_t
     meta = &((PyDatetimeScalarObject *)obj)->obmeta;
 
     npy_hash_t res = @lname@_hash(meta, val);
-    Py_DECREF(dtype);
     return res;
 }
 /**end repeat**/
