@@ -3919,8 +3919,7 @@ static npy_hash_t
         return PyBaseObject_Type.tp_hash(obj);
     }
 
-    dtype = PyArray_DescrFromScalar(obj);
-    meta = get_datetime_metadata_from_dtype(dtype);
+    meta = &((PyDatetimeScalarObject *)obj)->obmeta;
 
     npy_hash_t res = @lname@_hash(meta, val);
     Py_DECREF(dtype);
