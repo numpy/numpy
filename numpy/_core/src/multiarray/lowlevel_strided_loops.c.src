@@ -915,6 +915,7 @@ static GCC_CAST_OPT_LEVEL int
 #      if defined(__clang__) || defined(__GUNC__)
 #      pragma GCC diagnostic push
 #      pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#      pragma GCC diagnostic ignored "-Wtautological-compare"
 #endif
        if (!src_isnan && _TO_RTYPE1(src_value) > @type2max@) {
             return NPY_SAME_VALUE_FAILURE;
