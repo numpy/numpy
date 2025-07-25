@@ -21,6 +21,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy._core import overrides
 from numpy._core._multiarray_umath import _array_converter, _unique_hash
+from numpy.lib.array_utils import normalize_axis_index
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -248,7 +249,10 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a = np.array([[1, 1], [2, 3]])
     >>> np.unique(a)
     array([1, 2, 3])
-
+    >>> a = np.array([np.nan,0,0,np.nan])
+    >>> u = np.unique(a, axis=0, equal_nan=True)
+    >>> u
+    array([ 0., nan])
     Return the unique rows of a 2D array
 
     >>> a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])
@@ -290,7 +294,9 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
-    if axis is None or (axis == 0 and ar.ndim == 1):
+    if axis is None or ar.ndim == 1:
+        if axis is not None:
+            normalize_axis_index(axis, ar.ndim)
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
                         sorted=sorted)
