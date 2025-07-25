@@ -5,6 +5,8 @@ import re
 import sys
 import warnings
 
+import xarray as xr
+
 import numpy as np
 import numpy._core.numeric as _nx
 from numpy._core import overrides, transpose
@@ -59,19 +61,50 @@ from numpy.lib._histograms_impl import histogram, histogramdd  # noqa: F401
 from numpy.lib._twodim_base_impl import diag
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
 __all__ = [
-    'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
-    'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'flip',
-    'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
-    'bincount', 'digitize', 'cov', 'corrcoef',
-    'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
-    'meshgrid', 'delete', 'insert', 'append', 'interp',
-    'quantile'
-    ]
+    "select",
+    "piecewise",
+    "trim_zeros",
+    "copy",
+    "iterable",
+    "percentile",
+    "diff",
+    "gradient",
+    "angle",
+    "unwrap",
+    "sort_complex",
+    "flip",
+    "rot90",
+    "extract",
+    "place",
+    "vectorize",
+    "asarray_chkfinite",
+    "average",
+    "bincount",
+    "digitize",
+    "cov",
+    "corrcoef",
+    "median",
+    "sinc",
+    "hamming",
+    "hanning",
+    "bartlett",
+    "blackman",
+    "kaiser",
+    "trapezoid",
+    "trapz",
+    "i0",
+    "meshgrid",
+    "delete",
+    "insert",
+    "append",
+    "interp",
+    "quantile",
+]
 
 # _QuantileMethods is a dictionary listing all the supported methods to
 # compute quantile/percentile.
@@ -92,83 +125,97 @@ __all__ = [
 _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
-    'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
-        'fix_gamma': None,  # should never be called
+    "inverted_cdf": {
+        "get_virtual_index": lambda n, quantiles: _inverted_cdf(
+            n, quantiles
+        ),  # noqa: PLW0108
+        "fix_gamma": None,  # should never be called
     },
-    'averaged_inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: (n * quantiles) - 1,
-        'fix_gamma': lambda gamma, _: _get_gamma_mask(
+    "averaged_inverted_cdf": {
+        "get_virtual_index": lambda n, quantiles: (n * quantiles) - 1,
+        "fix_gamma": lambda gamma, _: _get_gamma_mask(
             shape=gamma.shape,
-            default_value=1.,
+            default_value=1.0,
             conditioned_value=0.5,
-            where=gamma == 0),
+            where=gamma == 0,
+        ),
     },
-    'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
-        'fix_gamma': None,  # should never be called
+    "closest_observation": {
+        "get_virtual_index": lambda n, quantiles: _closest_observation(
+            n, quantiles
+        ),  # noqa: PLW0108
+        "fix_gamma": None,  # should never be called
     },
     # Continuous methods
-    'interpolated_inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles:
-        _compute_virtual_index(n, quantiles, 0, 1),
-        'fix_gamma': lambda gamma, _: gamma,
+    "interpolated_inverted_cdf": {
+        "get_virtual_index": lambda n, quantiles: _compute_virtual_index(
+            n, quantiles, 0, 1
+        ),
+        "fix_gamma": lambda gamma, _: gamma,
     },
-    'hazen': {
-        'get_virtual_index': lambda n, quantiles:
-        _compute_virtual_index(n, quantiles, 0.5, 0.5),
-        'fix_gamma': lambda gamma, _: gamma,
+    "hazen": {
+        "get_virtual_index": lambda n, quantiles: _compute_virtual_index(
+            n, quantiles, 0.5, 0.5
+        ),
+        "fix_gamma": lambda gamma, _: gamma,
     },
-    'weibull': {
-        'get_virtual_index': lambda n, quantiles:
-        _compute_virtual_index(n, quantiles, 0, 0),
-        'fix_gamma': lambda gamma, _: gamma,
+    "weibull": {
+        "get_virtual_index": lambda n, quantiles: _compute_virtual_index(
+            n, quantiles, 0, 0
+        ),
+        "fix_gamma": lambda gamma, _: gamma,
     },
     # Default method.
     # To avoid some rounding issues, `(n-1) * quantiles` is preferred to
     # `_compute_virtual_index(n, quantiles, 1, 1)`.
     # They are mathematically equivalent.
-    'linear': {
-        'get_virtual_index': lambda n, quantiles: (n - 1) * quantiles,
-        'fix_gamma': lambda gamma, _: gamma,
+    "linear": {
+        "get_virtual_index": lambda n, quantiles: (n - 1) * quantiles,
+        "fix_gamma": lambda gamma, _: gamma,
     },
-    'median_unbiased': {
-        'get_virtual_index': lambda n, quantiles:
-        _compute_virtual_index(n, quantiles, 1 / 3.0, 1 / 3.0),
-        'fix_gamma': lambda gamma, _: gamma,
+    "median_unbiased": {
+        "get_virtual_index": lambda n, quantiles: _compute_virtual_index(
+            n, quantiles, 1 / 3.0, 1 / 3.0
+        ),
+        "fix_gamma": lambda gamma, _: gamma,
     },
-    'normal_unbiased': {
-        'get_virtual_index': lambda n, quantiles:
-        _compute_virtual_index(n, quantiles, 3 / 8.0, 3 / 8.0),
-        'fix_gamma': lambda gamma, _: gamma,
+    "normal_unbiased": {
+        "get_virtual_index": lambda n, quantiles: _compute_virtual_index(
+            n, quantiles, 3 / 8.0, 3 / 8.0
+        ),
+        "fix_gamma": lambda gamma, _: gamma,
     },
     # --- OTHER METHODS
-    'lower': {
-        'get_virtual_index': lambda n, quantiles: np.floor(
-            (n - 1) * quantiles).astype(np.intp),
-        'fix_gamma': None,  # should never be called, index dtype is int
+    "lower": {
+        "get_virtual_index": lambda n, quantiles: np.floor((n - 1) * quantiles).astype(
+            np.intp
+        ),
+        "fix_gamma": None,  # should never be called, index dtype is int
     },
-    'higher': {
-        'get_virtual_index': lambda n, quantiles: np.ceil(
-            (n - 1) * quantiles).astype(np.intp),
-        'fix_gamma': None,  # should never be called, index dtype is int
+    "higher": {
+        "get_virtual_index": lambda n, quantiles: np.ceil((n - 1) * quantiles).astype(
+            np.intp
+        ),
+        "fix_gamma": None,  # should never be called, index dtype is int
     },
-    'midpoint': {
-        'get_virtual_index': lambda n, quantiles: 0.5 * (
-                np.floor((n - 1) * quantiles)
-                + np.ceil((n - 1) * quantiles)),
-        'fix_gamma': lambda gamma, index: _get_gamma_mask(
+    "midpoint": {
+        "get_virtual_index": lambda n, quantiles: 0.5
+        * (np.floor((n - 1) * quantiles) + np.ceil((n - 1) * quantiles)),
+        "fix_gamma": lambda gamma, index: _get_gamma_mask(
             shape=gamma.shape,
             default_value=0.5,
-            conditioned_value=0.,
-            where=index % 1 == 0),
+            conditioned_value=0.0,
+            where=index % 1 == 0,
+        ),
     },
-    'nearest': {
-        'get_virtual_index': lambda n, quantiles: np.around(
-            (n - 1) * quantiles).astype(np.intp),
-        'fix_gamma': None,
+    "nearest": {
+        "get_virtual_index": lambda n, quantiles: np.around((n - 1) * quantiles).astype(
+            np.intp
+        ),
+        "fix_gamma": None,
         # should never be called, index dtype is int
-    }}
+    },
+}
 
 
 def _rot90_dispatcher(m, k=None, axes=None):
@@ -243,8 +290,7 @@ def rot90(m, k=1, axes=(0, 1)):
     if axes[0] == axes[1] or absolute(axes[0] - axes[1]) == m.ndim:
         raise ValueError("Axes must be different.")
 
-    if (axes[0] >= m.ndim or axes[0] < -m.ndim
-        or axes[1] >= m.ndim or axes[1] < -m.ndim):
+    if axes[0] >= m.ndim or axes[0] < -m.ndim or axes[1] >= m.ndim or axes[1] < -m.ndim:
         raise ValueError(f"Axes={axes} out of range for array of ndim={m.ndim}.")
 
     k %= 4
@@ -255,8 +301,7 @@ def rot90(m, k=1, axes=(0, 1)):
         return flip(flip(m, axes[0]), axes[1])
 
     axes_list = arange(0, m.ndim)
-    (axes_list[axes[0]], axes_list[axes[1]]) = (axes_list[axes[1]],
-                                                axes_list[axes[0]])
+    (axes_list[axes[0]], axes_list[axes[1]]) = (axes_list[axes[1]], axes_list[axes[0]])
 
     if k == 1:
         return transpose(flip(m, axes[1]), axes_list)
@@ -347,7 +392,7 @@ def flip(m, axis=None):
     >>> np.all(np.flip(A,2) == A[:,:,::-1,...])
     True
     """
-    if not hasattr(m, 'ndim'):
+    if not hasattr(m, "ndim"):
         m = asarray(m)
     if axis is None:
         indexer = (np.s_[::-1],) * m.ndim
@@ -360,7 +405,7 @@ def flip(m, axis=None):
     return m[indexer]
 
 
-@set_module('numpy')
+@set_module("numpy")
 def iterable(y):
     """
     Check whether or not an object can be iterated over.
@@ -417,28 +462,28 @@ def _weights_are_valid(weights, a, axis):
     if a.shape != wgt.shape:
         if axis is None:
             raise TypeError(
-                "Axis must be specified when shapes of a and weights "
-                "differ.")
+                "Axis must be specified when shapes of a and weights differ."
+            )
         if wgt.shape != tuple(a.shape[ax] for ax in axis):
             raise ValueError(
                 "Shape of weights must be consistent with "
-                "shape of a along specified axis.")
+                "shape of a along specified axis."
+            )
 
         # setup wgt to broadcast along axis
         wgt = wgt.transpose(np.argsort(axis))
-        wgt = wgt.reshape(tuple((s if ax in axis else 1)
-                                for ax, s in enumerate(a.shape)))
+        wgt = wgt.reshape(
+            tuple((s if ax in axis else 1) for ax, s in enumerate(a.shape))
+        )
     return wgt
 
 
-def _average_dispatcher(a, axis=None, weights=None, returned=None, *,
-                        keepdims=None):
+def _average_dispatcher(a, axis=None, weights=None, returned=None, *, keepdims=None):
     return (a, weights)
 
 
 @array_function_dispatch(_average_dispatcher)
-def average(a, axis=None, weights=None, returned=False, *,
-            keepdims=np._NoValue):
+def average(a, axis=None, weights=None, returned=False, *, keepdims=np._NoValue):
     """
     Compute the weighted average along the specified axis.
 
@@ -570,7 +615,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         # Don't pass on the keepdims argument if one wasn't given.
         keepdims_kw = {}
     else:
-        keepdims_kw = {'keepdims': keepdims}
+        keepdims_kw = {"keepdims": keepdims}
 
     if weights is None:
         avg = a.mean(axis, **keepdims_kw)
@@ -580,17 +625,17 @@ def average(a, axis=None, weights=None, returned=False, *,
         wgt = _weights_are_valid(weights=weights, a=a, axis=axis)
 
         if issubclass(a.dtype.type, (np.integer, np.bool)):
-            result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
+            result_dtype = np.result_type(a.dtype, wgt.dtype, "f8")
         else:
             result_dtype = np.result_type(a.dtype, wgt.dtype)
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
-            raise ZeroDivisionError(
-                "Weights sum to zero, can't be normalized")
+            raise ZeroDivisionError("Weights sum to zero, can't be normalized")
 
-        avg = avg_as_array = np.multiply(a, wgt,
-                          dtype=result_dtype).sum(axis, **keepdims_kw) / scl
+        avg = avg_as_array = (
+            np.multiply(a, wgt, dtype=result_dtype).sum(axis, **keepdims_kw) / scl
+        )
 
     if returned:
         if scl.shape != avg_as_array.shape:
@@ -600,7 +645,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         return avg
 
 
-@set_module('numpy')
+@set_module("numpy")
 def asarray_chkfinite(a, dtype=None, order=None):
     """Convert the input to an array, checking for NaNs or Infs.
 
@@ -666,9 +711,8 @@ def asarray_chkfinite(a, dtype=None, order=None):
 
     """
     a = asarray(a, dtype=dtype, order=order)
-    if a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a).all():
-        raise ValueError(
-            "array must not contain infs or NaNs")
+    if a.dtype.char in typecodes["AllFloat"] and not np.isfinite(a).all():
+        raise ValueError("array must not contain infs or NaNs")
     return a
 
 
@@ -774,7 +818,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     # undocumented: single condition is promoted to a list of one condition
     if isscalar(condlist) or (
-            not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0):
+        not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0
+    ):
         condlist = [condlist]
 
     condlist = asarray(condlist, dtype=bool)
@@ -861,8 +906,7 @@ def select(condlist, choicelist, default=0):
     """
     # Check the size of condlist and choicelist are the same, or abort.
     if len(condlist) != len(choicelist):
-        raise ValueError(
-            'list of cases must be same length as list of conditions')
+        raise ValueError("list of cases must be same length as list of conditions")
 
     # Now that the dtype is known, handle the deprecated select([], []) case
     if len(condlist) == 0:
@@ -873,14 +917,16 @@ def select(condlist, choicelist, default=0):
     #       way to spell this (and this can be replaced).
     choicelist = [
         choice if type(choice) in (int, float, complex) else np.asarray(choice)
-        for choice in choicelist]
-    choicelist.append(default if type(default) in (int, float, complex)
-                      else np.asarray(default))
+        for choice in choicelist
+    ]
+    choicelist.append(
+        default if type(default) in (int, float, complex) else np.asarray(default)
+    )
 
     try:
         dtype = np.result_type(*choicelist)
     except TypeError as e:
-        msg = f'Choicelist and default value do not have a common dtype: {e}'
+        msg = f"Choicelist and default value do not have a common dtype: {e}"
         raise TypeError(msg) from None
 
     # Convert conditions to arrays and broadcast conditions and choices
@@ -892,8 +938,7 @@ def select(condlist, choicelist, default=0):
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
     for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool:
-            raise TypeError(
-                f'invalid entry {i} in condlist: should be boolean ndarray')
+            raise TypeError(f"invalid entry {i} in condlist: should be boolean ndarray")
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -919,7 +964,7 @@ def _copy_dispatcher(a, order=None, subok=None):
 
 
 @array_function_dispatch(_copy_dispatcher)
-def copy(a, order='K', subok=False):
+def copy(a, order="K", subok=False):
     """
     Return an array copy of the given object.
 
@@ -987,6 +1032,7 @@ def copy(a, order='K', subok=False):
     array([3, 2, 3])
     """
     return array(a, order=order, subok=subok, copy=True)
+
 
 # Basic operations
 
@@ -1242,8 +1288,10 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             elif distances.ndim != 1:
                 raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
-                raise ValueError("when 1d, distances must match "
-                                 "the length of the corresponding dimension")
+                raise ValueError(
+                    "when 1d, distances must match "
+                    "the length of the corresponding dimension"
+                )
             if np.issubdtype(distances.dtype, np.integer):
                 # Convert numpy integer types to float64 to avoid modular
                 # arithmetic in np.diff(distances).
@@ -1274,7 +1322,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     otype = f.dtype
     if otype.type is np.datetime64:
         # the timedelta dtype with the same unit information
-        otype = np.dtype(otype.name.replace('datetime', 'timedelta'))
+        otype = np.dtype(otype.name.replace("datetime", "timedelta"))
         # view as timedelta to allow addition
         f = f.view(otype)
     elif otype.type is np.timedelta64:
@@ -1293,7 +1341,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         if f.shape[axis] < edge_order + 1:
             raise ValueError(
                 "Shape of array too small to calculate a numerical gradient, "
-                "at least (edge_order + 1) elements are required.")
+                "at least (edge_order + 1) elements are required."
+            )
         # result allocation
         out = np.empty_like(f, dtype=otype)
 
@@ -1307,7 +1356,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         slice4[axis] = slice(2, None)
 
         if uniform_spacing:
-            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2. * ax_dx)
+            out[tuple(slice1)] = (f[tuple(slice4)] - f[tuple(slice2)]) / (2.0 * ax_dx)
         else:
             dx1 = ax_dx[0:-1]
             dx2 = ax_dx[1:]
@@ -1319,8 +1368,9 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
-                                                + c * f[tuple(slice4)]
+            out[tuple(slice1)] = (
+                a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            )
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -1346,17 +1396,18 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             slice4[axis] = 2
             if uniform_spacing:
                 a = -1.5 / ax_dx
-                b = 2. / ax_dx
+                b = 2.0 / ax_dx
                 c = -0.5 / ax_dx
             else:
                 dx1 = ax_dx[0]
                 dx2 = ax_dx[1]
-                a = -(2. * dx1 + dx2) / (dx1 * (dx1 + dx2))
+                a = -(2.0 * dx1 + dx2) / (dx1 * (dx1 + dx2))
                 b = (dx1 + dx2) / (dx1 * dx2)
-                c = - dx1 / (dx2 * (dx1 + dx2))
+                c = -dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
-                                                        + c * f[tuple(slice4)]
+            out[tuple(slice1)] = (
+                a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            )
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1364,17 +1415,18 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             slice4[axis] = -1
             if uniform_spacing:
                 a = 0.5 / ax_dx
-                b = -2. / ax_dx
+                b = -2.0 / ax_dx
                 c = 1.5 / ax_dx
             else:
                 dx1 = ax_dx[-2]
                 dx2 = ax_dx[-1]
                 a = (dx2) / (dx1 * (dx1 + dx2))
-                b = - (dx2 + dx1) / (dx1 * dx2)
-                c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
+                b = -(dx2 + dx1) / (dx1 * dx2)
+                c = (2.0 * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
-                                                        + c * f[tuple(slice4)]
+            out[tuple(slice1)] = (
+                a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            )
 
         outvals.append(out)
 
@@ -1480,8 +1532,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError(
-            "order must be non-negative but got " + repr(n))
+        raise ValueError("order must be non-negative but got " + repr(n))
 
     a = asanyarray(a)
     nd = a.ndim
@@ -1727,6 +1778,19 @@ def angle(z, deg=False):
     return a
 
 
+def angle_ufunc(x, deg=False):
+    # use apply_ufunc only if x is xarray
+    if isinstance(x, xr.DataArray):
+        return xr.apply_ufunc(
+            angle, x, dask="allowed", vectorize=True, kwargs={"deg": deg}
+        )
+    else:
+        return angle(x, deg=deg)
+
+
+angle = angle_ufunc
+
+
 def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
     return (p,)
 
@@ -1803,7 +1867,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     dd = diff(p, axis=axis)
     if discont is None:
         discont = period / 2
-    slice1 = [slice(None, None)] * nd     # full slices
+    slice1 = [slice(None, None)] * nd  # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
     dtype = np.result_type(dd, period)
@@ -1819,8 +1883,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         # for `mask = (abs(dd) == period/2)`, the above line made
         # `ddmod[mask] == -period/2`. correct these such that
         # `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high,
-                   where=(ddmod == interval_low) & (dd > 0))
+        _nx.copyto(ddmod, interval_high, where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype=dtype)
@@ -1860,12 +1923,12 @@ def sort_complex(a):
     b = array(a, copy=True)
     b.sort()
     if not issubclass(b.dtype.type, _nx.complexfloating):
-        if b.dtype.char in 'bhBH':
-            return b.astype('F')
-        elif b.dtype.char == 'g':
-            return b.astype('G')
+        if b.dtype.char in "bhBH":
+            return b.astype("F")
+        elif b.dtype.char == "g":
+            return b.astype("G")
         else:
-            return b.astype('D')
+            return b.astype("D")
     else:
         return b
 
@@ -1914,7 +1977,7 @@ def _trim_zeros(filt, trim=None, axis=None):
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(filt, trim='fb', axis=None):
+def trim_zeros(filt, trim="fb", axis=None):
     """Remove values along a dimension which are zero along all other.
 
     Parameters
@@ -1990,9 +2053,9 @@ def trim_zeros(filt, trim='fb', axis=None):
         # resulting slice will be empty
         start = stop = np.zeros(filt_.ndim, dtype=np.intp)
     else:
-        if 'f' not in trim:
+        if "f" not in trim:
             start = (None,) * filt_.ndim
-        if 'b' not in trim:
+        if "b" not in trim:
             stop = (None,) * filt_.ndim
 
     if len(start) == 1:
@@ -2157,24 +2220,24 @@ def disp(mesg, device=None, linefeed=True):
         "use your own printing function instead. "
         "(deprecated in NumPy 2.0)",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     if device is None:
         device = sys.stdout
     if linefeed:
-        device.write(f'{mesg}\n')
+        device.write(f"{mesg}\n")
     else:
-        device.write(f'{mesg}')
+        device.write(f"{mesg}")
     device.flush()
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
-_DIMENSION_NAME = r'\w+'
-_CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME}(?:,{_DIMENSION_NAME})*)?'
-_ARGUMENT = fr'\({_CORE_DIMENSION_LIST}\)'
-_ARGUMENT_LIST = f'{_ARGUMENT}(?:,{_ARGUMENT})*'
-_SIGNATURE = f'^{_ARGUMENT_LIST}->{_ARGUMENT_LIST}$'
+_DIMENSION_NAME = r"\w+"
+_CORE_DIMENSION_LIST = f"(?:{_DIMENSION_NAME}(?:,{_DIMENSION_NAME})*)?"
+_ARGUMENT = rf"\({_CORE_DIMENSION_LIST}\)"
+_ARGUMENT_LIST = f"{_ARGUMENT}(?:,{_ARGUMENT})*"
+_SIGNATURE = f"^{_ARGUMENT_LIST}->{_ARGUMENT_LIST}$"
 
 
 def _parse_gufunc_signature(signature):
@@ -2192,14 +2255,17 @@ def _parse_gufunc_signature(signature):
     Tuple of input and output core dimensions parsed from the signature, each
     of the form List[Tuple[str, ...]].
     """
-    signature = re.sub(r'\s+', '', signature)
+    signature = re.sub(r"\s+", "", signature)
 
     if not re.match(_SIGNATURE, signature):
-        raise ValueError(
-            f'not a valid gufunc signature: {signature}')
-    return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
-                  for arg in re.findall(_ARGUMENT, arg_list)]
-                 for arg_list in signature.split('->'))
+        raise ValueError(f"not a valid gufunc signature: {signature}")
+    return tuple(
+        [
+            tuple(re.findall(_DIMENSION_NAME, arg))
+            for arg in re.findall(_ARGUMENT, arg_list)
+        ]
+        for arg_list in signature.split("->")
+    )
 
 
 def _update_dim_sizes(dim_sizes, arg, core_dims):
@@ -2221,17 +2287,18 @@ def _update_dim_sizes(dim_sizes, arg, core_dims):
     num_core_dims = len(core_dims)
     if arg.ndim < num_core_dims:
         raise ValueError(
-            '%d-dimensional argument does not have enough '
-            'dimensions for all core dimensions %r'
-            % (arg.ndim, core_dims))
+            "%d-dimensional argument does not have enough "
+            "dimensions for all core dimensions %r" % (arg.ndim, core_dims)
+        )
 
     core_shape = arg.shape[-num_core_dims:]
     for dim, size in zip(core_dims, core_shape):
         if dim in dim_sizes:
             if size != dim_sizes[dim]:
                 raise ValueError(
-                    'inconsistent size for core dimension %r: %r vs %r'
-                    % (dim, size, dim_sizes[dim]))
+                    "inconsistent size for core dimension %r: %r vs %r"
+                    % (dim, size, dim_sizes[dim])
+                )
         else:
             dim_sizes[dim] = size
 
@@ -2261,31 +2328,32 @@ def _parse_input_dimensions(args, input_core_dims):
         ndim = arg.ndim - len(core_dims)
         dummy_array = np.lib.stride_tricks.as_strided(0, arg.shape[:ndim])
         broadcast_args.append(dummy_array)
-    broadcast_shape = np.lib._stride_tricks_impl._broadcast_shape(
-        *broadcast_args
-    )
+    broadcast_shape = np.lib._stride_tricks_impl._broadcast_shape(*broadcast_args)
     return broadcast_shape, dim_sizes
 
 
 def _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims):
     """Helper for calculating broadcast shapes with core dimensions."""
-    return [broadcast_shape + tuple(dim_sizes[dim] for dim in core_dims)
-            for core_dims in list_of_core_dims]
+    return [
+        broadcast_shape + tuple(dim_sizes[dim] for dim in core_dims)
+        for core_dims in list_of_core_dims
+    ]
 
 
-def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
-                   results=None):
+def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes, results=None):
     """Helper for creating output arrays in vectorize."""
     shapes = _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims)
     if dtypes is None:
         dtypes = [None] * len(shapes)
     if results is None:
-        arrays = tuple(np.empty(shape=shape, dtype=dtype)
-                       for shape, dtype in zip(shapes, dtypes))
+        arrays = tuple(
+            np.empty(shape=shape, dtype=dtype) for shape, dtype in zip(shapes, dtypes)
+        )
     else:
-        arrays = tuple(np.empty_like(result, shape=shape, dtype=dtype)
-                       for result, shape, dtype
-                       in zip(results, shapes, dtypes))
+        arrays = tuple(
+            np.empty_like(result, shape=shape, dtype=dtype)
+            for result, shape, dtype in zip(results, shapes, dtypes)
+        )
     return arrays
 
 
@@ -2295,7 +2363,7 @@ def _get_vectorize_dtype(dtype):
     return dtype
 
 
-@set_module('numpy')
+@set_module("numpy")
 class vectorize:
     """
     vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
@@ -2459,8 +2527,16 @@ class vectorize:
     >>> as_float([0, 1, 2])
     array([0., 1., 2.])
     """
-    def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
-                 excluded=None, cache=False, signature=None):
+
+    def __init__(
+        self,
+        pyfunc=np._NoValue,
+        otypes=None,
+        doc=None,
+        excluded=None,
+        cache=False,
+        signature=None,
+    ):
 
         if (pyfunc != np._NoValue) and (not callable(pyfunc)):
             # Splitting the error message to keep
@@ -2472,20 +2548,20 @@ class vectorize:
         self.pyfunc = pyfunc
         self.cache = cache
         self.signature = signature
-        if pyfunc != np._NoValue and hasattr(pyfunc, '__name__'):
+        if pyfunc != np._NoValue and hasattr(pyfunc, "__name__"):
             self.__name__ = pyfunc.__name__
 
-        self._ufunc = {}    # Caching to improve default performance
+        self._ufunc = {}  # Caching to improve default performance
         self._doc = None
         self.__doc__ = doc
-        if doc is None and hasattr(pyfunc, '__doc__'):
+        if doc is None and hasattr(pyfunc, "__doc__"):
             self.__doc__ = pyfunc.__doc__
         else:
             self._doc = doc
 
         if isinstance(otypes, str):
             for char in otypes:
-                if char not in typecodes['All']:
+                if char not in typecodes["All"]:
                     raise ValueError(f"Invalid otype specified: {char}")
         elif iterable(otypes):
             otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
@@ -2533,7 +2609,7 @@ class vectorize:
             def func(*vargs):
                 for _n, _i in enumerate(inds):
                     the_args[_i] = vargs[_n]
-                kwargs.update(zip(names, vargs[len(inds):]))
+                kwargs.update(zip(names, vargs[len(inds) :]))
                 return self.pyfunc(*the_args, **kwargs)
 
             vargs = [args[_i] for _i in inds]
@@ -2552,7 +2628,7 @@ class vectorize:
         """Return (ufunc, otypes)."""
         # frompyfunc will fail if args is empty
         if not args:
-            raise ValueError('args can not be empty')
+            raise ValueError("args can not be empty")
 
         if self.otypes is not None:
             otypes = self.otypes
@@ -2580,8 +2656,9 @@ class vectorize:
             # arrays (the input values are not checked to ensure this)
             args = [asarray(a) for a in args]
             if builtins.any(arg.size == 0 for arg in args):
-                raise ValueError('cannot call `vectorize` on size 0 inputs '
-                                 'unless `otypes` is set')
+                raise ValueError(
+                    "cannot call `vectorize` on size 0 inputs unless `otypes` is set"
+                )
 
             inputs = [arg.flat[0] for arg in args]
             outputs = func(*inputs)
@@ -2598,6 +2675,7 @@ class vectorize:
                         return _cache.pop()
                     else:
                         return func(*vargs)
+
             else:
                 _func = func
 
@@ -2607,8 +2685,7 @@ class vectorize:
                 nout = 1
                 outputs = (outputs,)
 
-            otypes = ''.join([asarray(outputs[_k]).dtype.char
-                              for _k in range(nout)])
+            otypes = "".join([asarray(outputs[_k]).dtype.char for _k in range(nout)])
 
             # Performance note: profiling indicates that creating the ufunc is
             # not a significant cost compared with wrapping so it seems not
@@ -2632,8 +2709,7 @@ class vectorize:
             if ufunc.nout == 1:
                 res = asanyarray(outputs, dtype=otypes[0])
             else:
-                res = tuple(asanyarray(x, dtype=t)
-                            for x, t in zip(outputs, otypes))
+                res = tuple(asanyarray(x, dtype=t) for x, t in zip(outputs, otypes))
         return res
 
     def _vectorize_call_with_signature(self, func, args):
@@ -2641,17 +2717,18 @@ class vectorize:
         input_core_dims, output_core_dims = self._in_and_out_core_dims
 
         if len(args) != len(input_core_dims):
-            raise TypeError('wrong number of positional arguments: '
-                            'expected %r, got %r'
-                            % (len(input_core_dims), len(args)))
+            raise TypeError(
+                "wrong number of positional arguments: "
+                "expected %r, got %r" % (len(input_core_dims), len(args))
+            )
         args = tuple(asanyarray(arg) for arg in args)
 
-        broadcast_shape, dim_sizes = _parse_input_dimensions(
-            args, input_core_dims)
-        input_shapes = _calculate_shapes(broadcast_shape, dim_sizes,
-                                         input_core_dims)
-        args = [np.broadcast_to(arg, shape, subok=True)
-                for arg, shape in zip(args, input_shapes)]
+        broadcast_shape, dim_sizes = _parse_input_dimensions(args, input_core_dims)
+        input_shapes = _calculate_shapes(broadcast_shape, dim_sizes, input_core_dims)
+        args = [
+            np.broadcast_to(arg, shape, subok=True)
+            for arg, shape in zip(args, input_shapes)
+        ]
 
         outputs = None
         otypes = self.otypes
@@ -2664,8 +2741,9 @@ class vectorize:
 
             if nout != n_results:
                 raise ValueError(
-                    'wrong number of outputs from pyfunc: expected %r, got %r'
-                    % (nout, n_results))
+                    "wrong number of outputs from pyfunc: expected %r, got %r"
+                    % (nout, n_results)
+                )
 
             if nout == 1:
                 results = (results,)
@@ -2674,8 +2752,9 @@ class vectorize:
                 for result, core_dims in zip(results, output_core_dims):
                     _update_dim_sizes(dim_sizes, result, core_dims)
 
-                outputs = _create_arrays(broadcast_shape, dim_sizes,
-                                         output_core_dims, otypes, results)
+                outputs = _create_arrays(
+                    broadcast_shape, dim_sizes, output_core_dims, otypes, results
+                )
 
             for output, result in zip(outputs, results):
                 output[index] = result
@@ -2683,28 +2762,50 @@ class vectorize:
         if outputs is None:
             # did not call the function even once
             if otypes is None:
-                raise ValueError('cannot call `vectorize` on size 0 inputs '
-                                 'unless `otypes` is set')
-            if builtins.any(dim not in dim_sizes
-                            for dims in output_core_dims
-                            for dim in dims):
-                raise ValueError('cannot call `vectorize` with a signature '
-                                 'including new output dimensions on size 0 '
-                                 'inputs')
-            outputs = _create_arrays(broadcast_shape, dim_sizes,
-                                     output_core_dims, otypes)
+                raise ValueError(
+                    "cannot call `vectorize` on size 0 inputs unless `otypes` is set"
+                )
+            if builtins.any(
+                dim not in dim_sizes for dims in output_core_dims for dim in dims
+            ):
+                raise ValueError(
+                    "cannot call `vectorize` with a signature "
+                    "including new output dimensions on size 0 "
+                    "inputs"
+                )
+            outputs = _create_arrays(
+                broadcast_shape, dim_sizes, output_core_dims, otypes
+            )
 
         return outputs[0] if nout == 1 else outputs
 
 
-def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
-                    fweights=None, aweights=None, *, dtype=None):
+def _cov_dispatcher(
+    m,
+    y=None,
+    rowvar=None,
+    bias=None,
+    ddof=None,
+    fweights=None,
+    aweights=None,
+    *,
+    dtype=None,
+):
     return (m, y, fweights, aweights)
 
 
 @array_function_dispatch(_cov_dispatcher)
-def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
-        aweights=None, *, dtype=None):
+def cov(
+    m,
+    y=None,
+    rowvar=True,
+    bias=False,
+    ddof=None,
+    fweights=None,
+    aweights=None,
+    *,
+    dtype=None,
+):
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -2823,8 +2924,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
-        raise ValueError(
-            "ddof must be integer")
+        raise ValueError("ddof must be integer")
 
     # Handles complex arrays too
     m = np.asarray(m)
@@ -2864,29 +2964,22 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     if fweights is not None:
         fweights = np.asarray(fweights, dtype=float)
         if not np.all(fweights == np.around(fweights)):
-            raise TypeError(
-                "fweights must be integer")
+            raise TypeError("fweights must be integer")
         if fweights.ndim > 1:
-            raise RuntimeError(
-                "cannot handle multidimensional fweights")
+            raise RuntimeError("cannot handle multidimensional fweights")
         if fweights.shape[0] != X.shape[1]:
-            raise RuntimeError(
-                "incompatible numbers of samples and fweights")
+            raise RuntimeError("incompatible numbers of samples and fweights")
         if any(fweights < 0):
-            raise ValueError(
-                "fweights cannot be negative")
+            raise ValueError("fweights cannot be negative")
         w = fweights
     if aweights is not None:
         aweights = np.asarray(aweights, dtype=float)
         if aweights.ndim > 1:
-            raise RuntimeError(
-                "cannot handle multidimensional aweights")
+            raise RuntimeError("cannot handle multidimensional aweights")
         if aweights.shape[0] != X.shape[1]:
-            raise RuntimeError(
-                "incompatible numbers of samples and aweights")
+            raise RuntimeError("incompatible numbers of samples and aweights")
         if any(aweights < 0):
-            raise ValueError(
-                "aweights cannot be negative")
+            raise ValueError("aweights cannot be negative")
         if w is None:
             w = aweights
         else:
@@ -2906,8 +2999,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         fact = w_sum - ddof * sum(w * aweights) / w_sum
 
     if fact <= 0:
-        warnings.warn("Degrees of freedom <= 0 for slice",
-                      RuntimeWarning, stacklevel=2)
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning, stacklevel=2)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2920,14 +3012,12 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
-                         dtype=None):
+def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *, dtype=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
-             dtype=None):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *, dtype=None):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -3057,8 +3147,11 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     """
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "bias and ddof have no effect and are deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
@@ -3080,7 +3173,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     return c
 
 
-@set_module('numpy')
+@set_module("numpy")
 def blackman(M):
     """
     Return the Blackman window.
@@ -3180,7 +3273,7 @@ def blackman(M):
     return 0.42 + 0.5 * cos(pi * n / (M - 1)) + 0.08 * cos(2.0 * pi * n / (M - 1))
 
 
-@set_module('numpy')
+@set_module("numpy")
 def bartlett(M):
     """
     Return the Bartlett window.
@@ -3287,7 +3380,7 @@ def bartlett(M):
     return where(less_equal(n, 0), 1 + n / (M - 1), 1 - n / (M - 1))
 
 
-@set_module('numpy')
+@set_module("numpy")
 def hanning(M):
     """
     Return the Hanning window.
@@ -3389,7 +3482,7 @@ def hanning(M):
     return 0.5 + 0.5 * cos(pi * n / (M - 1))
 
 
-@set_module('numpy')
+@set_module("numpy")
 def hamming(M):
     """
     Return the Hamming window.
@@ -3491,65 +3584,65 @@ def hamming(M):
 ## Code from cephes for i0
 
 _i0A = [
-    -4.41534164647933937950E-18,
-    3.33079451882223809783E-17,
-    -2.43127984654795469359E-16,
-    1.71539128555513303061E-15,
-    -1.16853328779934516808E-14,
-    7.67618549860493561688E-14,
-    -4.85644678311192946090E-13,
-    2.95505266312963983461E-12,
-    -1.72682629144155570723E-11,
-    9.67580903537323691224E-11,
-    -5.18979560163526290666E-10,
-    2.65982372468238665035E-9,
-    -1.30002500998624804212E-8,
-    6.04699502254191894932E-8,
-    -2.67079385394061173391E-7,
-    1.11738753912010371815E-6,
-    -4.41673835845875056359E-6,
-    1.64484480707288970893E-5,
-    -5.75419501008210370398E-5,
-    1.88502885095841655729E-4,
-    -5.76375574538582365885E-4,
-    1.63947561694133579842E-3,
-    -4.32430999505057594430E-3,
-    1.05464603945949983183E-2,
-    -2.37374148058994688156E-2,
-    4.93052842396707084878E-2,
-    -9.49010970480476444210E-2,
-    1.71620901522208775349E-1,
-    -3.04682672343198398683E-1,
-    6.76795274409476084995E-1
-    ]
+    -4.41534164647933937950e-18,
+    3.33079451882223809783e-17,
+    -2.43127984654795469359e-16,
+    1.71539128555513303061e-15,
+    -1.16853328779934516808e-14,
+    7.67618549860493561688e-14,
+    -4.85644678311192946090e-13,
+    2.95505266312963983461e-12,
+    -1.72682629144155570723e-11,
+    9.67580903537323691224e-11,
+    -5.18979560163526290666e-10,
+    2.65982372468238665035e-9,
+    -1.30002500998624804212e-8,
+    6.04699502254191894932e-8,
+    -2.67079385394061173391e-7,
+    1.11738753912010371815e-6,
+    -4.41673835845875056359e-6,
+    1.64484480707288970893e-5,
+    -5.75419501008210370398e-5,
+    1.88502885095841655729e-4,
+    -5.76375574538582365885e-4,
+    1.63947561694133579842e-3,
+    -4.32430999505057594430e-3,
+    1.05464603945949983183e-2,
+    -2.37374148058994688156e-2,
+    4.93052842396707084878e-2,
+    -9.49010970480476444210e-2,
+    1.71620901522208775349e-1,
+    -3.04682672343198398683e-1,
+    6.76795274409476084995e-1,
+]
 
 _i0B = [
-    -7.23318048787475395456E-18,
-    -4.83050448594418207126E-18,
-    4.46562142029675999901E-17,
-    3.46122286769746109310E-17,
-    -2.82762398051658348494E-16,
-    -3.42548561967721913462E-16,
-    1.77256013305652638360E-15,
-    3.81168066935262242075E-15,
-    -9.55484669882830764870E-15,
-    -4.15056934728722208663E-14,
-    1.54008621752140982691E-14,
-    3.85277838274214270114E-13,
-    7.18012445138366623367E-13,
-    -1.79417853150680611778E-12,
-    -1.32158118404477131188E-11,
-    -3.14991652796324136454E-11,
-    1.18891471078464383424E-11,
-    4.94060238822496958910E-10,
-    3.39623202570838634515E-9,
-    2.26666899049817806459E-8,
-    2.04891858946906374183E-7,
-    2.89137052083475648297E-6,
-    6.88975834691682398426E-5,
-    3.36911647825569408990E-3,
-    8.04490411014108831608E-1
-    ]
+    -7.23318048787475395456e-18,
+    -4.83050448594418207126e-18,
+    4.46562142029675999901e-17,
+    3.46122286769746109310e-17,
+    -2.82762398051658348494e-16,
+    -3.42548561967721913462e-16,
+    1.77256013305652638360e-15,
+    3.81168066935262242075e-15,
+    -9.55484669882830764870e-15,
+    -4.15056934728722208663e-14,
+    1.54008621752140982691e-14,
+    3.85277838274214270114e-13,
+    7.18012445138366623367e-13,
+    -1.79417853150680611778e-12,
+    -1.32158118404477131188e-11,
+    -3.14991652796324136454e-11,
+    1.18891471078464383424e-11,
+    4.94060238822496958910e-10,
+    3.39623202570838634515e-9,
+    2.26666899049817806459e-8,
+    2.04891858946906374183e-7,
+    2.89137052083475648297e-6,
+    6.88975834691682398426e-5,
+    3.36911647825569408990e-3,
+    8.04490411014108831608e-1,
+]
 
 
 def _chbevl(x, vals):
@@ -3629,17 +3722,18 @@ def i0(x):
 
     """
     x = np.asanyarray(x)
-    if x.dtype.kind == 'c':
+    if x.dtype.kind == "c":
         raise TypeError("i0 not supported for complex values")
-    if x.dtype.kind != 'f':
+    if x.dtype.kind != "f":
         x = x.astype(float)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
+
 ## End of cephes code for i0
 
 
-@set_module('numpy')
+@set_module("numpy")
 def kaiser(M, beta):
     """
     Return the Kaiser window.
@@ -3767,7 +3861,7 @@ def kaiser(M, beta):
         return np.ones(1, dtype=values.dtype)
     n = arange(0, M)
     alpha = (M - 1) / 2.0
-    return i0(beta * sqrt(1 - ((n - alpha) / alpha)**2.0)) / i0(beta)
+    return i0(beta * sqrt(1 - ((n - alpha) / alpha) ** 2.0)) / i0(beta)
 
 
 def _sinc_dispatcher(x):
@@ -3886,8 +3980,8 @@ def _ureduce(a, func, keepdims=False, **kwargs):
 
     """
     a = np.asanyarray(a)
-    axis = kwargs.get('axis')
-    out = kwargs.get('out')
+    axis = kwargs.get("axis")
+    out = kwargs.get("out")
 
     if keepdims is np._NoValue:
         keepdims = False
@@ -3897,12 +3991,11 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         axis = _nx.normalize_axis_tuple(axis, nd)
 
         if keepdims and out is not None:
-            index_out = tuple(
-                0 if i in axis else slice(None) for i in range(nd))
-            kwargs['out'] = out[(Ellipsis, ) + index_out]
+            index_out = tuple(0 if i in axis else slice(None) for i in range(nd))
+            kwargs["out"] = out[(Ellipsis,) + index_out]
 
         if len(axis) == 1:
-            kwargs['axis'] = axis[0]
+            kwargs["axis"] = axis[0]
         else:
             keep = set(range(nd)) - set(axis)
             nkeep = len(keep)
@@ -3911,10 +4004,10 @@ def _ureduce(a, func, keepdims=False, **kwargs):
                 a = a.swapaxes(i, s)
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
-            kwargs['axis'] = -1
+            kwargs["axis"] = -1
     elif keepdims and out is not None:
-        index_out = (0, ) * nd
-        kwargs['out'] = out[(Ellipsis, ) + index_out]
+        index_out = (0,) * nd
+        kwargs["out"] = out[(Ellipsis,) + index_out]
 
     r = func(a, **kwargs)
 
@@ -3923,18 +4016,15 @@ def _ureduce(a, func, keepdims=False, **kwargs):
 
     if keepdims:
         if axis is None:
-            index_r = (np.newaxis, ) * nd
+            index_r = (np.newaxis,) * nd
         else:
-            index_r = tuple(
-                np.newaxis if i in axis else slice(None)
-                for i in range(nd))
-        r = r[(Ellipsis, ) + index_r]
+            index_r = tuple(np.newaxis if i in axis else slice(None) for i in range(nd))
+        r = r[(Ellipsis,) + index_r]
 
     return r
 
 
-def _median_dispatcher(
-        a, axis=None, out=None, overwrite_input=None, keepdims=None):
+def _median_dispatcher(a, axis=None, out=None, overwrite_input=None, keepdims=None):
     return (a, out)
 
 
@@ -4023,8 +4113,14 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
-    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
-                    overwrite_input=overwrite_input)
+    return _ureduce(
+        a,
+        func=_median,
+        keepdims=keepdims,
+        axis=axis,
+        out=out,
+        overwrite_input=overwrite_input,
+    )
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
@@ -4044,7 +4140,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         kth = [(sz - 1) // 2]
 
     # We have to check for NaNs (as of writing 'M' doesn't actually work).
-    supports_nans = np.issubdtype(a.dtype, np.inexact) or a.dtype.kind in 'Mm'
+    supports_nans = np.issubdtype(a.dtype, np.inexact) or a.dtype.kind in "Mm"
     if supports_nans:
         kth.append(-1)
 
@@ -4083,23 +4179,34 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     return rout
 
 
-def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, weights=None,
-                           interpolation=None):
+def _percentile_dispatcher(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=None,
+    method=None,
+    keepdims=None,
+    *,
+    weights=None,
+    interpolation=None,
+):
     return (a, q, out, weights)
 
 
 @array_function_dispatch(_percentile_dispatcher)
-def percentile(a,
-               q,
-               axis=None,
-               out=None,
-               overwrite_input=False,
-               method="linear",
-               keepdims=False,
-               *,
-               weights=None,
-               interpolation=None):
+def percentile(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=False,
+    *,
+    weights=None,
+    interpolation=None,
+):
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -4270,8 +4377,7 @@ def percentile(a,
 
     """
     if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "percentile")
+        method = _check_interpolation_as_method(method, interpolation, "percentile")
 
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
@@ -4285,8 +4391,7 @@ def percentile(a,
 
     if weights is not None:
         if method != "inverted_cdf":
-            msg = ("Only method 'inverted_cdf' supports weights. "
-                   f"Got: {method}.")
+            msg = "Only method 'inverted_cdf' supports weights. " f"Got: {method}."
             raise ValueError(msg)
         if axis is not None:
             axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
@@ -4295,26 +4400,38 @@ def percentile(a,
             raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights
+    )
 
 
-def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         method=None, keepdims=None, *, weights=None,
-                         interpolation=None):
+def _quantile_dispatcher(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=None,
+    method=None,
+    keepdims=None,
+    *,
+    weights=None,
+    interpolation=None,
+):
     return (a, q, out, weights)
 
 
 @array_function_dispatch(_quantile_dispatcher)
-def quantile(a,
-             q,
-             axis=None,
-             out=None,
-             overwrite_input=False,
-             method="linear",
-             keepdims=False,
-             *,
-             weights=None,
-             interpolation=None):
+def quantile(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=False,
+    *,
+    weights=None,
+    interpolation=None,
+):
     """
     Compute the q-th quantile of the data along the specified axis.
 
@@ -4531,8 +4648,7 @@ def quantile(a,
 
     """
     if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "quantile")
+        method = _check_interpolation_as_method(method, interpolation, "quantile")
 
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
@@ -4549,8 +4665,7 @@ def quantile(a,
 
     if weights is not None:
         if method != "inverted_cdf":
-            msg = ("Only method 'inverted_cdf' supports weights. "
-                   f"Got: {method}.")
+            msg = "Only method 'inverted_cdf' supports weights. " f"Got: {method}."
             raise ValueError(msg)
         if axis is not None:
             axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
@@ -4559,27 +4674,32 @@ def quantile(a,
             raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights
+    )
 
 
-def _quantile_unchecked(a,
-                        q,
-                        axis=None,
-                        out=None,
-                        overwrite_input=False,
-                        method="linear",
-                        keepdims=False,
-                        weights=None):
+def _quantile_unchecked(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=False,
+    weights=None,
+):
     """Assumes that q is in [0, 1], and is an ndarray"""
-    return _ureduce(a,
-                    func=_quantile_ureduce_func,
-                    q=q,
-                    weights=weights,
-                    keepdims=keepdims,
-                    axis=axis,
-                    out=out,
-                    overwrite_input=overwrite_input,
-                    method=method)
+    return _ureduce(
+        a,
+        func=_quantile_ureduce_func,
+        q=q,
+        weights=weights,
+        keepdims=keepdims,
+        axis=axis,
+        out=out,
+        overwrite_input=overwrite_input,
+        method=method,
+    )
 
 
 def _quantile_is_valid(q):
@@ -4601,12 +4721,15 @@ def _check_interpolation_as_method(method, interpolation, fname):
         "Users of the modes 'nearest', 'lower', 'higher', or "
         "'midpoint' are encouraged to review the method they used. "
         "(Deprecated NumPy 1.22)",
-        DeprecationWarning, stacklevel=4)
+        DeprecationWarning,
+        stacklevel=4,
+    )
     if method != "linear":
         # sanity check, we assume this basically never happens
         raise TypeError(
             "You shall not pass both `method` and `interpolation`!\n"
-            "(`interpolation` is Deprecated in favor of `method`)")
+            "(`interpolation` is Deprecated in favor of `method`)"
+        )
     return interpolation
 
 
@@ -4630,9 +4753,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     Hyndman&Fan paper "Sample Quantiles in Statistical Packages",
     DOI: 10.1080/00031305.1996.10473566
     """
-    return n * quantiles + (
-            alpha + quantiles * (1 - alpha - beta)
-    ) - 1
+    return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
 def _get_gamma(virtual_indexes, previous_indexes, method):
@@ -4676,8 +4797,14 @@ def _lerp(a, b, t, out=None):
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
     lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
-             casting='unsafe', dtype=type(lerp_interpolation.dtype))
+    subtract(
+        b,
+        diff_b_a * (1 - t),
+        out=lerp_interpolation,
+        where=t >= 0.5,
+        casting="unsafe",
+        dtype=type(lerp_interpolation.dtype),
+    )
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
@@ -4693,11 +4820,12 @@ def _discrete_interpolation_to_boundaries(index, gamma_condition_fun):
     previous = np.floor(index)
     next = previous + 1
     gamma = index - previous
-    res = _get_gamma_mask(shape=index.shape,
-                          default_value=next,
-                          conditioned_value=previous,
-                          where=gamma_condition_fun(gamma, index)
-                          ).astype(np.intp)
+    res = _get_gamma_mask(
+        shape=index.shape,
+        default_value=next,
+        conditioned_value=previous,
+        where=gamma_condition_fun(gamma, index),
+    ).astype(np.intp)
     # Some methods can lead to out-of-bound integers, clip them:
     res[res < 0] = 0
     return res
@@ -4707,14 +4835,12 @@ def _closest_observation(n, quantiles):
     # "choose the nearest even order statistic at g=0" (H&F (1996) pp. 362).
     # Order is 1-based so for zero-based indexing round to nearest odd index.
     gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 1)
-    return _discrete_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
-                                                 gamma_fun)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1 - 0.5, gamma_fun)
 
 
 def _inverted_cdf(n, quantiles):
     gamma_fun = lambda gamma, _: (gamma == 0)
-    return _discrete_interpolation_to_boundaries((n * quantiles) - 1,
-                                                 gamma_fun)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1, gamma_fun)
 
 
 def _quantile_ureduce_func(
@@ -4746,12 +4872,7 @@ def _quantile_ureduce_func(
     else:
         arr = a.copy()
         wgt = weights
-    result = _quantile(arr,
-                       quantiles=q,
-                       axis=axis,
-                       method=method,
-                       out=out,
-                       weights=wgt)
+    result = _quantile(arr, quantiles=q, axis=axis, method=method, out=out, weights=wgt)
     return result
 
 
@@ -4817,9 +4938,7 @@ def _quantile(
     # axis being sampled from `arr` to be last.
     if axis != 0:  # But moveaxis is slow, so only call it if necessary.
         arr = np.moveaxis(arr, axis, destination=0)
-    supports_nans = (
-        np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
-    )
+    supports_nans = np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in "Mm"
 
     if weights is None:
         # --- Computation of indexes
@@ -4831,24 +4950,24 @@ def _quantile(
         except KeyError:
             raise ValueError(
                 f"{method!r} is not a valid method. Use one of: "
-                f"{_QuantileMethods.keys()}") from None
-        virtual_indexes = method_props["get_virtual_index"](values_count,
-                                                            quantiles)
+                f"{_QuantileMethods.keys()}"
+            ) from None
+        virtual_indexes = method_props["get_virtual_index"](values_count, quantiles)
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         if method_props["fix_gamma"] is None:
             supports_integers = True
         else:
-            int_virtual_indices = np.issubdtype(virtual_indexes.dtype,
-                                                np.integer)
-            supports_integers = method == 'linear' and int_virtual_indices
+            int_virtual_indices = np.issubdtype(virtual_indexes.dtype, np.integer)
+            supports_integers = method == "linear" and int_virtual_indices
 
         if supports_integers:
             # No interpolation needed, take the points along axis
             if supports_nans:
                 # may contain nan, which would sort to the end
                 arr.partition(
-                    concatenate((virtual_indexes.ravel(), [-1])), axis=0,
+                    concatenate((virtual_indexes.ravel(), [-1])),
+                    axis=0,
                 )
                 slices_having_nans = np.isnan(arr[-1, ...])
             else:
@@ -4857,16 +4976,22 @@ def _quantile(
                 slices_having_nans = np.array(False, dtype=bool)
             result = take(arr, virtual_indexes, axis=0, out=out)
         else:
-            previous_indexes, next_indexes = _get_indexes(arr,
-                                                          virtual_indexes,
-                                                          values_count)
+            previous_indexes, next_indexes = _get_indexes(
+                arr, virtual_indexes, values_count
+            )
             # --- Sorting
             arr.partition(
-                np.unique(np.concatenate(([0, -1],
-                                          previous_indexes.ravel(),
-                                          next_indexes.ravel(),
-                                          ))),
-                axis=0)
+                np.unique(
+                    np.concatenate(
+                        (
+                            [0, -1],
+                            previous_indexes.ravel(),
+                            next_indexes.ravel(),
+                        )
+                    )
+                ),
+                axis=0,
+            )
             if supports_nans:
                 slices_having_nans = np.isnan(arr[-1, ...])
             else:
@@ -4878,10 +5003,7 @@ def _quantile(
             gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
             gamma = gamma.reshape(result_shape)
-            result = _lerp(previous,
-                        next,
-                        gamma,
-                        out=out)
+            result = _lerp(previous, next, gamma, out=out)
     else:
         # Weighted case
         # This implements method="inverted_cdf", the only supported weighted
@@ -4948,8 +5070,10 @@ def _quantile(
             result = np.empty_like(arr, shape=r_shape)
         else:
             if out.shape != r_shape:
-                msg = (f"Wrong shape of argument 'out', shape={r_shape} is "
-                       f"required; got shape={out.shape}.")
+                msg = (
+                    f"Wrong shape of argument 'out', shape={r_shape} is "
+                    f"required; got shape={out.shape}."
+                )
                 raise ValueError(msg)
             result = out
 
@@ -4957,9 +5081,7 @@ def _quantile(
         # always, so we remove it here.
         Nk = arr.shape[1:]
         for kk in np.ndindex(Nk):
-            result[(...,) + kk] = find_cdf_1d(
-                arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
-            )
+            result[(...,) + kk] = find_cdf_1d(arr[np.s_[:,] + kk], cdf[np.s_[:,] + kk])
 
         # Make result the same as in unweighted inverted_cdf.
         if result.shape == () and result.dtype == np.dtype("O"):
@@ -5113,7 +5235,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-@set_module('numpy')
+@set_module("numpy")
 def trapz(y, x=None, dx=1.0, axis=-1):
     """
     `trapz` is deprecated in NumPy 2.0.
@@ -5126,7 +5248,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         "`trapz` is deprecated. Use `trapezoid` instead, or one of the "
         "numerical integration functions in `scipy.integrate`.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
     return trapezoid(y, x=x, dx=dx, axis=axis)
 
@@ -5137,7 +5259,7 @@ def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
 
 # Based on scitools meshgrid
 @array_function_dispatch(_meshgrid_dispatcher)
-def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
+def meshgrid(*xi, copy=True, sparse=False, indexing="xy"):
     """
     Return a tuple of coordinate matrices from coordinate vectors.
 
@@ -5264,15 +5386,15 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
     ndim = len(xi)
 
-    if indexing not in ['xy', 'ij']:
-        raise ValueError(
-            "Valid values for `indexing` are 'xy' and 'ij'.")
+    if indexing not in ["xy", "ij"]:
+        raise ValueError("Valid values for `indexing` are 'xy' and 'ij'.")
 
     s0 = (1,) * ndim
-    output = [np.asanyarray(x).reshape(s0[:i] + (-1,) + s0[i + 1:])
-              for i, x in enumerate(xi)]
+    output = [
+        np.asanyarray(x).reshape(s0[:i] + (-1,) + s0[i + 1 :]) for i, x in enumerate(xi)
+    ]
 
-    if indexing == 'xy' and ndim > 1:
+    if indexing == "xy" and ndim > 1:
         # switch first and second axis
         output[0].shape = (1, -1) + s0[2:]
         output[1].shape = (-1, 1) + s0[2:]
@@ -5358,10 +5480,10 @@ def delete(arr, obj, axis=None):
 
     """
     conv = _array_converter(arr)
-    arr, = conv.as_arrays(subok=False)
+    (arr,) = conv.as_arrays(subok=False)
 
     ndim = arr.ndim
-    arrorder = 'F' if arr.flags.fnc else 'C'
+    arrorder = "F" if arr.flags.fnc else "C"
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
@@ -5410,7 +5532,7 @@ def delete(arr, obj, axis=None):
             pass
         else:  # use array indexing.
             keep = ones(stop - start, dtype=bool)
-            keep[:stop - start:step] = False
+            keep[: stop - start : step] = False
             slobj[axis] = slice(start, stop - numtodel)
             slobj2 = [slice(None)] * ndim
             slobj2[axis] = slice(start, stop)
@@ -5438,11 +5560,11 @@ def delete(arr, obj, axis=None):
 
     if single_value:
         # optimization for a single value
-        if (obj < -N or obj >= N):
+        if obj < -N or obj >= N:
             raise IndexError(
-                f"index {obj} is out of bounds for axis {axis} with "
-                f"size {N}")
-        if (obj < 0):
+                f"index {obj} is out of bounds for axis {axis} with size {N}"
+            )
+        if obj < 0:
             obj += N
         newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arrorder)
@@ -5455,9 +5577,11 @@ def delete(arr, obj, axis=None):
     else:
         if obj.dtype == bool:
             if obj.shape != (N,):
-                raise ValueError('boolean array argument obj to delete '
-                                 'must be one dimensional and match the axis '
-                                 f'length of {N}')
+                raise ValueError(
+                    "boolean array argument obj to delete "
+                    "must be one dimensional and match the axis "
+                    f"length of {N}"
+                )
 
             # optimization, the other branch is slower
             keep = ~obj
@@ -5574,10 +5698,10 @@ def insert(arr, obj, values, axis=None):
 
     """
     conv = _array_converter(arr)
-    arr, = conv.as_arrays(subok=False)
+    (arr,) = conv.as_arrays(subok=False)
 
     ndim = arr.ndim
-    arrorder = 'F' if arr.flags.fnc else 'C'
+    arrorder = "F" if arr.flags.fnc else "C"
     if axis is None:
         if ndim != 1:
             arr = arr.ravel()
@@ -5598,19 +5722,22 @@ def insert(arr, obj, values, axis=None):
         indices = np.array(obj)
         if indices.dtype == bool:
             if obj.ndim != 1:
-                raise ValueError('boolean array argument obj to insert '
-                                'must be one dimensional')
+                raise ValueError(
+                    "boolean array argument obj to insert must be one dimensional"
+                )
             indices = np.flatnonzero(obj)
         elif indices.ndim > 1:
             raise ValueError(
                 "index array argument obj to insert must be one dimensional "
-                "or scalar")
+                "or scalar"
+            )
     if indices.size == 1:
         index = indices.item()
         if index < -N or index > N:
-            raise IndexError(f"index {obj} is out of bounds for axis {axis} "
-                             f"with size {N}")
-        if (index < 0):
+            raise IndexError(
+                f"index {obj} is out of bounds for axis {axis} with size {N}"
+            )
+        if index < 0:
             index += N
 
         # There are some object array corner cases here, but we cannot avoid
@@ -5642,7 +5769,7 @@ def insert(arr, obj, values, axis=None):
     indices[indices < 0] += N
 
     numnew = len(indices)
-    order = indices.argsort(kind='mergesort')   # stable sort
+    order = indices.argsort(kind="mergesort")  # stable sort
     indices[order] += np.arange(numnew)
 
     newshape[axis] += numnew
@@ -5841,7 +5968,7 @@ def digitize(x, bins, right=False):
         raise ValueError("bins must be monotonically increasing or decreasing")
 
     # this is backwards because the arguments below are swapped
-    side = 'left' if right else 'right'
+    side = "left" if right else "right"
     if mono == -1:
         # reverse the bins, and invert the results
         return len(bins) - _nx.searchsorted(bins[::-1], x, side=side)
