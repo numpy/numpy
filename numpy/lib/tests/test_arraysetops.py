@@ -1256,3 +1256,21 @@ class TestUnique:
         u = np.unique(mat)
         expected = np.unique(np.asarray(mat))
         assert_array_equal(u, expected, strict=True)
+
+    def test_unique_axis0_equal_nan_on_1d_array(self):
+        # Test Issue #29336
+        arr1d = np.array([np.nan, 0, 0, np.nan])
+        expected = np.array([0., np.nan])
+        result = np.unique(arr1d, axis=0, equal_nan=True)
+        assert_array_equal(result, expected)
+
+    def test_unique_axis_minus1_eq_on_1d_array(self):
+        arr1d = np.array([np.nan, 0, 0, np.nan])
+        expected = np.array([0., np.nan])
+        result = np.unique(arr1d, axis=-1, equal_nan=True)
+        assert_array_equal(result, expected)
+
+    def test_unique_axis_float_raises_typeerror(self):
+        arr1d = np.array([np.nan, 0, 0, np.nan])
+        with pytest.raises(TypeError, match="integer argument expected"):
+            np.unique(arr1d, axis=0.0, equal_nan=False)
