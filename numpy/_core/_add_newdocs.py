@@ -3197,8 +3197,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         * 'unsafe' means any data conversions may be done.
         * 'same_value' means any data conversions may be done, but the values
           must not change, including rounding of floats or overflow of ints
+
         .. versionadded:: 2.4
             Support for ``'same_value'`` was added.
+
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.

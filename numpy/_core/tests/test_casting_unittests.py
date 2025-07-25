@@ -934,11 +934,12 @@ class TestCasting:
 
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_same_value_complex(self):
+        arr = np.array([complex(1, 1)], dtype=np.cdouble)
         # This works
-        np.array([complex(1, 1)], dtype=np.cdouble).astype(np.complex64, casting='same_value')
+        arr.astype(np.complex64, casting='same_value')
         # Casting with a non-zero imag part fails
         with pytest.raises(ValueError):
-            np.array([complex(1, 1)], dtype=np.cdouble).astype(np.float32, casting='same_value')
+            arr.astype(np.float32, casting='same_value')
 
     def _test_same_value_scalar(self):
         # Not implemented yet

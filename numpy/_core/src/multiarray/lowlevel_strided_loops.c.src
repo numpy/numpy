@@ -905,16 +905,16 @@ static GCC_CAST_OPT_LEVEL int
     /*
      * 1. Check that the src does not overflow the dst.
      *    Ignore inf since it does not compare well
-     *    This is complicated by clang warning that, for instance, int8 cannot
+     *    This is complicated by a warning that, for instance, int8 cannot
      *    overflow int64max
      */
 #if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
     if (!src_isinf) {
 #endif
 #      if !@is_bool1@
-#      if __clang__
-#      pragma clang diagnostic push
-#      pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#      if defined(__clang__) || defined(__GUNC__)
+#      pragma GCC diagnostic push
+#      pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 #endif
        if (!src_isnan && _TO_RTYPE1(src_value) > @type2max@) {
             return NPY_SAME_VALUE_FAILURE;
@@ -924,8 +924,8 @@ static GCC_CAST_OPT_LEVEL int
             return NPY_SAME_VALUE_FAILURE;
        }
 #      endif
-#      if __clang__
-#      pragma clang diagnostic pop
+#      if defined(__clang__) || defined(__GUNC__)
+#      pragma GCC diagnostic pop
 #      endif
 #      endif
 #   if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
