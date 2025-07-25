@@ -185,6 +185,16 @@ For more extensive information, see :ref:`testing-guidelines`.
 Note: do not run the tests from the root directory of your numpy git repo without ``spin``,
 that will result in strange test errors.
 
+Running type checks
+-------------------
+Changes that involve static type declarations are also executed using ``spin``.
+The invocation will look like the following:
+
+    $ spin mypy
+
+This will look in the ``typing/tests`` directory for sets of operations to
+test for type incompatibility.
+
 Running linting
 ---------------
 Lint checks can be performed on newly added lines of Python code.
