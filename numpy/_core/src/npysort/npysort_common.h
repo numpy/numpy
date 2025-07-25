@@ -10,6 +10,98 @@
 extern "C" {
 #endif
 
+
+/*
+ *****************************************************************************
+ **                        NEW SORTFUNC HANDLERS                            **
+ *****************************************************************************
+ */
+
+static inline int
+compare_result_to_int(NPY_COMPARE_RESULT result, NPY_SORT_NAN_POSITION nan_position)
+{
+    if (result == NPY_LESS) {
+        return -1;
+    }
+    else if (result == NPY_GREATER) {
+        return 1;
+    }
+    else if (result == NPY_EQUAL) {
+        return 0;
+    }
+    else {
+        if (nan_position == NPY_SORT_NAN_TO_END) {
+            if (result == NPY_UNORDERED_LEFT) {
+                return -1;
+            }
+            else if (result == NPY_UNORDERED_RIGHT) {
+                return 1;
+            }
+            else if (result == NPY_UNORDERED_BOTH) {
+                return 0;
+            }
+        }
+        else if (nan_position == NPY_SORT_NAN_TO_START) {
+            if (result == NPY_UNORDERED_LEFT) {
+                return 1;
+            }
+            else if (result == NPY_UNORDERED_RIGHT) {
+                return -1;
+            }
+            else if (result == NPY_UNORDERED_BOTH) {
+                return 0;
+            }
+        }
+    }
+
+    /* This should never happen, but just in case */
+    PyErr_SetString(PyExc_RuntimeError, "Unexpected comparison result in sort function");
+    return NPY_MIN_INT;  /* Indicate an error */
+}
+
+static inline int
+compare_from_context(const void *a, const void *b, void *context)
+{
+    PyArrayMethod_SortContext *sort_context = (PyArrayMethod_SortContext *)context;
+    PyArray_SortCompareFunc *cmp = sort_context->compare;
+
+    int descending = sort_context->descending;
+    NPY_SORT_NAN_POSITION nan_position = sort_context->nan_position;
+
+    NPY_COMPARE_RESULT result = cmp(a, b, sort_context->descriptor);
+
+    if (result == NPY_COMPARE_ERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "Unexpected comparison result in sort function");
+        return NPY_MIN_INT;  /* Indicate an error */
+    }
+
+    int cmp_result = compare_result_to_int(result, nan_position);
+
+    if (descending) {
+        cmp_result = -cmp_result;
+    }
+
+    return cmp_result;
+}
+
+static inline void
+fill_sort_data_from_arr_or_context(void *array, PyArrayMethod_SortContext *context,
+                                   void **out_arr_or_context, npy_intp *elsize,
+                                   PyArray_CompareFunc **out_cmp)
+{
+    if (context != NULL) {
+        *out_arr_or_context = (void *)context;
+        *elsize = PyDataType_ELSIZE(context->descriptor);
+        *out_cmp = &compare_from_context;
+    }
+    else {
+        PyArrayObject *arr = (PyArrayObject *)array;
+        *out_arr_or_context = (void *)arr;
+        *elsize = PyArray_ITEMSIZE(arr);
+        *out_cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    }
+}
+
 /*
  *****************************************************************************
  **                        SWAP MACROS                                      **
