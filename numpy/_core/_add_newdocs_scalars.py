@@ -369,6 +369,30 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         False
         """))
 
+    add_newdoc('numpy._core.numerictypes', float_name, ('from_number',
+        f"""
+        {float_name}.from_number(number) -> {float_name}
+
+        Create a new {float_name} instance from a numeric value.
+
+        Parameters
+        ----------
+        number : int, float, or other numeric type
+            A numeric value to be converted to a {float_name} scalar.
+
+        Returns
+        -------
+        out : numpy.{float_name}
+            A new scalar value of type {float_name} representing `number`.
+
+        Examples
+        --------
+        >>> np.{float_name}.from_number(3)
+        np.{float_name}(3.0)
+        >>> np.{float_name}.from_number(2.718)
+        np.{float_name}(2.718)
+        """))
+
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
         'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
     # Add negative examples for signed cases by checking typecode
