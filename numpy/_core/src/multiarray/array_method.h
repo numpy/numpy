@@ -122,6 +122,15 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec);
 NPY_NO_EXPORT PyBoundArrayMethodObject *
 PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int priv);
 
+/*
+ * Possible results to be handled in HandleArrayMethodError, after a call
+ * to a PyArrayMethod_StridedLoop
+ */
+#define NPY_GENERIC_LOOP_FAILURE -1   /* will have set a PyErr already */
+#define NPY_SAME_VALUE_FAILURE -31    /* same_value casting failed */
+ 
+int HandleArrayMethodError(int result, const char * name , int method_flags);
+
 #ifdef __cplusplus
 }
 #endif

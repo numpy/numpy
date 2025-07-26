@@ -746,13 +746,13 @@ can_cast_pyscalar_scalar_to(
     }
     else if (PyDataType_ISFLOAT(to)) {
         if (flags & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || (casting == NPY_SAME_VALUE_CASTING));
         }
         return 1;
     }
     else if (PyDataType_ISINTEGER(to)) {
         if (!(flags & NPY_ARRAY_WAS_PYTHON_INT)) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || (casting == NPY_SAME_VALUE_CASTING));
         }
         return 1;
     }
@@ -839,6 +839,8 @@ npy_casting_to_string(NPY_CASTING casting)
             return "'same_kind'";
         case NPY_UNSAFE_CASTING:
             return "'unsafe'";
+        case NPY_SAME_VALUE_CASTING:
+            return "'same_value'";
         default:
             return "<unknown>";
     }
@@ -2463,10 +2465,10 @@ cast_to_string_resolve_descriptors(
         return -1;
     }
 
-    if (self->casting == NPY_UNSAFE_CASTING) {
+    if ((self->casting == NPY_UNSAFE_CASTING) || (self->casting == NPY_SAME_VALUE_CASTING)){
         assert(dtypes[0]->type_num == NPY_UNICODE &&
                dtypes[1]->type_num == NPY_STRING);
-        return NPY_UNSAFE_CASTING;
+        return self->casting;
     }
 
     if (loop_descrs[1]->elsize >= size) {
