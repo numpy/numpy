@@ -530,10 +530,15 @@ def issubdtype(arg1, arg2):
     True
 
     """
-    if not issubclass_(arg1, generic):
-        arg1 = dtype(arg1).type
-    if not issubclass_(arg2, generic):
-        arg2 = dtype(arg2).type
+    try:
+        if not issubclass_(arg1, generic):
+            arg1 = dtype(arg1).type
+        if not issubclass_(arg2, generic):
+            arg2 = dtype(arg2).type
+    except TypeError:
+        # If either arg1 or arg2 cannot be casted to dtype object,
+        # they are not subdtype. (See #-28946)
+        return False
 
     return issubclass(arg1, arg2)
 
