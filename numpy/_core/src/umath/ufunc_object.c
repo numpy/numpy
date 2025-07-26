@@ -4531,10 +4531,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             full_args.in, casting) < 0) {
         goto fail;
     }
-    if (casting == NPY_SAME_VALUE_CASTING) {
-        PyErr_SetString(PyExc_NotImplementedError,
-            "ufunc with 'same_value' casting not implemented yet");
-    }
 
     /*
      * Do the final preparations and call the inner-loop.

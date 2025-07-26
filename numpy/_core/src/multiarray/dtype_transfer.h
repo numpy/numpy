@@ -30,10 +30,8 @@ NPY_context_init(PyArrayMethod_Context *context, PyArray_Descr *descr[2])
 {
     context->descriptors = descr;
     context->caller = NULL;
- #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
     context->_reserved = NULL;
     context->flags = 0;
- #endif
 }
 
 /*

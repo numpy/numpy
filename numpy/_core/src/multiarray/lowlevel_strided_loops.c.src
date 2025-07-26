@@ -912,11 +912,11 @@ static GCC_CAST_OPT_LEVEL int
     if (!src_isinf) {
 #endif
 #      if !@is_bool1@
-#      if defined(__clang__) || defined(__GUNC__)
+#      ifdef __GNUC__
 #      pragma GCC diagnostic push
 #      pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 #      pragma GCC diagnostic ignored "-Wtautological-compare"
-#endif
+#      endif
        if (!src_isnan && _TO_RTYPE1(src_value) > @type2max@) {
             return NPY_SAME_VALUE_FAILURE;
        }
@@ -925,10 +925,10 @@ static GCC_CAST_OPT_LEVEL int
             return NPY_SAME_VALUE_FAILURE;
        }
 #      endif
-#      if defined(__clang__) || defined(__GUNC__)
+#      ifdef __GNUC__
 #      pragma GCC diagnostic pop
-#      endif
-#      endif
+#      endif  /* __GNUC__ */
+#      endif /* !is_bool1 */
 #   if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
     }
 #   endif
@@ -977,11 +977,7 @@ static GCC_CAST_OPT_LEVEL int
 
     /* printf("@prefix@_cast_@name1@_to_@name2@\n"); */
 #if !@is_bool2@
- #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
     int same_value_casting = ((context->flags & NPY_SAME_VALUE_CASTING) == NPY_SAME_VALUE_CASTING);
- #else
-    int same_value_casting = 0;
- #endif
 #endif
 
     while (N--) {

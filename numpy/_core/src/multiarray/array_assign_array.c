@@ -132,12 +132,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (same_value_cast) {
- #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
         cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
- #else
-        PyErr_SetString(PyExc_NotImplementedError, 
-            "raw_array_assign_array with 'same_value' casting not implemented yet");
- #endif
     }
 
     /* Ensure number of elements exceeds threshold for threading */
@@ -248,10 +243,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         return -1;
     }
     if (same_value_cast) {
-        /* cast_info.context.flags |= NPY_SAME_VALUE_CASTING; */
-        PyErr_SetString(PyExc_NotImplementedError,
-            "raw_array_wheremasked_assign_array with 'same_value' casting not implemented yet");
-        return -1;
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
     }
 
     if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {

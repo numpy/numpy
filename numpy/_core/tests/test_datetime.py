@@ -1845,7 +1845,7 @@ class TestDateTime:
         assert_equal(np.datetime_as_string(a, unit='D', casting='unsafe'),
                             '2032-07-18')
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             np.datetime_as_string(a, unit='Y', casting='same_value')
 
         assert_equal(np.datetime_as_string(a, unit='h'), '2032-07-18T12')

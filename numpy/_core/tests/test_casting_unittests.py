@@ -941,8 +941,7 @@ class TestCasting:
         with pytest.raises(ValueError):
             arr.astype(np.float32, casting='same_value')
 
-    def _test_same_value_scalar(self):
-        # Not implemented yet
+    def test_same_value_scalar(self):
         i = np.array(123, dtype=np.int64)
         f = np.array(123, dtype=np.float64)
         assert i.astype(np.float64, casting='same_value') == f
