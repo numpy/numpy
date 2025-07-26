@@ -410,6 +410,10 @@ def printoptions(*args, **kwargs):
     --------
     set_printoptions, get_printoptions
 
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
+
     """
     token = _set_printoptions(*args, **kwargs)
 
