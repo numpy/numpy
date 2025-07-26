@@ -407,6 +407,10 @@ class TestIsSubDType:
         assert not np.issubdtype(np.float32, "float")
         assert not np.issubdtype(np.float64, "f")
 
+        # Some type cannot be interpreted by numpy
+        assert not np.issubdtype(str | int, np.number)
+        assert not np.issubdtype(np.number, str | int | float)
+
         # Test the same for the correct first datatype and abstract one
         # in the case of int, float, complex:
         assert np.issubdtype(np.float64, 'float64')
