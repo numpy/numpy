@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "arraytypes.h"
 #include "arrayobject.h"
 #include "array_converter.h"
+#include "blas_utils.h"
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
@@ -530,8 +531,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
                                    NPY_ORDER order, PyArrayObject *ret,
-                                   PyArray_Descr *dtype, NPY_CASTING casting,
-                                   npy_bool casting_not_passed)
+                                   PyArray_Descr *dtype, NPY_CASTING casting)
 {
     int iarrays;
     npy_intp shape = 0;
@@ -647,12 +647,11 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
  * @param ret output array to fill
  * @param dtype Forced output array dtype (cannot be combined with ret)
  * @param casting Casting mode used
- * @param casting_not_passed Deprecation helper
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ConcatenateInto(PyObject *op,
         int axis, PyArrayObject *ret, PyArray_Descr *dtype,
-        NPY_CASTING casting, npy_bool casting_not_passed)
+        NPY_CASTING casting)
 {
     int iarrays, narrays;
     PyArrayObject **arrays;
@@ -670,10 +669,17 @@ PyArray_ConcatenateInto(PyObject *op,
     }
 
     /* Convert the input list into arrays */
-    narrays = PySequence_Size(op);
-    if (narrays < 0) {
+    Py_ssize_t narrays_true = PySequence_Size(op);
+    if (narrays_true < 0) {
         return NULL;
     }
+    else if (narrays_true > NPY_MAX_INT) {
+        PyErr_Format(PyExc_ValueError,
+            "concatenate() only supports up to %d arrays but got %zd.",
+            NPY_MAX_INT, narrays_true);
+        return NULL;
+    }
+    narrays = (int)narrays_true;
     arrays = PyArray_malloc(narrays * sizeof(arrays[0]));
     if (arrays == NULL) {
         PyErr_NoMemory();
@@ -698,7 +704,7 @@ PyArray_ConcatenateInto(PyObject *op,
     if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
-                casting, casting_not_passed);
+                casting);
     }
     else {
         ret = PyArray_ConcatenateArrays(
@@ -743,7 +749,7 @@ PyArray_Concatenate(PyObject *op, int axis)
         casting = NPY_SAME_KIND_CASTING;
     }
     return PyArray_ConcatenateInto(
-            op, axis, NULL, NULL, casting, 0);
+            op, axis, NULL, NULL, casting);
 }
 
 static int
@@ -2489,7 +2495,6 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
     PyObject *out = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
-    PyObject *casting_obj = NULL;
     PyObject *res;
     int axis = 0;
 
@@ -2499,20 +2504,8 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", NULL, &out,
             "$dtype", &PyArray_DescrConverter2, &dtype,
-            "$casting", NULL, &casting_obj,
+            "$casting", &PyArray_CastingConverter, &casting,
             NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
-    int casting_not_passed = 0;
-    if (casting_obj == NULL) {
-        /*
-         * Casting was not passed in, needed for deprecation only.
-         * This should be simplified once the deprecation is finished.
-         */
-        casting_not_passed = 1;
-    }
-    else if (!PyArray_CastingConverter(casting_obj, &casting)) {
-        Py_XDECREF(dtype);
         return NULL;
     }
     if (out != NULL) {
@@ -2526,7 +2519,7 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
         }
     }
     res = PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out, dtype,
-            casting, casting_not_passed);
+            casting);
     Py_XDECREF(dtype);
     return res;
 }
@@ -2767,32 +2760,33 @@ fail:
 static int
 einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 {
-    int ellipsis = 0, subindex = 0;
+    int ellipsis = 0, subindex = 0, ret = -1;
     npy_intp i, size;
-    PyObject *item;
+    PyObject *item, *seq;
 
-    obj = PySequence_Fast(obj, "the subscripts for each operand must "
+    seq = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref OK
                                "be a list or a tuple");
-    if (obj == NULL) {
+    if (seq == NULL) {
         return -1;
     }
-    size = PySequence_Size(obj);
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
+    size = PySequence_Size(seq);
 
     for (i = 0; i < size; ++i) {
-        item = PySequence_Fast_GET_ITEM(obj, i);
+        item = PySequence_Fast_GET_ITEM(seq, i);
         /* Ellipsis */
         if (item == Py_Ellipsis) {
             if (ellipsis) {
                 PyErr_SetString(PyExc_ValueError,
                         "each subscripts list may have only one ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             if (subindex + 3 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             subscripts[subindex++] = '.';
             subscripts[subindex++] = '.';
@@ -2807,16 +2801,14 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 PyErr_SetString(PyExc_TypeError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
 
             if (s < 0) {
@@ -2835,16 +2827,19 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscript is not within the valid range [0, 52)");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
         }
-
     }
 
-    Py_DECREF(obj);
+    ret = subindex;
 
-    return subindex;
+  cleanup:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+    Py_DECREF(seq);
+
+    return ret;
 }
 
 /*
@@ -4586,7 +4581,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
-        METH_O, "Collect unique values via a hash map."},
+        METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4795,6 +4790,10 @@ _multiarray_umath_exec(PyObject *m) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         return -1;
     }
+
+#if NPY_BLAS_CHECK_FPE_SUPPORT
+    npy_blas_init();
+#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,

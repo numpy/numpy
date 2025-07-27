@@ -1,10 +1,8 @@
+from _typeshed import IdentityFunction
 from collections.abc import Callable, Iterable
 from typing import Protocol, TypeVar, overload, type_check_only
 
-from _typeshed import IdentityFunction
-
-from ._convertions import asbytes as asbytes
-from ._convertions import asunicode as asunicode
+from ._convertions import asbytes as asbytes, asunicode as asunicode
 
 ###
 

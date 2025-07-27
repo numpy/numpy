@@ -1,19 +1,10 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
 import ctypes
+from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from ctypes import c_int64 as _c_intp
-from typing import (
-    Any,
-    ClassVar,
-    Generic,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
-from typing import Literal as L
-
-from _typeshed import StrOrBytesPath
+from typing import Any, ClassVar, Generic, Literal as L, TypeAlias, TypeVar, overload
 
 import numpy as np
 from numpy import (

@@ -6,14 +6,13 @@ import warnings
 from decimal import Decimal
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
-from numpy._core._rational_tests import rational
 
 import numpy as np
 from numpy import ma
 from numpy._core import sctypes
+from numpy._core._rational_tests import rational
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
@@ -78,6 +77,13 @@ class TestResize:
         new_shape = (-10, -1)
         with pytest.raises(ValueError, match=r"negative"):
             np.resize(A, new_shape=new_shape)
+
+    def test_unsigned_resize(self):
+        # ensure unsigned integer sizes don't lead to underflows
+        for dt_pair in [(np.int32, np.uint32), (np.int64, np.uint64)]:
+            arr = np.array([[23, 95], [66, 37]])
+            assert_array_equal(np.resize(arr, dt_pair[0](1)),
+                               np.resize(arr, dt_pair[1](1)))
 
     def test_subclass(self):
         class MyArray(np.ndarray):
@@ -285,6 +291,10 @@ class TestNonarrayArgs:
         assert_(np.size(A) == 6)
         assert_(np.size(A, 0) == 2)
         assert_(np.size(A, 1) == 3)
+        assert_(np.size(A, ()) == 1)
+        assert_(np.size(A, (0,)) == 2)
+        assert_(np.size(A, (1,)) == 3)
+        assert_(np.size(A, (0, 1)) == 6)
 
     def test_squeeze(self):
         A = [[[1, 1, 1], [2, 2, 2], [3, 3, 3]]]

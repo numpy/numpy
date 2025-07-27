@@ -5,6 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_array_equal,
@@ -813,7 +814,9 @@ class TestUnique:
 
     def test_unique_zero_sized(self):
         # test for zero-sized arrays
-        for dt in self.get_types():
+        types = self.get_types()
+        types.extend('SU')
+        for dt in types:
             a = np.array([], dt)
             b = np.array([], dt)
             i1 = np.array([], np.int64)
@@ -837,6 +840,187 @@ class TestUnique:
             aa = Subclass(a.shape, dtype=dt, buffer=a)
             bb = Subclass(b.shape, dtype=dt, buffer=b)
             self.check_all(aa, bb, i1, i2, c, dt)
+
+    def test_unique_byte_string_hash_based(self):
+        # test for byte string arrays
+        arr = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape']
+        unq_sorted = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
+
+        a1 = unique(arr, sorted=False)
+        # the result varies depending on the impl of std::unordered_set,
+        # so we check them by sorting
+        assert_array_equal(sorted(a1.tolist()), unq_sorted)
+
+    def test_unique_unicode_string_hash_based(self):
+        # test for unicode string arrays
+        arr = [
+            'café', 'cafe', 'café', 'naïve', 'naive',
+            'résumé', 'naïve', 'resume', 'résumé',
+        ]
+        unq_sorted = ['cafe', 'café', 'naive', 'naïve', 'resume', 'résumé']
+
+        a1 = unique(arr, sorted=False)
+        # the result varies depending on the impl of std::unordered_set,
+        # so we check them by sorting
+        assert_array_equal(sorted(a1.tolist()), unq_sorted)
+
+    def test_unique_vstring_hash_based_equal_nan(self):
+        # test for unicode and nullable string arrays (equal_nan=True)
+        a = np.array([
+                # short strings
+                'straße',
+                None,
+                'strasse',
+                'straße',
+                None,
+                'niño',
+                'nino',
+                'élève',
+                'eleve',
+                'niño',
+                'élève',
+                # medium strings
+                'b' * 20,
+                'ß' * 30,
+                None,
+                'é' * 30,
+                'e' * 20,
+                'ß' * 30,
+                'n' * 30,
+                'ñ' * 20,
+                None,
+                'e' * 20,
+                'ñ' * 20,
+                # long strings
+                'b' * 300,
+                'ß' * 400,
+                None,
+                'é' * 400,
+                'e' * 300,
+                'ß' * 400,
+                'n' * 400,
+                'ñ' * 300,
+                None,
+                'e' * 300,
+                'ñ' * 300,
+            ],
+            dtype=StringDType(na_object=None)
+        )
+        unq_sorted_wo_none = [
+            'b' * 20,
+            'b' * 300,
+            'e' * 20,
+            'e' * 300,
+            'eleve',
+            'nino',
+            'niño',
+            'n' * 30,
+            'n' * 400,
+            'strasse',
+            'straße',
+            'ß' * 30,
+            'ß' * 400,
+            'élève',
+            'é' * 30,
+            'é' * 400,
+            'ñ' * 20,
+            'ñ' * 300,
+        ]
+
+        a1 = unique(a, sorted=False, equal_nan=True)
+        # the result varies depending on the impl of std::unordered_set,
+        # so we check them by sorting
+
+        # a1 should have exactly one None
+        count_none = sum(x is None for x in a1)
+        assert_equal(count_none, 1)
+
+        a1_wo_none = sorted(x for x in a1 if x is not None)
+        assert_array_equal(a1_wo_none, unq_sorted_wo_none)
+
+    def test_unique_vstring_hash_based_not_equal_nan(self):
+        # test for unicode and nullable string arrays (equal_nan=False)
+        a = np.array([
+                # short strings
+                'straße',
+                None,
+                'strasse',
+                'straße',
+                None,
+                'niño',
+                'nino',
+                'élève',
+                'eleve',
+                'niño',
+                'élève',
+                # medium strings
+                'b' * 20,
+                'ß' * 30,
+                None,
+                'é' * 30,
+                'e' * 20,
+                'ß' * 30,
+                'n' * 30,
+                'ñ' * 20,
+                None,
+                'e' * 20,
+                'ñ' * 20,
+                # long strings
+                'b' * 300,
+                'ß' * 400,
+                None,
+                'é' * 400,
+                'e' * 300,
+                'ß' * 400,
+                'n' * 400,
+                'ñ' * 300,
+                None,
+                'e' * 300,
+                'ñ' * 300,
+            ],
+            dtype=StringDType(na_object=None)
+        )
+        unq_sorted_wo_none = [
+            'b' * 20,
+            'b' * 300,
+            'e' * 20,
+            'e' * 300,
+            'eleve',
+            'nino',
+            'niño',
+            'n' * 30,
+            'n' * 400,
+            'strasse',
+            'straße',
+            'ß' * 30,
+            'ß' * 400,
+            'élève',
+            'é' * 30,
+            'é' * 400,
+            'ñ' * 20,
+            'ñ' * 300,
+        ]
+
+        a1 = unique(a, sorted=False, equal_nan=False)
+        # the result varies depending on the impl of std::unordered_set,
+        # so we check them by sorting
+
+        # a1 should have exactly one None
+        count_none = sum(x is None for x in a1)
+        assert_equal(count_none, 6)
+
+        a1_wo_none = sorted(x for x in a1 if x is not None)
+        assert_array_equal(a1_wo_none, unq_sorted_wo_none)
+
+    def test_unique_vstring_errors(self):
+        a = np.array(
+            [
+                'apple', 'banana', 'apple', None, 'cherry',
+                'date', 'banana', 'fig', None, 'grape',
+            ] * 2,
+            dtype=StringDType(na_object=None)
+        )
+        assert_raises(ValueError, unique, a, equal_nan=False)
 
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):

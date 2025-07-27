@@ -1455,7 +1455,7 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(ufunc->userloops, key);
+            obj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1742,7 +1742,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1813,7 +1813,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;

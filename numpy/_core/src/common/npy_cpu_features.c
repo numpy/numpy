@@ -562,7 +562,7 @@ npy__cpu_init_features(void)
 
 #elif defined(NPY_CPU_PPC64) || defined(NPY_CPU_PPC64LE)
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     #ifdef __FreeBSD__
         #include <machine/cpu.h> // defines PPC_FEATURE_HAS_VSX
     #endif
@@ -585,7 +585,7 @@ static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
     if ((hwcap & PPC_FEATURE_HAS_VSX) == 0)
@@ -612,7 +612,7 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_VSX2] = (hwcap & PPC_FEATURE2_ARCH_2_07) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX3] = (hwcap & PPC_FEATURE2_ARCH_3_00) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX4] = (hwcap & PPC_FEATURE2_ARCH_3_1) != 0;
-// TODO: AIX, OpenBSD
+// TODO: AIX
 #else
     npy__cpu_have[NPY_CPU_FEATURE_VSX]  = 1;
     #if defined(NPY_CPU_PPC64LE) || defined(NPY_HAVE_VSX2)
@@ -698,7 +698,7 @@ npy__cpu_init_features_arm8(void)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMD]      = 1;
 }
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 /*
  * we aren't sure of what kind kernel or clib we deal with
  * so we play it safe
@@ -709,7 +709,7 @@ npy__cpu_init_features_arm8(void)
 #if defined(__linux__)
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
 #endif
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 __attribute__((weak)) int elf_aux_info(int, void *, int); // linker should handle it
 
 static unsigned long getauxval(unsigned long k)
@@ -807,7 +807,7 @@ static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     if (npy__cpu_init_features_linux())
         return;
 #endif
@@ -846,22 +846,30 @@ npy__cpu_init_features(void)
 
 #elif defined(__riscv) && __riscv_xlen == 64
 
-#include <sys/auxv.h>
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+    #include <sys/auxv.h>
 
-#ifndef HWCAP_RVV
-    // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
-    #define COMPAT_HWCAP_ISA_V	(1 << ('V' - 'A'))
+    #ifndef HWCAP_RVV
+        // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
+        #define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
+    #endif
 #endif
 
 static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
+#else
+    unsigned long hwcap;
+    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+#endif
     if (hwcap & COMPAT_HWCAP_ISA_V) {
         npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
     }
+#endif
 }
 
 /*********** Unsupported ARCH ***********/

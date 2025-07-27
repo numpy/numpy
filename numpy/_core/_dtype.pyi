@@ -1,6 +1,4 @@
-from typing import Final, TypeAlias, TypedDict, overload, type_check_only
-from typing import Literal as L
-
+from typing import Final, Literal as L, TypeAlias, TypedDict, overload, type_check_only
 from typing_extensions import ReadOnly, TypeVar
 
 import numpy as np

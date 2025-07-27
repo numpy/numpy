@@ -1,4 +1,5 @@
 # ruff: noqa: ANN401
+from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -11,8 +12,6 @@ from typing import (
     overload,
     type_check_only,
 )
-
-from _typeshed import Incomplete
 from typing_extensions import deprecated
 
 import numpy as np
@@ -532,7 +531,7 @@ def trace(
     offset: SupportsIndex = ...,
     axis1: SupportsIndex = ...,
     axis2: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     out: None = ...,
 ) -> Any: ...
 @overload
@@ -541,7 +540,7 @@ def trace(
     offset: SupportsIndex,
     axis1: SupportsIndex,
     axis2: SupportsIndex,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
@@ -550,7 +549,7 @@ def trace(
     offset: SupportsIndex = ...,
     axis1: SupportsIndex = ...,
     axis2: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     *,
     out: _ArrayT,
 ) -> _ArrayT: ...
@@ -577,7 +576,7 @@ def ravel(
 @overload
 def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dtype]: ...
 
-def nonzero(a: _ArrayLike[Any]) -> tuple[NDArray[intp], ...]: ...
+def nonzero(a: _ArrayLike[Any]) -> tuple[np.ndarray[tuple[int], np.dtype[intp]], ...]: ...
 
 # this prevents `Any` from being returned with Pyright
 @overload
@@ -819,9 +818,10 @@ def sum(
     where: _ArrayLikeBool_co = ...,
 ) -> _ArrayT: ...
 
+# keep in sync with `any`
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: None = None,
     out: None = None,
     keepdims: Literal[False, 0] | _NoValueType = ...,
@@ -830,7 +830,7 @@ def all(
 ) -> np.bool: ...
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -839,7 +839,7 @@ def all(
 ) -> Incomplete: ...
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
     out: _ArrayT,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -848,7 +848,7 @@ def all(
 ) -> _ArrayT: ...
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     *,
     out: _ArrayT,
@@ -856,9 +856,10 @@ def all(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _ArrayT: ...
 
+# keep in sync with `all`
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: None = None,
     out: None = None,
     keepdims: Literal[False, 0] | _NoValueType = ...,
@@ -867,7 +868,7 @@ def any(
 ) -> np.bool: ...
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -876,7 +877,7 @@ def any(
 ) -> Incomplete: ...
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
     out: _ArrayT,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -885,7 +886,7 @@ def any(
 ) -> _ArrayT: ...
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     *,
     out: _ArrayT,
@@ -893,6 +894,7 @@ def any(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _ArrayT: ...
 
+#
 @overload
 def cumsum(
     a: _ArrayLike[_ScalarT],
@@ -1395,7 +1397,7 @@ def cumulative_prod(
 
 def ndim(a: ArrayLike) -> int: ...
 
-def size(a: ArrayLike, axis: int | None = ...) -> int: ...
+def size(a: ArrayLike, axis: int | tuple[int, ...] | None = ...) -> int: ...
 
 @overload
 def around(

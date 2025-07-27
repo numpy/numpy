@@ -35,6 +35,7 @@ from numpy import (
     amax,
     amin,
     angle,
+    array as narray,  # noqa: F401
     bool_,
     expand_dims,
     finfo,  # noqa: F401
@@ -42,7 +43,6 @@ from numpy import (
     iscomplexobj,
     ndarray,
 )
-from numpy import array as narray  # noqa: F401
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
@@ -5454,8 +5454,8 @@ class MaskedArray(ndarray):
             The default is to use the mean of the flattened array as reference.
         dtype : dtype, optional
             Type to use in computing the variance. For arrays of integer type
-             the default is float32; for arrays of float types it is the same as
-             the array type.
+            the default is float32; for arrays of float types it is the same as
+            the array type.
 
         See Also
         --------
@@ -5628,7 +5628,7 @@ class MaskedArray(ndarray):
             is used.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
-        order : list, optional
+        order : str or list of str, optional
             When `a` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
             specified.
@@ -5811,11 +5811,6 @@ class MaskedArray(ndarray):
             If ``fill_value`` is not None, it supersedes ``endwith``.
         stable : bool, optional
             Only for compatibility with ``np.sort``. Ignored.
-
-        Returns
-        -------
-        sorted_array : ndarray
-            Array of the same type and shape as `a`.
 
         See Also
         --------

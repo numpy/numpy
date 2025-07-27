@@ -2,7 +2,6 @@ import ctypes as ct
 import re
 from collections.abc import Callable, Iterable
 from typing import Any, Final, Generic, Self, overload
-
 from typing_extensions import TypeVar, deprecated
 
 import numpy as np

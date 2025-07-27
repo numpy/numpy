@@ -628,9 +628,9 @@ def arctanh(x):
     >>> np.emath.arctanh(0.5)
     0.5493061443340549
 
-    >>> from numpy.testing import suppress_warnings
-    >>> with suppress_warnings() as sup:
-    ...     sup.filter(RuntimeWarning)
+    >>> import warnings
+    >>> with warnings.catch_warnings():
+    ...     warnings.simplefilter('ignore', RuntimeWarning)
     ...     np.emath.arctanh(np.eye(2))
     array([[inf,  0.],
            [ 0., inf]])

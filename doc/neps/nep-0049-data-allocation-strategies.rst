@@ -8,8 +8,7 @@ NEP 49 — Data allocation strategies
 :Status: Final
 :Type: Standards Track
 :Created: 2021-04-18
-:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/YZ3PNTXZUT27B6ITFAD3WRSM3T3SRVK4/#PKYXCTG4R5Q6LIRZC4SEWLNBM6GLRF26
-
+:Resolution: `NumPy Discussion <https://mail.python.org/archives/list/numpy-discussion@python.org/thread/YZ3PNTXZUT27B6ITFAD3WRSM3T3SRVK4/#PKYXCTG4R5Q6LIRZC4SEWLNBM6GLRF26>`_
 
 Abstract
 --------

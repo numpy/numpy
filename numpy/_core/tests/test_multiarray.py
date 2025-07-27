@@ -21,16 +21,18 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-import numpy._core._multiarray_tests as _multiarray_tests
 import pytest
-from numpy._core._rational_tests import rational
 
 import numpy as np
+import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._rational_tests import rational
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib import stride_tricks
 from numpy.lib.recfunctions import repack_fields
 from numpy.testing import (
+    BLAS_SUPPORTS_FPE,
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
@@ -46,11 +48,9 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
     break_cycles,
     check_support_sve,
     runstring,
-    suppress_warnings,
     temppath,
 )
 from numpy.testing._private.utils import _no_tracing, requires_memory
@@ -381,7 +381,8 @@ class TestAttributes:
                                offset=offset * x.itemsize)
             except Exception as e:
                 raise RuntimeError(e)
-            r.strides = strides = strides * x.itemsize
+            with pytest.warns(DeprecationWarning):
+                r.strides = strides * x.itemsize
             return r
 
         assert_equal(make_array(4, 4, -1), np.array([4, 3, 2, 1]))
@@ -391,24 +392,28 @@ class TestAttributes:
         assert_raises(RuntimeError, make_array, 8, 3, 1)
         # Check that the true extent of the array is used.
         # Test relies on as_strided base not exposing a buffer.
-        x = np.lib.stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
+        x = stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
 
         def set_strides(arr, strides):
-            arr.strides = strides
+            with pytest.warns(DeprecationWarning):
+                arr.strides = strides
 
         assert_raises(ValueError, set_strides, x, (10 * x.itemsize, x.itemsize))
 
         # Test for offset calculations:
-        x = np.lib.stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
+        x = stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
                                                     shape=(10,), strides=(-1,))
         assert_raises(ValueError, set_strides, x[::-1], -1)
         a = x[::-1]
-        a.strides = 1
-        a[::2].strides = 2
+        with pytest.warns(DeprecationWarning):
+            a.strides = 1
+        with pytest.warns(DeprecationWarning):
+            a[::2].strides = 2
 
         # test 0d
         arr_0d = np.array(0)
-        arr_0d.strides = ()
+        with pytest.warns(DeprecationWarning):
+            arr_0d.strides = ()
         assert_raises(TypeError, set_strides, arr_0d, None)
 
     def test_fill(self):
@@ -3363,6 +3368,11 @@ class TestMethods:
     @pytest.mark.parametrize("dtype", [np.half, np.double, np.longdouble])
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_dot_errstate(self, dtype):
+        # Some dtypes use BLAS for 'dot' operation and
+        # not all BLAS support floating-point errors.
+        if not BLAS_SUPPORTS_FPE and dtype == np.double:
+            pytest.skip("BLAS does not support FPE")
+
         a = np.array([1, 1], dtype=dtype)
         b = np.array([-np.inf, np.inf], dtype=dtype)
 
@@ -3629,7 +3639,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a.strides = strides
+        a = stride_tricks.as_strided(a, strides=strides)
         assert_(a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel('K'), np.arange(0, 15, 2))
 
@@ -3638,7 +3648,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a.strides = strides
+        a = stride_tricks.as_strided(a, strides=strides)
         assert_(np.may_share_memory(a.ravel(order='K'), a))
         assert_equal(a.ravel(order='K'), np.arange(2**3))
 
@@ -3651,7 +3661,7 @@ class TestMethods:
 
         # 1-element tidy strides test:
         a = np.array([[1]])
-        a.strides = (123, 432)
+        a = stride_tricks.as_strided(a, strides=(123, 432))
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
@@ -3793,11 +3803,11 @@ class TestMethods:
             ap = complex(a)
             assert_equal(ap, a, msg)
 
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 bp = complex(b)
             assert_equal(bp, b, msg)
 
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 cp = complex(c)
             assert_equal(cp, c, msg)
 
@@ -3821,7 +3831,7 @@ class TestMethods:
         assert_raises(TypeError, complex, d)
 
         e = np.array(['1+1j'], 'U')
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             assert_raises(TypeError, complex, e)
 
 class TestCequenceMethods:
@@ -4205,6 +4215,13 @@ class TestBinop:
         assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
         assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
 
+    def test_pow_calls_square_structured_dtype(self):
+        # gh-29388
+        dt = np.dtype([('a', 'i4'), ('b', 'i4')])
+        a = np.array([(1, 2), (3, 4)], dtype=dt)
+        with pytest.raises(TypeError, match="ufunc 'square' not supported"):
+            a ** 2
+
     def test_pos_array_ufunc_override(self):
         class A(np.ndarray):
             def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -4493,18 +4510,24 @@ class TestPickling:
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_version0_int8(self):
         s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."
         a = np.array([1, 2, 3, 4], dtype=np.int8)
         p = self._loads(s)
         assert_equal(a, p)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_version0_float32(self):
         s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb."
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         p = self._loads(s)
         assert_equal(a, p)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_version0_object(self):
         s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb."
         a = np.array([{'a': 1}, {'b': 2}])
@@ -4512,24 +4535,32 @@ class TestPickling:
         assert_equal(a, p)
 
     # version 1 pickles, using protocol=2 to pickle
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_version1_int8(self):
         s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02i1K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x04\x01\x02\x03\x04tb."
         a = np.array([1, 2, 3, 4], dtype=np.int8)
         p = self._loads(s)
         assert_equal(a, p)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_version1_float32(self):
         s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x04\x85cnumpy\ndtype\nq\x04U\x02f4K\x00K\x01\x87Rq\x05(K\x01U\x01<NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89U\x10\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@tb."
         a = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         p = self._loads(s)
         assert_equal(a, p)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_version1_object(self):
         s = b"\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(K\x01U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb."
         a = np.array([{'a': 1}, {'b': 2}])
         p = self._loads(s)
         assert_equal(a, p)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
     def test_subarray_int_shape(self):
         s = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V6'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'a'\np12\ng3\ntp13\n(dp14\ng12\n(g7\n(S'V4'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'|'\np18\n(g7\n(S'i1'\np19\nI0\nI1\ntp20\nRp21\n(I3\nS'|'\np22\nNNNI-1\nI-1\nI0\ntp23\nb(I2\nI2\ntp24\ntp25\nNNI4\nI1\nI0\ntp26\nbI0\ntp27\nsg3\n(g7\n(S'V2'\np28\nI0\nI1\ntp29\nRp30\n(I3\nS'|'\np31\n(g21\nI2\ntp32\nNNI2\nI1\nI0\ntp33\nbI4\ntp34\nsI6\nI1\nI0\ntp35\nbI00\nS'\\x01\\x01\\x01\\x01\\x01\\x02'\np36\ntp37\nb."
         a = np.array([(1, (1, 2))], dtype=[('a', 'i1', (2, 2)), ('b', 'i1', 2)])
@@ -4540,7 +4571,8 @@ class TestPickling:
         original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
 
         original_byte_reversed = original.copy(order='K')
-        original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
+        new_dtype = original_byte_reversed.dtype.newbyteorder('S')
+        original_byte_reversed = original_byte_reversed.view(dtype=new_dtype)
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))
@@ -4905,9 +4937,11 @@ class TestArgmax:
     @pytest.mark.parametrize('data', nan_arr)
     def test_combinations(self, data):
         arr, pos = data
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,
-                        "invalid value encountered in reduce")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                "invalid value encountered in reduce",
+                RuntimeWarning)
             val = np.max(arr)
 
         assert_equal(np.argmax(arr), pos, err_msg=f"{arr!r}")
@@ -5047,9 +5081,11 @@ class TestArgmin:
     @pytest.mark.parametrize('data', nan_arr)
     def test_combinations(self, data):
         arr, pos = data
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,
-                       "invalid value encountered in reduce")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                "invalid value encountered in reduce",
+                RuntimeWarning)
             min_val = np.min(arr)
 
         assert_equal(np.argmin(arr), pos, err_msg=f"{arr!r}")
@@ -7241,8 +7277,8 @@ class TestMatmul(MatmulCommon):
         out = np.zeros((5, 2), dtype=np.complex128)
         c = self.matmul(a, b, out=out)
         assert_(c is out)
-        with suppress_warnings() as sup:
-            sup.filter(ComplexWarning, '')
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ComplexWarning)
             c = c.astype(tgt.dtype)
         assert_array_equal(c, tgt)
 
@@ -7316,6 +7352,34 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
+
+    # issue 29164 with extra checks
+    @pytest.mark.parametrize('dtype', (
+        np.float32, np.float64, np.complex64, np.complex128
+    ))
+    def test_dot_equivalent_matrix_matrix_blastypes(self, dtype):
+        modes = list(itertools.product(['C', 'F'], [True, False]))
+
+        def apply_mode(m, mode):
+            order, is_contiguous = mode
+            if is_contiguous:
+                return m.copy() if order == 'C' else m.T.copy().T
+
+            retval = np.zeros(
+                (m.shape[0] * 2, m.shape[1] * 2), dtype=m.dtype, order=order
+            )[::2, ::2]
+            retval[...] = m
+            return retval
+
+        is_complex = np.issubdtype(dtype, np.complexfloating)
+        m1 = self.m1.astype(dtype) + (1j if is_complex else 0)
+        m2 = self.m2.astype(dtype) + (1j if is_complex else 0)
+        dot_res = np.dot(m1, m2)
+        mo = np.zeros_like(dot_res)
+
+        for mode in itertools.product(*[modes] * 3):
+            m1_, m2_, mo_ = [apply_mode(*x) for x in zip([m1, m2, mo], mode)]
+            assert_equal(np.matmul(m1_, m2_, out=mo_), dot_res)
 
     def test_matmul_object(self):
         import fractions
@@ -8332,10 +8396,13 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x3)
 
     @pytest.mark.valgrind_error(reason="leaks buffer info cache temporarily.")
-    def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):  # noqa: B008
+    def test_relaxed_strides(self, c=stride_tricks.as_strided(  # noqa: B008
+                                              np.ones((1, 10, 10), dtype='i8'),  # noqa: B008
+                                              strides=(-1, 80, 8)
+                                              )
+                                  ):
         # Note: c defined as parameter so that it is persistent and leak
         # checks will notice gh-16934 (buffer info cache leak).
-        c.strides = (-1, 80, 8)  # strides need to be fixed at export
 
         assert_(memoryview(c).strides == (800, 80, 8))
 
@@ -8758,8 +8825,9 @@ class TestArrayAttributeDeletion:
         # ticket #2046, should not seqfault, raise AttributeError
         a = np.ones(2)
         attr = ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "Assigning the 'data' attribute", DeprecationWarning)
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
 
@@ -8812,6 +8880,8 @@ class TestArrayInterface:
         (f, {'strides': ()}, 0.5),
         (f, {'strides': (2,)}, ValueError),
         (f, {'strides': 16}, TypeError),
+        # This fails due to going into the buffer protocol path
+        (f, {'data': None, 'shape': ()}, TypeError),
         ])
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
@@ -8830,11 +8900,48 @@ class TestArrayInterface:
             post_cnt = sys.getrefcount(np.dtype('f8'))
             assert_equal(pre_cnt, post_cnt)
 
-def test_interface_no_shape():
+
+def test_interface_empty_shape():
     class ArrayLike:
         array = np.array(1)
         __array_interface__ = array.__array_interface__
     assert_equal(np.array(ArrayLike()), 1)
+
+
+def test_interface_no_shape_error():
+    class ArrayLike:
+        __array_interface__ = {"data": None, "typestr": "f8"}
+
+    with pytest.raises(ValueError, match="Missing __array_interface__ shape"):
+        np.array(ArrayLike())
+
+
+@pytest.mark.parametrize("iface", [
+    {"typestr": "f8", "shape": (0, 1)},
+    {"typestr": "(0,)f8,", "shape": (1, 3)},
+])
+def test_interface_nullptr(iface):
+    iface.update({"data": (0, True)})
+
+    class ArrayLike:
+        __array_interface__ = iface
+
+    arr = np.asarray(ArrayLike())
+    # Note, we currently set the base anyway, but we do an allocation
+    # (because NumPy doesn't like NULL data pointers everywhere).
+    assert arr.shape == iface["shape"]
+    assert arr.dtype == np.dtype(iface["typestr"])
+    assert arr.base is not None
+    assert arr.flags.owndata
+
+
+def test_interface_nullptr_size_check():
+    # Note that prior to NumPy 2.4 the below took the scalar path (if shape had size 1)
+    class ArrayLike:
+        __array_interface__ = {"data": (0, True), "typestr": "f8", "shape": ()}
+
+    with pytest.raises(ValueError, match="data is NULL but array contains data"):
+        np.array(ArrayLike())
 
 
 def test_array_interface_itemsize():
@@ -9013,9 +9120,9 @@ class TestConversion:
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
             assert_equal(int_func(np.array(0)), 0)
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 assert_equal(int_func(np.array([1])), 1)
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 assert_equal(int_func(np.array([[42]])), 42)
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
@@ -9029,7 +9136,7 @@ class TestConversion:
                     raise NotImplementedError
             assert_raises(NotImplementedError,
                 int_func, np.array(NotConvertible()))
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 assert_raises(NotImplementedError,
                     int_func, np.array([NotConvertible()]))
 
@@ -9619,12 +9726,10 @@ class TestWritebackIfCopy:
     @pytest.mark.leaks_references(
             reason="increments self in dealloc; ignore since deprecated path.")
     def test_dealloc_warning(self):
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
-            arr = np.arange(9).reshape(3, 3)
-            v = arr.T
+        arr = np.arange(9).reshape(3, 3)
+        v = arr.T
+        with pytest.warns(RuntimeWarning):
             _multiarray_tests.npy_abuse_writebackifcopy(v)
-            assert len(sup.log) == 1
 
     def test_view_discard_refcount(self):
         from numpy._core._multiarray_tests import (
@@ -10144,8 +10249,8 @@ class TestAlignment:
             xf128 = _aligned_zeros(3, np.longdouble, align=align)
 
             # test casting, both to and from misaligned
-            with suppress_warnings() as sup:
-                sup.filter(ComplexWarning, "Casting complex values")
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', "Casting complex values", ComplexWarning)
                 xc64.astype('f8')
             xf64.astype(np.complex64)
             test = xc64 + xf64

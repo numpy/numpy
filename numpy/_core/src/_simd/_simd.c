@@ -88,7 +88,7 @@ PyMODINIT_FUNC PyInit__simd(void)
     NPY_MTARGETS_CONF_DISPATCH(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
     NPY_MTARGETS_CONF_BASELINE(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

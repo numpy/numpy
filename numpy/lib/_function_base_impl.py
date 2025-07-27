@@ -10,9 +10,14 @@ import numpy._core.numeric as _nx
 from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
-from numpy._core.multiarray import _monotonicity, _place, bincount, normalize_axis_index
-from numpy._core.multiarray import interp as compiled_interp
-from numpy._core.multiarray import interp_complex as compiled_interp_complex
+from numpy._core.multiarray import (
+    _monotonicity,
+    _place,
+    bincount,
+    interp as compiled_interp,
+    interp_complex as compiled_interp_complex,
+    normalize_axis_index,
+)
 from numpy._core.numeric import (
     absolute,
     arange,
@@ -2573,6 +2578,7 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
+            args = [asarray(a) for a in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2618,8 +2624,9 @@ class vectorize:
         elif not args:
             res = func()
         else:
-            args = [asanyarray(a, dtype=object) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
+            # gh-29196: `dtype=object` should eventually be removed
+            args = [asanyarray(a, dtype=object) for a in args]
             outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
@@ -4705,14 +4712,14 @@ def _inverted_cdf(n, quantiles):
 
 
 def _quantile_ureduce_func(
-        a: np.array,
-        q: np.array,
-        weights: np.array,
-        axis: int | None = None,
-        out=None,
-        overwrite_input: bool = False,
-        method="linear",
-) -> np.array:
+    a: np.ndarray,
+    q: np.ndarray,
+    weights: np.ndarray,
+    axis: int | None = None,
+    out: np.ndarray | None = None,
+    overwrite_input: bool = False,
+    method: str = "linear",
+) -> np.ndarray:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
         # semantics. For now, keep the supported dimensions the same as it was
@@ -4778,13 +4785,13 @@ def _get_indexes(arr, virtual_indexes, valid_values_count):
 
 
 def _quantile(
-        arr: np.array,
-        quantiles: np.array,
-        axis: int = -1,
-        method="linear",
-        out=None,
-        weights=None,
-):
+    arr: "np.typing.ArrayLike",
+    quantiles: np.ndarray,
+    axis: int = -1,
+    method: str = "linear",
+    out: np.ndarray | None = None,
+    weights: "np.typing.ArrayLike | None" = None,
+) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce

@@ -1,14 +1,12 @@
 from typing import (
     Any,
+    Literal as L,
     NoReturn,
     SupportsIndex,
     SupportsInt,
     TypeAlias,
     TypeVar,
     overload,
-)
-from typing import (
-    Literal as L,
 )
 
 import numpy as np
@@ -157,8 +155,19 @@ def polyfit(
     x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co,
     deg: SupportsIndex | SupportsInt,
+    rcond: float | None,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = ...,
+    cov: bool | L["unscaled"] = ...,
+) -> _5Tup[NDArray[float64]]: ...
+@overload
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: SupportsIndex | SupportsInt,
     rcond: float | None = ...,
-    full: L[True] = ...,
+    *,
+    full: L[True],
     w: _ArrayLikeFloat_co | None = ...,
     cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[float64]]: ...
@@ -167,8 +176,19 @@ def polyfit(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co,
     deg: SupportsIndex | SupportsInt,
+    rcond: float | None,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = ...,
+    cov: bool | L["unscaled"] = ...,
+) -> _5Tup[NDArray[complex128]]: ...
+@overload
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: SupportsIndex | SupportsInt,
     rcond: float | None = ...,
-    full: L[True] = ...,
+    *,
+    full: L[True],
     w: _ArrayLikeFloat_co | None = ...,
     cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[complex128]]: ...

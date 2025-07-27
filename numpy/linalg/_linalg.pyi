@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from typing import (
     Any,
+    Literal as L,
     NamedTuple,
     Never,
     SupportsIndex,
@@ -9,7 +10,6 @@ from typing import (
     TypeVar,
     overload,
 )
-from typing import Literal as L
 
 import numpy as np
 from numpy import (
@@ -277,14 +277,30 @@ def svd(
 def svd(
     a: _ArrayLikeInt_co,
     full_matrices: bool = ...,
-    compute_uv: L[False] = ...,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = ...,
+) -> NDArray[float64]: ...
+@overload
+def svd(
+    a: _ArrayLikeInt_co,
+    full_matrices: bool,
+    compute_uv: L[False],
     hermitian: bool = ...,
 ) -> NDArray[float64]: ...
 @overload
 def svd(
     a: _ArrayLikeComplex_co,
     full_matrices: bool = ...,
-    compute_uv: L[False] = ...,
+    *,
+    compute_uv: L[False],
+    hermitian: bool = ...,
+) -> NDArray[floating]: ...
+@overload
+def svd(
+    a: _ArrayLikeComplex_co,
+    full_matrices: bool,
+    compute_uv: L[False],
     hermitian: bool = ...,
 ) -> NDArray[floating]: ...
 
@@ -424,7 +440,7 @@ def trace(
     /,
     *,
     offset: SupportsIndex = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
 ) -> Any: ...
 
 @overload

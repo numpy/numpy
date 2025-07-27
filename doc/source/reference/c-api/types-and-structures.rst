@@ -1608,7 +1608,7 @@ for completeness and assistance in understanding the code.
    The C-structure associated with :c:var:`PyArrayMapIter_Type`.
    This structure is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
-   ``arrayobject.h`` header. This type is not exposed to Python and
+   ``multiarray/mapping.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
 
@@ -1618,7 +1618,7 @@ NumPy C-API and C complex
 When you use the NumPy C-API, you will have access to complex real declarations
 ``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
 standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
-`#define I ...`` (where the actual definition depends on the compiler), which
+``#define I ...`` (where the actual definition depends on the compiler), which
 means that any downstream user that does ``#include <numpy/arrayobject.h>``
 could get ``I`` defined, and using something like declaring ``double I;`` in
 their code will result in an obscure compiler error like

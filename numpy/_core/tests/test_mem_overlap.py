@@ -1,10 +1,10 @@
 import itertools
 
 import pytest
-from numpy._core._multiarray_tests import internal_overlap, solve_diophantine
 
 import numpy as np
 from numpy._core import _umath_tests
+from numpy._core._multiarray_tests import internal_overlap, solve_diophantine
 from numpy.lib.stride_tricks import as_strided
 from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 

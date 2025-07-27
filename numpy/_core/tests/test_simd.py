@@ -6,8 +6,8 @@ import operator
 import re
 
 import pytest
-from numpy._core._multiarray_umath import __cpu_baseline__
 
+from numpy._core._multiarray_umath import __cpu_baseline__
 from numpy._core._simd import clear_floatstatus, get_floatstatus, targets
 
 
@@ -271,7 +271,8 @@ class _SIMD_INT(_Test_Utility):
             shr = self.shr(vdata_a, count)
             assert shr == data_shr_a
 
-        # shift by zero or max or out-range immediate constant is not applicable and illogical
+        # shift by zero or max or out-range immediate constant is not
+        # applicable and illogical
         for count in range(1, self._scalar_size()):
             # load to cast
             data_shl_a = self.load([a << count for a in data_a])
@@ -419,7 +420,8 @@ class _SIMD_FP(_Test_Utility):
             sqrt = self.sqrt(self.setall(case))
             assert sqrt == pytest.approx(data_sqrt, nan_ok=True)
 
-        data_sqrt = self.load([math.sqrt(x) for x in data])  # load to truncate precision
+        # load to truncate precision
+        data_sqrt = self.load([math.sqrt(x) for x in data])
         sqrt = self.sqrt(vdata)
         assert sqrt == data_sqrt
 
@@ -1334,8 +1336,10 @@ for target_name, npyv in targets.items():
         for sfx in sfxes:
             skip_m = skip_sfx.get(sfx, skip)
             inhr = (cls,)
-            attr = {"npyv": targets[target_name], "sfx": sfx, "target_name": target_name}
-            tcls = type(f"Test{cls.__name__}_{simd_width}_{target_name}_{sfx}", inhr, attr)
+            attr = {"npyv": targets[target_name], "sfx": sfx,
+                    "target_name": target_name}
+            type_name = f"Test{cls.__name__}_{simd_width}_{target_name}_{sfx}"
+            tcls = type(type_name, inhr, attr)
             if skip_m:
                 pytest.mark.skip(reason=skip_m)(tcls)
             globals()[tcls.__name__] = tcls

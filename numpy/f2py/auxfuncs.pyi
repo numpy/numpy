@@ -1,15 +1,14 @@
+from _typeshed import FileDescriptorOrPath
 from collections.abc import Callable, Mapping
 from pprint import pprint as show
-from typing import Any, Final, Never, TypeAlias, TypeVar, overload
-from typing import Literal as L
-
-from _typeshed import FileDescriptorOrPath
+from typing import Any, Final, Literal as L, Never, TypeAlias, TypeVar, overload
 
 from .cfuncs import errmess
 
 __all__ = [
     "applyrules",
     "containscommon",
+    "containsderivedtypes",
     "debugcapi",
     "dictappend",
     "errmess",
@@ -200,7 +199,7 @@ def isintent_inplace(var: _Var) -> bool: ...
 def isintent_aux(var: _Var) -> bool: ...
 
 #
-def containsderivedtypes(rout: _ROut) -> _Bool: ...
+def containsderivedtypes(rout: _ROut) -> L[0, 1]: ...
 def containscommon(rout: _ROut) -> _Bool: ...
 def hasexternals(rout: _ROut) -> bool: ...
 def hasresultnote(rout: _ROut) -> _Bool: ...

@@ -2245,8 +2245,8 @@ invalid_time:
 }
 
 /*
- * Gets a tzoffset in minutes by calling the fromutc() function on
- * the Python datetime.tzinfo object.
+ * Gets a tzoffset in minutes by calling the astimezone() function on
+ * the Python datetime.datetime object.
  */
 NPY_NO_EXPORT int
 get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
@@ -2255,14 +2255,14 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     npy_datetimestruct loc_dts;
 
     /* Create a Python datetime to give to the timezone object */
-    dt = PyDateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
-                            dts->hour, dts->min, 0, 0);
+    dt = PyDateTimeAPI->DateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
+                            dts->hour, dts->min, 0, 0, PyDateTime_TimeZone_UTC, PyDateTimeAPI->DateTimeType);
     if (dt == NULL) {
         return -1;
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(timezone_obj, "fromutc", "O", dt);
+    loc_dt = PyObject_CallMethod(dt, "astimezone", "O", timezone_obj);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;

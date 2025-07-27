@@ -14,14 +14,12 @@ match exactly, and could be adjusted):
 import threading
 
 import pytest
-from numpy._core._multiarray_tests import (
-    argparse_example_function as func,
-)
-from numpy._core._multiarray_tests import (
-    threaded_argparse_example_function as thread_func,
-)
 
 import numpy as np
+from numpy._core._multiarray_tests import (
+    argparse_example_function as func,
+    threaded_argparse_example_function as thread_func,
+)
 from numpy.testing import IS_WASM
 
 

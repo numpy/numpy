@@ -1,4 +1,5 @@
 import itertools
+import warnings
 
 import pytest
 
@@ -11,7 +12,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    suppress_warnings,
 )
 
 # Setup for optimize einsum
@@ -455,8 +455,8 @@ class TestEinsum:
                          np.outer(a, b))
 
         # Suppress the complex warnings for the 'as f8' tests
-        with suppress_warnings() as sup:
-            sup.filter(np.exceptions.ComplexWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', np.exceptions.ComplexWarning)
 
             # matvec(a,b) / a.dot(b) where a is matrix, b is vector
             for n in range(1, 17):

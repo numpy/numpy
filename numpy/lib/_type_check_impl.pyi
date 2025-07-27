@@ -1,8 +1,6 @@
-from collections.abc import Container, Iterable
-from typing import Any, Protocol, TypeAlias, overload, type_check_only
-from typing import Literal as L
-
 from _typeshed import Incomplete
+from collections.abc import Container, Iterable
+from typing import Any, Literal as L, Protocol, TypeAlias, overload, type_check_only
 from typing_extensions import TypeVar
 
 import numpy as np

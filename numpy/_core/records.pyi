@@ -1,5 +1,6 @@
 # ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
+from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from typing import (
     Any,
@@ -11,8 +12,6 @@ from typing import (
     overload,
     type_check_only,
 )
-
-from _typeshed import StrOrBytesPath
 from typing_extensions import TypeVar
 
 import numpy as np
