@@ -683,13 +683,21 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
         raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
-    if (not isinstance(d['shape'], tuple) or
-            not all(isinstance(x, int) for x in d['shape'])):
+    if not isinstance(d['shape'], tuple):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
+
+    # Convert np.int64 values to Python int only after the check for tuple
+    d['shape'] = tuple(int(x) for x in d['shape'])
+
+    if not all(isinstance(x, int) for x in d['shape']):
+        msg = "shape contains non-integer values: {!r}"
+        raise ValueError(msg.format(d['shape']))
+
     if not isinstance(d['fortran_order'], bool):
         msg = "fortran_order is not a valid bool: {!r}"
         raise ValueError(msg.format(d['fortran_order']))
+
     try:
         dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
@@ -697,6 +705,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
         raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
+
 
 
 @set_module("numpy.lib.format")
@@ -957,6 +966,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
             raise ValueError(msg)
+        # Convert shape to native Python integers (added change)
+        if shape is not None:
+            shape = tuple(np.atleast_1d(shape).tolist())  # Converts to native ints
         d = {
             "descr": dtype_to_descr(dtype),
             "fortran_order": fortran_order,
@@ -1034,3 +1046,4 @@ def isfileobj(f):
         return True
     except OSError:
         return False
+
