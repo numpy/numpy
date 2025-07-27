@@ -106,6 +106,16 @@ class TestRecFunctions:
         control = np.array([(), ()], dtype=[])
         assert_equal(test, control)
 
+        a = ma.array([(1, 2), (3, 4)],
+                     mask=[(0, 1), (1, 0)],
+                     dtype=[('a', int), ('b', int)])
+        control = ma.array([(1,), (3,)],
+                           mask=[(0,), (1,)],
+                           dtype=[('a', int)])
+        test = drop_fields(a, 'b')
+        assert_equal(test, control)
+        assert_equal(test.mask, control.mask)
+
     def test_rename_fields(self):
         # Test rename fields
         a = np.array([(1, (2, [3.0, 30.])), (4, (5, [6.0, 60.]))],
