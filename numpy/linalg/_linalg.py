@@ -2108,6 +2108,9 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     near that uncertainty may be preferable. The tolerance may be absolute
     if the uncertainties are absolute rather than relative.
 
+    To speed up the computation, `A` is transposed if the number of rows is
+    greater than the number of columns by more than a factor of 200.
+
     References
     ----------
     .. [1] MATLAB reference documentation, "Rank"
@@ -2136,6 +2139,8 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+    if A.shape[-2]*200 < A.shape[-1]:
+        A = swapaxes(A, -2, -1)
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
