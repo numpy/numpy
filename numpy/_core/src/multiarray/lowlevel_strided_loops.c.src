@@ -908,15 +908,17 @@ static GCC_CAST_OPT_LEVEL int
      *    This is complicated by a warning that, for instance, int8 cannot
      *    overflow int64max
      */
+#   ifdef __GNUC__
+#   pragma GCC diagnostic push
+#   ifdef __clang__
+#   pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#   endif
+#   pragma GCC diagnostic ignored "-Wtautological-compare"
+#   endif
 #if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
     if (!src_isinf) {
 #endif
 #      if !@is_bool1@
-#      ifdef __GNUC__
-#      pragma GCC diagnostic push
-#      pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
-#      pragma GCC diagnostic ignored "-Wtautological-compare"
-#      endif
        if (!src_isnan && _TO_RTYPE1(src_value) > @type2max@) {
             return NPY_SAME_VALUE_FAILURE;
        }
@@ -925,9 +927,6 @@ static GCC_CAST_OPT_LEVEL int
             return NPY_SAME_VALUE_FAILURE;
        }
 #      endif
-#      ifdef __GNUC__
-#      pragma GCC diagnostic pop
-#      endif  /* __GNUC__ */
 #      endif /* !is_bool1 */
 #   if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
     }
@@ -942,6 +941,9 @@ static GCC_CAST_OPT_LEVEL int
     if (!src_isnan && !src_isinf && src_value != _ROUND_TRIP(src_value)) {
         return NPY_SAME_VALUE_FAILURE;
     }
+#   ifdef __GNUC__
+#   pragma GCC diagnostic pop
+#   endif  /* __GNUC__ */
     return 0;
 }
 #endif

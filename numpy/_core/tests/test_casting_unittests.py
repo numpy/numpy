@@ -866,7 +866,7 @@ class TestCasting:
             # RuntimeWarning (fperror)
             # Casting with overflow  and 'same_value', should raise ValueError
             with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always", RuntimeWarning)
+                warnings.simplefilter("always", ComplexWarning)
                 arr1.astype(to_dtype, casting='same_value')
             assert len(w) < 2
         with pytest.raises(ValueError):
@@ -880,7 +880,7 @@ class TestCasting:
             np.typecodes["AllInteger"])
     @pytest.mark.parametrize("from_dtype",
             np.typecodes["AllFloat"])
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    @pytest.mark.filterwarnings("ignore::ComplexWarning")
     def test_same_value_float_to_int(self, from_dtype, to_dtype):
         # Should not raise, since the values can round trip
         arr1 = np.arange(10, dtype=from_dtype)
@@ -915,7 +915,7 @@ class TestCasting:
             s1_66.astype(to_dtype, casting='same_value')
 
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    @pytest.mark.filterwarnings("ignore::ComplexWarning")
     def test_same_value_naninf(self, value):
         # These work
         np.array([value], dtype=np.half).astype(np.cdouble, casting='same_value')
@@ -932,7 +932,7 @@ class TestCasting:
         with pytest.raises(ValueError):
             np.array([value], dtype=np.float32).astype(np.int64, casting='same_value')
 
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    @pytest.mark.filterwarnings("ignore::ComplexWarning")
     def test_same_value_complex(self):
         arr = np.array([complex(1, 1)], dtype=np.cdouble)
         # This works

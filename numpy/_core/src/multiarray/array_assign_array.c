@@ -132,6 +132,12 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (same_value_cast) {
+        if (!PyTypeNum_ISNUMBER(src_dtype->type_num) || !PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
+            NPY_cast_info_xfree(&cast_info);
+            PyErr_SetString(PyExc_ValueError,
+                "'same_value' casting only supported on built-in numerical dtypes");
+            return -1;
+        }
         cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
     }
 
@@ -243,6 +249,12 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         return -1;
     }
     if (same_value_cast) {
+        if (!PyTypeNum_ISNUMBER(src_dtype->type_num) || !PyTypeNum_ISNUMBER(dst_dtype->type_num)) {
+            NPY_cast_info_xfree(&cast_info);
+            PyErr_SetString(PyExc_ValueError,
+                "'same_value' casting only supported on built-in numerical dtypes");
+            return -1;
+        }
         cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
     }
 
