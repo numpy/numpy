@@ -2279,8 +2279,7 @@ class TestMethods:
 
     def test_sort_size_0(self):
         # check axis handling for multidimensional empty arrays
-        a = np.array([])
-        a.shape = (3, 2, 1, 0)
+        a = np.array([]).reshape((3, 2, 1, 0))
         for axis in range(-a.ndim, a.ndim):
             msg = f'test empty array sort with axis={axis}'
             assert_equal(np.sort(a, axis=axis), a, msg)
@@ -2541,8 +2540,7 @@ class TestMethods:
         assert_equal(a.copy().argsort(), c)
 
         # check axis handling for multidimensional empty arrays
-        a = np.array([])
-        a.shape = (3, 2, 1, 0)
+        a = np.array([]).reshape((3, 2, 1, 0))
         for axis in range(-a.ndim, a.ndim):
             msg = f'test empty array argsort with axis={axis}'
             assert_equal(np.argsort(a, axis=axis),
@@ -2859,8 +2857,7 @@ class TestMethods:
     def test_partition_empty_array(self, kth_dtype):
         # check axis handling for multidimensional empty arrays
         kth = np.array(0, dtype=kth_dtype)[()]
-        a = np.array([])
-        a.shape = (3, 2, 1, 0)
+        a = np.array([]).reshape((3, 2, 1, 0))
         for axis in range(-a.ndim, a.ndim):
             msg = f'test empty array partition with axis={axis}'
             assert_equal(np.partition(a, kth, axis=axis), a, msg)
@@ -2871,8 +2868,7 @@ class TestMethods:
     def test_argpartition_empty_array(self, kth_dtype):
         # check axis handling for multidimensional empty arrays
         kth = np.array(0, dtype=kth_dtype)[()]
-        a = np.array([])
-        a.shape = (3, 2, 1, 0)
+        a = np.array([]).reshape((3, 2, 1, 0))
         for axis in range(-a.ndim, a.ndim):
             msg = f'test empty array argpartition with axis={axis}'
             assert_equal(np.partition(a, kth, axis=axis),
@@ -5367,7 +5363,7 @@ class TestTake:
         unchecked_types = [bytes, str, np.void]
 
         x = np.random.random(24) * 100
-        x.shape = 2, 3, 4
+        x = x.reshape((2, 3, 4))
         for types in np._core.sctypes.values():
             for T in types:
                 if T not in unchecked_types:
@@ -5378,20 +5374,20 @@ class TestTake:
 
     def test_raise(self):
         x = np.random.random(24) * 100
-        x.shape = 2, 3, 4
+        x = x.reshape((2, 3, 4))
         assert_raises(IndexError, x.take, [0, 1, 2], axis=0)
         assert_raises(IndexError, x.take, [-3], axis=0)
         assert_array_equal(x.take([-1], axis=0)[0], x[1])
 
     def test_clip(self):
         x = np.random.random(24) * 100
-        x.shape = 2, 3, 4
+        x = x.reshape((2, 3, 4))
         assert_array_equal(x.take([-1], axis=0, mode='clip')[0], x[0])
         assert_array_equal(x.take([2], axis=0, mode='clip')[0], x[1])
 
     def test_wrap(self):
         x = np.random.random(24) * 100
-        x.shape = 2, 3, 4
+        x = x.reshape((2, 3, 4))
         assert_array_equal(x.take([-1], axis=0, mode='wrap')[0], x[1])
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
@@ -5971,7 +5967,7 @@ class TestFlat:
     def setup_method(self):
         a0 = np.arange(20.0)
         a = a0.reshape(4, 5)
-        a0.shape = (4, 5)
+        a0 = a0.reshape((4, 5))
         a.flags.writeable = False
         self.a = a
         self.b = a[::2, ::2]
