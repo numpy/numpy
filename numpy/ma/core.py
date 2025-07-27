@@ -5940,8 +5940,12 @@ class MaskedArray(ndarray):
             fill_value = minimum_fill_value(self)
         # No explicit output
         if out is None:
-            result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
+            """ The result of self.filled(fill_value).min(
+                axis=axis, out=out, **kwargs) is an integer.
+                It should be an ndarray object.
+                """
+            result = np.array(self.filled(fill_value).min(axis=axis, out=out, **kwargs)).view(type(self))
+
             if result.ndim:
                 # Set the mask
                 result.__setmask__(newmask)
