@@ -1063,8 +1063,12 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         Execute the call behavior.
 
         """
-        # Get the data, as ndarray
-        (da, db) = (getdata(a), getdata(b))
+        # Get the data
+        (da, db) = (a, b)
+        if not np.isscalar(da):
+            da = getdata(da)
+        if not np.isscalar(db):
+            db = getdata(db)
         # Get the result
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
@@ -1207,7 +1211,12 @@ class _DomainedBinaryOperation(_MaskedUFunc):
     def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         # Get the data
-        (da, db) = (getdata(a), getdata(b))
+        (da, db) = (a, b)
+        if not np.isscalar(da):
+            da = getdata(da)
+        if not np.isscalar(db):
+            db = getdata(db)
+
         # Get the result
         with np.errstate(divide='ignore', invalid='ignore'):
             result = self.f(da, db, *args, **kwargs)
@@ -7175,9 +7184,12 @@ def power(a, b, third=None):
     ma = getmask(a)
     mb = getmask(b)
     m = mask_or(ma, mb)
-    # Get the rawdata
-    fa = getdata(a)
-    fb = getdata(b)
+    # Get the data
+    (fa, fb) = (a, b)
+    if not np.isscalar(fa):
+        fa = getdata(fa)
+    if not np.isscalar(fb):
+        fb = getdata(fb)
     # Get the type of the result (so that we preserve subclasses)
     if isinstance(a, MaskedArray):
         basetype = type(a)
