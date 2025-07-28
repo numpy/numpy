@@ -84,14 +84,12 @@ classifier if needed::
     $ gvim pyproject.toml
 
 
-Check the ``pavement.py`` and ``doc/source/release.rst`` files
---------------------------------------------------------------
+Check the ``doc/source/release.rst`` file
+-----------------------------------------
 
-Check that the ``pavement.py`` file points to the correct release notes. It should
-have been updated after the last release, but if not, fix it now. Also make
-sure that the release notes have an entry in the ``release.rst`` file::
+make sure that the release notes have an entry in the ``release.rst`` file::
 
-    $ gvim pavement.py doc/source/release.rst
+    $ gvim doc/source/release.rst
 
 
 Generate the changelog
@@ -208,7 +206,7 @@ Anaconda staging directory using the ``tools/download-wheels.py`` script::
 This needs to be done after all installers are downloaded, but before the pavement
 file is updated for continued development::
 
-    $ paver write_release
+    $ python write_release 2.1.0
 
 
 5. Upload to PyPI
