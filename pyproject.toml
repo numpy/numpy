@@ -2,8 +2,8 @@
 build-backend = "mesonpy"
 requires = [
     # TODO: Point at an actual meson-python release.
-    # "meson-python>=0.15.0",
-    "meson-python @ git+https://github.com/freakboy3742/meson-python@ios-support",
+    # "meson-python>=0.19.0",
+    "meson-python @ git+https://github.com/mesonbuild/meson-python",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
@@ -170,7 +170,7 @@ test-requires = [
 test-sources = [
     "numpy/tests",
 ]
-test-command = "pytest --pyargs numpy -m 'not slow' -vv"
+test-command = "python -m pytest --pyargs numpy -m 'not slow' -vv"
 xbuild-tools = ["ninja"]
 
 [tool.cibuildwheel.linux]
