@@ -1002,7 +1002,6 @@ _copy_and_return_void_setitem(_PyArray_LegacyDescr *dstdescr, char *dstdata,
     npy_int names_size = PyTuple_GET_SIZE(dstdescr->names);
     npy_intp offset;
     npy_int i;
-    int ret;
 
     /* Fast path if dtypes are equal */
     if (PyArray_EquivTypes(srcdescr, (PyArray_Descr *)dstdescr)) {

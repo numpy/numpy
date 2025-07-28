@@ -1816,8 +1816,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* field access */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))){
         PyArrayObject *view;
-        ret = _get_field_view(self, ind, &view);
-        if (ret == 0){
+        if (_get_field_view(self, ind, &view) == 0){
             if (view == NULL) {
                 return -1;
             }
