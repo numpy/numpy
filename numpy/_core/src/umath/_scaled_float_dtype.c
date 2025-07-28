@@ -454,7 +454,7 @@ sfloat_init_casts(void)
         .nout = 1,
         /* minimal guaranteed casting */
         .casting = NPY_SAME_KIND_CASTING,
-        .flags = NPY_METH_SUPPORTS_UNALIGNED,
+        .flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI,
         .dtypes = dtypes,
         .slots = slots,
     };

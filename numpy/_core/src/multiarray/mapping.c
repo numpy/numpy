@@ -1242,17 +1242,16 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
         NPY_cast_info_xfree(&cast_info);
         if (!NpyIter_Deallocate(iter)) {
-            res = -1;
-        }
-        if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            int fpes = npy_get_floatstatus_barrier((char *)self);
-            if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-                return -1;
+            if (res ==0) {
+                res = -101;
             }
+        }
+        if (Py_CheckRetAndFPEAfterLoop("cast", res, cast_flags) < 0) {
+            return -1;
         }
     }
 
-    return res;
+    return 0;
 }
 
 
@@ -1800,6 +1799,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
 
     PyArrayMapIterObject *mit = NULL;
+    int ret = 0;
 
     /* When a subspace is used, casting is done manually. */
     NPY_cast_info cast_info = {.func = NULL};
@@ -1816,7 +1816,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* field access */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))){
         PyArrayObject *view;
-        int ret = _get_field_view(self, ind, &view);
+        ret = _get_field_view(self, ind, &view);
         if (ret == 0){
             if (view == NULL) {
                 return -1;
@@ -1859,7 +1859,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                                    PyArray_DESCR(self), 0, 0,
                                                    NPY_ARRAY_FORCECAST, NULL);
             if (tmp_arr == NULL) {
-                goto fail;
+                ret = -1;
+                goto finish;
             }
         }
         else {
@@ -1870,9 +1871,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (array_assign_boolean_subscript(self,
                                            (PyArrayObject *)indices[0].object,
                                            tmp_arr, NPY_CORDER) < 0) {
-            goto fail;
+            ret = -1;
         }
-        goto success;
+        goto finish;
     }
 
 
@@ -1907,12 +1908,14 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                 && !PyArray_CheckExact(self)) {
         view = (PyArrayObject *)PyObject_GetItem((PyObject *)self, ind);
         if (view == NULL) {
-            goto fail;
+            ret = -1;
+            goto finish;
         }
         if (!PyArray_Check(view)) {
             PyErr_SetString(PyExc_RuntimeError,
                             "Getitem not returning array");
-            goto fail;
+            ret = -1;
+            goto finish;
         }
     }
 
@@ -1926,7 +1929,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                            HAS_ELLIPSIS | HAS_INTEGER)) {
         if (get_view_from_index(self, &view, indices, index_num,
                                 (index_type & HAS_FANCY)) < 0) {
-            goto fail;
+            ret = -1;
+            goto finish;
         }
     }
     else {
@@ -1936,9 +1940,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* If there is no fancy indexing, we have the array to assign to */
     if (!(index_type & HAS_FANCY)) {
         if (PyArray_CopyObject(view, op) < 0) {
-            goto fail;
+            ret = -1;
         }
-        goto success;
+        goto finish;
     }
 
     if (!PyArray_Check(op)) {
@@ -1957,7 +1961,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             tmp_arr = (PyArrayObject *)PyArray_FromAny(op, descr, 0, 0,
                                                     NPY_ARRAY_FORCECAST, NULL);
             if (tmp_arr == NULL) {
-                goto fail;
+                ret = -1;
+                goto finish;
             }
         }
     }
@@ -1974,7 +1979,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             solve_may_share_memory(self, (PyArrayObject *)indices[i].object, 1) != 0) {
                 Py_SETREF(indices[i].object, PyArray_Copy((PyArrayObject*)indices[i].object));
                 if (indices[i].object == NULL) {
-                    goto fail;
+                    ret = -1;
+                    goto finish;
                 }
         }
     }
@@ -2015,15 +2021,16 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                         is_aligned, itemsize, itemsize,
                         PyArray_DESCR(tmp_arr), PyArray_DESCR(self),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
-                goto fail;
+                ret = -1;
+                goto finish;
             }
 
             /* trivial_set checks the index for us */
             if (mapiter_trivial_set(
                     self, ind, tmp_arr, is_aligned, &cast_info) < 0) {
-                goto fail;
+                ret = -1;
             }
-            goto success;
+            goto finish;
         }
     }
 
@@ -2046,7 +2053,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                              tmp_arr, descr);
 
     if (mit == NULL) {
-        goto fail;
+        ret = -1;
+        goto finish;
     }
 
     if (tmp_arr == NULL) {
@@ -2056,11 +2064,13 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (mit->consec) {
             PyArray_MapIterSwapAxes(mit, &tmp_arr, 1);
             if (tmp_arr == NULL) {
-                goto fail;
+                ret = -1;
+                goto finish;
             }
         }
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
-             goto fail;
+            ret = -1;
+            goto finish;
         }
         /*
          * In this branch we copy directly from a newly allocated array which
@@ -2070,7 +2080,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
-        goto fail;
+        ret = -1;
+        goto finish;
     }
 
     /*
@@ -2102,7 +2113,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                 fixed_strides[1], fixed_strides[0],
                 PyArray_DESCR(mit->extra_op), PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
-            goto fail;
+            ret = -1;
+            goto finish;
         }
         meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
     }
@@ -2114,7 +2126,8 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                 1, itemsize, itemsize,
                 descr, PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
-            goto fail;
+            ret = -1;
+            goto finish;
         }
         meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, transfer_flags);
     }
@@ -2125,40 +2138,23 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     /* Can now reset the outer iterator (delayed bufalloc) */
     if (NpyIter_Reset(mit->outer, NULL) < 0) {
-        goto fail;
+        ret = -1;
+        goto finish;
     }
 
     /*
      * Could add a casting check, but apparently most assignments do
      * not care about safe casting.
      */
-    if (mapiter_set(mit, &cast_info, meth_flags, is_aligned) < 0) {
-        goto fail;
+    ret = mapiter_set(mit, &cast_info, meth_flags, is_aligned);
+    if (Py_CheckRetAndFPEAfterLoop("cast", ret, meth_flags) < 0) {
+        ret = -1;
     }
 
-    if (!(meth_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier((char *)mit);
-        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-            goto fail;
-        }
-    }
-
-    Py_DECREF(mit);
-    goto success;
+finish:
+    Py_XDECREF(mit);
 
     /* Clean up temporary variables and indices */
-  fail:
-    Py_XDECREF((PyObject *)view);
-    Py_XDECREF((PyObject *)tmp_arr);
-    Py_XDECREF((PyObject *)mit);
-    NPY_cast_info_xfree(&cast_info);
-
-    for (i=0; i < index_num; i++) {
-        Py_XDECREF(indices[i].object);
-    }
-    return -1;
-
-  success:
     Py_XDECREF((PyObject *)view);
     Py_XDECREF((PyObject *)tmp_arr);
     NPY_cast_info_xfree(&cast_info);
@@ -2166,7 +2162,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     for (i=0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
-    return 0;
+    return ret;
 }
 
 

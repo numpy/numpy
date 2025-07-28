@@ -2857,14 +2857,9 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     if (!NpyIter_Deallocate(src_iter)) {
         res = -1;
     }
-
-    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier((char *)&src_iter);
-        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-            return -1;
-        }
+    if (Py_CheckRetAndFPEAfterLoop("cast", res, flags) < 0) {
+        return -1;
     }
-
     return res;
 }
 

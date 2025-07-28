@@ -1018,12 +1018,8 @@ _copy_and_return_void_setitem(_PyArray_LegacyDescr *dstdescr, char *dstdata,
     }
 
     /* Slow path */
-    ret = PyArray_CastRawArrays(1, srcdata, dstdata, 0, 0,
+    return PyArray_CastRawArrays(1, srcdata, dstdata, 0, 0,
                                 srcdescr, (PyArray_Descr *)dstdescr, 0);
-    if (ret != NPY_SUCCEED) {
-        return -1;
-    }
-    return 0;
 }
 
 static int

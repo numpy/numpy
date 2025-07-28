@@ -418,18 +418,13 @@ npy_cast_raw_scalar_item(
     char *args[2] = {from_item, to_item};
     const npy_intp strides[2] = {0, 0};
     const npy_intp length = 1;
-    if (cast_info.func(&cast_info.context,
-            args, &length, strides, cast_info.auxdata) < 0) {
-        NPY_cast_info_xfree(&cast_info);
-        return -1;
-    }
+    int ret = 0;
+    ret = cast_info.func(&cast_info.context,
+            args, &length, strides, cast_info.auxdata);
     NPY_cast_info_xfree(&cast_info);
-
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier(to_item);
-        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-            return -1;
-        }
+    
+    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+        return -1;
     }
 
     return 0;

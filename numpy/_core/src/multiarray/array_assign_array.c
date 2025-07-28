@@ -144,12 +144,14 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
+    int ret = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        if (cast_info.func(&cast_info.context,
-                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
-            goto fail;
+        ret = cast_info.func(&cast_info.context,
+                args, &shape_it[0], strides, cast_info.auxdata);
+        if (ret < 0) {
+            break;
         }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
@@ -158,18 +160,11 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
 
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier((char*)&src_data);
-        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-            return -1;
-        }
+    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+        return -1;
     }
 
     return 0;
-fail:
-    NPY_END_THREADS;
-    NPY_cast_info_xfree(&cast_info);
-    return -1;
 }
 
 /*
@@ -252,17 +247,19 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     }
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
+    int ret = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         PyArray_MaskedStridedUnaryOp *stransfer;
         stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
 
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        if (stransfer(&cast_info.context,
+        ret = stransfer(&cast_info.context,
                 args, &shape_it[0], strides,
                 (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                cast_info.auxdata) < 0) {
-            goto fail;
+                cast_info.auxdata);
+        if (ret < 0) {
+            break;
         }
     } NPY_RAW_ITER_THREE_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
@@ -272,19 +269,10 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
 
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier(src_data);
-        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-            return -1;
-        }
+    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+        return -1;
     }
-
     return 0;
-
-fail:
-    NPY_END_THREADS;
-    NPY_cast_info_xfree(&cast_info);
-    return -1;
 }
 
 /*

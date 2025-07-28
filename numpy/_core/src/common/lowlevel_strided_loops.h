@@ -249,7 +249,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
  * 'src_dtype' to 'dst' with 'dst_dtype'. See
  * PyArray_GetDTypeTransferFunction for more details.
  *
- * Returns NPY_SUCCEED or NPY_FAIL.
+ * Returns 0 or -1.
  */
 NPY_NO_EXPORT int
 PyArray_CastRawArrays(npy_intp count,
@@ -440,6 +440,13 @@ npy_aligned_block_offset(const void * addr, const npy_uintp esize,
     assert(peel <= NPY_MAX_INTP);
     return (npy_intp)peel;
 }
+
+/*
+ * Could be made public API. Check the result and, if needed, FPE status after
+ * a call to a PyArrayMethod_StridedLoop function
+ */
+NPY_NO_EXPORT int
+Py_CheckRetAndFPEAfterLoop(const char * name, int ret, NPY_ARRAYMETHOD_FLAGS flags);
 
 /*
  * Return upper loop bound for an array of 'nvals' elements

@@ -984,6 +984,10 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         res = -1;
     }
 
+    /*
+     * Do not use Py_CheckRetAndFPEAfterLoop since we don't want to look up the
+     * name if no error
+     */
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
         const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);

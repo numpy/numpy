@@ -328,7 +328,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
                             PyArray_BYTES(dates), (char *)holidays->begin,
                             PyArray_STRIDE(dates, 0), sizeof(npy_datetime),
                             PyArray_DESCR(dates), date_dtype,
-                            0) != NPY_SUCCEED) {
+                            0) < 0) {
         goto fail;
     }
 
