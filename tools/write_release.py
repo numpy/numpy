@@ -11,16 +11,15 @@ Needs to be run from the root of the repository and assumes
 that the output is in `release` and wheels and sdist in
 `release/installers`.
 
-Translation from rst to md markdown requires Pandoc, you 
+Translation from rst to md markdown requires Pandoc, you
 will need to rely on your distribution to provide that.
 
 """
+import argparse
 import os
 import subprocess
 import textwrap
-import argparse
-from hashlib import md5
-from hashlib import sha256
+from hashlib import md5, sha256
 from pathlib import Path
 
 # Name of the notes directory
@@ -51,7 +50,7 @@ def compute_hash(wheel_dir, hash_func):
     released = os.listdir(wheel_dir)
     checksums = []
     for fn in sorted(released):
-        fn_path = Path(f"{wheel_dir}/{fn}") 
+        fn_path = Path(f"{wheel_dir}/{fn}")
         m = hash_func(fn_path.read_bytes())
         checksums.append(f"{m.hexdigest()}  {fn}")
     return checksums
@@ -77,7 +76,7 @@ def write_release(version):
     wheel_dir = Path(OUTPUT_DIR) / "installers"
     target_md = Path(OUTPUT_DIR) / f"{OUTPUT_FILE}.md"
     target_rst = Path(OUTPUT_DIR) / f"{OUTPUT_FILE}.rst"
-    
+
     os.system(f"cp {notes} {target_rst}")
 
     with open(str(target_rst), 'a') as f:
@@ -107,7 +106,8 @@ def write_release(version):
         ["pandoc", "-s", "-o", str(target_md), str(target_rst), "--wrap=preserve"],
         check=True,
     )
- 
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
