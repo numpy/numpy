@@ -825,6 +825,7 @@ class TestCasting:
             np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
     @pytest.mark.parametrize("from_dtype",
             np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     def test_same_value_overflow(self, from_dtype, to_dtype):
         if from_dtype == to_dtype:
             return
@@ -849,10 +850,7 @@ class TestCasting:
         # Happy path
         arr1 = np.array([0] * 10, dtype=from_dtype)
         arr2 = np.array([0] * 10, dtype=to_dtype)
-        with warnings.catch_warnings(record=True) as w:
-            # complex -> non-complex will warn
-            warnings.simplefilter("always", RuntimeWarning)
-            arr1_astype = arr1.astype(to_dtype, casting='same_value')
+        arr1_astype = arr1.astype(to_dtype, casting='same_value')
         assert_equal(arr1_astype, arr2, strict=True)
         # Make it overflow, both aligned and unaligned
         arr1[0] = top1
@@ -866,7 +864,7 @@ class TestCasting:
             # RuntimeWarning (fperror)
             # Casting with overflow  and 'same_value', should raise ValueError
             with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always", ComplexWarning)
+                warnings.simplefilter("always", RuntimeWarning)
                 arr1.astype(to_dtype, casting='same_value')
             assert len(w) < 2
         with pytest.raises(ValueError):
@@ -880,7 +878,7 @@ class TestCasting:
             np.typecodes["AllInteger"])
     @pytest.mark.parametrize("from_dtype",
             np.typecodes["AllFloat"])
-    @pytest.mark.filterwarnings("ignore::ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_same_value_float_to_int(self, from_dtype, to_dtype):
         # Should not raise, since the values can round trip
         arr1 = np.arange(10, dtype=from_dtype)
@@ -891,7 +889,8 @@ class TestCasting:
         assert_array_equal(arr1.astype(to_dtype, casting='same_value'), arr2)
         assert_array_equal(unaligned.astype(to_dtype, casting='same_value'), arr2)
 
-        # Should raise, since values cannot round trip
+        # Should raise, since values cannot round trip. Might warn too about
+        # FPE errors
         arr1_66 = arr1 + 0.666
         unaligned_66 = unaligned + 0.66
         with pytest.raises(ValueError):
@@ -915,7 +914,7 @@ class TestCasting:
             s1_66.astype(to_dtype, casting='same_value')
 
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
-    @pytest.mark.filterwarnings("ignore::ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     def test_same_value_naninf(self, value):
         # These work
         np.array([value], dtype=np.half).astype(np.cdouble, casting='same_value')
@@ -932,7 +931,7 @@ class TestCasting:
         with pytest.raises(ValueError):
             np.array([value], dtype=np.float32).astype(np.int64, casting='same_value')
 
-    @pytest.mark.filterwarnings("ignore::ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     def test_same_value_complex(self):
         arr = np.array([complex(1, 1)], dtype=np.cdouble)
         # This works
