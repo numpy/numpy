@@ -1246,7 +1246,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
                 res = -101;
             }
         }
-        if (Py_CheckRetAndFPEAfterLoop("cast", res, cast_flags) < 0) {
+        if (PyArray_CheckRetAndFPE("cast", res, cast_flags) < 0) {
             return -1;
         }
     }
@@ -2146,7 +2146,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
      * not care about safe casting.
      */
     ret = mapiter_set(mit, &cast_info, meth_flags, is_aligned);
-    if (Py_CheckRetAndFPEAfterLoop("cast", ret, meth_flags) < 0) {
+    if (PyArray_CheckRetAndFPE("cast", ret, meth_flags) < 0) {
         ret = -1;
     }
 

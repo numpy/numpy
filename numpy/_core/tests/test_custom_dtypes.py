@@ -93,6 +93,7 @@ class TestSFloat:
 
         with pytest.raises(TypeError,
                 match="error raised inside the core-loop: non-finite factor!"):
+            print("------------")
             a.astype(SF(2e-300))
 
     def test_sfloat_promotion(self):

@@ -985,7 +985,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
     }
 
     /*
-     * Do not use Py_CheckRetAndFPEAfterLoop since we don't want to look up the
+     * Do not use PyArray_CheckRetAndFPE since we don't want to look up the
      * name if no error
      */
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {

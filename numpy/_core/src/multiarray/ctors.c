@@ -2857,7 +2857,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     if (!NpyIter_Deallocate(src_iter)) {
         res = -1;
     }
-    if (Py_CheckRetAndFPEAfterLoop("cast", res, flags) < 0) {
+    if (PyArray_CheckRetAndFPE("cast", res, flags) < 0) {
         return -1;
     }
     return res;

@@ -160,7 +160,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
 
-    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+    if (PyArray_CheckRetAndFPE("cast", ret, flags) < 0) {
         return -1;
     }
 
@@ -269,7 +269,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
 
-    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+    if (PyArray_CheckRetAndFPE("cast", ret, flags) < 0) {
         return -1;
     }
     return 0;

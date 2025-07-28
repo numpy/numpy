@@ -3433,7 +3433,7 @@ PyArray_CastRawArrays(npy_intp count,
 
     /* Cleanup */
     NPY_cast_info_xfree(&cast_info);
-    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+    if (PyArray_CheckRetAndFPE("cast", ret, flags) < 0) {
         return -1;
     }
     return 0;
@@ -3833,11 +3833,11 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp const *shape,
  * already been set, even if NPY_METH_REQUIRES_PYAPI is not set.
  */
 NPY_NO_EXPORT int
-Py_CheckRetAndFPEAfterLoop(const char * name, int ret, NPY_ARRAYMETHOD_FLAGS flags)
+PyArray_CheckRetAndFPE(const char * name, int ret, NPY_ARRAYMETHOD_FLAGS flags)
 {
     int res = 0;
     if (flags & NPY_METH_REQUIRES_PYAPI && PyErr_Occurred()) {
-        res = -1;
+        return -1;
     }
     else if (ret < 0 && ret > -100) {
         /* TODO: expose known error codes to improve the error message */
@@ -3845,10 +3845,6 @@ Py_CheckRetAndFPEAfterLoop(const char * name, int ret, NPY_ARRAYMETHOD_FLAGS fla
             "failed %s in low-level loop", name);
         res = -1;
     }
-    /*
-     * Also check for FPE, which could override previously set errors
-     * or set a warning
-     */
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         int fpes = npy_get_floatstatus_barrier((char*)&ret);
         if (fpes && PyUFunc_GiveFloatingpointErrors(name, fpes) < 0) {

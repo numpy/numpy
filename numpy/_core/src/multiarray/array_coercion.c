@@ -423,7 +423,7 @@ npy_cast_raw_scalar_item(
             args, &length, strides, cast_info.auxdata);
     NPY_cast_info_xfree(&cast_info);
     
-    if (Py_CheckRetAndFPEAfterLoop("cast", ret, flags) < 0) {
+    if (PyArray_CheckRetAndFPE("cast", ret, flags) < 0) {
         return -1;
     }
 
