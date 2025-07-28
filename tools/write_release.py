@@ -52,8 +52,7 @@ def compute_hash(wheel_dir, hash_func):
     checksums = []
     for fn in sorted(released):
         fn_path = Path(f"{wheel_dir}/{fn}") 
-        with open(fn_path, 'rb') as f:
-            m = hash_func(f.read())
+        m = hash_func(fn_path.read_bytes())
         checksums.append(f"{m.hexdigest()}  {fn}")
     return checksums
 
@@ -74,10 +73,10 @@ def write_release(version):
     None.
 
     """
-    notes = Path(f"{NOTES_DIR}/{version}-notes.rst")
-    wheel_dir = Path(f"{OUTPUT_DIR}/installers")
-    target_md = Path(f"{OUTPUT_DIR}/{OUTPUT_FILE}.md")
-    target_rst = Path(f"{OUTPUT_DIR}/{OUTPUT_FILE}.rst")
+    notes = Path(NOTES_DIR) / f"{version}-notes.rst"
+    wheel_dir = Path(OUTPUT_DIR) / "installers"
+    target_md = Path(OUTPUT_DIR) / f"{OUTPUT_FILE}.md"
+    target_rst = Path(OUTPUT_DIR) / f"{OUTPUT_FILE}.rst"
     
     os.system(f"cp {notes} {target_rst}")
 
@@ -104,12 +103,10 @@ def write_release(version):
         f.writelines([f'    {c}\n' for c in compute_hash(wheel_dir, sha256)])
 
     # translate README.rst to md for posting on GitHub
-    rst_to_md = subprocess.Popen(
-        ["pandoc", "-s", "-o", f"{target_md}", f"{target_rst}", "--wrap=preserve"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = rst_to_md.communicate()
-    if not rst_to_md.returncode == 0:
-        raise RuntimeError(f"{error} failed")
+    subprocess.run(
+        ["pandoc", "-s", "-o", str(target_md), str(target_rst), "--wrap=preserve"],
+        check=True,
+    )
  
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
