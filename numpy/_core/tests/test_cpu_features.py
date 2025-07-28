@@ -118,10 +118,10 @@ class AbstractTest:
                 )
 
 @pytest.mark.skipif(
-    sys.platform == 'emscripten',
+    getattr(subprocess, "_can_fork_exec", True),
     reason=(
-        "The subprocess module is not available on WASM platforms and"
-        " therefore this test class cannot be properly executed."
+        "The subprocess module is not available and therefore"
+        " this test class cannot be properly executed."
     ),
 )
 class TestEnvPrivation:
