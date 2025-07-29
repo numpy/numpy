@@ -375,6 +375,7 @@ assert_type(MAR_i8.hardmask, bool)
 assert_type(MAR_i8.sharedmask, bool)
 
 assert_type(MAR_i8.recordmask, np.ma.MaskType | NDArray[np.ma.MaskType])
+assert_type(MAR_2d_f4.recordmask, np.ma.MaskType | np.ndarray[tuple[int, int], np.dtype[np.ma.MaskType]])
 
 assert_type(MAR_2d_f4.anom(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.anom(axis=0, dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
