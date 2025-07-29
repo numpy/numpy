@@ -431,6 +431,8 @@ assert_type(MAR_f8.argsort(), MaskedArray[np.intp])
 assert_type(MAR_f8.argsort(axis=0, kind='heap', order=('x', 'y')), MaskedArray[np.intp])
 assert_type(MAR_f8.argsort(endwith=True, fill_value=1.5, stable=False), MaskedArray[np.intp])
 
+assert_type(MAR_f8.flat, np.ma.core.MaskedIterator)
+
 def invalid_resize() -> None:
     assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
 
