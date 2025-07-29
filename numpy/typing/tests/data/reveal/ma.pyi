@@ -445,6 +445,10 @@ assert_type(np.ma.MaskedArray(AR_f4), MaskedArray[np.float32])
 assert_type(np.ma.MaskedArray(np.array([1,2,3]), [True, True, False], np.float16), MaskedArray[np.float16])
 assert_type(np.ma.MaskedArray(np.array([1,2,3]), dtype=np.float16), MaskedArray[np.float16])
 assert_type(np.ma.MaskedArray(np.array([1,2,3]), copy=True), MaskedArray[Any])
+# TODO: This one could be made more precise, the return type could be `MaskedArraySubclassC`
+assert_type(np.ma.MaskedArray(MAR_subclass), MaskedArray[np.complex128])
+# TODO: This one could be made more precise, the return type could be `MaskedArraySubclass[np.float32]`
+assert_type(np.ma.MaskedArray(MAR_into_subclass), MaskedArray[np.float32])
 
 # Masked Array addition
 
