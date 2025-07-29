@@ -84,11 +84,11 @@ jobs:
           - [linux, ubuntu-22.04, musllinux_x86_64, ""]
           - [linux, ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [linux, ubuntu-22.04-arm, musllinux_aarch64, ""]
-          - [macos, macos-13, macosx_x86_64, openblas]
 
           # macos-14+ runners are ARM64. Building on macos-13 with accelerate
           # will build natively for x86_64, but set a min macOS version of 14.0
           # on the wheel.
+          - [macos, macos-13, macosx_x86_64, openblas]
           - [macos, macos-13, macosx_x86_64, accelerate]
           - [macos, macos-15, macosx_arm64, openblas]
           - [macos, macos-15, macosx_arm64, accelerate]
