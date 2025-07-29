@@ -12,8 +12,7 @@ _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 class MaskedArraySubclass(MaskedArray[_ScalarT_co]): ...
 
 class IntoMaskedArraySubClass(Generic[_ScalarT_co]):
-    def __array__(self) -> MaskedArraySubclass[_ScalarT_co]:
-        ...
+    def __array__(self) -> MaskedArraySubclass[_ScalarT_co]: ...
 
 MaskedArraySubclassC: TypeAlias = MaskedArraySubclass[np.complex128]
 
