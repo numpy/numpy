@@ -106,7 +106,8 @@ if platform.system() == 'Darwin' or platform.machine() == 'arm64':
 # A workaround for getpass.getuser(), which is required by pytest's
 # tmpdir mechanism. If the environment doesn't contain a username,
 # getuser() tries to use `pwd`, which doesn't exist on iOS. Fake a
-# username that will take priority.
+# username that will take priority. See pytest-dev/pytest#11875;
+# the workaround isn't needed under pytest 8.1.0 or newer.
 if IS_IOS:
     os.environ["USER"] = "iOSUser"
 
