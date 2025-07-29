@@ -9,7 +9,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, IS_WASM
+from numpy.testing import IS_EDITABLE, HAS_SUBPROCESSES
 
 try:
     import cffi
@@ -52,7 +52,7 @@ else:
         sys.platform == "win32" and sys.maxsize < 2**32,
         reason="Failing in 32-bit Windows wheel build job, skip for now"
 )
-@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
                     reason='Meson unable to find MSVC linker on win-arm64')

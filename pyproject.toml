@@ -162,14 +162,11 @@ build-dir = "build"
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=true build-dir=build"
 before-test = []
 test-requires = [
-    "hypothesis",
+    "hypothesis==6.81.1",
     "pytest==7.4.0",
-    "pytest-cov==4.1.0",
-    "pytz",
+    "tzdata",
 ]
-test-sources = [
-    "numpy/tests",
-]
+test-sources = []
 test-command = "python -m pytest --pyargs numpy -m 'not slow' -vv"
 xbuild-tools = ["ninja"]
 

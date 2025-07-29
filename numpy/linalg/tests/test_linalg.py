@@ -34,6 +34,7 @@ from numpy.linalg import LinAlgError, matrix_power, matrix_rank, multi_dot, norm
 from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     HAS_LAPACK64,
+    HAS_SUBPROCESSES,
     IS_WASM,
     NOGIL_BUILD,
     assert_,
@@ -2024,7 +2025,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.slow
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not

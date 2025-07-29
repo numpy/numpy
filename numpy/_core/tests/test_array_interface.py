@@ -4,7 +4,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
+from numpy.testing import IS_EDITABLE, HAS_SUBPROCESSES, extbuild
 
 
 @pytest.fixture
@@ -14,8 +14,8 @@ def get_module(tmp_path):
     """
     if sys.platform.startswith('cygwin'):
         pytest.skip('link fails on cygwin')
-    if IS_WASM:
-        pytest.skip("Can't build module inside Wasm")
+    if not HAS_SUBPROCESSES:
+        pytest.skip("Can't build module unless platform supports subprocesses")
     if IS_EDITABLE:
         pytest.skip("Can't build module for editable install")
 

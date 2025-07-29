@@ -5,7 +5,7 @@ import sysconfig
 
 import pytest
 
-from numpy.testing import IS_EDITABLE, IS_PYPY, IS_WASM, NOGIL_BUILD
+from numpy.testing import IS_EDITABLE, IS_PYPY, HAS_SUBPROCESSES, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:
@@ -32,12 +32,10 @@ if IS_EDITABLE:
     )
 
 
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
-    if IS_WASM:
-        pytest.skip("No subprocess")
-
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'limited_api')
     build_dir = tmpdir_factory.mktemp("limited_api") / "build"
     os.makedirs(build_dir, exist_ok=True)
@@ -79,7 +77,7 @@ def install_temp(tmpdir_factory):
     sys.path.append(str(build_dir))
 
 
-@pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG"),
     reason=(

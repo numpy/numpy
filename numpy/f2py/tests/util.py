@@ -104,7 +104,7 @@ class CompilerChecker:
             self.compilers_checked = True
 
 
-if not IS_WASM:
+if not IS_WASM and not IS_IOS:
     checker = CompilerChecker()
     checker.check_compilers()
 

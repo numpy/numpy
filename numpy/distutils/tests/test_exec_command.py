@@ -5,7 +5,7 @@ from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
-from numpy.testing import tempdir, assert_, IS_WASM
+from numpy.testing import tempdir, assert_, HAS_SUBPROCESSES
 
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
@@ -95,7 +95,7 @@ def test_exec_command_stderr():
                         exec_command.exec_command("cd '.'")
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 class TestExecCommand:
     def setup_method(self):
         self.pyexe = get_pythonexe()

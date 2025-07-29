@@ -13,6 +13,7 @@ import platform
 import pprint
 import re
 import shutil
+import subprocess
 import sys
 import sysconfig
 import threading
@@ -38,7 +39,8 @@ __all__ = [
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
+        'HAS_REFCOUNT', "HAS_SUBPROCESSES", "IS_IOS",
+        "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
         'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
@@ -87,9 +89,11 @@ else:
         IS_INSTALLED = False
 
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
+IS_IOS = (sys.platform == "ios")
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
+HAS_SUBPROCESSES = getattr(subprocess, "_can_fork_exec", True)
 BLAS_SUPPORTS_FPE = True
 if platform.system() == 'Darwin' or platform.machine() == 'arm64':
     try:
@@ -98,6 +102,13 @@ if platform.system() == 'Darwin' or platform.machine() == 'arm64':
             BLAS_SUPPORTS_FPE = False
     except KeyError:
         pass
+
+# A workaround for getpass.getuser(), which is required by pytest's
+# tmpdir mechanism. If the environment doesn't contain a username,
+# getuser() tries to use `pwd`, which doesn't exist on iOS. Fake a
+# username that will take priority.
+if IS_IOS:
+    os.environ["USER"] = "iOSUser"
 
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
