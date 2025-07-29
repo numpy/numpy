@@ -17,8 +17,11 @@ from typing_extensions import TypeIs, TypeVar
 
 import numpy as np
 from numpy import (
+    _AnyShapeT,
+    _HasDType,
     _HasDTypeWithRealAndImag,
     _ModeKind,
+    _OrderACF,
     _OrderKACF,
     _PartitionKind,
     _SortKind,
@@ -76,12 +79,14 @@ from numpy._typing import (
     _ArrayLikeString_co,
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
+    _DTypeLike,
     _DTypeLikeBool,
     _IntLike_co,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
 )
+from numpy._typing._dtype_like import _VoidDTypeLike
 
 __all__ = [
     "MAError",
@@ -453,7 +458,49 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
     def __array_finalize__(self, obj): ...
     def __array_wrap__(self, obj, context=..., return_scalar=...): ...
-    def view(self, dtype=..., type=..., fill_value=...): ...
+
+    @overload  # ()
+    def view(self, /, dtype: None = None, type: None = None, fill_value: _ScalarLike_co | None = None) -> Self: ...
+    @overload  # (dtype: DTypeT)
+    def view(
+        self,
+        /,
+        dtype: _DTypeT | _HasDType[_DTypeT],
+        type: None = None,
+        fill_value: _ScalarLike_co | None = None
+    ) -> MaskedArray[_ShapeT_co, _DTypeT]: ...
+    @overload  # (dtype: dtype[ScalarT])
+    def view(
+        self,
+        /,
+        dtype: _DTypeLike[_ScalarT],
+        type: None = None,
+        fill_value: _ScalarLike_co | None = None
+    ) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    @overload  # ([dtype: _, ]*, type: ArrayT)
+    def view(
+        self,
+        /,
+        dtype: DTypeLike | None = None,
+        *,
+        type: type[_ArrayT],
+        fill_value: _ScalarLike_co | None = None
+    ) -> _ArrayT: ...
+    @overload  # (dtype: _, type: ArrayT)
+    def view(self, /, dtype: DTypeLike | None, type: type[_ArrayT], fill_value: _ScalarLike_co | None = None) -> _ArrayT: ...
+    @overload  # (dtype: ArrayT, /)
+    def view(self, /, dtype: type[_ArrayT], type: None = None, fill_value: _ScalarLike_co | None = None) -> _ArrayT: ...
+    @overload  # (dtype: ?)
+    def view(
+        self,
+        /,
+        # `_VoidDTypeLike | str | None` is like `DTypeLike` but without `_DTypeLike[Any]` to avoid
+        # overlaps with previous overloads.
+        dtype: _VoidDTypeLike | str | None,
+        type: None = None,
+        fill_value: _ScalarLike_co | None = None
+    ) -> MaskedArray[_ShapeT_co, dtype]: ...
+
     def __getitem__(self, indx): ...
     def __setitem__(self, indx, value): ...
     @property
@@ -1081,7 +1128,90 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def count(self, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
 
     def ravel(self, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
-    def reshape(self, *s, **kwargs): ...
+
+    # Keep in sync with `ndarray.reshape`
+    # NOTE: reshape also accepts negative integers, so we can't use integer literals
+    @overload  # (None)
+    def reshape(self, shape: None, /, *, order: _OrderACF = "C", copy: bool | None = None) -> Self: ...
+    @overload  # (empty_sequence)
+    def reshape(  # type: ignore[overload-overlap]  # mypy false positive
+        self,
+        shape: Sequence[Never],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[tuple[()], _DTypeT_co]: ...
+    @overload  # (() | (int) | (int, int) | ....)  # up to 8-d
+    def reshape(
+        self,
+        shape: _AnyShapeT,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[_AnyShapeT, _DTypeT_co]: ...
+    @overload  # (index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[tuple[int], _DTypeT_co]: ...
+    @overload  # (index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[tuple[int, int], _DTypeT_co]: ...
+    @overload  # (index, index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[tuple[int, int, int], _DTypeT_co]: ...
+    @overload  # (index, index, index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        size4: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[tuple[int, int, int, int], _DTypeT_co]: ...
+    @overload  # (int, *(index, ...))
+    def reshape(
+        self,
+        size0: SupportsIndex,
+        /,
+        *shape: SupportsIndex,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    @overload  # (sequence[index])
+    def reshape(
+        self,
+        shape: Sequence[SupportsIndex],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: bool | None = None,
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+
     def resize(self, newshape: Never, refcheck: bool = True, order: bool = False) -> NoReturn: ...
     def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
     def ids(self) -> tuple[int, int]: ...
