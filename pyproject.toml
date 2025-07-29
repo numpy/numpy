@@ -163,7 +163,7 @@ config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=true bu
 before-test = []
 test-requires = [
     "hypothesis==6.81.1",
-    "pytest==7.4.0",
+    "pytest==8.4.1",
     "tzdata",
 ]
 test-sources = []
