@@ -19,7 +19,7 @@ A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
 C: list[int]
 D: SubClass[np.float64 | np.int64]
-F: IntoSubClass[np.float64 | np.int64]
+E: IntoSubClass[np.float64 | np.int64]
 
 mixed_shape: tuple[int, np.int64]
 
@@ -43,7 +43,7 @@ assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
-assert_type(np.array(F, subok=True), SubClass[np.float64 | np.int64])
+assert_type(np.array(E, subok=True), SubClass[np.float64 | np.int64])
 # https://github.com/numpy/numpy/issues/29245
 assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool])
 
