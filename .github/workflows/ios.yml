@@ -60,7 +60,7 @@ jobs:
 
       - name: Setup iOS
         run: |
-          if [[ ${{ matrix.buildplat[1] }} == 'accelerate' ]]; then
+          if [[ ${{ matrix.build_runner[1] }} == 'accelerate' ]]; then
             # Accelerate with ILP64 requires iOS 16.4 or higher
             CIBW="IPHONEOS_DEPLOYMENT_TARGET=17.0 INSTALL_OPENBLAS=false RUNNER_OS=iOS"
           else
@@ -76,7 +76,7 @@ jobs:
       - name: Upload wheel artifact(s)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}
+          name: ${{ matrix.build_runner[0] }}-${{ matrix.build_runner[1] }}
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
