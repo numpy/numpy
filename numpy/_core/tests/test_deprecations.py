@@ -493,12 +493,14 @@ class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
 
     def test_0d_boolean_assign_index_deprecated(self):
         arr = np.arange(3)
+
         def assign_to_index():
             arr.flat[True] = 10
+
         self.assert_deprecated(assign_to_index)
 
 
-class  TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
+class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
     # Deprecated in NumPy 2.4, 2025-07
     message = r"Float indices for iterator objects"
 
@@ -509,6 +511,8 @@ class  TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
 
     def test_float_assign_index_deprecated(self):
         arr = np.arange(3)
+
         def assign_to_index():
             arr.flat[[1.]] = 10
+
         self.assert_deprecated(assign_to_index)
