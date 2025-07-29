@@ -531,8 +531,11 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
     // Single boolean index
     else if (indices[0].type == HAS_0D_BOOL) {
-        DEPRECATE("Indexing flat iterators with a 0-dimensional boolean index is "
-                  "deprecated and may be removed in a future version.");
+        /* Deprecated 2025-07, NumPy 2.4 */
+        if (DEPRECATE("Indexing flat iterators with a 0-dimensional boolean index is deprecated "
+                      "and may be removed in a future version. (Deprecated NumPy 2.4)") < 0) {
+            goto finish;
+        }
         if (indices[0].value) {
             ret = PyArray_ToScalar(self->dataptr, self->ao);
             goto finish;
@@ -604,13 +607,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
             dptr += dtype_size;
         }
         PyArray_ITER_RESET(self);
-        goto finish;
-    }
-
-    if (!PyArray_Check(ind) && !PyArrayIter_Check(ind)) {
-        PyErr_SetString(PyExc_IndexError,
-            "Non-array indices are not supported because they can lead to unexpected behavior. "
-            "This is expected to change in future versions.");
         goto finish;
     }
 
@@ -803,8 +799,11 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     // Single boolean index
     else if (indices[0].type == HAS_0D_BOOL) {
-        DEPRECATE("Indexing flat iterators with a 0-dimensional boolean index is "
-                  "deprecated and may be removed in a future version.");
+        /* Deprecated 2025-07, NumPy 2.4 */
+        if (DEPRECATE("Indexing flat iterators with a 0-dimensional boolean index is deprecated "
+                      "and may be removed in a future version. (Deprecated NumPy 2.4)") < 0) {
+            goto finish;
+        }
         ret = 0;
         if (indices[0].value) {
             ret = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
@@ -878,13 +877,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         }
         PyArray_ITER_RESET(self);
         ret = 0;
-        goto finish;
-    }
-
-    if (!PyArray_Check(ind) && !PyArrayIter_Check(ind)) {
-        PyErr_SetString(PyExc_IndexError,
-            "Non-array indices are not supported because they can lead to unexpected behavior. "
-            "This is expected to change in future versions.");
         goto finish;
     }
 

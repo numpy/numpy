@@ -407,7 +407,13 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
              * For example an empty list can be cast to an integer array,
              * however it will default to a float one.
              */
-            if (PyArray_SIZE(tmp_arr) == 0) {
+            if (PyArray_SIZE(tmp_arr) == 0 || (PyArray_ISFLOAT(tmp_arr) && is_flatiter_object)) {
+                if (PyArray_ISFLOAT(tmp_arr)
+                    && is_flatiter_object
+                    && DEPRECATE("Float indices for iterator objects are deprecated and will be "
+                                 "removed in a future version. (Deprecated NumPy 2.4)") < 0) {
+                    goto failed_building_indices;
+                }
                 PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
 
                 arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,

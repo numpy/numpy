@@ -1,18 +1,23 @@
-Improve `flatiter` indexing by using ndarray index preparation
---------------------------------------------------------------
+Fix ``flatiter`` indexing edge cases
+------------------------------------
 
-The `flatiter`` object now shares the same index preparation logic as
-`ndarray`, ensuring consistent behavior and fixing several issues where
+The ``flatiter`` object now shares the same index preparation logic as
+``ndarray``, ensuring consistent behavior and fixing several issues where
 invalid indices were previously accepted or misinterpreted.
 
 Key fixes and improvements:
 
 * Stricter index validation
 
-  Complicated non-array indices like ``arr.flat[[True, True]]`` and
-  ``arr.flat[[1.0, 1.0]]`` were incorrectly
-  treated as ``arr.flat[[1, 1]]``. They now raise an `IndexError`. Array
-  indices should be used instead.
+  - Boolean non-array indices that do not match the axis's size, like
+    ``arr.flat[[True, True]]`` were incorrectly treated as
+    ``arr.flat[np.array([1, 1])]``. They now raise an index error.
+    (This is expected to not raise in the future).
+  - Float non-array indices were also cast to integer and incorrectly
+    treated as ``arr.flat[np.array([1.0, 1.0])]``. This is now deprecated
+    and will be removed in a future version.
+  - 0-dimensional boolean indices like ``arr.flat[True]`` are also
+    deprecated and will be removed in a future version.
 
 * Consistent error types:
 
