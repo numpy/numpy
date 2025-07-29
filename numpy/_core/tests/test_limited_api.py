@@ -32,10 +32,12 @@ if IS_EDITABLE:
     )
 
 
-@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.fixture(scope='module')
 def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
+    if not HAS_SUBPROCESSES:
+        pytest.skip("platform cannot start subprocesses")
+
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'limited_api')
     build_dir = tmpdir_factory.mktemp("limited_api") / "build"
     os.makedirs(build_dir, exist_ok=True)
