@@ -5711,6 +5711,36 @@ def test_string_dtype_fill_value_on_construction():
     assert filled.tolist() == ["FILL", "test", "FILL", "FILL"]
 
 
+def test_string_dtype_default_fill_value():
+    # Regression test for gh-29421: default fill_value for StringDType is 'N/A'
+    dt = np.dtypes.StringDType()
+    data = np.array(['x', 'y', 'z'], dtype=dt)
+    # no fill_value passed → uses default_fill_value internally
+    arr = np.ma.MaskedArray(data, mask=[True, False, True], dtype=dt)
+    # ensure it’s stored as a Python str and equals the expected default
+    assert isinstance(arr.fill_value, str)
+    assert arr.fill_value == 'N/A'
+    # masked slots should be replaced by that default
+    assert arr.filled().tolist() == ['N/A', 'y', 'N/A']
+
+
+def test_string_dtype_fill_value_persists_through_slice():
+    # Regression test for gh-29421: .fill_value survives slicing/viewing
+    dt = np.dtypes.StringDType()
+    arr = np.ma.MaskedArray(
+        ['a', 'b', 'c'],
+        mask=[True, False, True],
+        dtype=dt
+    )
+    arr.fill_value = 'Z'
+    # slice triggers __array_finalize__
+    sub = arr[1:]
+    # the slice should carry the same fill_value and behavior
+    assert isinstance(sub.fill_value, str)
+    assert sub.fill_value == 'Z'
+    assert sub.filled().tolist() == ['b', 'Z']
+
+
 def test_setting_fill_value_attribute():
     # Regression test for gh-29421: setting .fill_value post-construction works too
     dt = np.dtypes.StringDType()
