@@ -1,8 +1,17 @@
-from typing import Any, Literal, TypeAlias, TypeVar, assert_type, NoReturn
+from typing import (
+    Any,
+    Callable,
+    Literal,
+    NoReturn,
+    TypeAlias,
+    TypeVar,
+    assert_type,
+)
 
 import numpy as np
 from numpy import dtype, generic
 from numpy._typing import NDArray, _AnyShape
+from numpy.ma.core import PickleArgs
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
@@ -385,6 +394,8 @@ assert_type(MAR_2d_f4.transpose(1, 0), np.ma.MaskedArray[tuple[int, int], np.dty
 assert_type(MAR_2d_f4.transpose((1, 0)), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_b.T, MaskedArray[np.bool])
 assert_type(MAR_2d_f4.T, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(MAR_b.__reduce__(), tuple[Callable[[PickleArgs], np.ma.MaskedArray], PickleArgs, Any])
 
 assert_type(MAR_2d_f4.dot(1), MaskedArray[Any])
 assert_type(MAR_2d_f4.dot([1]), MaskedArray[Any])

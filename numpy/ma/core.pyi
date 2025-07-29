@@ -2,7 +2,7 @@
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from _typeshed import Incomplete
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Literal,
@@ -292,6 +292,8 @@ _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
+PickleArgs: TypeAlias = tuple[type[MaskedArray], type[np.ndarray], _Shape, DTypeLike]
+
 MaskType = bool_
 nomask: bool_[Literal[False]]
 
@@ -540,8 +542,12 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def filled(self, /, fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
     def compressed(self) -> ndarray[tuple[int], _DTypeT_co]: ...
     def compress(self, condition, axis=..., out=...): ...
-    def __eq__(self, other): ...
-    def __ne__(self, other): ...
+
+    # TODO: How to deal with the non-commutative nature of `==` and `!=`?
+    # xref numpy/numpy#17368
+    def __eq__(self, other: Incomplete, /) -> Incomplete: ...
+    def __ne__(self, other: Incomplete, /) -> Incomplete: ...
+
     def __ge__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __gt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __le__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
@@ -1841,7 +1847,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
 
     #
-    def __reduce__(self): ...
+    def __reduce__(self) -> tuple[
+        Callable[[PickleArgs], MaskedArray],
+        PickleArgs,
+        Incomplete  # output of (untyped) `self.__getstate__`
+    ]: ...
+
+    #
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
