@@ -8,12 +8,10 @@ from typing import (
     Literal,
     Never,
     NoReturn,
-    Protocol,
     Self,
     SupportsIndex,
     TypeAlias,
     overload,
-    type_check_only,
 )
 from typing_extensions import TypeIs, TypeVar
 
@@ -297,10 +295,6 @@ _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
-
-@type_check_only
-class _SupportsArray(Protocol[_ArrayT_co]):
-    def __array__(self, /) -> _ArrayT_co: ...
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
