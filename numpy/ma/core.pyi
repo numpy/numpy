@@ -480,7 +480,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __new__(
         cls,
-        data: Any,
+        data: ArrayLike,
         mask: _ArrayLikeBool_co,
         dtype: _DTypeLike[_ScalarT],
         copy: bool = False,
@@ -491,11 +491,11 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         hard_mask: bool | None = None,
         shrink: bool = True,
         order: _OrderKACF | None = None,
-    ) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    ) -> _MaskedArray[_ScalarT]: ...
     @overload
     def __new__(
         cls,
-        data: Any = None,
+        data: ArrayLike,
         mask: _ArrayLikeBool_co = nomask,
         *,
         dtype: _DTypeLike[_ScalarT],
@@ -507,13 +507,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         hard_mask: bool | None = None,
         shrink: bool = True,
         order: _OrderKACF | None = None,
-    ) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    ) -> _MaskedArray[_ScalarT]: ...
     @overload
     def __new__(
         cls,
-        data: Any = None,
+        data: ArrayLike,
         mask: _ArrayLikeBool_co = nomask,
-        dtype: DTypeLike = None,
+        dtype: DTypeLike | None = None,
         copy: bool = False,
         subok: bool = True,
         ndmin: int = 0,
