@@ -9,7 +9,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, HAS_SUBPROCESSES
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE
 
 try:
     import cffi

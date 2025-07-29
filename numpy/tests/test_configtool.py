@@ -9,7 +9,7 @@ import pytest
 import numpy as np
 import numpy._core.include
 import numpy._core.lib.pkgconfig
-from numpy.testing import IS_EDITABLE, IS_INSTALLED, HAS_SUBPROCESSES, NUMPY_ROOT
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, IS_INSTALLED, NUMPY_ROOT
 
 INCLUDE_DIR = NUMPY_ROOT / '_core' / 'include'
 PKG_CONFIG_DIR = NUMPY_ROOT / '_core' / 'lib' / 'pkgconfig'

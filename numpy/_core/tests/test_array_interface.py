@@ -4,7 +4,7 @@ import sysconfig
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, HAS_SUBPROCESSES, extbuild
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, extbuild
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import sysconfig
 
 import pytest
 
-from numpy.testing import IS_EDITABLE, IS_PYPY, HAS_SUBPROCESSES, NOGIL_BUILD
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, IS_PYPY, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:

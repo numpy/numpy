@@ -7,7 +7,7 @@ from datetime import datetime
 import pytest
 
 import numpy as np
-from numpy.testing import IS_EDITABLE, HAS_SUBPROCESSES, assert_array_equal
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, assert_array_equal
 
 # This import is copied from random.tests.test_extending
 try:

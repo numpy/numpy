@@ -2,7 +2,6 @@ import pytest
 
 from numpy.testing import IS_EDITABLE, IS_IOS, IS_WASM
 
-
 if IS_WASM or IS_IOS:
     pytest.skip(
         "Platform does not use or support Fortran",
