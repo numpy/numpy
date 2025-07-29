@@ -34,6 +34,8 @@ AR_LIKE_M = [np.datetime64(1, "D")]
 MAR_f.mask = AR_b
 MAR_f.mask = np.False_
 
+MAR_f.flat = [9]
+
 # Inplace addition
 
 MAR_b += AR_LIKE_b
