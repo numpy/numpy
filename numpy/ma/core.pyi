@@ -2,7 +2,7 @@
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from _typeshed import Incomplete
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import (
     Any,
     Literal,
@@ -291,8 +291,6 @@ _MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | np.bool]
 _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
-
-PickleArgs: TypeAlias = tuple[type[MaskedArray], type[np.ndarray], _Shape, DTypeLike]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -1845,13 +1843,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def tolist(self, fill_value: Incomplete | None = None) -> Incomplete: ...
     def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
     def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
-
-    #
-    def __reduce__(self) -> tuple[
-        Callable[[PickleArgs], MaskedArray],
-        PickleArgs,
-        Incomplete  # output of (untyped) `self.__getstate__`
-    ]: ...
 
     #
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self: ...
