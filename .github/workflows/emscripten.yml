@@ -49,7 +49,7 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@ffd835cef18fa11522f608fc0fa973b89f5ddc87  # v3.1.0
+      - uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b  # v3.1.2
         env:
           CIBW_PLATFORM: pyodide
 

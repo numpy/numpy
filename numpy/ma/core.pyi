@@ -25,6 +25,7 @@ from numpy import (
     _OrderKACF,
     _PartitionKind,
     _SortKind,
+    _ToIndices,
     amax,
     amin,
     bool_,
@@ -54,6 +55,7 @@ from numpy import (
     str_,
     timedelta64,
     unsignedinteger,
+    void,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -290,6 +292,7 @@ _MaskedArrayComplex_co: TypeAlias = _MaskedArray[inexact | integer | np.bool]
 _MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | np.bool]
 _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
+_ArrayInt_co: TypeAlias = NDArray[integer | bool_]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
@@ -455,7 +458,68 @@ class MaskedIterator:
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
-    def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
+    @overload
+    def __new__(
+        cls,
+        data: _ArrayLike[_ScalarT],
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: None = None,
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: object,
+        mask: _ArrayLikeBool_co,
+        dtype: _DTypeLike[_ScalarT],
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: object,
+        mask: _ArrayLikeBool_co = nomask,
+        *,
+        dtype: _DTypeLike[_ScalarT],
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: object,
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: DTypeLike | None = None,
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[Any]: ...
+
     def __array_finalize__(self, obj): ...
     def __array_wrap__(self, obj, context=..., return_scalar=...): ...
 
@@ -501,7 +565,18 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None
     ) -> MaskedArray[_ShapeT_co, dtype]: ...
 
-    def __getitem__(self, indx): ...
+    # Keep in sync with `ndarray.__getitem__`
+    @overload
+    def __getitem__(self, key: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    @overload
+    def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...
+    @overload
+    def __getitem__(self, key: _ToIndices, /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    @overload
+    def __getitem__(self: _MaskedArray[void], indx: str, /) -> MaskedArray[_ShapeT_co, dtype]: ...
+    @overload
+    def __getitem__(self: _MaskedArray[void], indx: list[str], /) -> MaskedArray[_ShapeT_co, dtype[void]]: ...
+
     def __setitem__(self, indx, value): ...
     @property
     def shape(self) -> _ShapeT_co: ...
@@ -509,13 +584,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def shape(self: MaskedArray[_ShapeT, Any], shape: _ShapeT, /) -> None: ...
     def __setmask__(self, mask: _ArrayLikeBool_co, copy: bool = False) -> None: ...
     @property
-    def mask(self) -> NDArray[MaskType] | MaskType: ...
+    def mask(self) -> np.ndarray[_ShapeT_co, dtype[MaskType]] | MaskType: ...
     @mask.setter
     def mask(self, value: _ArrayLikeBool_co, /) -> None: ...
     @property
-    def recordmask(self): ...
+    def recordmask(self) -> np.ndarray[_ShapeT_co, dtype[MaskType]] | MaskType: ...
     @recordmask.setter
-    def recordmask(self, mask): ...
+    def recordmask(self, mask: Never, /) -> NoReturn: ...
     def harden_mask(self) -> Self: ...
     def soften_mask(self) -> Self: ...
     @property
@@ -540,8 +615,12 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def filled(self, /, fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
     def compressed(self) -> ndarray[tuple[int], _DTypeT_co]: ...
     def compress(self, condition, axis=..., out=...): ...
-    def __eq__(self, other): ...
-    def __ne__(self, other): ...
+
+    # TODO: How to deal with the non-commutative nature of `==` and `!=`?
+    # xref numpy/numpy#17368
+    def __eq__(self, other: Incomplete, /) -> Incomplete: ...
+    def __ne__(self, other: Incomplete, /) -> Incomplete: ...
+
     def __ge__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __gt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __le__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
@@ -1841,7 +1920,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
 
     #
-    def __reduce__(self): ...
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
