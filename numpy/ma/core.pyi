@@ -616,13 +616,34 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def compressed(self) -> ndarray[tuple[int], _DTypeT_co]: ...
 
     @overload
-    def compress(self, condition: _ArrayLikeBool_co, axis: _ShapeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def compress(
+        self,
+        condition: _ArrayLikeBool_co,
+        axis: _ShapeLike | None,
+        out: _ArrayT
+    ) -> _ArrayT: ...
     @overload
-    def compress(self, condition: _ArrayLikeBool_co, axis: _ShapeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
+    def compress(
+        self,
+        condition: _ArrayLikeBool_co,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayT
+    ) -> _ArrayT: ...
     @overload
-    def compress(self, condition: _ArrayLikeBool_co, axis: None = None, out: None = None) -> MaskedArray[tuple[int], _DTypeT_co]: ...
+    def compress(
+        self,
+        condition: _ArrayLikeBool_co,
+        axis: None = None,
+        out: None = None
+    ) -> MaskedArray[tuple[int], _DTypeT_co]: ...
     @overload
-    def compress(self, condition: _ArrayLikeBool_co, axis: _ShapeLike | None = None, out: None = None) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    def compress(
+        self,
+        condition: _ArrayLikeBool_co,
+        axis: _ShapeLike | None = None,
+        out: None = None
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     # TODO: How to deal with the non-commutative nature of `==` and `!=`?
     # xref numpy/numpy#17368
