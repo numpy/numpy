@@ -1,4 +1,4 @@
-from typing import Any, Literal, TypeAlias, TypeVar, assert_type, NoReturn, Generic
+from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy import dtype, generic
