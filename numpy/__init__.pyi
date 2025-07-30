@@ -2118,7 +2118,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __getitem__(self: NDArray[void], key: list[str], /) -> ndarray[_ShapeT_co, _dtype[void]]: ...
 
-    # Keep in sync with `MaskedArray.__setitem__`
     @overload  # flexible | object_ | bool
     def __setitem__(
         self: ndarray[Any, dtype[flexible | object_ | np.bool] | dtypes.StringDType],
