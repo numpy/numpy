@@ -1951,6 +1951,7 @@ def cond(x, p=None):
         _assert_stacked_2d(x)
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
+        result_t = _realType(result_t)  # condition number is always real
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
