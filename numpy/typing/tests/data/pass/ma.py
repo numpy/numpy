@@ -40,6 +40,8 @@ AR_LIKE_M = [np.datetime64(1, "D")]
 MAR_f.mask = AR_b
 MAR_f.mask = np.False_
 
+MAR_i.fill_value = 0
+
 MAR_f.flat = [9]
 
 MAR_b[MAR_i > 0] = False
