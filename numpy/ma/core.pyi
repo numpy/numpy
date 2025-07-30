@@ -455,7 +455,68 @@ class MaskedIterator:
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
-    def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
+    @overload
+    def __new__(
+        cls,
+        data: _ArrayLike[_ScalarT],
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: None = None,
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: object,
+        mask: _ArrayLikeBool_co,
+        dtype: _DTypeLike[_ScalarT],
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: object,
+        mask: _ArrayLikeBool_co = nomask,
+        *,
+        dtype: _DTypeLike[_ScalarT],
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __new__(
+        cls,
+        data: object,
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: DTypeLike | None = None,
+        copy: bool = False,
+        subok: bool = True,
+        ndmin: int = 0,
+        fill_value: _ScalarLike_co | None = None,
+        keep_mask: bool = True,
+        hard_mask: bool | None = None,
+        shrink: bool = True,
+        order: _OrderKACF | None = None,
+    ) -> _MaskedArray[Any]: ...
+
     def __array_finalize__(self, obj): ...
     def __array_wrap__(self, obj, context=..., return_scalar=...): ...
 

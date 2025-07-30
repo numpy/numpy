@@ -1,14 +1,20 @@
-from typing import Any, Literal, TypeAlias, TypeVar, assert_type, NoReturn
+from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy import dtype, generic
 from numpy._typing import NDArray, _AnyShape
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
-class MaskedArraySubclass(MaskedArray[np.complex128]): ...
+class MaskedArraySubclass(MaskedArray[_ScalarT_co]): ...
+
+class IntoMaskedArraySubClass(Generic[_ScalarT_co]):
+    def __array__(self) -> MaskedArraySubclass[_ScalarT_co]: ...
+
+MaskedArraySubclassC: TypeAlias = MaskedArraySubclass[np.complex128]
 
 AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
@@ -43,7 +49,8 @@ MAR_V: MaskedArray[np.void]
 MAR_floating: MaskedArray[np.floating]
 MAR_number: MaskedArray[np.number]
 
-MAR_subclass: MaskedArraySubclass
+MAR_subclass: MaskedArraySubclassC
+MAR_into_subclass: IntoMaskedArraySubClass[np.float32]
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
 MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
@@ -66,9 +73,9 @@ assert_type(np.ma.min(MAR_b, axis=0), Any)
 assert_type(np.ma.min(MAR_f4, axis=0), Any)
 assert_type(np.ma.min(MAR_b, keepdims=True), Any)
 assert_type(np.ma.min(MAR_f4, keepdims=True), Any)
-assert_type(np.ma.min(MAR_f4, out=MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.min(MAR_f4, 0, MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.min(MAR_f4, None, MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.min(MAR_f4, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.min(MAR_f4, 0, MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.min(MAR_f4, None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.min(), np.bool)
 assert_type(MAR_f4.min(), np.float32)
@@ -76,9 +83,9 @@ assert_type(MAR_b.min(axis=0), Any)
 assert_type(MAR_f4.min(axis=0), Any)
 assert_type(MAR_b.min(keepdims=True), Any)
 assert_type(MAR_f4.min(keepdims=True), Any)
-assert_type(MAR_f4.min(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.min(0, MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.min(None, MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.min(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.min(0, MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.min(None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(np.ma.max(MAR_b), np.bool)
 assert_type(np.ma.max(MAR_f4), np.float32)
@@ -86,9 +93,9 @@ assert_type(np.ma.max(MAR_b, axis=0), Any)
 assert_type(np.ma.max(MAR_f4, axis=0), Any)
 assert_type(np.ma.max(MAR_b, keepdims=True), Any)
 assert_type(np.ma.max(MAR_f4, keepdims=True), Any)
-assert_type(np.ma.max(MAR_f4, out=MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.max(MAR_f4, 0, MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.max(MAR_f4, None, MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.max(MAR_f4, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.max(MAR_f4, 0, MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.max(MAR_f4, None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.max(), np.bool)
 assert_type(MAR_f4.max(), np.float32)
@@ -96,9 +103,9 @@ assert_type(MAR_b.max(axis=0), Any)
 assert_type(MAR_f4.max(axis=0), Any)
 assert_type(MAR_b.max(keepdims=True), Any)
 assert_type(MAR_f4.max(keepdims=True), Any)
-assert_type(MAR_f4.max(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.max(0, MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.max(None, MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.max(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.max(0, MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.max(None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(np.ma.ptp(MAR_b), np.bool)
 assert_type(np.ma.ptp(MAR_f4), np.float32)
@@ -106,9 +113,9 @@ assert_type(np.ma.ptp(MAR_b, axis=0), Any)
 assert_type(np.ma.ptp(MAR_f4, axis=0), Any)
 assert_type(np.ma.ptp(MAR_b, keepdims=True), Any)
 assert_type(np.ma.ptp(MAR_f4, keepdims=True), Any)
-assert_type(np.ma.ptp(MAR_f4, out=MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.ptp(MAR_f4, 0, MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.ptp(MAR_f4, None, MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.ptp(MAR_f4, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.ptp(MAR_f4, 0, MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.ptp(MAR_f4, None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.ptp(), np.bool)
 assert_type(MAR_f4.ptp(), np.float32)
@@ -116,9 +123,9 @@ assert_type(MAR_b.ptp(axis=0), Any)
 assert_type(MAR_f4.ptp(axis=0), Any)
 assert_type(MAR_b.ptp(keepdims=True), Any)
 assert_type(MAR_f4.ptp(keepdims=True), Any)
-assert_type(MAR_f4.ptp(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.ptp(0, MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.ptp(None, MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.ptp(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.ptp(0, MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.ptp(None, MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.argmin(), np.intp)
 assert_type(MAR_f4.argmin(), np.intp)
@@ -126,8 +133,8 @@ assert_type(MAR_f4.argmax(fill_value=6.28318, keepdims=False), np.intp)
 assert_type(MAR_b.argmin(axis=0), Any)
 assert_type(MAR_f4.argmin(axis=0), Any)
 assert_type(MAR_b.argmin(keepdims=True), Any)
-assert_type(MAR_f4.argmin(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.argmin(None, None, out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.argmin(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.argmin(None, None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(np.ma.argmin(MAR_b), np.intp)
 assert_type(np.ma.argmin(MAR_f4), np.intp)
@@ -135,8 +142,8 @@ assert_type(np.ma.argmin(MAR_f4, fill_value=6.28318, keepdims=False), np.intp)
 assert_type(np.ma.argmin(MAR_b, axis=0), Any)
 assert_type(np.ma.argmin(MAR_f4, axis=0), Any)
 assert_type(np.ma.argmin(MAR_b, keepdims=True), Any)
-assert_type(np.ma.argmin(MAR_f4, out=MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.argmin(MAR_f4, None, None, out=MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.argmin(MAR_f4, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.argmin(MAR_f4, None, None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.argmax(), np.intp)
 assert_type(MAR_f4.argmax(), np.intp)
@@ -144,8 +151,8 @@ assert_type(MAR_f4.argmax(fill_value=6.28318, keepdims=False), np.intp)
 assert_type(MAR_b.argmax(axis=0), Any)
 assert_type(MAR_f4.argmax(axis=0), Any)
 assert_type(MAR_b.argmax(keepdims=True), Any)
-assert_type(MAR_f4.argmax(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.argmax(None, None, out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.argmax(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.argmax(None, None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(np.ma.argmax(MAR_b), np.intp)
 assert_type(np.ma.argmax(MAR_f4), np.intp)
@@ -153,8 +160,8 @@ assert_type(np.ma.argmax(MAR_f4, fill_value=6.28318, keepdims=False), np.intp)
 assert_type(np.ma.argmax(MAR_b, axis=0), Any)
 assert_type(np.ma.argmax(MAR_f4, axis=0), Any)
 assert_type(np.ma.argmax(MAR_b, keepdims=True), Any)
-assert_type(np.ma.argmax(MAR_f4, out=MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.argmax(MAR_f4, None, None, out=MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.argmax(MAR_f4, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.argmax(MAR_f4, None, None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.all(), np.bool)
 assert_type(MAR_f4.all(), np.bool)
@@ -164,8 +171,8 @@ assert_type(MAR_b.all(axis=0, keepdims=True), MaskedArray[np.bool])
 assert_type(MAR_b.all(0, None, True), MaskedArray[np.bool])
 assert_type(MAR_f4.all(axis=0), np.bool | MaskedArray[np.bool])
 assert_type(MAR_b.all(keepdims=True), MaskedArray[np.bool])
-assert_type(MAR_f4.all(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.all(None, out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.all(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.all(None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_b.any(), np.bool)
 assert_type(MAR_f4.any(), np.bool)
@@ -175,22 +182,22 @@ assert_type(MAR_b.any(axis=0, keepdims=True), MaskedArray[np.bool])
 assert_type(MAR_b.any(0, None, True), MaskedArray[np.bool])
 assert_type(MAR_f4.any(axis=0), np.bool | MaskedArray[np.bool])
 assert_type(MAR_b.any(keepdims=True), MaskedArray[np.bool])
-assert_type(MAR_f4.any(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f4.any(None, out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f4.any(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f4.any(None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f4.sort(), None)
 assert_type(MAR_f4.sort(axis=0, kind='quicksort', order='K', endwith=False, fill_value=42., stable=False), None)
 
 assert_type(np.ma.sort(MAR_f4), MaskedArray[np.float32])
-assert_type(np.ma.sort(MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.sort(MAR_subclass), MaskedArraySubclassC)
 assert_type(np.ma.sort([[0, 1], [2, 3]]), NDArray[Any])
 assert_type(np.ma.sort(AR_f4), NDArray[np.float32])
 
 assert_type(MAR_f8.take(0), np.float64)
 assert_type(MAR_1d.take(0), Any)
 assert_type(MAR_f8.take([0]), MaskedArray[np.float64])
-assert_type(MAR_f8.take(0, out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f8.take([0], out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.take(0, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f8.take([0], out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(np.ma.take(f, 0), Any)
 assert_type(np.ma.take(f4, 0), np.float32)
@@ -199,8 +206,8 @@ assert_type(np.ma.take(AR_f4, 0), np.float32)
 assert_type(np.ma.take(MAR_1d, 0), Any)
 assert_type(np.ma.take(MAR_f8, [0]), MaskedArray[np.float64])
 assert_type(np.ma.take(AR_f4, [0]), MaskedArray[np.float32])
-assert_type(np.ma.take(MAR_f8, 0, out=MAR_subclass), MaskedArraySubclass)
-assert_type(np.ma.take(MAR_f8, [0], out=MAR_subclass), MaskedArraySubclass)
+assert_type(np.ma.take(MAR_f8, 0, out=MAR_subclass), MaskedArraySubclassC)
+assert_type(np.ma.take(MAR_f8, [0], out=MAR_subclass), MaskedArraySubclassC)
 assert_type(np.ma.take([1], [0]), MaskedArray[Any])
 assert_type(np.ma.take(np.eye(2), 1, axis=0), MaskedArray[np.float64])
 
@@ -391,17 +398,17 @@ assert_type(MAR_2d_f4.T, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]
 
 assert_type(MAR_2d_f4.dot(1), MaskedArray[Any])
 assert_type(MAR_2d_f4.dot([1]), MaskedArray[Any])
-assert_type(MAR_2d_f4.dot(1, out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_2d_f4.dot(1, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], ...])
 assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
 
 assert_type(MAR_f8.trace(), Any)
-assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclass)
-assert_type(MAR_f8.trace(out=MAR_subclass, dtype=None), MaskedArraySubclass)
+assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclassC)
+assert_type(MAR_f8.trace(out=MAR_subclass, dtype=None), MaskedArraySubclassC)
 
 assert_type(MAR_f8.round(), MaskedArray[np.float64])
-assert_type(MAR_f8.round(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.round(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_i8.reshape(None), MaskedArray[np.int64])
 assert_type(MAR_f8.reshape(-1), np.ma.MaskedArray[tuple[int], np.dtype[np.float64]])
@@ -411,10 +418,10 @@ assert_type(MAR_s.reshape([]), np.ma.MaskedArray[tuple[()], np.dtype[np.str_]])
 assert_type(MAR_V.reshape((480, 720, 4)), np.ma.MaskedArray[tuple[int, int, int], np.dtype[np.void]])
 
 assert_type(MAR_f8.cumprod(), MaskedArray[Any])
-assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.cumsum(), MaskedArray[Any])
-assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.view(), MaskedArray[np.float64])
 assert_type(MAR_f8.view(dtype=np.float32), MaskedArray[np.float32])
@@ -438,6 +445,15 @@ assert_type(MAR_f8.flat, np.ma.core.MaskedIterator)
 
 def invalid_resize() -> None:
     assert_type(MAR_f8.resize((1,1)), NoReturn)  # type: ignore[arg-type]
+
+assert_type(np.ma.MaskedArray(AR_f4), MaskedArray[np.float32])
+assert_type(np.ma.MaskedArray(np.array([1,2,3]), [True, True, False], np.float16), MaskedArray[np.float16])
+assert_type(np.ma.MaskedArray(np.array([1,2,3]), dtype=np.float16), MaskedArray[np.float16])
+assert_type(np.ma.MaskedArray(np.array([1,2,3]), copy=True), MaskedArray[Any])
+# TODO: This one could be made more precise, the return type could be `MaskedArraySubclassC`
+assert_type(np.ma.MaskedArray(MAR_subclass), MaskedArray[np.complex128])
+# TODO: This one could be made more precise, the return type could be `MaskedArraySubclass[np.float32]`
+assert_type(np.ma.MaskedArray(MAR_into_subclass), MaskedArray[np.float32])
 
 # Masked Array addition
 
@@ -780,27 +796,27 @@ assert_type(AR_LIKE_o * MAR_o, Any)  # type: ignore[assert-type]
 assert_type(MAR_f8.sum(), Any)
 assert_type(MAR_f8.sum(axis=0), Any)
 assert_type(MAR_f8.sum(keepdims=True), Any)
-assert_type(MAR_f8.sum(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.sum(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.std(), Any)
 assert_type(MAR_f8.std(axis=0), Any)
 assert_type(MAR_f8.std(keepdims=True, mean=0.), Any)
-assert_type(MAR_f8.std(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.std(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.var(), Any)
 assert_type(MAR_f8.var(axis=0), Any)
 assert_type(MAR_f8.var(keepdims=True, mean=0.), Any)
-assert_type(MAR_f8.var(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.var(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.mean(), Any)
 assert_type(MAR_f8.mean(axis=0), Any)
 assert_type(MAR_f8.mean(keepdims=True), Any)
-assert_type(MAR_f8.mean(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.mean(out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f8.prod(), Any)
 assert_type(MAR_f8.prod(axis=0), Any)
 assert_type(MAR_f8.prod(keepdims=True), Any)
-assert_type(MAR_f8.prod(out=MAR_subclass), MaskedArraySubclass)
+assert_type(MAR_f8.prod(out=MAR_subclass), MaskedArraySubclassC)
 
 # MaskedArray "true" division
 
