@@ -17,6 +17,11 @@ AR_b: npt.NDArray[np.bool]
 MAR_1d_f8.shape = (3, 1)  # type: ignore[assignment]
 MAR_1d_f8.dtype = np.bool  # type: ignore[assignment]
 
+def invalid_recordmask_setter() -> None:
+    # We make an inner function for this one to avoid the
+    # `NoReturn` causing an early exit for type checkers.
+    MAR_1d_f8.recordmask = [True]  # type: ignore[assignment]
+
 np.ma.min(MAR_1d_f8, axis=1.0)  # type: ignore[call-overload]
 np.ma.min(MAR_1d_f8, keepdims=1.0)  # type: ignore[call-overload]
 np.ma.min(MAR_1d_f8, out=1.0)  # type: ignore[call-overload]
