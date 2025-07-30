@@ -54,6 +54,7 @@ from numpy import (
     signedinteger,
     str_,
     timedelta64,
+    ufunc,
     unsignedinteger,
     void,
 )
@@ -520,8 +521,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         order: _OrderKACF | None = None,
     ) -> _MaskedArray[Any]: ...
 
-    def __array_finalize__(self, obj): ...
-    def __array_wrap__(self, obj, context=..., return_scalar=...): ...
+    def __array_wrap__(
+        self,
+        obj: ndarray[_ShapeT, _DTypeT],
+        context: tuple[ufunc, tuple[Any, ...], int] | None = None,
+        return_scalar: bool = False,
+        /,
+    ) -> MaskedArray[_ShapeT, _DTypeT]: ...
 
     @overload  # ()
     def view(self, /, dtype: None = None, type: None = None, fill_value: _ScalarLike_co | None = None) -> Self: ...
