@@ -1,17 +1,8 @@
-from typing import (
-    Any,
-    Callable,
-    Literal,
-    NoReturn,
-    TypeAlias,
-    TypeVar,
-    assert_type,
-)
+from typing import Any, Literal, TypeAlias, TypeVar, assert_type, NoReturn
 
 import numpy as np
 from numpy import dtype, generic
 from numpy._typing import NDArray, _AnyShape
-from numpy.ma.core import PickleArgs
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
