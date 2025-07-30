@@ -37,16 +37,12 @@ jobs:
   test:
     permissions:
       contents: read  # to fetch code (actions/checkout)
-    name: Build NumPy iOS distributions for ${{ matrix.build_runner[0] }} (${{ matrix.build_runner[1] }})
-    runs-on: ${{ matrix.build_runner[0] == 'x86_64' && 'macos-13' || 'macos-15' }}
+    name: Test (${{ matrix.accelerated && 'accelerated' || 'non-accelerated' }} build)
+    runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:
-        build_runner:
-          - ["x86_64", "non-accelerated"]
-          - ["x86_64", "accelerate"]
-          - ["arm64", "non-accelerated"]
-          - ["arm64", "accelerate"]
+        accelerated: [true, false]
 
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -60,7 +56,7 @@ jobs:
 
       - name: Setup iOS
         run: |
-          if [[ ${{ matrix.build_runner[1] }} == 'accelerate' ]]; then
+          if [[ ${{ matrix.accelerated }} ]]; then
             # Accelerate with ILP64 requires iOS 16.4 or higher
             CIBW="IPHONEOS_DEPLOYMENT_TARGET=17.0 INSTALL_OPENBLAS=false RUNNER_OS=iOS"
           else
@@ -72,11 +68,12 @@ jobs:
         uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b  # v3.1.2
         env:
           CIBW_PLATFORM: ios
+          CIBW_ARCHS_IOS: arm64_iphoneos arm64_iphonesimulator x86_64_iphonesimulator
 
       - name: Upload wheel artifact(s)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ${{ matrix.build_runner[0] }}-${{ matrix.build_runner[1] }}
+          name: ios-${{ matrix.accelerated && 'accelerated' || 'non-accelerated' }}
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 

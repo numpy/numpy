@@ -95,8 +95,8 @@ jobs:
           - [windows, windows-2022, win_amd64, ""]
           - [windows, windows-2022, win32, ""]
           - [windows, windows-11-arm, win_arm64, ""]
-          - [ios, macos-13, ios_x86_64_iphonesimulator, ""]
-          - [ios, macos-13, ios_x86_64_iphonesimulator, accelerate]
+          - [ios, macos-15, ios_x86_64_iphonesimulator, ""]
+          - [ios, macos-15, ios_x86_64_iphonesimulator, accelerate]
           - [ios, macos-15, ios_arm64_iphonesimulator, ""]
           - [ios, macos-15, ios_arm64_iphonesimulator, accelerate]
           - [ios, macos-15, ios_arm64, ""]
@@ -121,10 +121,10 @@ jobs:
           - buildplat: [macos, macos-13, macosx_x86_64, openblas]
             python: "cp314t"
 
-          # iOS builds are only supported for 3.13, non free-threaded
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, ""]
+          # iOS builds are only supported for 3.13+, non free-threaded
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, ""]
             python: "cp311"
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, accelerate]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, accelerate]
             python: "cp311"
           - buildplat: [ios, macos-15, ios_arm64_iphonesimulator, ""]
             python: "cp311"
@@ -135,9 +135,9 @@ jobs:
           - buildplat: [ios, macos-15, ios_arm64, accelerate]
             python: "cp311"
 
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, ""]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, ""]
             python: "cp312"
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, accelerate]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, accelerate]
             python: "cp312"
           - buildplat: [ios, macos-15, ios_arm64_iphonesimulator, ""]
             python: "cp312"
@@ -148,9 +148,9 @@ jobs:
           - buildplat: [ios, macos-15, ios_arm64, accelerate]
             python: "cp312"
 
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, ""]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, ""]
             python: "cp313t"
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, accelerate]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, accelerate]
             python: "cp313t"
           - buildplat: [ios, macos-15, ios_arm64_iphonesimulator, ""]
             python: "cp313t"
@@ -161,9 +161,9 @@ jobs:
           - buildplat: [ios, macos-15, ios_arm64, accelerate]
             python: "cp313t"
 
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, ""]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, ""]
             python: "cp314t"
-          - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, accelerate]
+          - buildplat: [ios, macos-15, ios_x86_64_iphonesimulator, accelerate]
             python: "cp314t"
           - buildplat: [ios, macos-15, ios_arm64_iphonesimulator, ""]
             python: "cp314t"
