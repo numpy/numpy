@@ -25,6 +25,7 @@ from numpy import (
     _OrderKACF,
     _PartitionKind,
     _SortKind,
+    _ToIndices,
     amax,
     amin,
     bool_,
@@ -54,6 +55,7 @@ from numpy import (
     str_,
     timedelta64,
     unsignedinteger,
+    void,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -290,6 +292,7 @@ _MaskedArrayComplex_co: TypeAlias = _MaskedArray[inexact | integer | np.bool]
 _MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | np.bool]
 _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
+_ArrayInt_co: TypeAlias = NDArray[integer | bool_]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
@@ -562,7 +565,18 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         fill_value: _ScalarLike_co | None = None
     ) -> MaskedArray[_ShapeT_co, dtype]: ...
 
-    def __getitem__(self, indx): ...
+    # Keep in sync with `ndarray.__getitem__`
+    @overload
+    def __getitem__(self, key: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    @overload
+    def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...
+    @overload
+    def __getitem__(self, key: _ToIndices, /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    @overload
+    def __getitem__(self: _MaskedArray[void], indx: str, /) -> MaskedArray[_ShapeT_co, dtype]: ...
+    @overload
+    def __getitem__(self: _MaskedArray[void], indx: list[str], /) -> MaskedArray[_ShapeT_co, dtype[void]]: ...
+
     def __setitem__(self, indx, value): ...
     @property
     def shape(self) -> _ShapeT_co: ...

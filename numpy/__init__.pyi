@@ -2106,6 +2106,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[_ShapeT, _DTypeT]: ...
 
+    # Keep in sync with `MaskedArray.__getitem__`
     @overload
     def __getitem__(self, key: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> ndarray[_AnyShape, _DTypeT_co]: ...
     @overload

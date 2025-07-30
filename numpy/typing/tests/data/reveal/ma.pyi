@@ -18,6 +18,7 @@ MaskedArraySubclassC: TypeAlias = MaskedArraySubclass[np.complex128]
 
 AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
+AR_i8: NDArray[np.int64]
 AR_u4: NDArray[np.uint32]
 AR_dt64: NDArray[np.datetime64]
 AR_td64: NDArray[np.timedelta64]
@@ -54,6 +55,7 @@ MAR_into_subclass: IntoMaskedArraySubClass[np.float32]
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
 MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
+MAR_2d_V: np.ma.MaskedArray[tuple[int, int], np.dtype[np.void]]
 
 b: np.bool
 f4: np.float32
@@ -364,6 +366,16 @@ assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
 assert_type(MAR_b.swapaxes(0, 1), MaskedArray[np.bool])
 assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
+
+assert_type(MAR_2d_f4[AR_i8], MaskedArray[np.float32])
+assert_type(MAR_2d_f4[[1, 2, 3]], MaskedArray[np.float32])
+assert_type(MAR_2d_f4[1:], MaskedArray[np.float32])
+assert_type(MAR_2d_f4[:], MaskedArray[np.float32])
+assert_type(MAR_2d_f4[0, 0], Any)
+assert_type(MAR_2d_f4[:, np.newaxis], MaskedArray[np.float32])
+assert_type(MAR_2d_f4[..., -1], MaskedArray[np.float32])
+assert_type(MAR_2d_V['field_0'], np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_V[['field_0', 'field_1']], np.ma.MaskedArray[tuple[int, int], np.dtype[np.void]])
 
 assert_type(np.ma.nomask, np.bool[Literal[False]])
 assert_type(np.ma.MaskType, type[np.bool])
