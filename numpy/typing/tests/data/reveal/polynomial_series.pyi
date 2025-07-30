@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, TypeAlias, assert_type
+from typing import TypeAlias, assert_type
 
 import numpy as np
 import numpy.polynomial as npp

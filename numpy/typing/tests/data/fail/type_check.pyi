@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.typing as npt
 
 DTYPE_i8: np.dtype[np.int64]
 

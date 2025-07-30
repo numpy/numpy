@@ -2,7 +2,6 @@ extend-exclude = [
     "numpy/__config__.py",
     "numpy/distutils",
     "numpy/typing/_char_codes.py",
-    "numpy/typing/tests/data",
     "spin/cmds.py",
     # Submodules.
     "doc/source/_static/scipy-mathjax",
@@ -96,6 +95,8 @@ ignore = [
 "numpy/_typing/_array_like.py" = ["E501"]
 "numpy/_typing/_dtype_like.py" = ["E501"]
 "numpy*pyi" = ["E501"]
+# "useless assignments" aren't so useless when you're testing that they don't make type checkers scream
+"numpy/typing/tests/data/*" = ["B015", "B018", "E501"]
 
 "__init__.py" = ["F401", "F403", "F405"]
 "__init__.pyi" = ["F401"]

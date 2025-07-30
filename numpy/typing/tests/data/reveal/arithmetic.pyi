@@ -64,7 +64,6 @@ AR_LIKE_m: list[np.timedelta64]
 AR_LIKE_M: list[np.datetime64]
 AR_LIKE_O: list[np.object_]
 
-
 # Array subtraction
 
 assert_type(AR_number - AR_number, npt.NDArray[np.number])
@@ -556,7 +555,7 @@ assert_type(f16 + f8, np.floating[_128Bit] | np.float64)
 assert_type(f8 + f8, np.float64)
 assert_type(i8 + f8, np.float64)
 assert_type(f4 + f8, np.float32 | np.float64)
-assert_type(i4 + f8,np.float64)
+assert_type(i4 + f8, np.float64)
 assert_type(b_ + f8, np.float64)
 assert_type(b + f8, np.float64)
 assert_type(c + f8, np.complex128 | np.float64)

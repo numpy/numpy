@@ -82,7 +82,7 @@ MAR_1d_f8.any(axis=1.0)  # type: ignore[call-overload]
 MAR_1d_f8.any(keepdims=1.0)  # type: ignore[call-overload]
 MAR_1d_f8.any(out=1.0)  # type: ignore[call-overload]
 
-MAR_1d_f8.sort(axis=(0,1))  # type: ignore[arg-type]
+MAR_1d_f8.sort(axis=(0, 1))  # type: ignore[arg-type]
 MAR_1d_f8.sort(axis=None)  # type: ignore[arg-type]
 MAR_1d_f8.sort(kind='cabbage')  # type: ignore[arg-type]
 MAR_1d_f8.sort(order=lambda: 'cabbage')  # type: ignore[arg-type]
@@ -101,13 +101,13 @@ np.ma.take(out=1)  # type: ignore[call-overload]
 np.ma.take(mode="bob")  # type: ignore[call-overload]
 
 MAR_1d_f8.partition(['cabbage'])  # type: ignore[arg-type]
-MAR_1d_f8.partition(axis=(0,1))  # type: ignore[arg-type, call-arg]
+MAR_1d_f8.partition(axis=(0, 1))  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.partition(kind='cabbage')  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.partition(order=lambda: 'cabbage')  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.partition(AR_b)  # type: ignore[arg-type]
 
 MAR_1d_f8.argpartition(['cabbage'])  # type: ignore[arg-type]
-MAR_1d_f8.argpartition(axis=(0,1))  # type: ignore[arg-type, call-arg]
+MAR_1d_f8.argpartition(axis=(0, 1))  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.argpartition(kind='cabbage')  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.argpartition(order=lambda: 'cabbage')  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.argpartition(AR_b)  # type: ignore[arg-type]
@@ -116,10 +116,10 @@ np.ma.ndim(lambda: 'lambda')  # type: ignore[arg-type]
 
 np.ma.size(AR_b, axis='0')  # type: ignore[arg-type]
 
-MAR_1d_f8 >= (lambda x: 'mango') # type: ignore[operator]
-MAR_1d_f8 > (lambda x: 'mango') # type: ignore[operator]
-MAR_1d_f8 <= (lambda x: 'mango') # type: ignore[operator]
-MAR_1d_f8 < (lambda x: 'mango') # type: ignore[operator]
+MAR_1d_f8 >= (lambda x: 'mango')  # type: ignore[operator]
+MAR_1d_f8 > (lambda x: 'mango')  # type: ignore[operator]
+MAR_1d_f8 <= (lambda x: 'mango')  # type: ignore[operator]
+MAR_1d_f8 < (lambda x: 'mango')  # type: ignore[operator]
 
 MAR_1d_f8.count(axis=0.)  # type: ignore[call-overload]
 
@@ -129,15 +129,15 @@ MAR_1d_f8.put(4, 999, mode='flip')  # type: ignore[arg-type]
 
 np.ma.put(MAR_1d_f8, 4, 999, mode='flip')  # type: ignore[arg-type]
 
-np.ma.put([1,1,3], 0, 999)  # type: ignore[arg-type]
+np.ma.put([1, 1, 3], 0, 999)  # type: ignore[arg-type]
 
 np.ma.compressed(lambda: 'compress me')  # type: ignore[call-overload]
 
-np.ma.allequal(MAR_1d_f8, [1,2,3], fill_value=1.5)  # type: ignore[arg-type]
+np.ma.allequal(MAR_1d_f8, [1, 2, 3], fill_value=1.5)  # type: ignore[arg-type]
 
-np.ma.allclose(MAR_1d_f8, [1,2,3], masked_equal=4.5)  # type: ignore[arg-type]
-np.ma.allclose(MAR_1d_f8, [1,2,3], rtol='.4')  # type: ignore[arg-type]
-np.ma.allclose(MAR_1d_f8, [1,2,3], atol='.5')  # type: ignore[arg-type]
+np.ma.allclose(MAR_1d_f8, [1, 2, 3], masked_equal=4.5)  # type: ignore[arg-type]
+np.ma.allclose(MAR_1d_f8, [1, 2, 3], rtol='.4')  # type: ignore[arg-type]
+np.ma.allclose(MAR_1d_f8, [1, 2, 3], atol='.5')  # type: ignore[arg-type]
 
 MAR_1d_f8.__setmask__('mask')  # type: ignore[arg-type]
 
@@ -147,9 +147,9 @@ MAR_td64 **= 2  # type: ignore[misc]
 
 MAR_1d_f8.swapaxes(axis1=1, axis2=0)  # type: ignore[call-arg]
 
-MAR_1d_f8.argsort(axis=(1,0))  # type: ignore[arg-type]
+MAR_1d_f8.argsort(axis=(1, 0))  # type: ignore[arg-type]
 
-np.ma.MaskedArray(np.array([1,2,3]), keep_mask='yes')  # type: ignore[call-overload]
-np.ma.MaskedArray(np.array([1,2,3]), subok=None)  # type: ignore[call-overload]
-np.ma.MaskedArray(np.array([1,2,3]), ndim=None)  # type: ignore[call-overload]
-np.ma.MaskedArray(np.array([1,2,3]), order='Corinthian')  # type: ignore[call-overload]
+np.ma.MaskedArray(np.array([1, 2, 3]), keep_mask='yes')  # type: ignore[call-overload]
+np.ma.MaskedArray(np.array([1, 2, 3]), subok=None)  # type: ignore[call-overload]
+np.ma.MaskedArray(np.array([1, 2, 3]), ndim=None)  # type: ignore[call-overload]
+np.ma.MaskedArray(np.array([1, 2, 3]), order='Corinthian')  # type: ignore[call-overload]

@@ -6,12 +6,11 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-from collections.abc import Iterator
 import ctypes as ct
 import operator
+from collections.abc import Iterator
 from types import ModuleType
 from typing import Any, Literal, assert_type
-
 from typing_extensions import CapsuleType
 
 import numpy as np
