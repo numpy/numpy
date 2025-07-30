@@ -1,7 +1,6 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
-import datetime as dt
 from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import (
@@ -10,10 +9,7 @@ from typing import (
     Never,
     NoReturn,
     Self,
-    SupportsComplex,
-    SupportsFloat,
     SupportsIndex,
-    SupportsInt,
     TypeAlias,
     overload,
 )
@@ -41,7 +37,6 @@ from numpy import (
     dtype,
     dtypes,
     expand_dims,
-    flexible,
     float16,
     float32,
     float64,
@@ -89,13 +84,11 @@ from numpy._typing import (
     _DTypeLike,
     _DTypeLikeBool,
     _IntLike_co,
-    _NestedSequence,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
 )
 from numpy._typing._dtype_like import _VoidDTypeLike
-from numpy._typing._scalars import _CharLike_co
 
 __all__ = [
     "MAError",
@@ -301,12 +294,6 @@ _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
 _ArrayInt_co: TypeAlias = NDArray[integer | bool_]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
-
-_ConvertibleToInt: TypeAlias = SupportsInt | SupportsIndex | _CharLike_co
-_ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
-_ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
-_ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
-_ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -590,54 +577,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __getitem__(self: _MaskedArray[void], indx: list[str], /) -> MaskedArray[_ShapeT_co, dtype[void]]: ...
 
-    # Keep in sync with `ndarray.__setitem__`
-    @overload  # flexible | object_ | bool
-    def __setitem__(
-        self: MaskedArray[Any, dtype[flexible | object_ | np.bool] | dtypes.StringDType],
-        indx: _ToIndices,
-        value: object,
-        /,
-    ) -> None: ...
-    @overload  # integer
-    def __setitem__(
-        self: _MaskedArray[integer],
-        indx: _ToIndices,
-        value: _ConvertibleToInt | _NestedSequence[_ConvertibleToInt] | _ArrayLikeInt_co,
-        /,
-    ) -> None: ...
-    @overload  # floating
-    def __setitem__(
-        self: _MaskedArray[floating],
-        indx: _ToIndices,
-        value: _ConvertibleToFloat | _NestedSequence[_ConvertibleToFloat | None] | _ArrayLikeFloat_co | None,
-        /,
-    ) -> None: ...
-    @overload  # complexfloating
-    def __setitem__(
-        self: _MaskedArray[complexfloating],
-        indx: _ToIndices,
-        value: _ConvertibleToComplex | _NestedSequence[_ConvertibleToComplex | None] | _ArrayLikeNumber_co | None,
-        /,
-    ) -> None: ...
-    @overload  # timedelta64
-    def __setitem__(
-        self: _MaskedArray[timedelta64],
-        indx: _ToIndices,
-        value: _ConvertibleToTD64 | _NestedSequence[_ConvertibleToTD64],
-        /,
-    ) -> None: ...
-    @overload  # datetime64
-    def __setitem__(
-        self: _MaskedArray[datetime64],
-        indx: _ToIndices,
-        value: _ConvertibleToDT64 | _NestedSequence[_ConvertibleToDT64],
-        /,
-    ) -> None: ...
-    @overload  # void
-    def __setitem__(self: _MaskedArray[void], indx: str | list[str], value: object, /) -> None: ...
-    @overload  # catch-all
-    def __setitem__(self, indx: _ToIndices, value: ArrayLike, /) -> None: ...
-
     @property
     def shape(self) -> _ShapeT_co: ...
     @shape.setter
@@ -667,9 +606,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @flat.setter
     def flat(self, value: ArrayLike, /) -> None: ...
     @property
-    def fill_value(self): ...
+    def fill_value(self: _MaskedArray[_ScalarT]) -> _ScalarT: ...
     @fill_value.setter
-    def fill_value(self, value=...): ...
+    def fill_value(self, value: _ScalarLike_co | None = None) -> None: ...
     get_fill_value: Any
     set_fill_value: Any
     def filled(self, /, fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
