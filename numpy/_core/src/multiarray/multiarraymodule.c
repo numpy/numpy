@@ -1106,7 +1106,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
     Py_DECREF(it1);
     Py_DECREF(it2);
-    /* Old API: dot does not return a value so we do not use Py_CheckAndFPEAfterLoop */
     if (PyErr_Occurred()) {
         /* only for OBJECT arrays */
         goto fail;
