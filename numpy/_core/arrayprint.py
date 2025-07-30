@@ -251,7 +251,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     Notes
     -----
 
-    * `formatter` is always reset with a call to `set_printoptions`.
+    * ``formatter`` is always reset with a call to `set_printoptions`.
     * Use `printoptions` as a context manager to set the values temporarily.
     * These print options apply only to NumPy ndarrays, not to scalars.
 
