@@ -1,5 +1,6 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
+
 import datetime as dt
 from _typeshed import Incomplete
 from collections.abc import Sequence

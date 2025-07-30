@@ -1,5 +1,5 @@
-from typing import Any, TypeAlias, TypeVar, cast
 import datetime as dt
+from typing import Any, TypeAlias, TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +21,11 @@ MAR_S: MaskedArray[np.bytes_] = np.ma.MaskedArray([b'foo'], dtype=np.bytes_)
 MAR_U: MaskedArray[np.str_] = np.ma.MaskedArray(['foo'], dtype=np.str_)
 MAR_T = cast(np.ma.MaskedArray[Any, np.dtypes.StringDType],
              np.ma.MaskedArray(["a"], dtype="T"))
-MAR_V : MaskedArray[np.void] = np.ma.MaskedArray([(1, 1)], mask=[(False, False)], dtype=[('a', int), ('b', int)])
+MAR_V: MaskedArray[np.void] = np.ma.MaskedArray(
+    [(1, 1)],
+    mask=[(False, False)],
+    dtype=[('a', int), ('b', int)]
+)
 
 AR_b: npt.NDArray[np.bool] = np.array([True, False, True])
 
@@ -38,12 +42,12 @@ MAR_f.mask = np.False_
 
 MAR_f.flat = [9]
 
-MAR_b[MAR_i>0] = False
+MAR_b[MAR_i > 0] = False
 MAR_i[:] = 1
 MAR_f[[0]] = AR_LIKE_f
-MAR_c[[0, 0]] = [3, 4+3j]
+MAR_c[[0, 0]] = [3, 4 + 3j]
 MAR_td64[0] = dt.timedelta(1)
-MAR_dt64[0] = dt.datetime(2020,1,1)
+MAR_dt64[0] = dt.datetime(2020, 1, 1)
 MAR_V['a'] = [2]
 
 # Inplace addition
