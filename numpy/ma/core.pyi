@@ -18,7 +18,6 @@ from typing_extensions import TypeIs, TypeVar
 import numpy as np
 from numpy import (
     _AnyShapeT,
-    _ArrayInt_co,
     _HasDType,
     _HasDTypeWithRealAndImag,
     _ModeKind,
@@ -293,6 +292,7 @@ _MaskedArrayComplex_co: TypeAlias = _MaskedArray[inexact | integer | np.bool]
 _MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | np.bool]
 _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
+_ArrayInt_co: TypeAlias = NDArray[integer | bool_]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
