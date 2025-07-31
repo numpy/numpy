@@ -25,7 +25,7 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.5.0
-  - mypy=1.16.1
+  - mypy=1.17.1
   - orjson  # makes mypy faster
   # For building docs
   - sphinx>=4.5.0
