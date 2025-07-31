@@ -101,7 +101,7 @@ jobs:
 
   clang_UBSAN:
     # To enable this workflow on a fork, comment out:
-    # if: github.repository == 'numpy/numpy'
+    if: github.repository == 'numpy/numpy'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -145,6 +145,7 @@ jobs:
           # Ignore test_casting_floatingpoint_errors on macOS for now - causes crash inside UBSAN
           UBSAN_OPTIONS=halt_on_error=1:suppressions=${GITHUB_WORKSPACE}/tools/ci/ubsan_suppressions_arm64.txt \
           spin test -- -k "not test_casting_floatingpoint_errors" -v -s --timeout=600 --durations=10
+
   ubuntu_UBSAN:
     # To enable this workflow on a fork, comment out:
     # if: github.repository == 'numpy/numpy'
