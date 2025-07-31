@@ -1106,10 +1106,9 @@ def tensordot(a, b, axes=2):
 
     An extended example taking advantage of the overloading of + and \\*:
 
-    >>> a = np.array(range(1, 9))
-    >>> a.shape = (2, 2, 2)
+    >>> a = np.array(range(1, 9)).reshape((2, 2, 2))
     >>> A = np.array(('a', 'b', 'c', 'd'), dtype=object)
-    >>> A.shape = (2, 2)
+    >>> A = A.reshape((2, 2))
     >>> a; A
     array([[[1, 2],
             [3, 4]],
