@@ -981,18 +981,13 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
      * released the GIL but manually set an Exception).
      */
     if (PyErr_Occurred()) {
-        res = -1;
+        return -1;
     }
-
-    /*
-     * Do not use PyArray_CheckRetAndFPE since we don't want to look up the
-     * name if no error
-     */
-    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        /* NOTE: We could check float errors even when `res < 0` */
-        const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-        res = _check_ufunc_fperr(errormask, name);
+    const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
+    if (PyArray_CheckRetAndFPE(name, res, flags) < 0) {
+        return -1;
     }
+    assert(res == 0);
     return res;
 }
 
@@ -1177,12 +1172,8 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     NPY_END_THREADS;
     NPY_AUXDATA_FREE(auxdata);
 
-    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        /* NOTE: We could check float errors even when `res < 0` */
-        const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
-        res = _check_ufunc_fperr(errormask, name);
-    }
-
+    const char *name = ufunc_get_name_cstr((PyUFuncObject *)context->caller);
+    res = PyArray_CheckRetAndFPE(name, res, flags);
     if (!NpyIter_Deallocate(iter)) {
         return -1;
     }

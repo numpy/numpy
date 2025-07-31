@@ -3829,28 +3829,32 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp const *shape,
 
 /*
  * Could be made public API. Check the result and, if needed, FPE status after
- * a call to a PyArrayMethod_StridedLoop function. If ret < -100, PyErr has
- * already been set, even if NPY_METH_REQUIRES_PYAPI is not set.
+ * a call to a PyArrayMethod_StridedLoop or function.
  */
 NPY_NO_EXPORT int
 PyArray_CheckRetAndFPE(const char * name, int ret, NPY_ARRAYMETHOD_FLAGS flags)
 {
-    int res = 0;
-    if (flags & NPY_METH_REQUIRES_PYAPI && PyErr_Occurred()) {
+    if (ret == -1 ) {
+        assert (PyErr_Occurred());
+        /* The loop must have already set a PyErr */
         return -1;
     }
-    else if (ret < 0 && ret > -100) {
+    else if (ret < -0xff) {
+        printf("CheckRet, ret=%d\n", ret);
         /* TODO: expose known error codes to improve the error message */
         PyErr_Format(PyExc_ValueError,
             "failed %s in low-level loop", name);
-        res = -1;
+        return -1;
+    }
+    else if (ret < 0) {
+        return ret;
     }
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         int fpes = npy_get_floatstatus_barrier((char*)&ret);
         if (fpes && PyUFunc_GiveFloatingpointErrors(name, fpes) < 0) {
-            res = -1;
+            return -1;
         }
     }
-    return res;
+    return 0;
 }
 

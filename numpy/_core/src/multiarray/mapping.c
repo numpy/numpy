@@ -1242,9 +1242,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
 
         NPY_cast_info_xfree(&cast_info);
         if (!NpyIter_Deallocate(iter)) {
-            if (res ==0) {
-                res = -101;
-            }
+            return -1;
         }
         if (PyArray_CheckRetAndFPE("cast", res, cast_flags) < 0) {
             return -1;
