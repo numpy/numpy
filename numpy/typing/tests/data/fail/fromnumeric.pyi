@@ -32,18 +32,18 @@ np.swapaxes(A, 1, [0])  # type: ignore[call-overload]
 np.transpose(A, axes=1.0)  # type: ignore[call-overload]
 
 np.partition(a, None)  # type: ignore[call-overload]
-np.partition(a, 0, axis="bob") # type: ignore[call-overload]
+np.partition(a, 0, axis="bob")  # type: ignore[call-overload]
 np.partition(A, 0, kind="bob")  # type: ignore[call-overload]
 np.partition(A, 0, order=range(5))  # type: ignore[arg-type]
 
 np.argpartition(a, None)  # type: ignore[arg-type]
 np.argpartition(a, 0, axis="bob")  # type: ignore[arg-type]
-np.argpartition(A, 0, kind="bob") # type: ignore[arg-type]
+np.argpartition(A, 0, kind="bob")  # type: ignore[arg-type]
 np.argpartition(A, 0, order=range(5))  # type: ignore[arg-type]
 
 np.sort(A, axis="bob")  # type: ignore[call-overload]
 np.sort(A, kind="bob")  # type: ignore[call-overload]
-np.sort(A, order=range(5)) # type: ignore[arg-type]
+np.sort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argsort(A, axis="bob")  # type: ignore[arg-type]
 np.argsort(A, kind="bob")  # type: ignore[arg-type]

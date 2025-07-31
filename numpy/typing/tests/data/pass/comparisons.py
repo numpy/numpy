@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import cast, Any
+from typing import Any, cast
+
 import numpy as np
 
 c16 = np.complex128()
@@ -18,10 +19,10 @@ td = np.timedelta64(0, "D")
 
 b_ = np.bool()
 
-b = bool()
+b = False
 c = complex()
-f = float()
-i = int()
+f = 0.0
+i = 0
 
 SEQ = (0, 1, 2, 3, 4)
 
