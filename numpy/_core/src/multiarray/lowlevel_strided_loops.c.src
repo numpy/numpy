@@ -25,6 +25,7 @@
 #include "usertypes.h"
 
 #include "umathmodule.h"
+#include "gil_utils.h"
 
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
@@ -893,6 +894,10 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
     #define GCC_CAST_OPT_LEVEL NPY_GCC_OPT_3
 #endif
 
+#define _RETURN_SAME_VALUE_FAILURE \
+        npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@"); \
+        return -1
+
 #if !@is_bool2@
 /*
  * Check various modes of failure to accurately cast src_value to dst
@@ -920,11 +925,11 @@ static GCC_CAST_OPT_LEVEL int
 #endif
 #      if !@is_bool1@
        if (!src_isnan && _TO_RTYPE1(src_value) > @type2max@) {
-            return NPY_SAME_VALUE_FAILURE;
+            _RETURN_SAME_VALUE_FAILURE;
        }
 #      if !@is_unsigned1@
        if (!src_isnan && _TO_RTYPE1(src_value) < @type2min@) {
-            return NPY_SAME_VALUE_FAILURE;
+            _RETURN_SAME_VALUE_FAILURE;
        }
 #      endif
 #      endif /* !is_bool1 */
@@ -934,12 +939,12 @@ static GCC_CAST_OPT_LEVEL int
     /* 2. Check inf, nan with a non-float dst */
 #   if (!@is_float2@ && !@is_emu_half2@ && !@is_double2@ && !@is_native_half2@)
         if (src_isnan || src_isinf) {
-        return NPY_SAME_VALUE_FAILURE;
+        _RETURN_SAME_VALUE_FAILURE;
     }
 #   endif
     /* 3. Check that the value can round trip exactly */
     if (!src_isnan && !src_isinf && src_value != _ROUND_TRIP(src_value)) {
-        return NPY_SAME_VALUE_FAILURE;
+        _RETURN_SAME_VALUE_FAILURE;
     }
 #   ifdef __GNUC__
 #   pragma GCC diagnostic pop
@@ -998,11 +1003,11 @@ static GCC_CAST_OPT_LEVEL int
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
     if (same_value_casting) {
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) == NPY_SAME_VALUE_FAILURE) {
-            return NPY_SAME_VALUE_FAILURE;
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            return -1;
         }
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[1]) == NPY_SAME_VALUE_FAILURE) {
-            return NPY_SAME_VALUE_FAILURE;
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[1]) < 0) {
+            return -1;
         }
     }
 #  elif !@aligned@
@@ -1011,11 +1016,12 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
        if (same_value_casting) {
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) == NPY_SAME_VALUE_FAILURE) {
-                return NPY_SAME_VALUE_FAILURE;
+            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+                return -1;
             }
             if (src_value[1] != 0) {
-                return NPY_SAME_VALUE_FAILURE;
+                npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@: imag is not 0");
+                return -1;
             }
        }
 #    endif
@@ -1025,11 +1031,12 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
        if (same_value_casting) {
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) == NPY_SAME_VALUE_FAILURE) {
-                return NPY_SAME_VALUE_FAILURE;
+            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+                return -1;
             }
             if (src_value[1] != 0) {
-                return NPY_SAME_VALUE_FAILURE;
+                npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@: imag is not 0");
+                return -1;
             }
        }
 #    endif
@@ -1039,15 +1046,15 @@ static GCC_CAST_OPT_LEVEL int
 #    if !@aligned@
     dst_value[0] = _CONVERT_FN(src_value);
     if (same_value_casting) {
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) == NPY_SAME_VALUE_FAILURE) {
-            return NPY_SAME_VALUE_FAILURE;
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+            return -1;
         }
     }
 #    else
     dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
     if (same_value_casting) {
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)src) == NPY_SAME_VALUE_FAILURE) {
-            return NPY_SAME_VALUE_FAILURE;
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)src) < 0) {
+            return -1;
         }
     }
 #    endif
@@ -1056,8 +1063,8 @@ static GCC_CAST_OPT_LEVEL int
     dst_value = _CONVERT_FN(src_value);
 #   if !@is_bool2@
     if (same_value_casting) {
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) == NPY_SAME_VALUE_FAILURE) {
-            return NPY_SAME_VALUE_FAILURE;
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+            return -1;
         }
     }
 #   endif // @is_bool2@
@@ -1065,8 +1072,8 @@ static GCC_CAST_OPT_LEVEL int
     *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
 #   if !@is_bool2@
     if (same_value_casting) {
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*((@rtype1@ *)src)) == NPY_SAME_VALUE_FAILURE) {
-            return NPY_SAME_VALUE_FAILURE;
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*((@rtype1@ *)src)) < 0) {
+            return -1;
         }
     }
 #   endif // @is_bool2@
@@ -1109,6 +1116,7 @@ static GCC_CAST_OPT_LEVEL int
 #undef _TYPE1
 #undef _TO_RTYPE1
 #undef _ROUND_TRIP
+#undef _RETURN_SAME_VALUE_FAILURE
 
 #endif
 

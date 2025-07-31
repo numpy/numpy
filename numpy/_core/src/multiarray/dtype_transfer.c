@@ -3431,7 +3431,6 @@ PyArray_CastRawArrays(npy_intp count,
     /* Cleanup */
     NPY_cast_info_xfree(&cast_info);
     if (result < 0) {
-        HandleArrayMethodError(result, "cast", flags);
         return NPY_FAIL;
     }
     if (flags & NPY_METH_REQUIRES_PYAPI && PyErr_Occurred()) {

@@ -1241,9 +1241,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
         }
 
         NPY_cast_info_xfree(&cast_info);
-        if (res < 0) {
-            HandleArrayMethodError(res, "cast", flags); 
-        }
         if (!NpyIter_Deallocate(iter)) {
             res = -1;
         }
@@ -2137,7 +2134,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
      */
     int result = mapiter_set(mit, &cast_info, meth_flags, is_aligned);
     if (result < 0) {
-        HandleArrayMethodError(result, "cast", meth_flags); 
         goto fail;
     }
 

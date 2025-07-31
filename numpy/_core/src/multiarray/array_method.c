@@ -986,11 +986,3 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_getset = boundarraymethods_getters,
 };
 
-int HandleArrayMethodError(int result, const char * name , int method_flags)
-{
-    if (result == NPY_SAME_VALUE_FAILURE) {
-        PyErr_Format(PyExc_ValueError, "'same_value' casting failure in %s", name);
-    }
-    return result;
-}
-

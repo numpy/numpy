@@ -180,7 +180,6 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
-    HandleArrayMethodError(result, "astype", method_flags); 
     return -1;
 }
 
@@ -303,7 +302,6 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
-    HandleArrayMethodError(result, "astype", method_flags); 
     return -1;
 }
 

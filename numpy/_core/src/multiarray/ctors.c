@@ -2854,7 +2854,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         res = -1;
     }
     if (result < 0) {
-        HandleArrayMethodError(result, "cast", flags);
         res = result;
     }
 

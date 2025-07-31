@@ -118,7 +118,6 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
-    HandleArrayMethodError(result, "cast", flags); 
     return -1;
 }
 
@@ -223,7 +222,6 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
-    HandleArrayMethodError(result, "cast", flags); 
     return -1;
 }
 

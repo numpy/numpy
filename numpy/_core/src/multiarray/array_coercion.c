@@ -423,7 +423,6 @@ npy_cast_raw_scalar_item(
             args, &length, strides, cast_info.auxdata);
     if (result < 0) {
         NPY_cast_info_xfree(&cast_info);
-        HandleArrayMethodError(result, "cast", flags); 
         return -1;
     }
     NPY_cast_info_xfree(&cast_info);
