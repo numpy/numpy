@@ -130,11 +130,11 @@ class TestMa:
     def test_testBasic2d(self, s):
         # Test of basic array creation and properties in 2 dimensions.
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        x.shape = s
-        y.shape = s
-        xm.shape = s
-        ym.shape = s
-        xf.shape = s
+        x = x.reshape(s)
+        y = y.reshape(s)
+        xm = xm.reshape(s)
+        ym = ym.reshape(s)
+        xf = xf.reshape(s)
 
         assert_(not isMaskedArray(x))
         assert_(isMaskedArray(xm))
