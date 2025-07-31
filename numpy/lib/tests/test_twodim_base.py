@@ -510,25 +510,24 @@ class TestTriuIndices:
                                   [11, 12, -1, -1, -10],
                                   [16, 17, 18, -1, -1]]))
 
-    def test_triu_indices_with_uint64():
+    def test_triu_indices_with_uint64(self):
         """Test that triu_indices works with uint64 inputs for n."""
         n = np.uint64(4)
         m = np.uint64(5)
         k = np.uint64(0)
-    
+
         # Should not raise OverflowError
         iu = np.triu_indices(n, k=k, m=m)
-    
+
         # Basic shape check
         assert isinstance(iu, tuple)
         assert len(iu) == 2
         assert len(iu[0]) == 14  # 4x5 matrix, upper triangle size
-    
+
         # Compare with int version
         iu_int = np.triu_indices(int(n), k=int(k), m=int(m))
         assert_equal(iu[0], iu_int[0])
         assert_equal(iu[1], iu_int[1])
-
 
 class TestTrilIndicesFrom:
     def test_exceptions(self):
