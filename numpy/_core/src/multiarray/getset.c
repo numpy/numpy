@@ -60,6 +60,14 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
                 "Cannot delete array shape");
         return -1;
     }
+
+    /* Deprecated NumPy 2.4, 2025-07-29 */
+    if (DEPRECATE("Setting the shape on a NumPy array has been deprecated in NumPy 2.4.\n"
+                  "As an alternative, you can create a new view using np.reshape."
+                 ) < 0 ) {
+        return -1;
+    }
+
     /* Assumes C-order */
     ret = (PyArrayObject *)PyArray_Reshape(self, val);
     if (ret == NULL) {
