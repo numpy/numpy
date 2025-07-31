@@ -1138,7 +1138,7 @@ def triu_indices(n, k=0, m=None):
     else:
         m = operator.index(m)
     k = operator.index(k)
-    
+
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
     return tuple(broadcast_to(inds, tri_.shape)[tri_]
