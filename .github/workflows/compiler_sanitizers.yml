@@ -128,7 +128,7 @@ jobs:
           echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
           echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
           echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
-      - name: Build Python with address sanitizer
+      - name: Install latest python version for env
         run: |
           pyenv install 3.14t
           pyenv global 3.14t
@@ -137,7 +137,7 @@ jobs:
           pip install -r requirements/build_requirements.txt
           pip install -r requirements/ci_requirements.txt
           pip install -r requirements/test_requirements.txt
-      - name: Build
+      - name: Build numpy with UndefinedBehaviorSanitizer
         run: python -m spin build -j2 -- -Db_sanitize=undefined -Db_lundef=false
       - name: Test
         run: |
@@ -148,7 +148,7 @@ jobs:
 
   ubuntu_UBSAN:
     # To enable this workflow on a fork, comment out:
-    # if: github.repository == 'numpy/numpy'
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -167,7 +167,7 @@ jobs:
           echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
       - name: Check pyenv is working
         run: pyenv --version
-      - name: Build Python with address sanitizer
+      - name: Install latest python version for env
         run: |
           pyenv install 3.14t
           pyenv global 3.14t
@@ -176,10 +176,10 @@ jobs:
           pip install -r requirements/build_requirements.txt
           pip install -r requirements/ci_requirements.txt
           pip install -r requirements/test_requirements.txt
-      - name: Build
+      - name: Build numpy with UndefinedBehaviorSanitizer
         run: python -m spin build -j2 -- -Db_sanitize=undefined -Db_lundef=false
       - name: Test
         run: |
           # pass -s to pytest to see UBSAN errors and warnings, otherwise pytest captures them
-          UBSAN_OPTIONS=halt_on_error=1:suppressions=${GITHUB_WORKSPACE}/tools/ci/ubsan_suppressions_x86.txt \
+          UBSAN_OPTIONS=halt_on_error=1:suppressions=${GITHUB_WORKSPACE}/tools/ci/ubsan_suppressions_x86_64.txt \
           spin test -- -v -s --timeout=600 --durations=10
