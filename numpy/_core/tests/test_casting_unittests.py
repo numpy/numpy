@@ -915,8 +915,9 @@ class TestCasting:
 
     @pytest.mark.parametrize("value", [np.nan, np.inf, -np.inf])
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_same_value_naninf(self, value):
-        # These work
+        # These work, but may trigger FPE warnings on macOS
         np.array([value], dtype=np.half).astype(np.cdouble, casting='same_value')
         np.array([value], dtype=np.half).astype(np.double, casting='same_value')
         np.array([value], dtype=np.float32).astype(np.cdouble, casting='same_value')
