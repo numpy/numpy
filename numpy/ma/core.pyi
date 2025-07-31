@@ -526,7 +526,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         obj: ndarray[_ShapeT, _DTypeT],
         context: tuple[ufunc, tuple[Any, ...], int] | None = None,
         return_scalar: bool = False,
-        /,
     ) -> MaskedArray[_ShapeT, _DTypeT]: ...
 
     @overload  # ()
