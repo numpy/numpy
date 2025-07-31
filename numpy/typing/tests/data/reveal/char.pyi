@@ -209,6 +209,9 @@ assert_type(np.char.array("bob", copy=True), np.char.chararray[np_t._AnyShape, n
 assert_type(np.char.array(b"bob", itemsize=5), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
 assert_type(np.char.array(1, unicode=False), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
 assert_type(np.char.array(1, unicode=True), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]])
+assert_type(np.char.array(1), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]] | np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
+assert_type(np.char.array(AR_U, unicode=False), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
+assert_type(np.char.array(AR_S, unicode=True), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]])
 
 assert_type(np.char.asarray(AR_U), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]])
 assert_type(np.char.asarray(AR_S, order="K"), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
@@ -216,3 +219,6 @@ assert_type(np.char.asarray("bob"), np.char.chararray[np_t._AnyShape, np.dtype[n
 assert_type(np.char.asarray(b"bob", itemsize=5), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
 assert_type(np.char.asarray(1, unicode=False), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
 assert_type(np.char.asarray(1, unicode=True), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]])
+assert_type(np.char.asarray(1), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]] | np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
+assert_type(np.char.asarray(AR_U, unicode=False), np.char.chararray[np_t._AnyShape, np.dtype[np.bytes_]])
+assert_type(np.char.asarray(AR_S, unicode=True), np.char.chararray[np_t._AnyShape, np.dtype[np.str_]])

@@ -1,8 +1,9 @@
 """Test deprecation and future warnings.
 
 """
+import pytest
+
 import numpy as np
-from numpy.testing import assert_warns
 
 
 def test_qr_mode_full_future_warning():
@@ -14,7 +15,7 @@ def test_qr_mode_full_future_warning():
 
     """
     a = np.eye(2)
-    assert_warns(DeprecationWarning, np.linalg.qr, a, mode='full')
-    assert_warns(DeprecationWarning, np.linalg.qr, a, mode='f')
-    assert_warns(DeprecationWarning, np.linalg.qr, a, mode='economic')
-    assert_warns(DeprecationWarning, np.linalg.qr, a, mode='e')
+    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='full')
+    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='f')
+    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='economic')
+    pytest.warns(DeprecationWarning, np.linalg.qr, a, mode='e')

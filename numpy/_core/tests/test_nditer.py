@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import textwrap
+import warnings
 
 import pytest
 
@@ -15,7 +16,6 @@ from numpy.testing import (
     assert_array_equal,
     assert_equal,
     assert_raises,
-    suppress_warnings,
 )
 from numpy.testing._private.utils import requires_memory
 
@@ -1899,8 +1899,8 @@ def test_iter_buffered_cast_byteswapped():
 
     assert_equal(a, 2 * np.arange(10, dtype='f4'))
 
-    with suppress_warnings() as sup:
-        sup.filter(np.exceptions.ComplexWarning)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', np.exceptions.ComplexWarning)
 
         a = np.arange(10, dtype='f8')
         a = a.view(a.dtype.newbyteorder()).byteswap()
@@ -3310,13 +3310,10 @@ def test_warn_noclose():
     a = np.arange(6, dtype='f4')
     au = a.byteswap()
     au = au.view(au.dtype.newbyteorder())
-    with suppress_warnings() as sup:
-        sup.record(RuntimeWarning)
+    with pytest.warns(RuntimeWarning):
         it = np.nditer(au, [], [['readwrite', 'updateifcopy']],
-                        casting='equiv', op_dtypes=[np.dtype('f4')])
+                       casting='equiv', op_dtypes=[np.dtype('f4')])
         del it
-        assert len(sup.log) == 1
-
 
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
         [("i", "O"), ("O", "i"),  # most simple cases

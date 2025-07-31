@@ -35,7 +35,9 @@ from numpy._core import (
     cdouble,
     complexfloating,
     count_nonzero,
+    cross as _core_cross,
     csingle,
+    diagonal as _core_diagonal,
     divide,
     dot,
     double,
@@ -49,10 +51,13 @@ from numpy._core import (
     intp,
     isfinite,
     isnan,
+    matmul as _core_matmul,
+    matrix_transpose as _core_matrix_transpose,
     moveaxis,
     multiply,
     newaxis,
     object_,
+    outer as _core_outer,
     overrides,
     prod,
     reciprocal,
@@ -62,34 +67,11 @@ from numpy._core import (
     sqrt,
     sum,
     swapaxes,
-    zeros,
-)
-from numpy._core import (
-    cross as _core_cross,
-)
-from numpy._core import (
-    diagonal as _core_diagonal,
-)
-from numpy._core import (
-    matmul as _core_matmul,
-)
-from numpy._core import (
-    matrix_transpose as _core_matrix_transpose,
-)
-from numpy._core import (
-    outer as _core_outer,
-)
-from numpy._core import (
     tensordot as _core_tensordot,
-)
-from numpy._core import (
     trace as _core_trace,
-)
-from numpy._core import (
     transpose as _core_transpose,
-)
-from numpy._core import (
     vecdot as _core_vecdot,
+    zeros,
 )
 from numpy._globals import _NoValue
 from numpy._typing import NDArray
@@ -335,8 +317,7 @@ def tensorsolve(a, b, axes=None):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(2*3*4)
-    >>> a.shape = (2*3, 4, 2, 3, 4)
+    >>> a = np.eye(2*3*4).reshape((2*3, 4, 2, 3, 4))
     >>> rng = np.random.default_rng()
     >>> b = rng.normal(size=(2*3, 4))
     >>> x = np.linalg.tensorsolve(a, b)
@@ -513,8 +494,7 @@ def tensorinv(a, ind=2):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(4*6)
-    >>> a.shape = (4, 6, 8, 3)
+    >>> a = np.eye(4*6).reshape((4, 6, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
@@ -523,8 +503,7 @@ def tensorinv(a, ind=2):
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
-    >>> a = np.eye(4*6)
-    >>> a.shape = (24, 8, 3)
+    >>> a = np.eye(4*6).reshape((24, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
@@ -2029,6 +2008,7 @@ def cond(x, p=None):
         # contain nans in the entries where inversion failed.
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
+        result_t = _realType(result_t)  # condition number is always real
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)

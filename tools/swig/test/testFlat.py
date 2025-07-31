@@ -43,7 +43,7 @@ class FlatTestCase(unittest.TestCase):
         for i in range(24):
             pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2, 3, 4)
+        x = x.reshape((2, 3, 4))
         y = x.copy()
         process(y)
         self.assertEqual(np.all((x + 1) == y), True)
@@ -56,7 +56,7 @@ class FlatTestCase(unittest.TestCase):
         for i in range(24):
             pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2, 3, 4)
+        x = x.reshape((2, 3, 4))
         y = x.copy()
         process(y.T)
         self.assertEqual(np.all((x.T + 1) == y.T), True)
@@ -69,7 +69,7 @@ class FlatTestCase(unittest.TestCase):
         for i in range(24):
             pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2, 3, 4)
+        x = x.reshape((2, 3, 4))
         self.assertRaises(TypeError, process, x[:, :, 0])
 
 

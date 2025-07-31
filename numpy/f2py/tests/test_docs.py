@@ -60,5 +60,7 @@ class TestDocAdvanced(util.F2PyTest):
         ftype.data.x[1] = 45
         assert_array_equal(ftype.data.x,
                            np.array([1, 45, 3], dtype=np.float32))
+        # gh-26718 Cleanup for repeated test runs
+        ftype.data.a = 0
 
     # TODO: implement test methods for other example Fortran codes

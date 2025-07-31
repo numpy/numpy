@@ -5,8 +5,7 @@ Test that we can run executable scripts that have been installed with numpy.
 import os
 import subprocess
 import sys
-from os.path import dirname, isfile
-from os.path import join as pathjoin
+from os.path import dirname, isfile, join as pathjoin
 
 import pytest
 

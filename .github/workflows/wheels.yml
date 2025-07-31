@@ -85,10 +85,9 @@ jobs:
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-13, macosx_x86_64, openblas]
-
-          # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
           - [macos-13, macosx_x86_64, accelerate]
-          - [macos-14, macosx_arm64, accelerate]  # always use accelerate
+          - [macos-14, macosx_arm64, openblas]
+          - [macos-14, macosx_arm64, accelerate]
           - [windows-2022, win_amd64, ""]
           - [windows-2022, win32, ""]
           - [windows-11-arm, win_arm64, ""]
@@ -175,7 +174,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@5f22145df44122af0f5a201f93cf0207171beca7  # v3.0.0
+        uses: pypa/cibuildwheel@9e4e50bd76b3190f55304387e333f6234823ea9b  # v3.1.2
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 

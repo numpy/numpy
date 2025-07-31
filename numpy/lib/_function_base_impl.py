@@ -10,9 +10,14 @@ import numpy._core.numeric as _nx
 from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
-from numpy._core.multiarray import _monotonicity, _place, bincount, normalize_axis_index
-from numpy._core.multiarray import interp as compiled_interp
-from numpy._core.multiarray import interp_complex as compiled_interp_complex
+from numpy._core.multiarray import (
+    _monotonicity,
+    _place,
+    bincount,
+    interp as compiled_interp,
+    interp_complex as compiled_interp_complex,
+    normalize_axis_index,
+)
 from numpy._core.numeric import (
     absolute,
     arange,
@@ -1312,7 +1317,10 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             # fix the shape for broadcasting
             shape = np.ones(N, dtype=int)
             shape[axis] = -1
-            a.shape = b.shape = c.shape = shape
+
+            a = a.reshape(shape)
+            b = b.reshape(shape)
+            c = c.reshape(shape)
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
             out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
                                                 + c * f[tuple(slice4)]

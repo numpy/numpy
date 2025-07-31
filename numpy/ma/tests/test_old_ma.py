@@ -83,11 +83,7 @@ from numpy.ma import (
     where,
     zeros,
 )
-from numpy.testing import (
-    assert_,
-    assert_equal,
-    assert_raises,
-)
+from numpy.testing import assert_, assert_equal, assert_raises
 
 pi = np.pi
 

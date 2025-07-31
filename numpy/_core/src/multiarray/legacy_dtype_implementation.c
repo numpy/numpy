@@ -320,8 +320,8 @@ can_cast_fields(PyObject *field1, PyObject *field2, NPY_CASTING casting)
 
     /* Iterate over all the fields and compare for castability */
     ppos = 0;
-    while (PyDict_Next(field1, &ppos, &key, &tuple1)) {
-        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) {
+    while (PyDict_Next(field1, &ppos, &key, &tuple1)) { // noqa: borrowed-ref OK
+        if ((tuple2 = PyDict_GetItem(field2, key)) == NULL) { // noqa: borrowed-ref OK
             return 0;
         }
         /* Compare the dtype of the field for castability */
@@ -372,7 +372,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                 Py_ssize_t ppos = 0;
                 PyObject *tuple;
                 PyArray_Descr *field;
-                PyDict_Next(lfrom->fields, &ppos, NULL, &tuple);
+                PyDict_Next(lfrom->fields, &ppos, NULL, &tuple); // noqa: borrowed-ref OK
                 field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 /*
                  * For a subarray, we need to get the underlying type;
