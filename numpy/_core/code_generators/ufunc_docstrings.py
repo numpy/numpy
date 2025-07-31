@@ -3792,6 +3792,11 @@ add_newdoc('numpy._core.umath', 'sign',
         The sign of `x`.
         $OUT_SCALAR_1
 
+    See Also
+    --------
+    signbit
+    copysign
+
     Notes
     -----
     There is more than one definition of sign in common use for complex
@@ -3828,6 +3833,11 @@ add_newdoc('numpy._core.umath', 'signbit',
         Output array, or reference to `out` if that was supplied.
         $OUT_SCALAR_1
 
+    See Also
+    --------
+    sign
+    copysign
+
     Examples
     --------
     >>> import numpy as np
@@ -3858,6 +3868,11 @@ add_newdoc('numpy._core.umath', 'copysign',
     out : ndarray or scalar
         The values of `x1` with the sign of `x2`.
         $OUT_SCALAR_2
+
+    See Also
+    --------
+    sign
+    signbit
 
     Examples
     --------

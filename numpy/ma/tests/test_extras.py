@@ -1077,7 +1077,7 @@ class TestMedian:
         x = np.ma.arange(24).reshape(3, 4, 2)
         x[x % 3 == 0] = masked
         assert_equal(median(x, 0), [[12, 9], [6, 15], [12, 9], [18, 15]])
-        x.shape = (4, 3, 2)
+        x = x.reshape((4, 3, 2))
         assert_equal(median(x, 0), [[99, 10], [11, 99], [13, 14]])
         x = np.ma.arange(24).reshape(4, 3, 2)
         x[x % 5 == 0] = masked

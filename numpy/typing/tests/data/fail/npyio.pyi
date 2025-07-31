@@ -1,8 +1,8 @@
 import pathlib
 from typing import IO
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 
 str_path: str
 bytes_path: bytes
