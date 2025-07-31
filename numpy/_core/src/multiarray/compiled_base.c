@@ -1522,7 +1522,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
         if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
-                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) {
+                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) { // noqa: borrowed-ref - manual fix needed
             /* Warning: Modifying `tp_dict` is not generally safe! */
             if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
                 return NULL;

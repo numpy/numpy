@@ -26,18 +26,16 @@ Prior to release
 Add/drop Python versions
 ------------------------
 
-When adding or dropping Python versions, three files need to be edited:
+When adding or dropping Python versions, two files need to be edited:
 
 - .github/workflows/wheels.yml  # for github cibuildwheel
-- tools/ci/cirrus_wheels.yml  # for cibuildwheel aarch64/arm64 builds
 - pyproject.toml  # for classifier and minimum version check.
 
 Make these changes in an ordinary PR against main and backport if necessary.
 Add ``[wheel build]`` at the end of the title line of the commit summary so
 that wheel builds will be run to test the changes. We currently release wheels
 for new Python versions after the first Python rc once manylinux and
-cibuildwheel support it. For Python 3.11 we were able to release within a week
-of the rc1 announcement.
+cibuildwheel support it.
 
 
 Backport pull requests
@@ -45,6 +43,7 @@ Backport pull requests
 
 Changes that have been marked for this release must be backported to the
 maintenance/2.1.x branch.
+
 
 Update 2.1.0 milestones
 -----------------------
@@ -79,19 +78,18 @@ commit message might be something like::
 Set the release version
 -----------------------
 
-Check the ``pyproject.toml`` file and set the release version if needed::
+Check the ``pyproject.toml`` file and set the release version and update the
+classifier if needed::
 
     $ gvim pyproject.toml
 
 
-Check the ``pavement.py`` and ``doc/source/release.rst`` files
---------------------------------------------------------------
+Check the ``doc/source/release.rst`` file
+-----------------------------------------
 
-Check that the ``pavement.py`` file points to the correct release notes. It should
-have been updated after the last release, but if not, fix it now. Also make
-sure that the notes have an entry in the ``release.rst`` file::
+make sure that the release notes have an entry in the ``release.rst`` file::
 
-    $ gvim pavement.py doc/source/release.rst
+    $ gvim doc/source/release.rst
 
 
 Generate the changelog
@@ -102,13 +100,12 @@ The changelog is generated using the changelog tool::
     $ spin changelog $GITHUB v2.0.0..maintenance/2.1.x > doc/changelog/2.1.0-changelog.rst
 
 where ``GITHUB`` contains your GitHub access token. The text will need to be
-checked for non-standard contributor names and dependabot entries removed. It
-is also a good idea to remove any links that may be present in the PR titles
-as they don't translate well to markdown, replace them with monospaced text. The
-non-standard contributor names should be fixed by updating the ``.mailmap``
-file, which is a lot of work. It is best to make several trial runs before
-reaching this point and ping the malefactors using a GitHub issue to get the
-needed information.
+checked for non-standard contributor names. It is also a good idea to remove
+any links that may be present in the PR titles as they don't translate well to
+markdown, replace them with monospaced text. The non-standard contributor names
+should be fixed by updating the ``.mailmap`` file, which is a lot of work. It
+is best to make several trial runs before reaching this point and ping the
+malefactors using a GitHub issue to get the needed information.
 
 
 Finish the release notes
@@ -170,26 +167,23 @@ If you need to delete the tag due to error::
 ---------------
 
 Tagging the build at the beginning of this process will trigger a wheel build
-via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
-on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
-hours. The CI runs on cirrus (for aarch64 and M1) take less time. You can check
-for uploaded files at the `staging repository`_, but note that it is not
-closely synched with what you see of the running jobs.
+via cibuildwheel and upload wheels and an sdist to the staging repo. All wheels
+are currently built on GitHub actions and take about 1 1/4 hours to build. 
 
 If you wish to manually trigger a wheel build, you can do so:
 
-- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
+- On GitHub actions -> `Wheel builder`_ there is a "Run workflow" button, click
   on it and choose the tag to build
-- On Cirrus we don't currently have an easy way to manually trigger builds and
-  uploads.
 
-If a wheel build fails for unrelated reasons, you can rerun it individually:
+If some wheel builds fail for unrelated reasons, you can re-run them:
 
-- On github actions select `Wheel builder`_ click on the commit that contains
-  the build you want to rerun. On the left there is a list of wheel builds,
-  select the one you want to rerun and on the resulting page hit the
-  counterclockwise arrows button.
-- On cirrus, log into cirrusci, look for the v2.1.0 tag and rerun the failed jobs.
+- On GitHub actions select `Wheel builder`_ click on the task that contains
+  the build you want to re-run, it will have the tag as the branch. On the
+  upper right will be a re-run button, hit it and select "re-run failed"
+
+If some wheels fail to upload to anaconda, you can select those builds in the
+`Wheel builder`_ and manually download the build artifact. This is a temporary
+workaround, but sometimes the quickest way to get a release out.
 
 .. _`staging repository`: https://anaconda.org/multibuild-wheels-staging/numpy/files
 .. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
@@ -212,26 +206,25 @@ Anaconda staging directory using the ``tools/download-wheels.py`` script::
 This needs to be done after all installers are downloaded, but before the pavement
 file is updated for continued development::
 
-    $ paver write_release
+    $ python write_release 2.1.0
 
 
 5. Upload to PyPI
 -----------------
 
-Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
-after recent PyPI changes, version ``3.4.1`` was used here::
+Upload to PyPI using ``twine``::
 
     $ cd ../numpy
     $ twine upload release/installers/*.whl
     $ twine upload release/installers/*.gz  # Upload last.
 
-If one of the commands breaks in the middle, you may need to selectively upload
-the remaining files because PyPI does not allow the same file to be uploaded
-twice. The source file should be uploaded last to avoid synchronization
-problems that might occur if pip users access the files while this is in
-process, causing pip to build from source rather than downloading a binary
-wheel. PyPI only allows a single source distribution, here we have
-chosen the zip archive.
+The source file should be uploaded last to avoid synchronization problems that
+might occur if pip users access the files while this is in process, causing pip
+to build from source rather than downloading a binary wheel. PyPI only allows a
+single source distribution, here we have chosen the gz version.  If the
+uploading breaks because of network related reasons, you can try re-running the
+commands, possibly after a fix. Twine will now handle the error generated by
+PyPI when the same file is uploaded twice.
 
 
 6. Upload files to GitHub

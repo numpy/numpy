@@ -293,3 +293,50 @@ def test_nonzero(dtype):
                     assert expected_warning in str(ex)
 
     run_threaded(func, max_workers=10, pass_count=True, outer_iterations=5)
+
+
+# These are all implemented using PySequence_Fast, which needs locking to be safe
+def np_broadcast(arrs):
+    for i in range(100):
+        np.broadcast(arrs)
+
+def create_array(arrs):
+    for i in range(100):
+        np.array(arrs)
+
+def create_nditer(arrs):
+    for i in range(1000):
+        np.nditer(arrs)
+
+@pytest.mark.parametrize("kernel", (np_broadcast, create_array, create_nditer))
+def test_arg_locking(kernel):
+    # should complete without failing or generating an error about an array size
+    # changing
+
+    b = threading.Barrier(5)
+    done = 0
+    arrs = []
+
+    def read_arrs():
+        nonlocal done
+        b.wait()
+        try:
+            kernel(arrs)
+        finally:
+            done += 1
+
+    def mutate_list():
+        b.wait()
+        while done < 4:
+            if len(arrs) > 10:
+                arrs.pop(0)
+            elif len(arrs) <= 10:
+                arrs.extend([np.array([1, 2, 3]) for _ in range(1000)])
+
+    arrs = [np.array([1, 2, 3]) for _ in range(1000)]
+
+    tasks = [threading.Thread(target=read_arrs) for _ in range(4)]
+    tasks.append(threading.Thread(target=mutate_list))
+
+    [t.start() for t in tasks]
+    [t.join() for t in tasks]

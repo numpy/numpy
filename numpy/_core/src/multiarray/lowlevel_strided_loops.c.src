@@ -850,7 +850,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 // Enable auto-vectorization for floating point casts with clang
 #if @is_native_half1@ || @is_float1@ || @is_double1@
     #if @is_native_half2@ || @is_float2@ || @is_double2@
-        #if defined(__clang__) && !defined(__EMSCRIPTEN__)
+        #if defined(__clang__) && !defined(__EMSCRIPTEN__) && !defined(__wasm__)
             #if __clang_major__ >= 12
                 _Pragma("clang fp exceptions(ignore)")
             #endif
@@ -965,7 +965,7 @@ static GCC_CAST_OPT_LEVEL int
 
 #if @is_native_half1@ || @is_float1@ || @is_double1@
     #if @is_native_half2@ || @is_float2@ || @is_double2@
-        #if defined(__clang__) && !defined(__EMSCRIPTEN__)
+        #if defined(__clang__) && !defined(__EMSCRIPTEN__) && !defined(__wasm__)
             #if __clang_major__ >= 12
                 _Pragma("clang fp exceptions(strict)")
             #endif

@@ -846,6 +846,7 @@ class TestMethods:
         ('abc', 6, ' ', ' abc  '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '***abc****'),
     ])
     def test_center(self, buf, width, fillchar, res, dt):
@@ -859,6 +860,7 @@ class TestMethods:
         ('abc', 6, ' ', 'abc   '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', 'abc*******'),
     ])
     def test_ljust(self, buf, width, fillchar, res, dt):
@@ -872,6 +874,7 @@ class TestMethods:
         ('abc', 6, ' ', '   abc'),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '*******abc'),
     ])
     def test_rjust(self, buf, width, fillchar, res, dt):
@@ -893,6 +896,7 @@ class TestMethods:
         ('-0123', 5, '-0123'),
         ('000', 3, '000'),
         ('34', 1, '34'),
+        ('34', -1, '34'),
         ('0034', 4, '0034'),
     ])
     def test_zfill(self, buf, width, res, dt):

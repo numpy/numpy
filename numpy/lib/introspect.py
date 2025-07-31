@@ -86,7 +86,7 @@ def opt_func_info(func_name=None, signature=None):
                     sig_pattern.search(c) or sig_pattern.search(dtype(c).name)
                     for c in chars
                 ):
-                    matching_chars[chars] = targets
+                    matching_chars[chars] = targets  # noqa: PERF403
             if matching_chars:
                 matching_sigs[k] = matching_chars
     else:

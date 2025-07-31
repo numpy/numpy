@@ -1,7 +1,7 @@
 import sys
 from collections import deque
 from pathlib import Path
-from typing import Any, TypeVar, assert_type
+from typing import Any, Generic, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -10,12 +10,16 @@ _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
 class SubClass(npt.NDArray[_ScalarT_co]): ...
 
+class IntoSubClass(Generic[_ScalarT_co]):
+    def __array__(self) -> SubClass[_ScalarT_co]: ...
+
 i8: np.int64
 
 A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
 C: list[int]
 D: SubClass[np.float64 | np.int64]
+E: IntoSubClass[np.float64 | np.int64]
 
 mixed_shape: tuple[int, np.int64]
 
@@ -39,6 +43,7 @@ assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
+assert_type(np.array(E, subok=True), SubClass[np.float64 | np.int64])
 # https://github.com/numpy/numpy/issues/29245
 assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool])
 

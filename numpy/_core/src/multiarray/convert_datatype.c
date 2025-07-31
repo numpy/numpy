@@ -344,7 +344,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             PyObject *cobj;
 
             key = PyLong_FromLong(type_num);
-            cobj = PyDict_GetItem(obj, key);
+            cobj = PyDict_GetItem(obj, key); // noqa: borrowed-ref OK
             Py_DECREF(key);
             if (cobj && PyCapsule_CheckExact(cobj)) {
                 castfunc = PyCapsule_GetPointer(cobj, NULL);
@@ -2749,7 +2749,7 @@ nonstructured_to_structured_resolve_descriptors(
 
             Py_ssize_t pos = 0;
             PyObject *key, *tuple;
-            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) {
+            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) { // noqa: borrowed-ref OK
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 npy_intp field_view_off = NPY_MIN_INTP;
                 NPY_CASTING field_casting = PyArray_GetCastInfo(
@@ -2898,7 +2898,7 @@ structured_to_nonstructured_resolve_descriptors(
             return -1;
         }
         PyObject *key = PyTuple_GetItem(PyDataType_NAMES(given_descrs[0]), 0);
-        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key);
+        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key); // noqa: borrowed-ref OK
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
         struct_view_offset = PyLong_AsSsize_t(PyTuple_GET_ITEM(base_tup, 1));
         if (error_converting(struct_view_offset)) {
@@ -3033,7 +3033,7 @@ can_cast_fields_safety(
     for (Py_ssize_t i = 0; i < field_count; i++) {
         npy_intp field_view_off = NPY_MIN_INTP;
         PyObject *from_key = PyTuple_GET_ITEM(PyDataType_NAMES(from), i);
-        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key);
+        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key); // noqa: borrowed-ref OK
         if (from_tup == NULL) {
             return give_bad_field_error(from_key);
         }
@@ -3041,7 +3041,7 @@ can_cast_fields_safety(
 
         /* Check whether the field names match */
         PyObject *to_key = PyTuple_GET_ITEM(PyDataType_NAMES(to), i);
-        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key);
+        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key); // noqa: borrowed-ref OK
         if (to_tup == NULL) {
             return give_bad_field_error(from_key);
         }

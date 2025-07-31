@@ -197,6 +197,40 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, b)
         self._test_equal(b, a)
 
+    # Also provides test cases for gh-11121
+    def test_masked_scalar(self):
+        # Test masked scalar vs. plain/masked scalar
+        for a_val, b_val, b_masked in itertools.product(
+            [3., np.nan, np.inf],
+            [3., 4., np.nan, np.inf, -np.inf],
+            [False, True],
+        ):
+            a = np.ma.MaskedArray(a_val, mask=True)
+            b = np.ma.MaskedArray(b_val, mask=True) if b_masked else np.array(b_val)
+            self._test_equal(a, b)
+            self._test_equal(b, a)
+
+        # Test masked scalar vs. plain array
+        for a_val, b_val in itertools.product(
+            [3., np.nan, -np.inf],
+            itertools.product([3., 4., np.nan, np.inf, -np.inf], repeat=2),
+        ):
+            a = np.ma.MaskedArray(a_val, mask=True)
+            b = np.array(b_val)
+            self._test_equal(a, b)
+            self._test_equal(b, a)
+
+        # Test masked scalar vs. masked array
+        for a_val, b_val, b_mask in itertools.product(
+            [3., np.nan, np.inf],
+            itertools.product([3., 4., np.nan, np.inf, -np.inf], repeat=2),
+            itertools.product([False, True], repeat=2),
+        ):
+            a = np.ma.MaskedArray(a_val, mask=True)
+            b = np.ma.MaskedArray(b_val, mask=b_mask)
+            self._test_equal(a, b)
+            self._test_equal(b, a)
+
     def test_subclass_that_overrides_eq(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
@@ -577,6 +611,18 @@ class TestArrayAlmostEqual(_GenericTest):
         b[0, 0] = -np.inf
         assert_raises(AssertionError,
                       lambda: self._assert_func(a, b))
+
+    def test_complex_inf(self):
+        a = np.array([np.inf + 1.j, 2. + 1.j, 3. + 1.j])
+        b = a.copy()
+        self._assert_func(a, b)
+        b[1] = 3. + 1.j
+        expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
+                        'Mismatch at index:\n'
+                        ' [1]: (2+1j) (ACTUAL), (3+1j) (DESIRED)\n'
+                        'Max absolute difference among violations: 1.\n')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
 
     def test_subclass(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -1249,9 +1295,19 @@ class TestAssertAllclose:
         # Should not raise:
         assert_allclose(a, b, equal_nan=True)
 
+        a = np.array([complex(np.nan, np.inf)])
+        b = np.array([complex(np.nan, np.inf)])
+        assert_allclose(a, b, equal_nan=True)
+        b = np.array([complex(np.nan, -np.inf)])
+        assert_allclose(a, b, equal_nan=True)
+
     def test_not_equal_nan(self):
         a = np.array([np.nan])
         b = np.array([np.nan])
+        assert_raises(AssertionError, assert_allclose, a, b, equal_nan=False)
+
+        a = np.array([complex(np.nan, np.inf)])
+        b = np.array([complex(np.nan, np.inf)])
         assert_raises(AssertionError, assert_allclose, a, b, equal_nan=False)
 
     def test_equal_nan_default(self):
@@ -1302,6 +1358,33 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError):
             assert_allclose(x, x.astype(np.float32), strict=True)
 
+    def test_infs(self):
+        a = np.array([np.inf])
+        b = np.array([np.inf])
+        assert_allclose(a, b)
+
+        b = np.array([3.])
+        expected_msg = 'inf location mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+
+        b = np.array([-np.inf])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+        b = np.array([complex(np.inf, 1.)])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+
+        a = np.array([complex(np.inf, 1.)])
+        b = np.array([complex(np.inf, 1.)])
+        assert_allclose(a, b)
+
+        b = np.array([complex(np.inf, 2.)])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
 
 class TestArrayAlmostEqualNulp:
 
