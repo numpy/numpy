@@ -150,7 +150,7 @@ jobs:
     # if: github.repository == 'numpy/numpy'
     runs-on: ubuntu_latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-tags: true
@@ -166,14 +166,6 @@ jobs:
           echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
       - name: Check pyenv is working
         run: pyenv --version
-      - name: Set up LLVM
-        run: |
-          brew install llvm@19
-          LLVM_PREFIX=$(brew --prefix llvm@19)
-          echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
-          echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
-          echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
-          echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
       - name: Build Python with address sanitizer
         run: |
           pyenv install 3.14.0b4
