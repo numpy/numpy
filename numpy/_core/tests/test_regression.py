@@ -649,7 +649,8 @@ class TestRegression:
     def test_reshape_zero_size(self):
         # GitHub Issue #2700, setting shape failed for 0-sized arrays
         a = np.ones((0, 2))
-        a.shape = (-1, 2)
+        with pytest.warns(DeprecationWarning):
+            a.shape = (-1, 2)
 
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
@@ -1580,8 +1581,7 @@ class TestRegression:
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_take_refcount(self):
         # ticket #939
-        a = np.arange(16, dtype=float)
-        a.shape = (4, 4)
+        a = np.arange(16, dtype=float).reshape((4, 4))
         lut = np.ones((5 + 3, 4), float)
         rgba = np.empty(shape=a.shape + (4,), dtype=lut.dtype)
         c1 = sys.getrefcount(rgba)
