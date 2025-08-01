@@ -1,6 +1,7 @@
 import functools
 import warnings
 
+import numpy as np
 import numpy._core.numeric as _nx
 from numpy._core import atleast_3d, overrides, vstack
 from numpy._core._multiarray_umath import _array_converter
@@ -171,15 +172,13 @@ def take_along_axis(arr, indices, axis=-1):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = arr.flat
-        arr_shape = (len(arr),)  # flatiter has no .shape
+        arr = np.array(arr.flat)
         axis = 0
     else:
         axis = normalize_axis_index(axis, arr.ndim)
-        arr_shape = arr.shape
 
     # use the fancy index
-    return arr[_make_along_axis_idx(arr_shape, indices, axis)]
+    return arr[_make_along_axis_idx(arr.shape, indices, axis)]
 
 
 def _put_along_axis_dispatcher(arr, indices, values, axis):
@@ -263,15 +262,13 @@ def put_along_axis(arr, indices, values, axis):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = arr.flat
+        arr = np.array(arr.flat)
         axis = 0
-        arr_shape = (len(arr),)  # flatiter has no .shape
     else:
         axis = normalize_axis_index(axis, arr.ndim)
-        arr_shape = arr.shape
 
     # use the fancy index
-    arr[_make_along_axis_idx(arr_shape, indices, axis)] = values
+    arr[_make_along_axis_idx(arr.shape, indices, axis)] = values
 
 
 def _apply_along_axis_dispatcher(func1d, axis, arr, *args, **kwargs):
