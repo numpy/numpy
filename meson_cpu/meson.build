@@ -46,20 +46,22 @@ if get_option('disable-optimization')
   CPU_CONF_BASELINE = 'none'
   CPU_CONF_DISPATCH = 'none'
 else
-  baseline_detect = false
+  baseline_detect = get_option('cpu-baseline-detect').enabled()
   c_args = get_option('c_args')
-  foreach arg : c_args
-    foreach carch : ['-march', '-mcpu', '-xhost', '/QxHost']
-      if arg.contains(carch)
-        message('Appending option "detect" to "cpu-baseline" due to detecting global architecture c_arg "' + arg + '"')
-        baseline_detect = true
+  if get_option('cpu-baseline-detect').auto()
+    foreach arg : c_args
+      foreach carch : ['-march', '-mcpu', '-xhost', '/QxHost']
+        if arg.contains(carch)
+          message('Appending option "detect" to "cpu-baseline" due to detecting global architecture c_arg "' + arg + '"')
+          baseline_detect = true
+          break
+        endif
+      endforeach
+      if baseline_detect
         break
       endif
     endforeach
-    if baseline_detect
-      break
-    endif
-  endforeach
+  endif
   # The required minimal set of required CPU features.
   CPU_CONF_BASELINE = get_option('cpu-baseline')
   if baseline_detect

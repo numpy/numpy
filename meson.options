@@ -28,6 +28,8 @@ option('disable-optimization', type: 'boolean', value: false,
         description: 'Disable CPU optimized code (dispatch,simd,unroll...)')
 option('cpu-baseline', type: 'string', value: 'min',
         description: 'Minimal set of required CPU features')
+option('cpu-baseline-detect', type: 'feature', value: 'auto',
+        description: 'Detect CPU baseline from the compiler flags')
 option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
         description: 'Dispatched set of additional CPU features')
 option('test-simd', type: 'array',
