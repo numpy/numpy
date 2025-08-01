@@ -375,16 +375,11 @@ array_nbytes_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
  * (contiguous or fortran) with compatible dimensions The shape and strides
  * will be adjusted in that case as well.
  */
-static int
-array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
+int
+array_descr_set_internal(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
-
-    if (arg == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array dtype");
-        return -1;
-    }
+    assert(arg);
 
     if (!(PyArray_DescrConverter(arg, &newtype)) ||
         newtype == NULL) {
@@ -520,6 +515,35 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
  fail:
     Py_DECREF(newtype);
     return -1;
+}
+
+int
+array_descr_set(PyArrayObject *self, PyObject *arg)
+{
+    if (arg == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array dtype");
+        return -1;
+    }
+
+#if !defined(PYPY_VERSION)
+    // On PyPy we skip the warning because we cannot rely on reference counts
+    // to be replaced with PyUnstable_Object_IsUniquelyReferenced https://github.com/python/cpython/pull/133144
+    int unique_reference = (Py_REFCNT(self) == 1);
+
+    if (PyArray_CheckExact(self) && (!unique_reference)) {
+         // this will not emit deprecation warnings for all cases, but for most it will
+         /* DEPRECATED 2025-06-20, NumPy 2.4 */
+         int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
+                    "Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.\n"
+                    "Instead of changing the dtype on an array x, create a new array with x.view(new_dtype)",
+                    1);
+        if (ret) {
+            return -1;
+        }
+    }
+#endif
+    return array_descr_set_internal(self, arg);
 }
 
 static PyObject *
