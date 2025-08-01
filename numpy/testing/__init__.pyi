@@ -4,8 +4,10 @@ from . import overrides
 from ._private.utils import (
     HAS_LAPACK64,
     HAS_REFCOUNT,
+    HAS_SUBPROCESSES,
     IS_EDITABLE,
     IS_INSTALLED,
+    IS_IOS,
     IS_MUSL,
     IS_PYPY,
     IS_PYSTON,
@@ -53,8 +55,10 @@ from ._private.utils import (
 __all__ = [
     "HAS_LAPACK64",
     "HAS_REFCOUNT",
+    "HAS_SUBPROCESSES",
     "IS_EDITABLE",
     "IS_INSTALLED",
+    "IS_IOS",
     "IS_MUSL",
     "IS_PYPY",
     "IS_PYSTON",

@@ -7,7 +7,7 @@ from importlib import reload
 import pytest
 
 import numpy.exceptions as ex
-from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises
+from numpy.testing import HAS_SUBPROCESSES, assert_, assert_equal, assert_raises
 
 
 def test_numpy_reloading():
@@ -40,7 +40,7 @@ def test_novalue():
                                           protocol=proto)) is np._NoValue)
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_full_reimport():
     # Reimporting numpy like this is not safe due to use of global C state,
     # and has unexpected side effects. Test that an ImportError is raised.

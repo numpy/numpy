@@ -1,5 +1,5 @@
 # Kanged out of numpy.f2py.tests.util for test_build_ext
-from numpy.testing import IS_WASM
+from numpy.testing import HAS_SUBPROCESSES
 import textwrap
 import shutil
 import tempfile
@@ -21,8 +21,8 @@ def _get_compiler_status():
         return _compiler_status
 
     _compiler_status = (False, False, False)
-    if IS_WASM:
-        # Can't run compiler from inside WASM.
+    if not HAS_SUBPROCESSES:
+        # Can't run compiler unless platform supports subprocesses.
         return _compiler_status
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils

@@ -11,7 +11,7 @@ import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
-    IS_WASM,
+    HAS_SUBPROCESSES,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -2075,7 +2075,7 @@ def test_buffered_cast_error_paths():
             buf = next(it)
             buf[...] = "a"  # cannot be converted to int.
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="PyPy seems to not hit this.")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
