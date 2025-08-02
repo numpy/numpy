@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
+#include "npy_sort.h"
 
 #include "static_string.h"
 #include "dtypemeta.h"
@@ -516,6 +517,133 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     return NpyString_cmp(&s_a, &s_b);
 }
 
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
+static NPY_COMPARE_RESULT
+stringdtype_sort_compare(void *a, void *b, PyArray_Descr *descr) {
+    PyArray_StringDTypeObject *string_descr = (PyArray_StringDTypeObject *)descr;
+    int dist = _compare(a, b, string_descr, string_descr);
+
+    if (dist < 0) {
+        return NPY_LESS;
+    }
+    else if (dist > 0) {
+        return NPY_GREATER;
+    }
+    else {
+        return NPY_EQUAL;
+    }
+}
+
+int
+_stringdtype_sort(PyArrayMethod_SortContext *context, void *start, npy_intp num,
+                  NpyAuxData *auxdata, PyArray_SortFuncWithContext *sort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptor;
+
+    NpyString_acquire_allocator(descr);
+    int result = sort(context, start, num, auxdata);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_quicksort(PyArrayMethod_SortContext *context, void *start, npy_intp num,
+                       NpyAuxData *auxdata) {
+    return _stringdtype_sort(context, start, num, auxdata,
+                             &npy_quicksort_with_context);
+}
+
+int
+_stringdtype_heapsort(PyArrayMethod_SortContext *context, void *start, npy_intp num,
+                      NpyAuxData *auxdata) {
+    return _stringdtype_sort(context, start, num, auxdata,
+                             &npy_heapsort_with_context);
+}
+
+int
+_stringdtype_timsort(PyArrayMethod_SortContext *context, void *start, npy_intp num,
+                       NpyAuxData *auxdata) {
+    return _stringdtype_sort(context, start, num, auxdata,
+                             &npy_timsort_with_context);
+}
+
+int
+stringdtype_get_sort_function(PyArray_Descr *descr,
+    NPY_SORTKIND sort_kind, PyArray_SortFuncWithContext **out_sort,
+    NpyAuxData **NPY_UNUSED(out_auxdata), NPY_ARRAYMETHOD_FLAGS *out_flags) {
+    
+    switch (sort_kind) {
+        default:
+        case NPY_QUICKSORT:
+            *out_sort = &_stringdtype_quicksort;
+            break;
+        case NPY_HEAPSORT:
+            *out_sort = &_stringdtype_heapsort;
+            break;
+        case NPY_STABLESORT:
+            *out_sort = &_stringdtype_timsort;
+            break;
+    }
+    *out_flags = NPY_METH_REQUIRES_PYAPI;
+    return 0;
+}
+
+int
+_stringdtype_argsort(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort,
+                     npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFuncWithContext *argsort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptor;
+
+    NpyString_acquire_allocator(descr);
+    int result = argsort(context, vv, tosort, num, auxdata);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_aquicksort(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort, 
+                        npy_intp n, NpyAuxData *auxdata) {
+    return _stringdtype_argsort(context, vv, tosort, n, auxdata,
+                                &npy_aquicksort_with_context);
+}
+
+int
+_stringdtype_aheapsort(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort, 
+                       npy_intp n, NpyAuxData *auxdata) {
+    return _stringdtype_argsort(context, vv, tosort, n, auxdata,
+                                &npy_aheapsort_with_context);
+}
+
+int
+_stringdtype_atimsort(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort, 
+                      npy_intp n, NpyAuxData *auxdata) {
+    return _stringdtype_argsort(context, vv, tosort, n, auxdata,
+                                &npy_atimsort_with_context);
+}
+
+int
+stringdtype_get_argsort_function(PyArray_Descr *descr, 
+    NPY_SORTKIND sort_kind, PyArray_ArgSortFuncWithContext **out_argsort,
+    NpyAuxData **NPY_UNUSED(out_auxdata), NPY_ARRAYMETHOD_FLAGS *out_flags) {
+    
+    switch (sort_kind) {
+        default:
+        case NPY_QUICKSORT:
+            *out_argsort = &_stringdtype_aquicksort;
+            break;
+        case NPY_HEAPSORT:
+            *out_argsort = &_stringdtype_aheapsort;
+            break;
+        case NPY_STABLESORT:
+            *out_argsort = &_stringdtype_atimsort;
+            break;
+    }
+    *out_flags = NPY_METH_REQUIRES_PYAPI;
+
+    return 0;
+}
+#endif // NPY_API_VERSION >= NPY_2_4_API_VERSION
+
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
 int
@@ -656,6 +784,11 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
          &string_discover_descriptor_from_pyobject},
         {NPY_DT_setitem, &stringdtype_setitem},
         {NPY_DT_getitem, &stringdtype_getitem},
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
+        {NPY_DT_sort_compare, &stringdtype_sort_compare},
+        {NPY_DT_get_sort_function, &stringdtype_get_sort_function},
+        {NPY_DT_get_argsort_function, &stringdtype_get_argsort_function},
+#endif
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},
