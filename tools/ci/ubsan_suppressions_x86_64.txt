@@ -1,0 +1,31 @@
+# This file contains suppressions for the default (with GIL) build to prevent runtime errors
+# when numpy is built with -Db_sanitize=undefined for x86_64 architecture
+#
+# reference: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#available-checks
+
+# Per this prior discussion, integer overflow is not a concern
+# https://github.com/numpy/numpy/issues/24209#issuecomment-2160154181
+signed-integer-overflow:*
+
+# all alignment runtime errors ignored in favor of this being tracked via TypeSanitizer
+# otherwise ubsan may detect system file alignment errors outside numpy
+alignment:*
+
+# suggested fix for runtime error: replace left bit shift with LLONG_MIN constant
+shift-base:_core/src/common/simd/sse/arithmetic.h
+shift-base:_core/src/common/simd/avx2/arithmetic.h
+# suggested fix for runtime error: use INT_MIN constant
+shift-base:_core/src/umath/_rational_tests.c
+# suggested fix for runtime error: check for overflow if signed
+shift-base:_core/src/npymath/npy_math_internal.h
+
+
+# suggested fix for runtime error: check that pointer is not null before calling function
+nonnull-attribute:_core/src/multiarray/array_coercion.c
+nonnull-attribute:_core/src/multiarray/ctors.c
+nonnull-attribute:_core/src/multiarray/datetime_busdaycal.c
+nonnull-attribute:_core/src/multiarray/scalarapi.c
+nonnull-attribute:_core/src/multiarray/calculation.c
+
+# suggested fix for runtime error: null check before loop
+pointer-overflow:_core/src/multiarray/nditer_templ.c
