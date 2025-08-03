@@ -1,8 +1,6 @@
 from collections.abc import Callable, Mapping
 from enum import Enum
-from typing import Any, Generic, ParamSpec, Self, TypeAlias, overload
-from typing import Literal as L
-
+from typing import Any, Generic, Literal as L, ParamSpec, Self, TypeAlias, overload
 from typing_extensions import TypeVar
 
 __all__ = ["Expr"]

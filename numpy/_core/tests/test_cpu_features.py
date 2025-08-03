@@ -1,16 +1,18 @@
 import os
-import re
-import sys
 import pathlib
 import platform
+import re
 import subprocess
+import sys
+
 import pytest
+
 from numpy._core._multiarray_umath import (
-    __cpu_features__,
     __cpu_baseline__,
     __cpu_dispatch__,
+    __cpu_features__,
 )
-import numpy as np
+
 
 def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -156,7 +158,6 @@ if __name__ == "__main__":
         file /= "_runtime_detect.py"
         file.write_text(self.SCRIPT)
         self.file = file
-        return
 
     def _run(self):
         return subprocess.run(
@@ -189,7 +190,6 @@ if __name__ == "__main__":
     def setup_method(self):
         """Ensure that the environment is reset"""
         self.env = os.environ.copy()
-        return
 
     def test_runtime_feature_selection(self):
         """
@@ -228,7 +228,6 @@ if __name__ == "__main__":
         # Ensure that both features are enabled, and they are exactly the ones
         # specified by `NPY_ENABLE_CPU_FEATURES`
         assert set(enabled_features) == set(non_baseline_features)
-        return
 
     @pytest.mark.parametrize("enabled, disabled",
     [

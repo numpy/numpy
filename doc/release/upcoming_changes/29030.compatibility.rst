@@ -1,0 +1,6 @@
+* NumPy's C extension modules have begun to use multi-phase initialisation,
+  as defined by :pep:`489`. As part of this, a new explicit check has been added
+  that each such module is only imported once per Python process. This comes with
+  the side-effect that deleting ``numpy`` from ``sys.modules`` and re-importing
+  it will now fail with an ``ImportError``. This has always been unsafe, with
+  unexpected side-effects, though did not previously raise an error.

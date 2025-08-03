@@ -1,23 +1,29 @@
 import contextlib
-import sys
-import warnings
 import itertools
 import operator
 import platform
-from numpy._utils import _pep440
+import sys
+import warnings
+
 import pytest
 from hypothesis import given, settings
-from hypothesis.strategies import sampled_from
 from hypothesis.extra import numpy as hynp
+from hypothesis.strategies import sampled_from
 
 import numpy as np
-from numpy.exceptions import ComplexWarning
 from numpy._core._rational_tests import rational
+from numpy._utils import _pep440
+from numpy.exceptions import ComplexWarning
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_almost_equal,
-    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns, check_support_sve,
-    )
+    IS_PYPY,
+    _gen_alignment_data,
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    check_support_sve,
+)
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -362,12 +368,7 @@ class TestModulus:
             assert_(rem >= -b, f'dt: {dt}')
 
         # Check nans, inf
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
-            sup.filter(RuntimeWarning, "divide by zero encountered in remainder")
-            sup.filter(RuntimeWarning, "divide by zero encountered in floor_divide")
-            sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
-            sup.filter(RuntimeWarning, "invalid value encountered in divmod")
+        with warnings.catch_warnings(), np.errstate(all='ignore'):
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -515,21 +516,17 @@ class TestConversion:
         # gh-627
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
-        with suppress_warnings() as sup:
-            sup.record(ComplexWarning)
+        with pytest.warns(ComplexWarning):
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
-            assert_equal(len(sup.log), 1)
 
     @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
     def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
-        with suppress_warnings() as sup:
-            sup.record(ComplexWarning)
+        with pytest.warns(ComplexWarning):
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
-            assert_equal(len(sup.log), 1)
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
@@ -724,8 +721,8 @@ class TestNegative:
 
     def test_result(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
                 if dt in np.typecodes['UnsignedInteger']:
@@ -742,8 +739,8 @@ class TestSubtract:
 
     def test_result(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
                 assert_equal(operator.sub(a, a), 0)
@@ -764,8 +761,8 @@ class TestAbs:
         x = test_dtype(np.finfo(test_dtype).max)
         assert_equal(absfunc(x), x.real)
 
-        with suppress_warnings() as sup:
-            sup.filter(UserWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
             x = test_dtype(np.finfo(test_dtype).tiny)
             assert_equal(absfunc(x), x.real)
 

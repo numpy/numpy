@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import Any
+
 import numpy as np
 
 AR_LIKE_b = [[True, True], [True, True]]

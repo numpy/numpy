@@ -7,13 +7,12 @@ specified.
 
 """
 import hashlib
+import importlib.util
 import io
 import os
 import re
 import sys
-import importlib.util
 import textwrap
-
 from os.path import join
 
 
@@ -467,8 +466,7 @@ def order_dict(d):
 def merge_api_dicts(dicts):
     ret = {}
     for d in dicts:
-        for k, v in d.items():
-            ret[k] = v
+        ret.update(d)
 
     return ret
 

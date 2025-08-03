@@ -1,28 +1,21 @@
 from collections.abc import Sequence  # noqa: F811
-from typing import (
-    Any,
-    Protocol,
-    TypeAlias,
-    TypeVar,
-    TypedDict,
-    runtime_checkable,
-)
+from typing import Any, Protocol, TypeAlias, TypedDict, TypeVar, runtime_checkable
 
 import numpy as np
 
 from ._char_codes import (
     _BoolCodes,
-    _NumberCodes,
-    _SignedIntegerCodes,
-    _UnsignedIntegerCodes,
-    _FloatingCodes,
+    _BytesCodes,
     _ComplexFloatingCodes,
     _DT64Codes,
-    _TD64Codes,
-    _BytesCodes,
-    _StrCodes,
-    _VoidCodes,
+    _FloatingCodes,
+    _NumberCodes,
     _ObjectCodes,
+    _SignedIntegerCodes,
+    _StrCodes,
+    _TD64Codes,
+    _UnsignedIntegerCodes,
+    _VoidCodes,
 )
 
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)

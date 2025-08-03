@@ -1,37 +1,39 @@
 from typing import (
-    Literal as L,
-    overload,
-    TypeAlias,
-    TypeVar,
     Any,
+    Literal as L,
+    Self,
     SupportsIndex,
     SupportsInt,
+    TypeAlias,
+    overload,
 )
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import (
-    ndarray,
-    dtype,
-    str_,
-    bytes_,
-    int_,
-    object_,
     _OrderKACF,
     _SupportsBuffer,
-    _SupportsArray
-)
-from numpy._typing import (
-    NDArray,
-    _Shape,
-    _ShapeLike,
-    _ArrayLikeStr_co as U_co,
-    _ArrayLikeBytes_co as S_co,
-    _ArrayLikeString_co as T_co,
-    _ArrayLikeAnyString_co as UST_co,
-    _ArrayLikeInt_co as i_co,
-    _ArrayLikeBool_co as b_co,
+    bytes_,
+    dtype,
+    int_,
+    ndarray,
+    object_,
+    str_,
 )
 from numpy._core.multiarray import compare_chararrays
+from numpy._typing import (
+    NDArray,
+    _AnyShape,
+    _ArrayLikeAnyString_co as UST_co,
+    _ArrayLikeBool_co as b_co,
+    _ArrayLikeBytes_co as S_co,
+    _ArrayLikeInt_co as i_co,
+    _ArrayLikeStr_co as U_co,
+    _ArrayLikeString_co as T_co,
+    _Shape,
+    _ShapeLike,
+    _SupportsArray,
+)
 
 __all__ = [
     "equal",
@@ -89,14 +91,15 @@ __all__ = [
     "chararray",
 ]
 
-_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _CharacterT = TypeVar("_CharacterT", bound=np.character)
-_CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], covariant=True)
-_CharArray: TypeAlias = chararray[tuple[int, ...], dtype[_CharacterT]]
+_CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], default=dtype, covariant=True)
 
-_StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+_CharArray: TypeAlias = chararray[_AnyShape, dtype[_CharacterT]]
+
+_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
+_StringDTypeOrUnicodeArray: TypeAlias = _StringDTypeArray | NDArray[np.str_]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | np.ndarray[_Shape, np.dtypes.StringDType]
 
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload
@@ -109,23 +112,35 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
-    ) -> chararray[_Shape, dtype[bytes_]]: ...
+    ) -> _CharArray[bytes_]: ...
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
+        itemsize: SupportsIndex | SupportsInt,
+        unicode: L[True],
+        buffer: _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: _ShapeLike = ...,
+        order: _OrderKACF = ...,
+    ) -> _CharArray[str_]: ...
     @overload
     def __new__(
         subtype,
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt = ...,
-        unicode: L[True] = ...,
+        *,
+        unicode: L[True],
         buffer: _SupportsBuffer = ...,
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
-    ) -> chararray[_Shape, dtype[str_]]: ...
+    ) -> _CharArray[str_]: ...
 
     def __array_finalize__(self, obj: object) -> None: ...
-    def __mul__(self, other: i_co) -> chararray[_Shape, _CharDTypeT_co]: ...
-    def __rmul__(self, other: i_co) -> chararray[_Shape, _CharDTypeT_co]: ...
-    def __mod__(self, i: Any) -> chararray[_Shape, _CharDTypeT_co]: ...
+    def __mul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...
+    def __rmul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...
+    def __mod__(self, i: Any) -> chararray[_AnyShape, _CharDTypeT_co]: ...
 
     @overload
     def __eq__(
@@ -273,7 +288,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def expandtabs(
         self,
         tabsize: i_co = ...,
-    ) -> chararray[_Shape, _CharDTypeT_co]: ...
+    ) -> Self: ...
 
     @overload
     def find(
@@ -498,12 +513,12 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         deletechars: S_co | None = ...,
     ) -> _CharArray[bytes_]: ...
 
-    def zfill(self, width: i_co) -> chararray[_Shape, _CharDTypeT_co]: ...
-    def capitalize(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def title(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def swapcase(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def lower(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def upper(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
+    def zfill(self, width: i_co) -> Self: ...
+    def capitalize(self) -> Self: ...
+    def title(self) -> Self: ...
+    def swapcase(self) -> Self: ...
+    def lower(self) -> Self: ...
+    def upper(self) -> Self: ...
     def isalnum(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
     def isalpha(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
     def isdigit(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
@@ -564,7 +579,7 @@ def add(x1: S_co, x2: S_co) -> NDArray[np.bytes_]: ...
 @overload
 def add(x1: _StringDTypeSupportsArray, x2: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
 @overload
-def add(x1: T_co, T_co) -> _StringDTypeOrUnicodeArray: ...
+def add(x1: T_co, x2: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
@@ -1029,14 +1044,15 @@ def startswith(
 def str_len(A: UST_co) -> NDArray[int_]: ...
 
 # Overload 1 and 2: str- or bytes-based array-likes
-# overload 3: arbitrary object with unicode=False  (-> bytes_)
-# overload 4: arbitrary object with unicode=True  (-> str_)
+# overload 3 and 4: arbitrary object with unicode=False  (-> bytes_)
+# overload 5 and 6: arbitrary object with unicode=True  (-> str_)
+# overload 7: arbitrary object with unicode=None (default)  (-> str_ | bytes_)
 @overload
 def array(
     obj: U_co,
     itemsize: int | None = ...,
     copy: bool = ...,
-    unicode: L[False] = ...,
+    unicode: L[True] | None = ...,
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
 @overload
@@ -1044,7 +1060,15 @@ def array(
     obj: S_co,
     itemsize: int | None = ...,
     copy: bool = ...,
-    unicode: L[False] = ...,
+    unicode: L[False] | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[bytes_]: ...
+@overload
+def array(
+    obj: object,
+    itemsize: int | None,
+    copy: bool,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
@@ -1052,43 +1076,84 @@ def array(
     obj: object,
     itemsize: int | None = ...,
     copy: bool = ...,
-    unicode: L[False] = ...,
+    *,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
 def array(
     obj: object,
-    itemsize: int | None = ...,
-    copy: bool = ...,
-    unicode: L[True] = ...,
+    itemsize: int | None,
+    copy: bool,
+    unicode: L[True],
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
+@overload
+def array(
+    obj: object,
+    itemsize: int | None = ...,
+    copy: bool = ...,
+    *,
+    unicode: L[True],
+    order: _OrderKACF = ...,
+) -> _CharArray[str_]: ...
+@overload
+def array(
+    obj: object,
+    itemsize: int | None = ...,
+    copy: bool = ...,
+    unicode: bool | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[str_] | _CharArray[bytes_]: ...
 
 @overload
 def asarray(
     obj: U_co,
     itemsize: int | None = ...,
-    unicode: L[False] = ...,
+    unicode: L[True] | None = ...,
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
 @overload
 def asarray(
     obj: S_co,
     itemsize: int | None = ...,
-    unicode: L[False] = ...,
+    unicode: L[False] | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[bytes_]: ...
+@overload
+def asarray(
+    obj: object,
+    itemsize: int | None,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
 def asarray(
     obj: object,
     itemsize: int | None = ...,
-    unicode: L[False] = ...,
+    *,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
 def asarray(
     obj: object,
-    itemsize: int | None = ...,
-    unicode: L[True] = ...,
+    itemsize: int | None,
+    unicode: L[True],
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
+@overload
+def asarray(
+    obj: object,
+    itemsize: int | None = ...,
+    *,
+    unicode: L[True],
+    order: _OrderKACF = ...,
+) -> _CharArray[str_]: ...
+@overload
+def asarray(
+    obj: object,
+    itemsize: int | None = ...,
+    unicode: bool | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[str_] | _CharArray[bytes_]: ...

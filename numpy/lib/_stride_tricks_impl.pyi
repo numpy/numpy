@@ -1,14 +1,8 @@
 from collections.abc import Iterable
-from typing import Any, TypeVar, overload, SupportsIndex
+from typing import Any, SupportsIndex, TypeVar, overload
 
 from numpy import generic
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    _ShapeLike,
-    _Shape,
-    _ArrayLike
-)
+from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _ShapeLike
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
@@ -72,7 +66,7 @@ def broadcast_to(
     subok: bool = ...,
 ) -> NDArray[Any]: ...
 
-def broadcast_shapes(*args: _ShapeLike) -> _Shape: ...
+def broadcast_shapes(*args: _ShapeLike) -> _AnyShape: ...
 
 def broadcast_arrays(
     *args: ArrayLike,

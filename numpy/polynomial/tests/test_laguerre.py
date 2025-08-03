@@ -6,9 +6,7 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises
 
 L0 = np.array([1]) / 1
 L1 = np.array([1, -1]) / 1

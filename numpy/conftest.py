@@ -5,17 +5,17 @@ import os
 import string
 import sys
 import tempfile
-from contextlib import contextmanager
 import warnings
+from contextlib import contextmanager
 
 import hypothesis
 import pytest
+
 import numpy
 import numpy as np
-
 from numpy._core._multiarray_tests import get_fpu_mode
-from numpy._core.tests._natype import pd_NA
-from numpy.testing._private.utils import NOGIL_BUILD, get_stringdtype_dtype
+from numpy._core.tests._natype import get_stringdtype_dtype, pd_NA
+from numpy.testing._private.utils import NOGIL_BUILD
 
 try:
     from scipy_doctest.conftest import dt_config
@@ -166,7 +166,6 @@ if HAVE_SCPDT:
                 "msvccompiler",
                 "Deprecated call",
                 "numpy.core",
-                "`np.compat`",
                 "Importing from numpy.matlib",
                 "This function is deprecated.",    # random_integers
                 "Data type alias 'a'",     # numpy.rec.fromfile
@@ -229,7 +228,6 @@ if HAVE_SCPDT:
         'numpy/_core/cversions.py',
         'numpy/_pyinstaller',
         'numpy/random/_examples',
-        'numpy/compat',
         'numpy/f2py/_backends/_distutils.py',
     ]
 

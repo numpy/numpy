@@ -3,6 +3,7 @@ import sys
 import types
 import unittest
 import warnings
+from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import _GeneratorContextManager
 from pathlib import Path
@@ -13,6 +14,7 @@ from typing import (
     ClassVar,
     Final,
     Generic,
+    Literal as L,
     NoReturn,
     ParamSpec,
     Self,
@@ -22,11 +24,8 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing import Literal as L
-from unittest.case import SkipTest
-
-from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
 from typing_extensions import TypeVar
+from unittest.case import SkipTest
 
 import numpy as np
 from numpy._typing import (

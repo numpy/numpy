@@ -14,8 +14,8 @@ exception, so it should hopefully not get unnoticed).
 
 """
 
-import os
 import importlib.util
+import os
 
 
 def get_annotations():

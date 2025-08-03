@@ -1,40 +1,33 @@
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    TypeAlias,
-    overload,
-    TypeVar,
-    Literal as L,
-)
+from typing import Any, Literal as L, TypeAlias, TypeVar, overload
 
 import numpy as np
 from numpy import (
-    generic,
-    timedelta64,
+    _OrderCF,
+    complex128,
+    complexfloating,
     datetime64,
+    float64,
+    floating,
+    generic,
     int_,
     intp,
-    float64,
-    complex128,
-    signedinteger,
-    floating,
-    complexfloating,
     object_,
-    _OrderCF,
+    signedinteger,
+    timedelta64,
 )
-
 from numpy._typing import (
-    DTypeLike,
-    _DTypeLike,
     ArrayLike,
-    _ArrayLike,
+    DTypeLike,
     NDArray,
+    _ArrayLike,
+    _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeObject_co,
+    _DTypeLike,
     _SupportsArray,
     _SupportsArrayFunc,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
 )
 
 __all__ = [

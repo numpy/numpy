@@ -187,11 +187,14 @@ Generic types
         to an array of ``float64``, even though ``float32`` is a subdtype of
         ``np.floating``.
 
+.. _dtype-constructing-from-python-types:
 
 Built-in Python types
-    Several python types are equivalent to a corresponding
+    Several Python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
+    ===================      ===============
+    Python type              NumPy type
     ===================      ===============
     :class:`int`             :class:`int\_`
     :class:`bool`            :class:`bool\_`
@@ -288,7 +291,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes.
     For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
     need zero-termination ``b`` or ``i1`` can be used.
 

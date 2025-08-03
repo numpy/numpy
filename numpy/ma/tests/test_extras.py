@@ -1,36 +1,73 @@
-# pylint: disable-msg=W0611, W0612, W0511
 """Tests suite for MaskedArray.
 Adapted from the original test_ma by Pierre Gerard-Marchant
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-import warnings
 import itertools
+import warnings
+
 import pytest
 
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
-from numpy.testing import (
-    assert_warns, suppress_warnings
-    )
-from numpy.ma.testutils import (
-    assert_, assert_array_equal, assert_equal, assert_almost_equal
-    )
 from numpy.ma.core import (
-    array, arange, masked, MaskedArray, masked_array, getmaskarray, shape,
-    nomask, ones, zeros, count
-    )
+    MaskedArray,
+    arange,
+    array,
+    count,
+    getmaskarray,
+    masked,
+    masked_array,
+    nomask,
+    ones,
+    shape,
+    zeros,
+)
 from numpy.ma.extras import (
-    atleast_1d, atleast_2d, atleast_3d, mr_, dot, polyfit, cov, corrcoef,
-    median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
-    ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
-    mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, ndenumerate, stack, vstack, _covhelper
-    )
+    _covhelper,
+    apply_along_axis,
+    apply_over_axes,
+    atleast_1d,
+    atleast_2d,
+    atleast_3d,
+    average,
+    clump_masked,
+    clump_unmasked,
+    compress_nd,
+    compress_rowcols,
+    corrcoef,
+    cov,
+    diagflat,
+    dot,
+    ediff1d,
+    flatnotmasked_contiguous,
+    in1d,
+    intersect1d,
+    isin,
+    mask_rowcols,
+    masked_all,
+    masked_all_like,
+    median,
+    mr_,
+    ndenumerate,
+    notmasked_contiguous,
+    notmasked_edges,
+    polyfit,
+    setdiff1d,
+    setxor1d,
+    stack,
+    union1d,
+    unique,
+    vstack,
+)
+from numpy.ma.testutils import (
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+)
 
 
 class TestGeneric:
@@ -708,7 +745,7 @@ class TestCompressFunctions:
         x = array(np.arange(9).reshape(3, 3),
                   mask=[[1, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             res = func(x, axis=axis)
             assert_equal(res, mask_rowcols(x, rowcols_axis))
 
@@ -1040,7 +1077,7 @@ class TestMedian:
         x = np.ma.arange(24).reshape(3, 4, 2)
         x[x % 3 == 0] = masked
         assert_equal(median(x, 0), [[12, 9], [6, 15], [12, 9], [18, 15]])
-        x.shape = (4, 3, 2)
+        x = x.reshape((4, 3, 2))
         assert_equal(median(x, 0), [[99, 10], [11, 99], [13, 14]])
         x = np.ma.arange(24).reshape(4, 3, 2)
         x[x % 5 == 0] = masked
@@ -1249,19 +1286,14 @@ class TestMedian:
     def test_empty(self):
         # empty arrays
         a = np.ma.masked_array(np.array([], dtype=float))
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             assert_array_equal(np.ma.median(a), np.nan)
-            assert_(w.log[0].category is RuntimeWarning)
 
         # multiple dimensions
         a = np.ma.masked_array(np.array([], dtype=float, ndmin=3))
         # no axis
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
-            warnings.filterwarnings('always', '', RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             assert_array_equal(np.ma.median(a), np.nan)
-            assert_(w.log[0].category is RuntimeWarning)
 
         # axis 0 and 1
         b = np.ma.masked_array(np.array([], dtype=float, ndmin=2))
@@ -1270,10 +1302,8 @@ class TestMedian:
 
         # axis 2
         b = np.ma.masked_array(np.array(np.nan, dtype=float, ndmin=2))
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             assert_equal(np.ma.median(a, axis=2), b)
-            assert_(w[0].category is RuntimeWarning)
 
     def test_object(self):
         o = np.ma.masked_array(np.arange(7.))
@@ -1380,10 +1410,13 @@ class TestCorrcoef:
         x, y = self.data, self.data2
         expected = np.corrcoef(x)
         expected2 = np.corrcoef(x, y)
-        with suppress_warnings() as sup:
-            warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, x, ddof=-1)
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with pytest.warns(DeprecationWarning):
+            corrcoef(x, ddof=-1)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
+
             # ddof has no or negligible effect on the function
             assert_almost_equal(np.corrcoef(x, ddof=0), corrcoef(x, ddof=0))
             assert_almost_equal(corrcoef(x, ddof=-1), expected)
@@ -1395,12 +1428,16 @@ class TestCorrcoef:
         x, y = self.data, self.data2
         expected = np.corrcoef(x)
         # bias raises DeprecationWarning
-        with suppress_warnings() as sup:
-            warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, x, y, True, False)
-            assert_warns(DeprecationWarning, corrcoef, x, y, True, True)
-            assert_warns(DeprecationWarning, corrcoef, x, bias=False)
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with pytest.warns(DeprecationWarning):
+            corrcoef(x, y, True, False)
+        with pytest.warns(DeprecationWarning):
+            corrcoef(x, y, True, True)
+        with pytest.warns(DeprecationWarning):
+            corrcoef(x, y, bias=False)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             # bias has no or negligible effect on the function
             assert_almost_equal(corrcoef(x, bias=1), expected)
 
@@ -1410,8 +1447,9 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
 
@@ -1421,8 +1459,9 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
 
@@ -1435,8 +1474,9 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(nx), corrcoef(x))
         assert_almost_equal(np.corrcoef(nx, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             assert_almost_equal(np.corrcoef(nx, rowvar=False, bias=True),
                                 corrcoef(x, rowvar=False, bias=True))
         try:
@@ -1448,8 +1488,9 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(nx, nx[::-1]), corrcoef(x, x[::-1]))
         assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False),
                             corrcoef(x, x[::-1], rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             # ddof and bias have no or negligible effect on the function
             assert_almost_equal(np.corrcoef(nx, nx[::-1]),
                                 corrcoef(x, x[::-1], bias=1))
@@ -1465,8 +1506,9 @@ class TestCorrcoef:
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "bias and ddof have no effect", DeprecationWarning)
             # ddof and bias have no or negligible effect on the function
             assert_almost_equal(corrcoef(x, ddof=-2)[:-1, :-1],
                                 control[:-1, :-1])

@@ -1,33 +1,69 @@
-import operator
-import warnings
-import sys
 import decimal
-from fractions import Fraction
 import math
-import pytest
-import hypothesis
-from hypothesis.extra.numpy import arrays
-import hypothesis.strategies as st
+import operator
+import sys
+import warnings
+from fractions import Fraction
 from functools import partial
 
-import numpy as np
-from numpy import (
-    ma, angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
-    select, setxor1d, sinc, trapezoid, trim_zeros, unwrap, unique, vectorize
-    )
-from numpy.exceptions import AxisError
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
-    IS_WASM, NOGIL_BUILD
-    )
-import numpy.lib._function_base_impl as nfb
-from numpy.random import rand
-from numpy._core.numeric import normalize_axis_tuple
+import hypothesis
+import hypothesis.strategies as st
+import pytest
+from hypothesis.extra.numpy import arrays
 
+import numpy as np
+import numpy.lib._function_base_impl as nfb
+from numpy import (
+    angle,
+    average,
+    bartlett,
+    blackman,
+    corrcoef,
+    cov,
+    delete,
+    diff,
+    digitize,
+    extract,
+    flipud,
+    gradient,
+    hamming,
+    hanning,
+    i0,
+    insert,
+    interp,
+    kaiser,
+    ma,
+    meshgrid,
+    piecewise,
+    place,
+    rot90,
+    select,
+    setxor1d,
+    sinc,
+    trapezoid,
+    trim_zeros,
+    unique,
+    unwrap,
+    vectorize,
+)
+from numpy._core.numeric import normalize_axis_tuple
+from numpy.exceptions import AxisError
+from numpy.random import rand
+from numpy.testing import (
+    HAS_REFCOUNT,
+    IS_WASM,
+    NOGIL_BUILD,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
+
+np_floats = [np.half, np.single, np.double, np.longdouble]
 
 def get_mat(n):
     data = np.arange(n)
@@ -272,7 +308,7 @@ class TestCopy:
     def test_order(self):
         # It turns out that people rely on np.copy() preserving order by
         # default; changing this broke scikit-learn:
-        # github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783
+        # github.com/scikit-learn/scikit-learn/commit/7842748
         a = np.array([[1, 2], [3, 4]])
         assert_(a.flags.c_contiguous)
         assert_(not a.flags.f_contiguous)
@@ -850,11 +886,11 @@ class TestDiff:
         output = [diff(x, n=n) for n in range(1, 5)]
         expected = [[1, 1], [0], [], []]
         assert_(diff(x, n=0) is x)
-        for n, (expected, out) in enumerate(zip(expected, output), start=1):
-            assert_(type(out) is np.ndarray)
-            assert_array_equal(out, expected)
-            assert_equal(out.dtype, np.int_)
-            assert_equal(len(out), max(0, len(x) - n))
+        for n, (expected_n, output_n) in enumerate(zip(expected, output), start=1):
+            assert_(type(output_n) is np.ndarray)
+            assert_array_equal(output_n, expected_n)
+            assert_equal(output_n.dtype, np.int_)
+            assert_equal(len(output_n), max(0, len(x) - n))
 
     def test_times(self):
         x = np.arange('1066-10-13', '1066-10-16', dtype=np.datetime64)
@@ -1695,6 +1731,15 @@ class TestVectorize:
         s = '0123456789' * 10
         assert_equal(s, f(s))
 
+    def test_dtype_promotion_gh_29189(self):
+        # dtype should not be silently promoted (int32 -> int64)
+        dtypes = [np.int16, np.int32, np.int64, np.float16, np.float32, np.float64]
+
+        for dtype in dtypes:
+            x = np.asarray([1, 2, 3], dtype=dtype)
+            y = np.vectorize(lambda x: x + x)(x)
+            assert x.dtype == y.dtype
+
     def test_cache(self):
         # Ensure that vectorized func called exactly once per argument.
         _calls = [0]
@@ -2009,8 +2054,8 @@ class TestLeaks:
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
         # class.attribute = np.frompyfunc(<method>) creates a
-        # reference cycle if <method> is a bound class method. It requires a
-        # gc collection cycle to break the cycle (on CPython 3)
+        # reference cycle if <method> is a bound class method.
+        # It requires a gc collection cycle to break the cycle.
         import gc
         A_func = getattr(self.A, name)
         gc.disable()
@@ -2426,10 +2471,10 @@ class TestCorrCoef:
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
             warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            sup.filter(DeprecationWarning)
+            pytest.warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
+            warnings.simplefilter('ignore', DeprecationWarning)
             # ddof has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
             assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
@@ -2438,11 +2483,11 @@ class TestCorrCoef:
 
     def test_bias(self):
         # bias raises DeprecationWarning
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
             warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
-            assert_warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            sup.filter(DeprecationWarning)
+            pytest.warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
+            pytest.warns(DeprecationWarning, corrcoef, self.A, bias=0)
+            warnings.simplefilter('ignore', DeprecationWarning)
             # bias has no or negligible effect on the function
             assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
@@ -2474,7 +2519,7 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
-    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    @pytest.mark.parametrize("test_type", np_floats)
     def test_corrcoef_dtype(self, test_type):
         cast_A = self.A.astype(test_type)
         res = corrcoef(cast_A, dtype=test_type)
@@ -2580,7 +2625,7 @@ class TestCov:
                             aweights=self.unit_weights),
                         self.res1)
 
-    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    @pytest.mark.parametrize("test_type", np_floats)
     def test_cov_dtype(self, test_type):
         cast_x1 = self.x1.astype(test_type)
         res = cov(cast_x1, dtype=test_type)
@@ -2602,7 +2647,8 @@ class Test_I0:
 
         # need at least one test above 8, as the implementation is piecewise
         A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549, 10.0])
-        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049, 2815.71662847])
+        expected = np.array([1.06307822, 1.12518299, 1.01214991,
+                             1.00006049, 2815.71662847])
         assert_almost_equal(i0(A), expected)
         assert_almost_equal(i0(-A), expected)
 
@@ -3095,23 +3141,27 @@ class TestInterp:
 
     def test_non_finite_inf(self, sc):
         """ Test that interp between opposite infs gives nan """
-        assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([      0,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0,       1], sc([-np.inf, +np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0,       1], sc([+np.inf, -np.inf])), sc(np.nan))
+        inf = np.inf
+        nan = np.nan
+        assert_equal(np.interp(0.5, [-inf, +inf], sc([   0,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0,    1], sc([-inf, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0,    1], sc([+inf, -inf])), sc(nan))
 
         # unless the y values are equal
         assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([     10,      10])), sc(10))
 
     def test_non_finite_half_inf_xf(self, sc):
         """ Test that interp where both axes have a bound at inf gives nan """
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([-np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([+np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, -np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, +np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([-np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([+np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, -np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, +np.inf])), sc(np.nan))
+        inf = np.inf
+        nan = np.nan
+        assert_equal(np.interp(0.5, [-inf,    1], sc([-inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([+inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([   0, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([   0, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([-inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([+inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([   0, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([   0, +inf])), sc(nan))
 
     def test_non_finite_half_inf_x(self, sc):
         """ Test interp where the x axis has a bound at inf """

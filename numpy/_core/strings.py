@@ -3,51 +3,58 @@ This module contains a set of functions for vectorized string
 operations.
 """
 
-import sys
 import functools
+import sys
+
 import numpy as np
 from numpy import (
-    equal, not_equal, less, less_equal, greater, greater_equal,
-    add, multiply as _multiply_ufunc,
+    add,
+    equal,
+    greater,
+    greater_equal,
+    less,
+    less_equal,
+    multiply as _multiply_ufunc,
+    not_equal,
 )
 from numpy._core.multiarray import _vec_string
-from numpy._core.overrides import set_module, array_function_dispatch
+from numpy._core.overrides import array_function_dispatch, set_module
 from numpy._core.umath import (
-    isalpha,
-    isdigit,
-    isspace,
-    isalnum,
-    islower,
-    isupper,
-    istitle,
-    isdecimal,
-    isnumeric,
-    str_len,
-    find as _find_ufunc,
-    rfind as _rfind_ufunc,
-    index as _index_ufunc,
-    rindex as _rindex_ufunc,
-    count as _count_ufunc,
-    startswith as _startswith_ufunc,
-    endswith as _endswith_ufunc,
-    _lstrip_whitespace,
-    _lstrip_chars,
-    _rstrip_whitespace,
-    _rstrip_chars,
-    _strip_whitespace,
-    _strip_chars,
-    _replace,
-    _expandtabs_length,
-    _expandtabs,
     _center,
+    _expandtabs,
+    _expandtabs_length,
     _ljust,
-    _rjust,
-    _zfill,
+    _lstrip_chars,
+    _lstrip_whitespace,
     _partition,
     _partition_index,
+    _replace,
+    _rjust,
     _rpartition,
     _rpartition_index,
+    _rstrip_chars,
+    _rstrip_whitespace,
     _slice,
+    _strip_chars,
+    _strip_whitespace,
+    _zfill,
+    count as _count_ufunc,
+    endswith as _endswith_ufunc,
+    find as _find_ufunc,
+    index as _index_ufunc,
+    isalnum,
+    isalpha,
+    isdecimal,
+    isdigit,
+    islower,
+    isnumeric,
+    isspace,
+    istitle,
+    isupper,
+    rfind as _rfind_ufunc,
+    rindex as _rindex_ufunc,
+    startswith as _startswith_ufunc,
+    str_len,
 )
 
 
@@ -195,7 +202,7 @@ def multiply(a, i):
 
     # Ensure we can do a_len * i without overflow.
     if np.any(a_len > sys.maxsize / np.maximum(i, 1)):
-        raise MemoryError("repeated string is too long")
+        raise OverflowError("Overflow encountered in string multiply")
 
     buffersizes = a_len * i
     out_dtype = f"{a.dtype.char}{buffersizes.max()}"

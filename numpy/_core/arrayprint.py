@@ -25,26 +25,33 @@ __docformat__ = 'restructuredtext'
 import functools
 import numbers
 import sys
+
 try:
     from _thread import get_ident
 except ImportError:
     from _dummy_thread import get_ident
 
-import numpy as np
-from . import numerictypes as _nt
-from .umath import absolute, isinf, isfinite, isnat
-from . import multiarray
-from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, ndarray)
-from .fromnumeric import any
-from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float64, complex128,
-                           flexible)
-from .overrides import array_function_dispatch, set_module
-from .printoptions import format_options
+import contextlib
 import operator
 import warnings
-import contextlib
+
+import numpy as np
+
+from . import numerictypes as _nt
+from .fromnumeric import any
+from .multiarray import (
+    array,
+    datetime_as_string,
+    datetime_data,
+    dragon4_positional,
+    dragon4_scientific,
+    ndarray,
+)
+from .numeric import asarray, concatenate, errstate
+from .numerictypes import complex128, flexible, float64, int_
+from .overrides import array_function_dispatch, set_module
+from .printoptions import format_options
+from .umath import absolute, isfinite, isinf, isnat
 
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
@@ -243,9 +250,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     Notes
     -----
-    `formatter` is always reset with a call to `set_printoptions`.
 
-    Use `printoptions` as a context manager to set the values temporarily.
+    * ``formatter`` is always reset with a call to `set_printoptions`.
+    * Use `printoptions` as a context manager to set the values temporarily.
+    * These print options apply only to NumPy ndarrays, not to scalars.
 
     Examples
     --------
@@ -345,6 +353,10 @@ def get_printoptions():
 
         For a full description of these options, see `set_printoptions`.
 
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
+
     See Also
     --------
     set_printoptions, printoptions
@@ -402,6 +414,10 @@ def printoptions(*args, **kwargs):
     See Also
     --------
     set_printoptions, get_printoptions
+
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
 
     """
     token = _set_printoptions(*args, **kwargs)

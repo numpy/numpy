@@ -1,8 +1,8 @@
-from .common import Benchmark
-
-import numpy as np
 import operator
 
+import numpy as np
+
+from .common import Benchmark
 
 _OPERATORS = {
     '==': operator.eq,

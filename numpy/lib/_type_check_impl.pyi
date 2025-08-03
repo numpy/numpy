@@ -1,12 +1,20 @@
-from collections.abc import Container, Iterable
-from typing import Any, Protocol, TypeAlias, overload, type_check_only
-from typing import Literal as L
-
 from _typeshed import Incomplete
+from collections.abc import Container, Iterable
+from typing import Any, Literal as L, Protocol, TypeAlias, overload, type_check_only
 from typing_extensions import TypeVar
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _16Bit, _32Bit, _64Bit, _ArrayLike, _NestedSequence, _ScalarLike_co, _SupportsArray
+from numpy._typing import (
+    ArrayLike,
+    NDArray,
+    _16Bit,
+    _32Bit,
+    _64Bit,
+    _ArrayLike,
+    _NestedSequence,
+    _ScalarLike_co,
+    _SupportsArray,
+)
 
 __all__ = [
     "common_type",

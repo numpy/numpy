@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Final, Literal, TypeVar, TypedDict, overload, type_check_only
+from typing import Final, Literal, TypedDict, TypeVar, overload, type_check_only
 
 from numpy.random._generator import Generator
 from numpy.random._mt19937 import MT19937

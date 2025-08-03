@@ -1,105 +1,102 @@
 # TODO: Sort out any and all missing functions in this namespace
 import datetime as dt
 from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
-from collections.abc import Sequence, Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
-    Literal as L,
     Any,
-    TypeAlias,
-    overload,
-    TypeVar,
-    TypedDict,
-    SupportsIndex,
-    final,
-    Final,
-    Protocol,
     ClassVar,
+    Final,
+    Literal as L,
+    Protocol,
+    SupportsIndex,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
     Unpack,
+    final,
+    overload,
     type_check_only,
 )
 from typing_extensions import CapsuleType
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]
+    _AnyShapeT,
+    _CastingKind,
+    _CopyMode,
+    _ModeKind,
+    _NDIterFlagsKind,
+    _NDIterFlagsOp,
+    _OrderCF,
+    _OrderKACF,
+    _SupportsBuffer,
+    _SupportsFileMethods,
+    broadcast,
     # Re-exports
     busdaycalendar,
-    broadcast,
+    complexfloating,
     correlate,
     count_nonzero,
+    datetime64,
     dtype,
     einsum as c_einsum,
     flatiter,
+    float64,
+    floating,
     from_dlpack,
+    generic,
+    int_,
     interp,
+    intp,
     matmul,
     ndarray,
     nditer,
-    vecdot,
-
+    signedinteger,
+    str_,
+    timedelta64,
     # The rest
     ufunc,
-    str_,
     uint8,
-    intp,
-    int_,
-    float64,
-    timedelta64,
-    datetime64,
-    generic,
     unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    _AnyShapeT,
-    _OrderKACF,
-    _OrderCF,
-    _CastingKind,
-    _ModeKind,
-    _SupportsBuffer,
-    _SupportsFileMethods,
-    _CopyMode,
-    _NDIterFlagsKind,
-    _NDIterFlagsOp,
+    vecdot,
 )
-from numpy.lib._array_utils_impl import normalize_axis_index
-
 from numpy._typing import (
-    # Shapes
-    _ShapeLike,
-
+    ArrayLike,
     # DTypes
     DTypeLike,
-    _DTypeLike,
-    _SupportsDType,
-
     # Arrays
     NDArray,
-    ArrayLike,
     _ArrayLike,
-    _SupportsArrayFunc,
-    _NestedSequence,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
+    _ArrayLikeBytes_co,
     _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
-    _ArrayLikeBytes_co,
-    _ScalarLike_co,
-    _IntLike_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeUInt_co,
+    _DTypeLike,
     _FloatLike_co,
+    _IntLike_co,
+    _NestedSequence,
+    _ScalarLike_co,
+    # Shapes
+    _Shape,
+    _ShapeLike,
+    _SupportsArrayFunc,
+    _SupportsDType,
     _TD64Like_co,
 )
 from numpy._typing._ufunc import (
     _2PTuple,
     _PyFunc_Nin1_Nout1,
+    _PyFunc_Nin1P_Nout2P,
     _PyFunc_Nin2_Nout1,
     _PyFunc_Nin3P_Nout1,
-    _PyFunc_Nin1P_Nout2P,
 )
+from numpy.lib._array_utils_impl import normalize_axis_index
 
 __all__ = [
     "_ARRAY_API",
@@ -206,7 +203,7 @@ _IDType = TypeVar("_IDType")
 _Nin = TypeVar("_Nin", bound=int)
 _Nout = TypeVar("_Nout", bound=int)
 
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
 _Array: TypeAlias = ndarray[_ShapeT, dtype[_ScalarT]]
 _Array1D: TypeAlias = ndarray[tuple[int], dtype[_ScalarT]]
 
@@ -497,33 +494,27 @@ def array(
     like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
+#
 @overload
-def unravel_index(  # type: ignore[misc]
-    indices: _IntLike_co,
-    shape: _ShapeLike,
-    order: _OrderCF = ...,
-) -> tuple[intp, ...]: ...
-@overload
-def unravel_index(
-    indices: _ArrayLikeInt_co,
-    shape: _ShapeLike,
-    order: _OrderCF = ...,
-) -> tuple[NDArray[intp], ...]: ...
-
-@overload
-def ravel_multi_index(  # type: ignore[misc]
-    multi_index: Sequence[_IntLike_co],
-    dims: Sequence[SupportsIndex],
-    mode: _ModeKind | tuple[_ModeKind, ...] = ...,
-    order: _OrderCF = ...,
+def ravel_multi_index(
+    multi_index: SupportsLenAndGetItem[_IntLike_co],
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
 ) -> intp: ...
 @overload
 def ravel_multi_index(
-    multi_index: Sequence[_ArrayLikeInt_co],
-    dims: Sequence[SupportsIndex],
-    mode: _ModeKind | tuple[_ModeKind, ...] = ...,
-    order: _OrderCF = ...,
+    multi_index: SupportsLenAndGetItem[_ArrayLikeInt_co],
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
 ) -> NDArray[intp]: ...
+
+#
+@overload
+def unravel_index(indices: _IntLike_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[intp, ...]: ...
+@overload
+def unravel_index(indices: _ArrayLikeInt_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
 
 # NOTE: Allow any sequence of array-like objects
 @overload
@@ -536,7 +527,6 @@ def concatenate(  # type: ignore[misc]
     dtype: None = ...,
     casting: _CastingKind | None = ...
 ) -> NDArray[_ScalarT]: ...
-@overload
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: SupportsLenAndGetItem[ArrayLike],
@@ -562,7 +552,17 @@ def concatenate(
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: SupportsIndex | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+    dtype: DTypeLike = ...,
+    casting: _CastingKind | None = ...
+) -> _ArrayT: ...
+@overload
+def concatenate(
+    arrays: SupportsLenAndGetItem[ArrayLike],
+    /,
+    axis: SupportsIndex | None,
+    out: _ArrayT,
     *,
     dtype: DTypeLike = ...,
     casting: _CastingKind | None = ...
@@ -1103,7 +1103,17 @@ def busday_count(
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def busday_count(
+    begindates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    enddates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 
 # `roll="raise"` is (more or less?) equivalent to `casting="safe"`
@@ -1135,7 +1145,18 @@ def busday_offset(  # type: ignore[misc]
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: _ArrayLike[datetime64] | dt.date | _NestedSequence[dt.date],
+    offsets: _ArrayLikeTD64_co | dt.timedelta | _NestedSequence[dt.timedelta],
+    roll: L["raise"],
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
 def busday_offset(  # type: ignore[misc]
@@ -1165,7 +1186,18 @@ def busday_offset(
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def busday_offset(
+    dates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    offsets: ArrayLike | dt.timedelta | _NestedSequence[dt.timedelta],
+    roll: _RollKind,
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 
 @overload
@@ -1190,7 +1222,16 @@ def is_busday(
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def is_busday(
+    dates: ArrayLike | _NestedSequence[dt.date],
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 
 @overload

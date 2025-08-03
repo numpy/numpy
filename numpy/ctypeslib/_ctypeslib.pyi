@@ -1,69 +1,55 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
 import ctypes
-from ctypes import c_int64 as _c_intp
-
 from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
-from typing import (
-    Literal as L,
-    Any,
-    TypeAlias,
-    TypeVar,
-    Generic,
-    overload,
-    ClassVar,
-)
+from ctypes import c_int64 as _c_intp
+from typing import Any, ClassVar, Generic, Literal as L, TypeAlias, TypeVar, overload
 
 import numpy as np
 from numpy import (
-    ndarray,
+    byte,
+    double,
     dtype,
     generic,
-    byte,
-    short,
     intc,
     long,
+    longdouble,
     longlong,
+    ndarray,
+    short,
+    single,
     ubyte,
-    ushort,
     uintc,
     ulong,
     ulonglong,
-    single,
-    double,
-    longdouble,
+    ushort,
     void,
 )
 from numpy._core._internal import _ctypes
 from numpy._core.multiarray import flagsobj
 from numpy._typing import (
-    # Arrays
-    NDArray,
-    _ArrayLike,
-
-    # Shapes
-    _Shape,
-    _ShapeLike,
-
-    # DTypes
     DTypeLike,
-    _DTypeLike,
-    _VoidDTypeLike,
+    NDArray,
+    _AnyShape,
+    _ArrayLike,
     _BoolCodes,
+    _ByteCodes,
+    _DoubleCodes,
+    _DTypeLike,
+    _IntCCodes,
+    _LongCodes,
+    _LongDoubleCodes,
+    _LongLongCodes,
+    _ShapeLike,
+    _ShortCodes,
+    _SingleCodes,
     _UByteCodes,
-    _UShortCodes,
     _UIntCCodes,
     _ULongCodes,
     _ULongLongCodes,
-    _ByteCodes,
-    _ShortCodes,
-    _IntCCodes,
-    _LongCodes,
-    _LongLongCodes,
-    _SingleCodes,
-    _DoubleCodes,
-    _LongDoubleCodes,
+    _UShortCodes,
+    _VoidDTypeLike,
 )
 
 __all__ = ["load_library", "ndpointer", "c_intp", "as_ctypes", "as_array", "as_ctypes_type"]
@@ -100,9 +86,9 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
 
 class _concrete_ndptr(_ndptr[_DTypeT]):
     _dtype_: ClassVar[_DTypeT]
-    _shape_: ClassVar[tuple[int, ...]]
+    _shape_: ClassVar[_AnyShape]
     @property
-    def contents(self) -> ndarray[_Shape, _DTypeT]: ...
+    def contents(self) -> ndarray[_AnyShape, _DTypeT]: ...
 
 def load_library(libname: StrOrBytesPath, loader_path: StrOrBytesPath) -> ctypes.CDLL: ...
 

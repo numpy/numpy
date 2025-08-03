@@ -137,9 +137,9 @@ static int multiply_loop_core(
         size_t newsize;
         int overflowed = npy_mul_with_overflow_size_t(
                 &newsize, cursize, factor);
-        if (overflowed) {
-            npy_gil_error(PyExc_MemoryError,
-                      "Failed to allocate string in string multiply");
+        if (overflowed || newsize > PY_SSIZE_T_MAX) {
+            npy_gil_error(PyExc_OverflowError,
+                      "Overflow encountered in string multiply");
             goto fail;
         }
 
@@ -1736,7 +1736,7 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             size_t num_codepoints = inbuf.num_codepoints();
             npy_intp width = (npy_intp)*(npy_int64*)in2;
 
-            if (num_codepoints > (size_t)width) {
+            if ((npy_intp)num_codepoints > width) {
                 width = num_codepoints;
             }
 
@@ -1748,9 +1748,9 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                     width - num_codepoints);
             newsize += s1.size;
 
-            if (overflowed) {
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to allocate string in %s", ufunc_name);
+            if (overflowed || newsize > PY_SSIZE_T_MAX) {
+                npy_gil_error(PyExc_OverflowError,
+                              "Overflow encountered in %s", ufunc_name);
                 goto fail;
             }
 
@@ -1866,8 +1866,8 @@ zfill_strided_loop(PyArrayMethod_Context *context,
         {
             Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
             size_t in_codepoints = inbuf.num_codepoints();
-            size_t width = (size_t)*(npy_int64 *)in2;
-            if (in_codepoints > width) {
+            npy_intp width = (npy_intp)*(npy_int64*)in2;
+            if ((npy_intp)in_codepoints > width) {
                 width = in_codepoints;
             }
             // number of leading one-byte characters plus the size of the
@@ -2605,7 +2605,7 @@ add_object_and_unicode_promoters(PyObject *umath, const char* ufunc_name,
 NPY_NO_EXPORT int
 init_stringdtype_ufuncs(PyObject *umath)
 {
-    static const char *comparison_ufunc_names[6] = {
+    static const char *const comparison_ufunc_names[6] = {
             "equal", "not_equal",
             "less", "less_equal", "greater_equal", "greater",
     };
@@ -2654,7 +2654,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         return -1;
     }
 
-    const char *unary_loop_names[] = {
+    const char *const unary_loop_names[] = {
         "isalpha", "isdecimal", "isdigit", "isnumeric", "isspace",
         "isalnum", "istitle", "isupper", "islower",
     };
@@ -2874,7 +2874,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType, &PyArray_StringDType
     };
 
-    const char *strip_whitespace_names[] = {
+    const char *const strip_whitespace_names[] = {
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace",
     };
 
@@ -2898,7 +2898,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType, &PyArray_StringDType, &PyArray_StringDType
     };
 
-    const char *strip_chars_names[] = {
+    const char *const strip_chars_names[] = {
         "_lstrip_chars", "_rstrip_chars", "_strip_chars",
     };
 
@@ -3082,7 +3082,7 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_StringDType
     };
 
-    const char *partition_names[] = {"_partition", "_rpartition"};
+    const char *const partition_names[] = {"_partition", "_rpartition"};
 
     static STARTPOSITION partition_startpositions[] = {
         STARTPOSITION::FRONT, STARTPOSITION::BACK

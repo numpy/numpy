@@ -118,7 +118,10 @@ assert_type(np.polyadd(AR_O, AR_O), npt.NDArray[np.object_])
 
 assert_type(np.polysub(poly_obj, AR_i8), np.poly1d)
 assert_type(np.polysub(AR_f8, poly_obj), np.poly1d)
-assert_type(np.polysub(AR_b, AR_b), NoReturn)
+
+def test_invalid_polysub() -> None:
+    assert_type(np.polysub(AR_b, AR_b), NoReturn)
+
 assert_type(np.polysub(AR_u4, AR_b), npt.NDArray[np.unsignedinteger])
 assert_type(np.polysub(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
 assert_type(np.polysub(AR_f8, AR_i8), npt.NDArray[np.floating])

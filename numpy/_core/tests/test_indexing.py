@@ -1,18 +1,22 @@
-import sys
-import warnings
 import functools
 import operator
+import sys
+import warnings
+from itertools import product
 
 import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import array_indexing
-from itertools import product
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
-    )
+    HAS_REFCOUNT,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestIndexing:
@@ -154,6 +158,20 @@ class TestIndexing:
         arr[10:] = arr[:-10]
         actual_vals = arr[10:]
         assert_equal(actual_vals, expected_vals)
+
+    def test_gh_26844(self):
+        expected = [0, 1, 3, 3, 3]
+        a = np.arange(5)
+        a[2:][a[:-2]] = 3
+        assert_equal(a, expected)
+
+    def test_gh_26844_segfault(self):
+        # check for absence of segfault for:
+        # https://github.com/numpy/numpy/pull/26958/files#r1854589178
+        a = np.arange(5)
+        expected = [0, 1, 3, 3, 3]
+        a[2:][None, a[:-2]] = 3
+        assert_equal(a, expected)
 
     def test_ellipsis_index(self):
         a = np.array([[1, 2, 3],
@@ -765,12 +783,12 @@ class TestFancyIndexingCast:
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(ComplexWarning,
+        pytest.warns(ComplexWarning,
                      zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
-        assert_warns(ComplexWarning,
+        pytest.warns(ComplexWarning,
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
@@ -945,7 +963,7 @@ class TestMultiIndexingAutomated:
                 except ValueError:
                     raise IndexError
                 in_indices[i] = indx
-            elif indx.dtype.kind != 'b' and indx.dtype.kind != 'i':
+            elif indx.dtype.kind not in 'bi':
                 raise IndexError('arrays used as indices must be of '
                                  'integer (or boolean) type')
             if indx.ndim != 0:
@@ -1002,12 +1020,12 @@ class TestMultiIndexingAutomated:
                     # Note that originally this is could be interpreted as
                     # integer in the full integer special case.
                     raise IndexError
-            else:
-                # If the index is a singleton, the bounds check is done
-                # before the broadcasting. This used to be different in <1.9
-                if indx.ndim == 0:
-                    if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
-                        raise IndexError
+            # If the index is a singleton, the bounds check is done
+            # before the broadcasting. This used to be different in <1.9
+            elif indx.ndim == 0 and not (
+                -arr.shape[ax] <= indx < arr.shape[ax]
+            ):
+                raise IndexError
             if indx.ndim == 0:
                 # The index is a scalar. This used to be two fold, but if
                 # fancy indexing was active, the check was done later,
@@ -1333,7 +1351,8 @@ class TestBooleanIndexing:
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx1])
 
-        # This used to incorrectly give a ValueError: operands could not be broadcast together
+        # This used to incorrectly give a ValueError: operands could not be
+        # broadcast together
         idx2 = np.array([[False] * 8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "

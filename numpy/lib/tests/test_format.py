@@ -274,20 +274,25 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-import sys
 import os
+import sys
 import warnings
-import pytest
 from io import BytesIO
 
-import numpy as np
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
-    )
-from numpy.testing._private.utils import requires_memory
-from numpy.lib import format
+import pytest
 
+import numpy as np
+from numpy.lib import format
+from numpy.testing import (
+    IS_64BIT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_raises,
+    assert_raises_regex,
+)
+from numpy.testing._private.utils import requires_memory
 
 # Generate some basic arrays to test with.
 scalars = [
@@ -378,9 +383,6 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
     ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True),
      'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
@@ -560,6 +562,8 @@ def test_python2_python3_interoperability():
     assert_array_equal(data, np.ones(2))
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
@@ -623,17 +627,18 @@ def test_pickle_disallow(tmpdir):
                   allow_pickle=False)
 
 @pytest.mark.parametrize('dt', [
-    np.dtype(np.dtype([('a', np.int8),
-                       ('b', np.int16),
-                       ('c', np.int32),
-                      ], align=True),
-             (3,)),
-    np.dtype([('x', np.dtype({'names': ['a', 'b'],
+    # Not testing a subarray only dtype, because it cannot be attached to an array
+    # (and would fail the test as of writing this.)
+    np.dtype([('a', np.int8),
+              ('b', np.int16),
+              ('c', np.int32),
+             ], align=True),
+    np.dtype([('x', np.dtype(({'names': ['a', 'b'],
                               'formats': ['i1', 'i1'],
                               'offsets': [0, 4],
                               'itemsize': 8,
                              },
-                    (3,)),
+                    (3,))),
                (4,),
              )]),
     np.dtype([('x',
@@ -1002,7 +1007,7 @@ def test_unicode_field_names(tmpdir):
 
     # notifies the user that 3.0 is selected
     with open(fname, 'wb') as f:
-        with assert_warns(UserWarning):
+        with pytest.warns(UserWarning):
             format.write_array(f, arr, version=None)
 
 def test_header_growth_axis():
@@ -1035,7 +1040,7 @@ def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
-    with assert_warns(UserWarning):
+    with pytest.warns(UserWarning):
         np.save(buf, arr)
     buf.seek(0)
 

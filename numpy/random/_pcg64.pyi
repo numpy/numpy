@@ -1,7 +1,7 @@
 from typing import TypedDict, type_check_only
 
-from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import _ArrayLikeInt_co
+from numpy.random.bit_generator import BitGenerator, SeedSequence
 
 @type_check_only
 class _PCG64Internal(TypedDict):

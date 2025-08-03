@@ -1,7 +1,7 @@
 from collections.abc import Iterable
-from typing import Any, TypeAlias, TypeVar, overload, Literal
+from typing import Any, Literal, TypeAlias, TypeVar, overload
 
-from numpy._typing import NDArray, DTypeLike, _SupportsArrayFunc
+from numpy._typing import DTypeLike, NDArray, _SupportsArrayFunc
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 

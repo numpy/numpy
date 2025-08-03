@@ -1,37 +1,36 @@
 from typing import (
-    Literal as L,
-    TypeAlias,
-    overload,
     Any,
-    SupportsInt,
-    SupportsIndex,
-    TypeVar,
+    Literal as L,
     NoReturn,
+    SupportsIndex,
+    SupportsInt,
+    TypeAlias,
+    TypeVar,
+    overload,
 )
 
 import numpy as np
 from numpy import (
-    poly1d,
-    unsignedinteger,
-    signedinteger,
-    floating,
+    complex128,
     complexfloating,
+    float64,
+    floating,
     int32,
     int64,
-    float64,
-    complex128,
     object_,
+    poly1d,
+    signedinteger,
+    unsignedinteger,
 )
-
 from numpy._typing import (
-    NDArray,
     ArrayLike,
+    NDArray,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUInt_co,
 )
 
 _T = TypeVar("_T")
@@ -156,8 +155,19 @@ def polyfit(
     x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co,
     deg: SupportsIndex | SupportsInt,
+    rcond: float | None,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = ...,
+    cov: bool | L["unscaled"] = ...,
+) -> _5Tup[NDArray[float64]]: ...
+@overload
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: SupportsIndex | SupportsInt,
     rcond: float | None = ...,
-    full: L[True] = ...,
+    *,
+    full: L[True],
     w: _ArrayLikeFloat_co | None = ...,
     cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[float64]]: ...
@@ -166,8 +176,19 @@ def polyfit(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co,
     deg: SupportsIndex | SupportsInt,
+    rcond: float | None,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = ...,
+    cov: bool | L["unscaled"] = ...,
+) -> _5Tup[NDArray[complex128]]: ...
+@overload
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: SupportsIndex | SupportsInt,
     rcond: float | None = ...,
-    full: L[True] = ...,
+    *,
+    full: L[True],
     w: _ArrayLikeFloat_co | None = ...,
     cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[complex128]]: ...

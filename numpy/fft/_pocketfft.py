@@ -33,12 +33,19 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 import functools
 import warnings
 
+from numpy._core import (
+    asarray,
+    conjugate,
+    empty_like,
+    overrides,
+    reciprocal,
+    result_type,
+    sqrt,
+    take,
+)
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import (asarray, empty_like, result_type,
-                         conjugate, take, sqrt, reciprocal)
-from . import _pocketfft_umath as pfu
-from numpy._core import overrides
 
+from . import _pocketfft_umath as pfu
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
@@ -198,8 +205,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
     >>> t = np.arange(256)
     >>> sp = np.fft.fft(np.sin(t))
     >>> freq = np.fft.fftfreq(t.shape[-1])
-    >>> plt.plot(freq, sp.real, freq, sp.imag)
-    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+    >>> _ = plt.plot(freq, sp.real, freq, sp.imag)
     >>> plt.show()
 
     """

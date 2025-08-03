@@ -233,7 +233,8 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", "--vsenv", "..", f'--native-file={os.fspath(native_file_name)}'],
+        subprocess.check_call(["meson", "setup", "--vsenv",
+                               "..", f'--native-file={os.fspath(native_file_name)}'],
                               cwd=build_dir
                               )
 

@@ -9,8 +9,6 @@
 // TODO(@seiko2plus):
 // - covers half-precision operations that being supported by numpy/halffloat.h
 // - add support for arithmetic operations
-// - enables __fp16 causes massive FP exceptions on aarch64,
-//   needs a deep investigation
 
 namespace np {
 
@@ -19,42 +17,19 @@ namespace np {
 
 /// Provides a type that implements 16-bit floating point (half-precision).
 /// This type is ensured to be 16-bit size.
-#if 1 // ndef __ARM_FP16_FORMAT_IEEE
 class Half final {
   public:
-    /// Whether `Half` has a full native HW support.
-    static constexpr bool kNative = false;
-    /// Whether `Half` has a native HW support for single/double conversion.
-    template<typename T>
-    static constexpr bool kNativeConversion = (
-        (
-            std::is_same_v<T, float> &&
-        #if defined(NPY_HAVE_FP16) || defined(NPY_HAVE_VSX3)
-            true
-        #else
-            false
-        #endif
-        ) || (
-            std::is_same_v<T, double> &&
-        #if defined(NPY_HAVE_AVX512FP16) || (defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE))
-            true
-        #else
-            false
-        #endif
-        )
-    );
-
     /// Default constructor. initialize nothing.
     Half() = default;
 
     /// Construct from float
     /// If there are no hardware optimization available, rounding will always
     /// be set to ties to even.
-    explicit Half(float f)
+    NPY_FINLINE explicit Half(float f)
     {
     #if defined(NPY_HAVE_FP16)
         __m128 mf = _mm_load_ss(&f);
-        bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_cvtps_ph(mf, _MM_FROUND_TO_NEAREST_INT)));
+        bits_ = _mm_extract_epi16(_mm_cvtps_ph(mf, _MM_FROUND_TO_NEAREST_INT), 0);
     #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX_ASM)
         __vector float vf32 = vec_splats(f);
         __vector unsigned short vf16;
@@ -64,6 +39,9 @@ class Half final {
         #else
         bits_ = vec_extract(vf16, 0);
         #endif
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        __fp16 f16 = __fp16(f);
+        bits_ = BitCast<uint16_t>(f16);
     #else
         bits_ = half_private::FromFloatBits(BitCast<uint32_t>(f));
     #endif
@@ -72,20 +50,23 @@ class Half final {
     /// Construct from double.
     /// If there are no hardware optimization available, rounding will always
     /// be set to ties to even.
-    explicit Half(double f)
+    NPY_FINLINE explicit Half(double f)
     {
     #if defined(NPY_HAVE_AVX512FP16)
         __m128d md = _mm_load_sd(&f);
-        bits_ = static_cast<uint16_t>(_mm_cvtsi128_si32(_mm_castph_si128(_mm_cvtpd_ph(md))));
+        bits_ = _mm_extract_epi16(_mm_castph_si128(_mm_cvtpd_ph(md)), 0);
     #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
         __asm__ __volatile__ ("xscvdphp %x0,%x1" : "=wa" (bits_) : "wa" (f));
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        __fp16 f16 = __fp16(f);
+        bits_ = BitCast<uint16_t>(f16);
     #else
         bits_ = half_private::FromDoubleBits(BitCast<uint64_t>(f));
     #endif
     }
 
     /// Cast to float
-    explicit operator float() const
+    NPY_FINLINE explicit operator float() const
     {
     #if defined(NPY_HAVE_FP16)
         float ret;
@@ -99,13 +80,15 @@ class Half final {
                              : "=wa"(vf32)
                              : "wa"(vec_splats(bits_)));
         return vec_extract(vf32, 0);
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        return float(BitCast<__fp16>(bits_));
     #else
         return BitCast<float>(half_private::ToFloatBits(bits_));
     #endif
     }
 
     /// Cast to double
-    explicit operator double() const
+    NPY_FINLINE explicit operator double() const
     {
     #if defined(NPY_HAVE_AVX512FP16)
         double ret;
@@ -117,6 +100,8 @@ class Half final {
                              : "=wa"(f64)
                              : "wa"(bits_));
         return f64;
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        return double(BitCast<__fp16>(bits_));
     #else
         return BitCast<double>(half_private::ToDoubleBits(bits_));
     #endif
@@ -223,40 +208,6 @@ class Half final {
   private:
     uint16_t bits_;
 };
-#else // __ARM_FP16_FORMAT_IEEE
-class Half final {
-  public:
-    static constexpr bool kNative = true;
-    template<typename T>
-    static constexpr bool kNativeConversion = (
-        std::is_same_v<T, float> || std::is_same_v<T, double>
-    );
-    Half() = default;
-    constexpr Half(__fp16 h) : half_(h)
-    {}
-    constexpr operator __fp16() const
-    { return half_; }
-    static Half FromBits(uint16_t bits)
-    {
-        Half h;
-        h.half_ = BitCast<__fp16>(bits);
-        return h;
-    }
-    uint16_t Bits() const
-    { return BitCast<uint16_t>(half_); }
-    constexpr bool Less(Half r) const
-    { return half_ < r.half_; }
-    constexpr bool LessEqual(Half r) const
-    { return half_ <= r.half_; }
-    constexpr bool Equal(Half r) const
-    { return half_ == r.half_; }
-    constexpr bool IsNaN() const
-    { return half_ != half_; }
-
-  private:
-    __fp16 half_;
-};
-#endif // __ARM_FP16_FORMAT_IEEE
 
 /// @} cpp_core_types
 

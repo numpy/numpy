@@ -7,6 +7,7 @@ _Shape2D: TypeAlias = tuple[int, int]
 
 mat: np.matrix[_Shape2D, np.dtype[np.int64]]
 ar_f8: npt.NDArray[np.float64]
+ar_ip: npt.NDArray[np.intp]
 
 assert_type(mat * 5, np.matrix[_Shape2D, Any])
 assert_type(5 * mat, np.matrix[_Shape2D, Any])
@@ -50,8 +51,8 @@ assert_type(mat.any(out=ar_f8), npt.NDArray[np.float64])
 assert_type(mat.all(out=ar_f8), npt.NDArray[np.float64])
 assert_type(mat.max(out=ar_f8), npt.NDArray[np.float64])
 assert_type(mat.min(out=ar_f8), npt.NDArray[np.float64])
-assert_type(mat.argmax(out=ar_f8), npt.NDArray[np.float64])
-assert_type(mat.argmin(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.argmax(out=ar_ip), npt.NDArray[np.intp])
+assert_type(mat.argmin(out=ar_ip), npt.NDArray[np.intp])
 assert_type(mat.ptp(out=ar_f8), npt.NDArray[np.float64])
 
 assert_type(mat.T, np.matrix[_Shape2D, np.dtype[np.int64]])

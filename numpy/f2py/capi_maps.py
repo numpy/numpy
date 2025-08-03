@@ -7,19 +7,21 @@ terms of the NumPy License.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 from . import __version__
+
 f2py_version = __version__.version
 
 import copy
-import re
 import os
-from .crackfortran import markoutercomma
+import re
+
 from . import cb_rules
-from ._isocbind import iso_c_binding_map, isoc_c2pycode_map, iso_c2py_map
+from ._isocbind import iso_c2py_map, iso_c_binding_map, isoc_c2pycode_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
+from .crackfortran import markoutercomma
 
 __all__ = [
     'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',
@@ -229,9 +231,8 @@ def getctype(var):
                         errmess('getctype: "%s(kind=%s)" is mapped to C "%s" (to override define dict(%s = dict(%s="<C typespec>")) in %s/.f2py_f2cmap file).\n'
                                 % (typespec, var['kindselector']['kind'], ctype,
                                    typespec, var['kindselector']['kind'], os.getcwd()))
-    else:
-        if not isexternal(var):
-            errmess(f'getctype: No C-type found in "{var}", assuming void.\n')
+    elif not isexternal(var):
+        errmess(f'getctype: No C-type found in "{var}", assuming void.\n')
     return ctype
 
 
@@ -767,10 +768,9 @@ return_value=
 void
 #endif
 """
-    else:
-        if hasnote(rout):
-            ret['note'] = rout['note']
-            rout['note'] = ['See elsewhere.']
+    elif hasnote(rout):
+        ret['note'] = rout['note']
+        rout['note'] = ['See elsewhere.']
     nofargs = 0
     nofoptargs = 0
     if 'args' in rout and 'vars' in rout:

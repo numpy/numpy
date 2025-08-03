@@ -1,18 +1,24 @@
+import subprocess
 import sys
+import textwrap
+import warnings
+
 import pytest
 
-import textwrap
-import subprocess
-
 import numpy as np
-import numpy._core.umath as ncu
 import numpy._core._multiarray_tests as _multiarray_tests
-from numpy import array, arange, nditer, all
+import numpy._core.umath as ncu
+from numpy import all, arange, array, nditer
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises,
-    IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles,
-    )
+    HAS_REFCOUNT,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 from numpy.testing._private.utils import requires_memory
+
 
 def iter_multi_index(i):
     ret = []
@@ -77,8 +83,6 @@ def test_iter_refcount():
     it2 = None
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
-
-    del it2  # avoid pyflakes unused variable warning
 
 def test_iter_best_order():
     # The iterator should always find the iteration order
@@ -854,7 +858,7 @@ def test_iter_nbo_align_contig():
 
     # Unaligned input
     a = np.zeros((6 * 4 + 1,), dtype='i1')[1:]
-    a.dtype = 'f4'
+    a = a.view('f4')
     a[:] = np.arange(6, dtype='f4')
     assert_(not a.flags.aligned)
     # Without 'aligned', shouldn't copy
@@ -1482,7 +1486,7 @@ def test_iter_copy_casts_structured2():
     # Array of two structured scalars:
     for res in res1, res2:
         # Cast to tuple by getitem, which may be weird and changeable?:
-        assert type(res["a"][0]) == tuple
+        assert isinstance(res["a"][0], tuple)
         assert res["a"][0] == (1, 1)
 
     for res in res1, res2:
@@ -1799,7 +1803,7 @@ def test_iter_buffering():
     arrays.append(np.arange(10, dtype='f4'))
     # Unaligned array
     a = np.zeros((4 * 16 + 1,), dtype='i1')[1:]
-    a.dtype = 'i4'
+    a = a.view('i4')
     a[:] = np.arange(16, dtype='i4')
     arrays.append(a)
     # 4-D F-order array
@@ -1895,8 +1899,8 @@ def test_iter_buffered_cast_byteswapped():
 
     assert_equal(a, 2 * np.arange(10, dtype='f4'))
 
-    with suppress_warnings() as sup:
-        sup.filter(np.exceptions.ComplexWarning)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', np.exceptions.ComplexWarning)
 
         a = np.arange(10, dtype='f8')
         a = a.view(a.dtype.newbyteorder()).byteswap()
@@ -3306,13 +3310,10 @@ def test_warn_noclose():
     a = np.arange(6, dtype='f4')
     au = a.byteswap()
     au = au.view(au.dtype.newbyteorder())
-    with suppress_warnings() as sup:
-        sup.record(RuntimeWarning)
+    with pytest.warns(RuntimeWarning):
         it = np.nditer(au, [], [['readwrite', 'updateifcopy']],
-                        casting='equiv', op_dtypes=[np.dtype('f4')])
+                       casting='equiv', op_dtypes=[np.dtype('f4')])
         del it
-        assert len(sup.log) == 1
-
 
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
         [("i", "O"), ("O", "i"),  # most simple cases
