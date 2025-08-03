@@ -742,6 +742,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
 def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
+    axes = [ax % a.ndim for ax in axes]
     # Combine the two, but in reverse, to end with the first axis given.
     axes_and_s = list(zip(axes, s))[::-1]
     # We try to use in-place calculations where possible, which is
@@ -760,7 +761,7 @@ def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
             elif this_out is not None and n < this_out.shape[axis]:
                 # For an intermediate step where we return fewer elements, we
                 # can use a smaller view of the previous array.
-                this_out = this_out[(slice(None,),)*(axis-1) + (slice(n),)]
+                this_out = this_out[(slice(None,),)*(axis) + (slice(n),)]
             else:
                 # If we need more elements, we need a new array.
                 # TODO: in principle, could see if out if big enough.
