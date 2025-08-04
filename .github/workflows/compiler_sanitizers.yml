@@ -132,7 +132,7 @@ jobs:
           pip install -r requirements/ci_requirements.txt
           pip install -r requirements/test_requirements.txt
       - name: Build numpy with UndefinedBehaviorSanitizer
-        run: python -m spin build -j2 -- -Db_sanitize=undefined -Db_lundef=false
+        run: python -m spin build -j2 -- -Db_sanitize=address,undefined -Db_lundef=false
       - name: Test
         run: |
           # pass -s to pytest to see UBSAN errors and warnings, otherwise pytest captures them
