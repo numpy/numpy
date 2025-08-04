@@ -41,7 +41,8 @@ jobs:
         echo "$PYENV_SHIMS" >> $GITHUB_PATH
         echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
     - name: Check pyenv is working
-      run: pyenv --version
+      run:
+        pyenv --version
     - name: Set up LLVM
       run: |
         brew install llvm@19
@@ -62,7 +63,8 @@ jobs:
         # xdist captures stdout/stderr, but we want the ASAN output
         pip uninstall -y pytest-xdist
     - name: Build
-      run: python -m spin build -j2 -- -Db_sanitize=address,undefined -Db_lundef=false
+      run:
+        python -m spin build -j2 -- -Db_sanitize=address,undefined -Db_lundef=false
     - name: Test
       run: |
         # pass -s to pytest to see ASAN errors and warnings, otherwise pytest captures them
@@ -76,8 +78,8 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nascheme/numpy-tsan:3.14t
-      options: --shm-size=2g # increase memory for large matrix ops
+        image: ghcr.io/nascheme/numpy-tsan:3.14t
+        options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
       - uses: actions/checkout@v4
