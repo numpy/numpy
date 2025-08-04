@@ -122,9 +122,9 @@ jobs:
           echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
       - name: Check pyenv is working
         run: pyenv --version
-      - name: Install latest python version for env
+      - name: Build python with address sanitizer
         run: |
-          pyenv install 3.14t
+          CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14t
           pyenv global 3.14t
       - name: Install dependencies
         run: |
