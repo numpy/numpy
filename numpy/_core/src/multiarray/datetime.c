@@ -3118,15 +3118,18 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
  */
 NPY_NO_EXPORT int
 cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
-                          PyArray_DatetimeMetaData *dst_meta,
-                          npy_timedelta src_dt,
-                          npy_timedelta *dst_dt)
+                            PyArray_DatetimeMetaData *dst_meta,
+                            npy_timedelta src_dt,
+                            npy_timedelta *dst_dt)
 {
     npy_int64 num = 0, denom = 0;
 
-    /* If the metadata is the same, short-circuit the conversion */
-    if (src_meta->base == dst_meta->base &&
-            src_meta->num == dst_meta->num) {
+    /*
+     * If the metadata is the same or if src_dt is NAT, short-circuit
+     * the conversion.
+     */
+    if ((src_meta->base == dst_meta->base && src_meta->num == dst_meta->num)
+            || src_dt == NPY_DATETIME_NAT) {
         *dst_dt = src_dt;
         return 0;
     }

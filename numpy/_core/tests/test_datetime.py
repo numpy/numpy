@@ -844,6 +844,21 @@ class TestDateTime:
         a = np.array([-1, 'NaT', 1234567], dtype='<m')
         assert_equal(str(a), "[     -1   'NaT' 1234567]")
 
+    def test_timedelta_array_with_nats(self):
+        # Regression test for gh-29497.
+        x = np.array([np.timedelta64('nat'),
+                      np.timedelta64('nat', 's'),
+                      np.timedelta64('nat', 'ms'),
+                      np.timedelta64(123, 'ms')])
+        for td in x[:3]:
+            assert np.isnat(td)
+
+    def test_timedelta_array_nat_assignment(self):
+        # Regression test for gh-29497.
+        x = np.zeros(3, dtype='m8[ms]')
+        x[1] = np.timedelta64('nat', 's')
+        assert np.isnat(x[1])
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
