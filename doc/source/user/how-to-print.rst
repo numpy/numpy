@@ -6,7 +6,7 @@
 
 
 This page explains how to control the formatting of printed NumPy arrays.
-Note that these printing options apply only to arrays, not to scalars as explained in :func:`numpy.set_printoptions`.
+Note that these printing options apply only to arrays, not to scalars.
 
 Defining printing options
 =========================
@@ -38,6 +38,8 @@ Use :func:`numpy.printoptions` as a context manager to temporarily override prin
     ...     print(arr)
     [0.15 0.18 0.17]
 
+
+All keywords that apply to :func:`numpy.set_printoptions` also apply to :func:`numpy.printoptions`.
 
 
 Changing the number of digits of precision
@@ -101,7 +103,7 @@ Applying custom formatting functions
 You can apply custom formatting functions to specific or all data types using ``formatter`` keyword.
 See :func:`numpy.set_printoptions` for more details on supported format keys.
 
-For example, to format datetime64 value with a custom function:
+For example, to format `datetime64` values with a custom function:
 
     >>> arr = np.array([np.datetime64("2025-01-01"), np.datetime64("2024-01-01")])
     >>> with np.printoptions(formatter={"datetime":lambda x: f"(Year: {x.item().year}, Month: {x.item().month})"}):
