@@ -84,21 +84,22 @@ class TestFromtextfile:
 
         with pytest.warns(DeprecationWarning):
             result = np.ma.mrecords.fromtextfile(textfile, delimitor=';')
-# class TestMaxMin:
-#     def test_maximum_too_many_args(self):
-#         a = np.array([1])
-#         b = np.array([2])
-#         out = np.empty_like(a)
-#         with pytest.warns(DeprecationWarning, match=r"Passing more than 2 positional arguments to np\.maximum is deprecated"):
-#             result = np.maximum(a, b, out)
-#         np.testing.assert_array_equal(result, [2])
 
-#     def test_minimum_too_many_args(self):
-#         a = np.array([1])
-#         b = np.array([2])
-#         out = np.empty_like(a)
+class TestMaxMin:
+    def test_maximum_too_many_args(self):
+        a = np.array([1])
+        b = np.array([2])
+        out = np.empty_like(a)
+        with pytest.warns(DeprecationWarning, match=r"Passing more than 2 positional arguments to np\.maximum is deprecated"):
+            result = np.maximum(a, b, out)
+        np.testing.assert_array_equal(result, [2])
 
-#         with pytest.warns(DeprecationWarning, match=r"Passing more than 2 positional arguments to np\.minimum is deprecated"):
-#             result = np.minimum(a, b, out)
+    def test_minimum_too_many_args(self):
+        a = np.array([1])
+        b = np.array([2])
+        out = np.empty_like(a)
 
-#         np.testing.assert_array_equal(result, [1])
+        with pytest.warns(DeprecationWarning, match=r"Passing more than 2 positional arguments to np\.minimum is deprecated"):
+            result = np.minimum(a, b, out)
+
+        np.testing.assert_array_equal(result, [1])
