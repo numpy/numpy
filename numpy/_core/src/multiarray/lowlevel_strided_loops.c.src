@@ -905,11 +905,18 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 static GCC_CAST_OPT_LEVEL int
 @prefix@_check_same_value_@name1@_to_@name2@(@rtype1@ src_value) {
 
-    int src_isnan = isnan((long double)_TO_RTYPE1(src_value));
-    int src_isinf = isinf((long double)_TO_RTYPE1(src_value));
+    /* 1. NaN/Infs always work for float to float and otherwise never */
+#if (@is_float1@ || @is_emu_half1@ || @is_double1@ || @is_native_half1@)
+    if (!npy_isfinite(_TO_RTYPE1(src_value))) {
+#       if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
+             return 0;  /* float to float can preserve NaN/Inf */
+#       else
+             _RETURN_SAME_VALUE_FAILURE;  /* cannot preserve NaN/Inf */
+#       endif
+    }
+#endif
     /*
-     * 1. Check that the src does not overflow the dst.
-     *    Ignore inf since it does not compare well
+     * 2. Check that the src does not overflow the dst.
      *    This is complicated by a warning that, for instance, int8 cannot
      *    overflow int64max
      */
@@ -920,30 +927,18 @@ static GCC_CAST_OPT_LEVEL int
 #   endif
 #   pragma GCC diagnostic ignored "-Wtautological-compare"
 #   endif
-#if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
-    if (!src_isinf) {
-#endif
-#      if !@is_bool1@
-       if (!src_isnan && _TO_RTYPE1(src_value) > @type2max@) {
-            _RETURN_SAME_VALUE_FAILURE;
-       }
-#      if !@is_unsigned1@
-       if (!src_isnan && _TO_RTYPE1(src_value) < @type2min@) {
-            _RETURN_SAME_VALUE_FAILURE;
-       }
-#      endif
-#      endif /* !is_bool1 */
-#   if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
-    }
-#   endif
-    /* 2. Check inf, nan with a non-float dst */
-#   if (!@is_float2@ && !@is_emu_half2@ && !@is_double2@ && !@is_native_half2@)
-        if (src_isnan || src_isinf) {
+#  if !@is_bool1@
+   if (_TO_RTYPE1(src_value) > @type2max@) {
         _RETURN_SAME_VALUE_FAILURE;
-    }
-#   endif
+   }
+#  if !@is_unsigned1@
+   if (_TO_RTYPE1(src_value) < @type2min@) {
+        _RETURN_SAME_VALUE_FAILURE;
+   }
+#  endif
+#  endif /* !is_bool1 */
     /* 3. Check that the value can round trip exactly */
-    if (!src_isnan && !src_isinf && src_value != _ROUND_TRIP(src_value)) {
+    if (src_value != _ROUND_TRIP(src_value)) {
         _RETURN_SAME_VALUE_FAILURE;
     }
 #   ifdef __GNUC__
