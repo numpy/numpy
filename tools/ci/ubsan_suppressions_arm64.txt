@@ -32,11 +32,13 @@ pointer-overflow:numpy/random/bit_generator.pyx.c
 float-cast-overflow:_core/src/multiarray/lowlevel_strided_loops.c.src
 
 # flagged in CI - call to function through pointer to incorrect function type
-function:*
-# function:_core/src/common/cblasfuncs.c
+# Many functions in the modules/files listed below cause undefined behavior in CI
+# general disable this check until further investigation, but keep the specific files
+# as a starting point for resolving the checks later
+function:_core/src/*
+function:numpy/random/*
+# function:_core/src/common/cblasfunc.c
 # function:_core/src/common/npy_argparse.c
-# function:_core/src/multiarray/*
-# function:_core/src/umath/*
 # function:_core/src/multiarray/number.c
 # function:_core/src/multiarray/ctors.c
 # function:_core/src/multiarray/convert_datatype.c
@@ -45,7 +47,5 @@ function:*
 # function:_core/src/multiarray/getset.c
 # function:_core/src/multiarray/scalarapi.c
 # function:_core/src/multiarray/scalartypes.c.src
-
-# Many functions in random cause undefined behavior in CI before tests are run
-# further investigation needed
-function:numpy/random/*
+# function:_core/src/umath/*
+# function:numpy/random/*
