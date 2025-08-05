@@ -758,6 +758,29 @@ def array_split(ary, indices_or_sections, axis=0):
     into n sections, it returns l % n sub-arrays of size l//n + 1
     and the rest of size l//n.
 
+    Parameters
+    ----------
+    ary : ndarray
+        Array to be divided into sub-arrays.
+    indices_or_sections : int, float, or 1-D array
+        If `indices_or_sections` is an integer, N, the array will be divided
+        into N equal arrays along `axis`. Unlike `split`, the sections do not
+        have to be of equal size.
+
+        If `indices_or_sections` is a floating-point number, it will be
+        truncated towards zero (equivalent to ``int()``) before splitting.
+        For example, ``3.9`` is treated as ``3``.
+
+        If `indices_or_sections` is a 1-D array of sorted integers, the entries
+        indicate where along `axis` the array is split.
+    axis : int, optional
+        The axis along which to split, default is 0.
+
+    Returns
+    -------
+    sub-arrays : list of ndarrays
+        A list of sub-arrays as views into `ary`.
+
     See Also
     --------
     split : Split array into multiple sub-arrays of equal size.
@@ -767,11 +790,17 @@ def array_split(ary, indices_or_sections, axis=0):
     >>> import numpy as np
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
-    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+    [array([0., 1., 2.]), array([3., 4., 5.]), array([6., 7.])]
 
     >>> x = np.arange(9)
     >>> np.array_split(x, 4)
     [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
+
+    Float inputs are truncated to integers:
+
+    >>> x = np.arange(10)
+    >>> np.array_split(x, 3.9)  # Treated as 3
+    [array([0, 1, 2, 3]), array([4, 5, 6]), array([7, 8, 9])]
 
     """
     try:
