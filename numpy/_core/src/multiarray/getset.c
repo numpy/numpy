@@ -518,6 +518,18 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
 }
 
 static int
+non_unique_reference(PyObject *lhs)
+{
+    // Return 1 if we have a guaranteed non-unique reference
+    // If 0 the object can be unique or non-unique
+#if defined(PYPY_VERSION)
+    // on pypy we cannot use reference counting
+    return 0;
+#endif
+    return Py_REFCNT(lhs) > 1;
+}
+
+static int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     if (arg == NULL) {
@@ -526,13 +538,10 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-#if !defined(PYPY_VERSION)
-    // On PyPy we skip the warning because we cannot rely on reference counts
-    // to be replaced with PyUnstable_Object_IsUniquelyReferenced https://github.com/python/cpython/pull/133144
-    int unique_reference = (Py_REFCNT(self) == 1);
-
-    if (PyArray_CheckExact(self) && (!unique_reference)) {
+    if (PyArray_CheckExact(self) && (non_unique_reference((PyObject *)self))) {
          // this will not emit deprecation warnings for all cases, but for most it will
+         // we skip unique references, so that we will not get a deprecation warning
+         // when array.view(new_dtype) is called
          /* DEPRECATED 2025-06-20, NumPy 2.4 */
          int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
                     "Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.\n"
@@ -542,7 +551,6 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
             return -1;
         }
     }
-#endif
     return array_descr_set_internal(self, arg);
 }
 
