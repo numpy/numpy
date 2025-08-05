@@ -4368,6 +4368,19 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_INCREF(tmp);
             PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
         }
+
+        /* Extra positional args but *no* keywords */
+        /* DEPRECATED NumPy 2.3.0, 2025-08-03 */
+        if (strcmp(ufunc->name, "maximum") == 0) {
+            DEPRECATE("Passing more than 2 positional arguments to np.maximum "
+                        "is deprecated; use out=keyword or np.maximum.reduce.");
+        }
+        /* DEPRECATED NumPy 2.3.0, 2025-08-03 */
+        else if (strcmp(ufunc->name, "minimum") == 0) {
+            DEPRECATE("Passing more than 2 positional arguments to np.minimum "
+                    "is deprecated; use out=keyword or np.minimum.reduce.");
+        }
+        
         if (all_none) {
             Py_SETREF(full_args.out, NULL);
         }
