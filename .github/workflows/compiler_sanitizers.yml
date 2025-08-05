@@ -89,7 +89,7 @@ jobs:
         run: pip uninstall -y pytest-xdist
 
       - name: Build NumPy with ThreadSanitizer
-        run: python -m spin build -j2 -- -Db_sanitize=thread
+        run: python -m spin build -- -Db_sanitize=thread
 
       - name: Run tests under prebuilt TSAN container
         run: |
