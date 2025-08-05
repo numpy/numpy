@@ -2586,7 +2586,7 @@ static PyObject* array__set_dtype(PyObject *self, PyObject *args)
 {
     int r = array_descr_set_internal((PyArrayObject *)self, args);
 
-    if (r) {
+    if (r < 0) {
         return NULL;
     }
     Py_RETURN_NONE;

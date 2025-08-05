@@ -375,7 +375,7 @@ array_nbytes_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
  * (contiguous or fortran) with compatible dimensions The shape and strides
  * will be adjusted in that case as well.
  */
-int
+NPY_NO_EXPORT int
 array_descr_set_internal(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
@@ -517,7 +517,7 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
     return -1;
 }
 
-int
+static int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     if (arg == NULL) {
