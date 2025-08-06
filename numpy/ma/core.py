@@ -3513,12 +3513,11 @@ class MaskedArray(ndarray):
 
     @shape.setter
     def shape(self, shape):
-        # how can we do this with the deprecation? maybe this warning here, and then use an internal setter?
         super(MaskedArray, type(self)).shape.__set__(self, shape)
         # Cannot use self._mask, since it may not (yet) exist when a
         # masked matrix sets the shape.
         if getmask(self) is not nomask:
-            self._mask.shape = self.shape
+            self._mask = self._mask.reshape(self.shape)
 
     def __setmask__(self, mask, copy=False):
         """
