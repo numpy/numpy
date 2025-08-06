@@ -770,7 +770,7 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
     binomial->psave = p;
     binomial->has_binomial = 1;
     binomial->q = q = 1.0 - p;
-    binomial->r = qn = exp(n * log(q));
+    binomial->r = qn = exp(n * log1p(-p));
     binomial->c = np = n * p;
     binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
   } else {
