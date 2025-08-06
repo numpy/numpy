@@ -105,17 +105,17 @@ class TestBinomial:
         sample_size = 20000000
         x = random.binomial(n, p, size=sample_size)
         sample_mean = x.mean()
-        expected_mean = n*p
-        sigma = np.sqrt(n*p*(1 - p)/sample_size)
+        expected_mean = n * p
+        sigma = np.sqrt(n * p * (1 - p) / sample_size)
         # Note: the parameters were chosen so that expected_mean - 6*sigma
         # is a positive value.  The first `assert` below validates that
         # assumption (in case someone edits the parameters in the future).
         # The second `assert` is the actual test.
-        low_bound = expected_mean - 6*sigma
+        low_bound = expected_mean - 6 * sigma
         assert low_bound > 0, "bad test params: 6-sigma lower bound is negative"
         test_msg = (f"sample mean {sample_mean} deviates from the expected mean "
                     f"{expected_mean} by more than 6*sigma")
-        assert abs(expected_mean - sample_mean) < 6*sigma, test_msg
+        assert abs(expected_mean - sample_mean) < 6 * sigma, test_msg
 
 
 class TestMultinomial:
