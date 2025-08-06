@@ -4370,15 +4370,18 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
 
         /* Extra positional args but *no* keywords */
-        /* DEPRECATED NumPy 2.3.0, 2025-08-03 */
-        if (strcmp(ufunc->name, "maximum") == 0) {
-            DEPRECATE("Passing more than 2 positional arguments to np.maximum "
-                        "is deprecated; use out=keyword or np.maximum.reduce.");
-        }
-        /* DEPRECATED NumPy 2.3.0, 2025-08-03 */
-        else if (strcmp(ufunc->name, "minimum") == 0) {
-            DEPRECATE("Passing more than 2 positional arguments to np.minimum "
-                    "is deprecated; use out=keyword or np.minimum.reduce.");
+        /* DEPRECATED NumPy 2.4, 2025-08 */
+        if (strcmp(ufunc->name, "maximum") == 0 || strcmp(ufunc->name, "minimum") == 0) {
+            const char *which = ufunc->name; // "maximum" or "minimum"
+            char msg[256];
+            snprintf(msg, sizeof(msg),
+                "Passing more than 2 positional arguments to np.%s "
+                "is deprecated; use out=keyword or np.%s.reduce.",
+                which, which);
+            
+            if (DEPRECATE(msg) < 0 && PyErr_Occurred()) {
+                return NULL;
+            }
         }
         
         if (all_none) {
