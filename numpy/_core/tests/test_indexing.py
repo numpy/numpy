@@ -1492,8 +1492,14 @@ class TestFlatiterIndexing:
         assert_array_equal(a.flat[[True, 1]], np.array([1, 1]))
 
         with pytest.raises(IndexError,
-                           match="boolean index did not match indexed flat iterator"):
+                           match="boolean indices for iterators are not supported"):
             a.flat[[True, True]]
+
+        a = np.arange(3)
+        with pytest.raises(IndexError,
+                           match="boolean indices for iterators are not supported"):
+            a.flat[[True, False, True]]
+        assert_array_equal(a.flat[np.asarray([True, False, True])], np.array([0, 2]))
 
     def test_flatiter_indexing_not_supported_newaxis_mutlidimensional_float(self):
         a = np.arange(9).reshape((3, 3))
@@ -1509,7 +1515,7 @@ class TestFlatiterIndexing:
             a.flat[1, 2]
 
         with pytest.warns(DeprecationWarning,
-                          match="Float indices for iterator objects are deprecated"):
+                          match="Invalid non-array indices for iterator objects are deprecated"):
             assert_array_equal(a.flat[[1.0, 2.0]], np.array([1, 2]))
 
     def test_flatiter_assign_single_integer(self):
@@ -1601,8 +1607,15 @@ class TestFlatiterIndexing:
         assert_array_equal(a, np.array([[0, 40, 30], [30, 30, 5], [6, 7, 8]]))
 
         with pytest.raises(IndexError,
-                           match="boolean index did not match indexed flat iterator"):
+                           match="boolean indices for iterators are not supported"):
             a.flat[[True, True]] = 50
+
+        a = np.arange(3)
+        with pytest.raises(IndexError,
+                           match="boolean indices for iterators are not supported"):
+            a.flat[[True, False, True]] = 20
+        a.flat[np.asarray([True, False, True])] = 20
+        assert_array_equal(a, np.array([20, 1, 20]))
 
     def test_flatiter_indexing_fancy_int16_dtype(self):
         a = np.arange(9).reshape((3, 3))
@@ -1624,7 +1637,7 @@ class TestFlatiterIndexing:
         assert_array_equal(a, np.array([[0, 10, 10], [3, 4, 5], [6, 7, 8]]))
 
         with pytest.warns(DeprecationWarning,
-                          match="Float indices for iterator objects are deprecated"):
+                          match="Invalid non-array indices for iterator objects are deprecated"):
             a.flat[[1.0, 2.0]] = 20
         assert_array_equal(a, np.array([[0, 20, 20], [3, 4, 5], [6, 7, 8]]))
 
@@ -1636,7 +1649,9 @@ class TestFlatiterIndexing:
     def test_empty_string_flat_index_on_flatiter(self):
         a = np.arange(9).reshape((3, 3))
         b = np.array([], dtype="S")
-        assert_equal(a.flat[b.flat], np.array([]))
+        with pytest.warns(DeprecationWarning,
+                          match="Invalid non-array indices for iterator objects are deprecated"):
+            assert_equal(a.flat[b.flat], np.array([]))
 
     def test_nonempty_string_flat_index_on_flatiter(self):
         a = np.arange(9).reshape((3, 3))

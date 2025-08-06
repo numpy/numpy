@@ -611,13 +611,16 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     if (index_type == HAS_BOOL) {
+        // This cannot be reached, because boolean indices temporarily raise an error.
+        // TODO: Enable valid boolean indices
         ret = iter_subscript_Bool(self, (PyArrayObject *) indices[0].object, &cast_info);
         goto finish;
     }
 
     if (index_type == HAS_FANCY) {
-        PyArrayObject *cast_array =
-            (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP);
+        PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+        PyArrayObject *cast_array = (PyArrayObject *)
+            PyArray_FromArray((PyArrayObject *) indices[0].object, indtype, NPY_ARRAY_FORCECAST);
         if (cast_array == NULL) {
             goto finish;
         }
@@ -881,13 +884,16 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     if (index_type == HAS_BOOL) {
+        // This cannot be reached, because boolean indices temporarily raise an error.
+        // TODO: Enable valid boolean indices
         ret = iter_ass_sub_Bool(self, (PyArrayObject *) indices[0].object, val_it, &cast_info);
         goto finish;
     }
 
     if (index_type == HAS_FANCY) {
-        PyArrayObject *cast_array =
-            (PyArrayObject *) PyArray_Cast((PyArrayObject *) indices[0].object, NPY_INTP);
+        PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+        PyArrayObject *cast_array = (PyArrayObject *)
+            PyArray_FromArray((PyArrayObject *) indices[0].object, indtype, NPY_ARRAY_FORCECAST);
         if (cast_array == NULL) {
             goto finish;
         }

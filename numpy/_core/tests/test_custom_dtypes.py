@@ -284,9 +284,9 @@ class TestSFloat:
 
     @pytest.mark.parametrize(
         "index", [
-            ..., slice(None, 2, None),
+            [1, 2], ..., slice(None, 2, None),
             np.array([True, True, False]), np.array([0, 1])
-        ], ids=["ellipsis", "slice", "bool_array", "int_array"])
+        ], ids=["int_list", "ellipsis", "slice", "bool_array", "int_array"])
     def test_flatiter_index(self, index):
         arr = np.array([1.0, 2.0, 3.0], dtype=SF(1.0))
         np.testing.assert_array_equal(

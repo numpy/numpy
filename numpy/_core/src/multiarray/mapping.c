@@ -403,23 +403,54 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 goto failed_building_indices;
             }
 
+            // We raise here because we changed the behavior for boolean
+            // indices for flat iterators from being handled as integers
+            // to being regular boolean indices.
+            // TODO: This should go away fairly soon and lists of booleans
+            // should be handled as regular boolean indices.
+            if (is_flatiter_object && PyArray_ISBOOL(tmp_arr) && !PyBool_Check(index)) {
+                Py_DECREF(tmp_arr);
+                PyErr_Format(PyExc_IndexError,
+                    "boolean indices for iterators are not supported because "
+                    "of previous behavior that was confusing (valid boolean "
+                    "indices are expected to work in the future)"
+                );
+                goto failed_building_indices;
+            }
+
             /*
              * For example an empty list can be cast to an integer array,
              * however it will default to a float one.
              */
-            if (PyArray_SIZE(tmp_arr) == 0 || (PyArray_ISFLOAT(tmp_arr) && is_flatiter_object)) {
-                if (PyArray_ISFLOAT(tmp_arr)
-                    && is_flatiter_object
-                    && DEPRECATE("Float indices for iterator objects are deprecated and will be "
-                                 "removed in a future version. (Deprecated NumPy 2.4)") < 0) {
-                    goto failed_building_indices;
-                }
-                PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+            if (PyArray_SIZE(tmp_arr) == 0
+                || (is_flatiter_object && !PyArray_ISINTEGER(tmp_arr) && !PyArray_ISBOOL(tmp_arr))) {
 
+                PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
                 arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
                                                          NPY_ARRAY_FORCECAST);
+
+                // If the cast succeeded (which means that the previous flat iterator
+                // indexing routine would have succeeded as well), we need to issue a
+                // deprecation warning.
+                if (arr
+                    && is_flatiter_object
+                    && !PyArray_ISINTEGER(tmp_arr)
+                    && !PyArray_ISBOOL(tmp_arr)
+                    && DEPRECATE("Invalid non-array indices for iterator objects are deprecated and will be "
+                                 "removed in a future version. (Deprecated NumPy 2.4)") < 0) {
+                    Py_DECREF(tmp_arr);
+                    goto failed_building_indices;
+                }
                 Py_DECREF(tmp_arr);
                 if (arr == NULL) {
+                    // Raise a helpful error if this was a ValueError (i.e. could not cast)
+                    if (PyErr_ExceptionMatches(PyExc_ValueError)) {
+                        PyErr_Format(PyExc_IndexError,
+                            "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
+                            "arrays are valid indices",
+                            is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
+                        );
+                    }
                     goto failed_building_indices;
                 }
             }
