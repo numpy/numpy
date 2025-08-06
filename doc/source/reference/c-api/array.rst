@@ -4457,5 +4457,7 @@ Enumerated Types
        Allow any cast, but error if any values change during the cast. Currently
        supported only in ``ndarray.astype(... casting='same_value')``
 
+       .. versionadded:: 2.4
+
 .. index::
    pair: ndarray; C-API
