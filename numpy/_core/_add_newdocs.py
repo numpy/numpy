@@ -2750,7 +2750,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
 
     .. warning::
 
-        Setting ``arr.shape`` is discouraged and may be deprecated in the
+        Setting ``arr.shape`` is deprecated and may be removed in the
         future.  Using `ndarray.reshape` is the preferred approach.
 
     Examples

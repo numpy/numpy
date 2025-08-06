@@ -4265,7 +4265,7 @@ cdef class RandomState:
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
-        x.shape = tuple(final_shape)
+        x = x.reshape(tuple(final_shape))
         return x
 
     def multinomial(self, long n, object pvals, size=None):
