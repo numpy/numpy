@@ -611,8 +611,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     if (index_type == HAS_BOOL) {
-        // This cannot be reached, because boolean indices temporarily raise an error.
-        // TODO: Enable valid boolean indices
         ret = iter_subscript_Bool(self, (PyArrayObject *) indices[0].object, &cast_info);
         goto finish;
     }
@@ -884,8 +882,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     if (index_type == HAS_BOOL) {
-        // This cannot be reached, because boolean indices temporarily raise an error.
-        // TODO: Enable valid boolean indices
         ret = iter_ass_sub_Bool(self, (PyArrayObject *) indices[0].object, val_it, &cast_info);
         goto finish;
     }
