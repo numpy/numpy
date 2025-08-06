@@ -189,10 +189,8 @@ class matrix(N.ndarray):
         else:
             newshape = self.shape
         if ndim == 0:
-            import sys; print(f'self refcount: {sys.getrefcount(self)}')
             self.shape = (1, 1)
         elif ndim == 1:
-            import sys; print(f'self refcount: {sys.getrefcount(self)}')
             self.shape = (1, newshape[0])
         return
 

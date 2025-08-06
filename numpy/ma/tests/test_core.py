@@ -1368,7 +1368,7 @@ class TestMaskedArrayArithmetic:
     def test_minmax_funcs_with_output(self):
         # Tests the min/max functions with explicit outputs
         mask = np.random.rand(12).round()
-        xm = array(np.random.uniform(0, 10, 12), mask=mask).reshape((3,4))
+        xm = array(np.random.uniform(0, 10, 12), mask=mask).reshape((3, 4))
         for funcname in ('min', 'max'):
             # Initialize
             npfunc = getattr(np, funcname)
