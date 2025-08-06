@@ -228,6 +228,44 @@ double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
   return scale * legacy_standard_exponential(aug_state);
 }
 
+static RAND_INT_TYPE legacy_random_binomial_inversion(
+    bitgen_t *bitgen_state, RAND_INT_TYPE n, double p, binomial_t *binomial
+)
+{
+  double q, qn, np, px, U;
+  RAND_INT_TYPE X, bound;
+
+  if (!(binomial->has_binomial) || (binomial->nsave != n) ||
+      (binomial->psave != p)) {
+    binomial->nsave = n;
+    binomial->psave = p;
+    binomial->has_binomial = 1;
+    binomial->q = q = 1.0 - p;
+    binomial->r = qn = exp(n * log(q));
+    binomial->c = np = n * p;
+    binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
+  } else {
+    q = binomial->q;
+    qn = binomial->r;
+    np = binomial->c;
+    bound = binomial->m;
+  }
+  X = 0;
+  px = qn;
+  U = next_double(bitgen_state);
+  while (U > px) {
+    X++;
+    if (X > bound) {
+      X = 0;
+      px = qn;
+      U = next_double(bitgen_state);
+    } else {
+      U -= px;
+      px = ((n - X + 1) * p * px) / (X * q);
+    }
+  }
+  return X;
+}
 
 static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
                                                      double p,
@@ -237,14 +275,14 @@ static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
 
   if (p <= 0.5) {
     if (p * n <= 30.0) {
-      return random_binomial_inversion(bitgen_state, n, p, binomial);
+      return legacy_random_binomial_inversion(bitgen_state, n, p, binomial);
     } else {
       return random_binomial_btpe(bitgen_state, n, p, binomial);
     }
   } else {
     q = 1.0 - p;
     if (q * n <= 30.0) {
-      return n - random_binomial_inversion(bitgen_state, n, q, binomial);
+      return n - legacy_random_binomial_inversion(bitgen_state, n, q, binomial);
     } else {
       return n - random_binomial_btpe(bitgen_state, n, q, binomial);
     }
