@@ -320,9 +320,11 @@ class TestAttributes:
         assert_equal(self.one.shape, (10,))
         assert_equal(self.two.shape, (4, 5))
         assert_equal(self.three.shape, (2, 5, 6))
-        self.three.shape = (10, 3, 2)
+        with warnings.catch_warnings(category=DeprecationWarning):  # gh-28901
+            self.three.shape = (10, 3, 2)
         assert_equal(self.three.shape, (10, 3, 2))
-        self.three.shape = (2, 5, 6)
+        with warnings.catch_warnings(category=DeprecationWarning):  # gh-28901
+            self.three.shape = (2, 5, 6)
         assert_equal(self.one.strides, (self.one.itemsize,))
         num = self.two.itemsize
         assert_equal(self.two.strides, (5 * num, num))

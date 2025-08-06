@@ -189,8 +189,10 @@ class matrix(N.ndarray):
         else:
             newshape = self.shape
         if ndim == 0:
+            import sys; print(f'self refcount: {sys.getrefcount(self)}')
             self.shape = (1, 1)
         elif ndim == 1:
+            import sys; print(f'self refcount: {sys.getrefcount(self)}')
             self.shape = (1, newshape[0])
         return
 
@@ -215,9 +217,9 @@ class matrix(N.ndarray):
             except Exception:
                 n = 0
             if n > 1 and isscalar(index[1]):
-                out.shape = (sh, 1)
+                out = out.reshape((sh, 1))
             else:
-                out.shape = (1, sh)
+                out = out.reshape((1, sh))
         return out
 
     def __mul__(self, other):
