@@ -1,10 +1,11 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
-
-import numpy as np
 import itertools
-from packaging import version
 import operator
 
+from packaging import version
+
+import numpy as np
+
+from .common import DLPACK_TYPES, TYPES1, Benchmark, get_squares_
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'bitwise_not',
@@ -16,12 +17,12 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
-          'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+          'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'mod',
+          'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
           'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc', 'vecdot']
+          'true_divide', 'trunc', 'vecdot', 'vecmat']
 arrayfuncdisp = ['real', 'round']
 
 for name in ufuncs:
@@ -31,13 +32,13 @@ for name in ufuncs:
 
 all_ufuncs = (getattr(np, name, None) for name in dir(np))
 all_ufuncs = set(filter(lambda f: isinstance(f, np.ufunc), all_ufuncs))
-bench_ufuncs = set(getattr(np, name, None) for name in ufuncs)
+bench_ufuncs = {getattr(np, name, None) for name in ufuncs}
 
 missing_ufuncs = all_ufuncs - bench_ufuncs
 if len(missing_ufuncs) > 0:
     missing_ufunc_names = [f.__name__ for f in missing_ufuncs]
     raise NotImplementedError(
-        "Missing benchmarks for ufuncs %r" % missing_ufunc_names)
+        f"Missing benchmarks for ufuncs {missing_ufunc_names!r}")
 
 
 class ArrayFunctionDispatcher(Benchmark):
@@ -52,7 +53,7 @@ class ArrayFunctionDispatcher(Benchmark):
         except AttributeError:
             raise NotImplementedError
         self.args = []
-        for _, aarg in get_squares_().items():
+        for aarg in get_squares_().values():
             arg = (aarg,) * 1  # no nin
             try:
                 self.afdn(*arg)
@@ -99,7 +100,7 @@ class UFunc(Benchmark):
         except AttributeError:
             raise NotImplementedError
         self.args = []
-        for _, aarg in get_squares_().items():
+        for aarg in get_squares_().values():
             arg = (aarg,) * self.ufn.nin
             try:
                 self.ufn(*arg)
@@ -251,7 +252,7 @@ class NDArrayGetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 50*50).reshape(50, 50)
+        self.xl = np.random.uniform(-1, 1, 50 * 50).reshape(50, 50)
 
     def time_methods_getitem(self, margs, msize):
         if msize == 'small':
@@ -268,7 +269,7 @@ class NDArraySetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        self.xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
 
     def time_methods_setitem(self, margs, msize):
         if msize == 'small':
@@ -342,7 +343,7 @@ class UFuncSmall(Benchmark):
         self.f(self.array_5)
 
     def time_ufunc_small_array_inplace(self, ufuncname):
-        self.f(self.array_5, out = self.array_5)
+        self.f(self.array_5, out=self.array_5)
 
     def time_ufunc_small_int_array(self, ufuncname):
         self.f(self.array_int_3)
@@ -432,7 +433,7 @@ class CustomScalar(Benchmark):
 
 
 class CustomComparison(Benchmark):
-    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+    params = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
               np.uint32, np.uint64, np.float32, np.float64, np.bool)
     param_names = ['dtype']
 
@@ -512,13 +513,15 @@ class Scalar(Benchmark):
 
 class ArgPack:
     __slots__ = ['args', 'kwargs']
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
+            [f'{k}={v!r}' for k, v in self.kwargs.items()]
         ))
 
 
@@ -585,6 +588,12 @@ class BinaryBench(Benchmark):
 
     def time_pow_half(self, dtype):
         np.power(self.a, 0.5)
+
+    def time_pow_2_op(self, dtype):
+        self.a ** 2
+
+    def time_pow_half_op(self, dtype):
+        self.a ** 0.5
 
     def time_atan2(self, dtype):
         np.arctan2(self.a, self.b)

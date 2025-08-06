@@ -1,10 +1,11 @@
+import importlib
 import os
 import re
 import sys
-import importlib
+from datetime import datetime
+
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from datetime import datetime
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -20,7 +21,8 @@ def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
 
-    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+    sizeof_void_p = ctypes.sizeof(ctypes.c_void_p)
+    Py_ssize_t = ctypes.c_int64 if sizeof_void_p == 8 else ctypes.c_int32
 
     class PyObject(ctypes.Structure):
         pass
@@ -32,7 +34,6 @@ def replace_scalar_type_names():
         ('ob_refcnt', Py_ssize_t),
         ('ob_type', ctypes.POINTER(PyTypeObject)),
     ]
-
 
     PyTypeObject._fields_ = [
         # varhead
@@ -53,7 +54,12 @@ def replace_scalar_type_names():
     ]:
         typ = getattr(numpy, name)
         c_typ = PyTypeObject.from_address(id(typ))
-        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+        if sys.implementation.name == 'cpython':
+            c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+        else:
+            # It is not guarenteed that the c_typ has this model on other
+            # implementations
+            _name_cache[typ] = b"numpy." + name.encode('utf8')
 
 
 replace_scalar_type_names()
@@ -62,6 +68,7 @@ replace_scalar_type_names()
 # As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
 # For some reasons, the doc build accesses these, so ignore them.
 import warnings
+
 warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
 
 
@@ -89,6 +96,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx.ext.imgconverter',
+    'jupyterlite_sphinx',
 ]
 
 skippable_extensions = [
@@ -116,12 +125,13 @@ copyright = f'2008-{year}, NumPy Developers'
 # other places throughout the built documents.
 #
 import numpy
+
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 # The full version, including alpha/beta/rc tags.
 release = numpy.__version__
-print("%s %s" % (version, release))
+print(f"{version} {release}")
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -140,8 +150,26 @@ default_role = "autolink"
 exclude_dirs = []
 
 exclude_patterns = []
+suppress_warnings = []
+nitpick_ignore = []
+
 if sys.version_info[:2] >= (3, 12):
-    exclude_patterns += ["reference/distutils.rst"]
+    exclude_patterns += [
+        "reference/distutils.rst",
+        "reference/distutils/misc_util.rst",
+    ]
+    suppress_warnings += [
+        'toc.excluded',  # Suppress warnings about excluded toctree entries
+    ]
+    nitpicky = True
+    nitpick_ignore += [
+        ('ref', 'numpy-distutils-refguide'),
+        # The first ignore is not catpured without nitpicky = True.
+        # These three ignores are required once nitpicky = True is set.
+        ('py:mod', 'numpy.distutils'),
+        ('py:class', 'Extension'),
+        ('py:class', 'numpy.distutils.misc_util.Configuration'),
+    ]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -178,7 +206,7 @@ class LegacyDirective(Directive):
                 "NumPy versions.")
 
         try:
-            self.content[0] = text+" "+self.content[0]
+            self.content[0] = text + " " + self.content[0]
         except IndexError:
             # Content is empty; use the default text
             source, lineno = self.state_machine.get_source_and_line(
@@ -229,8 +257,7 @@ html_theme = 'pydata_sphinx_theme'
 html_favicon = '_static/favicon/favicon.ico'
 
 # Set up the version switcher.  The versions.json is stored in the doc repo.
-if os.environ.get('CIRCLE_JOB', False) and \
-        os.environ.get('CIRCLE_BRANCH', '') != 'main':
+if os.environ.get('CIRCLE_JOB') and os.environ['CIRCLE_BRANCH'] != 'main':
     # For PR, name is set to its ref
     switcher_version = os.environ['CIRCLE_BRANCH']
 elif ".dev" in version:
@@ -265,7 +292,7 @@ html_theme_options = {
     "show_version_warning_banner": True,
 }
 
-html_title = "%s v%s Manual" % (project, version)
+html_title = f"{project} v{version} Manual"
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
@@ -433,14 +460,11 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 # Coverage checker
 # -----------------------------------------------------------------------------
-coverage_ignore_modules = r"""
-    """.split()
-coverage_ignore_functions = r"""
-    test($|_) (some|all)true bitwise_not cumproduct pkgload
-    generic\.
-    """.split()
-coverage_ignore_classes = r"""
-    """.split()
+coverage_ignore_modules = []
+coverage_ignore_functions = [
+    'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
+]
+coverage_ignore_classes = []
 
 coverage_c_path = []
 coverage_c_regexes = {}
@@ -458,7 +482,8 @@ plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
 import math
-phi = (math.sqrt(5) + 1)/2
+
+phi = (math.sqrt(5) + 1) / 2
 
 plot_rcparams = {
     'font.size': 8,
@@ -467,7 +492,7 @@ plot_rcparams = {
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     'legend.fontsize': 8,
-    'figure.figsize': (3*phi, 3),
+    'figure.figsize': (3 * phi, 3),
     'figure.subplot.bottom': 0.2,
     'figure.subplot.left': 0.2,
     'figure.subplot.right': 0.9,
@@ -482,7 +507,7 @@ plot_rcparams = {
 # -----------------------------------------------------------------------------
 
 import inspect
-from os.path import relpath, dirname
+from os.path import dirname, relpath
 
 for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
     try:
@@ -503,7 +528,6 @@ def _get_c_source_file(obj):
     else:
         # todo: come up with a better way to generate these
         return None
-
 
 def linkcode_resolve(domain, info):
     """
@@ -538,9 +562,14 @@ def linkcode_resolve(domain, info):
     fn = None
     lineno = None
 
-    # Make a poor effort at linking C extension types
-    if isinstance(obj, type) and obj.__module__ == 'numpy':
-        fn = _get_c_source_file(obj)
+    if isinstance(obj, type):
+        # Make a poor effort at linking C extension types
+        if obj.__module__ == 'numpy':
+            fn = _get_c_source_file(obj)
+
+        # This can be removed when removing the decorator set_module. Fix issue #28629
+        if hasattr(obj, '_module_source'):
+            obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if fn is None:
         try:
@@ -567,16 +596,20 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
+    if isinstance(obj, type) and hasattr(obj, '_module_source'):
+        obj.__module__, obj._module_source = obj._module_source, obj.__module__
+
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
-           fn, linespec)
+        return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
 
-from pygments.lexers import CLexer
+
 from pygments.lexer import inherit
+from pygments.lexers import CLexer
 from pygments.token import Comment
+
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
@@ -592,15 +625,28 @@ class NumPyLexer(CLexer):
 # -----------------------------------------------------------------------------
 # Breathe & Doxygen
 # -----------------------------------------------------------------------------
-breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_projects = {'numpy': os.path.join("..", "build", "doxygen", "xml")}
 breathe_default_project = "numpy"
 breathe_default_members = ("members", "undoc-members", "protected-members")
 
 # See https://github.com/breathe-doc/breathe/issues/696
-nitpick_ignore = [
+nitpick_ignore += [
     ('c:identifier', 'FILE'),
     ('c:identifier', 'size_t'),
     ('c:identifier', 'PyHeapTypeObject'),
 ]
 
+# -----------------------------------------------------------------------------
+# Interactive documentation examples via JupyterLite
+# -----------------------------------------------------------------------------
 
+global_enable_try_examples = True
+try_examples_global_button_text = "Try it in your browser!"
+try_examples_global_warning_text = (
+    "NumPy's interactive examples are experimental and may not always work"
+    " as expected, with high load times especially on low-resource platforms,"
+    " and the version of NumPy might not be in sync with the one you are"
+    " browsing the documentation for. If you encounter any issues, please"
+    " report them on the"
+    " [NumPy issue tracker](https://github.com/numpy/numpy/issues)."
+)

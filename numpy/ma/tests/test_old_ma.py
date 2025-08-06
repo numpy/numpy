@@ -1,27 +1,89 @@
-from functools import reduce
 import pickle
+from functools import reduce
 
 import pytest
 
 import numpy as np
-import numpy._core.umath as umath
 import numpy._core.fromnumeric as fromnumeric
-from numpy.testing import (
-    assert_, assert_raises, assert_equal,
-    )
+import numpy._core.umath as umath
 from numpy.ma import (
-    MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
-    arange, arccos, arcsin, arctan, arctan2, array, average, choose,
-    concatenate, conjugate, cos, cosh, count, divide, equal, exp, filled,
-    getmask, greater, greater_equal, inner, isMaskedArray, less,
-    less_equal, log, log10, make_mask, masked, masked_array, masked_equal,
-    masked_greater, masked_greater_equal, masked_inside, masked_less,
-    masked_less_equal, masked_not_equal, masked_outside,
-    masked_print_option, masked_values, masked_where, maximum, minimum,
-    multiply, nomask, nonzero, not_equal, ones, outer, product, put, ravel,
-    repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
-    take, tan, tanh, transpose, where, zeros,
-    )
+    MaskedArray,
+    MaskType,
+    absolute,
+    add,
+    all,
+    allclose,
+    allequal,
+    alltrue,
+    arange,
+    arccos,
+    arcsin,
+    arctan,
+    arctan2,
+    array,
+    average,
+    choose,
+    concatenate,
+    conjugate,
+    cos,
+    cosh,
+    count,
+    divide,
+    equal,
+    exp,
+    filled,
+    getmask,
+    greater,
+    greater_equal,
+    inner,
+    isMaskedArray,
+    less,
+    less_equal,
+    log,
+    log10,
+    make_mask,
+    masked,
+    masked_array,
+    masked_equal,
+    masked_greater,
+    masked_greater_equal,
+    masked_inside,
+    masked_less,
+    masked_less_equal,
+    masked_not_equal,
+    masked_outside,
+    masked_print_option,
+    masked_values,
+    masked_where,
+    maximum,
+    minimum,
+    multiply,
+    nomask,
+    nonzero,
+    not_equal,
+    ones,
+    outer,
+    product,
+    put,
+    ravel,
+    repeat,
+    resize,
+    shape,
+    sin,
+    sinh,
+    sometrue,
+    sort,
+    sqrt,
+    subtract,
+    sum,
+    take,
+    tan,
+    tanh,
+    transpose,
+    where,
+    zeros,
+)
+from numpy.testing import assert_, assert_equal, assert_raises
 
 pi = np.pi
 
@@ -36,7 +98,7 @@ def eq(v, w, msg=''):
 class TestMa:
 
     def setup_method(self):
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
@@ -58,8 +120,8 @@ class TestMa:
         assert_equal(shape(xm), s)
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
-        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assert_(eq(xm, xf))
         assert_(eq(filled(xm, 1.e20), xf))
         assert_(eq(x, xm))
@@ -594,12 +656,12 @@ class TestMa:
                                  np.add.reduce(np.arange(6)) * 3. / 12.))
         assert_(allclose(average(y, axis=0), np.arange(6) * 3. / 2.))
         assert_(allclose(average(y, axis=1),
-                                 [average(x, axis=0), average(x, axis=0)*2.0]))
+                                 [average(x, axis=0), average(x, axis=0) * 2.0]))
         assert_(allclose(average(y, None, weights=w2), 20. / 6.))
         assert_(allclose(average(y, axis=0, weights=w2),
                                  [0., 1., 2., 3., 4., 10.]))
         assert_(allclose(average(y, axis=1),
-                                 [average(x, axis=0), average(x, axis=0)*2.0]))
+                                 [average(x, axis=0), average(x, axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0, 0, 1, 1, 0, 0]
         m3 = [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0]]
@@ -651,7 +713,7 @@ class TestMa:
 
     def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
-        #TODO FIXME: Find out what the following raises a warning in r8247
+        # TODO FIXME: Find out what the following raises a warning in r8247
         with np.errstate(divide='ignore'):
             assert_((1 / array(0)).mask)
         assert_((1 + xm).mask)

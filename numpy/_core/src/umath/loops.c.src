@@ -486,6 +486,25 @@ _@TYPE@_squared_exponentiation_helper(@type@ base, @type@ exponent_two, int firs
    return out;
 }
 
+static inline @type@
+_@TYPE@_power_fast_path_helper(@type@ in1, @type@ in2, @type@ *op1) {
+    // Fast path for power calculation
+    if (in2 == 0 || in1 == 1) {
+        *op1 = 1;
+    }
+    else if (in2 == 1) {
+        *op1 = in1;
+    }
+    else if (in2 == 2) {
+        *op1 = in1 * in1;
+    }
+    else {
+        return 1;
+    }
+    return 0;
+}
+
+
 NPY_NO_EXPORT void
 @TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -493,21 +512,28 @@ NPY_NO_EXPORT void
         // stride for second argument is 0
         BINARY_DEFS
         const @type@ in2 = *(@type@ *)ip2;
-        #if @SIGNED@
-            if (in2 < 0) {
-                npy_gil_error(PyExc_ValueError,
-                              "Integers to negative integer powers are not allowed.");
-                return;
-            }
-        #endif
+
+#if @SIGNED@
+        if (in2 < 0) {
+            npy_gil_error(PyExc_ValueError,
+                            "Integers to negative integer powers are not allowed.");
+            return;
+        }
+#endif
 
         int first_bit = in2 & 1;
         @type@ in2start = in2 >> 1;
 
+        int fastop_exists = (in2 == 0) || (in2 == 1) || (in2 == 2);
+        
         BINARY_LOOP_SLIDING {
             @type@ in1 = *(@type@ *)ip1;
-
-            *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
+            if (fastop_exists) {
+                _@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1);
+            }
+            else {
+                *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
+            }
         }
         return;
     }
@@ -518,22 +544,16 @@ NPY_NO_EXPORT void
 #if @SIGNED@
         if (in2 < 0) {
             npy_gil_error(PyExc_ValueError,
-                          "Integers to negative integer powers are not allowed.");
+                            "Integers to negative integer powers are not allowed.");
             return;
         }
 #endif
-        if (in2 == 0) {
-            *((@type@ *)op1) = 1;
-            continue;
-        }
-        if (in1 == 1) {
-            *((@type@ *)op1) = 1;
-            continue;
-        }
 
-        int first_bit = in2 & 1;
-        in2 >>= 1;
-        *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2, first_bit);
+        if (_@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1) != 0) {
+            int first_bit = in2 & 1;
+            in2 >>= 1;
+            *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2, first_bit);
+        }
     }
 }
 /**end repeat**/

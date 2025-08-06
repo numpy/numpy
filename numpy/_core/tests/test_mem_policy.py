@@ -2,13 +2,14 @@ import asyncio
 import gc
 import os
 import sys
+import sysconfig
 import threading
 
 import pytest
 
 import numpy as np
-from numpy.testing import extbuild, assert_warns, IS_WASM, IS_EDITABLE
 from numpy._core.multiarray import get_handler_name
+from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
 
 
 @pytest.fixture
@@ -220,6 +221,8 @@ def get_module(tmp_path):
     except ImportError:
         pass
     # if it does not exist, build and load it
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     return extbuild.build_and_import_extension('mem_policy',
                                                functions,
                                                prologue=prologue,
@@ -429,7 +432,7 @@ def test_switch_owner(get_module, policy):
         # The policy should be NULL, so we have to assume we can call
         # "free".  A warning is given if the policy == "1"
         if policy:
-            with assert_warns(RuntimeWarning) as w:
+            with pytest.warns(RuntimeWarning) as w:
                 del a
                 gc.collect()
         else:

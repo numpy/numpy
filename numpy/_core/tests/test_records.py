@@ -1,17 +1,21 @@
 import collections.abc
+import pickle
 import textwrap
 from io import BytesIO
 from os import path
 from pathlib import Path
-import pickle
 
 import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath,
-    )
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    temppath,
+)
 
 
 class TestFromrecords:
@@ -157,7 +161,7 @@ class TestFromrecords:
             np.set_printoptions(legacy=False)
 
     def test_recarray_from_repr(self):
-        a = np.array([(1,'ABC'), (2, "DEF")],
+        a = np.array([(1, 'ABC'), (2, "DEF")],
                      dtype=[('foo', int), ('bar', 'S4')])
         recordarr = np.rec.array(a)
         recarr = a.view(np.recarray)
@@ -181,35 +185,35 @@ class TestFromrecords:
         assert_equal(recordview, recordview_r)
 
     def test_recarray_views(self):
-        a = np.array([(1,'ABC'), (2, "DEF")],
+        a = np.array([(1, 'ABC'), (2, "DEF")],
                      dtype=[('foo', int), ('bar', 'S4')])
-        b = np.array([1,2,3,4,5], dtype=np.int64)
+        b = np.array([1, 2, 3, 4, 5], dtype=np.int64)
 
-        #check that np.rec.array gives right dtypes
+        # check that np.rec.array gives right dtypes
         assert_equal(np.rec.array(a).dtype.type, np.record)
         assert_equal(type(np.rec.array(a)), np.recarray)
         assert_equal(np.rec.array(b).dtype.type, np.int64)
         assert_equal(type(np.rec.array(b)), np.recarray)
 
-        #check that viewing as recarray does the same
+        # check that viewing as recarray does the same
         assert_equal(a.view(np.recarray).dtype.type, np.record)
         assert_equal(type(a.view(np.recarray)), np.recarray)
         assert_equal(b.view(np.recarray).dtype.type, np.int64)
         assert_equal(type(b.view(np.recarray)), np.recarray)
 
-        #check that view to non-structured dtype preserves type=np.recarray
+        # check that view to non-structured dtype preserves type=np.recarray
         r = np.rec.array(np.ones(4, dtype="f4,i4"))
         rv = r.view('f8').view('f4,i4')
         assert_equal(type(rv), np.recarray)
         assert_equal(rv.dtype.type, np.record)
 
-        #check that getitem also preserves np.recarray and np.record
+        # check that getitem also preserves np.recarray and np.record
         r = np.rec.array(np.ones(4, dtype=[('a', 'i4'), ('b', 'i4'),
                                            ('c', 'i4,i4')]))
         assert_equal(r['c'].dtype.type, np.record)
         assert_equal(type(r['c']), np.recarray)
 
-        #and that it preserves subclasses (gh-6949)
+        # and that it preserves subclasses (gh-6949)
         class C(np.recarray):
             pass
 
@@ -218,10 +222,10 @@ class TestFromrecords:
 
         # check that accessing nested structures keep record type, but
         # not for subarrays, non-void structures, non-structured voids
-        test_dtype = [('a', 'f4,f4'), ('b', 'V8'), ('c', ('f4',2)),
+        test_dtype = [('a', 'f4,f4'), ('b', 'V8'), ('c', ('f4', 2)),
                       ('d', ('i8', 'i4,i4'))]
-        r = np.rec.array([((1,1), b'11111111', [1,1], 1),
-                          ((1,1), b'11111111', [1,1], 1)], dtype=test_dtype)
+        r = np.rec.array([((1, 1), b'11111111', [1, 1], 1),
+                          ((1, 1), b'11111111', [1, 1], 1)], dtype=test_dtype)
         assert_equal(r.a.dtype.type, np.record)
         assert_equal(r.b.dtype.type, np.void)
         assert_equal(r.c.dtype.type, np.float32)
@@ -229,11 +233,11 @@ class TestFromrecords:
         # check the same, but for views
         r = np.rec.array(np.ones(4, dtype='i4,i4'))
         assert_equal(r.view('f4,f4').dtype.type, np.record)
-        assert_equal(r.view(('i4',2)).dtype.type, np.int32)
+        assert_equal(r.view(('i4', 2)).dtype.type, np.int32)
         assert_equal(r.view('V8').dtype.type, np.void)
         assert_equal(r.view(('i8', 'i4,i4')).dtype.type, np.int64)
 
-        #check that we can undo the view
+        # check that we can undo the view
         arrs = [np.ones(4, dtype='f4,i4'), np.ones(4, dtype='f8')]
         for arr in arrs:
             rec = np.rec.array(arr)
@@ -297,8 +301,8 @@ class TestFromrecords:
 
     def test_recarray_returntypes(self):
         qux_fields = {'C': (np.dtype('S5'), 0), 'D': (np.dtype('S5'), 6)}
-        a = np.rec.array([('abc ', (1,1), 1, ('abcde', 'fgehi')),
-                          ('abc', (2,3), 1, ('abcde', 'jklmn'))],
+        a = np.rec.array([('abc ', (1, 1), 1, ('abcde', 'fgehi')),
+                          ('abc', (2, 3), 1, ('abcde', 'jklmn'))],
                          dtype=[('foo', 'S4'),
                                 ('bar', [('A', int), ('B', int)]),
                                 ('baz', int), ('qux', qux_fields)])
@@ -345,7 +349,7 @@ class TestPathUsage:
             path = Path(path)
             np.random.seed(123)
             a = np.random.rand(10).astype('f8,i4,S5')
-            a[5] = (0.5,10,'abcde')
+            a[5] = (0.5, 10, 'abcde')
             with path.open("wb") as fd:
                 a.tofile(fd)
             x = np._core.records.fromfile(
@@ -388,7 +392,7 @@ class TestRecord:
         with assert_raises(ValueError):
             r.f = [2, 3]
         with assert_raises(ValueError):
-            r.setfield([2,3], *r.dtype.fields['f'])
+            r.setfield([2, 3], *r.dtype.fields['f'])
 
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
@@ -450,8 +454,8 @@ class TestRecord:
         assert a[0] == unpickled
 
         # Also check the similar (impossible) "object scalar" path:
-        with pytest.warns(DeprecationWarning):
-            assert ctor(np.dtype("O"), data) is data
+        with assert_raises(TypeError):
+            ctor(np.dtype("O"), data)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
@@ -463,7 +467,7 @@ class TestRecord:
         ra = np.recarray(
             (2,), dtype=[('x', object), ('y', float), ('z', int)]
         )
-        ra[['x','y']]  # TypeError?
+        ra[['x', 'y']]  # TypeError?
 
     def test_record_scalar_setitem(self):
         # https://github.com/numpy/numpy/issues/3561

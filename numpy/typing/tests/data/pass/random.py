@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
 
 SEED_NONE = None
@@ -1493,5 +1494,5 @@ random_st.tomaxint()
 random_st.tomaxint(1)
 random_st.tomaxint((1,))
 
-np.random.set_bit_generator(SEED_PCG64)
-np.random.get_bit_generator()
+np.random.mtrand.set_bit_generator(SEED_PCG64)
+np.random.mtrand.get_bit_generator()

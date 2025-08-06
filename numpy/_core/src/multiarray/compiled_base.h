@@ -10,9 +10,9 @@ arr_bincount(PyObject *, PyObject *const *, Py_ssize_t, PyObject *);
 NPY_NO_EXPORT PyObject *
 arr__monotonicity(PyObject *, PyObject *, PyObject *kwds);
 NPY_NO_EXPORT PyObject *
-arr_interp(PyObject *, PyObject *const *, Py_ssize_t, PyObject *, PyObject *);
+arr_interp(PyObject *, PyObject *const *, Py_ssize_t, PyObject *);
 NPY_NO_EXPORT PyObject *
-arr_interp_complex(PyObject *, PyObject *const *, Py_ssize_t, PyObject *, PyObject *);
+arr_interp_complex(PyObject *, PyObject *const *, Py_ssize_t, PyObject *);
 NPY_NO_EXPORT PyObject *
 arr_ravel_multi_index(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *

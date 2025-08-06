@@ -10,16 +10,17 @@ warnings.warn("Importing from numpy.matlib is deprecated since 1.19.0. "
               PendingDeprecationWarning, stacklevel=2)
 
 import numpy as np
-from numpy.matrixlib.defmatrix import matrix, asmatrix
+
 # Matlib.py contains all functions in the numpy namespace with a few
 # replacements. See doc/source/reference/routines.matlib.rst for details.
 # Need * as we're copying the numpy namespace.
 from numpy import *  # noqa: F403
+from numpy.matrixlib.defmatrix import asmatrix, matrix
 
 __version__ = np.__version__
 
-__all__ = np.__all__[:] # copy numpy namespace
-__all__ += ['rand', 'randn', 'repmat']
+__all__ = ['rand', 'randn', 'repmat']
+__all__ += np.__all__
 
 def empty(shape, dtype=None, order='C'):
     """Return a new matrix of given shape and type, without initializing entries.
@@ -151,7 +152,7 @@ def zeros(shape, dtype=None, order='C'):
     a.fill(0)
     return a
 
-def identity(n,dtype=None):
+def identity(n, dtype=None):
     """
     Returns the square identity matrix of given size.
 
@@ -182,12 +183,12 @@ def identity(n,dtype=None):
             [0, 0, 1]])
 
     """
-    a = array([1]+n*[0], dtype=dtype)
+    a = array([1] + n * [0], dtype=dtype)
     b = empty((n, n), dtype=dtype)
     b.flat = a
     return b
 
-def eye(n,M=None, k=0, dtype=float, order='C'):
+def eye(n, M=None, k=0, dtype=float, order='C'):
     """
     Return a matrix with ones on the diagonal and zeros elsewhere.
 
@@ -206,8 +207,6 @@ def eye(n,M=None, k=0, dtype=float, order='C'):
     order : {'C', 'F'}, optional
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
-
-        .. versionadded:: 1.14.0
 
     Returns
     -------

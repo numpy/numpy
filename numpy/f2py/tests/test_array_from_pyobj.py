@@ -1,12 +1,13 @@
-import sys
 import copy
 import platform
-import pytest
+import sys
 from pathlib import Path
 
-import numpy as np
+import pytest
 
+import numpy as np
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
+
 from . import util
 
 wrap = None
@@ -20,7 +21,7 @@ c_names_dict = dict(
 
 def get_testdir():
     testroot = Path(__file__).resolve().parent / "src"
-    return  testroot / "array_from_pyobj"
+    return testroot / "array_from_pyobj"
 
 def setup_module():
     """
@@ -33,7 +34,7 @@ def setup_module():
         src = [
             get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
+        wrap = util.build_meson(src, module_name="test_array_from_pyobj_ext")
 
 
 def flags_info(arr):
@@ -82,10 +83,10 @@ class Intent:
         return self.__class__(self.intent_list + [name])
 
     def __str__(self):
-        return "intent(%s)" % (",".join(self.intent_list))
+        return f"intent({','.join(self.intent_list)})"
 
     def __repr__(self):
-        return "Intent(%r)" % (self.intent_list)
+        return f"Intent({self.intent_list!r})"
 
     def is_intent(self, *names):
         return all(name in self.intent_list for name in names)
@@ -291,7 +292,7 @@ class Array:
         else:
             self.pyarr = np.array(
                 np.array(obj, dtype=typ.dtypechar).reshape(*dims),
-                order=self.intent.is_intent("c") and "C" or "F",
+                order=(self.intent.is_intent("c") and "C") or "F",
             )
             assert self.pyarr.dtype == typ
         self.pyarr.setflags(write=self.arr.flags["WRITEABLE"])

@@ -7,17 +7,25 @@ namespace by importing from the extension module.
 """
 
 import functools
-from . import overrides
-from . import _multiarray_umath
+
+from . import _multiarray_umath, overrides
 from ._multiarray_umath import *  # noqa: F403
+
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
-from ._multiarray_umath import (
-    _flagdict, from_dlpack, _place, _reconstruct,
-    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _get_madvise_hugepage, _set_madvise_hugepage,
-    )
+from ._multiarray_umath import (  # noqa: F401
+    _ARRAY_API,
+    _flagdict,
+    _get_madvise_hugepage,
+    _get_ndarray_c_version,
+    _monotonicity,
+    _place,
+    _reconstruct,
+    _set_madvise_hugepage,
+    _vec_string,
+    from_dlpack,
+)
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
@@ -66,6 +74,35 @@ nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 normalize_axis_index.__module__ = 'numpy.lib.array_utils'
+add_docstring.__module__ = 'numpy.lib'
+compare_chararrays.__module__ = 'numpy.char'
+
+
+def _override___module__():
+    namespace_names = globals()
+    for ufunc_name in [
+        'absolute', 'arccos', 'arccosh', 'add', 'arcsin', 'arcsinh', 'arctan',
+        'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'invert',
+        'left_shift', 'bitwise_or', 'right_shift', 'bitwise_xor', 'cbrt',
+        'ceil', 'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees',
+        'divide', 'divmod', 'equal', 'exp', 'exp2', 'expm1', 'fabs',
+        'float_power', 'floor', 'floor_divide', 'fmax', 'fmin', 'fmod',
+        'frexp', 'gcd', 'greater', 'greater_equal', 'heaviside', 'hypot',
+        'isfinite', 'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'less',
+        'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
+        'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
+        'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'remainder',
+        'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+        'power', 'rad2deg', 'radians', 'reciprocal', 'rint', 'sign', 'signbit',
+        'sin', 'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
+        'trunc', 'vecdot', 'vecmat',
+    ]:
+        ufunc = namespace_names[ufunc_name]
+        ufunc.__module__ = "numpy"
+        ufunc.__qualname__ = ufunc_name
+
+
+_override___module__()
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -92,15 +129,11 @@ def empty_like(
         of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-
-        .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `prototype` is Fortran
         contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
-
-        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of `prototype`, otherwise it will be a base-class array. Defaults
@@ -109,8 +142,6 @@ def empty_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -150,7 +181,7 @@ def empty_like(
     array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
-    """   # NOQA
+    """
     return (prototype,)
 
 
@@ -585,16 +616,6 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    .. versionchanged:: 1.17.0
-       Casting between a simple data type and a structured one is possible only
-       for "unsafe" casting.  Casting to multiple fields is allowed, but
-       casting from multiple fields is not.
-
-    .. versionchanged:: 1.9.0
-       Casting from numeric to string types in 'safe' casting mode requires
-       that the string dtype length is long enough to store the maximum
-       integer/float value converted.
-
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
@@ -647,10 +668,6 @@ def min_scalar_type(a):
     -------
     out : dtype
         The minimal data type.
-
-    Notes
-    -----
-    .. versionadded:: 1.6.0
 
     See Also
     --------
@@ -714,8 +731,6 @@ def result_type(*arrays_and_dtypes):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
-
     The specific algorithm used is as follows.
 
     Categories are determined by first checking which of boolean,
@@ -848,18 +863,22 @@ def dot(a, b, out=None):
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
-    """
+    r"""
     vdot(a, b, /)
 
     Return the dot product of two vectors.
 
-    The vdot(`a`, `b`) function handles complex numbers differently than
-    dot(`a`, `b`).  If the first argument is complex the complex conjugate
-    of the first argument is used for the calculation of the dot product.
+    The `vdot` function handles complex numbers differently than `dot`:
+    if the first argument is complex, it is replaced by its complex conjugate
+    in the dot product calculation. `vdot` also handles multidimensional
+    arrays differently than `dot`: it does not perform a matrix product, but
+    flattens the arguments to 1-D arrays before taking a vector dot product.
 
-    Note that `vdot` handles multidimensional arrays differently than `dot`:
-    it does *not* perform a matrix product, but flattens input arguments
-    to 1-D vectors first. Consequently, it should only be used for vectors.
+    Consequently, when the arguments are 2-D arrays of the same shape, this
+    function effectively returns their
+    `Frobenius inner product <https://en.wikipedia.org/wiki/Frobenius_inner_product>`_
+    (also known as the *trace inner product* or the *standard inner product*
+    on a vector space of matrices).
 
     Parameters
     ----------
@@ -901,7 +920,7 @@ def vdot(a, b):
     >>> 1*4 + 4*1 + 5*2 + 6*2
     30
 
-    """
+    """  # noqa: E501
     return (a, b)
 
 
@@ -929,8 +948,6 @@ def bincount(x, weights=None, minlength=None):
         Weights, array of the same shape as `x`.
     minlength : int, optional
         A minimum number of bins for the output array.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1022,10 +1039,6 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
     --------
     unravel_index
 
-    Notes
-    -----
-    .. versionadded:: 1.6.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1061,15 +1074,9 @@ def unravel_index(indices, shape=None, order=None):
         this function accepted just one index value.
     shape : tuple of ints
         The shape of the array to use for unraveling ``indices``.
-
-        .. versionchanged:: 1.16.0
-            Renamed from ``dims`` to ``shape``.
-
     order : {'C', 'F'}, optional
         Determines whether the indices should be viewed as indexing in
         row-major (C-style) or column-major (Fortran-style) order.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1105,8 +1112,6 @@ def copyto(dst, src, casting=None, where=None):
 
     Raises a TypeError if the `casting` rule is violated, and if
     `where` is provided, it selects which elements to copy.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1217,8 +1222,6 @@ def packbits(a, axis=None, bitorder='big'):
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
-        .. versionadded:: 1.17.0
-
     Returns
     -------
     packed : ndarray
@@ -1281,16 +1284,11 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
-
-        .. versionadded:: 1.17.0
-
     bitorder : {'big', 'little'}, optional
         The order of the returned bits. 'big' will mimic bin(val),
         ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
         the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
         Defaults to 'big'.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1472,8 +1470,6 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     Calculates which of the given dates are valid days, and which are not.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     dates : array_like of datetime64[D]
@@ -1537,8 +1533,6 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
     First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
     counted in valid days.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1643,8 +1637,6 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
     If ``enddates`` specifies a date value that is earlier than the
     corresponding ``begindates`` date value, the count will be negative.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     begindates : array_like of datetime64[D]
@@ -1731,7 +1723,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     Examples
     --------
     >>> import numpy as np
-    >>> import pytz
+    >>> from zoneinfo import ZoneInfo
     >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
     >>> d
     array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
@@ -1744,9 +1736,9 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
            '2002-10-27T07:30Z'], dtype='<U35')
 
     Note that we picked datetimes that cross a DST boundary. Passing in a
-    ``pytz`` timezone object will print the appropriate offset
+    ``ZoneInfo`` object will print the appropriate offset
 
-    >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
+    >>> np.datetime_as_string(d, timezone=ZoneInfo('US/Eastern'))
     array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
            '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
 

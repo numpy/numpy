@@ -8,16 +8,15 @@ import numbers
 
 import numpy as np
 
+
 def _create_binary_propagating_op(name, is_divmod=False):
     is_cmp = name.strip("_") in ["eq", "ne", "le", "lt", "ge", "gt"]
 
     def method(self, other):
         if (
             other is pd_NA
-            or isinstance(other, (str, bytes))
-            or isinstance(other, (numbers.Number, np.bool))
-            or isinstance(other, np.ndarray)
-            and not other.shape
+            or isinstance(other, (str, bytes, numbers.Number, np.bool))
+            or (isinstance(other, np.ndarray) and not other.shape)
         ):
             # Need the other.shape clause to handle NumPy scalars,
             # since we do a setitem on `out` below, which
@@ -185,7 +184,7 @@ class NAType:
         )
         if result is NotImplemented:
             # For a NumPy ufunc that's not a binop, like np.logaddexp
-            index = [i for i, x in enumerate(inputs) if x is pd_NA][0]
+            index = next(i for i, x in enumerate(inputs) if x is pd_NA)
             result = np.broadcast_arrays(*inputs)[index]
             if result.ndim == 0:
                 result = result.item()
@@ -196,3 +195,11 @@ class NAType:
 
 
 pd_NA = NAType()
+
+
+def get_stringdtype_dtype(na_object, coerce=True):
+    # explicit is check for pd_NA because != with pd_NA returns pd_NA
+    if na_object is pd_NA or na_object != "unset":
+        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
+    else:
+        return np.dtypes.StringDType(coerce=coerce)

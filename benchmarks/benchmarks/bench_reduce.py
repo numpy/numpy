@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1, get_squares
-
 import numpy as np
+
+from .common import TYPES1, Benchmark, get_squares
 
 
 class AddReduce(Benchmark):
@@ -52,7 +52,7 @@ class StatsReductions(Benchmark):
     def setup(self, dtype):
         self.data = np.ones(200, dtype=dtype)
         if dtype.startswith('complex'):
-            self.data = self.data * self.data.T*1j
+            self.data = self.data * self.data.T * 1j
 
     def time_min(self, dtype):
         np.min(self.data)

@@ -1,33 +1,16 @@
-from typing import (
-    Any,
-    TypeVar,
-    Protocol,
-)
+from _typeshed import SupportsWrite
+from typing import LiteralString
+from typing_extensions import TypeVar
 
-from numpy._core.numerictypes import (
-    issubdtype as issubdtype,
-)
+import numpy as np
 
-_T_contra = TypeVar("_T_contra", contravariant=True)
+__all__ = ["get_include", "info", "show_runtime"]
 
-# A file-like object opened in `w` mode
-class _SupportsWrite(Protocol[_T_contra]):
-    def write(self, s: _T_contra, /) -> Any: ...
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 
-__all__: list[str]
-
-def get_include() -> str: ...
-
-def info(
-    object: object = ...,
-    maxwidth: int = ...,
-    output: None | _SupportsWrite[str] = ...,
-    toplevel: str = ...,
-) -> None: ...
-
-def source(
-    object: object,
-    output: None | _SupportsWrite[str] = ...,
-) -> None: ...
-
+def get_include() -> LiteralString: ...
 def show_runtime() -> None: ...
+def info(
+    object: object = None, maxwidth: int = 76, output: SupportsWrite[str] | None = None, toplevel: str = "numpy"
+) -> None: ...
+def drop_metadata(dtype: _DTypeT, /) -> _DTypeT: ...

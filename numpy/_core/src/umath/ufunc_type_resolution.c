@@ -1455,7 +1455,7 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(ufunc->userloops, key);
+            obj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1742,7 +1742,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1813,7 +1813,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -2228,19 +2228,17 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                     type_tup, out_dtypes);
     }
-    if (type_num1 == NPY_TIMEDELTA) {
-        if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
-            out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
-            out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
-            out_dtypes[3] = out_dtypes[0];
-            Py_INCREF(out_dtypes[3]);
+    if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
+        out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                             PyArray_DESCR(operands[1]));                             
+        if (out_dtypes[0] == NULL) {
+            return -1;
         }
-        else {
-            return raise_binary_type_reso_error(ufunc, operands);
-        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+        out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+        out_dtypes[3] = out_dtypes[0];
+        Py_INCREF(out_dtypes[3]);
     }
     else {
         return raise_binary_type_reso_error(ufunc, operands);

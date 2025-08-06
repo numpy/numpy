@@ -1,11 +1,17 @@
 import numpy as np
 from numpy import (
-    common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
-    nan_to_num, isrealobj, iscomplexobj, real_if_close
-    )
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises
-    )
+    common_type,
+    iscomplex,
+    iscomplexobj,
+    isneginf,
+    isposinf,
+    isreal,
+    isrealobj,
+    mintypecode,
+    nan_to_num,
+    real_if_close,
+)
+from numpy.testing import assert_, assert_array_equal, assert_equal
 
 
 def assert_all(x):
@@ -18,8 +24,8 @@ class TestCommonType:
         af16 = np.array([[1, 2], [3, 4]], dtype=np.float16)
         af32 = np.array([[1, 2], [3, 4]], dtype=np.float32)
         af64 = np.array([[1, 2], [3, 4]], dtype=np.float64)
-        acs = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.complex64)
-        acd = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.complex128)
+        acs = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.complex64)
+        acd = np.array([[1 + 5j, 2 + 6j], [3 + 7j, 4 + 8j]], dtype=np.complex128)
         assert_(common_type(ai32) == np.float64)
         assert_(common_type(af16) == np.float16)
         assert_(common_type(af32) == np.float32)
@@ -40,10 +46,10 @@ class TestMintypecode:
 
     def test_default_2(self):
         for itype in '1bcsuwil':
-            assert_equal(mintypecode(itype+'f'), 'f')
-            assert_equal(mintypecode(itype+'d'), 'd')
-            assert_equal(mintypecode(itype+'F'), 'F')
-            assert_equal(mintypecode(itype+'D'), 'D')
+            assert_equal(mintypecode(itype + 'f'), 'f')
+            assert_equal(mintypecode(itype + 'd'), 'd')
+            assert_equal(mintypecode(itype + 'F'), 'F')
+            assert_equal(mintypecode(itype + 'D'), 'D')
         assert_equal(mintypecode('ff'), 'f')
         assert_equal(mintypecode('fd'), 'd')
         assert_equal(mintypecode('fF'), 'F')
@@ -105,7 +111,7 @@ class TestReal:
         assert_(not isinstance(out, np.ndarray))
 
     def test_cmplx(self):
-        y = np.random.rand(10,)+1j*np.random.rand(10,)
+        y = np.random.rand(10,) + 1j * np.random.rand(10,)
         assert_array_equal(y.real, np.real(y))
 
         y = np.array(1 + 1j)
@@ -136,7 +142,7 @@ class TestImag:
         assert_(not isinstance(out, np.ndarray))
 
     def test_cmplx(self):
-        y = np.random.rand(10,)+1j*np.random.rand(10,)
+        y = np.random.rand(10,) + 1j * np.random.rand(10,)
         assert_array_equal(y.imag, np.imag(y))
 
         y = np.array(1 + 1j)
@@ -186,10 +192,10 @@ class TestIscomplexobj:
 
     def test_scalar(self):
         assert_(not iscomplexobj(1.0))
-        assert_(iscomplexobj(1+0j))
+        assert_(iscomplexobj(1 + 0j))
 
     def test_list(self):
-        assert_(iscomplexobj([3, 1+0j, True]))
+        assert_(iscomplexobj([3, 1 + 0j, True]))
         assert_(not iscomplexobj([3, 1, True]))
 
     def test_duck(self):
@@ -205,6 +211,7 @@ class TestIscomplexobj:
         # (pandas.core.dtypes)
         class PdComplex(np.complex128):
             pass
+
         class PdDtype:
             name = 'category'
             names = None
@@ -212,6 +219,7 @@ class TestIscomplexobj:
             kind = 'c'
             str = '<c16'
             base = np.dtype('complex128')
+
         class DummyPd:
             @property
             def dtype(self):
@@ -225,7 +233,7 @@ class TestIscomplexobj:
             def dtype(self):
                 return complex
 
-        a = MyArray([1+0j, 2+0j, 3+0j])
+        a = MyArray([1 + 0j, 2 + 0j, 3 + 0j])
         assert_(iscomplexobj(a))
 
 
@@ -246,25 +254,25 @@ class TestIsnan:
 
     def test_posinf(self):
         with np.errstate(divide='ignore'):
-            assert_all(np.isnan(np.array((1.,))/0.) == 0)
+            assert_all(np.isnan(np.array((1.,)) / 0.) == 0)
 
     def test_neginf(self):
         with np.errstate(divide='ignore'):
-            assert_all(np.isnan(np.array((-1.,))/0.) == 0)
+            assert_all(np.isnan(np.array((-1.,)) / 0.) == 0)
 
     def test_ind(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isnan(np.array((0.,))/0.) == 1)
+            assert_all(np.isnan(np.array((0.,)) / 0.) == 1)
 
     def test_integer(self):
         assert_all(np.isnan(1) == 0)
 
     def test_complex(self):
-        assert_all(np.isnan(1+1j) == 0)
+        assert_all(np.isnan(1 + 1j) == 0)
 
     def test_complex1(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isnan(np.array(0+0j)/0.) == 1)
+            assert_all(np.isnan(np.array(0 + 0j) / 0.) == 1)
 
 
 class TestIsfinite:
@@ -277,25 +285,25 @@ class TestIsfinite:
 
     def test_posinf(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isfinite(np.array((1.,))/0.) == 0)
+            assert_all(np.isfinite(np.array((1.,)) / 0.) == 0)
 
     def test_neginf(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isfinite(np.array((-1.,))/0.) == 0)
+            assert_all(np.isfinite(np.array((-1.,)) / 0.) == 0)
 
     def test_ind(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isfinite(np.array((0.,))/0.) == 0)
+            assert_all(np.isfinite(np.array((0.,)) / 0.) == 0)
 
     def test_integer(self):
         assert_all(np.isfinite(1) == 1)
 
     def test_complex(self):
-        assert_all(np.isfinite(1+1j) == 1)
+        assert_all(np.isfinite(1 + 1j) == 1)
 
     def test_complex1(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isfinite(np.array(1+1j)/0.) == 0)
+            assert_all(np.isfinite(np.array(1 + 1j) / 0.) == 0)
 
 
 class TestIsinf:
@@ -308,30 +316,30 @@ class TestIsinf:
 
     def test_posinf(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isinf(np.array((1.,))/0.) == 1)
+            assert_all(np.isinf(np.array((1.,)) / 0.) == 1)
 
     def test_posinf_scalar(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isinf(np.array(1.,)/0.) == 1)
+            assert_all(np.isinf(np.array(1.,) / 0.) == 1)
 
     def test_neginf(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isinf(np.array((-1.,))/0.) == 1)
+            assert_all(np.isinf(np.array((-1.,)) / 0.) == 1)
 
     def test_neginf_scalar(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isinf(np.array(-1.)/0.) == 1)
+            assert_all(np.isinf(np.array(-1.) / 0.) == 1)
 
     def test_ind(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            assert_all(np.isinf(np.array((0.,))/0.) == 0)
+            assert_all(np.isinf(np.array((0.,)) / 0.) == 0)
 
 
 class TestIsposinf:
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = isposinf(np.array((-1., 0, 1))/0.)
+            vals = isposinf(np.array((-1., 0, 1)) / 0.)
         assert_(vals[0] == 0)
         assert_(vals[1] == 0)
         assert_(vals[2] == 1)
@@ -341,7 +349,7 @@ class TestIsneginf:
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = isneginf(np.array((-1., 0, 1))/0.)
+            vals = isneginf(np.array((-1., 0, 1)) / 0.)
         assert_(vals[0] == 1)
         assert_(vals[1] == 0)
         assert_(vals[2] == 0)
@@ -351,7 +359,7 @@ class TestNanToNum:
 
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = nan_to_num(np.array((-1., 0, 1))/0.)
+            vals = nan_to_num(np.array((-1., 0, 1)) / 0.)
         assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
@@ -359,7 +367,7 @@ class TestNanToNum:
 
         # perform the same tests but with nan, posinf and neginf keywords
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = nan_to_num(np.array((-1., 0, 1))/0.,
+            vals = nan_to_num(np.array((-1., 0, 1)) / 0.,
                               nan=10, posinf=20, neginf=30)
         assert_equal(vals, [30, 10, 20])
         assert_all(np.isfinite(vals[[0, 2]]))
@@ -367,7 +375,7 @@ class TestNanToNum:
 
         # perform the same test but in-place
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = np.array((-1., 0, 1))/0.
+            vals = np.array((-1., 0, 1)) / 0.
         result = nan_to_num(vals, copy=False)
 
         assert_(result is vals)
@@ -378,7 +386,7 @@ class TestNanToNum:
 
         # perform the same test but in-place
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = np.array((-1., 0, 1))/0.
+            vals = np.array((-1., 0, 1)) / 0.
         result = nan_to_num(vals, copy=False, nan=10, posinf=20, neginf=30)
 
         assert_(result is vals)
@@ -411,17 +419,17 @@ class TestNanToNum:
         assert_equal(type(vals), np.float64)
 
     def test_complex_good(self):
-        vals = nan_to_num(1+1j)
-        assert_all(vals == 1+1j)
+        vals = nan_to_num(1 + 1j)
+        assert_all(vals == 1 + 1j)
         assert_equal(type(vals), np.complex128)
-        vals = nan_to_num(1+1j, nan=10, posinf=20, neginf=30)
-        assert_all(vals == 1+1j)
+        vals = nan_to_num(1 + 1j, nan=10, posinf=20, neginf=30)
+        assert_all(vals == 1 + 1j)
         assert_equal(type(vals), np.complex128)
 
     def test_complex_bad(self):
         with np.errstate(divide='ignore', invalid='ignore'):
             v = 1 + 1j
-            v += np.array(0+1.j)/0.
+            v += np.array(0 + 1.j) / 0.
         vals = nan_to_num(v)
         # !! This is actually (unexpectedly) zero
         assert_all(np.isfinite(vals))
@@ -430,7 +438,7 @@ class TestNanToNum:
     def test_complex_bad2(self):
         with np.errstate(divide='ignore', invalid='ignore'):
             v = 1 + 1j
-            v += np.array(-1+1.j)/0.
+            v += np.array(-1 + 1.j) / 0.
         vals = nan_to_num(v)
         assert_all(np.isfinite(vals))
         assert_equal(type(vals), np.complex128)
@@ -445,7 +453,7 @@ class TestNanToNum:
         # This is done to test that when, for instance, nan=np.inf then these
         # values are not rewritten by posinf keyword to the posinf value.
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = nan_to_num(np.array((-1., 0, 1))/0., nan=np.inf, posinf=999)
+            vals = nan_to_num(np.array((-1., 0, 1)) / 0., nan=np.inf, posinf=999)
         assert_all(np.isfinite(vals[[0, 2]]))
         assert_all(vals[0] < -1e10)
         assert_equal(vals[[1, 2]], [np.inf, 999])
@@ -456,10 +464,10 @@ class TestRealIfClose:
 
     def test_basic(self):
         a = np.random.rand(10)
-        b = real_if_close(a+1e-15j)
+        b = real_if_close(a + 1e-15j)
         assert_all(isrealobj(b))
         assert_array_equal(a, b)
-        b = real_if_close(a+1e-7j)
+        b = real_if_close(a + 1e-7j)
         assert_all(iscomplexobj(b))
-        b = real_if_close(a+1e-7j, tol=1e-6)
+        b = real_if_close(a + 1e-7j, tol=1e-6)
         assert_all(isrealobj(b))

@@ -82,7 +82,6 @@ class FindAttributes(ast.NodeVisitor):
     def visit_ClassDef(self, node):
         if not node.name.startswith("_"):
             self.attributes.add(node.name)
-        return
 
     def visit_AnnAssign(self, node):
         self.attributes.add(node.target.id)

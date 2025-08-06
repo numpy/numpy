@@ -1,17 +1,14 @@
-from __future__ import annotations
-
-import os
 import errno
+import os
+import re
 import shutil
 import subprocess
 import sys
-import re
+from itertools import chain
 from pathlib import Path
+from string import Template
 
 from ._backend import Backend
-from string import Template
-from itertools import chain
-
 
 
 class MesonTemplate:
@@ -97,13 +94,13 @@ class MesonTemplate:
 
         self.substitutions["lib_declarations"] = "\n".join(
             [
-                f"{lib.replace('.','_')} = declare_dependency(link_args : ['-l{lib}'])"
+                f"{lib.replace('.', '_')} = declare_dependency(link_args : ['-l{lib}'])"
                 for lib in self.libraries
             ]
         )
 
         self.substitutions["lib_list"] = f"\n{self.indent}".join(
-            [f"{self.indent}{lib.replace('.','_')}," for lib in self.libraries]
+            [f"{self.indent}{lib.replace('.', '_')}," for lib in self.libraries]
         )
         self.substitutions["lib_dir_list"] = f"\n{self.indent}".join(
             [f"{self.indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
@@ -127,7 +124,7 @@ class MesonTemplate:
             node()
         template = Template(self.meson_build_template())
         meson_build = template.substitute(self.substitutions)
-        meson_build = re.sub(r",,", ",", meson_build)
+        meson_build = meson_build.replace(",,", ",")
         return meson_build
 
 
@@ -146,6 +143,7 @@ class MesonBackend(Backend):
         path_objects = chain(
             walk_dir.glob(f"{self.modulename}*.so"),
             walk_dir.glob(f"{self.modulename}*.pyd"),
+            walk_dir.glob(f"{self.modulename}*.dll"),
         )
         # Same behavior as distutils
         # https://github.com/numpy/numpy/issues/24874#issuecomment-1835632293

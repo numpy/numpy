@@ -344,7 +344,7 @@ static int _warn_if_cast_exists_already(
     if (to_DType == NULL) {
         return -1;
     }
-    PyObject *cast_impl = PyDict_GetItemWithError(
+    PyObject *cast_impl = PyDict_GetItemWithError( // noqa: borrowed-ref OK
             NPY_DT_SLOTS(NPY_DTYPE(descr))->castingimpls, (PyObject *)to_DType);
     Py_DECREF(to_DType);
     if (cast_impl == NULL) {
@@ -618,8 +618,8 @@ legacy_userdtype_common_dtype_function(
  * used for legacy user-dtypes, but for example numeric to/from datetime
  * casts were only defined that way as well.
  *
- * @param from
- * @param to
+ * @param from Source DType
+ * @param to Destination DType
  * @param casting If `NPY_NO_CASTING` will check the legacy registered cast,
  *        otherwise uses the provided cast.
  */

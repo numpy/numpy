@@ -7,9 +7,8 @@ Author: Pearu Peterson, September 2003
 """
 __all__ = ['MachAr']
 
-from .fromnumeric import any
 from ._ufunc_config import errstate
-from .._utils import set_module
+from .fromnumeric import any
 
 # Need to speed this up...especially for longdouble
 
@@ -101,9 +100,9 @@ class MachAr:
 
     """
 
-    def __init__(self, float_conv=float,int_conv=int,
+    def __init__(self, float_conv=float, int_conv=int,
                  float_to_float=float,
-                 float_to_str=lambda v:'%24.16e' % v,
+                 float_to_str=lambda v: f'{v:24.16e}',
                  title='Python floating point number'):
         """
 
@@ -141,7 +140,7 @@ class MachAr:
         for _ in range(max_iterN):
             b = b + b
             temp = a + b
-            itemp = int_conv(temp-a)
+            itemp = int_conv(temp - a)
             if any(itemp != 0):
                 break
         else:
@@ -174,11 +173,11 @@ class MachAr:
             raise RuntimeError(msg % (_, one.dtype))
         temp = a + betah
         irnd = 0
-        if any(temp-a != zero):
+        if any(temp - a != zero):
             irnd = 1
         tempa = a + beta
         temp = tempa + betah
-        if irnd == 0 and any(temp-tempa != zero):
+        if irnd == 0 and any(temp - tempa != zero):
             irnd = 2
 
         # Determine negep and epsneg
@@ -190,7 +189,7 @@ class MachAr:
         b = a
         for _ in range(max_iterN):
             temp = one - a
-            if any(temp-one != zero):
+            if any(temp - one != zero):
                 break
             a = a * beta
             negep = negep - 1
@@ -209,7 +208,7 @@ class MachAr:
 
         for _ in range(max_iterN):
             temp = one + a
-            if any(temp-one != zero):
+            if any(temp - one != zero):
                 break
             a = a * beta
             machep = machep + 1
@@ -220,7 +219,7 @@ class MachAr:
         # Determine ngrd
         ngrd = 0
         temp = one + eps
-        if irnd == 0 and any(temp*one - one != zero):
+        if irnd == 0 and any(temp * one - one != zero):
             ngrd = 1
 
         # Determine iexp
@@ -231,13 +230,13 @@ class MachAr:
         nxres = 0
         for _ in range(max_iterN):
             y = z
-            z = y*y
-            a = z*one  # Check here for underflow
-            temp = z*t
-            if any(a+a == zero) or any(abs(z) >= y):
+            z = y * y
+            a = z * one  # Check here for underflow
+            temp = z * t
+            if any(a + a == zero) or any(abs(z) >= y):
                 break
             temp1 = temp * betain
-            if any(temp1*beta == z):
+            if any(temp1 * beta == z):
                 break
             i = i + 1
             k = k + k
@@ -263,7 +262,7 @@ class MachAr:
             if any((a + a) != zero) and any(abs(y) < xmin):
                 k = k + 1
                 temp1 = temp * betain
-                if any(temp1*beta == y) and any(temp != y):
+                if any(temp1 * beta == y) and any(temp != y):
                     nxres = 3
                     xmin = y
                     break
@@ -289,9 +288,9 @@ class MachAr:
         if any(a != y):
             maxexp = maxexp - 2
         xmax = one - epsneg
-        if any(xmax*one != xmax):
-            xmax = one - beta*epsneg
-        xmax = xmax / (xmin*beta*beta*beta)
+        if any(xmax * one != xmax):
+            xmax = one - beta * epsneg
+        xmax = xmax / (xmin * beta * beta * beta)
         i = maxexp + minexp + 3
         for j in range(i):
             if ibeta == 2:

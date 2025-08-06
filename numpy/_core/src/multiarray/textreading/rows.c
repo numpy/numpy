@@ -61,7 +61,7 @@ create_conv_funcs(
     Py_ssize_t pos = 0;
     int error = 0;
     Py_BEGIN_CRITICAL_SECTION(converters);
-    while (PyDict_Next(converters, &pos, &key, &value)) {
+    while (PyDict_Next(converters, &pos, &key, &value)) { // noqa: borrowed-ref OK
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
@@ -154,8 +154,6 @@ create_conv_funcs(
  * @param out_descr The dtype used for allocating a new array.  This is not
  *        used if `data_array` is provided.  Note that the actual dtype of the
  *        returned array can differ for strings.
- * @param num_cols Pointer in which the actual (discovered) number of columns
- *        is returned.  This is only relevant if `homogeneous` is true.
  * @param homogeneous Whether the datatype of the array is not homogeneous,
  *        i.e. not structured.  In this case the number of columns has to be
  *        discovered an the returned array will be 2-dimensional rather than

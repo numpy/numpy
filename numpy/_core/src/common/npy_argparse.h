@@ -69,7 +69,7 @@ NPY_NO_EXPORT int init_argparse_mutex(void);
  * used in cunjunction with the macro defined in the same scope.
  * (No two `npy_parse_arguments` may share a single `NPY_PREPARE_ARGPARSER`.)
  *
- * @param funcname
+ * @param funcname Function name
  * @param args Python passed args (METH_FASTCALL)
  * @param len_args Number of arguments (not flagged)
  * @param kwnames Tuple as passed by METH_FASTCALL or NULL.

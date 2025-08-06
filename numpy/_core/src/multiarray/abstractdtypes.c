@@ -139,16 +139,16 @@ initialize_and_map_pytypes_to_dtypes()
      *       the same could be achieved e.g. with additional abstract DTypes.
      */
     PyArray_DTypeMeta *dtype;
-    dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_UNICODE));
+    dtype = typenum_to_dtypemeta(NPY_UNICODE);
     if (_PyArray_MapPyTypeToDType(dtype, &PyUnicode_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
-    dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_STRING));
+    dtype = typenum_to_dtypemeta(NPY_STRING);
     if (_PyArray_MapPyTypeToDType(dtype, &PyBytes_Type, NPY_FALSE) < 0) {
         return -1;
     }
-    dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_BOOL));
+    dtype = typenum_to_dtypemeta(NPY_BOOL);
     if (_PyArray_MapPyTypeToDType(dtype, &PyBool_Type, NPY_FALSE) < 0) {
         return -1;
     }
@@ -177,7 +177,6 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *uint8_dt = &PyArray_UInt8DType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, uint8_dt);
-        Py_DECREF(uint8_dt);
         if (res == NULL) {
             PyErr_Clear();
         }
@@ -477,7 +476,6 @@ npy_find_descr_for_scalar(
             /* If the DType doesn't know the scalar type, guess at default. */
             !NPY_DT_CALL_is_known_scalar_type(common, Py_TYPE(scalar))) {
         if (common->singleton != NULL) {
-            Py_INCREF(common->singleton);
             res = common->singleton;
             Py_INCREF(res);
         }

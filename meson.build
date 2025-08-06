@@ -6,7 +6,7 @@ project(
     ['numpy/_build_utils/gitversion.py'],
     check: true).stdout().strip(),
   license: 'BSD-3',
-  meson_version: '>=1.2.99',  # version in vendored-meson is 1.2.99
+  meson_version: '>=1.5.2',  # version in vendored-meson is 1.5.2
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',
@@ -24,8 +24,8 @@ cy = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
-  if not cc.version().version_compare('>=8.4')
-    error('NumPy requires GCC >= 8.4')
+  if not cc.version().version_compare('>=9.3')
+    error('NumPy requires GCC >= 9.3')
   endif
 elif cc.get_id() == 'msvc'
   if not cc.version().version_compare('>=19.20')
@@ -80,12 +80,6 @@ if cc_id.startswith('clang')
     endif
     add_project_arguments(trapping_math, language: ['c', 'cpp'])
   endif
-endif
-
-if host_machine.system() == 'darwin' and cc.has_link_argument('-Wl,-ld_classic')
-  # New linker introduced in macOS 14 not working yet with at least OpenBLAS in Spack,
-  # see gh-24964 (and linked scipy issue from there).
-  add_project_link_arguments('-Wl,-ld_classic', language : ['c', 'cpp'])
 endif
 
 subdir('meson_cpu')

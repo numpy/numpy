@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-import sys
-import os
 import argparse
+import os
+import sys
 
-from Cython import Tempita as tempita
-
-# XXX: If this import ever fails (does it really?), vendor cython.tempita
+import tempita
 
 
 def process_tempita(fromfile, outfile=None):

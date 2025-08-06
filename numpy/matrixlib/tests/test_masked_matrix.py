@@ -1,13 +1,22 @@
 import pickle
 
 import numpy as np
-from numpy.testing import assert_warns
-from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
-                                assert_array_equal)
-from numpy.ma.core import (masked_array, masked_values, masked, allequal,
-                           MaskType, getmask, MaskedArray, nomask,
-                           log, add, hypot, divide)
+from numpy.ma.core import (
+    MaskedArray,
+    MaskType,
+    add,
+    allequal,
+    divide,
+    getmask,
+    hypot,
+    log,
+    masked,
+    masked_array,
+    masked_values,
+    nomask,
+)
 from numpy.ma.extras import mr_
+from numpy.ma.testutils import assert_, assert_array_equal, assert_equal, assert_raises
 
 
 class MMatrix(MaskedArray, np.matrix,):
@@ -20,7 +29,6 @@ class MMatrix(MaskedArray, np.matrix,):
     def __array_finalize__(self, obj):
         np.matrix.__array_finalize__(self, obj)
         MaskedArray.__array_finalize__(self, obj)
-        return
 
     @property
     def _series(self):
@@ -198,10 +206,10 @@ class TestSubclassing:
         assert_(isinstance(add(mx, mx), MMatrix))
         assert_(isinstance(add(mx, x), MMatrix))
         # Result should work
-        assert_equal(add(mx, x), mx+x)
+        assert_equal(add(mx, x), mx + x)
         assert_(isinstance(add(mx, mx)._data, np.matrix))
-        with assert_warns(DeprecationWarning):
-            assert_(isinstance(add.outer(mx, mx), MMatrix))
+        with assert_raises(TypeError):
+            add.outer(mx, mx)
         assert_(isinstance(hypot(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, x), MMatrix))
 

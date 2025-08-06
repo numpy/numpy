@@ -85,6 +85,8 @@ instance representing the expression :math:`x^{2} + 2x + 3` to a
 `~numpy.polynomial.polynomial.Polynomial` instance representing the same
 expression:
 
+.. try_examples::
+
     >>> import numpy as np
 
     >>> p1d = np.poly1d([1, 2, 3])

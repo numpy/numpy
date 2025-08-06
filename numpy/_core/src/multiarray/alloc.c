@@ -12,6 +12,7 @@
 #include "npy_config.h"
 #include "alloc.h"
 #include "npy_static_data.h"
+#include "templ_common.h"
 #include "multiarraymodule.h"
 
 #include <assert.h>
@@ -26,9 +27,24 @@
 #endif
 #endif
 
-#define NBUCKETS 1024 /* number of buckets for data*/
-#define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE 7 /* number of cache entries per bucket */
+/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
+ * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
+ * use-of-uninitialized-memory warnings less useful. */
+#ifdef Py_GIL_DISABLED
+#    define USE_ALLOC_CACHE 0
+#elif defined(__has_feature)
+#    if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
+#        define USE_ALLOC_CACHE 0
+#    endif
+#endif
+#ifndef USE_ALLOC_CACHE
+#    define USE_ALLOC_CACHE 1
+#endif
+
+
+# define NBUCKETS 1024 /* number of buckets for data*/
+# define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
+# define NCACHE 7 /* number of cache entries per bucket */
 /* this structure fits neatly into a cacheline */
 typedef struct {
     npy_uintp available; /* number of cached pointers */
@@ -36,7 +52,6 @@ typedef struct {
 } cache_bucket;
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
-
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
@@ -80,6 +95,24 @@ _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 }
 
 
+NPY_FINLINE void
+indicate_hugepages(void *p, size_t size) {
+#ifdef NPY_OS_LINUX
+    /* allow kernel allocating huge pages for large arrays */
+    if (NPY_UNLIKELY(size >= ((1u<<22u))) &&
+        npy_thread_unsafe_state.madvise_hugepage) {
+        npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
+        npy_uintp length = size - offset;
+        /**
+         * Intentionally not checking for errors that may be returned by
+         * older kernel versions; optimistically tries enabling huge pages.
+         */
+        madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
+    }
+#endif
+}
+
+
 /* as the cache is managed in global variables verify the GIL is held */
 
 /*
@@ -96,7 +129,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
     assert((esz == 1 && cache == datacache) ||
            (esz == sizeof(npy_intp) && cache == dimcache));
     assert(PyGILState_Check());
-#ifndef Py_GIL_DISABLED
+#if USE_ALLOC_CACHE
     if (nelem < msz) {
         if (cache[nelem].available > 0) {
             return cache[nelem].ptrs[--(cache[nelem].available)];
@@ -108,19 +141,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #ifdef _PyPyGC_AddMemoryPressure
         _PyPyPyGC_AddMemoryPressure(nelem * esz);
 #endif
-#ifdef NPY_OS_LINUX
-        /* allow kernel allocating huge pages for large arrays */
-        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) &&
-            npy_thread_unsafe_state.madvise_hugepage) {
-            npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
-            npy_uintp length = nelem * esz - offset;
-            /**
-             * Intentionally not checking for errors that may be returned by
-             * older kernel versions; optimistically tries enabling huge pages.
-             */
-            madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
-        }
-#endif
+        indicate_hugepages(p, nelem * esz);
     }
     return p;
 }
@@ -134,7 +155,7 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
                 cache_bucket * cache, void (*dealloc)(void *))
 {
     assert(PyGILState_Check());
-#ifndef Py_GIL_DISABLED
+#if USE_ALLOC_CACHE
     if (p != NULL && nelem < msz) {
         if (cache[nelem].available < NCACHE) {
             cache[nelem].ptrs[cache[nelem].available++] = p;
@@ -172,6 +193,9 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
     NPY_BEGIN_THREADS;
     p = PyDataMem_NEW_ZEROED(nmemb, size);
     NPY_END_THREADS;
+    if (p) {
+        indicate_hugepages(p, sz);
+    }
     return p;
 }
 
@@ -238,7 +262,11 @@ PyDataMem_NEW(size_t size)
 
     assert(size != 0);
     result = malloc(size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        free(result);
+        return NULL;
+    }
     return result;
 }
 
@@ -251,7 +279,11 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
     void *result;
 
     result = calloc(nmemb, size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    if (ret == -1) {
+        free(result);
+        return NULL;
+    }
     return result;
 }
 
@@ -274,11 +306,13 @@ PyDataMem_RENEW(void *ptr, size_t size)
     void *result;
 
     assert(size != 0);
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = realloc(ptr, size);
-    if (result != ptr) {
-        PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        free(result);
+        return NULL;
     }
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
 
@@ -309,6 +343,9 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
     }
     NPY_BEGIN_THREADS;
     p = calloc(nelem, elsize);
+    if (p) {
+        indicate_hugepages(p, sz);
+    }
     NPY_END_THREADS;
     return p;
 }
@@ -362,7 +399,11 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     }
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        handler->allocator.free(handler->allocator.ctx, result, size);
+        return NULL;
+    }
     return result;
 }
 
@@ -376,7 +417,11 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
         return NULL;
     }
     result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    if (ret == -1) {
+        handler->allocator.free(handler->allocator.ctx, result, size);
+        return NULL;
+    }
     return result;
 }
 
@@ -406,11 +451,13 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
     }
 
     assert(size != 0);
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
-    if (result != ptr) {
-        PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        handler->allocator.free(handler->allocator.ctx, result, size);
+        return NULL;
     }
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
 
@@ -533,4 +580,18 @@ get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
     version = PyLong_FromLong(handler->version);
     Py_DECREF(mem_handler);
     return version;
+}
+
+
+/*
+ * Internal function to malloc, but add an overflow check similar to Calloc
+ */
+NPY_NO_EXPORT void *
+_Npy_MallocWithOverflowCheck(npy_intp size, npy_intp elsize)
+{
+    npy_intp total_size;
+    if (npy_mul_sizes_with_overflow(&total_size, size, elsize)) {
+        return NULL;
+    }
+    return PyMem_MALLOC(total_size);
 }

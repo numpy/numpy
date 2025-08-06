@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT int
 initialize_static_globals(void);
 
@@ -38,6 +42,7 @@ typedef struct npy_interned_str_struct {
     PyObject *__dlpack__;
     PyObject *pyvals_name;
     PyObject *legacy;
+    PyObject *__doc__;
 } npy_interned_str_struct;
 
 /*
@@ -133,6 +138,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *GenericToVoidMethod;
     PyObject *ObjectToGenericMethod;
     PyObject *GenericToObjectMethod;
+
+    /*
+     * Used in from_dlpack
+     */
+    PyObject *dl_call_kwnames;
+    PyObject *dl_cpu_device_tuple;
+    PyObject *dl_max_version;
 } npy_static_pydata_struct;
 
 
@@ -166,5 +178,9 @@ typedef struct npy_static_cdata_struct {
 NPY_VISIBILITY_HIDDEN extern npy_interned_str_struct npy_interned_str;
 NPY_VISIBILITY_HIDDEN extern npy_static_pydata_struct npy_static_pydata;
 NPY_VISIBILITY_HIDDEN extern npy_static_cdata_struct npy_static_cdata;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // NUMPY_CORE_SRC_MULTIARRAY_STATIC_DATA_H_

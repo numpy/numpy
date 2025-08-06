@@ -1,83 +1,69 @@
 import os
-import sys
 import subprocess
+import sys
 from argparse import ArgumentParser
-from git import Repo, exc
 
 CWD = os.path.abspath(os.path.dirname(__file__))
-CONFIG = os.path.join(CWD, 'lint_diff.ini')
-
-# NOTE: The `diff` and `exclude` options of pycodestyle seem to be
-# incompatible, so instead just exclude the necessary files when
-# computing the diff itself.
-EXCLUDE = (
-    "numpy/typing/tests/data/",
-    "numpy/typing/_char_codes.py",
-    "numpy/__config__.py",
-    "numpy/f2py",
-)
 
 
 class DiffLinter:
-    def __init__(self, branch):
-        self.branch = branch
-        self.repo = Repo(os.path.join(CWD, '..'))
-        self.head = self.repo.head.commit
+    def __init__(self) -> None:
+        self.repository_root = os.path.realpath(os.path.join(CWD, ".."))
 
-    def get_branch_diff(self, uncommitted = False):
+    def run_ruff(self, fix: bool) -> tuple[int, str]:
         """
-            Determine the first common ancestor commit.
-            Find diff between branch and FCA commit.
-            Note: if `uncommitted` is set, check only
-                  uncommitted changes
+        Original Author: Josh Wilson (@person142)
+        Source:
+            https://github.com/scipy/scipy/blob/main/tools/lint_diff.py
+        Unlike pycodestyle, ruff by itself is not capable of limiting
+        its output to the given diff.
         """
-        try:
-            commit = self.repo.merge_base(self.branch, self.head)[0]
-        except exc.GitCommandError:
-            print(f"Branch with name `{self.branch}` does not exist")
-            sys.exit(1)
+        print("Running Ruff Check...")
+        command = ["ruff", "check"]
+        if fix:
+            command.append("--fix")
 
-        exclude = [f':(exclude){i}' for i in EXCLUDE]
-        if uncommitted:
-            diff = self.repo.git.diff(
-                self.head, '--unified=0', '***.py', *exclude
-            )
-        else:
-            diff = self.repo.git.diff(
-                commit, self.head, '--unified=0', '***.py', *exclude
-            )
-        return diff
-
-    def run_pycodestyle(self, diff):
-        """
-            Original Author: Josh Wilson (@person142)
-            Source:
-              https://github.com/scipy/scipy/blob/main/tools/lint_diff.py
-            Run pycodestyle on the given diff.
-        """
         res = subprocess.run(
-            ['pycodestyle', '--diff', '--config', CONFIG],
-            input=diff,
+            command,
             stdout=subprocess.PIPE,
-            encoding='utf-8',
+            cwd=self.repository_root,
+            encoding="utf-8",
         )
         return res.returncode, res.stdout
 
-    def run_lint(self, uncommitted):
-        diff = self.get_branch_diff(uncommitted)
-        retcode, errors = self.run_pycodestyle(diff)
+    def run_lint(self, fix: bool) -> None:
 
-        errors and print(errors)
+        # Ruff Linter
+        retcode, ruff_errors = self.run_ruff(fix)
+        ruff_errors and print(ruff_errors)
+
+        if retcode:
+            sys.exit(retcode)
+
+        # C API Borrowed-ref Linter
+        retcode, c_API_errors = self.run_check_c_api()
+        c_API_errors and print(c_API_errors)
 
         sys.exit(retcode)
 
+    def run_check_c_api(self) -> tuple[int, str]:
+        # Running borrowed ref checker
+        print("Running C API borrow-reference linter...")
+        borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci",
+                                           "check_c_api_usage.sh")
+        borrowed_res = subprocess.run(
+            ["bash", borrowed_ref_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="utf-8",
+        )
 
-if __name__ == '__main__':
+        # Exit with non-zero if C API Check fails
+        return borrowed_res.returncode, borrowed_res.stdout
+
+
+if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--branch", type=str, default='main',
-                        help="The branch to diff against")
-    parser.add_argument("--uncommitted", action='store_true',
-                        help="Check only uncommitted changes")
     args = parser.parse_args()
 
-    DiffLinter(args.branch).run_lint(args.uncommitted)
+    DiffLinter().run_lint(fix=False)

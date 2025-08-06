@@ -243,16 +243,18 @@ static int
 raise_incorrect_number_of_positional_args(const char *funcname,
         const _NpyArgParserCache *cache, Py_ssize_t len_args)
 {
+    const char *verb = (len_args == 1) ? "was" : "were";
     if (cache->npositional == cache->nrequired) {
         PyErr_Format(PyExc_TypeError,
-                "%s() takes %d positional arguments but %zd were given",
-                funcname, cache->npositional, len_args);
+                "%s() takes %d positional arguments but %zd %s given",
+                funcname, cache->npositional, len_args, verb);
     }
     else {
         PyErr_Format(PyExc_TypeError,
                 "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                funcname, cache->nrequired, cache->npositional, len_args);
+                "%zd %s given",
+                funcname, cache->nrequired, cache->npositional,
+                len_args, verb);
     }
     return -1;
 }
@@ -280,11 +282,11 @@ raise_missing_argument(const char *funcname,
  *
  * See macro version for an example pattern of how to use this function.
  *
- * @param funcname
- * @param cache
+ * @param funcname Function name
+ * @param cache a NULL initialized persistent storage for data
  * @param args Python passed args (METH_FASTCALL)
- * @param len_args
- * @param kwnames
+ * @param len_args Number of arguments (not flagged)
+ * @param kwnames Tuple as passed by METH_FASTCALL or NULL.
  * @param ... List of arguments (see macro version).
  *
  * @return Returns 0 on success and -1 on failure.

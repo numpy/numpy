@@ -1,7 +1,8 @@
-from numpy.testing import (assert_, assert_array_equal)
-import numpy as np
 import pytest
-from numpy.random import Generator, MT19937
+
+import numpy as np
+from numpy.random import MT19937, Generator
+from numpy.testing import assert_, assert_array_equal
 
 
 class TestRegression:
@@ -59,7 +60,7 @@ class TestRegression:
             mt19937 = Generator(MT19937(i))
             m = Generator(MT19937(4321))
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -83,7 +84,7 @@ class TestRegression:
         # gh-24266: beta would generate nan when the parameters
         # were subnormal or a small multiple of the smallest normal.
         tiny = np.finfo(1.0).tiny
-        x = self.mt19937.beta(tiny/32, tiny/40, size=50)
+        x = self.mt19937.beta(tiny / 32, tiny / 40, size=50)
         assert not np.any(np.isnan(x))
 
     def test_beta_expected_zero_frequency(self):
@@ -107,7 +108,7 @@ class TestRegression:
         #    exprected_freq = float(n*p)
         #
         expected_freq = 77616.90831318991
-        assert 0.95*expected_freq < nzeros < 1.05*expected_freq
+        assert 0.95 * expected_freq < nzeros < 1.05 * expected_freq
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
@@ -120,7 +121,7 @@ class TestRegression:
             c = self.mt19937.choice(a, p=probs)
             assert_(c in a)
             with pytest.raises(ValueError):
-                self.mt19937.choice(a, p=probs*0.9)
+                self.mt19937.choice(a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
@@ -203,4 +204,4 @@ class TestRegression:
         # it doesn't hang.  Certainly for a monotonically decreasing
         # discrete distribution truncated to signed 64 bit integers, more
         # than half should be less than 2**62.
-        assert np.count_nonzero(sample < 2**62) > n/2
+        assert np.count_nonzero(sample < 2**62) > n / 2

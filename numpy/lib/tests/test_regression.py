@@ -2,9 +2,13 @@ import os
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, _assert_valid_refcount,
-    )
+    _assert_valid_refcount,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 class TestRegression:
@@ -69,7 +73,7 @@ class TestRegression:
         u = np.poly1d([1, 2, 3])
         v = np.poly1d([1, 2, 3, 4, 5])
         q, r = np.polydiv(u, v)
-        assert_equal(q*v + r, u)
+        assert_equal(q * v + r, u)
 
     def test_poly_eq(self):
         # Ticket #554
@@ -131,17 +135,17 @@ class TestRegression:
     def test_large_fancy_indexing(self):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8
-        thesize = int((2**nbits)**(1.0/5.0)+1)
+        thesize = int((2**nbits)**(1.0 / 5.0) + 1)
 
         def dp():
             n = 3
-            a = np.ones((n,)*5)
+            a = np.ones((n,) * 5)
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)] = 0
 
         def dp2():
             n = 3
-            a = np.ones((n,)*5)
+            a = np.ones((n,) * 5)
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)]
 

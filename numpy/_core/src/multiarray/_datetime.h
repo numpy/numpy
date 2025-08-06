@@ -174,8 +174,8 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                                         npy_bool from_pickle);
 
 /*
- * Gets a tzoffset in minutes by calling the fromutc() function on
- * the Python datetime.tzinfo object.
+ * Gets a tzoffset in minutes by calling the astimezone() function on
+ * the Python datetime.datetime object.
  */
 NPY_NO_EXPORT int
 get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts);
@@ -327,5 +327,11 @@ find_object_datetime_type(PyObject *obj, int type_num);
 
 NPY_NO_EXPORT int
 PyArray_InitializeDatetimeCasts(void);
+
+NPY_NO_EXPORT npy_hash_t
+datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt);
+
+NPY_NO_EXPORT npy_hash_t
+timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */

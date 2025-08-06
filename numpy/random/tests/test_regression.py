@@ -1,9 +1,8 @@
 import sys
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises,
-    )
-from numpy import random
+
 import numpy as np
+from numpy import random
+from numpy.testing import assert_, assert_array_equal, assert_raises
 
 
 class TestRegression:
@@ -67,7 +66,7 @@ class TestRegression:
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -95,7 +94,7 @@ class TestRegression:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = np.random.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
+            assert_raises(ValueError, np.random.choice, a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings

@@ -127,7 +127,7 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
          * For each field, add the key + descr + offset to l
          */
         key = PyTuple_GET_ITEM(names, pos);
-        value = PyDict_GetItem(fields, key);
+        value = PyDict_GetItem(fields, key); // noqa: borrowed-ref OK
         /* XXX: are those checks necessary ? */
         if (value == NULL) {
             PyErr_SetString(PyExc_SystemError,

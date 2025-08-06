@@ -2,11 +2,13 @@
 import collections
 import functools
 
-from .._utils import set_module
-from .._utils._inspect import getargspec
 from numpy._core._multiarray_umath import (
-    add_docstring,  _get_implementing_args, _ArrayFunctionDispatcher)
-
+    _ArrayFunctionDispatcher,
+    _get_implementing_args,
+    add_docstring,
+)
+from numpy._utils import set_module  # noqa: F401
+from numpy._utils._inspect import getargspec
 
 ARRAY_FUNCTIONS = set()
 
@@ -19,12 +21,13 @@ array_function_like_doc = (
         compatible with that passed in via this argument."""
 )
 
-def set_array_function_like_doc(public_api):
-    if public_api.__doc__ is not None:
-        public_api.__doc__ = public_api.__doc__.replace(
-            "${ARRAY_FUNCTION_LIKE}",
-            array_function_like_doc,
-        )
+def get_array_function_like_doc(public_api, docstring_template=""):
+    ARRAY_FUNCTIONS.add(public_api)
+    docstring = public_api.__doc__ or docstring_template
+    return docstring.replace("${ARRAY_FUNCTION_LIKE}", array_function_like_doc)
+
+def finalize_array_function_like(public_api):
+    public_api.__doc__ = get_array_function_like_doc(public_api)
     return public_api
 
 

@@ -2,6 +2,7 @@ import pytest
 
 from . import util
 
+
 class TestValueAttr(util.F2PyTest):
     sources = [util.getpath("tests", "src", "value_attrspec", "gh21665.f90")]
 

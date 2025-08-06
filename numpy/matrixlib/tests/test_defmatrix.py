@@ -1,12 +1,17 @@
 import collections.abc
 
 import numpy as np
-from numpy import matrix, asmatrix, bmat
-from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises
-    )
+from numpy import asmatrix, bmat, matrix
 from numpy.linalg import matrix_power
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
+
 
 class TestCtor:
     def test_basic(self):
@@ -47,11 +52,11 @@ class TestCtor:
                               [5, 6, 1, 2],
                               [7, 8, 3, 4]])
         assert_(np.all(bmat("A,A;A,A") == Aresult))
-        assert_(np.all(bmat("A,A;A,A", ldict={'A':B}) == Aresult))
-        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A':B})
+        assert_(np.all(bmat("A,A;A,A", ldict={'A': B}) == Aresult))
+        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A': B})
         assert_(
-            np.all(bmat("A,A;A,A", ldict={'A':A}, gdict={'A':B}) == Aresult))
-        b2 = bmat("A,B;C,D", ldict={'A':A,'B':B}, gdict={'C':B,'D':A})
+            np.all(bmat("A,A;A,A", ldict={'A': A}, gdict={'A': B}) == Aresult))
+        b2 = bmat("A,B;C,D", ldict={'A': A, 'B': B}, gdict={'C': B, 'D': A})
         assert_(np.all(b2 == mixresult))
 
 
@@ -132,7 +137,7 @@ class TestProperties:
         assert_(np.all(np.array(np.transpose(A) == mA.H)))
         assert_(np.all(A == mA.A))
 
-        B = A + 2j*A
+        B = A + 2j * A
         mB = matrix(B)
         assert_(np.allclose(linalg.inv(B), mB.I))
         assert_(np.all(np.array(np.transpose(B) == mB.T)))
@@ -149,9 +154,9 @@ class TestProperties:
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
-        assert_(np.all(mB == A+0.1))
-        assert_(np.all(mB == matrix(A+0.1)))
-        assert_(not np.any(mB == matrix(A-0.1)))
+        assert_(np.all(mB == A + 0.1))
+        assert_(np.all(mB == matrix(A + 0.1)))
+        assert_(not np.any(mB == matrix(A - 0.1)))
         assert_(np.all(mA < mB))
         assert_(np.all(mA <= mB))
         assert_(np.all(mA <= mA))
@@ -199,7 +204,7 @@ class TestCasting:
         mB = mB + O
         assert_(mB.dtype.type == np.float64)
         assert_(np.all(mA != mB))
-        assert_(np.all(mB == mA+0.1))
+        assert_(np.all(mB == mA + 0.1))
 
         mC = mA.copy()
         O = np.ones((10, 10), np.complex128)
@@ -228,11 +233,11 @@ class TestAlgebra:
 
         assert_(np.allclose((mA * mA).A, np.dot(A, A)))
         assert_(np.allclose((mA + mA).A, (A + A)))
-        assert_(np.allclose((3*mA).A, (3*A)))
+        assert_(np.allclose((3 * mA).A, (3 * A)))
 
         mA2 = matrix(A)
         mA2 *= 3
-        assert_(np.allclose(mA2.A, 3*A))
+        assert_(np.allclose(mA2.A, 3 * A))
 
     def test_pow(self):
         """Test raising a matrix to an integer power works as expected."""
@@ -264,7 +269,7 @@ class TestAlgebra:
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
         with assert_raises(TypeError):
-            A*object()
+            A * object()
 
 
 class TestMatrixReturn:
@@ -284,7 +289,7 @@ class TestMatrixReturn:
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
             'partition', 'argpartition', 'newbyteorder', 'to_device',
-            'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
+            'take', 'tofile', 'tolist', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
             'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',
             ]
@@ -296,12 +301,9 @@ class TestMatrixReturn:
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
-                if attrib in methodargs:
-                    args = methodargs[attrib]
-                else:
-                    args = ()
+                args = methodargs.get(attrib, ())
                 b = f(*args)
-                assert_(type(b) is matrix, "%s" % attrib)
+                assert_(type(b) is matrix, f"{attrib}")
         assert_(type(a.real) is matrix)
         assert_(type(a.imag) is matrix)
         c, d = matrix([0.0]).nonzero()
@@ -342,10 +344,10 @@ class TestNewScalarIndexing:
         assert_equal(x, matrix([[3,  4,  3]]))
         x = a[[1, 0]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[3,  4], [1, 2]]))
+        assert_equal(x, matrix([[3, 4], [1, 2]]))
         x = a[[[1], [0]], [[1, 0], [0, 1]]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[4,  3], [1,  2]]))
+        assert_equal(x, matrix([[4, 3], [1, 2]]))
 
     def test_matrix_element(self):
         x = matrix([[1, 2, 3], [4, 5, 6]])
@@ -365,8 +367,8 @@ class TestNewScalarIndexing:
 
     def test_row_column_indexing(self):
         x = asmatrix(np.eye(2))
-        assert_array_equal(x[0,:], [[1, 0]])
-        assert_array_equal(x[1,:], [[0, 1]])
+        assert_array_equal(x[0, :], [[1, 0]])
+        assert_array_equal(x[1, :], [[0, 1]])
         assert_array_equal(x[:, 0], [[1], [0]])
         assert_array_equal(x[:, 1], [[0], [1]])
 
@@ -375,14 +377,14 @@ class TestNewScalarIndexing:
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, np.array([True, False])], x[:, 0])
-        assert_array_equal(x[np.array([True, False, False]),:], x[0,:])
+        assert_array_equal(x[np.array([True, False, False]), :], x[0, :])
 
     def test_list_indexing(self):
         A = np.arange(6)
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
-        assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
+        assert_array_equal(x[[2, 1, 0], :], x[::-1, :])
 
 
 class TestPower:

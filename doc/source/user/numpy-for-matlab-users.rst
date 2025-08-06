@@ -574,12 +574,12 @@ Notes
 
 \ **Submatrix**: Assignment to a submatrix can be done with lists of
 indices using the ``ix_`` command. E.g., for 2D array ``a``, one might
-do: ``ind=[1, 3]; a[np.ix_(ind, ind)] += 100``.
+do: ``ind=[1, 3]; a[np.ix_(ind, ind)] += 100``.
 
 \ **HELP**: There is no direct equivalent of MATLAB's ``which`` command,
 but the commands :func:`help` will usually list the filename
 where the function is located. Python also has an ``inspect`` module (do
-``import inspect``) which provides a ``getfile`` that often works.
+``import inspect``) which provides a ``getfile`` that often works.
 
 \ **INDEXING**: MATLAB uses one based indexing, so the initial element
 of a sequence has index 1. Python uses zero based indexing, so the
@@ -676,8 +676,7 @@ are only a handful of key differences between the two.
 
    -  For ``array``, **``*`` means element-wise multiplication**, while
       **``@`` means matrix multiplication**; they have associated functions
-      ``multiply()`` and ``dot()``.  (Before Python 3.5, ``@`` did not exist
-      and one had to use ``dot()`` for matrix multiplication).
+      ``multiply()`` and ``dot()``.
    -  For ``matrix``, **``*`` means matrix multiplication**, and for
       element-wise multiplication one has to use the ``multiply()`` function.
 
@@ -709,7 +708,7 @@ are only a handful of key differences between the two.
    -  The ``array`` constructor **takes (nested) Python sequences as
       initializers**. As in, ``array([[1,2,3],[4,5,6]])``.
    -  The ``matrix`` constructor additionally **takes a convenient
-      string initializer**. As in ``matrix("[1 2 3; 4 5 6]")``.
+      string initializer**. As in ``matrix("[1 2 3; 4 5 6]")``.
 
 There are pros and cons to using both:
 
@@ -810,10 +809,10 @@ Links
 =====
 
 Another somewhat outdated MATLAB/NumPy cross-reference can be found at
-http://mathesaurus.sf.net/
+https://mathesaurus.sf.net/
 
 An extensive list of tools for scientific work with Python can be
-found in the `topical software page <https://scipy.org/topical-software.html>`__.
+found in the `topical software page <https://projects.scipy.org/topical-software.html>`__.
 
 See
 `List of Python software: scripting

@@ -1,0 +1,38 @@
+
+Contributors
+============
+
+A total of 11 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Chris Sidebottom
+* Ishan Koradia +
+* João Eiras +
+* Katie Rust +
+* Marten van Kerkwijk
+* Matti Picus
+* Nathan Goldbaum
+* Peter Hawkins
+* Pieter Eendebak
+* Slava Gorloff +
+
+Pull requests merged
+====================
+
+A total of 14 pull requests were merged for this release.
+
+* `#27333 <https://github.com/numpy/numpy/pull/27333>`__: MAINT: prepare 2.1.x for further development
+* `#27400 <https://github.com/numpy/numpy/pull/27400>`__: BUG: apply critical sections around populating the dispatch cache
+* `#27406 <https://github.com/numpy/numpy/pull/27406>`__: BUG: Stub out get_build_msvc_version if distutils.msvccompiler...
+* `#27416 <https://github.com/numpy/numpy/pull/27416>`__: BUILD: fix missing include for std::ptrdiff_t for C++23 language...
+* `#27433 <https://github.com/numpy/numpy/pull/27433>`__: BLD: pin setuptools to avoid breaking numpy.distutils
+* `#27437 <https://github.com/numpy/numpy/pull/27437>`__: BUG: Allow unsigned shift argument for np.roll
+* `#27439 <https://github.com/numpy/numpy/pull/27439>`__: BUG: Disable SVE VQSort
+* `#27471 <https://github.com/numpy/numpy/pull/27471>`__: BUG: rfftn axis bug
+* `#27479 <https://github.com/numpy/numpy/pull/27479>`__: BUG: Fix extra decref of PyArray_UInt8DType.
+* `#27480 <https://github.com/numpy/numpy/pull/27480>`__: CI: use PyPI not scientific-python-nightly-wheels for CI doc...
+* `#27481 <https://github.com/numpy/numpy/pull/27481>`__: MAINT: Check for SVE support on demand
+* `#27484 <https://github.com/numpy/numpy/pull/27484>`__: BUG: initialize the promotion state to be weak
+* `#27501 <https://github.com/numpy/numpy/pull/27501>`__: MAINT: Bump pypa/cibuildwheel from 2.20.0 to 2.21.2
+* `#27506 <https://github.com/numpy/numpy/pull/27506>`__: BUG: avoid segfault on bad arguments in ndarray.__array_function__

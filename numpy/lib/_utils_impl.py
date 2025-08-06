@@ -1,14 +1,14 @@
+import functools
 import os
+import platform
 import sys
 import textwrap
 import types
 import warnings
-import functools
-import platform
 
+import numpy as np
 from numpy._core import ndarray
 from numpy._utils import set_module
-import numpy as np
 
 __all__ = [
     'get_include', 'info', 'show_runtime'
@@ -36,10 +36,13 @@ def show_runtime():
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     """
-    from numpy._core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
     from pprint import pprint
+
+    from numpy._core._multiarray_umath import (
+        __cpu_baseline__,
+        __cpu_dispatch__,
+        __cpu_features__,
+    )
     config_found = [{
         "numpy_version": np.__version__,
         "python": sys.version,
@@ -144,10 +147,9 @@ class _Deprecate:
         if old_name is None:
             old_name = func.__name__
         if new_name is None:
-            depdoc = "`%s` is deprecated!" % old_name
+            depdoc = f"`{old_name}` is deprecated!"
         else:
-            depdoc = "`%s` is deprecated, use `%s` instead!" % \
-                     (old_name, new_name)
+            depdoc = f"`{old_name}` is deprecated, use `{new_name}` instead!"
 
         if message is not None:
             depdoc += "\n" + message
@@ -326,10 +328,11 @@ def _split_line(name, arguments, width):
         k = k + len(argument) + len(addstr)
         if k > width:
             k = firstwidth + 1 + len(argument)
-            newstr = newstr + ",\n" + " "*(firstwidth+2) + argument
+            newstr = newstr + ",\n" + " " * (firstwidth + 2) + argument
         else:
             newstr = newstr + addstr + argument
     return newstr
+
 
 _namedict = None
 _dictlist = None
@@ -338,7 +341,7 @@ _dictlist = None
 # to see if something is defined
 def _makenamedict(module='numpy'):
     module = __import__(module, globals(), locals(), [])
-    thedict = {module.__name__:module.__dict__}
+    thedict = {module.__name__: module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
     while True:
@@ -393,21 +396,21 @@ def _info(obj, output=None):
     print("contiguous: ", bp(obj.flags.contiguous), file=output)
     print("fortran: ", obj.flags.fortran, file=output)
     print(
-        "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra),
+        f"data pointer: {hex(obj.ctypes._as_parameter_.value)}{extra}",
         file=output
         )
     print("byteorder: ", end=' ', file=output)
     if endian in ['|', '=']:
-        print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
+        print(f"{tic}{sys.byteorder}{tic}", file=output)
         byteswap = False
     elif endian == '>':
-        print("%sbig%s" % (tic, tic), file=output)
+        print(f"{tic}big{tic}", file=output)
         byteswap = sys.byteorder != "big"
     else:
-        print("%slittle%s" % (tic, tic), file=output)
+        print(f"{tic}little{tic}", file=output)
         byteswap = sys.byteorder != "little"
     print("byteswap: ", bp(byteswap), file=output)
-    print("type: %s" % obj.dtype, file=output)
+    print(f"type: {obj.dtype}", file=output)
 
 
 @set_module('numpy')
@@ -476,8 +479,8 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     """
     global _namedict, _dictlist
     # Local import to speed up numpy's import time.
-    import pydoc
     import inspect
+    import pydoc
 
     if (hasattr(object, '_ppimport_importer') or
            hasattr(object, '_ppimport_module')):
@@ -501,20 +504,19 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
             try:
                 obj = _namedict[namestr][object]
                 if id(obj) in objlist:
-                    print("\n     "
-                          "*** Repeat reference found in %s *** " % namestr,
+                    print(f"\n     *** Repeat reference found in {namestr} *** ",
                           file=output
                           )
                 else:
                     objlist.append(id(obj))
-                    print("     *** Found in %s ***" % namestr, file=output)
+                    print(f"     *** Found in {namestr} ***", file=output)
                     info(obj)
-                    print("-"*maxwidth, file=output)
+                    print("-" * maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
         if numfound == 0:
-            print("Help for %s not found." % object, file=output)
+            print(f"Help for {object} not found.", file=output)
         else:
             print("\n     "
                   "*** Total of %d references found. ***" % numfound,
@@ -528,7 +530,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -543,7 +545,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -567,7 +569,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
                     methstr, other = pydoc.splitdoc(
                             inspect.getdoc(thisobj) or "None"
                             )
-                print("  %s  --  %s" % (meth, methstr), file=output)
+                print(f"  {meth}  --  {methstr}", file=output)
 
     elif hasattr(object, '__doc__'):
         print(inspect.getdoc(object), file=output)
@@ -697,7 +699,9 @@ def _opt_info():
         str: A formatted string indicating the supported CPU features.
     """
     from numpy._core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+        __cpu_baseline__,
+        __cpu_dispatch__,
+        __cpu_features__,
     )
 
     if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
@@ -753,9 +757,9 @@ def drop_metadata(dtype, /):
         if not found_metadata:
             return dtype
 
-        structure = dict(
-            names=names, formats=formats, offsets=offsets, titles=titles,
-            itemsize=dtype.itemsize)
+        structure = {
+            'names': names, 'formats': formats, 'offsets': offsets, 'titles': titles,
+            'itemsize': dtype.itemsize}
 
         # NOTE: Could pass (dtype.type, structure) to preserve record dtypes...
         return np.dtype(structure, align=dtype.isalignedstruct)

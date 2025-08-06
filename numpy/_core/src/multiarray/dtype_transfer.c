@@ -235,8 +235,8 @@ any_to_object_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-
-    *flags = NPY_METH_REQUIRES_PYAPI;  /* No need for floating point errors */
+    /* Python API doesn't use FPEs and this also attempts to hide spurious ones. */
+    *flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     *out_loop = _strided_to_strided_any_to_object;
     *out_transferdata = PyMem_Malloc(sizeof(_any_to_object_auxdata));
@@ -342,7 +342,8 @@ object_to_any_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    *flags = NPY_METH_REQUIRES_PYAPI;
+    /* Python API doesn't use FPEs and this also attempts to hide spurious ones. */
+    *flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     /* NOTE: auxdata is only really necessary to flag `move_references` */
     _object_to_any_auxdata *data = PyMem_Malloc(sizeof(*data));
@@ -2318,7 +2319,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         *out_flags = PyArrayMethod_MINIMAL_FLAGS;
         for (i = 0; i < field_count; ++i) {
             key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
-            tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key);
+            tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
             if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
                 PyMem_Free(data);
@@ -2382,7 +2383,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         NPY_traverse_info_init(&data->decref_src);
 
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), 0);
-        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O",
                               &src_fld_dtype, &src_offset, &title)) {
             PyMem_Free(data);
@@ -2434,14 +2435,14 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     /* set up the transfer function for each field */
     for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
-        tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), i);
-        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);

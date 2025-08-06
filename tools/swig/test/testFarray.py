@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-# System imports
-from   distutils.util import get_platform
 import os
 import sys
 import unittest
+from distutils.util import get_platform
 
-# Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
+
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
 else:
@@ -15,7 +14,7 @@ else:
 
 # Add the distutils-generated build directory to the python search path and then
 # import the extension module
-libDir = "lib.{}-{}.{}".format(get_platform(), *sys.version_info[:2])
+libDir = f"lib.{get_platform()}-{sys.version_info[0]}.{sys.version_info[1]}"
 sys.path.insert(0, os.path.join("build", libDir))
 import Farray
 
@@ -58,7 +57,7 @@ class FarrayTestCase(unittest.TestCase):
 
     def testLen(self):
         "Test Farray __len__ method"
-        self.assertTrue(len(self.array) == self.nrows*self.ncols)
+        self.assertTrue(len(self.array) == self.nrows * self.ncols)
 
     def testSetGet(self):
         "Test Farray __setitem__, __getitem__ methods"
@@ -66,10 +65,10 @@ class FarrayTestCase(unittest.TestCase):
         n = self.ncols
         for i in range(m):
             for j in range(n):
-                self.array[i, j] = i*j
+                self.array[i, j] = i * j
         for i in range(m):
             for j in range(n):
-                self.assertTrue(self.array[i, j] == i*j)
+                self.assertTrue(self.array[i, j] == i * j)
 
     def testSetBad1(self):
         "Test Farray __setitem__ method, negative row"
@@ -81,11 +80,11 @@ class FarrayTestCase(unittest.TestCase):
 
     def testSetBad3(self):
         "Test Farray __setitem__ method, out-of-range row"
-        self.assertRaises(IndexError, self.array.__setitem__, (self.nrows+1, 0), 0)
+        self.assertRaises(IndexError, self.array.__setitem__, (self.nrows + 1, 0), 0)
 
     def testSetBad4(self):
         "Test Farray __setitem__ method, out-of-range col"
-        self.assertRaises(IndexError, self.array.__setitem__, (0, self.ncols+1), 0)
+        self.assertRaises(IndexError, self.array.__setitem__, (0, self.ncols + 1), 0)
 
     def testGetBad1(self):
         "Test Farray __getitem__ method, negative row"
@@ -97,11 +96,11 @@ class FarrayTestCase(unittest.TestCase):
 
     def testGetBad3(self):
         "Test Farray __getitem__ method, out-of-range row"
-        self.assertRaises(IndexError, self.array.__getitem__, (self.nrows+1, 0))
+        self.assertRaises(IndexError, self.array.__getitem__, (self.nrows + 1, 0))
 
     def testGetBad4(self):
         "Test Farray __getitem__ method, out-of-range col"
-        self.assertRaises(IndexError, self.array.__getitem__, (0, self.ncols+1))
+        self.assertRaises(IndexError, self.array.__getitem__, (0, self.ncols + 1))
 
     def testAsString(self):
         "Test Farray asString method"
@@ -114,7 +113,7 @@ class FarrayTestCase(unittest.TestCase):
 """
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i, j] = i+j
+                self.array[i, j] = i + j
         self.assertTrue(self.array.asString() == result)
 
     def testStr(self):
@@ -128,22 +127,23 @@ class FarrayTestCase(unittest.TestCase):
 """
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i, j] = i-j
+                self.array[i, j] = i - j
         self.assertTrue(str(self.array) == result)
 
     def testView(self):
         "Test Farray view method"
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.array[i, j] = i+j
+                self.array[i, j] = i + j
         a = self.array.view()
         self.assertTrue(isinstance(a, np.ndarray))
         self.assertTrue(a.flags.f_contiguous)
         for i in range(self.nrows):
             for j in range(self.ncols):
-                self.assertTrue(a[i, j] == i+j)
+                self.assertTrue(a[i, j] == i + j)
 
 ######################################################################
+
 
 if __name__ == "__main__":
 

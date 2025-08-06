@@ -41,6 +41,7 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_std;
     PyObject *_sum;
     PyObject *_ufunc_doc_signature_formatter;
+    PyObject *_usefields;
     PyObject *_var;
     PyObject *_view_is_safe;
     PyObject *_void_scalar_to_string;
@@ -81,7 +82,7 @@ npy_import(const char *module, const char *attr)
  *
  * @param module Absolute module name.
  * @param attr module attribute to cache.
- * @param cache Storage location for imported function.
+ * @param obj Storage location for imported function.
  */
 static inline int
 npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {

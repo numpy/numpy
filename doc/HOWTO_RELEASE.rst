@@ -13,14 +13,9 @@ Useful info can be found in the following locations:
 
 * **NumPy docs**
 
-  - https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst
-  - https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst
-  - https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst
-
-* **Release scripts**
-
-  - https://github.com/numpy/numpy-vendor
-
+  - `HOWTO_RELEASE.rst <https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst>`_
+  - `RELEASE_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst>`_
+  - `BRANCH_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst>`_
 
 Supported platforms and versions
 ================================
@@ -47,7 +42,7 @@ installers may be available for a subset of these versions (see below).
 
 * **Linux**
 
-  We build and ship `manylinux2014 <https://www.python.org/dev/peps/pep-0513>`_
+  We build and ship `manylinux_2_28 <https://www.python.org/dev/peps/pep-0600>`_
   wheels for NumPy.  Many Linux distributions include their own binary builds
   of NumPy.
 
@@ -134,7 +129,7 @@ What is released
 ================
 
 * **Wheels**
-  We currently support Python 3.8-3.10 on Windows, OSX, and Linux.
+  We currently support Python 3.10-3.13 on Windows, OSX, and Linux.
 
   * Windows: 32-bit and 64-bit wheels built using Github actions;
   * OSX: x64_86 and arm64 OSX wheels built using Github actions;

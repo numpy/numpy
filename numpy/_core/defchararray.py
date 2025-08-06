@@ -18,23 +18,24 @@ The preferred alias for `defchararray` is `numpy.char`.
 import functools
 
 import numpy as np
-from .._utils import set_module
-from .numerictypes import bytes_, str_, character
-from .numeric import ndarray, array as narray, asarray as asnarray
-from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
+from numpy._core.multiarray import compare_chararrays
+from numpy._core.strings import (
+    _join as join,
+    _rsplit as rsplit,
+    _split as split,
+    _splitlines as splitlines,
+)
+from numpy._utils import set_module
 from numpy.strings import *
 from numpy.strings import (
     multiply as strings_multiply,
     partition as strings_partition,
     rpartition as strings_rpartition,
 )
-from numpy._core.strings import (
-    _split as split,
-    _rsplit as rsplit,
-    _splitlines as splitlines,
-    _join as join,
-)
+
+from .numeric import array as narray, asarray as asnarray, ndarray
+from .numerictypes import bytes_, character, str_
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
@@ -262,6 +263,7 @@ def less(x1, x2):
     return compare_chararrays(x1, x2, '<', True)
 
 
+@set_module("numpy.char")
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -313,6 +315,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
 
 
+@set_module("numpy.char")
 def partition(a, sep):
     """
     Partition each element in `a` around `sep`.
@@ -354,6 +357,7 @@ def partition(a, sep):
     return np.stack(strings_partition(a, sep), axis=-1)
 
 
+@set_module("numpy.char")
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -1269,6 +1273,15 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> char_array = np.char.array(['hello', 'world', 'numpy','array'])
+    >>> char_array
+    chararray(['hello', 'world', 'numpy', 'array'], dtype='<U5')
+
     """
     if isinstance(obj, (bytes, str)):
         if unicode is None:

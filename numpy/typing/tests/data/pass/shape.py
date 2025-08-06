@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple, cast
+from typing import Any, NamedTuple
 
 import numpy as np
 
@@ -8,14 +8,12 @@ class XYGrid(NamedTuple):
     x_axis: int
     y_axis: int
 
-# TODO: remove this cast after: https://github.com/numpy/numpy/pull/27171
-arr: np.ndarray[XYGrid, Any] = cast(
-    np.ndarray[XYGrid, Any],
-    np.empty(XYGrid(2, 2)),
-)
-
-# Test variance of _ShapeType_co
+# Test variance of _ShapeT_co
 def accepts_2d(a: np.ndarray[tuple[int, int], Any]) -> None:
     return None
 
-accepts_2d(arr)
+
+accepts_2d(np.empty(XYGrid(2, 2)))
+accepts_2d(np.zeros(XYGrid(2, 2), dtype=int))
+accepts_2d(np.ones(XYGrid(2, 2), dtype=int))
+accepts_2d(np.full(XYGrid(2, 2), fill_value=5, dtype=int))

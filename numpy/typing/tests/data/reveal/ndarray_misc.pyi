@@ -6,14 +6,15 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-import operator
 import ctypes as ct
-from typing import Any, Literal
+import operator
+from collections.abc import Iterator
+from types import ModuleType
+from typing import Any, Literal, assert_type
+from typing_extensions import CapsuleType
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 class SubClass(npt.NDArray[np.object_]): ...
 
@@ -28,10 +29,14 @@ AR_m: npt.NDArray[np.timedelta64]
 AR_U: npt.NDArray[np.str_]
 AR_V: npt.NDArray[np.void]
 
+AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
+AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
+AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
+
 ctypes_obj = AR_f8.ctypes
 
-assert_type(AR_f8.__dlpack__(), Any)
-assert_type(AR_f8.__dlpack_device__(), tuple[int, Literal[0]])
+assert_type(AR_f8.__dlpack__(), CapsuleType)
+assert_type(AR_f8.__dlpack_device__(), tuple[Literal[1], Literal[0]])
 
 assert_type(ctypes_obj.data, int)
 assert_type(ctypes_obj.shape, ct.Array[np.ctypeslib.c_intp])
@@ -44,28 +49,28 @@ assert_type(ctypes_obj.strides_as(ct.c_ubyte), ct.Array[ct.c_ubyte])
 
 assert_type(f8.all(), np.bool)
 assert_type(AR_f8.all(), np.bool)
-assert_type(AR_f8.all(axis=0), Any)
-assert_type(AR_f8.all(keepdims=True), Any)
+assert_type(AR_f8.all(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.all(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.all(out=B), SubClass)
 
 assert_type(f8.any(), np.bool)
 assert_type(AR_f8.any(), np.bool)
-assert_type(AR_f8.any(axis=0), Any)
-assert_type(AR_f8.any(keepdims=True), Any)
+assert_type(AR_f8.any(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.any(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.any(out=B), SubClass)
 
 assert_type(f8.argmax(), np.intp)
 assert_type(AR_f8.argmax(), np.intp)
 assert_type(AR_f8.argmax(axis=0), Any)
-assert_type(AR_f8.argmax(out=B), SubClass)
+assert_type(AR_f8.argmax(out=AR_i8), npt.NDArray[np.intp])
 
 assert_type(f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(axis=0), Any)
-assert_type(AR_f8.argmin(out=B), SubClass)
+assert_type(AR_f8.argmin(out=AR_i8), npt.NDArray[np.intp])
 
-assert_type(f8.argsort(), npt.NDArray[Any])
-assert_type(AR_f8.argsort(), npt.NDArray[Any])
+assert_type(f8.argsort(), npt.NDArray[np.intp])
+assert_type(AR_f8.argsort(), npt.NDArray[np.intp])
 
 assert_type(f8.astype(np.int64).choose([()]), npt.NDArray[Any])
 assert_type(AR_f8.choose([0]), npt.NDArray[Any])
@@ -125,9 +130,12 @@ assert_type(f8.round(), np.float64)
 assert_type(AR_f8.round(), npt.NDArray[np.float64])
 assert_type(AR_f8.round(out=B), SubClass)
 
-assert_type(f8.repeat(1), npt.NDArray[np.float64])
-assert_type(AR_f8.repeat(1), npt.NDArray[np.float64])
-assert_type(B.repeat(1), npt.NDArray[np.object_])
+assert_type(f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(f8.repeat(1, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8.repeat(1, axis=0), npt.NDArray[np.float64])
+assert_type(B.repeat(1), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(B.repeat(1, axis=0), npt.NDArray[np.object_])
 
 assert_type(f8.std(), Any)
 assert_type(AR_f8.std(), Any)
@@ -161,7 +169,7 @@ assert_type(AR_f8.dot(1), npt.NDArray[Any])
 assert_type(AR_f8.dot([1]), Any)
 assert_type(AR_f8.dot(1, out=B), SubClass)
 
-assert_type(AR_f8.nonzero(), tuple[npt.NDArray[np.intp], ...])
+assert_type(AR_f8.nonzero(), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
 
 assert_type(AR_f8.searchsorted(1), np.intp)
 assert_type(AR_f8.searchsorted([1]), npt.NDArray[np.intp])
@@ -172,14 +180,18 @@ assert_type(AR_f8.trace(out=B), SubClass)
 assert_type(AR_f8.item(), float)
 assert_type(AR_U.item(), str)
 
-assert_type(AR_f8.ravel(), npt.NDArray[np.float64])
-assert_type(AR_U.ravel(), npt.NDArray[np.str_])
+assert_type(AR_f8.ravel(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_U.ravel(), np.ndarray[tuple[int], np.dtype[np.str_]])
 
-assert_type(AR_f8.flatten(), npt.NDArray[np.float64])
-assert_type(AR_U.flatten(), npt.NDArray[np.str_])
+assert_type(AR_f8.flatten(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_U.flatten(), np.ndarray[tuple[int], np.dtype[np.str_]])
 
-assert_type(AR_f8.reshape(1), npt.NDArray[np.float64])
-assert_type(AR_U.reshape(1), npt.NDArray[np.str_])
+assert_type(AR_i8.reshape(None), npt.NDArray[np.int64])
+assert_type(AR_f8.reshape(-1), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_c8.reshape(2, 3, 4, 5), np.ndarray[tuple[int, int, int, int], np.dtype[np.complex64]])
+assert_type(AR_m.reshape(()), np.ndarray[tuple[()], np.dtype[np.timedelta64]])
+assert_type(AR_U.reshape([]), np.ndarray[tuple[()], np.dtype[np.str_]])
+assert_type(AR_V.reshape((480, 720, 4)), np.ndarray[tuple[int, int, int], np.dtype[np.void]])
 
 assert_type(int(AR_f8), int)
 assert_type(int(AR_U), int)
@@ -225,5 +237,10 @@ assert_type(AR_u1.to_device("cpu"), npt.NDArray[np.uint8])
 assert_type(AR_c8.to_device("cpu"), npt.NDArray[np.complex64])
 assert_type(AR_m.to_device("cpu"), npt.NDArray[np.timedelta64])
 
-assert_type(f8.__array_namespace__(), Any)
-assert_type(AR_f8.__array_namespace__(), Any)
+assert_type(f8.__array_namespace__(), ModuleType)
+assert_type(AR_f8.__array_namespace__(), ModuleType)
+
+assert_type(iter(AR_f8), Iterator[Any])  # any-D
+assert_type(iter(AR_f8_1d), Iterator[np.float64])  # 1-D
+assert_type(iter(AR_f8_2d), Iterator[npt.NDArray[np.float64]])  # 2-D
+assert_type(iter(AR_f8_3d), Iterator[npt.NDArray[np.float64]])  # 3-D

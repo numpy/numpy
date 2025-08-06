@@ -9,46 +9,52 @@ other public modules and are useful to have in the main name-space.
 """
 
 # Public submodules
-# Note: recfunctions and (maybe) format are public too, but not imported
-from . import array_utils
-from . import introspect
-from . import mixins
-from . import npyio
-from . import scimath
-from . import stride_tricks
+# Note: recfunctions is public, but not imported
+from numpy._core._multiarray_umath import add_docstring, tracemalloc_domain
+from numpy._core.function_base import add_newdoc
 
 # Private submodules
 # load module names. See https://github.com/networkx/networkx/issues/5838
-from . import _type_check_impl
-from . import _index_tricks_impl
-from . import _nanfunctions_impl
-from . import _function_base_impl
-from . import _stride_tricks_impl
-from . import _shape_base_impl
-from . import _twodim_base_impl
-from . import _ufunclike_impl
-from . import _histograms_impl
-from . import _utils_impl
-from . import _arraysetops_impl
-from . import _polynomial_impl
-from . import _npyio_impl
-from . import _arrayterator_impl
-from . import _arraypad_impl
-from . import _version
+from . import (
+    _arraypad_impl,
+    _arraysetops_impl,
+    _arrayterator_impl,
+    _function_base_impl,
+    _histograms_impl,
+    _index_tricks_impl,
+    _nanfunctions_impl,
+    _npyio_impl,
+    _polynomial_impl,
+    _shape_base_impl,
+    _stride_tricks_impl,
+    _twodim_base_impl,
+    _type_check_impl,
+    _ufunclike_impl,
+    _utils_impl,
+    _version,
+    array_utils,
+    format,
+    introspect,
+    mixins,
+    npyio,
+    scimath,
+    stride_tricks,
+)
 
 # numpy.lib namespace members
 from ._arrayterator_impl import Arrayterator
 from ._version import NumpyVersion
-from numpy._core._multiarray_umath import add_docstring, tracemalloc_domain
-from numpy._core.function_base import add_newdoc
 
 __all__ = [
     "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
-    "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
-    "stride_tricks", "tracemalloc_domain"
+    "format", "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
+    "stride_tricks", "tracemalloc_domain",
 ]
 
+add_newdoc.__module__ = "numpy.lib"
+
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester
 
@@ -88,5 +94,4 @@ def __getattr__(attr):
             name=None
         )
     else:
-        raise AttributeError("module {!r} has no attribute "
-                             "{!r}".format(__name__, attr))
+        raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")

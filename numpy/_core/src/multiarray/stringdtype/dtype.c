@@ -144,7 +144,7 @@ fail:
     return NULL;
 }
 
-static int
+NPY_NO_EXPORT int
 na_eq_cmp(PyObject *a, PyObject *b) {
     if (a == b) {
         // catches None and other singletons like Pandas.NA
@@ -269,6 +269,15 @@ as_pystring(PyObject *scalar, int coerce)
                         "StringDType only allows string data when "
                         "string coercion is disabled.");
         return NULL;
+    }
+    else if (scalar_type == &PyBytes_Type) {
+        // assume UTF-8 encoding
+        char *buffer;
+        Py_ssize_t length;
+        if (PyBytes_AsStringAndSize(scalar, &buffer, &length) < 0) {
+            return NULL;
+        }
+        return PyUnicode_FromStringAndSize(buffer, length);
     }
     else {
         // attempt to coerce to str
@@ -624,11 +633,16 @@ PyArray_Descr *
 stringdtype_finalize_descr(PyArray_Descr *dtype)
 {
     PyArray_StringDTypeObject *sdtype = (PyArray_StringDTypeObject *)dtype;
+    // acquire the allocator lock in case the descriptor we want to finalize
+    // is shared between threads, see gh-28813
+    npy_string_allocator *allocator = NpyString_acquire_allocator(sdtype);
     if (sdtype->array_owned == 0) {
         sdtype->array_owned = 1;
+        NpyString_release_allocator(allocator);
         Py_INCREF(dtype);
         return dtype;
     }
+    NpyString_release_allocator(allocator);
     PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
             sdtype->na_object, sdtype->coerce);
     ret->array_owned = 1;
@@ -772,11 +786,9 @@ PyArray_StringDType_richcompare(PyObject *self, PyObject *other, int op)
     }
 
     if ((op == Py_EQ && eq) || (op == Py_NE && !eq)) {
-        Py_INCREF(Py_True);
-        return Py_True;
+        Py_RETURN_TRUE;
     }
-    Py_INCREF(Py_False);
-    return Py_False;
+    Py_RETURN_FALSE;
 }
 
 static Py_hash_t
@@ -843,18 +855,22 @@ init_string_dtype(void)
         return -1;
     }
 
-    PyArray_Descr *singleton =
-            NPY_DT_CALL_default_descr(&PyArray_StringDType);
+    PyArray_StringDTypeObject *singleton =
+            (PyArray_StringDTypeObject *)NPY_DT_CALL_default_descr(&PyArray_StringDType);
 
     if (singleton == NULL) {
         return -1;
     }
 
-    PyArray_StringDType.singleton = singleton;
+    // never associate the singleton with an array
+    singleton->array_owned = 1;
+
+    PyArray_StringDType.singleton = (PyArray_Descr *)singleton;
     PyArray_StringDType.type_num = NPY_VSTRING;
 
     for (int i = 0; PyArray_StringDType_casts[i] != NULL; i++) {
         PyMem_Free(PyArray_StringDType_casts[i]->dtypes);
+        PyMem_RawFree((void *)PyArray_StringDType_casts[i]->name);
         PyMem_Free(PyArray_StringDType_casts[i]);
     }
 

@@ -17,6 +17,11 @@ that target certain CPU features:
      During the runtime, NumPy modules will fail to load if any of specified features
      are not supported by the target CPU (raises Python runtime error).
 
+- ``cpu-baseline-detect``: controls detection of CPU baseline based on compiler
+  flags. Default value is ``auto`` that enables detection if ``-march=``
+  or a similar compiler flag is used. The other possible values are ``enabled``
+  and ``disabled`` to respective enable or disable it unconditionally.
+
 - ``cpu-dispatch``: dispatched set of additional CPU features.
    Default value is ``max -xop -fma4`` which enables all CPU
    features, except for AMD legacy features (in case of X86).
@@ -98,7 +103,7 @@ You may have some reservations about including of ``AVX512`` or
 any other CPU feature and you want to exclude from the dispatched features::
 
     python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
-    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
+    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl -avx512_spr"
 
 .. _opt-supported-features:
 
@@ -182,7 +187,7 @@ Behaviors
 
 - ``cpu-baseline`` will be treated as "native" if compiler native flag
   ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
-  ``CFLAGS``::
+  ``CFLAGS`` and ``cpu-baseline-detect`` is not ``disabled``::
 
     export CFLAGS="-march=native"
     pip install .
@@ -234,7 +239,7 @@ The need to align certain CPU features that are assured to be supported by
 successive generations of the same architecture, some cases:
 
 - On ppc64le ``VSX(ISA 2.06)`` and ``VSX2(ISA 2.07)`` both imply one another since the
-  first generation that supports little-endian mode is Power-8`(ISA 2.07)`
+  first generation that supports little-endian mode is ``Power-8(ISA 2.07)``
 - On AArch64 ``NEON NEON_FP16 NEON_VFPV4 ASIMD`` implies each other since they are part of the
   hardware baseline.
 

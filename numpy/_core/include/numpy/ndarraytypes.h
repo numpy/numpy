@@ -6,6 +6,10 @@
 #include "npy_cpu.h"
 #include "utils.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 
 /* Always allow threading unless it was explicitly disabled at build time */
@@ -841,7 +845,7 @@ typedef struct {
         npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
-/* This is not used internally. */
+/* This structure contains an exploded view of a timedelta value */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
@@ -1675,7 +1679,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 /*
  * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
  * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
- * lookup and are defined in npy_2_compat.h.
+ * lookup and are defined in npy_2_compat.h.
  */
 
 
@@ -1904,10 +1908,6 @@ typedef struct {
 #error "Do not use the reserved keyword NPY_DEPRECATED_INCLUDES."
 #endif
 #define NPY_DEPRECATED_INCLUDES
-#if !defined(NPY_NO_DEPRECATED_API) || \
-    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
-#include "npy_1_7_deprecated_api.h"
-#endif
 /*
  * There is no file npy_1_8_deprecated_api.h since there are no additional
  * deprecated API features in NumPy 1.8.
@@ -1919,7 +1919,32 @@ typedef struct {
  *     (NPY_NO_DEPRECATED_API < NPY_1_9_API_VERSION)
  * #include "npy_1_9_deprecated_api.h"
  * #endif
+ * Then in the npy_1_9_deprecated_api.h header add something like this
+ * --------------------
+ * #ifndef NPY_DEPRECATED_INCLUDES
+ * #error "Should never include npy_*_*_deprecated_api directly."
+ * #endif
+ * #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+ * #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+ * 
+ * #ifndef NPY_NO_DEPRECATED_API
+ * #if defined(_WIN32)
+ * #define _WARN___STR2__(x) #x
+ * #define _WARN___STR1__(x) _WARN___STR2__(x)
+ * #define _WARN___LOC__ __FILE__ "(" _WARN___STR1__(__LINE__) ") : Warning Msg: "
+ * #pragma message(_WARN___LOC__"Using deprecated NumPy API, disable it with " \
+ *                          "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION")
+ * #else
+ * #warning "Using deprecated NumPy API, disable it with " \
+ *          "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
+ * #endif
+ * #endif
+ * --------------------
  */
 #undef NPY_DEPRECATED_INCLUDES
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

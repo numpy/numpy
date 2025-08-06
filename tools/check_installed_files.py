@@ -18,11 +18,10 @@ meant for use in CI so it's not like many files will be missing at once.
 
 """
 
-import os
 import glob
-import sys
 import json
-
+import os
+import sys
 
 CUR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 ROOT_DIR = os.path.dirname(CUR_DIR)
@@ -55,7 +54,7 @@ def main(install_dir, tests_check):
         for test_file in numpy_test_files.keys():
             if test_file not in installed_test_files.keys():
                 raise Exception(
-                    "%s is not installed" % numpy_test_files[test_file]
+                    f"{numpy_test_files[test_file]} is not installed"
                 )
 
         print("----------- All the test files were installed --------------")
@@ -69,14 +68,14 @@ def main(install_dir, tests_check):
             if (tests_check == "--no-tests" and
                     "tests" in numpy_pyi_files[pyi_file]):
                 continue
-            raise Exception("%s is not installed" % numpy_pyi_files[pyi_file])
+            raise Exception(f"{numpy_pyi_files[pyi_file]} is not installed")
 
     print("----------- All the necessary .pyi files "
           "were installed --------------")
 
 
 def get_files(dir_to_check, kind='test'):
-    files = dict()
+    files = {}
     patterns = {
         'test': f'{dir_to_check}/**/test_*.py',
         'stub': f'{dir_to_check}/**/*.pyi',
@@ -120,5 +119,5 @@ if __name__ == '__main__':
             if values['tag'] not in all_tags:
                 all_tags.add(values['tag'])
 
-    if all_tags != set(['runtime', 'python-runtime', 'devel', 'tests']):
+    if all_tags != {'runtime', 'python-runtime', 'devel', 'tests'}:
         raise AssertionError(f"Found unexpected install tag: {all_tags}")

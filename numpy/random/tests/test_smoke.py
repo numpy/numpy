@@ -1,10 +1,12 @@
 import pickle
 from functools import partial
 
-import numpy as np
 import pytest
-from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937, PCG64, PCG64DXSM, Philox, SFC64)
+
+import numpy as np
+from numpy.random import MT19937, PCG64, PCG64DXSM, SFC64, Generator, Philox
+from numpy.testing import assert_, assert_array_equal, assert_equal
+
 
 @pytest.fixture(scope='module',
                 params=(np.bool, np.int8, np.int16, np.int32, np.int64,
@@ -66,13 +68,12 @@ def comp_state(state1, state2):
             identical &= comp_state(state1[key], state2[key])
     elif type(state1) != type(state2):
         identical &= type(state1) == type(state2)
+    elif (isinstance(state1, (list, tuple, np.ndarray)) and isinstance(
+            state2, (list, tuple, np.ndarray))):
+        for s1, s2 in zip(state1, state2):
+            identical &= comp_state(s1, s2)
     else:
-        if (isinstance(state1, (list, tuple, np.ndarray)) and isinstance(
-                state2, (list, tuple, np.ndarray))):
-            for s1, s2 in zip(state1, state2):
-                identical &= comp_state(s1, s2)
-        else:
-            identical &= state1 == state2
+        identical &= state1 == state2
     return identical
 
 
@@ -478,7 +479,7 @@ class RNG:
                            self.seed_vector_bits - 1) + 1
         bg = self.bit_generator(seed)
         state1 = bg.state
-        bg  = self.bit_generator(seed[0])
+        bg = self.bit_generator(seed[0])
         state2 = bg.state
         assert_(not comp_state(state1, state2))
 

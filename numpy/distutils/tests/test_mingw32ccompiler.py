@@ -2,11 +2,16 @@ import shutil
 import subprocess
 import sys
 import pytest
+import os
+import sysconfig
 
 from numpy.distutils import mingw32ccompiler
 
 
 @pytest.mark.skipif(sys.platform != 'win32', reason='win32 only test')
+@pytest.mark.skipif(not os.path.exists(os.path.join(sys.prefix, 'libs')),
+                    reason="test requires mingw library layout")
+@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64', reason='mingw GNU objdump does not understand arm64 binary format yet')
 def test_build_import():
     '''Test the mingw32ccompiler.build_import_library, which builds a
     `python.a` from the MSVC `python.lib`

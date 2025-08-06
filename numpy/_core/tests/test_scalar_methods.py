@@ -4,13 +4,13 @@ Test the scalar constructors, which also do type-coercion
 import fractions
 import platform
 import types
-from typing import Any, Type
+from typing import Any
 
 import pytest
-import numpy as np
 
+import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises, IS_MUSL
+from numpy.testing import assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -105,7 +105,7 @@ class TestAsIntegerRatio:
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")
 
-            assert_equal(nf / df, f, "{}/{}".format(n, d))
+            assert_equal(nf / df, f, f"{n}/{d}")
 
 
 class TestIsInteger:
@@ -143,7 +143,7 @@ class TestClassGetItem:
         np.signedinteger,
         np.floating,
     ])
-    def test_abc(self, cls: Type[np.number]) -> None:
+    def test_abc(self, cls: type[np.number]) -> None:
         alias = cls[Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is cls
@@ -164,7 +164,7 @@ class TestClassGetItem:
                 np.complexfloating[arg_tup]
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
-    def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:
+    def test_abc_non_numeric(self, cls: type[np.generic]) -> None:
         with pytest.raises(TypeError):
             cls[Any]
 
@@ -190,11 +190,11 @@ class TestClassGetItem:
 class TestBitCount:
     # derived in part from the cpython test "test_bit_count"
 
-    @pytest.mark.parametrize("itype", sctypes['int']+sctypes['uint'])
+    @pytest.mark.parametrize("itype", sctypes['int'] + sctypes['uint'])
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
             msg = f"Smoke test for {itype}({a}).bit_count()"
-            assert itype(a).bit_count() == bin(a).count("1"), msg
+            assert itype(a).bit_count() == a.bit_count(), msg
 
     def test_bit_count(self):
         for exp in [10, 17, 63]:
@@ -210,7 +210,7 @@ class TestDevice:
     Test scalar.device attribute and scalar.to_device() method.
     """
     scalars = [np.bool(True), np.int64(1), np.uint64(1), np.float64(1.0),
-               np.complex128(1+1j)]
+               np.complex128(1 + 1j)]
 
     @pytest.mark.parametrize("scalar", scalars)
     def test_device(self, scalar):
@@ -223,3 +223,24 @@ class TestDevice:
     @pytest.mark.parametrize("scalar", scalars)
     def test___array_namespace__(self, scalar):
         assert scalar.__array_namespace__() is np
+
+
+@pytest.mark.parametrize("scalar", [np.bool(True), np.int8(1), np.float64(1)])
+def test_array_wrap(scalar):
+    # Test scalars array wrap as long as it exists.  NumPy itself should
+    # probably not use it, so it may not be necessary to keep it around.
+
+    arr0d = np.array(3, dtype=np.int8)
+    # Third argument not passed, None, or True "decays" to scalar.
+    # (I don't think NumPy would pass `None`, but it seems clear to support)
+    assert type(scalar.__array_wrap__(arr0d)) is np.int8
+    assert type(scalar.__array_wrap__(arr0d, None, None)) is np.int8
+    assert type(scalar.__array_wrap__(arr0d, None, True)) is np.int8
+
+    # Otherwise, result should be the input
+    assert scalar.__array_wrap__(arr0d, None, False) is arr0d
+
+    # An old bug.  A non 0-d array cannot be converted to scalar:
+    arr1d = np.array([3], dtype=np.int8)
+    assert scalar.__array_wrap__(arr1d) is arr1d
+    assert scalar.__array_wrap__(arr1d, None, True) is arr1d

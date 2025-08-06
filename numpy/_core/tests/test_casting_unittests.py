@@ -6,18 +6,17 @@ Unlike most tests in NumPy, these are closer to unit-tests rather
 than integration tests.
 """
 
-import pytest
-import textwrap
+import ctypes
 import enum
 import random
-import ctypes
+import textwrap
+
+import pytest
 
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
-
-from numpy.testing import assert_array_equal
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
-
+from numpy.lib.stride_tricks import as_strided
+from numpy.testing import assert_array_equal
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -120,6 +119,7 @@ def _get_cancast_table():
             cancast[from_dt][to_dt] = convert_cast[c]
 
     return cancast
+
 
 CAST_TABLE = _get_cancast_table()
 
@@ -267,8 +267,8 @@ class TestCasting:
                 for to_dt in [to_Dt(), to_Dt().newbyteorder()]:
                     casting, (from_res, to_res), view_off = (
                             cast._resolve_descriptors((from_dt, to_dt)))
-                    assert(type(from_res) == from_Dt)
-                    assert(type(to_res) == to_Dt)
+                    assert type(from_res) == from_Dt
+                    assert type(to_res) == to_Dt
                     if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
@@ -284,8 +284,8 @@ class TestCasting:
                         assert casting == CAST_TABLE[from_Dt][to_Dt]
 
                     if from_Dt is to_Dt:
-                        assert(from_dt is from_res)
-                        assert(to_dt is to_res)
+                        assert from_dt is from_res
+                        assert to_dt is to_res
 
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("from_dt", simple_dtype_instances())
@@ -433,7 +433,7 @@ class TestCasting:
             to_dt = np.dtype(to_dt)
 
         # Test a few values for casting (results generated with NumPy 1.19)
-        values = np.array([-2**63, 1, 2**63-1, 10000, -10000, 2**32])
+        values = np.array([-2**63, 1, 2**63 - 1, 10000, -10000, 2**32])
         values = values.astype(np.dtype("int64").newbyteorder(from_dt.byteorder))
         assert values.dtype.byteorder == from_dt.byteorder
         assert np.isnat(values.view(from_dt)[0])
@@ -458,7 +458,7 @@ class TestCasting:
         orig_arr = values.view(from_dt)
         orig_out = np.empty_like(expected_out)
 
-        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):
+        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):  # noqa: PLR1714
             # Casting from non-generic to generic units is an error and should
             # probably be reported as an invalid cast earlier.
             with pytest.raises(ValueError):
@@ -752,11 +752,11 @@ class TestCasting:
             # field cases (field to field is tested explicitly also):
             # Not considered viewable, because a negative offset would allow
             # may structured dtype to indirectly access invalid memory.
-            ("i", dict(names=["a"], formats=["i"], offsets=[2]), None),
-            (dict(names=["a"], formats=["i"], offsets=[2]), "i", 2),
+            ("i", {"names": ["a"], "formats": ["i"], "offsets": [2]}, None),
+            ({"names": ["a"], "formats": ["i"], "offsets": [2]}, "i", 2),
             # Currently considered not viewable, due to multiple fields
             # even though they overlap (maybe we should not allow that?)
-            ("i", dict(names=["a", "b"], formats=["i", "i"], offsets=[2, 2]),
+            ("i", {"names": ["a", "b"], "formats": ["i", "i"], "offsets": [2, 2]},
              None),
             # different number of fields can't work, should probably just fail
             # so it never reports "viewable":
@@ -801,7 +801,7 @@ class TestCasting:
             expected = arr_normal.astype(dtype)
         except TypeError:
             with pytest.raises(TypeError):
-                arr_NULLs.astype(dtype),
+                arr_NULLs.astype(dtype)
         else:
             assert_array_equal(expected, arr_NULLs.astype(dtype))
 
@@ -815,4 +815,3 @@ class TestCasting:
         res = nonstandard_bools.astype(dtype)
         expected = [0, 1, 1]
         assert_array_equal(res, expected)
-

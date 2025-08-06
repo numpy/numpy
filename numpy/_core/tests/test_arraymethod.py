@@ -3,8 +3,6 @@ This file tests the generic aspects of ArrayMethod.  At the time of writing
 this is private API, but when added, public API may be added here.
 """
 
-from __future__ import annotations
-
 import types
 from typing import Any
 
@@ -53,8 +51,8 @@ class TestSimpleStridedCall:
          ValueError),  # not 1-D
         (((np.ones(3, dtype="d"), np.ones(4, dtype="f")),),
           ValueError),  # different length
-        (((np.frombuffer(b"\0x00"*3*2, dtype="d"),
-           np.frombuffer(b"\0x00"*3, dtype="f")),),
+        (((np.frombuffer(b"\0x00" * 3 * 2, dtype="d"),
+           np.frombuffer(b"\0x00" * 3, dtype="f")),),
          ValueError),  # output not writeable
     ])
     def test_invalid_arguments(self, args, error):

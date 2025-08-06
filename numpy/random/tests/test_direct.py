@@ -1,17 +1,28 @@
 import os
-from os.path import join
 import sys
+from os.path import join
 
-import numpy as np
-from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
-                           assert_raises)
 import pytest
 
+import numpy as np
 from numpy.random import (
-    Generator, MT19937, PCG64, PCG64DXSM, Philox, RandomState, SeedSequence,
-    SFC64, default_rng
+    MT19937,
+    PCG64,
+    PCG64DXSM,
+    SFC64,
+    Generator,
+    Philox,
+    RandomState,
+    SeedSequence,
+    default_rng,
 )
 from numpy.random._common import interface
+from numpy.testing import (
+    assert_allclose,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 try:
     import cffi  # noqa: F401
@@ -130,9 +141,11 @@ def gauss_from_uint(x, n, bits):
 
 
 def test_seedsequence():
-    from numpy.random.bit_generator import (ISeedSequence,
-                                            ISpawnableSeedSequence,
-                                            SeedlessSeedSequence)
+    from numpy.random.bit_generator import (
+        ISeedSequence,
+        ISpawnableSeedSequence,
+        SeedlessSeedSequence,
+    )
 
     s1 = SeedSequence(range(10), spawn_key=(1, 2), pool_size=6)
     s1.spawn(10)
@@ -432,7 +445,6 @@ class TestPCG64(Base):
         assert state["state"] == advanced_state
 
 
-
 class TestPCG64DXSM(Base):
     @classmethod
     def setup_class(cls):
@@ -559,3 +571,22 @@ class TestDefaultRNG:
         rg2 = default_rng(rg)
         assert rg2 is rg
         assert rg2.bit_generator is bg
+
+    def test_coercion_RandomState_Generator(self):
+        # use default_rng to coerce RandomState to Generator
+        rs = RandomState(1234)
+        rg = default_rng(rs)
+        assert isinstance(rg.bit_generator, MT19937)
+        assert rg.bit_generator is rs._bit_generator
+
+        # RandomState with a non MT19937 bit generator
+        _original = np.random.get_bit_generator()
+        bg = PCG64(12342298)
+        np.random.set_bit_generator(bg)
+        rs = np.random.mtrand._rand
+        rg = default_rng(rs)
+        assert rg.bit_generator is bg
+
+        # vital to get global state back to original, otherwise
+        # other tests start to fail.
+        np.random.set_bit_generator(_original)

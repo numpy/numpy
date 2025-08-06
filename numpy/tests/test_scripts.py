@@ -2,22 +2,23 @@
 
 Test that we can run executable scripts that have been installed with numpy.
 """
-import sys
 import os
-import pytest
-from os.path import join as pathjoin, isfile, dirname
 import subprocess
+import sys
+from os.path import dirname, isfile, join as pathjoin
+
+import pytest
 
 import numpy as np
-from numpy.testing import assert_equal, IS_WASM
+from numpy.testing import IS_WASM, assert_equal
 
-is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
+is_inplace = isfile(pathjoin(dirname(np.__file__), '..', 'setup.py'))
 
 
 def find_f2py_commands():
     if sys.platform == 'win32':
         exe_dir = dirname(sys.executable)
-        if exe_dir.endswith('Scripts'): # virtualenv
+        if exe_dir.endswith('Scripts'):  # virtualenv
             return [os.path.join(exe_dir, 'f2py')]
         else:
             return [os.path.join(exe_dir, "Scripts", 'f2py')]

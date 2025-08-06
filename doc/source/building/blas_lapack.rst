@@ -96,7 +96,7 @@ Full list of BLAS and LAPACK related build options
 --------------------------------------------------
 
 BLAS and LAPACK are complex dependencies. Some libraries have more options that
-are exposed via build options (see ``meson_options.txt`` in the root of the
+are exposed via build options (see ``meson.options`` in the root of the
 repo for all of NumPy's build options).
 
 - ``blas``: name of the BLAS library to use (default: ``auto``),

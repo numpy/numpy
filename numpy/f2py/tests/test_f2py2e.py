@@ -1,18 +1,18 @@
+import platform
 import re
 import shlex
 import subprocess
 import sys
 import textwrap
-from pathlib import Path
 from collections import namedtuple
-
-import platform
+from pathlib import Path
 
 import pytest
 
-from . import util
 from numpy.f2py.f2py2e import main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
+
+from . import util
 
 #######################
 # F2PY Test utilities #
@@ -29,6 +29,7 @@ def compiler_check_f2pycli():
 #########################
 # CLI utils and classes #
 #########################
+
 
 PPaths = namedtuple("PPaths", "finp, f90inp, pyf, wrap77, wrap90, cmodf")
 
@@ -144,11 +145,10 @@ def test_gh22819_cli(capfd, gh22819_cli, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         gen_paths = [item.name for item in ipath.parent.rglob("*") if item.is_file()]
-        assert "blahmodule.c" not in gen_paths # shouldn't be generated
+        assert "blahmodule.c" not in gen_paths  # shouldn't be generated
         assert "blah-f2pywrappers.f" not in gen_paths
         assert "test_22819-f2pywrappers.f" in gen_paths
         assert "test_22819module.c" in gen_paths
-        assert "Ignoring blah"
 
 
 def test_gh22819_many_pyf(capfd, gh22819_cli, monkeypatch):
@@ -249,13 +249,13 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "--fcompiler cannot be used with meson" in out
     monkeypatch.setattr(
-        sys, "argv", "f2py --help-link".split()
+        sys, "argv", ["f2py", "--help-link"]
     )
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Use --dep for meson builds" in out
-    MNAME = "hi2" # Needs to be different for a new -c
+    MNAME = "hi2"  # Needs to be different for a new -c
     monkeypatch.setattr(
         sys, "argv", f"f2py {ipath} -c -m {MNAME} --backend distutils".split()
     )
@@ -743,7 +743,7 @@ def test_version(capfd, monkeypatch):
 
     CLI :: -v
     """
-    monkeypatch.setattr(sys, "argv", 'f2py -v'.split())
+    monkeypatch.setattr(sys, "argv", ["f2py", "-v"])
     # TODO: f2py2e should not call sys.exit() after printing the version
     with pytest.raises(SystemExit):
         f2pycli()

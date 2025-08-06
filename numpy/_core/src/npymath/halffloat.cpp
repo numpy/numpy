@@ -198,41 +198,21 @@ npy_half npy_half_divmod(npy_half h1, npy_half h2, npy_half *modulus)
 
 npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 {
-    if constexpr (Half::kNativeConversion<float>) {
-        return BitCast<uint16_t>(Half(BitCast<float>(f)));
-    }
-    else {
-        return half_private::FromFloatBits(f);
-    }
+    return BitCast<uint16_t>(Half(BitCast<float>(f)));
 }
 
 npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
 {
-    if constexpr (Half::kNativeConversion<double>) {
-        return BitCast<uint16_t>(Half(BitCast<double>(d)));
-    }
-    else {
-        return half_private::FromDoubleBits(d);
-    }
+    return BitCast<uint16_t>(Half(BitCast<double>(d)));
 }
 
 npy_uint32 npy_halfbits_to_floatbits(npy_uint16 h)
 {
-    if constexpr (Half::kNativeConversion<float>) {
-        return BitCast<uint32_t>(static_cast<float>(Half::FromBits(h)));
-    }
-    else {
-        return half_private::ToFloatBits(h);
-    }
+    return BitCast<uint32_t>(static_cast<float>(Half::FromBits(h)));
 }
 
 npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
 {
-    if constexpr (Half::kNativeConversion<double>) {
-        return BitCast<uint64_t>(static_cast<double>(Half::FromBits(h)));
-    }
-    else {
-        return half_private::ToDoubleBits(h);
-    }
+    return BitCast<uint64_t>(static_cast<double>(Half::FromBits(h)));
 }
 

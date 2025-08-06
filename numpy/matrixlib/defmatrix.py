@@ -1,12 +1,13 @@
 __all__ = ['matrix', 'bmat', 'asmatrix']
 
+import ast
 import sys
 import warnings
-import ast
 
-from .._utils import set_module
 import numpy._core.numeric as N
 from numpy._core.numeric import concatenate, isscalar
+from numpy._utils import set_module
+
 # While not in __all__, matrix_power used to be defined here, so we import
 # it for backward compatibility.
 from numpy.linalg import matrix_power
@@ -114,6 +115,7 @@ class matrix(N.ndarray):
 
     """
     __array_priority__ = 10.0
+
     def __new__(subtype, data, dtype=None, copy=True):
         warnings.warn('the matrix subclass is not the recommended way to '
                       'represent matrices or deal with linear algebra (see '
@@ -177,7 +179,7 @@ class matrix(N.ndarray):
         if (ndim == 2):
             return
         if (ndim > 2):
-            newshape = tuple([x for x in self.shape if x > 1])
+            newshape = tuple(x for x in self.shape if x > 1)
             ndim = len(newshape)
             if ndim == 2:
                 self.shape = newshape
@@ -219,10 +221,10 @@ class matrix(N.ndarray):
         return out
 
     def __mul__(self, other):
-        if isinstance(other, (N.ndarray, list, tuple)) :
+        if isinstance(other, (N.ndarray, list, tuple)):
             # This promotes 1-D vectors to row vectors
             return N.dot(self, asmatrix(other))
-        if isscalar(other) or not hasattr(other, '__rmul__') :
+        if isscalar(other) or not hasattr(other, '__rmul__'):
             return N.dot(self, other)
         return NotImplemented
 
@@ -249,9 +251,9 @@ class matrix(N.ndarray):
         """
         if axis is None:
             return self[0, 0]
-        elif axis==0:
+        elif axis == 0:
             return self
-        elif axis==1:
+        elif axis == 1:
             return self.transpose()
         else:
             raise ValueError("unsupported axis")
@@ -324,7 +326,6 @@ class matrix(N.ndarray):
         """
         return N.ndarray.sum(self, axis, dtype, out, keepdims=True)._collapse(axis)
 
-
     # To update docstring from array to matrix...
     def squeeze(self, axis=None):
         """
@@ -376,7 +377,6 @@ class matrix(N.ndarray):
 
         """
         return N.ndarray.squeeze(self, axis=axis)
-
 
     # To update docstring from array to matrix...
     def flatten(self, order='C'):
@@ -482,7 +482,8 @@ class matrix(N.ndarray):
                 [ 1.11803399]])
 
         """
-        return N.ndarray.std(self, axis, dtype, out, ddof, keepdims=True)._collapse(axis)
+        return N.ndarray.std(self, axis, dtype, out, ddof,
+                             keepdims=True)._collapse(axis)
 
     def var(self, axis=None, dtype=None, out=None, ddof=0):
         """
@@ -516,7 +517,8 @@ class matrix(N.ndarray):
                 [1.25]])
 
         """
-        return N.ndarray.var(self, axis, dtype, out, ddof, keepdims=True)._collapse(axis)
+        return N.ndarray.var(self, axis, dtype, out, ddof,
+                             keepdims=True)._collapse(axis)
 
     def prod(self, axis=None, dtype=None, out=None):
         """
@@ -796,7 +798,7 @@ class matrix(N.ndarray):
         return N.ptp(self, axis, out)._align(axis)
 
     @property
-    def I(self):
+    def I(self):  # noqa: E743
         """
         Returns the (multiplicative) inverse of invertible `self`.
 
@@ -898,7 +900,6 @@ class matrix(N.ndarray):
 
         """
         return self.__array__().ravel()
-
 
     def ravel(self, order='C'):
         """

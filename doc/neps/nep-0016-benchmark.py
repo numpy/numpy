@@ -1,6 +1,9 @@
-import perf
 import abc
+
+import perf
+
 import numpy as np
+
 
 class NotArray:
     pass
@@ -8,7 +11,7 @@ class NotArray:
 class AttrArray:
     __array_implementer__ = True
 
-class ArrayBase(abc.ABC):
+class ArrayBase(abc.ABC):  # noqa: B024
     pass
 
 class ABCArray1(ArrayBase):
@@ -16,6 +19,7 @@ class ABCArray1(ArrayBase):
 
 class ABCArray2:
     pass
+
 
 ArrayBase.register(ABCArray2)
 
@@ -33,6 +37,7 @@ runner = perf.Runner()
 def t(name, statement):
     runner.timeit(name, statement, globals=globals())
 
+
 t("np.asarray([])", "np.asarray([])")
 arrobj = np.array([])
 t("np.asarray(arrobj)", "np.asarray(arrobj)")
@@ -45,4 +50,3 @@ t("attr, True",
 t("ABC, False", "isinstance(not_array, ArrayBase)")
 t("ABC, True, via inheritance", "isinstance(abc_array_1, ArrayBase)")
 t("ABC, True, via register", "isinstance(abc_array_2, ArrayBase)")
-

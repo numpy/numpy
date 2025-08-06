@@ -167,6 +167,13 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
+
+    /* 2024-11-12, NumPy 2.2 */
+    if (DEPRECATE("_add_newdoc_ufunc is deprecated. "
+                  "Use `ufunc.__doc__ = newdoc` instead.") < 0) {
+        return NULL;
+    }
+
     PyUFuncObject *ufunc;
     PyObject *str;
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
@@ -260,11 +267,11 @@ int initumath(PyObject *m)
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
 
-    s = PyDict_GetItemString(d, "divide");
+    s = PyDict_GetItemString(d, "divide"); // noqa: borrowed-ref OK
     PyDict_SetItemString(d, "true_divide", s);
 
-    s = PyDict_GetItemString(d, "conjugate");
-    s2 = PyDict_GetItemString(d, "remainder");
+    s = PyDict_GetItemString(d, "conjugate"); // noqa: borrowed-ref OK
+    s2 = PyDict_GetItemString(d, "remainder"); // noqa: borrowed-ref OK
 
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/

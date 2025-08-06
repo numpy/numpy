@@ -8,3 +8,5 @@ updates:
       prefix: "MAINT"
     labels:
       - "03 - Maintenance"
+    ignore:
+      - dependency-name: "bus1/cabuild"

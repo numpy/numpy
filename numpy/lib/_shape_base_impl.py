@@ -2,18 +2,22 @@ import functools
 import warnings
 
 import numpy._core.numeric as _nx
-from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
+from numpy._core import atleast_3d, overrides, vstack
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
-from numpy._core._multiarray_umath import _array_converter
-from numpy._core import overrides
-from numpy._core import vstack, atleast_3d
-from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.numeric import (
+    array,
+    asanyarray,
+    asarray,
+    normalize_axis_tuple,
+    zeros,
+    zeros_like,
+)
 from numpy._core.overrides import set_module
 from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
-
 
 __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
@@ -35,7 +39,7 @@ def _make_along_axis_idx(arr_shape, indices, axis):
         raise ValueError(
             "`indices` and `arr` must have the same number of dimensions")
     shape_ones = (1,) * indices.ndim
-    dest_dims = list(range(axis)) + [None] + list(range(axis+1, indices.ndim))
+    dest_dims = list(range(axis)) + [None] + list(range(axis + 1, indices.ndim))
 
     # build a fancy index, consisting of orthogonal aranges, with the
     # requested index inserted at the right location
@@ -44,18 +48,18 @@ def _make_along_axis_idx(arr_shape, indices, axis):
         if dim is None:
             fancy_index.append(indices)
         else:
-            ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
+            ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim + 1:]
             fancy_index.append(_nx.arange(n).reshape(ind_shape))
 
     return tuple(fancy_index)
 
 
-def _take_along_axis_dispatcher(arr, indices, axis):
+def _take_along_axis_dispatcher(arr, indices, axis=None):
     return (arr, indices)
 
 
 @array_function_dispatch(_take_along_axis_dispatcher)
-def take_along_axis(arr, indices, axis):
+def take_along_axis(arr, indices, axis=-1):
     """
     Take values from the input array by matching 1d index and data slices.
 
@@ -66,20 +70,21 @@ def take_along_axis(arr, indices, axis):
     Functions returning an index along an axis, like `argsort` and
     `argpartition`, produce suitable indices for this function.
 
-    .. versionadded:: 1.15.0
-
     Parameters
     ----------
     arr : ndarray (Ni..., M, Nk...)
         Source array
     indices : ndarray (Ni..., J, Nk...)
-        Indices to take along each 1d slice of `arr`. This must match the
-        dimension of arr, but dimensions Ni and Nj only need to broadcast
-        against `arr`.
-    axis : int
+        Indices to take along each 1d slice of ``arr``. This must match the
+        dimension of ``arr``, but dimensions Ni and Nj only need to broadcast
+        against ``arr``.
+    axis : int or None, optional
         The axis to take 1d slices along. If axis is None, the input array is
         treated as if it had first been flattened to 1d, for consistency with
         `sort` and `argsort`.
+
+        .. versionchanged:: 2.3
+            The default value is now ``-1``.
 
     Returns
     -------
@@ -192,8 +197,6 @@ def put_along_axis(arr, indices, values, axis):
 
     Functions returning an index along an axis, like `argsort` and
     `argpartition`, produce suitable indices for this function.
-
-    .. versionadded:: 1.15.0
 
     Parameters
     ----------
@@ -315,9 +318,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     kwargs : any
         Additional named arguments to `func1d`.
 
-        .. versionadded:: 1.9.0
-
-
     Returns
     -------
     out : ndarray  (Ni..., Nj..., Nk...)
@@ -376,7 +376,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     # arr, with the iteration axis at the end
     in_dims = list(range(nd))
-    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis+1:] + [axis])
+    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis + 1:] + [axis])
 
     # compute indices for the iteration axes, and append a trailing ellipsis to
     # prevent 0d arrays decaying to scalars, which fixes gh-8642
@@ -406,8 +406,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     buff_dims = list(range(buff.ndim))
     buff_permute = (
         buff_dims[0 : axis] +
-        buff_dims[buff.ndim-res.ndim : buff.ndim] +
-        buff_dims[axis : buff.ndim-res.ndim]
+        buff_dims[buff.ndim - res.ndim : buff.ndim] +
+        buff_dims[axis : buff.ndim - res.ndim]
     )
 
     # save the first result, then compute and save all remaining results
@@ -535,11 +535,6 @@ def expand_dims(a, axis):
             ``axis == a.ndim``, and passing ``axis < -a.ndim - 1`` will
             be treated as ``axis == 0``. This behavior is deprecated.
 
-        .. versionchanged:: 1.18.0
-            A tuple of axes is now supported.  Out of range axes as
-            described above are now forbidden and raise an
-            `~exceptions.AxisError`.
-
     Returns
     -------
     result : ndarray
@@ -598,7 +593,7 @@ def expand_dims(a, axis):
     else:
         a = asanyarray(a)
 
-    if type(axis) not in (tuple, list):
+    if not isinstance(axis, (tuple, list)):
         axis = (axis,)
 
     out_ndim = len(axis) + a.ndim
@@ -658,11 +653,11 @@ def column_stack(tup):
     --------
     >>> import numpy as np
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.column_stack((a,b))
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
     arrays = []
@@ -718,18 +713,18 @@ def dstack(tup):
     --------
     >>> import numpy as np
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.dstack((a,b))
-    array([[[1, 2],
-            [2, 3],
-            [3, 4]]])
+    array([[[1, 4],
+            [2, 5],
+            [3, 6]]])
 
     >>> a = np.array([[1],[2],[3]])
-    >>> b = np.array([[2],[3],[4]])
+    >>> b = np.array([[4],[5],[6]])
     >>> np.dstack((a,b))
-    array([[[1, 2]],
-           [[2, 3]],
-           [[3, 4]]])
+    array([[[1, 4]],
+           [[2, 5]],
+           [[3, 6]]])
 
     """
     arrs = atleast_3d(*tup)
@@ -794,8 +789,8 @@ def array_split(ary, indices_or_sections, axis=0):
             raise ValueError('number sections must be larger than 0.') from None
         Neach_section, extras = divmod(Ntotal, Nsections)
         section_sizes = ([0] +
-                         extras * [Neach_section+1] +
-                         (Nsections-extras) * [Neach_section])
+                         extras * [Neach_section + 1] +
+                         (Nsections - extras) * [Neach_section])
         div_points = _nx.array(section_sizes, dtype=_nx.intp).cumsum()
 
     sub_arys = []
@@ -1190,16 +1185,16 @@ def kron(a, b):
         b = reshape(b, bs)
 
     # Equalise the shapes by prepending smaller one with 1s
-    as_ = (1,)*max(0, ndb-nda) + as_
-    bs = (1,)*max(0, nda-ndb) + bs
+    as_ = (1,) * max(0, ndb - nda) + as_
+    bs = (1,) * max(0, nda - ndb) + bs
 
     # Insert empty dimensions
-    a_arr = expand_dims(a, axis=tuple(range(ndb-nda)))
-    b_arr = expand_dims(b, axis=tuple(range(nda-ndb)))
+    a_arr = expand_dims(a, axis=tuple(range(ndb - nda)))
+    b_arr = expand_dims(b, axis=tuple(range(nda - ndb)))
 
     # Compute the product
-    a_arr = expand_dims(a_arr, axis=tuple(range(1, nd*2, 2)))
-    b_arr = expand_dims(b_arr, axis=tuple(range(0, nd*2, 2)))
+    a_arr = expand_dims(a_arr, axis=tuple(range(1, nd * 2, 2)))
+    b_arr = expand_dims(b_arr, axis=tuple(range(0, nd * 2, 2)))
     # In case of `mat`, convert result to `array`
     result = _nx.multiply(a_arr, b_arr, subok=(not is_any_mat))
 
@@ -1295,8 +1290,8 @@ def tile(A, reps):
         # have no data there is no risk of an inadvertent overwrite.
         c = _nx.array(A, copy=None, subok=True, ndmin=d)
     if (d < c.ndim):
-        tup = (1,)*(c.ndim-d) + tup
-    shape_out = tuple(s*t for s, t in zip(c.shape, tup))
+        tup = (1,) * (c.ndim - d) + tup
+    shape_out = tuple(s * t for s, t in zip(c.shape, tup))
     n = c.size
     if n > 0:
         for dim_in, nrep in zip(c.shape, tup):

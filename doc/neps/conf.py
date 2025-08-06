@@ -16,6 +16,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from datetime import datetime
+
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -86,21 +87,18 @@ todo_include_todos = False
 
 html_theme = 'pydata_sphinx_theme'
 
-html_logo = '../source/_static/numpylogo.svg'
-
 html_favicon = '../source/_static/favicon/favicon.ico'
 
 html_theme_options = {
+  "logo": {
+    "image_light": "_static/numpylogo.svg",
+    "image_dark": "_static/numpylogo_dark.svg",
+  },
   "github_url": "https://github.com/numpy/numpy",
-  "external_links": [
-      {"name": "Wishlist",
-       "url": "https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22",
-      },
-  ],
   "show_prev_next": False,
 }
 
-html_title = "%s" % (project)
+html_title = f"{project}"
 html_static_path = ['../source/_static']
 html_last_updated_fmt = '%b %d, %Y'
 
@@ -115,7 +113,6 @@ if 'sphinx.ext.pngmath' in extensions:
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
-
 
 
 # -- Options for HTMLHelp output ------------------------------------------

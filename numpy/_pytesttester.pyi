@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import Literal as L
 
-__all__: list[str]
+__all__ = ["PytestTester"]
 
 class PytestTester:
     module_name: str
@@ -10,9 +10,9 @@ class PytestTester:
         self,
         label: L["fast", "full"] = ...,
         verbose: int = ...,
-        extra_argv: None | Iterable[str] = ...,
+        extra_argv: Iterable[str] | None = ...,
         doctests: L[False] = ...,
         coverage: bool = ...,
         durations: int = ...,
-        tests: None | Iterable[str] = ...,
+        tests: Iterable[str] | None = ...,
     ) -> bool: ...

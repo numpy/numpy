@@ -216,8 +216,8 @@ class build_clib(old_build_clib):
 
         sources = build_info.get('sources')
         if sources is None or not is_sequence(sources):
-            raise DistutilsSetupError(("in 'libraries' option (library '%s'), " +
-                                       "'sources' must be present and must be " +
+            raise DistutilsSetupError(("in 'libraries' option (library '%s'), "
+                                       "'sources' must be present and must be "
                                        "a list of source filenames") % lib_name)
         sources = list(sources)
 

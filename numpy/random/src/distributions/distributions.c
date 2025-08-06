@@ -770,7 +770,7 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
     binomial->psave = p;
     binomial->has_binomial = 1;
     binomial->q = q = 1.0 - p;
-    binomial->r = qn = exp(n * log(q));
+    binomial->r = qn = exp(n * log1p(-p));
     binomial->c = np = n * p;
     binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
   } else {
@@ -1023,7 +1023,7 @@ RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
    * Values below Umin would result in X being rejected because it is too
    * large, so there is no point in including them in the distribution of U.
    */
-  Umin = pow(RAND_INT_MAX, -am1);
+  Umin = pow((double) RAND_INT_MAX, -am1);
   while (1) {
     double U01, T, U, V, X;
 

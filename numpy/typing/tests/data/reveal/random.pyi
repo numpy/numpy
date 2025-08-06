@@ -1,17 +1,15 @@
 import threading
-from typing import Any
 from collections.abc import Sequence
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 from numpy.random._generator import Generator
 from numpy.random._mt19937 import MT19937
 from numpy.random._pcg64 import PCG64
-from numpy.random._sfc64 import SFC64
 from numpy.random._philox import Philox
-from numpy.random.bit_generator import SeedSequence, SeedlessSeedSequence
-
-from typing_extensions import assert_type
+from numpy.random._sfc64 import SFC64
+from numpy.random.bit_generator import SeedlessSeedSequence, SeedSequence
 
 def_rng = np.random.default_rng()
 seed_seq = np.random.SeedSequence()
@@ -74,11 +72,10 @@ assert_type(sfc64_raw_arr, npt.NDArray[np.uint64])
 assert_type(sfc64.lock, threading.Lock)
 
 assert_type(seed_seq.pool, npt.NDArray[np.uint32])
-assert_type(seed_seq.entropy, None | int | Sequence[int])
+assert_type(seed_seq.entropy, int | Sequence[int] | None)
 assert_type(seed_seq.spawn(1), list[np.random.SeedSequence])
 assert_type(seed_seq.generate_state(8, "uint32"), npt.NDArray[np.uint32 | np.uint64])
 assert_type(seed_seq.generate_state(8, "uint64"), npt.NDArray[np.uint32 | np.uint64])
-
 
 def_gen: np.random.Generator = np.random.default_rng()
 
@@ -504,8 +501,8 @@ assert_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, 
 
 I_int64_100: npt.NDArray[np.int64] = np.array([100], dtype=np.int64)
 
-assert_type(def_gen.integers(0, 100), int)
-assert_type(def_gen.integers(100), int)
+assert_type(def_gen.integers(0, 100), np.int64)
+assert_type(def_gen.integers(100), np.int64)
 assert_type(def_gen.integers([100]), npt.NDArray[np.int64])
 assert_type(def_gen.integers(0, [100]), npt.NDArray[np.int64])
 
@@ -636,7 +633,6 @@ assert_type(def_gen.integers(0, I_u4_high_open, dtype=np.int_), npt.NDArray[np.i
 assert_type(def_gen.integers(I_u4_high_closed, dtype=np.int_, endpoint=True), npt.NDArray[np.int_])
 assert_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.int_, endpoint=True), npt.NDArray[np.int_])
 assert_type(def_gen.integers(0, I_u4_high_closed, dtype=np.int_, endpoint=True), npt.NDArray[np.int_])
-
 
 assert_type(def_gen.integers(4294967296, dtype="u4"), np.uint32)
 assert_type(def_gen.integers(0, 4294967296, dtype="u4"), np.uint32)
@@ -890,7 +886,6 @@ assert_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype=np.int6
 assert_type(def_gen.integers(I_i8_high_closed, dtype=np.int64, endpoint=True), npt.NDArray[np.int64])
 assert_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype=np.int64, endpoint=True), npt.NDArray[np.int64])
 assert_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype=np.int64, endpoint=True), npt.NDArray[np.int64])
-
 
 assert_type(def_gen.bit_generator, np.random.BitGenerator)
 
@@ -1547,5 +1542,5 @@ assert_type(random_st.tomaxint(), int)
 assert_type(random_st.tomaxint(1), npt.NDArray[np.int64])
 assert_type(random_st.tomaxint((1,)), npt.NDArray[np.int64])
 
-assert_type(np.random.set_bit_generator(pcg64), None)
-assert_type(np.random.get_bit_generator(), np.random.BitGenerator)
+assert_type(np.random.mtrand.set_bit_generator(pcg64), None)
+assert_type(np.random.mtrand.get_bit_generator(), np.random.BitGenerator)

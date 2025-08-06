@@ -3,9 +3,12 @@ import pytest
 import numpy as np
 from numpy._core.multiarray import _vec_string
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises,
-    assert_raises_regex
-    )
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
@@ -379,7 +382,7 @@ class TestMethods:
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
-        assert_(B[0][0] == str(' \\u03a3 ').encode('latin1'))
+        assert_(B[0][0] == ' \\u03a3 '.encode('latin1'))
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
@@ -476,21 +479,21 @@ class TestMethods:
         a = np.array(['0123456789' * i for i in range(4)]
                      ).view(np.char.chararray)
         r1 = a.replace('5', 'ABCDE')
-        assert r1.dtype.itemsize == (3*10 + 3*4) * 4
+        assert r1.dtype.itemsize == (3 * 10 + 3 * 4) * 4
         assert_array_equal(r1, np.array(['01234ABCDE6789' * i
                                          for i in range(4)]))
         r2 = a.replace('5', 'ABCDE', count=1)
-        assert r2.dtype.itemsize == (3*10 + 4) * 4
+        assert r2.dtype.itemsize == (3 * 10 + 4) * 4
         r3 = a.replace('5', 'ABCDE', count=0)
         assert r3.dtype.itemsize == a.dtype.itemsize
         assert_array_equal(r3, a)
         # Negative values mean to replace all.
         r4 = a.replace('5', 'ABCDE', count=-1)
-        assert r4.dtype.itemsize == (3*10 + 3*4) * 4
+        assert r4.dtype.itemsize == (3 * 10 + 3 * 4) * 4
         assert_array_equal(r4, r1)
         # We can do count on an element-by-element basis.
         r5 = a.replace('5', 'ABCDE', count=[-1, -1, -1, 1])
-        assert r5.dtype.itemsize == (3*10 + 4) * 4
+        assert r5.dtype.itemsize == (3 * 10 + 4) * 4
         assert_array_equal(r5, np.array(
             ['01234ABCDE6789' * i for i in range(3)]
             + ['01234ABCDE6789' + '0123456789' * 2]))
@@ -673,21 +676,21 @@ class TestOperations:
     def test_mul(self):
         A = self.A
         for r in (2, 3, 5, 7, 197):
-            Ar = np.array([[A[0, 0]*r, A[0, 1]*r],
-                           [A[1, 0]*r, A[1, 1]*r]]).view(np.char.chararray)
+            Ar = np.array([[A[0, 0] * r, A[0, 1] * r],
+                           [A[1, 0] * r, A[1, 1] * r]]).view(np.char.chararray)
 
             assert_array_equal(Ar, (self.A * r))
 
         for ob in [object(), 'qrs']:
             with assert_raises_regex(ValueError,
                                      'Can only multiply by integers'):
-                A*ob
+                A * ob
 
     def test_rmul(self):
         A = self.A
         for r in (2, 3, 5, 7, 197):
-            Ar = np.array([[A[0, 0]*r, A[0, 1]*r],
-                           [A[1, 0]*r, A[1, 1]*r]]).view(np.char.chararray)
+            Ar = np.array([[A[0, 0] * r, A[0, 1] * r],
+                           [A[1, 0] * r, A[1, 1] * r]]).view(np.char.chararray)
             assert_array_equal(Ar, (r * self.A))
 
         for ob in [object(), 'qrs']:
@@ -713,8 +716,8 @@ class TestOperations:
         assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
-        assert_(("%s" % self.A) == str(self.A))
-        assert_(("%r" % self.A) == repr(self.A))
+        assert_(f"{self.A}" == str(self.A))
+        assert_(f"{self.A!r}" == repr(self.A))
 
         for ob in [42, object()]:
             with assert_raises_regex(

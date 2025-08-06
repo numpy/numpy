@@ -13,7 +13,8 @@ __all__ = ['einsum', 'einsum_path']
 
 # importing string for string.ascii_letters would be too slow
 # the first import before caching has been measured to take 800 µs (#23777)
-einsum_symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+# imports begin with uppercase to mimic ASCII values to avoid sorting issues
+einsum_symbols = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 einsum_symbols_set = set(einsum_symbols)
 
 
@@ -588,7 +589,7 @@ def _parse_einsum_input(operands):
             if s in '.,->':
                 continue
             if s not in einsum_symbols:
-                raise ValueError("Character %s is not a valid symbol." % s)
+                raise ValueError(f"Character {s} is not a valid symbol.")
 
     else:
         tmp_operands = list(operands)
@@ -690,7 +691,7 @@ def _parse_einsum_input(operands):
             tmp_subscripts = subscripts.replace(",", "")
             for s in sorted(set(tmp_subscripts)):
                 if s not in (einsum_symbols):
-                    raise ValueError("Character %s is not a valid symbol." % s)
+                    raise ValueError(f"Character {s} is not a valid symbol.")
                 if tmp_subscripts.count(s) == 1:
                     output_subscript += s
             normal_inds = ''.join(sorted(set(output_subscript) -
@@ -708,7 +709,7 @@ def _parse_einsum_input(operands):
         output_subscript = ""
         for s in sorted(set(tmp_subscripts)):
             if s not in einsum_symbols:
-                raise ValueError("Character %s is not a valid symbol." % s)
+                raise ValueError(f"Character {s} is not a valid symbol.")
             if tmp_subscripts.count(s) == 1:
                 output_subscript += s
 
@@ -718,8 +719,7 @@ def _parse_einsum_input(operands):
             raise ValueError("Output character %s appeared more than once in "
                              "the output." % char)
         if char not in input_subscripts:
-            raise ValueError("Output character %s did not appear in the input"
-                             % char)
+            raise ValueError(f"Output character {char} did not appear in the input")
 
     # Make sure number operands is equivalent to the number of terms
     if len(input_subscripts.split(',')) != len(operands):
@@ -875,7 +875,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         path_type = path_type[0]
 
     else:
-        raise TypeError("Did not understand the path: %s" % str(path_type))
+        raise TypeError(f"Did not understand the path: {str(path_type)}")
 
     # Hidden option, only einsum should call this
     einsum_call_arg = einsum_call
@@ -1012,8 +1012,8 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         # Explicit "einsum_path" is usually trusted, but we detect this kind of
         # mistake in order to prevent from returning an intermediate value.
         raise RuntimeError(
-            "Invalid einsum_path is specified: {} more operands has to be "
-            "contracted.".format(len(input_list) - 1))
+            f"Invalid einsum_path is specified: {len(input_list) - 1} more "
+            "operands has to be contracted.")
 
     if einsum_call_arg:
         return (operands, contraction_list)
@@ -1025,13 +1025,13 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     speedup = naive_cost / opt_cost
     max_i = max(size_list)
 
-    path_print = "  Complete contraction:  %s\n" % overall_contraction
-    path_print += "         Naive scaling:  %d\n" % len(indices)
+    path_print = f"  Complete contraction:  {overall_contraction}\n"
+    path_print += f"         Naive scaling:  {len(indices)}\n"
     path_print += "     Optimized scaling:  %d\n" % max(scale_list)
-    path_print += "      Naive FLOP count:  %.3e\n" % naive_cost
-    path_print += "  Optimized FLOP count:  %.3e\n" % opt_cost
-    path_print += "   Theoretical speedup:  %3.3f\n" % speedup
-    path_print += "  Largest intermediate:  %.3e elements\n" % max_i
+    path_print += f"      Naive FLOP count:  {naive_cost:.3e}\n"
+    path_print += f"  Optimized FLOP count:  {opt_cost:.3e}\n"
+    path_print += f"   Theoretical speedup:  {speedup:3.3f}\n"
+    path_print += f"  Largest intermediate:  {max_i:.3e} elements\n"
     path_print += "-" * 74 + "\n"
     path_print += "%6s %24s %40s\n" % header
     path_print += "-" * 74
@@ -1132,8 +1132,6 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
-
     The Einstein summation convention can be used to compute
     many multi-dimensional, linear algebraic array operations. `einsum`
     provides a succinct way of representing these.
@@ -1210,15 +1208,11 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     The examples below have corresponding `einsum` calls with the two
     parameter methods.
 
-    .. versionadded:: 1.10.0
-
     Views returned from einsum are now writeable whenever the input array
     is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
     have the same effect as :py:func:`np.swapaxes(a, 0, 2) <numpy.swapaxes>`
     and ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
     of a 2D array.
-
-    .. versionadded:: 1.12.0
 
     Added the ``optimize`` argument which will optimize the contraction order
     of an einsum expression. For a contraction with three or more operands
@@ -1434,8 +1428,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     unknown_kwargs = [k for (k, v) in kwargs.items() if
                       k not in valid_einsum_kwargs]
     if len(unknown_kwargs):
-        raise TypeError("Did not understand the following kwargs: %s"
-                        % unknown_kwargs)
+        raise TypeError(f"Did not understand the following kwargs: {unknown_kwargs}")
 
     # Build the contraction list and operand
     operands, contraction_list = einsum_path(*operands, optimize=optimize,

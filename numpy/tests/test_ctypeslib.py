@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 import numpy as np
-from numpy.ctypeslib import ndpointer, load_library, as_array
-from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
+from numpy.ctypeslib import as_array, load_library, ndpointer
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 try:
     import ctypes
@@ -61,7 +61,7 @@ class TestLoadLibrary:
         # (including extension) does not work.
         try:
             so_ext = sysconfig.get_config_var('EXT_SUFFIX')
-            load_library('_multiarray_umath%s' % so_ext,
+            load_library(f'_multiarray_umath{so_ext}',
                          np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
@@ -150,12 +150,12 @@ class TestNdpointerCFunc:
     @pytest.mark.parametrize(
         'dt', [
             float,
-            np.dtype(dict(
-                formats=['<i4', '<i4'],
-                names=['a', 'b'],
-                offsets=[0, 2],
-                itemsize=6
-            ))
+            np.dtype({
+                'formats': ['<i4', '<i4'],
+                'names': ['a', 'b'],
+                'offsets': [0, 2],
+                'itemsize': 6
+            })
         ], ids=[
             'float',
             'overlapping-fields'
@@ -205,7 +205,7 @@ class TestAsArray:
         assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
 
     def test_pointer(self):
-        from ctypes import c_int, cast, POINTER
+        from ctypes import POINTER, c_int, cast
 
         p = cast((c_int * 10)(*range(10)), POINTER(c_int))
 
@@ -225,7 +225,7 @@ class TestAsArray:
             reason="Broken in 3.12.0rc1, see gh-24399",
     )
     def test_struct_array_pointer(self):
-        from ctypes import c_int16, Structure, pointer
+        from ctypes import Structure, c_int16, pointer
 
         class Struct(Structure):
             _fields_ = [('a', c_int16)]
@@ -337,11 +337,11 @@ class TestAsCtypesType:
         ])
 
     def test_union(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 0],
-            formats=[np.uint16, np.uint32]
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 0],
+            'formats': [np.uint16, np.uint32]
+        })
 
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
@@ -352,12 +352,12 @@ class TestAsCtypesType:
         ])
 
     def test_padded_union(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 0],
-            formats=[np.uint16, np.uint32],
-            itemsize=5,
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 0],
+            'formats': [np.uint16, np.uint32],
+            'itemsize': 5,
+        })
 
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
@@ -369,9 +369,9 @@ class TestAsCtypesType:
         ])
 
     def test_overlapping(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 2],
-            formats=[np.uint32, np.uint32]
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 2],
+            'formats': [np.uint32, np.uint32]
+        })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)

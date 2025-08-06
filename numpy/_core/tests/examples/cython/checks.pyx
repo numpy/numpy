@@ -242,6 +242,15 @@ def npyiter_has_multi_index(it: "nditer"):
     return result
 
 
+def test_get_multi_index_iter_next(it: "nditer", cnp.ndarray[cnp.float64_t, ndim=2] arr):
+    cdef cnp.NpyIter* cit = npyiter_from_nditer_obj(it)
+    cdef cnp.NpyIter_GetMultiIndexFunc get_multi_index = \
+        cnp.NpyIter_GetGetMultiIndex(cit, NULL)
+    cdef cnp.NpyIter_IterNextFunc iternext = \
+        cnp.NpyIter_GetIterNext(cit, NULL)
+    return 1
+
+
 def npyiter_has_finished(it: "nditer"):
     cdef cnp.NpyIter* cit
     try:
@@ -266,3 +275,99 @@ def inc2_cfloat_struct(cnp.ndarray[cnp.cfloat_t] arr):
     # This works in both modes
     arr[1].real = arr[1].real + 1
     arr[1].imag = arr[1].imag + 1
+
+
+def npystring_pack(arr):
+    cdef char *string = "Hello world"
+    cdef size_t size = 11
+
+    allocator = cnp.NpyString_acquire_allocator(
+        <cnp.PyArray_StringDTypeObject *>cnp.PyArray_DESCR(arr)
+    )
+
+    # copy string->packed_string, the pointer to the underlying array buffer
+    ret = cnp.NpyString_pack(
+        allocator, <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr), string, size,
+    )
+
+    cnp.NpyString_release_allocator(allocator)
+    return ret
+
+
+def npystring_load(arr):
+    allocator = cnp.NpyString_acquire_allocator(
+        <cnp.PyArray_StringDTypeObject *>cnp.PyArray_DESCR(arr)
+    )
+
+    cdef cnp.npy_static_string sdata
+    sdata.size = 0
+    sdata.buf = NULL
+
+    cdef cnp.npy_packed_static_string *packed_string = <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr)
+    cdef int is_null = cnp.NpyString_load(allocator, packed_string, &sdata)
+    cnp.NpyString_release_allocator(allocator)
+    if is_null == -1:
+        raise ValueError("String unpacking failed.")
+    elif is_null == 1:
+        # String in the array buffer is the null string
+        return ""
+    else:
+        # Cython syntax for copying a c string to python bytestring:
+        # slice the char * by the length of the string
+        return sdata.buf[:sdata.size].decode('utf-8')
+
+
+def npystring_pack_multiple(arr1, arr2):
+    cdef cnp.npy_string_allocator *allocators[2]
+    cdef cnp.PyArray_Descr *descrs[2]
+    descrs[0] = cnp.PyArray_DESCR(arr1)
+    descrs[1] = cnp.PyArray_DESCR(arr2)
+
+    cnp.NpyString_acquire_allocators(2, descrs, allocators)
+
+    # Write into the first element of each array
+    cdef int ret1 = cnp.NpyString_pack(
+        allocators[0], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr1), "Hello world", 11,
+    )
+    cdef int ret2 = cnp.NpyString_pack(
+        allocators[1], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr2), "test this", 9,
+    )
+
+    # Write a null string into the last element
+    cdef cnp.npy_intp elsize = cnp.PyArray_ITEMSIZE(arr1)
+    cdef int ret3 = cnp.NpyString_pack_null(
+        allocators[0],
+        <cnp.npy_packed_static_string *>(<char *>cnp.PyArray_DATA(arr1) + 2*elsize),
+    )
+
+    cnp.NpyString_release_allocators(2, allocators)
+    if ret1 == -1 or ret2 == -1 or ret3 == -1:
+        return -1
+
+    return 0
+
+
+def npystring_allocators_other_types(arr1, arr2):
+    cdef cnp.npy_string_allocator *allocators[2]
+    cdef cnp.PyArray_Descr *descrs[2]
+    descrs[0] = cnp.PyArray_DESCR(arr1)
+    descrs[1] = cnp.PyArray_DESCR(arr2)
+
+    cnp.NpyString_acquire_allocators(2, descrs, allocators)
+
+    # None of the dtypes here are StringDType, so every allocator
+    # should be NULL upon acquisition.
+    cdef int ret = 0
+    for allocator in allocators:
+        if allocator != NULL:
+            ret = -1
+            break
+
+    cnp.NpyString_release_allocators(2, allocators)
+    return ret
+
+
+def check_npy_uintp_type_enum():
+    # Regression test for gh-27890: cnp.NPY_UINTP was not defined.
+    # Cython would fail to compile this before gh-27890 was fixed.
+    return cnp.NPY_UINTP > 0

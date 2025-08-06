@@ -23,6 +23,7 @@
 #include "item_selection.h"
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
+#include "npy_pycompat.h"
 
 #define NEWAXIS_INDEX -1
 #define ELLIPSIS_INDEX -2
@@ -136,7 +137,6 @@ PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
     nd = PyArray_NDIM(ao);
     /* The legacy iterator only supports 32 dimensions */
     assert(nd <= NPY_MAXDIMS_LEGACY_ITERS);
-    PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
     }
@@ -695,9 +695,23 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         obj = ind;
     }
 
-    /* Any remaining valid input is an array or has been turned into one */
     if (!PyArray_Check(obj)) {
-        goto fail;
+        PyArrayObject *tmp_arr = (PyArrayObject *) PyArray_FROM_O(obj);
+        if (tmp_arr == NULL) {
+            goto fail;
+        }
+
+        if (PyArray_SIZE(tmp_arr) == 0) {
+            PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+            Py_SETREF(obj, PyArray_FromArray(tmp_arr, indtype, NPY_ARRAY_FORCECAST));
+            Py_DECREF(tmp_arr);
+            if (obj == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            Py_SETREF(obj, (PyObject *) tmp_arr);
+        }
     }
 
     /* Check for Boolean array */
@@ -1463,6 +1477,7 @@ PyArray_MultiIterNew(int n, ...)
     return multiiter_new_impl(n, args_impl);
 }
 
+
 static PyObject*
 arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
                   PyObject *kwds)
@@ -1475,18 +1490,19 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
                         "keyword arguments not accepted.");
         return NULL;
     }
-
-    fast_seq = PySequence_Fast(args, "");  // needed for pypy
+    fast_seq = PySequence_Fast(args, "");  // noqa: borrowed-ref OK
     if (fast_seq == NULL) {
         return NULL;
     }
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(args)
     n = PySequence_Fast_GET_SIZE(fast_seq);
     if (n > NPY_MAXARGS) {
-        Py_DECREF(fast_seq);
-        return multiiter_wrong_number_of_args();
+        ret = multiiter_wrong_number_of_args();
+    } else {
+        ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
     }
-    ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
     Py_DECREF(fast_seq);
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST()
     return ret;
 }
 

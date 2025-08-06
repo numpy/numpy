@@ -1,347 +1,896 @@
+from builtins import bool as py_bool
 from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Final,
-    overload,
-    TypeVar,
     Literal as L,
+    Never,
+    NoReturn,
     SupportsAbs,
     SupportsIndex,
-    NoReturn,
+    TypeAlias,
     TypeGuard,
+    TypeVar,
+    Unpack,
+    overload,
 )
-from typing_extensions import Unpack
 
 import numpy as np
 from numpy import (
-    generic,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    int_,
-    intp,
-    float64,
-    timedelta64,
-    object_,
-    _OrderKACF,
+    False_,
+    True_,
     _OrderCF,
+    _OrderKACF,
+    bitwise_not,
+    inf,
+    little_endian,
+    nan,
+    newaxis,
+    ufunc,
 )
-
 from numpy._typing import (
     ArrayLike,
-    NDArray,
     DTypeLike,
-    _SupportsDType,
-    _ShapeLike,
-    _DTypeLike,
+    NDArray,
     _ArrayLike,
-    _SupportsArrayFunc,
-    _ScalarLike_co,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
-    _ArrayLikeUnknown,
+    _ArrayLikeTD64_co,
+    _ArrayLikeUInt_co,
+    _DTypeLike,
+    _NestedSequence,
+    _ScalarLike_co,
+    _Shape,
+    _ShapeLike,
+    _SupportsArrayFunc,
+    _SupportsDType,
 )
+from numpy.lib._array_utils_impl import normalize_axis_tuple as normalize_axis_tuple
 
+from ._asarray import require
+from ._ufunc_config import (
+    errstate,
+    getbufsize,
+    geterr,
+    geterrcall,
+    setbufsize,
+    seterr,
+    seterrcall,
+)
+from .arrayprint import (
+    array2string,
+    array_repr,
+    array_str,
+    format_float_positional,
+    format_float_scientific,
+    get_printoptions,
+    printoptions,
+    set_printoptions,
+)
+from .fromnumeric import (
+    all,
+    amax,
+    amin,
+    any,
+    argmax,
+    argmin,
+    argpartition,
+    argsort,
+    around,
+    choose,
+    clip,
+    compress,
+    cumprod,
+    cumsum,
+    cumulative_prod,
+    cumulative_sum,
+    diagonal,
+    matrix_transpose,
+    max,
+    mean,
+    min,
+    ndim,
+    nonzero,
+    partition,
+    prod,
+    ptp,
+    put,
+    ravel,
+    repeat,
+    reshape,
+    resize,
+    round,
+    searchsorted,
+    shape,
+    size,
+    sort,
+    squeeze,
+    std,
+    sum,
+    swapaxes,
+    take,
+    trace,
+    transpose,
+    var,
+)
 from .multiarray import (
+    ALLOW_THREADS as ALLOW_THREADS,
+    BUFSIZE as BUFSIZE,
+    CLIP as CLIP,
+    MAXDIMS as MAXDIMS,
+    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
+    RAISE as RAISE,
+    WRAP as WRAP,
     _Array,
     _ConstructorEmpty,
     _KwargsEmpty,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    ascontiguousarray,
+    asfortranarray,
+    broadcast,
+    can_cast,
+    concatenate,
+    copyto,
+    dot,
+    dtype,
+    empty,
+    empty_like,
+    flatiter,
+    from_dlpack,
+    frombuffer,
+    fromfile,
+    fromiter,
+    fromstring,
+    inner,
+    lexsort,
+    matmul,
+    may_share_memory,
+    min_scalar_type,
+    ndarray,
+    nditer,
+    nested_iters,
+    normalize_axis_index as normalize_axis_index,
+    promote_types,
+    putmask,
+    result_type,
+    shares_memory,
+    vdot,
+    where,
+    zeros,
+)
+from .numerictypes import (
+    ScalarType,
+    bool,
+    bool_,
+    busday_count,
+    busday_offset,
+    busdaycalendar,
+    byte,
+    bytes_,
+    cdouble,
+    character,
+    clongdouble,
+    complex64,
+    complex128,
+    complex192,
+    complex256,
+    complexfloating,
+    csingle,
+    datetime64,
+    datetime_as_string,
+    datetime_data,
+    double,
+    flexible,
+    float16,
+    float32,
+    float64,
+    float96,
+    float128,
+    floating,
+    generic,
+    half,
+    inexact,
+    int8,
+    int16,
+    int32,
+    int64,
+    int_,
+    intc,
+    integer,
+    intp,
+    is_busday,
+    isdtype,
+    issubdtype,
+    long,
+    longdouble,
+    longlong,
+    number,
+    object_,
+    short,
+    signedinteger,
+    single,
+    str_,
+    timedelta64,
+    typecodes,
+    ubyte,
+    uint,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
+    uintc,
+    uintp,
+    ulong,
+    ulonglong,
+    unsignedinteger,
+    ushort,
+    void,
+)
+from .umath import (
+    absolute,
+    add,
+    arccos,
+    arccosh,
+    arcsin,
+    arcsinh,
+    arctan,
+    arctan2,
+    arctanh,
+    bitwise_and,
+    bitwise_count,
+    bitwise_or,
+    bitwise_xor,
+    cbrt,
+    ceil,
+    conj,
+    conjugate,
+    copysign,
+    cos,
+    cosh,
+    deg2rad,
+    degrees,
+    divide,
+    divmod,
+    e,
+    equal,
+    euler_gamma,
+    exp,
+    exp2,
+    expm1,
+    fabs,
+    float_power,
+    floor,
+    floor_divide,
+    fmax,
+    fmin,
+    fmod,
+    frexp,
+    frompyfunc,
+    gcd,
+    greater,
+    greater_equal,
+    heaviside,
+    hypot,
+    invert,
+    isfinite,
+    isinf,
+    isnan,
+    isnat,
+    lcm,
+    ldexp,
+    left_shift,
+    less,
+    less_equal,
+    log,
+    log1p,
+    log2,
+    log10,
+    logaddexp,
+    logaddexp2,
+    logical_and,
+    logical_not,
+    logical_or,
+    logical_xor,
+    matvec,
+    maximum,
+    minimum,
+    mod,
+    modf,
+    multiply,
+    negative,
+    nextafter,
+    not_equal,
+    pi,
+    positive,
+    power,
+    rad2deg,
+    radians,
+    reciprocal,
+    remainder,
+    right_shift,
+    rint,
+    sign,
+    signbit,
+    sin,
+    sinh,
+    spacing,
+    sqrt,
+    square,
+    subtract,
+    tan,
+    tanh,
+    true_divide,
+    trunc,
+    vecdot,
+    vecmat,
 )
 
+__all__ = [
+    "False_",
+    "ScalarType",
+    "True_",
+    "absolute",
+    "add",
+    "all",
+    "allclose",
+    "amax",
+    "amin",
+    "any",
+    "arange",
+    "arccos",
+    "arccosh",
+    "arcsin",
+    "arcsinh",
+    "arctan",
+    "arctan2",
+    "arctanh",
+    "argmax",
+    "argmin",
+    "argpartition",
+    "argsort",
+    "argwhere",
+    "around",
+    "array",
+    "array2string",
+    "array_equal",
+    "array_equiv",
+    "array_repr",
+    "array_str",
+    "asanyarray",
+    "asarray",
+    "ascontiguousarray",
+    "asfortranarray",
+    "astype",
+    "base_repr",
+    "binary_repr",
+    "bitwise_and",
+    "bitwise_count",
+    "bitwise_not",
+    "bitwise_or",
+    "bitwise_xor",
+    "bool",
+    "bool_",
+    "broadcast",
+    "busday_count",
+    "busday_offset",
+    "busdaycalendar",
+    "byte",
+    "bytes_",
+    "can_cast",
+    "cbrt",
+    "cdouble",
+    "ceil",
+    "character",
+    "choose",
+    "clip",
+    "clongdouble",
+    "complex64",
+    "complex128",
+    "complex192",
+    "complex256",
+    "complexfloating",
+    "compress",
+    "concatenate",
+    "conj",
+    "conjugate",
+    "convolve",
+    "copysign",
+    "copyto",
+    "correlate",
+    "cos",
+    "cosh",
+    "count_nonzero",
+    "cross",
+    "csingle",
+    "cumprod",
+    "cumsum",
+    "cumulative_prod",
+    "cumulative_sum",
+    "datetime64",
+    "datetime_as_string",
+    "datetime_data",
+    "deg2rad",
+    "degrees",
+    "diagonal",
+    "divide",
+    "divmod",
+    "dot",
+    "double",
+    "dtype",
+    "e",
+    "empty",
+    "empty_like",
+    "equal",
+    "errstate",
+    "euler_gamma",
+    "exp",
+    "exp2",
+    "expm1",
+    "fabs",
+    "flatiter",
+    "flatnonzero",
+    "flexible",
+    "float16",
+    "float32",
+    "float64",
+    "float96",
+    "float128",
+    "float_power",
+    "floating",
+    "floor",
+    "floor_divide",
+    "fmax",
+    "fmin",
+    "fmod",
+    "format_float_positional",
+    "format_float_scientific",
+    "frexp",
+    "from_dlpack",
+    "frombuffer",
+    "fromfile",
+    "fromfunction",
+    "fromiter",
+    "frompyfunc",
+    "fromstring",
+    "full",
+    "full_like",
+    "gcd",
+    "generic",
+    "get_printoptions",
+    "getbufsize",
+    "geterr",
+    "geterrcall",
+    "greater",
+    "greater_equal",
+    "half",
+    "heaviside",
+    "hypot",
+    "identity",
+    "indices",
+    "inexact",
+    "inf",
+    "inner",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "int_",
+    "intc",
+    "integer",
+    "intp",
+    "invert",
+    "is_busday",
+    "isclose",
+    "isdtype",
+    "isfinite",
+    "isfortran",
+    "isinf",
+    "isnan",
+    "isnat",
+    "isscalar",
+    "issubdtype",
+    "lcm",
+    "ldexp",
+    "left_shift",
+    "less",
+    "less_equal",
+    "lexsort",
+    "little_endian",
+    "log",
+    "log1p",
+    "log2",
+    "log10",
+    "logaddexp",
+    "logaddexp2",
+    "logical_and",
+    "logical_not",
+    "logical_or",
+    "logical_xor",
+    "long",
+    "longdouble",
+    "longlong",
+    "matmul",
+    "matrix_transpose",
+    "matvec",
+    "max",
+    "maximum",
+    "may_share_memory",
+    "mean",
+    "min",
+    "min_scalar_type",
+    "minimum",
+    "mod",
+    "modf",
+    "moveaxis",
+    "multiply",
+    "nan",
+    "ndarray",
+    "ndim",
+    "nditer",
+    "negative",
+    "nested_iters",
+    "newaxis",
+    "nextafter",
+    "nonzero",
+    "not_equal",
+    "number",
+    "object_",
+    "ones",
+    "ones_like",
+    "outer",
+    "partition",
+    "pi",
+    "positive",
+    "power",
+    "printoptions",
+    "prod",
+    "promote_types",
+    "ptp",
+    "put",
+    "putmask",
+    "rad2deg",
+    "radians",
+    "ravel",
+    "reciprocal",
+    "remainder",
+    "repeat",
+    "require",
+    "reshape",
+    "resize",
+    "result_type",
+    "right_shift",
+    "rint",
+    "roll",
+    "rollaxis",
+    "round",
+    "searchsorted",
+    "set_printoptions",
+    "setbufsize",
+    "seterr",
+    "seterrcall",
+    "shape",
+    "shares_memory",
+    "short",
+    "sign",
+    "signbit",
+    "signedinteger",
+    "sin",
+    "single",
+    "sinh",
+    "size",
+    "sort",
+    "spacing",
+    "sqrt",
+    "square",
+    "squeeze",
+    "std",
+    "str_",
+    "subtract",
+    "sum",
+    "swapaxes",
+    "take",
+    "tan",
+    "tanh",
+    "tensordot",
+    "timedelta64",
+    "trace",
+    "transpose",
+    "true_divide",
+    "trunc",
+    "typecodes",
+    "ubyte",
+    "ufunc",
+    "uint",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "uintc",
+    "uintp",
+    "ulong",
+    "ulonglong",
+    "unsignedinteger",
+    "ushort",
+    "var",
+    "vdot",
+    "vecdot",
+    "vecmat",
+    "void",
+    "where",
+    "zeros",
+    "zeros_like",
+]
+
 _T = TypeVar("_T")
-_SCT = TypeVar("_SCT", bound=generic)
-_DType = TypeVar("_DType", bound=np.dtype[Any])
-_ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
-_SizeType = TypeVar("_SizeType", bound=int)
-_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
+_ScalarT = TypeVar("_ScalarT", bound=generic)
+_DTypeT = TypeVar("_DTypeT", bound=dtype)
+_ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+_AnyShapeT = TypeVar(
+    "_AnyShapeT",
+    tuple[()],
+    tuple[int],
+    tuple[int, int],
+    tuple[int, int, int],
+    tuple[int, int, int, int],
+    tuple[int, ...],
+)
 
-_CorrelateMode = L["valid", "same", "full"]
+_CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
-__all__: list[str]
-
+# keep in sync with `ones_like`
 @overload
 def zeros_like(
-    a: _ArrayType,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: L[True] = ...,
-    shape: None = ...,
+    a: _ArrayT,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: L[True] = True,
+    shape: None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+    device: L["cpu"] | None = None,
+) -> _ArrayT: ...
 @overload
 def zeros_like(
-    a: _ArrayLike[_SCT],
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike = ...,
+    a: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
+    device: L["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
 @overload
 def zeros_like(
     a: object,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    dtype: _DTypeLike[_ScalarT],
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[Any]: ...
+    device: L["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
 @overload
 def zeros_like(
-    a: Any,
-    dtype: _DTypeLike[_SCT],
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    a: object,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def zeros_like(
-    a: Any,
-    dtype: DTypeLike,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
-    *,
-    device: None | L["cpu"] = ...,
+    device: L["cpu"] | None = None,
 ) -> NDArray[Any]: ...
 
 ones: Final[_ConstructorEmpty]
 
+# keep in sync with `zeros_like`
 @overload
 def ones_like(
-    a: _ArrayType,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: L[True] = ...,
-    shape: None = ...,
+    a: _ArrayT,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: L[True] = True,
+    shape: None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+    device: L["cpu"] | None = None,
+) -> _ArrayT: ...
 @overload
 def ones_like(
-    a: _ArrayLike[_SCT],
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike = ...,
+    a: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
+    device: L["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
 @overload
 def ones_like(
     a: object,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    dtype: _DTypeLike[_ScalarT],
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[Any]: ...
+    device: L["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
 @overload
 def ones_like(
-    a: Any,
-    dtype: _DTypeLike[_SCT],
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    a: object,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def ones_like(
-    a: Any,
-    dtype: DTypeLike,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
-    *,
-    device: None | L["cpu"] = ...,
+    device: L["cpu"] | None = None,
 ) -> NDArray[Any]: ...
 
 # TODO: Add overloads for bool, int, float, complex, str, bytes, and memoryview
 # 1-D shape
 @overload
 def full(
-    shape: _SizeType,
-    fill_value: _SCT,
+    shape: SupportsIndex,
+    fill_value: _ScalarT,
     dtype: None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[tuple[_SizeType], _SCT]: ...
+) -> _Array[tuple[int], _ScalarT]: ...
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: Any,
-    dtype: _DType | _SupportsDType,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[tuple[_SizeType], _DType]: ...
+) -> np.ndarray[tuple[int], _DTypeT]: ...
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: Any,
-    dtype: type[_SCT],
+    dtype: type[_ScalarT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[tuple[_SizeType], _SCT]: ...
+) -> _Array[tuple[int], _ScalarT]: ...
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: Any,
-    dtype: None | DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[tuple[_SizeType], Any]: ...
+) -> _Array[tuple[int], Any]: ...
 # known shape
 @overload
 def full(
-    shape: _ShapeType,
-    fill_value: _SCT,
+    shape: _AnyShapeT,
+    fill_value: _ScalarT,
     dtype: None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_ShapeType, _SCT]: ...
+) -> _Array[_AnyShapeT, _ScalarT]: ...
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeT,
     fill_value: Any,
-    dtype: _DType | _SupportsDType[_DType],
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[_ShapeType, _DType]: ...
+) -> np.ndarray[_AnyShapeT, _DTypeT]: ...
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeT,
     fill_value: Any,
-    dtype: type[_SCT],
+    dtype: type[_ScalarT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_ShapeType, _SCT]: ...
+) -> _Array[_AnyShapeT, _ScalarT]: ...
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeT,
     fill_value: Any,
-    dtype: None | DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_ShapeType, Any]: ...
+) -> _Array[_AnyShapeT, Any]: ...
 # unknown shape
 @overload
 def full(
     shape: _ShapeLike,
-    fill_value: _SCT,
+    fill_value: _ScalarT,
     dtype: None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def full(
     shape: _ShapeLike,
     fill_value: Any,
-    dtype: _DType | _SupportsDType[_DType],
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[Any, _DType]: ...
+) -> np.ndarray[Any, _DTypeT]: ...
 @overload
 def full(
     shape: _ShapeLike,
     fill_value: Any,
-    dtype: type[_SCT],
+    dtype: type[_ScalarT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def full(
     shape: _ShapeLike,
     fill_value: Any,
-    dtype: None | DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
 ) -> NDArray[Any]: ...
 
 @overload
 def full_like(
-    a: _ArrayType,
-    fill_value: Any,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: L[True] = ...,
-    shape: None = ...,
+    a: _ArrayT,
+    fill_value: object,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: L[True] = True,
+    shape: None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+    device: L["cpu"] | None = None,
+) -> _ArrayT: ...
 @overload
 def full_like(
-    a: _ArrayLike[_SCT],
-    fill_value: Any,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike = ...,
+    a: _ArrayLike[_ScalarT],
+    fill_value: object,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
+    device: L["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
 @overload
 def full_like(
     a: object,
-    fill_value: Any,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    fill_value: object,
+    dtype: _DTypeLike[_ScalarT],
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[Any]: ...
+    device: L["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
 @overload
 def full_like(
-    a: Any,
-    fill_value: Any,
-    dtype: _DTypeLike[_SCT],
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    a: object,
+    fill_value: object,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = "K",
+    subok: py_bool = True,
+    shape: _ShapeLike | None = None,
     *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def full_like(
-    a: Any,
-    fill_value: Any,
-    dtype: DTypeLike,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike= ...,
-    *,
-    device: None | L["cpu"] = ...,
+    device: L["cpu"] | None = None,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def count_nonzero(a: ArrayLike, axis: None = None, *, keepdims: L[False] = False) -> np.intp: ...
+@overload
+def count_nonzero(a: _ScalarLike_co, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> np.intp: ...
 @overload
 def count_nonzero(
-    a: ArrayLike,
-    axis: None = ...,
-    *,
-    keepdims: L[False] = ...,
-) -> int: ...
+    a: NDArray[Any] | _NestedSequence[ArrayLike], axis: _ShapeLike | None = None, *, keepdims: L[True]
+) -> NDArray[np.intp]: ...
 @overload
-def count_nonzero(
-    a: ArrayLike,
-    axis: _ShapeLike = ...,
-    *,
-    keepdims: bool = ...,
-) -> Any: ...  # TODO: np.intp or ndarray[np.intp]
+def count_nonzero(a: ArrayLike, axis: _ShapeLike | None = None, *, keepdims: py_bool = False) -> Any: ...
 
-def isfortran(a: NDArray[Any] | generic) -> bool: ...
+#
+def isfortran(a: NDArray[Any] | generic) -> py_bool: ...
 
 def argwhere(a: ArrayLike) -> NDArray[intp]: ...
 
@@ -349,8 +898,8 @@ def flatnonzero(a: ArrayLike) -> NDArray[intp]: ...
 
 @overload
 def correlate(
-    a: _ArrayLikeUnknown,
-    v: _ArrayLikeUnknown,
+    a: _ArrayLike[Never],
+    v: _ArrayLike[Never],
     mode: _CorrelateMode = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -364,25 +913,25 @@ def correlate(
     a: _ArrayLikeUInt_co,
     v: _ArrayLikeUInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def correlate(
     a: _ArrayLikeInt_co,
     v: _ArrayLikeInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def correlate(
     a: _ArrayLikeFloat_co,
     v: _ArrayLikeFloat_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def correlate(
     a: _ArrayLikeComplex_co,
     v: _ArrayLikeComplex_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def correlate(
     a: _ArrayLikeTD64_co,
@@ -398,8 +947,8 @@ def correlate(
 
 @overload
 def convolve(
-    a: _ArrayLikeUnknown,
-    v: _ArrayLikeUnknown,
+    a: _ArrayLike[Never],
+    v: _ArrayLike[Never],
     mode: _CorrelateMode = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -413,25 +962,25 @@ def convolve(
     a: _ArrayLikeUInt_co,
     v: _ArrayLikeUInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def convolve(
     a: _ArrayLikeInt_co,
     v: _ArrayLikeInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def convolve(
     a: _ArrayLikeFloat_co,
     v: _ArrayLikeFloat_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def convolve(
     a: _ArrayLikeComplex_co,
     v: _ArrayLikeComplex_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def convolve(
     a: _ArrayLikeTD64_co,
@@ -447,8 +996,8 @@ def convolve(
 
 @overload
 def outer(
-    a: _ArrayLikeUnknown,
-    b: _ArrayLikeUnknown,
+    a: _ArrayLike[Never],
+    b: _ArrayLike[Never],
     out: None = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -462,25 +1011,25 @@ def outer(
     a: _ArrayLikeUInt_co,
     b: _ArrayLikeUInt_co,
     out: None = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def outer(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
     out: None = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def outer(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
     out: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def outer(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
     out: None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def outer(
     a: _ArrayLikeTD64_co,
@@ -497,13 +1046,13 @@ def outer(
 def outer(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     b: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    out: _ArrayType,
-) -> _ArrayType: ...
+    out: _ArrayT,
+) -> _ArrayT: ...
 
 @overload
 def tensordot(
-    a: _ArrayLikeUnknown,
-    b: _ArrayLikeUnknown,
+    a: _ArrayLike[Never],
+    b: _ArrayLike[Never],
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -517,25 +1066,25 @@ def tensordot(
     a: _ArrayLikeUInt_co,
     b: _ArrayLikeUInt_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def tensordot(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def tensordot(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def tensordot(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def tensordot(
     a: _ArrayLikeTD64_co,
@@ -551,91 +1100,91 @@ def tensordot(
 
 @overload
 def roll(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     shift: _ShapeLike,
-    axis: None | _ShapeLike = ...,
-) -> NDArray[_SCT]: ...
+    axis: _ShapeLike | None = ...,
+) -> NDArray[_ScalarT]: ...
 @overload
 def roll(
     a: ArrayLike,
     shift: _ShapeLike,
-    axis: None | _ShapeLike = ...,
+    axis: _ShapeLike | None = ...,
 ) -> NDArray[Any]: ...
 
 def rollaxis(
-    a: NDArray[_SCT],
+    a: NDArray[_ScalarT],
     axis: int,
     start: int = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 
 def moveaxis(
-    a: NDArray[_SCT],
+    a: NDArray[_ScalarT],
     source: _ShapeLike,
     destination: _ShapeLike,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 
 @overload
 def cross(
-    x1: _ArrayLikeUnknown,
-    x2: _ArrayLikeUnknown,
+    a: _ArrayLike[Never],
+    b: _ArrayLike[Never],
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
+    axis: int | None = ...,
 ) -> NDArray[Any]: ...
 @overload
 def cross(
-    x1: _ArrayLikeBool_co,
-    x2: _ArrayLikeBool_co,
+    a: _ArrayLikeBool_co,
+    b: _ArrayLikeBool_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
+    axis: int | None = ...,
 ) -> NoReturn: ...
 @overload
 def cross(
-    x1: _ArrayLikeUInt_co,
-    x2: _ArrayLikeUInt_co,
+    a: _ArrayLikeUInt_co,
+    b: _ArrayLikeUInt_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+    axis: int | None = ...,
+) -> NDArray[unsignedinteger]: ...
 @overload
 def cross(
-    x1: _ArrayLikeInt_co,
-    x2: _ArrayLikeInt_co,
+    a: _ArrayLikeInt_co,
+    b: _ArrayLikeInt_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
-) -> NDArray[signedinteger[Any]]: ...
+    axis: int | None = ...,
+) -> NDArray[signedinteger]: ...
 @overload
 def cross(
-    x1: _ArrayLikeFloat_co,
-    x2: _ArrayLikeFloat_co,
+    a: _ArrayLikeFloat_co,
+    b: _ArrayLikeFloat_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
-) -> NDArray[floating[Any]]: ...
+    axis: int | None = ...,
+) -> NDArray[floating]: ...
 @overload
 def cross(
-    x1: _ArrayLikeComplex_co,
-    x2: _ArrayLikeComplex_co,
+    a: _ArrayLikeComplex_co,
+    b: _ArrayLikeComplex_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+    axis: int | None = ...,
+) -> NDArray[complexfloating]: ...
 @overload
 def cross(
-    x1: _ArrayLikeObject_co,
-    x2: _ArrayLikeObject_co,
+    a: _ArrayLikeObject_co,
+    b: _ArrayLikeObject_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
-    axis: None | int = ...,
+    axis: int | None = ...,
 ) -> NDArray[object_]: ...
 
 @overload
@@ -647,25 +1196,32 @@ def indices(
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: type[int] = ...,
-    sparse: L[True] = ...,
+    dtype: type[int],
+    sparse: L[True],
 ) -> tuple[NDArray[int_], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: _DTypeLike[_SCT],
-    sparse: L[False] = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def indices(
-    dimensions: Sequence[int],
-    dtype: _DTypeLike[_SCT],
+    dtype: type[int] = ...,
+    *,
     sparse: L[True],
-) -> tuple[NDArray[_SCT], ...]: ...
+) -> tuple[NDArray[int_], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: DTypeLike,
+    dtype: _DTypeLike[_ScalarT],
+    sparse: L[False] = ...,
+) -> NDArray[_ScalarT]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: _DTypeLike[_ScalarT],
+    sparse: L[True],
+) -> tuple[NDArray[_ScalarT], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike = ...,
     sparse: L[False] = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -674,26 +1230,31 @@ def indices(
     dtype: DTypeLike,
     sparse: L[True],
 ) -> tuple[NDArray[Any], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike = ...,
+    *,
+    sparse: L[True],
+) -> tuple[NDArray[Any], ...]: ...
 
 def fromfunction(
     function: Callable[..., _T],
     shape: Sequence[int],
     *,
     dtype: DTypeLike = ...,
-    like: _SupportsArrayFunc = ...,
+    like: _SupportsArrayFunc | None = ...,
     **kwargs: Any,
 ) -> _T: ...
 
-def isscalar(element: object) -> TypeGuard[
-    generic | bool | int | float | complex | str | bytes | memoryview
-]: ...
+def isscalar(element: object) -> TypeGuard[generic | complex | str | bytes | memoryview]: ...
 
-def binary_repr(num: SupportsIndex, width: None | int = ...) -> str: ...
+def binary_repr(num: SupportsIndex, width: int | None = ...) -> str: ...
 
 def base_repr(
     number: SupportsAbs[float],
     base: float = ...,
-    padding: SupportsIndex = ...,
+    padding: SupportsIndex | None = ...,
 ) -> str: ...
 
 @overload
@@ -701,63 +1262,67 @@ def identity(
     n: int,
     dtype: None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[float64]: ...
 @overload
 def identity(
     n: int,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     *,
-    like: _SupportsArrayFunc = ...,
-) -> NDArray[_SCT]: ...
+    like: _SupportsArrayFunc | None = ...,
+) -> NDArray[_ScalarT]: ...
 @overload
 def identity(
     n: int,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     *,
-    like: _SupportsArrayFunc = ...,
+    like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
 def allclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: ArrayLike = ...,
-    atol: ArrayLike = ...,
-    equal_nan: bool = ...,
-) -> bool: ...
+    rtol: ArrayLike = 1e-5,
+    atol: ArrayLike = 1e-8,
+    equal_nan: py_bool = False,
+) -> py_bool: ...
 
 @overload
 def isclose(
     a: _ScalarLike_co,
     b: _ScalarLike_co,
-    rtol: ArrayLike = ...,
-    atol: ArrayLike = ...,
-    equal_nan: bool = ...,
+    rtol: ArrayLike = 1e-5,
+    atol: ArrayLike = 1e-8,
+    equal_nan: py_bool = False,
 ) -> np.bool: ...
 @overload
 def isclose(
     a: ArrayLike,
     b: ArrayLike,
-    rtol: ArrayLike = ...,
-    atol: ArrayLike = ...,
-    equal_nan: bool = ...,
+    rtol: ArrayLike = 1e-5,
+    atol: ArrayLike = 1e-8,
+    equal_nan: py_bool = False,
 ) -> NDArray[np.bool]: ...
 
-def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: bool = ...) -> bool: ...
+def array_equal(a1: ArrayLike, a2: ArrayLike, equal_nan: py_bool = False) -> py_bool: ...
 
-def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
+def array_equiv(a1: ArrayLike, a2: ArrayLike) -> py_bool: ...
 
 @overload
 def astype(
-    x: NDArray[Any],
-    dtype: _DTypeLike[_SCT],
-    copy: bool = ...,
-    device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
+    x: ndarray[_ShapeT, dtype],
+    dtype: _DTypeLike[_ScalarT],
+    /,
+    *,
+    copy: py_bool = True,
+    device: L["cpu"] | None = None,
+) -> ndarray[_ShapeT, dtype[_ScalarT]]: ...
 @overload
 def astype(
-    x: NDArray[Any],
+    x: ndarray[_ShapeT, dtype],
     dtype: DTypeLike,
-    copy: bool = ...,
-    device: None | L["cpu"] = ...,
-) -> NDArray[Any]: ...
+    /,
+    *,
+    copy: py_bool = True,
+    device: L["cpu"] | None = None,
+) -> ndarray[_ShapeT, dtype]: ...

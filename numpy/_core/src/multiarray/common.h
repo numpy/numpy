@@ -11,19 +11,13 @@
 #include "npy_static_data.h"
 #include "npy_import.h"
 #include <limits.h>
+#include <string.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
-
-#ifdef NPY_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_NDITER(iter) \
-        do { \
-            if (!NpyIter_IterationNeedsAPI(iter)) { \
-                NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter)); \
-            } \
-        } while(0)
-#else
-#define NPY_BEGIN_THREADS_NDITER(iter)
-#endif
 
 
 NPY_NO_EXPORT PyArray_Descr *
@@ -71,13 +65,6 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
- *
- * @param "value" should be the tuple.
- *
- * @return "descr" will be set to the field's dtype
- * @return "offset" will be set to the field's offset
- *
- * returns -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
@@ -111,13 +98,13 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for axis %d with size %"NPY_INTP_FMT,
+                         "index %" NPY_INTP_FMT" is out of bounds "
+                         "for axis %d with size %" NPY_INTP_FMT,
                          *index, axis, max_item);
         } else {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT, *index, max_item);
+                         "index %" NPY_INTP_FMT " is out of bounds "
+                         "for size %" NPY_INTP_FMT, *index, max_item);
         }
         return -1;
     }
@@ -170,7 +157,9 @@ check_and_adjust_axis(int *axis, int ndim)
  * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
  * clang versions < 8.0.0 have the same bug.
  */
-#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+#ifdef __cplusplus
+#define NPY_ALIGNOF(type) alignof(type)
+#elif (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
      || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
   && !defined __clang__) \
      || (defined __clang__ && __clang_major__ < 8))
@@ -242,15 +231,6 @@ npy_uint_alignment(int itemsize)
  * compared to memchr it returns one stride past end instead of NULL if needle
  * is not found.
  */
-#ifdef __clang__
-    /*
-     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
-     * should be OK but causes the clang sanitizer to warn.  It may make
-     * sense to modify the code to avoid this "unaligned" access but
-     * it would be good to carefully check the performance changes.
-     */
-    __attribute__((no_sanitize("alignment")))
-#endif
 static inline char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
@@ -271,11 +251,12 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
+        if (needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
-                unsigned int  v = *(unsigned int*)p;
+                unsigned int v;
+                memcpy(&v, p, sizeof(v));
                 if (v != 0) {
                     break;
                 }
@@ -330,8 +311,6 @@ NPY_NO_EXPORT int
 check_is_convertible_to_scalar(PyArrayObject *v);
 
 
-#include "ucsnarrow.h"
-
 /*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.
@@ -353,5 +332,9 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  * function (so that the way we flag the axis can be changed).
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */

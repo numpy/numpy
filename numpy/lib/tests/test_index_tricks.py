@@ -1,14 +1,29 @@
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_raises_regex,
-    )
 from numpy.lib._index_tricks_impl import (
-    mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, c_, r_, s_, ix_
-    )
+    c_,
+    diag_indices,
+    diag_indices_from,
+    fill_diagonal,
+    index_exp,
+    ix_,
+    mgrid,
+    ndenumerate,
+    ndindex,
+    ogrid,
+    r_,
+    s_,
+)
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestRavelUnravelIndex:
@@ -46,9 +61,9 @@ class TestRavelUnravelIndex:
         assert_raises(ValueError, np.ravel_multi_index, (0, 2), (2, 2))
         assert_raises(TypeError, np.ravel_multi_index, (0.1, 0.), (2, 2))
 
-        assert_equal(np.unravel_index((2*3 + 1)*6 + 4, (4, 3, 6)), [2, 1, 4])
+        assert_equal(np.unravel_index((2 * 3 + 1) * 6 + 4, (4, 3, 6)), [2, 1, 4])
         assert_equal(
-            np.ravel_multi_index([2, 1, 4], (4, 3, 6)), (2*3 + 1)*6 + 4)
+            np.ravel_multi_index([2, 1, 4], (4, 3, 6)), (2 * 3 + 1) * 6 + 4)
 
         arr = np.array([[3, 6, 6], [4, 5, 1]])
         assert_equal(np.ravel_multi_index(arr, (7, 6)), [22, 41, 37])
@@ -74,7 +89,7 @@ class TestRavelUnravelIndex:
         assert_raises_regex(TypeError, msg1, np.unravel_index, (), (10, 3, 5))
         assert_raises_regex(TypeError, msg2, np.unravel_index, np.array([]),
                             (10, 3, 5))
-        assert_equal(np.unravel_index(np.array([],dtype=int), (10, 3, 5)),
+        assert_equal(np.unravel_index(np.array([], dtype=int), (10, 3, 5)),
                      [[], [], []])
         assert_raises_regex(TypeError, msg1, np.ravel_multi_index, ([], []),
                             (10, 3))
@@ -97,19 +112,19 @@ class TestRavelUnravelIndex:
                 [5627771580, 117259570957])
 
         # test unravel_index for big indices (issue #9538)
-        assert_raises(ValueError, np.unravel_index, 1, (2**32-1, 2**31+1))
+        assert_raises(ValueError, np.unravel_index, 1, (2**32 - 1, 2**31 + 1))
 
         # test overflow checking for too big array (issue #7546)
-        dummy_arr = ([0],[0])
+        dummy_arr = ([0], [0])
         half_max = np.iinfo(np.intp).max // 2
         assert_equal(
             np.ravel_multi_index(dummy_arr, (half_max, 2)), [0])
         assert_raises(ValueError,
-            np.ravel_multi_index, dummy_arr, (half_max+1, 2))
+            np.ravel_multi_index, dummy_arr, (half_max + 1, 2))
         assert_equal(
             np.ravel_multi_index(dummy_arr, (half_max, 2), order='F'), [0])
         assert_raises(ValueError,
-            np.ravel_multi_index, dummy_arr, (half_max+1, 2), order='F')
+            np.ravel_multi_index, dummy_arr, (half_max + 1, 2), order='F')
 
     def test_dtypes(self):
         # Test with different data types
@@ -118,10 +133,10 @@ class TestRavelUnravelIndex:
             coords = np.array(
                 [[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0]], dtype=dtype)
             shape = (5, 8)
-            uncoords = 8*coords[0]+coords[1]
+            uncoords = 8 * coords[0] + coords[1]
             assert_equal(np.ravel_multi_index(coords, shape), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape))
-            uncoords = coords[0]+5*coords[1]
+            uncoords = coords[0] + 5 * coords[1]
             assert_equal(
                 np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
@@ -130,10 +145,10 @@ class TestRavelUnravelIndex:
                 [[1, 0, 1, 2, 3, 4], [1, 6, 1, 3, 2, 0], [1, 3, 1, 0, 9, 5]],
                 dtype=dtype)
             shape = (5, 8, 10)
-            uncoords = 10*(8*coords[0]+coords[1])+coords[2]
+            uncoords = 10 * (8 * coords[0] + coords[1]) + coords[2]
             assert_equal(np.ravel_multi_index(coords, shape), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape))
-            uncoords = coords[0]+5*(coords[1]+8*coords[2])
+            uncoords = coords[0] + 5 * (coords[1] + 8 * coords[2])
             assert_equal(
                 np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
@@ -151,7 +166,7 @@ class TestRavelUnravelIndex:
             ValueError, np.ravel_multi_index, [5, 1, -1, 2], (4, 3, 7, 12))
 
     def test_writeability(self):
-        # See gh-7269
+        # gh-7269
         x, y = np.unravel_index([1, 2, 3], (4, 5))
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)
@@ -169,7 +184,7 @@ class TestRavelUnravelIndex:
     def test_empty_array_ravel(self, mode):
         res = np.ravel_multi_index(
                     np.zeros((3, 0), dtype=np.intp), (2, 1, 0), mode=mode)
-        assert(res.shape == (0,))
+        assert res.shape == (0,)
 
         with assert_raises(ValueError):
             np.ravel_multi_index(
@@ -178,8 +193,8 @@ class TestRavelUnravelIndex:
     def test_empty_array_unravel(self):
         res = np.unravel_index(np.zeros(0, dtype=np.intp), (2, 1, 0))
         # res is a tuple of three empty arrays
-        assert(len(res) == 3)
-        assert(all(a.shape == (0,) for a in res))
+        assert len(res) == 3
+        assert all(a.shape == (0,) for a in res)
 
         with assert_raises(ValueError):
             np.unravel_index([1], (2, 1, 0))
@@ -193,13 +208,13 @@ class TestGrid:
         assert_(a[0] == -1)
         assert_almost_equal(a[-1], 1)
         assert_(b[0] == -1)
-        assert_almost_equal(b[1]-b[0], 0.1, 11)
-        assert_almost_equal(b[-1], b[0]+19*0.1, 11)
-        assert_almost_equal(a[1]-a[0], 2.0/9.0, 11)
+        assert_almost_equal(b[1] - b[0], 0.1, 11)
+        assert_almost_equal(b[-1], b[0] + 19 * 0.1, 11)
+        assert_almost_equal(a[1] - a[0], 2.0 / 9.0, 11)
 
     def test_linspace_equivalence(self):
         y, st = np.linspace(2, 10, retstep=True)
-        assert_almost_equal(st, 8/49.0)
+        assert_almost_equal(st, 8 / 49.0)
         assert_array_almost_equal(y, mgrid[2:10:50j], 13)
 
     def test_nd(self):
@@ -208,16 +223,16 @@ class TestGrid:
         assert_(c.shape == (2, 10, 10))
         assert_(d.shape == (2, 20, 20))
         assert_array_equal(c[0][0, :], -np.ones(10, 'd'))
-        assert_array_equal(c[1][:, 0], -2*np.ones(10, 'd'))
+        assert_array_equal(c[1][:, 0], -2 * np.ones(10, 'd'))
         assert_array_almost_equal(c[0][-1, :], np.ones(10, 'd'), 11)
-        assert_array_almost_equal(c[1][:, -1], 2*np.ones(10, 'd'), 11)
+        assert_array_almost_equal(c[1][:, -1], 2 * np.ones(10, 'd'), 11)
         assert_array_almost_equal(d[0, 1, :] - d[0, 0, :],
-                                  0.1*np.ones(20, 'd'), 11)
+                                  0.1 * np.ones(20, 'd'), 11)
         assert_array_almost_equal(d[1, :, 1] - d[1, :, 0],
-                                  0.2*np.ones(20, 'd'), 11)
+                                  0.2 * np.ones(20, 'd'), 11)
 
     def test_sparse(self):
-        grid_full   = mgrid[-1:1:10j, -2:2:10j]
+        grid_full = mgrid[-1:1:10j, -2:2:10j]
         grid_sparse = ogrid[-1:1:10j, -2:2:10j]
 
         # sparse grids can be made dense by broadcasting
@@ -477,7 +492,7 @@ class TestFillDiagonal:
     def test_hetero_shape_handling(self):
         # raise error with high dimensionality and
         # shape mismatch
-        a = np.zeros((3,3,7,3), int)
+        a = np.zeros((3, 3, 7, 3), int)
         with assert_raises_regex(ValueError, "equal length"):
             fill_diagonal(a, 2)
 

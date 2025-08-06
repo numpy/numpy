@@ -115,8 +115,8 @@ class TestParameters(util.F2PyTest):
         x = np.arange(3, dtype=np.float64)
         y = np.arange(5, dtype=np.float64)
         z = self.module.foo_array(x, y)
-        assert np.allclose(x, [0.0, 1./10, 2./10])
-        assert np.allclose(y, [0.0, 1.*10, 2.*10, 3.*10, 4.*10])
+        assert np.allclose(x, [0.0, 1. / 10, 2. / 10])
+        assert np.allclose(y, [0.0, 1. * 10, 2. * 10, 3. * 10, 4. * 10])
         assert np.allclose(z, 19.0)
 
     def test_constant_array_any_index(self):
@@ -127,4 +127,3 @@ class TestParameters(util.F2PyTest):
     def test_constant_array_delims(self):
         x = self.module.foo_array_delims()
         assert x == 9
-

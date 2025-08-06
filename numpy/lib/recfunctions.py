@@ -6,17 +6,12 @@ matplotlib.  They have been rewritten and extended for convenience.
 
 """
 import itertools
+
 import numpy as np
 import numpy.ma as ma
-from numpy import ndarray
-from numpy.ma import MaskedArray
-from numpy.ma.mrecords import MaskedRecords
+import numpy.ma.mrecords as mrec
 from numpy._core.overrides import array_function_dispatch
-from numpy._core.records import recarray
 from numpy.lib._iotools import _is_string_like
-
-_check_fill_value = np.ma.core._check_fill_value
-
 
 __all__ = [
     'append_fields', 'apply_along_fields', 'assign_fields_by_name',
@@ -267,7 +262,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
                 parents[name] = []
             parents.update(get_fieldstructure(current, name, parents))
         else:
-            lastparent = list((parents.get(lastname, []) or []))
+            lastparent = list(parents.get(lastname, []) or [])
             if lastparent:
                 lastparent.append(lastname)
             elif lastname:
@@ -334,15 +329,15 @@ def _fix_output(output, usemask=True, asrecarray=False):
     Private function: return a recarray, a ndarray, a MaskedArray
     or a MaskedRecords depending on the input parameters
     """
-    if not isinstance(output, MaskedArray):
+    if not isinstance(output, ma.MaskedArray):
         usemask = False
     if usemask:
         if asrecarray:
-            output = output.view(MaskedRecords)
+            output = output.view(mrec.MaskedRecords)
     else:
         output = ma.filled(output)
         if asrecarray:
-            output = output.view(recarray)
+            output = output.view(np.recarray)
     return output
 
 
@@ -418,7 +413,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     if (len(seqarrays) == 1):
         seqarrays = np.asanyarray(seqarrays[0])
     # Do we have a single ndarray as input ?
-    if isinstance(seqarrays, (ndarray, np.void)):
+    if isinstance(seqarrays, (np.ndarray, np.void)):
         seqdtype = seqarrays.dtype
         # Make sure we have named fields
         if seqdtype.names is None:
@@ -429,13 +424,13 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
             # Find what type of array we must return
             if usemask:
                 if asrecarray:
-                    seqtype = MaskedRecords
+                    seqtype = mrec.MaskedRecords
                 else:
-                    seqtype = MaskedArray
+                    seqtype = ma.MaskedArray
             elif asrecarray:
-                seqtype = recarray
+                seqtype = np.recarray
             else:
-                seqtype = ndarray
+                seqtype = np.ndarray
             return seqarrays.view(dtype=seqdtype, type=seqtype)
         else:
             seqarrays = (seqarrays,)
@@ -459,8 +454,8 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
             mask = ma.getmaskarray(a).ravel()
             # Get the filling value (if needed)
             if nbmissing:
-                fval = _check_fill_value(fill_value, a.dtype)
-                if isinstance(fval, (ndarray, np.void)):
+                fval = mrec._check_fill_value(fill_value, a.dtype)
+                if isinstance(fval, (np.ndarray, np.void)):
                     if len(fval.dtype) == 1:
                         fval = fval.item()[0]
                         fmsk = True
@@ -478,15 +473,15 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         output = ma.array(np.fromiter(data, dtype=newdtype, count=maxlength),
                           mask=list(_izip_records(seqmask, flatten=flatten)))
         if asrecarray:
-            output = output.view(MaskedRecords)
+            output = output.view(mrec.MaskedRecords)
     else:
         # Same as before, without the mask we don't need...
         for (a, n) in zip(seqarrays, sizes):
             nbmissing = (maxlength - n)
             data = a.ravel().__array__()
             if nbmissing:
-                fval = _check_fill_value(fill_value, a.dtype)
-                if isinstance(fval, (ndarray, np.void)):
+                fval = mrec._check_fill_value(fill_value, a.dtype)
+                if isinstance(fval, (np.ndarray, np.void)):
                     if len(fval.dtype) == 1:
                         fval = fval.item()[0]
                     else:
@@ -497,7 +492,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         output = np.fromiter(tuple(_izip_records(seqdata, flatten=flatten)),
                              dtype=newdtype, count=maxlength)
         if asrecarray:
-            output = output.view(recarray)
+            output = output.view(np.recarray)
     # And we're done...
     return output
 
@@ -512,10 +507,6 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     Return a new array with fields in `drop_names` dropped.
 
     Nested fields are supported.
-
-    .. versionchanged:: 1.18.0
-        `drop_fields` returns an array with 0 fields if all fields are dropped,
-        rather than returning ``None`` as it did previously.
 
     Parameters
     ----------
@@ -893,7 +884,7 @@ def _get_fields_and_offsets(dt, offset=0):
                     # optimization: avoid list comprehension if no subarray
                     fields.extend(subfields)
                 else:
-                    fields.extend([(d, c, o + i*size) for d, c, o in subfields])
+                    fields.extend([(d, c, o + i * size) for d, c, o in subfields])
     return fields
 
 def _common_stride(offsets, counts, itemsize):
@@ -1004,7 +995,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     >>> np.mean(rfn.structured_to_unstructured(b[['x', 'z']]), axis=-1)
     array([ 3. ,  5.5,  9. , 11. ])
 
-    """
+    """  # noqa: E501
     if arr.dtype.names is None:
         raise ValueError('arr must be a structured array')
 
@@ -1017,7 +1008,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         raise NotImplementedError("arr with no fields is not supported")
 
     dts, counts, offsets = zip(*fields)
-    names = ['f{}'.format(n) for n in range(n_fields)]
+    names = [f'f{n}' for n in range(n_fields)]
 
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])
@@ -1136,7 +1127,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
            (10, (11., 12), [13., 14.]), (15, (16., 17), [18., 19.])],
           dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
 
-    """
+    """  # noqa: E501
     if arr.shape == ():
         raise ValueError('arr must have at least one dimension')
     n_elem = arr.shape[-1]
@@ -1146,7 +1137,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
 
     if dtype is None:
         if names is None:
-            names = ['f{}'.format(n) for n in range(n_elem)]
+            names = [f'f{n}' for n in range(n_elem)]
         out_dtype = np.dtype([(n, arr.dtype) for n in names], align=align)
         fields = _get_fields_and_offsets(out_dtype)
         dts, counts, offsets = zip(*fields)
@@ -1169,7 +1160,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
         if align and not out_dtype.isalignedstruct:
             raise ValueError("align was True but dtype is not aligned")
 
-    names = ['f{}'.format(n) for n in range(len(fields))]
+    names = [f'f{n}' for n in range(len(fields))]
 
     # Use a series of views and casts to convert to a structured array:
 
@@ -1371,7 +1362,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                 dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """
-    if isinstance(arrays, ndarray):
+    if isinstance(arrays, np.ndarray):
         return arrays
     elif len(arrays) == 1:
         return arrays[0]
@@ -1394,8 +1385,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                 if autoconvert:
                     newdescr[nameidx] = (fname, max(fdtype, cdtype))
                 elif fdtype != cdtype:
-                    raise TypeError("Incompatible type '%s' <> '%s'" %
-                                    (cdtype, fdtype))
+                    raise TypeError(f"Incompatible type '{cdtype}' <> '{fdtype}'")
     # Only one field: use concatenate
     if len(newdescr) == 1:
         output = ma.concatenate(seqarrays)
@@ -1407,7 +1397,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
         for (a, n, i, j) in zip(seqarrays, fldnames, offset[:-1], offset[1:]):
             names = a.dtype.names
             if names is None:
-                output['f%i' % len(seen)][i:j] = a
+                output[f'f{len(seen)}'][i:j] = a
             else:
                 for name in n:
                     output[name][i:j] = a[name]
@@ -1551,20 +1541,18 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Check the keys
     if len(set(key)) != len(key):
-        dup = next(x for n,x in enumerate(key) if x in key[n+1:])
-        raise ValueError("duplicate join key %r" % dup)
+        dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
+        raise ValueError(f"duplicate join key {dup!r}")
     for name in key:
         if name not in r1.dtype.names:
-            raise ValueError('r1 does not have key field %r' % name)
+            raise ValueError(f'r1 does not have key field {name!r}')
         if name not in r2.dtype.names:
-            raise ValueError('r2 does not have key field %r' % name)
+            raise ValueError(f'r2 does not have key field {name!r}')
 
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()
     r2 = r2.ravel()
-    # Fixme: nb2 below is never used. Commenting out for pyflakes.
-    # (nb1, nb2) = (len(r1), len(r2))
-    nb1 = len(r1)
+    (nb1, nb2) = (len(r1), len(r2))
     (r1names, r2names) = (r1.dtype.names, r2.dtype.names)
 
     # Check the names for collision
@@ -1576,7 +1564,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Make temporary arrays of just the keys
     #  (use order of keys in `r1` for back-compatibility)
-    key1 = [ n for n in r1names if n in key ]
+    key1 = [n for n in r1names if n in key]
     r1k = _keep_fields(r1, key1)
     r2k = _keep_fields(r2, key1)
 
@@ -1619,7 +1607,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     for fname, fdtype in _get_fieldspec(r2.dtype):
         # Have we seen the current name already ?
         # we need to rebuild this list every time
-        names = list(name for name, dtype in ndtype)
+        names = [name for name, dtype in ndtype]
         try:
             nameidx = names.index(fname)
         except ValueError:
@@ -1664,7 +1652,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
             current[-r2spc:] = selected[r2cmn:]
     # Sort and finalize the output
     output.sort(order=key)
-    kwargs = dict(usemask=usemask, asrecarray=asrecarray)
+    kwargs = {'usemask': usemask, 'asrecarray': asrecarray}
     return _fix_output(_fix_defaults(output, defaults), **kwargs)
 
 
@@ -1685,6 +1673,9 @@ def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     --------
     join_by : equivalent function
     """
-    kwargs = dict(jointype=jointype, r1postfix=r1postfix, r2postfix=r2postfix,
-                  defaults=defaults, usemask=False, asrecarray=True)
+    kwargs = {'jointype': jointype, 'r1postfix': r1postfix, 'r2postfix': r2postfix,
+                  'defaults': defaults, 'usemask': False, 'asrecarray': True}
     return join_by(key, r1, r2, **kwargs)
+
+
+del array_function_dispatch

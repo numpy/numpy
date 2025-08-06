@@ -9,11 +9,8 @@ import warnings
 from contextlib import nullcontext
 
 import numpy as np
-from numpy._core import multiarray as mu
-from numpy._core import umath as um
+from numpy._core import multiarray as mu, numerictypes as nt, umath as um
 from numpy._core.multiarray import asanyarray
-from numpy._core import numerictypes as nt
-from numpy._core import _exceptions
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
@@ -28,13 +25,13 @@ umr_all = um.logical_and.reduce
 
 # Complex types to -> (2,)float view for fast-path computation in _var()
 _complex_to_float = {
-    nt.dtype(nt.csingle) : nt.dtype(nt.single),
-    nt.dtype(nt.cdouble) : nt.dtype(nt.double),
+    nt.dtype(nt.csingle): nt.dtype(nt.single),
+    nt.dtype(nt.cdouble): nt.dtype(nt.double),
 }
 # Special case for windows: ensure double takes precedence
 if nt.dtype(nt.longdouble) != nt.dtype(nt.double):
     _complex_to_float.update({
-        nt.dtype(nt.clongdouble) : nt.dtype(nt.longdouble),
+        nt.dtype(nt.clongdouble): nt.dtype(nt.longdouble),
     })
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very

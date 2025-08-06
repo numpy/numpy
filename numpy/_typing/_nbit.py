@@ -1,8 +1,8 @@
 """A module with the precisions of platform-specific `~numpy.number`s."""
 
 from typing import TypeAlias
-from ._nbit_base import _8Bit, _16Bit, _32Bit, _64Bit, _96Bit, _128Bit
 
+from ._nbit_base import _8Bit, _16Bit, _32Bit, _64Bit, _96Bit, _128Bit
 
 # To-be replaced with a `npt.NBitBase` subclass by numpy's mypy plugin
 _NBitByte: TypeAlias = _8Bit

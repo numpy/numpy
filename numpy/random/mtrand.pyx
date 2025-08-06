@@ -190,7 +190,7 @@ cdef class RandomState:
         self._initialize_bit_generator(bit_generator)
 
     def __repr__(self):
-        return self.__str__() + ' at 0x{:X}'.format(id(self))
+        return f'{self} at 0x{id(self):X}'
 
     def __str__(self):
         _str = self.__class__.__name__
@@ -718,8 +718,6 @@ cdef class RandomState:
             Desired dtype of the result. Byteorder must be native.
             The default value is long.
 
-            .. versionadded:: 1.11.0
-
             .. warning::
               This function defaults to the C-long dtype, which is 32bit on windows
               and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
@@ -861,8 +859,6 @@ cdef class RandomState:
 
         Generates a random sample from a given 1-D array
 
-        .. versionadded:: 1.7.0
-
         .. note::
             New code should use the `~numpy.random.Generator.choice`
             method of a `~numpy.random.Generator` instance instead;
@@ -982,7 +978,7 @@ cdef class RandomState:
                     atol = max(atol, np.sqrt(np.finfo(p.dtype).eps))
 
             p = <np.ndarray>np.PyArray_FROM_OTF(
-                p, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+                p, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
             pix = <double*>np.PyArray_DATA(p)
 
             if p.ndim != 1:
@@ -1168,8 +1164,8 @@ cdef class RandomState:
         cdef double _low, _high, range
         cdef object temp
 
-        alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ALIGNED)
-        ahigh = <np.ndarray>np.PyArray_FROM_OTF(high, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
+        ahigh = <np.ndarray>np.PyArray_FROM_OTF(high, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
 
         if np.PyArray_NDIM(alow) == np.PyArray_NDIM(ahigh) == 0:
             _low = PyFloat_AsDouble(low)
@@ -1391,15 +1387,14 @@ cdef class RandomState:
         """
         if high is None:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint(1, {low} + 1) instead".format(low=low)),
+                           f"randint(1, {low} + 1) instead"),
                           DeprecationWarning)
             high = low
             low = 1
 
         else:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint({low}, {high} + 1) "
-                           "instead".format(low=low, high=high)),
+                           f"randint({low}, {high} + 1) instead"),
                           DeprecationWarning)
 
         return self.randint(low, int(high) + 1, size=size, dtype='l')
@@ -1551,13 +1546,13 @@ cdef class RandomState:
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
         >>> s = np.random.normal(mu, sigma, 1000)
 
-        Verify the mean and the variance:
+        Verify the mean and the standard deviation:
 
         >>> abs(mu - np.mean(s))
         0.0  # may vary
 
         >>> abs(sigma - np.std(s, ddof=1))
-        0.1  # may vary
+        0.0  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1864,9 +1859,6 @@ cdef class RandomState:
         ----------
         dfnum : float or array_like of floats
             Numerator degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.14.0
-               Earlier NumPy versions required dfnum > 1.
         dfden : float or array_like of floats
             Denominator degrees of freedom, must be > 0.
         nonc : float or array_like of floats
@@ -1976,7 +1968,7 @@ cdef class RandomState:
         The variable obtained by summing the squares of `df` independent,
         standard normally distributed random variables:
 
-        .. math:: Q = \\sum_{i=0}^{\\mathtt{df}} X^2_i
+        .. math:: Q = \\sum_{i=1}^{\\mathtt{df}} X^2_i
 
         is chi-square distributed, denoted
 
@@ -2025,9 +2017,6 @@ cdef class RandomState:
         ----------
         df : float or array_like of floats
             Degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.10.0
-               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, must be non-negative.
         size : int or tuple of ints, optional
@@ -2292,7 +2281,7 @@ cdef class RandomState:
         Draw samples from a von Mises distribution.
 
         Samples are drawn from a von Mises distribution with specified mode
-        (mu) and dispersion (kappa), on the interval [-pi, pi].
+        (mu) and concentration (kappa), on the interval [-pi, pi].
 
         The von Mises distribution (also known as the circular normal
         distribution) is a continuous probability distribution on the unit
@@ -2309,7 +2298,7 @@ cdef class RandomState:
         mu : float or array_like of floats
             Mode ("center") of the distribution.
         kappa : float or array_like of floats
-            Dispersion of the distribution, has to be >=0.
+            Concentration of the distribution, has to be >=0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2333,7 +2322,7 @@ cdef class RandomState:
 
         .. math:: p(x) = \\frac{e^{\\kappa cos(x-\\mu)}}{2\\pi I_0(\\kappa)},
 
-        where :math:`\\mu` is the mode and :math:`\\kappa` the dispersion,
+        where :math:`\\mu` is the mode and :math:`\\kappa` the concentration,
         and :math:`I_0(\\kappa)` is the modified Bessel function of order 0.
 
         The von Mises is named for Richard Edler von Mises, who was born in
@@ -2354,7 +2343,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> mu, kappa = 0.0, 4.0 # mean and dispersion
+        >>> mu, kappa = 0.0, 4.0 # mean and concentration
         >>> s = np.random.vonmises(mu, kappa, 1000)
 
         Display the histogram of the samples, along with
@@ -3340,9 +3329,9 @@ cdef class RandomState:
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
-        oleft = <np.ndarray>np.PyArray_FROM_OTF(left, np.NPY_DOUBLE, np.NPY_ALIGNED)
-        omode = <np.ndarray>np.PyArray_FROM_OTF(mode, np.NPY_DOUBLE, np.NPY_ALIGNED)
-        oright = <np.ndarray>np.PyArray_FROM_OTF(right, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        oleft = <np.ndarray>np.PyArray_FROM_OTF(left, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
+        omode = <np.ndarray>np.PyArray_FROM_OTF(mode, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
+        oright = <np.ndarray>np.PyArray_FROM_OTF(right, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
 
         if np.PyArray_NDIM(oleft) == np.PyArray_NDIM(omode) == np.PyArray_NDIM(oright) == 0:
             fleft = PyFloat_AsDouble(left)
@@ -3474,9 +3463,9 @@ cdef class RandomState:
         cdef long *randoms_data
         cdef np.broadcast it
 
-        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
-        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INTP, np.NPY_ALIGNED)
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INTP, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
 
         if not is_scalar:
@@ -3963,9 +3952,9 @@ cdef class RandomState:
         cdef int64_t lngood, lnbad, lnsample
 
         # This legacy function supports "long" values only (checked below).
-        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
-        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
-        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
+        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
+        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
+        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
             lngood = <int64_t>ngood
@@ -4912,6 +4901,7 @@ def ranf(*args, **kwargs):
     return _rand.random_sample(*args, **kwargs)
 
 __all__ = [
+    'RandomState',
     'beta',
     'binomial',
     'bytes',
@@ -4964,5 +4954,18 @@ __all__ = [
     'wald',
     'weibull',
     'zipf',
-    'RandomState',
 ]
+
+seed.__module__ = "numpy.random"
+ranf.__module__ = "numpy.random"
+sample.__module__ = "numpy.random"
+get_bit_generator.__module__ = "numpy.random"
+set_bit_generator.__module__ = "numpy.random"
+
+# The first item in __all__ is 'RandomState', so it can be skipped here.
+for method_name in __all__[1:]:
+    method = getattr(RandomState, method_name, None)
+    if method is not None:
+        method.__module__ = "numpy.random"
+
+del method, method_name

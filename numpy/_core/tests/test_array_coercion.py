@@ -12,9 +12,7 @@ from pytest import param
 import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
-
-from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY)
+from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
 
 
 def arraylikes():
@@ -45,7 +43,7 @@ def arraylikes():
         def __len__(self):
             raise TypeError
 
-        def __getitem__(self):
+        def __getitem__(self, _, /):
             raise TypeError
 
     # Array-interface
@@ -90,10 +88,10 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
         yield param(np.sqrt(np.longdouble(5)), id="longdouble")
 
     # Complex:
-    yield param(np.sqrt(np.complex64(2+3j)), id="complex64")
-    yield param(np.sqrt(np.complex128(2+3j)), id="complex128")
+    yield param(np.sqrt(np.complex64(2 + 3j)), id="complex64")
+    yield param(np.sqrt(np.complex128(2 + 3j)), id="complex128")
     if extended_precision:
-        yield param(np.sqrt(np.clongdouble(2+3j)), id="clongdouble")
+        yield param(np.sqrt(np.clongdouble(2 + 3j)), id="clongdouble")
 
     # Bool:
     # XFAIL: Bool should be added, but has some bad properties when it
@@ -307,7 +305,7 @@ class TestScalarDiscovery:
             scalar = scalar.values[0]
 
             if dtype.type == np.void:
-               if scalar.dtype.fields is not None and dtype.fields is None:
+                if scalar.dtype.fields is not None and dtype.fields is None:
                     # Here, coercion to "V6" works, but the cast fails.
                     # Since the types are identical, SETITEM takes care of
                     # this, but has different rules than the cast.
@@ -324,18 +322,18 @@ class TestScalarDiscovery:
                 cast = np.array(scalar).astype(dtype)
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array(scalar, dtype=dtype)
 
                 if (isinstance(scalar, rational) and
                         np.issubdtype(dtype, np.signedinteger)):
                     return
 
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     res[()] = scalar
 
                 return
@@ -469,7 +467,6 @@ class TestTimeScalars:
             # the explicit cast fails:
             np.array(scalar).astype(dtype)
 
-
     @pytest.mark.parametrize(["val", "unit"],
             [param(123, "s", id="[s]"), param(123, "D", id="[D]")])
     def test_coercion_assignment_timedelta(self, val, unit):
@@ -598,6 +595,7 @@ class TestBadSequences:
     def test_growing_list(self):
         # List to coerce, `mylist` will append to it during coercion
         obj = []
+
         class mylist(list):
             def __len__(self):
                 obj.append([1, 2])
@@ -615,6 +613,7 @@ class TestBadSequences:
     def test_mutated_list(self):
         # List to coerce, `mylist` will mutate the first element
         obj = []
+
         class mylist(list):
             def __len__(self):
                 obj[0] = [2, 3]  # replace with a different list.
@@ -628,12 +627,13 @@ class TestBadSequences:
     def test_replace_0d_array(self):
         # List to coerce, `mylist` will mutate the first element
         obj = []
+
         class baditem:
             def __len__(self):
                 obj[0][0] = 2  # replace with a different list.
                 raise ValueError("not actually a sequence!")
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 pass
 
         # Runs into a corner case in the new code, the `array(2)` is cached
@@ -716,8 +716,7 @@ class TestArrayLikes:
         arr = np.array([ArrayLike])
         assert arr[0] is ArrayLike
 
-    @pytest.mark.skipif(
-            np.dtype(np.intp).itemsize < 8, reason="Needs 64bit platform")
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")
@@ -755,7 +754,8 @@ class TestArrayLikes:
         class BadSequence:
             def __len__(self):
                 raise error
-            def __getitem__(self):
+
+            def __getitem__(self, _, /):
                 # must have getitem to be a Sequence
                 return 1
 
@@ -845,7 +845,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self, dtype=None, copy=None):
+        def __array__(self, dtype=None, copy=None):  # noqa: PLR0206
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:

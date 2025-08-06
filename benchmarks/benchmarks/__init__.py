@@ -1,11 +1,13 @@
-from . import common
-import sys
 import os
+import sys
+
+from . import common
+
 
 def show_cpu_features():
     from numpy.lib._utils_impl import _opt_info
     info = _opt_info()
-    info = "NumPy CPU features: " + (info if info else 'nothing enabled')
+    info = "NumPy CPU features: " + (info or 'nothing enabled')
     # ASV wrapping stdout & stderr, so we assume having a tty here
     if 'SHELL' in os.environ and sys.platform != 'win32':
         # to avoid the red color that imposed by ASV

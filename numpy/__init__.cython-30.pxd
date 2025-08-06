@@ -51,15 +51,11 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef signed short       npy_int16
     ctypedef signed int         npy_int32
     ctypedef signed long long   npy_int64
-    ctypedef signed long long   npy_int96
-    ctypedef signed long long   npy_int128
 
     ctypedef unsigned char      npy_uint8
     ctypedef unsigned short     npy_uint16
     ctypedef unsigned int       npy_uint32
     ctypedef unsigned long long npy_uint64
-    ctypedef unsigned long long npy_uint96
-    ctypedef unsigned long long npy_uint128
 
     ctypedef float        npy_float32
     ctypedef double       npy_float64
@@ -117,6 +113,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_OBJECT
         NPY_STRING
         NPY_UNICODE
+        NPY_VSTRING
         NPY_VOID
         NPY_DATETIME
         NPY_TIMEDELTA
@@ -127,30 +124,24 @@ cdef extern from "numpy/arrayobject.h":
         NPY_INT16
         NPY_INT32
         NPY_INT64
-        NPY_INT128
-        NPY_INT256
         NPY_UINT8
         NPY_UINT16
         NPY_UINT32
         NPY_UINT64
-        NPY_UINT128
-        NPY_UINT256
         NPY_FLOAT16
         NPY_FLOAT32
         NPY_FLOAT64
         NPY_FLOAT80
         NPY_FLOAT96
         NPY_FLOAT128
-        NPY_FLOAT256
-        NPY_COMPLEX32
         NPY_COMPLEX64
         NPY_COMPLEX128
         NPY_COMPLEX160
         NPY_COMPLEX192
         NPY_COMPLEX256
-        NPY_COMPLEX512
 
         NPY_INTP
+        NPY_UINTP
         NPY_DEFAULT_INT  # Not a compile time constant (normally)!
 
     ctypedef enum NPY_ORDER:
@@ -190,40 +181,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SEARCHRIGHT
 
     enum:
-        # DEPRECATED since NumPy 1.7 ! Do not use in new code!
-        NPY_C_CONTIGUOUS
-        NPY_F_CONTIGUOUS
-        NPY_CONTIGUOUS
-        NPY_FORTRAN
-        NPY_OWNDATA
-        NPY_FORCECAST
-        NPY_ENSURECOPY
-        NPY_ENSUREARRAY
-        NPY_ELEMENTSTRIDES
-        NPY_ALIGNED
-        NPY_NOTSWAPPED
-        NPY_WRITEABLE
-        NPY_ARR_HAS_DESCR
-
-        NPY_BEHAVED
-        NPY_BEHAVED_NS
-        NPY_CARRAY
-        NPY_CARRAY_RO
-        NPY_FARRAY
-        NPY_FARRAY_RO
-        NPY_DEFAULT
-
-        NPY_IN_ARRAY
-        NPY_OUT_ARRAY
-        NPY_INOUT_ARRAY
-        NPY_IN_FARRAY
-        NPY_OUT_FARRAY
-        NPY_INOUT_FARRAY
-
-        NPY_UPDATE_ALL
-
-    enum:
-        # Added in NumPy 1.7 to replace the deprecated enums above.
         NPY_ARRAY_C_CONTIGUOUS
         NPY_ARRAY_F_CONTIGUOUS
         NPY_ARRAY_OWNDATA
@@ -757,6 +714,23 @@ cdef extern from "numpy/arrayobject.h":
     npy_intp PyArray_OverflowMultiplyList (npy_intp *, int)
     int PyArray_SetBaseObject(ndarray, base) except -1 # NOTE: steals a reference to base! Use "set_array_base()" instead.
 
+    # The memory handler functions require the NumPy 1.22 API
+    # and may require defining NPY_TARGET_VERSION
+    ctypedef struct PyDataMemAllocator:
+        void *ctx
+        void* (*malloc) (void *ctx, size_t size)
+        void* (*calloc) (void *ctx, size_t nelem, size_t elsize)
+        void* (*realloc) (void *ctx, void *ptr, size_t new_size)
+        void (*free) (void *ctx, void *ptr, size_t size)
+
+    ctypedef struct PyDataMem_Handler:
+        char* name
+        npy_uint8 version
+        PyDataMemAllocator allocator
+
+    object PyDataMem_SetHandler(object handler)
+    object PyDataMem_GetHandler()
+
     # additional datetime related functions are defined below
 
 
@@ -770,15 +744,11 @@ ctypedef npy_int8       int8_t
 ctypedef npy_int16      int16_t
 ctypedef npy_int32      int32_t
 ctypedef npy_int64      int64_t
-#ctypedef npy_int96      int96_t
-#ctypedef npy_int128     int128_t
 
 ctypedef npy_uint8      uint8_t
 ctypedef npy_uint16     uint16_t
 ctypedef npy_uint32     uint32_t
 ctypedef npy_uint64     uint64_t
-#ctypedef npy_uint96     uint96_t
-#ctypedef npy_uint128    uint128_t
 
 ctypedef npy_float32    float32_t
 ctypedef npy_float64    float64_t
@@ -839,6 +809,14 @@ cdef extern from "numpy/ndarraytypes.h":
     ctypedef struct npy_datetimestruct:
         int64_t year
         int32_t month, day, hour, min, sec, us, ps, as
+
+    # Iterator API added in v1.6
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    # https://github.com/cython/cython/issues/6720
+    ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
+    ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
 
 cdef extern from "numpy/arrayscalars.h":
@@ -945,10 +923,17 @@ cdef extern from "numpy/ufuncobject.h":
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
+        # deprecated
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
+        # use these instead
+        NPY_FPE_DIVIDEBYZERO
+        NPY_FPE_OVERFLOW
+        NPY_FPE_UNDERFLOW
+        NPY_FPE_INVALID
+
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)
@@ -1091,10 +1076,6 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) noexcept nogil:
     return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
 
 
-# Iterator API added in v1.6
-ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it) noexcept nogil
-ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords) noexcept nogil
-
 cdef extern from "numpy/arrayobject.h":
 
     ctypedef struct NpyIter:
@@ -1212,9 +1193,12 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
-    NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
-    NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
-                                                        char** errmsg) except NULL
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    NpyIter_IterNextFunc NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
+    NpyIter_GetMultiIndexFunc NpyIter_GetGetMultiIndex(NpyIter* it,
+                                                       char** errmsg) except NULL
     char** NpyIter_GetDataPtrArray(NpyIter* it) nogil
     char** NpyIter_GetInitialDataPtrArray(NpyIter* it) nogil
     npy_intp* NpyIter_GetIndexPtr(NpyIter* it)
@@ -1223,3 +1207,35 @@ cdef extern from "numpy/arrayobject.h":
     void NpyIter_GetInnerFixedStrideArray(NpyIter* it, npy_intp* outstrides) nogil
     npy_bool NpyIter_IterationNeedsAPI(NpyIter* it) nogil
     void NpyIter_DebugPrint(NpyIter* it)
+
+# NpyString API
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct npy_string_allocator:
+        pass
+
+    ctypedef struct npy_packed_static_string:
+        pass
+
+    ctypedef struct npy_static_string:
+        size_t size
+        const char *buf
+
+    ctypedef struct PyArray_StringDTypeObject:
+        PyArray_Descr base
+        PyObject *na_object
+        char coerce
+        char has_nan_na
+        char has_string_na
+        char array_owned
+        npy_static_string default_string
+        npy_static_string na_name
+        npy_string_allocator *allocator
+
+cdef extern from "numpy/arrayobject.h":
+    npy_string_allocator *NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
+    void NpyString_acquire_allocators(size_t n_descriptors, PyArray_Descr *const descrs[], npy_string_allocator *allocators[])
+    void NpyString_release_allocator(npy_string_allocator *allocator)
+    void NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
+    int NpyString_load(npy_string_allocator *allocator, const npy_packed_static_string *packed_string, npy_static_string *unpacked_string)
+    int NpyString_pack_null(npy_string_allocator *allocator, npy_packed_static_string *packed_string)
+    int NpyString_pack(npy_string_allocator *allocator, npy_packed_static_string *packed_string, const char *buf, size_t size)

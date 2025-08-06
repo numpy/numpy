@@ -96,5 +96,4 @@ lagroots: _FuncRoots[L["lagroots"]]
 laggauss: _FuncGauss[L["laggauss"]]
 lagweight: _FuncWeight[L["lagweight"]]
 
-
 class Laguerre(ABCPolyBase[L["L"]]): ...

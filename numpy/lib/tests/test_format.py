@@ -274,20 +274,25 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-import sys
 import os
+import sys
 import warnings
-import pytest
 from io import BytesIO
 
-import numpy as np
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM
-    )
-from numpy.testing._private.utils import requires_memory
-from numpy.lib import format
+import pytest
 
+import numpy as np
+from numpy.lib import format
+from numpy.testing import (
+    IS_64BIT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_raises,
+    assert_raises_regex,
+)
+from numpy.testing._private.utils import requires_memory
 
 # Generate some basic arrays to test with.
 scalars = [
@@ -378,9 +383,6 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
     ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True),
      'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
@@ -396,7 +398,7 @@ record_arrays = [
 ]
 
 
-#BytesIO that reads a random number of bytes at a time
+# BytesIO that reads a random number of bytes at a time
 class BytesIOSRandomSize(BytesIO):
     def read(self, size=None):
         import random
@@ -423,11 +425,10 @@ def roundtrip_randsize(arr):
 def roundtrip_truncated(arr):
     f = BytesIO()
     format.write_array(f, arr)
-    #BytesIO is one byte short
+    # BytesIO is one byte short
     f2 = BytesIO(f.getvalue()[0:-1])
     arr2 = format.read_array(f2)
     return arr2
-
 
 def assert_equal_(o1, o2):
     assert_(o1 == o2)
@@ -451,6 +452,30 @@ def test_roundtrip_truncated():
         if arr.dtype != object:
             assert_raises(ValueError, roundtrip_truncated, arr)
 
+def test_file_truncated(tmp_path):
+    path = tmp_path / "a.npy"
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            with open(path, 'wb') as f:
+                format.write_array(f, arr)
+            # truncate the file by one byte
+            with open(path, 'rb+') as f:
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
+            with open(path, 'rb') as f:
+                with pytest.raises(
+                    ValueError,
+                    match=(
+                        r"EOF: reading array header, "
+                        r"expected (\d+) bytes got (\d+)"
+                    ) if arr.size == 0 else (
+                        r"Failed to read all data for array\. "
+                        r"Expected \(.*?\) = (\d+) elements, "
+                        r"could only read (\d+) elements\. "
+                        r"\(file seems not fully written\?\)"
+                    )
+                ):
+                    _ = format.read_array(f)
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
@@ -508,7 +533,7 @@ dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
 # nested struct-in-struct
 dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
 # field with '' name
-dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4'] * 3})
 # titles
 dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
                 'offsets': [1, 6], 'titles': ['aa', 'bb']})
@@ -537,6 +562,8 @@ def test_python2_python3_interoperability():
     assert_array_equal(data, np.ones(2))
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
@@ -600,17 +627,18 @@ def test_pickle_disallow(tmpdir):
                   allow_pickle=False)
 
 @pytest.mark.parametrize('dt', [
-    np.dtype(np.dtype([('a', np.int8),
-                       ('b', np.int16),
-                       ('c', np.int32),
-                      ], align=True),
-             (3,)),
-    np.dtype([('x', np.dtype({'names':['a','b'],
-                              'formats':['i1','i1'],
-                              'offsets':[0,4],
-                              'itemsize':8,
+    # Not testing a subarray only dtype, because it cannot be attached to an array
+    # (and would fail the test as of writing this.)
+    np.dtype([('a', np.int8),
+              ('b', np.int16),
+              ('c', np.int32),
+             ], align=True),
+    np.dtype([('x', np.dtype(({'names': ['a', 'b'],
+                              'formats': ['i1', 'i1'],
+                              'offsets': [0, 4],
+                              'itemsize': 8,
                              },
-                    (3,)),
+                    (3,))),
                (4,),
              )]),
     np.dtype([('x',
@@ -619,10 +647,10 @@ def test_pickle_disallow(tmpdir):
                )]),
     np.dtype([('x', np.dtype((
         np.dtype((
-            np.dtype({'names':['a','b'],
-                      'formats':['i1','i1'],
-                      'offsets':[0,4],
-                      'itemsize':8}),
+            np.dtype({'names': ['a', 'b'],
+                      'formats': ['i1', 'i1'],
+                      'offsets': [0, 4],
+                      'itemsize': 8}),
             (3,)
             )),
         (4,)
@@ -634,10 +662,10 @@ def test_pickle_disallow(tmpdir):
                 np.dtype((
                     np.dtype([
                         ('a', int),
-                        ('b', np.dtype({'names':['a','b'],
-                                        'formats':['i1','i1'],
-                                        'offsets':[0,4],
-                                        'itemsize':8})),
+                        ('b', np.dtype({'names': ['a', 'b'],
+                                        'formats': ['i1', 'i1'],
+                                        'offsets': [0, 4],
+                                        'itemsize': 8})),
                     ]),
                     (3,),
                 )),
@@ -647,7 +675,6 @@ def test_pickle_disallow(tmpdir):
         )))
         ]),
     ])
-
 def test_descr_to_dtype(dt):
     dt1 = format.descr_to_dtype(dt.descr)
     assert_equal_(dt1, dt)
@@ -714,7 +741,7 @@ def test_version_2_0_memmap(tmpdir):
 @pytest.mark.parametrize("mmap_mode", ["r", None])
 def test_huge_header(tmpdir, mmap_mode):
     f = os.path.join(tmpdir, 'large_header.npy')
-    arr = np.array(1, dtype="i,"*10000+"i")
+    arr = np.array(1, dtype="i," * 10000 + "i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.save(f, arr)
@@ -733,7 +760,7 @@ def test_huge_header(tmpdir, mmap_mode):
 
 def test_huge_header_npz(tmpdir):
     f = os.path.join(tmpdir, 'large_header.npz')
-    arr = np.array(1, dtype="i,"*10000+"i")
+    arr = np.array(1, dtype="i," * 10000 + "i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.savez(f, arr=arr)
@@ -838,11 +865,11 @@ def test_bad_magic_args():
 
 def test_large_header():
     s = BytesIO()
-    d = {'shape': tuple(), 'fortran_order': False, 'descr': '<i8'}
+    d = {'shape': (), 'fortran_order': False, 'descr': '<i8'}
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d['descr'] = [('x'*256*256, '<i8')]
+    d['descr'] = [('x' * 256 * 256, '<i8')]
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 
@@ -887,7 +914,7 @@ def test_bad_header():
     # d = {"shape": (1, 2),
     #      "descr": "x"}
     s = BytesIO(
-        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }" +
+        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }"
         b"                    \n"
     )
     assert_raises(ValueError, format.read_array_header_1_0, s)
@@ -927,8 +954,7 @@ def test_large_file_support(tmpdir):
 
 
 @pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
-@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
-                    reason="test requires 64-bit system")
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
 def test_large_archive(tmpdir):
@@ -981,7 +1007,7 @@ def test_unicode_field_names(tmpdir):
 
     # notifies the user that 3.0 is selected
     with open(fname, 'wb') as f:
-        with assert_warns(UserWarning):
+        with pytest.warns(UserWarning):
             format.write_array(f, arr, version=None)
 
 def test_header_growth_axis():
@@ -993,7 +1019,7 @@ def test_header_growth_axis():
             format.write_array_header_1_0(fp, {
                 'shape': (2, size) if is_fortran_array else (size, 2),
                 'fortran_order': is_fortran_array,
-                'descr': np.dtype([(' '*dtype_space, int)])
+                'descr': np.dtype([(' ' * dtype_space, int)])
             })
 
             assert len(fp.getvalue()) == expected_header_length
@@ -1014,7 +1040,7 @@ def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
-    with assert_warns(UserWarning):
+    with pytest.warns(UserWarning):
         np.save(buf, arr)
     buf.seek(0)
 

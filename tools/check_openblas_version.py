@@ -6,9 +6,10 @@ min_version
 example: check_openblas_version.py 0.3.26
 """
 
-import numpy
 import pprint
 import sys
+
+import numpy
 
 version = sys.argv[1]
 deps = numpy.show_config('dicts')['Build Dependencies']

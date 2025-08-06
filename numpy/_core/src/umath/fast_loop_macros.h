@@ -10,9 +10,9 @@
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
-#include <assert.h>
-
 #include "simd/simd.h"
+
+#include <assert.h>
 
 /*
  * largest simd vector size in bytes numpy supports

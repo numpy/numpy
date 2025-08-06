@@ -78,8 +78,6 @@ Platform information
 .. c:macro:: NPY_CPU_S390
 .. c:macro:: NPY_CPU_PARISC
 
-    .. versionadded:: 1.3.0
-
     CPU architecture of the platform; only one of the above is
     defined.
 
@@ -91,8 +89,6 @@ Platform information
 
 .. c:macro:: NPY_BYTE_ORDER
 
-    .. versionadded:: 1.3.0
-
     Portable alternatives to the ``endian.h`` macros of GNU Libc.
     If big endian, :c:data:`NPY_BYTE_ORDER` == :c:data:`NPY_BIG_ENDIAN`, and
     similarly for little endian architectures.
@@ -100,8 +96,6 @@ Platform information
     Defined in ``numpy/npy_endian.h``.
 
 .. c:function:: int PyArray_GetEndianness()
-
-    .. versionadded:: 1.3.0
 
     Returns the endianness of the current platform.
     One of :c:data:`NPY_CPU_BIG`, :c:data:`NPY_CPU_LITTLE`,

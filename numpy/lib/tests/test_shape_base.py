@@ -1,18 +1,27 @@
-import numpy as np
 import functools
 import sys
+
 import pytest
 
+import numpy as np
 from numpy import (
-    apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
-    put_along_axis
-    )
+    apply_along_axis,
+    apply_over_axes,
+    array_split,
+    column_stack,
+    dsplit,
+    dstack,
+    expand_dims,
+    hsplit,
+    kron,
+    put_along_axis,
+    split,
+    take_along_axis,
+    tile,
+    vsplit,
+)
 from numpy.exceptions import AxisError
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
-    )
-
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 IS_64BIT = sys.maxsize > 2**32
 
@@ -35,9 +44,9 @@ class TestTakeAlongAxis:
         a = rand(3, 4, 5)
 
         funcs = [
-            (np.sort, np.argsort, dict()),
-            (_add_keepdims(np.min), _add_keepdims(np.argmin), dict()),
-            (_add_keepdims(np.max), _add_keepdims(np.argmax), dict()),
+            (np.sort, np.argsort, {}),
+            (_add_keepdims(np.min), _add_keepdims(np.argmin), {}),
+            (_add_keepdims(np.max), _add_keepdims(np.argmax), {}),
             #(np.partition, np.argpartition, dict(kth=2)),
         ]
 
@@ -68,7 +77,7 @@ class TestTakeAlongAxis:
 
     def test_empty(self):
         """ Test everything is ok with empty results, even with inserted dims """
-        a  = np.ones((3, 4, 5))
+        a = np.ones((3, 4, 5))
         ai = np.ones((3, 0, 5), dtype=np.intp)
 
         actual = take_along_axis(a, ai, axis=1)
@@ -76,7 +85,7 @@ class TestTakeAlongAxis:
 
     def test_broadcast(self):
         """ Test that non-indexing dimensions are broadcast in both directions """
-        a  = np.ones((3, 4, 1))
+        a = np.ones((3, 4, 1))
         ai = np.ones((1, 2, 5), dtype=np.intp)
         actual = take_along_axis(a, ai, axis=1)
         assert_equal(actual.shape, (3, 2, 5))
@@ -101,7 +110,7 @@ class TestPutAlongAxis:
 
     def test_broadcast(self):
         """ Test that non-indexing dimensions are broadcast in both directions """
-        a  = np.ones((3, 4, 1))
+        a = np.ones((3, 4, 1))
         ai = np.arange(10, dtype=np.intp).reshape((1, 2, 5)) % 4
         put_along_axis(a, ai, 20, axis=1)
         assert_equal(take_along_axis(a, ai, axis=1), 20)
@@ -124,17 +133,16 @@ class TestPutAlongAxis:
         assert "single dimension" in str(exc.exception)
 
 
-
 class TestApplyAlongAxis:
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+            apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_simple101(self):
         a = np.ones((10, 101), 'd')
         assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+            apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_3d(self):
         a = np.arange(27).reshape((3, 3, 3))
@@ -196,14 +204,14 @@ class TestApplyAlongAxis:
         def f1to2(x):
             """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            return (x[::-1] * x[1:,None]).view(cls)
+            return (x[::-1] * x[1:, None]).view(cls)
 
-        a2d = np.arange(6*3).reshape((6, 3))
+        a2d = np.arange(6 * 3).reshape((6, 3))
 
         # 2d insertion along first axis
         actual = apply_along_axis(f1to2, 0, a2d)
         expected = np.stack([
-            f1to2(a2d[:,i]) for i in range(a2d.shape[1])
+            f1to2(a2d[:, i]) for i in range(a2d.shape[1])
         ], axis=-1).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
@@ -211,18 +219,18 @@ class TestApplyAlongAxis:
         # 2d insertion along last axis
         actual = apply_along_axis(f1to2, 1, a2d)
         expected = np.stack([
-            f1to2(a2d[i,:]) for i in range(a2d.shape[0])
+            f1to2(a2d[i, :]) for i in range(a2d.shape[0])
         ], axis=0).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
 
         # 3d insertion along middle axis
-        a3d = np.arange(6*5*3).reshape((6, 5, 3))
+        a3d = np.arange(6 * 5 * 3).reshape((6, 5, 3))
 
         actual = apply_along_axis(f1to2, 1, a3d)
         expected = np.stack([
             np.stack([
-                f1to2(a3d[i,:,j]) for i in range(a3d.shape[0])
+                f1to2(a3d[i, :, j]) for i in range(a3d.shape[0])
             ], axis=0)
             for j in range(a3d.shape[2])
         ], axis=-1).view(cls)
@@ -240,15 +248,15 @@ class TestApplyAlongAxis:
         def f1to2(x):
             """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            res = x[::-1] * x[1:,None]
-            return np.ma.masked_where(res%5==0, res)
-        a = np.arange(6*3).reshape((6, 3))
+            res = x[::-1] * x[1:, None]
+            return np.ma.masked_where(res % 5 == 0, res)
+        a = np.arange(6 * 3).reshape((6, 3))
         res = apply_along_axis(f1to2, 0, a)
         assert_(isinstance(res, np.ma.masked_array))
         assert_equal(res.ndim, 3)
-        assert_array_equal(res[:,:,0].mask, f1to2(a[:,0]).mask)
-        assert_array_equal(res[:,:,1].mask, f1to2(a[:,1]).mask)
-        assert_array_equal(res[:,:,2].mask, f1to2(a[:,2]).mask)
+        assert_array_equal(res[:, :, 0].mask, f1to2(a[:, 0]).mask)
+        assert_array_equal(res[:, :, 1].mask, f1to2(a[:, 1]).mask)
+        assert_array_equal(res[:, :, 2].mask, f1to2(a[:, 2]).mask)
 
     def test_tuple_func1d(self):
         def sample_1d(x):
@@ -259,7 +267,7 @@ class TestApplyAlongAxis:
     def test_empty(self):
         # can't apply_along_axis when there's no chance to call the function
         def never_call(x):
-            assert_(False) # should never be reached
+            assert_(False)  # should never be reached
 
         a = np.empty((0, 0))
         assert_raises(ValueError, np.apply_along_axis, never_call, 0, a)
@@ -330,7 +338,7 @@ class TestExpandDims:
 
     def test_subclasses(self):
         a = np.arange(10).reshape((2, 5))
-        a = np.ma.array(a, mask=a%3 == 0)
+        a = np.ma.array(a, mask=a % 3 == 0)
 
         expanded = np.expand_dims(a, axis=1)
         assert_(isinstance(expanded, np.ma.MaskedArray))
@@ -734,8 +742,8 @@ class TestKron:
     def test_kron_shape(self, shape_a, shape_b):
         a = np.ones(shape_a)
         b = np.ones(shape_b)
-        normalised_shape_a = (1,) * max(0, len(shape_b)-len(shape_a)) + shape_a
-        normalised_shape_b = (1,) * max(0, len(shape_a)-len(shape_b)) + shape_b
+        normalised_shape_a = (1,) * max(0, len(shape_b) - len(shape_a)) + shape_a
+        normalised_shape_b = (1,) * max(0, len(shape_a) - len(shape_b)) + shape_b
         expected_shape = np.multiply(normalised_shape_a, normalised_shape_b)
 
         k = np.kron(a, b)
@@ -801,8 +809,5 @@ class TestMayShareMemory:
 # Utility
 def compare_results(res, desired):
     """Compare lists of arrays."""
-    if len(res) != len(desired):
-        raise ValueError("Iterables have different lengths")
-    # See also PEP 618 for Python 3.10
-    for x, y in zip(res, desired):
+    for x, y in zip(res, desired, strict=False):
         assert_array_equal(x, y)

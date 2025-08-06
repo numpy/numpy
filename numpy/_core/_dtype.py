@@ -5,7 +5,6 @@ String handling is much easier to do correctly in python.
 """
 import numpy as np
 
-
 _kind_to_stem = {
     'u': 'uint',
     'i': 'int',
@@ -26,8 +25,7 @@ def _kind_name(dtype):
         return _kind_to_stem[dtype.kind]
     except KeyError as e:
         raise RuntimeError(
-            "internal dtype error, unknown kind {!r}"
-            .format(dtype.kind)
+            f"internal dtype error, unknown kind {dtype.kind!r}"
         ) from None
 
 
@@ -46,7 +44,7 @@ def __repr__(dtype):
     arg_str = _construction_repr(dtype, include_align=False)
     if dtype.isalignedstruct:
         arg_str = arg_str + ", align=True"
-    return "dtype({})".format(arg_str)
+    return f"dtype({arg_str})"
 
 
 def _unpack_field(dtype, offset, title=None):
@@ -122,7 +120,7 @@ def _scalar_str(dtype, short):
 
     elif dtype.type == np.str_:
         if _isunsized(dtype):
-            return "'%sU'" % byteorder
+            return f"'{byteorder}U'"
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
@@ -141,10 +139,13 @@ def _scalar_str(dtype, short):
             return "'V%d'" % dtype.itemsize
 
     elif dtype.type == np.datetime64:
-        return "'%sM8%s'" % (byteorder, _datetime_metadata_str(dtype))
+        return f"'{byteorder}M8{_datetime_metadata_str(dtype)}'"
 
     elif dtype.type == np.timedelta64:
-        return "'%sm8%s'" % (byteorder, _datetime_metadata_str(dtype))
+        return f"'{byteorder}m8{_datetime_metadata_str(dtype)}'"
+
+    elif dtype.isbuiltin == 2:
+        return dtype.type.__name__
 
     elif np.issubdtype(dtype, np.number):
         # Short repr with endianness, like '<f8'
@@ -153,10 +154,7 @@ def _scalar_str(dtype, short):
 
         # Longer repr, like 'float64'
         else:
-            return "'%s%d'" % (_kind_name(dtype), 8*dtype.itemsize)
-
-    elif dtype.isbuiltin == 2:
-        return dtype.type.__name__
+            return "'%s%d'" % (_kind_name(dtype), 8 * dtype.itemsize)
 
     else:
         raise RuntimeError(
@@ -187,9 +185,9 @@ def _datetime_metadata_str(dtype):
     if unit == 'generic':
         return ''
     elif count == 1:
-        return '[{}]'.format(unit)
+        return f'[{unit}]'
     else:
-        return '[{}{}]'.format(count, unit)
+        return f'[{count}{unit}]'
 
 
 def _struct_dict_str(dtype, includealignedflag):
@@ -218,17 +216,17 @@ def _struct_dict_str(dtype, includealignedflag):
     ret += fieldsep.join(repr(name) for name in names)
 
     # Second, the formats
-    ret += "], 'formats'%s[" % colon
+    ret += f"], 'formats'{colon}["
     ret += fieldsep.join(
         _construction_repr(fld_dtype, short=True) for fld_dtype in fld_dtypes)
 
     # Third, the offsets
-    ret += "], 'offsets'%s[" % colon
+    ret += f"], 'offsets'{colon}["
     ret += fieldsep.join("%d" % offset for offset in offsets)
 
     # Fourth, the titles
     if any(title is not None for title in titles):
-        ret += "], 'titles'%s[" % colon
+        ret += f"], 'titles'{colon}["
         ret += fieldsep.join(repr(title) for title in titles)
 
     # Fifth, the itemsize
@@ -287,16 +285,13 @@ def _struct_list_str(dtype):
 
         item = "("
         if title is not None:
-            item += "({!r}, {!r}), ".format(title, name)
+            item += f"({title!r}, {name!r}), "
         else:
-            item += "{!r}, ".format(name)
+            item += f"{name!r}, "
         # Special case subarray handling here
         if fld_dtype.subdtype is not None:
             base, shape = fld_dtype.subdtype
-            item += "{}, {}".format(
-                _construction_repr(base, short=True),
-                shape
-            )
+            item += f"{_construction_repr(base, short=True)}, {shape}"
         else:
             item += _construction_repr(fld_dtype, short=True)
 
@@ -318,17 +313,14 @@ def _struct_str(dtype, include_align):
 
     # If the data type isn't the default, void, show it
     if dtype.type != np.void:
-        return "({t.__module__}.{t.__name__}, {f})".format(t=dtype.type, f=sub)
+        return f"({dtype.type.__module__}.{dtype.type.__name__}, {sub})"
     else:
         return sub
 
 
 def _subarray_str(dtype):
     base, shape = dtype.subdtype
-    return "({}, {})".format(
-        _construction_repr(base, short=True),
-        shape
-    )
+    return f"({_construction_repr(base, short=True)}, {shape})"
 
 
 def _name_includes_bit_suffix(dtype):
@@ -365,7 +357,7 @@ def _name_get(dtype):
 
     # append bit counts
     if _name_includes_bit_suffix(dtype):
-        name += "{}".format(dtype.itemsize * 8)
+        name += f"{dtype.itemsize * 8}"
 
     # append metadata to datetimes
     if dtype.type in (np.datetime64, np.timedelta64):

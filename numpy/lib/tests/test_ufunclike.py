@@ -1,9 +1,6 @@
 import numpy as np
-
-from numpy import fix, isposinf, isneginf
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises
-)
+from numpy import fix, isneginf, isposinf
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 
 class TestUfunclike:
@@ -76,7 +73,7 @@ class TestUfunclike:
         assert_equal(f.metadata, 'foo')
 
         # check 0d arrays don't decay to scalars
-        m0d = m[0,...]
+        m0d = m[0, ...]
         m0d.metadata = 'bar'
         f0d = fix(m0d)
         assert_(isinstance(f0d, MyArray))

@@ -52,7 +52,7 @@ your system.
     * BLAS and LAPACK libraries. `OpenBLAS <https://github.com/OpenMathLib/OpenBLAS/>`__
       is the NumPy default; other variants include Apple Accelerate,
       `MKL <https://software.intel.com/en-us/intel-mkl>`__,
-      `ATLAS <http://math-atlas.sourceforge.net/>`__ and
+      `ATLAS <https://math-atlas.sourceforge.net/>`__ and
       `Netlib <https://www.netlib.org/lapack/index.html>`__ (or "Reference")
       BLAS and LAPACK.
 
@@ -161,7 +161,8 @@ your system.
     This is needed even if you use the MinGW-w64 or Intel compilers, in order
     to ensure you have the Windows Universal C Runtime (the other components of
     Visual Studio are not needed when using Mingw-w64, and can be deselected if
-    desired, to save disk space).
+    desired, to save disk space). The recommended version of the UCRT is
+    >= 10.0.22621.0.
 
     .. tab-set::
 
@@ -173,6 +174,12 @@ your system.
         C/C++ compilers available inside the shell you are using, you need to
         run a ``.bat`` file for the correct bitness and architecture (e.g., for
         64-bit Intel CPUs, use ``vcvars64.bat``).
+
+        If using a Conda environment while a version of Visual Studio 2019+ is
+        installed that includes the MSVC v142 package (VS 2019 C++ x86/x64
+        build tools), activating the conda environment should cause Visual
+        Studio to be found and the appropriate .bat file executed to set
+        these variables.
 
         For detailed guidance, see `Use the Microsoft C++ toolset from the command line
         <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
@@ -213,6 +220,68 @@ your system.
         try again. The Fortran compiler should be installed as described in
         this section.
 
+  .. tab-item:: Windows on ARM64
+    :sync: Windows on ARM64
+
+    In Windows on ARM64, the set of a compiler options that are available for
+    building NumPy are limited. Compilers such as GCC and GFortran are not yet
+    supported for Windows on ARM64. Currently, the NumPy build for Windows on ARM64
+    is supported with MSVC and LLVM toolchains. The use of a Fortran compiler is
+    more tricky than on other platforms, because MSVC does not support Fortran, and
+    gfortran and MSVC can't be used together. If you don't need to run the ``f2py``
+    tests, simply using MSVC is easiest. Otherwise, you will need the following
+    set of compilers:
+
+    1. MSVC + flang (``cl``, ``flang``)
+    2. LLVM + flang (``clang-cl``, ``flang``)
+
+    First, install Microsoft Visual Studio - the 2022 Community Edition will
+    work (see the `Visual Studio download site <https://visualstudio.microsoft.com/downloads/>`__).
+    Ensure that you have installed necessary Visual Studio components for building NumPy 
+    on WoA from `here <https://gist.github.com/Mugundanmcw/c3bb93018d5da9311fb2b222f205ba19>`__.
+
+    To use the flang compiler for Windows on ARM64, install Latest LLVM
+    toolchain for WoA from `here <https://github.com/llvm/llvm-project/releases>`__.
+
+    .. tab-set::
+
+      .. tab-item:: MSVC
+
+        The MSVC installer does not put the compilers on the system path, and
+        the install location may change. To query the install location, MSVC
+        comes with a ``vswhere.exe`` command-line utility. And to make the
+        C/C++ compilers available inside the shell you are using, you need to
+        run a ``.bat`` file for the correct bitness and architecture (e.g., for
+        ARM64-based CPUs, use ``vcvarsarm64.bat``).
+
+        For detailed guidance, see `Use the Microsoft C++ toolset from the command line
+        <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
+
+      .. tab-item:: LLVM
+
+        Similar to MSVC, LLVM does not put the compilers on the system path.
+        To set system path for LLVM compilers, users may need to use ``set``
+        command to put compilers on the system path. To check compiler's path
+        for LLVM's clang-cl, try invoking LLVM's clang-cl compiler in the shell you use
+        (``clang-cl --version``).
+
+    .. note::
+
+        Compilers should be on the system path (i.e., the ``PATH`` environment
+        variable should contain the directory in which the compiler executables
+        can be found) in order to be found, with the exception of MSVC which
+        will be found automatically if and only if there are no other compilers
+        on the ``PATH``. You can use any shell (e.g., Powershell, ``cmd`` or
+        Git Bash) to invoke a build. To check that this is the case, try
+        invoking a Fortran compiler in the shell you use (e.g., ``flang
+        --version``).
+
+    .. warning::
+
+        Currently, Conda environment is not yet supported officially on `Windows
+        on ARM64 <https://github.com/conda-forge/conda-forge.github.io/issues/1940>`__.
+        The present approach uses virtualenv for building NumPy from source on
+        Windows on ARM64.
 
 Building NumPy from source
 --------------------------
@@ -256,6 +325,12 @@ Building from source to use NumPy
       git submodule update --init
       pip install . --no-build-isolation
 
+    .. warning::
+
+        On Windows, the AR, LD, and LDFLAGS environment variables may be set,
+        which will cause the pip install command to fail. These variables are only
+        needed for flang and can be safely unset prior to running pip install.
+
   .. tab-item:: Virtual env or system Python
     :sync: pip
 
@@ -289,7 +364,7 @@ Then you want to do the following:
 1. Create a dedicated development environment (virtual environment or conda
    environment),
 2. Install all needed dependencies (*build*, and also *test*, *doc* and
-   *optional* dependencies), 
+   *optional* dependencies),
 3. Build NumPy with the ``spin`` developer interface.
 
 Step (3) is always the same, steps (1) and (2) are different between conda and
@@ -348,9 +423,25 @@ virtual environments:
           python -m venv venv
           .\venv\Scripts\activate
 
+      .. tab-item:: Windows on ARM64
+        :sync: Windows on ARM64
+
+        ::
+
+          python -m venv venv
+          .\venv\Scripts\activate
+
+        .. note::
+
+          Building NumPy with BLAS and LAPACK functions requires OpenBLAS
+          library at Runtime. In Windows on ARM64, this can be done by setting
+          up pkg-config for OpenBLAS dependency. The build steps for OpenBLAS
+          for Windows on ARM64 can be found `here <http://www.openmathlib.org/OpenBLAS/docs/install/#windows-on-arm>`__.
+
+
     Then install the Python-level dependencies from PyPI with::
 
-       python -m pip install -r requirements/all_requirements.txt
+       python -m pip install -r requirements/build_requirements.txt
 
 To build NumPy in an activated development environment, run::
 
@@ -362,6 +453,13 @@ drop into IPython (``spin ipython``), or take other development steps
 like build the html documentation or running benchmarks. The ``spin``
 interface is self-documenting, so please see ``spin --help`` and
 ``spin <subcommand> --help`` for detailed guidance.
+
+.. warning::
+
+    In an activated conda environment on Windows, the AR, LD, and LDFLAGS
+    environment variables may be set, which will cause the build to fail.
+    These variables are only needed for flang and can be safely unset
+    for build.
 
 .. _meson-editable-installs:
 

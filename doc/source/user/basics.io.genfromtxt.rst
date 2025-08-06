@@ -131,10 +131,6 @@ marker(s) is simply ignored::
           [7., 8.],
           [9., 0.]])
 
-.. versionadded:: 1.7.0
-
-    When ``comments`` is set to ``None``, no lines are treated as comments.
-
 .. note::
 
    There is one notable exception to this behavior: if the optional argument

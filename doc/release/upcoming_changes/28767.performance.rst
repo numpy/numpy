@@ -1,0 +1,10 @@
+Performance improvements to ``np.unique`` for string dtypes
+-----------------------------------------------------------
+The hash-based algorithm for unique extraction provides
+an order-of-magnitude speedup on large string arrays. 
+In an internal benchmark with about 1 billion string elements,
+the hash-based np.unique completed in roughly 33.5 seconds,
+compared to 498 seconds with the sort-based method
+– about 15× faster for unsorted unique operations on strings.
+This improvement greatly reduces the time to find unique values
+in very large string datasets.

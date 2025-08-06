@@ -1,20 +1,18 @@
 import functools
-import sys
 import math
+import sys
 import warnings
 
 import numpy as np
-from .._utils import set_module
 import numpy._core.numeric as _nx
+import numpy.matrixlib as matrixlib
+from numpy._core import linspace, overrides
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
-
-import numpy.matrixlib as matrixlib
-from numpy._core.multiarray import ravel_multi_index, unravel_index
-from numpy._core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-
+from numpy.lib.stride_tricks import as_strided
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -102,7 +100,7 @@ def ix_(*args):
             raise ValueError("Cross index must be 1 dimensional")
         if issubdtype(new.dtype, _nx.bool):
             new, = new.nonzero()
-        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
+        new = new.reshape((1,) * k + (new.size,) + (1,) * (nd - k - 1))
         out.append(new)
     return tuple(out)
 
@@ -165,12 +163,12 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step*1.0))))
+                        math.ceil((stop - start) / step))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
-                      for _x, _t in zip(size, (typ,)*len(size))]
+                      for _x, _t in zip(size, (typ,) * len(size))]
             else:
                 nn = _nx.indices(size, typ)
             for k, kk in enumerate(key):
@@ -184,9 +182,9 @@ class nd_grid:
                     step = int(abs(step))
                     if step != 1:
                         step = (kk.stop - start) / float(step - 1)
-                nn[k] = (nn[k]*step+start)
+                nn[k] = (nn[k] * step + start)
             if self.sparse:
-                slobj = [_nx.newaxis]*len(size)
+                slobj = [_nx.newaxis] * len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][tuple(slobj)]
@@ -204,9 +202,9 @@ class nd_grid:
                 step_float = abs(step)
                 step = length = int(step_float)
                 if step != 1:
-                    step = (key.stop-start)/float(step-1)
+                    step = (key.stop - start) / float(step - 1)
                 typ = _nx.result_type(start, stop, step_float)
-                return _nx.arange(0, length, 1, dtype=typ)*step + start
+                return _nx.arange(0, length, 1, dtype=typ) * step + start
             else:
                 return _nx.arange(start, stop, step)
 
@@ -331,7 +329,7 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
-    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
 
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
@@ -399,7 +397,7 @@ class AxisConcatenator:
                         continue
                     except Exception as e:
                         raise ValueError(
-                            "unknown special directive {!r}".format(item)
+                            f"unknown special directive {item!r}"
                         ) from e
                 try:
                     axis = int(item)
@@ -841,8 +839,6 @@ def fill_diagonal(a, val, wrap=False):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
-
     This functionality can be obtained via `diag_indices`, but internally
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
@@ -970,10 +966,6 @@ def diag_indices(n, ndim=2):
     --------
     diag_indices_from
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1035,10 +1027,6 @@ def diag_indices_from(arr):
     See Also
     --------
     diag_indices
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------

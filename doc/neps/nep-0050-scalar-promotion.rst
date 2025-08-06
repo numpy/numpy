@@ -214,7 +214,7 @@ arrays that are not 0-D, such as ``array([2])``.
      - ``int64(301)``
      - *Exception* [T5]_
    * - ``uint8(100) + 200``
-     - ``int64(301)``
+     - ``int64(300)``
      - ``uint8(44)`` *and* ``RuntimeWarning``  [T6]_
    * - ``float32(1) + 3e100``
      - ``float64(3e100)``
