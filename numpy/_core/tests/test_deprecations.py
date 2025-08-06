@@ -502,7 +502,7 @@ class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
 
 class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
     # Deprecated in NumPy 2.4, 2025-07
-    message = r"Float indices for iterator objects"
+    message = r"Invalid non-array indices for iterator objects"
 
     def test_float_index_deprecated(self):
         arr = np.arange(3)
