@@ -4369,17 +4369,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
         }
 
-        /* Extra positional args but *no* keywords */
+        /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
         if (strcmp(ufunc->name, "maximum") == 0 || strcmp(ufunc->name, "minimum") == 0) {
-            const char *which = ufunc->name; // "maximum" or "minimum"
-            char msg[256];
-            snprintf(msg, sizeof(msg),
-                "Passing more than 2 positional arguments to np.%s "
-                "is deprecated; use out=keyword or np.%s.reduce.",
-                which, which);
             
-            if (DEPRECATE(msg) < 0 && PyErr_Occurred()) {
+            if (DEPRECATE(
+                "Passing more than 2 positional arguments to np.maximum and np.minimum "
+                "is deprecated. If you meant to use the third argument as an output, " 
+                "use the 'out' keyword argument instead. If you hoped to work with "
+                "more than 2 inputs, combine them into a single array and get the extrema "
+                "for the relevant axis.") < 0) {
                 return NULL;
             }
         }
