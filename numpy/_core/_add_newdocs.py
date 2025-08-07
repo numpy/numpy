@@ -2753,30 +2753,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
         Setting ``arr.shape`` is deprecated and may be removed in the
         future.  Using `ndarray.reshape` is the preferred approach.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> x = np.array([1, 2, 3, 4])
-    >>> x.shape
-    (4,)
-    >>> y = np.zeros((2, 3, 4))
-    >>> y.shape
-    (2, 3, 4)
-    >>> y.shape = (3, 8)
-    >>> y
-    array([[ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]])
-    >>> y.shape = (3, 6)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: cannot reshape array of size 24 into shape (3,6)
-    >>> np.zeros((4,2))[::2].shape = (-1,)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    AttributeError: Incompatible shape for in-place modification. Use
-    `.reshape()` to make a copy with the desired shape.
-
     See Also
     --------
     numpy.shape : Equivalent getter function.
