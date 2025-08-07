@@ -96,7 +96,7 @@ By default, NumPy exposes a API that is backward compatible with the earliest
 NumPy version that supports the oldest Python version currently supported by
 NumPy. For example, NumPy 1.25.0 supports Python 3.9 and above; and the
 earliest NumPy version to support Python 3.9 was 1.19. Therefore we guarantee
-NumPy 1.25 will, when using defaults, expose a C API compatible with NumPy
+NumPy 1.25 will, when using defaults, expose a C-API compatible with NumPy
 1.19. (the exact version is set within NumPy-internal header files).
 
 NumPy is also forward compatible for all minor releases, but a major release
