@@ -2753,6 +2753,16 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
         Setting ``arr.shape`` is deprecated and may be removed in the
         future.  Using `ndarray.reshape` is the preferred approach.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.array([1, 2, 3, 4])
+    >>> x.shape
+    (4,)
+    >>> y = np.zeros((2, 3, 4))
+    >>> y.shape
+    (2, 3, 4)
+
     See Also
     --------
     numpy.shape : Equivalent getter function.
