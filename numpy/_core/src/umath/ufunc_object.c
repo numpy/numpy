@@ -90,6 +90,8 @@ typedef struct {
 
 
 /* ---------------------------------------------------------------- */
+extern PyUFuncObject *UFUNC_MAXIMUM;
+extern PyUFuncObject *UFUNC_MINIMUM;
 
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
@@ -4371,7 +4373,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
-        if (strcmp(ufunc->name, "maximum") == 0 || strcmp(ufunc->name, "minimum") == 0) {
+        if (ufunc == UFUNC_MAXIMUM || ufunc == UFUNC_MINIMUM) {
             
             if (DEPRECATE(
                 "Passing more than 2 positional arguments to np.maximum and np.minimum "
