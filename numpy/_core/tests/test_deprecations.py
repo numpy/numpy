@@ -517,6 +517,7 @@ class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
 
         self.assert_deprecated(assign_to_index)
 
+
 class TestTooManyArgsExtremum(_DeprecationTestCase):
 
     # Deprecated in Numpy 2.4, 2025-08, gh-27639
