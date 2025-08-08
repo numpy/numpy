@@ -1653,10 +1653,11 @@ class TestFlatiterIndexing:
     def test_empty_string_flat_index_on_flatiter(self):
         a = np.arange(9).reshape((3, 3))
         b = np.array([], dtype="S")
-        with pytest.warns(DeprecationWarning,
-                          match="Invalid non-array indices for iterator objects are "
-                                "deprecated"):
-            assert_equal(a.flat[b.flat], np.array([]))
+        # This is arguably incorrect, and should be removed (ideally with
+        # deprecation).  But it matches the array path and comes from not
+        # distinguishing `arr[np.array([]).flat]` and `arr[[]]` and the latter
+        # must pass.
+        assert_equal(a.flat[b.flat], np.array([]))
 
     def test_nonempty_string_flat_index_on_flatiter(self):
         a = np.arange(9).reshape((3, 3))
