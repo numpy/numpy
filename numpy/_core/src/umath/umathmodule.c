@@ -40,8 +40,6 @@
 
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
-PyUFuncObject *UFUNC_MAXIMUM = NULL;
-PyUFuncObject *UFUNC_MINIMUM = NULL;
 
 static int
 object_ufunc_type_resolver(PyUFuncObject *ufunc,
@@ -283,17 +281,6 @@ int initumath(PyObject *m)
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
-
-    PyObject *tmp;
-    if (PyDict_GetItemStringRef(d, "maximum", &tmp) < 0) {
-        return -1;
-    }
-    UFUNC_MAXIMUM = (PyUFuncObject *)tmp;
-
-    if (PyDict_GetItemStringRef(d, "minimum", &tmp) < 0) {
-        return -1;
-    }
-    UFUNC_MINIMUM = (PyUFuncObject *)tmp;
 
     /*
      * Set up promoters for logical functions

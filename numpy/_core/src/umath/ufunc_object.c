@@ -65,6 +65,7 @@
 #include "mapping.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "../multiarray/number.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -90,8 +91,6 @@ typedef struct {
 
 
 /* ---------------------------------------------------------------- */
-extern PyUFuncObject *UFUNC_MAXIMUM;
-extern PyUFuncObject *UFUNC_MINIMUM;
 
 static PyObject *
 prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
@@ -4373,7 +4372,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
-        if (ufunc == UFUNC_MAXIMUM || ufunc == UFUNC_MINIMUM) {
+        if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
             
             if (DEPRECATE(
                 "Passing more than 2 positional arguments to np.maximum and np.minimum "
