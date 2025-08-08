@@ -1491,6 +1491,8 @@ class TestFlatiterIndexing:
 
         assert_array_equal(a.flat[[True, 1]], np.array([1, 1]))
 
+        assert_array_equal(a.flat[[]], np.array([], dtype=a.dtype))
+
         with pytest.raises(IndexError,
                            match="boolean indices for iterators are not supported"):
             a.flat[[True, True]]

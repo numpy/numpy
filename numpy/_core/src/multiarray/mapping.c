@@ -434,6 +434,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 // deprecation warning.
                 if (arr
                     && is_flatiter_object
+                    && PyArray_SIZE(tmp_arr) != 0
                     && !PyArray_ISINTEGER(tmp_arr)
                     && !PyArray_ISBOOL(tmp_arr)
                     && DEPRECATE("Invalid non-array indices for iterator objects are deprecated and will be "

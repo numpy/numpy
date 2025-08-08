@@ -576,7 +576,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         goto finish;
     }
 
-    if (index_type & HAS_SLICE) {
+    if (index_type == HAS_SLICE) {
         if (PySlice_GetIndicesEx(indices[0].object,
                                  self->size,
                                  &start, &stop, &step, &n_steps) < 0) {
@@ -854,7 +854,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto finish;
     }
 
-    if (index_type & HAS_SLICE) {
+    if (index_type == HAS_SLICE) {
         if (PySlice_GetIndicesEx(indices[0].object,
                                  self->size,
                                  &start, &stop, &step, &n_steps) < 0) {
