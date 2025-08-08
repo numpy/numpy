@@ -10,7 +10,9 @@
 #include <unordered_set>
 
 #include <numpy/npy_common.h>
+#include "numpy/npy_math.h"
 #include "numpy/arrayobject.h"
+#include "numpy/halffloat.h"
 #include "gil_utils.h"
 extern "C" {
     #include "fnv.h"
@@ -56,6 +58,94 @@ unique_integer(PyArrayObject *self, npy_bool equal_nan)
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<T> hashset(std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS));
+
+    // Input array is one-dimensional, enabling efficient iteration using strides.
+    char *idata = PyArray_BYTES(self);
+    npy_intp istride = PyArray_STRIDES(self)[0];
+    for (npy_intp i = 0; i < isize; i++, idata += istride) {
+        hashset.insert(*(T *)idata);
+    }
+
+    npy_intp length = hashset.size();
+
+    PyEval_RestoreThread(_save1);
+    NPY_ALLOW_C_API;
+    PyObject *res_obj = PyArray_NewFromDescr(
+        &PyArray_Type,
+        descr,
+        1, // ndim
+        &length, // shape
+        NULL, // strides
+        NULL, // data
+        // This flag is needed to be able to call .sort on it.
+        NPY_ARRAY_WRITEABLE, // flags
+        NULL // obj
+    );
+
+    if (res_obj == NULL) {
+        return NULL;
+    }
+    NPY_DISABLE_C_API;
+    PyThreadState *_save2 = PyEval_SaveThread();
+    auto save2_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save2);
+    });
+
+    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    // Output array is one-dimensional, enabling efficient iteration using strides.
+    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+        *(T *)odata = *it;
+    }
+
+    return res_obj;
+}
+
+template <typename T, int (*is_nan)(T), int (*eq_nonan)(T, T)>
+static PyObject*
+unique_float(PyArrayObject *self, npy_bool equal_nan)
+{
+    /*
+    * Returns a new NumPy array containing the unique values of the input array of half(16bit) float.
+    * This function uses hashing to identify uniqueness efficiently.
+    */
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    Py_INCREF(descr);
+    NPY_DISABLE_C_API;
+
+    PyThreadState *_save1 = PyEval_SaveThread();
+
+    // number of elements in the input array
+    npy_intp isize = PyArray_SIZE(self);
+
+    auto hash = [equal_nan](const T value) -> size_t {
+        if (npy_half_isnan(value) && equal_nan) {
+            return 0;
+        }
+        return std::hash<const T>{}(value);
+    };
+    auto equal = [equal_nan](const T lhs, const T rhs) -> bool {
+        int lhs_isnan = npy_half_isnan(*lhs);
+        int rhs_isnan = npy_half_isnan(*rhs);
+        if (lhs_isnan && rhs_isnan) {
+            return equal_nan || (&lhs == &rhs);
+        }
+        if (lhs_isnan || rhs_isnan) {
+            return false;
+        }
+        return npy_half_eq_nonan(*lhs, *rhs);
+    };
+
+    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
+    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
+    // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
+    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
+    std::unordered_set<T, decltype(hash), decltype(equal)> hashset(
+        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS),
+    );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
@@ -319,6 +409,13 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_ULONG, unique_integer<npy_ulong>},
     {NPY_LONGLONG, unique_integer<npy_longlong>},
     {NPY_ULONGLONG, unique_integer<npy_ulonglong>},
+    {NPY_HALF, unique_half<npy_half>},
+    {NPY_FLOAT, unique_float<npy_float>},
+    {NPY_DOUBLE, unique_float<npy_double>},
+    {NPY_LONGDOUBLE, unique_float<npy_longdouble>},
+    {NPY_CFLOAT, unique_complex<npy_cfloat>},
+    {NPY_CDOUBLE, unique_complex<npy_cdouble>},
+    {NPY_CLONGDOUBLE, unique_complex<npy_clongdouble>},
     {NPY_INT8, unique_integer<npy_int8>},
     {NPY_INT16, unique_integer<npy_int16>},
     {NPY_INT32, unique_integer<npy_int32>},
@@ -328,6 +425,11 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_UINT32, unique_integer<npy_uint32>},
     {NPY_UINT64, unique_integer<npy_uint64>},
     {NPY_DATETIME, unique_integer<npy_uint64>},
+    {NPY_FLOAT16, unique_half<npy_float16>},
+    {NPY_FLOAT32, unique_float<npy_float32>},
+    {NPY_FLOAT64, unique_float<npy_float64>},
+    {NPY_COMPLEX64, unique_complex<npy_complex64>},
+    {NPY_COMPLEX128, unique_complex<npy_complex128>},
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
     {NPY_VSTRING, unique_vstring},
