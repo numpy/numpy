@@ -2168,6 +2168,7 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+        case NPY_SAME_VALUE_CASTING: return PyUnicode_FromString("NPY_SAME_VALUE_CASTING");
         default: return PyLong_FromLong(casting);
     }
 }
