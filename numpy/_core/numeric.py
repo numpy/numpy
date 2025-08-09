@@ -718,12 +718,12 @@ def flatnonzero(a):
     return np.nonzero(np.ravel(a))[0]
 
 
-def _correlate_dispatcher(a, v, mode=None):
-    return (a, v)
+def _correlate_dispatcher(a, v, mode=None, out=None):
+    return (a, v, out)
 
 
 @array_function_dispatch(_correlate_dispatcher)
-def correlate(a, v, mode='valid'):
+def correlate(a, v, mode='valid', out=None):
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -742,6 +742,8 @@ def correlate(a, v, mode='valid'):
     mode : {'valid', 'same', 'full'}, optional
         Refer to the `convolve` docstring.  Note that the default
         is 'valid', unlike `convolve`, which uses 'full'.
+    out : ndarray, optional
+        A location where the result is stored
 
     Returns
     -------
@@ -795,15 +797,15 @@ def correlate(a, v, mode='valid'):
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
 
     """
-    return multiarray.correlate2(a, v, mode)
+    return multiarray.correlate2(a, v, out, mode)
 
 
-def _convolve_dispatcher(a, v, mode=None):
-    return (a, v)
+def _convolve_dispatcher(a, v, mode=None, out=None):
+    return (a, v, out)
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode='full'):
+def convolve(a, v, mode='full', out=None):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -837,6 +839,8 @@ def convolve(a, v, mode='full'):
           ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
           for points where the signals overlap completely.  Values outside
           the signal boundary have no effect.
+    out : ndarray, optional
+        A location where the result is stored
 
     Returns
     -------
@@ -899,7 +903,7 @@ def convolve(a, v, mode='full'):
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    return multiarray.correlate(a, v[::-1], mode)
+    return multiarray.correlate(a, v[::-1], out, mode)
 
 
 def _outer_dispatcher(a, b, out=None):
