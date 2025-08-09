@@ -581,6 +581,15 @@ class TestDateTime:
         assert_equal(np.datetime64('now').dtype,
                      np.dtype('M8[s]'))
 
+    @pytest.mark.parametrize('args', [(), ('s',)])
+    def test_timedelta_sign_nat(self, args):
+        # Regression test for gh-29496.
+        # Verify that sign(timedelta64('nat')) returns a nat.
+        nat = np.timedelta64('nat', *args)
+        sgn = np.sign(nat)
+        assert sgn.dtype == nat.dtype
+        assert np.isnat(sgn)
+
     def test_datetime_nat_casting(self):
         a = np.array('NaT', dtype='M8[D]')
         b = np.datetime64('NaT', '[D]')
