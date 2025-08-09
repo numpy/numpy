@@ -4207,6 +4207,31 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
+    @pytest.mark.parametrize(["err_msg", "weight"],
+                             [("Weights must be finite.", [1, np.inf, 1, 1]),
+                              ("Weights must be non-negative.", [1, -np.inf, 1, 1]),
+                              ("Weights must be finite.", [1, np.inf, 1, np.inf]),
+                              ("At least one weight must be non-zero.", np.zeros(4))])
+    @pytest.mark.parametrize("dty", ["f8", "O"])
+    def test_inf_zeroes_err(self, err_msg, weight, dty):
+
+        m = "inverted_cdf"
+        q = 0.5
+        arr = [1, 2, 3, 4]
+        wgts = np.array(weight, dtype=dty)
+        with pytest.raises(ValueError, match=err_msg):
+            a = np.quantile(arr, q, weights=wgts, method=m)
+
+    @pytest.mark.parametrize("weight", [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
+    @pytest.mark.parametrize(["err", "dty"], [(ValueError, "f8"), ((RuntimeWarning, ValueError), "O")])
+    def test_nan_err(self, err, dty, weight):
+
+        m = "inverted_cdf"
+        q = 0.5
+        arr = [1, 2, 3, 4]
+        wgts = np.array(weight, dtype=dty)
+        with pytest.raises(err):
+            a = np.quantile(arr, q, weights=wgts, method=m)
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
