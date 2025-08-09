@@ -1,0 +1,17 @@
+New comparison and null handling enums for sorting in dtype API
+---------------------------------------------------------------
+
+Using the new `NPY_DT_sort_compare` slot, user-defined dtypes can
+now specify how to compare elements during sorting operations.
+The sort compare function should return a member of the
+`NPY_COMPARE_RESULT` enum to indicate the result of the comparison,
+including support for unordered comparisons.
+
+The sorting context of type `PyArrayMethod_SortContext` is passed
+to the `NPY_DT_get_sort_function` and `NPY_DT_get_argsort_function`
+functions and contains a boolean `descending` flag and a
+`nan_position` of type `NPY_SORT_NAN_POSITION`, which can be used to
+control the behavior of sorting with respect to NaN values.
+Currently, sorts are always ascending and nulls are always sorted last,
+but this must be checked in the context passed to the sort function
+to allow for future features.
