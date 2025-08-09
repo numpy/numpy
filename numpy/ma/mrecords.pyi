@@ -59,38 +59,38 @@ mrecarray = MaskedRecords
 
 def fromarrays(
     arraylist,
-    dtype=...,
-    shape=...,
-    formats=...,
-    names=...,
-    titles=...,
-    aligned=...,
-    byteorder=...,
-    fill_value=...,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    fill_value=None,
 ): ...
 
 def fromrecords(
     reclist,
-    dtype=...,
-    shape=...,
-    formats=...,
-    names=...,
-    titles=...,
-    aligned=...,
-    byteorder=...,
-    fill_value=...,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    fill_value=None,
     mask=...,
 ): ...
 
 def fromtextfile(
     fname,
-    delimiter=...,
-    commentchar=...,
-    missingchar=...,
-    varnames=...,
-    vartypes=...,
+    delimiter=None,
+    commentchar='#',
+    missingchar='',
+    varnames=None,
+    vartypes=None,
     # NOTE: deprecated: NumPy 1.22.0, 2021-09-23
     # delimitor=...,
 ): ...
 
-def addfield(mrecord, newfield, newfieldname=...): ...
+def addfield(mrecord, newfield, newfieldname=None): ...
