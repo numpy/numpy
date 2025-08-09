@@ -462,7 +462,15 @@ assert_type(MAR_f8.argsort(), MaskedArray[np.intp])
 assert_type(MAR_f8.argsort(axis=0, kind='heap', order=('x', 'y')), MaskedArray[np.intp])
 assert_type(MAR_f8.argsort(endwith=True, fill_value=1.5, stable=False), MaskedArray[np.intp])
 
-assert_type(MAR_f8.flat, np.ma.core.MaskedIterator)
+assert_type(MAR_2d_f4.flat, np.ma.core.MaskedIterator[tuple[int, int], np.dtype[np.float32]])
+assert_type(MAR_2d_f4.flat.ma, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(MAR_2d_f4.flat[AR_i8], MaskedArray[np.float32])
+assert_type(MAR_2d_f4.flat[[1, 2, 3]], MaskedArray[np.float32])
+assert_type(MAR_2d_f4.flat[1:], MaskedArray[np.float32])
+assert_type(MAR_2d_f4.flat[:], MaskedArray[np.float32])
+assert_type(MAR_2d_f4.flat[0, 0], Any)
+assert_type(MAR_2d_f4.flat[:, np.newaxis], MaskedArray[np.float32])
+assert_type(MAR_2d_f4.flat[..., -1], MaskedArray[np.float32])
 
 def invalid_resize() -> None:
     assert_type(MAR_f8.resize((1, 1)), NoReturn)  # type: ignore[arg-type]

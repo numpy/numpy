@@ -1,15 +1,20 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
+import datetime as dt
 from _typeshed import Incomplete
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from typing import (
     Any,
+    Generic,
     Literal,
     Never,
     NoReturn,
     Self,
+    SupportsComplex,
+    SupportsFloat,
     SupportsIndex,
+    SupportsInt,
     TypeAlias,
     overload,
 )
@@ -37,6 +42,7 @@ from numpy import (
     dtype,
     dtypes,
     expand_dims,
+    flexible,
     float16,
     float32,
     float64,
@@ -82,9 +88,11 @@ from numpy._typing import (
     _ArrayLikeString_co,
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
+    _CharLike_co,
     _DTypeLike,
     _DTypeLikeBool,
     _IntLike_co,
+    _NestedSequence,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
@@ -296,6 +304,12 @@ _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 _ArrayInt_co: TypeAlias = NDArray[integer | bool_]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
+_ConvertibleToInt: TypeAlias = SupportsInt | SupportsIndex | _CharLike_co
+_ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
+_ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
+_ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
+_ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
+
 MaskType = bool_
 nomask: bool_[Literal[False]]
 
@@ -447,15 +461,68 @@ masked_print_option: _MaskedPrintOption
 
 def flatten_structured_array(a): ...
 
-class MaskedIterator:
-    ma: Any
+class MaskedIterator(Generic[_ShapeT_co, _DTypeT_co]):
+    ma: MaskedArray[_ShapeT_co, _DTypeT_co]
     dataiter: Any
     maskiter: Any
-    def __init__(self, ma): ...
-    def __iter__(self): ...
-    def __getitem__(self, indx): ...
-    def __setitem__(self, index, value): ...
-    def __next__(self): ...
+    def __init__(self, ma: MaskedArray[_ShapeT_co, _DTypeT_co]) -> None: ...
+    def __iter__(self) -> Iterator[Any]: ...
+
+    # Similar to `MaskedArray.__getitem__` but without the `void` case.
+    @overload
+    def __getitem__(self, indx: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+    @overload
+    def __getitem__(self, indx: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...
+    @overload
+    def __getitem__(self, indx: _ToIndices, /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
+
+    # Similar to `ndarray.__setitem__` but without the `void` case.
+    @overload  # flexible | object_ | bool
+    def __setitem__(
+        self: MaskedIterator[Any, dtype[flexible | object_ | np.bool] | dtypes.StringDType],
+        index: _ToIndices,
+        value: object,
+        /,
+    ) -> None: ...
+    @overload  # integer
+    def __setitem__(
+        self: MaskedIterator[Any, dtype[integer]],
+        index: _ToIndices,
+        value: _ConvertibleToInt | _NestedSequence[_ConvertibleToInt] | _ArrayLikeInt_co,
+        /,
+    ) -> None: ...
+    @overload  # floating
+    def __setitem__(
+        self: MaskedIterator[Any, dtype[floating]],
+        index: _ToIndices,
+        value: _ConvertibleToFloat | _NestedSequence[_ConvertibleToFloat | None] | _ArrayLikeFloat_co | None,
+        /,
+    ) -> None: ...
+    @overload  # complexfloating
+    def __setitem__(
+        self: MaskedIterator[Any, dtype[complexfloating]],
+        index: _ToIndices,
+        value: _ConvertibleToComplex | _NestedSequence[_ConvertibleToComplex | None] | _ArrayLikeNumber_co | None,
+        /,
+    ) -> None: ...
+    @overload  # timedelta64
+    def __setitem__(
+        self: MaskedIterator[Any, dtype[timedelta64]],
+        index: _ToIndices,
+        value: _ConvertibleToTD64 | _NestedSequence[_ConvertibleToTD64],
+        /,
+    ) -> None: ...
+    @overload  # datetime64
+    def __setitem__(
+        self: MaskedIterator[Any, dtype[datetime64]],
+        index: _ToIndices,
+        value: _ConvertibleToDT64 | _NestedSequence[_ConvertibleToDT64],
+        /,
+    ) -> None: ...
+    @overload  # catch-all
+    def __setitem__(self, index: _ToIndices, value: ArrayLike, /) -> None: ...
+
+    def __next__(self) -> Any: ...
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
@@ -607,7 +674,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def baseclass(self) -> type[NDArray[Any]]: ...
     data: Any
     @property
-    def flat(self) -> MaskedIterator: ...
+    def flat(self) -> MaskedIterator[_ShapeT_co, _DTypeT_co]: ...
     @flat.setter
     def flat(self, value: ArrayLike, /) -> None: ...
     @property
