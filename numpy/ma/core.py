@@ -3916,8 +3916,7 @@ class MaskedArray(ndarray):
 
         if fill_value is None:
             fill_value = self.fill_value
-        else:
-            fill_value = _check_fill_value(fill_value, self.dtype)
+        fill_value = _check_fill_value(fill_value, self.dtype)
 
         if self is masked_singleton:
             return np.asanyarray(fill_value)
