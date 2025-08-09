@@ -3240,6 +3240,16 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
 
+quantile_methods = [
+    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
+    'midpoint']
+
+
+methods_supporting_weights = ["inverted_cdf"]
+
+
 class TestPercentile:
 
     def test_basic(self):
@@ -3833,15 +3843,32 @@ class TestPercentile:
         res = np.percentile(a, 30, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
 
+    @pytest.mark.parametrize("qtype", [np.float16, np.float32])
+    @pytest.mark.parametrize("method", quantile_methods)
+    def test_percentile_gh_29003(self, qtype, method):
+        zero = qtype(0)
+        one = qtype(0)
+        data = [zero] * 65521
+        a = np.array(data)
+        a[:20_000] = one
+        z = np.percentile(a, 50, method=method)
+        assert z == zero
+        assert z.dtype == a.dtype
+        z = np.percentile(a, .9, method=method)
+        assert z == one
+        assert z.dtype == a.dtype
 
-quantile_methods = [
-    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
-    'midpoint']
-
-
-methods_supporting_weights = ["inverted_cdf"]
+    def test_percentile_gh_29003_Fraction(self):
+        zero = Fraction(0)
+        one = Fraction(0)
+        data = [zero] * 65521
+        a = np.array(data)
+        a[:20_000] = one
+        z = np.percentile(a, 50)
+        assert z == zero
+        z = np.percentile(a, Fraction(50))
+        assert z == zero
+        assert np.array(z).dtype == a.dtype
 
 
 class TestQuantile:
@@ -4206,6 +4233,21 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:8], q, method=m))
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
+
+    def test_quantile_gh_29003_Fraction(self):
+        r = np.quantile([1, 2], q=Fraction(1))
+        assert r == Fraction(2)
+        assert isinstance(r, Fraction)
+
+        r = np.quantile([1, 2], q=Fraction(.5))
+        assert r == Fraction(3, 2)
+        assert isinstance(r, Fraction)
+
+    def test_float16_gh_29003(self):
+        a = np.arange(50_001, dtype=np.float16)
+        q = .999
+        value = np.quantile(a, q)
+        assert value == q * 50_000
 
 
 class TestLerp:
