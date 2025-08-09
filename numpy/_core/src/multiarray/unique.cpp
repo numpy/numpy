@@ -10,14 +10,33 @@
 #include <unordered_set>
 
 #include <numpy/npy_common.h>
-#include "numpy/npy_math.h"
 #include "numpy/arrayobject.h"
-#include "numpy/halffloat.h"
 #include "gil_utils.h"
 extern "C" {
     #include "fnv.h"
     #include "npy_argparse.h"
+    #include "numpy/npy_math.h"
+    #include "numpy/halffloat.h"
 }
+
+// Function object wrappers for macros
+struct npy_isnan_wrapper {
+    template<typename T>
+    int operator()(T x) const { return npy_isnan(x); }
+};
+
+struct npy_half_isnan_wrapper {
+    int operator()(npy_half x) const { return npy_half_isnan(x); }
+};
+
+struct npy_half_eq_nonan_wrapper {
+    int operator()(npy_half a, npy_half b) const { return npy_half_eq_nonan(a, b); }
+};
+
+template<typename T>
+struct equal_wrapper {
+    int operator()(T a, T b) const { return a == b; }
+};
 
 // This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
 // Adapted from https://stackoverflow.com/a/25510879/2536294
@@ -101,7 +120,7 @@ unique_integer(PyArrayObject *self, npy_bool equal_nan)
     return res_obj;
 }
 
-template <typename T, int (*is_nan)(T), int (*is_eq)(T, T)>
+template <typename T, typename IsNan, typename IsEq>
 static PyObject*
 unique_float(PyArrayObject *self, npy_bool equal_nan)
 {
@@ -120,23 +139,26 @@ unique_float(PyArrayObject *self, npy_bool equal_nan)
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
 
-    auto hash = [equal_nan](const T value) -> size_t {
-        static std::hash<const T> hash{};
+    IsNan is_nan;
+    IsEq is_eq;
+    
+    auto hash = [equal_nan, is_nan](const T value) -> size_t {
+        static std::hash<T> hash;
         if (equal_nan && is_nan(value)) {
             return 0;
         }
         return hash(value);
     };
-    auto equal = [equal_nan](const T lhs, const T rhs) -> bool {
-        int lhs_isnan = is_nan(*lhs);
-        int rhs_isnan = is_nan(*rhs);
+    auto equal = [equal_nan, is_nan, is_eq](const T lhs, const T rhs) -> bool {
+        int lhs_isnan = is_nan(lhs);
+        int rhs_isnan = is_nan(rhs);
         if (lhs_isnan && rhs_isnan) {
             return equal_nan || (&lhs == &rhs);
         }
         if (lhs_isnan || rhs_isnan) {
             return false;
         }
-        return is_eq(*lhs, *rhs);
+        return is_eq(lhs, rhs);
     };
 
     // Reserve hashset capacity in advance to minimize reallocations and collisions.
@@ -145,7 +167,7 @@ unique_float(PyArrayObject *self, npy_bool equal_nan)
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<T, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS),
+        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
@@ -211,26 +233,26 @@ unique_complex(PyArrayObject *self, npy_bool equal_nan)
 
     auto hash = [equal_nan](const T value) -> size_t {
         auto float_hash = [equal_nan](const S value) -> size_t {
-            static std::hash<const S> hash{};
+            static std::hash<S> hash;
             if (equal_nan && npy_isnan(value)) {
                 return 0;
             }
             return hash(value);
-        }
+        };
         return float_hash(real(value)) ^ float_hash(imag(value));
     };
     auto equal = [equal_nan](const T lhs, const T rhs) -> bool {
         auto float_equal = [equal_nan](const S lhs, const S rhs) -> int {
-            int lhs_isnan = npy_isnan(*lhs);
-            int rhs_isnan = npy_isnan(*rhs);
+            int lhs_isnan = npy_isnan(lhs);
+            int rhs_isnan = npy_isnan(rhs);
             if (lhs_isnan && rhs_isnan) {
                 return equal_nan || (&lhs == &rhs);
             }
             if (lhs_isnan || rhs_isnan) {
                 return false;
             }
-            return *lhs == *rhs;
-        }
+            return lhs == rhs;
+        };
         return float_equal(real(lhs), real(rhs)) && float_equal(imag(lhs), imag(rhs));
     };
 
@@ -240,7 +262,7 @@ unique_complex(PyArrayObject *self, npy_bool equal_nan)
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<T, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS),
+        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
@@ -505,13 +527,13 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_ULONG, unique_integer<npy_ulong>},
     {NPY_LONGLONG, unique_integer<npy_longlong>},
     {NPY_ULONGLONG, unique_integer<npy_ulonglong>},
-    {NPY_HALF, unique_float<npy_half, npy_half_isnan, npy_half_eq_nonan>},
-    {NPY_FLOAT, unique_float<npy_float, npy_isnan, std::equal_to<npy_float>{}>},
-    {NPY_DOUBLE, unique_float<npy_double, npy_isnan, std::equal_to<npy_float>{}>},
-    {NPY_LONGDOUBLE, unique_float<npy_longdouble, npy_isnan, std::equal_to<npy_float>{}>},
+    {NPY_HALF, unique_float<npy_half, npy_half_isnan_wrapper, npy_half_eq_nonan_wrapper>},
+    {NPY_FLOAT, unique_float<npy_float, npy_isnan_wrapper, equal_wrapper<npy_float>>},
+    {NPY_DOUBLE, unique_float<npy_double, npy_isnan_wrapper, equal_wrapper<npy_double>>},
+    {NPY_LONGDOUBLE, unique_float<npy_longdouble, npy_isnan_wrapper, equal_wrapper<npy_longdouble>>},
     {NPY_CFLOAT, unique_complex<float, npy_cfloat, npy_crealf, npy_cimagf, npy_cpackf>},
     {NPY_CDOUBLE, unique_complex<double, npy_cdouble, npy_creal, npy_cimag, npy_cpack>},
-    {NPY_CLONGDOUBLE, unique_complex<long double, npy_clongdouble, npy_creall, npy_cimagl, npy_cpack>},
+    {NPY_CLONGDOUBLE, unique_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_cpackl>},
     {NPY_INT8, unique_integer<npy_int8>},
     {NPY_INT16, unique_integer<npy_int16>},
     {NPY_INT32, unique_integer<npy_int32>},
@@ -521,9 +543,9 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_UINT32, unique_integer<npy_uint32>},
     {NPY_UINT64, unique_integer<npy_uint64>},
     {NPY_DATETIME, unique_integer<npy_uint64>},
-    {NPY_FLOAT16, unique_float<npy_float16, npy_half_isnan, npy_half_eq_nonan>},
-    {NPY_FLOAT32, unique_float<npy_float32, npy_isnan, std::equal_to<npy_float>{}>},
-    {NPY_FLOAT64, unique_float<npy_float64, npy_isnan, std::equal_to<npy_float>{}>},
+    {NPY_FLOAT16, unique_float<npy_float16, npy_half_isnan_wrapper, npy_half_eq_nonan_wrapper>},
+    {NPY_FLOAT32, unique_float<npy_float32, npy_isnan_wrapper, equal_wrapper<npy_float32>>},
+    {NPY_FLOAT64, unique_float<npy_float64, npy_isnan_wrapper, equal_wrapper<npy_float64>>},
     {NPY_COMPLEX64, unique_complex<float, npy_complex64, npy_crealf, npy_cimagf, npy_cpackf>},
     {NPY_COMPLEX128, unique_complex<double, npy_complex128, npy_creal, npy_cimag, npy_cpack>},
     {NPY_STRING, unique_string<npy_byte>},
