@@ -414,6 +414,7 @@ from numpy import (  # noqa: F401
     setxor1d,
     shape,
     shares_memory,
+    shifted,
     short,
     show_config,
     show_runtime,
