@@ -182,7 +182,7 @@ class matrix(N.ndarray):
             newshape = tuple(x for x in self.shape if x > 1)
             ndim = len(newshape)
             if ndim == 2:
-                self.shape = newshape
+                self._set_shape(newshape)
                 return
             elif (ndim > 2):
                 raise ValueError("shape too large to be a matrix.")
