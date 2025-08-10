@@ -189,9 +189,9 @@ class matrix(N.ndarray):
         else:
             newshape = self.shape
         if ndim == 0:
-            self.shape = (1, 1)
+            self._set_shape((1, 1))
         elif ndim == 1:
-            self.shape = (1, newshape[0])
+            self._set_shape((1, newshape[0]))
         return
 
     def __getitem__(self, index):
