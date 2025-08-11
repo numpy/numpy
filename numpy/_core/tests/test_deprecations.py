@@ -480,3 +480,39 @@ class TestDTypeAlignBool(_VisibleDeprecationTestCase):
     def test_not_deprecated(self, align):
         # if the user passes a bool, it is accepted.
         self.assert_not_deprecated(lambda: np.dtype("f8", align=align))
+
+
+class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-07
+    message = r"Indexing flat iterators with a 0-dimensional boolean index"
+
+    def test_0d_boolean_index_deprecated(self):
+        arr = np.arange(3)
+        # 0d boolean indices on flat iterators are deprecated
+        self.assert_deprecated(lambda: arr.flat[True])
+
+    def test_0d_boolean_assign_index_deprecated(self):
+        arr = np.arange(3)
+
+        def assign_to_index():
+            arr.flat[True] = 10
+
+        self.assert_deprecated(assign_to_index)
+
+
+class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
+    # Deprecated in NumPy 2.4, 2025-07
+    message = r"Invalid non-array indices for iterator objects"
+
+    def test_float_index_deprecated(self):
+        arr = np.arange(3)
+        # float indices on flat iterators are deprecated
+        self.assert_deprecated(lambda: arr.flat[[1.]])
+
+    def test_float_assign_index_deprecated(self):
+        arr = np.arange(3)
+
+        def assign_to_index():
+            arr.flat[[1.]] = 10
+
+        self.assert_deprecated(assign_to_index)
