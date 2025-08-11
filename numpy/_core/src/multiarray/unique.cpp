@@ -8,6 +8,7 @@
 #include <cstring>
 #include <functional>
 #include <unordered_set>
+#include <vector>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -18,25 +19,6 @@ extern "C" {
     #include "numpy/npy_math.h"
     #include "numpy/halffloat.h"
 }
-
-// Function object wrappers for macros
-struct npy_isnan_wrapper {
-    template<typename T>
-    int operator()(T x) const { return npy_isnan(x); }
-};
-
-struct npy_half_isnan_wrapper {
-    int operator()(npy_half x) const { return npy_half_isnan(x); }
-};
-
-struct npy_half_eq_nonan_wrapper {
-    int operator()(npy_half a, npy_half b) const { return npy_half_eq_nonan(a, b); }
-};
-
-template<typename T>
-struct equal_wrapper {
-    int operator()(T a, T b) const { return a == b; }
-};
 
 // This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
 // Adapted from https://stackoverflow.com/a/25510879/2536294
@@ -53,171 +35,85 @@ FinalAction<F> finally(F f) {
 }
 
 template <typename T>
-static PyObject*
-unique_integer(PyArrayObject *self, npy_bool equal_nan)
-{
-    /*
-    * Returns a new NumPy array containing the unique values of the input array of integer.
-    * This function uses hashing to identify uniqueness efficiently.
-    */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    NPY_DISABLE_C_API;
-
-    PyThreadState *_save1 = PyEval_SaveThread();
-
-    // number of elements in the input array
-    npy_intp isize = PyArray_SIZE(self);
-
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
-    // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
-    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
-    // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
-    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T> hashset(std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS));
-
-    // Input array is one-dimensional, enabling efficient iteration using strides.
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert(*(T *)idata);
-    }
-
-    npy_intp length = hashset.size();
-
-    PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
-
-    if (res_obj == NULL) {
-        return NULL;
-    }
-    NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
-
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        *(T *)odata = *it;
-    }
-
-    return res_obj;
+int equal_default(T lhs, T rhs) {
+    return lhs == rhs;
 }
 
-template <typename T, typename IsNan, typename IsEq>
-static PyObject*
-unique_float(PyArrayObject *self, npy_bool equal_nan)
-{
-    /*
-    * Returns a new NumPy array containing the unique values of the input array of float(, half and double).
-    * This function uses hashing to identify uniqueness efficiently.
-    */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    NPY_DISABLE_C_API;
+// As npy_isnan is a macro, we need to define a wrapper function to use it in a template.
+template <typename T>
+int npy_isnan_wrapper(T value) {
+    return npy_isnan(value);
+}
 
-    PyThreadState *_save1 = PyEval_SaveThread();
+template <typename T>
+size_t hash_nonan(const T value, npy_bool equal_nan) {
+    static std::hash<T> hash;
+    return hash(value);
+}
 
-    // number of elements in the input array
-    npy_intp isize = PyArray_SIZE(self);
-
-    IsNan is_nan;
-    IsEq is_eq;
-    
-    auto hash = [equal_nan, is_nan](const T value) -> size_t {
-        static std::hash<T> hash;
-        if (equal_nan && is_nan(value)) {
-            return 0;
-        }
-        return hash(value);
-    };
-    auto equal = [equal_nan, is_nan, is_eq](const T lhs, const T rhs) -> bool {
-        int lhs_isnan = is_nan(lhs);
-        int rhs_isnan = is_nan(rhs);
-        if (lhs_isnan && rhs_isnan) {
-            return equal_nan || (&lhs == &rhs);
-        }
-        if (lhs_isnan || rhs_isnan) {
-            return false;
-        }
-        return is_eq(lhs, rhs);
-    };
-
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
-    // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
-    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
-    // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
-    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
-    );
-
-    // Input array is one-dimensional, enabling efficient iteration using strides.
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert(*(T *)idata);
+template <
+    typename T,
+    int (*isnan)(T) = npy_isnan_wrapper<T>
+>
+size_t hash_maybenan(const T value, npy_bool equal_nan) {
+    if (equal_nan && isnan(value)) {
+        return 0;
     }
+    return hash_nonan(value, equal_nan);
+}
 
-    npy_intp length = hashset.size();
+template <typename S, typename T, S (*real)(T), S (*imag)(T)>
+size_t hash_complex(const T value, npy_bool equal_nan) {
+    return hash_maybenan<S>(real(value), equal_nan) ^
+           hash_maybenan<S>(imag(value), equal_nan);
+}
 
-    PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
+template <typename T>
+int equal_nonan(const T lhs, const T rhs, npy_bool equal_nan) {
+    return lhs == rhs;
+}
 
-    if (res_obj == NULL) {
-        return NULL;
+template <
+    typename T,
+    int (*isnan)(T) = npy_isnan_wrapper<T>,
+    int (*iseq_nonan)(T, T) = equal_default<T>
+>
+int equal_maybenan(const T lhs, const T rhs, npy_bool equal_nan) {
+    int lhs_isnan = isnan(lhs);
+    int rhs_isnan = isnan(rhs);
+    if (lhs_isnan && rhs_isnan) {
+        return equal_nan || (&lhs == &rhs);
     }
-    NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
-
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        *(T *)odata = *it;
+    if (lhs_isnan || rhs_isnan) {
+        return false;
     }
+    return iseq_nonan(lhs, rhs);
+}
 
-    return res_obj;
+template <typename S, typename T, S (*real)(T), S (*imag)(T)>
+int equal_complex(const T lhs, const T rhs, npy_bool equal_nan) {
+    return equal_maybenan<S>(real(lhs), real(rhs), equal_nan) &&
+           equal_maybenan<S>(imag(lhs), imag(rhs), equal_nan);
+}
+
+template <typename T>
+void copy_real(char *data, T value) {
+    *(T *)data = value;
+    return;
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T), T (*pack)(S, S)>
+void copy_complex(char *data, T value) {
+    *(T *)data = pack(real(value), imag(value));
+    return;
+}
+
+template <typename T, size_t (*hash_func)(T, npy_bool), int (*equal_func)(T, T, npy_bool), void (*copy_func)(char *, T)>
 static PyObject*
-unique_complex(PyArrayObject *self, npy_bool equal_nan)
+unique_numeric(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
-    * Returns a new NumPy array containing the unique values of the input array of float(, half and double).
+    * Returns a new NumPy array containing the unique values of the input array of numeric (integer, float or complex).
     * This function uses hashing to identify uniqueness efficiently.
     */
     NPY_ALLOW_C_API_DEF;
@@ -232,28 +128,10 @@ unique_complex(PyArrayObject *self, npy_bool equal_nan)
     npy_intp isize = PyArray_SIZE(self);
 
     auto hash = [equal_nan](const T value) -> size_t {
-        auto float_hash = [equal_nan](const S value) -> size_t {
-            static std::hash<S> hash;
-            if (equal_nan && npy_isnan(value)) {
-                return 0;
-            }
-            return hash(value);
-        };
-        return float_hash(real(value)) ^ float_hash(imag(value));
+        return hash_func(value, equal_nan);
     };
     auto equal = [equal_nan](const T lhs, const T rhs) -> bool {
-        auto float_equal = [equal_nan](const S lhs, const S rhs) -> int {
-            int lhs_isnan = npy_isnan(lhs);
-            int rhs_isnan = npy_isnan(rhs);
-            if (lhs_isnan && rhs_isnan) {
-                return equal_nan || (&lhs == &rhs);
-            }
-            if (lhs_isnan || rhs_isnan) {
-                return false;
-            }
-            return lhs == rhs;
-        };
-        return float_equal(real(lhs), real(rhs)) && float_equal(imag(lhs), imag(rhs));
+        return equal_func(lhs, rhs, equal_nan);
     };
 
     // Reserve hashset capacity in advance to minimize reallocations and collisions.
@@ -301,7 +179,7 @@ unique_complex(PyArrayObject *self, npy_bool equal_nan)
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        *(T *)odata = pack(real(*it), imag(*it));
+        copy_func(odata, *it);
     }
 
     return res_obj;
@@ -517,37 +395,79 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *, npy_bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique_integer<npy_byte>},
-    {NPY_UBYTE, unique_integer<npy_ubyte>},
-    {NPY_SHORT, unique_integer<npy_short>},
-    {NPY_USHORT, unique_integer<npy_ushort>},
-    {NPY_INT, unique_integer<npy_int>},
-    {NPY_UINT, unique_integer<npy_uint>},
-    {NPY_LONG, unique_integer<npy_long>},
-    {NPY_ULONG, unique_integer<npy_ulong>},
-    {NPY_LONGLONG, unique_integer<npy_longlong>},
-    {NPY_ULONGLONG, unique_integer<npy_ulonglong>},
-    {NPY_HALF, unique_float<npy_half, npy_half_isnan_wrapper, npy_half_eq_nonan_wrapper>},
-    {NPY_FLOAT, unique_float<npy_float, npy_isnan_wrapper, equal_wrapper<npy_float>>},
-    {NPY_DOUBLE, unique_float<npy_double, npy_isnan_wrapper, equal_wrapper<npy_double>>},
-    {NPY_LONGDOUBLE, unique_float<npy_longdouble, npy_isnan_wrapper, equal_wrapper<npy_longdouble>>},
-    {NPY_CFLOAT, unique_complex<float, npy_cfloat, npy_crealf, npy_cimagf, npy_cpackf>},
-    {NPY_CDOUBLE, unique_complex<double, npy_cdouble, npy_creal, npy_cimag, npy_cpack>},
-    {NPY_CLONGDOUBLE, unique_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_cpackl>},
-    {NPY_INT8, unique_integer<npy_int8>},
-    {NPY_INT16, unique_integer<npy_int16>},
-    {NPY_INT32, unique_integer<npy_int32>},
-    {NPY_INT64, unique_integer<npy_int64>},
-    {NPY_UINT8, unique_integer<npy_uint8>},
-    {NPY_UINT16, unique_integer<npy_uint16>},
-    {NPY_UINT32, unique_integer<npy_uint32>},
-    {NPY_UINT64, unique_integer<npy_uint64>},
-    {NPY_DATETIME, unique_integer<npy_uint64>},
-    {NPY_FLOAT16, unique_float<npy_float16, npy_half_isnan_wrapper, npy_half_eq_nonan_wrapper>},
-    {NPY_FLOAT32, unique_float<npy_float32, npy_isnan_wrapper, equal_wrapper<npy_float32>>},
-    {NPY_FLOAT64, unique_float<npy_float64, npy_isnan_wrapper, equal_wrapper<npy_float64>>},
-    {NPY_COMPLEX64, unique_complex<float, npy_complex64, npy_crealf, npy_cimagf, npy_cpackf>},
-    {NPY_COMPLEX128, unique_complex<double, npy_complex128, npy_creal, npy_cimag, npy_cpack>},
+    {NPY_BYTE, unique_numeric<npy_byte, hash_nonan<npy_byte>, equal_nonan<npy_byte>, copy_real<npy_byte>>},
+    {NPY_UBYTE, unique_numeric<npy_ubyte, hash_nonan<npy_ubyte>, equal_nonan<npy_ubyte>, copy_real<npy_ubyte>>},
+    {NPY_SHORT, unique_numeric<npy_short, hash_nonan<npy_short>, equal_nonan<npy_short>, copy_real<npy_short>>},
+    {NPY_USHORT, unique_numeric<npy_ushort, hash_nonan<npy_ushort>, equal_nonan<npy_ushort>, copy_real<npy_ushort>>},
+    {NPY_INT, unique_numeric<npy_int, hash_nonan<npy_int>, equal_nonan<npy_int>, copy_real<npy_int>>},
+    {NPY_UINT, unique_numeric<npy_uint, hash_nonan<npy_uint>, equal_nonan<npy_uint>, copy_real<npy_uint>>},
+    {NPY_LONG, unique_numeric<npy_long, hash_nonan<npy_long>, equal_nonan<npy_long>, copy_real<npy_long>>},
+    {NPY_ULONG, unique_numeric<npy_ulong, hash_nonan<npy_ulong>, equal_nonan<npy_ulong>, copy_real<npy_ulong>>},
+    {NPY_LONGLONG, unique_numeric<npy_longlong, hash_nonan<npy_longlong>, equal_nonan<npy_longlong>, copy_real<npy_longlong>>},
+    {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_nonan<npy_ulonglong>, equal_nonan<npy_ulonglong>, copy_real<npy_ulonglong>>},
+    {NPY_HALF, unique_numeric<
+        npy_half,
+        hash_maybenan<npy_half, npy_half_isnan>,
+        equal_maybenan<npy_half, npy_half_isnan, npy_half_eq_nonan>,
+        copy_real<npy_half>
+        >
+    },
+    {NPY_FLOAT, unique_numeric<npy_float, hash_maybenan<npy_float>, equal_maybenan<npy_float>, copy_real<npy_float>>},
+    {NPY_DOUBLE, unique_numeric<npy_double, hash_maybenan<npy_double>, equal_maybenan<npy_double>, copy_real<npy_double>>},
+    {NPY_LONGDOUBLE, unique_numeric<npy_longdouble, hash_maybenan<npy_longdouble>, equal_maybenan<npy_longdouble>, copy_real<npy_longdouble>>},
+    {NPY_CFLOAT, unique_numeric<
+        npy_cfloat,
+        hash_complex<float, npy_cfloat, npy_crealf, npy_cimagf>,
+        equal_complex<float, npy_cfloat, npy_crealf, npy_cimagf>,
+        copy_complex<float, npy_cfloat, npy_crealf, npy_cimagf, npy_cpackf>
+        >
+    },
+    {NPY_CDOUBLE, unique_numeric<
+        npy_cdouble,
+        hash_complex<double, npy_cdouble, npy_creal, npy_cimag>,
+        equal_complex<double, npy_cdouble, npy_creal, npy_cimag>,
+        copy_complex<double, npy_cdouble, npy_creal, npy_cimag, npy_cpack>
+        >
+    },
+    {NPY_CLONGDOUBLE, unique_numeric<
+        npy_clongdouble,
+        hash_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_cpackl>
+        >
+    },
+    {NPY_INT8, unique_numeric<npy_int8, hash_nonan<npy_int8>, equal_nonan<npy_int8>, copy_real<npy_int8>>},
+    {NPY_INT16, unique_numeric<npy_int16, hash_nonan<npy_int16>, equal_nonan<npy_int16>, copy_real<npy_int16>>},
+    {NPY_INT32, unique_numeric<npy_int32, hash_nonan<npy_int32>, equal_nonan<npy_int32>, copy_real<npy_int32>>},
+    {NPY_INT64, unique_numeric<npy_int64, hash_nonan<npy_int64>, equal_nonan<npy_int64>, copy_real<npy_int64>>},
+    {NPY_UINT8, unique_numeric<npy_uint8, hash_nonan<npy_uint8>, equal_nonan<npy_uint8>, copy_real<npy_uint8>>},
+    {NPY_UINT16, unique_numeric<npy_uint16, hash_nonan<npy_uint16>, equal_nonan<npy_uint16>, copy_real<npy_uint16>>},
+    {NPY_UINT32, unique_numeric<npy_uint32, hash_nonan<npy_uint32>, equal_nonan<npy_uint32>, copy_real<npy_uint32>>},
+    {NPY_UINT64, unique_numeric<npy_uint64, hash_nonan<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
+    {NPY_DATETIME, unique_numeric<npy_uint64, hash_nonan<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
+    {NPY_FLOAT16, unique_numeric<
+        npy_float16,
+        hash_maybenan<npy_float16, npy_half_isnan>,
+        equal_maybenan<npy_float16, npy_half_isnan, npy_half_eq_nonan>,
+        copy_real<npy_float16>
+        >
+    },
+    {NPY_FLOAT32, unique_numeric<npy_float32, hash_maybenan<npy_float32>, equal_maybenan<npy_float32>, copy_real<npy_float32>>},
+    {NPY_FLOAT64, unique_numeric<npy_float64, hash_maybenan<npy_float64>, equal_maybenan<npy_float64>, copy_real<npy_float64>>},
+    {NPY_COMPLEX64, unique_numeric<
+        npy_complex64,
+        hash_complex<float, npy_complex64, npy_crealf, npy_cimagf>,
+        equal_complex<float, npy_complex64, npy_crealf, npy_cimagf>,
+        copy_complex<float, npy_complex64, npy_crealf, npy_cimagf, npy_cpackf>
+        >
+    },
+    {NPY_COMPLEX128, unique_numeric<
+        npy_complex128,
+        hash_complex<double, npy_complex128, npy_creal, npy_cimag>,
+        equal_complex<double, npy_complex128, npy_creal, npy_cimag>,
+        copy_complex<double, npy_complex128, npy_creal, npy_cimag, npy_cpack>
+        >
+    },
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
     {NPY_VSTRING, unique_vstring},
