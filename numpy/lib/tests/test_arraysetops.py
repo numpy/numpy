@@ -785,7 +785,10 @@ class TestUnique:
         actual_ua = np.unique(a)
         assert_equal(sum(np.isnan(actual_ua)), sum(np.isnan(ua)))
         assert_equal(
-            sorted([(value.real, value.imag) for value in actual_ua[~np.isnan(actual_ua)]]),
+            sorted([
+                (value.real, value.imag)
+                for value in actual_ua[~np.isnan(actual_ua)]
+            ]),
             sorted([(value.real, value.imag) for value in ua[~np.isnan(ua)]]),
         )
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
