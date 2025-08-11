@@ -14,18 +14,11 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  python64bit_openblas:
+  clangcl_python64bit_openblas32:
     name: x86-64, LP64 OpenBLAS
     runs-on: windows-2022
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler-pyversion:
-          - ["MSVC", "3.11"]
-          - ["Clang-cl", "3.14t-dev"]
-
     steps:
     - name: Checkout
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -37,7 +30,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
-        python-version: ${{ matrix.compiler-pyversion[1] }}
+        python-version: "3.14t-dev"
 
     - name: Install build dependencies from PyPI
       run: |
@@ -48,23 +41,7 @@ jobs:
         choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
 
-
-    - name: Install Clang-cl
-      if: matrix.compiler-pyversion[0] == 'Clang-cl'
-      run: |
-        # llvm is preinstalled, but leave
-        # this here in case we need to pin the
-        # version at some point.
-        #choco install llvm -y
-
-    - name: Install NumPy (MSVC)
-      if: matrix.compiler-pyversion[0] == 'MSVC'
-      run: |
-        pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv
-
     - name: Install NumPy (Clang-cl)
-      if: matrix.compiler-pyversion[0] == 'Clang-cl'
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
         pip install -r requirements/ci_requirements.txt
@@ -85,80 +62,7 @@ jobs:
       run: |
         spin test -- --timeout=600 --durations=10
 
-  python64bit_openblas_winarm64:
-    name: arm64, LPARM64 OpenBLAS
-    runs-on: windows-11-arm
-    # To enable this job on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler-pyversion:
-          - ["MSVC", "3.11"]
-          - ["Clang-cl", "3.14t-dev"]
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      with:
-        submodules: recursive
-        fetch-tags: true
-        persist-credentials: false
-
-    - name: Setup Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-      with:
-        python-version: ${{ matrix.compiler-pyversion[1] }}
-        architecture: arm64
-
-    - name: Setup MSVC
-      if: matrix.compiler-pyversion[0] == 'MSVC'
-      uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
-      with:
-        architecture: arm64
-
-    - name: Install build dependencies from PyPI
-      run: |
-        pip install -r requirements/build_requirements.txt
-
-    - name: Install pkg-config
-      run: |
-        choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
-        echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
-
-    - name: Install Clang-cl
-      if: matrix.compiler-pyversion[0] == 'Clang-cl'
-      uses: ./.github/windows_arm64_steps
-
-    - name: Install NumPy (MSVC)
-      if: matrix.compiler-pyversion[0] == 'MSVC'
-      run: |
-        pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv
-
-    - name: Install NumPy (Clang-cl)
-      if: matrix.compiler-pyversion[0] == 'Clang-cl'
-      run: |
-        "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-arm64.ini -Encoding ascii
-        pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-arm64.ini
-
-    - name: Meson Log
-      shell: bash
-      if: ${{ failure() }}
-      run: |
-        cat build/meson-logs/meson-log.txt
-
-    - name: Install test dependencies
-      run: |
-        python -m pip install -r requirements/test_requirements.txt
-        python -m pip install threadpoolctl
-
-    - name: Run test suite
-      run: |
-        spin test -- --timeout=600 --durations=10
-
-  msvc_python_no_openblas:
+  msvc_python32bit_no_openblas:
     name: MSVC, ${{ matrix.architecture }} Python , no BLAS
     runs-on: ${{ matrix.os }}
     strategy:
