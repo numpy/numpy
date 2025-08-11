@@ -2,21 +2,8 @@ set -xe
 
 PROJECT_DIR="${1:-$PWD}"
 
-
 # remove any cruft from a previous run
 rm -rf build
-
-# Update license
-echo "" >> $PROJECT_DIR/LICENSE.txt
-echo "----" >> $PROJECT_DIR/LICENSE.txt
-echo "" >> $PROJECT_DIR/LICENSE.txt
-if [[ $RUNNER_OS == "Linux" ]] ; then
-    cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
-elif [[ $RUNNER_OS == "macOS" ]]; then
-    cat $PROJECT_DIR/tools/wheels/LICENSE_osx.txt >> $PROJECT_DIR/LICENSE.txt
-elif [[ $RUNNER_OS == "Windows" ]]; then
-    cat $PROJECT_DIR/tools/wheels/LICENSE_win32.txt >> $PROJECT_DIR/LICENSE.txt
-fi
 
 if [[ $(python -c"import sys; print(sys.maxsize)") < $(python -c"import sys; print(2**33)") ]]; then
     echo "No BLAS used for 32-bit wheels"

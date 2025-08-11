@@ -1,34 +1,14 @@
-# Workflow to build and test wheels.
-# To work on the wheel building infrastructure on a fork, comment out:
+# Workflow to build and test wheels, similarly to numpy/numpy-release.
+# To work on these jobs in a fork, comment out:
 #
-# if: github.repository == 'numpy/numpy'
-#
-# in the get_commit_message job. Be sure to include [wheel build] in your commit
-# message to trigger the build. All files related to wheel building are located
-# at tools/wheels/
-# Alternatively, you can add labels to the pull request in order to trigger wheel
-# builds.
-# The labels that trigger builds are:
-# 36 - Build(for changes to the building process,
-# 14 - Release(ensure wheels build before release)
+#     if: github.repository == 'numpy/numpy'
 name: Wheel builder
 
 on:
-  schedule:
-    #        ┌───────────── minute (0 - 59)
-    #        │  ┌───────────── hour (0 - 23)
-    #        │  │ ┌───────────── day of the month (1 - 31)
-    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
-    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
-    #        │  │ │ │ │
-    - cron: "42 2 * * SUN,WED"
   pull_request:
     branches:
       - main
       - maintenance/**
-  push:
-    tags:
-      - v*
   workflow_dispatch:
 
 concurrency:
@@ -39,42 +19,12 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  get_commit_message:
-    name: Get commit message
-    runs-on: ubuntu-latest
-    # Only workflow_dispatch is enabled on forks.
-    # To enable this job and subsequent jobs on a fork for other events, comment out:
-    if: github.repository == 'numpy/numpy' || github.event_name == 'workflow_dispatch'
-    outputs:
-      message: ${{ steps.commit_message.outputs.message }}
-    steps:
-      - name: Checkout numpy
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        # Gets the correct commit message for pull request
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - name: Get commit message
-        id: commit_message
-        env:
-          HEAD: ${{ github.ref }}
-        run: |
-          set -xe
-          COMMIT_MSG=$(git log --no-merges -1 --oneline)
-          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
-          echo github.ref "$HEAD"
-
   build_wheels:
     name: Build wheel ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
-    needs: get_commit_message
-    if: >-
-      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
-      # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
         # Github Actions doesn't support pairing matrix values together, let's improvise
@@ -85,34 +35,13 @@ jobs:
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-13, macosx_x86_64, openblas]
-          - [macos-13, macosx_x86_64, accelerate]
           - [macos-14, macosx_arm64, openblas]
-          - [macos-14, macosx_arm64, accelerate]
           - [windows-2022, win_amd64, ""]
-          - [windows-2022, win32, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp311", "cp312", "cp313", "cp313t", "cp314", "cp314t", "pp311"]
-        exclude:
-          # Don't build PyPy 32-bit windows
-          - buildplat: [windows-2022, win32, ""]
-            python: "pp311"
-          # Don't build PyPy arm64 windows
-          - buildplat: [windows-11-arm, win_arm64, ""]
-            python: "pp311"
-          # No PyPy on musllinux images
-          - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
-            python: "pp311"
-          - buildplat: [ ubuntu-22.04-arm, musllinux_aarch64, "" ]
-            python: "pp311"
-          - buildplat: [ macos13, macosx_x86_64, openblas ]
-            python: "cp313t"
-          - buildplat: [ macos13, macosx_x86_64, openblas ]
-            python: "cp314t"
+        python: ["cp311"]
 
     env:
-      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
-      IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
-      IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -131,6 +60,7 @@ jobs:
         uses: ./.github/windows_arm64_steps
 
       - name: pkg-config-for-win
+        if: runner.os == 'windows'
         run: |
           choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
           $CIBW = "${{ github.workspace }}/.openblas"
@@ -140,12 +70,6 @@ jobs:
           # passed through, so convert it to '/'
           $CIBW = $CIBW.replace("\","/")
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
-        if: runner.os == 'windows'
-
-      # Used to push the built wheels
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-        with:
-          python-version: "3.x"
 
       - name: Setup macOS
         if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
@@ -182,126 +106,3 @@ jobs:
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
-
-      - name: install micromamba
-        uses: mamba-org/setup-micromamba@7f29b8b80078b1b601dfa018b0f7425c587c63bb
-        if: ${{ matrix.buildplat[1] != 'win_arm64' }} # unsupported platform at the moment
-        with:
-          # for installation of anaconda-client, required for upload to
-          # anaconda.org
-          # Note that this step is *after* specific pythons have been used to
-          # build and test the wheel
-          # for installation of anaconda-client, for upload to anaconda.org
-          # environment will be activated after creation, and in future bash steps
-          init-shell: bash
-          environment-name: upload-env
-          create-args: >-
-            anaconda-client
-
-      - name: win-arm64 install anaconda client
-        if: ${{ matrix.buildplat[1] == 'win_arm64' }}
-        run: |
-          # Rust installation needed for rpds-py.
-          Invoke-WebRequest https://static.rust-lang.org/rustup/dist/aarch64-pc-windows-msvc/rustup-init.exe -UseBasicParsing -Outfile rustup-init.exe
-          .\rustup-init.exe -y
-          $env:PATH="$env:PATH;$env:USERPROFILE\.cargo\bin"
-          pip install anaconda-client
-
-
-      - name: Upload wheels
-        if: success() && github.repository == 'numpy/numpy'
-        shell: bash -el {0}
-        # see https://github.com/marketplace/actions/setup-miniconda for why
-        # `-el {0}` is required.
-        env:
-          NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
-          NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
-        run: |
-          source tools/wheels/upload_wheels.sh
-          set_upload_vars
-          # trigger an upload to
-          # https://anaconda.org/scientific-python-nightly-wheels/numpy
-          # for cron jobs or "Run workflow" (restricted to main branch).
-          # Tags will upload to
-          # https://anaconda.org/multibuild-wheels-staging/numpy
-          # The tokens were originally generated at anaconda.org
-          upload_wheels
-
-  build_sdist:
-    name: Build sdist
-    needs: get_commit_message
-    if: >-
-      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      (contains(github.event.pull_request.labels.*.name, '36 - Build') ||
-      contains(github.event.pull_request.labels.*.name, '14 - Release'))) ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
-    runs-on: ubuntu-latest
-    env:
-      IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
-      # commented out so the sdist doesn't upload to nightly
-      # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    steps:
-      - name: Checkout numpy
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          submodules: true
-          persist-credentials: false
-      # Used to push the built wheels
-      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-        with:
-          # Build sdist on lowest supported Python
-          python-version: "3.11"
-      - name: Build sdist
-        run: |
-          python -m pip install -U pip build
-          python -m build --sdist -Csetup-args=-Dallow-noblas=true
-      - name: Test the sdist
-        run: |
-          # TODO: Don't run test suite, and instead build wheels from sdist
-          # Depends on pypa/cibuildwheel#1020
-          python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
-          pip install -r requirements/test_requirements.txt
-          cd .. # Can't import numpy within numpy src directory
-          python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
-
-      - name: Check README rendering for PyPI
-        run: |
-          python -mpip install twine
-          twine check dist/*
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: sdist
-          path: ./dist/*
-
-      - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
-        with:
-          # for installation of anaconda-client, required for upload to
-          # anaconda.org
-          # default (and activated) environment name is test
-          # Note that this step is *after* specific pythons have been used to
-          # build and test
-          auto-update-conda: true
-          python-version: "3.11"
-
-      - name: Upload sdist
-        if: success() && github.repository == 'numpy/numpy'
-        shell: bash -el {0}
-        env:
-          NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
-          # commented out so the sdist doesn't upload to nightly
-          # NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
-        run: |
-          conda install -y anaconda-client
-          source tools/wheels/upload_wheels.sh
-          set_upload_vars
-          # trigger an upload to
-          # https://anaconda.org/scientific-python-nightly-wheels/numpy
-          # for cron jobs or "Run workflow" (restricted to main branch).
-          # Tags will upload to
-          # https://anaconda.org/multibuild-wheels-staging/numpy
-          # The tokens were originally generated at anaconda.org
-          upload_wheels
