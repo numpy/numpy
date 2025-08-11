@@ -1,5 +1,5 @@
 # This script is used by .github/workflows/wheels.yml to run the full test
-# suite, checks for license inclusion and that the openblas version is correct.
+# suite, and that the openblas version is correct.
 set -xe
 
 PROJECT_DIR="$1"
@@ -45,4 +45,3 @@ fi
 # durations for the 10 slowests tests to help with debugging slow or hanging
 # tests
 python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto', '--timeout=1800', '--durations=10']))"
-python $PROJECT_DIR/tools/wheels/check_license.py
