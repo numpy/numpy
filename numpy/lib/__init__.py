@@ -45,7 +45,6 @@ from . import (
 from ._arrayterator_impl import Arrayterator
 from ._version import NumpyVersion
 
-
 __all__ = [
     "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
     "format", "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
