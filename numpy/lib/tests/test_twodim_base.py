@@ -468,9 +468,8 @@ def test_tril_indices_with_uint64():
     expected_row_tril = np.array([1, 2, 2])
     expected_col_tril = np.array([0, 0, 1])
     expected_tril = (expected_row_tril, expected_col_tril)
-    assert_equal(
-        il, expected_tril, err_msg="tril_indices failed with k=-1, n or m is uint"
-    )
+    assert_equal(il, expected_tril,
+                 err_msg="tril_indices failed with k=-1, n or m is uint")
 
 class TestTriuIndices:
     def test_triu_indices(self):
@@ -530,7 +529,8 @@ class TestTriuIndices:
         expected_row_triu = np.array([0, 0, 0, 1, 1, 2])
         expected_col_triu = np.array([0, 1, 2, 1, 2, 2])
         expected_triu = (expected_row_triu, expected_col_triu)
-        assert_equal(iu, expected_triu, err_msg="triu_indices failed with uint64 inputs")
+        assert_equal(iu, expected_triu,
+                     err_msg="triu_indices failed with uint64 inputs")
 
 class TestTrilIndicesFrom:
     def test_exceptions(self):
