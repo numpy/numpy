@@ -726,7 +726,10 @@ class TestUnique:
 
         # test for ticket #2799
         aa = [1. + 0.j, 1 - 1.j, 1]
-        assert_array_equal(np.unique(aa), [1. - 1.j, 1. + 0.j])
+        assert_array_equal(
+            sorted([(value.real, value.imag) for value in np.unique(aa)]),
+            [(1., -1.), (1., 0.)],
+        )
 
         # test for ticket #4785
         a = [(1, 2), (1, 2), (2, 3)]
@@ -757,22 +760,34 @@ class TestUnique:
 
         # test for ticket 2111 - float
         a = [2.0, np.nan, 1.0, np.nan]
-        ua = [1.0, 2.0, np.nan]
+        ua = np.array([1.0, 2.0, np.nan])
         ua_idx = [2, 0, 1]
         ua_inv = [1, 2, 0, 2]
         ua_cnt = [1, 1, 2]
-        assert_equal(np.unique(a), ua)
+        # order of unique values is not guaranteed
+        actual_ua = np.unique(a)
+        assert_equal(sum(np.isnan(actual_ua)), sum(np.isnan(ua)))
+        assert_equal(
+            sorted(actual_ua[~np.isnan(actual_ua)]),
+            sorted(ua[~np.isnan(ua)]),
+        )
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
         # test for ticket 2111 - complex
         a = [2.0 - 1j, np.nan, 1.0 + 1j, complex(0.0, np.nan), complex(1.0, np.nan)]
-        ua = [1.0 + 1j, 2.0 - 1j, complex(0.0, np.nan)]
+        ua = np.array([1.0 + 1j, 2.0 - 1j, complex(0.0, np.nan)])
         ua_idx = [2, 0, 3]
         ua_inv = [1, 2, 0, 2, 2]
         ua_cnt = [1, 1, 3]
-        assert_equal(np.unique(a), ua)
+        # order of unique values is not guaranteed
+        actual_ua = np.unique(a)
+        assert_equal(sum(np.isnan(actual_ua)), sum(np.isnan(ua)))
+        assert_equal(
+            sorted([(value.real, value.imag) for value in actual_ua[~np.isnan(actual_ua)]]),
+            sorted([(value.real, value.imag) for value in ua[~np.isnan(ua)]]),
+        )
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
@@ -1226,8 +1241,22 @@ class TestUnique:
             )
         ]:
             assert len(res_unique_array_api) == len(res_unique)
+            if not isinstance(res_unique_array_api, tuple):
+                res_unique_array_api = (res_unique_array_api,)
+            if not isinstance(res_unique, tuple):
+                res_unique = (res_unique,)
+
             for actual, expected in zip(res_unique_array_api, res_unique):
-                assert_array_equal(actual, expected)
+                # As order of output is not guaranteed,
+                # we check nan count and sorted items separately
+                assert_equal(
+                    np.sum(np.isnan(actual)),
+                    np.sum(np.isnan(expected)),
+                )
+                assert_equal(
+                    sorted(actual[~np.isnan(actual)]),
+                    sorted(expected[~np.isnan(expected)]),
+                )
 
     def test_unique_inverse_shape(self):
         # Regression test for https://github.com/numpy/numpy/issues/25552
