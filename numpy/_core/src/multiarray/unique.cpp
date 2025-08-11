@@ -117,7 +117,7 @@ int equal_complex(const T *lhs, const T *rhs, npy_bool equal_nan) {
 
 template <typename T>
 void copy_real(char *data, T *value) {
-    *(T *)data = *value;
+    std::copy_n(value, 1, (T *)data);
     return;
 }
 
