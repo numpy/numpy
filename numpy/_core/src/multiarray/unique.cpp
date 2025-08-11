@@ -130,10 +130,8 @@ template <
     void (*setimag)(T *, const S)
 >
 void copy_complex(char *data, T *value) {
-    S value_real = real(*value);
-    S value_imag = imag(*value);
-    setreal((T *)data, value_real);
-    setimag((T *)data, value_imag);
+    setreal((T *)data, real(*value));
+    setimag((T *)data, imag(*value));
     return;
 }
 
