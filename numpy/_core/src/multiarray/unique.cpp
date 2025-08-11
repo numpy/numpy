@@ -56,7 +56,7 @@ template <
     int (*isnan)(T) = npy_isnan_wrapper<T>
 >
 size_t hash_maybenan(const T value, npy_bool equal_nan) {
-    if (equal_nan && isnan(value)) {
+    if (equal_nan & isnan(value)) {
         return 0;
     }
     return hash_default(value, equal_nan);
@@ -66,8 +66,8 @@ template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 size_t hash_complex(const T value, npy_bool equal_nan) {
     S value_real = real(value);
     S value_imag = imag(value);
-    int isnan = npy_isnan(value_real) || npy_isnan(value_imag);
-    if (equal_nan && isnan) {
+    int isnan = npy_isnan(value_real) | npy_isnan(value_imag);
+    if (equal_nan & isnan) {
         return 0;
     }
 
@@ -87,10 +87,10 @@ template <
 int equal_maybenan(const T lhs, const T rhs, npy_bool equal_nan) {
     int lhs_isnan = isnan(lhs);
     int rhs_isnan = isnan(rhs);
-    if (lhs_isnan && rhs_isnan) {
+    if (lhs_isnan & rhs_isnan) {
         return equal_nan;
     }
-    if (lhs_isnan || rhs_isnan) {
+    if (lhs_isnan | rhs_isnan) {
         return false;
     }
     return iseq_nonan(lhs, rhs);
@@ -100,18 +100,18 @@ template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 int equal_complex(const T lhs, const T rhs, npy_bool equal_nan) {
     S lhs_real = real(lhs);
     S lhs_imag = imag(lhs);
-    int lhs_isnan = npy_isnan(lhs_real) || npy_isnan(lhs_imag);
+    int lhs_isnan = npy_isnan(lhs_real) | npy_isnan(lhs_imag);
     S rhs_real = real(rhs);
     S rhs_imag = imag(rhs);
-    int rhs_isnan = npy_isnan(rhs_real) || npy_isnan(rhs_imag);
+    int rhs_isnan = npy_isnan(rhs_real) | npy_isnan(rhs_imag);
 
-    if (lhs_isnan && rhs_isnan) {
-        return equal_nan || (&lhs == &rhs);
+    if (lhs_isnan & rhs_isnan) {
+        return equal_nan;
     }
-    if (lhs_isnan || rhs_isnan) {
+    if (lhs_isnan | rhs_isnan) {
         return false;
     }
-    return equal_nonan<S>(lhs_real, rhs_real, equal_nan) &&
+    return equal_nonan<S>(lhs_real, rhs_real, equal_nan) &
            equal_nonan<S>(lhs_imag, rhs_imag, equal_nan);
 }
 
