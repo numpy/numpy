@@ -461,7 +461,7 @@ def test_tril_indices():
                               [-10, -10, -10, -10, -10]]))
 
 def test_tril_indices_with_uint64():
-    n = np.uint64(3)   
+    n = np.uint64(3)
     k = -1
     m = np.uint64(3)
     il = np.tril_indices(n, k, m)
@@ -522,9 +522,9 @@ class TestTriuIndices:
 
     def test_triu_indices_with_uint64(self):
         """Test that triu_indices works with uint64 inputs for n."""
-        n = np.uint64(3)   
-        k1 = np.uint64(0) 
-        m = np.uint64(3)              
+        n = np.uint64(3)
+        k1 = np.uint64(0)
+        m = np.uint64(3)
         iu = np.triu_indices(n, k1, m)
         expected_row_triu = np.array([0, 0, 0, 1, 1, 2])
         expected_col_triu = np.array([0, 1, 2, 1, 2, 2])
