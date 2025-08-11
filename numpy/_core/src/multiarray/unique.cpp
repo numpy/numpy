@@ -46,7 +46,7 @@ int npy_isnan_wrapper(T value) {
 }
 
 template <typename T>
-size_t hash_nonan(const T value, npy_bool equal_nan) {
+size_t hash_default(const T value, npy_bool equal_nan) {
     static std::hash<T> hash;
     return hash(value);
 }
@@ -59,13 +59,19 @@ size_t hash_maybenan(const T value, npy_bool equal_nan) {
     if (equal_nan && isnan(value)) {
         return 0;
     }
-    return hash_nonan(value, equal_nan);
+    return hash_default(value, equal_nan);
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 size_t hash_complex(const T value, npy_bool equal_nan) {
-    return hash_maybenan<S>(real(value), equal_nan) ^
-           hash_maybenan<S>(imag(value), equal_nan);
+    S value_real = real(value);
+    S value_imag = imag(value);
+    int isnan = npy_isnan(value_real) || npy_isnan(value_imag);
+    if (equal_nan && isnan) {
+        return 0;
+    }
+
+    return hash_default<S>(value_real, equal_nan) ^ hash_default<S>(value_imag, equal_nan);
 }
 
 template <typename T>
@@ -82,7 +88,7 @@ int equal_maybenan(const T lhs, const T rhs, npy_bool equal_nan) {
     int lhs_isnan = isnan(lhs);
     int rhs_isnan = isnan(rhs);
     if (lhs_isnan && rhs_isnan) {
-        return equal_nan || (&lhs == &rhs);
+        return equal_nan;
     }
     if (lhs_isnan || rhs_isnan) {
         return false;
@@ -92,8 +98,21 @@ int equal_maybenan(const T lhs, const T rhs, npy_bool equal_nan) {
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 int equal_complex(const T lhs, const T rhs, npy_bool equal_nan) {
-    return equal_maybenan<S>(real(lhs), real(rhs), equal_nan) &&
-           equal_maybenan<S>(imag(lhs), imag(rhs), equal_nan);
+    S lhs_real = real(lhs);
+    S lhs_imag = imag(lhs);
+    int lhs_isnan = npy_isnan(lhs_real) || npy_isnan(lhs_imag);
+    S rhs_real = real(rhs);
+    S rhs_imag = imag(rhs);
+    int rhs_isnan = npy_isnan(rhs_real) || npy_isnan(rhs_imag);
+
+    if (lhs_isnan && rhs_isnan) {
+        return equal_nan || (&lhs == &rhs);
+    }
+    if (lhs_isnan || rhs_isnan) {
+        return false;
+    }
+    return equal_nonan<S>(lhs_real, rhs_real, equal_nan) &&
+           equal_nonan<S>(lhs_imag, rhs_imag, equal_nan);
 }
 
 template <typename T>
@@ -395,16 +414,16 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *, npy_bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique_numeric<npy_byte, hash_nonan<npy_byte>, equal_nonan<npy_byte>, copy_real<npy_byte>>},
-    {NPY_UBYTE, unique_numeric<npy_ubyte, hash_nonan<npy_ubyte>, equal_nonan<npy_ubyte>, copy_real<npy_ubyte>>},
-    {NPY_SHORT, unique_numeric<npy_short, hash_nonan<npy_short>, equal_nonan<npy_short>, copy_real<npy_short>>},
-    {NPY_USHORT, unique_numeric<npy_ushort, hash_nonan<npy_ushort>, equal_nonan<npy_ushort>, copy_real<npy_ushort>>},
-    {NPY_INT, unique_numeric<npy_int, hash_nonan<npy_int>, equal_nonan<npy_int>, copy_real<npy_int>>},
-    {NPY_UINT, unique_numeric<npy_uint, hash_nonan<npy_uint>, equal_nonan<npy_uint>, copy_real<npy_uint>>},
-    {NPY_LONG, unique_numeric<npy_long, hash_nonan<npy_long>, equal_nonan<npy_long>, copy_real<npy_long>>},
-    {NPY_ULONG, unique_numeric<npy_ulong, hash_nonan<npy_ulong>, equal_nonan<npy_ulong>, copy_real<npy_ulong>>},
-    {NPY_LONGLONG, unique_numeric<npy_longlong, hash_nonan<npy_longlong>, equal_nonan<npy_longlong>, copy_real<npy_longlong>>},
-    {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_nonan<npy_ulonglong>, equal_nonan<npy_ulonglong>, copy_real<npy_ulonglong>>},
+    {NPY_BYTE, unique_numeric<npy_byte, hash_default<npy_byte>, equal_nonan<npy_byte>, copy_real<npy_byte>>},
+    {NPY_UBYTE, unique_numeric<npy_ubyte, hash_default<npy_ubyte>, equal_nonan<npy_ubyte>, copy_real<npy_ubyte>>},
+    {NPY_SHORT, unique_numeric<npy_short, hash_default<npy_short>, equal_nonan<npy_short>, copy_real<npy_short>>},
+    {NPY_USHORT, unique_numeric<npy_ushort, hash_default<npy_ushort>, equal_nonan<npy_ushort>, copy_real<npy_ushort>>},
+    {NPY_INT, unique_numeric<npy_int, hash_default<npy_int>, equal_nonan<npy_int>, copy_real<npy_int>>},
+    {NPY_UINT, unique_numeric<npy_uint, hash_default<npy_uint>, equal_nonan<npy_uint>, copy_real<npy_uint>>},
+    {NPY_LONG, unique_numeric<npy_long, hash_default<npy_long>, equal_nonan<npy_long>, copy_real<npy_long>>},
+    {NPY_ULONG, unique_numeric<npy_ulong, hash_default<npy_ulong>, equal_nonan<npy_ulong>, copy_real<npy_ulong>>},
+    {NPY_LONGLONG, unique_numeric<npy_longlong, hash_default<npy_longlong>, equal_nonan<npy_longlong>, copy_real<npy_longlong>>},
+    {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_default<npy_ulonglong>, equal_nonan<npy_ulonglong>, copy_real<npy_ulonglong>>},
     {NPY_HALF, unique_numeric<
         npy_half,
         hash_maybenan<npy_half, npy_half_isnan>,
@@ -436,15 +455,15 @@ std::unordered_map<int, function_type> unique_funcs = {
         copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_cpackl>
         >
     },
-    {NPY_INT8, unique_numeric<npy_int8, hash_nonan<npy_int8>, equal_nonan<npy_int8>, copy_real<npy_int8>>},
-    {NPY_INT16, unique_numeric<npy_int16, hash_nonan<npy_int16>, equal_nonan<npy_int16>, copy_real<npy_int16>>},
-    {NPY_INT32, unique_numeric<npy_int32, hash_nonan<npy_int32>, equal_nonan<npy_int32>, copy_real<npy_int32>>},
-    {NPY_INT64, unique_numeric<npy_int64, hash_nonan<npy_int64>, equal_nonan<npy_int64>, copy_real<npy_int64>>},
-    {NPY_UINT8, unique_numeric<npy_uint8, hash_nonan<npy_uint8>, equal_nonan<npy_uint8>, copy_real<npy_uint8>>},
-    {NPY_UINT16, unique_numeric<npy_uint16, hash_nonan<npy_uint16>, equal_nonan<npy_uint16>, copy_real<npy_uint16>>},
-    {NPY_UINT32, unique_numeric<npy_uint32, hash_nonan<npy_uint32>, equal_nonan<npy_uint32>, copy_real<npy_uint32>>},
-    {NPY_UINT64, unique_numeric<npy_uint64, hash_nonan<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
-    {NPY_DATETIME, unique_numeric<npy_uint64, hash_nonan<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
+    {NPY_INT8, unique_numeric<npy_int8, hash_default<npy_int8>, equal_nonan<npy_int8>, copy_real<npy_int8>>},
+    {NPY_INT16, unique_numeric<npy_int16, hash_default<npy_int16>, equal_nonan<npy_int16>, copy_real<npy_int16>>},
+    {NPY_INT32, unique_numeric<npy_int32, hash_default<npy_int32>, equal_nonan<npy_int32>, copy_real<npy_int32>>},
+    {NPY_INT64, unique_numeric<npy_int64, hash_default<npy_int64>, equal_nonan<npy_int64>, copy_real<npy_int64>>},
+    {NPY_UINT8, unique_numeric<npy_uint8, hash_default<npy_uint8>, equal_nonan<npy_uint8>, copy_real<npy_uint8>>},
+    {NPY_UINT16, unique_numeric<npy_uint16, hash_default<npy_uint16>, equal_nonan<npy_uint16>, copy_real<npy_uint16>>},
+    {NPY_UINT32, unique_numeric<npy_uint32, hash_default<npy_uint32>, equal_nonan<npy_uint32>, copy_real<npy_uint32>>},
+    {NPY_UINT64, unique_numeric<npy_uint64, hash_default<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
+    {NPY_DATETIME, unique_numeric<npy_uint64, hash_default<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
     {NPY_FLOAT16, unique_numeric<
         npy_float16,
         hash_maybenan<npy_float16, npy_half_isnan>,
