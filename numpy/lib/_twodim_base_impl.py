@@ -429,11 +429,14 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
            [1.,  1.,  0.,  0.,  0.]])
 
     """
+    N = operator.index(N)
     if like is not None:
         return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
 
     if M is None:
         M = N
+    else:
+        M = operator.index(M)
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
                             arange(-k, M - k, dtype=_min_int(-k, M - k)))
@@ -547,6 +550,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
+    k = operator.index(k)
     mask = tri(*m.shape[-2:], k=k - 1, dtype=bool)
 
     return where(mask, zeros(1, m.dtype), m)
@@ -1132,11 +1136,6 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
-    n = operator.index(n)
-    if m is None:
-        m = n
-    else:
-        m = operator.index(m)
     k = operator.index(k)
 
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
