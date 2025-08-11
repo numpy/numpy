@@ -687,7 +687,7 @@ class ndindex:
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        if any(dim < 0 for dim in shape):
+        if min(shape) < 0:
             raise ValueError("negative dimensions are not allowed")
         self.shape = shape
         self._iter = product(*map(range, shape))
