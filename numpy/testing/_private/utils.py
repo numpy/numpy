@@ -56,6 +56,10 @@ verbose = 0
 
 NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
+WARNING_KWARGS = {}
+if sys.version_info >= (3, 12):
+    WARNING_KWARGS['skip_file_prefixes'] = (__file__, contextlib.__file__)
+
 try:
     np_dist = importlib.metadata.distribution('numpy')
 except importlib.metadata.PackageNotFoundError:
@@ -2009,6 +2013,11 @@ def assert_warns(warning_class, *args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
+    .. deprecated:: 2.5
+
+        This is deprecated. Use `warnings.catch_warnings` or
+        ``pytest.warns`` instead.
+
     Parameters
     ----------
     warning_class : class
@@ -2074,6 +2083,11 @@ def assert_no_warnings(*args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
+    .. deprecated:: 2.5
+
+        This is deprecated. Use `warnings.catch_warnings` or
+        ``pytest.warns`` instead.
+
     Parameters
     ----------
     func : callable
@@ -2088,6 +2102,10 @@ def assert_no_warnings(*args, **kwargs):
     The value returned by `func`.
 
     """
+    warnings.warn(
+        "NumPy warning suppression and assertion utilities are deprecated. "
+        "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+        "or pytest.filterwarnings instead.", DeprecationWarning, **WARNING_KWARGS)
     if not args:
         return _assert_no_warnings_context()
 
@@ -2227,6 +2245,11 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     For compatibility with Python, please consider all arguments to be
     keyword-only.
 
+    .. deprecated:: 2.5
+
+        This is deprecated. Use `warnings.filterwarnings` or
+        ``pytest.filterwarnings`` instead.
+
     Parameters
     ----------
     record : bool, optional
@@ -2253,6 +2276,10 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     class_modules = ()
 
     def __init__(self, record=False, modules=()):
+        warnings.warn(
+            "NumPy warning suppression and assertion utilities are deprecated. "
+            "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+            "or pytest.filterwarnings instead.", DeprecationWarning, **WARNING_KWARGS)
         self.modules = set(modules).union(self.class_modules)
         self._warnreg_copies = {}
         super().__init__(record=record)
@@ -2287,6 +2314,11 @@ class suppress_warnings:
     means that no "ignore" filter can be used easily, since following
     tests might need to see the warning. Additionally it allows easier
     specificity for testing warnings and can be nested.
+
+    .. deprecated:: 2.5
+
+        This is deprecated. Use `warnings.filterwarnings` or
+        ``pytest.filterwarnings`` instead.
 
     Parameters
     ----------
@@ -2349,6 +2381,11 @@ class suppress_warnings:
             pass
     """
     def __init__(self, forwarding_rule="always"):
+        # there isn't a unique stack level here, so don't set one at all on 3.11
+        warnings.warn(
+            "NumPy warning suppression and assertion utilities are deprecated. "
+            "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+            "or pytest.filterwarnings instead.", DeprecationWarning, **WARNING_KWARGS)
         self._entered = False
 
         # Suppressions are either instance or defined inside one with block:
