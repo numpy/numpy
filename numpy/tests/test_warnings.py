@@ -53,6 +53,7 @@ class FindFuncs(ast.NodeVisitor):
             args = {kw.arg for kw in node.keywords}
             if "stacklevel" in args:
                 return
+            breakpoint()
             raise AssertionError(
                 "warnings should have an appropriate stacklevel; "
                 f"found in {self.__filename} on line {node.lineno}")

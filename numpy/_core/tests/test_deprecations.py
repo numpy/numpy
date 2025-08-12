@@ -525,7 +525,7 @@ class TestWarningUtilityDeprecations(_DeprecationTestCase):
     def test_assert_warns_deprecated(self):
         def use_assert_warns():
             with np.testing.assert_warns(RuntimeWarning):
-                warnings.warn("foo", RuntimeWarning)
+                warnings.warn("foo", RuntimeWarning, stacklevel=1)
 
         self.assert_deprecated(use_assert_warns)
 
