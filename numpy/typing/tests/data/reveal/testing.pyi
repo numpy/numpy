@@ -90,7 +90,7 @@ assert_type(np.testing.assert_equal({1}, {1}), None)
 assert_type(np.testing.assert_equal([1, 2, 3], [1, 2, 3], err_msg="fail"), None)
 assert_type(np.testing.assert_equal(1, 1.0, verbose=True), None)
 
-assert_type(np.testing.print_assert_equal('Test XYZ of func xyz', [0, 1], [0, 1]), None)
+assert_type(np.testing.print_assert_equal("Test XYZ of func xyz", [0, 1], [0, 1]), None)
 
 assert_type(np.testing.assert_almost_equal(1.0, 1.1), None)
 assert_type(np.testing.assert_almost_equal([1, 2, 3], [1, 2, 3], err_msg="fail"), None)

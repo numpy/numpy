@@ -37,6 +37,7 @@ extend-select = [
     "PGH",
     "PLE",
     "UP",
+    "Q",
 ]
 ignore = [
     "B006",    # Do not use mutable data structures for argument defaults
@@ -97,6 +98,8 @@ ignore = [
 "numpy*pyi" = ["E501"]
 # "useless assignments" aren't so useless when you're testing that they don't make type checkers scream
 "numpy/typing/tests/data/*" = ["B015", "B018", "E501"]
+# too disruptive to enable all at once
+"**/*.py" = ["Q"]
 
 "__init__.py" = ["F401", "F403", "F405"]
 "__init__.pyi" = ["F401"]

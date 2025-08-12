@@ -10,7 +10,7 @@ supports_array: npt._SupportsArray[np.dtype[np.float64]]
 a.base = object()  # type: ignore[assignment, misc]
 a.coords = object()  # type: ignore[assignment, misc]
 a.index = object()  # type: ignore[assignment, misc]
-a.copy(order='C')  # type: ignore[call-arg]
+a.copy(order="C")  # type: ignore[call-arg]
 
 # NOTE: Contrary to `ndarray.__getitem__` its counterpart in `flatiter`
 # does not accept objects with the `__array__` or `__index__` protocols;
