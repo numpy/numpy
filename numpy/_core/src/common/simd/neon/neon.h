@@ -17,6 +17,8 @@
 #endif
 #define NPY_SIMD_BIGENDIAN 0
 #define NPY_SIMD_CMPSIGNAL 1
+#define NPY_SIMD_MAXLOAD_STRIDE32 (0x7ffffffff / 4)
+#define NPY_SIMD_MAXLOAD_STRIDE64 (0x7fffffffffffffff / 4)
 
 typedef uint8x16_t  npyv_u8;
 typedef int8x16_t   npyv_s8;
