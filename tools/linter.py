@@ -50,9 +50,9 @@ class DiffLinter:
         # Running borrowed ref checker
         print("Running C API borrow-reference linter...")
         borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci",
-                                           "check_c_api_usage.sh")
+                                           "check_c_api_usage.py")
         borrowed_res = subprocess.run(
-            ["bash", borrowed_ref_script],
+            ["python3", borrowed_ref_script],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             encoding="utf-8",
