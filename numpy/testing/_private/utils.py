@@ -2236,11 +2236,6 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     For compatibility with Python, please consider all arguments to be
     keyword-only.
 
-    .. deprecated:: 2.5
-
-        This is deprecated. Use `warnings.filterwarnings` or
-        ``pytest.filterwarnings`` instead.
-
     Parameters
     ----------
     record : bool, optional
@@ -2267,10 +2262,6 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     class_modules = ()
 
     def __init__(self, record=False, modules=()):
-        warnings.warn(
-            "NumPy warning suppression and assertion utilities are deprecated. "
-            "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
-            "or pytest.filterwarnings instead.", DeprecationWarning, **WARNING_KWARGS)
         self.modules = set(modules).union(self.class_modules)
         self._warnreg_copies = {}
         super().__init__(record=record)

@@ -536,9 +536,3 @@ class TestWarningUtilityDeprecations(_DeprecationTestCase):
 
         self.assert_deprecated(use_suppress_warnings)
 
-    def test_clear_and_catch_warnings_deprecated(self):
-        def use_clear_and_catch_warnings():
-            with np.testing.clear_and_catch_warnings():
-                pass
-
-        self.assert_deprecated(use_clear_and_catch_warnings)
