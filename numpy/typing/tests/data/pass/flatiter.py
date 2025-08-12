@@ -9,7 +9,6 @@ a.index
 iter(a)
 next(a)
 a[0]
-a[[0, 1, 2]]
 a[...]
 a[:]
 a.__array__()

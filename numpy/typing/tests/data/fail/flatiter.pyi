@@ -18,3 +18,5 @@ a.copy(order='C')  # type: ignore[call-arg]
 a[np.bool()]  # type: ignore[index]
 a[Index()]  # type: ignore[call-overload]
 a[supports_array]  # type: ignore[index]
+
+a[[0, 1, 2]]

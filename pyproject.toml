@@ -1,16 +1,13 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.15.0",
+    "meson-python>=0.18.0",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
 [project]
 name = "numpy"
 version = "2.4.0.dev0"
-# TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
-license = {file = "LICENSE.txt"}
-
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
@@ -22,7 +19,6 @@ classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: BSD License',
     'Programming Language :: C',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
@@ -40,6 +36,52 @@ classifiers = [
     'Operating System :: Unix',
     'Operating System :: MacOS',
 ]
+# License info:
+#   - The main NumPy project license is BSD-3-Clause.
+#   - The SPDX license expression below reflects installed numpy packages when
+#     built from source (e.g., with `python -m build --wheel`), with no vendoring.
+#   - That SPDX expression is therefore incomplete for:
+#     (a) sdists - see the comment below `license-files` for other licenses
+#         included in the sdist
+#     (b) wheels on PyPI - most wheels include vendored libraries with additional licenses:
+#         - libopenblas : BSD-3-Clause AND BSD-3-Clause-Attribution (all except arm64 macOS>=14)
+#         - libgfortran : GPL-3.0-with-GCC-exception                (all except arm64 macOS>=14)
+#         - libquadmath : LGPL-2.1-or-later                         (all except arm64 macOS>=14 and Windows)
+#         The licenses for these vendored components are dynamically included
+#         in the build process for PyPI wheels.
+license = 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0'
+license-files = [
+    'LICENSE.txt',                                       # BSD-3-Clause
+    'numpy/_core/include/numpy/libdivide/LICENSE.txt',   # Zlib
+    'numpy/_core/src/common/pythoncapi-compat/COPYING',  # 0BSD
+    'numpy/_core/src/highway/LICENSE-BSD3',              # BSD-3-Clause
+    'numpy/_core/src/multiarray/dragon4_LICENSE.txt',    # MIT
+    'numpy/_core/src/npysort/x86-simd-sort/LICENSE.md',  # BSD-3-Clause
+    'numpy/_core/src/umath/svml/LICENSE',                # BSD-3-Clause
+    'numpy/fft/pocketfft/LICENSE.md',                    # BSD-3-Clause
+    'numpy/ma/LICENSE',                                  # BSD-3-Clause
+    'numpy/linalg/lapack_lite/LICENSE.txt',              # BSD-3-Clause
+    'numpy/random/LICENSE.md',                           # BSD-3-Clause
+    'numpy/random/src/distributions/LICENSE.md',         # BSD-3-Clause AND MIT
+    'numpy/random/src/mt19937/LICENSE.md',               # BSD-3-Clause AND MIT
+    'numpy/random/src/pcg64/LICENSE.md',                 # MIT
+    'numpy/random/src/philox/LICENSE.md',                # BSD-3-Clause
+    'numpy/random/src/sfc64/LICENSE.md',                 # MIT
+    'numpy/random/src/splitmix64/LICENSE.md',            # CC0-1.0
+]
+# The license files below apply only to files in the repo and sdist, not to
+# installed `numpy` packages or wheels (build/doc tools don't affect the
+# license of the installed package). We have to make a choice whether to add
+# those to the SPDX expression above since PEP 639 is unclear on the
+# differences; we choose to make the SPDX expression reflect *a wheel built
+# from the sources*.
+#    '.spin/LICENSE',                                    # BSD-3-Clause
+#    'doc/source/_static/scipy-mathjax/LICENSE',         # Apache-2.0
+#    'numpy/_build_utils/tempita/LICENSE.txt',           # BSD-3-Clause
+#    'vendored-meson/meson/COPYING',                     # Apache-2.0
+# Note that the commented out license files are still included in the sdist,
+# just not in Core Metadata and in the .dist-info directory.
+
 
 [project.scripts]
 f2py = 'numpy.f2py.f2py2e:main'
