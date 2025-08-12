@@ -29,7 +29,7 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -118,7 +118,7 @@ jobs:
         version: ["3.11", "3.14t-dev"]
 
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
