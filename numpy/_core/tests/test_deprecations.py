@@ -529,13 +529,6 @@ class TestWarningUtilityDeprecations(_DeprecationTestCase):
 
         self.assert_deprecated(use_assert_warns)
 
-    def test_assert_no_warns_deprecated(self):
-        def use_assert_no_warns():
-            with np.testing.assert_no_warnings():
-                pass
-
-        self.assert_deprecated(use_assert_no_warns)
-
     def test_suppress_warnings_deprecated(self):
         def use_suppress_warnings():
             with np.testing.suppress_warnings() as sup:

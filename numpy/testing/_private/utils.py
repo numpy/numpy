@@ -2083,11 +2083,6 @@ def assert_no_warnings(*args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
-    .. deprecated:: 2.5
-
-        This is deprecated. Use `warnings.catch_warnings` or
-        ``pytest.warns`` instead.
-
     Parameters
     ----------
     func : callable
@@ -2102,10 +2097,6 @@ def assert_no_warnings(*args, **kwargs):
     The value returned by `func`.
 
     """
-    warnings.warn(
-        "NumPy warning suppression and assertion utilities are deprecated. "
-        "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
-        "or pytest.filterwarnings instead.", DeprecationWarning, **WARNING_KWARGS)
     if not args:
         return _assert_no_warnings_context()
 
