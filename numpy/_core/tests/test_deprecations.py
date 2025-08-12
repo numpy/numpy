@@ -535,4 +535,3 @@ class TestWarningUtilityDeprecations(_DeprecationTestCase):
                 sup.filter(RuntimeWarning, 'invalid value encountered in divide')
 
         self.assert_deprecated(use_suppress_warnings)
-
