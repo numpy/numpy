@@ -3198,16 +3198,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         self->flags = _descr_find_object((PyArray_Descr *)self);
     }
 
-    /*
-     * We have a borrowed reference to metadata so no need
-     * to alter reference count when throwing away Py_None.
-     */
-    if (metadata == Py_None) {
-        metadata = NULL;
-    }
+    PyObject *old_metadata, *new_metadata;
+    old_metadata = self->metadata;
 
-    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *old_metadata, *new_metadata;
+    if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
@@ -3224,27 +3218,25 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
             return NULL;
         }
 
-        old_metadata = self->metadata;
         new_metadata = PyTuple_GET_ITEM(metadata, 0);
-        if (new_metadata == Py_None) {
-            new_metadata = NULL;
-        }
-        else {
-            Py_INCREF(new_metadata);
-        }
-        self->metadata = new_metadata;
-        Py_XDECREF(old_metadata);
-
         memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
-               (char *) &temp_dt_data,
-               sizeof(PyArray_DatetimeMetaData));
+            (char *) &temp_dt_data,
+            sizeof(PyArray_DatetimeMetaData));
     }
     else {
-        PyObject *old_metadata = self->metadata;
-        self->metadata = metadata;
-        Py_XINCREF(self->metadata);
-        Py_XDECREF(old_metadata);
+        new_metadata = metadata;
     }
+
+    /*
+     * We have a borrowed reference to metadata so no need
+     * to alter reference count when throwing away Py_None.
+     */
+    if (new_metadata == Py_None) {
+        new_metadata = NULL;
+    }
+    self->metadata = new_metadata;
+    Py_XINCREF(new_metadata);
+    Py_XDECREF(old_metadata);
 
     Py_RETURN_NONE;
 }
