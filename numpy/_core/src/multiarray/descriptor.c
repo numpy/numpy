@@ -2671,8 +2671,9 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
     if (dtype->metadata != NULL) {
         Py_INCREF(dtype->metadata);
         PyTuple_SET_ITEM(ret, 0, dtype->metadata);
-    } else {
-        PyTuple_SET_ITEM(ret, 0, PyDict_New());
+    }
+    else {
+        PyTuple_SET_ITEM(ret, 0, Py_None);
     }
 
     /* Convert the datetime metadata into a tuple */
@@ -3206,7 +3207,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
 
     if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *old_metadata;
+        PyObject *old_metadata, *new_metadata;
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
@@ -3224,12 +3225,20 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
 
         old_metadata = self->metadata;
-        self->metadata = PyTuple_GET_ITEM(metadata, 0);
+        new_metadata = PyTuple_GET_ITEM(metadata, 0);
+
+        if (new_metadata == Py_None) {
+            new_metadata = NULL;
+        }
+        else {
+            Py_INCREF(new_metadata);
+        }
+        self->metadata = new_metadata;
+        Py_XDECREF(old_metadata);
+
         memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
                (char *) &temp_dt_data,
                sizeof(PyArray_DatetimeMetaData));
-        Py_XINCREF(self->metadata);
-        Py_XDECREF(old_metadata);
     }
     else {
         PyObject *old_metadata = self->metadata;
