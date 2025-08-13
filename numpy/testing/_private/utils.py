@@ -56,10 +56,6 @@ verbose = 0
 
 NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
-WARNING_KWARGS = {}
-if sys.version_info >= (3, 12):
-    WARNING_KWARGS['skip_file_prefixes'] = (__file__, contextlib.__file__)
-
 try:
     np_dist = importlib.metadata.distribution('numpy')
 except importlib.metadata.PackageNotFoundError:
@@ -1989,7 +1985,7 @@ def integer_repr(x):
 @contextlib.contextmanager
 def _assert_warns_context(warning_class, name=None):
     __tracebackhide__ = True  # Hide traceback for py.test
-    with suppress_warnings() as sup:
+    with suppress_warnings(_warn=False) as sup:
         l = sup.record(warning_class)
         yield
         if not len(l) > 0:
@@ -2045,6 +2041,10 @@ def assert_warns(warning_class, *args, **kwargs):
     >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
     >>> assert ret == 16
     """
+    warnings.warn(
+        "NumPy warning suppression and assertion utilities are deprecated. "
+        "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+        "or pytest.filterwarnings instead.", DeprecationWarning, stacklevel=2)
     if not args and not kwargs:
         return _assert_warns_context(warning_class)
     elif len(args) < 1:
@@ -2362,12 +2362,12 @@ class suppress_warnings:
             # do something which causes a warning in np.ma.core
             pass
     """
-    def __init__(self, forwarding_rule="always"):
-        # there isn't a unique stack level here, so don't set one at all on 3.11
-        warnings.warn(
-            "NumPy warning suppression and assertion utilities are deprecated. "
-            "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
-            "or pytest.filterwarnings instead.", DeprecationWarning, **WARNING_KWARGS)
+    def __init__(self, forwarding_rule="always", _warn=True):
+        if _warn:
+            warnings.warn(
+                "NumPy warning suppression and assertion utilities are deprecated. "
+                "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+                "or pytest.filterwarnings instead.", DeprecationWarning, stacklevel=2)
         self._entered = False
 
         # Suppressions are either instance or defined inside one with block:
