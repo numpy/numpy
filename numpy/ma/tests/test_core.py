@@ -1810,7 +1810,7 @@ class TestMaskedArrayArithmetic:
                 el_by_el = [m1[name] != m2[name] for name in dt.names]
                 assert_equal(array(el_by_el, dtype=bool).any(), ne_expected)
 
-    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('dt', ['S', 'U', 'T'])
     @pytest.mark.parametrize('fill', [None, 'A'])
     def test_eq_for_strings(self, dt, fill):
         # Test the equality of structured arrays
@@ -1842,7 +1842,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
-    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('dt', ['S', 'U', 'T'])
     @pytest.mark.parametrize('fill', [None, 'A'])
     def test_ne_for_strings(self, dt, fill):
         # Test the equality of structured arrays
@@ -1992,15 +1992,23 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
+    @pytest.mark.parametrize('dt', ['S', 'U', 'T'])
     @pytest.mark.parametrize('op',
             [operator.le, operator.lt, operator.ge, operator.gt])
     @pytest.mark.parametrize('fill', [None, "N/A"])
-    def test_comparisons_strings(self, op, fill):
+    def test_comparisons_strings(self, dt, op, fill):
         # See gh-21770, mask propagation is broken for strings (and some other
         # cases) so we explicitly test strings here.
         # In principle only == and != may need special handling...
-        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill)
-        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill)
+        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
+        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
+        assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
+
+        if isinstance(fill, str):
+            fill = np.array(fill, dtype=dt)
+
+        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
+        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill, dtype=dt)
         assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
 
     @pytest.mark.filterwarnings("ignore:.*Comparison to `None`.*:FutureWarning")
@@ -5690,6 +5698,65 @@ def test_append_masked_array_along_axis():
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
+
+
+def test_string_dtype_fill_value_on_construction():
+    # Regression test for gh-29421: allow string fill_value on StringDType masked arrays
+    dt = np.dtypes.StringDType()
+    data = np.array(["A", "test", "variable", ""], dtype=dt)
+    mask = [True, False, True, True]
+    # Prior to the fix, this would TypeError; now it should succeed
+    arr = np.ma.MaskedArray(data, mask=mask, fill_value="FILL", dtype=dt)
+    assert isinstance(arr.fill_value, str)
+    assert arr.fill_value == "FILL"
+    filled = arr.filled()
+    # Masked positions should be replaced by 'FILL'
+    assert filled.tolist() == ["FILL", "test", "FILL", "FILL"]
+
+
+def test_string_dtype_default_fill_value():
+    # Regression test for gh-29421: default fill_value for StringDType is 'N/A'
+    dt = np.dtypes.StringDType()
+    data = np.array(['x', 'y', 'z'], dtype=dt)
+    # no fill_value passed → uses default_fill_value internally
+    arr = np.ma.MaskedArray(data, mask=[True, False, True], dtype=dt)
+    # ensure it’s stored as a Python str and equals the expected default
+    assert isinstance(arr.fill_value, str)
+    assert arr.fill_value == 'N/A'
+    # masked slots should be replaced by that default
+    assert arr.filled().tolist() == ['N/A', 'y', 'N/A']
+
+
+def test_string_dtype_fill_value_persists_through_slice():
+    # Regression test for gh-29421: .fill_value survives slicing/viewing
+    dt = np.dtypes.StringDType()
+    arr = np.ma.MaskedArray(
+        ['a', 'b', 'c'],
+        mask=[True, False, True],
+        dtype=dt
+    )
+    arr.fill_value = 'Z'
+    # slice triggers __array_finalize__
+    sub = arr[1:]
+    # the slice should carry the same fill_value and behavior
+    assert isinstance(sub.fill_value, str)
+    assert sub.fill_value == 'Z'
+    assert sub.filled().tolist() == ['b', 'Z']
+
+
+def test_setting_fill_value_attribute():
+    # Regression test for gh-29421: setting .fill_value post-construction works too
+    dt = np.dtypes.StringDType()
+    arr = np.ma.MaskedArray(
+        ["x", "longstring", "mid"], mask=[False, True, False], dtype=dt
+    )
+    # Setting the attribute should not raise
+    arr.fill_value = "Z"
+    assert arr.fill_value == "Z"
+    # And filled() should use the new fill_value
+    assert arr.filled()[0] == "x"
+    assert arr.filled()[1] == "Z"
+    assert arr.filled()[2] == "mid"
 
 
 def test_ufunc_with_output():

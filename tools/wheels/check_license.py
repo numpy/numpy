@@ -38,7 +38,7 @@ def main():
     distinfo_path = next(iter(sitepkgs.glob("numpy-*.dist-info")))
 
     # Check license text
-    license_txt = distinfo_path / "LICENSE.txt"
+    license_txt = distinfo_path / "licenses" / "LICENSE.txt"
     with open(license_txt, encoding="utf-8") as f:
         text = f.read()
 

@@ -11,9 +11,6 @@ signed-integer-overflow:*
 # otherwise ubsan may detect system file alignment errors outside numpy
 alignment:*
 
-# suggested fix for runtime error: replace left bit shift with LLONG_MIN constant
-shift-base:_core/src/common/simd/sse/arithmetic.h
-shift-base:_core/src/common/simd/avx2/arithmetic.h
 # suggested fix for runtime error: use INT_MIN constant
 shift-base:_core/src/umath/_rational_tests.c
 # suggested fix for runtime error: check for overflow if signed

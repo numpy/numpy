@@ -42,7 +42,12 @@ MAR_f.mask = np.False_
 
 MAR_i.fill_value = 0
 
-MAR_f.flat = [9]
+MAR_b.flat[MAR_i > 0] = False
+MAR_i.flat[:] = 1
+MAR_f.flat[[0]] = AR_LIKE_f
+MAR_c.flat[[0, 0]] = [3, 4 + 3j]
+MAR_td64.flat[0] = dt.timedelta(1)
+MAR_dt64.flat[0] = dt.datetime(2020, 1, 1)
 
 MAR_b[MAR_i > 0] = False
 MAR_i[:] = 1

@@ -1,0 +1,7 @@
+``StringDType`` fill_value support in `numpy.ma.MaskedArray`
+------------------------------------------------------------
+Masked arrays now accept and preserve a Python ``str`` as their ``fill_value`` when
+using the variable‑width ``StringDType`` (kind ``'T'``), including through slicing
+and views.  The default is ``'N/A'`` and may be overridden by any valid string.
+This fixes issue `gh‑29421 <https://github.com/numpy/numpy/issues/29421>`__ and was 
+implemented in pull request `gh‑29423 <https://github.com/numpy/numpy/pull/29423>`__.

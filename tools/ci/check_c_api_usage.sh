@@ -24,7 +24,7 @@ echo "Scanning $(echo "$ALL_FILES" | wc -l) C/C++ source files..."
 
 # Prepare a result file
 mkdir -p .tmp
-OUTPUT=$(mktemp .tmp/c_api_usage_report.XXXXXX.txt)
+OUTPUT=$(mktemp .tmp/c_api_usage_report.XXXXXX)
 echo -e "Running Suspicious C API usage report workflow...\n" > $OUTPUT
 
 FAIL=0
