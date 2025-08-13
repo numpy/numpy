@@ -309,6 +309,7 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
+
 Converting datetime and timedelta to Python Object
 ==================================================
 
@@ -316,16 +317,17 @@ NumPy follows a strict protocol when converting datetime and timedelta to Python
 
 For conversion of datetime to a Python Object:
 
-- Not-a-time is returned as the string "NaT".
+- Not-a-time is returned as None.
 - For days or coarser, returns a datetime.date.
 - For microseconds or coarser, returns a datetime.datetime.
 - For units finer than microseconds, returns an integer.
 
 For conversion of timedelta to Python Object
 
-- Not-a-time is returned as the string "NaT".
+- Not-a-time is returned as None.
 - For microseconds or coarser, returns a datetime.timedelta.
-- For units finer than microseconds, returns an integer.
+- For Y/M/B (nonlinear units), generic units and units finer than microseconds, returns an integer.
+
 
 Business day functionality
 ==========================
