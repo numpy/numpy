@@ -316,7 +316,7 @@ NumPy follows a strict protocol when converting datetime and timedelta to Python
 
 For conversion of datetime to a Python Object:
 
-- For days or coarser, returns a datetime.date.
+- Not-a-time is returned as the string "NaT".
 - For days or coarser, returns a datetime.date.
 - For microseconds or coarser, returns a datetime.datetime.
 - For units finer than microseconds, returns an integer.
