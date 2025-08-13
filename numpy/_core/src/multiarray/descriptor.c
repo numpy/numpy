@@ -2878,6 +2878,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     char endian;
     PyObject *endian_obj;
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
+    PyObject *old_metadata, *new_metadata;
     int incref_names = 1;
     int int_dtypeflags = 0;
     npy_uint64 dtypeflags;
@@ -3198,9 +3199,6 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         self->flags = _descr_find_object((PyArray_Descr *)self);
     }
 
-    PyObject *old_metadata, *new_metadata;
-    old_metadata = self->metadata;
-
     if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData temp_dt_data;
 
@@ -3227,6 +3225,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         new_metadata = metadata;
     }
 
+    old_metadata = self->metadata;
     /*
      * We have a borrowed reference to metadata so no need
      * to alter reference count when throwing away Py_None.
