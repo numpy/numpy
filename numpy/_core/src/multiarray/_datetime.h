@@ -242,7 +242,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 /*
  * Converts a datetime into a PyObject *.
  *
- * For days or coarser, returns a datetime.date.
+ * Not-a-time is returned as the string "NaT".
  * For days or coarser, returns a datetime.date.
  * For microseconds or coarser, returns a datetime.datetime.
  * For units finer than microseconds, returns an integer.
