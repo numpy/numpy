@@ -3226,7 +3226,6 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
         old_metadata = self->metadata;
         new_metadata = PyTuple_GET_ITEM(metadata, 0);
-
         if (new_metadata == Py_None) {
             new_metadata = NULL;
         }
