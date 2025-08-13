@@ -7,6 +7,7 @@ import re
 import sys
 import tempfile
 from pathlib import Path
+from re import Pattern
 
 """
 Borrow-ref C API linter (Python version).
@@ -20,32 +21,6 @@ Borrow-ref C API linter (Python version).
   - block comments (/* ... */), even when they span lines
 - Prints findings and exits 1 if any issues found, else 0
 """
-
-# List of suspicious function calls:
-SUSPICIOUS_FUNCS: tuple[str, ...] = (
-    "PyList_GetItem",
-    "PyDict_GetItem",
-    "PyDict_GetItemWithError",
-    "PyDict_GetItemString",
-    "PyDict_SetDefault",
-    "PyDict_Next",
-    "PyWeakref_GetObject",
-    "PyWeakref_GET_OBJECT",
-    "PyList_GET_ITEM",
-    "_PyDict_GetItemStringWithError",
-    "PySequence_Fast"
-)
-
-# Match any function as a standalone C identifier: (?<!\w)(NAME)(?!\w)
-FUNC_RX = re.compile(r"(?<!\w)(?:"
-                     + "|".join(map(re.escape, SUSPICIOUS_FUNCS))
-                     + r")(?!\w)")
-
-NOQA_OK = "noqa: borrowed-ref OK"
-NOQA_MANUAL = "noqa: borrowed-ref - manual fix needed"
-
-DEFAULT_EXTS = {".c", ".h", ".c.src", ".cpp"}
-DEFAULT_EXCLUDES = {"pythoncapi-compat"}
 
 def strip_comments(line: str, in_block: bool) -> tuple[str, bool]:
     """
@@ -105,20 +80,27 @@ def iter_source_files(root: Path, exts: set[str], excludes: set[str]) -> list[Pa
                 results.append(Path(dirpath) / fn)
     return results
 
+def build_func_rx(funcs: tuple[str, ...]) -> Pattern[str]:
+    return re.compile(r"(?<!\w)(?:" + "|".join(map(re.escape, funcs)) + r")(?!\w)")
 
-def scan_file(path: Path) -> list[tuple[str, int, str, str]]:
+def scan_file(
+        path: Path,
+        func_rx: Pattern[str],
+        noqa_markers: tuple[str, ...]
+        ) -> list[tuple[str, int, str, str]]:
     """
     Scan a single file.
     Returns list of (func_name, line_number, path_str, raw_line_str).
     """
     hits: list[tuple[str, int, str, str]] = []
     in_block = False
+    noqa_set = set(noqa_markers)
 
     try:
         with path.open("r", encoding="utf-8", errors="ignore") as f:
             for lineno, raw in enumerate(f, 1):
                 # Skip if approved by noqa markers
-                if NOQA_OK in raw or NOQA_MANUAL in raw:
+                if any(mark in raw for mark in noqa_set):
                     continue
 
                 # Remove comments; if nothing remains, skip
@@ -127,9 +109,8 @@ def scan_file(path: Path) -> list[tuple[str, int, str, str]]:
                     continue
 
                 # Find all suspicious calls in non-comment code
-                for m in FUNC_RX.finditer(code):
-                    func = m.group(0)
-                    hits.append((func, lineno, str(path), raw.rstrip("\n")))
+                for m in func_rx.finditer(code):
+                    hits.append((m.group(0), lineno, str(path), raw.rstrip("\n")))
     except FileNotFoundError:
         # File may have disappeared; ignore gracefully
         pass
@@ -137,6 +118,28 @@ def scan_file(path: Path) -> list[tuple[str, int, str, str]]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # List of suspicious function calls:
+    suspicious_funcs: tuple[str, ...] = (
+        "PyList_GetItem",
+        "PyDict_GetItem",
+        "PyDict_GetItemWithError",
+        "PyDict_GetItemString",
+        "PyDict_SetDefault",
+        "PyDict_Next",
+        "PyWeakref_GetObject",
+        "PyWeakref_GET_OBJECT",
+        "PyList_GET_ITEM",
+        "_PyDict_GetItemStringWithError",
+        "PySequence_Fast"
+    )
+    func_rx = build_func_rx(suspicious_funcs)
+    noqa_markers = (
+        "noqa: borrowed-ref OK",
+        "noqa: borrowed-ref - manual fix needed"
+        )
+    default_exts = {".c", ".h", ".c.src", ".cpp"}
+    default_excludes = {"pythoncapi-compat"}
+
     ap = argparse.ArgumentParser(description="Borrow-ref C API linter (Python).")
     ap.add_argument(
         "--root",
@@ -148,42 +151,47 @@ def main(argv: list[str] | None = None) -> int:
         "--ext",
         action="append",
         default=None,
-        help="File extension(s) to include (repeatable). Defaults to .c,.h,.c.src,.cpp",
+        help=f"File extension(s) to include (repeatable). Defaults to {default_exts}",
     )
     ap.add_argument(
         "--exclude",
         action="append",
         default=None,
-        help="Directory name(s) to exclude (repeatable). Default: pythoncapi-compat",
+        help=f"Directory name(s) to exclude (repeatable). Default: {default_excludes}",
     )
     args = ap.parse_args(argv)
+
+    if args.ext:
+        exts = {e if e.startswith(".") else f".{e}" for e in args.ext}
+    else:
+        exts = set(default_exts)
+    excludes = set(args.exclude) if args.exclude else set(default_excludes)
 
     root = Path(args.root)
     if not root.exists():
         print(f"error: root '{root}' does not exist", file=sys.stderr)
         return 2
 
-    exts = set(args.ext) if args.ext else set(DEFAULT_EXTS)
-    excludes = set(args.exclude) if args.exclude else set(DEFAULT_EXCLUDES)
-
-    files = list(iter_source_files(root, exts, excludes))
+    files = sorted(iter_source_files(root, exts, excludes), key=str)
     print(f"Scanning {len(files)} C/C++ source files...")
 
     # Output file (mirrors your shell behavior)
     tmpdir = Path(".tmp")
     tmpdir.mkdir(exist_ok=True)
-    fd, outpath = tempfile.mkstemp(
-        prefix="c_api_usage_report.",
-        suffix=".txt",
-        dir=tmpdir
-        )
-    os.close(fd)
 
     findings = 0
-    with open(outpath, "w", encoding="utf-8", errors="ignore") as out:
+    with tempfile.NamedTemporaryFile(
+        prefix="c_api_usage_report.",
+        suffix=".txt",
+        dir=tmpdir,
+        mode="w+",
+        encoding="utf-8",
+        delete=False,
+        ) as out:
+        report_path = Path(out.name)
         out.write("Running Suspicious C API usage report workflow...\n\n")
         for p in files:
-            for func, lineno, pstr, raw in scan_file(p):
+            for func, lineno, pstr, raw in scan_file(p, func_rx, noqa_markers):
                 findings += 1
                 out.write(f"Found suspicious call to {func} in file: {pstr}\n")
                 out.write(f" -> {pstr}:{lineno}:{raw}\n")
@@ -200,12 +208,15 @@ def main(argv: list[str] | None = None) -> int:
         if findings == 0:
             out.write("C API borrow-ref linter found no issues.\n")
 
-    # Echo report and set exit status
-    with open(outpath, "r", encoding="utf-8", errors="ignore") as f:
-        sys.stdout.write(f.read())
+        # Echo report and set exit status
+        out.flush()
+        out.seek(0)
+        sys.stdout.write(out.read())
+    print(f"Report written to: {report_path}")
 
     return 1 if findings else 0
 
 
 if __name__ == "__main__":
+
     sys.exit(main())
