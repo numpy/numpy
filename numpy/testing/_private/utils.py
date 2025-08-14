@@ -2009,7 +2009,7 @@ def assert_warns(warning_class, *args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
-    .. deprecated:: 2.5
+    .. deprecated:: 2.4
 
         This is deprecated. Use `warnings.catch_warnings` or
         ``pytest.warns`` instead.
@@ -2297,7 +2297,7 @@ class suppress_warnings:
     tests might need to see the warning. Additionally it allows easier
     specificity for testing warnings and can be nested.
 
-    .. deprecated:: 2.5
+    .. deprecated:: 2.4
 
         This is deprecated. Use `warnings.filterwarnings` or
         ``pytest.filterwarnings`` instead.

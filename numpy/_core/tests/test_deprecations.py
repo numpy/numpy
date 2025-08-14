@@ -519,7 +519,7 @@ class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
 
 
 class TestWarningUtilityDeprecations(_DeprecationTestCase):
-    # Deprecation in NumPy 2.5
+    # Deprecation in NumPy 2.5, 2025-08
     message = r"NumPy warning suppression and assertion utilities are deprecated."
 
     def test_assert_warns_deprecated(self):
