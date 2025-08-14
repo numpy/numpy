@@ -2674,6 +2674,7 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
     }
     else {
         PyTuple_SET_ITEM(ret, 0, Py_None);
+        Py_INCREF(Py_None);
     }
 
     /* Convert the datetime metadata into a tuple */
