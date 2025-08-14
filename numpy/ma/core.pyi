@@ -1958,7 +1958,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         indices: _IntLike_co,
         axis: None = None,
         out: None = None,
-        mode: _ModeKind = 'raise'
+        mode: _ModeKind = "raise"
     ) -> _ScalarT: ...
     @overload
     def take(
@@ -1966,7 +1966,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = 'raise',
+        mode: _ModeKind = "raise",
     ) -> _MaskedArray[_ScalarT]: ...
     @overload
     def take(
@@ -1974,7 +1974,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None,
         out: _ArrayT,
-        mode: _ModeKind = 'raise',
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
     @overload
     def take(
@@ -1983,7 +1983,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         axis: SupportsIndex | None = None,
         *,
         out: _ArrayT,
-        mode: _ModeKind = 'raise',
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
 
     copy: Any
@@ -2326,7 +2326,7 @@ def take(
     indices: _IntLike_co,
     axis: None = None,
     out: None = None,
-    mode: _ModeKind = 'raise'
+    mode: _ModeKind = "raise"
 ) -> _ScalarT: ...
 @overload
 def take(
@@ -2334,7 +2334,7 @@ def take(
     indices: _ArrayLikeInt_co,
     axis: SupportsIndex | None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _MaskedArray[_ScalarT]: ...
 @overload
 def take(
@@ -2342,7 +2342,7 @@ def take(
     indices: _IntLike_co,
     axis: SupportsIndex | None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> Any: ...
 @overload
 def take(
@@ -2350,7 +2350,7 @@ def take(
     indices: _ArrayLikeInt_co,
     axis: SupportsIndex | None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _MaskedArray[Any]: ...
 @overload
 def take(
@@ -2358,7 +2358,7 @@ def take(
     indices: _ArrayLikeInt_co,
     axis: SupportsIndex | None,
     out: _ArrayT,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _ArrayT: ...
 @overload
 def take(
@@ -2367,7 +2367,7 @@ def take(
     axis: SupportsIndex | None = None,
     *,
     out: _ArrayT,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _ArrayT: ...
 
 def power(a, b, third=...): ...
@@ -2402,7 +2402,7 @@ def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
 def left_shift(a, n): ...
 def right_shift(a, n): ...
-def put(a: NDArray[Any], indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = 'raise') -> None: ...
+def put(a: NDArray[Any], indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
 def putmask(a: NDArray[Any], mask: _ArrayLikeBool_co, values: ArrayLike) -> None: ...
 def transpose(a, axes=...): ...
 def reshape(a, new_shape, order=...): ...

@@ -48,4 +48,4 @@ assert_type(np.typecodes["Character"], Literal["c"])
 assert_type(np.typecodes["Complex"], Literal["FDG"])
 assert_type(np.typecodes["All"], Literal["?bhilqnpBHILQNPefdgFDGSUVOMm"])
 
-assert_type(np.sctypeDict['uint8'], type[np.generic])
+assert_type(np.sctypeDict["uint8"], type[np.generic])
