@@ -889,8 +889,8 @@ class TestDateTime:
                 b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
             assert_equal(pickle.loads(pkl), np.dtype('>M8[us]'))
 
+    def test_gh_29555(self):
         # check that dtype metadata round-trips when none
-        # gh-29555
         dt = np.dtype('>M8[us]')
         assert dt.metadata is None
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
