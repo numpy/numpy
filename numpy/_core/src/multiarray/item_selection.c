@@ -1624,7 +1624,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         }
     }
 
-    if (sort == NULL) {
+    if (sort_with_array == NULL && sort == NULL) {
         if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare != NULL) {
             switch (which) {
                 default:
@@ -1798,7 +1798,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         }
     }
 
-    if (argsort == NULL) {
+    if (argsort_with_array == NULL && argsort == NULL) {
         if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare != NULL) {
             switch (which) {
                 default:
