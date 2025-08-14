@@ -118,8 +118,8 @@ from ._nbit import (
 )
 
 #
-from ._nbit_base import (
-    NBitBase as NBitBase,  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+from ._nbit_base import (  # type: ignore[deprecated]
+    NBitBase as NBitBase,  # pyright: ignore[reportDeprecated]
     _8Bit as _8Bit,
     _16Bit as _16Bit,
     _32Bit as _32Bit,
