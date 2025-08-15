@@ -371,7 +371,7 @@ array__get_implementing_args(
         return NULL;
     }
 
-    relevant_args = PySequence_Fast(
+    relevant_args = PySequence_Fast( // noqa: borrowed-ref OK
         relevant_args,
         "dispatcher for __array_function__ did not return an iterable");
     if (relevant_args == NULL) {
@@ -518,7 +518,7 @@ dispatcher_vectorcall(PyArray_ArrayFunctionDispatcherObject *self,
             fix_name_if_typeerror(self);
             return NULL;
         }
-        Py_SETREF(relevant_args, PySequence_Fast(relevant_args,
+        Py_SETREF(relevant_args, PySequence_Fast(relevant_args, // noqa: borrowed-ref OK
                 "dispatcher for __array_function__ did not return an iterable"));
         if (relevant_args == NULL) {
             return NULL;

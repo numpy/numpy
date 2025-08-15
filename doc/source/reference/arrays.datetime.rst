@@ -53,7 +53,8 @@ months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
 some additional SI-prefix seconds-based units. The `datetime64` data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
-letters, for a "Not A Time" value.
+letters, for a "Not A Time" value. The string "today" is also supported and
+returns the current UTC date with day precision.
 
 .. admonition:: Example
 
@@ -90,6 +91,11 @@ letters, for a "Not A Time" value.
 
     >>> np.datetime64('nat')
     np.datetime64('NaT')
+
+    The current date:
+
+    >>> np.datetime64('today')
+    np.datetime64('2025-08-05')  # result will depend on the current date
 
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the

@@ -1,8 +1,7 @@
 from collections.abc import Sequence
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, LiteralString, TypeAlias, TypeVar, assert_type
-from typing import Literal as L
+from typing import Any, Literal as L, LiteralString, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 import numpy.polynomial as npp
@@ -67,11 +66,11 @@ PS_all: (
 # static- and classmethods
 
 assert_type(type(PS_poly).basis_name, None)
-assert_type(type(PS_cheb).basis_name, L['T'])
-assert_type(type(PS_herm).basis_name, L['H'])
-assert_type(type(PS_herme).basis_name, L['He'])
-assert_type(type(PS_lag).basis_name, L['L'])
-assert_type(type(PS_leg).basis_name, L['P'])
+assert_type(type(PS_cheb).basis_name, L["T"])
+assert_type(type(PS_herm).basis_name, L["H"])
+assert_type(type(PS_herme).basis_name, L["He"])
+assert_type(type(PS_lag).basis_name, L["L"])
+assert_type(type(PS_leg).basis_name, L["P"])
 
 assert_type(type(PS_all).__hash__, None)
 assert_type(type(PS_all).__array_ufunc__, None)
@@ -91,10 +90,10 @@ assert_type(type(PS_leg).fromroots(SQ_O), npp.Legendre)
 assert_type(type(PS_leg).fromroots(AR_O_co), npp.Legendre)
 
 assert_type(type(PS_poly).identity(), npp.Polynomial)
-assert_type(type(PS_cheb).identity(symbol='z'), npp.Chebyshev)
+assert_type(type(PS_cheb).identity(symbol="z"), npp.Chebyshev)
 
 assert_type(type(PS_lag).basis(SC_i), npp.Laguerre)
-assert_type(type(PS_leg).basis(32, symbol='u'), npp.Legendre)
+assert_type(type(PS_leg).basis(32, symbol="u"), npp.Legendre)
 
 assert_type(type(PS_herm).cast(PS_poly), npp.Hermite)
 assert_type(type(PS_herme).cast(PS_leg), npp.HermiteE)

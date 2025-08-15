@@ -117,8 +117,20 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def __new__(
         subtype,
         shape: _ShapeLike,
+        itemsize: SupportsIndex | SupportsInt,
+        unicode: L[True],
+        buffer: _SupportsBuffer = ...,
+        offset: SupportsIndex = ...,
+        strides: _ShapeLike = ...,
+        order: _OrderKACF = ...,
+    ) -> _CharArray[str_]: ...
+    @overload
+    def __new__(
+        subtype,
+        shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt = ...,
-        unicode: L[True] = ...,
+        *,
+        unicode: L[True],
         buffer: _SupportsBuffer = ...,
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
@@ -1032,14 +1044,15 @@ def startswith(
 def str_len(A: UST_co) -> NDArray[int_]: ...
 
 # Overload 1 and 2: str- or bytes-based array-likes
-# overload 3: arbitrary object with unicode=False  (-> bytes_)
-# overload 4: arbitrary object with unicode=True  (-> str_)
+# overload 3 and 4: arbitrary object with unicode=False  (-> bytes_)
+# overload 5 and 6: arbitrary object with unicode=True  (-> str_)
+# overload 7: arbitrary object with unicode=None (default)  (-> str_ | bytes_)
 @overload
 def array(
     obj: U_co,
     itemsize: int | None = ...,
     copy: bool = ...,
-    unicode: L[False] = ...,
+    unicode: L[True] | None = ...,
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
 @overload
@@ -1047,7 +1060,15 @@ def array(
     obj: S_co,
     itemsize: int | None = ...,
     copy: bool = ...,
-    unicode: L[False] = ...,
+    unicode: L[False] | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[bytes_]: ...
+@overload
+def array(
+    obj: object,
+    itemsize: int | None,
+    copy: bool,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
@@ -1055,43 +1076,84 @@ def array(
     obj: object,
     itemsize: int | None = ...,
     copy: bool = ...,
-    unicode: L[False] = ...,
+    *,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
 def array(
     obj: object,
-    itemsize: int | None = ...,
-    copy: bool = ...,
-    unicode: L[True] = ...,
+    itemsize: int | None,
+    copy: bool,
+    unicode: L[True],
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
+@overload
+def array(
+    obj: object,
+    itemsize: int | None = ...,
+    copy: bool = ...,
+    *,
+    unicode: L[True],
+    order: _OrderKACF = ...,
+) -> _CharArray[str_]: ...
+@overload
+def array(
+    obj: object,
+    itemsize: int | None = ...,
+    copy: bool = ...,
+    unicode: bool | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[str_] | _CharArray[bytes_]: ...
 
 @overload
 def asarray(
     obj: U_co,
     itemsize: int | None = ...,
-    unicode: L[False] = ...,
+    unicode: L[True] | None = ...,
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
 @overload
 def asarray(
     obj: S_co,
     itemsize: int | None = ...,
-    unicode: L[False] = ...,
+    unicode: L[False] | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[bytes_]: ...
+@overload
+def asarray(
+    obj: object,
+    itemsize: int | None,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
 def asarray(
     obj: object,
     itemsize: int | None = ...,
-    unicode: L[False] = ...,
+    *,
+    unicode: L[False],
     order: _OrderKACF = ...,
 ) -> _CharArray[bytes_]: ...
 @overload
 def asarray(
     obj: object,
-    itemsize: int | None = ...,
-    unicode: L[True] = ...,
+    itemsize: int | None,
+    unicode: L[True],
     order: _OrderKACF = ...,
 ) -> _CharArray[str_]: ...
+@overload
+def asarray(
+    obj: object,
+    itemsize: int | None = ...,
+    *,
+    unicode: L[True],
+    order: _OrderKACF = ...,
+) -> _CharArray[str_]: ...
+@overload
+def asarray(
+    obj: object,
+    itemsize: int | None = ...,
+    unicode: bool | None = ...,
+    order: _OrderKACF = ...,
+) -> _CharArray[str_] | _CharArray[bytes_]: ...

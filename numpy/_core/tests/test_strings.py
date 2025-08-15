@@ -846,6 +846,7 @@ class TestMethods:
         ('abc', 6, ' ', ' abc  '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '***abc****'),
     ])
     def test_center(self, buf, width, fillchar, res, dt):
@@ -859,6 +860,7 @@ class TestMethods:
         ('abc', 6, ' ', 'abc   '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', 'abc*******'),
     ])
     def test_ljust(self, buf, width, fillchar, res, dt):
@@ -872,6 +874,7 @@ class TestMethods:
         ('abc', 6, ' ', '   abc'),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '*******abc'),
     ])
     def test_rjust(self, buf, width, fillchar, res, dt):
@@ -893,6 +896,7 @@ class TestMethods:
         ('-0123', 5, '-0123'),
         ('000', 3, '000'),
         ('34', 1, '34'),
+        ('34', -1, '34'),
         ('0034', 4, '0034'),
     ])
     def test_zfill(self, buf, width, res, dt):
@@ -989,22 +993,36 @@ class TestMethods:
         with pytest.raises(TypeError, match="did not contain a loop"):
             np.strings.slice(np.array([1, 2, 3]), 4)
 
-        with pytest.raises(TypeError, match=r"Cannot cast ufunc '_slice' input .* from .* to dtype\('int(64|32)'\)"):
-            np.strings.slice(np.array(['foo', 'bar'], dtype=dt), np.array(['foo', 'bar'], dtype=dt))
+        regexp = (r"Cannot cast ufunc '_slice' input .* "
+                  r"from .* to dtype\('int(64|32)'\)")
+        with pytest.raises(TypeError, match=regexp):
+            np.strings.slice(np.array(['foo', 'bar'], dtype=dt),
+                             np.array(['foo', 'bar'], dtype=dt))
 
-    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32, np.int64,
-                                        np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32,
+                                        np.int64, np.uint8, np.uint16,
+                                        np.uint32, np.uint64])
     def test_slice_int_type_promotion(self, int_dt, dt):
         buf = np.array(["hello", "world"], dtype=dt)
+        np_slice = np.strings.slice
+        assert_array_equal(np_slice(buf, int_dt(4)),
+                           np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np_slice(buf, np.array([4, 4], dtype=int_dt)),
+                           np.array(["hell", "worl"], dtype=dt))
 
-        assert_array_equal(np.strings.slice(buf, int_dt(4)), np.array(["hell", "worl"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([4, 4], dtype=int_dt)), np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np_slice(buf, int_dt(2), int_dt(4)),
+                           np.array(["ll", "rl"], dtype=dt))
+        assert_array_equal(np_slice(buf, np.array([2, 2], dtype=int_dt),
+                                    np.array([4, 4], dtype=int_dt)),
+                           np.array(["ll", "rl"], dtype=dt))
 
-        assert_array_equal(np.strings.slice(buf, int_dt(2), int_dt(4)), np.array(["ll", "rl"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([2, 2], dtype=int_dt), np.array([4, 4], dtype=int_dt)), np.array(["ll", "rl"], dtype=dt))
-
-        assert_array_equal(np.strings.slice(buf, int_dt(0), int_dt(4), int_dt(2)), np.array(["hl", "wr"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([0, 0], dtype=int_dt), np.array([4, 4], dtype=int_dt), np.array([2, 2], dtype=int_dt)), np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np_slice(buf, int_dt(0), int_dt(4), int_dt(2)),
+                           np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np_slice(buf,
+                                    np.array([0, 0], dtype=int_dt),
+                                    np.array([4, 4], dtype=int_dt),
+                                    np.array([2, 2], dtype=int_dt)),
+                           np.array(["hl", "wr"], dtype=dt))
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:

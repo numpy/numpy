@@ -939,12 +939,23 @@ datetimetype_repr(PyObject *self)
         if (legacy_print_mode == -1) {
             return NULL;
         }
-        if (legacy_print_mode > 125) {
-            ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+
+        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        if((scal->obval == NPY_DATETIME_NAT) && (meta != NULL)){
+            if (legacy_print_mode > 125) {
+                ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
+            } else {
+                ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+            }
+        } else {
+            if (legacy_print_mode > 125) {
+                ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+            }
+            else {
+                ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+            }
         }
-        else {
-            ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
-        }
+
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -3900,7 +3911,6 @@ static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     PyArray_DatetimeMetaData *meta;
-    PyArray_Descr *dtype;
     npy_@lname@ val = PyArrayScalar_VAL(obj, @name@);
 
     if (val == NPY_DATETIME_NAT) {
@@ -3908,10 +3918,10 @@ static npy_hash_t
         return PyBaseObject_Type.tp_hash(obj);
     }
 
-    dtype = PyArray_DescrFromScalar(obj);
-    meta = get_datetime_metadata_from_dtype(dtype);
+    meta = &((PyDatetimeScalarObject *)obj)->obmeta;
 
-    return @lname@_hash(meta, val);
+    npy_hash_t res = @lname@_hash(meta, val);
+    return res;
 }
 /**end repeat**/
 

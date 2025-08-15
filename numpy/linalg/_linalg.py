@@ -317,8 +317,7 @@ def tensorsolve(a, b, axes=None):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(2*3*4)
-    >>> a.shape = (2*3, 4, 2, 3, 4)
+    >>> a = np.eye(2*3*4).reshape((2*3, 4, 2, 3, 4))
     >>> rng = np.random.default_rng()
     >>> b = rng.normal(size=(2*3, 4))
     >>> x = np.linalg.tensorsolve(a, b)
@@ -495,8 +494,7 @@ def tensorinv(a, ind=2):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(4*6)
-    >>> a.shape = (4, 6, 8, 3)
+    >>> a = np.eye(4*6).reshape((4, 6, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
@@ -505,8 +503,7 @@ def tensorinv(a, ind=2):
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
-    >>> a = np.eye(4*6)
-    >>> a.shape = (24, 8, 3)
+    >>> a = np.eye(4*6).reshape((24, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
@@ -2011,6 +2008,7 @@ def cond(x, p=None):
         # contain nans in the entries where inversion failed.
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
+        result_t = _realType(result_t)  # condition number is always real
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)

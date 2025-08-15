@@ -130,7 +130,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
      * dimension_from_scalar as soon as possible.
      */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
-        seq_obj = PySequence_Fast(obj,
+        seq_obj = PySequence_Fast(obj, // noqa: borrowed-ref - manual fix needed
                "expected a sequence of integers or a single integer.");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */
@@ -438,15 +438,11 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    if (PyObject_IsTrue(object)) {
-        *val = NPY_TRUE;
-    }
-    else {
-        *val = NPY_FALSE;
-    }
-    if (PyErr_Occurred()) {
+    int bool_val = PyObject_IsTrue(object);
+    if (bool_val == -1) {
         return NPY_FAIL;
     }
+    *val = (npy_bool)bool_val;
     return NPY_SUCCEED;
 }
 
@@ -460,15 +456,11 @@ PyArray_OptionalBoolConverter(PyObject *object, int *val)
     if (object == Py_None) {
         return NPY_SUCCEED;
     }
-    if (PyObject_IsTrue(object)) {
-        *val = 1;
-    }
-    else {
-        *val = 0;
-    }
-    if (PyErr_Occurred()) {
+    int bool_val = PyObject_IsTrue(object);
+    if (bool_val == -1) {
         return NPY_FAIL;
     }
+    *val = (npy_bool)bool_val;
     return NPY_SUCCEED;
 }
 
@@ -1143,7 +1135,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     PyObject *seq_obj = NULL;
     if (!PyLong_CheckExact(seq) && PySequence_Check(seq)) {
-        seq_obj = PySequence_Fast(seq,
+        seq_obj = PySequence_Fast(seq, // noqa: borrowed-ref - manual fix needed
             "expected a sequence of integers or a single integer");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */

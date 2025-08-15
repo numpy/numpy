@@ -37,7 +37,6 @@ any_sctype: np.ndarray[Any, Any]
 assert_type(any_dtype.tolist(), Any)
 assert_type(any_sctype.tolist(), Any)
 
-
 # itemset does not return a value
 # tobytes is pretty simple
 # tofile does not return a value
