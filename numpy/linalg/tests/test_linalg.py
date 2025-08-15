@@ -2526,12 +2526,21 @@ class TestWeightedGramMatrix:
             np.linalg.weighted_gram_matrix(X, weights=weights)
 
     def test_X_3d(self):
-        # Test with 3-D X (should raise error)
-        X = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-        weights = np.array([1, 2])
-
-        with assert_raises(ValueError):
-            np.linalg.weighted_gram_matrix(X, weights=weights)
+        # Test with 3-D X
+        # Create two 2x3 matrices stacked along first axis
+        X = np.array([[[1, 2, 3], [4, 5, 6]], 
+                      [[7, 8, 9], [10, 11, 12]]])  # Shape (2, 2, 3)
+        weights = np.array([[1, 2], [3, 4]])  # Shape (2, 2)
+        
+        # Compute expected result manually for each 2D slice
+        expected1 = X[0].T @ np.diag(weights[0]) @ X[0]
+        expected2 = X[1].T @ np.diag(weights[1]) @ X[1]
+        expected = np.array([expected1, expected2])  # Shape (2, 3, 3)
+        
+        actual = np.linalg.weighted_gram_matrix(X, weights=weights)
+        
+        assert_allclose(actual, expected)
+        assert actual.shape == (2, 3, 3)
 
     def test_dtypes(self):
         # Test with different dtypes
@@ -2563,3 +2572,45 @@ class TestWeightedGramMatrix:
         actual = np.linalg.weighted_gram_matrix(X, weights=weights)
 
         assert_allclose(actual, expected)
+
+    def test_X_4d(self):
+        # Test with 4-D X
+        # Create a 4D array with shape (2, 3, 4, 5)
+        np.random.seed(1234)
+        X = np.random.rand(2, 3, 4, 5)
+        weights = np.random.rand(2, 3, 4)  # Matching shape except last dim
+        
+        # Compute expected result manually for a few slices
+        expected1 = X[0, 0].T @ np.diag(weights[0, 0]) @ X[0, 0]
+        expected2 = X[1, 2].T @ np.diag(weights[1, 2]) @ X[1, 2]
+        
+        actual = np.linalg.weighted_gram_matrix(X, weights=weights)
+        
+        # Check shapes
+        assert actual.shape == (2, 3, 5, 5)
+        
+        # Check a couple of slices
+        assert_allclose(actual[0, 0], expected1)
+        assert_allclose(actual[1, 2], expected2)
+        
+    def test_weights_shape_matching(self):
+        # Test that weights shape must match X.shape[:-1]
+        X = np.random.rand(2, 3, 4, 5)
+        
+        # Correct weights shape
+        weights = np.random.rand(2, 3, 4)
+        # This should work
+        np.linalg.weighted_gram_matrix(X, weights=weights)
+        
+        # Incorrect weights shapes
+        wrong_weights = [
+            np.random.rand(2, 3, 5),  # Wrong last dimension
+            np.random.rand(2, 4, 5),  # Wrong middle dimensions
+            np.random.rand(3, 4, 5),  # Wrong first dimension
+            np.random.rand(2, 3),     # Too few dimensions
+            np.random.rand(2, 3, 4, 5) # Too many dimensions
+        ]
+        
+        for w in wrong_weights:
+            with assert_raises(ValueError):
+                np.linalg.weighted_gram_matrix(X, weights=w)
