@@ -1545,6 +1545,10 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
 
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
+    }
+
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
         return NULL;
@@ -1563,7 +1567,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     Py_BEGIN_CRITICAL_SECTION(op);
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
+            op, max_depth, dims, &cache, in_DType, in_descr, &dtype,
             copy, &was_copied_by__array__);
 
     if (ndim < 0) {
@@ -1583,7 +1587,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         npy_free_coercion_cache(cache);
         goto cleanup;
     }
-    if (max_depth != 0 && ndim > max_depth) {
+    if (ndim > max_depth && (in_DType == NULL || in_DType->type_num != NPY_OBJECT)) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         npy_free_coercion_cache(cache);
