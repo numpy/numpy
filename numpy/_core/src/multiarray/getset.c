@@ -54,12 +54,7 @@ array_shape_set_internal(PyArrayObject *self, PyObject *val)
 {
     int nd;
     PyArrayObject *ret;
-
-    if (val == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array shape");
-        return -1;
-    }
+    assert(val);
 
     /* Assumes C-order */
     ret = (PyArrayObject *)PyArray_Reshape(self, val);
