@@ -4833,7 +4833,7 @@ def test_outer_bad_subclass():
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)
-        with assert_raises(TypeError) as _:
+        with pytest.raises(TypeError):
             # The first array gets reshaped (not the second one)
             np.add.outer(arr, [1, 2])
 
