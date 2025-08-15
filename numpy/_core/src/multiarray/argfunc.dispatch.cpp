@@ -336,7 +336,7 @@ arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
     if constexpr (kSupportLane<T>) {
         if constexpr (sizeof(T) <= 2) {
             *mindx = simd_argfunc_small<T, Op>(ip, n);
-        } else if constexpr (sizeof(long double) != sizeof(double) || !std::is_same_v<T, long double>) {
+        } else {
             *mindx = simd_argfunc_large<T, Op>(ip, n);
         }
         return 0;
@@ -447,7 +447,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(BOOL_argmax)
         if constexpr (kMaxLanes<uint8_t> == 64) {
             if (m != NPY_MAX_UINT64)
                 break;
-        }else{
+        }else if constexpr(kMaxLanes<uint8_t> < 64){
             if ((npy_int64)m != ((1LL << vstep) - 1))
                 break;
         }
