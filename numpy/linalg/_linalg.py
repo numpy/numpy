@@ -3698,6 +3698,10 @@ def weighted_gram_matrix(X, *, weights=None):
 
     X.T @ diag(weights) @ X = (X.T * weights) @ X
 
+    For performance-critical applications with large matrices, consider using
+    specialized libraries like tabmat which provide optimized implementations
+    of the sandwich product (equivalent to the weighted Gram matrix).
+
     Examples
     --------
     >>> import numpy as np
