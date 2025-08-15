@@ -35,20 +35,19 @@ FinalAction<F> finally(F f) {
 }
 
 template <typename T>
-int equal_default(T lhs, T rhs) {
+inline int equal_default(T lhs, T rhs) {
     return lhs == rhs;
 }
 
 // As npy_isnan is a macro, we need to define a wrapper function to use it in a template.
 template <typename T>
-int npy_isnan_wrapper(T value) {
+inline int npy_isnan_wrapper(T value) {
     return npy_isnan(value);
 }
 
 template <typename T>
-size_t hash_nonan(const T *value, npy_bool equal_nan) {
-    static std::hash<T> hash;
-    return hash(*value);
+inline size_t hash_nonan(const T *value, npy_bool equal_nan) {
+    return std::hash<T>{}(*value);
 }
 
 template <
@@ -75,7 +74,7 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
 }
 
 template <typename T>
-int equal_nonan(const T *lhs, const T *rhs, npy_bool equal_nan) {
+inline int equal_nonan(const T *lhs, const T *rhs, npy_bool equal_nan) {
     return equal_default(*lhs, *rhs);
 }
 
