@@ -85,7 +85,7 @@ simd_argfunc_small(T *ip, npy_intp len)
     T s_acc = *ip;
     npy_intp ret_idx = 0, i = 0;
 
-    HWY_LANES_CONSTEXPR size_t vstep = Lanes<T>();
+    HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
     const int wstep = vstep*4;
     std::vector<UnsignedT> d_vindices(vstep*4);
     for (int vi = 0; vi < wstep; ++vi) {
@@ -172,7 +172,7 @@ simd_argfunc_large(T *ip, npy_intp len)
     Op op_func;
     T s_acc = *ip;
     npy_intp ret_idx = 0, i = 0;
-    HWY_LANES_CONSTEXPR size_t vstep = Lanes<T>();
+    HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
     const int wstep = vstep*4;
 
     // loop by a scalar will perform better for small arrays
@@ -336,10 +336,11 @@ arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
     if constexpr (kSupportLane<T>) {
         if constexpr (sizeof(T) <= 2) {
             *mindx = simd_argfunc_small<T, Op>(ip, n);
-        } else {
+            return 0;
+        } else if constexpr (sizeof(long double) != sizeof(double)){
             *mindx = simd_argfunc_large<T, Op>(ip, n);
+            return 0;
         }
-        return 0;
     }
 #endif
 
