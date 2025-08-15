@@ -133,3 +133,5 @@ tools/swig/test/Vector_wrap.cxx
 tools/swig/test/Array.py
 .openblas
 numpy/_distributor_init_local.py
+
+.env/
