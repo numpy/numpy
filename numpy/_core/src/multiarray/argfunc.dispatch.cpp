@@ -19,7 +19,7 @@ struct OpGt {
         return hn::Gt(a, b); 
     }
 #endif
-    HWY_INLINE bool operator()(T a, T b) { 
+    HWY_INLINE bool operator()(T a, T b) {
         return a > b; 
     }
 
@@ -85,16 +85,16 @@ simd_argfunc_small(T *ip, npy_intp len)
     T s_acc = *ip;
     npy_intp ret_idx = 0, i = 0;
 
-    const int vstep = Lanes<T>();
+    HWY_LANES_CONSTEXPR size_t vstep = Lanes<T>();
     const int wstep = vstep*4;
-    UnsignedT d_vindices[Lanes<T>()*4];
+    std::vector<UnsignedT> d_vindices(vstep*4);
     for (int vi = 0; vi < wstep; ++vi) {
         d_vindices[vi] = vi;
     }
-    const auto vindices_0 = LoadU(d_vindices);
-    const auto vindices_1 = LoadU(d_vindices + vstep);
-    const auto vindices_2 = LoadU(d_vindices + vstep*2);
-    const auto vindices_3 = LoadU(d_vindices + vstep*3);
+    const auto vindices_0 = LoadU(d_vindices.data());
+    const auto vindices_1 = LoadU(d_vindices.data()+vstep);
+    const auto vindices_2 = LoadU(d_vindices.data()+vstep*2);
+    const auto vindices_3 = LoadU(d_vindices.data()+vstep*3);
 
     const npy_intp max_block = idx_max*wstep & -wstep;
     npy_intp len0 = len & -wstep;
@@ -129,13 +129,13 @@ simd_argfunc_small(T *ip, npy_intp len)
             acc_indices_scale = hn::IfThenElse(hn::RebindMask(_Tag<UnsignedT>(), m_acc), vi, acc_indices_scale);
         }
         // reduce
-        T dacc[Lanes<T>()];
-        UnsignedT dacc_i[Lanes<T>()];
-        UnsignedT dacc_s[Lanes<T>()];
+        std::vector<T> dacc(vstep);
+        std::vector<UnsignedT> dacc_i(vstep);
+        std::vector<UnsignedT> dacc_s(vstep);
 
-        StoreU(acc, dacc);
-        StoreU(acc_indices, dacc_i);
-        StoreU(acc_indices_scale, dacc_s);
+        StoreU(acc, dacc.data());
+        StoreU(acc_indices,       dacc_i.data());
+        StoreU(acc_indices_scale, dacc_s.data());
 
         for (int vi = 0; vi < vstep; ++vi) {
             if (op_func(dacc[vi], s_acc)) {
@@ -172,7 +172,7 @@ simd_argfunc_large(T *ip, npy_intp len)
     Op op_func;
     T s_acc = *ip;
     npy_intp ret_idx = 0, i = 0;
-    const int vstep = Lanes<T>();
+    HWY_LANES_CONSTEXPR size_t vstep = Lanes<T>();
     const int wstep = vstep*4;
 
     // loop by a scalar will perform better for small arrays
@@ -186,14 +186,14 @@ simd_argfunc_large(T *ip, npy_intp len)
             }
         }
         // create index for vector indices
-        UnsignedT d_vindices[Lanes<T>()*4];
+        std::vector<UnsignedT> d_vindices(vstep*4);
         for (int vi = 0; vi < wstep; ++vi) {
             d_vindices[vi] = vi;
         }
-        const auto vindices_0 = LoadU(d_vindices);
-        const auto vindices_1 = LoadU(d_vindices + vstep);
-        const auto vindices_2 = LoadU(d_vindices + vstep*2);
-        const auto vindices_3 = LoadU(d_vindices + vstep*3);
+        const auto vindices_0 = LoadU(d_vindices.data());
+        const auto vindices_1 = LoadU(d_vindices.data()+vstep);
+        const auto vindices_2 = LoadU(d_vindices.data()+vstep*2);
+        const auto vindices_3 = LoadU(d_vindices.data()+vstep*3);
 
         // initialize vector accumulator for highest values and its indexes
         auto acc_indices = Zero<UnsignedT>();
@@ -273,11 +273,11 @@ simd_argfunc_large(T *ip, npy_intp len)
         }
 
         // reduce
-        T dacc[Lanes<T>()];
-        UnsignedT dacc_i[Lanes<T>()];
+        std::vector<T> dacc(vstep);
+        std::vector<UnsignedT> dacc_i(vstep);
 
-        StoreU(acc_indices, dacc_i);
-        StoreU(acc, dacc);
+        StoreU(acc, dacc.data());
+        StoreU(acc_indices, dacc_i.data());
 
         s_acc   = dacc[0];
         ret_idx = dacc_i[0];
@@ -444,7 +444,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(BOOL_argmax)
         npy_uint64 m = 0;
         hn::StoreMaskBits(_Tag<uint8_t>(), hn::And(m_ab, m_cd), (uint8_t*)&m);
 
-        if constexpr (kMaxLanes<uint8_t> == 512) {
+        if constexpr (kMaxLanes<uint8_t> == 64) {
             if (m != NPY_MAX_UINT64)
                 break;
         }else{
