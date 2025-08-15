@@ -3700,13 +3700,13 @@ def weighted_gram_matrix(X, *, weights=None):
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> weights = np.array([1, 2, 3])
     >>> np.linalg.weighted_gram_matrix(X, weights=weights)
-    array([[ 70.,  88.],
-           [ 88., 112.]])
+    array([[ 94, 116],
+           [116, 144]])
 
     >>> # Without weights
     >>> np.linalg.weighted_gram_matrix(X)
-    array([[ 35.,  44.],
-           [ 44.,  56.]])
+    array([[ 35,  44],
+           [ 44,  56]])
 
     """
     X = asanyarray(X)
