@@ -1748,10 +1748,12 @@ array_array(PyObject *NPY_UNUSED(ignored),
         op = args[0];
     }
 
-    if (ndmax > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError,
-            "ndmax bigger than allowable number of dimensions "
-            "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
+    if (ndmax > NPY_MAXDIMS || ndmax <= 0) {
+        if (ndmax > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError, "ndmax must be <= NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
+        } else {
+            PyErr_Format(PyExc_ValueError, "ndmax must be > 0");
+        }
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
         return NULL;
