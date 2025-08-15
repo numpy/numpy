@@ -2447,119 +2447,119 @@ class TestWeightedGramMatrix:
         # Test basic functionality
         X = np.array([[1, 2], [3, 4], [5, 6]])
         weights = np.array([1, 2, 3])
-        
+
         # Expected result: X.T @ diag(weights) @ X
         expected = X.T @ np.diag(weights) @ X
         actual = np.linalg.weighted_gram_matrix(X, weights=weights)
-        
+
         assert_allclose(actual, expected)
-        
+
     def test_no_weights(self):
         # Test without weights (should be equivalent to X.T @ X)
         X = np.array([[1, 2], [3, 4], [5, 6]])
-        
+
         expected = X.T @ X
         actual = np.linalg.weighted_gram_matrix(X)
-        
+
         assert_allclose(actual, expected)
-        
+
     def test_symmetry(self):
         # Test that result is symmetric
         X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
         weights = np.array([1, 2, 3, 4])
-        
+
         result = np.linalg.weighted_gram_matrix(X, weights=weights)
-        
+
         # Check symmetry
         assert_allclose(result, result.T)
-        
+
     def test_single_column(self):
         # Test with single column
         X = np.array([[1], [2], [3]])
         weights = np.array([1, 2, 3])
-        
+
         expected = np.array([[14]])  # 1*1*1 + 2*2*2 + 3*3*3 = 1 + 8 + 27 = 36
         actual = np.linalg.weighted_gram_matrix(X, weights=weights)
-        
+
         assert_allclose(actual, np.array([[36]]))
-        
+
     def test_single_row(self):
         # Test with single row
         X = np.array([[1, 2, 3]])
         weights = np.array([2])
-        
+
         expected = np.array([[2, 4, 6], [4, 8, 12], [6, 12, 18]])
         actual = np.linalg.weighted_gram_matrix(X, weights=weights)
-        
+
         assert_allclose(actual, expected)
-        
+
     def test_empty_weights(self):
         # Test with empty weights array
         X = np.array([[1, 2], [3, 4]])
         weights = np.array([])
-        
+
         with assert_raises(ValueError):
             np.linalg.weighted_gram_matrix(X, weights=weights)
-            
+
     def test_wrong_weights_shape(self):
         # Test with wrong weights shape
         X = np.array([[1, 2], [3, 4], [5, 6]])
         weights = np.array([1, 2])  # Wrong length
-        
+
         with assert_raises(ValueError):
             np.linalg.weighted_gram_matrix(X, weights=weights)
-            
+
     def test_weights_2d(self):
         # Test with 2-D weights (should raise error)
         X = np.array([[1, 2], [3, 4]])
         weights = np.array([[1, 2], [3, 4]])
-        
+
         with assert_raises(ValueError):
             np.linalg.weighted_gram_matrix(X, weights=weights)
-            
+
     def test_X_1d(self):
         # Test with 1-D X (should raise error)
         X = np.array([1, 2, 3])
         weights = np.array([1, 2, 3])
-        
+
         with assert_raises(ValueError):
             np.linalg.weighted_gram_matrix(X, weights=weights)
-            
+
     def test_X_3d(self):
         # Test with 3-D X (should raise error)
         X = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
         weights = np.array([1, 2])
-        
+
         with assert_raises(ValueError):
             np.linalg.weighted_gram_matrix(X, weights=weights)
-            
+
     def test_dtypes(self):
         # Test with different dtypes
         dtypes = [np.float32, np.float64, np.complex64, np.complex128]
-        
+
         for dtype in dtypes:
             X = np.array([[1, 2], [3, 4]], dtype=dtype)
             weights = np.array([1, 2], dtype=np.float64)
-            
+
             result = np.linalg.weighted_gram_matrix(X, weights=weights)
             assert result.dtype == np.result_type(dtype, np.float64)
-            
+
     def test_zero_weights(self):
         # Test with zero weights
         X = np.array([[1, 2], [3, 4], [5, 6]])
         weights = np.array([0, 0, 0])
-        
+
         expected = np.zeros((2, 2))
         actual = np.linalg.weighted_gram_matrix(X, weights=weights)
-        
+
         assert_allclose(actual, expected)
-        
+
     def test_negative_weights(self):
         # Test with negative weights
         X = np.array([[1, 2], [3, 4]])
         weights = np.array([-1, -2])
-        
+
         expected = X.T @ np.diag(weights) @ X
         actual = np.linalg.weighted_gram_matrix(X, weights=weights)
-        
+
         assert_allclose(actual, expected)
