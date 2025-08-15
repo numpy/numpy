@@ -337,7 +337,7 @@ arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
         if constexpr (sizeof(T) <= 2) {
             *mindx = simd_argfunc_small<T, Op>(ip, n);
             return 0;
-        } else if constexpr (sizeof(long double) != sizeof(double)){
+        } else {
             *mindx = simd_argfunc_large<T, Op>(ip, n);
             return 0;
         }
@@ -383,13 +383,23 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                         
     return 0;                                                                                       \
 }
 
-#define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
-NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
-(long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
-{                                                                                  \
-    arg_max_min_func<long double, Op##INTR<long double>>(ip, n, max_ind);          \
-    return 0;                                                                      \
-}
+#if NPY_SIZEOF_LONGDOUBLE != NPY_SIZEOF_DOUBLE
+    #define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
+    NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
+    (long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
+    {                                                                                  \
+        arg_max_min_func<long double, Op##INTR<long double>>(ip, n, max_ind);          \
+        return 0;                                                                      \
+    }
+#else
+    #define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
+    NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
+    (long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
+    {                                                                                  \
+        arg_max_min_func<double, Op##INTR<double>>(reinterpret_cast<double*>(ip), n, max_ind); \
+        return 0;                                                                               \
+    }
+#endif
 
 DEFINE_ARGFUNC_INNER_FUNCTION(UBYTE,     argmax, Gt, npy_ubyte)
 DEFINE_ARGFUNC_INNER_FUNCTION(USHORT,    argmax, Gt, npy_ushort)
