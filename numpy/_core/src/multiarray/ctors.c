@@ -1508,6 +1508,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
+    }
+
     int was_scalar;
     PyObject* ret =  PyArray_FromAny_int(
             op, dt_info.descr, dt_info.dtype,
@@ -1544,10 +1548,6 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     coercion_cache_obj *cache = NULL;
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
-
-    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
-        max_depth = NPY_MAXDIMS;
-    }
 
     if (context != NULL) {
         PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
@@ -1800,6 +1800,10 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
         return NULL;
+    }
+
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
     }
 
     PyObject* ret =  PyArray_CheckFromAny_int(

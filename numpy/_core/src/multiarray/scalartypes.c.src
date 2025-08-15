@@ -226,7 +226,7 @@ find_binary_operation_path(
      */
     int was_scalar;
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny_int(
-                other, NULL, NULL, 0, 0, 0, NULL, &was_scalar);
+                other, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL, &was_scalar);
     if (arr == NULL) {
         return -1;
     }

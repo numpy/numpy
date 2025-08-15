@@ -1317,6 +1317,25 @@ class TestCreation:
                                  "The requested array would exceed the maximum number of dimension of 2."):
             np.array(data, ndmax=2)
 
+    def test_ndmax_is_zero(self):
+        data = [1, 2, 3]
+        arr = np.array(data, ndmax=0, dtype=object)
+        assert arr.ndim == 0
+        assert arr.shape == ()
+        assert arr.dtype == object
+
+        data = [[1, 2, 3], [4, 5, 6]]
+        arr = np.array(data, ndmax=0, dtype=object)
+        assert arr.ndim == 0
+        assert arr.shape == ()
+        assert arr.dtype == object
+
+        data = [[1, 2, 3], [4, 5]]
+        arr = np.array(data, ndmax=0, dtype=object)
+        assert arr.ndim == 0
+        assert arr.shape == ()
+        assert arr.dtype == object
+
     def test_ndmax_less_than_ndmin(self):
         data = [[[1], [2]], [[3], [4]]]
         with pytest.raises(ValueError, match="ndmin must be <= ndmax"):
@@ -1324,13 +1343,8 @@ class TestCreation:
 
     def test_ndmax_is_negative(self):
         data = [1, 2, 3]
-        with pytest.raises(ValueError, match="ndmax must be > 0"):
+        with pytest.raises(ValueError, match="ndmax must be >= 0"):
             np.array(data, ndmax=-1)
-
-    def test_ndmax_is_zero(self):
-        data = [1, 2, 3]
-        with pytest.raises(ValueError, match="ndmax must be > 0"):
-            np.array(data, ndmax=0)
 
     def test_ndmax_greather_than_NPY_MAXDIMS(self):
         data = [1, 2, 3]
