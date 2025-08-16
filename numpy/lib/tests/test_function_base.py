@@ -27,6 +27,7 @@ from numpy import (
     flipud,
     gradient,
     hamming,
+    hann,
     hanning,
     i0,
     insert,
@@ -2195,8 +2196,12 @@ class TestFilterwindows:
 
     def test_hanning(self, dtype: str, M: int) -> None:
         scalar = np.array(M, dtype=dtype)[()]
+        assert_warns(DeprecationWarning, hanning, scalar)
 
-        w = hanning(scalar)
+    def test_hann(self, dtype: str, M: int) -> None:
+        scalar = np.array(M, dtype=dtype)[()]
+
+        w = hann(scalar)
         if dtype == "O":
             ref_dtype = np.float64
         else:
