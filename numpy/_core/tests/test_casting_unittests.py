@@ -414,7 +414,7 @@ class TestCasting:
             [("M8[ns]", None, Casting.no, 0, 1, 1),
              (str(np.dtype("M8[ns]").newbyteorder()), None,
                   Casting.equiv, None, 1, 1),
-             ("M8", "M8[ms]", Casting.safe, 0, 1, 1),
+             ("M8", "M8[ms]", Casting.safe, None, 1, 1),
              # should be invalid cast:
              ("M8[ms]", "M8", Casting.unsafe, None, 1, 1),
              ("M8[5ms]", "M8[5ms]", Casting.no, 0, 1, 1),
@@ -427,7 +427,7 @@ class TestCasting:
              ("m8[ns]", None, Casting.no, 0, 1, 1),
              (str(np.dtype("m8[ns]").newbyteorder()), None,
                   Casting.equiv, None, 1, 1),
-             ("m8", "m8[ms]", Casting.safe, 0, 1, 1),
+             ("m8", "m8[ms]", Casting.safe, None, 1, 1),
              # should be invalid cast:
              ("m8[ms]", "m8", Casting.unsafe, None, 1, 1),
              ("m8[5ms]", "m8[5ms]", Casting.no, 0, 1, 1),
