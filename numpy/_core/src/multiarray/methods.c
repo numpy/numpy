@@ -3077,7 +3077,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"to_device",
         (PyCFunction)array_to_device,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    // For dtype setting deprecation
+    // For deprecation of ndarray setters
     {"_set_dtype",
         (PyCFunction)array__set_dtype,
         METH_O, NULL},

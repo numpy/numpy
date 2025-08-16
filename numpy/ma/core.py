@@ -3496,7 +3496,7 @@ class MaskedArray(ndarray):
 
     @dtype.setter
     def dtype(self, dtype):
-        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
+        self._set_dtype(dtype)
         if self._mask is not nomask:
             self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
             # Try to reset the shape of the mask (if we don't have a void).

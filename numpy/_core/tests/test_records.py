@@ -497,7 +497,8 @@ class TestRecord:
         assert dt.type != np.record
 
         # ensure that the dtype remains a record even when assigned
-        data.dtype = dt
+        with pytest.warns(DeprecationWarning):
+            data.dtype = dt
         assert data.dtype.type == np.record
 
     @pytest.mark.parametrize('nfields', [0, 1, 2])

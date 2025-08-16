@@ -538,7 +538,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
-    if (PyArray_CheckExact(self) && (non_unique_reference((PyObject *)self))) {
+    if (non_unique_reference((PyObject *)self)) {
          // this will not emit deprecation warnings for all cases, but for most it will
          // we skip unique references, so that we will not get a deprecation warning
          // when array.view(new_dtype) is called
