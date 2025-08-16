@@ -1749,11 +1749,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     }
 
     if (ndmax > NPY_MAXDIMS || ndmax < 0) {
-        if (ndmax > NPY_MAXDIMS) {
-            PyErr_Format(PyExc_ValueError, "ndmax must be <= NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
-        } else {
-            PyErr_Format(PyExc_ValueError, "ndmax must be >= 0");
-        }
+        PyErr_Format(PyExc_ValueError, "ndmax must be in the range [0, NPY_MAXDIMS (%d)] ", NPY_MAXDIMS);
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
         return NULL;
