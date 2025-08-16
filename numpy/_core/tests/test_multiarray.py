@@ -1343,13 +1343,13 @@ class TestCreation:
 
     def test_ndmax_is_negative(self):
         data = [1, 2, 3]
-        with pytest.raises(ValueError, match="ndmax must be >= 0"):
+        with pytest.raises(ValueError, match="ndmax must be in the range"):
             np.array(data, ndmax=-1)
 
     def test_ndmax_greather_than_NPY_MAXDIMS(self):
         data = [1, 2, 3]
         # current NPY_MAXDIMS is 64
-        with pytest.raises(ValueError, match="ndmax must be <= NPY_MAXDIMS"):
+        with pytest.raises(ValueError, match="ndmax must be in the range"):
             np.array(data, ndmax=65)
 
 
