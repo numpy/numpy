@@ -4207,6 +4207,45 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
+    def test_quantile_empty(self):
+        # Empty array
+        assert np.isnan(np.quantile([], 0.5))
+
+        # Multiple quantiles
+        result = np.quantile([], [0, 0.5, 1])
+        assert result.shape == (3,)
+        assert np.all(np.isnan(result))
+
+        # Keepdims=True
+        a = np.array([[], [], []]).T  # Shape (0, 3)
+        result = np.quantile(a, 0.5, axis=0, keepdims=True)
+        assert result.shape == (1, 3)
+        assert np.all(np.isnan(result))
+
+        # Axis=0
+        a = np.array([])
+        result = np.quantile(a, 0.5, axis=0)
+        assert np.isnan(result)
+
+        # Multiple axes reduction
+        a = np.zeros((3, 0, 2))  # Shape (3, 0, 2)
+        result = np.quantile(a, 0.5, axis=(0, 1))
+        assert result.shape == (2,)
+        assert np.all(np.isnan(result))
+
+    def test_quantile_int_overflow(self):
+        # Signed integer overflow
+        a = np.array([32767, -1], dtype=np.int16)
+        assert np.quantile(a, 0.5) == 16383.0
+
+        # Unsigned integer
+        b = np.array([0, 65535], dtype=np.uint16)
+        assert np.quantile(b, 0.5) == 32767.5
+
+        # Large integers
+        c = np.array([np.iinfo(np.int32).max, np.iinfo(np.int32).min], dtype=np.int32)
+        expected = (np.iinfo(np.int32).max + np.iinfo(np.int32).min) / 2.0
+        assert np.quantile(c, 0.5) == expected
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
