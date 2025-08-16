@@ -5942,8 +5942,9 @@ class MaskedArray(ndarray):
         # No explicit output
         if out is None:
             result = self.filled(fill_value).min(
-                axis=axis, out=out, **kwargs).view(type(self))
-            if result.ndim:
+                axis=axis, out=out, **kwargs)
+            if isinstance(result, ndarray) and result.ndim:
+                result = result.view(type(self))
                 # Set the mask
                 result.__setmask__(newmask)
                 # Get rid of Infs
@@ -6047,8 +6048,9 @@ class MaskedArray(ndarray):
         # No explicit output
         if out is None:
             result = self.filled(fill_value).max(
-                axis=axis, out=out, **kwargs).view(type(self))
-            if result.ndim:
+                axis=axis, out=out, **kwargs)
+            if isinstance(result, ndarray) and result.ndim:
+                result = result.view(type(self))
                 # Set the mask
                 result.__setmask__(newmask)
                 # Get rid of Infs
