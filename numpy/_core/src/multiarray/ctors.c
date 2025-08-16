@@ -1508,6 +1508,12 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
+    /*
+     * The internal implementation treats 0 as actually wanting a zero-dimensional
+     * array, but the API for this function has typically treated it as
+     * "anything is fine", so convert here.
+     * TODO: should we use another value as a placeholder instead?
+     */
     if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
         max_depth = NPY_MAXDIMS;
     }
@@ -1802,6 +1808,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         return NULL;
     }
 
+    /* See comment in PyArray_FromAny for rationale */
     if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
         max_depth = NPY_MAXDIMS;
     }
