@@ -4452,5 +4452,12 @@ Enumerated Types
 
        Allow any cast, no matter what kind of data loss may occur.
 
+    .. c:enumerator:: NPY_SAME_VALUE_CASTING
+
+       Allow any cast, but error if any values change during the cast. Currently
+       supported only in ``ndarray.astype(... casting='same_value')``
+
+       .. versionadded:: 2.4
+
 .. index::
    pair: ndarray; C-API

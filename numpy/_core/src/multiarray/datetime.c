@@ -1261,6 +1261,8 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
                 return (src_unit <= dst_unit);
             }
 
+        case NPY_SAME_VALUE_CASTING:
+            return 0;
         /* Enforce equality with 'no' or 'equiv' casting */
         default:
             return src_unit == dst_unit;
@@ -1302,6 +1304,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
          * 'safe' casting.
          */
         case NPY_SAFE_CASTING:
+        case NPY_SAME_VALUE_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
                 return src_unit == NPY_FR_GENERIC;
             }
@@ -1334,6 +1337,7 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
                                              casting);
 
         case NPY_SAFE_CASTING:
+        case NPY_SAME_VALUE_CASTING:
             return can_cast_datetime64_units(src_meta->base, dst_meta->base,
                                                              casting) &&
                    datetime_metadata_divides(src_meta, dst_meta, 0);
@@ -1361,6 +1365,7 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                                              casting);
 
         case NPY_SAFE_CASTING:
+        case NPY_SAME_VALUE_CASTING:
             return can_cast_timedelta64_units(src_meta->base, dst_meta->base,
                                                              casting) &&
                    datetime_metadata_divides(src_meta, dst_meta, 1);

@@ -2910,8 +2910,6 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  * TODO: Expand the view functionality for general offsets, not just 0:
  *       Partial casts could be skipped also for `view_offset != 0`.
  *
- * The `out_needs_api` flag must be initialized.
- *
  * NOTE: In theory casting errors here could be slightly misleading in case
  *       of a multi-step casting scenario. It should be possible to improve
  *       this in the future.
@@ -3428,11 +3426,13 @@ PyArray_CastRawArrays(npy_intp count,
     /* Cast */
     char *args[2] = {src, dst};
     npy_intp strides[2] = {src_stride, dst_stride};
-    cast_info.func(&cast_info.context, args, &count, strides, cast_info.auxdata);
+    int result = cast_info.func(&cast_info.context, args, &count, strides, cast_info.auxdata);
 
     /* Cleanup */
     NPY_cast_info_xfree(&cast_info);
-
+    if (result < 0) {
+        return NPY_FAIL;
+    }
     if (flags & NPY_METH_REQUIRES_PYAPI && PyErr_Occurred()) {
         return NPY_FAIL;
     }
