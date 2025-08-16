@@ -224,9 +224,8 @@ def _prepare_sources(mname, sources, bdir):
     return extended_sources
 
 def _prepare_objects(mname, objects, bdir):
-    #extended_sources = sources.copy()
     Path(bdir).mkdir(parents=True, exist_ok=True)
-    # Copy sources
+    # Copy objects
     for obj in objects:
         if Path(obj).exists() and Path(obj).is_file():
             shutil.copy(obj, bdir)
