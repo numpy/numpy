@@ -1572,7 +1572,7 @@ _array_fromobject_generic(
 
     if (ndmin > ndmax) {
         PyErr_Format(PyExc_ValueError,
-                "ndmin must be <= ndmax (=%d)", ndmax);
+                "ndmin must be <= ndmax (%d)", ndmax);
         goto finish;
     }
     /* fast exit if simple call */
