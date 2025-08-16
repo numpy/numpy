@@ -14,7 +14,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot']
+           'matrix_norm', 'vector_norm', 'vecdot', 'weighted_gram_matrix']
 
 import functools
 import operator
@@ -3659,3 +3659,102 @@ def vecdot(x1, x2, /, *, axis=-1):
 
     """
     return _core_vecdot(x1, x2, axis=axis)
+
+
+def _weighted_gram_matrix_dispatcher(X, *, weights=None):
+    return (X, weights)
+
+
+@array_function_dispatch(_weighted_gram_matrix_dispatcher)
+def weighted_gram_matrix(X, *, weights=None):
+    """
+    Compute the weighted Gram matrix.
+
+    This function computes X.T @ W @ X where X is an array and W is a
+    diagonal weight matrix. When weights is None, it computes the standard
+    Gram matrix X.T @ X. For arrays with more than 2 dimensions, the
+    computation is applied to the last two axes.
+
+    Parameters
+    ----------
+    X : array_like, shape (..., M, N)
+        Input matrix with M observations and N features. When X has more than
+        2 dimensions, the computation is applied to the last two axes.
+    weights : array_like, shape (..., M,), optional
+        Weights for each observation. If None, all weights are 1.
+        When X has more than 2 dimensions, the shape of weights should match
+        the shape of X except for the last dimension.
+
+    Returns
+    -------
+    G : ndarray, shape (..., N, N)
+        The weighted Gram matrix. The result is symmetric.
+
+    Notes
+    -----
+    This function provides an efficient implementation of the weighted
+    Gram matrix computation that avoids the explicit construction of the
+    diagonal weight matrix. It uses the identity:
+
+    X.T @ diag(weights) @ X = (X.T * weights) @ X
+
+    For performance-critical applications with large matrices, consider using
+    specialized libraries like tabmat which provide optimized implementations
+    of the sandwich product (equivalent to the weighted Gram matrix).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> weights = np.array([1, 2, 3])
+    >>> np.linalg.weighted_gram_matrix(X, weights=weights)
+    array([[ 94, 116],
+           [116, 144]])
+
+    >>> # Without weights
+    >>> np.linalg.weighted_gram_matrix(X)
+    array([[ 35,  44],
+           [ 44,  56]])
+
+    >>> # With higher-dimensional arrays
+    >>> X = np.random.rand(2, 3, 4)  # 2 arrays of shape (3, 4)
+    >>> G = np.linalg.weighted_gram_matrix(X)  # Shape (2, 4, 4)
+    >>> G.shape
+    (2, 4, 4)
+
+    """
+    X = asanyarray(X)
+
+    if X.ndim < 2:
+        raise ValueError("X must be at least a 2-D array")
+
+    if weights is None:
+        # Standard Gram matrix X.T @ X
+        # For arrays with more than 2 dimensions, transpose the last two axes
+        if X.ndim > 2:
+            # Use swapaxes to transpose the last two dimensions
+            return _core_matmul(swapaxes(X, -2, -1), X)
+        else:
+            return _core_matmul(X.T, X)
+
+    weights = asanyarray(weights)
+
+    if weights.ndim < 1:
+        raise ValueError("weights must be at least a 1-D array")
+
+    # Check that weights shape matches X shape except for the last dimension
+    if weights.shape != X.shape[:-1]:
+        raise ValueError(
+            "weights must have shape matching X.shape[:-1], "
+            f"but got {weights.shape} and {X.shape[:-1]}"
+        )
+
+    # Use the optimized computation: (X.T * weights) @ X
+    # This avoids creating the full diagonal matrix diag(weights)
+    # For arrays with more than 2 dimensions, transpose the last two axes
+    if X.ndim > 2:
+        # Reshape weights to match the transposed X for broadcasting
+        weights_reshaped = weights[..., None, :]
+        return _core_matmul(swapaxes(X, -2, -1) * weights_reshaped, X)
+    else:
+        return _core_matmul((X.T * weights[..., None, :]), X)
