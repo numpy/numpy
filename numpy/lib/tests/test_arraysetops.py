@@ -726,7 +726,10 @@ class TestUnique:
 
         # test for ticket #2799
         aa = [1. + 0.j, 1 - 1.j, 1]
-        assert_array_equal(np.unique(aa), [1. - 1.j, 1. + 0.j])
+        assert_array_equal(
+            np.sort(np.unique(aa)),
+            [1. - 1.j, 1.],
+        )
 
         # test for ticket #4785
         a = [(1, 2), (1, 2), (2, 3)]
@@ -761,7 +764,8 @@ class TestUnique:
         ua_idx = [2, 0, 1]
         ua_inv = [1, 2, 0, 2]
         ua_cnt = [1, 1, 2]
-        assert_equal(np.unique(a), ua)
+        # order of unique values is not guaranteed
+        assert_equal(np.sort(np.unique(a)), np.sort(ua))
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
@@ -772,7 +776,8 @@ class TestUnique:
         ua_idx = [2, 0, 3]
         ua_inv = [1, 2, 0, 2, 2]
         ua_cnt = [1, 1, 3]
-        assert_equal(np.unique(a), ua)
+        # order of unique values is not guaranteed
+        assert_equal(np.sort(np.unique(a)), np.sort(ua))
         assert_equal(np.unique(a, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(a, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
@@ -1226,8 +1231,14 @@ class TestUnique:
             )
         ]:
             assert len(res_unique_array_api) == len(res_unique)
+            if not isinstance(res_unique_array_api, tuple):
+                res_unique_array_api = (res_unique_array_api,)
+            if not isinstance(res_unique, tuple):
+                res_unique = (res_unique,)
+
             for actual, expected in zip(res_unique_array_api, res_unique):
-                assert_array_equal(actual, expected)
+                # Order of output is not guaranteed
+                assert_equal(np.sort(actual), np.sort(expected))
 
     def test_unique_inverse_shape(self):
         # Regression test for https://github.com/numpy/numpy/issues/25552
