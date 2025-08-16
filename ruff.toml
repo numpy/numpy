@@ -21,25 +21,26 @@ line-ending = "lf"
 [lint]
 preview = true
 extend-select = [
-    "B",
-    "C4",
-    "ISC",
-    "LOG",
-    "G",
-    "PIE",
-    "TID",
-    "FLY",
-    "I",
-    "PD",
-    "PERF",
-    "E",
-    "W",
-    "PGH",
-    "PLE",
-    "UP",
-    "Q",
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "ISC",  # flake8-implicit-str-concat
+    "LOG",  # flake8-logging
+    "G",    # flake8-logging-format
+    "PIE",  # flake8-pie
+    "Q",    # flake8-quotes
+    "TID",  # flake8-tidy-imports
+    "FLY",  # flynt
+    "I",    # isort
+    "PD",   # pandas-vet
+    "PERF", # perflint
+    "E",    # pycodestyle/error
+    "W",    # pycodestyle/warning
+    "PGH",  # pygrep-hooks
+    "PLE",  # pylint/error
+    "UP",   # pyupgrade
 ]
 ignore = [
+    # flake8-bugbear
     "B006",    # Do not use mutable data structures for argument defaults
     "B007",    # Loop control variable not used within loop body
     "B011",    # Do not `assert False` (`python -O` removes these calls), raise `AssertionError()`
@@ -47,11 +48,17 @@ ignore = [
     "B028",    # No explicit `stacklevel` keyword argument found
     "B904",    # Within an `except` clause distinguish raised exceptions from errors in exception handling
     "B905",    #`zip()` without an explicit `strict=` parameter
+    # flake8-comprehensions
     "C408",    # Unnecessary `dict()` call (rewrite as a literal)
+    # flake8-implicit-str-concat
     "ISC002",  # Implicitly concatenated string literals over multiple lines
+    # flake8-pie
     "PIE790",  # Unnecessary `pass` statement
+    # pandas-vet
     "PD901",   # Avoid using the generic variable name `df` for DataFrames
+    # perflint
     "PERF401", # Use a list comprehension to create a transformed list
+    # pycodestyle/error
     "E241",    # Multiple spaces after comma
     "E265",    # Block comment should start with `# `
     "E266",    # Too many leading `#` before block comment
@@ -61,10 +68,12 @@ ignore = [
     "E721",    # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
     "E731",    # Do not assign a `lambda` expression, use a `def`
     "E741",    # Ambiguous variable name
+    # pyflakes
     "F403",    # `from ... import *` used; unable to detect undefined names
     "F405",    # may be undefined, or defined from star imports
     "F821",    # Undefined name
     "F841",    # Local variable is assigned to but never used
+    # pyupgrade
     "UP015" ,  # Unnecessary mode argument
     "UP031",   # TODO: Use format specifiers instead of percent format
 ]
