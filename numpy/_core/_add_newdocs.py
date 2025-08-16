@@ -806,7 +806,7 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 add_newdoc('numpy._core.multiarray', 'array',
     """
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-          like=None)
+          ndmax=None, like=None)
 
     Create an array.
 
@@ -855,6 +855,15 @@ add_newdoc('numpy._core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be prepended to the shape as
         needed to meet this requirement.
+    ndmax : int, optional
+        Specifies the maximum number of dimensions to create when inferring
+        shape from nested sequences. By default, NumPy recurses through all
+        nesting levels (up to the compile-time constant ``NPY_MAXDIMS``).
+        Setting ``ndmax`` stops recursion at the specified depth, preserving
+        deeper nested structures as objects instead of promoting them to
+        higher-dimensional arrays. In this case, ``dtype=object`` is required.
+
+        .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -925,6 +934,21 @@ add_newdoc('numpy._core.multiarray', 'array',
     >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
+
+    Limiting the maximum dimensions with ``ndmax``:
+
+    >>> a = np.array([[1, 2], [3, 4]], dtype=object, ndmax=2)
+    >>> a
+    array([[1, 2],
+           [3, 4]], dtype=object)
+    >>> a.shape
+    (2, 2)
+
+    >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+    >>> b
+    array([list([1, 2]), list([3, 4])], dtype=object)
+    >>> b.shape
+    (2,)
 
     """)
 
