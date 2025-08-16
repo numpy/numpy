@@ -681,8 +681,6 @@ def test_ndindex_empty_shape():
     assert list(np.ndindex(())) == [()]
 
 def test_ndindex_negative_dim_raises():
-    import numpy as np
-    import pytest
     # ndindex(-1) should raise a ValueError
     with pytest.raises(ValueError):
         list(np.ndindex(-1))
