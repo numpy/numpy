@@ -441,57 +441,62 @@ def empty_like(
 @overload
 def array(
     object: _ArrayT,
-    dtype: None = ...,
+    dtype: None = None,
     *,
-    copy: bool | _CopyMode | None = ...,
-    order: _OrderKACF = ...,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
     subok: L[True],
-    ndmin: int = ...,
-    like: _SupportsArrayFunc | None = ...,
+    ndmin: int = 0,
+    ndmax: int | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _ArrayT: ...
 @overload
 def array(
     object: _SupportsArray[_ArrayT],
-    dtype: None = ...,
+    dtype: None = None,
     *,
-    copy: bool | _CopyMode | None = ...,
-    order: _OrderKACF = ...,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
     subok: L[True],
-    ndmin: L[0] = ...,
-    like: _SupportsArrayFunc | None = ...,
+    ndmin: L[0] = 0,
+    ndmax: int | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _ArrayT: ...
 @overload
 def array(
     object: _ArrayLike[_ScalarT],
-    dtype: None = ...,
+    dtype: None = None,
     *,
-    copy: bool | _CopyMode | None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: _SupportsArrayFunc | None = ...,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def array(
     object: Any,
     dtype: _DTypeLike[_ScalarT],
     *,
-    copy: bool | _CopyMode | None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: _SupportsArrayFunc | None = ...,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def array(
     object: Any,
-    dtype: DTypeLike | None = ...,
+    dtype: DTypeLike | None = None,
     *,
-    copy: bool | _CopyMode | None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: _SupportsArrayFunc | None = ...,
+    copy: bool | _CopyMode | None = True,
+    order: _OrderKACF = "K",
+    subok: bool = False,
+    ndmin: int = 0,
+    ndmax: int | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
 #
