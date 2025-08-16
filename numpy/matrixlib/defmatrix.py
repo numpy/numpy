@@ -215,9 +215,9 @@ class matrix(N.ndarray):
             except Exception:
                 n = 0
             if n > 1 and isscalar(index[1]):
-                out.shape = (sh, 1)
+                out = out.reshape((sh, 1))
             else:
-                out.shape = (1, sh)
+                out = out.reshape((1, sh))
         return out
 
     def __mul__(self, other):
