@@ -11,6 +11,8 @@ from __future__ import annotations
 import operator
 from typing import Any, cast
 
+import pytest
+
 import numpy as np
 import numpy.typing as npt
 
@@ -190,11 +192,11 @@ A_void["yap"] = A_float[:, 1]
 
 # deprecated
 
-with np.testing.assert_warns(DeprecationWarning):
+with pytest.deprecated_call():
     ctypes_obj.get_data()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-with np.testing.assert_warns(DeprecationWarning):
+with pytest.deprecated_call():
     ctypes_obj.get_shape()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-with np.testing.assert_warns(DeprecationWarning):
+with pytest.deprecated_call():
     ctypes_obj.get_strides()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-with np.testing.assert_warns(DeprecationWarning):
+with pytest.deprecated_call():
     ctypes_obj.get_as_parameter()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]

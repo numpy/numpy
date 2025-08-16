@@ -24,7 +24,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, deprecated
 from unittest.case import SkipTest
 
 import numpy as np
@@ -148,6 +148,7 @@ class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]): 
     @overload  # record; bool
     def __init__(self, /, record: bool, modules: _ToModules = ()) -> None: ...
 
+@deprecated("Please use warnings.filterwarnings or pytest.mark.filterwarnings instead")
 class suppress_warnings:
     log: Final[_WarnLog]
     def __init__(self, /, forwarding_rule: L["always", "module", "once", "location"] = "always") -> None: ...
@@ -358,8 +359,10 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 #
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
 def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
 

@@ -1,0 +1,6 @@
+Assertion and warning control utilities are deprecated
+------------------------------------------------------
+
+`np.testing.assert_warns` and `np.testing.suppress_warnings` are deprecated.
+Use `warnings.catch_warnings`, `warnings.filterwarnings`, ``pytest.warns``, or
+``pytest.filterwarnings`` instead.
