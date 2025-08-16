@@ -220,6 +220,9 @@ if HAVE_SCPDT:
         'basics.dispatch.rst': 'errors out in /testing/overrides.py',
         'basics.subclassing.rst': '.. testcode:: admonitions not understood',
         'misc.rst': 'manipulates warnings',
+        'arrays.nditer.cython.rst': 'uses non-python syntax',
+        'distutils.rst': '',
+        'coremath.rst': 'numpy.distutils does not exis'
     }
 
     # ignores are for things fail doctest collection (optionals etc)

@@ -242,7 +242,7 @@ def check_tutorials(*, parent_callback, pytest_args, **kwargs):
     #   - `spin check-tutorials path/to/rst`, and
     #   - `spin check-tutorials path/to/rst -- --durations=3`
     if (not pytest_args) or all(arg.startswith('-') for arg in pytest_args):
-        pytest_args = ('doc/source/user',) + pytest_args
+        pytest_args = ('doc/source/user', 'doc/source/reference/') + pytest_args
 
     # make all paths relative to the numpy source folder
     pytest_args = tuple(
