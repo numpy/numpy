@@ -971,7 +971,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         'C' row-major (C-style),
         'F' column-major (Fortran-style) memory representation.
         'A' (any) means 'F' if `a` is Fortran contiguous in memory and a copy
-        is made, 'C' otherwise. 'A' preserves the layout of existing arrays 
+        is made, 'C' otherwise. 'A' preserves the layout of existing arrays
         when no copy is needed.
         'K' (keep) preserve input order
         Defaults to 'K'.
@@ -1074,7 +1074,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         'C' row-major (C-style),
         'F' column-major (Fortran-style) memory representation.
         'A' (any) means 'F' if `a` is Fortran contiguous in memory and a copy
-        is made, 'C' otherwise. 'A' preserves the layout of existing arrays 
+        is made, 'C' otherwise. 'A' preserves the layout of existing arrays
         when no copy is needed.
         'K' (keep) preserve input order
         Defaults to 'C'.
