@@ -970,7 +970,9 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         Memory layout.  'A' and 'K' depend on the order of input array a.
         'C' row-major (C-style),
         'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'A' (any) means 'F' if `a` is Fortran contiguous in memory and a copy
+        is made, 'C' otherwise. 'A' preserves the layout of existing arrays 
+        when no copy is needed.
         'K' (keep) preserve input order
         Defaults to 'K'.
     device : str, optional
@@ -1042,6 +1044,15 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     >>> np.asanyarray(a) is a
     True
 
+    The `order='A'` parameter preserves existing array layout when possible:
+
+    >>> f_array = np.array([[1, 2], [3, 4]], order='F')
+    >>> result = np.asarray(f_array, order='A')
+    >>> result is f_array
+    True
+    >>> result.flags.f_contiguous
+    True
+
     """)
 
 add_newdoc('numpy._core.multiarray', 'asanyarray',
@@ -1062,7 +1073,9 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
         Memory layout.  'A' and 'K' depend on the order of input array a.
         'C' row-major (C-style),
         'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
+        'A' (any) means 'F' if `a` is Fortran contiguous in memory and a copy
+        is made, 'C' otherwise. 'A' preserves the layout of existing arrays 
+        when no copy is needed.
         'K' (keep) preserve input order
         Defaults to 'C'.
     device : str, optional
