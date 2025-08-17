@@ -716,6 +716,11 @@ def polyval(x, c, tensor=True):
     Notes
     -----
     The evaluation uses Horner's method.
+    
+    .. warning::
+   When using coefficients from polynomials created with ``Polynomial.fit()``,
+   use ``p(x)`` or ``polyval(x, p.convert().coef)`` to handle domain/window
+   scaling correctly, not ``polyval(x, p.coef)``.
 
     Examples
     --------
