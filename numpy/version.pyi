@@ -1,12 +1,12 @@
 from typing import Final, LiteralString
 
 __all__ = (
-    '__version__',
-    'full_version',
-    'git_revision',
-    'release',
-    'short_version',
-    'version',
+    "__version__",
+    "full_version",
+    "git_revision",
+    "release",
+    "short_version",
+    "version",
 )
 
 version: Final[LiteralString]

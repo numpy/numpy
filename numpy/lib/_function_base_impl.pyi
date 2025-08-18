@@ -107,7 +107,7 @@ _ScalarT2 = TypeVar("_ScalarT2", bound=generic)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray)
 
 _2Tuple: TypeAlias = tuple[_T, _T]
-_MeshgridIdx: TypeAlias = L['ij', 'xy']
+_MeshgridIdx: TypeAlias = L["ij", "xy"]
 
 @type_check_only
 class _TrimZerosSequence(Protocol[_T_co]):
