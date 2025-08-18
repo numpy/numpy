@@ -15,8 +15,8 @@ template <typename T>
 struct OpGt {
     using Degraded = std::conditional_t<std::is_same_v<T, long double>, OpGt<double>, OpGt<T>>;
 #if NPY_HWY
-    template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) { 
+    template <typename D = T, typename = std::enable_if_t<kSupportLane<D>>, typename V = Vec<D>>
+    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const { 
         return hn::Gt(a, b);
     }
 #endif
@@ -33,8 +33,8 @@ template <typename T>
 struct OpLt {
     using Degraded = std::conditional_t<std::is_same_v<T, long double>, OpLt<double>, OpLt<T>>;
 #if NPY_HWY
-    template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) { 
+    template <typename D = T, typename = std::enable_if_t<kSupportLane<D>>, typename V = Vec<D>>
+    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const { 
         return hn::Lt(a, b); 
     }
 #endif
