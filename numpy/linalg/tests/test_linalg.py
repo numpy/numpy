@@ -2619,9 +2619,9 @@ class TestWeightedGramMatrix:
     def test_medium_matrix_performance(self):
         """Test performance with a medium-sized matrix (1000x500)."""
         # Create test data
-        np.random.seed(42)
-        X = np.random.rand(1000, 500)
-        weights = np.random.rand(1000)
+        rng = np.random.default_rng(42)
+        X = rng.random((1000, 500))
+        weights = rng.random(1000)
 
         # Compute the result
         result = np.linalg.weighted_gram_matrix(X, weights=weights)
@@ -2636,9 +2636,9 @@ class TestWeightedGramMatrix:
     def test_large_matrix_performance(self):
         """Test performance with a large matrix (2000x500)."""
         # Create test data
-        np.random.seed(42)
-        X = np.random.rand(2000, 500)
-        weights = np.random.rand(2000)
+        rng = np.random.default_rng(42)
+        X = rng.random((2000, 500))
+        weights = rng.random(2000)
 
         # Compute the result
         result = np.linalg.weighted_gram_matrix(X, weights=weights)

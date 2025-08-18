@@ -3739,16 +3739,13 @@ def weighted_gram_matrix(X, *, weights=None):
     X = asanyarray(X)
 
     if X.ndim < 2:
-        raise ValueError("X must be at least a 2-D array")
+        raise LinAlgError(f"{X.ndim}-dimensional array given. Array must be at least two-dimensional")
 
     if weights is None:
         # Standard Gram matrix X.T @ X over the last two axes
         return _core_matmul(swapaxes(X, -2, -1), X)
 
     weights = asanyarray(weights)
-
-    if weights.ndim < 1:
-        raise ValueError("weights must be at least a 1-D array")
 
     # Check that weights shape matches X shape except for the last dimension
     if weights.shape != X.shape[:-1]:
