@@ -13,10 +13,11 @@ using namespace np::simd;
 
 template <typename T>
 struct OpGt {
+    using Degraded = std::conditional_t<std::is_same_v<T, long double>, OpGt<double>, OpGt<T>>;
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
     HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) { 
-        return hn::Gt(a, b); 
+        return hn::Gt(a, b);
     }
 #endif
     HWY_INLINE bool operator()(T a, T b) {
@@ -30,6 +31,7 @@ struct OpGt {
 
 template <typename T>
 struct OpLt {
+    using Degraded = std::conditional_t<std::is_same_v<T, long double>, OpLt<double>, OpLt<T>>;
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
     HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) { 
@@ -296,7 +298,7 @@ simd_argfunc_large(T *ip, npy_intp len)
 }
 #endif   //NPY_HWY
 
-template <typename T, typename Op>
+template <typename T, typename Op, typename D = std::conditional_t<std::is_same_v<T, long double>, double, T>>
 HWY_INLINE HWY_ATTR  int
 arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
 {
@@ -313,10 +315,10 @@ arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
 #if NPY_HWY
     if constexpr (kSupportLane<T>) {
         if constexpr (sizeof(T) <= 2) {
-            *mindx = simd_argfunc_small<T, Op>(ip, n);
+            *mindx = simd_argfunc_small<D, typename Op::Degraded>(ip, n);
             return 0;
         } else {
-            *mindx = simd_argfunc_large<T, Op>(ip, n);
+            *mindx = simd_argfunc_large<D, typename Op::Degraded>(ip, n);
             return 0;
         }
     }
