@@ -337,7 +337,7 @@ arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
         if constexpr (sizeof(T) <= 2) {
             *mindx = simd_argfunc_small<T, Op>(ip, n);
             return 0;
-        } else {
+        } else if constexpr (sizeof(long double) != sizeof(double) || !std::is_same_v<T, long double>) {
             *mindx = simd_argfunc_large<T, Op>(ip, n);
             return 0;
         }
@@ -383,23 +383,13 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                         
     return 0;                                                                                       \
 }
 
-#if NPY_SIZEOF_LONGDOUBLE != NPY_SIZEOF_DOUBLE
-    #define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
-    NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
-    (long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
-    {                                                                                  \
-        arg_max_min_func<long double, Op##INTR<long double>>(ip, n, max_ind);          \
-        return 0;                                                                      \
-    }
-#else
-    #define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
-    NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
-    (long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
-    {                                                                                  \
-        arg_max_min_func<double, Op##INTR<double>>(reinterpret_cast<double*>(ip), n, max_ind); \
-        return 0;                                                                               \
-    }
-#endif
+#define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
+(long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
+{                                                                                  \
+    arg_max_min_func<long double, Op##INTR<long double>>(ip, n, max_ind);          \
+    return 0;                                                                      \
+}
 
 DEFINE_ARGFUNC_INNER_FUNCTION(UBYTE,     argmax, Gt, npy_ubyte)
 DEFINE_ARGFUNC_INNER_FUNCTION(USHORT,    argmax, Gt, npy_ushort)
@@ -437,31 +427,34 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(BOOL_argmax)
 {
     npy_intp i = 0;
 #if NPY_HWY
-    const auto zero  = Zero<uint8_t>();
-    const int vstep  = Lanes<uint8_t>();
-    const int wstep  = vstep * 4;
-    for (npy_intp n = len & -wstep; i < n; i += wstep) {
-        auto a = LoadU(ip + i + vstep*0);
-        auto b = LoadU(ip + i + vstep*1);
-        auto c = LoadU(ip + i + vstep*2);
-        auto d = LoadU(ip + i + vstep*3);
-        auto m_a  = hn::Eq(a, zero);
-        auto m_b  = hn::Eq(b, zero);
-        auto m_c  = hn::Eq(c, zero);
-        auto m_d  = hn::Eq(d, zero);
-        auto m_ab = hn::And(m_a, m_b);
-        auto m_cd = hn::And(m_c, m_d);
+    constexpr int simd_width = kMaxLanes<uint8_t>;
+    if constexpr(simd_width <= 64){
+	const auto zero  = Zero<uint8_t>();
+	const int vstep  = Lanes<uint8_t>();
+	const int wstep  = vstep * 4;
+	for (npy_intp n = len & -wstep; i < n; i += wstep) {
+	    auto a = LoadU(ip + i + vstep*0);
+	    auto b = LoadU(ip + i + vstep*1);
+	    auto c = LoadU(ip + i + vstep*2);
+	    auto d = LoadU(ip + i + vstep*3);
+	    auto m_a  = hn::Eq(a, zero);
+	    auto m_b  = hn::Eq(b, zero);
+	    auto m_c  = hn::Eq(c, zero);
+	    auto m_d  = hn::Eq(d, zero);
+	    auto m_ab = hn::And(m_a, m_b);
+	    auto m_cd = hn::And(m_c, m_d);
 
-        npy_uint64 m = 0;
-        hn::StoreMaskBits(_Tag<uint8_t>(), hn::And(m_ab, m_cd), (uint8_t*)&m);
+	    npy_uint64 m = 0;
+	    hn::StoreMaskBits(_Tag<uint8_t>(), hn::And(m_ab, m_cd), (uint8_t*)&m);
 
-        if constexpr (kMaxLanes<uint8_t> == 64) {
-            if (m != NPY_MAX_UINT64)
-                break;
-        }else if constexpr(kMaxLanes<uint8_t> < 64){
-            if ((npy_int64)m != ((1LL << vstep) - 1))
-                break;
-        }
+	    if constexpr (simd_width == 64) {
+		if (m != NPY_MAX_UINT64)
+		    break;
+	    }else if constexpr(simd_width < 64){
+		if ((npy_int64)m != ((1LL << vstep) - 1))
+		    break;
+	    }
+	}
     }
 
 #endif  // NPY_HWY
