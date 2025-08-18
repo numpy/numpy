@@ -3,9 +3,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "npy_cpu_dispatch.h"
-#if NPY__CPU_TARGET_INDEX == 0
-#define HWY_COMPILE_ONLY_SCALAR 1
-#endif
 
 #include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
