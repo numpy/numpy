@@ -3757,12 +3757,6 @@ def weighted_gram_matrix(X, *, weights=None):
             f"but got {weights.shape} and {X.shape[:-1]}"
         )
 
-    # Use the optimized computation: (X.T * weights) @ X
+    # Apply the optimized computation (X.T * weights) @ X over the last two axes
     # This avoids creating the full diagonal matrix diag(weights)
-    # For arrays with more than 2 dimensions, transpose the last two axes
-    if X.ndim > 2:
-        # Reshape weights to match the transposed X for broadcasting
-        weights_reshaped = weights[..., None, :]
-        return _core_matmul(swapaxes(X, -2, -1) * weights_reshaped, X)
-    else:
-        return _core_matmul((X.T * weights[..., None, :]), X)
+    return _core_matmul(swapaxes(X, -2, -1) * weights[..., None, :], X)
