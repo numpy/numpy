@@ -2853,6 +2853,12 @@ static PyMethodDef numbertype_methods[] = {
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
 
+static PyMethodDef booleantype_methods[] = {
+        /* for typing */
+        {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+        {NULL, NULL, 0, NULL} /* sentinel */
+};
+
 /**begin repeat
  * #name = cfloat,clongdouble#
  */
@@ -4571,6 +4577,7 @@ initialize_numeric_types(void)
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
     PyBoolArrType_Type.tp_repr = genbool_type_repr;
+    PyBoolArrType_Type.tp_methods = booleantype_methods;
 
 
     /**begin repeat

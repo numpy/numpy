@@ -4,7 +4,7 @@ Test the scalar constructors, which also do type-coercion
 import fractions
 import platform
 import types
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -171,8 +171,12 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        with pytest.raises(TypeError):
-            cls[Any]
+        if cls == np.bool:
+            # np.bool allows subscript
+            assert cls[Any]
+        else:
+            with pytest.raises(TypeError):
+                cls[Any]
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
@@ -185,6 +189,10 @@ class TestClassGetItem:
 
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
+
+    @pytest.mark.parametrize("subscript", [Literal[True], Literal[False]])
+    def test_subscript_bool(self, subscript: Literal[True, False]) -> None:
+        assert isinstance(np.bool[subscript], types.GenericAlias)
 
 
 class TestBitCount:
