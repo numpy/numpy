@@ -13,7 +13,7 @@
 #include "loops_utils.h"
 #include "loops.h"
 #include "fast_loop_macros.h"
-#include "simd/simd.h"
+#include "simd/simd.hpp"
 #include "lowlevel_strided_loops.h"
 #include "common.hpp"
 
@@ -21,11 +21,10 @@
 #include <limits>
 #include <cstdio>
 
-#include <hwy/highway.h>
-namespace hn = hwy::HWY_NAMESPACE;
-
-HWY_BEFORE_NAMESPACE();
-namespace HWY_NAMESPACE {
+using namespace np::simd;
+#if NPY_HWY
+namespace hn = np::simd::hn;
+#endif
 
 // Helper function to set float status
 inline void set_float_status(bool overflow, bool divbyzero) {
@@ -36,13 +35,15 @@ inline void set_float_status(bool overflow, bool divbyzero) {
         npy_set_floatstatus_divbyzero();
     }
 }
-#if NPY_SIMD
-// Signed integer division
+#if NPY_HWY
+
+// Signed integer  DIVIDE  by scalar
+
 template <typename T>
 void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len) {
-    using D = hn::ScalableTag<T>;
+    using D = _Tag<T>;
     const D d;
-    const size_t N = hn::Lanes(d);
+    const size_t N = Lanes(T{});
 
     bool raise_overflow = false;
     bool raise_divbyzero = false;
@@ -59,13 +60,13 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
         }
     }
     else if (scalar == static_cast<T>(-1)) {
-        const auto vec_min_val = hn::Set(d, std::numeric_limits<T>::min());
+        const auto vec_min_val = Set(static_cast<T>(std::numeric_limits<T>::min()));
         size_t i = 0;
         for (; i + N <= static_cast<size_t>(len); i += N) {
-            const auto vec_src = hn::LoadU(d, src + i);
-            const auto is_min_val = hn::Eq(vec_src, vec_min_val);
+            const auto vec_src = LoadU(src + i);
+            const auto is_min_val = Eq(vec_src, vec_min_val);
             const auto vec_res = hn::IfThenElse(is_min_val, vec_min_val, hn::Neg(vec_src));
-            hn::StoreU(vec_res, d, dst + i);
+            StoreU(vec_res, dst + i);
             if (!raise_overflow && !hn::AllFalse(d, is_min_val)) {
                 raise_overflow = true;
             }
@@ -83,21 +84,21 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     }
     else {
         // General case with floor division semantics
-        const auto vec_scalar = hn::Set(d, scalar);
-        const auto vec_zero = hn::Zero(d);
-        const auto one = hn::Set(d, static_cast<T>(1));
+        const auto vec_scalar = Set(scalar);
+        const auto vec_zero = Zero<T>();
+        const auto one = Set(static_cast<T>(1));
         size_t i = 0;
         
         for (; i + N <= static_cast<size_t>(len); i += N) {
-            const auto vec_src = hn::LoadU(d, src + i);
-            auto vec_div = hn::Div(vec_src, vec_scalar);
-            const auto vec_mul = hn::Mul(vec_div, vec_scalar);
-            const auto eq_mask = hn::Eq(vec_src, vec_mul);
-            const auto diff_signs = hn::Lt(hn::Xor(vec_src, vec_scalar), vec_zero);
-            const auto adjust = hn::AndNot(eq_mask, diff_signs);
+            const auto vec_src = LoadU(src + i);
+            auto vec_div = Div(vec_src, vec_scalar);
+            const auto vec_mul = Mul(vec_div, vec_scalar);
+            const auto eq_mask = Eq(vec_src, vec_mul);
+            const auto diff_signs = Lt(Xor(vec_src, vec_scalar), vec_zero);
+            const auto adjust = AndNot(eq_mask, diff_signs);
             
             vec_div = hn::MaskedSubOr(vec_div, adjust, vec_div, one);
-            hn::StoreU(vec_div, d, dst + i);
+            StoreU(vec_div, dst + i);
         }
         
         // Handle remaining elements with scalar code
@@ -113,13 +114,12 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     set_float_status(raise_overflow, raise_divbyzero);
 }
 
-// Unsigned integer division
+// Unsigned integer  DIVIDE  by scalar
+
 template <typename T>
 void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp len) {
-    using D = hn::ScalableTag<T>;
-    const D d;
-    const size_t N = hn::Lanes(d);
 
+    const size_t N = Lanes(T{});
     bool raise_divbyzero = false;
 
     if (scalar == 0) {
@@ -134,12 +134,12 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
         }
     }
     else {
-        const auto vec_scalar = hn::Set(d, scalar);
+        const auto vec_scalar = Set(scalar);
         size_t i = 0;
         for (; i + N <= static_cast<size_t>(len); i += N) {
-            const auto vec_src = hn::LoadU(d, src + i);
-            const auto vec_res = hn::Div(vec_src, vec_scalar);
-            hn::StoreU(vec_res, d, dst + i);
+            const auto vec_src = LoadU(src + i);
+            const auto vec_res = Div(vec_src, vec_scalar);
+            StoreU(vec_res, dst + i);
         }
         // Handle remaining elements
         for (; i < static_cast<size_t>(len); i++) {
@@ -149,63 +149,45 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
 
     set_float_status(false, raise_divbyzero);
 }
-#endif // NPY_SIMD
-// Floor division for signed integers
-template <typename T>
-T floor_div(T n, T d) {
-    if (HWY_UNLIKELY(d == 0 || (n == std::numeric_limits<T>::min() && d == -1))) {
-        if (d == 0) {
-            npy_set_floatstatus_divbyzero();
-            return 0;
-        }
-        else {
-            npy_set_floatstatus_overflow();
-            return std::numeric_limits<T>::min();
-        }
-    }
-    T r = n / d;
-    if (((n > 0) != (d > 0)) && ((r * d) != n)) {
-        --r;
-    }
-    return r;
-}
 
-// General divide implementation for arrays
+// Signed integer  DIVIDE  array / array
+
 template <typename T>
 void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
-    using D = hn::ScalableTag<T>;
+    using D = _Tag<T>;
     const D d;
-    const size_t N = hn::Lanes(d);
+    const size_t N = Lanes(T{});
+
     bool raise_overflow = false;
     bool raise_divbyzero = false;
-    const auto vec_zero = hn::Zero(d);
-    const auto vec_one = hn::Set(d, static_cast<T>(1));
-    const auto vec_min_val = hn::Set(d, std::numeric_limits<T>::min());
-    const auto vec_neg_one = hn::Set(d, static_cast<T>(-1));
+    const auto vec_zero = Zero<T>();
+    const auto vec_one = Set(static_cast<T>(1));
+    const auto vec_min_val = Set(static_cast<T>(std::numeric_limits<T>::min()));
+    const auto vec_neg_one = Set(static_cast<T>(-1));
 
     size_t i = 0;
     for (; i + N <= static_cast<size_t>(len); i += N) {
-        const auto vec_a = hn::LoadU(d, src1 + i);
-        const auto vec_b = hn::LoadU(d, src2 + i);
+        const auto vec_a = LoadU(src1 + i);
+        const auto vec_b = LoadU(src2 + i);
         
-        const auto b_is_zero = hn::Eq(vec_b, vec_zero);
-        const auto a_is_min = hn::Eq(vec_a, vec_min_val);
-        const auto b_is_neg_one = hn::Eq(vec_b, vec_neg_one);
-        const auto overflow_cond = hn::And(a_is_min, b_is_neg_one);
+        const auto b_is_zero = Eq(vec_b, vec_zero);
+        const auto a_is_min = Eq(vec_a, vec_min_val);
+        const auto b_is_neg_one = Eq(vec_b, vec_neg_one);
+        const auto overflow_cond = And(a_is_min, b_is_neg_one);
         
-        const auto safe_div_mask = hn::Not(hn::Or(b_is_zero, overflow_cond));
-        const auto safe_b = hn::IfThenElse(hn::Or(b_is_zero, overflow_cond), vec_one, vec_b);
+        const auto safe_div_mask = hn::Not(Or(b_is_zero, overflow_cond));
+        const auto safe_b = hn::IfThenElse(Or(b_is_zero, overflow_cond), vec_one, vec_b);
         
-        auto vec_div = hn::Div(vec_a, safe_b);
+        auto vec_div = Div(vec_a, safe_b);
         
         if (!hn::AllFalse(d, safe_div_mask)) {
-            const auto vec_mul = hn::Mul(vec_div, safe_b);
+            const auto vec_mul = Mul(vec_div, safe_b);
             const auto has_remainder = hn::Ne(vec_a, vec_mul);
-            const auto a_sign = hn::Lt(vec_a, vec_zero);
-            const auto b_sign = hn::Lt(vec_b, vec_zero);
-            const auto different_signs = hn::Xor(a_sign, b_sign);
-            const auto needs_adjustment = hn::And(safe_div_mask,
-                                                 hn::And(has_remainder, different_signs));
+            const auto a_sign = Lt(vec_a, vec_zero);
+            const auto b_sign = Lt(vec_b, vec_zero);
+            const auto different_signs = Xor(a_sign, b_sign);
+            const auto needs_adjustment = And(safe_div_mask,
+                                                And(has_remainder, different_signs));
             
             vec_div = hn::MaskedSubOr(vec_div, needs_adjustment, vec_div, vec_one);
         }
@@ -213,7 +195,7 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
         vec_div = hn::IfThenElse(b_is_zero, vec_zero, vec_div);
         vec_div = hn::IfThenElse(overflow_cond, vec_min_val, vec_div);
         
-        hn::StoreU(vec_div, d, dst + i);
+        StoreU(vec_div, dst + i);
         
         if (!raise_divbyzero && !hn::AllFalse(d, b_is_zero)) {
             raise_divbyzero = true;
@@ -249,30 +231,32 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
     set_float_status(raise_overflow, raise_divbyzero);
 }
 
-// Unsigned division for arrays
+// Unsigned integer  DIVIDE  array / array
+
 template <typename T>
 void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
-    using D = hn::ScalableTag<T>;
+    using D = _Tag<T>;
     const D d;
-    const size_t N = hn::Lanes(d);
+    const size_t N = Lanes(T{});
+
     bool raise_divbyzero = false;
-    const auto vec_zero = hn::Zero(d);
-    const auto vec_one = hn::Set(d, static_cast<T>(1));
+    const auto vec_zero = Zero<T>();
+    const auto vec_one = Set(static_cast<T>(1));
 
     size_t i = 0;
     for (; i + N <= static_cast<size_t>(len); i += N) {
-        const auto vec_a = hn::LoadU(d, src1 + i);
-        const auto vec_b = hn::LoadU(d, src2 + i);
+        const auto vec_a = LoadU(src1 + i);
+        const auto vec_b = LoadU(src2 + i);
 
-        const auto b_is_zero = hn::Eq(vec_b, vec_zero);
+        const auto b_is_zero = Eq(vec_b, vec_zero);
         
         const auto safe_b = hn::IfThenElse(b_is_zero, vec_one, vec_b);
         
-        auto vec_div = hn::Div(vec_a, safe_b);
+        auto vec_div = Div(vec_a, safe_b);
         
         vec_div = hn::IfThenElse(b_is_zero, vec_zero, vec_div);
         
-        hn::StoreU(vec_div, d, dst + i);
+        StoreU(vec_div, dst + i);
         
         if (!raise_divbyzero && !hn::AllFalse(d, b_is_zero)) {
             raise_divbyzero = true;
@@ -296,6 +280,29 @@ void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
     set_float_status(false, raise_divbyzero);
 }
 
+#endif // NPY_HWY
+
+// Floor division for signed integers
+template <typename T>
+T floor_div(T n, T d) {
+    if (NPY_UNLIKELY(d == 0 || (n == std::numeric_limits<T>::min() && d == -1))) {
+        if (d == 0) {
+            npy_set_floatstatus_divbyzero();
+            return 0;
+        }
+        else {
+            npy_set_floatstatus_overflow();
+            return std::numeric_limits<T>::min();
+        }
+    }
+    T r = n / d;
+    if (((n > 0) != (d > 0)) && ((r * d) != n)) {
+        --r;
+    }
+    return r;
+}
+
+
 // Dispatch functions for signed integer division
 template <typename T>
 void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) {
@@ -303,10 +310,10 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
     if (IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP(T) {
             const T divisor = *reinterpret_cast<T*>(ip2);
-            if (HWY_UNLIKELY(divisor == 0)) {
+            if (NPY_UNLIKELY(divisor == 0)) {
                 npy_set_floatstatus_divbyzero();
                 io1 = 0;
-            } else if (HWY_UNLIKELY(io1 == std::numeric_limits<T>::min() && divisor == -1)) {
+            } else if (NPY_UNLIKELY(io1 == std::numeric_limits<T>::min() && divisor == -1)) {
                 npy_set_floatstatus_overflow();
                 io1 = std::numeric_limits<T>::min();
             } else {
@@ -316,7 +323,8 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
         *reinterpret_cast<T*>(iop1) = io1;
         return;
     }
-#if NPY_SIMD
+
+#if NPY_HWY
     // Handle array-array case
     if (IS_BLOCKABLE_BINARY(sizeof(T), NPY_SIMD_WIDTH)) 
     {
@@ -343,18 +351,19 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
             return;
         }
     }
-#endif // NPY_SIMD
+#endif // NPY_HWY
 
+    // Scalar fallback
     // Fallback for non-blockable, in-place, or zero divisor cases
     BINARY_LOOP {
         const T dividend = *reinterpret_cast<T*>(ip1);
         const T divisor = *reinterpret_cast<T*>(ip2);
         T* result = reinterpret_cast<T*>(op1);
 
-        if (HWY_UNLIKELY(divisor == 0)) {
+        if (NPY_UNLIKELY(divisor == 0)) {
             npy_set_floatstatus_divbyzero();
             *result = 0;
-        } else if (HWY_UNLIKELY(dividend == std::numeric_limits<T>::min() && divisor == -1)) {
+        } else if (NPY_UNLIKELY(dividend == std::numeric_limits<T>::min() && divisor == -1)) {
             npy_set_floatstatus_overflow();
             *result = std::numeric_limits<T>::min();
         } else {
@@ -370,7 +379,7 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
     if (IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP(T) {
             const T d = *reinterpret_cast<T*>(ip2);
-            if (HWY_UNLIKELY(d == 0)) {
+            if (NPY_UNLIKELY(d == 0)) {
                 npy_set_floatstatus_divbyzero();
                 io1 = 0;
             } else {
@@ -380,7 +389,7 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
         *reinterpret_cast<T*>(iop1) = io1;
         return;
     }
-#if NPY_SIMD
+#if NPY_HWY
     // Handle array-array case
     if (IS_BLOCKABLE_BINARY(sizeof(T), NPY_SIMD_WIDTH)) {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]) &&
@@ -406,13 +415,13 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
             return;
         }
     }
-#endif // NPY_SIMD
+#endif // NPY_HWY
 
     // Fallback for non-blockable, in-place, or zero divisor cases
     BINARY_LOOP {
         const T in1 = *reinterpret_cast<T*>(ip1);
         const T in2 = *reinterpret_cast<T*>(ip2);
-        if (HWY_UNLIKELY(in2 == 0)) {
+        if (NPY_UNLIKELY(in2 == 0)) {
             npy_set_floatstatus_divbyzero();
             *reinterpret_cast<T*>(op1) = 0;
         } else {
@@ -465,7 +474,7 @@ int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
         T* indexed = (T*)(ip1 + is1 * indx);
         T divisor = *(T*)value;
 
-        if (HWY_UNLIKELY(divisor == 0)) {
+        if (NPY_UNLIKELY(divisor == 0)) {
             npy_set_floatstatus_divbyzero();
             *indexed = 0;
         } else {
@@ -524,6 +533,3 @@ int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
 
 #undef DEFINE_DIVIDE_FUNCTION
 #undef DEFINE_DIVIDE_FUNCTION_UNSIGNED
-
-} // namespace HWY_NAMESPACE
-HWY_AFTER_NAMESPACE();
