@@ -2044,7 +2044,8 @@ def assert_warns(warning_class, *args, **kwargs):
     warnings.warn(
         "NumPy warning suppression and assertion utilities are deprecated. "
         "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
-        "or pytest.filterwarnings instead.", DeprecationWarning, stacklevel=2)
+        "or pytest.filterwarnings instead. (Deprecated NumPy 2.4)",
+        DeprecationWarning, stacklevel=2)
     if not args and not kwargs:
         return _assert_warns_context(warning_class)
     elif len(args) < 1:
@@ -2367,7 +2368,8 @@ class suppress_warnings:
             warnings.warn(
                 "NumPy warning suppression and assertion utilities are deprecated. "
                 "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
-                "or pytest.filterwarnings instead.", DeprecationWarning, stacklevel=2)
+                "or pytest.filterwarnings instead. (Deprecated NumPy 2.4)",
+                DeprecationWarning, stacklevel=2)
         self._entered = False
 
         # Suppressions are either instance or defined inside one with block:
