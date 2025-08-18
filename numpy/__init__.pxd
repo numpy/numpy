@@ -165,7 +165,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SAFE_CASTING
         NPY_SAME_KIND_CASTING
         NPY_UNSAFE_CASTING
-        NPY_SAME_VALUE_CASTING
+        NPY_SAME_VALUE_CASTING_FLAG  # A flag not an enum, but part of casting
 
     ctypedef enum NPY_CLIPMODE:
         NPY_CLIP

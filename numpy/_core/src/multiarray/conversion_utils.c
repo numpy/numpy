@@ -942,7 +942,7 @@ static int casting_parser_full(char const *str, Py_ssize_t length, void *data, i
             return 0;
         }
         if (can_use_same_value && length == 10 && strcmp(str, "same_value") == 0) {
-            *casting = NPY_SAME_VALUE_CASTING;
+            *casting = NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
             return 0;
         }
         break;

@@ -845,7 +845,7 @@ array_astype(PyArrayObject *self,
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
     int success;
-    if (casting == NPY_SAME_VALUE_CASTING) {
+    if (((int)casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
         success = PyArray_AssignArray(ret, self, NULL, casting);
     } else {
         success = PyArray_AssignArray(ret, self, NULL, NPY_UNSAFE_CASTING);

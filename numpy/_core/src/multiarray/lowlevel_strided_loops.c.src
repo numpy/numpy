@@ -979,7 +979,7 @@ static GCC_CAST_OPT_LEVEL int
 
     /* printf("@prefix@_cast_@name1@_to_@name2@\n"); */
 #if !@is_bool2@
-    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CASTING) == NPY_SAME_VALUE_CASTING);
+    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CASTING_FLAG) == NPY_SAME_VALUE_CASTING_FLAG);
 #endif
 
     while (N--) {

@@ -132,7 +132,8 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (same_value_cast) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+        /* reuse, should the value be different? */
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING_FLAG;
     }
 
     /* Ensure number of elements exceeds threshold for threading */
@@ -242,7 +243,8 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         return -1;
     }
     if (same_value_cast) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+        /* reuse, should the value be different? */
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING_FLAG;
     }
 
     if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
@@ -446,7 +448,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     int aligned =
         copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst)) &&
         copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(src), PyArray_DATA(src), src_strides);
-    int flags = ((NPY_SAME_VALUE_CASTING == casting) << 1) | aligned;
+    int flags = (((NPY_SAME_VALUE_CASTING_FLAG & casting) > 0) << 1) | aligned;
 
     if (wheremask == NULL) {
         /* A straightforward value assignment */

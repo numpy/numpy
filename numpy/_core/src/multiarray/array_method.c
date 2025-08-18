@@ -185,14 +185,17 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting) {
+    switch ((int)spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
         case NPY_SAME_KIND_CASTING:
         case NPY_UNSAFE_CASTING:
-        case NPY_SAME_VALUE_CASTING:
-        case NPY_SAME_VALUE_SAME_KIND_CASTING:
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
             break;
         default:
             if (spec->casting != -1) {
@@ -671,10 +674,11 @@ boundarraymethod__resolve_descripors(
         if (!parametric) {
             /*
              * Non-parametric can only mismatch if it switches from equiv to no
-             * (e.g. due to byteorder changes).
+             * (e.g. due to byteorder changes). Throw away same_value casting flag
              */
+            int method_casting = self->method->casting & ~NPY_SAME_VALUE_CASTING_FLAG;
             if (cast != self->method->casting &&
-                    self->method->casting != NPY_EQUIV_CASTING) {
+                    method_casting != NPY_EQUIV_CASTING) {
                 PyErr_Format(PyExc_RuntimeError,
                         "resolve_descriptors cast level changed even though "
                         "the cast is non-parametric where the only possible "

@@ -77,11 +77,10 @@ class Casting(enum.IntEnum):
     safe = 2
     same_kind = 3
     unsafe = 4
-    same_value_same_kind = 8 | 3
-    same_value = 8 | 4
+    same_value = 64
 
 
-same_value_dtypes = tuple(type(np.dtype(c)) for c in "bhilqBHILQefdgFDG")
+same_value_dtypes = tuple(type(np.dtype(c)) for c in "?bhilqBHILQefdgFDG")
 
 def _get_cancast_table():
     table = textwrap.dedent("""
@@ -124,10 +123,7 @@ def _get_cancast_table():
             cancast[from_dt][to_dt] = convert_cast[c]
             # Of the types checked, numeric cast support same-value
             if from_dt in same_value_dtypes and to_dt in same_value_dtypes:
-                if cancast[from_dt][to_dt] == Casting.unsafe:
-                    cancast[from_dt][to_dt] = Casting.same_value
-                if cancast[from_dt][to_dt] == Casting.same_kind:
-                    cancast[from_dt][to_dt] = Casting.same_value_same_kind
+                cancast[from_dt][to_dt] |= Casting.same_value
 
     return cancast
 
@@ -283,9 +279,11 @@ class TestCasting:
                     if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
-                        assert casting == Casting.no
-                        # The above table lists this as "equivalent"
-                        assert Casting.equiv == CAST_TABLE[from_Dt][to_Dt]
+                        assert casting == Casting.no | Casting.same_value
+                        # The above table lists this as "equivalent", perhaps
+                        # with "same_value"
+                        v = CAST_TABLE[from_Dt][to_Dt] & ~Casting.same_value
+                        assert Casting.equiv == v
                         # Note that to_res may not be the same as from_dt
                         assert from_res.isnative == to_res.isnative
                     else:
@@ -315,7 +313,7 @@ class TestCasting:
             to_dt = to_dt.values[0]
             cast = get_castingimpl(type(from_dt), type(to_dt))
 
-            print("from_dt", from_dt, "to_dt", to_dt)
+            # print("from_dt", from_dt, "to_dt", to_dt)
             casting, (from_res, to_res), view_off = cast._resolve_descriptors(
                 (from_dt, to_dt))
 
@@ -329,9 +327,9 @@ class TestCasting:
 
             arr1, arr2, values = self.get_data(from_dt, to_dt)
 
-            print("2", arr1, arr2, cast)
+            # print("2", arr1, arr2, cast)
             cast._simple_strided_call((arr1, arr2))
-            print("3")
+            # print("3")
 
             # Check via python list
             assert arr2.tolist() == values
