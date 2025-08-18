@@ -3742,13 +3742,8 @@ def weighted_gram_matrix(X, *, weights=None):
         raise ValueError("X must be at least a 2-D array")
 
     if weights is None:
-        # Standard Gram matrix X.T @ X
-        # For arrays with more than 2 dimensions, transpose the last two axes
-        if X.ndim > 2:
-            # Use swapaxes to transpose the last two dimensions
-            return _core_matmul(swapaxes(X, -2, -1), X)
-        else:
-            return _core_matmul(X.T, X)
+        # Standard Gram matrix X.T @ X over the last two axes
+        return _core_matmul(swapaxes(X, -2, -1), X)
 
     weights = asanyarray(weights)
 
