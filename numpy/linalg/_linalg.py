@@ -3739,7 +3739,9 @@ def weighted_gram_matrix(X, *, weights=None):
     X = asanyarray(X)
 
     if X.ndim < 2:
-        raise LinAlgError(f"{X.ndim}-dimensional array given. Array must be at least two-dimensional")
+        raise LinAlgError(
+            f"{X.ndim}-dimensional array given. Array must be at least two-dimensional"
+        )
 
     if weights is None:
         # Standard Gram matrix X.T @ X over the last two axes
