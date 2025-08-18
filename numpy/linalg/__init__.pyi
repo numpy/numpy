@@ -67,7 +67,7 @@ __all__ = [
     "trace",
     "vecdot",
     "vector_norm",
-    "weighted_gram_matrix"
+    "weighted_gram_matrix",
 ]
 
 class LinAlgError(ValueError): ...
