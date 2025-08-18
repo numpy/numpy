@@ -20,3 +20,8 @@ assert_type(np.pad(AR_LIKE, (2, 3), "constant"), npt.NDArray[Any])
 
 assert_type(np.pad(AR_f8, (2, 3), mode_func), npt.NDArray[np.float64])
 assert_type(np.pad(AR_f8, (2, 3), mode_func, a=1, b=2), npt.NDArray[np.float64])
+
+assert_type(np.pad(AR_i8, {-1: (2, 3)}), npt.NDArray[np.int64])
+assert_type(np.pad(AR_i8, {-2: 4}), npt.NDArray[np.int64])
+pad_width: dict[int, int | tuple[int, int]] = {-1: (2, 3), -2: 4}
+assert_type(np.pad(AR_i8, pad_width), npt.NDArray[np.int64])
