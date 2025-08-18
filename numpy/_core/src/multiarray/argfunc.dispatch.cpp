@@ -28,17 +28,6 @@ struct OpGt {
     }
 };
 
-template <>
-struct OpGt<long double> {
-    HWY_INLINE bool operator()(long double a, long double b) {
-        return a > b; 
-    }
-
-    HWY_INLINE bool negated_op(long double a, long double b) {
-        return a <= b;
-    }
-};
-
 template <typename T>
 struct OpLt {
 #if NPY_HWY
@@ -52,17 +41,6 @@ struct OpLt {
     }
 
     HWY_INLINE bool negated_op(T a, T b) {
-        return a >= b;
-    }
-};
-
-template <>
-struct OpLt<long double> {
-    HWY_INLINE bool operator()(long double a, long double b) {
-        return a < b; 
-    }
-
-    HWY_INLINE bool negated_op(long double a, long double b) {
         return a >= b;
     }
 };
@@ -337,7 +315,7 @@ arg_max_min_func(T *ip, npy_intp n, npy_intp *mindx)
         if constexpr (sizeof(T) <= 2) {
             *mindx = simd_argfunc_small<T, Op>(ip, n);
             return 0;
-        } else if constexpr (sizeof(long double) != sizeof(double) || !std::is_same_v<T, long double>) {
+        } else {
             *mindx = simd_argfunc_large<T, Op>(ip, n);
             return 0;
         }

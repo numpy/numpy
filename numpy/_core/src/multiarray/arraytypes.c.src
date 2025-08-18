@@ -3428,39 +3428,6 @@ static int
 
 #define VOID_argmin NULL
 
-/**begin repeat
- * #func = argmax, argmin#
- * #iop = <, >#
- */
-NPY_NO_EXPORT int
-LONGDOUBLE_@func@(npy_longdouble *ip, npy_intp n, npy_intp *mindx, PyArrayObject *NPY_UNUSED(aip))
-{
-    if (npy_isnan(*ip)) {
-        // nan encountered; it's maximal|minimal
-        *mindx = 0;
-        return 0;
-    }
-
-    npy_longdouble mp = *ip;
-    *mindx = 0;
-    npy_intp i = 1;
-
-    for (; i < n; ++i) {
-        npy_longdouble a = ip[i];
-        if (!(a @iop@= mp)) {  // negated, for correct nan handling
-            mp = a;
-            *mindx = i;
-            if (npy_isnan(mp)) {
-                // nan encountered, it's maximal|minimal
-                break;
-            }
-        }
-    }
-
-    return 0;
-}
-/**end repeat**/
-
 /*
  *****************************************************************************
  **                                  DOT                                    **
