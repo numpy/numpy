@@ -516,3 +516,22 @@ class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
             arr.flat[[1.]] = 10
 
         self.assert_deprecated(assign_to_index)
+
+
+class TestWarningUtilityDeprecations(_DeprecationTestCase):
+    # Deprecation in NumPy 2.4, 2025-08
+    message = r"NumPy warning suppression and assertion utilities are deprecated."
+
+    def test_assert_warns_deprecated(self):
+        def use_assert_warns():
+            with np.testing.assert_warns(RuntimeWarning):
+                warnings.warn("foo", RuntimeWarning, stacklevel=1)
+
+        self.assert_deprecated(use_assert_warns)
+
+    def test_suppress_warnings_deprecated(self):
+        def use_suppress_warnings():
+            with np.testing.suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, 'invalid value encountered in divide')
+
+        self.assert_deprecated(use_suppress_warnings)
