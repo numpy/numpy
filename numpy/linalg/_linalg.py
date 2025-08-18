@@ -3668,61 +3668,74 @@ def _weighted_gram_matrix_dispatcher(X, *, weights=None):
 @array_function_dispatch(_weighted_gram_matrix_dispatcher)
 def weighted_gram_matrix(X, *, weights=None):
     """
-    Compute the weighted Gram matrix.
+    Compute the weighted Gram matrix (sandwich product).
 
-    This function computes X.T @ W @ X where X is an array and W is a
-    diagonal weight matrix. When weights is None, it computes the standard
-    Gram matrix X.T @ X. For arrays with more than 2 dimensions, the
-    computation is applied to the last two axes.
+    Computes the matrix product::
+
+        G = X.T @ diag(weights) @ X
+
+    When ``weights`` is not provided, computes the standard Gram matrix::
+
+        G = X.T @ X
+
+    For arrays with more than 2 dimensions, the computation is applied to the
+    last two axes.
 
     Parameters
     ----------
     X : array_like, shape (..., M, N)
-        Input matrix with M observations and N features. When X has more than
-        2 dimensions, the computation is applied to the last two axes.
-    weights : array_like, shape (..., M,), optional
-        Weights for each observation. If None, all weights are 1.
-        When X has more than 2 dimensions, the shape of weights should match
-        the shape of X except for the last dimension.
+        Input array containing ``M`` observations in the second-to-last dimension
+        and ``N`` features in the last dimension. For higher-dimensional inputs,
+        the computation is broadcast over the leading dimensions.
+    weights : array_like, shape (..., M), optional
+        Weights vector corresponding to the observations. Must be broadcastable
+        to the shape of ``X`` excluding the last dimension (``X.shape[:-1]``).
+        If None (default), uses unit weights (equivalent to standard Gram matrix).
 
     Returns
     -------
     G : ndarray, shape (..., N, N)
-        The weighted Gram matrix. The result is symmetric.
+        The weighted Gram matrix. The result is always symmetric and positive
+        semi-definite when weights are non-negative.
 
     Notes
     -----
-    This function provides an efficient implementation of the weighted
-    Gram matrix computation that avoids the explicit construction of the
-    diagonal weight matrix. It uses the identity:
+    This implementation efficiently computes the weighted Gram matrix without
+    explicitly constructing the diagonal weight matrix, using the identity::
 
-    X.T @ diag(weights) @ X = (X.T * weights) @ X
+        X.T @ diag(weights) @ X = (X.T * weights) @ X
 
-    For performance-critical applications with large matrices, consider using
-    specialized libraries like tabmat which provide optimized implementations
-    of the sandwich product (equivalent to the weighted Gram matrix).
+    Performance considerations:
+    - For small matrices (M < 1000), this implementation is efficient.
+    - For large matrices (M > 5000), consider specialized libraries like
+      ``tabmat`` that provide optimized implementations of sandwich products.
+    - When operating on higher-dimensional arrays, intermediate results may
+      require significant memory.
 
     Examples
     --------
     >>> import numpy as np
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> weights = np.array([1, 2, 3])
+
+    >>> # Weighted Gram matrix
     >>> np.linalg.weighted_gram_matrix(X, weights=weights)
     array([[ 94, 116],
            [116, 144]])
 
-    >>> # Without weights
+    >>> # Standard Gram matrix (no weights)
     >>> np.linalg.weighted_gram_matrix(X)
-    array([[ 35,  44],
-           [ 44,  56]])
+    array([[35, 44],
+           [44, 56]])
 
-    >>> # With higher-dimensional arrays
-    >>> X = np.random.rand(2, 3, 4)  # 2 arrays of shape (3, 4)
-    >>> G = np.linalg.weighted_gram_matrix(X)  # Shape (2, 4, 4)
+    >>> # Higher-dimensional input
+    >>> X_3d = np.random.rand(2, 3, 4)  # 2 matrices of shape (3, 4)
+    >>> weights_3d = np.array([[1, 2, 3], [4, 5, 6]])  # Shape (2, 3)
+    >>> G = np.linalg.weighted_gram_matrix(X_3d, weights=weights_3d)
     >>> G.shape
     (2, 4, 4)
-
     """
+
     X = asanyarray(X)
 
     if X.ndim < 2:
