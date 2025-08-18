@@ -383,14 +383,6 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                         
     return 0;                                                                                       \
 }
 
-#define DEFINE_ARGFUNC_INNER_FUNCTION_LD(TYPE, KIND, INTR)                         \
-NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                            \
-(long double *ip, npy_intp n, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))   \
-{                                                                                  \
-    arg_max_min_func<long double, Op##INTR<long double>>(ip, n, max_ind);          \
-    return 0;                                                                      \
-}
-
 DEFINE_ARGFUNC_INNER_FUNCTION(UBYTE,     argmax, Gt, npy_ubyte)
 DEFINE_ARGFUNC_INNER_FUNCTION(USHORT,    argmax, Gt, npy_ushort)
 DEFINE_ARGFUNC_INNER_FUNCTION(UINT,      argmax, Gt, npy_uint)
@@ -415,12 +407,65 @@ DEFINE_ARGFUNC_INNER_FUNCTION(LONG,      argmin, Lt, npy_long)
 DEFINE_ARGFUNC_INNER_FUNCTION(LONGLONG,  argmin, Lt, npy_longlong)
 DEFINE_ARGFUNC_INNER_FUNCTION(FLOAT,     argmin, Lt, npy_float)
 DEFINE_ARGFUNC_INNER_FUNCTION(DOUBLE,    argmin, Lt, npy_double)
-DEFINE_ARGFUNC_INNER_FUNCTION_LD(LONGDOUBLE, argmax, Gt)
-DEFINE_ARGFUNC_INNER_FUNCTION_LD(LONGDOUBLE, argmin, Lt)
 
 #undef DEFINE_ARGFUNC_INNER_FUNCTION
-#undef DEFINE_ARGFUNC_INNER_FUNCTION_LD
 
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(LONGDOUBLE_argmax)
+(npy_longdouble *ip, npy_intp n, npy_intp *mindx, PyArrayObject *NPY_UNUSED(aip))
+{
+    if (npy_isnan(*ip)) {
+        // nan encountered; it's maximal|minimal
+        *mindx = 0;
+        return 0;
+    }
+
+    npy_longdouble mp = *ip;
+    *mindx = 0;
+    npy_intp i = 1;
+
+    for (; i < n; ++i) {
+        npy_longdouble a = ip[i];
+        if (!(a <= mp)) {  // negated, for correct nan handling
+            mp = a;
+            *mindx = i;
+            if (npy_isnan(mp)) {
+                // nan encountered, it's maximal|minimal
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(LONGDOUBLE_argmin)
+(npy_longdouble *ip, npy_intp n, npy_intp *mindx, PyArrayObject *NPY_UNUSED(aip))
+{
+    if (npy_isnan(*ip)) {
+        // nan encountered; it's maximal|minimal
+        *mindx = 0;
+        return 0;
+    }
+
+    npy_longdouble mp = *ip;
+    *mindx = 0;
+    npy_intp i = 1;
+
+    for (; i < n; ++i) {
+        npy_longdouble a = ip[i];
+        if (!(a >= mp)) {  // negated, for correct nan handling
+            mp = a;
+            *mindx = i;
+            if (npy_isnan(mp)) {
+                // nan encountered, it's maximal|minimal
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
 
 NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(BOOL_argmax)
 (npy_bool *ip, npy_intp len, npy_intp *max_ind, PyArrayObject *NPY_UNUSED(aip))
