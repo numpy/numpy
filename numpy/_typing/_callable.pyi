@@ -365,5 +365,4 @@ class _ComparisonOpGE(Protocol[_T1_contra, _T2_contra]):
 @type_check_only
 class _CanAdd(Protocol[_T1_contra, _T2_co]):
     """Protocol for objects that can perform addition operations."""
-    @overload
     def __add__(self, other: _T1_contra, /) -> _T2_co: ...
