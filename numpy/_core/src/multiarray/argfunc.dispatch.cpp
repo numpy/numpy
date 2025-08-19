@@ -222,6 +222,12 @@ simd_argfunc_large(T *ip, npy_intp len)
 
                 npy_uint64 nnan = 0;
                 hn::StoreMaskBits(_Tag<T>(), hn::And(nnan_ab, nnan_cd), (uint8_t*)&nnan);
+#if HWY_IS_BIG_ENDIAN
+                static_assert(kMaxLanes<T> <= 8,
+                      "This conversion is not supported for SIMD widths "
+                      "larger than 256 bits.");
+                nnan = ((uint8_t *)&nnan)[0];
+#endif
 
                 if ((unsigned long long int)nnan != ((1ULL << vstep) - 1)) {
                     npy_uint64 nnan_4[4];
@@ -229,6 +235,12 @@ simd_argfunc_large(T *ip, npy_intp len)
                     hn::StoreMaskBits(_Tag<T>(), nnan_b, (uint8_t*)&(nnan_4[1]));
                     hn::StoreMaskBits(_Tag<T>(), nnan_c, (uint8_t*)&(nnan_4[2]));
                     hn::StoreMaskBits(_Tag<T>(), nnan_d, (uint8_t*)&(nnan_4[3]));
+#if HWY_IS_BIG_ENDIAN
+                    nnan_4[0] = ((uint8_t *)&nnan_4[0])[0];
+                    nnan_4[1] = ((uint8_t *)&nnan_4[1])[0];
+                    nnan_4[2] = ((uint8_t *)&nnan_4[2])[0];
+                    nnan_4[3] = ((uint8_t *)&nnan_4[3])[0];
+#endif
                     for (int ni = 0; ni < 4; ++ni) {
                         for (int vi = 0; vi < vstep; ++vi) {
                             if (!((nnan_4[ni] >> vi) & 1)) {
@@ -253,6 +265,9 @@ simd_argfunc_large(T *ip, npy_intp len)
 
                 npy_uint64 nnan = 0;
                 hn::StoreMaskBits(_Tag<T>(), nnan_a, (uint8_t*)&nnan);
+#if HWY_IS_BIG_ENDIAN
+                nnan = ((uint8_t *)&nnan)[0];
+#endif
 
                 if ((unsigned long long int)nnan != ((1ULL << vstep) - 1)) {
                     for (int vi = 0; vi < vstep; ++vi) {
@@ -466,32 +481,32 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(BOOL_argmax)
 #if NPY_HWY
     constexpr int simd_width = kMaxLanes<uint8_t>;
     if constexpr(simd_width <= 64){
-	const auto zero  = Zero<uint8_t>();
-	const int vstep  = Lanes<uint8_t>();
-	const int wstep  = vstep * 4;
-	for (npy_intp n = len & -wstep; i < n; i += wstep) {
-	    auto a = LoadU(ip + i + vstep*0);
-	    auto b = LoadU(ip + i + vstep*1);
-	    auto c = LoadU(ip + i + vstep*2);
-	    auto d = LoadU(ip + i + vstep*3);
-	    auto m_a  = hn::Eq(a, zero);
-	    auto m_b  = hn::Eq(b, zero);
-	    auto m_c  = hn::Eq(c, zero);
-	    auto m_d  = hn::Eq(d, zero);
-	    auto m_ab = hn::And(m_a, m_b);
-	    auto m_cd = hn::And(m_c, m_d);
+        const auto zero  = Zero<uint8_t>();
+        const int vstep  = Lanes<uint8_t>();
+        const int wstep  = vstep * 4;
+        for (npy_intp n = len & -wstep; i < n; i += wstep) {
+            auto a = LoadU(ip + i + vstep*0);
+            auto b = LoadU(ip + i + vstep*1);
+            auto c = LoadU(ip + i + vstep*2);
+            auto d = LoadU(ip + i + vstep*3);
+            auto m_a  = hn::Eq(a, zero);
+            auto m_b  = hn::Eq(b, zero);
+            auto m_c  = hn::Eq(c, zero);
+            auto m_d  = hn::Eq(d, zero);
+            auto m_ab = hn::And(m_a, m_b);
+            auto m_cd = hn::And(m_c, m_d);
 
-	    npy_uint64 m = 0;
-	    hn::StoreMaskBits(_Tag<uint8_t>(), hn::And(m_ab, m_cd), (uint8_t*)&m);
+            npy_uint64 m = 0;
+            hn::StoreMaskBits(_Tag<uint8_t>(), hn::And(m_ab, m_cd), (uint8_t*)&m);
 
-	    if constexpr (simd_width == 64) {
-		if (m != NPY_MAX_UINT64)
-		    break;
-	    }else if constexpr(simd_width < 64){
-		if ((npy_int64)m != ((1LL << vstep) - 1))
-		    break;
-	    }
-	}
+            if constexpr (simd_width == 64) {
+                if (m != NPY_MAX_UINT64)
+                    break;
+            }else if constexpr(simd_width < 64){
+                if ((npy_int64)m != ((1LL << vstep) - 1))
+                    break;
+            }
+        }
     }
 
 #endif  // NPY_HWY
