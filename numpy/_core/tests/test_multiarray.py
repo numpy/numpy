@@ -1279,6 +1279,79 @@ class TestCreation:
         assert_array_equal(arr1, arr2)
         assert arr2.dtype == dtype
 
+    def test_ndmax_less_than_actual_dims_dtype_object(self):
+        data = [[1, 2, 3], [4, 5, 6]]
+        arr = np.array(data, ndmax=1, dtype=object)
+        assert arr.ndim == 1
+        assert arr.shape == (2,)
+        assert arr.dtype == object
+
+        data = [[1, 2, 3], [4, 5]]
+        arr = np.array(data, ndmax=1, dtype=object)
+        assert arr.ndim == 1
+        assert arr.shape == (2,)
+        assert arr.dtype == object
+
+        data = [[[1], [2]], [[3], [4]]]
+        arr = np.array(data, ndmax=2, dtype=object)
+        assert arr.ndim == 2
+        assert arr.shape == (2, 2)
+        assert arr.dtype == object
+
+    def test_ndmax_equal_to_actual_dims(self):
+        data = [[1, 2], [3, 4]]
+        arr = np.array(data, ndmax=2)
+        assert arr.ndim == 2
+        assert_array_equal(arr, np.array(data))
+
+    def test_ndmax_greater_than_actual_dims(self):
+        data = [[1, 2], [3, 4]]
+        arr = np.array(data, ndmax=3)
+        assert arr.ndim == 2
+        assert_array_equal(arr, np.array(data))
+
+    def test_ndmax_less_than_actual_dims(self):
+        data = [[[1], [2]], [[3], [4]]]
+        with pytest.raises(ValueError,
+                           match="setting an array element with a sequence. "
+                                 "The requested array would exceed the maximum number of dimension of 2."):
+            np.array(data, ndmax=2)
+
+    def test_ndmax_is_zero(self):
+        data = [1, 2, 3]
+        arr = np.array(data, ndmax=0, dtype=object)
+        assert arr.ndim == 0
+        assert arr.shape == ()
+        assert arr.dtype == object
+
+        data = [[1, 2, 3], [4, 5, 6]]
+        arr = np.array(data, ndmax=0, dtype=object)
+        assert arr.ndim == 0
+        assert arr.shape == ()
+        assert arr.dtype == object
+
+        data = [[1, 2, 3], [4, 5]]
+        arr = np.array(data, ndmax=0, dtype=object)
+        assert arr.ndim == 0
+        assert arr.shape == ()
+        assert arr.dtype == object
+
+    def test_ndmax_less_than_ndmin(self):
+        data = [[[1], [2]], [[3], [4]]]
+        with pytest.raises(ValueError, match="ndmin must be <= ndmax"):
+            np.array(data, ndmax=1, ndmin=2)
+
+    def test_ndmax_is_negative(self):
+        data = [1, 2, 3]
+        with pytest.raises(ValueError, match="ndmax must be in the range"):
+            np.array(data, ndmax=-1)
+
+    def test_ndmax_greather_than_NPY_MAXDIMS(self):
+        data = [1, 2, 3]
+        # current NPY_MAXDIMS is 64
+        with pytest.raises(ValueError, match="ndmax must be in the range"):
+            np.array(data, ndmax=65)
+
 
 class TestStructured:
     def test_subarray_field_access(self):
