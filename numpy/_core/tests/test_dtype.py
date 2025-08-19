@@ -804,13 +804,14 @@ class TestSubarray:
 
         # Test that _validate_shape_dims catches dimension overflow
         # with the exact original error message
-        max_int = np.iinfo(np.intc).max
+        # Use a value guaranteed to be larger than NPY_MAX_INT (2^31-1 on most platforms)
+        overflow_value = 2**31  # This exceeds NPY_MAX_INT on most platforms
         with pytest.raises(ValueError, match=re.escape("does not fit into a C int")):
-            np.dtype((np.int8, (max_int + 1,)))
+            np.dtype((np.int8, (overflow_value,)))
 
         # Test multiple dimensions, should catch the first overflow
         with pytest.raises(ValueError, match=re.escape("does not fit into a C int")):
-            np.dtype((np.uint16, (1, max_int + 100, 3)))
+            np.dtype((np.uint16, (1, overflow_value + 100, 3)))
 
         # Test that _validate_shape_dims allows all valid dimensions
         valid_test_cases = [
