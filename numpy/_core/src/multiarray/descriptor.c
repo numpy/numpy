@@ -240,6 +240,27 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
     return 0;
 }
 
+/* Helper function to validate shape dimensions for fixed-type tuple */
+static int
+_validate_shape_dims(PyArray_Dims *shape)
+{
+    for (int i = 0; i < shape->len; i++) {
+        if (shape->ptr[i] < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "invalid shape in fixed-type tuple: "
+                            "dimension smaller then zero.");
+            return -1;
+        }
+        if (shape->ptr[i] > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_ValueError,
+                            "invalid shape in fixed-type tuple: "
+                            "dimension does not fit into a C int.");
+            return -1;
+        }
+    }
+    return 0;
+}
+
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
@@ -317,19 +338,8 @@ _convert_from_tuple(PyObject *obj, int align)
         }
 
         /* validate and set shape */
-        for (int i=0; i < shape.len; i++) {
-            if (shape.ptr[i] < 0) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension smaller then zero.");
-                goto fail;
-            }
-            if (shape.ptr[i] > NPY_MAX_INT) {
-                PyErr_SetString(PyExc_ValueError,
-                                "invalid shape in fixed-type tuple: "
-                                "dimension does not fit into a C int.");
-                goto fail;
-            }
+        if (_validate_shape_dims(&shape) < 0) {
+            goto fail;
         }
         npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
