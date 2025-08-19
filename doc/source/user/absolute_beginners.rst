@@ -1740,5 +1740,5 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar* 
+*Image credits: Jay Alammar*
 `https://jalammar.github.io/ <https://jalammar.github.io/>`_
