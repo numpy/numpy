@@ -738,7 +738,7 @@ def full(
     shape: SupportsIndex,
     fill_value: _ScalarT,
     dtype: None = None,
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> _Array[tuple[int], _ScalarT]: ...
 @overload
@@ -746,7 +746,7 @@ def full(
     shape: SupportsIndex,
     fill_value: Any,
     dtype: _DTypeT | _SupportsDType[_DTypeT],
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> np.ndarray[tuple[int], _DTypeT]: ...
 @overload
@@ -754,7 +754,7 @@ def full(
     shape: SupportsIndex,
     fill_value: Any,
     dtype: type[_ScalarT],
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> _Array[tuple[int], _ScalarT]: ...
 @overload
@@ -762,7 +762,7 @@ def full(
     shape: SupportsIndex,
     fill_value: Any,
     dtype: DTypeLike | None = None,
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> _Array[tuple[int], Any]: ...
 # known shape
@@ -771,7 +771,7 @@ def full(
     shape: _AnyShapeT,
     fill_value: _ScalarT,
     dtype: None = None,
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> _Array[_AnyShapeT, _ScalarT]: ...
 @overload
@@ -779,7 +779,7 @@ def full(
     shape: _AnyShapeT,
     fill_value: Any,
     dtype: _DTypeT | _SupportsDType[_DTypeT],
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> np.ndarray[_AnyShapeT, _DTypeT]: ...
 @overload
@@ -787,7 +787,7 @@ def full(
     shape: _AnyShapeT,
     fill_value: Any,
     dtype: type[_ScalarT],
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> _Array[_AnyShapeT, _ScalarT]: ...
 @overload
@@ -795,7 +795,7 @@ def full(
     shape: _AnyShapeT,
     fill_value: Any,
     dtype: DTypeLike | None = None,
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> _Array[_AnyShapeT, Any]: ...
 # unknown shape
@@ -804,7 +804,7 @@ def full(
     shape: _ShapeLike,
     fill_value: _ScalarT,
     dtype: None = None,
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> NDArray[_ScalarT]: ...
 @overload
@@ -812,7 +812,7 @@ def full(
     shape: _ShapeLike,
     fill_value: Any,
     dtype: _DTypeT | _SupportsDType[_DTypeT],
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> np.ndarray[Any, _DTypeT]: ...
 @overload
@@ -820,7 +820,7 @@ def full(
     shape: _ShapeLike,
     fill_value: Any,
     dtype: type[_ScalarT],
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> NDArray[_ScalarT]: ...
 @overload
@@ -828,7 +828,7 @@ def full(
     shape: _ShapeLike,
     fill_value: Any,
     dtype: DTypeLike | None = None,
-    order: _OrderCF = 'C',
+    order: _OrderCF = "C",
     **kwargs: Unpack[_KwargsEmpty],
 ) -> NDArray[Any]: ...
 
@@ -900,98 +900,98 @@ def flatnonzero(a: ArrayLike) -> NDArray[intp]: ...
 def correlate(
     a: _ArrayLike[Never],
     v: _ArrayLike[Never],
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[Any]: ...
 @overload
 def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[np.bool]: ...
 @overload
 def correlate(
     a: _ArrayLikeUInt_co,
     v: _ArrayLikeUInt_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[unsignedinteger]: ...
 @overload
 def correlate(
     a: _ArrayLikeInt_co,
     v: _ArrayLikeInt_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[signedinteger]: ...
 @overload
 def correlate(
     a: _ArrayLikeFloat_co,
     v: _ArrayLikeFloat_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[floating]: ...
 @overload
 def correlate(
     a: _ArrayLikeComplex_co,
     v: _ArrayLikeComplex_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[complexfloating]: ...
 @overload
 def correlate(
     a: _ArrayLikeTD64_co,
     v: _ArrayLikeTD64_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[timedelta64]: ...
 @overload
 def correlate(
     a: _ArrayLikeObject_co,
     v: _ArrayLikeObject_co,
-    mode: _CorrelateMode = 'valid',
+    mode: _CorrelateMode = "valid",
 ) -> NDArray[object_]: ...
 
 @overload
 def convolve(
     a: _ArrayLike[Never],
     v: _ArrayLike[Never],
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[Any]: ...
 @overload
 def convolve(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[np.bool]: ...
 @overload
 def convolve(
     a: _ArrayLikeUInt_co,
     v: _ArrayLikeUInt_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[unsignedinteger]: ...
 @overload
 def convolve(
     a: _ArrayLikeInt_co,
     v: _ArrayLikeInt_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[signedinteger]: ...
 @overload
 def convolve(
     a: _ArrayLikeFloat_co,
     v: _ArrayLikeFloat_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[floating]: ...
 @overload
 def convolve(
     a: _ArrayLikeComplex_co,
     v: _ArrayLikeComplex_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[complexfloating]: ...
 @overload
 def convolve(
     a: _ArrayLikeTD64_co,
     v: _ArrayLikeTD64_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[timedelta64]: ...
 @overload
 def convolve(
     a: _ArrayLikeObject_co,
     v: _ArrayLikeObject_co,
-    mode: _CorrelateMode = 'full',
+    mode: _CorrelateMode = "full",
 ) -> NDArray[object_]: ...
 
 @overload

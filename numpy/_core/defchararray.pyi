@@ -234,13 +234,13 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def center(
         self: _CharArray[str_],
         width: i_co,
-        fillchar: U_co = ' ',
+        fillchar: U_co = " ",
     ) -> _CharArray[str_]: ...
     @overload
     def center(
         self: _CharArray[bytes_],
         width: i_co,
-        fillchar: S_co = ' ',
+        fillchar: S_co = " ",
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -335,13 +335,13 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def ljust(
         self: _CharArray[str_],
         width: i_co,
-        fillchar: U_co = ' ',
+        fillchar: U_co = " ",
     ) -> _CharArray[str_]: ...
     @overload
     def ljust(
         self: _CharArray[bytes_],
         width: i_co,
-        fillchar: S_co = ' ',
+        fillchar: S_co = " ",
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -415,13 +415,13 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def rjust(
         self: _CharArray[str_],
         width: i_co,
-        fillchar: U_co = ' ',
+        fillchar: U_co = " ",
     ) -> _CharArray[str_]: ...
     @overload
     def rjust(
         self: _CharArray[bytes_],
         width: i_co,
-        fillchar: S_co = ' ',
+        fillchar: S_co = " ",
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -609,13 +609,13 @@ def capitalize(a: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
 def capitalize(a: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def center(a: U_co, width: i_co, fillchar: U_co = ' ') -> NDArray[str_]: ...
+def center(a: U_co, width: i_co, fillchar: U_co = " ") -> NDArray[str_]: ...
 @overload
-def center(a: S_co, width: i_co, fillchar: S_co = ' ') -> NDArray[bytes_]: ...
+def center(a: S_co, width: i_co, fillchar: S_co = " ") -> NDArray[bytes_]: ...
 @overload
-def center(a: _StringDTypeSupportsArray, width: i_co, fillchar: _StringDTypeSupportsArray = ' ') -> _StringDTypeArray: ...
+def center(a: _StringDTypeSupportsArray, width: i_co, fillchar: _StringDTypeSupportsArray = " ") -> _StringDTypeArray: ...
 @overload
-def center(a: T_co, width: i_co, fillchar: T_co = ' ') -> _StringDTypeOrUnicodeArray: ...
+def center(a: T_co, width: i_co, fillchar: T_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
 def decode(
     a: S_co,
@@ -647,13 +647,13 @@ def join(sep: _StringDTypeSupportsArray, seq: _StringDTypeSupportsArray) -> _Str
 def join(sep: T_co, seq: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def ljust(a: U_co, width: i_co, fillchar: U_co = ' ') -> NDArray[str_]: ...
+def ljust(a: U_co, width: i_co, fillchar: U_co = " ") -> NDArray[str_]: ...
 @overload
-def ljust(a: S_co, width: i_co, fillchar: S_co = ' ') -> NDArray[bytes_]: ...
+def ljust(a: S_co, width: i_co, fillchar: S_co = " ") -> NDArray[bytes_]: ...
 @overload
-def ljust(a: _StringDTypeSupportsArray, width: i_co, fillchar: _StringDTypeSupportsArray = ' ') -> _StringDTypeArray: ...
+def ljust(a: _StringDTypeSupportsArray, width: i_co, fillchar: _StringDTypeSupportsArray = " ") -> _StringDTypeArray: ...
 @overload
-def ljust(a: T_co, width: i_co, fillchar: T_co = ' ') -> _StringDTypeOrUnicodeArray: ...
+def ljust(a: T_co, width: i_co, fillchar: T_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def lower(a: U_co) -> NDArray[str_]: ...
@@ -715,25 +715,25 @@ def replace(
 def rjust(
     a: U_co,
     width: i_co,
-    fillchar: U_co = ' ',
+    fillchar: U_co = " ",
 ) -> NDArray[str_]: ...
 @overload
 def rjust(
     a: S_co,
     width: i_co,
-    fillchar: S_co = ' ',
+    fillchar: S_co = " ",
 ) -> NDArray[bytes_]: ...
 @overload
 def rjust(
     a: _StringDTypeSupportsArray,
     width: i_co,
-    fillchar: _StringDTypeSupportsArray = ' ',
+    fillchar: _StringDTypeSupportsArray = " ",
 ) -> _StringDTypeArray: ...
 @overload
 def rjust(
     a: T_co,
     width: i_co,
-    fillchar: T_co = ' ',
+    fillchar: T_co = " ",
 ) -> _StringDTypeOrUnicodeArray: ...
 
 @overload

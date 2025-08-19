@@ -131,7 +131,7 @@ def take(
     indices: _IntLike_co,
     axis: None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _ScalarT: ...
 @overload
 def take(
@@ -139,7 +139,7 @@ def take(
     indices: _IntLike_co,
     axis: SupportsIndex | None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> Any: ...
 @overload
 def take(
@@ -147,7 +147,7 @@ def take(
     indices: _ArrayLikeInt_co,
     axis: SupportsIndex | None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> NDArray[_ScalarT]: ...
 @overload
 def take(
@@ -155,7 +155,7 @@ def take(
     indices: _ArrayLikeInt_co,
     axis: SupportsIndex | None = None,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> NDArray[Any]: ...
 @overload
 def take(
@@ -163,7 +163,7 @@ def take(
     indices: _ArrayLikeInt_co,
     axis: SupportsIndex | None,
     out: _ArrayT,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _ArrayT: ...
 @overload
 def take(
@@ -172,7 +172,7 @@ def take(
     axis: SupportsIndex | None = None,
     *,
     out: _ArrayT,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _ArrayT: ...
 
 @overload
@@ -250,28 +250,28 @@ def choose(
     a: _IntLike_co,
     choices: ArrayLike,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> Any: ...
 @overload
 def choose(
     a: _ArrayLikeInt_co,
     choices: _ArrayLike[_ScalarT],
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> NDArray[_ScalarT]: ...
 @overload
 def choose(
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
     out: None = None,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> NDArray[Any]: ...
 @overload
 def choose(
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
     out: _ArrayT,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> _ArrayT: ...
 
 @overload
@@ -303,7 +303,7 @@ def put(
     a: NDArray[Any],
     ind: _ArrayLikeInt_co,
     v: ArrayLike,
-    mode: _ModeKind = 'raise',
+    mode: _ModeKind = "raise",
 ) -> None: ...
 
 @overload
@@ -469,14 +469,14 @@ def argmin(
 def searchsorted(
     a: ArrayLike,
     v: _ScalarLike_co,
-    side: _SortSide = 'left',
+    side: _SortSide = "left",
     sorter: _ArrayLikeInt_co | None = None,  # 1D int array
 ) -> intp: ...
 @overload
 def searchsorted(
     a: ArrayLike,
     v: ArrayLike,
-    side: _SortSide = 'left',
+    side: _SortSide = "left",
     sorter: _ArrayLikeInt_co | None = None,  # 1D int array
 ) -> NDArray[intp]: ...
 
