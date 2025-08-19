@@ -87,14 +87,10 @@ simd_argfunc_small(T *ip, npy_intp len)
 
     HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
     const int wstep = vstep*4;
-    std::vector<UnsignedT> d_vindices(vstep*4);
-    for (int vi = 0; vi < wstep; ++vi) {
-        d_vindices[vi] = vi;
-    }
-    const auto vindices_0 = LoadU(d_vindices.data());
-    const auto vindices_1 = LoadU(d_vindices.data()+vstep);
-    const auto vindices_2 = LoadU(d_vindices.data()+vstep*2);
-    const auto vindices_3 = LoadU(d_vindices.data()+vstep*3);
+    const auto vindices_0 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(0));
+    const auto vindices_1 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(vstep));
+    const auto vindices_2 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(vstep*2));
+    const auto vindices_3 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(vstep*3));
 
     const npy_intp max_block = idx_max*wstep & -wstep;
     npy_intp len0 = len & -wstep;
@@ -185,15 +181,11 @@ simd_argfunc_large(T *ip, npy_intp len)
                 len0 = NPY_MAX_UINT32;
             }
         }
-        // create index for vector indices
-        std::vector<UnsignedT> d_vindices(vstep*4);
-        for (int vi = 0; vi < wstep; ++vi) {
-            d_vindices[vi] = vi;
-        }
-        const auto vindices_0 = LoadU(d_vindices.data());
-        const auto vindices_1 = LoadU(d_vindices.data()+vstep);
-        const auto vindices_2 = LoadU(d_vindices.data()+vstep*2);
-        const auto vindices_3 = LoadU(d_vindices.data()+vstep*3);
+
+        const auto vindices_0 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(0));
+        const auto vindices_1 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(vstep));
+        const auto vindices_2 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(vstep*2));
+        const auto vindices_3 = hn::Iota(_Tag<UnsignedT>(), UnsignedT(vstep*3));
 
         // initialize vector accumulator for highest values and its indexes
         auto acc_indices = Zero<UnsignedT>();
