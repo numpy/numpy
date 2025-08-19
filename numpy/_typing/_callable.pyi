@@ -42,6 +42,7 @@ from ._scalars import _BoolLike_co, _IntLike_co, _NumberLike_co
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
+_T = TypeVar("_T")
 _T1_contra = TypeVar("_T1_contra", contravariant=True)
 _T2_contra = TypeVar("_T2_contra", contravariant=True)
 
@@ -360,3 +361,9 @@ class _ComparisonOpGE(Protocol[_T1_contra, _T2_contra]):
     def __call__(self, other: _NestedSequence[_SupportsGT], /) -> NDArray[np.bool]: ...
     @overload
     def __call__(self, other: _SupportsGT, /) -> np.bool: ...
+
+@type_check_only
+class _CanAdd(Protocol[_T1_contra, _T2_co]):
+    """Protocol for objects that can perform addition operations."""
+    @overload
+    def __add__(self, other: _T1_contra, /) -> _T2_co: ...
