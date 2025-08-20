@@ -1452,18 +1452,14 @@ class TestMaskedArrayArithmetic:
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
-    def test_minmax_object_dtype(self):
-        one = 1
-        three = 3
-        a = masked_array([one, 2, three], dtype=object)
-        assert a.min() is one
-        assert a.max() is three
-
-        one_ao = np.array(1)
-        three_ao = np.array(3)
-        aoao = masked_array([one_ao, np.array(2), three_ao], dtype=object)
-        assert aoao.min() is one_ao
-        assert aoao.max() is three_ao
+    @pytest.mark.parametrize("arg1, arg2, arg3", [
+        (1, 2, 3),
+        (np.array(1), np.array(2), np.array(3)),
+    ])
+    def test_minmax_object_dtype(self, arg1, arg2, arg3):
+        a = masked_array([arg1, arg2, arg3], dtype=object)
+        assert a.min() is arg1
+        assert a.max() is arg3
 
     @pytest.mark.parametrize("dtype", "bBiIqQ")
     @pytest.mark.parametrize("mask", [
