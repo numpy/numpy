@@ -637,7 +637,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                 return (PyObject *)out;
             }
             else {
-                return PyArray_Copy(a);
+                return PyArray_NewCopy(a, NPY_KEEPORDER);
             }
         }
         if (decimals == 0) {
