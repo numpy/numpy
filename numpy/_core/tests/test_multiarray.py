@@ -2171,6 +2171,11 @@ class TestMethods:
         out = np.empty(3, dtype=dt)
         assert not np.shares_memory(a.round(out=out), a)
 
+        a = np.arange(12).astype(dt).reshape(3, 4).T
+
+        assert a.flags.f_contiguous
+        assert np.round(a).flags.f_contiguous
+
     def test_squeeze(self):
         a = np.array([[[1], [2], [3]]])
         assert_equal(a.squeeze(), [1, 2, 3])
