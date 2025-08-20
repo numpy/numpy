@@ -1369,8 +1369,8 @@ ldexp_promoter(PyObject *ufunc,
      */
 
     new_op_dtypes[0] = &PyArray_DoubleDType;
-    new_op_dtypes[1] = &PyArray_LongDType;
-    new_op_dtypes[2] = &PyArray_DoubleDType;
+    new_op_dtypes[1] = op_dtypes[1];
+    new_op_dtypes[2] = op_dtypes[2];
 
     return 0;
 }
