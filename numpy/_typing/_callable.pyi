@@ -40,13 +40,10 @@ from ._nbit import _NBitInt
 from ._nested_sequence import _NestedSequence
 from ._scalars import _BoolLike_co, _IntLike_co, _NumberLike_co
 
-_T1 = TypeVar("_T1")
-_T2 = TypeVar("_T2")
-_T = TypeVar("_T")
 _T1_contra = TypeVar("_T1_contra", contravariant=True)
 _T2_contra = TypeVar("_T2_contra", contravariant=True)
 
-_2Tuple: TypeAlias = tuple[_T1, _T1]
+_2Tuple: TypeAlias = tuple[_T1_contra, _T1_contra]
 
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)

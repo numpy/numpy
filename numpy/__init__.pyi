@@ -208,11 +208,11 @@ from typing import (
     SupportsIndex,
     TypeAlias,
     TypedDict,
-    TypeVar,
     final,
     overload,
     type_check_only,
 )
+from typing_extensions import TypeVar
 
 # NOTE: `typing_extensions` and `_typeshed` are always available in `.pyi` stubs, even
 # if not available at runtime. This is because the `typeshed` stubs for the standard
@@ -3002,7 +3002,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `MaskedArray.__rsub__`
     # First try to delegate to the left-hand side if it implements __sub__
     @overload
-    def __rsub__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rsub__(self, other: _ArrayLikeNumber_co, /) -> Any: ...
     @overload
     def __rsub__(self: NDArray[_NumberT], other: int | np.bool, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3162,7 +3162,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `MaskedArray.__rtruediv__`
     # First try to delegate to the left-hand side if it implements __truediv__
     @overload
-    def __rtruediv__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rtruediv__(self, other: _ArrayLikeNumber_co, /) -> Any: ...
     @overload
     def __rtruediv__(self: _ArrayInt_co | NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
     @overload
@@ -3225,7 +3225,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `MaskedArray.__rfloordiv__`
     # First try to delegate to the left-hand side if it implements __floordiv__
     @overload
-    def __rfloordiv__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rfloordiv__(self, other: _ArrayLikeNumber_co, /) -> Any: ...
     @overload
     def __rfloordiv__(self: NDArray[_RealNumberT], other: int | np.bool, /) -> ndarray[_ShapeT_co, dtype[_RealNumberT]]: ...
     @overload
@@ -3290,7 +3290,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # Keep in sync with `MaskedArray.__rpow__`
     # First try to delegate to the left-hand side if it implements __pow__
     @overload
-    def __rpow__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rpow__(self, other: _ArrayLikeNumber_co, /) -> Any: ...
     @overload
     def __rpow__(self: NDArray[_NumberT], other: int | np.bool, mod: None = None, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3336,7 +3336,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __lshift__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
     @overload
-    def __rlshift__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rlshift__(self, other: _ArrayLikeInt_co, /) -> Any: ...
     @overload
     def __rlshift__(self: NDArray[np.bool], other: _ArrayLikeBool_co, /) -> NDArray[int8]: ...  # type: ignore[misc]
     @overload
@@ -3360,7 +3360,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __rshift__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
     @overload
-    def __rrshift__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rrshift__(self, other: _ArrayLikeInt_co, /) -> Any: ...
     @overload
     def __rrshift__(self: NDArray[np.bool], other: _ArrayLikeBool_co, /) -> NDArray[int8]: ...  # type: ignore[misc]
     @overload
@@ -3384,7 +3384,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __and__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
     @overload
-    def __rand__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rand__(self, other: _ArrayLikeInt_co, /) -> Any: ...
     @overload
     def __rand__(self: NDArray[np.bool], other: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...  # type: ignore[misc]
     @overload
@@ -3408,7 +3408,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __xor__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
     @overload
-    def __rxor__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __rxor__(self, other: _ArrayLikeInt_co, /) -> Any: ...
     @overload
     def __rxor__(self: NDArray[np.bool], other: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...  # type: ignore[misc]
     @overload
@@ -3432,7 +3432,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __or__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
     @overload
-    def __ror__(self, other: _CanAdd[Self, _T], /) -> _T: ...
+    def __ror__(self, other: _ArrayLikeInt_co, /) -> Any: ...
     @overload
     def __ror__(self: NDArray[np.bool], other: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...  # type: ignore[misc]
     @overload
