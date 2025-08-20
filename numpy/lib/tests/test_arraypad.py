@@ -1413,3 +1413,15 @@ def test_dtype_persistence(dtype, mode):
     arr = np.zeros((3, 2, 1), dtype=dtype)
     result = np.pad(arr, 1, mode=mode)
     assert result.dtype == dtype
+
+
+@pytest.mark.parametrize("input_shape, pad_width, expected_shape", [
+    ((3, 4, 5), {-2: (1, 3)}, (3, 4 + 1 + 3, 5)),
+    ((3, 4, 5), {0: (5, 2)}, (3 + 5 + 2, 4, 5)),
+    ((3, 4, 5), {0: (5, 2), -1: (3, 4)}, (3 + 5 + 2, 4, 5 + 3 + 4)),
+    ((3, 4, 5), {1: 5}, (3, 4 + 2 * 5, 5)),
+])
+def test_pad_dict_pad_width(input_shape, pad_width, expected_shape):
+    a = np.zeros(input_shape)
+    result = np.pad(a, pad_width)
+    assert result.shape == expected_shape
