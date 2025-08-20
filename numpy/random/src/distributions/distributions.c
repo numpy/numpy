@@ -470,7 +470,7 @@ double random_chisquare(bitgen_t *bitgen_state, double df) {
 double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) {
   double subexpr1 = random_chisquare(bitgen_state, dfnum) * dfden;
   double subexpr2 = random_chisquare(bitgen_state, dfden) * dfnum;
-  return subexpr1/subexpr2;
+  return subexpr1 / subexpr2;
 }
 
 double random_standard_cauchy(bitgen_t *bitgen_state) {
