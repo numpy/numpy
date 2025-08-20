@@ -54,7 +54,7 @@ _PadWidth: TypeAlias = (
 def pad(
     array: _ArrayLike[_ScalarT],
     pad_width: _PadWidth,
-    mode: _ModeKind = ...,
+    mode: _ModeKind = "constant",
     *,
     stat_length: _ArrayLikeInt | None = ...,
     constant_values: ArrayLike = ...,
@@ -65,7 +65,7 @@ def pad(
 def pad(
     array: ArrayLike,
     pad_width: _PadWidth,
-    mode: _ModeKind = ...,
+    mode: _ModeKind = "constant",
     *,
     stat_length: _ArrayLikeInt | None = ...,
     constant_values: ArrayLike = ...,

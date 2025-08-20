@@ -15,8 +15,8 @@ def byte_bounds(a: generic | NDArray[Any]) -> tuple[int, int]: ...
 def normalize_axis_tuple(
     axis: int | Iterable[int],
     ndim: int = ...,
-    argname: str | None = ...,
-    allow_duplicate: bool | None = ...,
+    argname: str | None = None,
+    allow_duplicate: bool | None = False,
 ) -> tuple[int, int]: ...
 
 def normalize_axis_index(
