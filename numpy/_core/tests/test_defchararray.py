@@ -137,9 +137,9 @@ class TestVecString:
 class TestWhitespace:
     def test1(self):
         A = np.array([['abc ', '123  '],
-                           ['789 ', 'xyz ']]).view(np.char.chararray)
+                      ['789 ', 'xyz ']]).view(np.char.chararray)
         B = np.array([['abc', '123'],
-                           ['789', 'xyz']]).view(np.char.chararray)
+                      ['789', 'xyz']]).view(np.char.chararray)
         assert_(np.all(A == B))
         assert_(np.all(A >= B))
         assert_(np.all(A <= B))
@@ -156,11 +156,11 @@ class TestChar:
 class TestComparisons:
     def A(self):
         return np.array([['abc', 'abcc', '123'],
-                            ['789', 'abc', 'xyz']]).view(np.char.chararray)
+                         ['789', 'abc', 'xyz']]).view(np.char.chararray)
 
     def B(self):
         return np.array([['efg', 'efg', '123  '],
-                            ['051', 'efgg', 'tuv']]).view(np.char.chararray)
+                         ['051', 'efgg', 'tuv']]).view(np.char.chararray)
 
     def test_not_equal(self):
         A, B = self.A(), self.B()
@@ -218,15 +218,15 @@ class TestComparisonsMixed2(TestComparisons):
 class TestInformation:
     def A(self):
         return np.array([[' abc ', ''],
-                           ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']]) \
-                            .view(np.char.chararray)
+                         ['12345', 'MixedCase'],
+                         ['123 \t 345 \0 ', 'UPPER']]) \
+                          .view(np.char.chararray)
 
     def B(self):
         return np.array([[' \u03a3 ', ''],
-                           ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']]) \
-                            .view(np.char.chararray)
+                         ['12345', 'MixedCase'],
+                         ['123 \t 345 \0 ', 'UPPER']]) \
+                          .view(np.char.chararray)
 
     def test_len(self):
         A, B = self.A(), self.B()
@@ -240,11 +240,9 @@ class TestInformation:
         assert_array_equal(A.count('a'), [[1, 0], [0, 1], [0, 0]])
         assert_array_equal(A.count('123'), [[0, 0], [1, 0], [1, 0]])
         # Python doesn't seem to like counting NULL characters
-        # assert_array_equal(A.count('\0'), [[0, 0], [0, 0], [1, 0]])
         assert_array_equal(A.count('a', 0, 2), [[1, 0], [0, 0], [0, 0]])
         assert_array_equal(B.count('a'), [[0, 0], [0, 1], [0, 0]])
         assert_array_equal(B.count('123'), [[0, 0], [1, 0], [1, 0]])
-        # assert_array_equal(B.count('\0'), [[0, 0], [0, 0], [1, 0]])
 
     def test_endswith(self):
         A = self.A()
@@ -274,8 +272,8 @@ class TestInformation:
         assert_array_equal(A.find([encode('1'), encode('P')]),
                            [[-1, -1], [0, -1], [0, 1]])
         C = (np.array(['ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-                            '01234567890123456789012345'])
-                  .view(np.char.chararray)).astype(dtype)
+                       '01234567890123456789012345'])
+                       .view(np.char.chararray)).astype(dtype)
         assert_array_equal(C.find(encode('M')), [12, -1])
 
     def test_index(self):
@@ -355,15 +353,15 @@ class TestInformation:
 class TestMethods:
     def A(self):
         return np.array([[' abc ', ''],
-                           ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']],
-                          dtype='S').view(np.char.chararray)
+                         ['12345', 'MixedCase'],
+                         ['123 \t 345 \0 ', 'UPPER']],
+                         dtype='S').view(np.char.chararray)
 
     def B(self):
         return np.array([[' \u03a3 ', ''],
-                           ['12345', 'MixedCase'],
-                           ['123 \t 345 \0 ', 'UPPER']]).view(
-                                                            np.char.chararray)
+                         ['12345', 'MixedCase'],
+                         ['123 \t 345 \0 ', 'UPPER']]) \
+                          .view(np.char.chararray)
 
     def test_capitalize(self):
         A, B = self.A(), self.B()
@@ -690,11 +688,11 @@ class TestMethods:
 class TestOperations:
     def A(self):
         return np.array([['abc', '123'],
-                           ['789', 'xyz']]).view(np.char.chararray)
+                         ['789', 'xyz']]).view(np.char.chararray)
 
     def B(self):
         return np.array([['efg', '456'],
-                           ['051', 'tuv']]).view(np.char.chararray)
+                         ['051', 'tuv']]).view(np.char.chararray)
 
     def test_add(self):
         A, B = self.A(), self.B()
