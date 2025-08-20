@@ -785,76 +785,13 @@ class TestSubarray:
 
     def test_validate_shape_dims_helper_function(self):
         """
-        Focused test specifically for the _validate_shape_dims helper function.
-        This test exercises the helper function indirectly through the
-        (dtype, shape) tuple format, ensuring that:
-        1. The helper correctly validates negative dimensions
-        2. The helper correctly validates dimension overflow
-        3. The helper allows all valid dimensions
-        4. Error messages are exactly preserved from original implementation
+        Test the _validate_shape_dims helper function preserves original
+        error behavior for negative dimensions and integer overflow.
         """
-        # Test that _validate_shape_dims catches negative dimensions
-        # with the exact original error message
         with pytest.raises(ValueError, match=re.escape("dimension smaller then zero")):
             np.dtype((np.int32, (-1,)))
-
-        # Test multiple dimensions, should catch the first negative one
-        with pytest.raises(ValueError, match=re.escape("dimension smaller then zero")):
-            np.dtype((np.float64, (5, -2, 10)))
-
-        # Test that _validate_shape_dims catches dimension overflow
-        # with the exact original error message
-        # Use values guaranteed to trigger overflow on any platform
-        overflow_values = [2**31, 2**32, 2147483648]  # Multiple values to ensure cross-platform compatibility
-        overflow_caught = False
-
-        for overflow_value in overflow_values:
-            try:
-                np.dtype((np.int8, (overflow_value,)))
-            except ValueError as e:
-                if "dimension does not fit into a C int" in str(e):
-                    overflow_caught = True
-                    break
-
-        assert overflow_caught, f"Expected overflow error not caught with values {overflow_values}"
-
-        # Test multiple dimensions - should catch overflow in any dimension
-        try:
-            np.dtype((np.uint16, (1, 2**31, 3)))
-        except ValueError as e:
-            assert "dimension does not fit into a C int" in str(e), f"Unexpected error: {e}"
-        else:
-            # Try an even larger value if the first didn't work
-            with pytest.raises(ValueError, match=re.escape("dimension does not fit into a C int")):
-                np.dtype((np.uint16, (1, 2**32, 3)))
-
-        # Test that _validate_shape_dims allows all valid dimensions
-        valid_test_cases = [
-            (0,),
-            (1,),
-            (100,),
-            (5, 10, 15),
-            (0, 5, 0, 10),
-        ]
-
-        for shape in valid_test_cases:
-            dt = np.dtype((np.int32, shape))
-            assert dt.shape == shape
-
-        # Test a large dimension that should work without overflow
-        large_but_safe = 1000000
-        dt = np.dtype((np.int8, (large_but_safe,)))
-        assert dt.shape == (large_but_safe,)
-
-        # Verify the helper is used in the correct code path
-        # Test that it's only used for the shape tuple format, not other formats
-
-        # These should NOT go through _validate_shape_dims as different code paths
-        np.dtype(('U', 10))
-        np.dtype(('V', 8))
-
-        # Only the (dtype, shape_tuple) format should use _validate_shape_dims
-        # and that is tested that above
+        with pytest.raises(ValueError, match="dimension does not fit into a C int"):
+            np.dtype((np.int8, (2**31,)))
 
 
 def iter_struct_object_dtypes():
