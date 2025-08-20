@@ -27,7 +27,7 @@ def require(
 def require(
     a: object,
     dtype: DTypeLike = None,
-    requirements: _E | Iterable[_RequirementsWithE] = None,
+    requirements: _E | Iterable[_RequirementsWithE] | None = None,
     *,
     like: _SupportsArrayFunc | None = None
 ) -> NDArray[Any]: ...
