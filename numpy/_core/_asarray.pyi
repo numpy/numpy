@@ -29,7 +29,7 @@ def require(
     dtype: DTypeLike = None,
     requirements: _E | Iterable[_RequirementsWithE] = None,
     *,
-    like: _SupportsArrayFunc = None
+    like: _SupportsArrayFunc | None = None
 ) -> NDArray[Any]: ...
 @overload
 def require(
@@ -37,5 +37,5 @@ def require(
     dtype: DTypeLike = None,
     requirements: _Requirements | Iterable[_Requirements] | None = None,
     *,
-    like: _SupportsArrayFunc = None
+    like: _SupportsArrayFunc | None = None
 ) -> NDArray[Any]: ...
