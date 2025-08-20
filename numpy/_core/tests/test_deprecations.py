@@ -535,3 +535,12 @@ class TestWarningUtilityDeprecations(_DeprecationTestCase):
                 sup.filter(RuntimeWarning, 'invalid value encountered in divide')
 
         self.assert_deprecated(use_suppress_warnings)
+
+
+class TestTooManyArgsExtremum(_DeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-08, gh-27639
+    message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
+
+    @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
+    def test_extremem_3_args(self, ufunc):
+        self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
