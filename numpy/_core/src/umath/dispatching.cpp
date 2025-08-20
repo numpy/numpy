@@ -58,6 +58,7 @@
 #include "legacy_array_method.h"
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
+#include "abstractdtypes.h"
 
 
 #define PROMOTION_DEBUG_TRACING 0
@@ -1342,6 +1343,53 @@ install_logical_ufunc_promoter(PyObject *ufunc)
         return -1;
     }
     PyObject *promoter = PyCapsule_New((void *)&logical_ufunc_promoter,
+            "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        Py_DECREF(dtype_tuple);
+        return -1;
+    }
+
+    PyObject *info = PyTuple_Pack(2, dtype_tuple, promoter);
+    Py_DECREF(dtype_tuple);
+    Py_DECREF(promoter);
+    if (info == NULL) {
+        return -1;
+    }
+
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+NPY_NO_EXPORT int
+ldexp_promoter(PyObject *ufunc,
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    /*
+     * The output should always be a double to ensure no overflow.
+     */
+
+    new_op_dtypes[0] = &PyArray_DoubleDType;
+    new_op_dtypes[1] = &PyArray_LongDType;
+    new_op_dtypes[2] = &PyArray_DoubleDType;
+
+    return 0;
+}
+
+NPY_NO_EXPORT int
+init_ldexp(PyObject *ldexp)
+{
+    PyUFuncObject *ufunc = (PyUFuncObject *)ldexp;
+    if (ufunc == NULL) {
+        return -1;
+    }
+
+    PyObject *dtype_tuple = PyTuple_Pack(3,
+        &PyArray_PyLongDType, &PyArray_IntAbstractDType, Py_None, NULL);
+    if (dtype_tuple == NULL) {
+        return -1;
+    }
+
+    PyObject *promoter = PyCapsule_New((void *)&ldexp_promoter,
             "numpy._ufunc_promoter", NULL);
     if (promoter == NULL) {
         Py_DECREF(dtype_tuple);
