@@ -926,7 +926,7 @@ def tril_indices(n, k=0, m=None):
     -------
     inds : tuple of arrays
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
@@ -1073,7 +1073,7 @@ def triu_indices(n, k=0, m=None):
     -------
     inds : tuple, shape(2) of ndarrays, shape(`n`)
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
