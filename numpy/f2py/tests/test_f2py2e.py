@@ -673,6 +673,22 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
             assert "#include <stdbool.h>" in ocmr
             assert "#include <stdio.h>" in ocmr
 
+# def test_cli_obj(capfd, hello_world_f90, monkeypatch):
+#     """Ensures that the build directory can be specified
+
+#     CLI :: --build-dir
+#     """
+#     ipath = Path(hello_world_f90)
+#     mname = "blah"
+#     obj = "blahhh.o"
+#     monkeypatch.setattr(sys, "argv",
+#                         f'f2py -m {mname} -c {obj} {ipath}'.split())
+
+#     with util.switchdir(ipath.parent):
+#         f2pycli()
+#         out, _ = capfd.readouterr()
+#         assert f"Wrote C/API module \"{mname}\"" in out
+
 
 def test_inclpath():
     """Add to the include directories
