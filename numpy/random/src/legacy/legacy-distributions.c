@@ -182,7 +182,9 @@ int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) {
 }
 
 double legacy_standard_cauchy(aug_bitgen_t *aug_state) {
-  return legacy_gauss(aug_state) / legacy_gauss(aug_state);
+  double subexpr1 = legacy_gauss(aug_state);
+  double subexpr2 = legacy_gauss(aug_state);
+  return subexpr1/subexpr2;
 }
 
 double legacy_beta(aug_bitgen_t *aug_state, double a, double b) {
@@ -220,8 +222,9 @@ double legacy_beta(aug_bitgen_t *aug_state, double a, double b) {
 }
 
 double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) {
-  return ((legacy_chisquare(aug_state, dfnum) * dfden) /
-          (legacy_chisquare(aug_state, dfden) * dfnum));
+  double subexpr1 = legacy_chisquare(aug_state, dfnum) * dfden;
+  double subexpr2 = legacy_chisquare(aug_state, dfden) * dfnum;
+  return subexpr1/subexpr2;
 }
 
 double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
