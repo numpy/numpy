@@ -322,12 +322,12 @@ def swapaxes(
 @overload
 def transpose(
     a: _ArrayLike[_ScalarT],
-    axes: _ShapeLike | None = None
+    axes: _ShapeLike | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def transpose(
     a: ArrayLike,
-    axes: _ShapeLike | None = None
+    axes: _ShapeLike | None = None,
 ) -> NDArray[Any]: ...
 
 @overload
