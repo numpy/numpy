@@ -476,7 +476,7 @@ double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) {
 double random_standard_cauchy(bitgen_t *bitgen_state) {
   double subexpr1 = random_standard_normal(bitgen_state);
   double subexpr2 = random_standard_normal(bitgen_state);
-  return subexpr1/subexpr2;
+  return subexpr1 / subexpr2;
 }
 
 double random_pareto(bitgen_t *bitgen_state, double a) {
