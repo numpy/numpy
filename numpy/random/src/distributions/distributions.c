@@ -848,9 +848,8 @@ double random_noncentral_f(bitgen_t *bitgen_state, double dfnum, double dfden,
 
 double random_wald(bitgen_t *bitgen_state, double mean, double scale) {
   double U, X, Y;
-  double mu_2l, d;
+  double d;
 
-  mu_2l = mean / (2 * scale);
   Y = random_standard_normal(bitgen_state);
   Y = mean * Y * Y;
   d = Y + sqrt(Y) * sqrt(Y + 4 * scale);
