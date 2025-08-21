@@ -970,8 +970,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
         The memory layout of the output ndarray. The output of 'A' and 'K' depend on the memory layout of input a.
         'C' gives a row-major layout (C-style),
         'F' gives a column-major layout (Fortran-style).
-        Both 'C' and 'F' ensure a contiguous result.
-        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'. If the desired output is a non-contiguous Fortran-style ndarray, the user should set ``copy`` to ``True`` to ensure this.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'. Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
         'K' (keep) is the default and preserves the input order for the output.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
