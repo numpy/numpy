@@ -313,18 +313,18 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
 Converting datetime and timedelta to Python Object
 ==================================================
 
-NumPy follows a strict protocol when converting ``np.datetime64`` and/or ``np.timedelta64`` to Python Objects (e.g., ``tuple``, ``list``, ``datetime.datetime``). 
+NumPy follows a strict protocol when converting `datetime64` and/or `timedelta64` to Python Objects (e.g., `tuple`, `list`, `datetime.datetime`). 
 
 The protocol is described in the following table:
 
 ================================ ================================= ==================================
-         Input Type                         for ``datetime64``                    for ``timedelta64``
+         Input Type                         for `datetime64`               for `timedelta64`
 ================================ ================================= ==================================
-              ``NaT``                           ``None``                               ``None``
-     Finer than Microseconds                    ``int``                                ``int``
-     Microseconds or Coarser              ``datetime.datetime``                 ``datetime.timedelta``
-         Days or Coarser                    ``datetime.date``                   ``datetime.timedelta``
-Non-linear(Y/M) and genric units            ``datetime.date``                          ``int``
+              `NaT`                             `None`                           `None`
+     Finer than Microseconds                    `int`                            `int`
+     Microseconds or Coarser              `datetime.datetime`              `datetime.timedelta`
+         Days or Coarser                    `datetime.date`                `datetime.timedelta`
+Non-linear(Y/M) and genric units            `datetime.date`                      `int`
 ================================ ================================= ==================================
 
 .. admonition:: Example
