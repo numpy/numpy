@@ -313,20 +313,40 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
 Converting datetime and timedelta to Python Object
 ==================================================
 
-NumPy follows a strict protocol when converting datetime and timedelta to Python Objects (e.g., tuple, list, datetime.datetime).
+NumPy follows a strict protocol when converting datetime64 and/or timedelta64 to Python Objects (e.g., tuple, list, datetime.datetime). 
 
-For conversion of datetime to a Python Object:
+The protocol is described in the following table:
 
-- Not-a-time is returned as None.
-- For days or coarser, returns a datetime.date.
-- For microseconds or coarser, returns a datetime.datetime.
-- For units finer than microseconds, returns an integer.
+================================ ================================= ==================================
+         Input Type                         for datetime64                    for timedelta64
+================================ ================================= ==================================
+              NaT                               None                               None
+     Finer than Microseconds                    int                                int
+     Microseconds or Coarser              datetime.datetime                 datetime.timedelta
+         Days or Coarser                    datetime.date                   datetime.timedelta
+Non-linear(Y/M) and genric units            datetime.date                          int
+================================ ================================= ==================================
 
-For conversion of timedelta to Python Object
+.. admonition:: Example
 
-- Not-a-time is returned as None.
-- For microseconds or coarser, returns a datetime.timedelta.
-- For Y/M/B (nonlinear units), generic units and units finer than microseconds, returns an integer.
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> type(np.datetime64('NaT').astype(object))
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64('NaT').astype(object))
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64(123, 'ns').astype(object))
+    <class 'int'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').astype(object))
+    <class 'datetime.datetime'>
+
+    >>> type(np.timedelta64(10, 'D').astype(object))
+    <class 'datetime.timedelta'>
 
 
 Business day functionality
