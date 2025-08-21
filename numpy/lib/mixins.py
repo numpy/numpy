@@ -19,7 +19,7 @@ def _binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(self, other)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -29,7 +29,7 @@ def _reflected_binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(other, self)
-    func.__name__ = '__r{}__'.format(name)
+    func.__name__ = f'__r{name}__'
     return func
 
 
@@ -37,7 +37,7 @@ def _inplace_binary_method(ufunc, name):
     """Implement an in-place binary method with a ufunc, e.g., __iadd__."""
     def func(self, other):
         return ufunc(self, other, out=(self,))
-    func.__name__ = '__i{}__'.format(name)
+    func.__name__ = f'__i{name}__'
     return func
 
 
@@ -52,7 +52,7 @@ def _unary_method(ufunc, name):
     """Implement a unary special method with a ufunc."""
     def func(self):
         return ufunc(self)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -155,7 +155,6 @@ class NDArrayOperatorsMixin:
     __mul__, __rmul__, __imul__ = _numeric_methods(um.multiply, 'mul')
     __matmul__, __rmatmul__, __imatmul__ = _numeric_methods(
         um.matmul, 'matmul')
-    # Python 3 does not use __div__, __rdiv__, or __idiv__
     __truediv__, __rtruediv__, __itruediv__ = _numeric_methods(
         um.true_divide, 'truediv')
     __floordiv__, __rfloordiv__, __ifloordiv__ = _numeric_methods(

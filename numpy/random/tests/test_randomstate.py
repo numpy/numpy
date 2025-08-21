@@ -3,16 +3,20 @@ import pickle
 import sys
 import warnings
 
-import numpy as np
 import pytest
-from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings, IS_WASM
-        )
 
-from numpy.random import MT19937, PCG64
+import numpy as np
 from numpy import random
+from numpy.random import MT19937, PCG64
+from numpy.testing import (
+    IS_WASM,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+)
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),
@@ -236,12 +240,10 @@ class TestSetState:
 
     def test_get_state_warning(self):
         rs = random.RandomState(PCG64())
-        with suppress_warnings() as sup:
-            w = sup.record(RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             state = rs.get_state()
-            assert_(len(w) == 1)
-            assert isinstance(state, dict)
-            assert state['bit_generator'] == 'PCG64'
+        assert isinstance(state, dict)
+        assert state['bit_generator'] == 'PCG64'
 
     def test_invalid_legacy_state_setting(self):
         state = self.random_state.get_state()
@@ -481,20 +483,16 @@ class TestRandomDist:
 
     def test_random_integers(self):
         random.seed(self.seed)
-        with suppress_warnings() as sup:
-            w = sup.record(DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             actual = random.random_integers(-99, 99, size=(3, 2))
-            assert_(len(w) == 1)
         desired = np.array([[31, 3],
                             [-52, 41],
                             [-48, -66]])
         assert_array_equal(actual, desired)
 
         random.seed(self.seed)
-        with suppress_warnings() as sup:
-            w = sup.record(DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             actual = random.random_integers(198, size=(3, 2))
-            assert_(len(w) == 1)
         assert_array_equal(actual, desired + 100)
 
     def test_tomaxint(self):
@@ -523,20 +521,16 @@ class TestRandomDist:
         # into a C long. Previous implementations of this
         # method have thrown an OverflowError when attempting
         # to generate this integer.
-        with suppress_warnings() as sup:
-            w = sup.record(DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             actual = random.random_integers(np.iinfo('l').max,
                                             np.iinfo('l').max)
-            assert_(len(w) == 1)
 
         desired = np.iinfo('l').max
         assert_equal(actual, desired)
-        with suppress_warnings() as sup:
-            w = sup.record(DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             typer = np.dtype('l').type
             actual = random.random_integers(typer(np.iinfo('l').max),
                                             typer(np.iinfo('l').max))
-            assert_(len(w) == 1)
         assert_equal(actual, desired)
 
     def test_random_integers_deprecated(self):
@@ -873,8 +867,8 @@ class TestRandomDist:
         assert_raises(ValueError, random.geometric, [1.1] * 10)
         assert_raises(ValueError, random.geometric, -0.1)
         assert_raises(ValueError, random.geometric, [-0.1] * 10)
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             assert_raises(ValueError, random.geometric, np.nan)
             assert_raises(ValueError, random.geometric, [np.nan] * 10)
 
@@ -1006,7 +1000,7 @@ class TestRandomDist:
         # RuntimeWarning
         mean = [0, 0]
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov)
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov)
 
         # and that it doesn't warn with RuntimeWarning check_valid='ignore'
         assert_no_warnings(random.multivariate_normal, mean, cov,
@@ -1017,10 +1011,9 @@ class TestRandomDist:
                       check_valid='raise')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', RuntimeWarning)
             random.multivariate_normal(mean, cov)
-            w = sup.record(RuntimeWarning)
-            assert len(w) == 0
 
         mu = np.zeros(2)
         cov = np.eye(2)
@@ -1042,8 +1035,8 @@ class TestRandomDist:
         assert_array_equal(actual, desired)
 
     def test_negative_binomial_exceptions(self):
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             assert_raises(ValueError, random.negative_binomial, 100, np.nan)
             assert_raises(ValueError, random.negative_binomial, 100,
                           [np.nan] * 10)
@@ -1125,8 +1118,8 @@ class TestRandomDist:
         assert_raises(ValueError, random.poisson, [lamneg] * 10)
         assert_raises(ValueError, random.poisson, lambig)
         assert_raises(ValueError, random.poisson, [lambig] * 10)
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             assert_raises(ValueError, random.poisson, np.nan)
             assert_raises(ValueError, random.poisson, [np.nan] * 10)
 

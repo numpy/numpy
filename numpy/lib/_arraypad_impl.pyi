@@ -1,25 +1,19 @@
 from typing import (
-    Literal as L,
     Any,
-    TypeAlias,
-    overload,
-    TypeVar,
+    Literal as L,
     Protocol,
+    TypeAlias,
+    TypeVar,
+    overload,
     type_check_only,
 )
 
 from numpy import generic
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    _ArrayLikeInt,
-    _ArrayLike,
-)
+from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt
 
 __all__ = ["pad"]
 
-_SCT = TypeVar("_SCT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 @type_check_only
 class _ModeFunc(Protocol):
@@ -49,40 +43,46 @@ _ModeKind: TypeAlias = L[
 # TODO: In practice each keyword argument is exclusive to one or more
 # specific modes. Consider adding more overloads to express this in the future.
 
+_PadWidth: TypeAlias = (
+    _ArrayLikeInt
+    | dict[int, int]
+    | dict[int, tuple[int, int]]
+    | dict[int, int | tuple[int, int]]
+)
 # Expand `**kwargs` into explicit keyword-only arguments
 @overload
 def pad(
-    array: _ArrayLike[_SCT],
-    pad_width: _ArrayLikeInt,
+    array: _ArrayLike[_ScalarT],
+    pad_width: _PadWidth,
     mode: _ModeKind = ...,
     *,
-    stat_length: None | _ArrayLikeInt = ...,
+    stat_length: _ArrayLikeInt | None = ...,
     constant_values: ArrayLike = ...,
     end_values: ArrayLike = ...,
     reflect_type: L["odd", "even"] = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def pad(
     array: ArrayLike,
-    pad_width: _ArrayLikeInt,
+    pad_width: _PadWidth,
     mode: _ModeKind = ...,
     *,
-    stat_length: None | _ArrayLikeInt = ...,
+    stat_length: _ArrayLikeInt | None = ...,
     constant_values: ArrayLike = ...,
     end_values: ArrayLike = ...,
     reflect_type: L["odd", "even"] = ...,
 ) -> NDArray[Any]: ...
 @overload
 def pad(
-    array: _ArrayLike[_SCT],
-    pad_width: _ArrayLikeInt,
+    array: _ArrayLike[_ScalarT],
+    pad_width: _PadWidth,
     mode: _ModeFunc,
     **kwargs: Any,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def pad(
     array: ArrayLike,
-    pad_width: _ArrayLikeInt,
+    pad_width: _PadWidth,
     mode: _ModeFunc,
     **kwargs: Any,
 ) -> NDArray[Any]: ...

@@ -1,20 +1,22 @@
 import inspect
-import sys
 import os
+import pickle
+import sys
 import tempfile
 from io import StringIO
 from unittest import mock
-import pickle
 
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex)
-from numpy.testing.overrides import get_overridable_numpy_array_functions
 from numpy._core.overrides import (
-    _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures)
+    _get_implementing_args,
+    array_function_dispatch,
+    verify_matching_signatures,
+)
+from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
+from numpy.testing.overrides import get_overridable_numpy_array_functions
+
 
 def _return_not_implemented(self, *args, **kwargs):
     return NotImplemented
@@ -202,14 +204,6 @@ class TestNDArrayArrayFunction:
         result = array.__array_function__(func=func, types=(np.ndarray,),
                                           args=(array,), kwargs={})
         assert_equal(result, array * 2)
-
-    def test_wrong_arguments(self):
-        # Check our implementation guards against wrong arguments.
-        a = np.array([1, 2])
-        with pytest.raises(TypeError, match="args must be a tuple"):
-            a.__array_function__(np.reshape, (np.ndarray,), a, (2, 1))
-        with pytest.raises(TypeError, match="kwargs must be a dict"):
-            a.__array_function__(np.reshape, (np.ndarray,), (a,), (2, 1))
 
     def test_wrong_arguments(self):
         # Check our implementation guards against wrong arguments.

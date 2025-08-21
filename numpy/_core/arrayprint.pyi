@@ -3,8 +3,16 @@ from collections.abc import Callable
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
-from typing import Any, Final, Literal, SupportsIndex, TypeAlias, TypedDict, overload, type_check_only
-
+from typing import (
+    Any,
+    Final,
+    Literal,
+    SupportsIndex,
+    TypeAlias,
+    TypedDict,
+    overload,
+    type_check_only,
+)
 from typing_extensions import deprecated
 
 import numpy as np
@@ -69,14 +77,14 @@ class _FormatOptions(TypedDict):
 __docformat__: Final = "restructuredtext"  # undocumented
 
 def set_printoptions(
-    precision: None | SupportsIndex = ...,
-    threshold: None | int = ...,
-    edgeitems: None | int = ...,
-    linewidth: None | int = ...,
-    suppress: None | bool = ...,
-    nanstr: None | str = ...,
-    infstr: None | str = ...,
-    formatter: None | _FormatDict = ...,
+    precision: SupportsIndex | None = None,
+    threshold: int | None = None,
+    edgeitems: int | None = None,
+    linewidth: int | None = None,
+    suppress: bool | None = None,
+    nanstr: str | None = None,
+    infstr: str | None = None,
+    formatter: _FormatDict | None = None,
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     *,
@@ -181,47 +189,47 @@ def array2string(
 
 def format_float_scientific(
     x: _FloatLike_co,
-    precision: None | int = ...,
-    unique: bool = ...,
+    precision: int | None = None,
+    unique: bool = True,
     trim: _Trim = "k",
-    sign: bool = ...,
-    pad_left: None | int = ...,
-    exp_digits: None | int = ...,
-    min_digits: None | int = ...,
+    sign: bool = False,
+    pad_left: int | None = None,
+    exp_digits: int | None = None,
+    min_digits: int | None = None,
 ) -> str: ...
 def format_float_positional(
     x: _FloatLike_co,
-    precision: None | int = ...,
-    unique: bool = ...,
-    fractional: bool = ...,
+    precision: int | None = None,
+    unique: bool = True,
+    fractional: bool = True,
     trim: _Trim = "k",
-    sign: bool = ...,
-    pad_left: None | int = ...,
-    pad_right: None | int = ...,
-    min_digits: None | int = ...,
+    sign: bool = False,
+    pad_left: int | None = None,
+    pad_right: int | None = None,
+    min_digits: int | None = None,
 ) -> str: ...
 def array_repr(
     arr: NDArray[Any],
-    max_line_width: None | int = ...,
-    precision: None | SupportsIndex = ...,
-    suppress_small: None | bool = ...,
+    max_line_width: int | None = None,
+    precision: SupportsIndex | None = None,
+    suppress_small: bool | None = None,
 ) -> str: ...
 def array_str(
     a: NDArray[Any],
-    max_line_width: None | int = ...,
-    precision: None | SupportsIndex = ...,
-    suppress_small: None | bool = ...,
+    max_line_width: int | None = None,
+    precision: SupportsIndex | None = None,
+    suppress_small: bool | None = None,
 ) -> str: ...
 def printoptions(
-    precision: None | SupportsIndex = ...,
-    threshold: None | int = ...,
-    edgeitems: None | int = ...,
-    linewidth: None | int = ...,
-    suppress: None | bool = ...,
-    nanstr: None | str = ...,
-    infstr: None | str = ...,
-    formatter: None | _FormatDict = ...,
-    sign: None | _Sign = None,
+    precision: SupportsIndex | None = ...,
+    threshold: int | None = ...,
+    edgeitems: int | None = ...,
+    linewidth: int | None = ...,
+    suppress: bool | None = ...,
+    nanstr: str | None = ...,
+    infstr: str | None = ...,
+    formatter: _FormatDict | None = ...,
+    sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     *,
     legacy: _Legacy | None = None,

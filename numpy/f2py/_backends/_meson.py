@@ -1,16 +1,14 @@
-from __future__ import annotations
-
-import os
 import errno
+import os
+import re
 import shutil
 import subprocess
 import sys
-import re
+from itertools import chain
 from pathlib import Path
+from string import Template
 
 from ._backend import Backend
-from string import Template
-from itertools import chain
 
 
 class MesonTemplate:
@@ -126,7 +124,7 @@ class MesonTemplate:
             node()
         template = Template(self.meson_build_template())
         meson_build = template.substitute(self.substitutions)
-        meson_build = re.sub(r",,", ",", meson_build)
+        meson_build = meson_build.replace(",,", ",")
         return meson_build
 
 

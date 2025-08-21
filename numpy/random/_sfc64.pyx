@@ -135,8 +135,7 @@ cdef class SFC64(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'RNG'.format(self.__class__.__name__))
+            raise ValueError('state must be for a {self.__class__.__name__} RNG')
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
         state_vec[:] = value['state']['state']
         has_uint32 = value['has_uint32']

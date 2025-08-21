@@ -3,6 +3,7 @@ import sys
 import types
 import unittest
 import warnings
+from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import _GeneratorContextManager
 from pathlib import Path
@@ -13,17 +14,18 @@ from typing import (
     ClassVar,
     Final,
     Generic,
+    Literal as L,
     NoReturn,
+    ParamSpec,
+    Self,
     SupportsIndex,
     TypeAlias,
+    TypeVarTuple,
     overload,
     type_check_only,
 )
-from typing import Literal as L
+from typing_extensions import TypeVar, deprecated
 from unittest.case import SkipTest
-
-from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
-from typing_extensions import ParamSpec, Self, TypeVar, TypeVarTuple, Unpack
 
 import numpy as np
 from numpy._typing import (
@@ -146,6 +148,7 @@ class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]): 
     @overload  # record; bool
     def __init__(self, /, record: bool, modules: _ToModules = ()) -> None: ...
 
+@deprecated("Please use warnings.filterwarnings or pytest.mark.filterwarnings instead")
 class suppress_warnings:
     log: Final[_WarnLog]
     def __init__(self, /, forwarding_rule: L["always", "module", "once", "location"] = "always") -> None: ...
@@ -356,8 +359,10 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 #
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
 def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
 
@@ -471,22 +476,22 @@ def run_threaded(
 ) -> None: ...
 @overload
 def run_threaded(
-    func: Callable[[Unpack[_Ts]], None],
+    func: Callable[[*_Ts], None],
     max_workers: int,
     pass_count: bool,
     pass_barrier: bool,
     outer_iterations: int,
-    prepare_args: tuple[Unpack[_Ts]],
+    prepare_args: tuple[*_Ts],
 ) -> None: ...
 @overload
 def run_threaded(
-    func: Callable[[Unpack[_Ts]], None],
+    func: Callable[[*_Ts], None],
     max_workers: int = 8,
     pass_count: bool = False,
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     *,
-    prepare_args: tuple[Unpack[_Ts]],
+    prepare_args: tuple[*_Ts],
 ) -> None: ...
 
 #

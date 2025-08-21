@@ -1,12 +1,14 @@
-from math import nan, inf
-import pytest
-from numpy._core import array, arange, printoptions
-import numpy.polynomial as poly
-from numpy.testing import assert_equal, assert_
+from decimal import Decimal
 
 # For testing polynomial printing with object arrays
 from fractions import Fraction
-from decimal import Decimal
+from math import inf, nan
+
+import pytest
+
+import numpy.polynomial as poly
+from numpy._core import arange, array, printoptions
+from numpy.testing import assert_, assert_equal
 
 
 class TestStrUnicodeSuperSubscripts:
@@ -546,7 +548,7 @@ class TestPrintOptions:
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])
         assert str(p) == 'nan + inf x'
-        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'
+        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'  # noqa: RUF027
         with printoptions(nanstr='NAN', infstr='INF'):
             assert str(p) == 'NAN + INF x'
             assert p._repr_latex_() == \

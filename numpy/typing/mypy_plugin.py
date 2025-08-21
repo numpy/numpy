@@ -65,18 +65,10 @@ def _get_precision_dict() -> dict[str, str]:
 
 def _get_extended_precision_list() -> list[str]:
     extended_names = [
-        "uint128",
-        "uint256",
-        "int128",
-        "int256",
-        "float80",
         "float96",
         "float128",
-        "float256",
-        "complex160",
         "complex192",
         "complex256",
-        "complex512",
     ]
     return [i for i in extended_names if hasattr(np, i)]
 
@@ -107,9 +99,9 @@ try:
         from mypy.typeanal import TypeAnalyser
 
     import mypy.types
-    from mypy.plugin import Plugin, AnalyzeTypeContext
-    from mypy.nodes import MypyFile, ImportFrom, Statement
     from mypy.build import PRI_MED
+    from mypy.nodes import ImportFrom, MypyFile, Statement
+    from mypy.plugin import AnalyzeTypeContext, Plugin
 
 except ModuleNotFoundError as e:
 
@@ -169,8 +161,7 @@ else:
             """Handle all import-based overrides.
 
             * Import platform-specific extended-precision `numpy.number`
-              subclasses (*e.g.* `numpy.float96`, `numpy.float128` and
-              `numpy.complex256`).
+              subclasses (*e.g.* `numpy.float96` and `numpy.float128`).
             * Import the appropriate `ctypes` equivalent to `numpy.intp`.
 
             """

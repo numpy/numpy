@@ -7,15 +7,15 @@ valgrind's callgrind tool.
 import os
 import re
 import sys
-from xml.sax.saxutils import quoteattr, escape
+from xml.sax.saxutils import escape, quoteattr
 
 try:
     import pygments
     if tuple(int(x) for x in pygments.__version__.split('.')) < (0, 11):
         raise ImportError
     from pygments import highlight
-    from pygments.lexers import CLexer
     from pygments.formatters import HtmlFormatter
+    from pygments.lexers import CLexer
     has_pygments = True
 except ImportError:
     print("This script requires pygments 0.11 or greater to generate HTML")
@@ -123,13 +123,13 @@ def collect_stats(files, fd, pattern):
     current_file = None
     current_function = None
     for line in fd:
-        if re.match("f[lie]=.+", line):
+        if re.match(r"f[lie]=.+", line):
             path = line.split('=', 2)[1].strip()
             if os.path.exists(path) and re.search(pattern, path):
                 current_file = files.get_file(path)
             else:
                 current_file = None
-        elif re.match("fn=.+", line):
+        elif re.match(r"fn=.+", line):
             current_function = line.split('=', 2)[1].strip()
         elif current_file is not None:
             for regex in line_regexs:

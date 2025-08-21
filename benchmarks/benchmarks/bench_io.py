@@ -1,7 +1,8 @@
-from .common import Benchmark, get_squares, get_squares_
+from io import SEEK_SET, BytesIO, StringIO
 
 import numpy as np
-from io import SEEK_SET, StringIO, BytesIO
+
+from .common import Benchmark, get_squares, get_squares_
 
 
 class Copy(Benchmark):

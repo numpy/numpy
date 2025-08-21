@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import pytest
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
+
 from . import util
-from pathlib import Path
+
 
 def get_docdir():
     parents = Path(__file__).resolve().parents
@@ -56,5 +60,7 @@ class TestDocAdvanced(util.F2PyTest):
         ftype.data.x[1] = 45
         assert_array_equal(ftype.data.x,
                            np.array([1, 45, 3], dtype=np.float32))
+        # gh-26718 Cleanup for repeated test runs
+        ftype.data.a = 0
 
     # TODO: implement test methods for other example Fortran codes

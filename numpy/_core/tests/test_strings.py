@@ -1,10 +1,10 @@
+import operator
 import sys
+
 import pytest
 
-import operator
 import numpy as np
-
-from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
@@ -224,8 +224,19 @@ class TestMethods:
         with pytest.raises(TypeError, match="unsupported type"):
             np.strings.multiply(np.array("abc", dtype=dt), 3.14)
 
-        with pytest.raises(MemoryError):
+        with pytest.raises(OverflowError):
             np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
+
+    def test_inplace_multiply(self, dt):
+        arr = np.array(['foo ', 'bar'], dtype=dt)
+        arr *= 2
+        if dt != "T":
+            assert_array_equal(arr, np.array(['foo ', 'barb'], dtype=dt))
+        else:
+            assert_array_equal(arr, ['foo foo ', 'barbar'])
+
+        with pytest.raises(OverflowError):
+            arr *= sys.maxsize
 
     @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32,
                                       np.int64, np.int_])
@@ -381,6 +392,8 @@ class TestMethods:
          None, [3, -1]),
         ("Ae¢☃€ 😊" * 2, "😊", 0, None, 6),
         ("Ae¢☃€ 😊" * 2, "😊", 7, None, 13),
+        pytest.param("A" * (2 ** 17), r"[\w]+\Z", 0, None, -1,
+                     id=r"A*2**17-[\w]+\Z-0-None--1"),
     ])
     def test_find(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
@@ -833,6 +846,7 @@ class TestMethods:
         ('abc', 6, ' ', ' abc  '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '***abc****'),
     ])
     def test_center(self, buf, width, fillchar, res, dt):
@@ -846,6 +860,7 @@ class TestMethods:
         ('abc', 6, ' ', 'abc   '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', 'abc*******'),
     ])
     def test_ljust(self, buf, width, fillchar, res, dt):
@@ -859,6 +874,7 @@ class TestMethods:
         ('abc', 6, ' ', '   abc'),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '*******abc'),
     ])
     def test_rjust(self, buf, width, fillchar, res, dt):
@@ -880,6 +896,7 @@ class TestMethods:
         ('-0123', 5, '-0123'),
         ('000', 3, '000'),
         ('34', 1, '34'),
+        ('34', -1, '34'),
         ('0034', 4, '0034'),
     ])
     def test_zfill(self, buf, width, res, dt):
@@ -976,22 +993,36 @@ class TestMethods:
         with pytest.raises(TypeError, match="did not contain a loop"):
             np.strings.slice(np.array([1, 2, 3]), 4)
 
-        with pytest.raises(TypeError, match=r"Cannot cast ufunc '_slice' input .* from .* to dtype\('int(64|32)'\)"):
-            np.strings.slice(np.array(['foo', 'bar'], dtype=dt), np.array(['foo', 'bar'], dtype=dt))
+        regexp = (r"Cannot cast ufunc '_slice' input .* "
+                  r"from .* to dtype\('int(64|32)'\)")
+        with pytest.raises(TypeError, match=regexp):
+            np.strings.slice(np.array(['foo', 'bar'], dtype=dt),
+                             np.array(['foo', 'bar'], dtype=dt))
 
-    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32, np.int64,
-                                        np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32,
+                                        np.int64, np.uint8, np.uint16,
+                                        np.uint32, np.uint64])
     def test_slice_int_type_promotion(self, int_dt, dt):
         buf = np.array(["hello", "world"], dtype=dt)
+        np_slice = np.strings.slice
+        assert_array_equal(np_slice(buf, int_dt(4)),
+                           np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np_slice(buf, np.array([4, 4], dtype=int_dt)),
+                           np.array(["hell", "worl"], dtype=dt))
 
-        assert_array_equal(np.strings.slice(buf, int_dt(4)), np.array(["hell", "worl"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([4, 4], dtype=int_dt)), np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np_slice(buf, int_dt(2), int_dt(4)),
+                           np.array(["ll", "rl"], dtype=dt))
+        assert_array_equal(np_slice(buf, np.array([2, 2], dtype=int_dt),
+                                    np.array([4, 4], dtype=int_dt)),
+                           np.array(["ll", "rl"], dtype=dt))
 
-        assert_array_equal(np.strings.slice(buf, int_dt(2), int_dt(4)), np.array(["ll", "rl"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([2, 2], dtype=int_dt), np.array([4, 4], dtype=int_dt)), np.array(["ll", "rl"], dtype=dt))
-
-        assert_array_equal(np.strings.slice(buf, int_dt(0), int_dt(4), int_dt(2)), np.array(["hl", "wr"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([0, 0], dtype=int_dt), np.array([4, 4], dtype=int_dt), np.array([2, 2], dtype=int_dt)), np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np_slice(buf, int_dt(0), int_dt(4), int_dt(2)),
+                           np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np_slice(buf,
+                                    np.array([0, 0], dtype=int_dt),
+                                    np.array([4, 4], dtype=int_dt),
+                                    np.array([2, 2], dtype=int_dt)),
+                           np.array(["hl", "wr"], dtype=dt))
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -1367,3 +1398,71 @@ class TestReplaceOnArrays:
                                         dtype=dt))
         r3 = np.strings.replace(a, ["0", "0,0", "0,0,0"], "X")
         assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"], dtype=dt))
+
+
+class TestOverride:
+    @classmethod
+    def setup_class(cls):
+        class Override:
+
+            def __array_function__(self, *args, **kwargs):
+                return "function"
+
+            def __array_ufunc__(self, *args, **kwargs):
+                return "ufunc"
+
+        cls.override = Override()
+
+    @pytest.mark.parametrize("func, kwargs", [
+        (np.strings.center, dict(width=10)),
+        (np.strings.capitalize, {}),
+        (np.strings.decode, {}),
+        (np.strings.encode, {}),
+        (np.strings.expandtabs, {}),
+        (np.strings.ljust, dict(width=10)),
+        (np.strings.lower, {}),
+        (np.strings.mod, dict(values=2)),
+        (np.strings.multiply, dict(i=2)),
+        (np.strings.partition, dict(sep="foo")),
+        (np.strings.rjust, dict(width=10)),
+        (np.strings.rpartition, dict(sep="foo")),
+        (np.strings.swapcase, {}),
+        (np.strings.title, {}),
+        (np.strings.translate, dict(table=None)),
+        (np.strings.upper, {}),
+        (np.strings.zfill, dict(width=10)),
+    ])
+    def test_override_function(self, func, kwargs):
+        assert func(self.override, **kwargs) == "function"
+
+    @pytest.mark.parametrize("func, args, kwargs", [
+        (np.strings.add, (None, ), {}),
+        (np.strings.lstrip, (), {}),
+        (np.strings.rstrip, (), {}),
+        (np.strings.strip, (), {}),
+        (np.strings.equal, (None, ), {}),
+        (np.strings.not_equal, (None, ), {}),
+        (np.strings.greater_equal, (None, ), {}),
+        (np.strings.less_equal, (None, ), {}),
+        (np.strings.greater, (None, ), {}),
+        (np.strings.less, (None, ), {}),
+        (np.strings.count, ("foo", ), {}),
+        (np.strings.endswith, ("foo", ), {}),
+        (np.strings.find, ("foo", ), {}),
+        (np.strings.index, ("foo", ), {}),
+        (np.strings.isalnum, (), {}),
+        (np.strings.isalpha, (), {}),
+        (np.strings.isdecimal, (), {}),
+        (np.strings.isdigit, (), {}),
+        (np.strings.islower, (), {}),
+        (np.strings.isnumeric, (), {}),
+        (np.strings.isspace, (), {}),
+        (np.strings.istitle, (), {}),
+        (np.strings.isupper, (), {}),
+        (np.strings.rfind, ("foo", ), {}),
+        (np.strings.rindex, ("foo", ), {}),
+        (np.strings.startswith, ("foo", ), {}),
+        (np.strings.str_len, (), {}),
+    ])
+    def test_override_ufunc(self, func, args, kwargs):
+        assert func(self.override, *args, **kwargs) == "ufunc"

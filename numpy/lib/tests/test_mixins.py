@@ -4,7 +4,6 @@ import operator
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
-
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
@@ -46,7 +45,7 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
             return type(self)(result)
 
     def __repr__(self):
-        return '%s(%r)' % (type(self).__name__, self.value)
+        return f'{type(self).__name__}({self.value!r})'
 
 
 def wrap_array_like(result):
@@ -182,14 +181,14 @@ class TestNDArrayOperatorsMixin:
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(array, 1))
             actual = op(array_like, 1)
-            err_msg = 'failed for operator {}'.format(op)
+            err_msg = f'failed for operator {op}'
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
     def test_reflected_binary_methods(self):
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(2, 1))
             actual = op(2, ArrayLike(1))
-            err_msg = 'failed for operator {}'.format(op)
+            err_msg = f'failed for operator {op}'
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
     def test_matmul(self):

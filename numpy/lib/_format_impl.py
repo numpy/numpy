@@ -167,9 +167,8 @@ import pickle
 import warnings
 
 import numpy
-from numpy.lib._utils_impl import drop_metadata
 from numpy._utils import set_module
-
+from numpy.lib._utils_impl import drop_metadata
 
 __all__ = []
 
@@ -408,7 +407,7 @@ def _wrap_header(header, version):
     try:
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
-        msg = "Header length {} too big for version={}".format(hlen, version)
+        msg = f"Header length {hlen} too big for version={version}"
         raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic
@@ -460,7 +459,7 @@ def _write_array_header(fp, d, version=None):
     header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
-        header.append("'%s': %s, " % (key, repr(value)))
+        header.append(f"'{key}': {repr(value)}, ")
     header.append("}")
     header = "".join(header)
 
@@ -629,7 +628,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     import struct
     hinfo = _header_size_info.get(version)
     if hinfo is None:
-        raise ValueError("Invalid version {!r}".format(version))
+        raise ValueError(f"Invalid version {version!r}")
     hlength_type, encoding = hinfo
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
@@ -724,7 +723,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass to pickle.dump, excluding
         'protocol'. These are only useful when pickling objects in object
-        arrays on Python 3 to Python 2 compatible format.
+        arrays to Python 2 compatible format.
 
     Raises
     ------
@@ -769,14 +768,13 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
                     buffersize=buffersize, order='F'):
                 fp.write(chunk.tobytes('C'))
+    elif isfileobj(fp):
+        array.tofile(fp)
     else:
-        if isfileobj(fp):
-            array.tofile(fp)
-        else:
-            for chunk in numpy.nditer(
-                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='C'):
-                fp.write(chunk.tobytes('C'))
+        for chunk in numpy.nditer(
+                array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                buffersize=buffersize, order='C'):
+            fp.write(chunk.tobytes('C'))
 
 
 @set_module("numpy.lib.format")
@@ -794,8 +792,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
         Whether to allow writing pickled data. Default: False
     pickle_kwargs : dict
         Additional keyword arguments to pass to pickle.load. These are only
-        useful when loading object arrays saved on Python 2 when using
-        Python 3.
+        useful when loading object arrays saved on Python 2.
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
@@ -872,7 +869,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                     data = _read_bytes(fp, read_size, "array data")
                     array[i:i + read_count] = numpy.frombuffer(data, dtype=dtype,
                                                              count=read_count)
-        
+
         if array.size != count:
             raise ValueError(
                 "Failed to read all data for array. "
@@ -882,10 +879,10 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
             )
 
         if fortran_order:
-            array.shape = shape[::-1]
+            array = array.reshape(shape[::-1])
             array = array.transpose()
         else:
-            array.shape = shape
+            array = array.reshape(shape)
 
     return array
 
@@ -1007,7 +1004,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     Required as e.g. ZipExtFile in python 2.6 can return less data than
     requested.
     """
-    data = bytes()
+    data = b""
     while True:
         # io files (default in python3) return None or raise on
         # would-block, python2 file will truncate, probably nothing can be

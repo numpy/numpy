@@ -1,18 +1,24 @@
+import hashlib
 import os.path
 import sys
-import hashlib
+import warnings
 
 import pytest
 
 import numpy as np
 from numpy.exceptions import AxisError
 from numpy.linalg import LinAlgError
+from numpy.random import MT19937, Generator, RandomState, SeedSequence
 from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_allclose,
-    assert_warns, assert_no_warnings, assert_array_equal,
-    assert_array_almost_equal, suppress_warnings, IS_WASM)
-
-from numpy.random import Generator, MT19937, SeedSequence, RandomState
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+)
 
 random = Generator(MT19937())
 
@@ -92,6 +98,24 @@ class TestBinomial:
     def test_p_is_nan(self):
         # Issue #4571.
         assert_raises(ValueError, random.binomial, 1, np.nan)
+
+    def test_p_extremely_small(self):
+        n = 50000000000
+        p = 5e-17
+        sample_size = 20000000
+        x = random.binomial(n, p, size=sample_size)
+        sample_mean = x.mean()
+        expected_mean = n * p
+        sigma = np.sqrt(n * p * (1 - p) / sample_size)
+        # Note: the parameters were chosen so that expected_mean - 6*sigma
+        # is a positive value.  The first `assert` below validates that
+        # assumption (in case someone edits the parameters in the future).
+        # The second `assert` is the actual test.
+        low_bound = expected_mean - 6 * sigma
+        assert low_bound > 0, "bad test params: 6-sigma lower bound is negative"
+        test_msg = (f"sample mean {sample_mean} deviates from the expected mean "
+                    f"{expected_mean} by more than 6*sigma")
+        assert abs(expected_mean - sample_mean) < 6 * sigma, test_msg
 
 
 class TestMultinomial:
@@ -1456,8 +1480,8 @@ class TestRandomDist:
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov)
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov,
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov)
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov,
                      method='eigh')
         assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
                       method='cholesky')
@@ -1484,10 +1508,9 @@ class TestRandomDist:
                           method='cholesky')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             random.multivariate_normal(mean, cov, method=method)
-            w = sup.record(RuntimeWarning)
-            assert len(w) == 0
 
         mu = np.zeros(2)
         cov = np.eye(2)
@@ -1899,7 +1922,7 @@ class TestBroadcast:
         scale = [1]
         bad_scale = [-1]
         random = Generator(MT19937(self.seed))
-        desired = np.array([-0.38736406738527,  0.79594375042255,  0.0197076236097])
+        desired = np.array([-0.38736406738527, 0.79594375042255, 0.0197076236097])
 
         random = Generator(MT19937(self.seed))
         actual = random.normal(loc * 3, scale)
@@ -2780,8 +2803,8 @@ def test_pickle_preserves_seed_sequence():
 @pytest.mark.parametrize("version", [121, 126])
 def test_legacy_pickle(version):
     # Pickling format was changes in 1.22.x and in 2.0.x
-    import pickle
     import gzip
+    import pickle
 
     base_path = os.path.split(os.path.abspath(__file__))[0]
     pkl_file = os.path.join(

@@ -1,6 +1,6 @@
-from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark, get_indexes_rand, get_squares_
 
 
 class Eindot(Benchmark):
@@ -103,6 +103,8 @@ class LinalgNorm(Benchmark):
 class LinalgSmallArrays(Benchmark):
     """ Test overhead of linalg methods for small arrays """
     def setup(self):
+        self.array_3_3 = np.eye(3) + np.arange(9.).reshape((3, 3))
+        self.array_3 = np.arange(3.)
         self.array_5 = np.arange(5.)
         self.array_5_5 = np.reshape(np.arange(25.), (5, 5))
 
@@ -111,6 +113,16 @@ class LinalgSmallArrays(Benchmark):
 
     def time_det_small_array(self):
         np.linalg.det(self.array_5_5)
+
+    def time_det_3x3(self):
+        np.linalg.det(self.array_3_3)
+
+    def time_solve_3x3(self):
+        np.linalg.solve(self.array_3_3, self.array_3)
+
+    def time_eig_3x3(self):
+        np.linalg.eig(self.array_3_3)
+
 
 class Lstsq(Benchmark):
     def setup(self):
@@ -136,7 +148,9 @@ class Einsum(Benchmark):
         self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=dtype)
         self.non_contiguous_dim1 = np.arange(1, 4000, 2, dtype=dtype)
         self.non_contiguous_dim2 = np.arange(1, 2400, 2, dtype=dtype).reshape(30, 40)
-        self.non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=dtype).reshape(20, 30, 40)
+
+        non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=dtype)
+        self.non_contiguous_dim3 = non_contiguous_dim3.reshape(20, 30, 40)
 
     # outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):
@@ -168,11 +182,13 @@ class Einsum(Benchmark):
 
     # outer(a,b): non_contiguous arrays
     def time_einsum_noncon_outer(self, dtype):
-        np.einsum("i,j", self.non_contiguous_dim1, self.non_contiguous_dim1, optimize=True)
+        np.einsum("i,j", self.non_contiguous_dim1,
+                  self.non_contiguous_dim1, optimize=True)
 
     # multiply(a, b):non_contiguous arrays
     def time_einsum_noncon_multiply(self, dtype):
-        np.einsum("..., ...", self.non_contiguous_dim2, self.non_contiguous_dim3, optimize=True)
+        np.einsum("..., ...", self.non_contiguous_dim2,
+                  self.non_contiguous_dim3, optimize=True)
 
     # sum and multiply:non_contiguous arrays
     def time_einsum_noncon_sum_mul(self, dtype):
@@ -188,9 +204,10 @@ class Einsum(Benchmark):
 
     # contig_contig_outstride0_two: non_contiguous arrays
     def time_einsum_noncon_contig_contig(self, dtype):
-        np.einsum("ji,i->", self.non_contiguous_dim2, self.non_contiguous_dim1_small, optimize=True)
+        np.einsum("ji,i->", self.non_contiguous_dim2,
+                  self.non_contiguous_dim1_small, optimize=True)
 
-    # sum_of_products_contig_outstride0_one：non_contiguous arrays
+    # sum_of_products_contig_outstride0_one: non_contiguous arrays
     def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contiguous_dim1, optimize=True)
 
@@ -239,14 +256,14 @@ class MatmulStrided(Benchmark):
         }
 
         self.params = [list(self.args_map.keys())]
-    
+
     def setup(self, configuration):
         m, p, n, batch_size = self.args_map[configuration]
 
         self.a1raw = np.random.rand(batch_size * m * 2 * n).reshape(
             (batch_size, m, 2 * n)
         )
-        
+
         self.a1 = self.a1raw[:, :, ::2]
 
         self.a2 = np.random.rand(batch_size * n * p).reshape(

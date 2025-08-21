@@ -1,13 +1,22 @@
 import pickle
 
 import numpy as np
-from numpy.testing import assert_warns
-from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
-                                assert_array_equal)
-from numpy.ma.core import (masked_array, masked_values, masked, allequal,
-                           MaskType, getmask, MaskedArray, nomask,
-                           log, add, hypot, divide)
+from numpy.ma.core import (
+    MaskedArray,
+    MaskType,
+    add,
+    allequal,
+    divide,
+    getmask,
+    hypot,
+    log,
+    masked,
+    masked_array,
+    masked_values,
+    nomask,
+)
 from numpy.ma.extras import mr_
+from numpy.ma.testutils import assert_, assert_array_equal, assert_equal, assert_raises
 
 
 class MMatrix(MaskedArray, np.matrix,):
@@ -20,7 +29,6 @@ class MMatrix(MaskedArray, np.matrix,):
     def __array_finalize__(self, obj):
         np.matrix.__array_finalize__(self, obj)
         MaskedArray.__array_finalize__(self, obj)
-        return
 
     @property
     def _series(self):
@@ -108,7 +116,7 @@ class TestMaskedMatrix:
         # Test setting
         test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
         testflat = test.flat
-        testflat[:] = testflat[[2, 1, 0]]
+        testflat[:] = testflat[np.array([2, 1, 0])]
         assert_equal(test, control)
         testflat[0] = 9
         # test that matrices keep the correct shape (#4615)

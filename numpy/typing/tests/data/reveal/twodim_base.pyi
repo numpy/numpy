@@ -1,15 +1,13 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-from typing_extensions import assert_type
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
 
-_SCT = TypeVar("_SCT", bound=np.generic)
+def func1(ar: npt.NDArray[_ScalarT], a: int) -> npt.NDArray[_ScalarT]: ...
 
-def func1(ar: npt.NDArray[_SCT], a: int) -> npt.NDArray[_SCT]: ...
-
-def func2(ar: npt.NDArray[np.number[Any]], a: str) -> npt.NDArray[np.float64]: ...
+def func2(ar: npt.NDArray[np.number], a: str) -> npt.NDArray[np.float64]: ...
 
 AR_b: npt.NDArray[np.bool]
 AR_u: npt.NDArray[np.uint64]
@@ -47,11 +45,11 @@ assert_type(np.tril(AR_LIKE_b, k=0), npt.NDArray[Any])
 assert_type(np.triu(AR_b), npt.NDArray[np.bool])
 assert_type(np.triu(AR_LIKE_b, k=0), npt.NDArray[Any])
 
-assert_type(np.vander(AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.vander(AR_u), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.vander(AR_i, N=2), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.vander(AR_f, increasing=True), npt.NDArray[np.floating[Any]])
-assert_type(np.vander(AR_c), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.vander(AR_b), npt.NDArray[np.signedinteger])
+assert_type(np.vander(AR_u), npt.NDArray[np.signedinteger])
+assert_type(np.vander(AR_i, N=2), npt.NDArray[np.signedinteger])
+assert_type(np.vander(AR_f, increasing=True), npt.NDArray[np.floating])
+assert_type(np.vander(AR_c), npt.NDArray[np.complexfloating])
 assert_type(np.vander(AR_O), npt.NDArray[np.object_])
 
 assert_type(

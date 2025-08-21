@@ -10,8 +10,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 
 from numpy._core.function_base import add_newdoc
-from numpy._core.overrides import get_array_function_like_doc
-
+from numpy._core.overrides import get_array_function_like_doc  # noqa: F401
 
 ###############################################################################
 #
@@ -807,7 +806,7 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 add_newdoc('numpy._core.multiarray', 'array',
     """
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-          like=None)
+          ndmax=None, like=None)
 
     Create an array.
 
@@ -856,6 +855,15 @@ add_newdoc('numpy._core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be prepended to the shape as
         needed to meet this requirement.
+    ndmax : int, optional
+        Specifies the maximum number of dimensions to create when inferring
+        shape from nested sequences. By default, NumPy recurses through all
+        nesting levels (up to the compile-time constant ``NPY_MAXDIMS``).
+        Setting ``ndmax`` stops recursion at the specified depth, preserving
+        deeper nested structures as objects instead of promoting them to
+        higher-dimensional arrays. In this case, ``dtype=object`` is required.
+
+        .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -926,6 +934,21 @@ add_newdoc('numpy._core.multiarray', 'array',
     >>> np.array(np.asmatrix('1 2; 3 4'), subok=True)
     matrix([[1, 2],
             [3, 4]])
+
+    Limiting the maximum dimensions with ``ndmax``:
+
+    >>> a = np.array([[1, 2], [3, 4]], dtype=object, ndmax=2)
+    >>> a
+    array([[1, 2],
+           [3, 4]], dtype=object)
+    >>> a.shape
+    (2, 2)
+
+    >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+    >>> b
+    array([list([1, 2]), list([3, 4])], dtype=object)
+    >>> b.shape
+    (2,)
 
     """)
 
@@ -1663,8 +1686,8 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
-    protocol. Generally, the returned NumPy array is a read-only view
-    of the input object. See [1]_ and [2]_ for more details.
+    protocol. Generally, the returned NumPy array is a view of the input
+    object. See [1]_ and [2]_ for more details.
 
     Parameters
     ----------
@@ -3027,8 +3050,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     >>> from typing import Any
     >>> import numpy as np
 
-    >>> np.ndarray[Any, np.dtype[Any]]
-    numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
+    >>> np.ndarray[Any, np.dtype[np.uint8]]
+    numpy.ndarray[typing.Any, numpy.dtype[numpy.uint8]]
 
     See Also
     --------
@@ -3081,7 +3104,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('all',
     """
-    a.all(axis=None, out=None, keepdims=False, *, where=True)
+    a.all(axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
 
     Returns True if all elements evaluate to True.
 
@@ -3096,7 +3119,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('any',
     """
-    a.any(axis=None, out=None, keepdims=False, *, where=True)
+    a.any(axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
 
     Returns True if any of the elements of `a` evaluate to True.
 
@@ -3304,7 +3327,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('choose',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('clip',
     """
-    a.clip(min=None, max=None, out=None, **kwargs)
+    a.clip(min=np._NoValue, max=np._NoValue, out=None, **kwargs)
 
     Return an array whose values are limited to ``[min, max]``.
     One of max or min must be given.
@@ -3709,7 +3732,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('max',
     """
-    a.max(axis=None, out=None, keepdims=False, initial=<no value>, where=True)
+    a.max(axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
 
     Return the maximum along a given axis.
 
@@ -3724,7 +3747,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('mean',
     """
-    a.mean(axis=None, dtype=None, out=None, keepdims=False, *, where=True)
+    a.mean(axis=None, dtype=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
 
     Returns the average of the array elements along given axis.
 
@@ -3739,7 +3762,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mean',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('min',
     """
-    a.min(axis=None, out=None, keepdims=False, initial=<no value>, where=True)
+    a.min(axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
 
     Return the minimum along a given axis.
 
@@ -3769,8 +3792,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nonzero',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('prod',
     """
-    a.prod(axis=None, dtype=None, out=None, keepdims=False,
-        initial=1, where=True)
+    a.prod(axis=None, dtype=None, out=None, keepdims=np._NoValue,
+        initial=np._NoValue, where=np._NoValue)
 
     Return the product of the array elements over the given axis
 
@@ -4241,7 +4264,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
     """
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
+    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *, where=np._NoValue, mean=np._NoValue)
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4256,7 +4279,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('sum',
     """
-    a.sum(axis=None, dtype=None, out=None, keepdims=False, initial=0, where=True)
+    a.sum(axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
 
     Return the sum of the array elements over the given axis.
 
@@ -4519,7 +4542,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('var',
     """
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=False, *, where=True)
+    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *, where=np._NoValue, mean=np._NoValue)
 
     Returns the variance of the array elements, along given axis.
 
@@ -4906,12 +4929,17 @@ add_newdoc('numpy._core', 'ufunc',
     ----------
     *x : array_like
         Input arrays.
-    out : ndarray, None, or tuple of ndarray and None, optional
-        Alternate array object(s) in which to put the result; if provided, it
-        must have a shape that the inputs broadcast to. A tuple of arrays
-        (possible only as a keyword argument) must have length equal to the
-        number of outputs; use None for uninitialized outputs to be
-        allocated by the ufunc.
+    out : ndarray, None, ..., or tuple of ndarray and None, optional
+        Location(s) into which the result(s) are stored.
+        If not provided or None, new array(s) are created by the ufunc.
+        If passed as a keyword argument, can be Ellipses (``out=...``) to
+        ensure an array is returned even if the result is 0-dimensional,
+        or a tuple with length equal to the number of outputs (where None
+        can be used for allocation by the ufunc).
+
+        .. versionadded:: 2.3
+            Support for ``out=...`` was added.
+
     where : array_like, optional
         This condition is broadcast over the input. At locations where the
         condition is True, the `out` array will be set to the ufunc result.
@@ -5163,11 +5191,17 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ``out`` if given, and the data type of ``array`` otherwise (though
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
-    out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
+    out : ndarray, None, ..., or tuple of ndarray and None, optional
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        If passed as a keyword argument, can be Ellipses (``out=...``) to
+        ensure an array is returned even if the result is 0-dimensional
+        (which is useful especially for object dtype), or a 1-element tuple
+        (latter for consistency with ``ufunc.__call__``).
+
+        .. versionadded:: 2.3
+            Support for ``out=...`` was added.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -5272,10 +5306,11 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         to the data-type of the output array if such is provided, or the
         data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
 
     Returns
     -------
@@ -5353,10 +5388,11 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
 
     Returns
     -------
@@ -5932,7 +5968,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('fields',
     >>> import numpy as np
     >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
     >>> print(dt.fields)
-    {'name': (dtype('|S16'), 0), 'grades': (dtype(('float64',(2,))), 16)}
+    {'name': (dtype('<U16'), 0), 'grades': (dtype(('<f8', (2,))), 64)}
 
     """))
 

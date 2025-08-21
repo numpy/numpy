@@ -1,15 +1,19 @@
+import sys
 import warnings
 
 import pytest
 
 import numpy as np
-from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings, IS_WASM
-        )
 from numpy import random
-import sys
+from numpy.testing import (
+    IS_WASM,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+)
 
 
 class TestSeed:
@@ -325,10 +329,8 @@ class TestRandomDist:
 
     def test_random_integers(self):
         np.random.seed(self.seed)
-        with suppress_warnings() as sup:
-            w = sup.record(DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             actual = np.random.random_integers(-99, 99, size=(3, 2))
-            assert_(len(w) == 1)
         desired = np.array([[31, 3],
                             [-52, 41],
                             [-48, -66]])
@@ -340,11 +342,9 @@ class TestRandomDist:
         # into a C long. Previous implementations of this
         # method have thrown an OverflowError when attempting
         # to generate this integer.
-        with suppress_warnings() as sup:
-            w = sup.record(DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             actual = np.random.random_integers(np.iinfo('l').max,
                                                np.iinfo('l').max)
-            assert_(len(w) == 1)
 
         desired = np.iinfo('l').max
         assert_equal(actual, desired)
@@ -789,7 +789,7 @@ class TestRandomDist:
         # RuntimeWarning
         mean = [0, 0]
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, np.random.multivariate_normal, mean, cov)
+        pytest.warns(RuntimeWarning, np.random.multivariate_normal, mean, cov)
 
         # and that it doesn't warn with RuntimeWarning check_valid='ignore'
         assert_no_warnings(np.random.multivariate_normal, mean, cov,
@@ -800,10 +800,9 @@ class TestRandomDist:
                       check_valid='raise')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
             np.random.multivariate_normal(mean, cov)
-            w = sup.record(RuntimeWarning)
-            assert len(w) == 0
 
     def test_negative_binomial(self):
         np.random.seed(self.seed)

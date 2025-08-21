@@ -1,7 +1,9 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
+from collections import deque
 
 import numpy as np
-from collections import deque
+
+from .common import TYPES1, Benchmark
+
 
 class BroadcastArrays(Benchmark):
     params = [[(16, 32), (128, 256), (512, 1024)],

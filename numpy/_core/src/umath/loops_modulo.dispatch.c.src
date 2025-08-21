@@ -1,6 +1,3 @@
-/*@targets
- ** baseline vsx4
- **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION

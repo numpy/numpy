@@ -16,11 +16,11 @@ class _ErrDict(TypedDict):
     invalid: _ErrKind
 
 def seterr(
-    all: None | _ErrKind = ...,
-    divide: None | _ErrKind = ...,
-    over: None | _ErrKind = ...,
-    under: None | _ErrKind = ...,
-    invalid: None | _ErrKind = ...,
+    all: _ErrKind | None = None,
+    divide: _ErrKind | None = None,
+    over: _ErrKind | None = None,
+    under: _ErrKind | None = None,
+    invalid: _ErrKind | None = None,
 ) -> _ErrDict: ...
 def geterr() -> _ErrDict: ...
 def setbufsize(size: int) -> int: ...

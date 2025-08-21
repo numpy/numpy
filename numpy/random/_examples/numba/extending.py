@@ -1,8 +1,9 @@
-import numpy as np
+from timeit import timeit
+
 import numba as nb
 
+import numpy as np
 from numpy.random import PCG64
-from timeit import timeit
 
 bit_gen = PCG64()
 next_d = bit_gen.cffi.next_double
@@ -83,5 +84,3 @@ def bounded_uints(lb, ub, n, state):
 
 
 bounded_uints(323, 2394691, 10000000, ctypes_state.value)
-
-

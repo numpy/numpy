@@ -117,4 +117,4 @@ def dtype_from_ctypes_type(t):
         return _from_ctypes_scalar(t)
     else:
         raise NotImplementedError(
-            "Unknown ctypes type {}".format(t.__name__))
+            f"Unknown ctypes type {t.__name__}")

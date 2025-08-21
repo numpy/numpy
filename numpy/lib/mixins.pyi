@@ -1,5 +1,5 @@
-from abc import ABCMeta, abstractmethod
-from typing import Literal as L, Any
+from abc import ABC, abstractmethod
+from typing import Any, Literal as L
 
 from numpy import ufunc
 
@@ -12,7 +12,7 @@ __all__ = ["NDArrayOperatorsMixin"]
 # completely dependent on how `__array_ufunc__` is implemented.
 # As such, only little type safety can be provided here.
 
-class NDArrayOperatorsMixin(metaclass=ABCMeta):
+class NDArrayOperatorsMixin(ABC):
     @abstractmethod
     def __array_ufunc__(
         self,
