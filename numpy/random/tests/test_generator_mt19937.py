@@ -1876,7 +1876,7 @@ class TestRandomDist:
 
     def test_wald_nonnegative(self):
         random = Generator(MT19937(self.seed))
-        samples = random.wald(mean=1e8, scale=2.25, size=1000)
+        samples = random.wald(mean=1e9, scale=2.25, size=1000)
         assert_(np.all(samples >= 0.0))
 
     def test_weibull(self):
