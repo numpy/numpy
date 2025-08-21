@@ -2945,9 +2945,9 @@ convert_timedelta_to_timedeltastruct(PyArray_DatetimeMetaData *meta,
 /*
  * Converts a timedelta into a PyObject *.
  *
- * Not-a-time is returned as None.
+ * NaT (Not-a-time) is returned as None.
  * For microseconds or coarser, returns a datetime.timedelta.
- * For Y/M/B (nonlinear units), generic units and units finer than microseconds, returns an integer.
+ * For Y/M (nonlinear units), generic units and units finer than microseconds, returns an integer.
  */
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
@@ -2963,7 +2963,7 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 
     /*
      * If the type's precision is greater than microseconds, is
-     * Y/M/B (nonlinear units), or is generic units, return an int
+     * Y/M (nonlinear units), or is generic units, return an int
      */
     if (meta->base > NPY_FR_us ||
                     meta->base == NPY_FR_Y ||
