@@ -323,7 +323,7 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
 
 #if NPY_HWY
     // Handle array-array case
-    if (IS_BLOCKABLE_BINARY(sizeof(T), NPY_SIMD_WIDTH)) 
+    if (IS_BLOCKABLE_BINARY(sizeof(T), kMaxLanes<uint8_t>)) 
     {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]) &&
                          nomemoverlap(args[2], steps[2], args[1], steps[1], dimensions[0]);
@@ -336,7 +336,7 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
             return;
         }
     }
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), kMaxLanes<uint8_t>) &&
         *reinterpret_cast<T*>(args[1]) != 0)
     {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]);
@@ -388,7 +388,7 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
     }
 #if NPY_HWY
     // Handle array-array case
-    if (IS_BLOCKABLE_BINARY(sizeof(T), NPY_SIMD_WIDTH)) {
+    if (IS_BLOCKABLE_BINARY(sizeof(T), kMaxLanes<uint8_t>)) {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]) &&
                          nomemoverlap(args[2], steps[2], args[1], steps[1], dimensions[0]);
         // Check if we can use SIMD for contiguous arrays - all steps must equal to sizeof(T)
@@ -400,7 +400,7 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
             return;
         }
     }
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), kMaxLanes<uint8_t>) &&
         *reinterpret_cast<T*>(args[1]) != 0)
     {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]);
@@ -483,25 +483,21 @@ int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
 
 // Macro to define the dispatch functions for signed types
 #define DEFINE_DIVIDE_FUNCTION(TYPE, SCALAR_TYPE) \
-    extern "C" { \
         NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_divide)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func) { \
             TYPE_divide<SCALAR_TYPE>(args, dimensions, steps, func); \
         } \
         NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_divide_indexed)(PyArrayMethod_Context *context, char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *func) { \
             return TYPE_divide_indexed<SCALAR_TYPE>(context, args, dimensions, steps, func); \
-        } \
-    } // extern "C"
+        }
 
 // Macro to define the dispatch functions for unsigned types
 #define DEFINE_DIVIDE_FUNCTION_UNSIGNED(TYPE, SCALAR_TYPE) \
-    extern "C" { \
         NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_divide)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func) { \
             TYPE_divide_unsigned<SCALAR_TYPE>(args, dimensions, steps, func); \
         } \
         NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_divide_indexed)(PyArrayMethod_Context *context, char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *func) { \
             return TYPE_divide_unsigned_indexed<SCALAR_TYPE>(context, args, dimensions, steps, func); \
-        } \
-    } // extern "C"
+        }
 
 
 #ifdef NPY_CPU_DISPATCH_CURFX
