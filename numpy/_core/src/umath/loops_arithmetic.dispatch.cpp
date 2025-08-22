@@ -57,7 +57,7 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
         }
     }
     else if (scalar == static_cast<T>(-1)) {
-        const auto vec_min_val = Set(static_cast<T>(std::numeric_limits<T>::min()));
+        const auto vec_min_val = Set(d, static_cast<T>(std::numeric_limits<T>::min()));
         size_t i = 0;
         for (; i + N <= static_cast<size_t>(len); i += N) {
             const auto vec_src = LoadU(src + i);
@@ -81,8 +81,8 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     }
     else {
         // General case with floor division semantics
-        const auto vec_scalar = Set(scalar);
-        const auto one = Set(static_cast<T>(1));
+        const auto vec_scalar = Set(d, scalar);
+        const auto one = Set(d, static_cast<T>(1));
         const auto vec_zero = Xor(one, one);
         size_t i = 0;
         
@@ -157,10 +157,10 @@ void simd_divide_contig_signed(T* src1, T* src2, T* dst, npy_intp len) {
 
     bool raise_overflow = false;
     bool raise_divbyzero = false;
-    const auto vec_one = Set(static_cast<T>(1));
+    const auto vec_one = Set(d, static_cast<T>(1));
     const auto vec_zero = Xor(vec_one, vec_one);
-    const auto vec_min_val = Set(static_cast<T>(std::numeric_limits<T>::min()));
-    const auto vec_neg_one = Set(static_cast<T>(-1));
+    const auto vec_min_val = Set(d, static_cast<T>(std::numeric_limits<T>::min()));
+    const auto vec_neg_one = Set(d, static_cast<T>(-1));
 
     size_t i = 0;
     for (; i + N <= static_cast<size_t>(len); i += N) {
@@ -237,7 +237,7 @@ void simd_divide_contig_unsigned(T* src1, T* src2, T* dst, npy_intp len) {
     const size_t N = Lanes(T{});
 
     bool raise_divbyzero = false;
-    const auto vec_one = Set(static_cast<T>(1));
+    const auto vec_one = Set(d, static_cast<T>(1));
     const auto vec_zero = Xor(vec_one, vec_one);
 
     size_t i = 0;
