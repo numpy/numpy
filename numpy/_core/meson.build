@@ -936,7 +936,7 @@ foreach gen_mtargets : [
     [
       AVX512_SKX, AVX512F, AVX2, SSE41, SSE2,
       NEON,
-      VSX2,
+      VSX4, VSX2,
       VX,
       LSX,
       RVV,

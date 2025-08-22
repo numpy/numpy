@@ -42,7 +42,7 @@ jobs:
               "ppc64le",
               "powerpc64le-linux-gnu",
               "ppc64le/ubuntu:22.04",
-              "-Dallow-noblas=true",
+              "-Dallow-noblas=true -Dcpu-dispatch=vsx,vsx2,vsx3",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "ppc64le"
             ]
@@ -50,7 +50,7 @@ jobs:
               "ppc64le - baseline(Power9)",
               "powerpc64le-linux-gnu",
               "ppc64le/ubuntu:22.04",
-              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
+              "-Dallow-noblas=true -Dcpu-baseline=vsx3 -Dcpu-dispatch=vsx,vsx2,vsx3",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "ppc64le"
             ]
