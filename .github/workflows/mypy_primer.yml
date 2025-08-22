@@ -4,9 +4,13 @@ on:
   # Only run on PR, since we diff against main
   pull_request:
     paths:
-      - "**/*.pyi"
       - ".github/workflows/mypy_primer.yml"
       - ".github/workflows/mypy_primer_comment.yml"
+      - "numpy/**/*.pyi"
+      - "numpy/_typing/*.py"
+      - "numpy/typing/*.py"
+      - "!numpy/typing/tests/**"
+      - "numpy/py.typed"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
