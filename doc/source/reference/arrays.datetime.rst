@@ -324,8 +324,8 @@ The protocol is described in the following table:
         ns/ps/fs/as                           ``int``                            ``int``
         μs/ms/s/m/h                      `datetime.datetime`               `datetime.timedelta`
       D/W (Linear units)                   `datetime.date`                 `datetime.timedelta` 
-    Y/M (Non-linear units)                 `datetime.date`                        ``int``
-        Generic units                      `datetime.date`                        ``int``
+    Y/M (Non-linear units)                 `datetime.date`                       ``int``
+        Generic units                      `datetime.date`                       ``int``
 ================================ ================================= ==================================
 
 .. admonition:: Example
