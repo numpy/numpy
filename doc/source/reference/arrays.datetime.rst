@@ -350,7 +350,7 @@ The protocol is described in the following table:
     <class 'datetime.timedelta'>
 
 
-In the casea where conversion of `datetime64` and/or `timedelta64` is done against Python types like ``int``, ``float``, and ``str`` the corresponding return types will be ``np.str_``, ``np.int64`` and ``np.float64``.
+In the case where conversion of `datetime64` and/or `timedelta64` is done against Python types like ``int``, ``float``, and ``str`` the corresponding return types will be ``np.str_``, ``np.int64`` and ``np.float64``.
 
 
 .. admonition:: Example
