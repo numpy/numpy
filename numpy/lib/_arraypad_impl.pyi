@@ -56,10 +56,10 @@ def pad(
     pad_width: _PadWidth,
     mode: _ModeKind = "constant",
     *,
-    stat_length: _ArrayLikeInt | None = ...,
-    constant_values: ArrayLike = ...,
-    end_values: ArrayLike = ...,
-    reflect_type: L["odd", "even"] = ...,
+    stat_length: _ArrayLikeInt | None = None,
+    constant_values: ArrayLike = 0,
+    end_values: ArrayLike = 0,
+    reflect_type: L["odd", "even"] = "even",
 ) -> NDArray[_ScalarT]: ...
 @overload
 def pad(
@@ -67,10 +67,10 @@ def pad(
     pad_width: _PadWidth,
     mode: _ModeKind = "constant",
     *,
-    stat_length: _ArrayLikeInt | None = ...,
-    constant_values: ArrayLike = ...,
-    end_values: ArrayLike = ...,
-    reflect_type: L["odd", "even"] = ...,
+    stat_length: _ArrayLikeInt | None = None,
+    constant_values: ArrayLike = 0,
+    end_values: ArrayLike = 0,
+    reflect_type: L["odd", "even"] = "even",
 ) -> NDArray[Any]: ...
 @overload
 def pad(
