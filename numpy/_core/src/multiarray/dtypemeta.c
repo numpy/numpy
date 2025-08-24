@@ -1398,7 +1398,7 @@ PyArray_DTypeMeta *_Void_dtype = NULL;
 
 
 /*NUMPY_API
- * Fetch the ArrFuncs struct which new lives on the DType and not the
+ * Fetch the ArrFuncs struct which now lives on the DType and not the
  * descriptor.  Use of this struct should be avoided but remains necessary
  * for certain functionality.
  *

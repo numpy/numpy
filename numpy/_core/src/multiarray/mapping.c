@@ -33,23 +33,6 @@
 #include "umathmodule.h"
 
 
-#define HAS_INTEGER 1
-#define HAS_NEWAXIS 2
-#define HAS_SLICE 4
-#define HAS_ELLIPSIS 8
-/* HAS_FANCY can be mixed with HAS_0D_BOOL, be careful when to use & or == */
-#define HAS_FANCY 16
-#define HAS_BOOL 32
-/* NOTE: Only set if it is neither fancy nor purely integer index! */
-#define HAS_SCALAR_ARRAY 64
-/*
- * Indicate that this is a fancy index that comes from a 0d boolean.
- * This means that the index does not operate along a real axis. The
- * corresponding index type is just HAS_FANCY.
- */
-#define HAS_0D_BOOL (HAS_FANCY | 128)
-
-
 static int
 _nonzero_indices(PyObject *myBool, PyArrayObject **arrays);
 
@@ -263,20 +246,22 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
  *
  * Checks everything but the bounds.
  *
- * @param self the array being indexed
+ * @param array_ndims The number of dimensions of the array being indexed (1 for iterators)
+ * @param array_dims The dimensions of the array being indexed (self->size for iterators)
  * @param index the index object
  * @param indices index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
  * @param num number of indices found
  * @param ndim dimension of the indexing result
  * @param out_fancy_ndim dimension of the fancy/advanced indices part
  * @param allow_boolean whether to allow the boolean special case
+ * @param is_flatiter_object Whether the object indexed is an iterator
  *
  * @returns the index_type or -1 on failure and fills the number of indices.
  */
 NPY_NO_EXPORT int
-prepare_index(PyArrayObject *self, PyObject *index,
-              npy_index_info *indices,
-              int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
+prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
+              npy_index_info *indices, int *num, int *ndim, int *out_fancy_ndim,
+              int allow_boolean, int is_flatiter_object)
 {
     int new_ndim, fancy_ndim, used_ndim, index_ndim;
     int curr_idx, get_idx;
@@ -314,8 +299,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
     while (get_idx < index_ndim) {
         if (curr_idx > NPY_MAXDIMS * 2) {
-            PyErr_SetString(PyExc_IndexError,
-                            "too many indices for array");
+            PyErr_Format(PyExc_IndexError,
+                            "too many indices for %s", is_flatiter_object ? "flat iterator" : "array");
             goto failed_building_indices;
         }
 
@@ -377,7 +362,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
          * Since this is always an error if it was not a boolean, we can
          * allow the 0-d special case before the rest.
          */
-        else if (PyArray_NDIM(self) != 0) {
+        else if (array_ndims != 0) {
             /*
              * Single integer index, there are two cases here.
              * It could be an array, a 0-d array is handled
@@ -418,17 +403,55 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 goto failed_building_indices;
             }
 
+            // We raise here because we changed the behavior for boolean
+            // indices for flat iterators from being handled as integers
+            // to being regular boolean indices.
+            // TODO: This should go away fairly soon and lists of booleans
+            // should be handled as regular boolean indices.
+            if (is_flatiter_object && PyArray_ISBOOL(tmp_arr) && !PyBool_Check(index)) {
+                Py_DECREF(tmp_arr);
+                PyErr_Format(PyExc_IndexError,
+                    "boolean indices for iterators are not supported because "
+                    "of previous behavior that was confusing (valid boolean "
+                    "indices are expected to work in the future)"
+                );
+                goto failed_building_indices;
+            }
+
             /*
              * For example an empty list can be cast to an integer array,
              * however it will default to a float one.
              */
-            if (PyArray_SIZE(tmp_arr) == 0) {
-                PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
+            if (PyArray_SIZE(tmp_arr) == 0
+                || (is_flatiter_object && !PyArray_ISINTEGER(tmp_arr) && !PyArray_ISBOOL(tmp_arr))) {
 
+                PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
                 arr = (PyArrayObject *)PyArray_FromArray(tmp_arr, indtype,
                                                          NPY_ARRAY_FORCECAST);
+
+                // If the cast succeeded (which means that the previous flat iterator
+                // indexing routine would have succeeded as well), we need to issue a
+                // deprecation warning.
+                if (arr
+                    && is_flatiter_object
+                    && PyArray_SIZE(tmp_arr) != 0
+                    && !PyArray_ISINTEGER(tmp_arr)
+                    && !PyArray_ISBOOL(tmp_arr)
+                    && DEPRECATE("Invalid non-array indices for iterator objects are deprecated and will be "
+                                 "removed in a future version. (Deprecated NumPy 2.4)") < 0) {
+                    Py_DECREF(tmp_arr);
+                    goto failed_building_indices;
+                }
                 Py_DECREF(tmp_arr);
                 if (arr == NULL) {
+                    // Raise a helpful error if this was a ValueError (i.e. could not cast)
+                    if (PyErr_ExceptionMatches(PyExc_ValueError)) {
+                        PyErr_Format(PyExc_IndexError,
+                            "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
+                            "arrays are valid indices",
+                            is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
+                        );
+                    }
                     goto failed_building_indices;
                 }
             }
@@ -458,9 +481,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
                  * this is always an error. The check ensures that these errors are raised
                  * and match those of the generic path.
                  */
-                if ((PyArray_NDIM(arr) == PyArray_NDIM(self))
+                if ((PyArray_NDIM(arr) == array_ndims)
                         && PyArray_CompareLists(PyArray_DIMS(arr),
-                                                PyArray_DIMS(self),
+                                                array_dims,
                                                 PyArray_NDIM(arr))) {
 
                     index_type = HAS_BOOL;
@@ -468,8 +491,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
                     indices[curr_idx].object = (PyObject *)arr;
 
                     /* keep track anyway, just to be complete */
-                    used_ndim = PyArray_NDIM(self);
-                    fancy_ndim = PyArray_NDIM(self);
+                    used_ndim = array_ndims;
+                    fancy_ndim = array_ndims;
                     curr_idx += 1;
                     break;
                 }
@@ -524,8 +547,8 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             /* Check that we will not run out of indices to store new ones */
             if (curr_idx + n >= NPY_MAXDIMS * 2) {
-                PyErr_SetString(PyExc_IndexError,
-                                "too many indices for array");
+                PyErr_Format(PyExc_IndexError,
+                                "too many indices for %s", is_flatiter_object ? "flat iterator" : "array");
                 for (i=0; i < n; i++) {
                     Py_DECREF(nonzero_result[i]);
                 }
@@ -603,10 +626,11 @@ prepare_index(PyArrayObject *self, PyObject *index,
         }
         else {
             /* The input was not an array, so give a general error message */
-            PyErr_SetString(PyExc_IndexError,
-                    "only integers, slices (`:`), ellipsis (`...`), "
-                    "numpy.newaxis (`None`) and integer or boolean "
-                    "arrays are valid indices");
+            PyErr_Format(PyExc_IndexError,
+                    "only integers, slices (`:`), ellipsis (`...`)%s and integer or boolean "
+                    "arrays are valid indices",
+                    is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
+                );
         }
         Py_DECREF(arr);
         goto failed_building_indices;
@@ -616,10 +640,10 @@ prepare_index(PyArrayObject *self, PyObject *index,
      * Compare dimension of the index to the real ndim. this is
      * to find the ellipsis value or append an ellipsis if necessary.
      */
-    if (used_ndim < PyArray_NDIM(self)) {
+    if (used_ndim < array_ndims) {
         if (index_type & HAS_ELLIPSIS) {
-            indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
-            used_ndim = PyArray_NDIM(self);
+            indices[ellipsis_pos].value = array_ndims - used_ndim;
+            used_ndim = array_ndims;
             new_ndim += indices[ellipsis_pos].value;
         }
         else {
@@ -630,19 +654,21 @@ prepare_index(PyArrayObject *self, PyObject *index,
             index_type |= HAS_ELLIPSIS;
             indices[curr_idx].object = NULL;
             indices[curr_idx].type = HAS_ELLIPSIS;
-            indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
+            indices[curr_idx].value = array_ndims - used_ndim;
             ellipsis_pos = curr_idx;
 
-            used_ndim = PyArray_NDIM(self);
+            used_ndim = array_ndims;
             new_ndim += indices[curr_idx].value;
             curr_idx += 1;
         }
     }
-    else if (used_ndim > PyArray_NDIM(self)) {
+    else if (used_ndim > array_ndims) {
         PyErr_Format(PyExc_IndexError,
-                     "too many indices for array: "
-                     "array is %d-dimensional, but %d were indexed",
-                     PyArray_NDIM(self),
+                     "too many indices for %s: "
+                     "%s is %d-dimensional, but %d were indexed",
+                     is_flatiter_object ? "flat iterator" : "array",
+                     is_flatiter_object ? "flat iterator" : "array",
+                     array_ndims,
                      used_ndim);
         goto failed_building_indices;
     }
@@ -697,14 +723,15 @@ prepare_index(PyArrayObject *self, PyObject *index,
         used_ndim = 0;
         for (i = 0; i < curr_idx; i++) {
             if ((indices[i].type == HAS_FANCY) && indices[i].value > 0) {
-                if (indices[i].value != PyArray_DIM(self, used_ndim)) {
+                if (indices[i].value != array_dims[used_ndim]) {
                     char err_msg[174];
 
                     PyOS_snprintf(err_msg, sizeof(err_msg),
-                        "boolean index did not match indexed array along "
+                        "boolean index did not match indexed %s along "
                         "axis %d; size of axis is %" NPY_INTP_FMT
                         " but size of corresponding boolean axis is %" NPY_INTP_FMT,
-                        used_ndim, PyArray_DIM(self, used_ndim),
+                        is_flatiter_object ? "flat iterator" : "array",
+                        used_ndim, array_dims[used_ndim],
                         indices[i].value);
                     PyErr_SetString(PyExc_IndexError, err_msg);
                     goto failed_building_indices;
@@ -738,6 +765,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
     }
     multi_DECREF(raw_indices, index_ndim);
     return -1;
+}
+
+NPY_NO_EXPORT int
+prepare_index(PyArrayObject *self, PyObject *index,
+              npy_index_info *indices,
+              int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
+{
+    return prepare_index_noarray(PyArray_NDIM(self), PyArray_DIMS(self),
+                                          index, indices, num, ndim, out_fancy_ndim,
+                                          allow_boolean, 0);
 }
 
 

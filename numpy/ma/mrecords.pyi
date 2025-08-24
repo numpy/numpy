@@ -48,49 +48,49 @@ class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __setattr__(self, attr, val): ...
     def __getitem__(self, indx): ...
     def __setitem__(self, indx, value): ...
-    def view(self, dtype=..., type=...): ...
+    def view(self, dtype=None, type=None): ...
     def harden_mask(self): ...
     def soften_mask(self): ...
     def copy(self): ...
-    def tolist(self, fill_value=...): ...
+    def tolist(self, fill_value=None): ...
     def __reduce__(self): ...
 
 mrecarray = MaskedRecords
 
 def fromarrays(
     arraylist,
-    dtype=...,
-    shape=...,
-    formats=...,
-    names=...,
-    titles=...,
-    aligned=...,
-    byteorder=...,
-    fill_value=...,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    fill_value=None,
 ): ...
 
 def fromrecords(
     reclist,
-    dtype=...,
-    shape=...,
-    formats=...,
-    names=...,
-    titles=...,
-    aligned=...,
-    byteorder=...,
-    fill_value=...,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    fill_value=None,
     mask=...,
 ): ...
 
 def fromtextfile(
     fname,
-    delimiter=...,
-    commentchar=...,
-    missingchar=...,
-    varnames=...,
-    vartypes=...,
+    delimiter=None,
+    commentchar="#",
+    missingchar="",
+    varnames=None,
+    vartypes=None,
     # NOTE: deprecated: NumPy 1.22.0, 2021-09-23
     # delimitor=...,
 ): ...
 
-def addfield(mrecord, newfield, newfieldname=...): ...
+def addfield(mrecord, newfield, newfieldname=None): ...

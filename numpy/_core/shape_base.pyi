@@ -68,72 +68,72 @@ def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray
 def vstack(
     tup: Sequence[_ArrayLike[_ScalarT]],
     *,
-    dtype: None = ...,
-    casting: _CastingKind = ...
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[_ScalarT]: ...
 @overload
 def vstack(
     tup: Sequence[ArrayLike],
     *,
     dtype: _DTypeLike[_ScalarT],
-    casting: _CastingKind = ...
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[_ScalarT]: ...
 @overload
 def vstack(
     tup: Sequence[ArrayLike],
     *,
-    dtype: DTypeLike = ...,
-    casting: _CastingKind = ...
+    dtype: DTypeLike = None,
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 
 @overload
 def hstack(
     tup: Sequence[_ArrayLike[_ScalarT]],
     *,
-    dtype: None = ...,
-    casting: _CastingKind = ...
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[_ScalarT]: ...
 @overload
 def hstack(
     tup: Sequence[ArrayLike],
     *,
     dtype: _DTypeLike[_ScalarT],
-    casting: _CastingKind = ...
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[_ScalarT]: ...
 @overload
 def hstack(
     tup: Sequence[ArrayLike],
     *,
-    dtype: DTypeLike = ...,
-    casting: _CastingKind = ...
+    dtype: DTypeLike = None,
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 
 @overload
 def stack(
     arrays: Sequence[_ArrayLike[_ScalarT]],
-    axis: SupportsIndex = ...,
-    out: None = ...,
+    axis: SupportsIndex = 0,
+    out: None = None,
     *,
-    dtype: None = ...,
-    casting: _CastingKind = ...
+    dtype: None = None,
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[_ScalarT]: ...
 @overload
 def stack(
     arrays: Sequence[ArrayLike],
-    axis: SupportsIndex = ...,
-    out: None = ...,
+    axis: SupportsIndex = 0,
+    out: None = None,
     *,
     dtype: _DTypeLike[_ScalarT],
-    casting: _CastingKind = ...
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[_ScalarT]: ...
 @overload
 def stack(
     arrays: Sequence[ArrayLike],
-    axis: SupportsIndex = ...,
-    out: None = ...,
+    axis: SupportsIndex = 0,
+    out: None = None,
     *,
-    dtype: DTypeLike = ...,
-    casting: _CastingKind = ...
+    dtype: DTypeLike = None,
+    casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 @overload
 def stack(
@@ -159,14 +159,14 @@ def unstack(
     array: _ArrayLike[_ScalarT],
     /,
     *,
-    axis: int = ...,
+    axis: int = 0,
 ) -> tuple[NDArray[_ScalarT], ...]: ...
 @overload
 def unstack(
     array: ArrayLike,
     /,
     *,
-    axis: int = ...,
+    axis: int = 0,
 ) -> tuple[NDArray[Any], ...]: ...
 
 @overload

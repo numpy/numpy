@@ -79,7 +79,7 @@ class _SupportsArrayWrap(Protocol):
 def take_along_axis(
     arr: _ScalarT | NDArray[_ScalarT],
     indices: NDArray[integer],
-    axis: int | None = ...,
+    axis: int | None = -1,
 ) -> NDArray[_ScalarT]: ...
 
 def put_along_axis(
@@ -147,26 +147,26 @@ def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 def array_split(
     ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
-    axis: SupportsIndex = ...,
+    axis: SupportsIndex = 0,
 ) -> list[NDArray[_ScalarT]]: ...
 @overload
 def array_split(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-    axis: SupportsIndex = ...,
+    axis: SupportsIndex = 0,
 ) -> list[NDArray[Any]]: ...
 
 @overload
 def split(
     ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
-    axis: SupportsIndex = ...,
+    axis: SupportsIndex = 0,
 ) -> list[NDArray[_ScalarT]]: ...
 @overload
 def split(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-    axis: SupportsIndex = ...,
+    axis: SupportsIndex = 0,
 ) -> list[NDArray[Any]]: ...
 
 @overload

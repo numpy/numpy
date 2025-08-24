@@ -144,15 +144,15 @@ __all__ = [
 
 @type_check_only
 class _TypeCodes(TypedDict):
-    Character: L['c']
-    Integer: L['bhilqnp']
-    UnsignedInteger: L['BHILQNP']
-    Float: L['efdg']
-    Complex: L['FDG']
-    AllInteger: L['bBhHiIlLqQnNpP']
-    AllFloat: L['efdgFDG']
-    Datetime: L['Mm']
-    All: L['?bhilqnpBHILQNPefdgFDGSUVOMm']
+    Character: L["c"]
+    Integer: L["bhilqnp"]
+    UnsignedInteger: L["BHILQNP"]
+    Float: L["efdg"]
+    Complex: L["FDG"]
+    AllInteger: L["bBhHiIlLqQnNpP"]
+    AllFloat: L["efdgFDG"]
+    Datetime: L["Mm"]
+    All: L["?bhilqnpBHILQNPefdgFDGSUVOMm"]
 
 def isdtype(dtype: dtype | type, kind: DTypeLike | tuple[DTypeLike, ...]) -> py_bool: ...
 def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> py_bool: ...

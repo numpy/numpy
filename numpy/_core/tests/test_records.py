@@ -359,26 +359,26 @@ class TestPathUsage:
 
 
 class TestRecord:
-    def setup_method(self):
-        self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
+    def _create_data(self):
+        return np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
                                    ("col2", "<i4"),
                                    ("col3", "<i4")])
 
     def test_assignment1(self):
-        a = self.data
+        a = self._create_data()
         assert_equal(a.col1[0], 1)
         a[0].col1 = 0
         assert_equal(a.col1[0], 0)
 
     def test_assignment2(self):
-        a = self.data
+        a = self._create_data()
         assert_equal(a.col1[0], 1)
         a.col1[0] = 0
         assert_equal(a.col1[0], 0)
 
     def test_invalid_assignment(self):
-        a = self.data
+        a = self._create_data()
 
         def assign_invalid_column(x):
             x[0].col5 = 1
@@ -396,14 +396,14 @@ class TestRecord:
 
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
-        x = self.data[['col1', 'col2']]
+        x = self._create_data()[['col1', 'col2']]
         assert_equal(x.dtype.names, ('col1', 'col2'))
         assert_equal(x.dtype.descr,
                      [('col1', '<i4'), ('col2', '<i4'), ('', '|V4')])
 
         # names change order to match indexing, as of 1.14 - descr can't
         # represent that
-        y = self.data[['col2', 'col1']]
+        y = self._create_data()[['col2', 'col1']]
         assert_equal(y.dtype.names, ('col2', 'col1'))
         assert_raises(ValueError, lambda: y.dtype.descr)
 
@@ -416,7 +416,7 @@ class TestRecord:
                                                          protocol=proto)))
 
     def test_pickle_2(self):
-        a = self.data
+        a = self._create_data()
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
             assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
@@ -424,7 +424,7 @@ class TestRecord:
 
     def test_pickle_3(self):
         # Issue #7140
-        a = self.data
+        a = self._create_data()
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             pa = pickle.loads(pickle.dumps(a[0], protocol=proto))
             assert_(pa.flags.c_contiguous)

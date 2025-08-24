@@ -65,6 +65,7 @@
 #include "mapping.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "number.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -4368,6 +4369,21 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_INCREF(tmp);
             PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
         }
+
+        /* Extra positional args but no keywords */
+        /* DEPRECATED NumPy 2.4, 2025-08 */
+        if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
+            
+            if (DEPRECATE(
+                "Passing more than 2 positional arguments to np.maximum and np.minimum "
+                "is deprecated. If you meant to use the third argument as an output, " 
+                "use the `out` keyword argument instead. If you hoped to work with "
+                "more than 2 inputs, combine them into a single array and get the extrema "
+                "for the relevant axis.") < 0) {
+                return NULL;
+            }
+        }
+        
         if (all_none) {
             Py_SETREF(full_args.out, NULL);
         }

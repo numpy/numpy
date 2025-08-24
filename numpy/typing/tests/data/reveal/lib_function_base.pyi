@@ -73,8 +73,8 @@ assert_type(np.asarray_chkfinite(AR_f8, dtype=float), npt.NDArray[Any])
 
 assert_type(np.piecewise(AR_f8, AR_b, [func]), npt.NDArray[np.float64])
 assert_type(np.piecewise(AR_f8, AR_b_list, [func]), npt.NDArray[np.float64])
-assert_type(np.piecewise(AR_f8, AR_b_list, [func], True, -1, kwarg=''), npt.NDArray[np.float64])
-assert_type(np.piecewise(AR_f8, AR_b_list, [func], True, arg=-1, kwarg=''), npt.NDArray[np.float64])
+assert_type(np.piecewise(AR_f8, AR_b_list, [func], True, -1, kwarg=""), npt.NDArray[np.float64])
+assert_type(np.piecewise(AR_f8, AR_b_list, [func], True, arg=-1, kwarg=""), npt.NDArray[np.float64])
 assert_type(np.piecewise(AR_LIKE_f8, AR_b_list, [func]), npt.NDArray[Any])
 
 assert_type(np.select([AR_f8], [AR_f8]), npt.NDArray[Any])

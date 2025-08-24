@@ -1,0 +1,27 @@
+``ndmax`` option for `numpy.array`
+----------------------------------------------------
+The ``ndmax`` option is now available for `numpy.array`.
+It explicitly limits the maximum number of dimensions created from nested sequences.
+
+This is particularly useful when creating arrays of list-like objects with ``dtype=object``.
+By default, NumPy recurses through all nesting levels to create the highest possible
+dimensional array, but this behavior may not be desired when the intent is to preserve
+nested structures as objects. The ``ndmax`` parameter provides explicit control over
+this recursion depth.
+
+.. code-block:: python
+
+   # Default behavior: Creates a 2D array
+   >>> a = np.array([[1, 2], [3, 4]], dtype=object)
+   >>> a
+   array([[1, 2],
+          [3, 4]], dtype=object)
+   >>> a.shape
+   (2, 2)
+
+   # With ndmax=1: Creates a 1D array
+   >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+   >>> b
+   array([list([1, 2]), list([3, 4])], dtype=object)
+   >>> b.shape
+   (2,)
