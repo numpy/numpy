@@ -1,5 +1,6 @@
 """Benchmarks for `numpy.lib`."""
 
+import string
 
 import numpy as np
 
@@ -119,37 +120,61 @@ class Nan(Benchmark):
 class Unique(Benchmark):
     """Benchmark for np.unique with np.nan values."""
 
-    param_names = ["array_size", "percent_nans"]
+    param_names = ["array_size", "percent_nans", "percent_unique_values", "dtype"]
     params = [
         # sizes of the 1D arrays
-        [200, int(2e5)],
+        [200, int(2e5), int(1e9)],
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
+        # percent of unique values in arrays
+        [2., 50., 90.],
+        # dtypes of the arrays
+        [np.float64, np.complex128, np.dtypes.StringDType(na_object=np.nan)],
     ]
 
-    def setup(self, array_size, percent_nans):
-        np.random.seed(123)
+    def setup(self, array_size, percent_nans, percent_unique_values, dtype):
+        rng = np.random.default_rng(123)
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
-        base_array = np.random.uniform(size=array_size)
+        match dtype:
+            case np.float64:
+                base_array = rng.uniform(size=array_size, dtype=dtype)
+            case np.complex128:
+                base_array = np.array(
+                    [
+                        complex(*rng.uniform(size=2, dtype=np.float64))
+                        for _ in range(array_size)
+                    ],
+                    dtype=dtype,
+                )
+            case np.dtypes.StringDType:
+                chars = string.ascii_letters + string.digits
+                base_array = np.array(
+                    [
+                        ''.join(rng.choice(list(chars), size=10))
+                        for _ in range(array_size)
+                    ],
+                    dtype=dtype,
+                )
+
         n_nan = int(percent_nans * array_size)
         nan_indices = np.random.choice(np.arange(array_size), size=n_nan)
         base_array[nan_indices] = np.nan
         self.arr = base_array
 
-    def time_unique_values(self, array_size, percent_nans):
+    def time_unique_values(self, array_size, percent_nans, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=False, return_counts=False)
 
-    def time_unique_counts(self, array_size, percent_nans):
+    def time_unique_counts(self, array_size, percent_nans, dtype):
         np.unique(self.arr, return_index=False,
-                  return_inverse=False, return_counts=True)
+                  return_inverse=False, return_counts=True,)
 
-    def time_unique_inverse(self, array_size, percent_nans):
+    def time_unique_inverse(self, array_size, percent_nans, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=True, return_counts=False)
 
-    def time_unique_all(self, array_size, percent_nans):
+    def time_unique_all(self, array_size, percent_nans, dtype):
         np.unique(self.arr, return_index=True,
                   return_inverse=True, return_counts=True)
 
