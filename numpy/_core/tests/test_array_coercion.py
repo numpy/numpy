@@ -505,19 +505,15 @@ class TestNested:
         # Test that this also works for two nested sequences
         l = []
         l.append(l)
-        
-        # ValueError: NumPy array cannot be created using cyclic nested sequence.
-        with pytest.raises(ValueError, match="NumPy array cannot be created using self-nested sequences."):
+
+        with pytest.raises(ValueError, match="cannot be created using self-nested"):
             arr = np.array([l, l, l], dtype=object)
             # assert arr.shape == (3,) + (1,) * (ncu.MAXDIMS - 1)
 
         # Also check a ragged case:
-        with pytest.raises(ValueError, match="NumPy array cannot be created using self-nested sequences."):
+        with pytest.raises(ValueError, match="cannot be created using self-nested"):
             arr = np.array([l, [None], l], dtype=object)
             # assert arr.shape == (3, 1)
-
-
-        
 
     @pytest.mark.parametrize("arraylike", arraylikes())
     def test_nested_arraylikes(self, arraylike):
