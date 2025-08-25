@@ -155,10 +155,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
         int fastop_found = 1;
         BINARY_LOOP_SLIDING {
             const @type@ in1 = *(@type@ *)ip1;
-            if (in2 == -1.0) {
-                *(@type@ *)op1 = 1.0 / in1;
-            }
-            else if (in2 == 0.0) {
+            if (in2 == 0.0) {
                 *(@type@ *)op1 = 1.0;
             }
             else if (in2 == 0.5) {

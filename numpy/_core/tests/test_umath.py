@@ -1270,6 +1270,27 @@ class TestPower:
             result = np.power(a, 0.5)
             assert_array_max_ulp(result, expected, maxulp=1)
 
+    def test_power_negative_exponent_precision(self):
+        # gh-29624: Test that np.power has consistent precision with negative exponents
+        # This ensures the fast path optimization for x ** -1.0 doesn't cause precision loss
+        x = np.float64(141322)
+        result_power = np.power(x, -1.0)
+        result_float_power = np.float_power(x, -1.0)
+        result_python = x ** -1.0
+        
+        # All three should produce identical results
+        assert_equal(result_power, result_float_power)
+        assert_equal(result_power, result_python)
+        
+        # Test with array input
+        arr = np.array([141322.0, 1000.0, 50000.0], dtype=np.float64)
+        result_arr_power = np.power(arr, -1.0)
+        result_arr_float_power = np.float_power(arr, -1.0)
+        result_arr_python = arr ** -1.0
+        
+        assert_array_equal(result_arr_power, result_arr_float_power)
+        assert_array_equal(result_arr_power, result_arr_python)
+
 
 class TestFloat_power:
     def test_type_conversion(self):

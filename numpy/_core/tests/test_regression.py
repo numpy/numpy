@@ -2674,3 +2674,27 @@ class TestRegression:
         x = np.array([(0, 1.)], dtype=[('time', '<i8'), ('value', '<f8')])
         y = np.array((0, 0.), dtype=[('time', '<i8'), ('value', '<f8')])
         x.searchsorted(y)
+
+    def test_power_negative_exponent_precision_regression(self):
+        # gh-29624: Regression test for precision loss with np.power and negative exponents
+        # This test ensures that the fast path optimization for x ** -1.0 doesn't cause
+        # precision differences between np.power, np.float_power, and Python's ** operator
+        x = np.float64(141322)
+        
+        # Test scalar case
+        result_power = np.power(x, -1.0)
+        result_float_power = np.float_power(x, -1.0)
+        result_python = x ** -1.0
+        
+        # All three should produce identical results
+        assert_equal(result_power, result_float_power)
+        assert_equal(result_power, result_python)
+        
+        # Test array case
+        arr = np.array([141322.0, 1000.0, 50000.0], dtype=np.float64)
+        result_arr_power = np.power(arr, -1.0)
+        result_arr_float_power = np.float_power(arr, -1.0)
+        result_arr_python = arr ** -1.0
+        
+        assert_array_equal(result_arr_power, result_arr_float_power)
+        assert_array_equal(result_arr_power, result_arr_python)
