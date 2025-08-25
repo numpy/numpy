@@ -1201,7 +1201,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         if (PySequence_Check(objects[0])){
             if(objects[0] == obj){
                   PyErr_SetString(PyExc_ValueError,
-                            "NumPy array cannot be created using cyclic self-nested sequence.");
+                            "NumPy array cannot be created using self-nested sequences.");
                 return -1;
             }
         }
