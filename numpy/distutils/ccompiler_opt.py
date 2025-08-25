@@ -485,7 +485,7 @@ class _Config:
                     flags="-mvsx"
                 ),
                 VSX2 = dict(
-                    flags="-mcpu=power8", implies_detect=False
+                    flags="-mcpu=power8 -mvsx", implies_detect=False
                 ),
                 VSX3 = dict(
                     flags="-mcpu=power9 -mtune=power9", implies_detect=False
@@ -496,7 +496,7 @@ class _Config:
             )
             if self.cc_is_clang:
                 partial["VSX"]["flags"]  = "-maltivec -mvsx"
-                partial["VSX2"]["flags"] = "-mcpu=power8"
+                partial["VSX2"]["flags"] = "-mcpu=power8 -mvsx"
                 partial["VSX3"]["flags"] = "-mcpu=power9"
                 partial["VSX4"]["flags"] = "-mcpu=power10"
 
