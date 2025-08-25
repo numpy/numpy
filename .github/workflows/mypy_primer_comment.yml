@@ -49,10 +49,10 @@ jobs:
             return parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
 
       - name: Hide old comments
-        uses: kanga333/comment-hider@c12bb20b48aeb8fc098e35967de8d4f8018fffdf  # v0.4.0
+        uses: int128/hide-comment-action@a30d551065e4231e6d7a671bb5ce884f9ee6417b  # v1.43.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          issue_number: ${{ steps.get-pr-number.outputs.result }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.get-pr-number.outputs.result }}
 
       - run: cat diff_*.txt | tee fulldiff.txt
 

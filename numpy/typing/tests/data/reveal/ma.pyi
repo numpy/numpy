@@ -188,7 +188,7 @@ assert_type(MAR_f4.any(out=MAR_subclass), MaskedArraySubclassC)
 assert_type(MAR_f4.any(None, out=MAR_subclass), MaskedArraySubclassC)
 
 assert_type(MAR_f4.sort(), None)
-assert_type(MAR_f4.sort(axis=0, kind='quicksort', order='K', endwith=False, fill_value=42., stable=False), None)
+assert_type(MAR_f4.sort(axis=0, kind="quicksort", order="K", endwith=False, fill_value=42., stable=False), None)
 
 assert_type(np.ma.sort(MAR_f4), MaskedArray[np.float32])
 assert_type(np.ma.sort(MAR_subclass), MaskedArraySubclassC)
@@ -214,10 +214,10 @@ assert_type(np.ma.take([1], [0]), MaskedArray[Any])
 assert_type(np.ma.take(np.eye(2), 1, axis=0), MaskedArray[np.float64])
 
 assert_type(MAR_f4.partition(1), None)
-assert_type(MAR_V.partition(1, axis=0, kind='introselect', order='K'), None)
+assert_type(MAR_V.partition(1, axis=0, kind="introselect", order="K"), None)
 
 assert_type(MAR_f4.argpartition(1), MaskedArray[np.intp])
-assert_type(MAR_1d.argpartition(1, axis=0, kind='introselect', order='K'), MaskedArray[np.intp])
+assert_type(MAR_1d.argpartition(1, axis=0, kind="introselect", order="K"), MaskedArray[np.intp])
 
 assert_type(np.ma.ndim(f4), int)
 assert_type(np.ma.ndim(MAR_b), int)
@@ -311,22 +311,22 @@ assert_type(np.ma.compressed([[1, 2, 3]]), np.ndarray[tuple[int], np.dtype])
 
 assert_type(MAR_f4.put([0, 4, 8], [10, 20, 30]), None)
 assert_type(MAR_f4.put(4, 999), None)
-assert_type(MAR_f4.put(4, 999, mode='clip'), None)
+assert_type(MAR_f4.put(4, 999, mode="clip"), None)
 
 assert_type(MAR_c8.__array_wrap__(AR_b), MaskedArray[np.bool])
 
 assert_type(np.ma.put(MAR_f4, [0, 4, 8], [10, 20, 30]), None)
 assert_type(np.ma.put(MAR_f4, 4, 999), None)
-assert_type(np.ma.put(MAR_f4, 4, 999, mode='clip'), None)
+assert_type(np.ma.put(MAR_f4, 4, 999, mode="clip"), None)
 
 assert_type(np.ma.putmask(MAR_f4, [True, False], [0, 1]), None)
 assert_type(np.ma.putmask(MAR_f4, np.False_, [0, 1]), None)
 
-assert_type(MAR_f4.filled(float('nan')), NDArray[np.float32])
+assert_type(MAR_f4.filled(float("nan")), NDArray[np.float32])
 assert_type(MAR_i8.filled(), NDArray[np.int64])
 assert_type(MAR_1d.filled(), np.ndarray[tuple[int], np.dtype])
 
-assert_type(np.ma.filled(MAR_f4, float('nan')), NDArray[np.float32])
+assert_type(np.ma.filled(MAR_f4, float("nan")), NDArray[np.float32])
 assert_type(np.ma.filled([[1, 2, 3]]), NDArray[Any])
 # PyRight detects this one correctly, but mypy doesn't.
 # https://github.com/numpy/numpy/pull/28742#discussion_r2048968375
@@ -345,7 +345,7 @@ assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
 
 assert_type(MAR_2d_f4.ravel(), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
-assert_type(MAR_1d.ravel(order='A'), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
+assert_type(MAR_1d.ravel(order="A"), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
 
 assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | np.bool)
 # PyRight detects this one correctly, but mypy doesn't:
@@ -381,8 +381,8 @@ assert_type(MAR_2d_f4[:], MaskedArray[np.float32])
 assert_type(MAR_2d_f4[0, 0], Any)
 assert_type(MAR_2d_f4[:, np.newaxis], MaskedArray[np.float32])
 assert_type(MAR_2d_f4[..., -1], MaskedArray[np.float32])
-assert_type(MAR_2d_V['field_0'], np.ma.MaskedArray[tuple[int, int], np.dtype])
-assert_type(MAR_2d_V[['field_0', 'field_1']], np.ma.MaskedArray[tuple[int, int], np.dtype[np.void]])
+assert_type(MAR_2d_V["field_0"], np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_V[["field_0", "field_1"]], np.ma.MaskedArray[tuple[int, int], np.dtype[np.void]])
 
 assert_type(np.ma.nomask, np.bool[Literal[False]])
 assert_type(np.ma.MaskType, type[np.bool])
@@ -406,7 +406,7 @@ assert_type(MAR_2d_f4.recordmask, np.ma.MaskType | np.ndarray[tuple[int, int], n
 assert_type(MAR_2d_f4.anom(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.anom(axis=0, dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
 assert_type(MAR_2d_f4.anom(0, np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
-assert_type(MAR_2d_f4.anom(0, 'float16'), np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_f4.anom(0, "float16"), np.ma.MaskedArray[tuple[int, int], np.dtype])
 
 assert_type(MAR_i8.fill_value, np.int64)
 
@@ -451,15 +451,15 @@ assert_type(MAR_f8.view(dtype=np.float32, fill_value=0), MaskedArray[np.float32]
 assert_type(MAR_f8.view(type=np.ndarray), np.ndarray[Any, Any])
 assert_type(MAR_f8.view(None, np.ndarray), np.ndarray[Any, Any])
 assert_type(MAR_f8.view(dtype=np.ndarray), np.ndarray[Any, Any])
-assert_type(MAR_f8.view(dtype='float32'), MaskedArray[Any])
-assert_type(MAR_f8.view(dtype='float32', type=np.ndarray), np.ndarray[Any, Any])
+assert_type(MAR_f8.view(dtype="float32"), MaskedArray[Any])
+assert_type(MAR_f8.view(dtype="float32", type=np.ndarray), np.ndarray[Any, Any])
 assert_type(MAR_2d_f4.view(dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
 assert_type(MAR_2d_f4.view(dtype=np.dtype(np.float16)), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float16]])
 
 assert_type(MAR_f8.__deepcopy__(), MaskedArray[np.float64])
 
 assert_type(MAR_f8.argsort(), MaskedArray[np.intp])
-assert_type(MAR_f8.argsort(axis=0, kind='heap', order=('x', 'y')), MaskedArray[np.intp])
+assert_type(MAR_f8.argsort(axis=0, kind="heap", order=("x", "y")), MaskedArray[np.intp])
 assert_type(MAR_f8.argsort(endwith=True, fill_value=1.5, stable=False), MaskedArray[np.intp])
 
 assert_type(MAR_2d_f4.flat, np.ma.core.MaskedIterator[tuple[int, int], np.dtype[np.float32]])

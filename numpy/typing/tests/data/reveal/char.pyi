@@ -65,6 +65,7 @@ assert_type(np.char.join(AR_T, "_"), AR_TU_alias)
 
 assert_type(np.char.ljust(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.char.ljust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
+assert_type(np.char.ljust(AR_S, [4, 3, 1], fillchar="a"), npt.NDArray[np.bytes_])
 assert_type(np.char.ljust(AR_T, 5), AR_T_alias)
 assert_type(np.char.ljust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_TU_alias)
 

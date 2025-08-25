@@ -1560,7 +1560,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
-        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin)
+        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin, int ndmax)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
@@ -1570,10 +1570,9 @@ _array_fromobject_generic(
     Py_XINCREF(in_descr);
     PyArray_Descr *dtype = in_descr;
 
-    if (ndmin > NPY_MAXDIMS) {
+    if (ndmin > ndmax) {
         PyErr_Format(PyExc_ValueError,
-                "ndmin bigger than allowable number of dimensions "
-                "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
+                "ndmin must be <= ndmax (%d)", ndmax);
         goto finish;
     }
     /* fast exit if simple call */
@@ -1682,7 +1681,7 @@ _array_fromobject_generic(
     flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, 0, flags, NULL);
+            op, dtype, in_DType, 0, ndmax, flags, NULL);
 
 finish:
     Py_XDECREF(dtype);
@@ -1713,6 +1712,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     npy_bool subok = NPY_FALSE;
     NPY_COPYMODE copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
+    int ndmax = NPY_MAXDIMS;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
@@ -1726,6 +1726,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
+                "$ndmax", &PyArray_PythonPyIntFromInt, &ndmax,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(dt_info.descr);
@@ -1747,8 +1748,15 @@ array_array(PyObject *NPY_UNUSED(ignored),
         op = args[0];
     }
 
+    if (ndmax > NPY_MAXDIMS || ndmax < 0) {
+        PyErr_Format(PyExc_ValueError, "ndmax must be in the range [0, NPY_MAXDIMS (%d)] ", NPY_MAXDIMS);
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin);
+            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin, ndmax);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1794,7 +1802,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1840,7 +1848,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1882,7 +1890,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_CORDER, NPY_FALSE,
-            1);
+            1, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1924,7 +1932,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_FORTRANORDER,
-            NPY_FALSE, 1);
+            NPY_FALSE, 1, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;

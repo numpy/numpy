@@ -1508,6 +1508,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
+    /*
+     * The internal implementation treats 0 as actually wanting a zero-dimensional
+     * array, but the API for this function has typically treated it as
+     * "anything is fine", so convert here.
+     * TODO: should we use another value as a placeholder instead?
+     */
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
+    }
+
     int was_scalar;
     PyObject* ret =  PyArray_FromAny_int(
             op, dt_info.descr, dt_info.dtype,
@@ -1563,7 +1573,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     Py_BEGIN_CRITICAL_SECTION(op);
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
+            op, max_depth, dims, &cache, in_DType, in_descr, &dtype,
             copy, &was_copied_by__array__);
 
     if (ndim < 0) {
@@ -1583,7 +1593,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         npy_free_coercion_cache(cache);
         goto cleanup;
     }
-    if (max_depth != 0 && ndim > max_depth) {
+    if (ndim > max_depth && (in_DType == NULL || in_DType->type_num != NPY_OBJECT)) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         npy_free_coercion_cache(cache);
@@ -1796,6 +1806,11 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         Py_XDECREF(dt_info.descr);
         Py_XDECREF(dt_info.dtype);
         return NULL;
+    }
+
+    /* See comment in PyArray_FromAny for rationale */
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
     }
 
     PyObject* ret =  PyArray_CheckFromAny_int(
