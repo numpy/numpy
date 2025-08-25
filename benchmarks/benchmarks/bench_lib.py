@@ -123,7 +123,7 @@ class Unique(Benchmark):
     param_names = ["array_size", "percent_nans", "percent_unique_values", "dtype"]
     params = [
         # sizes of the 1D arrays
-        [500, int(5e4), int(5e6)],
+        [200, int(5e4), int(1e7)],
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
         # percent of unique values in arrays
