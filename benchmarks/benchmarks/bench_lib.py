@@ -127,7 +127,7 @@ class Unique(Benchmark):
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
         # percent of unique values in arrays
-        [0.002, 0.2, 20.],
+        [0.001, 0.1, 10.],
         # dtypes of the arrays
         [np.float64, np.complex128, np.dtypes.StringDType(na_object=np.nan)],
     ]
@@ -152,7 +152,7 @@ class Unique(Benchmark):
                 chars = string.ascii_letters + string.digits
                 unique_array = np.array(
                     [
-                        ''.join(rng.choice(list(chars), size=rng.integers(5, 10)))
+                        ''.join(rng.choice(list(chars), size=rng.integers(4, 8)))
                         for _ in range(unique_values_size)
                     ],
                     dtype=dtype,
