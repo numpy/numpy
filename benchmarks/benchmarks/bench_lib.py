@@ -123,11 +123,11 @@ class Unique(Benchmark):
     param_names = ["array_size", "percent_nans", "percent_unique_values", "dtype"]
     params = [
         # sizes of the 1D arrays
-        [200, int(2e5), int(1e9)],
+        [200, int(2e5), int(2e8)],
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
         # percent of unique values in arrays
-        [2., 50., 90.],
+        [0.002, 0.2, 20.],
         # dtypes of the arrays
         [np.float64, np.complex128, np.dtypes.StringDType(na_object=np.nan)],
     ]
@@ -136,45 +136,51 @@ class Unique(Benchmark):
         rng = np.random.default_rng(123)
         # produce a randomly shuffled array with the
         # approximate desired percentage np.nan content
+        unique_values_size = max(int(percent_unique_values / 100. * array_size), 2)
         match dtype:
             case np.float64:
-                base_array = rng.uniform(size=array_size, dtype=dtype)
+                unique_array = rng.uniform(size=unique_values_size)
             case np.complex128:
-                base_array = np.array(
+                unique_array = np.array(
                     [
-                        complex(*rng.uniform(size=2, dtype=np.float64))
-                        for _ in range(array_size)
+                        complex(*rng.uniform(size=2))
+                        for _ in range(unique_values_size)
                     ],
                     dtype=dtype,
                 )
-            case np.dtypes.StringDType:
+            case np.dtypes.StringDType():
                 chars = string.ascii_letters + string.digits
-                base_array = np.array(
+                unique_array = np.array(
                     [
-                        ''.join(rng.choice(list(chars), size=10))
-                        for _ in range(array_size)
+                        ''.join(rng.choice(list(chars), size=rng.integers(5, 20)))
+                        for _ in range(unique_values_size)
                     ],
                     dtype=dtype,
                 )
+            case _:
+                raise ValueError(f"Unsupported dtype {dtype}")
 
-        n_nan = int(percent_nans * array_size)
-        nan_indices = np.random.choice(np.arange(array_size), size=n_nan)
+        base_array = np.resize(unique_array, array_size)
+        rng.shuffle(base_array)
+        # insert nans in random places
+        n_nan = int(percent_nans / 100. * array_size)
+        nan_indices = rng.choice(np.arange(array_size), size=n_nan, replace=False)
         base_array[nan_indices] = np.nan
         self.arr = base_array
 
-    def time_unique_values(self, array_size, percent_nans, dtype):
+    def time_unique_values(self, array_size, percent_nans, percent_unique_values, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=False, return_counts=False)
 
-    def time_unique_counts(self, array_size, percent_nans, dtype):
+    def time_unique_counts(self, array_size, percent_nans, percent_unique_values, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=False, return_counts=True,)
 
-    def time_unique_inverse(self, array_size, percent_nans, dtype):
+    def time_unique_inverse(self, array_size, percent_nans, percent_unique_values, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=True, return_counts=False)
 
-    def time_unique_all(self, array_size, percent_nans, dtype):
+    def time_unique_all(self, array_size, percent_nans, percent_unique_values, dtype):
         np.unique(self.arr, return_index=True,
                   return_inverse=True, return_counts=True)
 
