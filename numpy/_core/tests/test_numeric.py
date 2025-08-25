@@ -747,7 +747,7 @@ class TestBoolScalar:
 
 
 class TestBoolArray:
-    def _create_arrays(self):
+    def _create_bool_arrays(self):
         # offset for simd tests
         t = np.array([True] * 41, dtype=bool)[1::]
         f = np.array([False] * 41, dtype=bool)[1::]
@@ -761,7 +761,7 @@ class TestBoolArray:
         return t, f, o, nm, im
 
     def test_all_any(self):
-        t, f, _, nm, im = self._create_arrays()
+        t, f, _, nm, im = self._create_bool_arrays()
         assert_(t.all())
         assert_(t.any())
         assert_(not f.all())
@@ -789,7 +789,7 @@ class TestBoolArray:
             assert_(not np.all(e), msg=f"{i!r}")
 
     def test_logical_not_abs(self):
-        t, f, o, nm, im = self._create_arrays()
+        t, f, o, nm, im = self._create_bool_arrays()
         assert_array_equal(~t, f)
         assert_array_equal(np.abs(~t), f)
         assert_array_equal(np.abs(~f), t)
@@ -803,7 +803,7 @@ class TestBoolArray:
         assert_array_equal(o, t)
 
     def test_logical_and_or_xor(self):
-        t, f, o, nm, im = self._create_arrays()
+        t, f, o, nm, im = self._create_bool_arrays()
         assert_array_equal(t | t, t)
         assert_array_equal(f | f, f)
         assert_array_equal(t | f, t)

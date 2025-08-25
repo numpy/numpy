@@ -659,7 +659,7 @@ class TestArrayLike:
             ref = np.array(1)
         else:
             ref = MyArray.array()
-        print(ref)
+
         like_args = tuple(a() if callable(a) else a for a in args)
         array_like = np_func(*like_args, **kwargs, like=ref)
 
