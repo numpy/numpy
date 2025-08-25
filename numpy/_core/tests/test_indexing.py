@@ -776,6 +776,7 @@ class TestFancyIndexingCast:
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
 
+
 class TestFancyIndexingEquivalence:
     def test_object_assign(self):
         # Check that the field and object special case using copyto is active.
@@ -846,10 +847,11 @@ class TestMultiIndexingAutomated:
 
     """
 
-    def setup_method(self):
-        self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
-        self.b = np.empty((3, 0, 5, 6))
-        self.complex_indices = ['skip', Ellipsis,
+    def _create_array(self):
+        return np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
+
+    def _create_complex_indices(self):
+        return ['skip', Ellipsis,
             0,
             # Boolean indices, up to 3-d for some special cases of eating up
             # dimensions, also need to test all False
@@ -869,11 +871,6 @@ class TestMultiIndexingAutomated:
             np.array([2, -1], dtype=np.int8),
             np.zeros([1] * 31, dtype=int),  # trigger too large array.
             np.array([0., 1.])]  # invalid datatype
-        # Some simpler indices that still cover a bit more
-        self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]),
-                               'skip']
-        # Very simple ones to fill the rest:
-        self.fill_indices = [slice(None, None), 0]
 
     def _get_multi_index(self, arr, indices):
         """Mimic multi dimensional indexing.
@@ -1206,16 +1203,23 @@ class TestMultiIndexingAutomated:
         # it is aligned to the left. This is probably correct for
         # consistency with arr[boolean_array,] also no broadcasting
         # is done at all
+        a = self._create_array()
         self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool),))
+            a, (np.zeros_like(a, dtype=bool),))
         self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
+            a, (np.zeros_like(a, dtype=bool)[..., 0],))
         self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
+            a, (np.zeros_like(a, dtype=bool)[None, ...],))
 
     def test_multidim(self):
         # Automatically test combinations with complex indexes on 2nd (or 1st)
         # spot and the simple ones in one other spot.
+        a = self._create_array()
+        b = np.empty((3, 0, 5, 6))
+        complex_indices = self._create_complex_indices()
+        simple_indices = [Ellipsis, None, -1, [1], np.array([True]), 'skip']
+        fill_indices = [slice(None, None), 0]
+
         with warnings.catch_warnings():
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
@@ -1226,27 +1230,29 @@ class TestMultiIndexingAutomated:
                 return isinstance(idx, str) and idx == "skip"
 
             for simple_pos in [0, 2, 3]:
-                tocheck = [self.fill_indices, self.complex_indices,
-                           self.fill_indices, self.fill_indices]
-                tocheck[simple_pos] = self.simple_indices
+                tocheck = [fill_indices, complex_indices,
+                           fill_indices, fill_indices]
+                tocheck[simple_pos] = simple_indices
                 for index in product(*tocheck):
                     index = tuple(i for i in index if not isskip(i))
-                    self._check_multi_index(self.a, index)
-                    self._check_multi_index(self.b, index)
+                    self._check_multi_index(a, index)
+                    self._check_multi_index(b, index)
 
         # Check very simple item getting:
-        self._check_multi_index(self.a, (0, 0, 0, 0))
-        self._check_multi_index(self.b, (0, 0, 0, 0))
+        self._check_multi_index(a, (0, 0, 0, 0))
+        self._check_multi_index(b, (0, 0, 0, 0))
         # Also check (simple cases of) too many indices:
-        assert_raises(IndexError, self.a.__getitem__, (0, 0, 0, 0, 0))
-        assert_raises(IndexError, self.a.__setitem__, (0, 0, 0, 0, 0), 0)
-        assert_raises(IndexError, self.a.__getitem__, (0, 0, [1], 0, 0))
-        assert_raises(IndexError, self.a.__setitem__, (0, 0, [1], 0, 0), 0)
+        assert_raises(IndexError, a.__getitem__, (0, 0, 0, 0, 0))
+        assert_raises(IndexError, a.__setitem__, (0, 0, 0, 0, 0), 0)
+        assert_raises(IndexError, a.__getitem__, (0, 0, [1], 0, 0))
+        assert_raises(IndexError, a.__setitem__, (0, 0, [1], 0, 0), 0)
 
     def test_1d(self):
         a = np.arange(10)
-        for index in self.complex_indices:
+        complex_indices = self._create_complex_indices()
+        for index in complex_indices:
             self._check_single_index(a, index)
+
 
 class TestFloatNonIntegerArgument:
     """
