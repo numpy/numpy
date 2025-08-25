@@ -123,11 +123,11 @@ class Unique(Benchmark):
     param_names = ["array_size", "percent_nans", "percent_unique_values", "dtype"]
     params = [
         # sizes of the 1D arrays
-        [200, int(2e5), int(2e7)],
+        [500, int(5e4), int(5e6)],
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
         # percent of unique values in arrays
-        [0.001, 0.1, 10.],
+        [0.02, 0.2, 20.],
         # dtypes of the arrays
         [np.float64, np.complex128, np.dtypes.StringDType(na_object=np.nan)],
     ]
@@ -139,7 +139,7 @@ class Unique(Benchmark):
         unique_values_size = max(int(percent_unique_values / 100. * array_size), 2)
         match dtype:
             case np.float64:
-                unique_array = rng.uniform(size=unique_values_size)
+                unique_array = rng.uniform(size=unique_values_size).astype(dtype)
             case np.complex128:
                 unique_array = np.array(
                     [
