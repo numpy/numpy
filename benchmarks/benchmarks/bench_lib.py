@@ -168,19 +168,23 @@ class Unique(Benchmark):
         base_array[nan_indices] = np.nan
         self.arr = base_array
 
-    def time_unique_values(self, array_size, percent_nans, percent_unique_values, dtype):
+    def time_unique_values(self, array_size, percent_nans,
+                           percent_unique_values, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=False, return_counts=False)
 
-    def time_unique_counts(self, array_size, percent_nans, percent_unique_values, dtype):
+    def time_unique_counts(self, array_size, percent_nans,
+                           percent_unique_values, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=False, return_counts=True,)
 
-    def time_unique_inverse(self, array_size, percent_nans, percent_unique_values, dtype):
+    def time_unique_inverse(self, array_size, percent_nans,
+                            percent_unique_values, dtype):
         np.unique(self.arr, return_index=False,
                   return_inverse=True, return_counts=False)
 
-    def time_unique_all(self, array_size, percent_nans, percent_unique_values, dtype):
+    def time_unique_all(self, array_size, percent_nans,
+                        percent_unique_values, dtype):
         np.unique(self.arr, return_index=True,
                   return_inverse=True, return_counts=True)
 
