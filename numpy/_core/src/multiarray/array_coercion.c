@@ -1197,6 +1197,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         copy = -1;
     }
 
+    if(is_sequence){
+        if (PySequence_Check(objects[0])){
+            if(objects[0] == obj){
+                  PyErr_SetString(PyExc_ValueError,
+                            "NumPy array cannot be created using cyclic self-nested sequence.");
+                return -1;
+            }
+        }
+    }
+
     /* Recursive call for each sequence item */
     for (Py_ssize_t i = 0; i < size; i++) {
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
