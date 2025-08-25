@@ -127,7 +127,7 @@ class Unique(Benchmark):
         # percent of np.nan in arrays
         [0, 0.1, 2., 50., 90.],
         # percent of unique values in arrays
-        [0.02, 0.2, 20.],
+        [0.02, 0.5, 10.],
         # dtypes of the arrays
         [np.float64, np.complex128, np.dtypes.StringDType(na_object=np.nan)],
     ]
