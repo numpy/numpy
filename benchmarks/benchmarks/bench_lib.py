@@ -152,7 +152,7 @@ class Unique(Benchmark):
                 chars = string.ascii_letters + string.digits
                 unique_array = np.array(
                     [
-                        ''.join(rng.choice(list(chars), size=rng.integers(5, 20)))
+                        ''.join(rng.choice(list(chars), size=rng.integers(5, 10)))
                         for _ in range(unique_values_size)
                     ],
                     dtype=dtype,
