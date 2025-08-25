@@ -507,12 +507,12 @@ class TestNested:
         l.append(l)
         
         # ValueError: NumPy array cannot be created using cyclic nested sequence.
-        with pytest.raises(ValueError, match="NumPy array cannot be created using cyclic self-nested sequence."):
+        with pytest.raises(ValueError, match="NumPy array cannot be created using self-nested sequences."):
             arr = np.array([l, l, l], dtype=object)
             # assert arr.shape == (3,) + (1,) * (ncu.MAXDIMS - 1)
 
         # Also check a ragged case:
-        with pytest.raises(ValueError, match="NumPy array cannot be created using cyclic self-nested sequence."):
+        with pytest.raises(ValueError, match="NumPy array cannot be created using self-nested sequences."):
             arr = np.array([l, [None], l], dtype=object)
             # assert arr.shape == (3, 1)
 
