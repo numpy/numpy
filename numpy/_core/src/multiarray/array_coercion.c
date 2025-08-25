@@ -1197,9 +1197,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         copy = -1;
     }
 
-    if(is_sequence){
-        if (PySequence_Check(objects[0])){
-            if(objects[0] == obj){
+    /* Check for self-nested sequences to prevent RAM exhaustion */
+    if (is_sequence) {
+        if (PySequence_Check(objects[0])) {
+            if (objects[0] == obj) {
                   PyErr_SetString(PyExc_ValueError,
                             "NumPy array cannot be created using self-nested sequences.");
                 return -1;
