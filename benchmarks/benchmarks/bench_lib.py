@@ -125,7 +125,7 @@ class Unique(Benchmark):
         # sizes of the 1D arrays
         [200, int(5e4), int(1e7)],
         # percent of np.nan in arrays
-        [0, 0.1, 2., 50., 90.],
+        [0, 10., 90.],
         # percent of unique values in arrays
         [0.02, 0.5, 10.],
         # dtypes of the arrays
