@@ -1137,7 +1137,7 @@ class TestMaskedArrayArithmetic:
         xm.set_fill_value(1e+20)
         return x, y, a10, m1, m2, xm, ym, z, zm, xf
 
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def err_status(self):
         err = np.geterr()
         np.seterr(divide='ignore', invalid='ignore')
@@ -2754,7 +2754,7 @@ class TestMaskedArrayInPlaceArithmetic:
     def _create_otherdata(self):
         o = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
         othertypes = [np.dtype(_).type for _ in o]
-        (x, y, xm) = self._create_intdata()
+        x, y, xm = self._create_intdata()
         uint8data = (
             x.astype(np.uint8),
             y.astype(np.uint8),

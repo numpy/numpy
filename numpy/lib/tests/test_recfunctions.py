@@ -1,5 +1,3 @@
-import pytest
-
 import numpy as np
 import numpy.ma as ma
 from numpy.lib.recfunctions import (
@@ -236,7 +234,6 @@ class TestRecFunctions:
         dt = np.dtype((np.record, dt))
         assert_(repack_fields(dt).type is np.record)
 
-    @pytest.mark.thread_unsafe
     def test_structured_to_unstructured(self, tmp_path):
         a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
         out = structured_to_unstructured(a)
