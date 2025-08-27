@@ -4757,7 +4757,6 @@ class str_(character[str], str):
     @overload
     def __new__(cls, value: bytes, /, encoding: str = ..., errors: str = ...) -> Self: ...
 
-
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
 class ufunc:
