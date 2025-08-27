@@ -1283,7 +1283,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_CASTING casting)
 {
     if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
-        /* Force SAFE_CASTING */
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
         casting = NPY_SAFE_CASTING;
     }
     switch (casting) {
@@ -1365,7 +1365,7 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                              NPY_CASTING casting)
 {
     if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
-        /* Force SAFE_CASTING */
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
         casting = NPY_SAFE_CASTING;
     }
     switch (casting) {

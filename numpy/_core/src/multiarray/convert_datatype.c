@@ -261,7 +261,9 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
  * extending cast-levels if necessary.
  * It is not valid for one of the arguments to be -1 to indicate an error.
  * Pass through NPY_SAME_VALUE_CASTING_FLAG on casting1, unless both have the
- * flag, in which case return NPY_UNSAFE_CAST | NPY_SAME_VALUE_CASTING_FLAG
+ * flag, in which case return max_casting | NPY_SAME_VALUE_CASTING_FLAG.
+ * Usually this will be exactly NPY_SAME_VALUE_CASTING, but the logic here
+ * should handle other 'casting with same_value' options
  *
  * @param casting1 First (left-hand) casting level to compare
  * @param casting2 Second (right-hand) casting level to compare
@@ -853,7 +855,7 @@ npy_casting_to_string(NPY_CASTING casting)
         case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
             return "'same_kind and same_value'";
         case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
-            return "'unsafe and same_value'";
+            return "'same_value'";
         default:
             return "<unknown>";
     }

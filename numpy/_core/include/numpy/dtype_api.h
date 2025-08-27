@@ -99,6 +99,11 @@ typedef enum {
 } NPY_ARRAYMETHOD_FLAGS;
 
 
+typedef enum {
+    /* Casting via same_value logic */
+    NPY_SAME_VALUE_CONTEXT_FLAG=1,
+} NPY_ARRAYMETHOD_CONTEXT_FLAGS;
+
 typedef struct PyArrayMethod_Context_tag {
     /* The caller, which is typically the original ufunc.  May be NULL */
     PyObject *caller;
@@ -111,7 +116,7 @@ typedef struct PyArrayMethod_Context_tag {
     void * _reserved;
     /* 
      * Optional flag to pass information into the inner loop
-     * If set, it will be NPY_CASTING
+     * NPY_ARRAYMETHOD_CONTEXT_FLAGS
      */
     uint64_t flags;
     /* Structure may grow (this is harmless for DType authors) */

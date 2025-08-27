@@ -87,7 +87,7 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
     }
 
     if (((int)casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING_FLAG;
+        cast_info.context.flags |= NPY_SAME_VALUE_CONTEXT_FLAG;
     }
 
     npy_intp strides[2] = {0, dst_strides_it[0]};
@@ -184,7 +184,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
     if (((int)casting & NPY_SAME_VALUE_CASTING_FLAG) != 0) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING_FLAG;
+        cast_info.context.flags |= NPY_SAME_VALUE_CONTEXT_FLAG;
     }
 
     npy_intp strides[2] = {0, dst_strides_it[0]};

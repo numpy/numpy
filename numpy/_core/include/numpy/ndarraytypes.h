@@ -214,6 +214,16 @@ typedef enum {
         NPY_KEEPORDER=2
 } NPY_ORDER;
 
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
+/*
+ * check that no values overflow/change during casting
+ * Used  explicitly only in the ArrayMethod creation or resolve_dtypes functions to
+ * indicate that a same-value cast is supported. In external APIs, use only
+ * NPY_SAME_VALUE_CASTING
+ */
+#define NPY_SAME_VALUE_CASTING_FLAG 64
+#endif
+
 /* For specifying allowed casting in operations which support it */
 typedef enum {
         _NPY_ERROR_OCCURRED_IN_CAST = -1,
@@ -227,14 +237,10 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
-} NPY_CASTING;
-
 #if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
-/*
- * check that no values overflow/change during casting
- */
-#define NPY_SAME_VALUE_CASTING_FLAG 64  // Flag layered over NPY_CASTING
+        NPY_SAME_VALUE_CASTING=NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG,
 #endif
+} NPY_CASTING;
 
 typedef enum {
         NPY_CLIP=0,
