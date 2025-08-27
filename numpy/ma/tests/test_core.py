@@ -1137,7 +1137,7 @@ class TestMaskedArrayArithmetic:
         xm.set_fill_value(1e+20)
         return x, y, a10, m1, m2, xm, ym, z, zm, xf
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True, scope="class")
     def err_status(self):
         err = np.geterr()
         np.seterr(divide='ignore', invalid='ignore')
@@ -2595,7 +2595,7 @@ class TestUfuncs:
         return (array([1.0, 0, -1, pi / 2] * 2, mask=[0, 1] + [0] * 6),
                   array([1.0, 0, -1, pi / 2] * 2, mask=[1, 0] + [0] * 6),)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True, scope="class")
     def err_status(self):
         err = np.geterr()
         np.seterr(divide='ignore', invalid='ignore')
@@ -2737,6 +2737,7 @@ class TestUfuncs:
         with np.errstate(under="raise"):
             X2 = X / 2.0
             np.testing.assert_array_equal(X2, x / 2)
+
 
 class TestMaskedArrayInPlaceArithmetic:
     # Test MaskedArray Arithmetic
@@ -5649,6 +5650,7 @@ def test_masked_array():
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
 
+
 def test_masked_array_no_copy():
     # check nomask array is updated in place
     a = np.ma.array([1, 2, 3, 4])
@@ -5662,6 +5664,7 @@ def test_masked_array_no_copy():
     a = np.ma.array([np.inf, 1, 2, 3, 4])
     _ = np.ma.masked_invalid(a, copy=False)
     assert_array_equal(a.mask, [True, False, False, False, False])
+
 
 def test_append_masked_array():
     a = np.ma.masked_equal([1, 2, 3], value=2)
@@ -5700,6 +5703,7 @@ def test_append_masked_array_along_axis():
     expected = expected.reshape((3, 3))
     assert_array_equal(result.data, expected.data)
     assert_array_equal(result.mask, expected.mask)
+
 
 def test_default_fill_value_complex():
     # regression test for Python 3, where 'unicode' was not defined
@@ -5869,6 +5873,7 @@ def test_mask_shape_assignment_does_not_break_masked():
     b = np.ma.array(1, mask=a.mask)
     b.shape = (1,)
     assert_equal(a.mask.shape, ())
+
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")  # noqa: E501

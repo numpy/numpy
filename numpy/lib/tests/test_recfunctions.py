@@ -817,6 +817,7 @@ class TestJoinBy:
         assert_equal(test, control)
 
     def test_join(self):
+        a, b = self._create_arrays()
         # Fixme, this test is broken
         #test = join_by(('a', 'b'), a, b)
         #control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
@@ -825,7 +826,6 @@ class TestJoinBy:
         #                   dtype=[('a', int), ('b', int),
         #                          ('c', int), ('d', int)])
         #assert_equal(test, control)
-        a, b = self._create_arrays()
         join_by(('a', 'b'), a, b)
         np.array([(5, 55, 105, 100), (6, 56, 106, 101),
                   (7, 57, 107, 102), (8, 58, 108, 103),
