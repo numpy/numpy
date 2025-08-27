@@ -2334,8 +2334,8 @@ class vectorize:
         passed directly to `pyfunc` unmodified.
 
     cache : bool, optional
-        If `True`, then cache the first function call that determines the number
-        of outputs if `otypes` is not provided.
+        If neither `otypes` nor `signature` are provided, and `cache` is ``True``, then
+        cache the number of outputs.
 
     signature : string, optional
         Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
@@ -2359,12 +2359,12 @@ class vectorize:
     The `vectorize` function is provided primarily for convenience, not for
     performance. The implementation is essentially a for loop.
 
-    If `otypes` is not specified, then a call to the function with the
-    first argument will be used to determine the number of outputs.  The
-    results of this call will be cached if `cache` is `True` to prevent
-    calling the function twice.  However, to implement the cache, the
-    original function must be wrapped which will slow down subsequent
-    calls, so only do this if your function is expensive.
+    If neither `otypes` nor `signature` are specified, then a call to the function with
+    the first argument will be used to determine the number of outputs.  The results of
+    this call will be cached if `cache` is `True` to prevent calling the function
+    twice.  However, to implement the cache, the original function must be wrapped
+    which will slow down subsequent calls, so only do this if your function is
+    expensive.
 
     The new keyword argument interface and `excluded` argument support
     further degrades performance.

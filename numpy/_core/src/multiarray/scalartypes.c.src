@@ -2853,11 +2853,15 @@ static PyMethodDef numbertype_methods[] = {
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
 
-static PyMethodDef booleantype_methods[] = {
-        /* for typing */
-        {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
-        {NULL, NULL, 0, NULL} /* sentinel */
+/**begin repeat
+ * #name = boolean,datetime#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* for typing */
+    {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
+/**end repeat**/
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -4564,6 +4568,7 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    PyDatetimeArrType_Type.tp_methods = datetimetype_methods;
 
     /**begin repeat
      * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
