@@ -4409,7 +4409,7 @@ add_newdoc('numpy._core.umath', 'ldexp',
     --------
     >>> import numpy as np
     >>> np.ldexp(5, np.arange(4))
-    array([ 5., 10., 20., 40.])
+    array([ 5., 10., 20., 40.], dtype=float32)
 
     >>> x = np.arange(6)
     >>> np.ldexp(*np.frexp(x))
