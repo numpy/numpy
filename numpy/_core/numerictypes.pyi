@@ -1,5 +1,5 @@
 from builtins import bool as py_bool
-from typing import Final, Literal as L, TypedDict, type_check_only
+from typing import Any, Final, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 from numpy import (
@@ -166,7 +166,7 @@ ScalarType: Final[
         type[py_bool],
         type[bytes],
         type[str],
-        type[memoryview],
+        type[memoryview[Any]],
         type[np.bool],
         type[csingle],
         type[cdouble],
