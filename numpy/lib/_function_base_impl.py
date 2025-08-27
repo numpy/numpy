@@ -617,7 +617,8 @@ def asarray_chkfinite(a, dtype=None, order=None):
         'C' gives a row-major layout (C-style),
         'F' gives a column-major layout (Fortran-style).
         'C' and 'F' will copy if needed to ensure the output format.
-        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or
+        Fortran-contiguous, otherwise, it is equivalent to 'C'.
         Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
         'K' (keep) preserves the input order for the output.
         'C' is the default.
