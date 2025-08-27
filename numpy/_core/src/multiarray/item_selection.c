@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -1599,6 +1600,69 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 }
 
 
+/*NUMPY_API
+ * Sort an array in-place with extended parameters
+ */
+NPY_NO_EXPORT int
+PyArray_SortExt(PyArrayObject *op, int axis, bool stable, bool descending, bool nanfirst)
+{
+    PyArray_SortFunc **sort_table = NULL;
+    PyArray_SortFunc *sort = NULL;
+    int n = PyArray_NDIM(op);
+
+    if (check_and_adjust_axis(&axis, n) < 0) {
+        return -1;
+    }
+
+    if (PyArray_FailUnlessWriteable(op, "sort array") < 0) {
+        return -1;
+    }
+
+    sort_table = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort;
+
+    int which = (nanfirst << 2) + (descending << 1) + stable;
+    // Look for type specific functions
+    switch (which) {
+        case 0:
+            sort = sort_table[0];
+            break;
+        case 1:
+            sort = sort_table[2];
+            break;
+        default:
+            sort = NULL;
+    }
+
+    // Look for appropriate generic function if no type specific version
+    if (sort == NULL) {
+        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+            switch (which) {
+                case 0:
+                    sort = npy_quicksort;
+                    break;
+                case 1:
+                    sort = npy_timsort;
+                    break;
+                default:
+                    sort = NULL;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not have compare function");
+            return -1;
+        }
+    }
+
+    if (sort == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "no current sort function meets the requirements");
+        return -1;
+    }
+    return _new_sortlike(op, axis, sort, NULL, NULL, 0);
+}
+
+
 /*
  * make kth array positive, ravel and sort it
  */
@@ -1744,6 +1808,71 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                             "type does not have compare function");
             return NULL;
         }
+    }
+
+    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
+    if (op2 == NULL) {
+        return NULL;
+    }
+
+    ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, 0);
+
+    Py_DECREF(op2);
+    return ret;
+}
+
+
+/*NUMPY_API
+ * ArgSort an array with extended parameters
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_ArgSortExt(PyArrayObject *op, int axis, bool stable, bool descending, bool nanfirst)
+{
+    PyArrayObject *op2;
+    PyObject *ret;
+    PyArray_ArgSortFunc **argsort_table = NULL;
+    PyArray_ArgSortFunc *argsort = NULL;
+
+    argsort_table = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort;
+
+    int which = (nanfirst << 2) + (descending << 1) + stable;
+    // Look for type specific functions
+    switch (which) {
+        case 0:
+            argsort = argsort_table[0];
+            break;
+        case 1:
+            argsort = argsort_table[2];
+            break;
+        default:
+            argsort = NULL;
+    }
+
+    // Look for appropriate generic function if no type specific version
+    if (argsort == NULL) {
+        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+            switch (which) {
+                case 0:
+                    argsort = npy_aquicksort;
+                    break;
+                case 1:
+                    argsort = npy_atimsort;
+                    break;
+                default:
+                    argsort = NULL;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not have compare function");
+            return NULL;
+        }
+    }
+
+    if (argsort == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "no current argsort function meets the requirements");
+        return NULL;
     }
 
     op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);

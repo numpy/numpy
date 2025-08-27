@@ -1154,7 +1154,6 @@ array_copy_keeporder(PyArrayObject *self, PyObject *args)
     return PyArray_NewCopy(self, NPY_KEEPORDER);
 }
 
-#include <stdio.h>
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1265,6 +1264,29 @@ array_sort(PyArrayObject *self,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
+
+    /*
+     * Convert sortkind to stable, descending, and nanfirst if it is
+     * defined, otherwise use the default values if needed.
+     * current defaults are all 0, but we might want to change
+     * the stable default.
+     */
+    if (sortkind != _NPY_SORT_UNDEFINED) {
+        if (stable != -1) {
+            PyErr_SetString(PyExc_ValueError,
+                "`kind` and `stable` parameters can't be provided at "
+                "the same time. Use only one of them.");
+            return NULL;
+        }
+        else {
+            stable = sortkind == 2;
+        }
+    }
+    else {
+        stable = (stable != -1)? stable: 0;  // defaults to maybe not stable
+    }
+
+    // Reorder field names if required.
     if (order == Py_None) {
         order = NULL;
     }
@@ -1273,7 +1295,87 @@ array_sort(PyArrayObject *self,
         PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
+            PyErr_SetString(PyExc_ValueError,
+                "`kind` and `stable` parameters can't be provided at "
+                "the same time. Use only one of them.");
+            return NULL;
+        }
+        _numpy_internal = PyImport_ImportModule("numpy._core._internal");
+        if (_numpy_internal == NULL) {
+            return NULL;
+        }
+        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
+                                       "OO", saved, order);
+        Py_DECREF(_numpy_internal);
+        if (new_name == NULL) {
+            return NULL;
+        }
+        newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
+        ((PyArrayObject_fields *)self)->descr = newd;
+    }
+
+    val = PyArray_SortExt(self, axis, stable, 0, 0);
+
+    if (order != NULL) {
+        Py_XDECREF(PyArray_DESCR(self));
+        ((PyArrayObject_fields *)self)->descr = saved;
+    }
+    if (val < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+
+static PyObject *
+array_sortext(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    int axis = -1;
+    int val;
+    PyObject *order = NULL;
+    PyArray_Descr *saved = NULL;
+    PyArray_Descr *newd;
+    int stable = -1;
+    int descending = -1;
+    int nanfirst = -1;
+    NPY_PREPARE_ARGPARSER;
+
+    if (npy_parse_arguments("sort", args, len_args, kwnames,
+            "|axis", &PyArray_PythonPyIntFromInt, &axis,
+            "|order", NULL, &order,
+            "$stable", &PyArray_OptionalBoolConverter, &stable,
+            "$descending", &PyArray_OptionalBoolConverter, &descending,
+            "$nanfirst", &PyArray_OptionalBoolConverter, &nanfirst,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+
+    /*
+     * Convert sortkind to stable, descending, and nanfirst if it is
+     * defined, otherwise use the default values if needed.
+     * current defaults are all 0, but we might want to change
+     * the stable default.
+     */
+    stable = (stable != -1)? stable: 0;  // defaults to maybe not stable
+    descending = (descending != -1)? descending: 0;  // defaults to ascending
+    nanfirst = (nanfirst != -1)? nanfirst: 0;  // defaults to nan at the end
+    order = (order != Py_None)? order: NULL;
+
+    // Reorder field names if required.
+    if (order != NULL) {
+        PyObject *new_name;
+        PyObject *_numpy_internal;
+        saved = PyArray_DESCR(self);
+        if (!PyDataType_HASFIELDS(saved)) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
@@ -1296,20 +1398,9 @@ array_sort(PyArrayObject *self,
         ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
-    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
-        PyErr_SetString(PyExc_ValueError,
-            "`kind` and `stable` parameters can't be provided at "
-            "the same time. Use only one of them.");
-        return NULL;
-    }
-    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
-        sortkind = NPY_QUICKSORT;
-    }
-    else if (stable == 1) {
-        sortkind = NPY_STABLESORT;
-    }
 
-    val = PyArray_Sort(self, axis, sortkind);
+    val = PyArray_SortExt(self, axis, stable, descending, nanfirst);
+
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
         ((PyArrayObject_fields *)self)->descr = saved;
@@ -1319,6 +1410,7 @@ array_sort(PyArrayObject *self,
     }
     Py_RETURN_NONE;
 }
+
 
 static PyObject *
 array_partition(PyArrayObject *self,
@@ -1412,6 +1504,29 @@ array_argsort(PyArrayObject *self,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
+
+    /*
+     * Convert sortkind to stable, descending, and nanfirst if it is
+     * defined, otherwise use the default values if needed.
+     * current defaults are all 0, but we might want to change
+     * the stable default.
+     */
+    if (sortkind != _NPY_SORT_UNDEFINED) {
+        if (stable != -1) {
+            PyErr_SetString(PyExc_ValueError,
+                "`kind` and `stable` parameters can't be provided at "
+                "the same time. Use only one of them.");
+            return NULL;
+        }
+        else {
+            stable = sortkind == 2;
+        }
+    }
+    else {
+        stable = (stable != -1)? stable: 0;  // defaults to maybe not stable
+    }
+
+    // Reorder field names if required.
     if (order == Py_None) {
         order = NULL;
     }
@@ -1443,20 +1558,84 @@ array_argsort(PyArrayObject *self,
         ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
-    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
-        PyErr_SetString(PyExc_ValueError,
-            "`kind` and `stable` parameters can't be provided at "
-            "the same time. Use only one of them.");
+
+    res = PyArray_ArgSortExt(self, axis, stable, 0, 0);
+
+    if (order != NULL) {
+        Py_XDECREF(PyArray_DESCR(self));
+        ((PyArrayObject_fields *)self)->descr = saved;
+    }
+    return PyArray_Return((PyArrayObject *)res);
+}
+
+
+static PyObject *
+array_argsortext(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    int axis = -1;
+    PyObject *order = NULL, *res;
+    PyArray_Descr *newd, *saved=NULL;
+    int stable = -1;
+    int descending = -1;
+    int nanfirst = -1;
+    NPY_PREPARE_ARGPARSER;
+
+    if (npy_parse_arguments("argsort", args, len_args, kwnames,
+            "|axis", &PyArray_AxisConverter, &axis,
+            "|order", NULL, &order,
+            "$stable", &PyArray_OptionalBoolConverter, &stable,
+            "$descending", &PyArray_OptionalBoolConverter, &descending,
+            "$nanfirst", &PyArray_OptionalBoolConverter, &nanfirst,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
-    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
-        sortkind = NPY_QUICKSORT;
+
+    /*
+     * Convert sortkind to stable, descending, and nanfirst if it is
+     * defined, otherwise use the default values if needed.
+     * current defaults are all 0, but we might want to change
+     * the stable default.
+     */
+    stable = (stable != -1)? stable: 0;  // defaults to maybe not stable
+    descending = (descending != -1)? descending: 0;  // defaults to ascending
+    nanfirst = (nanfirst != -1)? nanfirst: 0;  // defaults to nan at the end.
+
+    // Reorder field names if required.
+    if (order == Py_None) {
+        order = NULL;
     }
-    else if (stable == 1) {
-        sortkind = NPY_STABLESORT;
+    if (order != NULL) {
+        PyObject *new_name;
+        PyObject *_numpy_internal;
+        saved = PyArray_DESCR(self);
+        if (!PyDataType_HASFIELDS(saved)) {
+            PyErr_SetString(PyExc_ValueError, "Cannot specify "
+                            "order when the array has no fields.");
+            return NULL;
+        }
+        _numpy_internal = PyImport_ImportModule("numpy._core._internal");
+        if (_numpy_internal == NULL) {
+            return NULL;
+        }
+        new_name = PyObject_CallMethod(_numpy_internal, "_newnames",
+                                       "OO", saved, order);
+        Py_DECREF(_numpy_internal);
+        if (new_name == NULL) {
+            return NULL;
+        }
+        newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
+        Py_DECREF(((_PyArray_LegacyDescr *)newd)->names);
+        ((_PyArray_LegacyDescr *)newd)->names = new_name;
+        ((PyArrayObject_fields *)self)->descr = newd;
     }
 
-    res = PyArray_ArgSort(self, axis, sortkind);
+    res = PyArray_ArgSortExt(self, axis, stable, descending, nanfirst);
+
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
         ((PyArrayObject_fields *)self)->descr = saved;
@@ -2919,6 +3098,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"argsort",
         (PyCFunction)array_argsort,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"argsortext",
+        (PyCFunction)array_argsortext,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"astype",
         (PyCFunction)array_astype,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -3014,6 +3196,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"sort",
         (PyCFunction)array_sort,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"sortext",
+        (PyCFunction)array_sortext,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"squeeze",
         (PyCFunction)array_squeeze,

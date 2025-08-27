@@ -641,7 +641,9 @@ cdef extern from "numpy/arrayobject.h":
     object PyArray_Repeat (ndarray, object, int)
     object PyArray_Choose (ndarray, object, ndarray, NPY_CLIPMODE)
     int PyArray_Sort (ndarray, int, NPY_SORTKIND) except -1
+    int PyArray_SortExt (ndarray, int, npy_bool, npy_bool, npy_bool) except -1
     object PyArray_ArgSort (ndarray, int, NPY_SORTKIND)
+    object PyArray_ArgSortExt (ndarray, int, npy_bool, npy_bool, npy_bool)
     object PyArray_SearchSorted (ndarray, object, NPY_SEARCHSIDE, PyObject *)
     object PyArray_ArgMax (ndarray, int, ndarray)
     object PyArray_ArgMin (ndarray, int, ndarray)

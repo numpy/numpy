@@ -409,6 +409,9 @@ multiarray_funcs_api = {
     # End 2.0 API
     # NpyIterGetTransferFlags (slot 223) added.
     # End 2.3 API
+    'PyArray_SortExt':                               (369, MinVersion("2.4")),
+    'PyArray_ArgSortExt':                            (370, MinVersion("2.4")),
+    # End 2.4 API
 }
 
 ufunc_types_api = {

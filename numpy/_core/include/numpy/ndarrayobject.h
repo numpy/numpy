@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 #include <Python.h>
+#include <stdbool.h>
 #include "ndarraytypes.h"
 #include "dtype_api.h"
 

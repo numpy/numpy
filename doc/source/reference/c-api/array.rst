@@ -2319,6 +2319,40 @@ Item selection and manipulation
     structured array, create a new data-type with a different order of names
     and construct a view of the array with that new data-type.
 
+.. c:function:: PyObject* PyArray_SortExt(PyArrayObject* self, int axis, bool stable, bool descending, bool nanfirst)
+
+    .. versionadded:: 2.24.0
+   
+    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sortext>` (*self*, *axis*, *stable*, *descending*, *nanfirst*).
+    Return an array with the items of *self* sorted along *axis*. The *stable*,
+    *descending*, and *nanfirst* variables determine which algorithm is used in
+    the sort.  If *self* ->descr is a data-type with fields defined, then
+    self->descr->names is used to determine the sort order. A comparison where
+    the first field is equal will use the second field and so on. To alter the
+    sort order of a structured array, create a new data-type with a different
+    order of names and construct a view of the array with that new data-type.
+
+    Raises a *TypeError* if the required algorithm is not available.
+
+
+.. c:function:: PyObject* PyArray_ArgSortExt(PyArrayObject* self, int axis, int stable, int descending, bool nanfirst)
+
+    .. versionadded:: 2.24.0
+   
+    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
+
+    Return an array of indices such that selection of these indices along the
+    given ``axis`` would return a sorted version of *self*. The *stable*,
+    *descending*, and *nanfirst* variables determine which algorithm is used in
+    the sort.  If *self* ->descr is a data-type with fields defined, then
+    self->descr->names is used to determine the sort order. A comparison where
+    the first field is equal will use the second field and so on. To alter the
+    sort order of a structured array, create a new data-type with a different
+    order of names and construct a view of the array with that new data-type.
+
+    Raises *TypeError* if the needed algorithm is not available.
+
+
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
     Given a sequence of arrays (*sort_keys*) of the same shape,

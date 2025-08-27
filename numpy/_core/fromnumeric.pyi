@@ -68,6 +68,7 @@ __all__ = [
     "argmin",
     "argpartition",
     "argsort",
+    "argsortext",
     "around",
     "choose",
     "clip",
@@ -96,6 +97,7 @@ __all__ = [
     "shape",
     "size",
     "sort",
+    "sortext",
     "squeeze",
     "std",
     "sum",
@@ -390,6 +392,27 @@ def sort(
     stable: bool | None = None,
 ) -> NDArray[Any]: ...
 
+@overload
+def sortext(
+    a: _ArrayLike[_ScalarT],
+    axis: SupportsIndex | None = -1,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | None = None,
+    nanfirst: bool | None = None,
+) -> NDArray[_ScalarT]: ...
+@overload
+def sortext(
+    a: ArrayLike,
+    axis: SupportsIndex | None = -1,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | None = None,
+    nanfirst: bool | None = None,
+) -> NDArray[Any]: ...
+
 def argsort(
     a: ArrayLike,
     axis: SupportsIndex | None = -1,
@@ -397,6 +420,16 @@ def argsort(
     order: str | Sequence[str] | None = None,
     *,
     stable: bool | None = None,
+) -> NDArray[intp]: ...
+
+def argsortext(
+    a: ArrayLike,
+    axis: SupportsIndex | None = -1,
+    order: str | Sequence[str] | None = None,
+    *,
+    stable: bool | None = None,
+    descending: bool | None = None,
+    nanfirst: bool | None = None,
 ) -> NDArray[intp]: ...
 
 @overload

@@ -17,14 +17,13 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-    'all', 'amax', 'amin', 'any', 'argmax',
-    'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
-    'compress', 'cumprod', 'cumsum', 'cumulative_prod', 'cumulative_sum',
-    'diagonal', 'mean', 'max', 'min', 'matrix_transpose',
-    'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
-    'ravel', 'repeat', 'reshape', 'resize', 'round',
-    'searchsorted', 'shape', 'size', 'sort', 'squeeze',
-    'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+    'all', 'amax', 'amin', 'any', 'argmax', 'argmin', 'argpartition',
+    'argsort', 'argsortext', 'around', 'choose', 'clip', 'compress', 'cumprod',
+    'cumsum', 'cumulative_prod', 'cumulative_sum', 'diagonal', 'mean', 'max',
+    'min', 'matrix_transpose', 'ndim', 'nonzero', 'partition', 'prod', 'ptp',
+    'put', 'ravel', 'repeat', 'reshape', 'resize', 'round', 'searchsorted',
+    'shape', 'size', 'sort', 'sortext', 'squeeze', 'std', 'sum', 'swapaxes', 'take',
+    'trace', 'transpose', 'var',
 ]
 
 _gentype = types.GeneratorType
@@ -1120,6 +1119,69 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
     return a
 
 
+def _sortext_dispatcher(a, axis=None, order=None, *,
+                        stable=None, descending=None, nanfirst=None):
+    return (a,)
+
+
+@array_function_dispatch(_sortext_dispatcher)
+def sortext(a, axis=-1, order=None, *,
+            stable=None, descending=None, nanfirst=None):
+    """
+    Return a sorted copy of an array.
+
+    .. versionadded:: 2.4.0
+
+    Parameters
+    ----------
+    a : array_like
+        Array to be sorted.
+    axis : int or None, optional
+        Axis along which to sort. If None, the array is flattened before
+        sorting. The default is -1, which sorts along the last axis.
+    order : str or list of str, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
+    stable : boolean, optional
+        If True, a sort that preserves the order of equal elements is used. If
+        False, the order of equal elements may not be preserved.  The default
+        is False.
+    descending : boolean, optional
+        If True, the array elements are sorted in descending order. If False,
+        the array elements are sorted in ascending order.  The default is
+        False.
+    nanfirst : boolean, optional
+        If True, NaN elements are sorted to the beginning of the array. If
+        False, NaN elements are sorted to the end of the array.  The default is
+        False.
+
+    Returns
+    -------
+    sorted_array : ndarray
+        Array of the same type and shape as `a`.
+
+    See Also
+    --------
+    ndarray.sort : Method to sort an array in-place.
+    argsort : Indirect sort.
+    lexsort : Indirect stable sort on multiple keys.
+    searchsorted : Find elements in a sorted array.
+    partition : Partial sort.
+    """
+    if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
+        a = asanyarray(a).flatten()
+        axis = -1
+    else:
+        a = asanyarray(a).copy(order="K")
+    a.sortext(axis=axis, order=order,
+              stable=stable, descending=decending, nanfirst=nanfirst)
+    return a
+
+
 def _argsort_dispatcher(a, axis=None, kind=None, order=None, *, stable=None):
     return (a,)
 
@@ -1239,6 +1301,64 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
     """
     return _wrapfunc(
         a, 'argsort', axis=axis, kind=kind, order=order, stable=stable
+    )
+
+
+def _argsortext_dispatcher(a, axis=None, order=None, *,
+                           stable=None, descending=None, nanfirst=None):
+    return (a,)
+
+
+@array_function_dispatch(_argsortext_dispatcher)
+def argsortext(a, axis=-1, order=None, *, stable, descending, nanfirst):
+    """
+    Returns the indices that would sort an array.
+
+    Perform an indirect sort along the given axis using the algorithm specified
+    by the `kind` keyword. It returns an array of indices of the same shape as
+    `a` that index data along the given axis in sorted order.
+
+    .. versionadded:: 2.4
+
+    Parameters
+    ----------
+    a : array_like
+        Array to sort.
+    axis : int or None, optional
+        Axis along which to sort.  The default is -1 (the last axis). If None,
+        the flattened array is used.
+    order : str or list of str, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
+    stable : boolean, optional
+        If True, a sort that preserves the order of equal elements is used. If
+        False, the order of equal elements may not be preserved.  The default
+        is False.
+    descending : boolean, optional
+        If True, the array elements are sorted in descending order. If False,
+        the array elements are sorted in ascending order.  The default is
+        False.
+    nanfirst : boolean, optional
+        If True, NaN elements are sorted to the beginning of the array. If
+        False, NaN elements are sorted to the end of the array.  The default is
+        False.
+
+        .. versionadded:: 2.0.0
+
+    Returns
+    -------
+    index_array : ndarray, int
+        Array of indices that sort `a` along the specified `axis`.
+        If `a` is one-dimensional, ``a[index_array]`` yields a sorted `a`.
+        More generally, ``np.take_along_axis(a, index_array, axis=axis)``
+        always yields the sorted `a`, irrespective of dimensionality.
+    """
+    return _wrapfunc(
+        a, 'argsortext', axis=axis, order=order,
+        stable=stable, descending=descending, nanfirst=nanfirst
     )
 
 def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):

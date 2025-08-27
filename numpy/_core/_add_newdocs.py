@@ -3162,17 +3162,19 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argmin',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('argsort',
+add_newdoc('numpy._core.multiarray', 'ndarray', ('argsortext',
     """
     a.argsort(axis=-1, kind=None, order=None)
 
     Returns the indices that would sort this array.
 
-    Refer to `numpy.argsort` for full documentation.
+    Refer to `numpy.argsortext` for full documentation.
+
+    .. versionadded:: 2.4.0
 
     See Also
     --------
-    numpy.argsort : equivalent function
+    numpy.argsortext : equivalent function
 
     """))
 
@@ -4181,6 +4183,76 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
 
     >>> a = np.array([('a', 2), ('c', 1)], dtype=[('x', 'S1'), ('y', int)])
     >>> a.sort(order='y')
+    >>> a
+    array([(b'c', 1), (b'a', 2)],
+          dtype=[('x', 'S1'), ('y', '<i8')])
+
+    """))
+
+
+add_newdoc('numpy._core.multiarray', 'ndarray', ('sortext',
+    """
+    a.sort(axis=-1, order=None, stable, descending, nanfirst)
+
+    Sort an array in-place. Refer to `numpy.sortext` for full documentation.
+
+    .. versionadded:: 2.4.0
+
+    Parameters
+    ----------
+    axis : int, optional
+        Axis along which to sort. Default is -1, which means sort along the
+        last axis.
+    order : str or list of str, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  A single field can
+        be specified as a string, and not all fields need be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
+    stable : boolean, optional
+        If True, a sort that preserves the order of equal elements is used. If
+        False, the order of equal elements may not be preserved.  The default
+        is False.
+    descending : boolean, optional
+        If True, the array elements are sorted in descending order. If False,
+        the array elements are sorted in ascending order.  The default is
+        False.
+    nanfirst : boolean, optional
+        If True, NaN elements are sorted to the beginning of the array. If
+        False, NaN elements are sorted to the end of the array.  The default is
+        False.
+
+    See Also
+    --------
+    numpy.sortext: Return a sorted copy of an array.
+    numpy.argsortext : Indirect sort.
+    numpy.lexsort : Indirect stable sort on multiple keys.
+    numpy.searchsorted : Find elements in sorted array.
+    numpy.partition: Partial sort.
+
+    Notes
+    -----
+    As of NumPy, descending and nanfirst are not implemented for the numpy
+    types.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array([[1,4], [3,1]])
+    >>> a.sortext(axis=1)
+    >>> a
+    array([[1, 4],
+           [1, 3]])
+    >>> a.sortext(axis=0)
+    >>> a
+    array([[1, 3],
+           [1, 4]])
+
+    Use the `order` keyword to specify a field to use when sorting a
+    structured array:
+
+    >>> a = np.array([('a', 2), ('c', 1)], dtype=[('x', 'S1'), ('y', int)])
+    >>> a.sortext(order='y')
     >>> a
     array([(b'c', 1), (b'a', 2)],
           dtype=[('x', 'S1'), ('y', '<i8')])
