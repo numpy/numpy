@@ -2357,7 +2357,7 @@ class TestLdexp:
             assert_equal(ncu.ldexp(2., imin), 0)
 
     def test_ldexp_python_scalar(self):
-        assert_almost_equal(ncu.ldexp(1, np.int16(16)), 65536)
+        assert_almost_equal(ncu.ldexp(1, np.int32(16)), 65536)
         assert_almost_equal(ncu.ldexp(1, np.int64(16)), 65536)
 
 class TestMaximum(_FilterInvalids):
