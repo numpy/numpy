@@ -97,14 +97,14 @@ c_intp = _c_intp
 @overload
 def ndpointer(
     dtype: None = None,
-    ndim: int = None,
+    ndim: int | None = None,
     shape: _ShapeLike | None = None,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[None]]: ...
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
-    ndim: int = None,
+    ndim: int | None = None,
     *,
     shape: _ShapeLike,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
@@ -112,7 +112,7 @@ def ndpointer(
 @overload
 def ndpointer(
     dtype: DTypeLike,
-    ndim: int = None,
+    ndim: int | None = None,
     *,
     shape: _ShapeLike,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
@@ -120,14 +120,14 @@ def ndpointer(
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
-    ndim: int = None,
+    ndim: int | None = None,
     shape: None = None,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
     dtype: DTypeLike,
-    ndim: int = None,
+    ndim: int | None = None,
     shape: None = None,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[dtype]]: ...
