@@ -479,15 +479,27 @@ that the same hardware flags are set and used to interpret the results
 as for :ref:`ufunc <ufuncs>`, so that the error state used for ufuncs
 also carries over to the math on array scalars.
 
+**Important Note about astype():**
+
+.. note::
+   The :meth:`~generic.astype` method behaves differently for scalars than for arrays:
+   
+   - **Always returns an ndarray**, never a scalar, regardless of input type
+   - **The copy parameter has no effect** - a copy is always made when converting scalar to array
+   - This is different from :meth:`numpy.ndarray.astype` which can return the same object when ``copy=False``
+
+The exceptions to the above rules are given below:
+
 The exceptions to the above rules are given below:
 
 .. autosummary::
    :toctree: generated/
 
-   generic.__array__
+      generic.__array__
    generic.__array_wrap__
    generic.squeeze
    generic.byteswap
+   generic.astype
    generic.__reduce__
    generic.__setstate__
    generic.setflags
