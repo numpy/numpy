@@ -249,10 +249,6 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a = np.array([[1, 1], [2, 3]])
     >>> np.unique(a)
     array([1, 2, 3])
-    >>> a = np.array([np.nan,0,0,np.nan])
-    >>> u = np.unique(a, axis=0, equal_nan=True)
-    >>> u
-    array([ 0., nan])
 
     Return the unique rows of a 2D array
 
