@@ -42,7 +42,7 @@ assert_type(c8.dtype, np.dtype[np.complex64])
 assert_type(c8.real, np.float32)
 assert_type(c16.imag, np.float64)
 
-assert_type(np.str_('foo'), np.str_)
+assert_type(np.str_("foo"), np.str_)
 
 assert_type(V[0], Any)
 assert_type(V["field1"], Any)

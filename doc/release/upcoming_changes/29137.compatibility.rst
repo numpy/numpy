@@ -1,0 +1,3 @@
+* `numpy.round` now always returns a copy. Previously, it returned a view
+  for integer inputs for ``decimals >= 0`` and a copy in all other cases.
+  This change brings ``round`` in line with ``ceil``, ``floor`` and ``trunc``.
