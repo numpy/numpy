@@ -1118,8 +1118,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         if t.shape == ():
             t = t.reshape(1)
             if m is not nomask:
-                m = make_mask(m, copy=True)
-                m = m.reshape((1,))
+                m = make_mask(m, copy=True).reshape((1,))
 
         if m is nomask:
             tr = self.f.reduce(t, axis)
@@ -2726,8 +2725,7 @@ class MaskedIterator:
             _mask = self.maskiter.__getitem__(indx)
             if isinstance(_mask, ndarray):
                 # set shape to match that of data; this is needed for matrices
-                _mask = _mask.reshape(result.shape)
-                result._mask = _mask
+                result._mask = _mask.reshape(result.shape)
             elif isinstance(_mask, np.void):
                 return mvoid(result, mask=_mask, hardmask=self.ma._hardmask)
             elif _mask:  # Just a scalar, masked
@@ -4793,9 +4791,9 @@ class MaskedArray(ndarray):
 
         Notes
         -----
-        The reshaping operation cannot guarantee that a copy will not be made,
-        to modify the shape in place, use ``a.shape = s``. Note: reshaping in
-        place is deprecated.
+        By default, the reshaping operation will make a copy if a view
+        with different strides is not possible. To ensure a view,
+        pass ``copy=False``.
 
         Examples
         --------

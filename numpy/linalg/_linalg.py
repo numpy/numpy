@@ -352,8 +352,7 @@ def tensorsolve(a, b, axes=None):
     a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
-    res = res.reshape(oldshape)
-    return res
+    return res.reshape(oldshape)
 
 
 def _solve_dispatcher(a, b):

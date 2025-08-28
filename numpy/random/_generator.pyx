@@ -3952,8 +3952,7 @@ cdef class Generator:
             _factor = u * np.sqrt(s)
 
         x = mean + x @ _factor.T
-        x = x.reshape(tuple(final_shape))
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, object n, object pvals, size=None):
         """
