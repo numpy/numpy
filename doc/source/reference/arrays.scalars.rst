@@ -490,12 +490,10 @@ also carries over to the math on array scalars.
 
 The exceptions to the above rules are given below:
 
-The exceptions to the above rules are given below:
-
 .. autosummary::
    :toctree: generated/
 
-      generic.__array__
+   generic.__array__
    generic.__array_wrap__
    generic.squeeze
    generic.byteswap
