@@ -349,6 +349,7 @@ class TestMRecords:
 
 
 class TestView:
+
     def _create_data(self):
         a, b = (np.arange(10), np.random.rand(10))
         ndtype = [('a', float), ('b', float)]

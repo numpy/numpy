@@ -96,6 +96,7 @@ def eq(v, w, msg=''):
 
 
 class TestMa:
+
     def _create_data(self):
         x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
@@ -776,6 +777,7 @@ class TestMa:
 
 
 class TestUfuncs:
+
     def _create_data(self):
         return (array([1.0, 0, -1, pi / 2] * 2, mask=[0, 1] + [0] * 6),
                   array([1.0, 0, -1, pi / 2] * 2, mask=[1, 0] + [0] * 6),)
@@ -841,6 +843,7 @@ class TestUfuncs:
 
 
 class TestArrayMethods:
+
     def _create_data(self):
         x = np.array([8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
                       8.43, 7.78, 9.865, 5.878, 8.979, 4.732,

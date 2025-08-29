@@ -181,6 +181,7 @@ class TestMaskedMatrix:
 
 class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
+
     def _create_data(self):
         x = np.arange(5, dtype='float')
         mx = MMatrix(x, mask=[0, 1, 0, 0, 0])
