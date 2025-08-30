@@ -10,7 +10,6 @@ rm -rf build
 echo "" >> $PROJECT_DIR/LICENSE.txt
 echo "----" >> $PROJECT_DIR/LICENSE.txt
 echo "" >> $PROJECT_DIR/LICENSE.txt
-cat $PROJECT_DIR/LICENSES_bundled.txt >> $PROJECT_DIR/LICENSE.txt
 if [[ $RUNNER_OS == "Linux" ]] ; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
 elif [[ $RUNNER_OS == "macOS" ]]; then

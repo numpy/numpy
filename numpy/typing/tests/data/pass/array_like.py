@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray, ArrayLike, _SupportsArray
+    from numpy._typing import ArrayLike, NDArray, _SupportsArray
 
 x1: ArrayLike = True
 x2: ArrayLike = 5

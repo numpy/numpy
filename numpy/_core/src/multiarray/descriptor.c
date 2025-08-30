@@ -2671,8 +2671,10 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
     if (dtype->metadata != NULL) {
         Py_INCREF(dtype->metadata);
         PyTuple_SET_ITEM(ret, 0, dtype->metadata);
-    } else {
-        PyTuple_SET_ITEM(ret, 0, PyDict_New());
+    }
+    else {
+        PyTuple_SET_ITEM(ret, 0, Py_None);
+        Py_INCREF(Py_None);
     }
 
     /* Convert the datetime metadata into a tuple */
@@ -3197,16 +3199,8 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         self->flags = _descr_find_object((PyArray_Descr *)self);
     }
 
-    /*
-     * We have a borrowed reference to metadata so no need
-     * to alter reference count when throwing away Py_None.
-     */
-    if (metadata == Py_None) {
-        metadata = NULL;
-    }
-
-    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *old_metadata;
+    PyObject *old_metadata, *new_metadata;
+    if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
@@ -3223,20 +3217,26 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
             return NULL;
         }
 
-        old_metadata = self->metadata;
-        self->metadata = PyTuple_GET_ITEM(metadata, 0);
+        new_metadata = PyTuple_GET_ITEM(metadata, 0);
         memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
-               (char *) &temp_dt_data,
-               sizeof(PyArray_DatetimeMetaData));
-        Py_XINCREF(self->metadata);
-        Py_XDECREF(old_metadata);
+            (char *) &temp_dt_data,
+            sizeof(PyArray_DatetimeMetaData));
     }
     else {
-        PyObject *old_metadata = self->metadata;
-        self->metadata = metadata;
-        Py_XINCREF(self->metadata);
-        Py_XDECREF(old_metadata);
+        new_metadata = metadata;
     }
+
+    old_metadata = self->metadata;
+    /*
+     * We have a borrowed reference to metadata so no need
+     * to alter reference count when throwing away Py_None.
+     */
+    if (new_metadata == Py_None) {
+        new_metadata = NULL;
+    }
+    self->metadata = new_metadata;
+    Py_XINCREF(new_metadata);
+    Py_XDECREF(old_metadata);
 
     Py_RETURN_NONE;
 }

@@ -30,7 +30,7 @@ AR_LIKE_M: list[np.datetime64]
 # NOTE: mypys `NoReturn` errors are, unfortunately, not that great
 _1 = AR_b - AR_LIKE_b  # type: ignore[var-annotated]
 _2 = AR_LIKE_b - AR_b  # type: ignore[var-annotated]
-AR_i - bytes()  # type: ignore[operator]
+AR_i - b""  # type: ignore[operator]
 
 AR_f - AR_LIKE_m  # type: ignore[operator]
 AR_f - AR_LIKE_M  # type: ignore[operator]

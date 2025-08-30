@@ -60,12 +60,12 @@ _DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=dtype | None)
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 
 _FlagsKind: TypeAlias = L[
-    'C_CONTIGUOUS', 'CONTIGUOUS', 'C',
-    'F_CONTIGUOUS', 'FORTRAN', 'F',
-    'ALIGNED', 'A',
-    'WRITEABLE', 'W',
-    'OWNDATA', 'O',
-    'WRITEBACKIFCOPY', 'X',
+    "C_CONTIGUOUS", "CONTIGUOUS", "C",
+    "F_CONTIGUOUS", "FORTRAN", "F",
+    "ALIGNED", "A",
+    "WRITEABLE", "W",
+    "OWNDATA", "O",
+    "WRITEBACKIFCOPY", "X",
 ]
 
 # TODO: Add a shape typevar once we have variadic typevars (PEP 646)

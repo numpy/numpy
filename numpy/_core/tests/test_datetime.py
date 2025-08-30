@@ -844,6 +844,21 @@ class TestDateTime:
         a = np.array([-1, 'NaT', 1234567], dtype='<m')
         assert_equal(str(a), "[     -1   'NaT' 1234567]")
 
+    def test_timedelta_array_with_nats(self):
+        # Regression test for gh-29497.
+        x = np.array([np.timedelta64('nat'),
+                      np.timedelta64('nat', 's'),
+                      np.timedelta64('nat', 'ms'),
+                      np.timedelta64(123, 'ms')])
+        for td in x[:3]:
+            assert np.isnat(td)
+
+    def test_timedelta_array_nat_assignment(self):
+        # Regression test for gh-29497.
+        x = np.zeros(3, dtype='m8[ms]')
+        x[1] = np.timedelta64('nat', 's')
+        assert np.isnat(x[1])
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -873,6 +888,15 @@ class TestDateTime:
                 b"(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n"\
                 b"I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
             assert_equal(pickle.loads(pkl), np.dtype('>M8[us]'))
+
+    def test_gh_29555(self):
+        # check that dtype metadata round-trips when none
+        dt = np.dtype('>M8[us]')
+        assert dt.metadata is None
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            res = pickle.loads(pickle.dumps(dt, protocol=proto))
+            assert_equal(res, dt)
+            assert res.metadata is None
 
     def test_setstate(self):
         "Verify that datetime dtype __setstate__ can handle bad arguments"

@@ -1140,7 +1140,9 @@ class TestArrayAssertLess:
         with pytest.raises(AssertionError):
             self._assert_func(x, y.astype(np.float32), strict=True)
 
-
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
 class TestWarns:
 
     def test_warn(self):
@@ -1787,6 +1789,9 @@ def test_clear_and_catch_warnings():
     assert_warn_len_equal(my_mod, 0)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
 def test_suppress_warnings_module():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1833,6 +1838,9 @@ def test_suppress_warnings_module():
     assert_warn_len_equal(my_mod, 0)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1861,6 +1869,9 @@ def test_suppress_warnings_type():
     assert_warn_len_equal(my_mod, 0)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
 def test_suppress_warnings_decorate_no_record():
     sup = suppress_warnings()
     sup.filter(UserWarning)
@@ -1876,6 +1887,9 @@ def test_suppress_warnings_decorate_no_record():
         assert_equal(len(w), 1)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
 def test_suppress_warnings_record():
     sup = suppress_warnings()
     log1 = sup.record()
@@ -1913,9 +1927,13 @@ def test_suppress_warnings_record():
             warnings.warn('Some warning')
             warnings.warn('Some other warning')
             assert_equal(len(sup2.log), 1)
-        assert_equal(len(sup.log), 1)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 2)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
 def test_suppress_warnings_forwarding():
     def warn_other_module():
         # Apply along axis is implemented in python; stacklevel=2 means
@@ -1931,7 +1949,8 @@ def test_suppress_warnings_forwarding():
             for i in range(2):
                 warnings.warn("Some warning")
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
     with suppress_warnings() as sup:
         sup.record()
@@ -1940,7 +1959,8 @@ def test_suppress_warnings_forwarding():
                 warnings.warn("Some warning")
                 warnings.warn("Some warning")
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
     with suppress_warnings() as sup:
         sup.record()
@@ -1950,7 +1970,8 @@ def test_suppress_warnings_forwarding():
                 warnings.warn("Some warning")
                 warn_other_module()
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
     with suppress_warnings() as sup:
         sup.record()
@@ -1960,7 +1981,8 @@ def test_suppress_warnings_forwarding():
                 warnings.warn("Some other warning")
                 warn_other_module()
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
 
 def test_tempdir():

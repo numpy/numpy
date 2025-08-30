@@ -747,27 +747,29 @@ class TestBoolScalar:
 
 
 class TestBoolArray:
-    def setup_method(self):
+    def _create_bool_arrays(self):
         # offset for simd tests
-        self.t = np.array([True] * 41, dtype=bool)[1::]
-        self.f = np.array([False] * 41, dtype=bool)[1::]
-        self.o = np.array([False] * 42, dtype=bool)[2::]
-        self.nm = self.f.copy()
-        self.im = self.t.copy()
-        self.nm[3] = True
-        self.nm[-2] = True
-        self.im[3] = False
-        self.im[-2] = False
+        t = np.array([True] * 41, dtype=bool)[1::]
+        f = np.array([False] * 41, dtype=bool)[1::]
+        o = np.array([False] * 42, dtype=bool)[2::]
+        nm = f.copy()
+        im = t.copy()
+        nm[3] = True
+        nm[-2] = True
+        im[3] = False
+        im[-2] = False
+        return t, f, o, nm, im
 
     def test_all_any(self):
-        assert_(self.t.all())
-        assert_(self.t.any())
-        assert_(not self.f.all())
-        assert_(not self.f.any())
-        assert_(self.nm.any())
-        assert_(self.im.any())
-        assert_(not self.nm.all())
-        assert_(not self.im.all())
+        t, f, _, nm, im = self._create_bool_arrays()
+        assert_(t.all())
+        assert_(t.any())
+        assert_(not f.all())
+        assert_(not f.any())
+        assert_(nm.any())
+        assert_(im.any())
+        assert_(not nm.all())
+        assert_(not im.all())
         # check bad element in all positions
         for i in range(256 - 7):
             d = np.array([False] * 256, dtype=bool)[7::]
@@ -787,118 +789,103 @@ class TestBoolArray:
             assert_(not np.all(e), msg=f"{i!r}")
 
     def test_logical_not_abs(self):
-        assert_array_equal(~self.t, self.f)
-        assert_array_equal(np.abs(~self.t), self.f)
-        assert_array_equal(np.abs(~self.f), self.t)
-        assert_array_equal(np.abs(self.f), self.f)
-        assert_array_equal(~np.abs(self.f), self.t)
-        assert_array_equal(~np.abs(self.t), self.f)
-        assert_array_equal(np.abs(~self.nm), self.im)
-        np.logical_not(self.t, out=self.o)
-        assert_array_equal(self.o, self.f)
-        np.abs(self.t, out=self.o)
-        assert_array_equal(self.o, self.t)
+        t, f, o, nm, im = self._create_bool_arrays()
+        assert_array_equal(~t, f)
+        assert_array_equal(np.abs(~t), f)
+        assert_array_equal(np.abs(~f), t)
+        assert_array_equal(np.abs(f), f)
+        assert_array_equal(~np.abs(f), t)
+        assert_array_equal(~np.abs(t), f)
+        assert_array_equal(np.abs(~nm), im)
+        np.logical_not(t, out=o)
+        assert_array_equal(o, f)
+        np.abs(t, out=o)
+        assert_array_equal(o, t)
 
     def test_logical_and_or_xor(self):
-        assert_array_equal(self.t | self.t, self.t)
-        assert_array_equal(self.f | self.f, self.f)
-        assert_array_equal(self.t | self.f, self.t)
-        assert_array_equal(self.f | self.t, self.t)
-        np.logical_or(self.t, self.t, out=self.o)
-        assert_array_equal(self.o, self.t)
-        assert_array_equal(self.t & self.t, self.t)
-        assert_array_equal(self.f & self.f, self.f)
-        assert_array_equal(self.t & self.f, self.f)
-        assert_array_equal(self.f & self.t, self.f)
-        np.logical_and(self.t, self.t, out=self.o)
-        assert_array_equal(self.o, self.t)
-        assert_array_equal(self.t ^ self.t, self.f)
-        assert_array_equal(self.f ^ self.f, self.f)
-        assert_array_equal(self.t ^ self.f, self.t)
-        assert_array_equal(self.f ^ self.t, self.t)
-        np.logical_xor(self.t, self.t, out=self.o)
-        assert_array_equal(self.o, self.f)
+        t, f, o, nm, im = self._create_bool_arrays()
+        assert_array_equal(t | t, t)
+        assert_array_equal(f | f, f)
+        assert_array_equal(t | f, t)
+        assert_array_equal(f | t, t)
+        np.logical_or(t, t, out=o)
+        assert_array_equal(o, t)
+        assert_array_equal(t & t, t)
+        assert_array_equal(f & f, f)
+        assert_array_equal(t & f, f)
+        assert_array_equal(f & t, f)
+        np.logical_and(t, t, out=o)
+        assert_array_equal(o, t)
+        assert_array_equal(t ^ t, f)
+        assert_array_equal(f ^ f, f)
+        assert_array_equal(t ^ f, t)
+        assert_array_equal(f ^ t, t)
+        np.logical_xor(t, t, out=o)
+        assert_array_equal(o, f)
 
-        assert_array_equal(self.nm & self.t, self.nm)
-        assert_array_equal(self.im & self.f, False)
-        assert_array_equal(self.nm & True, self.nm)
-        assert_array_equal(self.im & False, self.f)
-        assert_array_equal(self.nm | self.t, self.t)
-        assert_array_equal(self.im | self.f, self.im)
-        assert_array_equal(self.nm | True, self.t)
-        assert_array_equal(self.im | False, self.im)
-        assert_array_equal(self.nm ^ self.t, self.im)
-        assert_array_equal(self.im ^ self.f, self.im)
-        assert_array_equal(self.nm ^ True, self.im)
-        assert_array_equal(self.im ^ False, self.im)
+        assert_array_equal(nm & t, nm)
+        assert_array_equal(im & f, False)
+        assert_array_equal(nm & True, nm)
+        assert_array_equal(im & False, f)
+        assert_array_equal(nm | t, t)
+        assert_array_equal(im | f, im)
+        assert_array_equal(nm | True, t)
+        assert_array_equal(im | False, im)
+        assert_array_equal(nm ^ t, im)
+        assert_array_equal(im ^ f, im)
+        assert_array_equal(nm ^ True, im)
+        assert_array_equal(im ^ False, im)
 
 
 class TestBoolCmp:
-    def setup_method(self):
-        self.f = np.ones(256, dtype=np.float32)
-        self.ef = np.ones(self.f.size, dtype=bool)
-        self.d = np.ones(128, dtype=np.float64)
-        self.ed = np.ones(self.d.size, dtype=bool)
+    def _create_data(self, dtype, size):
+        # generate data using given dtype and num for size of array
+        a = np.ones(size, dtype=dtype)
+        e = np.ones(a.size, dtype=bool)
         # generate values for all permutation of 256bit simd vectors
         s = 0
-        for i in range(32):
-            self.f[s:s + 8] = [i & 2**x for x in range(8)]
-            self.ef[s:s + 8] = [(i & 2**x) != 0 for x in range(8)]
-            s += 8
-        s = 0
-        for i in range(16):
-            self.d[s:s + 4] = [i & 2**x for x in range(4)]
-            self.ed[s:s + 4] = [(i & 2**x) != 0 for x in range(4)]
-            s += 4
+        r = int(size / 32)
+        for i in range(int(size / 8)):
+            a[s:s + r] = [i & 2**x for x in range(r)]
+            e[s:s + r] = [(i & 2**x) != 0 for x in range(r)]
+            s += r
+        n = a.copy()
+        n[e] = np.nan
 
-        self.nf = self.f.copy()
-        self.nd = self.d.copy()
-        self.nf[self.ef] = np.nan
-        self.nd[self.ed] = np.nan
+        inf = a.copy()
+        inf[::3][e[::3]] = np.inf
+        inf[1::3][e[1::3]] = -np.inf
+        inf[2::3][e[2::3]] = np.nan
+        enonan = e.copy()
+        enonan[2::3] = False
 
-        self.inff = self.f.copy()
-        self.infd = self.d.copy()
-        self.inff[::3][self.ef[::3]] = np.inf
-        self.infd[::3][self.ed[::3]] = np.inf
-        self.inff[1::3][self.ef[1::3]] = -np.inf
-        self.infd[1::3][self.ed[1::3]] = -np.inf
-        self.inff[2::3][self.ef[2::3]] = np.nan
-        self.infd[2::3][self.ed[2::3]] = np.nan
-        self.efnonan = self.ef.copy()
-        self.efnonan[2::3] = False
-        self.ednonan = self.ed.copy()
-        self.ednonan[2::3] = False
-
-        self.signf = self.f.copy()
-        self.signd = self.d.copy()
-        self.signf[self.ef] *= -1.
-        self.signd[self.ed] *= -1.
-        self.signf[1::6][self.ef[1::6]] = -np.inf
-        self.signd[1::6][self.ed[1::6]] = -np.inf
+        sign = a.copy()
+        sign[e] *= -1.
+        sign[1::6][e[1::6]] = -np.inf
         # On RISC-V, many operations that produce NaNs, such as converting
         # a -NaN from f64 to f32, return a canonical NaN.  The canonical
         # NaNs are always positive.  See section 11.3 NaN Generation and
         # Propagation of the RISC-V Unprivileged ISA for more details.
         # We disable the float32 sign test on riscv64 for -np.nan as the sign
         # of the NaN will be lost when it's converted to a float32.
-        if platform.machine() != 'riscv64':
-            self.signf[3::6][self.ef[3::6]] = -np.nan
-        self.signd[3::6][self.ed[3::6]] = -np.nan
-        self.signf[4::6][self.ef[4::6]] = -0.
-        self.signd[4::6][self.ed[4::6]] = -0.
+        if not (dtype == np.float32 and platform.machine() == 'riscv64'):
+            sign[3::6][e[3::6]] = -np.nan
+        sign[4::6][e[4::6]] = -0.
+        return a, e, n, inf, enonan, sign
 
     def test_float(self):
         # offset for alignment test
+        f, ef, nf, inff, efnonan, signf = self._create_data(np.float32, 256)
         for i in range(4):
-            assert_array_equal(self.f[i:] > 0, self.ef[i:])
-            assert_array_equal(self.f[i:] - 1 >= 0, self.ef[i:])
-            assert_array_equal(self.f[i:] == 0, ~self.ef[i:])
-            assert_array_equal(-self.f[i:] < 0, self.ef[i:])
-            assert_array_equal(-self.f[i:] + 1 <= 0, self.ef[i:])
-            r = self.f[i:] != 0
-            assert_array_equal(r, self.ef[i:])
-            r2 = self.f[i:] != np.zeros_like(self.f[i:])
-            r3 = 0 != self.f[i:]
+            assert_array_equal(f[i:] > 0, ef[i:])
+            assert_array_equal(f[i:] - 1 >= 0, ef[i:])
+            assert_array_equal(f[i:] == 0, ~ef[i:])
+            assert_array_equal(-f[i:] < 0, ef[i:])
+            assert_array_equal(-f[i:] + 1 <= 0, ef[i:])
+            r = f[i:] != 0
+            assert_array_equal(r, ef[i:])
+            r2 = f[i:] != np.zeros_like(f[i:])
+            r3 = 0 != f[i:]
             assert_array_equal(r, r2)
             assert_array_equal(r, r3)
             # check bool == 0x1
@@ -907,24 +894,25 @@ class TestBoolCmp:
             assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
             # isnan on amd64 takes the same code path
-            assert_array_equal(np.isnan(self.nf[i:]), self.ef[i:])
-            assert_array_equal(np.isfinite(self.nf[i:]), ~self.ef[i:])
-            assert_array_equal(np.isfinite(self.inff[i:]), ~self.ef[i:])
-            assert_array_equal(np.isinf(self.inff[i:]), self.efnonan[i:])
-            assert_array_equal(np.signbit(self.signf[i:]), self.ef[i:])
+            assert_array_equal(np.isnan(nf[i:]), ef[i:])
+            assert_array_equal(np.isfinite(nf[i:]), ~ef[i:])
+            assert_array_equal(np.isfinite(inff[i:]), ~ef[i:])
+            assert_array_equal(np.isinf(inff[i:]), efnonan[i:])
+            assert_array_equal(np.signbit(signf[i:]), ef[i:])
 
     def test_double(self):
         # offset for alignment test
+        d, ed, nd, infd, ednonan, signd = self._create_data(np.float64, 128)
         for i in range(2):
-            assert_array_equal(self.d[i:] > 0, self.ed[i:])
-            assert_array_equal(self.d[i:] - 1 >= 0, self.ed[i:])
-            assert_array_equal(self.d[i:] == 0, ~self.ed[i:])
-            assert_array_equal(-self.d[i:] < 0, self.ed[i:])
-            assert_array_equal(-self.d[i:] + 1 <= 0, self.ed[i:])
-            r = self.d[i:] != 0
-            assert_array_equal(r, self.ed[i:])
-            r2 = self.d[i:] != np.zeros_like(self.d[i:])
-            r3 = 0 != self.d[i:]
+            assert_array_equal(d[i:] > 0, ed[i:])
+            assert_array_equal(d[i:] - 1 >= 0, ed[i:])
+            assert_array_equal(d[i:] == 0, ~ed[i:])
+            assert_array_equal(-d[i:] < 0, ed[i:])
+            assert_array_equal(-d[i:] + 1 <= 0, ed[i:])
+            r = d[i:] != 0
+            assert_array_equal(r, ed[i:])
+            r2 = d[i:] != np.zeros_like(d[i:])
+            r3 = 0 != d[i:]
             assert_array_equal(r, r2)
             assert_array_equal(r, r3)
             # check bool == 0x1
@@ -933,11 +921,11 @@ class TestBoolCmp:
             assert_array_equal(r3.view(np.int8), r3.astype(np.int8))
 
             # isnan on amd64 takes the same code path
-            assert_array_equal(np.isnan(self.nd[i:]), self.ed[i:])
-            assert_array_equal(np.isfinite(self.nd[i:]), ~self.ed[i:])
-            assert_array_equal(np.isfinite(self.infd[i:]), ~self.ed[i:])
-            assert_array_equal(np.isinf(self.infd[i:]), self.ednonan[i:])
-            assert_array_equal(np.signbit(self.signd[i:]), self.ed[i:])
+            assert_array_equal(np.isnan(nd[i:]), ed[i:])
+            assert_array_equal(np.isfinite(nd[i:]), ~ed[i:])
+            assert_array_equal(np.isfinite(infd[i:]), ~ed[i:])
+            assert_array_equal(np.isinf(infd[i:]), ednonan[i:])
+            assert_array_equal(np.signbit(signd[i:]), ed[i:])
 
 
 class TestSeterr:
@@ -1646,6 +1634,7 @@ class TestFromiter:
         with pytest.raises(ValueError):
             np.fromiter(iterable, dtype=np.dtype((int, 2)))
 
+
 class TestNonzero:
     def test_nonzero_trivial(self):
         assert_equal(np.count_nonzero(np.array([])), 0)
@@ -2315,9 +2304,8 @@ def assert_array_strict_equal(x, y):
 
 
 class TestClip:
-    def setup_method(self):
-        self.nr = 5
-        self.nc = 3
+    nr = 5
+    nc = 3
 
     def fastclip(self, a, m, M, out=None, **kwargs):
         return a.clip(m, M, out=out, **kwargs)
@@ -2950,6 +2938,7 @@ class TestClip:
         if max is not None:
             assert (c <= max).all()
 
+
 class TestAllclose:
     rtol = 1e-5
     atol = 1e-8
@@ -3243,45 +3232,50 @@ class TestIsclose:
 
 
 class TestStdVar:
-    def setup_method(self):
-        self.A = np.array([1, -1, 1, -1])
-        self.real_var = 1
+    def _create_data(self):
+        A = np.array([1, -1, 1, -1])
+        real_var = 1
+        return A, real_var
 
     def test_basic(self):
-        assert_almost_equal(np.var(self.A), self.real_var)
-        assert_almost_equal(np.std(self.A)**2, self.real_var)
+        A, real_var = self._create_data()
+        assert_almost_equal(np.var(A), real_var)
+        assert_almost_equal(np.std(A)**2, real_var)
 
     def test_scalars(self):
         assert_equal(np.var(1), 0)
         assert_equal(np.std(1), 0)
 
     def test_ddof1(self):
-        assert_almost_equal(np.var(self.A, ddof=1),
-                            self.real_var * len(self.A) / (len(self.A) - 1))
-        assert_almost_equal(np.std(self.A, ddof=1)**2,
-                            self.real_var * len(self.A) / (len(self.A) - 1))
+        A, real_var = self._create_data()
+        assert_almost_equal(np.var(A, ddof=1),
+                            real_var * len(A) / (len(A) - 1))
+        assert_almost_equal(np.std(A, ddof=1)**2,
+                            real_var * len(A) / (len(A) - 1))
 
     def test_ddof2(self):
-        assert_almost_equal(np.var(self.A, ddof=2),
-                            self.real_var * len(self.A) / (len(self.A) - 2))
-        assert_almost_equal(np.std(self.A, ddof=2)**2,
-                            self.real_var * len(self.A) / (len(self.A) - 2))
+        A, real_var = self._create_data()
+        assert_almost_equal(np.var(A, ddof=2),
+                            real_var * len(A) / (len(A) - 2))
+        assert_almost_equal(np.std(A, ddof=2)**2,
+                            real_var * len(A) / (len(A) - 2))
 
     def test_correction(self):
+        A, _ = self._create_data()
         assert_almost_equal(
-            np.var(self.A, correction=1), np.var(self.A, ddof=1)
+            np.var(A, correction=1), np.var(A, ddof=1)
         )
         assert_almost_equal(
-            np.std(self.A, correction=1), np.std(self.A, ddof=1)
+            np.std(A, correction=1), np.std(A, ddof=1)
         )
 
         err_msg = "ddof and correction can't be provided simultaneously."
 
         with assert_raises_regex(ValueError, err_msg):
-            np.var(self.A, ddof=1, correction=0)
+            np.var(A, ddof=1, correction=0)
 
         with assert_raises_regex(ValueError, err_msg):
-            np.std(self.A, ddof=1, correction=1)
+            np.std(A, ddof=1, correction=1)
 
     def test_out_scalar(self):
         d = np.arange(10)
@@ -3310,26 +3304,22 @@ class TestStdVarComplex:
 
 
 class TestCreationFuncs:
-    # Test ones, zeros, empty and full.
-
-    def setup_method(self):
-        dtypes = {np.dtype(tp) for tp in itertools.chain(*sctypes.values())}
-        # void, bytes, str
-        variable_sized = {tp for tp in dtypes if tp.str.endswith('0')}
+    def check_function(self, func, fill_value=None):
+        dtypes_info = {np.dtype(tp) for tp in itertools.chain(*sctypes.values())}
         keyfunc = lambda dtype: dtype.str
-        self.dtypes = sorted(dtypes - variable_sized |
+        variable_sized = {tp for tp in dtypes_info if tp.str.endswith('0')}
+        dtypes = sorted(dtypes_info - variable_sized |
                              {np.dtype(tp.str.replace("0", str(i)))
                               for tp in variable_sized for i in range(1, 10)},
                              key=keyfunc)
-        self.dtypes += [type(dt) for dt in sorted(dtypes, key=keyfunc)]
-        self.orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}
-        self.ndims = 10
+        dtypes += [type(dt) for dt in sorted(dtypes_info, key=keyfunc)]
+        orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}
+        ndims = 10
 
-    def check_function(self, func, fill_value=None):
         par = ((0, 1, 2),
-               range(self.ndims),
-               self.orders,
-               self.dtypes)
+               range(ndims),
+               orders,
+               dtypes)
         fill_kwarg = {}
         if fill_value is not None:
             fill_kwarg = {'fill_value': fill_value}
@@ -3355,7 +3345,7 @@ class TestCreationFuncs:
                     assert_equal(arr.dtype, np.dtype(dtype_str))
                 else:
                     assert_equal(arr.dtype, np.dtype(dtype.type))
-            assert_(getattr(arr.flags, self.orders[order]))
+            assert_(getattr(arr.flags, orders[order]))
 
             if fill_value is not None:
                 if arr.dtype.str.startswith('|S'):
@@ -3395,32 +3385,6 @@ class TestCreationFuncs:
 class TestLikeFuncs:
     '''Test ones_like, zeros_like, empty_like and full_like'''
 
-    def setup_method(self):
-        self.data = [
-                # Array scalars
-                (np.array(3.), None),
-                (np.array(3), 'f8'),
-                # 1D arrays
-                (np.arange(6, dtype='f4'), None),
-                (np.arange(6), 'c16'),
-                # 2D C-layout arrays
-                (np.arange(6).reshape(2, 3), None),
-                (np.arange(6).reshape(3, 2), 'i1'),
-                # 2D F-layout arrays
-                (np.arange(6).reshape((2, 3), order='F'), None),
-                (np.arange(6).reshape((3, 2), order='F'), 'i1'),
-                # 3D C-layout arrays
-                (np.arange(24).reshape(2, 3, 4), None),
-                (np.arange(24).reshape(4, 3, 2), 'f4'),
-                # 3D F-layout arrays
-                (np.arange(24).reshape((2, 3, 4), order='F'), None),
-                (np.arange(24).reshape((4, 3, 2), order='F'), 'f4'),
-                # 3D non-C/F-layout arrays
-                (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
-                (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
-                     ]
-        self.shapes = [(), (5,), (5, 6,), (5, 6, 7,)]
-
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
             if fill_value:
@@ -3433,11 +3397,36 @@ class TestLikeFuncs:
                 assert_(np.all(dz == value))
 
     def check_like_function(self, like_function, value, fill_value=False):
+        data = [
+            # Array scalars
+            (np.array(3.), None),
+            (np.array(3), 'f8'),
+            # 1D arrays
+            (np.arange(6, dtype='f4'), None),
+            (np.arange(6), 'c16'),
+            # 2D C-layout arrays
+            (np.arange(6).reshape(2, 3), None),
+            (np.arange(6).reshape(3, 2), 'i1'),
+            # 2D F-layout arrays
+            (np.arange(6).reshape((2, 3), order='F'), None),
+            (np.arange(6).reshape((3, 2), order='F'), 'i1'),
+            # 3D C-layout arrays
+            (np.arange(24).reshape(2, 3, 4), None),
+            (np.arange(24).reshape(4, 3, 2), 'f4'),
+            # 3D F-layout arrays
+            (np.arange(24).reshape((2, 3, 4), order='F'), None),
+            (np.arange(24).reshape((4, 3, 2), order='F'), 'f4'),
+            # 3D non-C/F-layout arrays
+            (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
+            (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
+               ]
+        shapes = [(), (5,), (5, 6,), (5, 6, 7,)]
+
         if fill_value:
             fill_kwarg = {'fill_value': value}
         else:
             fill_kwarg = {}
-        for d, dtype in self.data:
+        for d, dtype in data:
             # default (K) order, dtype
             dz = like_function(d, dtype=dtype, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
@@ -3485,7 +3474,7 @@ class TestLikeFuncs:
             self.compare_array_value(dz, value, fill_value)
 
             # Test the 'shape' parameter
-            for s in self.shapes:
+            for s in shapes:
                 for o in 'CFA':
                     sz = like_function(d, dtype=dtype, shape=s, order=o,
                                        **fill_kwarg)

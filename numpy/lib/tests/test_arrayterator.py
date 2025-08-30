@@ -14,8 +14,7 @@ def test():
     ndims = randint(5) + 1
     shape = tuple(randint(10) + 1 for dim in range(ndims))
     els = reduce(mul, shape)
-    a = np.arange(els)
-    a.shape = shape
+    a = np.arange(els).reshape(shape)
 
     buf_size = randint(2 * els)
     b = Arrayterator(a, buf_size)

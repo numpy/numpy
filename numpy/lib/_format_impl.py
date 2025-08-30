@@ -879,10 +879,10 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
             )
 
         if fortran_order:
-            array.shape = shape[::-1]
+            array = array.reshape(shape[::-1])
             array = array.transpose()
         else:
-            array.shape = shape
+            array = array.reshape(shape)
 
     return array
 

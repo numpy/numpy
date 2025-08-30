@@ -851,8 +851,8 @@ class TestRegression:
         assert_raises(IndexError, ia, x, s, np.zeros(11, dtype=float))
 
         # Old special case (different code path):
-        assert_raises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
-        assert_raises(ValueError, ia, x.flat, s, np.zeros(11, dtype=float))
+        assert_raises(IndexError, ia, x.flat, s, np.zeros(9, dtype=float))
+        assert_raises(IndexError, ia, x.flat, s, np.zeros(11, dtype=float))
 
     def test_mem_scalar_indexing(self):
         # Ticket #603

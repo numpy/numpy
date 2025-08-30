@@ -50,6 +50,7 @@ assert_type(AR_S.join([b"_", b""]), _BytesCharArray)
 
 assert_type(AR_U.ljust(5), _StrCharArray)
 assert_type(AR_S.ljust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), _BytesCharArray)
+assert_type(AR_S.ljust([4, 3, 1], fillchar="a"), _BytesCharArray)
 assert_type(AR_U.rjust(5), _StrCharArray)
 assert_type(AR_S.rjust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), _BytesCharArray)
 
