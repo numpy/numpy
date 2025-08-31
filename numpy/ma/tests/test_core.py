@@ -1462,6 +1462,10 @@ class TestMaskedArrayArithmetic:
         assert a.min() is arg1
         assert a.max() is arg3
 
+    def test_gh_9103(self):
+        arr = masked_array([1, 2, 3], dtype='object', mask=[True, False, False])
+        assert arr.min() == 2
+
     @pytest.mark.parametrize("dtype", "bBiIqQ")
     @pytest.mark.parametrize("mask", [
         [False, False, False, True, True],  # masked min/max
