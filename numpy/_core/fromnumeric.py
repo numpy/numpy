@@ -2953,12 +2953,12 @@ def cumsum(a, axis=None, dtype=None, out=None):
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
 
 
-def _ptp_dispatcher(a, axis=None, out=None, keepdims=None):
+def _ptp_dispatcher(a, axis=None, out=None, keepdims=None, where=None):
     return (a, out)
 
 
 @array_function_dispatch(_ptp_dispatcher)
-def ptp(a, axis=None, out=None, keepdims=np._NoValue):
+def ptp(a, axis=None, out=None, keepdims=np._NoValue, where=np._NoValue):
     """
     Range of values (maximum - minimum) along an axis.
 
@@ -2997,6 +2997,10 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
         `ndarray`, however any non-default value will be.  If the
         sub-class' method does not implement `keepdims` any
         exceptions will be raised.
+
+    where : array_like of bool, optional
+        Elements to include in the peak-to-peak. See
+        `~numpy.ufunc.reduce` for details.
 
     Returns
     -------
@@ -3038,7 +3042,9 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
     """
     kwargs = {}
     if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
+        kwargs["keepdims"] = keepdims
+    if where is not np._NoValue:
+        kwargs["where"] = where
     return _methods._ptp(a, axis=axis, out=out, **kwargs)
 
 

@@ -1004,6 +1004,7 @@ def ptp(
     axis: None = None,
     out: None = None,
     keepdims: Literal[False] = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> _ScalarT: ...
 @overload
 def ptp(
@@ -1011,6 +1012,7 @@ def ptp(
     axis: _ShapeLike | None = None,
     out: None = None,
     keepdims: bool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 @overload
 def ptp(
@@ -1018,6 +1020,7 @@ def ptp(
     axis: _ShapeLike | None,
     out: _ArrayT,
     keepdims: bool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> _ArrayT: ...
 @overload
 def ptp(
@@ -1026,6 +1029,7 @@ def ptp(
     *,
     out: _ArrayT,
     keepdims: bool = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> _ArrayT: ...
 
 @overload

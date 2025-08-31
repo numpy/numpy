@@ -153,6 +153,11 @@ class TestNonarrayArgs:
         a = [3, 4, 5, 10, -3, -5, 6.0]
         assert_equal(np.ptp(a, axis=0), 15.0)
 
+    def test_ptp_where(self):
+        a = np.array([1, 5, 7, 0])
+        where = [True, False, True, False]
+        assert_equal(np.ptp(a, where=where), 6)
+
     def test_prod(self):
         arr = [[1, 2, 3, 4],
                [5, 6, 7, 9],

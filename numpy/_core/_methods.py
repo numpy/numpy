@@ -229,10 +229,10 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
     return ret
 
-def _ptp(a, axis=None, out=None, keepdims=False):
+def _ptp(a, axis=None, out=None, keepdims=False, where=True):
     return um.subtract(
-        umr_maximum(a, axis, None, out, keepdims),
-        umr_minimum(a, axis, None, None, keepdims),
+        umr_maximum(a, axis, None, out, keepdims, _NoValue, where),
+        umr_minimum(a, axis, None, None, keepdims, _NoValue, where),
         out
     )
 
