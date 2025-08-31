@@ -191,6 +191,39 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
     default_filler["M8[" + v + "]"] = np.datetime64("NaT", v)
     default_filler["m8[" + v + "]"] = np.timedelta64("NaT", v)
 
+
+class _UniversalInfinity:
+    def __init__(self, neg=False):
+        self.neg = neg
+
+    def __le__(self, other):
+        return self.neg
+
+    def __lt__(self, other):
+        return self.neg and self != other
+
+    def __ge__(self, other):
+        return not self.neg
+
+    def __gt__(self, other):
+        return not self.neg and self != other
+
+    def __eq__(self, other):
+        return isinstance(other, _UniversalInfinity) and self.neg == other.neg
+
+    def __hash__(self):
+        return hash(self.neg)
+
+    def __neg__(self):
+        return _UniversalInfinity(not self.neg)
+
+    def __pos__(self):
+        return self
+
+    def __repr__(self):
+        return "-uinf" if self.neg else "uinf"
+
+
 float_types_list = [np.half, np.single, np.double, np.longdouble,
                     np.csingle, np.cdouble, np.clongdouble]
 
@@ -211,6 +244,8 @@ for sctype in ntypes.sctypeDict.values():
         min_val, max_val = info.min, info.max
     elif scalar_dtype.kind == "b":
         min_val, max_val = 0, 1
+    elif scalar_dtype.kind == "O":
+        min_val, max_val = -_UniversalInfinity(), _UniversalInfinity()
     else:
         min_val, max_val = None, None
 
