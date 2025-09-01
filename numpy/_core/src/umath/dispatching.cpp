@@ -1367,7 +1367,7 @@ ldexp_promoter(PyObject *ufunc,
     /*
      * The output should always be a double to ensure no overflow.
      */
-    new_op_dtypes[0] = PyArray_CommonDType(op_dtypes[0], &PyArray_FloatDType);
+    new_op_dtypes[0] = PyArray_CommonDType(op_dtypes[0], &PyArray_PyFloatDType);
     new_op_dtypes[1] = PyArray_CommonDType(op_dtypes[1], &PyArray_IntDType);
     if (new_op_dtypes[2] == NULL) {
         new_op_dtypes[2] = new_op_dtypes[0];
