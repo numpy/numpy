@@ -320,6 +320,11 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyLongDType = {{{
     .scalar_type = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
 };
 
+NPY_DType_Slots floatabstractdtype_slots = {
+    .default_descr = float_default_descriptor,
+    .common_dtype = float_common_dtype,
+};
+
 NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._FloatAbstractDType",
@@ -329,6 +334,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
     },},
     .type_num = -1,
     .flags = NPY_DT_ABSTRACT,
+    .dt_slots = &floatabstractdtype_slots,
 };
 
 NPY_DType_Slots pyfloatdtype_slots = {
