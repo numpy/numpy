@@ -71,6 +71,9 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
                 "the dtype is `object`.", dtype1, dtype2);
         return NULL;
     }
+    if (NPY_DT_SLOTS(common_dtype)->default_descr != NULL) {
+        common_dtype = NPY_DTYPE(PyArray_GetDefaultDescr(common_dtype));
+    }
     return common_dtype;
 }
 
