@@ -81,6 +81,9 @@ npy_find_descr_for_scalar(
     PyObject *scalar, PyArray_Descr *original_descr,
     PyArray_DTypeMeta *in_DT, PyArray_DTypeMeta *op_DT);
 
+NPY_NO_EXPORT PyArray_DTypeMeta *
+ensure_concrete_dtype(PyArray_DTypeMeta *dtype);
+
 #ifdef __cplusplus
 }
 #endif

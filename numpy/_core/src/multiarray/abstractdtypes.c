@@ -496,3 +496,18 @@ npy_find_descr_for_scalar(
     Py_DECREF(common);
     return res;
 }
+
+
+/*
+ * This is used for promoters where we need to ensure that the DType is
+ * concrete (not abstract).  Currently this is only used for the default
+ * `ldexp` implementation.
+ */
+NPY_NO_EXPORT PyArray_DTypeMeta *
+ensure_concrete_dtype(PyArray_DTypeMeta *dtype)
+{
+    if (NPY_DT_is_abstract(dtype)) {
+        dtype = NPY_DTYPE(PyArray_GetDefaultDescr(dtype));
+    }
+    return dtype;
+}

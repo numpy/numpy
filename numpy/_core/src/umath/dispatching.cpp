@@ -1359,15 +1359,6 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }
 
-NPY_NO_EXPORT PyArray_DTypeMeta *
-ensure_concrete_dtype(PyArray_DTypeMeta *dtype)
-{
-    if (NPY_DT_is_abstract(dtype)) {
-        dtype = NPY_DTYPE(PyArray_GetDefaultDescr(dtype));
-    }
-    return dtype;
-}
-
 NPY_NO_EXPORT int
 ldexp_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
