@@ -1359,6 +1359,15 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }
 
+NPY_NO_EXPORT PyArray_DTypeMeta *
+ensure_concrete_dtype(PyArray_DTypeMeta *dtype)
+{
+    if (NPY_DT_is_abstract(dtype)) {
+        dtype = NPY_DTYPE(PyArray_GetDefaultDescr(dtype));
+    }
+    return dtype;
+}
+
 NPY_NO_EXPORT int
 ldexp_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
@@ -1368,6 +1377,7 @@ ldexp_promoter(PyObject *ufunc,
      * The output should always be a double to ensure no overflow.
      */
     new_op_dtypes[0] = PyArray_CommonDType(op_dtypes[0], &PyArray_FloatAbstractDType);
+    new_op_dtypes[0] = ensure_concrete_dtype(new_op_dtypes[0]);
     new_op_dtypes[1] = PyArray_CommonDType(op_dtypes[1], &PyArray_IntDType);
     if (new_op_dtypes[2] == NULL) {
         new_op_dtypes[2] = new_op_dtypes[0];
