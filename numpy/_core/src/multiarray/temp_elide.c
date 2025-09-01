@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include "npy_config.h"
+#include "npy_pycompat.h"
 #include "numpy/arrayobject.h"
 
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -115,10 +116,14 @@ check_unique_temporary(PyObject *lhs)
 #if PY_VERSION_HEX == 0x030E00A7 && !defined(PYPY_VERSION)
 #error "NumPy is broken on CPython 3.14.0a7, please update to a newer version"
 #elif PY_VERSION_HEX >= 0x030E00B1 && !defined(PYPY_VERSION)
+    // Python 3.14 changed the semantics for reference counting temporaries
     // see https://github.com/python/cpython/issues/133164
     return PyUnstable_Object_IsUniqueReferencedTemporary(lhs);
 #else
-    return 1;
+    // equivalent to Py_REFCNT(lhs) == 1 except on 3.13t
+    // we need to use the backport on 3.13t because
+    // this function was first exposed in 3.14
+    return PyUnstable_Object_IsUniquelyReferenced(lhs);
 #endif
 }
 
@@ -303,13 +308,13 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
      * array of a basic type, own its data and size larger than threshold
      */
     PyArrayObject *alhs = (PyArrayObject *)olhs;
-    if (Py_REFCNT(olhs) != 1 || !PyArray_CheckExact(olhs) ||
+    if (!check_unique_temporary(olhs) ||
+            !PyArray_CheckExact(olhs) ||
             !PyArray_ISNUMBER(alhs) ||
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
-            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES ||
-            !check_unique_temporary(olhs)) {
+            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
     if (PyArray_CheckExact(orhs) ||
