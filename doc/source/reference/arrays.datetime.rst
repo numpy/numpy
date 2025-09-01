@@ -90,12 +90,12 @@ returns the current UTC date with day precision.
     NAT (not a time):
 
     >>> np.datetime64('nat')
-    np.datetime64('NaT')
+    np.datetime64('NaT','generic')
 
     The current date:
 
     >>> np.datetime64('today')
-    np.datetime64('2025-08-05')  # result will depend on the current date
+    np.datetime64('2025-08-05')  # may vary: result will depend on the current date
 
 When creating an array of datetimes from a string, it is still possible
 to automatically select the unit from the inputs, by using the
@@ -232,7 +232,7 @@ simple datetime calculations.
     np.timedelta64('NaT','D')
 
     >>> np.datetime64('2009-01-01') + np.timedelta64('nat')
-    np.datetime64('NaT')
+    np.datetime64('NaT','D')
 
 There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
@@ -253,7 +253,7 @@ calculating the averaged values from the 400 year leap-year cycle.
     >>> a = np.timedelta64(1, 'Y')
 
     >>> np.timedelta64(a, 'M')
-    numpy.timedelta64(12,'M')
+    np.timedelta64(12,'M')
 
     >>> np.timedelta64(a, 'D')
     Traceback (most recent call last):
@@ -548,7 +548,7 @@ given below.
       >>> a = np.datetime64("0000-01-01", "us")
       >>> b = np.datetime64("1600-01-01", "us")
       >>> b - a
-      numpy.timedelta64(50491123200000000,'us')
+      np.timedelta64(50491123200000000,'us')
 
       The computed results, `50491123200` seconds, are obtained as the elapsed
       number of days (`584388`) times `86400` seconds; this is the number of
