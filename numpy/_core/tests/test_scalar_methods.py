@@ -171,8 +171,8 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        if cls == np.bool:
-            # np.bool allows subscript
+        if cls in {np.bool, np.datetime64}:
+            # these are intentionally subscriptable
             assert cls[Any]
         else:
             with pytest.raises(TypeError):

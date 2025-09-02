@@ -5,25 +5,6 @@ on:
     branches:
       - main
       - maintenance/**
-  # Note: this workflow gets triggered on the same schedule as the
-  # wheels.yml workflow to upload WASM wheels to Anaconda.org.
-  schedule:
-    #        ┌───────────── minute (0 - 59)
-    #        │  ┌───────────── hour (0 - 23)
-    #        │  │ ┌───────────── day of the month (1 - 31)
-    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
-    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
-    #        │  │ │ │ │
-    - cron: "42 2 * * SUN,WED"
-  workflow_dispatch:
-    inputs:
-      push_wheels:
-        # Can be 'true' or 'false'. Default is 'false'.
-        # Warning: this will overwrite existing wheels.
-        description: >
-          Push wheels to Anaconda.org if the build succeeds
-        required: false
-        default: 'false'
 
 env:
   FORCE_COLOR: 3
@@ -37,7 +18,7 @@ jobs:
   build-wasm-emscripten:
     permissions:
       contents: read  # to fetch code (actions/checkout)
-    name: Build NumPy distribution for Pyodide
+    name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -52,34 +33,4 @@ jobs:
       - uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6  # v3.1.4
         env:
           CIBW_PLATFORM: pyodide
-
-      - name: Upload wheel artifact(s)
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
-        with:
-          name: cp312-pyodide_wasm32
-          path: ./wheelhouse/*.whl
-          if-no-files-found: error
-
-  # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
-  # WARNING: this job will overwrite any existing WASM wheels.
-  upload-wheels:
-    name: Upload NumPy WASM wheels to Anaconda.org
-    runs-on: ubuntu-22.04
-    permissions: {}
-    needs: [build-wasm-emscripten]
-    if: >-
-      (github.repository == 'numpy/numpy') &&
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
-      (github.event_name == 'schedule')
-    steps:
-      - name: Download wheel artifact(s)
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0  # v5.0.0
-        with:
-          path: wheelhouse/
-          merge-multiple: true
-
-      - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf  # v0.6.2
-        with:
-          artifacts_path: wheelhouse/
-          anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
+          CIBW_BUILD: cp312-*

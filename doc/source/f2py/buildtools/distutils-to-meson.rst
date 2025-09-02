@@ -10,7 +10,7 @@ collects common workflows in both formats.
 
 .. note::
 
-    This is a ****living**** document, `pull requests <https://numpy.org/doc/stable/dev/howto-docs.html>`_ are very welcome!
+    This is a **living** document, `pull requests <https://numpy.org/doc/stable/dev/howto-docs.html>`_ are very welcome!
 
 1.1 Baseline
 ~~~~~~~~~~~~

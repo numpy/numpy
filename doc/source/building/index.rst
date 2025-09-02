@@ -473,7 +473,7 @@ interface is self-documenting, so please see ``spin --help`` and
     install").
 
     Editable installs are supported. It is important to understand that **you
-    may use either an editable install or ``spin`` in a given repository clone,
+    may use either an editable install or** ``spin`` **in a given repository clone,
     but not both**. If you use editable installs, you have to use ``pytest``
     and other development tools directly instead of using ``spin``.
 

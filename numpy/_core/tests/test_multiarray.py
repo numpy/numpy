@@ -2153,6 +2153,7 @@ class TestMethods:
             assert_equal(out, expected)
             assert out is res
 
+        check_round(np.array([1, 2, 3]), [1, 2, 3])
         check_round(np.array([1.2, 1.5]), [1, 2])
         check_round(np.array(1.5), 2)
         check_round(np.array([12.2, 15.5]), [10, 20], -1)
@@ -2160,6 +2161,20 @@ class TestMethods:
         # Complex rounding
         check_round(np.array([4.5 + 1.5j]), [4 + 2j])
         check_round(np.array([12.5 + 15.5j]), [10 + 20j], -1)
+
+    @pytest.mark.parametrize('dt', ['uint8', int, float, complex])
+    def test_round_copies(self, dt):
+        a = np.arange(3, dtype=dt)
+        assert not np.shares_memory(a.round(), a)
+        assert not np.shares_memory(a.round(decimals=2), a)
+
+        out = np.empty(3, dtype=dt)
+        assert not np.shares_memory(a.round(out=out), a)
+
+        a = np.arange(12).astype(dt).reshape(3, 4).T
+
+        assert a.flags.f_contiguous
+        assert np.round(a).flags.f_contiguous
 
     def test_squeeze(self):
         a = np.array([[[1], [2], [3]]])
