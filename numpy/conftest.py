@@ -147,14 +147,6 @@ def check_fpu_mode(request):
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
 
-@pytest.fixture(autouse=True, scope="session")
-def env_setup():
-    orig = os.environ.get("PYTHONHASHSEED")
-    os.environ["PYTHONHASHSEED"] = '0'
-    yield
-    if orig:
-        os.environ["PYTHONHASHSEED"] = orig
-
 
 if HAVE_SCPDT:
 
