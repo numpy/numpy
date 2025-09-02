@@ -2303,29 +2303,36 @@ Item selection and manipulation
 
 .. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*,
-    *kind*).  Return an array with the items of *self* sorted along *axis*. The
-    array is sorted using an algorithm whose properties are specified by
-    *kind*, an integer/enum specifying the reguirements of the sorting
-    algorithm used. If *self* ->descr is a data-type with fields defined, then
-    self->descr->names is used to determine the sort order. A comparison where
-    the first field is equal will use the second field and so on. To alter the
-    sort order of a structured array, create a new data-type with a different
-    order of names and construct a view of the array with that new data-type.
+    Return an array with the items of ``self`` sorted along ``axis``. The array
+    is sorted using an algorithm whose properties are specified by the value of
+    ``kind``, an integer/enum specifying the reguirements of the sorting
+    algorithm used. If ``self* ->descr`` is a data-type with fields defined,
+    then ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
 
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.sort<numpy.ndarray.sort>`, though with a different meaning
+    of ``kind`` -- see ``NPY_SORTKIND`` below.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*,
-    *axis*, *kind*).  Return an array of indices such that selection of these
-    indices along the given ``axis`` would return a sorted version of *self*.
-    The array is sorted using an algorithm whose properties are specified by
-    *kind*, an integer/enum specifying the reguirements of the sorting
-    algorithm used. If *self* ->descr is a data-type with fields defined, then
-    self->descr->names is used to determine the sort order. A comparison where
-    the first field is equal will use the second field and so on. To alter the
-    sort order of a structured array, create a new data-type with a different
-    order of names and construct a view of the array with that new data-type.
+    Return an array of indices such that selection of these indices along the
+    given ``axis`` would return a sorted version of ``self``.  The array is
+    sorted using an algorithm whose properties are specified by ``kind``, an
+    integer/enum specifying the reguirements of the sorting algorithm used. If
+    ``self->descr`` is a data-type with fields defined, then
+    ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
+
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.argsort<numpy.ndarray.argsort>`, though with a different
+    meaning of ``kind`` -- see ``NPY_SORTKIND`` below.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 

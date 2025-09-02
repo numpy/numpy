@@ -169,12 +169,11 @@ enum NPY_TYPECHAR {
  *
  * Updated in NumPy 2.4
  *
- * Updated with new names denoting requirements rather than the algorithm. All
- * the previous values are reused in a way that should be downstream
- * compatible, but the actual algorithms used may be different than before. The
- * new approach should be more flexible and easier to update. The idea is that
- * NPY_SORT_STABLE | NPY_SORT_DESCENDING | NPY_SORT_NANFIRST should provide an
- * index.
+ * Updated with new names denoting requirements rather than specifying a
+ * particular algorithm. All the previous values are reused in a way that
+ * should be downstream compatible, but the actual algorithms used may be
+ * different than before. The new approach should be more flexible and easier
+ * to update.
  * 
  * Names with a leading underscore are private, and should only be used
  * internally by NumPy.
