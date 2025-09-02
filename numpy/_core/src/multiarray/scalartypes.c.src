@@ -2108,25 +2108,27 @@ gentype_@name@(PyObject *self, PyObject *args)
 /**end repeat**/
 
 static PyObject *
-gentype___copy__(PyObject *self)
+gentype___copy__(PyObject *self, PyObject *args)
 {
     // scalars are immutable, so we can return a new reference
     // the only expections are scalars with void dtype
-    if PyObject_IsInstance(obj, (PyObject *)&PyVoidScalarObject)) {
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
         // path via array
-        return gentype_generic_method(self, NULL, NULL, "__copy__");
+        return gentype_generic_method(self, args, NULL, "__copy__");
     }
     return Py_NewRef(self);
 }
 
 static PyObject *
-gentype___deepcopy__(PyObject *self)
+gentype___deepcopy__(PyObject *self, PyObject *args)
 {
+    // note: maybe the signature needs to be updated as __deepcopy__ can accept the keyword memo
+
     // scalars are immutable, so we can return a new reference
     // the only expections are scalars with void dtype
-    if PyObject_IsInstance(obj, (PyObject *)&PyVoidScalarObject)) {
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
         // path via array
-        return gentype_generic_method(self, NULL, NULL, "__deepcopy__");
+        return gentype_generic_method(self, args, NULL, "__deepcopy__");
     }
     return Py_NewRef(self);
 }
