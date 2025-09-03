@@ -1608,7 +1608,7 @@ for completeness and assistance in understanding the code.
    The C-structure associated with :c:var:`PyArrayMapIter_Type`.
    This structure is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
-   ``arrayobject.h`` header. This type is not exposed to Python and
+   ``multiarray/mapping.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
 

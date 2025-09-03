@@ -23,8 +23,7 @@ import itertools
 import warnings
 
 import numpy as np
-from numpy import array as nxarray
-from numpy import ndarray
+from numpy import array as nxarray, ndarray
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple

@@ -1,6 +1,5 @@
 from builtins import bool as py_bool
-from typing import Final, TypedDict, type_check_only
-from typing import Literal as L
+from typing import Any, Final, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 from numpy import (
@@ -145,15 +144,15 @@ __all__ = [
 
 @type_check_only
 class _TypeCodes(TypedDict):
-    Character: L['c']
-    Integer: L['bhilqnp']
-    UnsignedInteger: L['BHILQNP']
-    Float: L['efdg']
-    Complex: L['FDG']
-    AllInteger: L['bBhHiIlLqQnNpP']
-    AllFloat: L['efdgFDG']
-    Datetime: L['Mm']
-    All: L['?bhilqnpBHILQNPefdgFDGSUVOMm']
+    Character: L["c"]
+    Integer: L["bhilqnp"]
+    UnsignedInteger: L["BHILQNP"]
+    Float: L["efdg"]
+    Complex: L["FDG"]
+    AllInteger: L["bBhHiIlLqQnNpP"]
+    AllFloat: L["efdgFDG"]
+    Datetime: L["Mm"]
+    All: L["?bhilqnpBHILQNPefdgFDGSUVOMm"]
 
 def isdtype(dtype: dtype | type, kind: DTypeLike | tuple[DTypeLike, ...]) -> py_bool: ...
 def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> py_bool: ...
@@ -167,7 +166,7 @@ ScalarType: Final[
         type[py_bool],
         type[bytes],
         type[str],
-        type[memoryview],
+        type[memoryview[Any]],
         type[np.bool],
         type[csingle],
         type[cdouble],

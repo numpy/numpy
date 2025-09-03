@@ -576,7 +576,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
             Py_INCREF(arr);
         }
         else {
-            arr = PyArray_Copy(a);
+            arr = PyArray_NewCopy(a, NPY_KEEPORDER);
             if (arr == NULL) {
                 return NULL;
             }
@@ -637,8 +637,7 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
                 return (PyObject *)out;
             }
             else {
-                Py_INCREF(a);
-                return (PyObject *)a;
+                return PyArray_NewCopy(a, NPY_KEEPORDER);
             }
         }
         if (decimals == 0) {

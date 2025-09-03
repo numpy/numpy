@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 
 f2: np.float16
@@ -58,15 +57,15 @@ np.float64(value=0.0)  # type: ignore[call-arg]
 np.int64(value=0)  # type: ignore[call-arg]
 np.uint64(value=0)  # type: ignore[call-arg]
 np.complex128(value=0.0j)  # type: ignore[call-overload]
-np.str_(value='bob')  # type: ignore[call-overload]
-np.bytes_(value=b'test')  # type: ignore[call-overload]
-np.void(value=b'test')  # type: ignore[call-overload]
+np.str_(value="bob")  # type: ignore[call-overload]
+np.bytes_(value=b"test")  # type: ignore[call-overload]
+np.void(value=b"test")  # type: ignore[call-overload]
 np.bool(value=True)  # type: ignore[call-overload]
 np.datetime64(value="2019")  # type: ignore[call-overload]
 np.timedelta64(value=0)  # type: ignore[call-overload]
 
-np.bytes_(b"hello", encoding='utf-8')  # type: ignore[call-overload]
-np.str_("hello", encoding='utf-8')  # type: ignore[call-overload]
+np.bytes_(b"hello", encoding="utf-8")  # type: ignore[call-overload]
+np.str_("hello", encoding="utf-8")  # type: ignore[call-overload]
 
 f8.item(1)  # type: ignore[call-overload]
 f8.item((0, 1))  # type: ignore[arg-type]

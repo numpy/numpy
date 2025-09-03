@@ -6,10 +6,12 @@ Does not include tests which fall under ``array_constructors``.
 """
 
 from __future__ import annotations
+
 from typing import cast
 
 import numpy as np
 import numpy.typing as npt
+
 
 class SubClass(npt.NDArray[np.float64]): ...
 

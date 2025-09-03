@@ -11,11 +11,7 @@ from numpy._core.fromnumeric import (
     sum,
     var,
 )
-from numpy.lib._function_base_impl import (
-    median,
-    percentile,
-    quantile,
-)
+from numpy.lib._function_base_impl import median, percentile, quantile
 
 __all__ = [
     "nansum",

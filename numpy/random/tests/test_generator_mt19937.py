@@ -1,6 +1,7 @@
 import hashlib
 import os.path
 import sys
+import warnings
 
 import pytest
 
@@ -17,8 +18,6 @@ from numpy.testing import (
     assert_equal,
     assert_no_warnings,
     assert_raises,
-    assert_warns,
-    suppress_warnings,
 )
 
 random = Generator(MT19937())
@@ -99,6 +98,24 @@ class TestBinomial:
     def test_p_is_nan(self):
         # Issue #4571.
         assert_raises(ValueError, random.binomial, 1, np.nan)
+
+    def test_p_extremely_small(self):
+        n = 50000000000
+        p = 5e-17
+        sample_size = 20000000
+        x = random.binomial(n, p, size=sample_size)
+        sample_mean = x.mean()
+        expected_mean = n * p
+        sigma = np.sqrt(n * p * (1 - p) / sample_size)
+        # Note: the parameters were chosen so that expected_mean - 6*sigma
+        # is a positive value.  The first `assert` below validates that
+        # assumption (in case someone edits the parameters in the future).
+        # The second `assert` is the actual test.
+        low_bound = expected_mean - 6 * sigma
+        assert low_bound > 0, "bad test params: 6-sigma lower bound is negative"
+        test_msg = (f"sample mean {sample_mean} deviates from the expected mean "
+                    f"{expected_mean} by more than 6*sigma")
+        assert abs(expected_mean - sample_mean) < 6 * sigma, test_msg
 
 
 class TestMultinomial:
@@ -1463,8 +1480,8 @@ class TestRandomDist:
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov)
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov,
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov)
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov,
                      method='eigh')
         assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
                       method='cholesky')
@@ -1491,10 +1508,9 @@ class TestRandomDist:
                           method='cholesky')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             random.multivariate_normal(mean, cov, method=method)
-            w = sup.record(RuntimeWarning)
-            assert len(w) == 0
 
         mu = np.zeros(2)
         cov = np.eye(2)

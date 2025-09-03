@@ -468,12 +468,15 @@ double random_chisquare(bitgen_t *bitgen_state, double df) {
 }
 
 double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) {
-  return ((random_chisquare(bitgen_state, dfnum) * dfden) /
-          (random_chisquare(bitgen_state, dfden) * dfnum));
+  double subexpr1 = random_chisquare(bitgen_state, dfnum) * dfden;
+  double subexpr2 = random_chisquare(bitgen_state, dfden) * dfnum;
+  return subexpr1 / subexpr2;
 }
 
 double random_standard_cauchy(bitgen_t *bitgen_state) {
-  return random_standard_normal(bitgen_state) / random_standard_normal(bitgen_state);
+  double subexpr1 = random_standard_normal(bitgen_state);
+  double subexpr2 = random_standard_normal(bitgen_state);
+  return subexpr1 / subexpr2;
 }
 
 double random_pareto(bitgen_t *bitgen_state, double a) {
@@ -770,7 +773,7 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
     binomial->psave = p;
     binomial->has_binomial = 1;
     binomial->q = q = 1.0 - p;
-    binomial->r = qn = exp(n * log(q));
+    binomial->r = qn = exp(n * log1p(-p));
     binomial->c = np = n * p;
     binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
   } else {

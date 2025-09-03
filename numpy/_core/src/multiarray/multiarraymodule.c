@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "arraytypes.h"
 #include "arrayobject.h"
 #include "array_converter.h"
+#include "blas_utils.h"
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
@@ -668,10 +669,17 @@ PyArray_ConcatenateInto(PyObject *op,
     }
 
     /* Convert the input list into arrays */
-    narrays = PySequence_Size(op);
-    if (narrays < 0) {
+    Py_ssize_t narrays_true = PySequence_Size(op);
+    if (narrays_true < 0) {
         return NULL;
     }
+    else if (narrays_true > NPY_MAX_INT) {
+        PyErr_Format(PyExc_ValueError,
+            "concatenate() only supports up to %d arrays but got %zd.",
+            NPY_MAX_INT, narrays_true);
+        return NULL;
+    }
+    narrays = (int)narrays_true;
     arrays = PyArray_malloc(narrays * sizeof(arrays[0]));
     if (arrays == NULL) {
         PyErr_NoMemory();
@@ -1552,7 +1560,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
-        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin)
+        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin, int ndmax)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
@@ -1562,10 +1570,9 @@ _array_fromobject_generic(
     Py_XINCREF(in_descr);
     PyArray_Descr *dtype = in_descr;
 
-    if (ndmin > NPY_MAXDIMS) {
+    if (ndmin > ndmax) {
         PyErr_Format(PyExc_ValueError,
-                "ndmin bigger than allowable number of dimensions "
-                "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
+                "ndmin must be <= ndmax (%d)", ndmax);
         goto finish;
     }
     /* fast exit if simple call */
@@ -1674,7 +1681,7 @@ _array_fromobject_generic(
     flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, 0, flags, NULL);
+            op, dtype, in_DType, 0, ndmax, flags, NULL);
 
 finish:
     Py_XDECREF(dtype);
@@ -1705,6 +1712,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     npy_bool subok = NPY_FALSE;
     NPY_COPYMODE copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
+    int ndmax = NPY_MAXDIMS;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
@@ -1718,6 +1726,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
+                "$ndmax", &PyArray_PythonPyIntFromInt, &ndmax,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(dt_info.descr);
@@ -1739,8 +1748,15 @@ array_array(PyObject *NPY_UNUSED(ignored),
         op = args[0];
     }
 
+    if (ndmax > NPY_MAXDIMS || ndmax < 0) {
+        PyErr_Format(PyExc_ValueError, "ndmax must be in the range [0, NPY_MAXDIMS (%d)] ", NPY_MAXDIMS);
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin);
+            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin, ndmax);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1786,7 +1802,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1832,7 +1848,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1874,7 +1890,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_CORDER, NPY_FALSE,
-            1);
+            1, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1916,7 +1932,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_FORTRANORDER,
-            NPY_FALSE, 1);
+            NPY_FALSE, 1, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -2752,32 +2768,33 @@ fail:
 static int
 einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 {
-    int ellipsis = 0, subindex = 0;
+    int ellipsis = 0, subindex = 0, ret = -1;
     npy_intp i, size;
-    PyObject *item;
+    PyObject *item, *seq;
 
-    obj = PySequence_Fast(obj, "the subscripts for each operand must "
+    seq = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref OK
                                "be a list or a tuple");
-    if (obj == NULL) {
+    if (seq == NULL) {
         return -1;
     }
-    size = PySequence_Size(obj);
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
+    size = PySequence_Size(seq);
 
     for (i = 0; i < size; ++i) {
-        item = PySequence_Fast_GET_ITEM(obj, i);
+        item = PySequence_Fast_GET_ITEM(seq, i);
         /* Ellipsis */
         if (item == Py_Ellipsis) {
             if (ellipsis) {
                 PyErr_SetString(PyExc_ValueError,
                         "each subscripts list may have only one ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             if (subindex + 3 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             subscripts[subindex++] = '.';
             subscripts[subindex++] = '.';
@@ -2792,16 +2809,14 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 PyErr_SetString(PyExc_TypeError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
 
             if (s < 0) {
@@ -2820,16 +2835,19 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscript is not within the valid range [0, 52)");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
         }
-
     }
 
-    Py_DECREF(obj);
+    ret = subindex;
 
-    return subindex;
+  cleanup:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+    Py_DECREF(seq);
+
+    return ret;
 }
 
 /*
@@ -4571,7 +4589,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
-        METH_O, "Collect unique values via a hash map."},
+        METH_FASTCALL | METH_KEYWORDS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4780,6 +4798,10 @@ _multiarray_umath_exec(PyObject *m) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         return -1;
     }
+
+#if NPY_BLAS_CHECK_FPE_SUPPORT
+    npy_blas_init();
+#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,

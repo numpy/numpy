@@ -997,26 +997,26 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int i;
     int nin, nout;
     PyObject *out_kwd_obj;
-    PyObject *fast;
-    PyObject **in_objs, **out_objs, *where_obj;
+    PyObject **out_objs, *where_obj;
 
     /* check inputs */
     nin = PyTuple_Size(args);
     if (nin < 0) {
         return -1;
     }
-    fast = PySequence_Fast(args, "Could not convert object to sequence");
-    if (fast == NULL) {
-        return -1;
-    }
-    in_objs = PySequence_Fast_ITEMS(fast);
     for (i = 0; i < nin; ++i) {
-        if (PyUFunc_HasOverride(in_objs[i])) {
-            Py_DECREF(fast);
+#if defined(PYPY_VERSION) || defined(Py_LIMITED_API)
+        PyObject *obj = PyTuple_GetItem(args, i);
+        if (obj == NULL) {
+            return -1;
+        }
+#else
+        PyObject *obj = PyTuple_GET_ITEM(args, i);
+#endif
+        if (PyUFunc_HasOverride(obj)) {
             return 1;
         }
     }
-    Py_DECREF(fast);
     if (kwds == NULL) {
         return 0;
     }
@@ -1033,7 +1033,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     Py_DECREF(out_kwd_obj);
     /* check where if it exists */
-    where_obj = PyDict_GetItemWithError(kwds, npy_interned_str.where);
+    where_obj = PyDict_GetItemWithError(kwds, npy_interned_str.where); // noqa: borrowed-ref OK
     if (where_obj == NULL) {
         if (PyErr_Occurred()) {
             return -1;
@@ -1115,14 +1115,15 @@ array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kw
         PyErr_SetString(PyExc_TypeError, "kwargs must be a dict.");
         return NULL;
     }
-    types = PySequence_Fast(
+    types = PySequence_Fast( // noqa: borrowed-ref OK
         types,
         "types argument to ndarray.__array_function__ must be iterable");
     if (types == NULL) {
         return NULL;
     }
-
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(types);
     result = array_function_method_impl(func, types, args, kwargs);
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     Py_DECREF(types);
     return result;
 }
@@ -1566,7 +1567,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         PyArray_Descr *new;
         int offset, res;
         Py_ssize_t pos = 0;
-        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -1733,7 +1734,7 @@ _setlist_pkl(PyArrayObject *self, PyObject *list)
         return -1;
     }
     while(iter->index < iter->size) {
-        theobject = PyList_GET_ITEM(list, iter->index);
+        theobject = PyList_GET_ITEM(list, iter->index); // noqa: borrowed-ref OK
         setitem(theobject, iter->dataptr, self);
         PyArray_ITER_NEXT(iter);
     }

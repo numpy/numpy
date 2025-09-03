@@ -1,0 +1,9 @@
+``__array_interface__`` with NULL pointer changed
+-------------------------------------------------
+The array interface now accepts NULL pointers (NumPy will do
+its own dummy allocation, though).
+Previously, these incorrectly triggered an undocumented
+scalar path.
+In the unlikely event that the scalar path was actually desired,
+you can (for now) achieve the previous behavior via the correct
+scalar path by not providing a ``data`` field at all.

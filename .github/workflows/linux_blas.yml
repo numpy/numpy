@@ -65,7 +65,7 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -127,7 +127,7 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel openblas-devel -y
 
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -163,7 +163,7 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel flexiblas-devel -y
 
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -194,7 +194,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -223,7 +223,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -260,7 +260,7 @@ jobs:
         # If it is needed in the future, use install name `pkgconf-pkg-config`
         zypper install -y git gcc-c++ python3-pip python3-devel blas cblas lapack
 
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -285,7 +285,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -349,7 +349,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -386,7 +386,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
         fetch-tags: true

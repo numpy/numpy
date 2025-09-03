@@ -83,7 +83,7 @@ array_converter_new(
         }
         else {
             item->array = (PyArrayObject *)PyArray_FromAny_int(
-                    item->object, NULL, NULL, 0, 0, 0, NULL,
+                    item->object, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL,
                     &item->scalar_input);
             if (item->array == NULL) {
                 goto fail;

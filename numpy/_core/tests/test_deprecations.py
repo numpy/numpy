@@ -406,6 +406,13 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
 
+class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
+    message = "Setting the .*on a NumPy array has been deprecated.*"
+
+    def test_deprecated_strides_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
+
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
@@ -441,8 +448,99 @@ class TestDeprecatedSaveFixImports(_DeprecationTestCase):
 class TestAddNewdocUFunc(_DeprecationTestCase):
     # Deprecated in Numpy 2.2, 2024-11
     def test_deprecated(self):
+        doc = struct_ufunc.add_triplet.__doc__
+        # gh-26718
+        # This test mutates the C-level docstring pointer for add_triplet,
+        # which is permanent once set. Skip when re-running tests.
+        if doc is not None and "new docs" in doc:
+            pytest.skip("Cannot retest deprecation, otherwise ValueError: "
+                "Cannot change docstring of ufunc with non-NULL docstring")
         self.assert_deprecated(
             lambda: np._core.umath._add_newdoc_ufunc(
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
+
+class TestDTypeAlignBool(_VisibleDeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-07
+    # NOTE: As you can see, finalizing this deprecation breaks some (very) old
+    # pickle files.  This may be fine, but needs to be done with some care since
+    # it breaks all of them and not just some.
+    # (Maybe it should be a 3.0 or only after warning more explicitly around pickles.)
+    message = r"dtype\(\): align should be passed as Python or NumPy boolean but got "
+
+    def test_deprecated(self):
+        # in particular integers should be rejected because one may think they mean
+        # alignment, or pass them accidentally as a subarray shape (meaning to pass
+        # a tuple).
+        self.assert_deprecated(lambda: np.dtype("f8", align=3))
+
+    @pytest.mark.parametrize("align", [True, False, np.True_, np.False_])
+    def test_not_deprecated(self, align):
+        # if the user passes a bool, it is accepted.
+        self.assert_not_deprecated(lambda: np.dtype("f8", align=align))
+
+
+class TestFlatiterIndexing0dBoolIndex(_DeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-07
+    message = r"Indexing flat iterators with a 0-dimensional boolean index"
+
+    def test_0d_boolean_index_deprecated(self):
+        arr = np.arange(3)
+        # 0d boolean indices on flat iterators are deprecated
+        self.assert_deprecated(lambda: arr.flat[True])
+
+    def test_0d_boolean_assign_index_deprecated(self):
+        arr = np.arange(3)
+
+        def assign_to_index():
+            arr.flat[True] = 10
+
+        self.assert_deprecated(assign_to_index)
+
+
+class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
+    # Deprecated in NumPy 2.4, 2025-07
+    message = r"Invalid non-array indices for iterator objects"
+
+    def test_float_index_deprecated(self):
+        arr = np.arange(3)
+        # float indices on flat iterators are deprecated
+        self.assert_deprecated(lambda: arr.flat[[1.]])
+
+    def test_float_assign_index_deprecated(self):
+        arr = np.arange(3)
+
+        def assign_to_index():
+            arr.flat[[1.]] = 10
+
+        self.assert_deprecated(assign_to_index)
+
+
+class TestWarningUtilityDeprecations(_DeprecationTestCase):
+    # Deprecation in NumPy 2.4, 2025-08
+    message = r"NumPy warning suppression and assertion utilities are deprecated."
+
+    def test_assert_warns_deprecated(self):
+        def use_assert_warns():
+            with np.testing.assert_warns(RuntimeWarning):
+                warnings.warn("foo", RuntimeWarning, stacklevel=1)
+
+        self.assert_deprecated(use_assert_warns)
+
+    def test_suppress_warnings_deprecated(self):
+        def use_suppress_warnings():
+            with np.testing.suppress_warnings() as sup:
+                sup.filter(RuntimeWarning, 'invalid value encountered in divide')
+
+        self.assert_deprecated(use_suppress_warnings)
+
+
+class TestTooManyArgsExtremum(_DeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-08, gh-27639
+    message = "Passing more than 2 positional arguments to np.maximum and np.minimum "
+
+    @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
+    def test_extremem_3_args(self, ufunc):
+        self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))

@@ -261,7 +261,7 @@ class NpzFile(Mapping):
                         max_header_size=self.max_header_size
                     )
                 else:
-                    return bytes.read(key)
+                    return bytes.read()
 
     def __contains__(self, key):
         return (key in self._files)
@@ -1730,7 +1730,7 @@ def fromregex(file, regexp, dtype, encoding=None):
             #   re-interpret as a single-field structured array.
             newdtype = np.dtype(dtype[dtype.names[0]])
             output = np.array(seq, dtype=newdtype)
-            output.dtype = dtype
+            output = output.view(dtype)
         else:
             output = np.array(seq, dtype=dtype)
 

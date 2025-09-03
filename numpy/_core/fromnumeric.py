@@ -2,16 +2,14 @@
 
 """
 import functools
+import math
 import types
 import warnings
 
 import numpy as np
 from numpy._utils import set_module
 
-from . import _methods, overrides
-from . import multiarray as mu
-from . import numerictypes as nt
-from . import umath as um
+from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _array_converter
 from .multiarray import asanyarray, asarray, concatenate
 
@@ -172,7 +170,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
         Ni, Nk = a.shape[:axis], a.shape[axis+1:]
         for ii in ndindex(Ni):
-            for kk in ndindex(Nj):
+            for kk in ndindex(Nk):
                 out[ii + s_[...,] + kk] = a[ii + s_[:,] + kk][indices]
 
     For this reason, it is equivalent to (but faster than) the following use
@@ -1607,7 +1605,8 @@ def resize(a, new_shape):
         # First case must zero fill. The second would have repeats == 0.
         return np.zeros_like(a, shape=new_shape)
 
-    repeats = -(-new_size // a.size)  # ceil division
+    # ceiling division without negating new_size
+    repeats = (new_size + a.size - 1) // a.size
     a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)
@@ -3571,9 +3570,12 @@ def size(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
-        Axis along which the elements are counted.  By default, give
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which the elements are counted.  By default, give
         the total number of elements.
+
+        .. versionchanged:: 2.4
+           Extended to accept multiple axes.
 
     Returns
     -------
@@ -3592,10 +3594,12 @@ def size(a, axis=None):
     >>> a = np.array([[1,2,3],[4,5,6]])
     >>> np.size(a)
     6
-    >>> np.size(a,1)
+    >>> np.size(a,axis=1)
     3
-    >>> np.size(a,0)
+    >>> np.size(a,axis=0)
     2
+    >>> np.size(a,axis=(0,1))
+    6
 
     """
     if axis is None:
@@ -3604,10 +3608,10 @@ def size(a, axis=None):
         except AttributeError:
             return asarray(a).size
     else:
-        try:
-            return a.shape[axis]
-        except AttributeError:
-            return asarray(a).shape[axis]
+        _shape = shape(a)
+        from .numeric import normalize_axis_tuple
+        axis = normalize_axis_tuple(axis, len(_shape), allow_duplicate=False)
+        return math.prod(_shape[ax] for ax in axis)
 
 
 def _round_dispatcher(a, decimals=None, out=None):

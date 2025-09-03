@@ -1,12 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    Final,
-    Literal,
-    SupportsIndex,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
+from typing import Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt

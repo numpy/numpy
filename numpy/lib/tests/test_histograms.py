@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 import numpy as np
@@ -12,7 +14,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    suppress_warnings,
 )
 
 
@@ -138,11 +139,9 @@ class TestHistogram:
         # Should raise an warning on booleans
         # Ensure that the histograms are equivalent, need to suppress
         # the warnings to get the actual outputs
-        with suppress_warnings() as sup:
-            rec = sup.record(RuntimeWarning, 'Converting input from .*')
+        with pytest.warns(RuntimeWarning, match='Converting input from .*'):
             hist, edges = np.histogram([True, True, False])
             # A warning should be issued
-            assert_equal(len(rec), 1)
             assert_array_equal(hist, int_hist)
             assert_array_equal(edges, int_edges)
 
@@ -284,9 +283,8 @@ class TestHistogram:
         all_nan = np.array([np.nan, np.nan])
 
         # the internal comparisons with NaN give warnings
-        sup = suppress_warnings()
-        sup.filter(RuntimeWarning)
-        with sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             # can't infer range with nan
             assert_raises(ValueError, histogram, one_nan, bins='auto')
             assert_raises(ValueError, histogram, all_nan, bins='auto')
@@ -618,9 +616,9 @@ class TestHistogramOptimBinNums:
         """
         Test that bin width for integer data is at least 1.
         """
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
             if bins == 'stone':
-                sup.filter(RuntimeWarning)
+                warnings.simplefilter('ignore', RuntimeWarning)
             assert_equal(
                 np.histogram_bin_edges(np.tile(np.arange(9), 1000), bins),
                 np.arange(9))
