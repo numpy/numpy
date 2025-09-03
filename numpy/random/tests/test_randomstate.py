@@ -191,52 +191,58 @@ class TestMultinomial:
         # Non-index integer types should gracefully truncate floats
         random.multinomial(100.5, [0.2, 0.8])
 
+
 class TestSetState:
-    def setup_method(self):
-        self.seed = 1234567890
-        self.random_state = random.RandomState(self.seed)
-        self.state = self.random_state.get_state()
+    def _create_state(self):
+        seed = 1234567890
+        random_state = random.RandomState(seed)
+        state = random_state.get_state()
+        return random_state, state
 
     def test_basic(self):
-        old = self.random_state.tomaxint(16)
-        self.random_state.set_state(self.state)
-        new = self.random_state.tomaxint(16)
+        random_state, state = self._create_state()
+        old = random_state.tomaxint(16)
+        random_state.set_state(state)
+        new = random_state.tomaxint(16)
         assert_(np.all(old == new))
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
-        old = self.random_state.standard_normal(size=3)
-        self.random_state.set_state(self.state)
-        new = self.random_state.standard_normal(size=3)
+        random_state, state = self._create_state()
+        old = random_state.standard_normal(size=3)
+        random_state.set_state(state)
+        new = random_state.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
-
-        self.random_state.standard_normal()
-        state = self.random_state.get_state()
-        old = self.random_state.standard_normal(size=3)
-        self.random_state.set_state(state)
-        new = self.random_state.standard_normal(size=3)
+        random_state, state = self._create_state()
+        random_state.standard_normal()
+        state = random_state.get_state()
+        old = random_state.standard_normal(size=3)
+        random_state.set_state(state)
+        new = random_state.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_backwards_compatibility(self):
         # Make sure we can accept old state tuples that do not have the
         # cached Gaussian value.
-        old_state = self.state[:-2]
-        x1 = self.random_state.standard_normal(size=16)
-        self.random_state.set_state(old_state)
-        x2 = self.random_state.standard_normal(size=16)
-        self.random_state.set_state(self.state)
-        x3 = self.random_state.standard_normal(size=16)
+        random_state, state = self._create_state()
+        old_state = state[:-2]
+        x1 = random_state.standard_normal(size=16)
+        random_state.set_state(old_state)
+        x2 = random_state.standard_normal(size=16)
+        random_state.set_state(state)
+        x3 = random_state.standard_normal(size=16)
         assert_(np.all(x1 == x2))
         assert_(np.all(x1 == x3))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        self.random_state.negative_binomial(0.5, 0.5)
+        random_state, _ = self._create_state()
+        random_state.negative_binomial(0.5, 0.5)
 
     def test_get_state_warning(self):
         rs = random.RandomState(PCG64())
@@ -246,34 +252,38 @@ class TestSetState:
         assert state['bit_generator'] == 'PCG64'
 
     def test_invalid_legacy_state_setting(self):
-        state = self.random_state.get_state()
+        random_state, state = self._create_state()
+        state = random_state.get_state()
         new_state = ('Unknown', ) + state[1:]
-        assert_raises(ValueError, self.random_state.set_state, new_state)
-        assert_raises(TypeError, self.random_state.set_state,
+        assert_raises(ValueError, random_state.set_state, new_state)
+        assert_raises(TypeError, random_state.set_state,
                       np.array(new_state, dtype=object))
-        state = self.random_state.get_state(legacy=False)
+        state = random_state.get_state(legacy=False)
         del state['bit_generator']
-        assert_raises(ValueError, self.random_state.set_state, state)
+        assert_raises(ValueError, random_state.set_state, state)
 
     def test_pickle(self):
-        self.random_state.seed(0)
-        self.random_state.random_sample(100)
-        self.random_state.standard_normal()
-        pickled = self.random_state.get_state(legacy=False)
+        random_state, _ = self._create_state()
+        random_state.seed(0)
+        random_state.random_sample(100)
+        random_state.standard_normal()
+        pickled = random_state.get_state(legacy=False)
         assert_equal(pickled['has_gauss'], 1)
-        rs_unpick = pickle.loads(pickle.dumps(self.random_state))
+        rs_unpick = pickle.loads(pickle.dumps(random_state))
         unpickled = rs_unpick.get_state(legacy=False)
         assert_mt19937_state_equal(pickled, unpickled)
 
     def test_state_setting(self):
-        attr_state = self.random_state.__getstate__()
-        self.random_state.standard_normal()
-        self.random_state.__setstate__(attr_state)
-        state = self.random_state.get_state(legacy=False)
+        random_state, state = self._create_state()
+        attr_state = random_state.__getstate__()
+        random_state.standard_normal()
+        random_state.__setstate__(attr_state)
+        state = random_state.get_state(legacy=False)
         assert_mt19937_state_equal(attr_state, state)
 
     def test_repr(self):
-        assert repr(self.random_state).startswith('RandomState(MT19937)')
+        random_state, _ = self._create_state()
+        assert repr(random_state).startswith('RandomState(MT19937)')
 
 
 class TestRandint:
@@ -443,9 +453,7 @@ class TestRandint:
 class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
-
-    def setup_method(self):
-        self.seed = 1234567890
+    seed = 1234567890
 
     def test_rand(self):
         random.seed(self.seed)
@@ -1309,8 +1317,7 @@ class TestRandomDist:
 class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setup_method(self):
-        self.seed = 123456789
+    seed = 123456789
 
     def set_seed(self):
         random.seed(self.seed)
@@ -1896,8 +1903,7 @@ class TestBroadcast:
 @pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
-    def setup_method(self):
-        self.seeds = range(4)
+    seeds = range(4)
 
     def check_function(self, function, sz):
         from threading import Thread
@@ -1942,13 +1948,11 @@ class TestThread:
 
 # See Issue #4263
 class TestSingleEltArrayInput:
-    def setup_method(self):
-        self.argOne = np.array([2])
-        self.argTwo = np.array([3])
-        self.argThree = np.array([4])
-        self.tgtShape = (1,)
+    def _create_arrays(self):
+        return np.array([2]), np.array([3]), np.array([4]), (1,)
 
     def test_one_arg_funcs(self):
+        argOne, _, _, tgtShape = self._create_arrays()
         funcs = (random.exponential, random.standard_gamma,
                  random.chisquare, random.standard_t,
                  random.pareto, random.weibull,
@@ -1963,11 +1967,12 @@ class TestSingleEltArrayInput:
                 out = func(np.array([0.5]))
 
             else:
-                out = func(self.argOne)
+                out = func(argOne)
 
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
     def test_two_arg_funcs(self):
+        argOne, argTwo, _, tgtShape = self._create_arrays()
         funcs = (random.uniform, random.normal,
                  random.beta, random.gamma,
                  random.f, random.noncentral_chisquare,
@@ -1983,30 +1988,31 @@ class TestSingleEltArrayInput:
                 argTwo = np.array([0.5])
 
             else:
-                argTwo = self.argTwo
+                argTwo = argTwo
 
-            out = func(self.argOne, argTwo)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne[0], argTwo)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne[0], argTwo)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne, argTwo[0])
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo[0])
+            assert_equal(out.shape, tgtShape)
 
     def test_three_arg_funcs(self):
+        argOne, argTwo, argThree, tgtShape = self._create_arrays()
         funcs = [random.noncentral_f, random.triangular,
                  random.hypergeometric]
 
         for func in funcs:
-            out = func(self.argOne, self.argTwo, self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo, argThree)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne[0], self.argTwo, self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne[0], argTwo, argThree)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne, self.argTwo[0], self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo[0], argThree)
+            assert_equal(out.shape, tgtShape)
 
 
 # Ensure returned array dtype is correct for platform
