@@ -2126,7 +2126,9 @@ gentype___deepcopy__(PyObject *self, PyObject *args)
 
     // scalars are immutable, so we can return a new reference
     // the only expections are scalars with void dtype
-    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
+    // if the number of arguments is not 1, we let gentype_generic_method do the
+    // error handling
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (PyTuple_Size(args)!=1)) {
         // path via array
         return gentype_generic_method(self, args, NULL, "__deepcopy__");
     }
