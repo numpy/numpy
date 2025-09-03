@@ -36,6 +36,9 @@ from numpy.testing import (
 
 class _GenericTest:
 
+    def _assert_func(self, *args, **kwargs):
+        pass
+
     def _test_equal(self, a, b):
         self._assert_func(a, b)
 
@@ -82,8 +85,8 @@ class _GenericTest:
 
 class TestArrayEqual(_GenericTest):
 
-    def setup_method(self):
-        self._assert_func = assert_array_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_array_equal(*args, **kwargs)
 
     def test_generic_rank1(self):
         """Test rank 1 array for all dtypes."""
@@ -389,8 +392,8 @@ class TestBuildErrorMessage:
 
 class TestEqual(TestArrayEqual):
 
-    def setup_method(self):
-        self._assert_func = assert_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_equal(*args, **kwargs)
 
     def test_nan_items(self):
         self._assert_func(np.nan, np.nan)
@@ -484,8 +487,8 @@ class TestEqual(TestArrayEqual):
 
 class TestArrayAlmostEqual(_GenericTest):
 
-    def setup_method(self):
-        self._assert_func = assert_array_almost_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_array_almost_equal(*args, **kwargs)
 
     def test_closeness(self):
         # Note that in the course of time we ended up with
@@ -700,8 +703,8 @@ class TestArrayAlmostEqual(_GenericTest):
 
 class TestAlmostEqual(_GenericTest):
 
-    def setup_method(self):
-        self._assert_func = assert_almost_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_almost_equal(*args, **kwargs)
 
     def test_closeness(self):
         # Note that in the course of time we ended up with
@@ -870,8 +873,8 @@ class TestAlmostEqual(_GenericTest):
 
 class TestApproxEqual:
 
-    def setup_method(self):
-        self._assert_func = assert_approx_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_approx_equal(*args, **kwargs)
 
     def test_simple_0d_arrays(self):
         x = np.array(1234.22)
@@ -913,8 +916,8 @@ class TestApproxEqual:
 
 class TestArrayAssertLess:
 
-    def setup_method(self):
-        self._assert_func = assert_array_less
+    def _assert_func(self, *args, **kwargs):
+        assert_array_less(*args, **kwargs)
 
     def test_simple_arrays(self):
         x = np.array([1.1, 2.2])
