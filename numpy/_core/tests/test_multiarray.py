@@ -6837,7 +6837,7 @@ class TestDot:
     N = 7
 
     def _create_data(self):
-        rng = np.random.default_rng(128)
+        rng = np.random.RandomState(128)
         A = rng.random((4, 2))
         b1 = rng.random((2, 1))
         b2 = rng.random(2)
@@ -6848,52 +6848,51 @@ class TestDot:
     def test_dotmatmat(self):
         A, _, _, _, _ = self._create_data()
         res = np.dot(A.transpose(), A)
-        tgt = np.array([[1.47632191, 1.30902162],
-                        [1.30902162, 1.44047178]])
+        tgt = np.array([[1.45046013, 0.86323640],
+                        [0.86323640, 0.84934569]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotmatvec(self):
         A, b1, _, _, _ = self._create_data()
         res = np.dot(A, b1)
-        tgt = np.array([[0.53147439], [0.3881244],
-                        [0.28278056], [0.81799083]])
+        tgt = np.array([[0.32114320], [0.04889721],
+                        [0.15696029], [0.33612621]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotmatvec2(self):
         A, _, b2, _, _ = self._create_data()
         res = np.dot(A, b2)
-        tgt = np.array([0.73687498, 0.51701463, 0.27242132, 1.09264356])
+        tgt = np.array([0.29677940, 0.04518649, 0.14468333, 0.31039293])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecmat(self):
         A, _, _, _, b4 = self._create_data()
         res = np.dot(b4, A)
-        tgt = np.array([0.30087302, 0.76540662])
+        tgt = np.array([1.23495091, 1.12222648])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecmat2(self):
         A, _, _, b3, _ = self._create_data()
         res = np.dot(b3, A.transpose())
-        tgt = np.array([[0.87004937, 0.63750863, 0.47499902, 1.3432763]])
+        tgt = np.array([[0.58793804, 0.08957460, 0.30605758, 0.62716383]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecmat3(self):
         A, _, _, _, b4 = self._create_data()
         res = np.dot(A.transpose(), b4)
-        tgt = np.array([0.30087302, 0.76540662])
+        tgt = np.array([1.23495091, 1.12222648])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecvecouter(self):
         _, b1, _, b3, _ = self._create_data()
         res = np.dot(b1, b3)
-        tgt = np.array([[0.41852888, 0.35668856],
-                        [0.33830126, 0.28831508]])
+        tgt = np.array([[0.20128610, 0.08400440], [0.07190947, 0.03001058]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecvecinner(self):
         _, b1, _, b3, _ = self._create_data()
         res = np.dot(b3, b1)
-        tgt = np.array([[0.70684396]])
+        tgt = np.array([[0.23129668]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotcolumnvect1(self):
@@ -6911,19 +6910,19 @@ class TestDot:
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecscalar(self):
-        rng = np.random.default_rng(100)
+        rng = np.random.RandomState(100)
         b1 = rng.random((1, 1))
         b2 = rng.random((1, 4))
         res = np.dot(b1, b2)
-        tgt = np.array([[0.49811165, 0.2411955, 0.03586377, 0.81298353]])
+        tgt = np.array([[0.15126730, 0.23068496, 0.45905553, 0.00256425]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotvecscalar2(self):
-        rng = np.random.default_rng(100)
+        rng = np.random.RandomState(100)
         b1 = rng.random((4, 1))
         b2 = rng.random((1, 1))
         res = np.dot(b1, b2)
-        tgt = np.array([[0.81298353], [0.58083745], [0.28125296], [0.04181999]])
+        tgt = np.array([[0.00256425], [0.00131359], [0.00200324], [0.00398638]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_all(self):
