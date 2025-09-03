@@ -147,10 +147,6 @@ def check_fpu_mode(request):
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
 
-@pytest.fixture(autouse=True)
-def env_setup(monkeypatch):
-    monkeypatch.setenv('PYTHONHASHSEED', '0')
-
 
 if HAVE_SCPDT:
 
