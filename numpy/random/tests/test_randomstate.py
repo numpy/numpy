@@ -241,7 +241,7 @@ class TestSetState:
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        random_state = self._create_state()[0]
+        random_state, _ = self._create_state()
         random_state.negative_binomial(0.5, 0.5)
 
     def test_get_state_warning(self):
@@ -263,7 +263,7 @@ class TestSetState:
         assert_raises(ValueError, random_state.set_state, state)
 
     def test_pickle(self):
-        random_state = self._create_state()[0]
+        random_state, _ = self._create_state()
         random_state.seed(0)
         random_state.random_sample(100)
         random_state.standard_normal()
@@ -282,7 +282,7 @@ class TestSetState:
         assert_mt19937_state_equal(attr_state, state)
 
     def test_repr(self):
-        random_state = self._create_state()[0]
+        random_state, _ = self._create_state()
         assert repr(random_state).startswith('RandomState(MT19937)')
 
 
@@ -1949,11 +1949,7 @@ class TestThread:
 # See Issue #4263
 class TestSingleEltArrayInput:
     def _create_arrays(self):
-        argOne = np.array([2])
-        argTwo = np.array([3])
-        argThree = np.array([4])
-        tgtShape = (1,)
-        return argOne, argTwo, argThree, tgtShape
+        return np.array([2]), np.array([3]), np.array([4]), (1,)
 
     def test_one_arg_funcs(self):
         argOne, _, _, tgtShape = self._create_arrays()

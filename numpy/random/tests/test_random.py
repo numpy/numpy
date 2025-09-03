@@ -153,12 +153,12 @@ class TestSetState:
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        prng = self._create_rng()[0]
+        prng, _ = self._create_rng()
         prng.negative_binomial(0.5, 0.5)
 
     def test_set_invalid_state(self):
         # gh-25402
-        prng = self._create_rng()[0]
+        prng, _ = self._create_rng()
         with pytest.raises(IndexError):
             prng.set_state(())
 
@@ -1669,11 +1669,7 @@ class TestThread:
 # See Issue #4263
 class TestSingleEltArrayInput:
     def _create_arrays(self):
-        argOne = np.array([2])
-        argTwo = np.array([3])
-        argThree = np.array([4])
-        tgtShape = (1,)
-        return argOne, argTwo, argThree, tgtShape
+        return np.array([2]), np.array([3]), np.array([4]), (1,)
 
     def test_one_arg_funcs(self):
         argOne, _, _, tgtShape = self._create_arrays()
@@ -1724,7 +1720,7 @@ class TestSingleEltArrayInput:
             assert_equal(out.shape, tgtShape)
 
     def test_randint(self):
-        tgtShape = self._create_arrays()[3]
+        _, _, _, tgtShape = self._create_arrays()
         itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
                  np.int32, np.uint32, np.int64, np.uint64]
         func = np.random.randint

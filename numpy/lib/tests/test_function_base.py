@@ -999,7 +999,7 @@ class TestDelete:
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
-        a = self._create_arrays()[0]
+        a, _ = self._create_arrays()
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
         with pytest.raises(IndexError):
             delete(a, [100])
@@ -1035,7 +1035,8 @@ class TestDelete:
         class SubClass(np.ndarray):
             pass
 
-        a = self._create_arrays()[0].view(SubClass)
+        a_orig, _ = self._create_arrays()
+        a = a_orig.view(SubClass)
         assert_(isinstance(delete(a, 0), SubClass))
         assert_(isinstance(delete(a, []), SubClass))
         assert_(isinstance(delete(a, [0, 1]), SubClass))

@@ -313,8 +313,8 @@ class TestSetState:
         bit_generator = rg.bit_generator
         state = bit_generator.state
         legacy_state = (state['bit_generator'],
-                             state['state']['key'],
-                             state['state']['pos'])
+                        state['state']['key'],
+                        state['state']['pos'])
         return rg, bit_generator, state
 
     def test_gaussian_reset(self):
@@ -339,7 +339,7 @@ class TestSetState:
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        rg = self._create_rng()[0]
+        rg, _, _ = self._create_rng()
         rg.negative_binomial(0.5, 0.5)
 
 
@@ -2508,6 +2508,7 @@ class TestBroadcast:
         assert actual.shape == (3, 0, 7, 4)
 
 
+@pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
     seeds = range(4)
@@ -2556,11 +2557,7 @@ class TestThread:
 # See Issue #4263
 class TestSingleEltArrayInput:
     def _create_arrays(self):
-        argOne = np.array([2])
-        argTwo = np.array([3])
-        argThree = np.array([4])
-        tgtShape = (1,)
-        return argOne, argTwo, argThree, tgtShape
+        return np.array([2]), np.array([3]), np.array([4]), (1,)
 
     def test_one_arg_funcs(self):
         argOne, _, _, tgtShape = self._create_arrays()
@@ -2611,7 +2608,7 @@ class TestSingleEltArrayInput:
             assert_equal(out.shape, tgtShape)
 
     def test_integers(self, endpoint):
-        tgtShape = self._create_arrays()[3]
+        _, _, _, tgtShape = self._create_arrays()
         itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
                  np.int32, np.uint32, np.int64, np.uint64]
         func = random.integers
