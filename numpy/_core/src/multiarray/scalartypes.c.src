@@ -2108,13 +2108,13 @@ gentype_@name@(PyObject *self, PyObject *args)
 /**end repeat**/
 
 static PyObject *
-gentype___copy__(PyObject *self, PyObject *args)
+gentype___copy__(PyObject *self)
 {
     // scalars are immutable, so we can return a new reference
     // the only expections are scalars with void dtype
     if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
         // path via array
-        return gentype_generic_method(self, args, NULL, "__copy__");
+        return gentype_generic_method(self, NULL, NULL, "__copy__");
     }
     return Py_NewRef(self);
 }
@@ -2677,7 +2677,7 @@ static PyMethodDef gentype_methods[] = {
     /* for the copy module */
     {"__copy__",
         (PyCFunction)gentype___copy__,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
         METH_VARARGS, NULL},
