@@ -4381,15 +4381,6 @@ Enumerated Types
         This functionality is not yet implemented for any of the NumPy types
         and cannot yet be set from the Python interface.
 
-    .. c:enumerator:: NPY_SORT_NANFIRST
-
-        (Requirement) Specifies that the sort must sort NaNs to
-        the beginning, e.g. NaNs compare less than any other value for the
-        type. This is only relevant if the type has NaN equivalents.
-        This functionality is not yet implemented for any of the NumPy types
-        and cannot yet be set from the Python interface. It may change in the
-        future.
-
 .. c:enum:: NPY_SCALARKIND
 
     A special variable type indicating the number of "kinds" of

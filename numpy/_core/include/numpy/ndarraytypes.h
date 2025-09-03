@@ -193,7 +193,6 @@ typedef enum {
         NPY_SORT_DEFAULT = 0,
         NPY_SORT_STABLE = 2,
         NPY_SORT_DESCENDING = 4,
-        NPY_SORT_NANFIRST = 8,
 } NPY_SORTKIND;
 #define NPY_NSORTS (NPY_STABLESORT + 1)
 

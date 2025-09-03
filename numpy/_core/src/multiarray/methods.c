@@ -1255,7 +1255,6 @@ array_sort(PyArrayObject *self,
     NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     int stable = -1;
     int descending = -1;
-    int nanfirst = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
@@ -1264,7 +1263,6 @@ array_sort(PyArrayObject *self,
             "|order", NULL, &order,
             "$stable", &PyArray_OptionalBoolConverter, &stable,
 //            "$descending", &PyArray_OptionalBoolConverter, &descending,
-//            "$nanfirst", &PyArray_OptionalBoolConverter, &nanfirst,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1274,14 +1272,12 @@ array_sort(PyArrayObject *self,
         sortkind = 0;
         sortkind |= (stable > 0)? NPY_SORT_STABLE: 0;
         sortkind |= (descending > 0)? NPY_SORT_DESCENDING: 0;
-        sortkind |= (nanfirst > 0)? NPY_SORT_NANFIRST: 0;
     }
     else {
         // Check that no keywords are used
         int keywords_used = 0;
         keywords_used |= (stable != -1);
         keywords_used |= (descending != -1);
-        keywords_used |= (nanfirst != -1);
         if (keywords_used) {
             PyErr_SetString(PyExc_ValueError,
                     "`kind` and keyword parameters can't be provided at "
@@ -1421,7 +1417,6 @@ array_argsort(PyArrayObject *self,
     NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     int stable = -1;
     int descending = -1;
-    int nanfirst = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argsort", args, len_args, kwnames,
@@ -1430,7 +1425,6 @@ array_argsort(PyArrayObject *self,
             "|order", NULL, &order,
             "$stable", &PyArray_OptionalBoolConverter, &stable,
 //            "$descending", &PyArray_OptionalBoolConverter, &descending,
-//            "$nanfirst", &PyArray_OptionalBoolConverter, &nanfirst,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -1440,14 +1434,12 @@ array_argsort(PyArrayObject *self,
         sortkind = 0;
         sortkind |= (stable > 0)? NPY_SORT_STABLE: 0;
         sortkind |= (descending > 0)? NPY_SORT_DESCENDING: 0;
-        sortkind |= (nanfirst > 0)? NPY_SORT_NANFIRST: 0;
     }
     else {
         // Check that no keywords are used
         int keywords_used = 0;
         keywords_used |= (stable != -1);
         keywords_used |= (descending != -1);
-        keywords_used |= (nanfirst != -1);
         if (keywords_used) {
             PyErr_SetString(PyExc_ValueError,
                     "`kind` and keyword parameters can't be provided at "
