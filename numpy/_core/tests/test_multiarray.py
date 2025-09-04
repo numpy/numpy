@@ -2215,7 +2215,7 @@ class TestMethods:
 
         with assert_raises_regex(
             ValueError,
-            "kind` and `stable` parameters can't be provided at the same time"
+            "`kind` and keyword parameters can't be provided at the same time"
         ):
             np.sort(a, kind="stable", stable=True)
 
@@ -2658,7 +2658,7 @@ class TestMethods:
 
         with assert_raises_regex(
             ValueError,
-            "kind` and `stable` parameters can't be provided at the same time"
+            "`kind` and keyword parameters can't be provided at the same time"
         ):
             np.argsort(a, kind="stable", stable=True)
 
