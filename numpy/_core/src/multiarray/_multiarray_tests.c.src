@@ -2089,10 +2089,18 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     switch (kind) {
-        case _NPY_SORT_UNDEFINED: return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
-        case NPY_QUICKSORT: return PyUnicode_FromString("NPY_QUICKSORT");
-        case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
-        case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
+        case _NPY_SORT_UNDEFINED:
+            return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
+        case NPY_QUICKSORT:
+            return PyUnicode_FromString("NPY_QUICKSORT");
+        case NPY_HEAPSORT:
+            return PyUnicode_FromString("NPY_HEAPSORT");
+        case NPY_STABLESORT:
+            return PyUnicode_FromString("NPY_STABLESORT");
+        default:
+            // the other possible values in NPY_SORTKIND can only
+            // be set with keywords.
+            break;
     }
     return PyLong_FromLong(kind);
 }
