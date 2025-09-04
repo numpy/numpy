@@ -833,6 +833,7 @@ class TestSFC64(RNG):
         seed_vector_bits = 192
         return bit_generator, advance, seed, rg, initial_state, seed_vector_bits
 
+
 class TestPCG64(RNG):
     @classmethod
     def _create_gen(cls):
@@ -844,6 +845,7 @@ class TestPCG64(RNG):
         seed_vector_bits = 64
         return bit_generator, advance, seed, rg, initial_state, seed_vector_bits
 
+
 class TestPCG64DXSM(RNG):
     @classmethod
     def _create_gen(cls):
@@ -854,6 +856,7 @@ class TestPCG64DXSM(RNG):
         initial_state = rg.bit_generator.state
         seed_vector_bits = 64
         return bit_generator, advance, seed, rg, initial_state, seed_vector_bits
+
 
 class TestDefaultRNG(RNG):
     @classmethod
