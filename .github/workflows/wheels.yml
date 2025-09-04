@@ -184,7 +184,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
       - name: install micromamba
-        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b
+        uses: mamba-org/setup-micromamba@7f29b8b80078b1b601dfa018b0f7425c587c63bb
         if: ${{ matrix.buildplat[1] != 'win_arm64' }} # unsupported platform at the moment
         with:
           # for installation of anaconda-client, required for upload to
