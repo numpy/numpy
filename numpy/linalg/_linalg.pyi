@@ -381,7 +381,7 @@ def norm(
 def norm(
     x: ArrayLike,
     ord: float | L["fro", "nuc"] | None,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...],
+    axis: SupportsInt | SupportsIndex | tuple[int, ...] | None,
     keepdims: bool = False,
 ) -> Any: ...
 @overload
@@ -389,7 +389,7 @@ def norm(
     x: ArrayLike,
     ord: float | L["fro", "nuc"] | None = None,
     *,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...],
+    axis: SupportsInt | SupportsIndex | tuple[int, ...] | None,
     keepdims: bool = False,
 ) -> Any: ...
 
