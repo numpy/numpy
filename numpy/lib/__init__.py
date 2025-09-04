@@ -39,6 +39,7 @@ from . import (
     npyio,
     scimath,
     stride_tricks,
+    array_info,
 )
 
 # numpy.lib namespace members
@@ -48,7 +49,7 @@ from ._version import NumpyVersion
 __all__ = [
     "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
     "format", "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
-    "stride_tricks", "tracemalloc_domain",
+    "stride_tricks", "tracemalloc_domain", "array_info"
 ]
 
 add_newdoc.__module__ = "numpy.lib"
