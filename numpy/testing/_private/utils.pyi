@@ -180,7 +180,7 @@ def build_err_msg(
     err_msg: object,
     header: str = "Items are not equal:",
     verbose: bool = True,
-    names: Sequence[str] = ...,
+    names: Sequence[str] = ...,  # = ('ACTUAL', 'DESIRED')
     precision: SupportsIndex | None = 8,
 ) -> str: ...
 

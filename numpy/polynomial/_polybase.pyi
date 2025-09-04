@@ -183,7 +183,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         self,
         /,
         m: SupportsIndex = 1,
-        k: _CoefLike_co | _SeriesLikeCoef_co = ...,
+        k: _CoefLike_co | _SeriesLikeCoef_co = ...,  # = []
         lbnd: _CoefLike_co | None = None,
     ) -> Self: ...
 
@@ -206,7 +206,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
         domain: _SeriesLikeCoef_co | None = None,
-        rcond: _FloatLike_co = None,
+        rcond: _FloatLike_co | None = None,
         full: Literal[False] = False,
         w: _SeriesLikeCoef_co | None = None,
         window: _SeriesLikeCoef_co | None = None,
@@ -220,7 +220,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
         domain: _SeriesLikeCoef_co | None = None,
-        rcond: _FloatLike_co = None,
+        rcond: _FloatLike_co | None = None,
         *,
         full: Literal[True],
         w: _SeriesLikeCoef_co | None = None,
@@ -246,7 +246,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def fromroots(
         cls,
         roots: _ArrayLikeCoef_co,
-        domain: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = ...,  # = []
         window: _SeriesLikeCoef_co | None = None,
         symbol: str = "x",
     ) -> Self: ...

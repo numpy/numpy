@@ -375,13 +375,21 @@ def norm(
     x: ArrayLike,
     ord: float | L["fro", "nuc"] | None = None,
     axis: None = None,
-    keepdims: bool = False,
+    keepdims: L[False] = False,
 ) -> floating: ...
 @overload
 def norm(
     x: ArrayLike,
+    ord: float | L["fro", "nuc"] | None,
+    axis: SupportsInt | SupportsIndex | tuple[int, ...],
+    keepdims: bool = False,
+) -> Any: ...
+@overload
+def norm(
+    x: ArrayLike,
     ord: float | L["fro", "nuc"] | None = None,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...] = None,
+    *,
+    axis: SupportsInt | SupportsIndex | tuple[int, ...],
     keepdims: bool = False,
 ) -> Any: ...
 
@@ -391,7 +399,7 @@ def matrix_norm(
     /,
     *,
     ord: float | L["fro", "nuc"] | None = "fro",
-    keepdims: bool = False,
+    keepdims: L[False] = False,
 ) -> floating: ...
 @overload
 def matrix_norm(
@@ -409,14 +417,14 @@ def vector_norm(
     *,
     axis: None = None,
     ord: float | None = 2,
-    keepdims: bool = False,
+    keepdims: L[False] = False,
 ) -> floating: ...
 @overload
 def vector_norm(
     x: ArrayLike,
     /,
     *,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...] = None,
+    axis: SupportsInt | SupportsIndex | tuple[int, ...],
     ord: float | None = 2,
     keepdims: bool = False,
 ) -> Any: ...
