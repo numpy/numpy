@@ -1803,6 +1803,14 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     """
     p = asarray(p)
     nd = p.ndim
+    if np.issubdtype(p.dtype, np.unsignedinteger):
+        # covnert it to signed integer
+        if np.can_cast(p.dtype, np.int16):
+            p = p.astype(np.int16)
+        elif np.can_cast(p.dtype, np.int32):
+            p = p.astype(np.int32)
+        else:
+            p = p.astype(np.int64)
     dd = diff(p, axis=axis)
     if discont is None:
         discont = period / 2
