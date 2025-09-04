@@ -6070,11 +6070,6 @@ class TestFlat:
         b = a[::2, ::2]
         return a, b
 
-    def _create_arrays0(self):
-        a0 = np.arange(20.0).reshape((4, 5))
-        b0 = a0[::2, ::2]
-        return a0, b0
-
     def test_contiguous(self):
         testpassed = False
         a, _ = self._create_arrays()
@@ -6096,8 +6091,12 @@ class TestFlat:
         assert_(b.flat[4] == 12.0)
 
     def test___array__(self):
-        a, b = self._create_arrays()
-        a0, b0 = self._create_arrays0()
+        a0 = np.arange(20.0)
+        a = a0.reshape(4, 5)
+        a0 = a0.reshape((4, 5))
+        a.flags.writeable = False
+        b = a[::2, ::2]
+        b0 = a0[::2, ::2]
         c = a.flat.__array__()
         d = b.flat.__array__()
         e = a0.flat.__array__()
