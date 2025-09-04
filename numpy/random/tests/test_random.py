@@ -105,56 +105,62 @@ class TestMultinomial:
 
 
 class TestSetState:
-    def setup_method(self):
-        self.seed = 1234567890
-        self.prng = random.RandomState(self.seed)
-        self.state = self.prng.get_state()
+    def _create_rng(self):
+        seed = 1234567890
+        prng = random.RandomState(seed)
+        state = prng.get_state()
+        return prng, state
 
     def test_basic(self):
-        old = self.prng.tomaxint(16)
-        self.prng.set_state(self.state)
-        new = self.prng.tomaxint(16)
+        prng, state = self._create_rng()
+        old = prng.tomaxint(16)
+        prng.set_state(state)
+        new = prng.tomaxint(16)
         assert_(np.all(old == new))
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
-        old = self.prng.standard_normal(size=3)
-        self.prng.set_state(self.state)
-        new = self.prng.standard_normal(size=3)
+        prng, state = self._create_rng()
+        old = prng.standard_normal(size=3)
+        prng.set_state(state)
+        new = prng.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
-
-        self.prng.standard_normal()
-        state = self.prng.get_state()
-        old = self.prng.standard_normal(size=3)
-        self.prng.set_state(state)
-        new = self.prng.standard_normal(size=3)
+        prng, state = self._create_rng()
+        prng.standard_normal()
+        state = prng.get_state()
+        old = prng.standard_normal(size=3)
+        prng.set_state(state)
+        new = prng.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_backwards_compatibility(self):
         # Make sure we can accept old state tuples that do not have the
         # cached Gaussian value.
-        old_state = self.state[:-2]
-        x1 = self.prng.standard_normal(size=16)
-        self.prng.set_state(old_state)
-        x2 = self.prng.standard_normal(size=16)
-        self.prng.set_state(self.state)
-        x3 = self.prng.standard_normal(size=16)
+        prng, state = self._create_rng()
+        old_state = state[:-2]
+        x1 = prng.standard_normal(size=16)
+        prng.set_state(old_state)
+        x2 = prng.standard_normal(size=16)
+        prng.set_state(state)
+        x3 = prng.standard_normal(size=16)
         assert_(np.all(x1 == x2))
         assert_(np.all(x1 == x3))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        self.prng.negative_binomial(0.5, 0.5)
+        prng, _ = self._create_rng()
+        prng.negative_binomial(0.5, 0.5)
 
     def test_set_invalid_state(self):
         # gh-25402
+        prng, _ = self._create_rng()
         with pytest.raises(IndexError):
-            self.prng.set_state(())
+            prng.set_state(())
 
 
 class TestRandint:
@@ -299,9 +305,7 @@ class TestRandint:
 class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
-
-    def setup_method(self):
-        self.seed = 1234567890
+    seed = 1234567890
 
     def test_rand(self):
         np.random.seed(self.seed)
@@ -1053,8 +1057,7 @@ class TestRandomDist:
 class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setup_method(self):
-        self.seed = 123456789
+    seed = 123456789
 
     def setSeed(self):
         np.random.seed(self.seed)
@@ -1623,8 +1626,7 @@ class TestBroadcast:
 @pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
-    def setup_method(self):
-        self.seeds = range(4)
+    seeds = range(4)
 
     def check_function(self, function, sz):
         from threading import Thread
@@ -1666,13 +1668,11 @@ class TestThread:
 
 # See Issue #4263
 class TestSingleEltArrayInput:
-    def setup_method(self):
-        self.argOne = np.array([2])
-        self.argTwo = np.array([3])
-        self.argThree = np.array([4])
-        self.tgtShape = (1,)
+    def _create_arrays(self):
+        return np.array([2]), np.array([3]), np.array([4]), (1,)
 
     def test_one_arg_funcs(self):
+        argOne, _, _, tgtShape = self._create_arrays()
         funcs = (np.random.exponential, np.random.standard_gamma,
                  np.random.chisquare, np.random.standard_t,
                  np.random.pareto, np.random.weibull,
@@ -1687,11 +1687,12 @@ class TestSingleEltArrayInput:
                 out = func(np.array([0.5]))
 
             else:
-                out = func(self.argOne)
+                out = func(argOne)
 
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
     def test_two_arg_funcs(self):
+        argOne, argTwo, _, tgtShape = self._create_arrays()
         funcs = (np.random.uniform, np.random.normal,
                  np.random.beta, np.random.gamma,
                  np.random.f, np.random.noncentral_chisquare,
@@ -1707,18 +1708,19 @@ class TestSingleEltArrayInput:
                 argTwo = np.array([0.5])
 
             else:
-                argTwo = self.argTwo
+                argTwo = argTwo
 
-            out = func(self.argOne, argTwo)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne[0], argTwo)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne[0], argTwo)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne, argTwo[0])
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo[0])
+            assert_equal(out.shape, tgtShape)
 
     def test_randint(self):
+        _, _, _, tgtShape = self._create_arrays()
         itype = [bool, np.int8, np.uint8, np.int16, np.uint16,
                  np.int32, np.uint32, np.int64, np.uint64]
         func = np.random.randint
@@ -1727,24 +1729,25 @@ class TestSingleEltArrayInput:
 
         for dt in itype:
             out = func(low, high, dtype=dt)
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
             out = func(low[0], high, dtype=dt)
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
             out = func(low, high[0], dtype=dt)
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
     def test_three_arg_funcs(self):
+        argOne, argTwo, argThree, tgtShape = self._create_arrays()
         funcs = [np.random.noncentral_f, np.random.triangular,
                  np.random.hypergeometric]
 
         for func in funcs:
-            out = func(self.argOne, self.argTwo, self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo, argThree)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne[0], self.argTwo, self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne[0], argTwo, argThree)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne, self.argTwo[0], self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo[0], argThree)
+            assert_equal(out.shape, tgtShape)
