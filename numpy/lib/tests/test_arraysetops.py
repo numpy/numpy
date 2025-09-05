@@ -1204,7 +1204,13 @@ class TestUnique:
         assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
 
     def test_unique_array_api_functions(self):
-        arr = np.array([np.nan, 1, 4, 1, 3, 4, np.nan, 5, 1])
+        arr = np.array(
+            [
+                np.nan, 1.0, 0.0, 4.0, -np.nan,
+                -0.0, 1.0, 3.0, 4.0, np.nan,
+                5.0, -0.0, 1.0, -np.nan, 0.0,
+            ],
+        )
 
         for res_unique_array_api, res_unique in [
             (
