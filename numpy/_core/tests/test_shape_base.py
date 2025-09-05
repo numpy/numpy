@@ -385,7 +385,7 @@ class TestConcatenate:
 
     def test_concatenate_same_value(self):
         r4 = list(range(4))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^casting must be one of"):
             concatenate([r4, r4], casting="same_value")
 
     @pytest.mark.skipif(

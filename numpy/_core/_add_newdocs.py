@@ -3237,6 +3237,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     >>> x.astype(int)
     array([1, 2, 2])
 
+    >>> x.astype(int, casting="same_value")
+    Traceback (most recent call last):
+    ...
+    ValueError: could not cast 'same_value' double to long
+
+    >>> x[:2].astype(int, casting="same_value")
+    array([1, 2])
     """))
 
 

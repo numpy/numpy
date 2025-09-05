@@ -948,8 +948,55 @@ static GCC_CAST_OPT_LEVEL int
 }
 #endif
 
+/*
+ * Use a declaration instead of moving the function definition to here to make reviewing
+ * easier. TODO: move the repeat3 up here instead of these declarations
+ */
+
+static GCC_CAST_OPT_LEVEL int
+@prefix@_cast_@name1@_to_@name2@_no_same_value(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(data));
+
+#if !@is_bool2@
+static GCC_CAST_OPT_LEVEL int
+@prefix@_cast_@name1@_to_@name2@_same_value(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(data));
+#endif
+
+/*
+ * This is the entry point function called outside this file
+ */
+
 static GCC_CAST_OPT_LEVEL int
 @prefix@_cast_@name1@_to_@name2@(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *data)
+{
+#if !@is_bool2@
+    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CONTEXT_FLAG) == NPY_SAME_VALUE_CONTEXT_FLAG);
+    if (same_value_casting) {
+        return @prefix@_cast_@name1@_to_@name2@_same_value(context, args, dimensions, strides, data);
+    } else {
+#else
+    {
+#endif
+        return @prefix@_cast_@name1@_to_@name2@_no_same_value(context, args, dimensions, strides, data);
+}}
+
+/**begin repeat3
+ * #func_name = no_same_value,same_value#
+ * #same_value = 0,1#
+ */
+
+
+#if !(@is_bool2@ && @same_value@)
+static GCC_CAST_OPT_LEVEL int
+@prefix@_cast_@name1@_to_@name2@_@func_name@(
         PyArrayMethod_Context *context, char *const *args,
         const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(data))
@@ -978,9 +1025,6 @@ static GCC_CAST_OPT_LEVEL int
 #endif
 
     /* printf("@prefix@_cast_@name1@_to_@name2@\n"); */
-#if !@is_bool2@
-    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CONTEXT_FLAG) == NPY_SAME_VALUE_CONTEXT_FLAG);
-#endif
 
     while (N--) {
 #if @aligned@
@@ -997,20 +1041,20 @@ static GCC_CAST_OPT_LEVEL int
 #  if @is_complex2@
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
-    if (same_value_casting) {
+#   if @same_value@
         if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
             return -1;
         }
         if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[1]) < 0) {
             return -1;
         }
-    }
-#  elif !@aligned@
+#   endif //same_value
+#   elif !@aligned@
 #    if @is_bool2@
        dst_value = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
-       if (same_value_casting) {
+#      if @same_value@
             if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
                 return -1;
             }
@@ -1018,14 +1062,14 @@ static GCC_CAST_OPT_LEVEL int
                 npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@: imag is not 0");
                 return -1;
             }
-       }
+#      endif //same_value
 #    endif
 #  else
 #    if @is_bool2@
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
-       if (same_value_casting) {
+#      if @same_value@
             if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
                 return -1;
             }
@@ -1033,44 +1077,44 @@ static GCC_CAST_OPT_LEVEL int
                 npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@: imag is not 0");
                 return -1;
             }
-       }
+#      endif //same_value
 #    endif
 #  endif
 #else // @is_complex1@
 #  if @is_complex2@
 #    if !@aligned@
     dst_value[0] = _CONVERT_FN(src_value);
-    if (same_value_casting) {
+#   if @same_value@
         if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
             return -1;
         }
-    }
-#    else
+#   endif //same_value
+#    else //!aligned
     dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
-    if (same_value_casting) {
+#     if @same_value@
         if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)src) < 0) {
             return -1;
         }
-    }
+#     endif //same_value
 #    endif
     dst_value[1] = 0;
 #  elif !@aligned@
     dst_value = _CONVERT_FN(src_value);
 #   if !@is_bool2@
-    if (same_value_casting) {
+#     if @same_value@
         if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
             return -1;
         }
-    }
+#     endif //same_value
 #   endif // @is_bool2@
 #  else
     *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
 #   if !@is_bool2@
-    if (same_value_casting) {
+#     if @same_value@
         if (@prefix@_check_same_value_@name1@_to_@name2@(*((@rtype1@ *)src)) < 0) {
             return -1;
         }
-    }
+#     endif //same_value
 #   endif // @is_bool2@
 #  endif
 #endif
@@ -1094,6 +1138,9 @@ static GCC_CAST_OPT_LEVEL int
     }
     return 0;
 }
+#endif // !@is_bool2@
+
+/**end repeat3**/
 
 #if @is_native_half1@ || @is_float1@ || @is_double1@
     #if @is_native_half2@ || @is_float2@ || @is_double2@

@@ -1234,7 +1234,7 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_CASTING casting)
 {
     if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
-        /* Not supported */
+        /* TODO: support this */
         return 0;
     }
     switch (casting) {

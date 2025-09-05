@@ -173,6 +173,7 @@ class TestCastingConverter(StringConverterTestCase):
         self._check("equiv", "NPY_EQUIV_CASTING")
         self._check("safe", "NPY_SAFE_CASTING")
         self._check("unsafe", "NPY_UNSAFE_CASTING")
+        self._check("same_kind", "NPY_SAME_KIND_CASTING")
 
     def test_invalid(self):
         # Currently, 'same_value' is supported only in ndarray.astype

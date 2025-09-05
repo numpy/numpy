@@ -29,6 +29,8 @@
 
 #include "umathmodule.h"
 
+#define NPY_ALIGNED_CASTING_FLAG 1
+
 /*
  * Check that array data is both uint-aligned and true-aligned for all array
  * elements, as required by the copy/casting code in lowlevel_strided_loops.c
@@ -88,8 +90,8 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     npy_intp src_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    int aligned = flags & 0x01;
-    int same_value_cast = (flags & 0x02) == 0x02;
+    int aligned = (flags & NPY_ALIGNED_CASTING_FLAG) != 0;
+    int same_value_cast = (flags & NPY_SAME_VALUE_CASTING_FLAG) != 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -197,8 +199,8 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    int aligned = flags & 0x01;
-    int same_value_cast = (flags & 0x02) == 0x02;
+    int aligned = (flags & NPY_ALIGNED_CASTING_FLAG) != 0;
+    int same_value_cast = (flags & NPY_SAME_VALUE_CASTING_FLAG) != 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -443,10 +445,14 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         }
     }
 
-    int aligned =
-        copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst)) &&
-        copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(src), PyArray_DATA(src), src_strides);
-    int flags = (((NPY_SAME_VALUE_CASTING_FLAG & casting) != 0) << 1) | aligned;
+    int flags = (NPY_SAME_VALUE_CASTING_FLAG & casting);
+    if (copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(dst),
+                           PyArray_DATA(dst), PyArray_STRIDES(dst)) && 
+        copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(src),
+                           PyArray_DATA(src), src_strides)) {
+        /* NPY_ALIGNED_CASTING_FLAG is internal to this file */
+        flags |= NPY_ALIGNED_CASTING_FLAG;
+    }
 
     if (wheremask == NULL) {
         /* A straightforward value assignment */
