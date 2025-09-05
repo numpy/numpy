@@ -531,6 +531,13 @@ def test_fancy_indexing(string_list):
         assert_array_equal(sarr[ind], uarr[ind])
 
 
+def test_flatiter_indexing():
+    # see gh-29659
+    arr = np.array(['hello', 'world'], dtype='T')
+    arr.flat[:] = 9223372036854775
+    assert_array_equal(arr, np.array([9223372036854775] * 2, dtype='T'))
+
+
 def test_creation_functions():
     assert_array_equal(np.zeros(3, dtype="T"), ["", "", ""])
     assert_array_equal(np.empty(3, dtype="T"), ["", "", ""])

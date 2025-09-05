@@ -956,7 +956,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     /* We can assume the newly allocated array is aligned */
     int is_aligned = IsUintAligned(self->ao);
     if (PyArray_GetDTypeTransferFunction(
-                is_aligned, itemsize, itemsize, type, type, 0,
+                is_aligned, itemsize, itemsize, PyArray_DESCR(arrval), type, 0,
                 &cast_info, &transfer_flags) < 0) {
         goto finish;
     }
