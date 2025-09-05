@@ -70,8 +70,10 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         return 0;
     }
 
-    const S pair[2] = {value_real, value_imag};
-    return npy_fnv1a(pair, 2 * sizeof(S));
+    char buf[2 * sizeof(S)];
+    std::memcpy(buf, &value_real, sizeof(S));
+    std::memcpy(buf + sizeof(S), &value_imag, sizeof(S));
+    return npy_fnv1a(buf, 2 * sizeof(S));
 }
 
 template <typename T>
