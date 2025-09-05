@@ -56,6 +56,9 @@ stages:
         python tools/linter.py
       displayName: 'Run Lint Checks'
       failOnStderr: true
+    - script: |
+        python tools/check_python_h_first.py
+      displayName: 'Check Python.h is first file included'
 
   - job: Linux_Python_311_32bit_full_with_asserts
     pool:
