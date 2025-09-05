@@ -70,7 +70,7 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         return 0;
     }
 
-    S pair[2] = {value_real, value_imag};
+    const S pair[2] = {value_real, value_imag};
     return npy_fnv1a(pair, 2 * sizeof(S));
 }
 
