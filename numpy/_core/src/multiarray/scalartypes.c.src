@@ -2093,12 +2093,11 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 
 /*
  * These gentype_* functions do not take keyword arguments.
- * The proper flag is METH_VARARGS.
+ * The proper flag is METH_VARARGS or METH_NOARGS.
  */
 /**begin repeat
  *
- * #name = tolist, item, __deepcopy__, __copy__,
- *         swapaxes, conj, conjugate, nonzero,
+ * #name = tolist, item, swapaxes, conj, conjugate, nonzero,
  *         fill, transpose#
  */
 static PyObject *
@@ -2107,6 +2106,34 @@ gentype_@name@(PyObject *self, PyObject *args)
     return gentype_generic_method(self, args, NULL, "@name@");
 }
 /**end repeat**/
+
+static PyObject *
+gentype___copy__(PyObject *self)
+{
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
+        // path via array
+        return gentype_generic_method(self, NULL, NULL, "__copy__");
+    }
+    return Py_NewRef(self);
+}
+
+static PyObject *
+gentype___deepcopy__(PyObject *self, PyObject *args)
+{
+    // note: maybe the signature needs to be updated as __deepcopy__ can accept the keyword memo
+
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    // if the number of arguments is not 1, we let gentype_generic_method do the
+    // error handling
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (PyTuple_Size(args)!=1)) {
+        // path via array
+        return gentype_generic_method(self, args, NULL, "__deepcopy__");
+    }
+    return Py_NewRef(self);
+}
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2652,7 +2679,7 @@ static PyMethodDef gentype_methods[] = {
     /* for the copy module */
     {"__copy__",
         (PyCFunction)gentype___copy__,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
         METH_VARARGS, NULL},
