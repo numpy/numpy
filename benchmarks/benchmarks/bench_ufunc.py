@@ -129,7 +129,7 @@ class BoolUfuncPerformance(Benchmark):
         arr2 = get_square_(dtype)
 
         self.data_and = (arr1, arr2)
-        self.data_or  = (arr1, arr2)
+        self.data_or = (arr1, arr2)
         self.data_not = (arr1,)
         self.data_abs = (arr1,)
 
