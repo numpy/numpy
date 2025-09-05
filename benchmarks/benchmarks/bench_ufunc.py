@@ -112,6 +112,40 @@ class UFunc(Benchmark):
         [self.ufn(*arg) for arg in self.args]
 
 
+class BoolUfuncPerformance(Benchmark):
+    timeout = 10
+    params = ['bool']
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        np.seterr(all='ignore')
+        self.logical_and_fn = np.logical_and
+        self.logical_or_fn = np.logical_or
+        self.logical_not_fn = np.logical_not
+        self.absolute_fn = np.absolute
+
+        from .common import get_square_
+        arr1 = get_square_(dtype)
+        arr2 = get_square_(dtype)
+
+        self.data_and = (arr1, arr2)
+        self.data_or  = (arr1, arr2)
+        self.data_not = (arr1,)
+        self.data_abs = (arr1,)
+
+    def time_logical_and(self, dtype):
+        self.logical_and_fn(*self.data_and)
+
+    def time_logical_or(self, dtype):
+        self.logical_or_fn(*self.data_or)
+
+    def time_logical_not(self, dtype):
+        self.logical_not_fn(*self.data_not)
+
+    def time_absolute(self, dtype):
+        self.absolute_fn(*self.data_abs)
+
+
 class MethodsV0(Benchmark):
     """ Benchmark for the methods which do not take any arguments
     """
