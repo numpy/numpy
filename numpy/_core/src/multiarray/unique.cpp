@@ -70,7 +70,8 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         return 0;
     }
 
-    return hash_nonan<S>(&value_real, equal_nan) ^ hash_nonan<S>(&value_imag, equal_nan);
+    S pair[2] = {value_real, value_imag};
+    return npy_fnv1a(pair, 2 * sizeof(S));
 }
 
 template <typename T>
