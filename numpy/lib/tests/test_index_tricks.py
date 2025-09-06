@@ -566,3 +566,123 @@ def test_ndindex():
     # Make sure 0-sized ndindex works correctly
     x = list(ndindex(*[0]))
     assert_equal(x, [])
+
+
+def test_ndindex_zero_dimensions_explicit():
+    """Test ndindex produces empty iterators for explicit
+    zero-length dimensions."""
+    assert list(np.ndindex(0, 3)) == []
+    assert list(np.ndindex(3, 0, 2)) == []
+    assert list(np.ndindex(0)) == []
+
+
+@pytest.mark.parametrize("bad_shape", [2.5, "2", [2, 3], (2.0, 3)])
+def test_ndindex_non_integer_dimensions(bad_shape):
+    """Test that non-integer dimensions raise TypeError."""
+    with pytest.raises(TypeError):
+        # Passing invalid_shape_arg directly to ndindex. It will try to use it
+        # as a dimension and should trigger a TypeError.
+        list(np.ndindex(bad_shape))
+
+
+def test_ndindex_stop_iteration_behavior():
+    """Test that StopIteration is raised properly after exhaustion."""
+    it = np.ndindex(2, 2)
+    # Exhaust the iterator
+    list(it)
+    # Should raise StopIteration on subsequent calls
+    with pytest.raises(StopIteration):
+        next(it)
+
+
+def test_ndindex_iterator_independence():
+    """Test that each ndindex instance creates independent iterators."""
+    shape = (2, 3)
+    iter1 = np.ndindex(*shape)
+    iter2 = np.ndindex(*shape)
+
+    next(iter1)
+    next(iter1)
+
+    assert_equal(next(iter2), (0, 0))
+    assert_equal(next(iter1), (0, 2))
+
+
+def test_ndindex_tuple_vs_args_consistency():
+    """Test that ndindex(shape) and ndindex(*shape) produce same results."""
+    # Single dimension
+    assert_equal(list(np.ndindex(5)), list(np.ndindex((5,))))
+
+    # Multiple dimensions
+    assert_equal(list(np.ndindex(2, 3)), list(np.ndindex((2, 3))))
+
+    # Complex shape
+    shape = (2, 1, 4)
+    assert_equal(list(np.ndindex(*shape)), list(np.ndindex(shape)))
+
+
+def test_ndindex_against_ndenumerate_compatibility():
+    """Test ndindex produces same indices as ndenumerate."""
+    for shape in [(1, 2, 3), (3,), (2, 2), ()]:
+        ndindex_result = list(np.ndindex(shape))
+        ndenumerate_indices = [ix for ix, _ in np.ndenumerate(np.zeros(shape))]
+        assert_array_equal(ndindex_result, ndenumerate_indices)
+
+
+def test_ndindex_multidimensional_correctness():
+    """Test ndindex produces correct indices for multidimensional arrays."""
+    shape = (2, 1, 3)
+    result = list(np.ndindex(*shape))
+    expected = [
+        (0, 0, 0),
+        (0, 0, 1),
+        (0, 0, 2),
+        (1, 0, 0),
+        (1, 0, 1),
+        (1, 0, 2),
+    ]
+    assert_equal(result, expected)
+
+
+def test_ndindex_large_dimensions_behavior():
+    """Test ndindex behaves correctly when initialized with large dimensions."""
+    large_shape = (1000, 1000)
+    iter_obj = np.ndindex(*large_shape)
+    first_element = next(iter_obj)
+    assert_equal(first_element, (0, 0))
+
+
+def test_ndindex_empty_iterator_behavior():
+    """Test detailed behavior of empty iterators."""
+    empty_iter = np.ndindex(0, 5)
+    assert_equal(list(empty_iter), [])
+
+    empty_iter2 = np.ndindex(3, 0, 2)
+    with pytest.raises(StopIteration):
+        next(empty_iter2)
+
+
+@pytest.mark.parametrize(
+    "negative_shape_arg",
+    [
+        (-1,),  # Single negative dimension
+        (2, -3, 4),  # Negative dimension in the middle
+        (5, 0, -2),  # Mix of valid (0) and invalid (negative) dimensions
+    ],
+)
+def test_ndindex_negative_dimensions(negative_shape_arg):
+    """Test that negative dimensions raise ValueError."""
+    with pytest.raises(ValueError):
+        ndindex(negative_shape_arg)
+
+
+def test_ndindex_empty_shape():
+    import numpy as np
+    # ndindex() and ndindex(()) should return a single empty tuple
+    assert list(np.ndindex()) == [()]
+    assert list(np.ndindex(())) == [()]
+
+def test_ndindex_negative_dim_raises():
+    # ndindex(-1) should raise a ValueError
+    with pytest.raises(ValueError):
+        list(np.ndindex(-1))
