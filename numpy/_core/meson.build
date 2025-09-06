@@ -896,6 +896,9 @@ umath_gen_headers = [
   src_file.process('src/umath/loops_utils.h.src'),
 ]
 
+npsr = subproject('numpy-simd-routines')
+npsr_dep = npsr.get_variable('npsr_dep')
+
 foreach gen_mtargets : [
   [
     'loops_arithm_fp.dispatch.h',
@@ -1060,7 +1063,7 @@ foreach gen_mtargets : [
     dispatch: gen_mtargets[2],
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, npsr_dep],
     c_args: c_args_common + max_opt,
     cpp_args: cpp_args_common + max_opt,
     include_directories: [
