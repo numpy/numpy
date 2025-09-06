@@ -8,10 +8,10 @@ __all__ = ["asmatrix", "bmat", "matrix"]
 
 def bmat(
     obj: str | Sequence[ArrayLike] | NDArray[Any],
-    ldict: Mapping[str, Any] | None = ...,
-    gdict: Mapping[str, Any] | None = ...,
+    ldict: Mapping[str, Any] | None = None,
+    gdict: Mapping[str, Any] | None = None,
 ) -> matrix[tuple[int, int], Any]: ...
 
 def asmatrix(
-    data: ArrayLike, dtype: DTypeLike = ...
+    data: ArrayLike, dtype: DTypeLike = None
 ) -> matrix[tuple[int, int], Any]: ...
