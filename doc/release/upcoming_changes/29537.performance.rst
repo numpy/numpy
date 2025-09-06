@@ -1,0 +1,13 @@
+Performance improvements to ``np.unique`` for float and complex dtypes
+----------------------------------------------------------------------
+The hash-based algorithm for unique extraction now also supports float
+and complex dtypes, offering noticeable performance gains.
+
+In an internal benchmark with 5 billion float64 elements (1,000 unique values),
+the hash-based ``np.unique`` completed in **406.9 seconds**,
+compared to **441.8 seconds** with the sort-based method.
+
+For complex128 arrays with 1 billion elements (1,000 unique values),
+the hash-based method completed in **11.4 seconds**, compared to **47.4 seconds**
+with the sort-based method – a more than 4× speedup for unsorted unique
+operations on complex numbers.

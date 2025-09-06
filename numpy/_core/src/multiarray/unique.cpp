@@ -9,6 +9,7 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -16,6 +17,8 @@
 extern "C" {
     #include "fnv.h"
     #include "npy_argparse.h"
+    #include "numpy/npy_math.h"
+    #include "numpy/halffloat.h"
 }
 
 // This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
@@ -33,11 +36,117 @@ FinalAction<F> finally(F f) {
 }
 
 template <typename T>
+inline int equal_default(T lhs, T rhs) {
+    return lhs == rhs;
+}
+
+// As npy_isnan is a macro, we need to define a wrapper function to use it in a template.
+template <typename T>
+inline int npy_isnan_wrapper(T value) {
+    return npy_isnan(value);
+}
+
+template <typename T>
+inline size_t hash_nonan(const T *value, npy_bool equal_nan) {
+    return std::hash<T>{}(*value);
+}
+
+template <
+    typename T,
+    int (*isnan)(T) = npy_isnan_wrapper<T>
+>
+size_t hash_maybenan(const T *value, npy_bool equal_nan) {
+    if (equal_nan && isnan(*value)) {
+        return 0;
+    }
+    return hash_nonan(value, equal_nan);
+}
+
+template <typename S, typename T, S (*real)(T), S (*imag)(T)>
+size_t hash_complex(const T *value, npy_bool equal_nan) {
+    S value_real = real(*value);
+    S value_imag = imag(*value);
+    int isnan = npy_isnan_wrapper<S>(value_real) || npy_isnan_wrapper<S>(value_imag);
+    if (equal_nan && isnan) {
+        return 0;
+    }
+
+    S pair[2] = {value_real, value_imag};
+    return npy_fnv1a(static_cast<void *>(pair), 2 * sizeof(S));
+}
+
+template <typename T>
+inline int equal_nonan(const T *lhs, const T *rhs, npy_bool equal_nan) {
+    return equal_default(*lhs, *rhs);
+}
+
+template <
+    typename T,
+    int (*isnan)(T) = npy_isnan_wrapper<T>,
+    int (*iseq_nonan)(T, T) = equal_default<T>
+>
+int equal_maybenan(const T *lhs, const T *rhs, npy_bool equal_nan) {
+    int lhs_isnan = isnan(*lhs);
+    int rhs_isnan = isnan(*rhs);
+    if (lhs_isnan && rhs_isnan) {
+        return equal_nan;
+    }
+    if (lhs_isnan || rhs_isnan) {
+        return false;
+    }
+    return iseq_nonan(*lhs, *rhs);
+}
+
+template <typename S, typename T, S (*real)(T), S (*imag)(T)>
+int equal_complex(const T *lhs, const T *rhs, npy_bool equal_nan) {
+    S lhs_real = real(*lhs);
+    S lhs_imag = imag(*lhs);
+    int lhs_isnan = npy_isnan(lhs_real) || npy_isnan(lhs_imag);
+    S rhs_real = real(*rhs);
+    S rhs_imag = imag(*rhs);
+    int rhs_isnan = npy_isnan(rhs_real) || npy_isnan(rhs_imag);
+
+    if (lhs_isnan && rhs_isnan) {
+        return equal_nan;
+    }
+    if (lhs_isnan || rhs_isnan) {
+        return false;
+    }
+    return equal_nonan<S>(&lhs_real, &rhs_real, equal_nan) &&
+           equal_nonan<S>(&lhs_imag, &rhs_imag, equal_nan);
+}
+
+template <typename T>
+void copy_real(char *data, T *value) {
+    std::copy_n(value, 1, (T *)data);
+    return;
+}
+
+template <
+    typename S,
+    typename T,
+    S (*real)(T),
+    S (*imag)(T),
+    void (*setreal)(T *, const S),
+    void (*setimag)(T *, const S)
+>
+void copy_complex(char *data, T *value) {
+    setreal((T *)data, real(*value));
+    setimag((T *)data, imag(*value));
+    return;
+}
+
+template <
+    typename T,
+    size_t (*hash_func)(const T *, npy_bool),
+    int (*equal_func)(const T *, const T *, npy_bool),
+    void (*copy_func)(char *, T *)
+>
 static PyObject*
-unique_integer(PyArrayObject *self, npy_bool equal_nan)
+unique_numeric(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
-    * Returns a new NumPy array containing the unique values of the input array of integer.
+    * Returns a new NumPy array containing the unique values of the input array of numeric (integer, float or complex).
     * This function uses hashing to identify uniqueness efficiently.
     */
     NPY_ALLOW_C_API_DEF;
@@ -51,18 +160,27 @@ unique_integer(PyArrayObject *self, npy_bool equal_nan)
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
 
+    auto hash = [equal_nan](const T *value) -> size_t {
+        return hash_func(value, equal_nan);
+    };
+    auto equal = [equal_nan](const T *lhs, const T *rhs) -> bool {
+        return equal_func(lhs, rhs, equal_nan);
+    };
+
     // Reserve hashset capacity in advance to minimize reallocations and collisions.
     // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
     // - Reserving for all elements (isize) may over-allocate when there are few unique values.
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T> hashset(std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS));
+    std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
+        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
+    );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert(*(T *)idata);
+        hashset.insert((T *)idata);
     }
 
     npy_intp length = hashset.size();
@@ -94,7 +212,7 @@ unique_integer(PyArrayObject *self, npy_bool equal_nan)
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        *(T *)odata = *it;
+        copy_func(odata, *it);
     }
 
     return res_obj;
@@ -310,25 +428,79 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *, npy_bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique_integer<npy_byte>},
-    {NPY_UBYTE, unique_integer<npy_ubyte>},
-    {NPY_SHORT, unique_integer<npy_short>},
-    {NPY_USHORT, unique_integer<npy_ushort>},
-    {NPY_INT, unique_integer<npy_int>},
-    {NPY_UINT, unique_integer<npy_uint>},
-    {NPY_LONG, unique_integer<npy_long>},
-    {NPY_ULONG, unique_integer<npy_ulong>},
-    {NPY_LONGLONG, unique_integer<npy_longlong>},
-    {NPY_ULONGLONG, unique_integer<npy_ulonglong>},
-    {NPY_INT8, unique_integer<npy_int8>},
-    {NPY_INT16, unique_integer<npy_int16>},
-    {NPY_INT32, unique_integer<npy_int32>},
-    {NPY_INT64, unique_integer<npy_int64>},
-    {NPY_UINT8, unique_integer<npy_uint8>},
-    {NPY_UINT16, unique_integer<npy_uint16>},
-    {NPY_UINT32, unique_integer<npy_uint32>},
-    {NPY_UINT64, unique_integer<npy_uint64>},
-    {NPY_DATETIME, unique_integer<npy_uint64>},
+    {NPY_BYTE, unique_numeric<npy_byte, hash_nonan<npy_byte>, equal_nonan<npy_byte>, copy_real<npy_byte>>},
+    {NPY_UBYTE, unique_numeric<npy_ubyte, hash_nonan<npy_ubyte>, equal_nonan<npy_ubyte>, copy_real<npy_ubyte>>},
+    {NPY_SHORT, unique_numeric<npy_short, hash_nonan<npy_short>, equal_nonan<npy_short>, copy_real<npy_short>>},
+    {NPY_USHORT, unique_numeric<npy_ushort, hash_nonan<npy_ushort>, equal_nonan<npy_ushort>, copy_real<npy_ushort>>},
+    {NPY_INT, unique_numeric<npy_int, hash_nonan<npy_int>, equal_nonan<npy_int>, copy_real<npy_int>>},
+    {NPY_UINT, unique_numeric<npy_uint, hash_nonan<npy_uint>, equal_nonan<npy_uint>, copy_real<npy_uint>>},
+    {NPY_LONG, unique_numeric<npy_long, hash_nonan<npy_long>, equal_nonan<npy_long>, copy_real<npy_long>>},
+    {NPY_ULONG, unique_numeric<npy_ulong, hash_nonan<npy_ulong>, equal_nonan<npy_ulong>, copy_real<npy_ulong>>},
+    {NPY_LONGLONG, unique_numeric<npy_longlong, hash_nonan<npy_longlong>, equal_nonan<npy_longlong>, copy_real<npy_longlong>>},
+    {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_nonan<npy_ulonglong>, equal_nonan<npy_ulonglong>, copy_real<npy_ulonglong>>},
+    {NPY_HALF, unique_numeric<
+        npy_half,
+        hash_maybenan<npy_half, npy_half_isnan>,
+        equal_maybenan<npy_half, npy_half_isnan, npy_half_eq_nonan>,
+        copy_real<npy_half>
+        >
+    },
+    {NPY_FLOAT, unique_numeric<npy_float, hash_maybenan<npy_float>, equal_maybenan<npy_float>, copy_real<npy_float>>},
+    {NPY_DOUBLE, unique_numeric<npy_double, hash_maybenan<npy_double>, equal_maybenan<npy_double>, copy_real<npy_double>>},
+    {NPY_LONGDOUBLE, unique_numeric<npy_longdouble, hash_maybenan<npy_longdouble>, equal_maybenan<npy_longdouble>, copy_real<npy_longdouble>>},
+    {NPY_CFLOAT, unique_numeric<
+        npy_cfloat,
+        hash_complex<float, npy_cfloat, npy_crealf, npy_cimagf>,
+        equal_complex<float, npy_cfloat, npy_crealf, npy_cimagf>,
+        copy_complex<float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
+        >
+    },
+    {NPY_CDOUBLE, unique_numeric<
+        npy_cdouble,
+        hash_complex<double, npy_cdouble, npy_creal, npy_cimag>,
+        equal_complex<double, npy_cdouble, npy_creal, npy_cimag>,
+        copy_complex<double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
+        >
+    },
+    {NPY_CLONGDOUBLE, unique_numeric<
+        npy_clongdouble,
+        hash_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>
+        >
+    },
+    {NPY_INT8, unique_numeric<npy_int8, hash_nonan<npy_int8>, equal_nonan<npy_int8>, copy_real<npy_int8>>},
+    {NPY_INT16, unique_numeric<npy_int16, hash_nonan<npy_int16>, equal_nonan<npy_int16>, copy_real<npy_int16>>},
+    {NPY_INT32, unique_numeric<npy_int32, hash_nonan<npy_int32>, equal_nonan<npy_int32>, copy_real<npy_int32>>},
+    {NPY_INT64, unique_numeric<npy_int64, hash_nonan<npy_int64>, equal_nonan<npy_int64>, copy_real<npy_int64>>},
+    {NPY_UINT8, unique_numeric<npy_uint8, hash_nonan<npy_uint8>, equal_nonan<npy_uint8>, copy_real<npy_uint8>>},
+    {NPY_UINT16, unique_numeric<npy_uint16, hash_nonan<npy_uint16>, equal_nonan<npy_uint16>, copy_real<npy_uint16>>},
+    {NPY_UINT32, unique_numeric<npy_uint32, hash_nonan<npy_uint32>, equal_nonan<npy_uint32>, copy_real<npy_uint32>>},
+    {NPY_UINT64, unique_numeric<npy_uint64, hash_nonan<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
+    {NPY_DATETIME, unique_numeric<npy_uint64, hash_nonan<npy_uint64>, equal_nonan<npy_uint64>, copy_real<npy_uint64>>},
+    {NPY_FLOAT16, unique_numeric<
+        npy_float16,
+        hash_maybenan<npy_float16, npy_half_isnan>,
+        equal_maybenan<npy_float16, npy_half_isnan, npy_half_eq_nonan>,
+        copy_real<npy_float16>
+        >
+    },
+    {NPY_FLOAT32, unique_numeric<npy_float32, hash_maybenan<npy_float32>, equal_maybenan<npy_float32>, copy_real<npy_float32>>},
+    {NPY_FLOAT64, unique_numeric<npy_float64, hash_maybenan<npy_float64>, equal_maybenan<npy_float64>, copy_real<npy_float64>>},
+    {NPY_COMPLEX64, unique_numeric<
+        npy_complex64,
+        hash_complex<float, npy_complex64, npy_crealf, npy_cimagf>,
+        equal_complex<float, npy_complex64, npy_crealf, npy_cimagf>,
+        copy_complex<float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
+        >
+    },
+    {NPY_COMPLEX128, unique_numeric<
+        npy_complex128,
+        hash_complex<double, npy_complex128, npy_creal, npy_cimag>,
+        equal_complex<double, npy_complex128, npy_creal, npy_cimag>,
+        copy_complex<double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
+        >
+    },
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
     {NPY_VSTRING, unique_vstring},
