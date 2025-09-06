@@ -673,21 +673,24 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
             assert "#include <stdbool.h>" in ocmr
             assert "#include <stdio.h>" in ocmr
 
-# def test_cli_obj(capfd, hello_world_f90, monkeypatch):
-#     """Ensures that the build directory can be specified
+def test_cli_obj(capfd, hello_world_f90, monkeypatch):
+    """Ensures that the extra object can be specified
+    """
+    ipath = Path(hello_world_f90)
+    mname = "blah"
+    odir = "tttmp"
+    obj = "extra.o"
+    monkeypatch.setattr(sys, "argv",
+                        f'f2py --build-dir {odir} -m {mname} -c {obj} {ipath}'.split())
 
-#     CLI :: --build-dir
-#     """
-#     ipath = Path(hello_world_f90)
-#     mname = "blah"
-#     obj = "blahhh.o"
-#     monkeypatch.setattr(sys, "argv",
-#                         f'f2py -m {mname} -c {obj} {ipath}'.split())
-
-#     with util.switchdir(ipath.parent):
-#         f2pycli()
-#         out, _ = capfd.readouterr()
-#         assert f"Wrote C/API module \"{mname}\"" in out
+    with util.switchdir(ipath.parent):
+        Path(obj).touch()
+        f2pycli()
+        # out, _ = capfd.readouterr()
+        with Path(f"{odir}/meson.build").open() as mesonbuild:
+            mbld = mesonbuild.read()
+            assert "objects:" in mbld
+            assert f"'''{obj}'''" in mbld
 
 
 def test_inclpath():
