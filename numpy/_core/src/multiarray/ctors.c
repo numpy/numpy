@@ -2830,7 +2830,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         count = (src_count < dst_count) ? src_count : dst_count;
         if (cast_info.func(&cast_info.context,
                 args, &count, strides, cast_info.auxdata) < 0) {
-            res = -1;
             break;
         }
 

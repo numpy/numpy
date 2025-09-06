@@ -2170,12 +2170,17 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "O&", PyArray_CastingConverter, &casting)) {
         return NULL;
     }
-    switch (casting) {
+    switch ((int)casting) {
         case NPY_NO_CASTING: return PyUnicode_FromString("NPY_NO_CASTING");
         case NPY_EQUIV_CASTING: return PyUnicode_FromString("NPY_EQUIV_CASTING");
         case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+        case NPY_SAME_VALUE_CASTING: return PyUnicode_FromString("NPY_SAME_VALUE_CASTING");
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
         default: return PyLong_FromLong(casting);
     }
 }
