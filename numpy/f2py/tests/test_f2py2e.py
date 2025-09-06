@@ -674,14 +674,14 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
             assert "#include <stdio.h>" in ocmr
 
 def test_cli_obj(capfd, hello_world_f90, monkeypatch):
-    """Ensures that the extra object can be specified
+    """Ensures that the extra object can be specified when using meson backend
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
     odir = "tttmp"
     obj = "extra.o"
     monkeypatch.setattr(sys, "argv",
-                        f'f2py --build-dir {odir} -m {mname} -c {obj} {ipath}'.split())
+                        f'f2py --backend meson --build-dir {odir} -m {mname} -c {obj} {ipath}'.split())
 
     with util.switchdir(ipath.parent):
         Path(obj).touch()
