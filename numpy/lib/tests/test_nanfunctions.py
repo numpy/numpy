@@ -951,15 +951,10 @@ class TestNanFunctions_Median:
             assert output.dtype == mat.dtype
             assert np.isnan(output).all()
 
-            _filtered_record = [
-                item.message
-                for item in r
-                if "All-NaN slice encountered" in str(item.message)
-            ]
             if axis is None:
-                assert_(len(_filtered_record) == 1)
+                assert_(len(r) == 1)
             else:
-                assert_(len(_filtered_record) == 3)
+                assert_(len(r) == 3)
 
             # Check scalar
             scalar = np.array(np.nan).astype(dtype)[()]
@@ -967,15 +962,10 @@ class TestNanFunctions_Median:
             assert output_scalar.dtype == scalar.dtype
             assert np.isnan(output_scalar)
 
-            _filtered_record = [
-                item.message
-                for item in r
-                if "All-NaN slice encountered" in str(item.message)
-            ]
             if axis is None:
-                assert_(len(_filtered_record) == 2)
+                assert_(len(r) == 2)
             else:
-                assert_(len(_filtered_record) == 4)
+                assert_(len(r) == 4)
 
     def test_empty(self):
         mat = np.zeros((0, 3))
