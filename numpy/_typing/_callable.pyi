@@ -8,16 +8,7 @@ See the `Mypy documentation`_ on protocols for more details.
 
 """
 
-from typing import (
-    Any,
-    NoReturn,
-    Protocol,
-    TypeAlias,
-    TypeVar,
-    final,
-    overload,
-    type_check_only,
-)
+from typing import Any, Protocol, TypeAlias, TypeVar, final, overload, type_check_only
 
 import numpy as np
 from numpy import (
@@ -26,7 +17,6 @@ from numpy import (
     float64,
     floating,
     generic,
-    int8,
     int_,
     integer,
     number,
@@ -38,18 +28,13 @@ from . import NBitBase
 from ._array_like import NDArray
 from ._nbit import _NBitInt
 from ._nested_sequence import _NestedSequence
-from ._scalars import (
-    _BoolLike_co,
-    _IntLike_co,
-    _NumberLike_co,
-)
+from ._scalars import _NumberLike_co
 
-_T1 = TypeVar("_T1")
-_T2 = TypeVar("_T2")
+_T = TypeVar("_T")
 _T1_contra = TypeVar("_T1_contra", contravariant=True)
 _T2_contra = TypeVar("_T2_contra", contravariant=True)
 
-_2Tuple: TypeAlias = tuple[_T1, _T1]
+_2Tuple: TypeAlias = tuple[_T, _T]
 
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
@@ -57,79 +42,7 @@ _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 _IntType = TypeVar("_IntType", bound=integer)
 _FloatType = TypeVar("_FloatType", bound=floating)
 _NumberType = TypeVar("_NumberType", bound=number)
-_NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
 _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
-
-@type_check_only
-class _BoolOp(Protocol[_GenericType_co]):
-    @overload
-    def __call__(self, other: _BoolLike_co, /) -> _GenericType_co: ...
-    @overload  # platform dependent
-    def __call__(self, other: int, /) -> int_: ...
-    @overload
-    def __call__(self, other: float, /) -> float64: ...
-    @overload
-    def __call__(self, other: complex, /) -> complex128: ...
-    @overload
-    def __call__(self, other: _NumberType, /) -> _NumberType: ...
-
-@type_check_only
-class _BoolBitOp(Protocol[_GenericType_co]):
-    @overload
-    def __call__(self, other: _BoolLike_co, /) -> _GenericType_co: ...
-    @overload  # platform dependent
-    def __call__(self, other: int, /) -> int_: ...
-    @overload
-    def __call__(self, other: _IntType, /) -> _IntType: ...
-
-@type_check_only
-class _BoolSub(Protocol):
-    # Note that `other: bool` is absent here
-    @overload
-    def __call__(self, other: bool, /) -> NoReturn: ...
-    @overload  # platform dependent
-    def __call__(self, other: int, /) -> int_: ...
-    @overload
-    def __call__(self, other: float, /) -> float64: ...
-    @overload
-    def __call__(self, other: complex, /) -> complex128: ...
-    @overload
-    def __call__(self, other: _NumberType, /) -> _NumberType: ...
-
-@type_check_only
-class _BoolTrueDiv(Protocol):
-    @overload
-    def __call__(self, other: float | _IntLike_co, /) -> float64: ...
-    @overload
-    def __call__(self, other: complex, /) -> complex128: ...
-    @overload
-    def __call__(self, other: _NumberType, /) -> _NumberType: ...
-
-@type_check_only
-class _BoolMod(Protocol):
-    @overload
-    def __call__(self, other: _BoolLike_co, /) -> int8: ...
-    @overload  # platform dependent
-    def __call__(self, other: int, /) -> int_: ...
-    @overload
-    def __call__(self, other: float, /) -> float64: ...
-    @overload
-    def __call__(self, other: _IntType, /) -> _IntType: ...
-    @overload
-    def __call__(self, other: _FloatType, /) -> _FloatType: ...
-
-@type_check_only
-class _BoolDivMod(Protocol):
-    @overload
-    def __call__(self, other: _BoolLike_co, /) -> _2Tuple[int8]: ...
-    @overload  # platform dependent
-    def __call__(self, other: int, /) -> _2Tuple[int_]: ...
-    @overload
-    def __call__(self, other: float, /) -> _2Tuple[np.float64]: ...
-    @overload
-    def __call__(self, other: _IntType, /) -> _2Tuple[_IntType]: ...
-    @overload
-    def __call__(self, other: _FloatType, /) -> _2Tuple[_FloatType]: ...
 
 @type_check_only
 class _IntTrueDiv(Protocol[_NBit1]):

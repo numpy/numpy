@@ -8,7 +8,7 @@ i = int()
 
 f8 = np.float64()
 
-b_ >> f8  # type: ignore[call-overload]
+b_ >> f8  # type: ignore[operator]
 i8 << f8  # type: ignore[call-overload]
 i | f8  # type: ignore[operator]
 i8 ^ f8  # type: ignore[call-overload]
