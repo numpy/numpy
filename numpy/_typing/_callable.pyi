@@ -8,16 +8,7 @@ See the `Mypy documentation`_ on protocols for more details.
 
 """
 
-from typing import (
-    Any,
-    NoReturn,
-    Protocol,
-    TypeAlias,
-    TypeVar,
-    final,
-    overload,
-    type_check_only,
-)
+from typing import Any, Protocol, TypeAlias, TypeVar, final, overload, type_check_only
 
 import numpy as np
 from numpy import (
@@ -26,7 +17,6 @@ from numpy import (
     float64,
     floating,
     generic,
-    int8,
     int_,
     integer,
     number,
@@ -38,11 +28,7 @@ from . import NBitBase
 from ._array_like import NDArray
 from ._nbit import _NBitInt
 from ._nested_sequence import _NestedSequence
-from ._scalars import (
-    _BoolLike_co,
-    _IntLike_co,
-    _NumberLike_co,
-)
+from ._scalars import _NumberLike_co
 
 _T = TypeVar("_T")
 _T1_contra = TypeVar("_T1_contra", contravariant=True)
