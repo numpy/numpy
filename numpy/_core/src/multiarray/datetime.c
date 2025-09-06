@@ -1036,11 +1036,6 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
 
     /* Generic units change to the destination with no conversion factor */
     if (src_meta->base == NPY_FR_GENERIC) {
-        PyErr_WarnEx(PyExc_RuntimeWarning,
-                     "Casting from unitless timedelta to unitful timedelta is "
-                     "ambiguous.",
-                     1);
-
         *out_num = 1;
         *out_denom = 1;
         return;
@@ -3908,6 +3903,9 @@ time_to_time_resolve_descriptors(
         return NPY_EQUIV_CASTING;
     }
     else if (meta1->base == NPY_FR_GENERIC) {
+        if (byteorder_may_allow_view) {
+            *view_offset = 0;
+        }
         return NPY_SAFE_CASTING ;
     }
     else if (meta2->base == NPY_FR_GENERIC) {
