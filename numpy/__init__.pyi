@@ -134,7 +134,6 @@ from numpy._typing import (
 )
 
 from numpy._typing._callable import (
-    _IntTrueDiv,
     _UnsignedIntOp,
     _UnsignedIntBitOp,
     _UnsignedIntMod,
@@ -146,11 +145,14 @@ from numpy._typing._callable import (
     _FloatOp,
     _FloatMod,
     _FloatDivMod,
-    _NumberOp,
     _ComparisonOpLT,
     _ComparisonOpLE,
     _ComparisonOpGT,
     _ComparisonOpGE,
+    _SupportsLT,
+    _SupportsLE,
+    _SupportsGT,
+    _SupportsGE,
 )
 
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
@@ -211,7 +213,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, TypeVar, deprecated
+from typing_extensions import CapsuleType, TypeVar, deprecated, override
 
 from numpy import (
     char,
@@ -3855,23 +3857,44 @@ class number(generic[_NumberItemT_co], Generic[_NBit, _NumberItemT_co]):
     def __pos__(self) -> Self: ...
     def __abs__(self) -> Self: ...
 
-    __add__: _NumberOp
-    __radd__: _NumberOp
-    __sub__: _NumberOp
-    __rsub__: _NumberOp
-    __mul__: _NumberOp
-    __rmul__: _NumberOp
-    __floordiv__: _NumberOp
-    __rfloordiv__: _NumberOp
-    __pow__: _NumberOp
-    __rpow__: _NumberOp
-    __truediv__: _NumberOp
-    __rtruediv__: _NumberOp
+    def __add__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __radd__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __sub__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __rsub__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __mul__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __rmul__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __pow__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __rpow__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __truediv__(self, other: _NumberLike_co, /) -> Incomplete: ...
+    def __rtruediv__(self, other: _NumberLike_co, /) -> Incomplete: ...
 
-    __lt__: _ComparisonOpLT[_NumberLike_co, _ArrayLikeNumber_co]
-    __le__: _ComparisonOpLE[_NumberLike_co, _ArrayLikeNumber_co]
-    __gt__: _ComparisonOpGT[_NumberLike_co, _ArrayLikeNumber_co]
-    __ge__: _ComparisonOpGE[_NumberLike_co, _ArrayLikeNumber_co]
+    @overload
+    def __lt__(self, other: _NumberLike_co, /) -> bool_: ...
+    @overload
+    def __lt__(self, other: _ArrayLikeNumber_co | _NestedSequence[_SupportsGT], /) -> NDArray[bool_]: ...
+    @overload
+    def __lt__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __le__(self, other: _NumberLike_co, /) -> bool_: ...
+    @overload
+    def __le__(self, other: _ArrayLikeNumber_co | _NestedSequence[_SupportsGE], /) -> NDArray[bool_]: ...
+    @overload
+    def __le__(self, other: _SupportsGE, /) -> bool_: ...
+
+    @overload
+    def __gt__(self, other: _NumberLike_co, /) -> bool_: ...
+    @overload
+    def __gt__(self, other: _ArrayLikeNumber_co | _NestedSequence[_SupportsLT], /) -> NDArray[bool_]: ...
+    @overload
+    def __gt__(self, other: _SupportsLT, /) -> bool_: ...
+
+    @overload
+    def __ge__(self, other: _NumberLike_co, /) -> bool_: ...
+    @overload
+    def __ge__(self, other: _ArrayLikeNumber_co | _NestedSequence[_SupportsLE], /) -> NDArray[bool_]: ...
+    @overload
+    def __ge__(self, other: _SupportsLE, /) -> bool_: ...
 
 class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     @property
