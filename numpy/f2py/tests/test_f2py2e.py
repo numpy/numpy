@@ -673,6 +673,7 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
             assert "#include <stdbool.h>" in ocmr
             assert "#include <stdio.h>" in ocmr
 
+@pytest.mark.skipif((platform.system() != 'Linux'), reason='Compiler required')
 def test_cli_obj(capfd, hello_world_f90, monkeypatch):
     """Ensures that the extra object can be specified when using meson backend
     """
