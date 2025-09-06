@@ -31,6 +31,7 @@ from ._linalg import (
     trace,
     vecdot,
     vector_norm,
+    weighted_gram_matrix,
 )
 
 __all__ = [
@@ -66,6 +67,7 @@ __all__ = [
     "trace",
     "vecdot",
     "vector_norm",
+    "weighted_gram_matrix",
 ]
 
 class LinAlgError(ValueError): ...
