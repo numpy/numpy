@@ -1335,6 +1335,7 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             assert_allclose(a, b)
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_timedelta(self):
         # see gh-18286
         a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")

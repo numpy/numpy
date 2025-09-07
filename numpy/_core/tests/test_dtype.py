@@ -1964,6 +1964,7 @@ class TestClassGetItem:
         assert np.dtype[Any]
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_result_type_integers_and_unitless_timedelta64():
     # Regression test for gh-20077.  The following call of `result_type`
     # would cause a seg. fault.

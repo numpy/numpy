@@ -2319,6 +2319,7 @@ class TestRegression:
             else:
                 assert_(t.__hash__ is not None)
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_scalar_copy(self):
         scalar_types = set(np._core.sctypeDict.values())
         values = {
@@ -2346,6 +2347,17 @@ class TestRegression:
         assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
         assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
 
+    def test_structarray_title(self):
+        # The following used to segfault on pypy, due to NPY_TITLE_KEY
+        # not working properly and resulting to double-decref of the
+        # structured array field items:
+        # See: https://bitbucket.org/pypy/pypy/issues/2789
+        for j in range(5):
+            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
+            structure[0]['x'] = np.array([2])
+            gc.collect()
+
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_dtype_scalar_squeeze(self):
         # gh-11384
         values = {

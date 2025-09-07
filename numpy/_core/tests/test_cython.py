@@ -83,6 +83,7 @@ def install_temp(tmpdir_factory):
     sys.path.append(str(build_dir))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_is_timedelta64_object(install_temp):
     import checks
 
@@ -96,6 +97,7 @@ def test_is_timedelta64_object(install_temp):
     assert not checks.is_td64(np.datetime64("now", "s"))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_is_datetime64_object(install_temp):
     import checks
 
