@@ -121,7 +121,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
     if times:
         # Datetimes and timedelta
-        yield param(np.timedelta64(2), id="timedelta64[generic]")
+        yield param(np.timedelta64(2, "ns"), id="timedelta64[ns]")
         yield param(np.timedelta64(23, "s"), id="timedelta64[s]")
         yield param(np.timedelta64("NaT", "s"), id="timedelta64[s](NaT)")
 
@@ -420,13 +420,15 @@ class TestTimeScalars:
             ass[()] = scalar
             assert_array_equal(ass, cast)
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
-    @pytest.mark.parametrize("scalar",
-            [param(np.timedelta64(123, "ns"), id="timedelta64[ns]"),
-             param(np.timedelta64(12, "generic"), id="timedelta64[generic]")])
-    def test_coercion_timedelta_convert_to_number(self, dtype, scalar):
+    @pytest.mark.parametrize("value, unit",
+            [param(123, "ns", id="timedelta64[ns]"),
+             param(12, "generic", id="timedelta64[generic]")])
+    def test_coercion_timedelta_convert_to_number(self, dtype, value, unit):
         # Only "ns" and "generic" timedeltas can be converted to numbers
         # so these are slightly special.
+        scalar = np.timedelta64(value, unit)
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
         ass = np.ones((), dtype=dtype)
