@@ -1,13 +1,3 @@
-.. currentmodule:: numpy
-
-=========================
-NumPy 2.3.3 Release Notes
-=========================
-
-The NumPy 2.3.3 release is a patch release split between a number of maintenance
-updates and bug fixes. This release supports Python versions 3.11-3.14. Note
-that the 3.14.0 final is currently expected in Oct, 2025. This release is based
-on 3.14.0rc2.
 
 Contributors
 ============
@@ -57,3 +47,4 @@ A total of 23 pull requests were merged for this release.
 * `#29691 <https://github.com/numpy/numpy/pull/29691>`__: BUG: use correct input dtype in flatiter assignment
 * `#29700 <https://github.com/numpy/numpy/pull/29700>`__: TYP: fix np.bool method declarations
 * `#29701 <https://github.com/numpy/numpy/pull/29701>`__: BUG: Correct ambiguous logic for s390x CPU feature detection
+
