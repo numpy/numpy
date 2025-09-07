@@ -11,15 +11,7 @@ See the `Mypy documentation`_ on protocols for more details.
 from typing import Any, Protocol, TypeAlias, TypeVar, final, overload, type_check_only
 
 import numpy as np
-from numpy import (
-    complex128,
-    complexfloating,
-    float64,
-    floating,
-    integer,
-    signedinteger,
-    unsignedinteger,
-)
+from numpy import complex128, complexfloating, float64, floating, integer
 
 from . import NBitBase
 from ._array_like import NDArray
@@ -34,59 +26,6 @@ _2Tuple: TypeAlias = tuple[_T, _T]
 
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
-
-@type_check_only
-class _UnsignedIntOp(Protocol[_NBit1]):
-    # NOTE: `uint64 + signedinteger -> float64`
-    @overload
-    def __call__(self, other: int, /) -> unsignedinteger[_NBit1]: ...
-    @overload
-    def __call__(self, other: float, /) -> float64: ...
-    @overload
-    def __call__(self, other: complex, /) -> complex128: ...
-    @overload
-    def __call__(self, other: unsignedinteger[_NBit2], /) -> unsignedinteger[_NBit1] | unsignedinteger[_NBit2]: ...
-    @overload
-    def __call__(self, other: signedinteger, /) -> Any: ...
-
-@type_check_only
-class _UnsignedIntBitOp(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> unsignedinteger[_NBit1]: ...
-    @overload
-    def __call__(self, other: int, /) -> signedinteger: ...
-    @overload
-    def __call__(self, other: signedinteger, /) -> signedinteger: ...
-    @overload
-    def __call__(
-        self, other: unsignedinteger[_NBit2], /
-    ) -> unsignedinteger[_NBit1] | unsignedinteger[_NBit2]: ...
-
-@type_check_only
-class _UnsignedIntMod(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> unsignedinteger[_NBit1]: ...
-    @overload
-    def __call__(self, other: int | signedinteger, /) -> Any: ...
-    @overload
-    def __call__(self, other: float, /) -> floating[_NBit1] | float64: ...
-    @overload
-    def __call__(
-        self, other: unsignedinteger[_NBit2], /
-    ) -> unsignedinteger[_NBit1] | unsignedinteger[_NBit2]: ...
-
-@type_check_only
-class _UnsignedIntDivMod(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> _2Tuple[signedinteger[_NBit1]]: ...
-    @overload
-    def __call__(self, other: int | signedinteger, /) -> _2Tuple[Any]: ...
-    @overload
-    def __call__(self, other: float, /) -> _2Tuple[floating[_NBit1]] | _2Tuple[float64]: ...
-    @overload
-    def __call__(
-        self, other: unsignedinteger[_NBit2], /
-    ) -> _2Tuple[unsignedinteger[_NBit1]] | _2Tuple[unsignedinteger[_NBit2]]: ...
 
 @type_check_only
 class _FloatOp(Protocol[_NBit1]):
