@@ -31,7 +31,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
-from numpy.testing._private.utils import _glibc_older_than
+from numpy.testing._private.utils import _glibc_older_than, _ufunc_has_fma
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
          if isinstance(obj, np.ufunc)]
@@ -2201,19 +2201,30 @@ class TestAVXFloat32Transcendental:
             # this is known to be problematic on old glibc, so skip it there
             x_f32[index] = np.float32(10E+10 * np.random.rand(M))
         x_f64 = np.float64(x_f32)
-        assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=2)
-        assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=2)
+        # numpy-simd-rounding gives ~3 ulp when fma is not available and kLowAccuracy
+        # been set in the precision mode
+        maxulp_f32 = 2 if _ufunc_has_fma(np.sin, np.float32) else 3
+        assert_array_max_ulp(
+            np.sin(x_f32),
+            np.float32(np.sin(x_f64)),
+            maxulp=maxulp_f32
+        )
+        assert_array_max_ulp(
+            np.cos(x_f32),
+            np.float32(np.cos(x_f64)),
+            maxulp=maxulp_f32
+        )
         # test aliasing(issue #17761)
         tx_f32 = x_f32.copy()
         assert_array_max_ulp(
             np.sin(x_f32, out=x_f32),
             np.float32(np.sin(x_f64)),
-            maxulp=2,
+            maxulp=maxulp_f32,
         )
         assert_array_max_ulp(
             np.cos(tx_f32, out=tx_f32),
             np.float32(np.cos(x_f64)),
-            maxulp=2,
+            maxulp=maxulp_f32,
         )
 
     def test_strided_float32(self):
