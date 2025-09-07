@@ -16,7 +16,6 @@ from numpy import (
     complexfloating,
     float64,
     floating,
-    int_,
     integer,
     signedinteger,
     unsignedinteger,
@@ -88,54 +87,6 @@ class _UnsignedIntDivMod(Protocol[_NBit1]):
     def __call__(
         self, other: unsignedinteger[_NBit2], /
     ) -> _2Tuple[unsignedinteger[_NBit1]] | _2Tuple[unsignedinteger[_NBit2]]: ...
-
-@type_check_only
-class _SignedIntOp(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: int, /) -> signedinteger[_NBit1]: ...
-    @overload
-    def __call__(self, other: float, /) -> float64: ...
-    @overload
-    def __call__(self, other: complex, /) -> complex128: ...
-    @overload
-    def __call__(self, other: signedinteger[_NBit2], /) -> signedinteger[_NBit1] | signedinteger[_NBit2]: ...
-
-@type_check_only
-class _SignedIntBitOp(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> signedinteger[_NBit1]: ...
-    @overload
-    def __call__(self, other: int, /) -> signedinteger[_NBit1] | int_: ...
-    @overload
-    def __call__(
-        self, other: signedinteger[_NBit2], /
-    ) -> signedinteger[_NBit1] | signedinteger[_NBit2]: ...
-
-@type_check_only
-class _SignedIntMod(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> signedinteger[_NBit1]: ...
-    @overload
-    def __call__(self, other: int, /) -> signedinteger[_NBit1] | int_: ...
-    @overload
-    def __call__(self, other: float, /) -> floating[_NBit1] | float64: ...
-    @overload
-    def __call__(
-        self, other: signedinteger[_NBit2], /
-    ) -> signedinteger[_NBit1] | signedinteger[_NBit2]: ...
-
-@type_check_only
-class _SignedIntDivMod(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> _2Tuple[signedinteger[_NBit1]]: ...
-    @overload
-    def __call__(self, other: int, /) -> _2Tuple[signedinteger[_NBit1]] | _2Tuple[int_]: ...
-    @overload
-    def __call__(self, other: float, /) -> _2Tuple[floating[_NBit1]] | _2Tuple[float64]: ...
-    @overload
-    def __call__(
-        self, other: signedinteger[_NBit2], /
-    ) -> _2Tuple[signedinteger[_NBit1]] | _2Tuple[signedinteger[_NBit2]]: ...
 
 @type_check_only
 class _FloatOp(Protocol[_NBit1]):
