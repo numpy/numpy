@@ -10,7 +10,7 @@ project(
   ],
 )
 fs = import('fs')
-if not fs.exists('src')
+if not fs.exists('src/npsr')
   error('Missing the `numpy-simd-routines` git submodule! Run `git submodule update --init` to fix this.')
 endif
 npsr_inc = include_directories('src')

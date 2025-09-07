@@ -44,6 +44,30 @@ struct OPcos {
 };
 
 template <typename OP, typename T = typename OP::T>
+NPY_NOINLINE void
+UnaryContig(OP &op, const T *src, T *dst, npy_intp len)
+{
+#if NPY_HWY
+    if constexpr (kSupportLane<T>) {
+        const npy_intp nlanes = Lanes<T>();
+        for (; len > 0; len -= nlanes, src += nlanes, dst += nlanes) {
+            Vec<T> x = LoadN(src, len);
+            Vec<T> r = op(x);
+            StoreN(r, dst, len);
+        }
+    }
+#else
+    if constexpr (0) {
+    }
+#endif
+    else {
+        for (const T *end = src + len; src < end; ++src, ++dst) {
+            *dst = op(*src);
+        }
+    }
+};
+
+template <typename OP, typename T = typename OP::T>
 NPY_FINLINE void
 UnaryOP(OP &op, char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
@@ -59,28 +83,6 @@ UnaryOP(OP &op, char **args, npy_intp const *dimensions, npy_intp const *steps)
     // kernels will increase performance, please make sure to benchmark it first and
     // compare the binary size before and after the change.
     // Note: the intrinsics of NumPy SIMD routines are inlined by default.
-#if NPY_HWY
-    auto Contig = [](OP &op, const T *HWY_RESTRICT src, T *HWY_RESTRICT dst,
-                     npy_intp len) NPY_NOINLINE -> void {
-        if constexpr (kSupportLane<T>) {
-            const npy_intp nlanes = Lanes<T>();
-            for (; len > 0; len -= nlanes, src += nlanes, dst += nlanes) {
-                Vec<T> x = LoadN(src, len);
-                Vec<T> r = op(x);
-                StoreN(r, dst, len);
-            }
-        }
-#else
-    auto Contig = [](OP &op, const T *src, T *dst, npy_intp len) -> void {
-        if constexpr (0) {
-        }
-#endif
-        else {
-            for (const T *end = src + len; src < end; ++src, ++dst) {
-                *dst = op(*src);
-            }
-        }
-    };
     if (NPY_UNLIKELY(is_mem_overlap(args[0], sin, args[1], sout, len) ||
                      sin != sizeof(T) || sout != sizeof(T))) {
         // this for non-contiguous or overlapping case
@@ -94,7 +96,7 @@ UnaryOP(OP &op, char **args, npy_intp const *dimensions, npy_intp const *steps)
             for (npy_intp i = 0; i < chunk; ++i, in += sin) {
                 buffer[i] = *reinterpret_cast<const T *>(in);
             }
-            Contig(op, buffer, buffer, chunk);
+            UnaryContig(op, buffer, buffer, chunk);
             for (npy_intp i = 0; i < chunk; ++i, out += sout) {
                 *reinterpret_cast<T *>(out) = buffer[i];
             }
@@ -102,7 +104,7 @@ UnaryOP(OP &op, char **args, npy_intp const *dimensions, npy_intp const *steps)
         }
     }
     else {
-        Contig(op, (T *)in, (T *)out, len);
+        UnaryContig(op, (T *)in, (T *)out, len);
     }
 }
 }  // namespace
