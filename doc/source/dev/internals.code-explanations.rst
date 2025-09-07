@@ -564,8 +564,8 @@ way, the operation performed is
    :nowrap:
 
    \begin{align*}
-   o[0] & =  \quad i[0] \quad  &  \\
-   o[k] & =  i[k]\textrm{ <op> }o[k-1] & k=1,\ldots, N.
+   o & =  \quad i[0] \quad  &  \\
+   o & =  i[k]\textrm{ <op> }o & k=1,\ldots, N.
    \end{align*}
 
 where :math:`N+1` is the number of elements in the input, :math:`i`,
