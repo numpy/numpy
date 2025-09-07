@@ -12,7 +12,7 @@ func_int: Callable[[np.integer], str]
 
 assert_type(np.get_printoptions(), _FormatOptions)
 assert_type(
-    np.array2string(AR, formatter={'float_kind': func_float, 'int_kind': func_int}),
+    np.array2string(AR, formatter={"float_kind": func_float, "int_kind": func_int}),
     str,
 )
 assert_type(np.format_float_scientific(1.0), str)

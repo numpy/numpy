@@ -1,0 +1,7 @@
+Sorting ``kind='heapsort'`` now maps to ``kind='quicksort'``
+------------------------------------------------------------
+It is unlikely that this change will be noticed, but if you do see a change in
+execution time or unstable argsort order, that is likely the cause. Please let
+us know if there is a performance regression. Congratulate us if it is
+improved :)
+
