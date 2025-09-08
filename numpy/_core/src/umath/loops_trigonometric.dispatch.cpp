@@ -20,7 +20,7 @@ struct OPsin {
     NPY_FINLINE double operator()(double x) const { return npy_sin(x); }
 #if NPY_HWY
     NPY_FINLINE auto operator()(const Vec<T> &x)
-            -> std::enable_if_t<kSupportLane<T>, Vec<T>>
+            -> Vec<std::enable_if_t<kSupportLane<T>, T>>
     {
         return sr::Sin(prec, x);
     }
@@ -35,7 +35,7 @@ struct OPcos {
     NPY_FINLINE double operator()(double x) const { return npy_cos(x); }
 #if NPY_HWY
     NPY_FINLINE auto operator()(const Vec<T> &x)
-            -> std::enable_if_t<kSupportLane<T>, Vec<T>>
+            -> Vec<std::enable_if_t<kSupportLane<T>, T>>
     {
         return sr::Cos(prec, x);
     }
