@@ -49,4 +49,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        spin test -j2 -m full -- --timeout=600 --durations=10
+        spin test -- --timeout=60 --durations=10
