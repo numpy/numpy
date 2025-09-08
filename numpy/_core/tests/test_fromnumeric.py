@@ -27,7 +27,7 @@ def test_cumsum_reverse_dtype():
     assert y.dtype == np.int64
 
 def test_cumsum_reverse_none_axis_equiv():
-    x = np.arange(12).reshape(3,4)
+    x = np.arange(12).reshape(3, 4)
     r1 = np.cumsum(x, axis=None, reverse=True)
     r2 = np.flip(np.cumsum(np.flip(x.ravel()), axis=0))
     np.testing.assert_array_equal(r1, r2)

@@ -1443,7 +1443,8 @@ def test_nancumsum_reverse_simple():
 
 def test_nancumprod_reverse_simple():
     x = np.array([2.0, np.nan, 3.0])
-    np.testing.assert_allclose(np.nancumprod(x, reverse=True), np.array([6.0, 3.0, 3.0]))
+    expected = np.array([6.0, 3.0, 3.0])
+    np.testing.assert_allclose(np.nancumprod(x, reverse=True), expected)
 
 def test_nancumsum_reverse_axis():
     a = np.array([[1.0, np.nan], [3.0, 4.0]])
