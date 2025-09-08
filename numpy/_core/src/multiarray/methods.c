@@ -963,6 +963,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (newtype == NULL) {
             newtype = PyArray_DESCR(self);
         }
+        Py_INCREF(newtype);
         ret = PyArray_CastToType(self, newtype, 0);
         Py_DECREF(self);
         return ret;
@@ -971,6 +972,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return (PyObject *)self;
         }
         if (copy == NPY_COPY_IF_NEEDED) {
+            Py_INCREF(newtype);
             ret = PyArray_CastToType(self, newtype, 0);
             Py_DECREF(self);
             return ret;

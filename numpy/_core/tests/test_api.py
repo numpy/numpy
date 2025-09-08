@@ -91,12 +91,24 @@ def test_array_array():
     # instead we get a array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
-    # test array
+    # test __array__
     def custom__array__(self, dtype=None, copy=None):
         return np.array(100.0, dtype=dtype, copy=copy)
 
     o = type("o", (object,), {"__array__": custom__array__})()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
+    if HAS_REFCOUNT:
+        class MyArray:
+            def __init__(self):
+                self.val = np.array(-1, dtype=dt)
+
+            def __array__(self, dtype=None, copy=None):
+                return self.val.__array__(dtype=dtype, copy=copy)
+
+        dt = np.dtype(np.int32)
+        old_refcount = sys.getrefcount(dt)
+        np.array(MyArray())
+        assert_equal(old_refcount, sys.getrefcount(dt))
 
     # test recursion
     nested = 1.5
