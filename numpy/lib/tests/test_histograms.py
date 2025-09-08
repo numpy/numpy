@@ -296,6 +296,16 @@ class TestHistogram:
             h, b = histogram(all_nan, bins=[0, 1])
             assert_equal(h.sum(), 0)  # nan is not counted
 
+    def test_nan_object_dtype_values(self):
+        # gh-28730
+        float_nan = np.asarray([0., 1., np.nan], dtype=float)
+        object_nan = np.asarray([0., 1., np.nan], dtype=object)
+        
+        h, b = histogram(float_nan, bins=np.arange(0,5))
+        assert_array_equal(h,[1,1,0,0])
+        h, b = histogram(object_nan, bins=np.arange(0,5))
+        assert_array_equal(h,[1,1,0,0])
+
     def test_datetime(self):
         begin = np.datetime64('2000-01-01', 'D')
         offsets = np.array([0, 0, 1, 1, 2, 3, 5, 10, 20])
