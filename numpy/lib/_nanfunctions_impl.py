@@ -1656,8 +1656,8 @@ def _nanquantile_ureduce_func(
         # We need to apply along axis over 2 arrays, a and weights.
         # move operation axes to end for simplicity:
         a = np.moveaxis(a, axis, -1)
-        if weights is not None:
-            weights = np.moveaxis(weights, axis, -1)
+        # if weights is not None:
+        #    weights = np.moveaxis(weights, axis, 0)
         if out is not None:
             result = out
         else:
@@ -1666,9 +1666,13 @@ def _nanquantile_ureduce_func(
             result = np.empty_like(a, shape=q.shape + a.shape[:-1])
 
         for ii in np.ndindex(a.shape[:-1]):
+            if weights is not None:
+                current_weights = weights[ii] if weights.ndim > a.shape[-1] else weights
+            else:
+                current_weights = None
+
             result[(...,) + ii] = _nanquantile_1d(
-                    a[ii], q, weights=weights[ii],
-                    overwrite_input=overwrite_input, method=method,
+                a[ii], q, weights=current_weights, method=method
             )
         # This path dealt with `out` already...
         return result

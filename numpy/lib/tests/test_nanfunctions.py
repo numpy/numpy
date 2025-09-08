@@ -10,6 +10,7 @@ from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_,
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
     assert_equal,
@@ -1435,3 +1436,41 @@ def test_memmap_takes_fast_route(tmpdir):
         # For completeness, same for nanmin.
         with pytest.raises(ValueError, match="reduction operation fmin"):
             np.nanmin(mm, out=np.zeros(2))
+
+def test_nanpercentile_weights_broadcasting():
+    """Test that nanpercentile broadcasts weights correctly (gh-29709)."""
+    # Test case 1: simple broadcasting
+    a = np.array([[1., 2.], [3., 4.], [5., 6.]])
+    w = np.array([1., 1., 1.])
+    q = 50
+
+    result_percentile = np.percentile(a, q, weights=w, axis=0, method='inverted_cdf')
+    result_nanpercentile = np.nanpercentile(a, q, weights=w, axis=0, method='inverted_cdf')
+
+    assert result_percentile.shape == result_nanpercentile.shape
+    assert_allclose(result_percentile, result_nanpercentile)
+
+    # Test case 2: multiple quantiles
+    q_multi = [25, 50, 75]
+    result_multi = np.nanpercentile(a, q_multi, weights=w, axis=0, method='inverted_cdf')
+    assert result_multi.shape == (3, 2)
+
+    # Test case 3: with NaN values
+    a_nan = a.copy()
+    a_nan[1, 0] = np.nan
+    result_nan = np.nanpercentile(a_nan, q, weights=w, axis=0, method='inverted_cdf')
+    assert result_nan.shape == (2,)
+    assert not np.isnan(result_nan[1])  # Second column should be valid
+
+
+def test_nanquantile_weights_broadcasting():
+    """Test that nanquantile also broadcasts weights correctly."""
+    a = np.array([[1., 2.], [3., 4.], [5., 6.]])
+    w = np.array([1., 1., 1.])
+    q = 0.5
+
+    result_quantile = np.quantile(a, q, weights=w, axis=0, method='inverted_cdf')
+    result_nanquantile = np.nanquantile(a, q, weights=w, axis=0, method='inverted_cdf')
+
+    assert result_quantile.shape == result_nanquantile.shape
+    assert_allclose(result_quantile, result_nanquantile)
