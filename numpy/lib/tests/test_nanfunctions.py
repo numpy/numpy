@@ -1435,3 +1435,18 @@ def test_memmap_takes_fast_route(tmpdir):
         # For completeness, same for nanmin.
         with pytest.raises(ValueError, match="reduction operation fmin"):
             np.nanmin(mm, out=np.zeros(2))
+
+
+def test_nancumsum_reverse_simple():
+    x = np.array([1.0, np.nan, 2.0])
+    np.testing.assert_allclose(np.nancumsum(x, reverse=True), np.array([3.0, 2.0, 2.0]))
+
+def test_nancumprod_reverse_simple():
+    x = np.array([2.0, np.nan, 3.0])
+    np.testing.assert_allclose(np.nancumprod(x, reverse=True), np.array([6.0, 3.0, 3.0]))
+
+def test_nancumsum_reverse_axis():
+    a = np.array([[1.0, np.nan], [3.0, 4.0]])
+    r = np.nancumsum(a, axis=1, reverse=True)
+    exp = np.flip(np.nancumsum(np.flip(a, axis=1), axis=1), axis=1)
+    np.testing.assert_allclose(r, exp)
