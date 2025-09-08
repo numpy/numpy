@@ -49,7 +49,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -85,10 +85,9 @@ jobs:
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-13, macosx_x86_64, openblas]
-
-          # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
           - [macos-13, macosx_x86_64, accelerate]
-          - [macos-14, macosx_arm64, accelerate]  # always use accelerate
+          - [macos-14, macosx_arm64, openblas]
+          - [macos-14, macosx_arm64, accelerate]
           - [windows-2022, win_amd64, ""]
           - [windows-2022, win32, ""]
           - [windows-11-arm, win_arm64, ""]
@@ -116,7 +115,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           submodules: true
           persist-credentials: false
@@ -127,11 +126,9 @@ jobs:
         with:
           architecture: 'x86'
 
-      - name: Setup MSVC arm64
+      - name: Setup LLVM for Windows ARM64
         if: ${{ matrix.buildplat[1] == 'win_arm64' }}
-        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
-        with:
-          architecture: 'arm64'
+        uses: ./.github/windows_arm64_steps
 
       - name: pkg-config-for-win
         run: |
@@ -177,7 +174,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@5f22145df44122af0f5a201f93cf0207171beca7  # v3.0.0
+        uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6  # v3.1.4
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
@@ -248,7 +245,7 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           submodules: true
           persist-credentials: false

@@ -424,7 +424,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         return NULL;
     }
     for (int i = 0; i < n; i++) {
-        PyObject *item = PyList_GET_ITEM(obj, i);
+        PyObject *item = PyList_GET_ITEM(obj, i); // noqa: borrowed-ref - manual fix needed
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
             PyErr_Format(PyExc_TypeError,
 			 "Field elements must be 2- or 3-tuples, got '%R'",
@@ -507,10 +507,10 @@ _convert_from_array_descr(PyObject *obj, int align)
                          "StringDType is not currently supported for structured dtype fields.");
             goto fail;
         }
-        if ((PyDict_GetItemWithError(fields, name) != NULL)
+        if ((PyDict_GetItemWithError(fields, name) != NULL) // noqa: borrowed-ref OK
              || (title
                  && PyUnicode_Check(title)
-                 && (PyDict_GetItemWithError(fields, title) != NULL))) {
+                 && (PyDict_GetItemWithError(fields, title) != NULL))) { // noqa: borrowed-ref OK
             PyErr_Format(PyExc_ValueError,
                     "field %R occurs more than once", name);
             Py_DECREF(conv);
@@ -548,7 +548,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 goto fail;
             }
             if (PyUnicode_Check(title)) {
-                PyObject *existing = PyDict_GetItemWithError(fields, title);
+                PyObject *existing = PyDict_GetItemWithError(fields, title); // noqa: borrowed-ref OK
                 if (existing == NULL && PyErr_Occurred()) {
                     goto fail;
                 }
@@ -613,7 +613,7 @@ _convert_from_list(PyObject *obj, int align)
      * Ignore any empty string at end which _internal._commastring
      * can produce
      */
-    PyObject *last_item = PyList_GET_ITEM(obj, n-1);
+    PyObject *last_item = PyList_GET_ITEM(obj, n-1); // noqa: borrowed-ref OK
     if (PyUnicode_Check(last_item)) {
         Py_ssize_t s = PySequence_Size(last_item);
         if (s < 0) {
@@ -643,7 +643,7 @@ _convert_from_list(PyObject *obj, int align)
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
         PyArray_Descr *conv = _convert_from_any(
-                PyList_GET_ITEM(obj, i), align);
+                PyList_GET_ITEM(obj, i), align); // noqa: borrowed-ref OK
         if (conv == NULL) {
             goto fail;
         }
@@ -794,7 +794,7 @@ _validate_union_object_dtype(_PyArray_LegacyDescr *new, _PyArray_LegacyDescr *co
     if (name == NULL) {
         return -1;
     }
-    tup = PyDict_GetItemWithError(conv->fields, name);
+    tup = PyDict_GetItemWithError(conv->fields, name); // noqa: borrowed-ref OK
     if (tup == NULL) {
         if (!PyErr_Occurred()) {
             /* fields was missing the name it claimed to contain */
@@ -940,7 +940,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
         if (key == NULL) {
             return -1;
         }
-        tup = PyDict_GetItemWithError(fields, key);
+        tup = PyDict_GetItemWithError(fields, key); // noqa: borrowed-ref OK
         if (tup == NULL) {
             if (!PyErr_Occurred()) {
                 /* fields was missing the name it claimed to contain */
@@ -960,7 +960,7 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
                     if (key == NULL) {
                         return -1;
                     }
-                    tup = PyDict_GetItemWithError(fields, key);
+                    tup = PyDict_GetItemWithError(fields, key); // noqa: borrowed-ref OK
                     if (tup == NULL) {
                         if (!PyErr_Occurred()) {
                             /* fields was missing the name it claimed to contain */
@@ -1029,17 +1029,13 @@ _validate_object_field_overlap(_PyArray_LegacyDescr *dtype)
 static PyArray_Descr *
 _convert_from_field_dict(PyObject *obj, int align)
 {
-    PyObject *_numpy_internal;
-    PyArray_Descr *res;
-
-    _numpy_internal = PyImport_ImportModule("numpy._core._internal");
-    if (_numpy_internal == NULL) {
+    if (npy_cache_import_runtime(
+            "numpy._core._internal", "_usefields", &npy_runtime_imports._usefields) < 0) {
         return NULL;
     }
-    res = (PyArray_Descr *)PyObject_CallMethod(_numpy_internal,
-            "_usefields", "Oi", obj, align);
-    Py_DECREF(_numpy_internal);
-    return res;
+
+    return (PyArray_Descr *)PyObject_CallFunctionObjArgs(
+        npy_runtime_imports._usefields, obj, align ? Py_True : Py_False, NULL);
 }
 
 /*
@@ -1217,7 +1213,7 @@ _convert_from_dict(PyObject *obj, int align)
         }
 
         /* Insert into dictionary */
-        if (PyDict_GetItemWithError(fields, name) != NULL) {
+        if (PyDict_GetItemWithError(fields, name) != NULL) { // noqa: borrowed-ref OK
             PyErr_SetString(PyExc_ValueError,
                     "name already used as a name or title");
             Py_DECREF(tup);
@@ -1236,7 +1232,7 @@ _convert_from_dict(PyObject *obj, int align)
         }
         if (len == 3) {
             if (PyUnicode_Check(title)) {
-                if (PyDict_GetItemWithError(fields, title) != NULL) {
+                if (PyDict_GetItemWithError(fields, title) != NULL) { // noqa: borrowed-ref OK
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
                     Py_DECREF(tup);
@@ -1899,7 +1895,7 @@ _convert_from_str(PyObject *obj, int align)
         if (typeDict == NULL) {
             goto fail;
         }
-        PyObject *item = PyDict_GetItemWithError(typeDict, obj);
+        PyObject *item = PyDict_GetItemWithError(typeDict, obj); // noqa: borrowed-ref - manual fix needed
         if (item == NULL) {
             if (PyErr_Occurred()) {
                 return NULL;
@@ -2095,7 +2091,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_PYSSIZET, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-#if NPY_ULONGLONG == NPY_UINT64
+#if NPY_SIZEOF_LONGLONG == 8
         T_ULONGLONG, offsetof(PyArray_Descr, flags), READONLY, NULL},
 #else
     #error Assuming long long is 64bit, if not replace with getter function.
@@ -2280,7 +2276,7 @@ _arraydescr_isnative(PyArray_Descr *self)
         PyArray_Descr *new;
         int offset;
         Py_ssize_t pos = 0;
-        while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -2426,7 +2422,7 @@ arraydescr_names_set(
         int ret;
         key = PyTuple_GET_ITEM(self->names, i);
         /* Borrowed references to item and new_key */
-        item = PyDict_GetItemWithError(self->fields, key);
+        item = PyDict_GetItemWithError(self->fields, key); // noqa: borrowed-ref OK
         if (item == NULL) {
             if (!PyErr_Occurred()) {
                 /* fields was missing the name it claimed to contain */
@@ -2554,7 +2550,9 @@ arraydescr_new(PyTypeObject *subtype,
         return NULL;
     }
 
-    PyObject *odescr, *metadata=NULL;
+    PyObject *odescr;
+    PyObject *oalign = NULL;
+    PyObject *metadata = NULL;
     PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
     npy_bool copy = NPY_FALSE;
@@ -2562,12 +2560,31 @@ arraydescr_new(PyTypeObject *subtype,
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!:dtype", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O!:dtype", kwlist,
                 &odescr,
-                PyArray_BoolConverter, &align,
+                &oalign,
                 PyArray_BoolConverter, &copy,
                 &PyDict_Type, &metadata)) {
         return NULL;
+    }
+
+    if (oalign != NULL) {
+        /*
+         * In the future, reject non Python (or NumPy) boolean, including integers to avoid any
+         * possibility of thinking that an integer alignment makes sense here.
+         */
+        if (!PyBool_Check(oalign) && !PyArray_IsScalar(oalign, Bool)) {
+            /* Deprecated 2025-07-01: NumPy 2.4 */
+            if (PyErr_WarnFormat(npy_static_pydata.VisibleDeprecationWarning, 1,
+                        "dtype(): align should be passed as Python or NumPy boolean but got `align=%.100R`. "
+                        "Did you mean to pass a tuple to create a subarray type? (Deprecated NumPy 2.4)",
+                        oalign) < 0) {
+                return NULL;
+            }
+        }
+        if (!PyArray_BoolConverter(oalign, &align)) {
+            return NULL;
+        }
     }
 
     conv = _convert_from_any(odescr, align);
@@ -2654,8 +2671,10 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
     if (dtype->metadata != NULL) {
         Py_INCREF(dtype->metadata);
         PyTuple_SET_ITEM(ret, 0, dtype->metadata);
-    } else {
-        PyTuple_SET_ITEM(ret, 0, PyDict_New());
+    }
+    else {
+        PyTuple_SET_ITEM(ret, 0, Py_None);
+        Py_INCREF(Py_None);
     }
 
     /* Convert the datetime metadata into a tuple */
@@ -2831,7 +2850,7 @@ _descr_find_object(PyArray_Descr *self)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(self), &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -2947,7 +2966,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         if (fields != Py_None) {
             PyObject *key, *list;
             key = PyLong_FromLong(-1);
-            list = PyDict_GetItemWithError(fields, key);
+            list = PyDict_GetItemWithError(fields, key); // noqa: borrowed-ref OK
             if (!list) {
                 if (!PyErr_Occurred()) {
                     /* fields was missing the name it claimed to contain */
@@ -3123,7 +3142,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
             for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
                 name = PyTuple_GET_ITEM(names, i);
-                field = PyDict_GetItemWithError(fields, name);
+                field = PyDict_GetItemWithError(fields, name); // noqa: borrowed-ref OK
                 if (!field) {
                     if (!PyErr_Occurred()) {
                         /* fields was missing the name it claimed to contain */
@@ -3180,16 +3199,8 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         self->flags = _descr_find_object((PyArray_Descr *)self);
     }
 
-    /*
-     * We have a borrowed reference to metadata so no need
-     * to alter reference count when throwing away Py_None.
-     */
-    if (metadata == Py_None) {
-        metadata = NULL;
-    }
-
-    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *old_metadata;
+    PyObject *old_metadata, *new_metadata;
+    if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
@@ -3206,20 +3217,26 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
             return NULL;
         }
 
-        old_metadata = self->metadata;
-        self->metadata = PyTuple_GET_ITEM(metadata, 0);
+        new_metadata = PyTuple_GET_ITEM(metadata, 0);
         memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
-               (char *) &temp_dt_data,
-               sizeof(PyArray_DatetimeMetaData));
-        Py_XINCREF(self->metadata);
-        Py_XDECREF(old_metadata);
+            (char *) &temp_dt_data,
+            sizeof(PyArray_DatetimeMetaData));
     }
     else {
-        PyObject *old_metadata = self->metadata;
-        self->metadata = metadata;
-        Py_XINCREF(self->metadata);
-        Py_XDECREF(old_metadata);
+        new_metadata = metadata;
     }
+
+    old_metadata = self->metadata;
+    /*
+     * We have a borrowed reference to metadata so no need
+     * to alter reference count when throwing away Py_None.
+     */
+    if (new_metadata == Py_None) {
+        new_metadata = NULL;
+    }
+    self->metadata = new_metadata;
+    Py_XINCREF(new_metadata);
+    Py_XDECREF(old_metadata);
 
     Py_RETURN_NONE;
 }
@@ -3327,7 +3344,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *oself, char newendian)
             return NULL;
         }
         /* make new dictionary with replaced PyArray_Descr Objects */
-        while (PyDict_Next(self->fields, &pos, &key, &value)) {
+        while (PyDict_Next(self->fields, &pos, &key, &value)) { // noqa: borrowed-ref OK
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -3453,7 +3470,7 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
         if (key == NULL) {
             return 0;
         }
-        tup = PyDict_GetItem(fields, key);
+        tup = PyDict_GetItem(fields, key); // noqa: borrowed-ref OK
         if (tup == NULL) {
             return 0;
         }
@@ -3618,7 +3635,7 @@ _check_has_fields(PyArray_Descr *self)
 static PyObject *
 _subscript_by_name(_PyArray_LegacyDescr *self, PyObject *op)
 {
-    PyObject *obj = PyDict_GetItemWithError(self->fields, op);
+    PyObject *obj = PyDict_GetItemWithError(self->fields, op); // noqa: borrowed-ref OK
     if (obj == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_KeyError,
@@ -3655,7 +3672,7 @@ _is_list_of_strings(PyObject *obj)
     }
     seqlen = PyList_GET_SIZE(obj);
     for (i = 0; i < seqlen; i++) {
-        PyObject *item = PyList_GET_ITEM(obj, i);
+        PyObject *item = PyList_GET_ITEM(obj, i); // noqa: borrowed-ref - manual fix needed
         if (!PyUnicode_Check(item)) {
             return NPY_FALSE;
         }
@@ -3699,7 +3716,7 @@ arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind)
          */
         PyTuple_SET_ITEM(names, i, name);
 
-        tup = PyDict_GetItemWithError(self->fields, name);
+        tup = PyDict_GetItemWithError(self->fields, name); // noqa: borrowed-ref OK
         if (tup == NULL) {
             if (!PyErr_Occurred()) {
                 PyErr_SetObject(PyExc_KeyError, name);

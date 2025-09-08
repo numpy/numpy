@@ -26,7 +26,6 @@ from numpy.testing import (
     assert_equal,
     assert_no_warnings,
     assert_raises,
-    suppress_warnings,
 )
 from numpy.testing._private.utils import requires_memory
 
@@ -686,8 +685,8 @@ class TestUfunc:
                         tgt = float(x) / float(y)
                         rtol = max(np.finfo(dtout).resolution, 1e-15)
                         # The value of tiny for double double is NaN
-                        with suppress_warnings() as sup:
-                            sup.filter(UserWarning)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter('ignore', UserWarning)
                             if not np.isnan(np.finfo(dtout).tiny):
                                 atol = max(np.finfo(dtout).tiny, 3e-308)
                             else:
@@ -706,8 +705,8 @@ class TestUfunc:
                     tgt = complex(x) / complex(y)
                     rtol = max(np.finfo(dtout).resolution, 1e-15)
                     # The value of tiny for double double is NaN
-                    with suppress_warnings() as sup:
-                        sup.filter(UserWarning)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore', UserWarning)
                         if not np.isnan(np.finfo(dtout).tiny):
                             atol = max(np.finfo(dtout).tiny, 3e-308)
                         else:
@@ -1100,17 +1099,15 @@ class TestUfunc:
                 match=r"out=\.\.\. is only allowed as a keyword argument."):
             np.add.reduce(1, (), None, ...)
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        type_error = r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"
+        with pytest.raises(TypeError, match=type_error):
             np.negative(1, out=(...,))
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        with pytest.raises(TypeError, match=type_error):
             # We only allow out=... not individual args for now
             np.divmod(1, 2, out=(np.empty(()), ...))
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        with pytest.raises(TypeError, match=type_error):
             np.add.reduce(1, out=(...,))
 
     def test_axes_argument(self):
@@ -1556,7 +1553,8 @@ class TestUfunc:
 
         arr1d = np.array([HasComparisons()])
         assert_equal(arr1d == arr1d, np.array([True]))
-        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
+        # normal behavior is a cast
+        assert_equal(np.equal(arr1d, arr1d), np.array([True]))
         assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
 
     def test_object_array_reduction(self):
@@ -2123,15 +2121,16 @@ class TestUfunc:
         class ArrayPriorityMinus2000(ArrayPriorityBase):
             __array_priority__ = -2000
 
-        x = ArrayPriorityMinus1000(2)
-        xb = ArrayPriorityMinus1000b(2)
-        y = ArrayPriorityMinus2000(2)
+        x = np.ones(2).view(ArrayPriorityMinus1000)
+        xb = np.ones(2).view(ArrayPriorityMinus1000b)
+        y = np.ones(2).view(ArrayPriorityMinus2000)
 
         assert np.add(x, y) is ArrayPriorityMinus1000
         assert np.add(y, x) is ArrayPriorityMinus1000
         assert np.add(x, xb) is ArrayPriorityMinus1000
         assert np.add(xb, x) is ArrayPriorityMinus1000b
-        assert np.add(np.zeros(2), ArrayPriorityMinus0(2)) is ArrayPriorityMinus0
+        y_minus0 = np.zeros(2).view(ArrayPriorityMinus0)
+        assert np.add(np.zeros(2), y_minus0) is ArrayPriorityMinus0
         assert type(np.add(xb, x, np.zeros(2))) is np.ndarray
 
     @pytest.mark.parametrize("a", (
@@ -3002,6 +3001,45 @@ def test_reduce_casterrors(offset):
     # if the error happened immediately.
     # This does not define behaviour, the output is invalid and thus undefined
     assert out[()] < value * offset
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_reduction_no_reference_leak():
+    # Test that the generic reduction does not leak references.
+    # gh-29358
+    arr = np.array([1, 2, 3], dtype=np.int32)
+    count = sys.getrefcount(arr)
+
+    np.add.reduce(arr, dtype=np.int32, initial=0)
+    assert count == sys.getrefcount(arr)
+
+    np.add.accumulate(arr, dtype=np.int32)
+    assert count == sys.getrefcount(arr)
+
+    np.add.reduceat(arr, [0, 1], dtype=np.int32)
+    assert count == sys.getrefcount(arr)
+
+    # with `out=` the reference count is not changed
+    out = np.empty((), dtype=np.int32)
+    out_count = sys.getrefcount(out)
+
+    np.add.reduce(arr, dtype=np.int32, out=out, initial=0)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
+
+    out = np.empty(arr.shape, dtype=np.int32)
+    out_count = sys.getrefcount(out)
+
+    np.add.accumulate(arr, dtype=np.int32, out=out)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
+
+    out = np.empty((2,), dtype=np.int32)
+    out_count = sys.getrefcount(out)
+
+    np.add.reduceat(arr, [0, 1], dtype=np.int32, out=out)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
 
 
 def test_object_reduce_cleanup_on_failure():

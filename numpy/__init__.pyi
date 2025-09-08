@@ -217,7 +217,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, TypeVar
+from typing_extensions import CapsuleType, TypeVar, deprecated
 
 from numpy import (
     char,
@@ -807,6 +807,7 @@ _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
 _FloatingT_co = TypeVar("_FloatingT_co", bound=floating, default=floating, covariant=True)
 _IntegerT = TypeVar("_IntegerT", bound=integer)
 _IntegerT_co = TypeVar("_IntegerT_co", bound=integer, default=integer, covariant=True)
+_NonObjectScalarT = TypeVar("_NonObjectScalarT", bound=np.bool | number | flexible | datetime64 | timedelta64)
 
 _NBit = TypeVar("_NBit", bound=NBitBase, default=Any)  # pyright: ignore[reportDeprecated]
 _NBit1 = TypeVar("_NBit1", bound=NBitBase, default=Any)  # pyright: ignore[reportDeprecated]
@@ -1720,7 +1721,7 @@ class _ArrayOrScalarCommon:
         order: str | Sequence[str] | None = ...,
         *,
         stable: bool | None = ...,
-    ) -> NDArray[Any]: ...
+    ) -> NDArray[intp]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
     def argmax(self, /, axis: None = None, out: None = None, *, keepdims: L[False] = False) -> intp: ...
@@ -1740,6 +1741,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(self, /, axis: SupportsIndex | None = None, *, out: _BoolOrIntArrayT, keepdims: builtins.bool = False) -> _BoolOrIntArrayT: ...
 
+    # Keep in sync with `MaskedArray.round`
     @overload  # out=None (default)
     def round(self, /, decimals: SupportsIndex = 0, out: None = None) -> Self: ...
     @overload  # out=ndarray
@@ -1775,6 +1777,7 @@ class _ArrayOrScalarCommon:
     @overload
     def compress(self, /, condition: _ArrayLikeInt_co, axis: SupportsIndex | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
+    # Keep in sync with `MaskedArray.cumprod`
     @overload  # out: None (default)
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
     @overload  # out: ndarray
@@ -1782,6 +1785,7 @@ class _ArrayOrScalarCommon:
     @overload
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
+    # Keep in sync with `MaskedArray.cumsum`
     @overload  # out: None (default)
     def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
     @overload  # out: ndarray
@@ -2102,6 +2106,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         /,
     ) -> ndarray[_ShapeT, _DTypeT]: ...
 
+    # Keep in sync with `MaskedArray.__getitem__`
     @overload
     def __getitem__(self, key: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> ndarray[_AnyShape, _DTypeT_co]: ...
     @overload
@@ -2168,10 +2173,11 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def shape(self, value: _ShapeLike) -> None: ...
     @property
     def strides(self) -> _Shape: ...
+    @deprecated("Setting the strides on a NumPy array has been deprecated in NumPy 2.4")
     @strides.setter
     def strides(self, value: _ShapeLike) -> None: ...
     def byteswap(self, inplace: builtins.bool = ...) -> Self: ...
-    def fill(self, value: Any) -> None: ...
+    def fill(self, value: Any, /) -> None: ...
     @property
     def flat(self) -> flatiter[Self]: ...
 
@@ -2353,7 +2359,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def dot(self, b: ArrayLike, out: _ArrayT) -> _ArrayT: ...
 
     # `nonzero()` is deprecated for 0d arrays/generics
-    def nonzero(self) -> tuple[NDArray[intp], ...]: ...
+    def nonzero(self) -> tuple[ndarray[tuple[int], np.dtype[intp]], ...]: ...
 
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
@@ -2383,13 +2389,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         stable: bool | None = ...,
     ) -> None: ...
 
+    # Keep in sync with `MaskedArray.trace`
     @overload
     def trace(
         self,  # >= 2D array
         offset: SupportsIndex = ...,
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: None = ...,
     ) -> Any: ...
     @overload
@@ -2398,8 +2405,18 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         offset: SupportsIndex = ...,
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
+        dtype: DTypeLike | None = ...,
+        *,
+        out: _ArrayT,
+    ) -> _ArrayT: ...
+    @overload
+    def trace(
+        self,  # >= 2D array
+        offset: SupportsIndex,
+        axis1: SupportsIndex,
+        axis2: SupportsIndex,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
     ) -> _ArrayT: ...
 
     @overload
@@ -2423,7 +2440,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 
@@ -2443,6 +2469,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def flatten(self, /, order: _OrderKACF = "C") -> ndarray[tuple[int], _DTypeT_co]: ...
     def ravel(self, /, order: _OrderKACF = "C") -> ndarray[tuple[int], _DTypeT_co]: ...
 
+    # Keep in sync with `MaskedArray.reshape`
     # NOTE: reshape also accepts negative integers, so we can't use integer literals
     @overload  # (None)
     def reshape(self, shape: None, /, *, order: _OrderACF = "C", copy: builtins.bool | None = None) -> Self: ...
@@ -2550,14 +2577,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # (dtype: T)
     def view(self, /, dtype: _DTypeT | _HasDType[_DTypeT]) -> ndarray[_ShapeT_co, _DTypeT]: ...
     @overload  # (dtype: dtype[T])
-    def view(self, /, dtype: _DTypeLike[_ScalarT]) -> NDArray[_ScalarT]: ...
+    def view(self, /, dtype: _DTypeLike[_ScalarT]) -> ndarray[_ShapeT_co, dtype[_ScalarT]]: ...
     @overload  # (type: T)
     def view(self, /, *, type: type[_ArrayT]) -> _ArrayT: ...
     @overload  # (_: T)
     def view(self, /, dtype: type[_ArrayT]) -> _ArrayT: ...
     @overload  # (dtype: ?)
     def view(self, /, dtype: DTypeLike) -> ndarray[_ShapeT_co, dtype]: ...
-    @overload  # (dtype: ?, type: type[T])
+    @overload  # (dtype: ?, type: T)
     def view(self, /, dtype: DTypeLike, type: type[_ArrayT]) -> _ArrayT: ...
 
     def setfield(self, /, val: ArrayLike, dtype: DTypeLike, offset: SupportsIndex = 0) -> None: ...
@@ -2572,12 +2599,19 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __len__(self) -> int: ...
     def __contains__(self, value: object, /) -> builtins.bool: ...
 
-    @overload  # == 1-d & object_
-    def __iter__(self: ndarray[tuple[int], dtype[object_]], /) -> Iterator[Any]: ...
-    @overload  # == 1-d
-    def __iter__(self: ndarray[tuple[int], dtype[_ScalarT]], /) -> Iterator[_ScalarT]: ...
+    # NOTE: This weird `Never` tuple works around a strange mypy issue where it assigns
+    # `tuple[int]` to `tuple[Never]` or `tuple[int, int]` to `tuple[Never, Never]`.
+    # This way the bug only occurs for 9-D arrays, which are probably not very common.
+    @overload
+    def __iter__(
+        self: ndarray[tuple[Never, Never, Never, Never, Never, Never, Never, Never, Never], Any], /
+    ) -> Iterator[Any]: ...
+    @overload  # == 1-d & dtype[T \ object_]
+    def __iter__(self: ndarray[tuple[int], dtype[_NonObjectScalarT]], /) -> Iterator[_NonObjectScalarT]: ...
+    @overload  # == 1-d & StringDType
+    def __iter__(self: ndarray[tuple[int], dtypes.StringDType], /) -> Iterator[str]: ...
     @overload  # >= 2-d
-    def __iter__(self: ndarray[tuple[int, int, *tuple[int, ...]], dtype[_ScalarT]], /) -> Iterator[NDArray[_ScalarT]]: ...
+    def __iter__(self: ndarray[tuple[int, int, *tuple[int, ...]], _DTypeT], /) -> Iterator[ndarray[_AnyShape, _DTypeT]]: ...
     @overload  # ?-d
     def __iter__(self, /) -> Iterator[Any]: ...
 
@@ -2998,6 +3032,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rsub__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__mul__`
     @overload
     def __mul__(self: NDArray[_NumberT], other: int | np.bool, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3039,6 +3074,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __mul__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__rmul__`
     @overload  # signature equivalent to __mul__
     def __rmul__(self: NDArray[_NumberT], other: int | np.bool, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3080,6 +3116,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rmul__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__truediv__`
     @overload
     def __truediv__(self: _ArrayInt_co | NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
     @overload
@@ -3111,6 +3148,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __truediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__rtruediv__`
     @overload
     def __rtruediv__(self: _ArrayInt_co | NDArray[float64], other: _ArrayLikeFloat64_co, /) -> NDArray[float64]: ...
     @overload
@@ -3140,6 +3178,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rtruediv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__floordiv__`
     @overload
     def __floordiv__(self: NDArray[_RealNumberT], other: int | np.bool, /) -> ndarray[_ShapeT_co, dtype[_RealNumberT]]: ...
     @overload
@@ -3169,6 +3208,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __floordiv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__rfloordiv__`
     @overload
     def __rfloordiv__(self: NDArray[_RealNumberT], other: int | np.bool, /) -> ndarray[_ShapeT_co, dtype[_RealNumberT]]: ...
     @overload
@@ -3196,6 +3236,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rfloordiv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__pow__`
     @overload
     def __pow__(self: NDArray[_NumberT], other: int | np.bool, mod: None = None, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3229,6 +3270,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __pow__(self: NDArray[Any], other: _ArrayLikeObject_co, mod: None = None, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__rpow__`
     @overload
     def __rpow__(self: NDArray[_NumberT], other: int | np.bool, mod: None = None, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3640,7 +3682,16 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 
@@ -3837,14 +3888,14 @@ class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     @property
     def imag(self) -> np.bool[L[False]]: ...
 
-    @overload
-    def __init__(self: np.bool[L[False]], /) -> None: ...
+    @overload  # mypy bug workaround: https://github.com/numpy/numpy/issues/29245
+    def __init__(self: np.bool[builtins.bool], value: Never, /) -> None: ...
     @overload
     def __init__(self: np.bool[L[False]], value: _Falsy = ..., /) -> None: ...
     @overload
     def __init__(self: np.bool[L[True]], value: _Truthy, /) -> None: ...
     @overload
-    def __init__(self, value: object, /) -> None: ...
+    def __init__(self: np.bool[builtins.bool], value: object, /) -> None: ...
 
     def __bool__(self, /) -> _BoolItemT_co: ...
     @overload
@@ -4790,96 +4841,96 @@ class ufunc:
     ) -> tuple[dtype, ...]: ...
 
 # Parameters: `__name__`, `ntypes` and `identity`
-absolute: _UFunc_Nin1_Nout1[L['absolute'], L[20], None]
-add: _UFunc_Nin2_Nout1[L['add'], L[22], L[0]]
-arccos: _UFunc_Nin1_Nout1[L['arccos'], L[8], None]
-arccosh: _UFunc_Nin1_Nout1[L['arccosh'], L[8], None]
-arcsin: _UFunc_Nin1_Nout1[L['arcsin'], L[8], None]
-arcsinh: _UFunc_Nin1_Nout1[L['arcsinh'], L[8], None]
-arctan2: _UFunc_Nin2_Nout1[L['arctan2'], L[5], None]
-arctan: _UFunc_Nin1_Nout1[L['arctan'], L[8], None]
-arctanh: _UFunc_Nin1_Nout1[L['arctanh'], L[8], None]
-bitwise_and: _UFunc_Nin2_Nout1[L['bitwise_and'], L[12], L[-1]]
-bitwise_count: _UFunc_Nin1_Nout1[L['bitwise_count'], L[11], None]
-bitwise_or: _UFunc_Nin2_Nout1[L['bitwise_or'], L[12], L[0]]
-bitwise_xor: _UFunc_Nin2_Nout1[L['bitwise_xor'], L[12], L[0]]
-cbrt: _UFunc_Nin1_Nout1[L['cbrt'], L[5], None]
-ceil: _UFunc_Nin1_Nout1[L['ceil'], L[7], None]
-conjugate: _UFunc_Nin1_Nout1[L['conjugate'], L[18], None]
-copysign: _UFunc_Nin2_Nout1[L['copysign'], L[4], None]
-cos: _UFunc_Nin1_Nout1[L['cos'], L[9], None]
-cosh: _UFunc_Nin1_Nout1[L['cosh'], L[8], None]
-deg2rad: _UFunc_Nin1_Nout1[L['deg2rad'], L[5], None]
-degrees: _UFunc_Nin1_Nout1[L['degrees'], L[5], None]
-divide: _UFunc_Nin2_Nout1[L['divide'], L[11], None]
-divmod: _UFunc_Nin2_Nout2[L['divmod'], L[15], None]
-equal: _UFunc_Nin2_Nout1[L['equal'], L[23], None]
-exp2: _UFunc_Nin1_Nout1[L['exp2'], L[8], None]
-exp: _UFunc_Nin1_Nout1[L['exp'], L[10], None]
-expm1: _UFunc_Nin1_Nout1[L['expm1'], L[8], None]
-fabs: _UFunc_Nin1_Nout1[L['fabs'], L[5], None]
-float_power: _UFunc_Nin2_Nout1[L['float_power'], L[4], None]
-floor: _UFunc_Nin1_Nout1[L['floor'], L[7], None]
-floor_divide: _UFunc_Nin2_Nout1[L['floor_divide'], L[21], None]
-fmax: _UFunc_Nin2_Nout1[L['fmax'], L[21], None]
-fmin: _UFunc_Nin2_Nout1[L['fmin'], L[21], None]
-fmod: _UFunc_Nin2_Nout1[L['fmod'], L[15], None]
-frexp: _UFunc_Nin1_Nout2[L['frexp'], L[4], None]
-gcd: _UFunc_Nin2_Nout1[L['gcd'], L[11], L[0]]
-greater: _UFunc_Nin2_Nout1[L['greater'], L[23], None]
-greater_equal: _UFunc_Nin2_Nout1[L['greater_equal'], L[23], None]
-heaviside: _UFunc_Nin2_Nout1[L['heaviside'], L[4], None]
-hypot: _UFunc_Nin2_Nout1[L['hypot'], L[5], L[0]]
-invert: _UFunc_Nin1_Nout1[L['invert'], L[12], None]
-isfinite: _UFunc_Nin1_Nout1[L['isfinite'], L[20], None]
-isinf: _UFunc_Nin1_Nout1[L['isinf'], L[20], None]
-isnan: _UFunc_Nin1_Nout1[L['isnan'], L[20], None]
-isnat: _UFunc_Nin1_Nout1[L['isnat'], L[2], None]
-lcm: _UFunc_Nin2_Nout1[L['lcm'], L[11], None]
-ldexp: _UFunc_Nin2_Nout1[L['ldexp'], L[8], None]
-left_shift: _UFunc_Nin2_Nout1[L['left_shift'], L[11], None]
-less: _UFunc_Nin2_Nout1[L['less'], L[23], None]
-less_equal: _UFunc_Nin2_Nout1[L['less_equal'], L[23], None]
-log10: _UFunc_Nin1_Nout1[L['log10'], L[8], None]
-log1p: _UFunc_Nin1_Nout1[L['log1p'], L[8], None]
-log2: _UFunc_Nin1_Nout1[L['log2'], L[8], None]
-log: _UFunc_Nin1_Nout1[L['log'], L[10], None]
-logaddexp2: _UFunc_Nin2_Nout1[L['logaddexp2'], L[4], float]
-logaddexp: _UFunc_Nin2_Nout1[L['logaddexp'], L[4], float]
-logical_and: _UFunc_Nin2_Nout1[L['logical_and'], L[20], L[True]]
-logical_not: _UFunc_Nin1_Nout1[L['logical_not'], L[20], None]
-logical_or: _UFunc_Nin2_Nout1[L['logical_or'], L[20], L[False]]
-logical_xor: _UFunc_Nin2_Nout1[L['logical_xor'], L[19], L[False]]
-matmul: _GUFunc_Nin2_Nout1[L['matmul'], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
-matvec: _GUFunc_Nin2_Nout1[L['matvec'], L[19], None, L["(m,n),(n)->(m)"]]
-maximum: _UFunc_Nin2_Nout1[L['maximum'], L[21], None]
-minimum: _UFunc_Nin2_Nout1[L['minimum'], L[21], None]
-modf: _UFunc_Nin1_Nout2[L['modf'], L[4], None]
-multiply: _UFunc_Nin2_Nout1[L['multiply'], L[23], L[1]]
-negative: _UFunc_Nin1_Nout1[L['negative'], L[19], None]
-nextafter: _UFunc_Nin2_Nout1[L['nextafter'], L[4], None]
-not_equal: _UFunc_Nin2_Nout1[L['not_equal'], L[23], None]
-positive: _UFunc_Nin1_Nout1[L['positive'], L[19], None]
-power: _UFunc_Nin2_Nout1[L['power'], L[18], None]
-rad2deg: _UFunc_Nin1_Nout1[L['rad2deg'], L[5], None]
-radians: _UFunc_Nin1_Nout1[L['radians'], L[5], None]
-reciprocal: _UFunc_Nin1_Nout1[L['reciprocal'], L[18], None]
-remainder: _UFunc_Nin2_Nout1[L['remainder'], L[16], None]
-right_shift: _UFunc_Nin2_Nout1[L['right_shift'], L[11], None]
-rint: _UFunc_Nin1_Nout1[L['rint'], L[10], None]
-sign: _UFunc_Nin1_Nout1[L['sign'], L[19], None]
-signbit: _UFunc_Nin1_Nout1[L['signbit'], L[4], None]
-sin: _UFunc_Nin1_Nout1[L['sin'], L[9], None]
-sinh: _UFunc_Nin1_Nout1[L['sinh'], L[8], None]
-spacing: _UFunc_Nin1_Nout1[L['spacing'], L[4], None]
-sqrt: _UFunc_Nin1_Nout1[L['sqrt'], L[10], None]
-square: _UFunc_Nin1_Nout1[L['square'], L[18], None]
-subtract: _UFunc_Nin2_Nout1[L['subtract'], L[21], None]
-tan: _UFunc_Nin1_Nout1[L['tan'], L[8], None]
-tanh: _UFunc_Nin1_Nout1[L['tanh'], L[8], None]
-trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
-vecdot: _GUFunc_Nin2_Nout1[L['vecdot'], L[19], None, L["(n),(n)->()"]]
-vecmat: _GUFunc_Nin2_Nout1[L['vecmat'], L[19], None, L["(n),(n,m)->(m)"]]
+absolute: _UFunc_Nin1_Nout1[L["absolute"], L[20], None]
+add: _UFunc_Nin2_Nout1[L["add"], L[22], L[0]]
+arccos: _UFunc_Nin1_Nout1[L["arccos"], L[8], None]
+arccosh: _UFunc_Nin1_Nout1[L["arccosh"], L[8], None]
+arcsin: _UFunc_Nin1_Nout1[L["arcsin"], L[8], None]
+arcsinh: _UFunc_Nin1_Nout1[L["arcsinh"], L[8], None]
+arctan2: _UFunc_Nin2_Nout1[L["arctan2"], L[5], None]
+arctan: _UFunc_Nin1_Nout1[L["arctan"], L[8], None]
+arctanh: _UFunc_Nin1_Nout1[L["arctanh"], L[8], None]
+bitwise_and: _UFunc_Nin2_Nout1[L["bitwise_and"], L[12], L[-1]]
+bitwise_count: _UFunc_Nin1_Nout1[L["bitwise_count"], L[11], None]
+bitwise_or: _UFunc_Nin2_Nout1[L["bitwise_or"], L[12], L[0]]
+bitwise_xor: _UFunc_Nin2_Nout1[L["bitwise_xor"], L[12], L[0]]
+cbrt: _UFunc_Nin1_Nout1[L["cbrt"], L[5], None]
+ceil: _UFunc_Nin1_Nout1[L["ceil"], L[7], None]
+conjugate: _UFunc_Nin1_Nout1[L["conjugate"], L[18], None]
+copysign: _UFunc_Nin2_Nout1[L["copysign"], L[4], None]
+cos: _UFunc_Nin1_Nout1[L["cos"], L[9], None]
+cosh: _UFunc_Nin1_Nout1[L["cosh"], L[8], None]
+deg2rad: _UFunc_Nin1_Nout1[L["deg2rad"], L[5], None]
+degrees: _UFunc_Nin1_Nout1[L["degrees"], L[5], None]
+divide: _UFunc_Nin2_Nout1[L["divide"], L[11], None]
+divmod: _UFunc_Nin2_Nout2[L["divmod"], L[15], None]
+equal: _UFunc_Nin2_Nout1[L["equal"], L[23], None]
+exp2: _UFunc_Nin1_Nout1[L["exp2"], L[8], None]
+exp: _UFunc_Nin1_Nout1[L["exp"], L[10], None]
+expm1: _UFunc_Nin1_Nout1[L["expm1"], L[8], None]
+fabs: _UFunc_Nin1_Nout1[L["fabs"], L[5], None]
+float_power: _UFunc_Nin2_Nout1[L["float_power"], L[4], None]
+floor: _UFunc_Nin1_Nout1[L["floor"], L[7], None]
+floor_divide: _UFunc_Nin2_Nout1[L["floor_divide"], L[21], None]
+fmax: _UFunc_Nin2_Nout1[L["fmax"], L[21], None]
+fmin: _UFunc_Nin2_Nout1[L["fmin"], L[21], None]
+fmod: _UFunc_Nin2_Nout1[L["fmod"], L[15], None]
+frexp: _UFunc_Nin1_Nout2[L["frexp"], L[4], None]
+gcd: _UFunc_Nin2_Nout1[L["gcd"], L[11], L[0]]
+greater: _UFunc_Nin2_Nout1[L["greater"], L[23], None]
+greater_equal: _UFunc_Nin2_Nout1[L["greater_equal"], L[23], None]
+heaviside: _UFunc_Nin2_Nout1[L["heaviside"], L[4], None]
+hypot: _UFunc_Nin2_Nout1[L["hypot"], L[5], L[0]]
+invert: _UFunc_Nin1_Nout1[L["invert"], L[12], None]
+isfinite: _UFunc_Nin1_Nout1[L["isfinite"], L[20], None]
+isinf: _UFunc_Nin1_Nout1[L["isinf"], L[20], None]
+isnan: _UFunc_Nin1_Nout1[L["isnan"], L[20], None]
+isnat: _UFunc_Nin1_Nout1[L["isnat"], L[2], None]
+lcm: _UFunc_Nin2_Nout1[L["lcm"], L[11], None]
+ldexp: _UFunc_Nin2_Nout1[L["ldexp"], L[8], None]
+left_shift: _UFunc_Nin2_Nout1[L["left_shift"], L[11], None]
+less: _UFunc_Nin2_Nout1[L["less"], L[23], None]
+less_equal: _UFunc_Nin2_Nout1[L["less_equal"], L[23], None]
+log10: _UFunc_Nin1_Nout1[L["log10"], L[8], None]
+log1p: _UFunc_Nin1_Nout1[L["log1p"], L[8], None]
+log2: _UFunc_Nin1_Nout1[L["log2"], L[8], None]
+log: _UFunc_Nin1_Nout1[L["log"], L[10], None]
+logaddexp2: _UFunc_Nin2_Nout1[L["logaddexp2"], L[4], float]
+logaddexp: _UFunc_Nin2_Nout1[L["logaddexp"], L[4], float]
+logical_and: _UFunc_Nin2_Nout1[L["logical_and"], L[20], L[True]]
+logical_not: _UFunc_Nin1_Nout1[L["logical_not"], L[20], None]
+logical_or: _UFunc_Nin2_Nout1[L["logical_or"], L[20], L[False]]
+logical_xor: _UFunc_Nin2_Nout1[L["logical_xor"], L[19], L[False]]
+matmul: _GUFunc_Nin2_Nout1[L["matmul"], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]]
+matvec: _GUFunc_Nin2_Nout1[L["matvec"], L[19], None, L["(m,n),(n)->(m)"]]
+maximum: _UFunc_Nin2_Nout1[L["maximum"], L[21], None]
+minimum: _UFunc_Nin2_Nout1[L["minimum"], L[21], None]
+modf: _UFunc_Nin1_Nout2[L["modf"], L[4], None]
+multiply: _UFunc_Nin2_Nout1[L["multiply"], L[23], L[1]]
+negative: _UFunc_Nin1_Nout1[L["negative"], L[19], None]
+nextafter: _UFunc_Nin2_Nout1[L["nextafter"], L[4], None]
+not_equal: _UFunc_Nin2_Nout1[L["not_equal"], L[23], None]
+positive: _UFunc_Nin1_Nout1[L["positive"], L[19], None]
+power: _UFunc_Nin2_Nout1[L["power"], L[18], None]
+rad2deg: _UFunc_Nin1_Nout1[L["rad2deg"], L[5], None]
+radians: _UFunc_Nin1_Nout1[L["radians"], L[5], None]
+reciprocal: _UFunc_Nin1_Nout1[L["reciprocal"], L[18], None]
+remainder: _UFunc_Nin2_Nout1[L["remainder"], L[16], None]
+right_shift: _UFunc_Nin2_Nout1[L["right_shift"], L[11], None]
+rint: _UFunc_Nin1_Nout1[L["rint"], L[10], None]
+sign: _UFunc_Nin1_Nout1[L["sign"], L[19], None]
+signbit: _UFunc_Nin1_Nout1[L["signbit"], L[4], None]
+sin: _UFunc_Nin1_Nout1[L["sin"], L[9], None]
+sinh: _UFunc_Nin1_Nout1[L["sinh"], L[8], None]
+spacing: _UFunc_Nin1_Nout1[L["spacing"], L[4], None]
+sqrt: _UFunc_Nin1_Nout1[L["sqrt"], L[10], None]
+square: _UFunc_Nin1_Nout1[L["square"], L[18], None]
+subtract: _UFunc_Nin2_Nout1[L["subtract"], L[21], None]
+tan: _UFunc_Nin1_Nout1[L["tan"], L[8], None]
+tanh: _UFunc_Nin1_Nout1[L["tanh"], L[8], None]
+trunc: _UFunc_Nin1_Nout1[L["trunc"], L[7], None]
+vecdot: _GUFunc_Nin2_Nout1[L["vecdot"], L[19], None, L["(n),(n)->()"]]
+vecmat: _GUFunc_Nin2_Nout1[L["vecmat"], L[19], None, L["(n),(n,m)->(m)"]]
 
 abs = absolute
 acos = arccos
@@ -5208,11 +5259,11 @@ class poly1d:
     def __getitem__(self, val: int, /) -> Any: ...
     def __setitem__(self, key: int, val: Any, /) -> None: ...
     def __iter__(self) -> Iterator[Any]: ...
-    def deriv(self, m: SupportsInt | SupportsIndex = ...) -> poly1d: ...
+    def deriv(self, m: SupportsInt | SupportsIndex = 1) -> poly1d: ...
     def integ(
         self,
-        m: SupportsInt | SupportsIndex = ...,
-        k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = ...,
+        m: SupportsInt | SupportsIndex = 1,
+        k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0,
     ) -> poly1d: ...
 
 class matrix(ndarray[_2DShapeT_co, _DTypeT_co]):

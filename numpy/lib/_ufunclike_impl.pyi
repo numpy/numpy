@@ -16,17 +16,17 @@ _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 @overload
 def fix(  # type: ignore[misc]
     x: _FloatLike_co,
-    out: None = ...,
+    out: None = None,
 ) -> floating: ...
 @overload
 def fix(
     x: _ArrayLikeFloat_co,
-    out: None = ...,
+    out: None = None,
 ) -> NDArray[floating]: ...
 @overload
 def fix(
     x: _ArrayLikeObject_co,
-    out: None = ...,
+    out: None = None,
 ) -> NDArray[object_]: ...
 @overload
 def fix(
@@ -37,12 +37,12 @@ def fix(
 @overload
 def isposinf(  # type: ignore[misc]
     x: _FloatLike_co,
-    out: None = ...,
+    out: None = None,
 ) -> np.bool: ...
 @overload
 def isposinf(
     x: _ArrayLikeFloat_co,
-    out: None = ...,
+    out: None = None,
 ) -> NDArray[np.bool]: ...
 @overload
 def isposinf(
@@ -53,12 +53,12 @@ def isposinf(
 @overload
 def isneginf(  # type: ignore[misc]
     x: _FloatLike_co,
-    out: None = ...,
+    out: None = None,
 ) -> np.bool: ...
 @overload
 def isneginf(
     x: _ArrayLikeFloat_co,
-    out: None = ...,
+    out: None = None,
 ) -> NDArray[np.bool]: ...
 @overload
 def isneginf(

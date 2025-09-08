@@ -1,5 +1,4 @@
-from typing import Any, Final, TypeVar, overload
-from typing import Literal as L
+from typing import Any, Final, Literal as L, TypeVar, overload
 
 from numpy import complexfloating, floating, generic, integer
 from numpy._typing import (

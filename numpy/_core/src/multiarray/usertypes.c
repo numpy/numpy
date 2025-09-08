@@ -344,7 +344,7 @@ static int _warn_if_cast_exists_already(
     if (to_DType == NULL) {
         return -1;
     }
-    PyObject *cast_impl = PyDict_GetItemWithError(
+    PyObject *cast_impl = PyDict_GetItemWithError( // noqa: borrowed-ref OK
             NPY_DT_SLOTS(NPY_DTYPE(descr))->castingimpls, (PyObject *)to_DType);
     Py_DECREF(to_DType);
     if (cast_impl == NULL) {

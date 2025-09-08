@@ -1,6 +1,5 @@
 from collections.abc import Callable, Iterable
-from typing import Any, Concatenate, Final, Self, TypeVar, overload
-from typing import Literal as L
+from typing import Any, Concatenate, Final, Literal as L, Self, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt

@@ -10,7 +10,7 @@ collects common workflows in both formats.
 
 .. note::
 
-    This is a ****living**** document, `pull requests <https://numpy.org/doc/stable/dev/howto-docs.html>`_ are very welcome!
+    This is a **living** document, `pull requests <https://numpy.org/doc/stable/dev/howto-docs.html>`_ are very welcome!
 
 1.1 Baseline
 ~~~~~~~~~~~~
@@ -117,13 +117,11 @@ sample is included below.
     +------------------------------------+-------------------------------+
     | LDFLAGS                            | Linker options                |
     +------------------------------------+-------------------------------+
-    | LD\ :sub:`LIBRARY`\ \ :sub:`PATH`\ | Library file locations (Unix) |
+    | LD_LIBRARY_PATH                    | Library file locations (Unix) |
     +------------------------------------+-------------------------------+
     | LIBS                               | Libraries to link against     |
     +------------------------------------+-------------------------------+
     | PATH                               | Search path for executables   |
-    +------------------------------------+-------------------------------+
-    | LDFLAGS                            | Linker flags                  |
     +------------------------------------+-------------------------------+
     | CXX                                | C++ compiler                  |
     +------------------------------------+-------------------------------+

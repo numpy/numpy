@@ -22,12 +22,25 @@ class TypeTup(NamedTuple):
     origin: type | None
 
 
+def _flatten_type_alias(t: Any) -> Any:
+    # "flattens" a TypeAliasType to its underlying type alias
+    return getattr(t, "__value__", t)
+
+
 NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)
 
 TYPES = {
-    "ArrayLike": TypeTup(npt.ArrayLike, npt.ArrayLike.__args__, Union),
-    "DTypeLike": TypeTup(npt.DTypeLike, npt.DTypeLike.__args__, Union),
-    "NBitBase": TypeTup(npt.NBitBase, (), None),
+    "ArrayLike": TypeTup(
+        _flatten_type_alias(npt.ArrayLike),
+        _flatten_type_alias(npt.ArrayLike).__args__,
+        Union,
+    ),
+    "DTypeLike": TypeTup(
+        _flatten_type_alias(npt.DTypeLike),
+        _flatten_type_alias(npt.DTypeLike).__args__,
+        Union,
+    ),
+    "NBitBase": TypeTup(npt.NBitBase, (), None),  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
     "NDArray": NDArrayTup,
 }
 
@@ -68,7 +81,7 @@ def test_get_type_hints_str(name: type, tup: TypeTup) -> None:
     def func(a: typ_str) -> None: pass
 
     out = get_type_hints(func)
-    ref = {"a": typ, "return": type(None)}
+    ref = {"a": getattr(npt, str(name)), "return": type(None)}
     assert out == ref
 
 

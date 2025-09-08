@@ -1,7 +1,7 @@
 import sys
 from collections import deque
 from pathlib import Path
-from typing import Any, TypeVar, assert_type
+from typing import Any, Generic, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -10,12 +10,16 @@ _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
 class SubClass(npt.NDArray[_ScalarT_co]): ...
 
+class IntoSubClass(Generic[_ScalarT_co]):
+    def __array__(self) -> SubClass[_ScalarT_co]: ...
+
 i8: np.int64
 
 A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
 C: list[int]
 D: SubClass[np.float64 | np.int64]
+E: IntoSubClass[np.float64 | np.int64]
 
 mixed_shape: tuple[int, np.int64]
 
@@ -25,65 +29,68 @@ assert_type(np.empty_like(A), npt.NDArray[np.float64])
 assert_type(np.empty_like(B), SubClass[np.float64])
 assert_type(np.empty_like([1, 1.0]), npt.NDArray[Any])
 assert_type(np.empty_like(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.empty_like(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.empty_like(A, dtype="c16"), npt.NDArray[Any])
 
 assert_type(np.array(A), npt.NDArray[np.float64])
 assert_type(np.array(B), npt.NDArray[np.float64])
 assert_type(np.array([1, 1.0]), npt.NDArray[Any])
 assert_type(np.array(deque([1, 2, 3])), npt.NDArray[Any])
 assert_type(np.array(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.array(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.array(A, dtype="c16"), npt.NDArray[Any])
 assert_type(np.array(A, like=A), npt.NDArray[np.float64])
 assert_type(np.array(A, subok=True), npt.NDArray[np.float64])
 assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
+assert_type(np.array(E, subok=True), SubClass[np.float64 | np.int64])
+# https://github.com/numpy/numpy/issues/29245
+assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.zeros([1, 5, 6], dtype='c16'), npt.NDArray[Any])
+assert_type(np.zeros([1, 5, 6], dtype="c16"), npt.NDArray[Any])
 assert_type(np.zeros(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.empty([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.empty([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.empty([1, 5, 6], dtype='c16'), npt.NDArray[Any])
+assert_type(np.empty([1, 5, 6], dtype="c16"), npt.NDArray[Any])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
-assert_type(np.concatenate([A, A]), Any)  # pyright correctly infers this as NDArray[float64]
+assert_type(np.concatenate([A, A]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.concatenate([[1], A]), npt.NDArray[Any])
 assert_type(np.concatenate([[1], [1]]), npt.NDArray[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])
 assert_type(np.concatenate(([1], [1])), npt.NDArray[Any])
 assert_type(np.concatenate([1, 1.0]), npt.NDArray[Any])
 assert_type(np.concatenate(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.concatenate(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.concatenate(A, dtype="c16"), npt.NDArray[Any])
 assert_type(np.concatenate([1, 1.0], out=A), npt.NDArray[np.float64])
 
 assert_type(np.asarray(A), npt.NDArray[np.float64])
 assert_type(np.asarray(B), npt.NDArray[np.float64])
 assert_type(np.asarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.asarray(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.asarray(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.asarray(A, dtype="c16"), npt.NDArray[Any])
 
 assert_type(np.asanyarray(A), npt.NDArray[np.float64])
 assert_type(np.asanyarray(B), SubClass[np.float64])
 assert_type(np.asanyarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.asanyarray(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.asanyarray(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.asanyarray(A, dtype="c16"), npt.NDArray[Any])
 
 assert_type(np.ascontiguousarray(A), npt.NDArray[np.float64])
 assert_type(np.ascontiguousarray(B), npt.NDArray[np.float64])
 assert_type(np.ascontiguousarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.ascontiguousarray(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.ascontiguousarray(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.ascontiguousarray(A, dtype="c16"), npt.NDArray[Any])
 
 assert_type(np.asfortranarray(A), npt.NDArray[np.float64])
 assert_type(np.asfortranarray(B), npt.NDArray[np.float64])
 assert_type(np.asfortranarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.asfortranarray(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.asfortranarray(A, dtype='c16'), npt.NDArray[Any])
+assert_type(np.asfortranarray(A, dtype="c16"), npt.NDArray[Any])
 
 assert_type(np.fromstring("1 1 1", sep=" "), npt.NDArray[np.float64])
 assert_type(np.fromstring(b"1 1 1", sep=" "), npt.NDArray[np.float64])

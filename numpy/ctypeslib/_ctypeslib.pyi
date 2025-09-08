@@ -4,15 +4,7 @@ import ctypes
 from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from ctypes import c_int64 as _c_intp
-from typing import (
-    Any,
-    ClassVar,
-    Generic,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
-from typing import Literal as L
+from typing import Any, ClassVar, Generic, Literal as L, TypeAlias, TypeVar, overload
 
 import numpy as np
 from numpy import (
@@ -68,12 +60,12 @@ _DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=dtype | None)
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 
 _FlagsKind: TypeAlias = L[
-    'C_CONTIGUOUS', 'CONTIGUOUS', 'C',
-    'F_CONTIGUOUS', 'FORTRAN', 'F',
-    'ALIGNED', 'A',
-    'WRITEABLE', 'W',
-    'OWNDATA', 'O',
-    'WRITEBACKIFCOPY', 'X',
+    "C_CONTIGUOUS", "CONTIGUOUS", "C",
+    "F_CONTIGUOUS", "FORTRAN", "F",
+    "ALIGNED", "A",
+    "WRITEABLE", "W",
+    "OWNDATA", "O",
+    "WRITEBACKIFCOPY", "X",
 ]
 
 # TODO: Add a shape typevar once we have variadic typevars (PEP 646)

@@ -17,6 +17,11 @@ that target certain CPU features:
      During the runtime, NumPy modules will fail to load if any of specified features
      are not supported by the target CPU (raises Python runtime error).
 
+- ``cpu-baseline-detect``: controls detection of CPU baseline based on compiler
+  flags. Default value is ``auto`` that enables detection if ``-march=``
+  or a similar compiler flag is used. The other possible values are ``enabled``
+  and ``disabled`` to respective enable or disable it unconditionally.
+
 - ``cpu-dispatch``: dispatched set of additional CPU features.
    Default value is ``max -xop -fma4`` which enables all CPU
    features, except for AMD legacy features (in case of X86).
@@ -182,7 +187,7 @@ Behaviors
 
 - ``cpu-baseline`` will be treated as "native" if compiler native flag
   ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
-  ``CFLAGS``::
+  ``CFLAGS`` and ``cpu-baseline-detect`` is not ``disabled``::
 
     export CFLAGS="-march=native"
     pip install .

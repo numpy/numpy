@@ -1,7 +1,16 @@
 from _typeshed import Incomplete
 from collections.abc import Sequence
-from typing import Any, ClassVar, Final, Generic, Self, SupportsIndex, final, overload
-from typing import Literal as L
+from typing import (
+    Any,
+    ClassVar,
+    Final,
+    Generic,
+    Literal as L,
+    Self,
+    SupportsIndex,
+    final,
+    overload,
+)
 from typing_extensions import TypeVar, deprecated
 
 import numpy as np
@@ -178,10 +187,10 @@ def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[np.float64], ...
 def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[np.complex128], ...]: ...
 
 #
-def fill_diagonal(a: NDArray[Any], val: object, wrap: bool = ...) -> None: ...
+def fill_diagonal(a: NDArray[Any], val: object, wrap: bool = False) -> None: ...
 
 #
-def diag_indices(n: int, ndim: int = ...) -> tuple[NDArray[np.intp], ...]: ...
+def diag_indices(n: int, ndim: int = 2) -> tuple[NDArray[np.intp], ...]: ...
 def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[np.intp], ...]: ...
 
 #
