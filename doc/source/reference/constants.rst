@@ -67,7 +67,11 @@ NumPy includes several constants:
     >>> import numpy as np
     >>> np.inf
     inf
-    >>> np.array([1]) / 0.
+    >>> import warnings
+    >>> with warnings.catch_warnings():
+    ...     warnings.simplefilter('ignore')
+    ...     x = np.array([1]) / 0.      # emits a 'Division by zero' warning
+    >>> x
     array([inf])
 
 
