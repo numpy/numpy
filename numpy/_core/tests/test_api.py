@@ -99,16 +99,28 @@ def test_array_array():
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
     if HAS_REFCOUNT:
         class MyArray:
-            def __init__(self):
-                self.val = np.array(-1, dtype=dt)
+            def __init__(self, dtype):
+                self.val = np.array(-1, dtype=dtype)
 
             def __array__(self, dtype=None, copy=None):
                 return self.val.__array__(dtype=dtype, copy=copy)
 
         dt = np.dtype(np.int32)
         old_refcount = sys.getrefcount(dt)
-        np.array(MyArray())
+        np.array(MyArray(dt))
         assert_equal(old_refcount, sys.getrefcount(dt))
+        np.array(MyArray(dt), dtype=dt)
+        assert_equal(old_refcount, sys.getrefcount(dt))
+        np.array(MyArray(dt), copy=None)
+        assert_equal(old_refcount, sys.getrefcount(dt))
+        np.array(MyArray(dt), dtype=dt, copy=None)
+        assert_equal(old_refcount, sys.getrefcount(dt))
+        dt2 = np.dtype(np.int16)
+        old_refcount2 = sys.getrefcount(dt2)
+        np.array(MyArray(dt), dtype=dt2)
+        assert_equal(old_refcount2, sys.getrefcount(dt2))
+        np.array(MyArray(dt), dtype=dt2, copy=None)
+        assert_equal(old_refcount2, sys.getrefcount(dt2))
 
     # test recursion
     nested = 1.5
