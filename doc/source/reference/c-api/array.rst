@@ -2303,21 +2303,36 @@ Item selection and manipulation
 
 .. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
-    Return an array with the items of *self* sorted along *axis*. The array
-    is sorted using the algorithm denoted by *kind*, which is an integer/enum pointing
-    to the type of sorting algorithms used.
+    Return an array with the items of ``self`` sorted along ``axis``. The array
+    is sorted using an algorithm whose properties are specified by the value of
+    ``kind``, an integer/enum specifying the reguirements of the sorting
+    algorithm used. If ``self* ->descr`` is a data-type with fields defined,
+    then ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
 
-.. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.sort<numpy.ndarray.sort>`, though with a different meaning
+    of ``kind`` -- see ``NPY_SORTKIND`` below.
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
-    Return an array of indices such that selection of these indices
-    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
-    is a data-type with fields defined, then self->descr->names is used
-    to determine the sort order. A comparison where the first field is equal
-    will use the second field and so on. To alter the sort order of a
-    structured array, create a new data-type with a different order of names
-    and construct a view of the array with that new data-type.
+.. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
+
+    Return an array of indices such that selection of these indices along the
+    given ``axis`` would return a sorted version of ``self``.  The array is
+    sorted using an algorithm whose properties are specified by ``kind``, an
+    integer/enum specifying the reguirements of the sorting algorithm used. If
+    ``self->descr`` is a data-type with fields defined, then
+    ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
+
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.argsort<numpy.ndarray.argsort>`, though with a different
+    meaning of ``kind`` -- see ``NPY_SORTKIND`` below.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -4321,7 +4336,11 @@ Enumerated Types
 .. c:enum:: NPY_SORTKIND
 
     A special variable-type which can take on different values to indicate
-    the sorting algorithm being used.
+    the sorting algorithm being used. These algorithm types have not been
+    treated strictly for some time, but rather treated as stable/not stable.
+    In NumPy 2.4 they are replaced by requirements (see below), but done in a
+    backwards compatible way. These values will continue to work, except that
+    that NPY_HEAPSORT will do the same thing as NPY_QUICKSORT.
 
     .. c:enumerator:: NPY_QUICKSORT
 
@@ -4335,11 +4354,32 @@ Enumerated Types
 
     .. c:enumerator:: NPY_NSORTS
 
-       Defined to be the number of sorts. It is fixed at three by the need for
-       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
-       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
-       of several stable sorting algorithms depending on the data type.
+        Defined to be the number of sorts. It is fixed at three by the need for
+        backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+        :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+        of several stable sorting algorithms depending on the data type.
 
+    In NumPy 2.4 the algorithm names are replaced by requirements. You can still use
+    the old values, a recompile is not needed, but they are reinterpreted such that
+
+    * NPY_QUICKSORT and NPY_HEAPSORT -> NPY_SORT_DEFAULT
+    * NPY_MERGESORT and NPY_STABLE -> NPY_SORT_STABLE
+
+    .. c:enumerator:: NPY_SORT_DEFAULT
+
+        The default sort for the type. For the NumPy builtin types it may be
+        stable or not, but will be ascending and sort NaN types to the end. It
+        is usually chosen for speed and/or low memory.
+
+    .. c:enumerator:: NPY_SORT_STABLE
+
+        (Requirement) Specifies that the sort must be stable.
+
+    .. c:enumerator:: NPY_SORT_DESCENDING
+
+        (Requirement) Specifies that the sort must be in descending order.
+        This functionality is not yet implemented for any of the NumPy types
+        and cannot yet be set from the Python interface.
 
 .. c:enum:: NPY_SCALARKIND
 

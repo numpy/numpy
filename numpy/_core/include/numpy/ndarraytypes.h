@@ -162,18 +162,37 @@ enum NPY_TYPECHAR {
 };
 
 /*
- * Changing this may break Numpy API compatibility
- * due to changing offsets in PyArray_ArrFuncs, so be
- * careful. Here we have reused the mergesort slot for
- * any kind of stable sort, the actual implementation will
- * depend on the data type.
+ * Changing this may break Numpy API compatibility due to changing offsets in
+ * PyArray_ArrFuncs, so be careful. Here we have reused the mergesort slot for
+ * any kind of stable sort, the actual implementation will depend on the data
+ * type.
+ *
+ * Updated in NumPy 2.4
+ *
+ * Updated with new names denoting requirements rather than specifying a
+ * particular algorithm. All the previous values are reused in a way that
+ * should be downstream compatible, but the actual algorithms used may be
+ * different than before. The new approach should be more flexible and easier
+ * to update.
+ * 
+ * Names with a leading underscore are private, and should only be used
+ * internally by NumPy.
+ *
+ * NPY_NSORTS remains the same for backwards compatibility, it should not be
+ * changed.
  */
+
 typedef enum {
-        _NPY_SORT_UNDEFINED=-1,
-        NPY_QUICKSORT=0,
-        NPY_HEAPSORT=1,
-        NPY_MERGESORT=2,
-        NPY_STABLESORT=2,
+        _NPY_SORT_UNDEFINED = -1,
+        NPY_QUICKSORT = 0,
+        NPY_HEAPSORT = 1,
+        NPY_MERGESORT = 2,
+        NPY_STABLESORT = 2,
+        // new style names 
+        _NPY_SORT_HEAPSORT = 1,
+        NPY_SORT_DEFAULT = 0,
+        NPY_SORT_STABLE = 2,
+        NPY_SORT_DESCENDING = 4,
 } NPY_SORTKIND;
 #define NPY_NSORTS (NPY_STABLESORT + 1)
 

@@ -181,7 +181,8 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': b'???',
-                  'U': 'N/A'
+                  'U': 'N/A',
+                  'T': 'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
@@ -264,16 +265,17 @@ def default_fill_value(obj):
     The default filling value depends on the datatype of the input
     array or the type of the input scalar:
 
-       ========  ========
-       datatype  default
-       ========  ========
-       bool      True
-       int       999999
-       float     1.e20
-       complex   1.e20+0j
-       object    '?'
-       string    'N/A'
-       ========  ========
+       ===========  ========
+       datatype      default
+       ===========  ========
+       bool         True
+       int          999999
+       float        1.e20
+       complex      1.e20+0j
+       object       '?'
+       string       'N/A'
+       StringDType  'N/A'
+       ===========  ========
 
     For structured types, a structured scalar is returned, with each field the
     default fill value for its type.
@@ -498,7 +500,7 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
-    elif isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
+    elif isinstance(fill_value, str) and (ndtype.char not in 'OSTVU'):
         # Note this check doesn't work if fill_value is not a scalar
         err_msg = "Cannot set fill value of string with array of dtype %s"
         raise TypeError(err_msg % ndtype)

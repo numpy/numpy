@@ -806,7 +806,7 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 add_newdoc('numpy._core.multiarray', 'array',
     """
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-          like=None)
+          ndmax=None, like=None)
 
     Create an array.
 
@@ -855,6 +855,15 @@ add_newdoc('numpy._core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be prepended to the shape as
         needed to meet this requirement.
+    ndmax : int, optional
+        Specifies the maximum number of dimensions to create when inferring
+        shape from nested sequences. By default, NumPy recurses through all
+        nesting levels (up to the compile-time constant ``NPY_MAXDIMS``).
+        Setting ``ndmax`` stops recursion at the specified depth, preserving
+        deeper nested structures as objects instead of promoting them to
+        higher-dimensional arrays. In this case, ``dtype=object`` is required.
+
+        .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -926,6 +935,21 @@ add_newdoc('numpy._core.multiarray', 'array',
     matrix([[1, 2],
             [3, 4]])
 
+    Limiting the maximum dimensions with ``ndmax``:
+
+    >>> a = np.array([[1, 2], [3, 4]], dtype=object, ndmax=2)
+    >>> a
+    array([[1, 2],
+           [3, 4]], dtype=object)
+    >>> a.shape
+    (2, 2)
+
+    >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+    >>> b
+    array([list([1, 2]), list([3, 4])], dtype=object)
+    >>> b.shape
+    (2,)
+
     """)
 
 add_newdoc('numpy._core.multiarray', 'asarray',
@@ -943,12 +967,13 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'K'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) is the default and preserves the input order for the output.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -1035,12 +1060,14 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'C'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) preserves the input order for the output.
+        'C' is the default.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.

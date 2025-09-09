@@ -114,7 +114,7 @@ AR_f **= AR_LIKE_c  # type: ignore[arg-type]
 
 # Scalars
 
-b_ - b_  # type: ignore[call-overload]
+b_ - b_  # type: ignore[operator]
 
 dt + dt  # type: ignore[operator]
 td - dt  # type: ignore[operator]

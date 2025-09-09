@@ -118,7 +118,7 @@ _EmptyDict: TypeAlias = dict[Never, Never]
 
 @final
 class __array_namespace_info__:
-    __module__: ClassVar[Literal['numpy']]
+    __module__: ClassVar[Literal["numpy"]]
 
     def capabilities(self) -> _Capabilities: ...
     def default_device(self) -> _Device: ...

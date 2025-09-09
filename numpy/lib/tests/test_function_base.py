@@ -974,18 +974,20 @@ class TestDiff:
 
 class TestDelete:
 
-    def setup_method(self):
-        self.a = np.arange(5)
-        self.nd_a = np.arange(5).repeat(2).reshape(1, 5, 2)
+    def _create_arrays(self):
+        a = np.arange(5)
+        nd_a = np.arange(5).repeat(2).reshape(1, 5, 2)
+        return a, nd_a
 
     def _check_inverse_of_slicing(self, indices):
-        a_del = delete(self.a, indices)
-        nd_a_del = delete(self.nd_a, indices, axis=1)
+        a, nd_a = self._create_arrays()
+        a_del = delete(a, indices)
+        nd_a_del = delete(nd_a, indices, axis=1)
         msg = f'Delete failed for obj: {indices!r}'
-        assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
+        assert_array_equal(setxor1d(a_del, a[indices, ]), a,
                            err_msg=msg)
-        xor = setxor1d(nd_a_del[0, :, 0], self.nd_a[0, indices, 0])
-        assert_array_equal(xor, self.nd_a[0, :, 0], err_msg=msg)
+        xor = setxor1d(nd_a_del[0, :, 0], nd_a[0, indices, 0])
+        assert_array_equal(xor, nd_a[0, :, 0], err_msg=msg)
 
     def test_slices(self):
         lims = [-6, -2, 0, 1, 2, 4, 5]
@@ -997,11 +999,12 @@ class TestDelete:
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
+        a, _ = self._create_arrays()
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
         with pytest.raises(IndexError):
-            delete(self.a, [100])
+            delete(a, [100])
         with pytest.raises(IndexError):
-            delete(self.a, [-100])
+            delete(a, [-100])
 
         self._check_inverse_of_slicing([0, -1, 2, 2])
 
@@ -1009,13 +1012,13 @@ class TestDelete:
 
         # not legal, indexing with these would change the dimension
         with pytest.raises(ValueError):
-            delete(self.a, True)
+            delete(a, True)
         with pytest.raises(ValueError):
-            delete(self.a, False)
+            delete(a, False)
 
         # not enough items
         with pytest.raises(ValueError):
-            delete(self.a, [False] * 4)
+            delete(a, [False] * 4)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
@@ -1031,7 +1034,9 @@ class TestDelete:
     def test_subclass(self):
         class SubClass(np.ndarray):
             pass
-        a = self.a.view(SubClass)
+
+        a_orig, _ = self._create_arrays()
+        a = a_orig.view(SubClass)
         assert_(isinstance(delete(a, 0), SubClass))
         assert_(isinstance(delete(a, []), SubClass))
         assert_(isinstance(delete(a, [0, 1]), SubClass))
@@ -1056,12 +1061,13 @@ class TestDelete:
 
     @pytest.mark.parametrize("indexer", [np.array([1]), [1]])
     def test_single_item_array(self, indexer):
-        a_del_int = delete(self.a, 1)
-        a_del = delete(self.a, indexer)
+        a, nd_a = self._create_arrays()
+        a_del_int = delete(a, 1)
+        a_del = delete(a, indexer)
         assert_equal(a_del_int, a_del)
 
-        nd_a_del_int = delete(self.nd_a, 1, axis=1)
-        nd_a_del = delete(self.nd_a, np.array([1]), axis=1)
+        nd_a_del_int = delete(nd_a, 1, axis=1)
+        nd_a_del = delete(nd_a, np.array([1]), axis=1)
         assert_equal(nd_a_del_int, nd_a_del)
 
     def test_single_item_array_non_int(self):
@@ -2405,6 +2411,7 @@ class TestSinc:
         # before gh-27784, fill value for 0 in input would underflow float16,
         # resulting in nan
         assert_array_equal(sinc(x), np.asarray(1.0))
+
 
 class TestUnique:
 
