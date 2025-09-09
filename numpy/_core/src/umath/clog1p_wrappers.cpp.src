@@ -1,0 +1,32 @@
+#include <Python.h>
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#include "numpy/npy_math.h"
+#include "numpy/ndarraytypes.h"
+#include <cmath>
+#include <complex>
+#include "log1p_complex.h"
+
+extern "C" {
+
+/**begin repeat
+ * #c_fp_type = float, double, long double#
+ * #np_cplx_type = npy_cfloat,npy_cdouble,npy_clongdouble#
+ * #c = f, , l#
+ */
+
+/*
+ * C wrapper for log1p_complex(z).  This function is to be used only
+ * when the input is close to the unit circle centered at -1+0j.
+ */
+NPY_NO_EXPORT void
+clog1p@c@(@np_cplx_type@ *x, @np_cplx_type@ *r)
+{
+    std::complex<@c_fp_type@> z{npy_creal@c@(*x), npy_cimag@c@(*x)};
+    auto w = log1p_complex::log1p_complex(z);
+    npy_csetreal@c@(r, w.real());
+    npy_csetimag@c@(r, w.imag());
+}
+
+/**end repeat**/
+
+}  // extern "C"
