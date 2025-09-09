@@ -182,9 +182,8 @@ tracker = "https://github.com/numpy/numpy/issues"
 
 [tool.cibuildwheel]
 # Note: the below skip command doesn't do much currently, the platforms to
-# build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
-# `tools/ci/cirrus_wheels.yml`.
-build-frontend = "build"
+# build wheels for in CI are controlled in `.github/workflows/wheels.yml`.
+# universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
 skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
@@ -202,6 +201,22 @@ manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
+[tool.cibuildwheel.linux.environment]
+# RUNNER_OS is a GitHub Actions specific env var; define it here so it's
+# defined when running cibuildwheel locally
+RUNNER_OS="Linux"
+# /project will be the $PWD equivalent inside the docker used to build the wheel
+PKG_CONFIG_PATH="/project/.openblas"
+
+[tool.cibuildwheel.windows]
+config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=false"], build-dir="build"}
+repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
+
+[[tool.cibuildwheel.overrides]]
+select = ["*-win32"]
+config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=true"], build-dir="build"}
+repair-wheel-command = ""
+
 [tool.cibuildwheel.pyodide]
 before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
@@ -212,34 +227,6 @@ test-command = "python -m pytest --pyargs numpy -m 'not slow'"
 build-dir = "build"
 setup-args = ["--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross", "-Dblas=none", "-Dlapack=none"]
 
-[tool.cibuildwheel.linux.environment]
-# RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
-RUNNER_OS="Linux"
-# /project will be the $PWD equivalent inside the docker used to build the wheel
-PKG_CONFIG_PATH="/project/.openblas"
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/project/.openblas/lib"
-
-[tool.cibuildwheel.macos]
-# universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
-# note that universal2 wheels are not built, they're listed in the tool.cibuildwheel.skip
-# section
-# Not clear why the DYLD_LIBRARY_PATH is not passed through from the environment
-repair-wheel-command = [
-  "export DYLD_LIBRARY_PATH=$PWD/.openblas/lib",
-  "echo DYLD_LIBRARY_PATH $DYLD_LIBRARY_PATH",
-  "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}",
-]
-
-[tool.cibuildwheel.windows]
-config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=false"], build-dir="build"}
-repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
-# This does not work, use CIBW_ENVIRONMENT_WINDOWS
-environment = {PKG_CONFIG_PATH="./.openblas"}
-
-[[tool.cibuildwheel.overrides]]
-select = ["*-win32"]
-config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=true"], build-dir="build"}
-repair-wheel-command = ""
 
 
 [tool.meson-python]
