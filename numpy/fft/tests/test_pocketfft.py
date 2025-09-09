@@ -465,6 +465,24 @@ class TestFFT1D:
         assert result is out
         assert_array_equal(result, expected)
 
+    @pytest.mark.parametrize("x_shape,s_tuple", [
+        ((4,4,4),(6,6,6)),    # larger all dims
+        ((4,4,4),(2,4,4)),    # smaller first dim
+        ((4,4,4),(4,4,6)),    # larger last dim
+    ])
+    @pytest.mark.parametrize("axes", [(0,1,2),(2,0,1),(-1,0,1)])
+    def test_fftn_out_and_s_interaction2(self, x_shape, s_tuple, axes):
+        rng = np.random.default_rng(42)
+        x = rng.random(x_shape) + 1j*rng.random(x_shape)
+        x.flags.writeable = False
+
+        out = np.empty(s_tuple, dtype=complex)
+        result = np.fft.fftn(x, s=s_tuple, axes=axes, out=out)
+        expected = np.fft.fftn(x, s=s_tuple, axes=axes)
+
+        assert result is out
+        assert_allclose(result, expected)
+
 
 @pytest.mark.parametrize(
         "dtype",
