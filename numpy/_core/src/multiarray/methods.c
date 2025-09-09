@@ -968,10 +968,8 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         Py_DECREF(self);
         return ret;
     } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
-        if (newtype == NULL) {
-            return (PyObject *)self;
-        } else if (PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
-            Py_DECREF(newtype);
+        if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            Py_XDECREF(newtype);
             return (PyObject *)self;
         }
         if (copy == NPY_COPY_IF_NEEDED) {
