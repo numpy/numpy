@@ -50,7 +50,7 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     }
 
     S pair[2] = {value_real, value_imag};
-    return npy_fnv1a(static_cast<void *>(pair), 2 * sizeof(S));
+    return npy_fnv1a(pair, 2 * sizeof(S));
 }
 
 template <typename T>
@@ -414,16 +414,16 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>>},
     {NPY_CFLOAT, unique_numeric<
         npy_cfloat,
-        hash_complex<float, npy_cfloat, npy_crealf, npy_cimagf>,
-        equal_complex<float, npy_cfloat, npy_crealf, npy_cimagf>,
-        copy_complex<float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
         >
     },
     {NPY_CDOUBLE, unique_numeric<
         npy_cdouble,
-        hash_complex<double, npy_cdouble, npy_creal, npy_cimag>,
-        equal_complex<double, npy_cdouble, npy_creal, npy_cimag>,
-        copy_complex<double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
         >
     },
     {NPY_CLONGDOUBLE, unique_numeric<
@@ -444,16 +444,16 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_DATETIME, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>>},
     {NPY_COMPLEX64, unique_numeric<
         npy_complex64,
-        hash_complex<float, npy_complex64, npy_crealf, npy_cimagf>,
-        equal_complex<float, npy_complex64, npy_crealf, npy_cimagf>,
-        copy_complex<float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
         >
     },
     {NPY_COMPLEX128, unique_numeric<
         npy_complex128,
-        hash_complex<double, npy_complex128, npy_creal, npy_cimag>,
-        equal_complex<double, npy_complex128, npy_creal, npy_cimag>,
-        copy_complex<double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
         >
     },
     {NPY_STRING, unique_string<npy_byte>},
