@@ -59,7 +59,7 @@ int equal_integer(const T *lhs, const T *rhs, npy_bool equal_nan) {
 }
 
 template <typename T>
-int equal_float(const T *lhs, const T *rhs, npy_bool equal_nan) {
+inline int equal_float(const T *lhs, const T *rhs, npy_bool equal_nan) {
     int lhs_isnan = npy_isnan(*lhs);
     int rhs_isnan = npy_isnan(*rhs);
     if (lhs_isnan && rhs_isnan) {
