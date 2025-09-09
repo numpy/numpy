@@ -44,8 +44,8 @@ template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 size_t hash_complex(const T *value, npy_bool equal_nan) {
     S value_real = real(*value);
     S value_imag = imag(*value);
-    int isnan = npy_isnan(value_real) || npy_isnan(value_imag);
-    if (equal_nan && isnan) {
+    int hasnan = npy_isnan(value_real) || npy_isnan(value_imag);
+    if (equal_nan && hasnan) {
         return 0;
     }
 
