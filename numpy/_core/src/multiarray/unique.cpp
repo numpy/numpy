@@ -40,7 +40,7 @@ inline size_t hash_integer(const T *value, npy_bool equal_nan) {
     return std::hash<T>{}(*value);
 }
 
-template <typename S, typename T, S (*real)(T), S (*imag)(T)>
+template <typename S, typename T, S (*real)(T), S (*imag)(T), int actual_size_of_S>
 size_t hash_complex(const T *value, npy_bool equal_nan) {
     S value_real = real(*value);
     S value_imag = imag(*value);
@@ -50,6 +50,11 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     }
 
     S pair[2] = {value_real, value_imag};
+    #if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
+        std::memset(pair + actual_size_of_S, 0, sizeof(S) - actual_size_of_S);
+    #else
+        std::memset(pair, 0, sizeof(S) - actual_size_of_S);
+    #endif
     return npy_fnv1a(pair, 2 * sizeof(S));
 }
 
@@ -414,21 +419,21 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>>},
     {NPY_CFLOAT, unique_numeric<
         npy_cfloat,
-        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf>,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_SIZEOF_FLOAT>,
         equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf>,
         copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
         >
     },
     {NPY_CDOUBLE, unique_numeric<
         npy_cdouble,
-        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag>,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_SIZEOF_DOUBLE>,
         equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag>,
         copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
         >
     },
     {NPY_CLONGDOUBLE, unique_numeric<
         npy_clongdouble,
-        hash_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
+        hash_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_SIZEOF_LONGDOUBLE>,
         equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
         copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>
         >
@@ -444,14 +449,14 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_DATETIME, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>>},
     {NPY_COMPLEX64, unique_numeric<
         npy_complex64,
-        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf>,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_SIZEOF_FLOAT>,
         equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf>,
         copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
         >
     },
     {NPY_COMPLEX128, unique_numeric<
         npy_complex128,
-        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_SIZEOF_DOUBLE>,
         equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
         copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
         >
