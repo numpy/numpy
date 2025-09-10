@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import re
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from re import Pattern
-import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 """
 Borrow-ref C API linter (Python version).
@@ -146,7 +146,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--quiet",
         action="store_true",
-        help="Suppress normal output; exit status alone indicates result (useful for CI).",
+        help="Suppress normal output; exit status alone indicates result (useful\
+              for CI).",
     )
     ap.add_argument(
         "-j", "--jobs",
@@ -208,7 +209,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Determine concurrency: auto picks a reasonable cap for I/O-bound work
     if args.jobs is None or args.jobs <= 0:
-        max_workers = min(32, (os.cpu_count() or 1 ) * 5)
+        max_workers = min(32, (os.cpu_count() or 1) * 5)
     else:
         max_workers = max(1, args.jobs)
     log.info("Scanning %d C/C++ source files...", len(files))
@@ -226,7 +227,8 @@ def main(argv: list[str] | None = None) -> int:
             all_hits.extend(scan_file(p, func_rx, noqa_markers))
     else:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut_to_file = {ex.submit(scan_file, p, func_rx, noqa_markers): p for p in files}
+            fut_to_file = {ex.submit(scan_file, p, func_rx, noqa_markers):
+                           p for p in files}
             for fut in as_completed(fut_to_file):
                 try:
                     all_hits.extend(fut.result())
