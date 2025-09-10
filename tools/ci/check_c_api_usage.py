@@ -8,6 +8,8 @@ import sys
 import tempfile
 from pathlib import Path
 from re import Pattern
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 """
 Borrow-ref C API linter (Python version).
@@ -142,6 +144,22 @@ def main(argv: list[str] | None = None) -> int:
 
     ap = argparse.ArgumentParser(description="Borrow-ref C API linter (Python).")
     ap.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress normal output; exit status alone indicates result (useful for CI).",
+    )
+    ap.add_argument(
+        "-j", "--jobs",
+        type=int,
+        default=0,
+        help="Number of worker threads (0=auto, 1=sequential).",
+    )
+    ap.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable debug logging (developer mode)"
+    )
+    ap.add_argument(
         "--root",
         default="numpy",
         type=str,
@@ -161,6 +179,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
+    # Logging setup: send to stdout so CI shows in inline with normal output.
+    level = logging.INFO
+    if args.quiet:
+        level = logging.WARNING
+    if args.verbose:
+        level = logging.DEBUG
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s: %(message)s",
+        stream=sys.stdout,
+        force=True,
+    )
+    log = logging.getLogger("borrowref_linter")
+
     if args.ext:
         exts = {e if e.startswith(".") else f".{e}" for e in args.ext}
     else:
@@ -169,17 +201,40 @@ def main(argv: list[str] | None = None) -> int:
 
     root = Path(args.root)
     if not root.exists():
-        print(f"error: root '{root}' does not exist", file=sys.stderr)
+        log.error("root '%s' does not exist", root)
         return 2
 
     files = sorted(iter_source_files(root, exts, excludes), key=str)
-    print(f"Scanning {len(files)} C/C++ source files...")
+
+    # Determine concurrency: auto picks a reasonable cap for I/O-bound work
+    if args.jobs is None or args.jobs <= 0:
+        max_workers = min(32, (os.cpu_count() or 1 ) * 5)
+    else:
+        max_workers = max(1, args.jobs)
+    log.info("Scanning %d C/C++ source files...", len(files))
 
     # Output file (mirrors your shell behavior)
     tmpdir = Path(".tmp")
     tmpdir.mkdir(exist_ok=True)
 
     findings = 0
+
+    # Run the scanning in parallel; only the main thread writes the report
+    all_hits: list[tuple[str, int, str, str]] = []
+    if max_workers == 1:
+        for p in files:
+            all_hits.extend(scan_file(p, func_rx, noqa_markers))
+    else:
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            fut_to_file = {ex.submit(scan_file, p, func_rx, noqa_markers): p for p in files}
+            for fut in as_completed(fut_to_file):
+                try:
+                    all_hits.extend(fut.result())
+                except Exception as e:
+                    log.warning("Failed to scan %s: %s", fut_to_file[fut], e)
+    # Sort for deterministic output: by path, then line number
+    all_hits.sort(key=lambda t: (t[2], t[1]))
+
     with tempfile.NamedTemporaryFile(
         prefix="c_api_usage_report.",
         suffix=".txt",
@@ -190,29 +245,30 @@ def main(argv: list[str] | None = None) -> int:
         ) as out:
         report_path = Path(out.name)
         out.write("Running Suspicious C API usage report workflow...\n\n")
-        for p in files:
-            for func, lineno, pstr, raw in scan_file(p, func_rx, noqa_markers):
-                findings += 1
-                out.write(f"Found suspicious call to {func} in file: {pstr}\n")
-                out.write(f" -> {pstr}:{lineno}:{raw}\n")
-                out.write("Recommendation:\n")
-                out.write(
-                    "If this use is intentional and safe, add "
-                    "'// noqa: borrowed-ref OK' on the same line "
-                    "to silence this warning.\n"
-                )
-                out.write(
-                    "Otherwise, consider replacing the call "
-                    "with a thread-safe API function.\n\n")
+        for func, lineo, pstr, raw in all_hits:
+            findings += 1
+            out.write(f"Found suspicious call to {func} in file: {pstr}\n")
+            out.write(f" -> {pstr}:{lineo}a:{raw}\n")
+            out.write("Recommendation:\n")
+            out.write(
+                "If this use is intentional and safe, add "
+                "'// noqa: borrowed-ref OK' on the same line "
+                "to silence this warning.\n"
+            )
+            out.write(
+                "Otherwise, consider replacing the call "
+                "with a thread-safe API function.\n\n"
+            )
 
         if findings == 0:
             out.write("C API borrow-ref linter found no issues.\n")
 
         # Echo report and set exit status
         out.flush()
-        out.seek(0)
-        sys.stdout.write(out.read())
-    print(f"Report written to: {report_path}")
+        if not args.quiet:
+            out.seek(0)
+            sys.stdout.write(out.read())
+    log.info("Report written to: %s", report_path)
 
     return 1 if findings else 0
 
