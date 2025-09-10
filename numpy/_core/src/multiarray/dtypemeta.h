@@ -31,6 +31,7 @@ typedef struct {
      */
     PyArrayDTypeMeta_SetItem *setitem;
     PyArrayDTypeMeta_GetItem *getitem;
+
     /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
@@ -67,6 +68,9 @@ typedef struct {
      * parameters, if any, as the operand dtype.
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
+
+    PyArrayDTypeMeta_SortFunctions *sort_functions;
+    PyArrayDTypeMeta_ArgSortFunctions *argsort_functions;
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
@@ -89,7 +93,11 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
+#define NPY_NUM_DTYPE_SLOTS 13
+#else
 #define NPY_NUM_DTYPE_SLOTS 11
+#endif
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
