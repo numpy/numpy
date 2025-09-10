@@ -97,30 +97,6 @@ def test_array_array():
 
     o = type("o", (object,), {"__array__": custom__array__})()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
-    if HAS_REFCOUNT:
-        class MyArray:
-            def __init__(self, dtype):
-                self.val = np.array(-1, dtype=dtype)
-
-            def __array__(self, dtype=None, copy=None):
-                return self.val.__array__(dtype=dtype, copy=copy)
-
-        dt = np.dtype(np.int32)
-        old_refcount = sys.getrefcount(dt)
-        np.array(MyArray(dt))
-        assert_equal(old_refcount, sys.getrefcount(dt))
-        np.array(MyArray(dt), dtype=dt)
-        assert_equal(old_refcount, sys.getrefcount(dt))
-        np.array(MyArray(dt), copy=None)
-        assert_equal(old_refcount, sys.getrefcount(dt))
-        np.array(MyArray(dt), dtype=dt, copy=None)
-        assert_equal(old_refcount, sys.getrefcount(dt))
-        dt2 = np.dtype(np.int16)
-        old_refcount2 = sys.getrefcount(dt2)
-        np.array(MyArray(dt), dtype=dt2)
-        assert_equal(old_refcount2, sys.getrefcount(dt2))
-        np.array(MyArray(dt), dtype=dt2, copy=None)
-        assert_equal(old_refcount2, sys.getrefcount(dt2))
 
     # test recursion
     nested = 1.5
@@ -180,6 +156,34 @@ def test_array_array():
                  np.ones((1, 10), dtype=np.float64))
     assert_equal(np.array([(1.0,) * 10] * 10, dtype=np.float64),
                  np.ones((10, 10), dtype=np.float64))
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test___array___refcount():
+    class MyArray:
+        def __init__(self, dtype):
+            self.val = np.array(-1, dtype=dtype)
+
+        def __array__(self, dtype=None, copy=None):
+            return self.val.__array__(dtype=dtype, copy=copy)
+
+    dt = np.dtype(np.int32)
+    old_refcount = sys.getrefcount(dt)
+    np.array(MyArray(dt))
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), dtype=dt)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), copy=None)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), dtype=dt, copy=None)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    dt2 = np.dtype(np.int16)
+    old_refcount2 = sys.getrefcount(dt2)
+    np.array(MyArray(dt), dtype=dt2)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+    np.array(MyArray(dt), dtype=dt2, copy=None)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
