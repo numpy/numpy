@@ -1605,7 +1605,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
 
 @final
 class flatiter(Generic[_ArrayT_co]):
-    __hash__: ClassVar[None]
+    __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
     @property
     def base(self) -> _ArrayT_co: ...
     @property
