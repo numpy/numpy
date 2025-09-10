@@ -49,16 +49,20 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         return 0;
     }
 
-    S pair[2] = {value_real, value_imag};
     int size_of_S = sizeof(S);
+    char buf[2 * size_of_S];
+    std::memcpy(buf, &value_real, size_of_S);
+    std::memcpy(buf + size_of_S, &value_imag, size_of_S);
+
     #if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
-        std::memset(pair + actual_size_of_S, 0, size_of_S - actual_size_of_S);
-        std::memset(pair + size_of_S + actual_size_of_S, 0, size_of_S - actual_size_of_S);
+        std::memset(buf + actual_size_of_S, 0, size_of_S - actual_size_of_S);
+        std::memset(buf + size_of_S + actual_size_of_S, 0, size_of_S - actual_size_of_S);
     #else
-        std::memset(pair, 0, size_of_S - actual_size_of_S);
-        std::memset(pair + size_of_S, 0, size_of_S - actual_size_of_S);
+        std::memset(buf, 0, size_of_S - actual_size_of_S);
+        std::memset(buf + size_of_S, 0, size_of_S - actual_size_of_S);
     #endif
-    return npy_fnv1a(pair, 2 * size_of_S);
+
+    return npy_fnv1a(buf, 2 * size_of_S);
 }
 
 template <typename T>
