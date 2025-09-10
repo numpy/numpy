@@ -9,6 +9,11 @@
 extern "C" {
 #endif
 
+NPY_NO_EXPORT int
+get_initial_from_ufunc(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        void *initial);
+
 NPY_NO_EXPORT PyArrayMethodObject *
 PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[]);
