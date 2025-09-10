@@ -49,7 +49,7 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         return 0;
     }
 
-    int size_of_S = sizeof(S);
+    constexpr int size_of_S = sizeof(S);
     char buf[2 * size_of_S];
     std::memcpy(buf, &value_real, size_of_S);
     std::memcpy(buf + size_of_S, &value_imag, size_of_S);
