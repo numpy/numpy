@@ -165,47 +165,49 @@ class TestSetState:
 
 class TestRandint:
 
-    rfunc = np.random.randint
-
     # valid integer/boolean types
     itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
-        assert_raises(TypeError, self.rfunc, 1, dtype=float)
+        rng = random.RandomState()
+        assert_raises(TypeError, rng.randint, 1, dtype=float)
 
     def test_bounds_checking(self):
+        rng = random.RandomState()
         for dt in self.itype:
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
-            assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
-            assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
-            assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
-            assert_raises(ValueError, self.rfunc, 1, 0, dtype=dt)
+            assert_raises(ValueError, rng.randint, lbnd - 1, ubnd, dtype=dt)
+            assert_raises(ValueError, rng.randint, lbnd, ubnd + 1, dtype=dt)
+            assert_raises(ValueError, rng.randint, ubnd, lbnd, dtype=dt)
+            assert_raises(ValueError, rng.randint, 1, 0, dtype=dt)
 
     def test_rng_zero_and_extremes(self):
+        rng = random.RandomState()
         for dt in self.itype:
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             tgt = ubnd - 1
-            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(rng.randint(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
             tgt = lbnd
-            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(rng.randint(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
             tgt = (lbnd + ubnd) // 2
-            assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
+            assert_equal(rng.randint(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
         # Test for ticket #1690
+        rng = random.RandomState()
 
         for dt in self.itype:
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             try:
-                self.rfunc(lbnd, ubnd, dtype=dt)
+                rng.randint(lbnd, ubnd, dtype=dt)
             except Exception as e:
                 raise AssertionError("No error should have been raised, "
                                      "but one was with the following "
@@ -213,15 +215,15 @@ class TestRandint:
 
     def test_in_bounds_fuzz(self):
         # Don't use fixed seed
-        np.random.seed()
+        rng = random.RandomState()
 
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
-                vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
+                vals = rng.randint(2, ubnd, size=2**16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
 
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+        vals = rng.randint(0, 2, size=2**16, dtype=np.bool)
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
@@ -284,11 +286,12 @@ class TestRandint:
 
     def test_respect_dtype_singleton(self):
         # See gh-7203
+        rng = random.RandomState()
         for dt in self.itype:
             lbnd = 0 if dt is np.bool else np.iinfo(dt).min
             ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
-            sample = self.rfunc(lbnd, ubnd, dtype=dt)
+            sample = rng.randint(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
         for dt in (bool, int):
@@ -297,7 +300,7 @@ class TestRandint:
             ubnd = 2 if dt is bool else np.iinfo("long").max + 1
 
             # gh-7284: Ensure that we get Python data types
-            sample = self.rfunc(lbnd, ubnd, dtype=dt)
+            sample = rng.randint(lbnd, ubnd, dtype=dt)
             assert_(not hasattr(sample, 'dtype'))
             assert_equal(type(sample), dt)
 
