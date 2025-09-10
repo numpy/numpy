@@ -133,17 +133,6 @@ from numpy._typing import (
     _GUFunc_Nin2_Nout1,
 )
 
-from numpy._typing._callable import (
-    _ComparisonOpLT,
-    _ComparisonOpLE,
-    _ComparisonOpGT,
-    _ComparisonOpGE,
-    _SupportsLT,
-    _SupportsLE,
-    _SupportsGT,
-    _SupportsGE,
-)
-
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
 from numpy._typing._extended_precision import (
     float96,
@@ -1041,6 +1030,26 @@ class _FormerAttrsDict(TypedDict):
     int: LiteralString
 
 ### Protocols (for internal use only)
+
+@final
+@type_check_only
+class _SupportsLT(Protocol):
+    def __lt__(self, other: Any, /) -> Any: ...
+
+@final
+@type_check_only
+class _SupportsLE(Protocol):
+    def __le__(self, other: Any, /) -> Any: ...
+
+@final
+@type_check_only
+class _SupportsGT(Protocol):
+    def __gt__(self, other: Any, /) -> Any: ...
+
+@final
+@type_check_only
+class _SupportsGE(Protocol):
+    def __ge__(self, other: Any, /) -> Any: ...
 
 @type_check_only
 class _SupportsFileMethods(SupportsFlush, Protocol):
@@ -5365,10 +5374,35 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __rfloordiv__(self, a: timedelta64, /) -> int64: ...
 
-    __lt__: _ComparisonOpLT[_TD64Like_co, _ArrayLikeTD64_co]
-    __le__: _ComparisonOpLE[_TD64Like_co, _ArrayLikeTD64_co]
-    __gt__: _ComparisonOpGT[_TD64Like_co, _ArrayLikeTD64_co]
-    __ge__: _ComparisonOpGE[_TD64Like_co, _ArrayLikeTD64_co]
+    # comparison ops
+
+    @overload
+    def __lt__(self, other: _TD64Like_co, /) -> bool_: ...
+    @overload
+    def __lt__(self, other: _ArrayLikeTD64_co | _NestedSequence[_SupportsGT], /) -> NDArray[bool_]: ...
+    @overload
+    def __lt__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __le__(self, other: _TD64Like_co, /) -> bool_: ...
+    @overload
+    def __le__(self, other: _ArrayLikeTD64_co | _NestedSequence[_SupportsGE], /) -> NDArray[bool_]: ...
+    @overload
+    def __le__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __gt__(self, other: _TD64Like_co, /) -> bool_: ...
+    @overload
+    def __gt__(self, other: _ArrayLikeTD64_co | _NestedSequence[_SupportsLT], /) -> NDArray[bool_]: ...
+    @overload
+    def __gt__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __ge__(self, other: _TD64Like_co, /) -> bool_: ...
+    @overload
+    def __ge__(self, other: _ArrayLikeTD64_co | _NestedSequence[_SupportsLE], /) -> NDArray[bool_]: ...
+    @overload
+    def __ge__(self, other: _SupportsGT, /) -> bool_: ...
 
 class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @property
@@ -5465,10 +5499,33 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __rsub__(self, x: datetime64, /) -> timedelta64: ...
 
-    __lt__: _ComparisonOpLT[datetime64, _ArrayLikeDT64_co]
-    __le__: _ComparisonOpLE[datetime64, _ArrayLikeDT64_co]
-    __gt__: _ComparisonOpGT[datetime64, _ArrayLikeDT64_co]
-    __ge__: _ComparisonOpGE[datetime64, _ArrayLikeDT64_co]
+    @overload
+    def __lt__(self, other: datetime64, /) -> bool_: ...
+    @overload
+    def __lt__(self, other: _ArrayLikeDT64_co | _NestedSequence[_SupportsGT], /) -> NDArray[bool_]: ...
+    @overload
+    def __lt__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __le__(self, other: datetime64, /) -> bool_: ...
+    @overload
+    def __le__(self, other: _ArrayLikeDT64_co | _NestedSequence[_SupportsGE], /) -> NDArray[bool_]: ...
+    @overload
+    def __le__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __gt__(self, other: datetime64, /) -> bool_: ...
+    @overload
+    def __gt__(self, other: _ArrayLikeDT64_co | _NestedSequence[_SupportsLT], /) -> NDArray[bool_]: ...
+    @overload
+    def __gt__(self, other: _SupportsGT, /) -> bool_: ...
+
+    @overload
+    def __ge__(self, other: datetime64, /) -> bool_: ...
+    @overload
+    def __ge__(self, other: _ArrayLikeDT64_co | _NestedSequence[_SupportsLE], /) -> NDArray[bool_]: ...
+    @overload
+    def __ge__(self, other: _SupportsGT, /) -> bool_: ...
 
 class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]):
     @abstractmethod

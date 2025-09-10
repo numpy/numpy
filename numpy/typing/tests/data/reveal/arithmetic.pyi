@@ -3,7 +3,7 @@ from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _32Bit, _64Bit, _128Bit
+from numpy._typing import _64Bit, _128Bit
 
 b: bool
 c: complex
