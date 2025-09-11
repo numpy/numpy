@@ -559,7 +559,7 @@ def concatenate(
     axis: SupportsIndex | None = ...,
     *,
     out: _ArrayT,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     casting: _CastingKind | None = ...
 ) -> _ArrayT: ...
 @overload
@@ -569,7 +569,7 @@ def concatenate(
     axis: SupportsIndex | None,
     out: _ArrayT,
     *,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     casting: _CastingKind | None = ...
 ) -> _ArrayT: ...
 
@@ -941,7 +941,7 @@ def fromiter(
 @overload
 def fromiter(
     iter: Iterable[Any],
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     count: SupportsIndex = ...,
     *,
     like: _SupportsArrayFunc | None = ...,
@@ -1328,7 +1328,7 @@ def nested_iters(
     axes: Sequence[Sequence[SupportsIndex]],
     flags: Sequence[_NDIterFlagsKind] | None = ...,
     op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = ...,
-    op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
+    op_dtypes: DTypeLike | None | Sequence[DTypeLike | None] = ...,
     order: _OrderKACF = ...,
     casting: _CastingKind = ...,
     buffersize: SupportsIndex = ...,

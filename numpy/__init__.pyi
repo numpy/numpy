@@ -2049,7 +2049,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         shape: _ShapeLike,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         buffer: _SupportsBuffer | None = ...,
         offset: SupportsIndex = ...,
         strides: _ShapeLike | None = ...,
@@ -5664,7 +5664,7 @@ class nditer:
         op: ArrayLike | Sequence[ArrayLike | None],
         flags: Sequence[_NDIterFlagsKind] | None = ...,
         op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = ...,
-        op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
+        op_dtypes: DTypeLike | None | Sequence[DTypeLike | None] = ...,
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         op_axes: Sequence[Sequence[SupportsIndex]] | None = ...,
@@ -5874,7 +5874,7 @@ class matrix(ndarray[_2DShapeT_co, _DTypeT_co]):
     def __new__(
         subtype,  # pyright: ignore[reportSelfClsParameterName]
         data: ArrayLike,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         copy: builtins.bool = ...,
     ) -> matrix[_2D, Incomplete]: ...
     def __array_finalize__(self, obj: object) -> None: ...
