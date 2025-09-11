@@ -817,12 +817,13 @@ multiarray_gen_headers = [
 foreach gen_mtargets : [
   [
     'argfunc.dispatch.h',
-    src_file.process('src/multiarray/argfunc.dispatch.c.src'),
+    'src/multiarray/argfunc.dispatch.cpp',
     [
       AVX512_SKX, AVX2, XOP, SSE42, SSE2,
       VSX2,
       ASIMD, NEON,
-      VXE, VX
+      VXE, VX,
+      RVV
     ]
   ],
 ]
@@ -840,7 +841,8 @@ foreach gen_mtargets : [
       'src/multiarray',
       'src/multiarray/stringdtype',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway'
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
