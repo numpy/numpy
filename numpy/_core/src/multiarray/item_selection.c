@@ -1549,56 +1549,6 @@ fail:
 }
 
 
-/*NUMPY_API
- * Sort an array in-place
- */
-NPY_NO_EXPORT int
-PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
-{
-    PyArray_SortFunc *sort = NULL;
-    int n = PyArray_NDIM(op);
-
-    if (check_and_adjust_axis(&axis, n) < 0) {
-        return -1;
-    }
-
-    if (PyArray_FailUnlessWriteable(op, "sort array") < 0) {
-        return -1;
-    }
-
-    if (which < 0 || which >= NPY_NSORTS) {
-        PyErr_SetString(PyExc_ValueError, "not a valid sort kind");
-        return -1;
-    }
-
-    sort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
-
-    if (sort == NULL) {
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
-            switch (which) {
-                default:
-                case NPY_QUICKSORT:
-                    sort = npy_quicksort;
-                    break;
-                case NPY_HEAPSORT:
-                    sort = npy_heapsort;
-                    break;
-                case NPY_STABLESORT:
-                    sort = npy_timsort;
-                    break;
-            }
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "type does not have compare function");
-            return -1;
-        }
-    }
-
-    return _new_sortlike(op, axis, sort, NULL, NULL, 0);
-}
-
-
 /*
  * make kth array positive, ravel and sort it
  */
@@ -1708,52 +1658,6 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
 
     Py_DECREF(kthrvl);
 
-    return ret;
-}
-
-
-/*NUMPY_API
- * ArgSort an array
- */
-NPY_NO_EXPORT PyObject *
-PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
-{
-    PyArrayObject *op2;
-    PyArray_ArgSortFunc *argsort = NULL;
-    PyObject *ret;
-
-    argsort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
-
-    if (argsort == NULL) {
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
-            switch (which) {
-                default:
-                case NPY_QUICKSORT:
-                    argsort = npy_aquicksort;
-                    break;
-                case NPY_HEAPSORT:
-                    argsort = npy_aheapsort;
-                    break;
-                case NPY_STABLESORT:
-                    argsort = npy_atimsort;
-                    break;
-            }
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "type does not have compare function");
-            return NULL;
-        }
-    }
-
-    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
-    if (op2 == NULL) {
-        return NULL;
-    }
-
-    ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, 0);
-
-    Py_DECREF(op2);
     return ret;
 }
 
@@ -3154,3 +3058,138 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
 
     return PyArray_Pack(PyArray_DESCR(self), data, obj);
 }
+
+
+/* Table of generic sort functions for use in PyArray_SortEx*/
+static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
+                                                       npy_heapsort,
+                                                       npy_timsort};
+
+/*NUMPY_API
+ * Sort an array in-place with extended parameters
+ */
+NPY_NO_EXPORT int
+PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
+{
+    PyArray_SortFunc **sort_table = NULL;
+    PyArray_SortFunc *sort = NULL;
+
+    if (check_and_adjust_axis(&axis, PyArray_NDIM(op)) < 0) {
+        return -1;
+    }
+
+    if (PyArray_FailUnlessWriteable(op, "sort array") < 0) {
+        return -1;
+    }
+
+    // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
+    flags &= ~_NPY_SORT_HEAPSORT;
+
+    sort_table = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort;
+    switch (flags) {
+        case NPY_SORT_DEFAULT:
+            sort = sort_table[NPY_QUICKSORT];
+            break;
+        case NPY_SORT_STABLE:
+            sort = sort_table[NPY_STABLESORT];
+            break;
+        default:
+            break;
+    }
+
+    // Look for appropriate generic function if no type specific version
+    if (sort == NULL) {
+        if (!PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not have compare function");
+            return -1;
+        }
+        switch (flags) {
+            case NPY_SORT_DEFAULT:
+                sort = generic_sort_table[NPY_QUICKSORT];
+                break;
+            case NPY_SORT_STABLE:
+                sort = generic_sort_table[NPY_STABLESORT];
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (sort == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "no current sort function meets the requirements");
+        return -1;
+    }
+    return _new_sortlike(op, axis, sort, NULL, NULL, 0);
+}
+
+/* Table of generic argsort function for use by PyArray_ArgSortEx */
+static PyArray_ArgSortFunc* const generic_argsort_table[] = {npy_aquicksort,
+                                                             npy_aheapsort,
+                                                             npy_atimsort};
+
+/*NUMPY_API
+ * ArgSort an array with extended parameters
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
+{
+    PyArrayObject *op2;
+    PyObject *ret;
+    PyArray_ArgSortFunc **argsort_table = NULL;
+    PyArray_ArgSortFunc *argsort = NULL;
+
+    // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
+    flags &= ~_NPY_SORT_HEAPSORT;
+
+    // Look for type specific functions
+    argsort_table = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort;
+    switch (flags) {
+        case NPY_SORT_DEFAULT:
+            argsort = argsort_table[NPY_QUICKSORT];
+            break;
+        case NPY_SORT_STABLE:
+            argsort = argsort_table[NPY_STABLESORT];
+            break;
+        default:
+            break;
+    }
+
+    // Look for generic function if no type specific version
+    if (argsort == NULL) {
+        if (!PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+            PyErr_SetString(PyExc_TypeError,
+                            "type does not have compare function");
+            return NULL;
+        }
+        switch (flags) {
+            case NPY_SORT_DEFAULT:
+                argsort = generic_argsort_table[NPY_QUICKSORT];
+                break;
+            case NPY_SORT_STABLE:
+                argsort = generic_argsort_table[NPY_STABLESORT];
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (argsort == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "no current argsort function meets the requirements");
+        return NULL;
+    }
+
+    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
+    if (op2 == NULL) {
+        return NULL;
+    }
+
+    ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, 0);
+
+    Py_DECREF(op2);
+    return ret;
+}
+
+
