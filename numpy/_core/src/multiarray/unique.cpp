@@ -55,8 +55,10 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         std::memcpy(buf + actual_size_of_S, &value_imag, actual_size_of_S);
     #else
         const int size_of_S = sizeof(S);
-        std::memcpy(buf, &value_real + (size_of_S - actual_size_of_S), actual_size_of_S);
-        std::memcpy(buf + actual_size_of_S, &value_imag + (size_of_S - actual_size_of_S), actual_size_of_S);
+        const char *pr = reinterpret_cast<const char*>(&value_real);
+        const char *pi = reinterpret_cast<const char*>(&value_imag);
+        std::memcpy(buf, pr + (size_of_S - actual_size_of_S), actual_size_of_S);
+        std::memcpy(buf + actual_size_of_S, pi + (size_of_S - actual_size_of_S), actual_size_of_S);
     #endif
 
     return npy_fnv1a(buf, 2 * actual_size_of_S);
