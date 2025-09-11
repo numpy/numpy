@@ -794,6 +794,23 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 
 .. _dtypemeta:
 
+PyArrayMethod_SortContext
+-------------------------
+
+.. c:type:: PyArrayMethod_SortContext
+
+   A struct passed to sort methods to provide context for the sort operation.
+
+   .. code-block:: c
+
+      typedef struct {
+        PyArray_Descr *descr;
+      } PyArrayMethod_SortContext;
+
+    .. c:member:: PyArray_Descr *descr
+
+       The descriptor for the data being sorted.
+
 PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
 -------------------------------------------
 
