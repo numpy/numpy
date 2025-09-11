@@ -230,14 +230,6 @@ if HAVE_SCPDT:
     ]
 
 
-@pytest.fixture
-def random_string_list():
-    chars = list(string.ascii_letters + string.digits)
-    chars = np.array(chars, dtype="U1")
-    ret = np.random.choice(chars, size=100 * 10, replace=True)
-    return ret.view("U100")
-
-
 @pytest.fixture(params=[True, False])
 def coerce(request):
     return request.param

@@ -9,6 +9,7 @@ import pytest
 
 import numpy as np
 from numpy._core.tests._natype import get_stringdtype_dtype as get_dtype, pd_NA
+from numpy._core.tests.string_testing import random_string_list
 from numpy.dtypes import StringDType
 from numpy.testing import IS_PYPY, assert_array_equal
 
@@ -266,12 +267,13 @@ class TestStringLikeCasts:
                 sarr.astype("S20")
 
 
-def test_additional_unicode_cast(random_string_list, dtype):
-    arr = np.array(random_string_list, dtype=dtype)
+def test_additional_unicode_cast(dtype):
+    string_list = random_string_list()
+    arr = np.array(string_list, dtype=dtype)
     # test that this short-circuits correctly
     assert_array_equal(arr, arr.astype(arr.dtype))
     # tests the casts via the comparison promoter
-    assert_array_equal(arr, arr.astype(random_string_list.dtype))
+    assert_array_equal(arr, arr.astype(string_list.dtype))
 
 
 def test_insert_scalar(dtype, string_list):
