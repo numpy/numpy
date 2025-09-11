@@ -1062,9 +1062,6 @@ class TestBroadcast:
     # correctly when presented with non-scalar arguments
     seed = 123456789
 
-    def setSeed(self):
-        return random.RandomState(self.seed)
-
     # TODO: Include test for randint once it can broadcast
     # Can steal the test written in PR #6938
 
@@ -1075,11 +1072,11 @@ class TestBroadcast:
                             0.53413660089041659,
                             0.50955303552646702])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.uniform(low * 3, high)
         assert_array_almost_equal(actual, desired, decimal=14)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.uniform(low, high * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
 
@@ -1091,12 +1088,12 @@ class TestBroadcast:
                             2.1283977976520019,
                             1.8417114045748335])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.normal(loc * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.normal, loc * 3, bad_scale)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.normal(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.normal, loc, bad_scale * 3)
@@ -1110,13 +1107,13 @@ class TestBroadcast:
                             0.075230336409423643,
                             0.24976865978980844])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.beta(a * 3, b)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.beta, bad_a * 3, b)
         assert_raises(ValueError, rng.beta, a * 3, bad_b)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.beta(a, b * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.beta, bad_a, b * 3)
@@ -1129,7 +1126,7 @@ class TestBroadcast:
                             0.76386282278691653,
                             0.71243813125891797])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.exponential(scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.exponential, bad_scale * 3)
@@ -1141,7 +1138,7 @@ class TestBroadcast:
                             0.76386282278691653,
                             0.71243813125891797])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.standard_gamma(shape * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.standard_gamma, bad_shape * 3)
@@ -1155,13 +1152,13 @@ class TestBroadcast:
                             1.5277256455738331,
                             1.4248762625178359])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.gamma(shape * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.gamma, bad_shape * 3, scale)
         assert_raises(ValueError, rng.gamma, shape * 3, bad_scale)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.gamma(shape, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.gamma, bad_shape, scale * 3)
@@ -1176,13 +1173,13 @@ class TestBroadcast:
                             0.86768719635363512,
                             2.7251095168386801])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.f(dfnum * 3, dfden)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.f, bad_dfnum * 3, dfden)
         assert_raises(ValueError, rng.f, dfnum * 3, bad_dfden)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.f(dfnum, dfden * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.f, bad_dfnum, dfden * 3)
@@ -1199,21 +1196,21 @@ class TestBroadcast:
                             13.025456344595602,
                             8.8018098359100545])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.noncentral_f(dfnum * 3, dfden, nonc)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.noncentral_f, bad_dfnum * 3, dfden, nonc)
         assert_raises(ValueError, rng.noncentral_f, dfnum * 3, bad_dfden, nonc)
         assert_raises(ValueError, rng.noncentral_f, dfnum * 3, dfden, bad_nonc)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.noncentral_f(dfnum, dfden * 3, nonc)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.noncentral_f, bad_dfnum, dfden * 3, nonc)
         assert_raises(ValueError, rng.noncentral_f, dfnum, bad_dfden * 3, nonc)
         assert_raises(ValueError, rng.noncentral_f, dfnum, dfden * 3, bad_nonc)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.noncentral_f(dfnum, dfden, nonc * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.noncentral_f, bad_dfnum, dfden, nonc * 3)
@@ -1221,7 +1218,7 @@ class TestBroadcast:
         assert_raises(ValueError, rng.noncentral_f, dfnum, dfden, bad_nonc * 3)
 
     def test_noncentral_f_small_df(self):
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         desired = np.array([6.869638627492048, 0.785880199263955])
         actual = rng.noncentral_f(0.9, 0.9, 2, size=2)
         assert_array_almost_equal(actual, desired, decimal=14)
@@ -1233,7 +1230,7 @@ class TestBroadcast:
                             0.51947702108840776,
                             0.1320969254923558])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.chisquare(df * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.chisquare, bad_df * 3)
@@ -1247,13 +1244,13 @@ class TestBroadcast:
                             4.5804135049718742,
                             6.0872302432834564])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.noncentral_chisquare(df * 3, nonc)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.noncentral_chisquare, bad_df * 3, nonc)
         assert_raises(ValueError, rng.noncentral_chisquare, df * 3, bad_nonc)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.noncentral_chisquare(df, nonc * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.noncentral_chisquare, bad_df, nonc * 3)
@@ -1266,7 +1263,7 @@ class TestBroadcast:
                             5.8560725167361607,
                             1.0274791436474273])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.standard_t(df * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.standard_t, bad_df * 3)
@@ -1279,12 +1276,12 @@ class TestBroadcast:
                             -2.7064099483995943,
                             -1.8672476700665914])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.vonmises(mu * 3, kappa)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.vonmises, mu * 3, bad_kappa)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.vonmises(mu, kappa * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.vonmises, mu, bad_kappa * 3)
@@ -1296,7 +1293,7 @@ class TestBroadcast:
                             1.1465519762044529,
                             1.0389564467453547])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.pareto(a * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.pareto, bad_a * 3)
@@ -1308,7 +1305,7 @@ class TestBroadcast:
                             0.76386282278691653,
                             0.71243813125891797])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.weibull(a * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.weibull, bad_a * 3)
@@ -1320,7 +1317,7 @@ class TestBroadcast:
                             0.53413660089041659,
                             0.50955303552646702])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.power(a * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.power, bad_a * 3)
@@ -1333,12 +1330,12 @@ class TestBroadcast:
                             0.070715642226971326,
                             0.019290950698972624])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.laplace(loc * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.laplace, loc * 3, bad_scale)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.laplace(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.laplace, loc, bad_scale * 3)
@@ -1351,12 +1348,12 @@ class TestBroadcast:
                             0.26936705726291116,
                             0.33906220393037939])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.gumbel(loc * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.gumbel, loc * 3, bad_scale)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.gumbel(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.gumbel, loc, bad_scale * 3)
@@ -1369,12 +1366,12 @@ class TestBroadcast:
                             0.13675915696285773,
                             0.038216792802833396])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.logistic(loc * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.logistic, loc * 3, bad_scale)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.logistic(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.logistic, loc, bad_scale * 3)
@@ -1387,12 +1384,12 @@ class TestBroadcast:
                             8.4013952870126261,
                             6.3073234116578671])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.lognormal(mean * 3, sigma)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.lognormal, mean * 3, bad_sigma)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.lognormal(mean, sigma * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.lognormal, mean, bad_sigma * 3)
@@ -1404,7 +1401,7 @@ class TestBroadcast:
                             1.2360119924878694,
                             1.1936818095781789])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.rayleigh(scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.rayleigh, bad_scale * 3)
@@ -1418,13 +1415,13 @@ class TestBroadcast:
                             0.12450084820795027,
                             0.9096122728408238])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.wald(mean * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.wald, bad_mean * 3, scale)
         assert_raises(ValueError, rng.wald, mean * 3, bad_scale)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.wald(mean, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.wald, bad_mean, scale * 3)
@@ -1443,7 +1440,7 @@ class TestBroadcast:
                             2.0347400359389356,
                             2.0095991069536208])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.triangular(left * 3, mode, right)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.triangular, bad_left_one * 3, mode, right)
@@ -1451,7 +1448,7 @@ class TestBroadcast:
         assert_raises(ValueError, rng.triangular, bad_left_two * 3, bad_mode_two,
                       right)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.triangular(left, mode * 3, right)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.triangular, bad_left_one, mode * 3, right)
@@ -1459,7 +1456,7 @@ class TestBroadcast:
         assert_raises(ValueError, rng.triangular, bad_left_two, bad_mode_two * 3,
                       right)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.triangular(left, mode, right * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, rng.triangular, bad_left_one, mode, right * 3)
@@ -1475,14 +1472,14 @@ class TestBroadcast:
         bad_p_two = [1.5]
         desired = np.array([1, 1, 1])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.binomial(n * 3, p)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.binomial, bad_n * 3, p)
         assert_raises(ValueError, rng.binomial, n * 3, bad_p_one)
         assert_raises(ValueError, rng.binomial, n * 3, bad_p_two)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.binomial(n, p * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.binomial, bad_n, p * 3)
@@ -1497,14 +1494,14 @@ class TestBroadcast:
         bad_p_two = [1.5]
         desired = np.array([1, 0, 1])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.negative_binomial(n * 3, p)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.negative_binomial, bad_n * 3, p)
         assert_raises(ValueError, rng.negative_binomial, n * 3, bad_p_one)
         assert_raises(ValueError, rng.negative_binomial, n * 3, bad_p_two)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.negative_binomial(n, p * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.negative_binomial, bad_n, p * 3)
@@ -1519,7 +1516,7 @@ class TestBroadcast:
         bad_lam_two = [max_lam * 2]
         desired = np.array([1, 1, 0])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.poisson(lam * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.poisson, bad_lam_one * 3)
@@ -1530,7 +1527,7 @@ class TestBroadcast:
         bad_a = [0]
         desired = np.array([2, 2, 1])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.zipf(a * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.zipf, bad_a * 3)
@@ -1544,7 +1541,7 @@ class TestBroadcast:
         bad_p_two = [1.5]
         desired = np.array([2, 2, 2])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.geometric(p * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.geometric, bad_p_one * 3)
@@ -1560,7 +1557,7 @@ class TestBroadcast:
         bad_nsample_two = [4]
         desired = np.array([1, 1, 1])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.hypergeometric(ngood * 3, nbad, nsample)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.hypergeometric, bad_ngood * 3, nbad, nsample)
@@ -1568,7 +1565,7 @@ class TestBroadcast:
         assert_raises(ValueError, rng.hypergeometric, ngood * 3, nbad, bad_nsample_one)
         assert_raises(ValueError, rng.hypergeometric, ngood * 3, nbad, bad_nsample_two)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.hypergeometric(ngood, nbad * 3, nsample)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.hypergeometric, bad_ngood, nbad * 3, nsample)
@@ -1576,7 +1573,7 @@ class TestBroadcast:
         assert_raises(ValueError, rng.hypergeometric, ngood, nbad * 3, bad_nsample_one)
         assert_raises(ValueError, rng.hypergeometric, ngood, nbad * 3, bad_nsample_two)
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.hypergeometric(ngood, nbad, nsample * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.hypergeometric, bad_ngood, nbad, nsample * 3)
@@ -1590,7 +1587,7 @@ class TestBroadcast:
         bad_p_two = [-1]
         desired = np.array([1, 1, 1])
 
-        rng = self.setSeed()
+        rng = random.RandomState(self.seed)
         actual = rng.logseries(p * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, rng.logseries, bad_p_one * 3)
