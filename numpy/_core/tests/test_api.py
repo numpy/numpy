@@ -168,7 +168,7 @@ def test___array___refcount():
             return self.val.__array__(dtype=dtype, copy=copy)
 
     # test all possible scenarios:
-    # dtype(none | same | different) x copy(true | false)
+    # dtype(none | same | different) x copy(true | false | none)
     dt = np.dtype(np.int32)
     old_refcount = sys.getrefcount(dt)
     np.array(MyArray(dt))
@@ -184,6 +184,9 @@ def test___array___refcount():
     np.array(MyArray(dt), dtype=dt2)
     assert_equal(old_refcount2, sys.getrefcount(dt2))
     np.array(MyArray(dt), dtype=dt2, copy=None)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+    with pytest.raises(ValueError):
+        np.array(MyArray(dt), dtype=dt2, copy=False)
     assert_equal(old_refcount2, sys.getrefcount(dt2))
 
 

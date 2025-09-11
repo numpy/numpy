@@ -951,6 +951,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 (PyObject *)self
         );
         if (new == NULL) {
+            Py_XDECREF(newtype);
             return NULL;
         }
         self = new;
@@ -982,6 +983,9 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return ret;
         } else { // copy == NPY_COPY_NEVER
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
+            // On error release a strong reference introduced by
+            // PyArray_DescrConverter2 in arg parsing.
+            Py_DECREF(newtype);
             Py_DECREF(self);
             return NULL;
         }
