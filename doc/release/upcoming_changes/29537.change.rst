@@ -1,7 +1,7 @@
-``unique_values`` for float and complex dtypes may return unsorted data
------------------------------------------------------------------------
-np.unique now supports hash‐based duplicate removal for float and complex dtypes.
-This enhancement extends the hash‐table algorithm to all floating types
-('f'), complex types ('c'), and their extended precision variants.
+``unique_values`` for complex dtypes may return unsorted data
+-------------------------------------------------------------
+np.unique now supports hash‐based duplicate removal for complex dtypes.
+This enhancement extends the hash‐table algorithm
+to all complex types ('c'), and their extended precision variants.
 The hash‐based method provides faster extraction of unique values
 but does not guarantee that the result will be sorted.
