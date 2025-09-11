@@ -1875,7 +1875,7 @@ described below.
 
 .. c:type:: int (PyArray_SortFuncWithContext)( \
                  PyArrayMethod_SortContext *context, \
-                 char *const *data, npy_intp length,
+                 const char *data, npy_intp length,
                  NpyAuxData *auxdata)
 
     A function to sort a contiguous buffer of data. The *data* is a pointer
@@ -1887,7 +1887,7 @@ described below.
 
 .. c:type:: int (PyArray_ArgFuncWithContext)( \
                  PyArrayMethod_SortContext *context, \
-                 char *const *data, npy_intp *tosort, npy_intp length, \
+                 const char *data, npy_intp *tosort, npy_intp length, \
                  NpyAuxData *auxdata)
 
     A function to argsort a contiguous buffer of data. The *data* is a
