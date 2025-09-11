@@ -2,7 +2,6 @@
 Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
-import string
 import sys
 import tempfile
 import warnings
@@ -12,9 +11,7 @@ import hypothesis
 import pytest
 
 import numpy
-import numpy as np
 from numpy._core._multiarray_tests import get_fpu_mode
-from numpy._core.tests._natype import get_stringdtype_dtype, pd_NA
 from numpy.testing._private.utils import NOGIL_BUILD
 
 try:
@@ -228,21 +225,3 @@ if HAVE_SCPDT:
         'numpy/random/_examples',
         'numpy/f2py/_backends/_distutils.py',
     ]
-
-
-@pytest.fixture(params=[True, False])
-def coerce(request):
-    return request.param
-
-
-@pytest.fixture(
-    params=["unset", None, pd_NA, np.nan, float("nan"), "__nan__"],
-    ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
-)
-def na_object(request):
-    return request.param
-
-
-@pytest.fixture()
-def dtype(na_object, coerce):
-    return get_stringdtype_dtype(na_object, coerce)

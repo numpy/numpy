@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy._core import _rational_tests
-from numpy._core.tests.string_testing import random_string_list
+from numpy._core.tests.test_stringdtype import random_unicode_string_list
 from numpy.testing import IS_64BIT, IS_WASM
 from numpy.testing._private.utils import run_threaded
 
@@ -218,12 +218,12 @@ def test_structured_threadsafety2():
     assert arr.dtype is dt
 
 
-def test_stringdtype_multithreaded_access_and_mutation(dtype):
+def test_stringdtype_multithreaded_access_and_mutation():
     # this test uses an RNG and may crash or cause deadlocks if there is a
     # threading bug
     rng = np.random.default_rng(0x4D3D3D3)
 
-    string_list = random_string_list()
+    string_list = random_unicode_string_list()
 
     def func(arr):
         rnd = rng.random()
@@ -246,7 +246,7 @@ def test_stringdtype_multithreaded_access_and_mutation(dtype):
             arr[:] = string_list
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        arr = np.array(string_list, dtype=dtype)
+        arr = np.array(string_list, dtype="T")
         futures = [tpe.submit(func, arr) for _ in range(500)]
 
         for f in futures:
