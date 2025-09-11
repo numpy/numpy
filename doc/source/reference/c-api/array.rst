@@ -1873,6 +1873,32 @@ described below.
    pointer. Currently this is used for zero-filling and clearing arrays storing
    embedded references.
 
+.. c:type:: int (PyArray_SortFuncWithContext)( \
+                 PyArrayMethod_SortContext *context, \
+                 char *const *data, npy_intp length,
+                 NpyAuxData *auxdata)
+
+    A function to sort a contiguous buffer of data. The *data* is a pointer
+    to the beginning of the continguous buffer containing *length* elements.
+    The *context* contains information about the data, including the
+    descriptor for the array. The ``NPY_DT_sort_functions`` DType API
+    structs contains pointers to functions of this type. Returns 0 on
+    success and -1 on failure.
+
+.. c:type:: int (PyArray_ArgFuncWithContext)( \
+                 PyArrayMethod_SortContext *context, \
+                 char *const *data, npy_intp *tosort, npy_intp length, \
+                 NpyAuxData *auxdata)
+
+    A function to argsort a contiguous buffer of data. The *data* is a
+    pointer to the beginning of the continguous buffer containing *length*
+    elements. The *tosort* is a pointer to an array of indices that must be
+    filled in with the indices that would sort the data. The *context*
+    contains information about the data, including the descriptor for the
+    array. The ``NPY_DT_argsort_functions`` DType API structs contains
+    pointers to functions of this type. Returns 0 on success and -1 on
+    failure.
+
 API Functions and Typedefs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -3536,6 +3562,70 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    force newly created arrays to have a newly created descriptor
    instance, no matter what input descriptor is provided by a user.
 
+.. c:macro:: NPY_DT_sort_functions
+
+.. c:type:: PyArrayDTypeMeta_SortFunctions
+
+    A struct containing function pointers for sorting implementations for
+    the dtype. This allows defining sorting implementations for each of the
+    sorting algorithms numpy implements.
+
+    .. code-block:: c
+
+         typedef struct {
+              PyArray_SortFuncWithContext *default_sort;
+              PyArray_SortFuncWithContext *stable_sort;
+              PyArray_SortFuncWithContext *default_descending_sort;
+              PyArray_SortFuncWithContext *stable_descending_sort;
+         } PyArrayDTypeMeta_SortFunctions;
+
+    .. c:member:: PyArray_SortFuncWithContext *default_sort
+
+        The default sort function for the dtype.
+
+    .. c:member:: PyArray_SortFuncWithContext *stable_sort
+
+        A stable sort function for the dtype.
+
+    .. c:member:: PyArray_SortFuncWithContext *default_descending_sort
+
+        The default descending sort function for the dtype.
+
+    .. c:member:: PyArray_SortFuncWithContext *stable_descending_sort
+
+        A stable descending sort function for the dtype.
+
+.. c:macro:: NPY_DT_argsort_functions
+
+    A struct containing function pointers for argsorting implementations for
+    the dtype. This allows defining argsorting implementations for each of the
+    sorting algorithms numpy implements.
+
+    .. code-block:: c
+    
+          typedef struct {
+                 PyArray_ArgSortFuncWithContext *default_argsort;
+                 PyArray_ArgSortFuncWithContext *stable_argsort;
+                 PyArray_ArgSortFuncWithContext *default_descending_argsort;
+                 PyArray_ArgSortFuncWithContext *stable_descending_argsort;
+          } PyArrayDTypeMeta_ArgSortFunctions;
+
+    .. c:member:: PyArray_ArgSortFuncWithContext *default_argsort
+
+        The default argsort function for the dtype.
+
+    .. c:member:: PyArray_ArgSortFuncWithContext *stable_argsort
+
+        A stable argsort function for the dtype.
+
+    .. c:member:: PyArray_ArgSortFuncWithContext *default_descending_argsort
+
+        The default descending argsort function for the dtype.
+
+    .. c:member:: PyArray_ArgSortFuncWithContext *stable_descending_argsort
+
+        A stable descending argsort function for the dtype.
+
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3605,13 +3695,16 @@ DType API slots but for now we have exposed the legacy
 
    An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
    defining custom sorting implementations for each of the sorting
-   algorithms numpy implements.
+   algorithms numpy implements. If `NPY_DT_get_sort_function` is defined,
+   it will be used instead. This slot may be deprecated in the future.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
 
    An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
    allows defining custom argsorting implementations for each of the
-   sorting algorithms numpy implements.
+   sorting algorithms numpy implements. If `NPY_DT_get_argsort_function`
+   is defined, it will be used instead. This slot may be deprecated in
+   the future.
 
 Macros and Static Inline Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
