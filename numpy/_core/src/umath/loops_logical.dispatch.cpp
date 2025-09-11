@@ -108,7 +108,6 @@ struct UnaryLogicalTraits;
 
 template<>
 struct UnaryLogicalTraits<logical_not_t> {
-    static constexpr bool is_not    = true;
     static constexpr auto scalar_op = std::equal_to<bool>{};
 
 #if NPY_HWY
@@ -121,7 +120,6 @@ struct UnaryLogicalTraits<logical_not_t> {
 
 template<>
 struct UnaryLogicalTraits<absolute_t> {
-    static constexpr bool is_not    = false;
     static constexpr auto scalar_op = std::not_equal_to<bool>{};
 
 #if NPY_HWY
