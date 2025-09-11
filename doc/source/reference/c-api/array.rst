@@ -1885,7 +1885,7 @@ described below.
     structs contains pointers to functions of this type. Returns 0 on
     success and -1 on failure.
 
-.. c:type:: int (PyArray_ArgFuncWithContext)( \
+.. c:type:: int (PyArray_ArgSortFuncWithContext)( \
                  PyArrayMethod_SortContext *context, \
                  char *data, npy_intp *tosort, npy_intp length, \
                  NpyAuxData *auxdata)
