@@ -962,6 +962,8 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (copy == NPY_COPY_ALWAYS) {
         if (newtype == NULL) {
             newtype = PyArray_DESCR(self);
+            // Take a new strong reference to compensate for
+            // PyArray_CastToType stealing a reference to newtype.
             Py_INCREF(newtype);
         }
         ret = PyArray_CastToType(self, newtype, 0);
@@ -969,6 +971,8 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return ret;
     } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
         if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            // If newtype isn't NULL then release a strong reference
+            // introduced by PyArray_DescrConverter2 in arg parsing.
             Py_XDECREF(newtype);
             return (PyObject *)self;
         }

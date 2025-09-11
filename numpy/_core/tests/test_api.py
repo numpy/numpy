@@ -167,6 +167,8 @@ def test___array___refcount():
         def __array__(self, dtype=None, copy=None):
             return self.val.__array__(dtype=dtype, copy=copy)
 
+    # test all possible scenarios:
+    # dtype(none | same | different) x copy(true | false)
     dt = np.dtype(np.int32)
     old_refcount = sys.getrefcount(dt)
     np.array(MyArray(dt))
