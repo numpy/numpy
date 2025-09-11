@@ -1,0 +1,21 @@
+#
+# Meson cross file for Android
+#
+# This file defines the toolchain for Android cross-compilation.
+# It assumes that environment variables like CC, CXX, CFLAGS, CXXFLAGS, etc.,
+# are set by the calling environment (e.g., a cibuildwheel before-build script)
+# to point to the correct NDK tools and include the correct target flags.
+#
+
+[binaries]
+pkg-config = 'pkg-config'
+
+[host_machine]
+system = 'android'
+cpu_family = 'aarch64' # This is a placeholder, the build environment should target the correct arch
+cpu = 'aarch64'
+endian = 'little'
+
+[properties]
+# This tells Meson not to try running compiled binaries on the host.
+needs_exe_wrapper = true
