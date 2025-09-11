@@ -2,8 +2,8 @@ import copy
 import itertools
 import os
 import pickle
-import sys
 import string
+import sys
 import tempfile
 
 import pytest
