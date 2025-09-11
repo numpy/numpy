@@ -74,8 +74,7 @@ class NAType:
         raise TypeError("boolean value of NA is ambiguous")
 
     def __hash__(self):
-        exponent = 31 if is_32bit else 61
-        return 2**exponent - 1
+        return 2**61 - 1
 
     def __reduce__(self):
         return "pd_NA"
@@ -114,33 +113,6 @@ class NAType:
     __abs__ = _create_unary_propagating_op("__abs__")
     __invert__ = _create_unary_propagating_op("__invert__")
 
-    # pow has special
-    def __pow__(self, other):
-        if other is pd_NA:
-            return pd_NA
-        elif isinstance(other, (numbers.Number, np.bool)):
-            if other == 0:
-                # returning positive is correct for +/- 0.
-                return type(other)(1)
-            else:
-                return pd_NA
-        elif util.is_array(other):
-            return np.where(other == 0, other.dtype.type(1), pd_NA)
-
-        return NotImplemented
-
-    def __rpow__(self, other):
-        if other is pd_NA:
-            return pd_NA
-        elif isinstance(other, (numbers.Number, np.bool)):
-            if other == 1:
-                return other
-            else:
-                return pd_NA
-        elif util.is_array(other):
-            return np.where(other == 1, other, pd_NA)
-        return NotImplemented
-
     # Logical ops using Kleene logic
 
     def __and__(self, other):
@@ -167,31 +139,6 @@ class NAType:
         return NotImplemented
 
     __rxor__ = __xor__
-
-    __array_priority__ = 1000
-    _HANDLED_TYPES = (np.ndarray, numbers.Number, str, np.bool)
-
-    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        types = self._HANDLED_TYPES + (NAType,)
-        for x in inputs:
-            if not isinstance(x, types):
-                return NotImplemented
-
-        if method != "__call__":
-            raise ValueError(f"ufunc method '{method}' not supported for NA")
-        result = maybe_dispatch_ufunc_to_dunder_op(
-            self, ufunc, method, *inputs, **kwargs
-        )
-        if result is NotImplemented:
-            # For a NumPy ufunc that's not a binop, like np.logaddexp
-            index = next(i for i, x in enumerate(inputs) if x is pd_NA)
-            result = np.broadcast_arrays(*inputs)[index]
-            if result.ndim == 0:
-                result = result.item()
-            if ufunc.nout > 1:
-                result = (pd_NA,) * ufunc.nout
-
-        return result
 
 
 pd_NA = NAType()
