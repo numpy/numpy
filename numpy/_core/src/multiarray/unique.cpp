@@ -70,19 +70,6 @@ int equal_integer(const T *lhs, const T *rhs, npy_bool equal_nan) {
     return *lhs == *rhs;
 }
 
-template <typename T>
-inline int equal_float(const T *lhs, const T *rhs, npy_bool equal_nan) {
-    int lhs_isnan = npy_isnan(*lhs);
-    int rhs_isnan = npy_isnan(*rhs);
-    if (lhs_isnan && rhs_isnan) {
-        return equal_nan;
-    }
-    if (lhs_isnan || rhs_isnan) {
-        return false;
-    }
-    return *lhs == *rhs;
-}
-
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 int equal_complex(const T *lhs, const T *rhs, npy_bool equal_nan) {
     S lhs_real = real(*lhs);
@@ -98,8 +85,8 @@ int equal_complex(const T *lhs, const T *rhs, npy_bool equal_nan) {
     if (lhs_isnan || rhs_isnan) {
         return false;
     }
-    return equal_float<S>(&lhs_real, &rhs_real, equal_nan) &&
-           equal_float<S>(&lhs_imag, &rhs_imag, equal_nan);
+    // Now both lhs and rhs are not NaN.
+    return (lhs_real == rhs_real) && (lhs_imag == rhs_imag);
 }
 
 template <typename T>
