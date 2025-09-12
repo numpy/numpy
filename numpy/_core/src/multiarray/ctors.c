@@ -1582,7 +1582,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         npy_free_coercion_cache(cache);
         return NULL;
     }
-    if (max_depth != 0 && ndim > max_depth) {
+    if (ndim > max_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         Py_DECREF(dtype);
