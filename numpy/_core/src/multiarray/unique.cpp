@@ -49,6 +49,8 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         return 0;
     }
 
+    // Now, equal_nan is false or neither of the values is not NaN.
+    // SO we don't need to worry about NaN here.
     size_t hval = std::hash<S>{}(value_real);
     #if NPY_SIZEOF_SIZE_T == 8
         /* multiply by the 64 bit FNV magic prime */
