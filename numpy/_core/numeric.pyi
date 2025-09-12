@@ -1320,7 +1320,7 @@ def astype(
 @overload
 def astype(
     x: ndarray[_ShapeT, dtype],
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     /,
     *,
     copy: py_bool = True,
