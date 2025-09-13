@@ -52,9 +52,9 @@ class TestRegression:
                   [(1, 1), (2, 2), (3, 3), None],
                   [1, (2, 2), (3, 3), None],
                   [(1, 1), 2, 3, None]]:
-            np.random.seed(12345)
+            rng = np.random.RandomState(12345)
             shuffled = list(t)
-            random.shuffle(shuffled)
+            rng.shuffle(shuffled)
             expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
             assert_array_equal(np.array(shuffled, dtype=object), expected)
 
@@ -129,9 +129,9 @@ class TestRegression:
         class N(np.ndarray):
             pass
 
-        np.random.seed(1)
+        rng = np.random.RandomState(1)
         orig = np.arange(3).view(N)
-        perm = np.random.permutation(orig)
+        perm = rng.permutation(orig)
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
@@ -141,8 +141,8 @@ class TestRegression:
             def __array__(self, dtype=None, copy=None):
                 return self.a
 
-        np.random.seed(1)
+        rng = np.random.RandomState(1)
         m = M()
-        perm = np.random.permutation(m)
+        perm = rng.permutation(m)
         assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
         assert_array_equal(m.__array__(), np.arange(5))
