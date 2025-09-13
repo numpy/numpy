@@ -91,7 +91,7 @@ def test_array_array():
     # instead we get a array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
-    # test array
+    # test __array__
     def custom__array__(self, dtype=None, copy=None):
         return np.array(100.0, dtype=dtype, copy=copy)
 
@@ -156,6 +156,39 @@ def test_array_array():
                  np.ones((1, 10), dtype=np.float64))
     assert_equal(np.array([(1.0,) * 10] * 10, dtype=np.float64),
                  np.ones((10, 10), dtype=np.float64))
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test___array___refcount():
+    class MyArray:
+        def __init__(self, dtype):
+            self.val = np.array(-1, dtype=dtype)
+
+        def __array__(self, dtype=None, copy=None):
+            return self.val.__array__(dtype=dtype, copy=copy)
+
+    # test all possible scenarios:
+    # dtype(none | same | different) x copy(true | false | none)
+    dt = np.dtype(np.int32)
+    old_refcount = sys.getrefcount(dt)
+    np.array(MyArray(dt))
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), dtype=dt)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), copy=None)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), dtype=dt, copy=None)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    dt2 = np.dtype(np.int16)
+    old_refcount2 = sys.getrefcount(dt2)
+    np.array(MyArray(dt), dtype=dt2)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+    np.array(MyArray(dt), dtype=dt2, copy=None)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+    with pytest.raises(ValueError):
+        np.array(MyArray(dt), dtype=dt2, copy=False)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
