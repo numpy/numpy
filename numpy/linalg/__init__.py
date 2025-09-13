@@ -76,6 +76,7 @@ Other matrix operations
 
    diagonal (Array API compatible)
    matrix_transpose (Array API compatible)
+   weighted_gram_matrix
 
 Exceptions
 ----------
