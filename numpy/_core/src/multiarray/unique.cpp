@@ -9,6 +9,7 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
