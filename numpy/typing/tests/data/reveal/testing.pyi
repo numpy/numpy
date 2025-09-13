@@ -172,8 +172,8 @@ assert_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=2), Non
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=2), npt.NDArray[Any])
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32), npt.NDArray[Any])
 
-assert_type(np.testing.assert_warns(RuntimeWarning), contextlib._GeneratorContextManager[None])
-assert_type(np.testing.assert_warns(RuntimeWarning, func3, 5), bool)
+assert_type(np.testing.assert_warns(RuntimeWarning), contextlib._GeneratorContextManager[None])  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+assert_type(np.testing.assert_warns(RuntimeWarning, func3, 5), bool)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
 def func4(a: int, b: str) -> bool: ...
 
