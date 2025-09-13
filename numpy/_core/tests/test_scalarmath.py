@@ -1070,6 +1070,12 @@ def test_longdouble_complex():
     assert 1j + x == 1 + 1j
 
 
+def test_clongdouble_precision():
+    # This tests that the precision of a long double is equivalent to the
+    # precision of the fields of a complex long double
+    s = "0.333333333333333333333333"
+    assert np.longdouble(s) == np.clongdouble(s).real
+
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
