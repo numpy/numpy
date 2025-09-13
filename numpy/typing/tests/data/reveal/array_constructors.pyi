@@ -235,7 +235,7 @@ assert_type(np.vstack([C, C]), npt.NDArray[Any])
 assert_type(np.hstack([A, A]), npt.NDArray[np.float64])
 assert_type(np.hstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 
-assert_type(np.stack([A, A]), npt.NDArray[np.float64]) 
+assert_type(np.stack([A, A]), npt.NDArray[np.float64])
 assert_type(np.stack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.stack([A, C]), npt.NDArray[Any])
 assert_type(np.stack([C, C]), npt.NDArray[Any])
