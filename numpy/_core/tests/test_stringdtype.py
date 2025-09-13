@@ -2,25 +2,64 @@ import copy
 import itertools
 import os
 import pickle
+import string
 import sys
 import tempfile
 
 import pytest
 
 import numpy as np
-from numpy._core.tests._natype import get_stringdtype_dtype as get_dtype, pd_NA
+from numpy._core.tests._natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.testing import IS_PYPY, assert_array_equal
 
 
+def random_unicode_string_list():
+    """Returns an array of 10 100-character strings containing random text"""
+    chars = list(string.ascii_letters + string.digits)
+    chars = np.array(chars, dtype="U1")
+    ret = np.random.choice(chars, size=100 * 10, replace=True)
+    return ret.view("U100")
+
+
+def get_dtype(na_object, coerce=True):
+    """Helper to work around pd_NA boolean behavior"""
+    # explicit is check for pd_NA because != with pd_NA returns pd_NA
+    if na_object is pd_NA or na_object != "unset":
+        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
+    else:
+        return np.dtypes.StringDType(coerce=coerce)
+
+
+@pytest.fixture(params=[True, False])
+def coerce(request):
+    """Coerce input to strings or raise an error for non-string input"""
+    return request.param
+
+
+@pytest.fixture(
+    params=["unset", None, pd_NA, np.nan, float("nan"), "__nan__"],
+    ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
+)
+def na_object(request):
+    """Possible values for the missing data sentinel"""
+    return request.param
+
+
+@pytest.fixture()
+def dtype(na_object, coerce):
+    """Cartesian project of missing data sentinel and string coercion options"""
+    return get_dtype(na_object, coerce)
+
 @pytest.fixture
 def string_list():
+    """Mix of short and long strings, some with unicode, some without"""
     return ["abc", "def", "ghi" * 10, "A¢☃€ 😊" * 100, "Abc" * 1000, "DEF"]
 
 
-# second copy for cast tests to do a cartesian product over dtypes
 @pytest.fixture(params=[True, False])
 def coerce2(request):
+    """Second copy of the coerce fixture for tests that need two instances"""
     return request.param
 
 
@@ -29,11 +68,13 @@ def coerce2(request):
     ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
 )
 def na_object2(request):
+    """Second copy of the na_object fixture for tests that need two instances"""
     return request.param
 
 
 @pytest.fixture()
 def dtype2(na_object2, coerce2):
+    """Second copy of the dtype fixture for tests that need two instances"""
     # explicit is check for pd_NA because != with pd_NA returns pd_NA
     if na_object2 is pd_NA or na_object2 != "unset":
         return StringDType(na_object=na_object2, coerce=coerce2)
@@ -266,12 +307,13 @@ class TestStringLikeCasts:
                 sarr.astype("S20")
 
 
-def test_additional_unicode_cast(random_string_list, dtype):
-    arr = np.array(random_string_list, dtype=dtype)
+def test_additional_unicode_cast(dtype):
+    string_list = random_unicode_string_list()
+    arr = np.array(string_list, dtype=dtype)
     # test that this short-circuits correctly
     assert_array_equal(arr, arr.astype(arr.dtype))
     # tests the casts via the comparison promoter
-    assert_array_equal(arr, arr.astype(random_string_list.dtype))
+    assert_array_equal(arr, arr.astype(string_list.dtype))
 
 
 def test_insert_scalar(dtype, string_list):
