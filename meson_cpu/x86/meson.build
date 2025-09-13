@@ -78,10 +78,11 @@ endif
 
 if compiler_id == 'msvc'
   cc_ver = cc.version()
-  MSVC_SSE4 = cpu_family == 'x86' ? ['/arch:SSE2'] : []
-  MSVC_SSE4 = cc_ver.version_compare('>=19.40') ? ['/arch:SSE4.2'] : MSVC_SSE4 
+  MSVC_SSE4 = cc_ver.version_compare('>=19.40') ? ['/arch:SSE4.2'] : []
+  # 32-bit MSVC does not support /arch:SSE4.2
+  MSVC_SSE4 = cpu_family == 'x86' ? ['/arch:SSE2'] : MSVC_SSE4
   MSVC_SSE4 = cc_ver.version_compare('>=19.30') ? MSVC_SSE4 + ['/fp:contract'] : MSVC_SSE4 
-  X86_V2.update(args: MSVC_SSE4)
+  X86_V2.update(args: MSVC_SSE4 + HWY_SSE4_FLAGS)
   clear_arch = '/arch:.*'
   X86_V3.update(args: {'val': '/arch:AVX2', 'match': clear_arch})
   # FIXME: After completing transition from universal intrinsics to Highway,
