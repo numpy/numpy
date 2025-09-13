@@ -110,7 +110,7 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _2Tuple[str | None] = ...,
     ) -> Any: ...
@@ -124,7 +124,7 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _2Tuple[str | None] = ...,
     ) -> NDArray[Any]: ...
@@ -138,7 +138,7 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _2Tuple[str | None] = ...,
     ) -> Any: ...
@@ -242,7 +242,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         self,
         array: ArrayLike,
         axis: _ShapeLike | None = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: NDArray[Any] | EllipsisType | None = ...,
         keepdims: bool = ...,
         initial: Any = ...,
@@ -253,7 +253,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         self,
         array: ArrayLike,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: NDArray[Any] | EllipsisType | None = ...,
     ) -> NDArray[Any]: ...
 
@@ -262,7 +262,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         array: ArrayLike,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: NDArray[Any] | EllipsisType | None = ...,
     ) -> NDArray[Any]: ...
 
@@ -353,7 +353,7 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _3Tuple[str | None] = ...,
     ) -> _2Tuple[Any]: ...
@@ -369,7 +369,7 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _3Tuple[str | None] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
@@ -385,7 +385,7 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _3Tuple[str | None] = ...,
     ) -> _2Tuple[Any]: ...
@@ -428,7 +428,7 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _4Tuple[str | None] = ...,
     ) -> _2Tuple[Any]: ...
@@ -445,7 +445,7 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _4Tuple[str | None] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
@@ -486,7 +486,7 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]
         *,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _3Tuple[str | None] = ...,
         axes: list[_2Tuple[SupportsIndex]] = ...,
@@ -501,7 +501,7 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]
         *,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         subok: bool = ...,
         signature: str | _3Tuple[str | None] = ...,
         axes: list[_2Tuple[SupportsIndex]] = ...,
@@ -672,7 +672,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: _ShapeLike | None,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         out: _ArrayT,
         keepdims: bool = ...,
         initial: _ScalarLike_co = ...,
@@ -684,7 +684,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: _ShapeLike | None = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         *,
         out: _ArrayT | tuple[_ArrayT],
         keepdims: bool = ...,
@@ -697,7 +697,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: _ShapeLike | None = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: EllipsisType | None = ...,
         *,
         keepdims: Literal[True],
@@ -710,7 +710,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: _ShapeLike | None = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: EllipsisType | None = ...,
         keepdims: bool = ...,
         initial: _ScalarLike_co = ...,
@@ -724,7 +724,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         array: ArrayLike,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         out: _ArrayT,
     ) -> _ArrayT: ...
     @overload
@@ -734,7 +734,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         array: ArrayLike,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         *,
         out: _ArrayT | tuple[_ArrayT],
     ) -> _ArrayT: ...
@@ -745,7 +745,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         array: ArrayLike,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: EllipsisType | None = ...,
     ) -> NDArray[np.object_]: ...
     @overload
@@ -755,7 +755,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         array: _SupportsArrayUFunc,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: NDArray[Any] | tuple[NDArray[Any]] | EllipsisType | None = ...,
     ) -> Any: ...
 
@@ -765,7 +765,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: SupportsIndex,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         out: _ArrayT,
     ) -> _ArrayT: ...
     @overload
@@ -774,7 +774,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         *,
         out: _ArrayT | tuple[_ArrayT],
     ) -> _ArrayT: ...
@@ -784,7 +784,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         array: ArrayLike,
         axis: SupportsIndex = ...,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         out: EllipsisType | None = ...,
     ) -> NDArray[np.object_]: ...
 

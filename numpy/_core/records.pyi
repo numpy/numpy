@@ -77,7 +77,7 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         *,
-        formats: DTypeLike,
+        formats: DTypeLike | None,
         names: str | Sequence[str] | None = None,
         titles: str | Sequence[str] | None = None,
         byteorder: _ByteOrder | None = None,
@@ -88,7 +88,7 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         subtype,
         shape: _ShapeLike,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         buf: _SupportsBuffer | None = None,
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
@@ -115,7 +115,7 @@ class format_parser:
     def __init__(
         self,
         /,
-        formats: DTypeLike,
+        formats: DTypeLike | None,
         names: str | Sequence[str] | None,
         titles: str | Sequence[str] | None,
         aligned: bool = False,
@@ -140,7 +140,7 @@ def fromarrays(
     dtype: None = None,
     shape: _ShapeLike | None = None,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -164,7 +164,7 @@ def fromrecords(
     dtype: None = None,
     shape: _ShapeLike | None = None,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -175,7 +175,7 @@ def fromrecords(
 @overload
 def fromstring(
     datastring: _SupportsBuffer,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
     formats: None = None,
@@ -191,7 +191,7 @@ def fromstring(
     shape: _ShapeLike | None = None,
     offset: int = 0,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -202,7 +202,7 @@ def fromstring(
 @overload
 def fromfile(
     fd: StrOrBytesPath | _SupportsReadInto,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
     formats: None = None,
@@ -218,7 +218,7 @@ def fromfile(
     shape: _ShapeLike | None = None,
     offset: int = 0,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -243,7 +243,7 @@ def array(
 @overload
 def array(
     obj: ArrayLike,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
     strides: tuple[int, ...] | None = None,
@@ -262,7 +262,7 @@ def array(
     offset: int = 0,
     strides: tuple[int, ...] | None = None,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -272,7 +272,7 @@ def array(
 @overload
 def array(
     obj: None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     shape: _ShapeLike,
     offset: int = 0,
     strides: tuple[int, ...] | None = None,
@@ -291,7 +291,7 @@ def array(
     shape: _ShapeLike,
     offset: int = 0,
     strides: tuple[int, ...] | None = None,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,
@@ -301,7 +301,7 @@ def array(
 @overload
 def array(
     obj: _SupportsReadInto,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
     strides: tuple[int, ...] | None = None,
@@ -320,7 +320,7 @@ def array(
     offset: int = 0,
     strides: tuple[int, ...] | None = None,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike | None,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
     aligned: bool = False,

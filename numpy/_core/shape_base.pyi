@@ -82,7 +82,7 @@ def vstack(
 def vstack(
     tup: Sequence[ArrayLike],
     *,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 
@@ -104,7 +104,7 @@ def hstack(
 def hstack(
     tup: Sequence[ArrayLike],
     *,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 
@@ -132,7 +132,7 @@ def stack(
     axis: SupportsIndex = 0,
     out: None = None,
     *,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 @overload

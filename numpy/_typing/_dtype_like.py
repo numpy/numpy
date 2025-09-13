@@ -97,7 +97,7 @@ _DTypeLikeObject: TypeAlias = type[object] | _DTypeLike[np.object_] | _ObjectCod
 
 # Anything that can be coerced into numpy.dtype.
 # Reference: https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
-DTypeLike: TypeAlias = _DTypeLike[Any] | _VoidDTypeLike | str | None
+DTypeLike: TypeAlias = _DTypeLike[Any] | _VoidDTypeLike | str
 
 # NOTE: while it is possible to provide the dtype as a dict of
 # dtype-like objects (e.g. `{'field1': ..., 'field2': ..., ...}`),

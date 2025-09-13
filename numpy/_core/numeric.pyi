@@ -1221,19 +1221,19 @@ def indices(
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     sparse: L[False] = False,
 ) -> NDArray[Any]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     sparse: L[True],
 ) -> tuple[NDArray[Any], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     *,
     sparse: L[True],
 ) -> tuple[NDArray[Any], ...]: ...
@@ -1242,7 +1242,7 @@ def fromfunction(
     function: Callable[..., _T],
     shape: Sequence[int],
     *,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     like: _SupportsArrayFunc | None = None,
     **kwargs: Any,
 ) -> _T: ...
@@ -1320,7 +1320,7 @@ def astype(
 @overload
 def astype(
     x: ndarray[_ShapeT, dtype],
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     /,
     *,
     copy: py_bool = True,
