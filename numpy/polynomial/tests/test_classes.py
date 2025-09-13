@@ -308,6 +308,7 @@ def test_floordiv(Poly):
         assert_raises(TypeError, op.floordiv, p1, Polynomial([0]))
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_truediv(Poly):
     # true division is valid only if the denominator is a Number and
     # not a python bool.

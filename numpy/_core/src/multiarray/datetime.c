@@ -2543,6 +2543,15 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 meta->base = NPY_FR_GENERIC;
                 meta->num = 1;
             }
+            /* If output is NaT, skip this warning. */
+            if(*out != NPY_DATETIME_NAT && meta->base == NPY_FR_GENERIC) {
+                if (DEPRECATE_FUTUREWARNING(
+                            "Using 'generic' unit for NumPy timedelta is deprecated, "
+                            "and will raise an error in the future. Please use a "
+                            "specific units instead.") < 0) {
+                    return -1;
+                }
+            }
 
             return 0;
         }
@@ -2553,6 +2562,14 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (meta->base == NPY_FR_ERROR) {
             meta->base = NPY_DATETIME_DEFAULTUNIT;
             meta->num = 1;
+        }
+        if (meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE_FUTUREWARNING(
+                        "Using 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "Please use a specific units instead.") < 0) {
+                return -1;
+            }
         }
 
         *out = PyLong_AsLongLong(obj);
