@@ -563,7 +563,10 @@ way, the operation performed is
 .. math::
    :nowrap:
 
-   $$o_k = \begin{cases} & i[0] & k=0 \\\ & i[k] \text{ <op> }o_{k-1} & k=1,\ldots, N \text{.} \end{cases}$$
+   \begin{align*}
+   o & =  \quad i[0] \quad  &  \\
+   o & =  i[k]\textrm{ <op> }o & k=1,\ldots, N.
+   \end{align*}
 
 where :math:`N+1` is the number of elements in the input, :math:`i`,
 :math:`o` is the output, and :math:`i[k]` is the
