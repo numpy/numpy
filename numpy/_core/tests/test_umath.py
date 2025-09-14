@@ -1,6 +1,7 @@
 import fnmatch
 import itertools
 import operator
+import os
 import platform
 import sys
 import warnings
@@ -4342,6 +4343,10 @@ class TestComplexFunctions:
         reason="Older glibc versions are imprecise (maybe passes with SIMD?)"
     )
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
+    @pytest.mark.skipif(
+        os.environ.get("CIBW_ARCHS_MACOS") == "x86_64",
+        reason="Test fails when running on arm64 under Rosetta in wheel build jobs",
+    )
     @pytest.mark.parametrize('dtype', [
         np.complex64, np.complex128, np.clongdouble
     ])

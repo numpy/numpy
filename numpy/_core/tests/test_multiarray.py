@@ -1030,6 +1030,10 @@ class TestCreation:
             assert_equal(np.count_nonzero(d), 0)
 
     @pytest.mark.slow
+    @pytest.mark.skipif(
+        os.environ.get("CIBW_ARCHS_MACOS") == "x86_64",
+        reason="Test fails when running on arm64 under Rosetta in wheel build jobs",
+    )
     def test_zeros_big(self):
         # test big array as they might be allocated different by the system
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']

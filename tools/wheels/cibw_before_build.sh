@@ -32,8 +32,17 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     echo pkgconf_path is $pkgconf_path, OPENBLAS is ${OPENBLAS}
     rm -rf $pkgconf_path
     mkdir -p $pkgconf_path
-    python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt
-    python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
+
+    if [[ $CIBW_ARCHS_MACOS == "x86_64" ]]; then
+        # We're cross compiling; the before-build hook isn't using Rosetta (see cibuildwheel#2592)
+        mkdir host-env
+        python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt --platform macosx_10_13_x86_64 --only-binary :all: -U --target ./host-env
+	# Use a handwritten .pc file, because we can't run the cross Python to generate it
+	cp $PROJECT_DIR/tools/ci/scipy-openblas-macos-x86-64.pc $pkgconf_path/scipy-openblas.pc
+    else
+        python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt
+        python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
+    fi
 
     # Copy scipy-openblas DLL's to a fixed location so we can point delvewheel
     # at it in `repair_windows.sh` (needed only on Windows because of the lack

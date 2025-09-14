@@ -1,0 +1,12 @@
+libdir=/Users/runner/work/numpy/numpy/host-env/scipy_openblas64/lib
+includedir=/Users/runner/work/numpy/numpy/host-env/scipy_openblas64/include
+openblas_config=Dont-trust-this-because-hardcoded-pcfile
+version=0.3.30
+extralib=-lm -lpthread -lgfortran -lquadmath -L${libdir} -lscipy_openblas64_
+Name: openblas
+Description: OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version
+Version: ${version}
+URL: https://github.com/xianyi/OpenBLAS
+Libs: ${libdir}/libscipy_openblas64_.dylib -Wl,-rpath,${libdir}
+Libs.private: ${extralib}
+Cflags: -I${includedir} -DBLAS_SYMBOL_PREFIX=scipy_ -DBLAS_SYMBOL_SUFFIX=64_ -DHAVE_BLAS_ILP64 -DOPENBLAS_ILP64_NAMING_SCHEME
