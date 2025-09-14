@@ -81,7 +81,7 @@
 
 /* half-to-double, copied from CPP to allow inlining */
 
-NPY_FINLINE
+static NPY_GCC_OPT_3
 uint64_t ToDoubleBits(uint16_t h)
 {
     uint16_t h_exp = (h&0x7c00u);
@@ -1046,7 +1046,7 @@ static GCC_CAST_OPT_LEVEL int
 
 
 #if !(@is_bool2@ && @same_value@)
-NPY_FINLINE int
+static GCC_CAST_OPT_LEVEL int
 @prefix@_cast_@name1@_to_@name2@_@func_name@(
         PyArrayMethod_Context *context, char *const *args,
         const npy_intp *dimensions, const npy_intp *strides,
