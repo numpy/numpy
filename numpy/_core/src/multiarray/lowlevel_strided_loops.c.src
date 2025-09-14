@@ -125,8 +125,7 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
                              : "wa"(h));
         return f64;
     #elif defined(__ARM_FP16_FORMAT_IEEE)
-        return double((__fp16)(h));
-(
+        return (double)((__fp16)(h));
     #else
         return (double)(ToDoubleBits(h));
     #endif
