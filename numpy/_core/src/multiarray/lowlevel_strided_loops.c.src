@@ -81,7 +81,7 @@
 
 /* half-to-double, copied from CPP to allow inlining */
 
-inline
+NPY_FINLINE
 uint64_t ToDoubleBits(uint16_t h)
 {
     uint16_t h_exp = (h&0x7c00u);
@@ -112,20 +112,19 @@ uint64_t ToDoubleBits(uint16_t h)
     }
 }
 
-inline
+NPY_FINLINE
 npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
+    /*
+     * Use npymath versions for all the special cases, only inline the
+     * x86_64 non-intrinsic case. Someday we will rewrite this in CPP and
+     * can then explore inlining more
+     */
     #if defined(NPY_HAVE_AVX512FP16)
-        double ret;
-        _mm_store_sd(&ret, _mm_cvtph_pd(_mm_castsi128_ph(_mm_cvtsi32_si128(h))));
-        return ret;
+        return npy_halfbits_to_doublebits(h);
     #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
-        double f64;
-        __asm__ __volatile__("xscvhpdp %x0,%x1"
-                             : "=wa"(f64)
-                             : "wa"(h));
-        return f64;
+        return npy_halfbits_to_doublebits(h);
     #elif defined(__ARM_FP16_FORMAT_IEEE)
-        return (double)((__fp16)(h));
+        return npy_halfbits_to_doublebits(h);
     #else
         return (double)(ToDoubleBits(h));
     #endif
