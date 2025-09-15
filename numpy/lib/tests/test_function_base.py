@@ -1186,8 +1186,8 @@ class TestGradient:
         assert_(np.all(num_error < 0.03) == True)
 
         # test with unevenly spaced
-        np.random.seed(0)
-        x = np.sort(np.random.random(10))
+        rng = np.random.default_rng(0)
+        x = np.sort(rng.random(10))
         y = 2 * x ** 3 + 4 * x ** 2 + 2 * x
         analytical = 6 * x ** 2 + 8 * x + 2
         num_error = np.abs((np.gradient(y, x, edge_order=2) / analytical) - 1)
