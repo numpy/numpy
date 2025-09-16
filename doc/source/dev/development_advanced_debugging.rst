@@ -242,7 +242,7 @@ Use together with ``spin``
 
 The ``spin`` `development workflow tool
 <https://github.com/scientific-python/spin>`_. has built-in support for working
-with both ``gdb`` and ``ldb`` via the ``spin gdb`` and ``spin lldb`` commands.
+with both ``gdb`` and ``lldb`` via the ``spin gdb`` and ``spin lldb`` commands.
 
 For both debuggers, it's advisable to build NumPy in either the ``debug`` or
 ``debugoptimized`` meson build profile. To use ``debug`` you can pass the option
@@ -256,8 +256,8 @@ You can pass additional arguments to `meson setup
 <https://mesonbuild.com/Builtin-options.html>`_ besides ``buildtype`` using the
 same positional argument syntax for ``spin build``.
 
-Let's say you have a test script named `test.py` that lives in a ``test`` folder
-in the same directory as the NumPy source checking. You could execute the test
+Let's say you have a test script named ``test.py`` that lives in a ``test`` folder
+in the same directory as the NumPy source checkout. You could execute the test
 script using the ``spin`` build of NumPy with the following incantation:
 
 .. code-block:: bash
