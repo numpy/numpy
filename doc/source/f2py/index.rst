@@ -109,9 +109,6 @@ following template:
 For more information on writing NumPy ufunc extensions, see the
 official NumPy documentation: https://numpy.org/doc/stable/reference/c-api.ufunc.html
 
-You can also refer to SciPy's Meson build files for real-world
-examples: https://github.com/scipy/scipy/tree/main/meson.build
-
 .. toctree::
    :maxdepth: 3
 
