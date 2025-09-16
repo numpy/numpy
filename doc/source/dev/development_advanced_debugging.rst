@@ -229,16 +229,16 @@ crash. The call stack often provides valuable context to understand the nature
 of a crash. C debuggers are also very useful during development, allowing
 interactive debugging in the C implementation of NumPy.
 
-The NumPy developers often use both ``gdb`` and ``lldb`` to debug Numpy. It does
-not matter which debugger you use - although on a Mac it is often far easier to
-use ``lldb`` than ``gdb``. That said, they have disjoint user interfaces, so you
-will need to learn how to use whichever one you land on. The ``gdb`` to ``lldb``
-`command map <https://lldb.llvm.org/use/map.html>`_ is a convnient reference for
-how to accomplish common recipes in both debuggers.
+The NumPy developers often use both ``gdb`` and ``lldb`` to debug Numpy. As a
+rule of thumb, ``gdb`` is often easier to use on Linux while ``lldb`` is easier
+to use on a Mac environment. They have disjoint user interfaces, so you will need to
+learn how to use whichever one you land on. The ``gdb`` to ``lldb`` `command map
+<https://lldb.llvm.org/use/map.html>`_ is a convnient reference for how to
+accomplish common recipes in both debuggers.
 
 
-Use together with ``spin``
---------------------------
+Building With Debug Symbols
+---------------------------
 
 The ``spin`` `development workflow tool
 <https://github.com/scientific-python/spin>`_. has built-in support for working
@@ -252,11 +252,16 @@ via ``spin build``:
 
    spin build -- -Dbuildtype=debug
 
+to use ``debugoptimized`` you're pass ``-Dbuildtype=debugoptimized`` instead.
+
 You can pass additional arguments to `meson setup
 <https://mesonbuild.com/Builtin-options.html>`_ besides ``buildtype`` using the
 same positional argument syntax for ``spin build``.
 
-Let's say you have a test script named ``test.py`` that lives in a ``test`` folder
+Running a Test Script
+---------------------
+
+Let's say you have a test script named `test.py` that lives in a ``test`` folder
 in the same directory as the NumPy source checkout. You could execute the test
 script using the ``spin`` build of NumPy with the following incantation:
 
@@ -303,7 +308,41 @@ nothing and then calls ``os.kill`` on the Python process with the ``SIGUSR1``
 signal. This causes the signal handler to fire and critically also causes both
 ``gdb`` and ``lldb`` to halt execution inside of the ``kill`` syscall.
 
-Since the ``os.kill`` call happens after the ``numpy`` module is already fully
+If you run ``lldb`` you should see output something like this:
+
+.. code-block::
+
+   Process 67365 stopped
+    * thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGUSR1
+        frame #0: 0x000000019c4b9da4 libsystem_kernel.dylib`__kill + 8
+    libsystem_kernel.dylib`__kill:
+    ->  0x19c4b9da4 <+8>:  b.lo   0x19c4b9dc4    ; <+40>
+        0x19c4b9da8 <+12>: pacibsp
+        0x19c4b9dac <+16>: stp    x29, x30, [sp, #-0x10]!
+        0x19c4b9db0 <+20>: mov    x29, sp
+    Target 0: (python3.13) stopped.
+    (lldb) bt
+    * thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGUSR1
+      * frame #0: 0x000000019c4b9da4 libsystem_kernel.dylib`__kill + 8
+        frame #1: 0x000000010087f5c4 libpython3.13.dylib`os_kill + 104
+        frame #2: 0x000000010071374c libpython3.13.dylib`cfunction_vectorcall_FASTCALL + 276
+        frame #3: 0x00000001006c1e3c libpython3.13.dylib`PyObject_Vectorcall + 88
+        frame #4: 0x00000001007edd1c libpython3.13.dylib`_PyEval_EvalFrameDefault + 23608
+        frame #5: 0x00000001007e7e6c libpython3.13.dylib`PyEval_EvalCode + 252
+        frame #6: 0x0000000100852944 libpython3.13.dylib`run_eval_code_obj + 180
+        frame #7: 0x0000000100852610 libpython3.13.dylib`run_mod + 220
+        frame #8: 0x000000010084fa4c libpython3.13.dylib`_PyRun_SimpleFileObject + 868
+        frame #9: 0x000000010084f400 libpython3.13.dylib`_PyRun_AnyFileObject + 160
+        frame #10: 0x0000000100874ab8 libpython3.13.dylib`pymain_run_file + 336
+        frame #11: 0x0000000100874324 libpython3.13.dylib`Py_RunMain + 1516
+        frame #12: 0x000000010087459c libpython3.13.dylib`pymain_main + 324
+        frame #13: 0x000000010087463c libpython3.13.dylib`Py_BytesMain + 40
+        frame #14: 0x000000019c152b98 dyld`start + 6076
+   (lldb)
+
+As you can see, the C stack trace is inside of the ``kill`` syscall and an
+``lldb`` prompt is active, allowing interactively setting breakpoints. Since the
+``os.kill`` call happens after the ``numpy`` module is already fully
 initialized, this means any breakpoints set inside of ``kill`` will happen
 *after* ``numpy`` is finished initializing.
 
@@ -410,7 +449,7 @@ the sanitizer as an option. For example, with address sanitizer:
 You may see memory leaks coming from the Python interpreter, particularly on
 MacOS. If the memory leak reports are not useful, you can disable leak detection
 by passing ``detect_leaks=0`` in ``ASAN_OPTIONS``. You can pass more than one
-option using a comma-delimited list, like this:
+option using a colon-delimited list, like this:
 
 .. code-block:: bash
 
