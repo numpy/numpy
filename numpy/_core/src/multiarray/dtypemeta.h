@@ -67,6 +67,7 @@ typedef struct {
      * parameters, if any, as the operand dtype.
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
+    PyArrayDTypeMeta_GetFinfo *get_finfo;
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
@@ -89,7 +90,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 11
+#define NPY_NUM_DTYPE_SLOTS 12
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -102,6 +103,8 @@ typedef struct {
 #define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
 #define NPY_DT_is_numeric(dtype) (((dtype)->flags & NPY_DT_NUMERIC) != 0)
 #define NPY_DT_is_user_defined(dtype) (((dtype)->type_num == -1))
+#define NPY_DT_CALL_get_finfo(dtype) \
+    NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_finfo(dtype)
 
 /*
  * Macros for convenient classmethod calls, since these require

@@ -3419,6 +3419,31 @@ arraydescr_class_getitem(PyObject *cls, PyObject *args)
     return Py_GenericAlias(cls, args);
 }
 
+PyObject * _is_user_dtype(PyObject *self, PyObject *Py_UNUSED(ignored)) {
+    if (!PyArray_DescrCheck(self)) {
+        PyErr_SetString(PyExc_TypeError, "_is_user_dtype should be called on a dtype instance");
+        return NULL;
+    }
+    return PyBool_FromLong(NPY_DT_is_user_defined((PyArray_Descr *)self));
+}
+
+PyObject * _get_user_def_finfo(PyObject *self, PyObject *Py_UNUSED(ignored)) {
+    if (!PyArray_DescrCheck(self)) {
+        PyErr_SetString(PyExc_TypeError, "_get_finfo should be called on a dtype instance");
+        return NULL;
+    }
+    if (!NPY_DT_is_user_defined((PyArray_Descr *)self)) {
+        PyErr_SetString(PyExc_TypeError, "_get_finfo should be called on a user-defined dtype");
+        return NULL;
+    }
+    PyObject* finfo_obj = NPY_DT_CALL_get_finfo((PyArray_Descr *)self);
+    if (finfo_obj == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "User DType needs to register NPY_DT_get_finfo slot");
+        return NULL;
+    }
+    return finfo_obj;
+}
+
 static PyMethodDef arraydescr_methods[] = {
     /* for pickling */
     {"__reduce__",
@@ -3434,6 +3459,18 @@ static PyMethodDef arraydescr_methods[] = {
     {"__class_getitem__",
         (PyCFunction)arraydescr_class_getitem,
         METH_CLASS | METH_O, NULL},
+    {
+      "_is_user_dtype", 
+      (PyCFunction)_is_user_dtype,
+      METH_NOARGS, 
+      NULL
+    },
+    {
+      "_get_finfo",
+      (PyCFunction)_get_user_def_finfo,
+      METH_NOARGS, 
+      NULL
+    },
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 

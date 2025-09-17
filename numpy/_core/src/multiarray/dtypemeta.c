@@ -179,7 +179,7 @@ dtypemeta_initialize_struct_from_spec(
     DType->dt_slots = PyMem_Calloc(1, sizeof(NPY_DType_Slots));
     if (DType->dt_slots == NULL) {
         return -1;
-    }
+  }
 
     /* Set default values (where applicable) */
     NPY_DT_SLOTS(DType)->discover_descr_from_pyobject =
@@ -195,6 +195,7 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
     NPY_DT_SLOTS(DType)->finalize_descr = NULL;
+    NPY_DT_SLOTS(DType)->get_finfo = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
