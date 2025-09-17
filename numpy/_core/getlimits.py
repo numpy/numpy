@@ -516,7 +516,7 @@ class finfo:
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
-        
+
         if dtype._is_user_dtype() and issubclass(dtype.type, numeric.inexact):
             finfo = dtype._get_finfo()
             obj = object.__new__(cls)._init_from_finfo_obj(dtype, finfo)
@@ -577,7 +577,7 @@ class finfo:
         self._str_smallest_normal = machar._str_smallest_normal.strip()
         self._str_smallest_subnormal = machar._str_smallest_subnormal.strip()
         return self
-    
+
     def _init_from_finfo_obj(self, dtype, finfo_obj):
         self.dtype = numeric.dtype(dtype)
         self.precision = finfo_obj.get('precision')
