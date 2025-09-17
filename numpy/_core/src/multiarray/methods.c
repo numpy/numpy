@@ -934,6 +934,11 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    if (newtype == NULL) {
+        newtype = PyArray_DESCR(self);
+        Py_INCREF(newtype);  // newtype is owned.
+    }
+
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *new;
@@ -951,6 +956,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 (PyObject *)self
         );
         if (new == NULL) {
+            Py_DECREF(newtype);
             return NULL;
         }
         self = new;
@@ -960,22 +966,21 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (copy == NPY_COPY_ALWAYS) {
-        if (newtype == NULL) {
-            newtype = PyArray_DESCR(self);
-        }
-        ret = PyArray_CastToType(self, newtype, 0);
+        ret = PyArray_CastToType(self, newtype, 0);  // steals newtype reference
         Py_DECREF(self);
         return ret;
     } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
-        if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+        if (PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            Py_DECREF(newtype);
             return (PyObject *)self;
         }
         if (copy == NPY_COPY_IF_NEEDED) {
-            ret = PyArray_CastToType(self, newtype, 0);
+            ret = PyArray_CastToType(self, newtype, 0);  // steals newtype reference.
             Py_DECREF(self);
             return ret;
         } else { // copy == NPY_COPY_NEVER
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
+            Py_DECREF(newtype);
             Py_DECREF(self);
             return NULL;
         }
