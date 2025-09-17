@@ -980,7 +980,6 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return ret;
         } else { // copy == NPY_COPY_NEVER
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
-            // On error release a strong reference.
             Py_DECREF(newtype);
             Py_DECREF(self);
             return NULL;
