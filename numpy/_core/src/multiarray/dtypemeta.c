@@ -195,7 +195,7 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
     NPY_DT_SLOTS(DType)->finalize_descr = NULL;
-    NPY_DT_SLOTS(DType)->get_finfo = NULL;
+    NPY_DT_SLOTS(DType)->get_dtype_info = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;

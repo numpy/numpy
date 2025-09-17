@@ -379,7 +379,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
-#define NPY_DT_get_finfo 12
+#define NPY_DT_get_dtype_info 12
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -491,10 +491,27 @@ typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
 /*
- * Function to compute finfo for a custom dtype.
- * Should return a Python object with finfo attributes (precision, eps, max, etc.)
- * or NULL to fall back to default behavior.
+ * Enum for different types of dtype information that can be requested.
  */
-typedef PyObject *(PyArrayDTypeMeta_GetFinfo)(PyArray_Descr *);
+typedef enum {
+    NPY_DTYPE_INFO_FLOAT = 0,    /* For finfo() - floating point parameters */
+    NPY_DTYPE_INFO_INTEGER = 1,  /* For iinfo() - integer parameters (not implemented) */
+    NPY_DTYPE_INFO_GENERIC = 2   /* For generic dtype info (not implemented) */
+} NPY_DTYPE_INFO_TYPE;
+
+/*
+ * Function to compute dtype information for custom dtypes.
+ * 
+ * @param descr: The dtype descriptor
+ * @param info_type: The type of information requested (float, integer, etc.)
+ * 
+ * Should return a Python object with appropriate attributes based on info_type:
+ * - For NPY_DTYPE_INFO_FLOAT: finfo attributes (precision, eps, max, etc.)
+ * - For NPY_DTYPE_INFO_INTEGER: iinfo attributes (min, max, etc.) - not implemented yet
+ * - For NPY_DTYPE_INFO_GENERIC: generic dtype info - not implemented yet
+ * 
+ * Returns NULL to fall back to default behavior or on error.
+ */
+typedef PyObject *(PyArrayDTypeMeta_GetDTypeInfo)(PyArray_Descr *, NPY_DTYPE_INFO_TYPE);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

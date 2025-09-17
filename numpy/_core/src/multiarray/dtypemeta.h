@@ -67,7 +67,7 @@ typedef struct {
      * parameters, if any, as the operand dtype.
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
-    PyArrayDTypeMeta_GetFinfo *get_finfo;
+    PyArrayDTypeMeta_GetDTypeInfo *get_dtype_info;
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
@@ -103,8 +103,8 @@ typedef struct {
 #define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
 #define NPY_DT_is_numeric(dtype) (((dtype)->flags & NPY_DT_NUMERIC) != 0)
 #define NPY_DT_is_user_defined(dtype) (((dtype)->type_num == -1))
-#define NPY_DT_CALL_get_finfo(dtype) \
-    NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_finfo(dtype)
+#define NPY_DT_CALL_get_dtype_info(dtype, info_type) \
+    NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_dtype_info(dtype, info_type)
 
 /*
  * Macros for convenient classmethod calls, since these require

@@ -3436,9 +3436,9 @@ PyObject * _get_user_def_finfo(PyObject *self, PyObject *Py_UNUSED(ignored)) {
         PyErr_SetString(PyExc_TypeError, "_get_finfo should be called on a user-defined dtype");
         return NULL;
     }
-    PyObject* finfo_obj = NPY_DT_CALL_get_finfo((PyArray_Descr *)self);
+    PyObject* finfo_obj = NPY_DT_CALL_get_dtype_info((PyArray_Descr *)self, NPY_DTYPE_INFO_FLOAT);
     if (finfo_obj == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "User DType needs to register NPY_DT_get_finfo slot");
+        PyErr_SetString(PyExc_RuntimeError, "User DType needs to register NPY_DT_get_dtype_info slot");
         return NULL;
     }
     return finfo_obj;
