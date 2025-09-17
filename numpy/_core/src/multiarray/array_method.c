@@ -39,6 +39,7 @@
 #include "convert_datatype.h"
 #include "common.h"
 #include "numpy/ufuncobject.h"
+#include "dtype_transfer.h"
 
 
 /*
@@ -184,12 +185,17 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting) {
+    switch ((int)spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
         case NPY_SAME_KIND_CASTING:
         case NPY_UNSAFE_CASTING:
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
             break;
         default:
             if (spec->casting != -1) {
@@ -668,10 +674,11 @@ boundarraymethod__resolve_descripors(
         if (!parametric) {
             /*
              * Non-parametric can only mismatch if it switches from equiv to no
-             * (e.g. due to byteorder changes).
+             * (e.g. due to byteorder changes). Throw away same_value casting flag
              */
+            int method_casting = self->method->casting & ~NPY_SAME_VALUE_CASTING_FLAG;
             if (cast != self->method->casting &&
-                    self->method->casting != NPY_EQUIV_CASTING) {
+                    method_casting != NPY_EQUIV_CASTING) {
                 PyErr_Format(PyExc_RuntimeError,
                         "resolve_descriptors cast level changed even though "
                         "the cast is non-parametric where the only possible "
@@ -792,11 +799,10 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-            .caller = NULL,
-            .method = self->method,
-            .descriptors = descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.method = self->method;
+
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     NpyAuxData *loop_data = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -984,3 +990,4 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };
+

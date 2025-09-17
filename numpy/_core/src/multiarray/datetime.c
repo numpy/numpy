@@ -1233,6 +1233,10 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* TODO: support this */
+        return 0;
+    }
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
@@ -1278,6 +1282,10 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
@@ -1325,6 +1333,10 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Force SAFE_CASTING */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         case NPY_UNSAFE_CASTING:
             return 1;
@@ -1352,6 +1364,10 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         case NPY_UNSAFE_CASTING:
             return 1;

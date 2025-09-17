@@ -3212,7 +3212,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         'C' order otherwise, and 'K' means as close to the
         order the array elements appear in memory as possible.
         Default is 'K'.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'same_value', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
@@ -3222,6 +3222,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         * 'same_kind' means only safe casts or casts within a kind,
           like float64 to float32, are allowed.
         * 'unsafe' means any data conversions may be done.
+        * 'same_value' means any data conversions may be done, but the values
+          must not change, including rounding of floats or overflow of ints
+
+        .. versionadded:: 2.4
+            Support for ``'same_value'`` was added.
+
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -3244,6 +3250,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     ComplexWarning
         When casting from complex to float or int. To avoid this,
         one should use ``a.real.astype(t)``.
+    ValueError
+        When casting using ``'same_value'`` and the values change or would
+        overflow
 
     Examples
     --------
@@ -3255,6 +3264,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     >>> x.astype(int)
     array([1, 2, 2])
 
+    >>> x.astype(int, casting="same_value")
+    Traceback (most recent call last):
+    ...
+    ValueError: could not cast 'same_value' double to long
+
+    >>> x[:2].astype(int, casting="same_value")
+    array([1, 2])
     """))
 
 

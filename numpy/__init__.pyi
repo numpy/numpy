@@ -940,7 +940,7 @@ _DTypeBuiltinKind: TypeAlias = L[0, 1, 2]
 
 _ArrayAPIVersion: TypeAlias = L["2021.12", "2022.12", "2023.12", "2024.12"]
 
-_CastingKind: TypeAlias = L["no", "equiv", "safe", "same_kind", "unsafe"]
+_CastingKind: TypeAlias = L["no", "equiv", "safe", "same_kind", "same_value", "unsafe"]
 
 _OrderKACF: TypeAlias = L["K", "A", "C", "F"] | None
 _OrderACF: TypeAlias = L["A", "C", "F"] | None
