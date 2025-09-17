@@ -616,6 +616,35 @@ class TestScalarTypeNames:
         assert np.dtype(t.__name__).type is t
 
 
+class TestScalarTypeOrder:
+    @pytest.mark.parametrize(('a', 'b'), [
+        # signedinteger
+        (np.byte, np.short),
+        (np.short, np.intc),
+        (np.intc, np.long),
+        (np.long, np.longlong),
+        # unsignedinteger
+        (np.ubyte, np.ushort),
+        (np.ushort, np.uintc),
+        (np.uintc, np.ulong),
+        (np.ulong, np.ulonglong),
+        # floating
+        (np.half, np.single),
+        (np.single, np.double),
+        (np.double, np.longdouble),
+        # complexfloating
+        (np.csingle, np.cdouble),
+        (np.cdouble, np.clongdouble),
+        # flexible
+        (np.bytes_, np.str_),
+        (np.str_, np.void),
+        # bouncy castles
+        (np.datetime64, np.timedelta64),
+    ])
+    def test_stable_ordering(self, a: type[np.generic], b: type[np.generic]):
+        assert np.ScalarType.index(a) <= np.ScalarType.index(b)
+
+
 class TestBoolDefinition:
     def test_bool_definition(self):
         assert nt.bool is np.bool
