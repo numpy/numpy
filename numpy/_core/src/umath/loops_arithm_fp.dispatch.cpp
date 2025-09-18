@@ -625,11 +625,7 @@ complex_conjugate_square_func(char **args, npy_intp const *dimensions, npy_intp 
                     }
                 }
             }
-            else if (sdst == 2 && static_cast<D>(ssrc) >= 0) {
-                if (hstep > 0 && ssrc > 0 && (std::numeric_limits<npy_intp>::max() / hstep < ssrc)) {
-                    // Overflow detected, fall back to the scalar loop
-                    goto loop_scalar;
-                }
+            else if (sdst == 2 && ssrc >= 0) {
                 auto i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc));
                 i = hn::OddEven(Add(i, Set<D>(1)), i);
                 for (; len >= vstep; len -= vstep, src += ssrc*vstep, dst += wstep) {
