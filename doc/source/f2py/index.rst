@@ -45,73 +45,12 @@ end matches the NumPy version printed from ``python -m numpy.f2py``, then you
 can use the shorter version. If not, or if you cannot run ``f2py``, you should
 replace all calls to ``f2py`` mentioned in this guide with the longer version.
 
-=======================
-Using f2py with Meson
-=======================
-
-Meson is a modern build system recommended for building Python extension modules,
-especially starting with Python 3.12 and NumPy 2.x. Meson provides a robust and
-maintainable way to build Fortran extensions with f2py.
-
-To build a Fortran extension using f2py and Meson, you can use Meson's `custom_target`
-to invoke f2py and generate the extension module. The following minimal example
-demonstrates how to do this:
-
-.. code-block:: meson
-
-   # List your Fortran source files
-   fortran_sources = files('your_module.f90')
-
-   # Find the Python installation
-   py = import('python').find_installation()
-
-   # Create a custom target to build the extension with f2py
-   f2py_wrapper = custom_target(
-     'your_module_wrapper',
-     output: 'your_module.so',
-     input: fortran_sources,
-     command: [
-       py.full_path(), '-m', 'numpy.f2py',
-       '-c', '@INPUT@', '-m', 'your_module'
-     ]
-   )
-
-   # Install the built extension to the Python site-packages directory
-   install_data(f2py_wrapper, install_dir: py.site_packages_dir())
-
-For more details and advanced usage, see the Meson build guide in
-the user documentation or refer to SciPy's Meson build files for
-real-world examples: https://github.com/scipy/scipy/tree/main/meson.build
-
-==========================================
-Building NumPy ufunc Extensions with Meson
-==========================================
-
-To build a NumPy ufunc extension (C API) using Meson, you can use the
-following template:
-
-.. code-block:: meson
-
-   # List your C source files
-   c_sources = files('your_ufunc_module.c')
-
-   # Find the Python installation
-   py = import('python').find_installation()
-
-   # Create an extension module
-   extension_module = py.extension_module(
-     'your_ufunc_module',
-     c_sources,
-     dependencies: py.dependency(),
-     install: true
-   )
-
-For more information on writing NumPy ufunc extensions, see the
-official NumPy documentation: https://numpy.org/doc/stable/reference/c-api.ufunc.html
+For Meson build examples, see :doc:`usage`.
 
 .. toctree::
    :maxdepth: 3
-
+   
+   usage
    f2py-user
    f2py-reference
    windows/index
