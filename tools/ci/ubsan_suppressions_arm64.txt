@@ -21,7 +21,7 @@ pointer-overflow:_core/src/common/simd/neon/memory.h
 pointer-overflow:_core/src/multiarray/datetime_busdaycal.c
 pointer-overflow:_core/src/multiarray/nditer_templ.c
 pointer-overflow:_core/src/multiarray/nditer_constr.c
-pointer-overflow:_core/src/umath/loops_arithm_fp.dispatch.c.src
+pointer-overflow:_core/src/umath/loops_arithm_fp.dispatch.cpp
 pointer-overflow:_core/src/umath/loops_unary.dispatch.c.src
 pointer-overflow:_core/src/umath/loops_unary_complex.dispatch.c.src
 pointer-overflow:_core/src/umath/loops_unary_fp_le.dispatch.c.src
