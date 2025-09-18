@@ -54,7 +54,7 @@ properties of the type, such as whether it is an integer::
     >>> np.issubdtype(d, np.floating)
     False
 
-To convert the type of an array, use the .astype() method. For example: ::
+To convert the type of an array, use the .astype() method. For example::
 
     >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
     array([0.,  1.,  2.])
@@ -70,7 +70,7 @@ Sometimes the conversion can overflow, for instance when converting a `numpy.int
 300 to `numpy.int8`. NumPy follows C casting rules, so that value would overflow and
 become 44 ``(300 - 256)``. If you wish to avoid such overflows, you can specify that the
 overflow action fail by using ``same_value`` for the ``casting`` argument (see also
-:ref:`overflow-errors`): ::
+:ref:`overflow-errors`)::
 
     >>> z.astype(np.float64, casting="same_value")   #doctest: +NORMALIZE_WHITESPACE
     array([0.,  1.,  2.])
