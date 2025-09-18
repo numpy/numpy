@@ -1,0 +1,13 @@
+The NPY_SORTKIND enum has been enhanced with new variables
+----------------------------------------------------------
+This is of interest if you are using ``PyArray_Sort`` or ``PyArray_ArgSort``.
+We have changed the semantics of the old names in the NPY_SORTKIND enum and
+added new ones. The changes are backward compatible, and no recompilation is
+needed. The new names of interest are:
+
+* NPY_SORT_DEFAULT -- default sort (same value as NPY_QUICKSORT)
+* NPY_SORT_STABLE  -- the sort must be stable (same value as NPY_MERGESORT)
+* NPY_SORT_DESCENDING -- the sort must be descending
+
+The semantic change is that NPY_HEAPSORT is mapped to NPY_QUICKSORT when used.
+Note that NPY_SORT_DESCENDING is not yet implemented.

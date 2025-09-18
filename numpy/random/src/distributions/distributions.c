@@ -468,12 +468,15 @@ double random_chisquare(bitgen_t *bitgen_state, double df) {
 }
 
 double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) {
-  return ((random_chisquare(bitgen_state, dfnum) * dfden) /
-          (random_chisquare(bitgen_state, dfden) * dfnum));
+  double subexpr1 = random_chisquare(bitgen_state, dfnum) * dfden;
+  double subexpr2 = random_chisquare(bitgen_state, dfden) * dfnum;
+  return subexpr1 / subexpr2;
 }
 
 double random_standard_cauchy(bitgen_t *bitgen_state) {
-  return random_standard_normal(bitgen_state) / random_standard_normal(bitgen_state);
+  double subexpr1 = random_standard_normal(bitgen_state);
+  double subexpr2 = random_standard_normal(bitgen_state);
+  return subexpr1 / subexpr2;
 }
 
 double random_pareto(bitgen_t *bitgen_state, double a) {

@@ -50,7 +50,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.1.x
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
-C_API_VERSION = '0x00000014'
+# 0x00000015 - 2.4.x
+C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -777,7 +778,7 @@ _umath_tests_mtargets = mod_features.multi_targets(
     AVX2, SSE41, SSE2,
     ASIMDHP, ASIMD, NEON,
     VSX3, VSX2, VSX,
-    VXE, VX,
+    VXE, VX, RVV,
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',

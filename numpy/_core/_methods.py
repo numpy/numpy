@@ -119,7 +119,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
-        warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
+        warnings.warn("Mean of empty slice", RuntimeWarning, stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None:

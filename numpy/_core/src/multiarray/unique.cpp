@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <unordered_map>
 #include <unordered_set>
 
 #include <numpy/npy_common.h>

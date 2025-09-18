@@ -96,40 +96,40 @@ c_intp = _c_intp
 
 @overload
 def ndpointer(
-    dtype: None = ...,
-    ndim: int = ...,
-    shape: _ShapeLike | None = ...,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    dtype: None = None,
+    ndim: int | None = None,
+    shape: _ShapeLike | None = None,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[None]]: ...
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
-    ndim: int = ...,
+    ndim: int | None = None,
     *,
     shape: _ShapeLike,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_concrete_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
     dtype: DTypeLike,
-    ndim: int = ...,
+    ndim: int | None = None,
     *,
     shape: _ShapeLike,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_concrete_ndptr[dtype]]: ...
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
-    ndim: int = ...,
-    shape: None = ...,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    ndim: int | None = None,
+    shape: None = None,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
     dtype: DTypeLike,
-    ndim: int = ...,
-    shape: None = ...,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    ndim: int | None = None,
+    shape: None = None,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[dtype]]: ...
 
 @overload
@@ -170,9 +170,9 @@ def as_ctypes_type(dtype: str) -> type[Any]: ...
 @overload
 def as_array(obj: ctypes._PointerLike, shape: Sequence[int]) -> NDArray[Any]: ...
 @overload
-def as_array(obj: _ArrayLike[_ScalarT], shape: _ShapeLike | None = ...) -> NDArray[_ScalarT]: ...
+def as_array(obj: _ArrayLike[_ScalarT], shape: _ShapeLike | None = None) -> NDArray[_ScalarT]: ...
 @overload
-def as_array(obj: object, shape: _ShapeLike | None = ...) -> NDArray[Any]: ...
+def as_array(obj: object, shape: _ShapeLike | None = None) -> NDArray[Any]: ...
 
 @overload
 def as_ctypes(obj: np.bool) -> ctypes.c_bool: ...

@@ -613,12 +613,15 @@ def asarray_chkfinite(a, dtype=None, order=None):
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'C'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or
+        Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) preserves the input order for the output.
+        'C' is the default.
 
     Returns
     -------
@@ -2334,8 +2337,8 @@ class vectorize:
         passed directly to `pyfunc` unmodified.
 
     cache : bool, optional
-        If `True`, then cache the first function call that determines the number
-        of outputs if `otypes` is not provided.
+        If neither `otypes` nor `signature` are provided, and `cache` is ``True``, then
+        cache the number of outputs.
 
     signature : string, optional
         Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
@@ -2359,12 +2362,12 @@ class vectorize:
     The `vectorize` function is provided primarily for convenience, not for
     performance. The implementation is essentially a for loop.
 
-    If `otypes` is not specified, then a call to the function with the
-    first argument will be used to determine the number of outputs.  The
-    results of this call will be cached if `cache` is `True` to prevent
-    calling the function twice.  However, to implement the cache, the
-    original function must be wrapped which will slow down subsequent
-    calls, so only do this if your function is expensive.
+    If neither `otypes` nor `signature` are specified, then a call to the function with
+    the first argument will be used to determine the number of outputs.  The results of
+    this call will be cached if `cache` is `True` to prevent calling the function
+    twice.  However, to implement the cache, the original function must be wrapped
+    which will slow down subsequent calls, so only do this if your function is
+    expensive.
 
     The new keyword argument interface and `excluded` argument support
     further degrades performance.

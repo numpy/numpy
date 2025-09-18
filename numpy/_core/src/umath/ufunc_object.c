@@ -65,6 +65,7 @@
 #include "mapping.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "number.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -2084,11 +2085,10 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                                     NPY_SIZEOF_INTP * nop);
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
@@ -2203,11 +2203,10 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
     }
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     /* Do the ufunc loop */
     if (wheremask != NULL) {
@@ -2553,11 +2552,10 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
             arr, out, wheremask, axis_flags, keepdims,
@@ -2629,12 +2627,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     assert(PyArray_EquivTypes(descrs[0], descrs[1])
            && PyArray_EquivTypes(descrs[0], descrs[2]));
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
-
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc,
+    context.method = ufuncimpl,
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3061,12 +3057,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         goto fail;
     }
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
-
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc,
+    context.method = ufuncimpl,
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -4368,6 +4362,21 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_INCREF(tmp);
             PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
         }
+
+        /* Extra positional args but no keywords */
+        /* DEPRECATED NumPy 2.4, 2025-08 */
+        if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
+            
+            if (DEPRECATE(
+                "Passing more than 2 positional arguments to np.maximum and np.minimum "
+                "is deprecated. If you meant to use the third argument as an output, " 
+                "use the `out` keyword argument instead. If you hoped to work with "
+                "more than 2 inputs, combine them into a single array and get the extrema "
+                "for the relevant axis.") < 0) {
+                return NULL;
+            }
+        }
+        
         if (all_none) {
             Py_SETREF(full_args.out, NULL);
         }
@@ -5902,11 +5911,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     /* Use contiguous strides; if there is such a loop it may be faster */
     npy_intp strides[3] = {

@@ -806,7 +806,7 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 add_newdoc('numpy._core.multiarray', 'array',
     """
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-          like=None)
+          ndmax=None, like=None)
 
     Create an array.
 
@@ -855,6 +855,15 @@ add_newdoc('numpy._core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be prepended to the shape as
         needed to meet this requirement.
+    ndmax : int, optional
+        Specifies the maximum number of dimensions to create when inferring
+        shape from nested sequences. By default, NumPy recurses through all
+        nesting levels (up to the compile-time constant ``NPY_MAXDIMS``).
+        Setting ``ndmax`` stops recursion at the specified depth, preserving
+        deeper nested structures as objects instead of promoting them to
+        higher-dimensional arrays. In this case, ``dtype=object`` is required.
+
+        .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -926,6 +935,21 @@ add_newdoc('numpy._core.multiarray', 'array',
     matrix([[1, 2],
             [3, 4]])
 
+    Limiting the maximum dimensions with ``ndmax``:
+
+    >>> a = np.array([[1, 2], [3, 4]], dtype=object, ndmax=2)
+    >>> a
+    array([[1, 2],
+           [3, 4]], dtype=object)
+    >>> a.shape
+    (2, 2)
+
+    >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+    >>> b
+    array([list([1, 2]), list([3, 4])], dtype=object)
+    >>> b.shape
+    (2,)
+
     """)
 
 add_newdoc('numpy._core.multiarray', 'asarray',
@@ -943,12 +967,13 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'K'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) is the default and preserves the input order for the output.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -1035,12 +1060,14 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'C'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) preserves the input order for the output.
+        'C' is the default.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -3185,7 +3212,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         'C' order otherwise, and 'K' means as close to the
         order the array elements appear in memory as possible.
         Default is 'K'.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'same_value', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
@@ -3195,6 +3222,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         * 'same_kind' means only safe casts or casts within a kind,
           like float64 to float32, are allowed.
         * 'unsafe' means any data conversions may be done.
+        * 'same_value' means any data conversions may be done, but the values
+          must not change, including rounding of floats or overflow of ints
+
+        .. versionadded:: 2.4
+            Support for ``'same_value'`` was added.
+
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -3217,6 +3250,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     ComplexWarning
         When casting from complex to float or int. To avoid this,
         one should use ``a.real.astype(t)``.
+    ValueError
+        When casting using ``'same_value'`` and the values change or would
+        overflow
 
     Examples
     --------
@@ -3228,6 +3264,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     >>> x.astype(int)
     array([1, 2, 2])
 
+    >>> x.astype(int, casting="same_value")
+    Traceback (most recent call last):
+    ...
+    ValueError: could not cast 'same_value' double to long
+
+    >>> x[:2].astype(int, casting="same_value")
+    array([1, 2])
     """))
 
 

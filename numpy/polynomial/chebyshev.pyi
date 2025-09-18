@@ -150,7 +150,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         cls,
         func: Callable[[npt.NDArray[np.float64]], _CoefSeries],
         deg: _IntLike_co,
-        domain: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = None,
         args: tuple[()] = ...,
     ) -> Self: ...
     @overload
@@ -162,7 +162,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
             _CoefSeries,
         ],
         deg: _IntLike_co,
-        domain: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = None,
         *,
         args: Iterable[Any],
     ) -> Self: ...

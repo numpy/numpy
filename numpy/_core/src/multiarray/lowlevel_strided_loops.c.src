@@ -17,6 +17,7 @@
 #include <numpy/arrayobject.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/halffloat.h>
+#include <float.h>
 
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
@@ -24,6 +25,7 @@
 #include "usertypes.h"
 
 #include "umathmodule.h"
+#include "gil_utils.h"
 
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
@@ -76,6 +78,57 @@
         a = (x)[6]; (x)[6] = (x)[9]; (x)[9] = a; \
         a = (x)[7]; (x)[7] = (x)[8]; (x)[8] = a; \
         }
+
+/* half-to-double, copied from CPP to allow inlining */
+
+static NPY_GCC_OPT_3
+uint64_t ToDoubleBits(uint16_t h)
+{
+    uint16_t h_exp = (h&0x7c00u);
+    uint64_t d_sgn = ((uint64_t)h&0x8000u) << 48;
+    switch (h_exp) {
+        case 0x0000u: { // 0 or subnormal
+            uint16_t h_sig = (h&0x03ffu);
+            // Signed zero
+            if (h_sig == 0) {
+                return d_sgn;
+            }
+            // Subnormal
+            h_sig <<= 1;
+            while ((h_sig&0x0400u) == 0) {
+                h_sig <<= 1;
+                h_exp++;
+            }
+            uint64_t d_exp = ((uint64_t)(1023 - 15 - h_exp)) << 52;
+            uint64_t d_sig = ((uint64_t)(h_sig&0x03ffu)) << 42;
+            return d_sgn + d_exp + d_sig;
+        }
+        case 0x7c00u: // inf or NaN
+            // All-ones exponent and a copy of the significand
+            return d_sgn + 0x7ff0000000000000ULL + (((uint64_t)(h&0x03ffu)) << 42);
+        default: // normalized
+            // Just need to adjust the exponent and shift
+            return d_sgn + (((uint64_t)(h&0x7fffu) + 0xfc000u) << 42);
+    }
+}
+
+NPY_FINLINE
+npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
+    /*
+     * Use npymath versions for all the special cases, only inline the
+     * x86_64 non-intrinsic case. Someday we will rewrite this in CPP and
+     * can then explore inlining more
+     */
+    #if defined(NPY_HAVE_AVX512FP16)
+        return npy_halfbits_to_doublebits(h);
+    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
+        return npy_halfbits_to_doublebits(h);
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        return npy_halfbits_to_doublebits(h);
+    #else
+        return (double)(ToDoubleBits(h));
+    #endif
+}
 
 /************* STRIDED COPYING/SWAPPING SPECIALIZED FUNCTIONS *************/
 
@@ -742,6 +795,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double1 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex1 = 0*15, 1*3#
+ * #is_unsigned1 = 1*6, 0*12#
  */
 
 /**begin repeat1
@@ -766,6 +820,16 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  *          npy_byte, npy_short, npy_int, npy_long, npy_longlong,
  *          _npy_half, npy_float, npy_double, npy_longdouble,
  *          npy_float, npy_double, npy_longdouble#
+ * #type2max = 0,
+ *          UCHAR_MAX, USHRT_MAX, UINT_MAX, ULONG_MAX, ULLONG_MAX,
+ *          SCHAR_MAX,  SHRT_MAX,  INT_MAX,  LONG_MAX,  LLONG_MAX,
+ *          65500, FLT_MAX, DBL_MAX, LDBL_MAX,
+ *          FLT_MAX, DBL_MAX, LDBL_MAX#
+ * #type2min = 0,
+ *          0, 0, 0, 0, 0,
+ *          SCHAR_MIN,  SHRT_MIN,  INT_MIN,  LONG_MIN,  LLONG_MIN,
+ *          -65500, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
+ *          -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  * #is_bool2 = 1, 0*17#
  * #is_emu_half2 = 0*11, EMULATED_FP16, 0*6#
  * #is_native_half2 = 0*11, NATIVE_FP16, 0*6#
@@ -810,40 +874,52 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 /* Determine an appropriate casting conversion function */
 #if @is_emu_half1@
-
+#  define _TO_RTYPE1(x) npy_half_to_float(x)
 #  if @is_float2@
 #    define _CONVERT_FN(x) npy_halfbits_to_floatbits(x)
+#    define _ROUND_TRIP(x) npy_floatbits_to_halfbits(_CONVERT_FN(x))
 #  elif @is_double2@
-#    define _CONVERT_FN(x) npy_halfbits_to_doublebits(x)
+#    define _CONVERT_FN(x) _npy_halfbits_to_doublebits(x)
+#    define _ROUND_TRIP(x) npy_doublebits_to_halfbits(_CONVERT_FN(x))
 #  elif @is_emu_half2@
 #    define _CONVERT_FN(x) (x)
+#    define _ROUND_TRIP(x) (x)
 #  elif @is_bool2@
 #    define _CONVERT_FN(x) ((npy_bool)!npy_half_iszero(x))
+#    define _ROUND_TRIP(x) npy_float_to_half((float)(!npy_half_iszero(x)))
 #  else
 #    define _CONVERT_FN(x) ((_TYPE2)npy_half_to_float(x))
+#    define _ROUND_TRIP(x) npy_float_to_half((float)_CONVERT_FN(x))
 #  endif
 
 #elif @is_emu_half2@
+#  define _TO_RTYPE1(x) (@rtype1@)(x)
 
 #  if @is_float1@
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
+#    define _ROUND_TRIP(x) (@rtype1@)npy_halfbits_to_floatbits(_CONVERT_FN(x))
 #  elif @is_double1@
 #    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
+#    define _ROUND_TRIP(x) (@rtype1@)_npy_halfbits_to_doublebits(_CONVERT_FN(x))
 #  elif @is_emu_half1@
 #    define _CONVERT_FN(x) (x)
+#    define _ROUND_TRIP(x) (x)
 #  elif @is_bool1@
 #    define _CONVERT_FN(x) npy_float_to_half((float)(x!=0))
+#    define _ROUND_TRIP(x) (x)
 #  else
 #    define _CONVERT_FN(x) npy_float_to_half((float)x)
+#    define _ROUND_TRIP(x) ((@rtype1@)npy_half_to_float(_CONVERT_FN(x)))
 #  endif
 
 #else
-
 #  if @is_bool2@ || @is_bool1@
 #    define _CONVERT_FN(x) ((npy_bool)(x != 0))
 #  else
 #    define _CONVERT_FN(x) ((_TYPE2)x)
 #  endif
+#  define _TO_RTYPE1(x) (@rtype1@)(x)
+#  define _ROUND_TRIP(x) _TO_RTYPE1(_CONVERT_FN(x))
 
 #endif
 
@@ -869,8 +945,109 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
     #define GCC_CAST_OPT_LEVEL NPY_GCC_OPT_3
 #endif
 
+#define _RETURN_SAME_VALUE_FAILURE \
+        npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@"); \
+        return -1
+
+#if !@is_bool2@
+/*
+ * Check various modes of failure to accurately cast src_value to dst
+ */
+static GCC_CAST_OPT_LEVEL int
+@prefix@_check_same_value_@name1@_to_@name2@(@rtype1@ src_value) {
+
+    /* 1. NaN/Infs always work for float to float and otherwise never */
+#if (@is_float1@ || @is_emu_half1@ || @is_double1@ || @is_native_half1@)
+    if (!npy_isfinite(_TO_RTYPE1(src_value))) {
+#       if (@is_float2@ || @is_emu_half2@ || @is_double2@ || @is_native_half2@)
+             return 0;  /* float to float can preserve NaN/Inf */
+#       else
+             _RETURN_SAME_VALUE_FAILURE;  /* cannot preserve NaN/Inf */
+#       endif
+    }
+#endif
+    /*
+     * 2. Check that the src does not overflow the dst.
+     *    This is complicated by a warning that, for instance, int8 cannot
+     *    overflow int64max
+     */
+#   ifdef __GNUC__
+#   pragma GCC diagnostic push
+#   ifdef __clang__
+#   pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+#   endif
+#   pragma GCC diagnostic ignored "-Wtautological-compare"
+#   endif
+#  if !@is_bool1@
+   if (_TO_RTYPE1(src_value) > @type2max@) {
+        _RETURN_SAME_VALUE_FAILURE;
+   }
+#  if !@is_unsigned1@
+   if (_TO_RTYPE1(src_value) < @type2min@) {
+        _RETURN_SAME_VALUE_FAILURE;
+   }
+#  endif
+#  endif /* !is_bool1 */
+    /* 3. Check that the value can round trip exactly */
+    if (src_value != _ROUND_TRIP(src_value)) {
+        _RETURN_SAME_VALUE_FAILURE;
+    }
+#   ifdef __GNUC__
+#   pragma GCC diagnostic pop
+#   endif  /* __GNUC__ */
+    return 0;
+}
+#endif
+
+/*
+ * Use a declaration instead of moving the function definition to here to make reviewing
+ * easier. TODO: move the repeat3 up here instead of these declarations
+ */
+
+static GCC_CAST_OPT_LEVEL int
+@prefix@_cast_@name1@_to_@name2@_no_same_value(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(data));
+
+#if !@is_bool2@
+static GCC_CAST_OPT_LEVEL int
+@prefix@_cast_@name1@_to_@name2@_same_value(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(data));
+#endif
+
+/*
+ * This is the entry point function called outside this file
+ */
+
 static GCC_CAST_OPT_LEVEL int
 @prefix@_cast_@name1@_to_@name2@(
+        PyArrayMethod_Context *context, char *const *args,
+        const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *data)
+{
+#if !@is_bool2@
+    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CONTEXT_FLAG) == NPY_SAME_VALUE_CONTEXT_FLAG);
+    if (same_value_casting) {
+        return @prefix@_cast_@name1@_to_@name2@_same_value(context, args, dimensions, strides, data);
+    } else {
+#else
+    {
+#endif
+        return @prefix@_cast_@name1@_to_@name2@_no_same_value(context, args, dimensions, strides, data);
+}}
+
+/**begin repeat3
+ * #func_name = no_same_value,same_value#
+ * #same_value = 0,1#
+ */
+
+
+#if !(@is_bool2@ && @same_value@)
+static GCC_CAST_OPT_LEVEL int
+@prefix@_cast_@name1@_to_@name2@_@func_name@(
         PyArrayMethod_Context *context, char *const *args,
         const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(data))
@@ -898,7 +1075,7 @@ static GCC_CAST_OPT_LEVEL int
     assert(N == 0 || npy_is_aligned(dst, NPY_ALIGNOF(_TYPE2)));
 #endif
 
-    /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
+    /* printf("@prefix@_cast_@name1@_to_@name2@_@func_name@, N=%ld\n", N); */
 
     while (N--) {
 #if @aligned@
@@ -915,31 +1092,81 @@ static GCC_CAST_OPT_LEVEL int
 #  if @is_complex2@
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
-#  elif !@aligned@
+#   if @same_value@
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            return -1;
+        }
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[1]) < 0) {
+            return -1;
+        }
+#   endif //same_value
+#   elif !@aligned@
 #    if @is_bool2@
        dst_value = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
+#      if @same_value@
+            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+                return -1;
+            }
+            if (src_value[1] != 0) {
+                npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@: imag is not 0");
+                return -1;
+            }
+#      endif //same_value
 #    endif
 #  else
 #    if @is_bool2@
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
+#      if @same_value@
+            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+                return -1;
+            }
+            if (src_value[1] != 0) {
+                npy_gil_error(PyExc_ValueError, "could not cast 'same_value' @name1@ to @name2@: imag is not 0");
+                return -1;
+            }
+#      endif //same_value
 #    endif
 #  endif
-#else
+#else // @is_complex1@
 #  if @is_complex2@
 #    if !@aligned@
     dst_value[0] = _CONVERT_FN(src_value);
-#    else
+#   if @same_value@
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+            return -1;
+        }
+#   endif //same_value
+#    else //!aligned
     dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
+#     if @same_value@
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)src) < 0) {
+            return -1;
+        }
+#     endif //same_value
 #    endif
     dst_value[1] = 0;
 #  elif !@aligned@
     dst_value = _CONVERT_FN(src_value);
+#   if !@is_bool2@
+#     if @same_value@
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+            return -1;
+        }
+#     endif //same_value
+#   endif // @is_bool2@
 #  else
     *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
+#   if !@is_bool2@
+#     if @same_value@
+        if (@prefix@_check_same_value_@name1@_to_@name2@(*((@rtype1@ *)src)) < 0) {
+            return -1;
+        }
+#     endif //same_value
+#   endif // @is_bool2@
 #  endif
 #endif
 
@@ -962,6 +1189,9 @@ static GCC_CAST_OPT_LEVEL int
     }
     return 0;
 }
+#endif // !@is_bool2@
+
+/**end repeat3**/
 
 #if @is_native_half1@ || @is_float1@ || @is_double1@
     #if @is_native_half2@ || @is_float2@ || @is_double2@
@@ -977,6 +1207,9 @@ static GCC_CAST_OPT_LEVEL int
 #undef _CONVERT_FN
 #undef _TYPE2
 #undef _TYPE1
+#undef _TO_RTYPE1
+#undef _ROUND_TRIP
+#undef _RETURN_SAME_VALUE_FAILURE
 
 #endif
 
