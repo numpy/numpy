@@ -233,8 +233,9 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
     ptrdiff_t step_in = steps[3], step_out = steps[4];
 
+#ifndef POCKETFFT_NO_VECTORS
     size_t npts_in = nout / 2 + 1;
-
+#endif
     assert(nout > 0);
 
 #ifndef POCKETFFT_NO_VECTORS
