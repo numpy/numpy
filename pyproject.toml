@@ -300,8 +300,3 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:check_tutorials",
 ]
 "Metrics" = [".spin/cmds.py:bench"]
-
-[tool.uv.workspace]
-members = [
-    "android_test",
-]

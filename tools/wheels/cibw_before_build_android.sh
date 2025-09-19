@@ -94,13 +94,6 @@ echo "CIBW_ARCHS: ${CIBW_ARCHS:-'(not set)'}"
 echo "CIBW_ARCHS_ANDROID: ${CIBW_ARCHS_ANDROID:-'(not set)'}"
 echo "--- End debug ---"
 
-# Get the target architecture from cibuildwheel's environment variables
-# According to cibuildwheel docs, CIBW_ARCHS should be available for Android builds
-echo "--- Debug: Checking for cibuildwheel architecture environment variables ---"
-echo "CIBW_ARCHS: ${CIBW_ARCHS:-'(not set)'}"
-echo "CIBW_ARCHS_ANDROID: ${CIBW_ARCHS_ANDROID:-'(not set)'}"
-echo "--- End debug ---"
-
 # Check for architecture in standard cibuildwheel environment variables
 if [ -n "$CIBW_ARCHS" ]; then
     TARGET_ARCH="$CIBW_ARCHS"
