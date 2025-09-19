@@ -49,8 +49,7 @@ For Meson build examples, see :doc:`usage`.
 
 .. toctree::
    :maxdepth: 3
-   
-   usage
+
    f2py-user
    f2py-reference
    windows/index

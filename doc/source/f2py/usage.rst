@@ -328,12 +328,11 @@ resulting package to work, you need to create a file named ``__init__.py``
 defined entirely in terms of the ``add.pyf`` and ``add.f`` files. The
 conversion of the .pyf file to a .c file is handled by `numpy.distutils`.
 
-===============================
 Building with Meson (Examples)
-===============================
+==============================
 
 Using f2py with Meson
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Meson is a modern build system recommended for building Python extension
 modules, especially starting with Python 3.12 and NumPy 2.x. Meson provides
@@ -370,7 +369,7 @@ user documentation or refer to SciPy's Meson build files for real-world
 examples: https://github.com/scipy/scipy/tree/main/meson.build
 
 Building NumPy ufunc Extensions with Meson
-------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To build a NumPy ufunc extension (C API) using Meson, you can use the
 following template:
