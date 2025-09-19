@@ -516,7 +516,7 @@ class finfo:
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
-        if hasattr(dtype, "finfo") and issubclass(dtype, numeric.inexact):
+        if hasattr(dtype, "finfo") and issubclass(dtype.type, numeric.inexact):
             # User-defined dtype with finfo support
             finfo_obj = dtype.finfo()
             obj = object.__new__(cls)._init_from_finfo_obj(dtype, finfo_obj)
