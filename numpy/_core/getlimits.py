@@ -469,6 +469,9 @@ class finfo:
     (e.g. numpy.finfo(numpy.csingle) is the same as numpy.finfo(numpy.single)).
     However, the output is true for the real and imaginary components.
 
+    User-defined dtypes can now support ``finfo`` by implementing the ``NPY_DT_get_dtype_info`` 
+    slot in their DTypeMeta at the C level. This provides the necessary machine limits (e.g., eps, min, max) for the dtype.
+
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,

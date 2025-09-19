@@ -205,6 +205,21 @@ Enumerated types
         example when calling np.zero(shape). This is equivalent to
         :c:data:`NPY_DOUBLE`.
 
+.. c:enum:: NPY_DTYPE_INFO_TYPE
+
+    Enumeration defining the type of dtype information (e.g., float, int or generic).
+
+    .. c:enumerator:: NPY_DTYPE_INFO_FLOAT
+
+        Indicates floating-point type information.
+
+    .. c:enumerator:: NPY_DTYPE_INFO_INTEGER
+
+        Indicates integer type information.
+    
+    .. c:enumerator:: NPY_DTYPE_INFO_GENERIC
+        Indicates generic type information
+
 Other useful related constants are
 
 .. c:macro:: NPY_NTYPES_LEGACY
@@ -502,3 +517,22 @@ format specifier in printf and related commands.
 .. c:macro:: NPY_UINTP_FMT
 
 .. c:macro:: NPY_LONGDOUBLE_FMT
+
+DType Slots
+===========
+
+The following slots are part of the DType C API for user-defined data types. They are defined as offsets in the PyArrayDTypeMeta_Spec structure and allow customization of dtype behavior.
+
+.. c:var:: NPY_DT_get_dtype_info
+
+    Slot for retrieving dtype information to support ``np.finfo`` and potentially ``np.iinfo`` on user-defined dtypes.
+
+    .. c:type:: PyObject *(PyArrayDTypeMeta_GetDTypeInfo)(PyArray_Descr *, NPY_DTYPE_INFO_TYPE)
+
+    This function should return a Python object with appropriate attributes based on the info type:
+    
+    - For ``NPY_DTYPE_INFO_FLOAT``: An object with finfo attributes (precision, eps, max, etc.)
+    - For ``NPY_DTYPE_INFO_INTEGER``: An object with iinfo attributes (min, max, etc.) - not implemented yet
+    - For ``NPY_DTYPE_INFO_GENERIC``: Generic dtype info - not implemented yet
+    
+    The function takes a dtype descriptor and an ``NPY_DTYPE_INFO_TYPE`` enum value indicating the type of information requested. It should return ``NULL`` to fall back to default behavior or on error. If not implemented, ``np.finfo`` will raise an error for the dtype.

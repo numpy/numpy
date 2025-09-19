@@ -1,0 +1,14 @@
+DType C API support for ``np.finfo``
+------------------------------------
+User-defined dtypes can now provide floating-point information that integrates with
+`numpy.finfo`. A new C API slot ``NPY_DT_get_dtype_info`` has been added to the 
+DType API, which allows custom dtypes to specify their floating-point limits and 
+properties. The API is designed to be extensible for future support of integer info (`np.iinfo`) 
+and generic dtype information, though only floating-point info is currently 
+implemented. 
+Custom dtypes can implement this by providing a function with the signature::
+    PyObject *get_dtype_info(PyArray_Descr *descr, NPY_DTYPE_INFO_TYPE info_type)
+The function should handle ``NPY_DTYPE_INFO_FLOAT`` and return a Python object 
+with the appropriate finfo attributes (precision, eps, max, min, etc.).
+This fixes issue `gh‑27231 <https://github.com/numpy/numpy/issues/27231>`__ and was 
+implemented in pull request `gh‑29763 <https://github.com/numpy/numpy/pull/29763>`__.

@@ -693,3 +693,34 @@ Comparison operations:
    dtype.__gt__
    dtype.__le__
    dtype.__lt__
+
+
+Internal methods for custom user defined data types
+--------------------------------------
+
+These methods are primarily for developers implementing user-defined data types and are not intended for general use.
+
+.. method:: dtype._is_user_dtype()
+
+   Check if the dtype is a user-defined (custom) data type.
+
+   :returns: ``True`` if the dtype is user-defined, ``False`` otherwise.
+   :rtype: bool
+
+   .. note::
+      This method helps distinguish built-in dtypes from those created via the DType C API.
+      It returns ``True`` only for dtypes that have ``type_num == -1``.
+
+.. method:: dtype._get_finfo()
+
+   Retrieve the machine limits information (finfo) for user-defined dtypes.
+
+   :returns: A Python object with finfo attributes (e.g., 'bits', 'eps', 'max', 'min', etc.) if the dtype implements the ``NPY_DT_get_dtype_info`` slot, otherwise raises an error.
+   :rtype: object
+   :raises TypeError: If called on a non-dtype object or built-in dtype.
+   :raises RuntimeError: If the user dtype doesn't implement the ``NPY_DT_get_dtype_info`` slot.
+
+   .. note::
+      This method is specifically for user-defined dtypes and uses the ``NPY_DT_get_dtype_info`` C API slot with ``NPY_DTYPE_INFO_FLOAT`` to retrieve floating-point limits. It enables custom dtypes to integrate with ``np.finfo()``.
+      
+      The method will only work on dtypes where ``_is_user_dtype()`` returns ``True``.
