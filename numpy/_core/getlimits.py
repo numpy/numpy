@@ -516,6 +516,11 @@ class finfo:
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
+        if hasattr(dtype, "finfo") and issubclass(dtype, numeric.inexact):
+            # User-defined dtype with finfo support
+            finfo_obj = dtype.finfo()
+            obj = object.__new__(cls)._init_from_finfo_obj(dtype, finfo_obj)
+            return obj
         dtypes = [dtype]
         newdtype = ntypes.obj2sctype(dtype)
         if newdtype is not dtype:
@@ -570,6 +575,33 @@ class finfo:
         self._str_resolution = machar._str_resolution.strip()
         self._str_smallest_normal = machar._str_smallest_normal.strip()
         self._str_smallest_subnormal = machar._str_smallest_subnormal.strip()
+        return self
+
+    def _init_from_finfo_obj(self, dtype, finfo_obj):
+        self.dtype = numeric.dtype(dtype)
+        self.precision = finfo_obj.get('precision')
+        self.iexp = finfo_obj.get('iexp')
+        self.maxexp = finfo_obj.get('maxexp')
+        self.minexp = finfo_obj.get('minexp')
+        self.negep = finfo_obj.get('negep')
+        self.machep = finfo_obj.get('machep')
+        self.resolution = finfo_obj.get('resolution')
+        self.epsneg = finfo_obj.get('epsneg')
+        self.smallest_subnormal = finfo_obj.get('smallest_subnormal')
+        self.bits = self.dtype.itemsize * 8
+        self.max = finfo_obj.get('max')
+        self.min = finfo_obj.get('min')
+        self.eps = finfo_obj.get('eps')
+        self.nexp = finfo_obj.get('nexp')
+        self.nmant = finfo_obj.get('nmant')
+        self._machar = finfo_obj.get('machar')
+        self._str_tiny = str(finfo_obj.get("smallest_normal"))
+        self._str_max = str(self.max)
+        self._str_epsneg = str(self.epsneg)
+        self._str_eps = str(self.eps)
+        self._str_resolution = str(self.resolution)
+        self._str_smallest_normal = str(finfo_obj.get("smallest_normal"))
+        self._str_smallest_subnormal = str(self.smallest_subnormal)
         return self
 
     def __str__(self):
