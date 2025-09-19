@@ -1593,7 +1593,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         npy_free_coercion_cache(cache);
         goto cleanup;
     }
-    if (ndim > max_depth && (in_DType == NULL || in_DType->type_num != NPY_OBJECT)) {
+    if (ndim > max_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         npy_free_coercion_cache(cache);
@@ -2830,7 +2830,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         count = (src_count < dst_count) ? src_count : dst_count;
         if (cast_info.func(&cast_info.context,
                 args, &count, strides, cast_info.auxdata) < 0) {
-            res = -1;
             break;
         }
 

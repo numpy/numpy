@@ -752,6 +752,10 @@ array_toscalar(PyArrayObject *self, PyObject *args)
     return PyArray_MultiIndexGetItem(self, multi_index);
 }
 
+
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
+
 static PyObject *
 array_astype(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -770,7 +774,7 @@ array_astype(PyArrayObject *self,
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
-            "|casting", &PyArray_CastingConverter, &casting,
+            "|casting", &PyArray_CastingConverterSameValue, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
             "|copy", &PyArray_AsTypeCopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
@@ -840,7 +844,12 @@ array_astype(PyArrayObject *self,
         ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
-    int success = PyArray_CopyInto(ret, self);
+    int success;
+    if (((int)casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        success = PyArray_AssignArray(ret, self, NULL, casting);
+    } else {
+        success = PyArray_AssignArray(ret, self, NULL, NPY_UNSAFE_CASTING);
+    }
 
     Py_DECREF(dtype);
     ((PyArrayObject_fields *)ret)->nd = out_ndim;
@@ -934,6 +943,11 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    if (newtype == NULL) {
+        newtype = PyArray_DESCR(self);
+        Py_INCREF(newtype);  // newtype is owned.
+    }
+
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *new;
@@ -951,6 +965,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 (PyObject *)self
         );
         if (new == NULL) {
+            Py_DECREF(newtype);
             return NULL;
         }
         self = new;
@@ -960,22 +975,21 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (copy == NPY_COPY_ALWAYS) {
-        if (newtype == NULL) {
-            newtype = PyArray_DESCR(self);
-        }
-        ret = PyArray_CastToType(self, newtype, 0);
+        ret = PyArray_CastToType(self, newtype, 0);  // steals newtype reference
         Py_DECREF(self);
         return ret;
     } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
-        if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+        if (PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            Py_DECREF(newtype);
             return (PyObject *)self;
         }
         if (copy == NPY_COPY_IF_NEEDED) {
-            ret = PyArray_CastToType(self, newtype, 0);
+            ret = PyArray_CastToType(self, newtype, 0);  // steals newtype reference.
             Py_DECREF(self);
             return ret;
         } else { // copy == NPY_COPY_NEVER
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
+            Py_DECREF(newtype);
             Py_DECREF(self);
             return NULL;
         }
@@ -1154,7 +1168,6 @@ array_copy_keeporder(PyArrayObject *self, PyObject *args)
     return PyArray_NewCopy(self, NPY_KEEPORDER);
 }
 
-#include <stdio.h>
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -1250,11 +1263,12 @@ array_sort(PyArrayObject *self,
 {
     int axis = -1;
     int val;
-    NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
+    NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
     int stable = -1;
+    int descending = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("sort", args, len_args, kwnames,
@@ -1262,18 +1276,39 @@ array_sort(PyArrayObject *self,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
             "$stable", &PyArray_OptionalBoolConverter, &stable,
+//            "$descending", &PyArray_OptionalBoolConverter, &descending,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-    if (order == Py_None) {
-        order = NULL;
+
+    if (sortkind == _NPY_SORT_UNDEFINED) {
+        // keywords only if sortkind not passed
+        sortkind = 0;
+        sortkind |= (stable > 0)? NPY_SORT_STABLE: 0;
+        sortkind |= (descending > 0)? NPY_SORT_DESCENDING: 0;
     }
+    else {
+        // Check that no keywords are used
+        int keywords_used = 0;
+        keywords_used |= (stable != -1);
+        keywords_used |= (descending != -1);
+        if (keywords_used) {
+            PyErr_SetString(PyExc_ValueError,
+                    "`kind` and keyword parameters can't be provided at "
+                    "the same time. Use only one of them.");
+            return NULL;
+        }
+    }
+
+    order = (order != Py_None)? order: NULL;
+    // Reorder field names if required.
     if (order != NULL) {
         PyObject *new_name;
         PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
+            PyErr_SetString(PyExc_ValueError,
+                            "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
@@ -1296,20 +1331,9 @@ array_sort(PyArrayObject *self,
         ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
-    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
-        PyErr_SetString(PyExc_ValueError,
-            "`kind` and `stable` parameters can't be provided at "
-            "the same time. Use only one of them.");
-        return NULL;
-    }
-    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
-        sortkind = NPY_QUICKSORT;
-    }
-    else if (stable == 1) {
-        sortkind = NPY_STABLESORT;
-    }
 
     val = PyArray_Sort(self, axis, sortkind);
+
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
         ((PyArrayObject_fields *)self)->descr = saved;
@@ -1319,6 +1343,7 @@ array_sort(PyArrayObject *self,
     }
     Py_RETURN_NONE;
 }
+
 
 static PyObject *
 array_partition(PyArrayObject *self,
@@ -1393,15 +1418,19 @@ array_partition(PyArrayObject *self,
     Py_RETURN_NONE;
 }
 
+
 static PyObject *
 array_argsort(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis = -1;
+    PyObject *res;
+    PyObject *order = NULL;
+    PyArray_Descr *saved = NULL;
+    PyArray_Descr *newd;
     NPY_SORTKIND sortkind = _NPY_SORT_UNDEFINED;
-    PyObject *order = NULL, *res;
-    PyArray_Descr *newd, *saved=NULL;
     int stable = -1;
+    int descending = -1;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argsort", args, len_args, kwnames,
@@ -1409,12 +1438,32 @@ array_argsort(PyArrayObject *self,
             "|kind", &PyArray_SortkindConverter, &sortkind,
             "|order", NULL, &order,
             "$stable", &PyArray_OptionalBoolConverter, &stable,
+//            "$descending", &PyArray_OptionalBoolConverter, &descending,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-    if (order == Py_None) {
-        order = NULL;
+
+    if (sortkind == _NPY_SORT_UNDEFINED) {
+        // keywords only if sortkind not passed
+        sortkind = 0;
+        sortkind |= (stable > 0)? NPY_SORT_STABLE: 0;
+        sortkind |= (descending > 0)? NPY_SORT_DESCENDING: 0;
     }
+    else {
+        // Check that no keywords are used
+        int keywords_used = 0;
+        keywords_used |= (stable != -1);
+        keywords_used |= (descending != -1);
+        if (keywords_used) {
+            PyErr_SetString(PyExc_ValueError,
+                    "`kind` and keyword parameters can't be provided at "
+                    "the same time. Use only one of them.");
+            return NULL;
+        }
+    }
+
+    // Reorder field names if required.
+    order = (order != Py_None)? order: NULL;
     if (order != NULL) {
         PyObject *new_name;
         PyObject *_numpy_internal;
@@ -1443,20 +1492,9 @@ array_argsort(PyArrayObject *self,
         ((_PyArray_LegacyDescr *)newd)->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
-    if (sortkind != _NPY_SORT_UNDEFINED && stable != -1) {
-        PyErr_SetString(PyExc_ValueError,
-            "`kind` and `stable` parameters can't be provided at "
-            "the same time. Use only one of them.");
-        return NULL;
-    }
-    else if ((sortkind == _NPY_SORT_UNDEFINED && stable == -1) || (stable == 0)) {
-        sortkind = NPY_QUICKSORT;
-    }
-    else if (stable == 1) {
-        sortkind = NPY_STABLESORT;
-    }
 
     res = PyArray_ArgSort(self, axis, sortkind);
+
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
         ((PyArrayObject_fields *)self)->descr = saved;

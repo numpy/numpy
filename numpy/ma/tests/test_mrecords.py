@@ -350,24 +350,24 @@ class TestMRecords:
 
 class TestView:
 
-    def setup_method(self):
-        (a, b) = (np.arange(10), np.random.rand(10))
+    def _create_data(self):
+        a, b = (np.arange(10), np.random.rand(10))
         ndtype = [('a', float), ('b', float)]
         arr = np.array(list(zip(a, b)), dtype=ndtype)
 
         mrec = fromarrays([a, b], dtype=ndtype, fill_value=(-9., -99.))
         mrec.mask[3] = (False, True)
-        self.data = (mrec, a, b, arr)
+        return mrec, a, b, arr
 
     def test_view_by_itself(self):
-        (mrec, a, b, arr) = self.data
+        mrec = self._create_data()[0]
         test = mrec.view()
         assert_(isinstance(test, MaskedRecords))
         assert_equal_records(test, mrec)
         assert_equal_records(test._mask, mrec._mask)
 
     def test_view_simple_dtype(self):
-        (mrec, a, b, arr) = self.data
+        mrec, a, b, _ = self._create_data()
         ntype = (float, 2)
         test = mrec.view(ntype)
         assert_(isinstance(test, ma.MaskedArray))
@@ -375,7 +375,7 @@ class TestView:
         assert_(test[3, 1] is ma.masked)
 
     def test_view_flexible_type(self):
-        (mrec, a, b, arr) = self.data
+        mrec, _, _, arr = self._create_data()
         alttype = [('A', float), ('B', float)]
         test = mrec.view(alttype)
         assert_(isinstance(test, MaskedRecords))

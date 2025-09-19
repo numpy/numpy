@@ -227,19 +227,19 @@ assert_type(np.atleast_3d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_3d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_3d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 
-assert_type(np.vstack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
+assert_type(np.vstack([A, A]), npt.NDArray[np.float64])
 assert_type(np.vstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.vstack([A, C]), npt.NDArray[Any])
 assert_type(np.vstack([C, C]), npt.NDArray[Any])
 
-assert_type(np.hstack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
+assert_type(np.hstack([A, A]), npt.NDArray[np.float64])
 assert_type(np.hstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 
-assert_type(np.stack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
+assert_type(np.stack([A, A]), npt.NDArray[np.float64])
 assert_type(np.stack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.stack([A, C]), npt.NDArray[Any])
 assert_type(np.stack([C, C]), npt.NDArray[Any])
-assert_type(np.stack([A, A], axis=0), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
+assert_type(np.stack([A, A], axis=0), npt.NDArray[np.float64])
 assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
