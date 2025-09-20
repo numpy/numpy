@@ -158,7 +158,7 @@ line that isn't inside NumPy to see which package has the incompatibility.
 Note your NumPy version and the version of the incompatible package to
 help you find the best solution.
 
-There can be various reason for the incompatibility:
+There can be various reasons for the incompatibility:
 
 * You have recently upgraded NumPy, most likely to NumPy 2, and the other
   module now also needs to be upgraded.  (NumPy 2 was released in June 2024.)
