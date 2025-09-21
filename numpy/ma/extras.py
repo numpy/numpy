@@ -1466,27 +1466,20 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
            fill_value=True)
 
     """
-    if not assume_unique:
-        ar1, rev_idx = unique(ar1, return_inverse=True)
-        ar2 = unique(ar2)
-
-    ar = ma.concatenate((ar1, ar2))
-    # We need this to be a stable sort, so always use 'mergesort'
-    # here. The values from the first array should always come before
-    # the values from the second array.
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
-    if invert:
-        bool_ar = (sar[1:] != sar[:-1])
+    ar1, ar2 = ma.asarray(ar1), ma.asarray(ar2)
+    m = getmask(ar1)
+    res = ma.empty_like(ar1, dtype='bool')
+    if ar1.mask is not nomask:
+        ar1 = ar1[~ar1.mask]
+    if ar2.mask is not nomask:
+        ar2 = ar2[~ar2.mask]
+    out = np.in1d(ar1, ar2, assume_unique=assume_unique,
+                  invert=invert)
+    if m is not nomask:
+        res[~m] = out
     else:
-        bool_ar = (sar[1:] == sar[:-1])
-    flag = ma.concatenate((bool_ar, [invert]))
-    indx = order.argsort(kind='mergesort')[:len(ar1)]
-
-    if assume_unique:
-        return flag[indx]
-    else:
-        return flag[indx][rev_idx]
+        res[:] = out
+    return res
 
 
 def isin(element, test_elements, assume_unique=False, invert=False):
