@@ -1390,8 +1390,6 @@ python_sources = [
   '_exceptions.pyi',
   '_internal.py',
   '_internal.pyi',
-  '_machar.py',
-  '_machar.pyi',
   '_methods.py',
   '_methods.pyi',
   '_simd.pyi',

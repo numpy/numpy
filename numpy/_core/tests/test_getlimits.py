@@ -9,7 +9,6 @@ import pytest
 import numpy as np
 from numpy import double, half, longdouble, single
 from numpy._core import finfo, iinfo
-from numpy._core.getlimits import _discovered_machar, _float_ma
 from numpy.testing import assert_, assert_equal, assert_raises
 
 ##################################################

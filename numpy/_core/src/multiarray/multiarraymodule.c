@@ -4328,6 +4328,86 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
+_populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (PyTuple_Size(args) != 2) {
+        PyErr_SetString(PyExc_TypeError, "Expected 2 arguments");
+        return NULL;
+    }
+    PyObject *finfo = PyTuple_GetItem(args, 0);
+    PyArray_Descr *descr = (PyArray_Descr *)PyTuple_GetItem(args, 1);
+    if (!PyArray_DescrCheck(descr)) {
+        PyErr_SetString(PyExc_TypeError, "Second argument must be a dtype");
+        return NULL;
+    }
+
+    NPY_ALLOC_WORKSPACE(finfo_value, char, 32, descr->elsize);
+    if (finfo_value == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    static const struct {
+        char *name;
+        int id;
+        npy_bool is_int;
+    } finfo_constants[] = {
+        {"max", NPY_CONSTANT_maximum_finite, 0},
+        {"min", NPY_CONSTANT_minimum_finite, 0},
+        {"_radix", NPY_CONSTANT_finfo_radix, 0},
+        {"eps", NPY_CONSTANT_finfo_eps, 0},
+        {"smallest_normal", NPY_CONSTANT_finfo_smallest_normal, 0},
+        {"smallest_subnormal", NPY_CONSTANT_finfo_smallest_subnormal, 0},
+        {"nmant", NPY_CONSTANT_finfo_nmant, 1},
+        {"minexp", NPY_CONSTANT_finfo_min_exp, 1},
+        {"maxexp", NPY_CONSTANT_finfo_max_exp, 1},
+        {"precision", NPY_CONSTANT_finfo_decimal_digits, 1},
+        {NULL, -1},
+    };
+
+    for (int i = 0; finfo_constants[i].name != NULL; i++) {
+        PyObject *value_obj;
+        if (!finfo_constants[i].is_int) {
+            int res = NPY_DT_CALL_get_constant(descr, finfo_constants[i].id, finfo_value);
+            if (res < 0) {
+                goto fail;
+            }
+            if (res == 0) {
+                continue;
+            }
+            value_obj = NPY_DT_CALL_getitem(descr, finfo_value);
+        }
+        else {
+            npy_intp int_value;
+            int res = NPY_DT_CALL_get_constant(descr, finfo_constants[i].id, &int_value);
+            if (res < 0) {
+                goto fail;
+            }
+            if (res == 0) {
+                continue;
+            }
+            value_obj = PyLong_FromSsize_t(int_value);
+        }
+        if (value_obj == NULL) {
+            goto fail;
+        }
+        int res = PyObject_SetAttrString(finfo, finfo_constants[i].name, value_obj);
+        Py_DECREF(value_obj);
+        if (res < 0) {
+            goto fail;
+        }
+    }
+
+    npy_free_workspace(finfo_value);
+    Py_RETURN_NONE;
+  fail:
+    npy_free_workspace(finfo_value);
+    return NULL;
+}
+
+
+
+static PyObject *
 _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
@@ -4556,6 +4636,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,
+        METH_VARARGS, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,

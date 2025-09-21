@@ -118,6 +118,43 @@ use_new_as_default(PyArray_DTypeMeta *self)
 }
 
 
+/*
+ * By default fill in zero, one, and negative one via the Python casts,
+ * users should override this, but this allows us to use it for legacy user dtypes.
+ */
+static int
+default_get_constant(PyArray_Descr *descr, int constant_id, void *data)
+{
+    return 0;
+}
+
+
+static int
+legacy_fallback_setitem(PyArray_Descr *descr, PyObject *value, char *data)
+{
+    PyArrayObject_fields arr_fields = {
+        .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
+    };
+    Py_SET_TYPE(&arr_fields, &PyArray_Type);
+    Py_SET_REFCNT(&arr_fields, 1);
+    arr_fields.descr = descr;
+    return PyDataType_GetArrFuncs(descr)->setitem(value, data, &arr_fields);
+}
+
+
+PyObject *
+legacy_fallback_getitem(PyArray_Descr *descr, char *data)
+{
+    PyArrayObject_fields arr_fields = {
+        .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
+    };
+    Py_SET_TYPE(&arr_fields, &PyArray_Type);
+    Py_SET_REFCNT(&arr_fields, 1);
+    arr_fields.descr = descr;
+    return PyDataType_GetArrFuncs(descr)->getitem(data, &arr_fields);
+}
+
+
 static int
 legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
 {
@@ -195,6 +232,7 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
     NPY_DT_SLOTS(DType)->finalize_descr = NULL;
+    NPY_DT_SLOTS(DType)->get_constant = default_get_constant;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
@@ -1068,9 +1106,9 @@ object_common_dtype(
  *              Some may have more aliases, as `intp` is not its own thing,
  *              as of writing this, these are not added here.
  *
- * @returns 0 on success, -1 on failure.
+ * @returns A borrowed references to the new DType or NULL.
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT PyArray_DTypeMeta *
 dtypemeta_wrap_legacy_descriptor(
     _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
     PyTypeObject *dtype_super_class, const char *name, const char *alias)
@@ -1097,19 +1135,19 @@ dtypemeta_wrap_legacy_descriptor(
                 "that of an existing dtype (with the assumption it is just "
                 "copied over and can be replaced).",
                 descr->typeobj, Py_TYPE(descr));
-        return -1;
+        return NULL;
     }
 
     NPY_DType_Slots *dt_slots = PyMem_Malloc(sizeof(NPY_DType_Slots));
     if (dt_slots == NULL) {
-        return -1;
+        return NULL;
     }
     memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
 
     PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
         PyMem_Free(dt_slots);
-        return -1;
+        return NULL;
     }
 
     /*
@@ -1148,12 +1186,12 @@ dtypemeta_wrap_legacy_descriptor(
     /* Let python finish the initialization */
     if (PyType_Ready((PyTypeObject *)dtype_class) < 0) {
         Py_DECREF(dtype_class);
-        return -1;
+        return NULL;
     }
     dt_slots->castingimpls = PyDict_New();
     if (dt_slots->castingimpls == NULL) {
         Py_DECREF(dtype_class);
-        return -1;
+        return NULL;
     }
 
     /*
@@ -1173,6 +1211,9 @@ dtypemeta_wrap_legacy_descriptor(
     dt_slots->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
+    // These may be overwritten, but if not provide fallback via array struct hack:
+    dt_slots->setitem = legacy_fallback_setitem;
+    dt_slots->getitem = legacy_fallback_getitem;
     dt_slots->ensure_canonical = ensure_native_byteorder;
     dt_slots->get_fill_zero_loop = NULL;
     dt_slots->finalize_descr = NULL;
@@ -1233,7 +1274,7 @@ dtypemeta_wrap_legacy_descriptor(
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
             PyTypeNum_ISUSERDEF(dtype_class->type_num)) < 0) {
         Py_DECREF(dtype_class);
-        return -1;
+        return NULL;
     }
 
     /* Finally, replace the current class of the descr */
@@ -1243,23 +1284,23 @@ dtypemeta_wrap_legacy_descriptor(
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
         if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
                                      &npy_runtime_imports._add_dtype_helper) == -1) {
-            return -1;
+            return NULL;
         }
 
         if (PyObject_CallFunction(
                 npy_runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
-            return -1;
+            return NULL;
         }
     }
     else {
         // ensure the within dtype cast is populated for legacy user dtypes
         if (PyArray_GetCastingImpl(dtype_class, dtype_class) == NULL) {
-            return -1;
+            return NULL;
         }
     }
 
-    return 0;
+    return dtype_class;
 }
 
 
