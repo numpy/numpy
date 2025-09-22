@@ -2077,8 +2077,14 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
         npy_intp *strides = NAD_STRIDES(axisdata);
 
         for (int iop = 0; iop < nop; iop++) {
-            /* Check that we set things up nicely (if shape is ever 1) */
-            assert((axisdata->shape == 1) ? (prev_strides[iop] == strides[iop]) : 1);
+            /*
+             * Check that we set things up nicely so strides coalesc.  Except
+             * for index operands, which currently disrupts coalescing.
+             * NOTE(seberg): presumably `npyiter_compute_index_strides` should
+             * not set the strides to 0, but this was safer for backporting.
+             */
+            assert((axisdata->shape != 1) || (prev_strides[iop] == strides[iop])
+                   || (op_itflags[iop] & (NPY_ITER_C_INDEX|NPY_ITER_F_INDEX)));
 
             if (op_single_stride_dims[iop] == idim) {
                 /*  Best case: the strides still collapse for this operand. */
