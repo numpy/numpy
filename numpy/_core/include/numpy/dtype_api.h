@@ -492,8 +492,7 @@ typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
 typedef struct {
-    int stable;
-    int descending;
-} PyArrayMethod_SortFlags;
+    NPY_SORTKIND flags;
+} PyArrayMethod_SortParameters;
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

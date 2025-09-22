@@ -31,7 +31,6 @@ typedef struct {
      */
     PyArrayDTypeMeta_SetItem *setitem;
     PyArrayDTypeMeta_GetItem *getitem;
-
     /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
