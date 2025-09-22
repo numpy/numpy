@@ -67,7 +67,6 @@ typedef struct {
      * parameters, if any, as the operand dtype.
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
-
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
