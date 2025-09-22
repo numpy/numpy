@@ -3106,7 +3106,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         if (sort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
             sort_method = sort_impls[i]->method;
 
-            PyArrayMethod_Context *context;
+            PyArrayMethod_Context *context = {0};
             NPY_ARRAYMETHOD_FLAGS method_flags = 0;
             
             PyArrayMethod_StridedLoop *strided_loop = NULL;
@@ -3185,7 +3185,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         if (argsort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
             argsort_method = argsort_impls[i]->method;
 
-            PyArrayMethod_Context *context;
+            PyArrayMethod_Context *context = {0};
             NPY_ARRAYMETHOD_FLAGS method_flags = 0;
             
             PyArrayMethod_StridedLoop *strided_loop = NULL;
