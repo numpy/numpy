@@ -3088,6 +3088,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     DType_ArrayMethod **sort_impls = npy_sort_impls.sort_impls;
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
+    PyArrayMethod_Context _context = {0};
     PyArrayMethod_Context *context = NULL;
     PyArray_SortFunc **sort_table = NULL;
     PyArray_SortFunc *sort = NULL;
@@ -3111,9 +3112,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             PyArrayMethod_SortParameters sort_params = {
                 .flags = flags,
             };
-            PyArrayMethod_Context _context = {
-                .parameters = &sort_params,
-            };
+            _context.parameters = &sort_params;
             context = &_context;
 
             NPY_ARRAYMETHOD_FLAGS method_flags = 0;
@@ -3183,6 +3182,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     DType_ArrayMethod **argsort_impls = npy_sort_impls.argsort_impls;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
+    PyArrayMethod_Context _context = {0};
     PyArrayMethod_Context *context = NULL;
     PyArray_ArgSortFunc **argsort_table = NULL;
     PyArray_ArgSortFunc *argsort = NULL;
@@ -3198,9 +3198,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             PyArrayMethod_SortParameters sort_params = {
                 .flags = flags,
             };
-            PyArrayMethod_Context _context = {
-                .parameters = &sort_params,
-            };
+            _context.parameters = &sort_params;
             context = &_context;
 
             NPY_ARRAYMETHOD_FLAGS method_flags = 0;
