@@ -52,6 +52,7 @@ NPYV_IMPL_NEON_MEM(f64, double)
  ***************************/
 NPY_FINLINE npyv_s32 npyv_loadn_s32(const npy_int32 *ptr, npy_intp stride)
 {
+    assert(llabs(stride) <= NPY_SIMD_MAXLOAD_STRIDE32);
     int32x4_t a = vdupq_n_s32(0);
     a = vld1q_lane_s32((const int32_t*)ptr,            a, 0);
     a = vld1q_lane_s32((const int32_t*)ptr + stride,   a, 1);
@@ -75,6 +76,7 @@ NPY_FINLINE npyv_f32 npyv_loadn_f32(const float *ptr, npy_intp stride)
 //// 64
 NPY_FINLINE npyv_s64 npyv_loadn_s64(const npy_int64 *ptr, npy_intp stride)
 {
+    assert(llabs(stride) <= NPY_SIMD_MAXLOAD_STRIDE64);
     return vcombine_s64(
         vld1_s64((const int64_t*)ptr), vld1_s64((const int64_t*)ptr + stride)
     );
