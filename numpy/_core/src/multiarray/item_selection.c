@@ -3182,6 +3182,11 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     // Zero the NPY_HEAPSORT bit, maps NPY_HEAPSORT to NPY_QUICKSORT
     flags &= ~_NPY_SORT_HEAPSORT;
 
+    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
+    if (op2 == NULL) {
+        return NULL;
+    }
+
     // Look for type specific functions
     for (size_t i = 0; argsort_impls[i] != NULL; i++) {
         if (argsort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
@@ -3195,11 +3200,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             PyArrayMethod_StridedLoop *strided_loop = NULL;
             if (argsort_method->get_strided_loop(
                 context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
-                return NULL;
-            }
-
-            op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
-            if (op2 == NULL) {
                 return NULL;
             }
 
@@ -3244,11 +3244,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     if (argsort == NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "no current argsort function meets the requirements");
-        return NULL;
-    }
-
-    op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
-    if (op2 == NULL) {
         return NULL;
     }
 
