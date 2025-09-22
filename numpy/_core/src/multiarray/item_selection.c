@@ -3119,6 +3119,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
                 context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
                 return -1;
             }
+            break;
         }
     }
 
@@ -3203,6 +3204,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
                 context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
                 return NULL;
             }
+            break;
         }
     }
 
