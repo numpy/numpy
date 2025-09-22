@@ -25,6 +25,7 @@
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
 #include "refcount.h"
+#include "methods.h"
 
 #include "npy_sort.h"
 #include "npy_partition.h"
@@ -1193,8 +1194,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  */
 static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
-              PyArray_SortFuncWithContext *sort_with_context,
-              PyArrayMethod_SortContext *context,
+              PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
               PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
@@ -1296,8 +1296,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
          */
 
         if (part == NULL) {
-            if (sort_with_context != NULL) {
-                ret = sort_with_context(context, bufptr, N, NULL);
+            if (strided_loop != NULL) {
+                char *const *data = &bufptr;
+                ret = strided_loop(context, data, &N, NULL, NULL);
             }
             else {
                 ret = sort(bufptr, N, op);
@@ -1367,10 +1368,8 @@ fail:
 
 static PyObject*
 _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
-                 PyArray_ArgSortFuncWithContext *argsort_with_context,
-                 PyArrayMethod_SortContext *context,
-                 PyArray_ArgPartitionFunc *argpart,
-                 npy_intp const *kth, npy_intp nkth)
+                 PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
+                 PyArray_ArgPartitionFunc *argpart, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -1493,8 +1492,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         }
 
         if (argpart == NULL) {
-            if (argsort_with_context != NULL) {
-                ret = argsort_with_context(context, valptr, idxptr, N, NULL);
+            if (strided_loop != NULL) {
+                char *const data[2] = {valptr, (char *)idxptr};
+                ret = strided_loop(context, data, &N, NULL, NULL);
             }
             else {
                 ret = argsort(valptr, idxptr, N, op);
@@ -3085,9 +3085,8 @@ static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
 NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
-    PyArrayDTypeMeta_SortFunctions *sort_functions = NULL;
-    PyArray_SortFuncWithContext *sort_with_context = NULL;
-
+    DType_ArrayMethod **sort_impls = npy_sort_impls.sort_impls;
+    PyArrayMethodObject *sort_method = NULL;
     PyArray_SortFunc **sort_table = NULL;
     PyArray_SortFunc *sort = NULL;
 
@@ -3103,29 +3102,21 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     flags &= ~_NPY_SORT_HEAPSORT;
 
     // Look for type specific functions
-    sort_functions = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_functions;
-    if (sort_functions != NULL) {
-        switch (flags) {
-            case NPY_SORT_DEFAULT:
-                sort_with_context = sort_functions->default_sort;
-                break;
-            case NPY_SORT_STABLE:
-                sort_with_context = sort_functions->stable_sort;
-                break;
-            default:
-                break;
-        }
+    for (size_t i = 0; sort_impls[i] != NULL; i++) {
+        if (sort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
+            sort_method = sort_impls[i]->method;
 
-        if (sort_with_context != NULL) {
-            PyArrayMethod_SortContext context = {
-                .descr = PyArray_DESCR(op),
-            };
-            return _new_sortlike(op, axis, NULL, sort_with_context, &context, NULL, NULL, 0);
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "no current sort function meets the requirements");
-            return -1;
+            PyArrayMethod_Context *context;
+            NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+            
+            PyArrayMethod_StridedLoop *strided_loop = NULL;
+            if (sort_method->get_strided_loop(
+                context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
+                return -1;
+            }
+
+            return _new_sortlike(
+                op, axis, NULL, strided_loop, context, NULL, NULL, 0);
         }
     }
 
@@ -3179,11 +3170,10 @@ static PyArray_ArgSortFunc* const generic_argsort_table[] = {npy_aquicksort,
 NPY_NO_EXPORT PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
-    PyArrayDTypeMeta_ArgSortFunctions *argsort_functions = NULL;
-    PyArray_ArgSortFuncWithContext *argsort_with_context = NULL;
-
     PyArrayObject *op2;
     PyObject *ret;
+    DType_ArrayMethod **argsort_impls = npy_sort_impls.argsort_impls;
+    PyArrayMethodObject *argsort_method = NULL;
     PyArray_ArgSortFunc **argsort_table = NULL;
     PyArray_ArgSortFunc *argsort = NULL;
 
@@ -3191,29 +3181,28 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     flags &= ~_NPY_SORT_HEAPSORT;
 
     // Look for type specific functions
-    argsort_functions = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_functions;
-    if (argsort_functions != NULL) {
-        switch (flags) {
-            case NPY_SORT_DEFAULT:
-                argsort_with_context = argsort_functions->default_argsort;
-                break;
-            case NPY_SORT_STABLE:
-                argsort_with_context = argsort_functions->stable_argsort;
-                break;
-            default:
-                break;
-        }
+    for (size_t i = 0; argsort_impls[i] != NULL; i++) {
+        if (argsort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
+            argsort_method = argsort_impls[i]->method;
 
-        if (argsort_with_context != NULL) {
-            PyArrayMethod_SortContext context = {
-                .descr = PyArray_DESCR(op),
-            };
-            return _new_argsortlike(op, axis, NULL, argsort_with_context, &context, NULL, NULL, 0);
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                            "no current argsort function meets the requirements");
-            return NULL;
+            PyArrayMethod_Context *context;
+            NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+            
+            PyArrayMethod_StridedLoop *strided_loop = NULL;
+            if (argsort_method->get_strided_loop(
+                context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
+                return NULL;
+            }
+
+            op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
+            if (op2 == NULL) {
+                return NULL;
+            }
+
+            ret = _new_argsortlike(
+                op2, axis, NULL, strided_loop, context, NULL, NULL, 0);
+            Py_DECREF(op2);
+            return ret;
         }
     }
 

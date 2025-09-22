@@ -6,6 +6,18 @@
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
+typedef struct {
+    PyArray_DTypeMeta *dtype;
+    PyArrayMethodObject *method;
+} DType_ArrayMethod;
+
+typedef struct {
+    DType_ArrayMethod **sort_impls;
+    DType_ArrayMethod **argsort_impls;
+} NpySortImpls;
+
+extern NPY_NO_EXPORT NpySortImpls npy_sort_impls;
+
 
 /*
  * Pathlib support, takes a borrowed reference and returns a new one.

@@ -2877,6 +2877,18 @@ array_class_getitem(PyObject *cls, PyObject *args)
     return Py_GenericAlias(cls, args);
 }
 
+static DType_ArrayMethod *sort_impls[] = {
+    NULL
+};
+static DType_ArrayMethod *argsort_impls[] = {
+    NULL
+};
+
+NPY_NO_EXPORT NpySortImpls npy_sort_impls = {
+    .sort_impls = sort_impls,
+    .argsort_impls = argsort_impls
+};
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */

@@ -121,6 +121,8 @@ typedef struct PyArrayMethod_Context_tag {
     uint64_t flags;
     /* Structure may grow (this is harmless for DType authors) */
  #endif
+
+    void *parameters;
 } PyArrayMethod_Context;
 
 
@@ -379,10 +381,6 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
-#if NPY_VERSION >= NPY_2_4_API_VERSION
-#define NPY_DT_get_sort_function 12
-#define NPY_DT_get_argsort_function 13
-#endif
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -494,25 +492,8 @@ typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
 typedef struct {
-    PyArray_Descr *descr;
-} PyArrayMethod_SortContext;
-
-typedef int (PyArray_SortFuncWithContext)(
-        PyArrayMethod_SortContext *, void *, npy_intp, NpyAuxData *);
-typedef int (PyArray_ArgSortFuncWithContext)(
-        PyArrayMethod_SortContext *, void *, npy_intp *, npy_intp, NpyAuxData *);
-
-typedef struct {
-    PyArray_SortFuncWithContext *default_sort;
-    PyArray_SortFuncWithContext *stable_sort;
-    PyArray_SortFuncWithContext *default_descending_sort;
-    PyArray_SortFuncWithContext *stable_descending_sort;
-} PyArrayDTypeMeta_SortFunctions;
-typedef struct {
-    PyArray_ArgSortFuncWithContext *default_argsort;
-    PyArray_ArgSortFuncWithContext *stable_argsort;
-    PyArray_ArgSortFuncWithContext *default_descending_argsort;
-    PyArray_ArgSortFuncWithContext *stable_descending_argsort;
-} PyArrayDTypeMeta_ArgSortFunctions;
+    int stable;
+    int descending;
+} PyArrayMethod_SortFlags;
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
