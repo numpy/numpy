@@ -59,7 +59,8 @@ Small improvements or fixes are always appreciated. If you are considering large
 to the source code, please contact us through the [mailing
 list](https://mail.python.org/mailman/listinfo/numpy-discussion) first.
 
-Writing code isn’t the only way to contribute to NumPy. You can also:
+Writing code isn’t the only way to contribute to NumPy. 
+You can also:
 - review pull requests
 - help us stay on top of new and old issues
 - develop tutorials, presentations, and other educational materials
