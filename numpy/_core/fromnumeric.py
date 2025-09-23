@@ -280,11 +280,11 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
     array([[0, 1, 2],
            [3, 4, 5]])
     >>> np.reshape(a, (2, 3), order='F') # Fortran-like index ordering
-    array([[0, 4, 3],
-           [2, 1, 5]])
+    array([[0, 2, 4],
+           [1, 3, 5]])
     >>> np.reshape(np.ravel(a, order='F'), (2, 3), order='F')
-    array([[0, 4, 3],
-           [2, 1, 5]])
+    array([[0, 2, 4],
+           [1, 3, 5]])
 
     Examples
     --------
