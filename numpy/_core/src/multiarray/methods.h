@@ -6,6 +6,7 @@
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
+
 /*
  * Pathlib support, takes a borrowed reference and returns a new one.
  * The new object may be the same as the old.
