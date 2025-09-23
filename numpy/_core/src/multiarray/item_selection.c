@@ -3118,8 +3118,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             return -1;
         }
     }
-
-    if (strided_loop == NULL) {
+    else {
         sort_table = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort;
         switch (flags) {
             case NPY_SORT_DEFAULT:
@@ -3199,8 +3198,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             return NULL;
         }
     }
-
-    if (strided_loop == NULL) {
+    else {
         argsort_table = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort;
         switch (flags) {
             case NPY_SORT_DEFAULT:
