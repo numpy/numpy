@@ -1687,9 +1687,9 @@ class TestDTypeClasses:
 
     @pytest.mark.parametrize("name",
             ["Half", "Float", "Double", "CFloat", "CDouble"])
-    def test_float_alias_names(self, name):
+    def test_float_alias_names_not_present(self, name):
         with pytest.raises(AttributeError):
-            getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
+            getattr(numpy.dtypes, name + "DType")
 
     def test_scalar_helper_all_dtypes(self):
         for dtype in np.dtypes.__all__:
