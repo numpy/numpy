@@ -3085,7 +3085,7 @@ static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
 NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
-    DType_ArrayMethod **sort_impls = npy_sort_impls.sort_impls;
+    GeneralizedArrayMethodLoop **sort_impls = npy_generalized_array_methods.sort->loops;
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_Context _context = {0};
@@ -3179,7 +3179,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayObject *op2;
     PyObject *ret;
-    DType_ArrayMethod **argsort_impls = npy_sort_impls.argsort_impls;
+    GeneralizedArrayMethodLoop **argsort_impls = npy_generalized_array_methods.argsort->loops;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_Context _context = {0};
