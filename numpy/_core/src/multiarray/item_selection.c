@@ -1493,7 +1493,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (argpart == NULL) {
             if (strided_loop != NULL) {
-                char *const data[3] = {valptr, (char *)idxptr, valptr};
+                char *const data[2] = {valptr, (char *)idxptr};
                 ret = strided_loop(context, data, &N, NULL, NULL);
             }
             else {
@@ -3197,12 +3197,13 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             .flags = flags,
         };
         PyArray_Descr *descr = PyArray_DESCR(op);
-        _context.descriptors = (PyArray_Descr * const[]){descr, NULL, descr};
+        PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INT64);
+        _context.descriptors = (PyArray_Descr * const[]){descr, odescr};
         _context.parameters = &sort_params;
         context = &_context;
 
         npy_intp stride = PyArray_STRIDE(op, axis);
-        npy_intp strides[3] = {stride, 0, stride};
+        npy_intp strides[2] = {stride, stride};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (argsort_method->get_strided_loop(
