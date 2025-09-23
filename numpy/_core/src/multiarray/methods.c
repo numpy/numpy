@@ -2877,32 +2877,6 @@ array_class_getitem(PyObject *cls, PyObject *args)
     return Py_GenericAlias(cls, args);
 }
 
-static GeneralizedArrayMethodLoop *sort_loops[] = {
-    NULL
-};
-static GeneralizedArrayMethodLoop *argsort_loops[] = {
-    NULL
-};
-
-static GeneralizedArrayMethodImpl sort_impl = {
-    .name = "sort",
-    .nin = 1,
-    .nout = 1,
-    .loops = sort_loops,
-};
-
-static GeneralizedArrayMethodImpl argsort_impl = {
-    .name = "argsort",
-    .nin = 2,
-    .nout = 1,
-    .loops = argsort_loops,
-};
-
-NPY_NO_EXPORT NpyGeneralizedArrayMethods npy_generalized_array_methods = {
-    .sort = &sort_impl,
-    .argsort = &argsort_impl
-};
-
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */

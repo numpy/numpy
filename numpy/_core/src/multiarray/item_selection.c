@@ -3085,7 +3085,6 @@ static PyArray_SortFunc* const generic_sort_table[] = {npy_quicksort,
 NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
-    GeneralizedArrayMethodLoop **sort_impls = npy_generalized_array_methods.sort->loops;
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_Context _context = {0};
@@ -3105,22 +3104,18 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     flags &= ~_NPY_SORT_HEAPSORT;
 
     // Look for type specific functions
-    for (size_t i = 0; sort_impls[i] != NULL; i++) {
-        if (sort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
-            sort_method = sort_impls[i]->method;
+    sort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_meth;
+    if (sort_method != NULL) {
+        PyArrayMethod_SortParameters sort_params = {
+            .flags = flags,
+        };
+        _context.parameters = &sort_params;
+        context = &_context;
 
-            PyArrayMethod_SortParameters sort_params = {
-                .flags = flags,
-            };
-            _context.parameters = &sort_params;
-            context = &_context;
-
-            NPY_ARRAYMETHOD_FLAGS method_flags = 0;
-            if (sort_method->get_strided_loop(
-                context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
-                return -1;
-            }
-            break;
+        NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+        if (sort_method->get_strided_loop(
+            context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
+            return -1;
         }
     }
 
@@ -3179,7 +3174,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayObject *op2;
     PyObject *ret;
-    GeneralizedArrayMethodLoop **argsort_impls = npy_generalized_array_methods.argsort->loops;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_Context _context = {0};
@@ -3191,22 +3185,18 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     flags &= ~_NPY_SORT_HEAPSORT;
 
     // Look for type specific functions
-    for (size_t i = 0; argsort_impls[i] != NULL; i++) {
-        if (argsort_impls[i]->dtype == NPY_DTYPE(PyArray_DESCR(op))) {
-            argsort_method = argsort_impls[i]->method;
+    argsort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_meth;
+    if (argsort_method != NULL) {
+        PyArrayMethod_SortParameters sort_params = {
+            .flags = flags,
+        };
+        _context.parameters = &sort_params;
+        context = &_context;
 
-            PyArrayMethod_SortParameters sort_params = {
-                .flags = flags,
-            };
-            _context.parameters = &sort_params;
-            context = &_context;
-
-            NPY_ARRAYMETHOD_FLAGS method_flags = 0;
-            if (argsort_method->get_strided_loop(
-                context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
-                return NULL;
-            }
-            break;
+        NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+        if (argsort_method->get_strided_loop(
+            context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
+            return NULL;
         }
     }
 

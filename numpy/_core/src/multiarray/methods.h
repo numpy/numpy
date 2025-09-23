@@ -6,26 +6,6 @@
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
-typedef struct {
-    PyArray_DTypeMeta *dtype;
-    PyArrayMethodObject *method;
-} GeneralizedArrayMethodLoop;
-
-typedef struct GeneralizedArrayMethodImpl_tag {
-    const char *name;
-    int nin, nout;
-    GeneralizedArrayMethodLoop **loops;
-    int nloops, allocated;
-} GeneralizedArrayMethodImpl;
-
-typedef struct {
-    GeneralizedArrayMethodImpl *sort;
-    GeneralizedArrayMethodImpl *argsort;
-} NpyGeneralizedArrayMethods;
-
-extern NPY_NO_EXPORT NpyGeneralizedArrayMethods npy_generalized_array_methods;
-
-
 /*
  * Pathlib support, takes a borrowed reference and returns a new one.
  * The new object may be the same as the old.
