@@ -3109,12 +3109,15 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArrayMethod_SortParameters sort_params = {
             .flags = flags,
         };
+        _context.descriptors = (PyArray_Descr * const[]){ PyArray_DESCR(op) };
         _context.parameters = &sort_params;
         context = &_context;
 
+        npy_intp strides[1] = {PyArray_STRIDE(op, axis)};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+
         if (sort_method->get_strided_loop(
-            context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
+            context, 1, 0, strides, &strided_loop, NULL, &method_flags) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get strided loop for sort");
             return -1;
@@ -3191,12 +3194,15 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArrayMethod_SortParameters sort_params = {
             .flags = flags,
         };
+        _context.descriptors = (PyArray_Descr * const[]){ PyArray_DESCR(op) };
         _context.parameters = &sort_params;
         context = &_context;
 
+        npy_intp strides[1] = {PyArray_STRIDE(op, axis)};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
+
         if (argsort_method->get_strided_loop(
-            context, 1, 0, NULL, &strided_loop, NULL, &method_flags) < 0) {
+            context, 1, 0, strides, &strided_loop, NULL, &method_flags) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get strided loop for argsort");
             return NULL;
