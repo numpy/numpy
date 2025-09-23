@@ -1297,7 +1297,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         if (part == NULL) {
             if (strided_loop != NULL) {
-                char *const *data = &bufptr;
+                char *const data[2] = {bufptr, bufptr};
                 ret = strided_loop(context, data, &N, NULL, NULL);
             }
             else {
@@ -1493,7 +1493,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (argpart == NULL) {
             if (strided_loop != NULL) {
-                char *const data[2] = {valptr, (char *)idxptr};
+                char *const data[3] = {valptr, (char *)idxptr, valptr};
                 ret = strided_loop(context, data, &N, NULL, NULL);
             }
             else {
@@ -3109,11 +3109,13 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArrayMethod_SortParameters sort_params = {
             .flags = flags,
         };
-        _context.descriptors = (PyArray_Descr * const[]){ PyArray_DESCR(op) };
+        PyArray_Descr *descr = PyArray_DESCR(op);
+        _context.descriptors = (PyArray_Descr * const[]){descr, descr};
         _context.parameters = &sort_params;
         context = &_context;
 
-        npy_intp strides[1] = {PyArray_STRIDE(op, axis)};
+        npy_intp stride = PyArray_STRIDE(op, axis);
+        npy_intp strides[2] = {stride, stride};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (sort_method->get_strided_loop(
@@ -3194,11 +3196,13 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArrayMethod_SortParameters sort_params = {
             .flags = flags,
         };
-        _context.descriptors = (PyArray_Descr * const[]){ PyArray_DESCR(op) };
+        PyArray_Descr *descr = PyArray_DESCR(op);
+        _context.descriptors = (PyArray_Descr * const[]){descr, NULL, descr};
         _context.parameters = &sort_params;
         context = &_context;
 
-        npy_intp strides[1] = {PyArray_STRIDE(op, axis)};
+        npy_intp stride = PyArray_STRIDE(op, axis);
+        npy_intp strides[3] = {stride, 0, stride};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (argsort_method->get_strided_loop(
