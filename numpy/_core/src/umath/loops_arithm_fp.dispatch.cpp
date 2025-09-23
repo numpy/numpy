@@ -2,8 +2,6 @@
 #include "loops_utils.h"
 #include "loops.h"
 #include "simd/simd.hpp"
-#include <hwy/highway.h>
-#include <limits>   // Required for std::numeric_limits
 
 namespace {
 using namespace np::simd;
@@ -12,83 +10,69 @@ template <typename T>
 struct OpAdd {
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const {
+    NPY_FINLINE V operator()(const V &a, const V &b) const {
         return hn::Add(a, b);
     }
 #endif
-    HWY_INLINE T operator()(T a, T b) const {
+    NPY_FINLINE T operator()(T a, T b) const {
         return a + b; 
     }
-    static constexpr int PW = 1;
-    static constexpr bool is_div = false;
-    static constexpr bool is_mul = false;
 };
 
 template <typename T>
 struct OpSub {
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const {
+    NPY_FINLINE V operator()(const V &a, const V &b) const {
         return hn::Sub(a, b);
     }
 #endif
-    HWY_INLINE T operator()(T a, T b) const {
+    NPY_FINLINE T operator()(T a, T b) const {
         return a - b; 
     }
-    static constexpr int PW = 0;
-    static constexpr bool is_div = false;
-    static constexpr bool is_mul = false;
 };
 
 template <typename T>
 struct OpMul {
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const {
+    NPY_FINLINE V operator()(const V &a, const V &b) const {
         return hn::Mul(a, b);
     }
 #endif
-    HWY_INLINE T operator()(T a, T b) const {
+    NPY_FINLINE T operator()(T a, T b) const {
         return a * b; 
     }
-    static constexpr int PW = 0;
-    static constexpr bool is_div = false;
-    static constexpr bool is_mul = true;
 };
 
 template <typename T>
 struct OpDiv {
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const {
+    NPY_FINLINE V operator()(const V &a, const V &b) const {
         return hn::Div(a, b);
     }
 #endif
-    HWY_INLINE T operator()(T a, T b) const {
+    NPY_FINLINE T operator()(T a, T b) const {
         return a / b; 
     }
-    static constexpr int PW = 0;
-    static constexpr bool is_div = true;
-    static constexpr bool is_mul = false;
 };
 
 template <typename T>
 struct OpMulComplex {
 #if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b) const {
+    NPY_FINLINE V operator()(const V &a, const V &b) const {
         return hn::MulComplex(a, b);
     }
 #endif
-    HWY_INLINE T operator()(T a, T b) const {
+    NPY_FINLINE T operator()(T a, T b) const {
         return a * b; 
     }
-    static constexpr int PW = 0;
-    static constexpr bool is_mul = true;
 };
 
 template <typename T, typename Op>
-HWY_INLINE HWY_ATTR void
+NPY_FINLINE void
 real_single_double_func(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     Op op_func;
@@ -98,7 +82,7 @@ real_single_double_func(char **args, npy_intp const *dimensions, npy_intp const 
 
     // reduce
     if (ssrc0 == 0 && ssrc0 == sdst && src0 == dst) {
-        if constexpr (Op::PW) {
+        if constexpr (std::is_same_v<Op, OpAdd<T>>) {
             if constexpr (std::is_same_v<T, float>){
                 *((T*)src0) += FLOAT_pairwise_sum(src1, len, ssrc1);
             } else {
@@ -121,7 +105,7 @@ real_single_double_func(char **args, npy_intp const *dimensions, npy_intp const 
     }
 
 #if HWY_HAVE_NEON_FP && !NPY_HWY_F64
-    if constexpr (Op::is_div) {
+    if constexpr (std::is_same_v<Op, OpDiv<T>>) {
         goto loop_scalar;
     }
 #endif
@@ -148,86 +132,88 @@ real_single_double_func(char **args, npy_intp const *dimensions, npy_intp const 
      */
 
 #if NPY_HWY
+    using V = Vec<T>;
     if constexpr (kSupportLane<T>) {
         if (static_cast<size_t>(len) > Lanes<T>()*2 &&
             !is_mem_overlap(src0, ssrc0, dst, sdst, len) &&
             !is_mem_overlap(src1, ssrc1, dst, sdst, len)
         ) {
-            HWY_LANES_CONSTEXPR int vstep = Lanes<uint8_t>();
+            const T *t_src0 = reinterpret_cast<const T*>(src0);
+            const T *t_src1 = reinterpret_cast<const T*>(src1);
+            T *t_dst = reinterpret_cast<T*>(dst);
+            HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
             const int wstep = vstep * 2;
-            HWY_LANES_CONSTEXPR int hstep = Lanes<T>();
-            const int lstep = hstep * 2;
             // lots of specializations, to squeeze out max performance
             if (ssrc0 == sizeof(T) && ssrc0 == ssrc1 && ssrc0 == sdst) {
-                for (; len >= lstep; len -= lstep, src0 += wstep, src1 += wstep, dst += wstep) {
-                    auto a0 = LoadU<T>((const T*)src0);
-                    auto a1 = LoadU<T>((const T*)(src0 + vstep));
-                    auto b0 = LoadU<T>((const T*)src1);
-                    auto b1 = LoadU<T>((const T*)(src1 + vstep));
-                    auto r0 = op_func(a0, b0);
-                    auto r1 = op_func(a1, b1);
-                    StoreU<T>(r0, (T*)dst);
-                    StoreU<T>(r1, (T*)(dst + vstep));
+                for (; len >= wstep; len -= wstep, t_src0 += wstep, t_src1 += wstep, t_dst += wstep) {
+                    V a0 = LoadU(t_src0);
+                    V a1 = LoadU(t_src0 + vstep);
+                    V b0 = LoadU(t_src1);
+                    V b1 = LoadU(t_src1 + vstep);
+                    V r0 = op_func(a0, b0);
+                    V r1 = op_func(a1, b1);
+                    StoreU(r0, t_dst);
+                    StoreU(r1, t_dst + vstep);
                 }
-                for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
-                    if constexpr(Op::is_div){
-                        auto a = hn::LoadNOr(Set<T>(1.0), _Tag<T>(), (const T*)src0, len);
-                        auto b = hn::LoadNOr(Set<T>(1.0), _Tag<T>(), (const T*)src1, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+                for (; len > 0; len -= vstep, t_src0 += vstep, t_src1 += vstep, t_dst += vstep) {
+                    if constexpr(std::is_same_v<Op, OpDiv<T>>){
+                        V a = LoadNOr(Set<T>(1.0), t_src0, len);
+                        V b = LoadNOr(Set<T>(1.0), t_src1, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
                      } else {
-                        auto a = hn::LoadN(_Tag<T>(), (const T*)src0, len);
-                        auto b = hn::LoadN(_Tag<T>(), (const T*)src1, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+                        V a = LoadN(t_src0, len);
+                        V b = LoadN(t_src1, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
                     }
                 }
             }
             else if (ssrc0 == 0 && ssrc1 == sizeof(T) && sdst == ssrc1) {
-                auto a = Set<T>(*((T*)src0));
-                for (; len >= lstep; len -= lstep, src1 += wstep, dst += wstep) {
-                    auto b0 = LoadU<T>((const T*)src1);
-                    auto b1 = LoadU<T>((const T*)(src1 + vstep));
-                    auto r0 = op_func(a, b0);
-                    auto r1 = op_func(a, b1);
-                    StoreU<T>(r0, (T*)dst);
-                    StoreU<T>(r1, (T*)(dst + vstep));
+                V a = Set(*t_src0);
+                for (; len >= wstep; len -= wstep, t_src1 += wstep, t_dst += wstep) {
+                    V b0 = LoadU(t_src1);
+                    V b1 = LoadU(t_src1 + vstep);
+                    V r0 = op_func(a, b0);
+                    V r1 = op_func(a, b1);
+                    StoreU(r0, t_dst);
+                    StoreU(r1, t_dst + vstep);
                 }
-                for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
-                    if constexpr (Op::is_div || Op::is_mul) {
-                        auto b = hn::LoadNOr(Set<T>(1.0), _Tag<T>(), (const T*)src1, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+                for (; len > 0; len -= vstep, t_src1 += vstep, t_dst += vstep) {
+                    if constexpr (std::is_same_v<Op, OpDiv<T>> || std::is_same_v<Op, OpMul<T>>) {
+                        V b = LoadNOr(Set<T>(1.0), t_src1, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
                     } else {
-                        auto b = hn::LoadN(_Tag<T>(), (const T*)src1, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+                        V b = LoadN(t_src1, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
                     }
                 }
             }
             else if (ssrc1 == 0 && ssrc0 == sizeof(T) && sdst == ssrc0) {
-                auto b = Set<T>(*((T*)src1));
-                for (; len >= lstep; len -= lstep, src0 += wstep, dst += wstep) {
-                    auto a0 = LoadU<T>((const T*)src0);
-                    auto a1 = LoadU<T>((const T*)(src0 + vstep));
-                    auto r0 = op_func(a0, b);
-                    auto r1 = op_func(a1, b);
-                    StoreU<T>(r0, (T*)dst);
-                    StoreU<T>(r1, (T*)(dst + vstep));
+                V b = Set(*t_src1);
+                for (; len >= wstep; len -= wstep, t_src0 += wstep, t_dst += wstep) {
+                    V a0 = LoadU(t_src0);
+                    V a1 = LoadU(t_src0 + vstep);
+                    V r0 = op_func(a0, b);
+                    V r1 = op_func(a1, b);
+                    StoreU(r0, t_dst);
+                    StoreU(r1, t_dst + vstep);
                 }
-                for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
-                    if constexpr (Op::is_mul) {
-                        auto a = hn::LoadNOr(Set<T>(1.0), _Tag<T>(), (const T*)src0, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
-                    } else if constexpr (Op::is_div) {
-                        auto a = hn::LoadNOr(Set<T>(NPY_NAN), _Tag<T>(), (const T*)src0, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+                for (; len > 0; len -= vstep, t_src0 += vstep, t_dst += vstep) {
+                    if constexpr (std::is_same_v<Op, OpMul<T>>) {
+                        V a = LoadNOr(Set<T>(1.0), t_src0, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
+                    } else if constexpr (std::is_same_v<Op, OpDiv<T>>) {
+                        V a = LoadNOr(Set<T>(NPY_NAN), t_src0, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
                     } else {
-                        auto a = hn::LoadN(_Tag<T>(), (const T*)src0, len);
-                        auto r = op_func(a, b);
-                        hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+                        V a = LoadN(t_src0, len);
+                        V r = op_func(a, b);
+                        StoreN(r, t_dst, len);
                     }
                 }
             } else {
@@ -247,7 +233,7 @@ loop_scalar:
 }
 
 template <typename T, typename Op>
-HWY_INLINE HWY_ATTR int
+NPY_FINLINE int
 real_single_double_indexed_func(char * const*args, npy_intp const *dimensions, npy_intp const *steps)
 {
     Op op_func;
@@ -271,7 +257,7 @@ real_single_double_indexed_func(char * const*args, npy_intp const *dimensions, n
 }
 
 template <typename T, typename Op>
-HWY_INLINE HWY_ATTR void
+NPY_FINLINE void
 complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     Op op_func;
@@ -279,7 +265,7 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
     npy_intp len = dimensions[0];
     char *b_src0 = args[0], *b_src1 = args[1], *b_dst = args[2];
     npy_intp b_ssrc0 = steps[0], b_ssrc1 = steps[1], b_sdst = steps[2];
-    if constexpr (Op::PW) {
+    if constexpr (std::is_same_v<Op, OpAdd<T>>) {
         // reduce
         if (b_ssrc0 == 0 && b_ssrc0 == b_sdst && b_src0 == b_dst &&
             b_ssrc1 % (sizeof(T)*2) == 0
@@ -298,6 +284,8 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
     }
 
 #if NPY_HWY
+    using V = Vec<T>;
+    using D_ = Vec<D>;
     if constexpr (kSupportLane<T>) {
         // Certain versions of Apple clang (commonly used in CI images) produce
         // non-deterministic output in the mul path with AVX2 enabled on x86_64.
@@ -306,7 +294,7 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
                 && defined(__apple_build_version__) \
                 && __apple_build_version__ >= 14000000 \
                 && __apple_build_version__ < 14030000
-            if constexpr (Op::is_mul) {
+            if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
                 goto loop_scalar;
             }
         #endif  // end affected Apple clang.
@@ -331,69 +319,69 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
             // contiguous
             if (ssrc0 == 2 && ssrc0 == ssrc1 && ssrc0 == sdst) {
                 for (; len >= vstep; len -= vstep, src0 += wstep, src1 += wstep, dst += wstep) {
-                    auto a0 = LoadU<T>(src0);
-                    auto a1 = LoadU<T>(src0 + vstep);
-                    auto b0 = LoadU<T>(src1);
-                    auto b1 = LoadU<T>(src1 + vstep);
-                    auto r0 = op_func(a0, b0);
-                    auto r1 = op_func(a1, b1);
+                    V a0 = LoadU(src0);
+                    V a1 = LoadU(src0 + vstep);
+                    V b0 = LoadU(src1);
+                    V b1 = LoadU(src1 + vstep);
+                    V r0 = op_func(a0, b0);
+                    V r1 = op_func(a1, b1);
                     StoreU(r0, dst);
                     StoreU(r1, dst + vstep);
                 }
                 for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
-                    auto a = hn::LoadN(_Tag<T>(), src0, len*2);
-                    auto b = hn::LoadN(_Tag<T>(), src1, len*2);
-                    auto r = op_func(a, b);
-                    hn::StoreN(r, _Tag<T>(), dst, len*2);
+                    V a = LoadN(src0, len*2);
+                    V b = LoadN(src1, len*2);
+                    V r = op_func(a, b);
+                    StoreN(r, dst, len*2);
                 }
             }
             // scalar 0
             else if (ssrc0 == 0) {
-                auto a = hn::OddEven(Set<T>(src0[1]), Set<T>(src0[0]));
+                V a = hn::OddEven(Set(src0[1]), Set(src0[0]));
                 // contiguous
                 if (ssrc1 == 2 && sdst == ssrc1) {
                     for (; len >= vstep; len -= vstep, src1 += wstep, dst += wstep) {
-                        auto b0 = LoadU<T>(src1);
-                        auto b1 = LoadU<T>(src1 + vstep);
-                        auto r0 = op_func(a, b0);
-                        auto r1 = op_func(a, b1);
+                        V b0 = LoadU(src1);
+                        V b1 = LoadU(src1 + vstep);
+                        V r0 = op_func(a, b0);
+                        V r1 = op_func(a, b1);
                         StoreU(r0, dst);
                         StoreU(r1, dst + vstep);
                     }
                     for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
-                        if constexpr (Op::is_mul) {
-                            auto b = hn::LoadNOr(Set<T>(1.0), _Tag<T>(), src1, len*2);
-                            auto r = op_func(a, b);
-                            hn::StoreN(r, _Tag<T>(), dst, len*2);
+                        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                            V b = LoadNOr(Set<T>(1.0), src1, len*2);
+                            V r = op_func(a, b);
+                            StoreN(r, dst, len*2);
                         } else {
-                            auto b = hn::LoadN(_Tag<T>(), src1, len*2);
-                            auto r = op_func(a, b);
-                            hn::StoreN(r, _Tag<T>(), dst, len*2);
+                            V b = LoadN(src1, len*2);
+                            V r = op_func(a, b);
+                            StoreN(r, dst, len*2);
                         }
                     }
                 }
                 // non-contig
                 else if (static_cast<D>(ssrc1) >= 0 && static_cast<D>(sdst) >= 0) {
-                    auto i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
-                    auto i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                    D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
+                    D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
                     i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
                     i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
                     for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
-                        auto b0 = hn::GatherIndex(_Tag<T>(), src1, i0);
-                        auto b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i0);
-                        auto r0 = op_func(a, b0);
-                        auto r1 = op_func(a, b1);
+                        V b0 = hn::GatherIndex(_Tag<T>(), src1, i0);
+                        V b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i0);
+                        V r0 = op_func(a, b0);
+                        V r1 = op_func(a, b1);
                         hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
                         hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
                     }
                     for (; len > 0; len -= hstep, src1 += ssrc1*hstep, dst += sdst*hstep) {
-                        if constexpr (Op::is_mul) {
-                            auto b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i0);
-                            auto r = op_func(a, b);
+                        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                            V b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i0);
+                            V r = op_func(a, b);
                             hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
                         } else {
-                            auto b = hn::GatherIndexN(_Tag<T>(), src1, i0, len*2);
-                            auto r = op_func(a, b);
+                            V b = hn::GatherIndexN(_Tag<T>(), src1, i0, len*2);
+                            V r = op_func(a, b);
                             hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
                         }
                     }
@@ -404,50 +392,50 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
             }
             // scalar 1
             else if (ssrc1 == 0) {
-                auto b = hn::OddEven(Set<T>(src1[1]), Set<T>(src1[0]));
+                V b = hn::OddEven(Set<T>(src1[1]), Set<T>(src1[0]));
                 if (ssrc0 == 2 && sdst == ssrc0) {
                     for (; len >= vstep; len -= vstep, src0 += wstep, dst += wstep) {
-                        auto a0 = LoadU<T>(src0);
-                        auto a1 = LoadU<T>(src0 + vstep);
-                        auto r0 = op_func(a0, b);
-                        auto r1 = op_func(a1, b);
+                        V a0 = LoadU(src0);
+                        V a1 = LoadU(src0 + vstep);
+                        V r0 = op_func(a0, b);
+                        V r1 = op_func(a1, b);
                         StoreU<T>(r0, dst);
                         StoreU<T>(r1, dst + vstep);
                     }
                     for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
-                        if constexpr (Op::is_mul) {
-                            auto a = hn::LoadNOr(Set<T>(1.0), _Tag<T>(), src0, len*2);
-                            auto r = op_func(a, b);
-                            hn::StoreN(r, _Tag<T>(), dst, len*2);
+                        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                            V a = LoadNOr(Set<T>(1.0), src0, len*2);
+                            V r = op_func(a, b);
+                            StoreN(r, dst, len*2);
                         } else {
-                            auto a = hn::LoadN(_Tag<T>(), src0, len*2);
-                            auto r = op_func(a, b);
-                            hn::StoreN(r, _Tag<T>(), dst, len*2);
+                            V a = LoadN(src0, len*2);
+                            V r = op_func(a, b);
+                            StoreN(r, dst, len*2);
                         }
                     }
                 }
                 // non-contig
                 else if (static_cast<D>(ssrc0) >= 0 && static_cast<D>(sdst) >= 0) {
-                    auto i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
-                    auto i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                    D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
+                    D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
                     i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
                     i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
                     for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
-                        auto a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
-                        auto a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
-                        auto r0 = op_func(a0, b);
-                        auto r1 = op_func(a1, b);
+                        V a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
+                        V a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
+                        V r0 = op_func(a0, b);
+                        V r1 = op_func(a1, b);
                         hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
                         hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
                     }
                     for (; len > 0; len -= hstep, src0 += ssrc0*hstep, dst += sdst*hstep) {
-                        if constexpr (Op::is_mul) {
-                            auto a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
-                            auto r = op_func(a, b);
+                        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                            V a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
+                            V r = op_func(a, b);
                             hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
                         } else {
-                            auto a = hn::GatherIndexN(_Tag<T>(), src0, i0, len*2);
-                            auto r = op_func(a, b);
+                            V a = hn::GatherIndexN(_Tag<T>(), src0, i0, len*2);
+                            V r = op_func(a, b);
                             hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
                         }
                     }
@@ -458,29 +446,29 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
             }
             // non-contiguous
             else if (static_cast<D>(ssrc0) >= 0 && static_cast<D>(ssrc1) >= 0 && static_cast<D>(sdst) >= 0) {
-                if constexpr (Op::is_mul) {
-                    auto i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
-                    auto i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
-                    auto i2 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                    D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
+                    D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
+                    D_ i2 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
                     i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
                     i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
                     i2 = hn::OddEven(Add(i2, Set<D>(1)), i2);
                     for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
                         src1 += ssrc1*vstep, dst += sdst*vstep) {
-                        auto a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
-                        auto a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
-                        auto b0 = hn::GatherIndex(_Tag<T>(), src1, i1);
-                        auto b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i1);
-                        auto r0 = op_func(a0, b0);
-                        auto r1 = op_func(a1, b1);
+                        V a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
+                        V a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
+                        V b0 = hn::GatherIndex(_Tag<T>(), src1, i1);
+                        V b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i1);
+                        V r0 = op_func(a0, b0);
+                        V r1 = op_func(a1, b1);
                         hn::ScatterIndex(r0, _Tag<T>(), dst, i2);
                         hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i2);
                     }
                     for (; len > 0; len -= hstep, src0 += ssrc0*hstep,
                         src1 += ssrc1*hstep, dst += sdst*hstep) {
-                        auto a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
-                        auto b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i1);
-                        auto r = op_func(a, b);
+                        V a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
+                        V b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i1);
+                        V r = op_func(a, b);
                         hn::ScatterIndexN(r, _Tag<T>(), dst, i2, len*2);
                     }
                 } else {
@@ -503,7 +491,7 @@ loop_scalar:
         const T a_i = ((T *)b_src0)[1];
         const T b_r = ((T *)b_src1)[0];
         const T b_i = ((T *)b_src1)[1];
-        if constexpr (Op::is_mul) {
+        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
             ((T *)b_dst)[0] = a_r*b_r - a_i*b_i;
             ((T *)b_dst)[1] = a_r*b_i + a_i*b_r;
         } else {
@@ -514,7 +502,7 @@ loop_scalar:
 }
 
 template <typename T, typename Op>
-HWY_INLINE HWY_ATTR int
+NPY_FINLINE int
 complex_single_double_indexed_func(char * const*args, npy_intp const *dimensions, npy_intp const *steps)
 {
     Op op_func;
@@ -534,7 +522,7 @@ complex_single_double_indexed_func(char * const*args, npy_intp const *dimensions
         indexed = (T *)(ip1 + is1 * indx);
         const T b_r = ((T *)value)[0];
         const T b_i = ((T *)value)[1];
-        if constexpr (Op::is_mul) {
+        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
             const T a_r = indexed[0];
             const T a_i = indexed[1];
             indexed[0]  = a_r*b_r - a_i*b_i;
@@ -548,7 +536,7 @@ complex_single_double_indexed_func(char * const*args, npy_intp const *dimensions
 }
 
 template <typename T, int is_square>
-HWY_INLINE HWY_ATTR void
+NPY_FINLINE void
 complex_conjugate_square_func(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     using D = std::conditional_t<sizeof(T) == 8, int64_t, int32_t>;
@@ -557,6 +545,8 @@ complex_conjugate_square_func(char **args, npy_intp const *dimensions, npy_intp 
     npy_intp b_ssrc = steps[0], b_sdst = steps[1];
 
 #if NPY_HWY
+    using V = Vec<T>;
+    using D_ = Vec<D>;
     if constexpr (kSupportLane<T>) {
         if (!is_mem_overlap(b_src, b_ssrc, b_dst, b_sdst, len) && sizeof(T) == alignof(T) &&
             b_ssrc % sizeof(T) == 0 && b_sdst % sizeof(T) == 0) {
@@ -571,86 +561,86 @@ complex_conjugate_square_func(char **args, npy_intp const *dimensions, npy_intp 
 
             if (ssrc == 2 && ssrc == sdst) {
                 for (; len >= vstep; len -= vstep, src += wstep, dst += wstep) {
-                    auto a0 = LoadU<T>(src);
-                    auto a1 = LoadU<T>(src + vstep);
+                    V a0 = LoadU(src);
+                    V a1 = LoadU(src + vstep);
                     if constexpr (is_square) {
-                        auto r0 = hn::MulComplex(a0, a0);
-                        auto r1 = hn::MulComplex(a1, a1);
+                        V r0 = hn::MulComplex(a0, a0);
+                        V r1 = hn::MulComplex(a1, a1);
                         StoreU<T>(r0, dst);
                         StoreU<T>(r1, dst + vstep);
                     } else {
-                        auto r0 = hn::ComplexConj(a0);
-                        auto r1 = hn::ComplexConj(a1);
+                        V r0 = hn::ComplexConj(a0);
+                        V r1 = hn::ComplexConj(a1);
                         StoreU<T>(r0, dst);
                         StoreU<T>(r1, dst + vstep);
                     }
                 }
                 for (; len > 0; len -= hstep, src += vstep, dst += vstep) {
-                    auto a = hn::LoadN(_Tag<T>(), src, len*2);
+                    V a = LoadN(src, len*2);
                     if constexpr (is_square) {
-                        auto r = hn::MulComplex(a, a);
-                        hn::StoreN(r, _Tag<T>(), dst, len*2);
+                        V r = hn::MulComplex(a, a);
+                        StoreN(r, dst, len*2);
                     } else {
-                        auto r = hn::ComplexConj(a);
-                        hn::StoreN(r, _Tag<T>(), dst, len*2);
+                        V r = hn::ComplexConj(a);
+                        StoreN(r, dst, len*2);
                     }
                 }
             }
             else if (ssrc == 2 && static_cast<D>(sdst) >= 0) {
-                auto i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                D_ i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
                 i = hn::OddEven(Add(i, Set<D>(1)), i);
                 for (; len >= vstep; len -= vstep, src += wstep, dst += sdst*vstep) {
-                    auto a0 = LoadU<T>(src);
-                    auto a1 = LoadU<T>(src + vstep);
+                    V a0 = LoadU(src);
+                    V a1 = LoadU(src + vstep);
                     if constexpr (is_square) {
-                        auto r0 = hn::MulComplex(a0, a0);
-                        auto r1 = hn::MulComplex(a1, a1);
+                        V r0 = hn::MulComplex(a0, a0);
+                        V r1 = hn::MulComplex(a1, a1);
                         hn::ScatterIndex(r0, _Tag<T>(), dst, i);
                         hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i);
                     } else {
-                        auto r0 = hn::ComplexConj(a0);
-                        auto r1 = hn::ComplexConj(a1);
+                        V r0 = hn::ComplexConj(a0);
+                        V r1 = hn::ComplexConj(a1);
                         hn::ScatterIndex(r0, _Tag<T>(), dst, i);
                         hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i);
                     }
                 }
                 for (; len > 0; len -= hstep, src += vstep, dst += sdst*hstep) {
-                    auto a = hn::LoadN(_Tag<T>(), src, len*2);
+                    V a = LoadN(src, len*2);
                     if constexpr (is_square) {
-                        auto r = hn::MulComplex(a, a);
+                        V r = hn::MulComplex(a, a);
                         hn::ScatterIndexN(r, _Tag<T>(), dst, i, len*2);
                     } else {
-                        auto r = hn::ComplexConj(a);
+                        V r = hn::ComplexConj(a);
                         hn::ScatterIndexN(r, _Tag<T>(), dst, i, len*2);
                     }
                 }
             }
             else if (sdst == 2 && static_cast<D>(ssrc) >= 0) {
-                auto i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc));
+                D_ i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc));
                 i = hn::OddEven(Add(i, Set<D>(1)), i);
                 for (; len >= vstep; len -= vstep, src += ssrc*vstep, dst += wstep) {
-                    auto a0 = hn::GatherIndex(_Tag<T>(), src, i);
-                    auto a1 = hn::GatherIndex(_Tag<T>(), src + ssrc*hstep, i);
+                    V a0 = hn::GatherIndex(_Tag<T>(), src, i);
+                    V a1 = hn::GatherIndex(_Tag<T>(), src + ssrc*hstep, i);
                     if constexpr (is_square) {
-                        auto r0 = hn::MulComplex(a0, a0);
-                        auto r1 = hn::MulComplex(a1, a1);
+                        V r0 = hn::MulComplex(a0, a0);
+                        V r1 = hn::MulComplex(a1, a1);
                         StoreU<T>(r0, dst);
                         StoreU<T>(r1, dst + vstep);
                     } else {
-                        auto r0 = hn::ComplexConj(a0);
-                        auto r1 = hn::ComplexConj(a1);
+                        V r0 = hn::ComplexConj(a0);
+                        V r1 = hn::ComplexConj(a1);
                         StoreU<T>(r0, dst);
                         StoreU<T>(r1, dst + vstep);
                     }
                 }
                 for (; len > 0; len -= hstep, src += ssrc*hstep, dst += vstep) {
-                    auto a = hn::GatherIndexN(_Tag<T>(), src, i, len*2);
+                    V a = hn::GatherIndexN(_Tag<T>(), src, i, len*2);
                     if constexpr (is_square) {
-                        auto r = hn::MulComplex(a, a);
-                        hn::StoreN(r, _Tag<T>(), dst, len*2);
+                        V r = hn::MulComplex(a, a);
+                        StoreN(r, dst, len*2);
                     } else {
-                        auto r = hn::ComplexConj(a);
-                        hn::StoreN(r, _Tag<T>(), dst, len*2);
+                        V r = hn::ComplexConj(a);
+                        StoreN(r, dst, len*2);
                     }
                 }
             }
