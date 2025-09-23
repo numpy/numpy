@@ -4704,6 +4704,18 @@ def test_reduceat():
     np.setbufsize(ncu.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
 
+def test_negative_value_raises():
+    with pytest.raises(ValueError, match="buffer size must be non-negative"):
+        np.setbufsize(-5)
+
+    old = np.getbufsize()
+    try:
+        prev = np.setbufsize(4096)
+        assert prev == old
+        assert np.getbufsize() == 4096
+    finally:
+        np.setbufsize(old)
+
 def test_reduceat_empty():
     """Reduceat should work with empty arrays"""
     indices = np.array([], 'i4')
