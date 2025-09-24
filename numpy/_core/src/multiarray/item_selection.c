@@ -1194,7 +1194,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  */
 static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
-              PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
+              PyArrayMethod_StridedLoop *strided_loop,
+              PyArrayMethod_Context *context, NpyAuxData *auxdata,
               PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
@@ -1338,6 +1339,8 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         PyArray_ITER_NEXT(it);
     }
+    
+    NPY_AUXDATA_FREE(auxdata);
 
 fail:
     NPY_END_THREADS_DESCR(descr);
@@ -1362,13 +1365,15 @@ fail:
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&to_cast_info);
     NPY_cast_info_xfree(&from_cast_info);
+    NPY_AUXDATA_FREE(auxdata);
 
     return ret;
 }
 
 static PyObject*
 _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
-                 PyArrayMethod_StridedLoop *strided_loop, PyArrayMethod_Context *context,
+                 PyArrayMethod_StridedLoop *strided_loop,
+                 PyArrayMethod_Context *context, NpyAuxData *auxdata,
                  PyArray_ArgPartitionFunc *argpart, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
@@ -1537,6 +1542,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         PyArray_ITER_NEXT(rit);
     }
 
+    NPY_AUXDATA_FREE(auxdata);
+
 fail:
     NPY_END_THREADS_DESCR(descr);
     /* cleanup internal buffers */
@@ -1558,6 +1565,7 @@ fail:
     Py_XDECREF(rit);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&cast_info);
+    NPY_AUXDATA_FREE(auxdata);
 
     return (PyObject *)rop;
 }
@@ -1667,7 +1675,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         return -1;
     }
 
-    ret = _new_sortlike(op, axis, sort, NULL, NULL, part,
+    ret = _new_sortlike(op, axis, sort, NULL, NULL, NULL, part,
                         PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
 
     Py_DECREF(kthrvl);
@@ -1723,7 +1731,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         return NULL;
     }
 
-    ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, argpart,
+    ret = _new_argsortlike(op2, axis, argsort, NULL, NULL, NULL, argpart,
                            PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
 
     Py_DECREF(kthrvl);
@@ -3088,6 +3096,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_Context *context = {0};
+    NpyAuxData *auxdata = NULL;
+    
     PyArray_SortFunc **sort_table = NULL;
     PyArray_SortFunc *sort = NULL;
 
@@ -3117,7 +3127,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (sort_method->get_strided_loop(
-            context, 1, 0, strides, &strided_loop, NULL, &method_flags) < 0) {
+            context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get strided loop for sort");
             return -1;
@@ -3162,7 +3172,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         }
     }
 
-    return _new_sortlike(op, axis, sort, strided_loop, context, NULL, NULL, 0);
+    return _new_sortlike(op, axis, sort, strided_loop,
+                         context, auxdata, NULL, NULL, 0);
 }
 
 /* Table of generic argsort function for use by PyArray_ArgSortEx */
@@ -3181,6 +3192,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_Context *context = {0};
+    NpyAuxData *auxdata = NULL;
+
     PyArray_ArgSortFunc **argsort_table = NULL;
     PyArray_ArgSortFunc *argsort = NULL;
 
@@ -3203,7 +3216,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (argsort_method->get_strided_loop(
-            context, 1, 0, strides, &strided_loop, NULL, &method_flags) < 0) {
+            context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get strided loop for argsort");
             return NULL;
@@ -3253,7 +3266,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         return NULL;
     }
 
-    ret = _new_argsortlike(op2, axis, argsort, strided_loop, context, NULL, NULL, 0);
+    ret = _new_argsortlike(op2, axis, argsort, strided_loop,
+                           context, auxdata, NULL, NULL, 0);
 
     Py_DECREF(op2);
     return ret;
