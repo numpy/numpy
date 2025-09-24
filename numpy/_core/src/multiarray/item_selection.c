@@ -3121,6 +3121,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArray_DTypeMeta *dtypes[2] = {dt, dt};
         PyArray_Descr *given_descrs[2] = {descr, descr};
         PyArray_Descr *loop_descrs[2];
+        // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
         
         if (sort_method->resolve_descriptors(
@@ -3229,6 +3230,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         PyArray_DTypeMeta *dtypes[2] = {dt, odt};
         PyArray_Descr *given_descrs[2] = {descr, odescr};
         PyArray_Descr *loop_descrs[2];
+        // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
         
         if (argsort_method->resolve_descriptors(
