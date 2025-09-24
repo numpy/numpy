@@ -3087,8 +3087,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_Context _context = {0};
-    PyArrayMethod_Context *context = NULL;
+    PyArrayMethod_Context *context = {0};
     PyArray_SortFunc **sort_table = NULL;
     PyArray_SortFunc *sort = NULL;
 
@@ -3110,9 +3109,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
             .flags = flags,
         };
         PyArray_Descr *descr = PyArray_DESCR(op);
-        _context.descriptors = (PyArray_Descr * const[]){descr, descr};
-        _context.parameters = &sort_params;
-        context = &_context;
+        context->descriptors = (PyArray_Descr * const[]){descr, descr};
+        context->parameters = &sort_params;
 
         npy_intp stride = PyArray_STRIDE(op, axis);
         npy_intp strides[2] = {stride, stride};
@@ -3182,8 +3180,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyObject *ret;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_Context _context = {0};
-    PyArrayMethod_Context *context = NULL;
+    PyArrayMethod_Context *context = {0};
     PyArray_ArgSortFunc **argsort_table = NULL;
     PyArray_ArgSortFunc *argsort = NULL;
 
@@ -3198,9 +3195,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         };
         PyArray_Descr *descr = PyArray_DESCR(op);
         PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INT64);
-        _context.descriptors = (PyArray_Descr * const[]){descr, odescr};
-        _context.parameters = &sort_params;
-        context = &_context;
+        context->descriptors = (PyArray_Descr * const[]){descr, odescr};
+        context->parameters = &sort_params;
 
         npy_intp stride = PyArray_STRIDE(op, axis);
         npy_intp strides[2] = {stride, stride};
