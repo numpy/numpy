@@ -3670,8 +3670,8 @@ cdef class Generator:
 
         The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
-        Williams in 1943 [2].  It may also be used to model the numbers of
-        occupants seen in cars [3].
+        Williams in 1943 [2]_.  It may also be used to model the numbers of
+        occupants seen in cars [3]_.
 
         References
         ----------
@@ -3699,7 +3699,7 @@ cdef class Generator:
         >>> bins = np.arange(-.5, max(s) + .5 )
         >>> count, bins, _ = plt.hist(s, bins=bins, label='Sample count')
 
-        #   plot against distribution
+        Plot against the distribution:
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
