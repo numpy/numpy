@@ -3095,7 +3095,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_Context *context = {0};
+    PyArrayMethod_Context context = {0};
     NpyAuxData *auxdata = NULL;
     
     PyArray_SortFunc **sort_table = NULL;
@@ -3115,12 +3115,26 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     // Look for type specific functions
     sort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->sort_meth;
     if (sort_method != NULL) {
+        PyArray_Descr *descr = PyArray_DESCR(op);
+        PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
+
+        PyArray_DTypeMeta *dtypes[2] = {dt, dt};
+        PyArray_Descr *given_descrs[2] = {descr, descr};
+        PyArray_Descr *loop_descrs[2];
+        npy_intp view_offset = 0;
+        
+        if (sort_method->resolve_descriptors(
+            sort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "unable to resolve descriptors for sort");
+            return -1;
+        }
+        
         PyArrayMethod_SortParameters sort_params = {
             .flags = flags,
         };
-        PyArray_Descr *descr = PyArray_DESCR(op);
-        context->descriptors = (PyArray_Descr * const[]){descr, descr};
-        context->parameters = &sort_params;
+        context.parameters = &sort_params;
+        context.descriptors = loop_descrs;
 
         // Arrays are always contiguous for sorting
         npy_intp stride = PyArray_ITEMSIZE(op);
@@ -3128,7 +3142,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (sort_method->get_strided_loop(
-            context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get strided loop for sort");
             return -1;
@@ -3174,7 +3188,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     }
 
     return _new_sortlike(op, axis, sort, strided_loop,
-                         context, auxdata, NULL, NULL, 0);
+                         &context, auxdata, NULL, NULL, 0);
 }
 
 /* Table of generic argsort function for use by PyArray_ArgSortEx */
@@ -3192,7 +3206,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyObject *ret;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_Context *context = {0};
+    PyArrayMethod_Context context = {0};
     NpyAuxData *auxdata = NULL;
 
     PyArray_ArgSortFunc **argsort_table = NULL;
@@ -3204,13 +3218,31 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     // Look for type specific functions
     argsort_method = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(op)))->argsort_meth;
     if (argsort_method != NULL) {
+        PyArray_Descr *descr = PyArray_DESCR(op);
+        PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INTP);
+        if (odescr == NULL) {
+            return NULL;
+        }
+        PyArray_DTypeMeta *dt = NPY_DTYPE(PyArray_DESCR(op));
+        PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
+
+        PyArray_DTypeMeta *dtypes[2] = {dt, odt};
+        PyArray_Descr *given_descrs[2] = {descr, odescr};
+        PyArray_Descr *loop_descrs[2];
+        npy_intp view_offset = 0;
+        
+        if (argsort_method->resolve_descriptors(
+            argsort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "unable to resolve descriptors for argsort");
+            return NULL;
+        }
+
         PyArrayMethod_SortParameters sort_params = {
             .flags = flags,
         };
-        PyArray_Descr *descr = PyArray_DESCR(op);
-        PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INT64);
-        context->descriptors = (PyArray_Descr * const[]){descr, odescr};
-        context->parameters = &sort_params;
+        context.descriptors = loop_descrs;
+        context.parameters = &sort_params;
 
         // Arrays are always contiguous for sorting
         npy_intp stride = PyArray_ITEMSIZE(op);
@@ -3219,7 +3251,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (argsort_method->get_strided_loop(
-            context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to get strided loop for argsort");
             return NULL;
@@ -3270,7 +3302,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     }
 
     ret = _new_argsortlike(op2, axis, argsort, strided_loop,
-                           context, auxdata, NULL, NULL, 0);
+                           &context, auxdata, NULL, NULL, 0);
 
     Py_DECREF(op2);
     return ret;
