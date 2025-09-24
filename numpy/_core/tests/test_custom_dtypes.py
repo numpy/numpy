@@ -263,11 +263,11 @@ class TestSFloat:
         assert_array_equal(a.view(np.float64), [3., 2., 1.])
 
         a = self._get_array(0.5)
-        a = a[::-1]  # reverse it
+        a = a[::2][::-1]  # reverse it
         indices = np.argsort(a)
-        assert_array_equal(indices, [2, 1, 0])
+        assert_array_equal(indices, [1, 0])
         # original is unchanged
-        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+        assert_array_equal(a.view(np.float64), [6., 2.])
 
     def test_astype_class(self):
         # Very simple test that we accept `.astype()` also on the class.
