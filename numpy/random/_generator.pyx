@@ -1521,7 +1521,7 @@ cdef class Generator:
 
         Examples
         --------
-        An example from Glantz[1], pp 47-40:
+        An example from Glantz [1]_, pp 47-40:
 
         Two groups, children of diabetics (25 people) and children from people
         without diabetes (25 controls). Fasting blood glucose was measured,
