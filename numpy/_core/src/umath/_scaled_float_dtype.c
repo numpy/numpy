@@ -21,6 +21,7 @@
 #include "array_method.h"
 #include "common.h"
 #include "numpy/npy_math.h"
+#include "npy_sort.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
@@ -861,6 +862,205 @@ sfloat_init_ufuncs(void) {
 }
 
 
+NPY_NO_EXPORT int
+sfloat_stable_sort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+
+    return timsort_double(in, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_default_sort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+
+    return quicksort_double(in, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_sort_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_sort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_sort_loop;
+    }
+    else {
+        return -1;
+    }
+    return 0;
+}
+
+
+static NPY_CASTING
+sfloat_sort_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
+{
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    if (given_descrs[1] != NULL) {
+        Py_INCREF(given_descrs[1]);
+        loop_descrs[1] = given_descrs[1];
+    }
+    else {
+        loop_descrs[1] = given_descrs[0];
+        Py_INCREF(given_descrs[0]);
+    }
+    return NPY_NO_CASTING;
+}
+
+
+NPY_NO_EXPORT int
+sfloat_stable_argsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    npy_intp *out = (npy_intp *)data[1];
+
+    return atimsort_double(in, out, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_default_argsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    npy_intp *out = (npy_intp *)data[1];
+
+    return aquicksort_double(in, out, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_argsort_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_argsort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_argsort_loop;
+    }
+    else {
+        return -1;
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT NPY_CASTING
+sfloat_argsort_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
+{
+    Py_INCREF(given_descrs[0]);
+    loop_descrs[0] = given_descrs[0];
+    if (given_descrs[1] != NULL) {
+        Py_INCREF(given_descrs[1]);
+        loop_descrs[1] = given_descrs[1];
+    }
+    else {
+        loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
+        if (loop_descrs[1] == NULL) {
+            return -1;
+        }
+    }
+    return NPY_NO_CASTING;
+}
+
+
+static int
+sfloat_init_sort(void)
+{
+    PyArray_DTypeMeta *dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
+    PyType_Slot slots[3] = {{0, NULL}};
+    PyArrayMethod_Spec spec = {
+        .nin = 1,
+        .nout = 1,
+        .dtypes = dtypes,
+        .slots = slots,
+    };
+    spec.name = "sfloat_sort";
+    spec.casting = NPY_NO_CASTING;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &sfloat_sort_resolve_descriptors;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = &sfloat_sort_get_loop;
+
+    PyBoundArrayMethodObject *sort_meth = PyArrayMethod_FromSpec_int(&spec, 0);
+    if (sort_meth == NULL) {
+        return -1;
+    }
+    NPY_DT_SLOTS(&PyArray_SFloatDType)->sort_meth = sort_meth->method;
+
+    spec.name = "sfloat_argsort";
+    dtypes[1] = &PyArray_IntpDType;
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &sfloat_argsort_resolve_descriptors;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = &sfloat_argsort_get_loop;
+
+    PyBoundArrayMethodObject *argsort_meth = PyArrayMethod_FromSpec_int(&spec, 0);
+    if (argsort_meth == NULL) {
+        return -1;
+    }
+    NPY_DT_SLOTS(&PyArray_SFloatDType)->argsort_meth = argsort_meth->method;
+
+    return 0;
+}
+
 /*
  * Python entry point, exported via `umathmodule.h` and `multiarraymodule.c`.
  * TODO: Should be moved when the necessary API is not internal anymore.
@@ -894,6 +1094,10 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     }
 
     if (sfloat_init_ufuncs() < 0) {
+        return NULL;
+    }
+
+    if (sfloat_init_sort() < 0) {
         return NULL;
     }
 

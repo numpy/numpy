@@ -231,6 +231,30 @@ class TestSFloat:
         expected = np.hypot.reduce(float_equiv, keepdims=True)
         assert res.view(np.float64) * 2 == expected
 
+    def test_sort(self):
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        a.sort()
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        sorted_a = np.sort(a)
+        assert_array_equal(sorted_a.view(np.float64), [1., 2., 3.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [3., 2., 1.])
+
+    def test_argsort(self):
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        indices = np.argsort(a)
+        assert_array_equal(indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [3., 2., 1.])
+
     def test_astype_class(self):
         # Very simple test that we accept `.astype()` also on the class.
         # ScaledFloat always returns the default descriptor, but it does
