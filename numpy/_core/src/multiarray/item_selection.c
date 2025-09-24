@@ -1340,8 +1340,6 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         PyArray_ITER_NEXT(it);
     }
     
-    NPY_AUXDATA_FREE(auxdata);
-
 fail:
     NPY_END_THREADS_DESCR(descr);
     /* cleanup internal buffer */
@@ -1365,7 +1363,6 @@ fail:
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&to_cast_info);
     NPY_cast_info_xfree(&from_cast_info);
-    NPY_AUXDATA_FREE(auxdata);
 
     return ret;
 }
@@ -1542,8 +1539,6 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         PyArray_ITER_NEXT(rit);
     }
 
-    NPY_AUXDATA_FREE(auxdata);
-
 fail:
     NPY_END_THREADS_DESCR(descr);
     /* cleanup internal buffers */
@@ -1565,7 +1560,6 @@ fail:
     Py_XDECREF(rit);
     Py_DECREF(mem_handler);
     NPY_cast_info_xfree(&cast_info);
-    NPY_AUXDATA_FREE(auxdata);
 
     return (PyObject *)rop;
 }
@@ -3101,6 +3095,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyArray_SortFunc **sort_table = NULL;
     PyArray_SortFunc *sort = NULL;
 
+    int ret;
+
     if (check_and_adjust_axis(&axis, PyArray_NDIM(op)) < 0) {
         return -1;
     }
@@ -3188,8 +3184,14 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         }
     }
 
-    return _new_sortlike(op, axis, sort, strided_loop,
-                         &context, auxdata, NULL, NULL, 0);
+    ret = _new_sortlike(op, axis, sort, strided_loop,
+                        &context, auxdata, NULL, NULL, 0);
+    if (strided_loop != NULL) {
+        NPY_AUXDATA_FREE(auxdata);
+        Py_DECREF(context.descriptors[0]);
+        Py_DECREF(context.descriptors[1]);
+    }
+    return ret;
 }
 
 /* Table of generic argsort function for use by PyArray_ArgSortEx */
@@ -3305,8 +3307,11 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     ret = _new_argsortlike(op2, axis, argsort, strided_loop,
                            &context, auxdata, NULL, NULL, 0);
-
-    Py_DECREF(op2);
+    if (strided_loop != NULL) {
+        NPY_AUXDATA_FREE(auxdata);
+        Py_DECREF(context.descriptors[0]);
+        Py_DECREF(context.descriptors[1]);
+    }
     return ret;
 }
 
