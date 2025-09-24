@@ -3089,7 +3089,9 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 {
     PyArrayMethodObject *sort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_Context context = {0};
+    PyArrayMethod_SortParameters sort_params = {.flags = flags};
+    PyArrayMethod_Context context = { .parameters = &sort_params };
+    PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
     
     PyArray_SortFunc **sort_table = NULL;
@@ -3116,7 +3118,6 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
         PyArray_DTypeMeta *dtypes[2] = {dt, dt};
         PyArray_Descr *given_descrs[2] = {descr, descr};
-        PyArray_Descr *loop_descrs[2];
         // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
         
@@ -3126,11 +3127,6 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
                             "unable to resolve descriptors for sort");
             return -1;
         }
-        
-        PyArrayMethod_SortParameters sort_params = {
-            .flags = flags,
-        };
-        context.parameters = &sort_params;
         context.descriptors = loop_descrs;
 
         // Arrays are always contiguous for sorting
@@ -3210,7 +3206,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyObject *ret;
     PyArrayMethodObject *argsort_method = NULL;
     PyArrayMethod_StridedLoop *strided_loop = NULL;
-    PyArrayMethod_Context context = {0};
+    PyArrayMethod_SortParameters sort_params = {.flags = flags};
+    PyArrayMethod_Context context = { .parameters = &sort_params };
     NpyAuxData *auxdata = NULL;
 
     PyArray_ArgSortFunc **argsort_table = NULL;
@@ -3242,12 +3239,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
                             "unable to resolve descriptors for argsort");
             return NULL;
         }
-
-        PyArrayMethod_SortParameters sort_params = {
-            .flags = flags,
-        };
         context.descriptors = loop_descrs;
-        context.parameters = &sort_params;
 
         // Arrays are always contiguous for sorting
         npy_intp stride = PyArray_ITEMSIZE(op);
