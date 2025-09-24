@@ -119,10 +119,10 @@ typedef struct PyArrayMethod_Context_tag {
      * NPY_ARRAYMETHOD_CONTEXT_FLAGS
      */
     uint64_t flags;
+    
+    void *parameters;
     /* Structure may grow (this is harmless for DType authors) */
  #endif
-
-    void *parameters;
 } PyArrayMethod_Context;
 
 
