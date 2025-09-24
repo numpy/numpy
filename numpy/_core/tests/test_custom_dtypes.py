@@ -246,7 +246,7 @@ class TestSFloat:
         # original is unchanged
         assert_array_equal(a.view(np.float64), [3., 2., 1.])
 
-        a = self._get_array(0.5) # different factor
+        a = self._get_array(0.5)  # different factor
         a = a[::2][::-1]  # non-contiguous
         sorted_a = np.sort(a)
         assert_array_equal(sorted_a.view(np.float64), [2., 6.])
