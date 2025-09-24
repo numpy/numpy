@@ -3187,7 +3187,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     ret = _new_sortlike(op, axis, sort, strided_loop,
                         &context, auxdata, NULL, NULL, 0);
-    if (strided_loop != NULL) {
+    if (sort_method != NULL) {
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
@@ -3309,7 +3309,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     ret = _new_argsortlike(op2, axis, argsort, strided_loop,
                            &context, auxdata, NULL, NULL, 0);
-    if (strided_loop != NULL) {
+    if (argsort_method != NULL) {
         NPY_AUXDATA_FREE(auxdata);
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
