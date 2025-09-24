@@ -1853,6 +1853,12 @@ using ftyp = fortran_type_t<typ>;
         END_OUTER_LOOP
 
         release_gesv(&params);
+    } else {
+        /* malloc failed in init_gesv() */
+        NPY_ALLOW_C_API_DEF
+        NPY_ALLOW_C_API;
+        PyErr_NoMemory();
+        NPY_DISABLE_C_API;
     }
 
     set_fp_invalid_or_clear(error_occurred);
