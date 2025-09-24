@@ -3122,7 +3122,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         context->descriptors = (PyArray_Descr * const[]){descr, descr};
         context->parameters = &sort_params;
 
-        npy_intp stride = PyArray_STRIDE(op, axis);
+        // Arrays are always contiguous for sorting
+        npy_intp stride = PyArray_ITEMSIZE(op);
         npy_intp strides[2] = {stride, stride};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
@@ -3211,8 +3212,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         context->descriptors = (PyArray_Descr * const[]){descr, odescr};
         context->parameters = &sort_params;
 
-        npy_intp stride = PyArray_STRIDE(op, axis);
-        npy_intp strides[2] = {stride, stride};
+        // Arrays are always contiguous for sorting
+        npy_intp stride = PyArray_ITEMSIZE(op);
+        npy_intp ostride = PyDataType_ELSIZE(odescr);
+        npy_intp strides[2] = {stride, ostride};
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
         if (argsort_method->get_strided_loop(
