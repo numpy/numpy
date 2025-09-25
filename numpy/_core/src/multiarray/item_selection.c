@@ -3234,8 +3234,10 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
         
-        if (argsort_method->resolve_descriptors(
-            argsort_method, dtypes, given_descrs, loop_descrs, &view_offset) < 0) {
+        int resolve_ret = argsort_method->resolve_descriptors(
+            argsort_method, dtypes, given_descrs, loop_descrs, &view_offset);
+        Py_DECREF(odescr);
+        if (resolve_ret < 0) {
             PyErr_SetString(PyExc_RuntimeError,
                             "unable to resolve descriptors for argsort");
             return NULL;
