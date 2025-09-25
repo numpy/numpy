@@ -1276,9 +1276,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
     while (size--) {
         char *bufptr = it->dataptr;
-        npy_intp strides[2] = {astride, elsize};
         if (needcopy) {
             char *args[2] = {it->dataptr, buffer};
+            npy_intp strides[2] = {astride, elsize};
             if (NPY_UNLIKELY(to_cast_info.func(
                                  &to_cast_info.context, args, &N, strides,
                                  to_cast_info.auxdata) < 0)) {
@@ -3310,6 +3310,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         Py_DECREF(context.descriptors[0]);
         Py_DECREF(context.descriptors[1]);
     }
+    Py_DECREF(op2);
     return ret;
 }
 
