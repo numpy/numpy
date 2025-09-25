@@ -752,7 +752,8 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       struct is specific to the loop.
 
    .. versionchanged:: NumPy 2.4
-      The `parameters` member was added in NumPy 2.4.
+     .. versionchanged:: NumPy 2.4
+        The `parameters` member was added in NumPy 2.4.
 
 .. c:type:: PyArrayMethod_Spec
 
