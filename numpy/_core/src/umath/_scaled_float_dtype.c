@@ -870,6 +870,12 @@ sfloat_stable_sort_loop(
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
+    assert(data[0] == data[1]);
+    assert(dimensions[0] == dimensions[1]);
+    assert(strides[0] == strides[1]);
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_STABLE);
+
     npy_intp N = dimensions[0];
     char *in = data[0];
 
@@ -885,6 +891,12 @@ sfloat_default_sort_loop(
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
+    assert(data[0] == data[1]);
+    assert(dimensions[0] == dimensions[1]);
+    assert(strides[0] == strides[1]);
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_DEFAULT);
+
     npy_intp N = dimensions[0];
     char *in = data[0];
 
@@ -946,6 +958,10 @@ sfloat_stable_argsort_loop(
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
+    assert(dimensions[0] == dimensions[1]);
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_STABLE);
+
     npy_intp N = dimensions[0];
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];
@@ -962,6 +978,10 @@ sfloat_default_argsort_loop(
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
+    assert(dimensions[0] == dimensions[1]);
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_DEFAULT);
+
     npy_intp N = dimensions[0];
     char *in = data[0];
     npy_intp *out = (npy_intp *)data[1];

@@ -1279,10 +1279,11 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         if (needcopy) {
             char *args[2] = {it->dataptr, buffer};
+            npy_intp dimensions[2] = {N, N};
             npy_intp strides[2] = {astride, elsize};
 
             if (NPY_UNLIKELY(to_cast_info.func(
-                                 &to_cast_info.context, args, &N, strides,
+                                 &to_cast_info.context, args, dimensions, strides,
                                  to_cast_info.auxdata) < 0)) {
                 goto fail;
             }
@@ -1299,7 +1300,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         if (part == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {bufptr, bufptr};
-                ret = strided_loop(context, data, &N, NULL, NULL);
+                npy_intp strides[2] = {astride, astride};
+                npy_intp dimensions[2] = {N, N};
+                ret = strided_loop(context, data, dimensions, strides, NULL);
             }
             else {
                 ret = sort(bufptr, N, op);
@@ -1329,9 +1332,10 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         if (needcopy) {
             char *args[2] = {buffer, it->dataptr};
             npy_intp strides[2] = {elsize, astride};
+            npy_intp dimensions[2] = {N, N};
 
             if (NPY_UNLIKELY(from_cast_info.func(
-                                 &from_cast_info.context, args, &N, strides,
+                                 &from_cast_info.context, args, dimensions, strides,
                                  from_cast_info.auxdata) < 0)) {
                 goto fail;
             }
@@ -1474,10 +1478,11 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (needcopy) {
             char *args[2] = {it->dataptr, valbuffer};
+            npy_intp dimensions[2] = {N, N};
             npy_intp strides[2] = {astride, elsize};
 
             if (NPY_UNLIKELY(cast_info.func(
-                                 &cast_info.context, args, &N, strides,
+                                 &cast_info.context, args, dimensions, strides,
                                  cast_info.auxdata) < 0)) {
                 goto fail;
             }
@@ -1496,7 +1501,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         if (argpart == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {valptr, (char *)idxptr};
-                ret = strided_loop(context, data, &N, NULL, NULL);
+                npy_intp dimensions[2] = {N, N};
+                npy_intp strides[2] = {astride, rstride};
+                ret = strided_loop(context, data, dimensions, strides, NULL);
             }
             else {
                 ret = argsort(valptr, idxptr, N, op);
