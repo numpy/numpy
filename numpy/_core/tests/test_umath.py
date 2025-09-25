@@ -3751,8 +3751,8 @@ class TestSpecialMethods:
 
         with pytest.raises(TypeError):
             ufunc(
-                array, 
-                where=where.view(OverriddenArrayOld), 
+                array,
+                where=where.view(OverriddenArrayOld),
                 out=out,
             )
 
