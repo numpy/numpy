@@ -1276,7 +1276,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
     while (size--) {
         char *bufptr = it->dataptr;
-        
+
         if (needcopy) {
             char *args[2] = {it->dataptr, buffer};
             npy_intp strides[2] = {astride, elsize};
