@@ -20,22 +20,20 @@ class _DeprecationTestCase:
     message = ''
     warning_cls = DeprecationWarning
 
-    def setup_method(self):
-        self.warn_ctx = warnings.catch_warnings(record=True)
-        self.log = self.warn_ctx.__enter__()
-
-        # Do *not* ignore other DeprecationWarnings. Ignoring warnings
-        # can give very confusing results because of
-        # https://bugs.python.org/issue4180 and it is probably simplest to
-        # try to keep the tests cleanly giving only the right warning type.
-        # (While checking them set to "error" those are ignored anyway)
-        # We still have them show up, because otherwise they would be raised
-        warnings.filterwarnings("always", category=self.warning_cls)
-        warnings.filterwarnings("always", message=self.message,
-                                category=self.warning_cls)
-
-    def teardown_method(self):
-        self.warn_ctx.__exit__()
+    @contextlib.contextmanager
+    def filter_warnings(self):
+        with warnings.catch_warnings(record=True) as w:
+            # Do *not* ignore other DeprecationWarnings. Ignoring warnings
+            # can give very confusing results because of
+            # https://bugs.python.org/issue4180 and it is probably simplest to
+            # try to keep the tests cleanly giving only the right warning type.
+            # (While checking them set to "error" those are ignored anyway)
+            # We still have them show up, because otherwise they would be raised
+            warnings.filterwarnings("always", category=self.warning_cls)
+            warnings.filterwarnings("always", message=self.message,
+                                    category=self.warning_cls)
+            yield w
+        return
 
     def assert_deprecated(self, function, num=1, ignore_others=False,
                           function_fails=False,
@@ -72,9 +70,6 @@ class _DeprecationTestCase:
         """
         __tracebackhide__ = True  # Hide traceback for py.test
 
-        # reset the log
-        self.log[:] = []
-
         if exceptions is np._NoValue:
             exceptions = (self.warning_cls,)
 
@@ -83,11 +78,12 @@ class _DeprecationTestCase:
         else:
             context_manager = contextlib.nullcontext()
         with context_manager:
-            function(*args, **kwargs)
+            with self.filter_warnings() as w_context:
+                function(*args, **kwargs)
 
         # just in case, clear the registry
         num_found = 0
-        for warning in self.log:
+        for warning in w_context:
             if warning.category is self.warning_cls:
                 num_found += 1
             elif not ignore_others:
@@ -95,8 +91,8 @@ class _DeprecationTestCase:
                         "expected %s but got: %s" %
                         (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
-            msg = f"{len(self.log)} warnings found but {num} expected."
-            lst = [str(w) for w in self.log]
+            msg = f"{len(w_context)} warnings found but {num} expected."
+            lst = [str(w) for w in w_context]
             raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
@@ -131,7 +127,6 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
 class TestTestDeprecated:
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
-        test_case_instance.setup_method()
         assert_raises(AssertionError,
                       test_case_instance.assert_deprecated,
                       lambda: None)
@@ -140,7 +135,6 @@ class TestTestDeprecated:
             warnings.warn("foo", category=DeprecationWarning, stacklevel=2)
 
         test_case_instance.assert_deprecated(foo)
-        test_case_instance.teardown_method()
 
 
 class TestBincount(_DeprecationTestCase):
@@ -242,9 +236,7 @@ class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
     @pytest.mark.parametrize("func",
             [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
     def test_both_passed(self, func):
-        with warnings.catch_warnings():
-            # catch the DeprecationWarning so that it does not raise:
-            warnings.simplefilter("always", DeprecationWarning)
+        with pytest.warns(DeprecationWarning):
             with pytest.raises(TypeError):
                 func([0., 1.], 0., interpolation="nearest", method="nearest")
 
@@ -365,12 +357,10 @@ class TestLibImports(_DeprecationTestCase):
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
 
     def _check_for_warning(self, func):
-        with warnings.catch_warnings(record=True) as caught_warnings:
+        with pytest.warns(DeprecationWarning,
+                          match="alias 'a' was deprecated in NumPy 2.0") as w:
             func()
-        assert len(caught_warnings) == 1
-        w = caught_warnings[0]
-        assert w.category is DeprecationWarning
-        assert "alias 'a' was deprecated in NumPy 2.0" in str(w.message)
+        assert len(w) == 1
 
     def test_a_dtype_alias(self):
         for dtype in ["a", "a10"]:

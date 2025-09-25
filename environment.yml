@@ -16,7 +16,7 @@ dependencies:
   - ninja
   - pkg-config
   - meson-python
-  - spin==0.13
+  - spin==0.15
   - ccache
   # For testing
   - pytest
@@ -25,7 +25,7 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.5.0
-  - mypy=1.17.1
+  - mypy=1.18.1
   - orjson  # makes mypy faster
   # For building docs
   - sphinx>=4.5.0

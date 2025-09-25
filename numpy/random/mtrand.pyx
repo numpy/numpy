@@ -4147,7 +4147,8 @@ cdef class RandomState:
         >>> mean = [0, 0]
         >>> cov = [[1, 0], [0, 100]]  # diagonal covariance
 
-        Diagonal covariance means that points are oriented along x or y-axis:
+        Diagonal covariance means that the variables are independent, and the
+        probability density contours have their axes aligned with the coordinate axes:
 
         >>> import matplotlib.pyplot as plt
         >>> x, y = np.random.multivariate_normal(mean, cov, 5000).T

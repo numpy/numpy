@@ -59,47 +59,47 @@ _AnyVanderF: TypeAlias = Callable[
 @overload
 def as_series(
     alist: npt.NDArray[np.integer] | _FloatArray,
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_FloatSeries]: ...
 @overload
 def as_series(
     alist: _ComplexArray,
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_ComplexSeries]: ...
 @overload
 def as_series(
     alist: _ObjectArray,
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_ObjectSeries]: ...
 @overload
 def as_series(  # type: ignore[overload-overlap]
     alist: Iterable[_FloatArray | npt.NDArray[np.integer]],
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_FloatSeries]: ...
 @overload
 def as_series(
     alist: Iterable[_ComplexArray],
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_ComplexSeries]: ...
 @overload
 def as_series(
     alist: Iterable[_ObjectArray],
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_ObjectSeries]: ...
 @overload
 def as_series(  # type: ignore[overload-overlap]
     alist: Iterable[_SeriesLikeFloat_co | float],
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_FloatSeries]: ...
 @overload
 def as_series(
     alist: Iterable[_SeriesLikeComplex_co | complex],
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_ComplexSeries]: ...
 @overload
 def as_series(
     alist: Iterable[_SeriesLikeCoef_co | object],
-    trim: bool = ...,
+    trim: bool = True,
 ) -> list[_ObjectSeries]: ...
 
 _T_seq = TypeVar("_T_seq", bound=_CoefArray | Sequence[_CoefLike_co])
@@ -108,32 +108,32 @@ def trimseq(seq: _T_seq) -> _T_seq: ...
 @overload
 def trimcoef(  # type: ignore[overload-overlap]
     c: npt.NDArray[np.integer] | _FloatArray,
-    tol: _FloatLike_co = ...,
+    tol: _FloatLike_co = 0,
 ) -> _FloatSeries: ...
 @overload
 def trimcoef(
     c: _ComplexArray,
-    tol: _FloatLike_co = ...,
+    tol: _FloatLike_co = 0,
 ) -> _ComplexSeries: ...
 @overload
 def trimcoef(
     c: _ObjectArray,
-    tol: _FloatLike_co = ...,
+    tol: _FloatLike_co = 0,
 ) -> _ObjectSeries: ...
 @overload
 def trimcoef(  # type: ignore[overload-overlap]
     c: _SeriesLikeFloat_co | float,
-    tol: _FloatLike_co = ...,
+    tol: _FloatLike_co = 0,
 ) -> _FloatSeries: ...
 @overload
 def trimcoef(
     c: _SeriesLikeComplex_co | complex,
-    tol: _FloatLike_co = ...,
+    tol: _FloatLike_co = 0,
 ) -> _ComplexSeries: ...
 @overload
 def trimcoef(
     c: _SeriesLikeCoef_co | object,
-    tol: _FloatLike_co = ...,
+    tol: _FloatLike_co = 0,
 ) -> _ObjectSeries: ...
 
 @overload
@@ -361,9 +361,9 @@ def _fit(  # type: ignore[overload-overlap]
     y: _ArrayLikeFloat_co,
     deg: _SeriesLikeInt_co,
     domain: _SeriesLikeFloat_co | None = ...,
-    rcond: _FloatLike_co | None = ...,
-    full: Literal[False] = ...,
-    w: _SeriesLikeFloat_co | None = ...,
+    rcond: _FloatLike_co | None = None,
+    full: Literal[False] = False,
+    w: _SeriesLikeFloat_co | None = None,
 ) -> _FloatArray: ...
 @overload
 def _fit(
@@ -372,9 +372,9 @@ def _fit(
     y: _ArrayLikeComplex_co,
     deg: _SeriesLikeInt_co,
     domain: _SeriesLikeComplex_co | None = ...,
-    rcond: _FloatLike_co | None = ...,
-    full: Literal[False] = ...,
-    w: _SeriesLikeComplex_co | None = ...,
+    rcond: _FloatLike_co | None = None,
+    full: Literal[False] = False,
+    w: _SeriesLikeComplex_co | None = None,
 ) -> _ComplexArray: ...
 @overload
 def _fit(
@@ -383,9 +383,9 @@ def _fit(
     y: _ArrayLikeCoef_co,
     deg: _SeriesLikeInt_co,
     domain: _SeriesLikeCoef_co | None = ...,
-    rcond: _FloatLike_co | None = ...,
-    full: Literal[False] = ...,
-    w: _SeriesLikeCoef_co | None = ...,
+    rcond: _FloatLike_co | None = None,
+    full: Literal[False] = False,
+    w: _SeriesLikeCoef_co | None = None,
 ) -> _CoefArray: ...
 @overload
 def _fit(
@@ -397,7 +397,7 @@ def _fit(
     rcond: _FloatLike_co | None,
     full: Literal[True],
     /,
-    w: _SeriesLikeCoef_co | None = ...,
+    w: _SeriesLikeCoef_co | None = None,
 ) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 @overload
 def _fit(
@@ -406,11 +406,11 @@ def _fit(
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
     domain: _SeriesLikeCoef_co | None = ...,
-    rcond: _FloatLike_co | None = ...,
+    rcond: _FloatLike_co | None = None,
     *,
     full: Literal[True],
-    w: _SeriesLikeCoef_co | None = ...,
+    w: _SeriesLikeCoef_co | None = None,
 ) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 
 def _as_int(x: SupportsIndex, desc: str) -> int: ...
-def format_float(x: _FloatLike_co, parens: bool = ...) -> str: ...
+def format_float(x: _FloatLike_co, parens: bool = False) -> str: ...

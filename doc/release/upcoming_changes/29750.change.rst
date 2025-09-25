@@ -1,0 +1,5 @@
+The ``npymath`` and ``npyrandom`` libraries now have a ``.lib`` rather than a
+``.a`` file extension on win-arm64, for compatibility for building with MSVC and
+``setuptools``. Please note that using these static libraries is discouraged
+and for existing projects using it, it's best to use it with a matching
+compiler toolchain, which is ``clang-cl`` on Windows on Arm.

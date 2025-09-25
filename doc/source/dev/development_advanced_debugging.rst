@@ -5,10 +5,14 @@ Advanced debugging tools
 ========================
 
 If you reached here, you want to dive into, or use, more advanced tooling.
-This is usually not necessary for first time contributors and most
+This is usually not necessary for first-time contributors and most
 day-to-day development.
 These are used more rarely, for example close to a new NumPy release,
 or when a large or particular complex change was made.
+
+Some of these tools are used in NumPy's continuous integration tests. If you
+see a test failure that only happens under a debugging tool, these instructions
+should hopefully enable you to reproduce the test failure locally.
 
 Since not all of these tools are used on a regular basis and only available
 on some systems, please expect differences, issues, or quirks;
@@ -20,7 +24,7 @@ Finding C errors with additional tooling
 ########################################
 
 Most development will not require more than a typical debugging toolchain
-as shown in :ref:`Debugging <debugging>`. 
+as shown in :ref:`Debugging <debugging>`.
 But for example memory leaks can be particularly subtle or difficult to
 narrow down.
 
@@ -213,3 +217,248 @@ command for NumPy).
 
 .. _pytest-valgrind: https://github.com/seberg/pytest-valgrind
 
+
+C debuggers
+===========
+
+Whenever NumPy crashes or when working on changes to NumPy's low-level C or C++
+code, it's often convenient to run Python under a C debugger to get more
+information. A debugger can aid in understanding an interpreter crash (e.g. due
+to a segmentation fault) by providing a C call stack at the site of the
+crash. The call stack often provides valuable context to understand the nature
+of a crash. C debuggers are also very useful during development, allowing
+interactive debugging in the C implementation of NumPy.
+
+The NumPy developers often use both ``gdb`` and ``lldb`` to debug Numpy. As a
+rule of thumb, ``gdb`` is often easier to use on Linux while ``lldb`` is easier
+to use on a Mac environment. They have disjoint user interfaces, so you will need to
+learn how to use whichever one you land on. The ``gdb`` to ``lldb`` `command map
+<https://lldb.llvm.org/use/map.html>`_ is a convnient reference for how to
+accomplish common recipes in both debuggers.
+
+
+Building With Debug Symbols
+---------------------------
+
+The ``spin`` `development workflow tool
+<https://github.com/scientific-python/spin>`_. has built-in support for working
+with both ``gdb`` and ``lldb`` via the ``spin gdb`` and ``spin lldb`` commands.
+
+For both debuggers, it's advisable to build NumPy in either the ``debug`` or
+``debugoptimized`` meson build profile. To use ``debug`` you can pass the option
+via ``spin build``:
+
+.. code-block:: bash
+
+   spin build -- -Dbuildtype=debug
+
+to use ``debugoptimized`` you're pass ``-Dbuildtype=debugoptimized`` instead.
+
+You can pass additional arguments to `meson setup
+<https://mesonbuild.com/Builtin-options.html>`_ besides ``buildtype`` using the
+same positional argument syntax for ``spin build``.
+
+Running a Test Script
+---------------------
+
+Let's say you have a test script named `test.py` that lives in a ``test`` folder
+in the same directory as the NumPy source checkout. You could execute the test
+script using the ``spin`` build of NumPy with the following incantation:
+
+.. code-block:: bash
+
+   spin gdb ../test/test.py
+
+This will launch into gdb. If all you care about is a call stack for a crash,
+type "r" and hit enter. Your test script will run and if a crash happens, you
+type "bt" to get a traceback. For ``lldb``, the instructions are similar, just
+replace ``spin gdb`` with ``spin lldb``.
+
+You can also set breakpoints and use other more advanced techniques. See the
+documentation for your debugger for more details.
+
+One common issue with breakpoints in NumPy is that some code paths get hit
+repeatedly during the import of the ``numpy`` module. This can make it tricky or
+tedious to find the first "real" call after the NumPy import has completed and
+the ``numpy`` module is fully initialized.
+
+One workaround is to use a script like this:
+
+.. code-block:: python
+
+   import os
+   import signal
+
+   import numpy as np
+
+   PID = os.getpid()
+
+   def do_nothing(*args):
+       pass
+
+   signal.signal(signal.SIGUSR1, do_nothing)
+
+   os.kill(PID, signal.SIGUSR1)
+
+   # the code to run under a debugger follows
+
+
+This example installs a signal handler for the ``SIGUSR1`` signal that does
+nothing and then calls ``os.kill`` on the Python process with the ``SIGUSR1``
+signal. This causes the signal handler to fire and critically also causes both
+``gdb`` and ``lldb`` to halt execution inside of the ``kill`` syscall.
+
+If you run ``lldb`` you should see output something like this:
+
+.. code-block::
+
+   Process 67365 stopped
+    * thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGUSR1
+        frame #0: 0x000000019c4b9da4 libsystem_kernel.dylib`__kill + 8
+    libsystem_kernel.dylib`__kill:
+    ->  0x19c4b9da4 <+8>:  b.lo   0x19c4b9dc4    ; <+40>
+        0x19c4b9da8 <+12>: pacibsp
+        0x19c4b9dac <+16>: stp    x29, x30, [sp, #-0x10]!
+        0x19c4b9db0 <+20>: mov    x29, sp
+    Target 0: (python3.13) stopped.
+    (lldb) bt
+    * thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGUSR1
+      * frame #0: 0x000000019c4b9da4 libsystem_kernel.dylib`__kill + 8
+        frame #1: 0x000000010087f5c4 libpython3.13.dylib`os_kill + 104
+        frame #2: 0x000000010071374c libpython3.13.dylib`cfunction_vectorcall_FASTCALL + 276
+        frame #3: 0x00000001006c1e3c libpython3.13.dylib`PyObject_Vectorcall + 88
+        frame #4: 0x00000001007edd1c libpython3.13.dylib`_PyEval_EvalFrameDefault + 23608
+        frame #5: 0x00000001007e7e6c libpython3.13.dylib`PyEval_EvalCode + 252
+        frame #6: 0x0000000100852944 libpython3.13.dylib`run_eval_code_obj + 180
+        frame #7: 0x0000000100852610 libpython3.13.dylib`run_mod + 220
+        frame #8: 0x000000010084fa4c libpython3.13.dylib`_PyRun_SimpleFileObject + 868
+        frame #9: 0x000000010084f400 libpython3.13.dylib`_PyRun_AnyFileObject + 160
+        frame #10: 0x0000000100874ab8 libpython3.13.dylib`pymain_run_file + 336
+        frame #11: 0x0000000100874324 libpython3.13.dylib`Py_RunMain + 1516
+        frame #12: 0x000000010087459c libpython3.13.dylib`pymain_main + 324
+        frame #13: 0x000000010087463c libpython3.13.dylib`Py_BytesMain + 40
+        frame #14: 0x000000019c152b98 dyld`start + 6076
+   (lldb)
+
+As you can see, the C stack trace is inside of the ``kill`` syscall and an
+``lldb`` prompt is active, allowing interactively setting breakpoints. Since the
+``os.kill`` call happens after the ``numpy`` module is already fully
+initialized, this means any breakpoints set inside of ``kill`` will happen
+*after* ``numpy`` is finished initializing.
+
+Use together with ``pytest``
+----------------------------
+
+You can also run ``pytest`` tests under a debugger. This requires using
+the debugger in a slightly more manual fashion, since ``spin`` does not yet
+automate this process. First, run ``spin build`` to ensure there is a fully
+built copy of NumPy managed by ``spin``. Then, to run the tests under ``lldb``
+you would do something like this:
+
+.. code-block:: bash
+
+   spin lldb $(which python) $(which pytest) build-install/usr/lib/python3.13/site-packages/numpy/_core/tests/test_multiarray.py
+
+This will execute the tests in ``test_multiarray.py`` under lldb after typing
+'r' and hitting enter. Note that this command comes from a session using Python
+3.13 on a Mac. If you are using a different Python version or operating system,
+the directory layout inside ``build-install`` may be slightly different.
+
+You can set breakpoints as described above. The issue about breakpoints
+commonly being hit during NumPy import also applies - consider refactoring your
+test workflow into a test script so you can adopt the workaround using
+``os.kill`` described above.
+
+Note the use of ``$(which python)`` to ensure the debugger receives a path to a
+Python executable. If you are using ``pyenv``, you may need to replace ``which
+python`` with ``pyenv which python``, since ``pyenv`` relies on shim scripts
+that ``which`` doesn't know about.
+
+
+Compiler Sanitizers
+===================
+
+The `compiler sanitizer <https://hpc-wiki.info/hpc/Compiler_Sanitizers>`_ suites
+shipped by both GCC and LLVM offer a means to detect many common programming
+errors at runtime. The sanitizers work by instrumenting the application code at
+build time so additional runtime checks fire. Typically, sanitizers are run
+during the course of regular testing and if a sanitizer check fails, this leads
+to a test failure or crash, along with a report about the nature of the failure.
+
+While it is possible to use sanitizers with a "regular" build of CPython - it is
+best if you can set up a Python environment based on a from-source Python build
+with sanitizer instrumentation, and then use the instrumented Python to build
+NumPy and run the tests. If the entire Python stack is instrumented using the
+same sanitizer runtime, it becomes possible to identify issues that happen
+across the Python stack. This enables detecting memory leaks in NumPy due to
+misuse of memory allocated in CPython, for example.
+
+Build Python with Sanitizer Instrumentation
+-------------------------------------------
+
+See the `section in the Python developer's guide
+<https://devguide.python.org/getting-started/setup-building/>`_ on this topic for
+more information about building Python from source. To enable address sanitizer,
+you will need to pass ``--with-address-sanitizer`` to the ``configure`` script
+invocation when you build Python.
+
+You can also use `pyenv <https://github.com/pyenv/pyenv>`_ to automate the
+process of building Python and quickly activate or deactivate a Python
+installation using a command-line interface similar to virtual
+environments. With ``pyenv`` you could install an ASAN-instrumented build of
+Python 3.13 like this:
+
+.. code-block:: bash
+
+   CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.13
+
+If you are interested in thread sanitizer, the ``cpython_sanity`` `docker images
+<https://github.com/nascheme/cpython_sanity>`_ might also be a quicker choice
+that bypasses building Python from source, although it may be annoying to do
+debugging work inside of a docker image.
+
+Use together with ``spin``
+--------------------------
+
+However you build Python, once you have an instrumented Python build, you can
+install NumPy's development and test dependencies and build NumPy with address
+sanitizer instrumentation. For example, to build NumPy with the ``debug``
+profile and address sanitizer, you would pass additional build options to
+``meson`` like this:
+
+.. code-block:: bash
+
+   spin build -- -Dbuildtype=debug -Db_sanitize=address
+
+
+Once the build is finished, you can use other ``spin`` command like ``spin
+test`` and ``spin gdb`` as with any other Python build.
+
+Special considerations
+----------------------
+
+Some NumPy tests intentionally lead to ``malloc`` returning ``NULL``. In its
+default configuration, some of the compiler sanitizers flag this as an
+error. You can disable that check by passing ``allocator_may_return_null=1`` to
+the sanitizer as an option. For example, with address sanitizer:
+
+.. code-block:: bash
+
+   ASAN_OPTIONS=allocator_may_return_null=1 spin test
+
+You may see memory leaks coming from the Python interpreter, particularly on
+MacOS. If the memory leak reports are not useful, you can disable leak detection
+by passing ``detect_leaks=0`` in ``ASAN_OPTIONS``. You can pass more than one
+option using a colon-delimited list, like this:
+
+.. code-block:: bash
+
+   ASAN_OPTIONS=allocator_may_return_null=1:halt_on_error=1:detect_leaks=1 spin test
+
+The ``halt_on_error`` option can be particularly useful -- it hard-crashes the
+Python executable whenever it detects an error, along with a report about the
+error that includes a stack trace.
+
+You can also take a look at the ``compiler_sanitizers.yml`` GitHub actions
+workflow configuration. It describes several different CI jobs that are run as
+part of the NumPy tests using Thread, Address, and Undefined Behavior sanitizer.

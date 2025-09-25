@@ -148,7 +148,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def copy(self, /) -> Self: ...
     def degree(self, /) -> int: ...
     def cutdeg(self, /) -> Self: ...
-    def trim(self, /, tol: _FloatLike_co = ...) -> Self: ...
+    def trim(self, /, tol: _FloatLike_co = 0) -> Self: ...
     def truncate(self, /, size: _AnyInt) -> Self: ...
 
     @overload
@@ -157,24 +157,24 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         /,
         domain: _SeriesLikeCoef_co | None,
         kind: type[_Other],
-        window: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = None,
     ) -> _Other: ...
     @overload
     def convert(
         self,
         /,
-        domain: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = None,
         *,
         kind: type[_Other],
-        window: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = None,
     ) -> _Other: ...
     @overload
     def convert(
         self,
         /,
-        domain: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = None,
         kind: None = None,
-        window: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = None,
     ) -> Self: ...
 
     def mapparms(self, /) -> _Tuple2[Any]: ...
@@ -182,20 +182,20 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def integ(
         self,
         /,
-        m: SupportsIndex = ...,
-        k: _CoefLike_co | _SeriesLikeCoef_co = ...,
-        lbnd: _CoefLike_co | None = ...,
+        m: SupportsIndex = 1,
+        k: _CoefLike_co | _SeriesLikeCoef_co = ...,  # = []
+        lbnd: _CoefLike_co | None = None,
     ) -> Self: ...
 
-    def deriv(self, /, m: SupportsIndex = ...) -> Self: ...
+    def deriv(self, /, m: SupportsIndex = 1) -> Self: ...
 
     def roots(self, /) -> _CoefSeries: ...
 
     def linspace(
         self,
         /,
-        n: SupportsIndex = ...,
-        domain: _SeriesLikeCoef_co | None = ...,
+        n: SupportsIndex = 100,
+        domain: _SeriesLikeCoef_co | None = None,
     ) -> _Tuple2[_Series[np.float64 | np.complex128]]: ...
 
     @overload
@@ -205,12 +205,12 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         x: _SeriesLikeCoef_co,
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
-        domain: _SeriesLikeCoef_co | None = ...,
-        rcond: _FloatLike_co = ...,
-        full: Literal[False] = ...,
-        w: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        rcond: _FloatLike_co | None = None,
+        full: Literal[False] = False,
+        w: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> Self: ...
     @overload
     @classmethod
@@ -219,13 +219,13 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         x: _SeriesLikeCoef_co,
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
-        domain: _SeriesLikeCoef_co | None = ...,
-        rcond: _FloatLike_co = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        rcond: _FloatLike_co | None = None,
         *,
         full: Literal[True],
-        w: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        w: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> tuple[Self, Sequence[np.inexact | np.int32]]: ...
     @overload
     @classmethod
@@ -237,43 +237,43 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         domain: _SeriesLikeCoef_co | None,
         rcond: _FloatLike_co,
         full: Literal[True], /,
-        w: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        w: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> tuple[Self, Sequence[np.inexact | np.int32]]: ...
 
     @classmethod
     def fromroots(
         cls,
         roots: _ArrayLikeCoef_co,
-        domain: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        domain: _SeriesLikeCoef_co | None = ...,  # = []
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> Self: ...
 
     @classmethod
     def identity(
         cls,
-        domain: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> Self: ...
 
     @classmethod
     def basis(
         cls,
         deg: _AnyInt,
-        domain: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> Self: ...
 
     @classmethod
     def cast(
         cls,
         series: ABCPolyBase,
-        domain: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
     ) -> Self: ...
 
     @classmethod
