@@ -3120,7 +3120,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
         PyArray_DTypeMeta *dtypes[2] = {dt, dt};
         PyArray_Descr *given_descrs[2] = {descr, descr};
-        // we can ignore the view_offset for sorting
+        // Sort cannot be a view, so view_offset is unused
         npy_intp view_offset = 0;
         
         if (sort_method->resolve_descriptors(
