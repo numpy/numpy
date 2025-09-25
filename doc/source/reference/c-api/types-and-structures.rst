@@ -747,13 +747,12 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 
    .. c:member:: void *parameters
 
-      A pointer to a structure containing any parameters needed by the
+      A pointer to a structure containing any runtime parameters needed by the
       loop. This is ``NULL`` if no parameters are needed. The type of the
       struct is specific to the loop.
 
    .. versionchanged:: NumPy 2.4
-      The `parameters` member was added in NumPy 2.4 to allow passing
-      additional information to loops, beginning with it use in sorting loops.
+      The `parameters` member was added in NumPy 2.4.
 
 .. c:type:: PyArrayMethod_Spec
 
