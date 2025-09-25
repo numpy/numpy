@@ -1328,7 +1328,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         if (needcopy) {
             char *args[2] = {buffer, it->dataptr};
             npy_intp strides[2] = {elsize, astride};
-            
+
             if (NPY_UNLIKELY(from_cast_info.func(
                                  &from_cast_info.context, args, &N, strides,
                                  from_cast_info.auxdata) < 0)) {
