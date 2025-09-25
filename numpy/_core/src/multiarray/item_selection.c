@@ -1276,11 +1276,11 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
     while (size--) {
         char *bufptr = it->dataptr;
-
+        npy_intp strides[2] = {astride, elsize};
         if (needcopy) {
             char *args[2] = {it->dataptr, buffer};
             if (NPY_UNLIKELY(to_cast_info.func(
-                                 &to_cast_info.context, args, NULL, NULL,
+                                 &to_cast_info.context, args, &N, strides,
                                  to_cast_info.auxdata) < 0)) {
                 goto fail;
             }
@@ -1328,8 +1328,9 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         if (needcopy) {
             char *args[2] = {buffer, it->dataptr};
+            npy_intp strides[2] = {elsize, astride};
             if (NPY_UNLIKELY(from_cast_info.func(
-                                 &from_cast_info.context, args, NULL, NULL,
+                                 &from_cast_info.context, args, &N, strides,
                                  from_cast_info.auxdata) < 0)) {
                 goto fail;
             }
@@ -1472,9 +1473,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (needcopy) {
             char *args[2] = {it->dataptr, valbuffer};
-
+            npy_intp strides[2] = {astride, elsize};
             if (NPY_UNLIKELY(cast_info.func(
-                                 &cast_info.context, args, NULL, NULL,
+                                 &cast_info.context, args, &N, strides,
                                  cast_info.auxdata) < 0)) {
                 goto fail;
             }
