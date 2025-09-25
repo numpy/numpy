@@ -872,7 +872,7 @@ sfloat_stable_sort_loop(
 {
     assert(data[0] == data[1]);
     assert(dimensions[0] == dimensions[1]);
-    assert(strides[0] == strides[1]);
+    assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     assert(parameters->flags == NPY_SORT_STABLE);
 
