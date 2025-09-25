@@ -1339,7 +1339,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         PyArray_ITER_NEXT(it);
     }
-    
+
 fail:
     NPY_END_THREADS_DESCR(descr);
     /* cleanup internal buffer */
@@ -3226,7 +3226,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         if (odescr == NULL) {
             return NULL;
         }
-        PyArray_DTypeMeta *dt = NPY_DTYPE(PyArray_DESCR(op));
+        PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
         PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
 
         PyArray_DTypeMeta *dtypes[2] = {dt, odt};
