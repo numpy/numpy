@@ -120,7 +120,12 @@ typedef struct PyArrayMethod_Context_tag {
      */
     uint64_t flags;
     
+    /*
+     * Optional run-time parameters to pass to the loop (currently used in sorting).
+     * Fixed parameters are expected to be passed via auxdata.
+     */
     void *parameters;
+    
     /* Structure may grow (this is harmless for DType authors) */
  #endif
 } PyArrayMethod_Context;
