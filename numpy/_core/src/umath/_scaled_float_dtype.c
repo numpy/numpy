@@ -1044,7 +1044,11 @@ static int
 sfloat_init_sort(void)
 {
     PyArray_DTypeMeta *dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
-    PyType_Slot slots[3] = {{0, NULL}};
+    PyType_Slot slots[3] = {
+        {NPY_METH_resolve_descriptors, &sfloat_sort_resolve_descriptors},
+        {NPY_METH_get_loop, &sfloat_sort_get_loop},
+        {0, NULL}
+    };
     PyArrayMethod_Spec spec = {
         .nin = 1,
         .nout = 1,
@@ -1054,11 +1058,6 @@ sfloat_init_sort(void)
     spec.name = "sfloat_sort";
     spec.casting = NPY_NO_CASTING;
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
-    slots[0].slot = NPY_METH_resolve_descriptors;
-    slots[0].pfunc = &sfloat_sort_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
-    slots[1].pfunc = &sfloat_sort_get_loop;
 
     PyBoundArrayMethodObject *sort_meth = PyArrayMethod_FromSpec_int(&spec, 0);
     if (sort_meth == NULL) {
