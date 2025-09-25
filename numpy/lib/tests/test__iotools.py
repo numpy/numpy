@@ -1,6 +1,8 @@
 import time
 from datetime import date
 
+import pytest
+
 import numpy as np
 from numpy.lib._iotools import (
     LineSplitter,
@@ -200,6 +202,10 @@ class TestStringConverter:
         except ValueError:
             pass
 
+    @pytest.mark.thread_unsafe(
+        reason=("numpy/lib/tests/test_io.py::TestFromTxt::"
+                "test_dtype_with_object_no_converter "
+                "fails due to thread-unsafe try/finally"))
     def test_upgrademapper(self):
         "Tests updatemapper"
         dateparser = _bytes_to_date

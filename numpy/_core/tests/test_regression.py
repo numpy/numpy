@@ -2386,6 +2386,7 @@ class TestRegression:
                 assert_equal(squeezed, scvalue)
                 assert_equal(type(squeezed), type(scvalue))
 
+    @pytest.mark.thread_unsafe(reason="immortal string, sys.getrefcounts is thread-unsafe")
     def test_field_access_by_title(self):
         # gh-11507
         s = 'Some long field name'
@@ -2491,6 +2492,7 @@ class TestRegression:
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     @requires_memory(free_bytes=9e9)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_dot_big_stride(self):
         # gh-17111
         # blas stride = stride//itemsize > int32 max

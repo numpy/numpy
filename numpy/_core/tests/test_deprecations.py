@@ -508,6 +508,7 @@ class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
         self.assert_deprecated(assign_to_index)
 
 
+@pytest.mark.thread_unsafe(reason="is deprecated due to being thread-unsafe")
 class TestWarningUtilityDeprecations(_DeprecationTestCase):
     # Deprecation in NumPy 2.4, 2025-08
     message = r"NumPy warning suppression and assertion utilities are deprecated."

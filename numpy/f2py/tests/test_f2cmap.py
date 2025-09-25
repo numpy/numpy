@@ -1,8 +1,11 @@
+import pytest
+
 import numpy as np
 
 from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestF2Cmap(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90"),

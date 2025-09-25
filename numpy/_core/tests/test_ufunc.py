@@ -1762,6 +1762,7 @@ class TestUfunc:
 
     @pytest.mark.parametrize("a", identityless_reduce_arrs())
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+    @pytest.mark.thread_unsafe(reason="races to modify parameters")
     def test_identityless_reduction(self, a, pos):
         # np.minimum.reduce is an identityless reduction
         a[...] = 1
@@ -1787,6 +1788,7 @@ class TestUfunc:
     @requires_memory(6 * 1024**3)
     @pytest.mark.skipif(sys.maxsize < 2**32,
             reason="test array too large for 32bit platform")
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_identityless_reduction_huge_array(self):
         # Regression test for gh-20921 (copying identity incorrectly failed)
         arr = np.zeros((2, 2**31), 'uint8')
@@ -3238,6 +3240,7 @@ class TestLowlevelAPIAccess:
 
     @pytest.mark.skipif(not hasattr(ct, "pythonapi"),
             reason="`ctypes.pythonapi` required for capsule unpacking.")
+    @pytest.mark.thread_unsafe(reason="ctype global state")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
         data_t = ct.c_char_p * 2

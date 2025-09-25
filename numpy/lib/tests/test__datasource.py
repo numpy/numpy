@@ -88,6 +88,7 @@ def invalid_httpfile():
     return http_fakefile
 
 
+@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestDataSourceOpen:
     def setup_method(self):
         self.tmpdir = mkdtemp()
@@ -157,6 +158,7 @@ class TestDataSourceOpen:
         assert_equal(magic_line, result)
 
 
+@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestDataSourceExists:
     def setup_method(self):
         self.tmpdir = mkdtemp()
@@ -187,6 +189,7 @@ class TestDataSourceExists:
         assert_equal(self.ds.exists(tmpfile), False)
 
 
+@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestDataSourceAbspath:
     def setup_method(self):
         self.tmpdir = os.path.abspath(mkdtemp())
@@ -252,6 +255,7 @@ class TestDataSourceAbspath:
             os.sep = orig_os_sep
 
 
+@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestRepositoryAbspath:
     def setup_method(self):
         self.tmpdir = os.path.abspath(mkdtemp())
@@ -285,6 +289,7 @@ class TestRepositoryAbspath:
             os.sep = orig_os_sep
 
 
+@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestRepositoryExists:
     def setup_method(self):
         self.tmpdir = mkdtemp()
@@ -318,6 +323,7 @@ class TestRepositoryExists:
         assert_(self.repos.exists(tmpfile))
 
 
+@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestOpenFunc:
     def setup_method(self):
         self.tmpdir = mkdtemp()
