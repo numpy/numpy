@@ -3209,6 +3209,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     PyArrayMethod_SortParameters sort_params = {.flags = flags};
     PyArrayMethod_Context context = {0};
+    PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
 
     PyArray_ArgSortFunc **argsort_table = NULL;
@@ -3230,7 +3231,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
         PyArray_DTypeMeta *dtypes[2] = {dt, odt};
         PyArray_Descr *given_descrs[2] = {descr, odescr};
-        PyArray_Descr *loop_descrs[2];
         // we can ignore the view_offset for sorting
         npy_intp view_offset = 0;
         
