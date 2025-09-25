@@ -8,6 +8,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <iostream>
+
 #define NPY_TARGET_VERSION NPY_2_1_API_VERSION
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
@@ -446,6 +448,15 @@ set_fp_invalid_or_clear(int error_occurred)
     else {
         npy_clear_floatstatus_barrier((char*)&error_occurred);
     }
+}
+
+static inline void
+report_no_memory()
+{
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
 }
 
 /*
@@ -1199,10 +1210,7 @@ slogdet(char **args,
     }
     else {
         /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
+        report_no_memory();
     }
 }
 
@@ -1255,10 +1263,7 @@ det(char **args,
     }
     else {
         /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
+        report_no_memory();
     }
 }
 
@@ -1331,7 +1336,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
     mem_buff = (npy_uint8 *)malloc(alloc_size);
 
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(typ);
@@ -1365,7 +1370,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
 
     mem_buff2 = (npy_uint8 *)malloc(lwork*sizeof(typ) + liwork*sizeof(fortran_int));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -1377,6 +1382,9 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
     params->IWORK = (fortran_int*)iwork;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
 
  error:
     /* something failed */
@@ -1440,7 +1448,7 @@ using fbasetyp = fortran_type_t<basetyp>;
     mem_buff = (npy_uint8 *)malloc(safe_N * safe_N * sizeof(typ) +
                       safe_N * sizeof(basetyp));
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(typ);
@@ -1478,7 +1486,7 @@ using fbasetyp = fortran_type_t<basetyp>;
                        lrwork*sizeof(basetyp) +
                        liwork*sizeof(fortran_int));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -1495,6 +1503,8 @@ using fbasetyp = fortran_type_t<basetyp>;
     return 1;
 
     /* something failed */
+no_memory:
+    report_no_memory();
 error:
     memset(params, 0, sizeof(*params));
     free(mem_buff2);
@@ -1733,7 +1743,10 @@ init_gesv(GESV_PARAMS_t<ftyp> *params, fortran_int N, fortran_int NRHS)
     params->LDB = ld;
 
     return 1;
+
  error:
+    report_no_memory();
+
     free(mem_buff);
     memset(params, 0, sizeof(*params));
 
@@ -1853,12 +1866,6 @@ using ftyp = fortran_type_t<typ>;
         END_OUTER_LOOP
 
         release_gesv(&params);
-    } else {
-        /* malloc failed in init_gesv() */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
     }
 
     set_fp_invalid_or_clear(error_occurred);
@@ -1983,6 +1990,8 @@ init_potrf(POTR_PARAMS_t<ftyp> *params, char UPLO, fortran_int N)
 
     return 1;
  error:
+    report_no_memory();
+
     free(mem_buff);
     memset(params, 0, sizeof(*params));
 
@@ -2181,7 +2190,7 @@ scalar_trait)
                       vlr_size + vrr_size +
                       w_size + vl_size + vr_size);
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2224,7 +2233,7 @@ scalar_trait)
 
     mem_buff2 = (npy_uint8 *)malloc(work_count*sizeof(typ));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
     work = mem_buff2;
 
@@ -2232,6 +2241,10 @@ scalar_trait)
     params->WORK = (typ*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     free(mem_buff2);
     free(mem_buff);
@@ -2398,7 +2411,7 @@ using realtyp = basetype_t<ftyp>;
 
     mem_buff = (npy_uint8 *)malloc(total_size);
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2440,7 +2453,7 @@ using realtyp = basetype_t<ftyp>;
 
     mem_buff2 = (npy_uint8 *)malloc(work_count*sizeof(ftyp));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -2449,6 +2462,9 @@ using realtyp = basetype_t<ftyp>;
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
  error:
     free(mem_buff2);
     free(mem_buff);
@@ -2760,7 +2776,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     mem_buff = (npy_uint8 *)malloc(a_size + s_size + u_size + vt_size + iwork_size);
 
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2804,7 +2820,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -2813,6 +2829,9 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -2900,7 +2919,7 @@ using frealtyp = basetype_t<ftyp>;
                       rwork_size +
                       iwork_size);
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2945,7 +2964,7 @@ using frealtyp = basetype_t<ftyp>;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -2954,6 +2973,10 @@ using frealtyp = basetype_t<ftyp>;
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff2);
@@ -3192,7 +3215,7 @@ using ftyp = fortran_doublereal;
     mem_buff = (npy_uint8 *)malloc(a_size + tau_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     a = mem_buff;
     tau = a + a_size;
@@ -3225,13 +3248,17 @@ using ftyp = fortran_doublereal;
     work_size = (size_t) params->LWORK * sizeof(ftyp);
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3266,7 +3293,7 @@ using ftyp = fortran_doublecomplex;
     mem_buff = (npy_uint8 *)malloc(a_size + tau_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     a = mem_buff;
     tau = a + a_size;
@@ -3301,13 +3328,17 @@ using ftyp = fortran_doublecomplex;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3439,7 +3470,7 @@ using ftyp = fortran_doublereal;
     mem_buff = (npy_uint8 *)malloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     q = mem_buff;
     tau = q + q_size;
@@ -3474,13 +3505,17 @@ using ftyp = fortran_doublereal;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3518,7 +3553,7 @@ using ftyp=fortran_doublecomplex;
     mem_buff = (npy_uint8 *)malloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     q = mem_buff;
     tau = q + q_size;
@@ -3554,7 +3589,7 @@ using ftyp=fortran_doublecomplex;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
@@ -3562,6 +3597,10 @@ using ftyp=fortran_doublecomplex;
     params->LWORK = work_count;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3904,10 +3943,7 @@ scalar_trait)
     return 1;
 
  no_memory:
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
+    report_no_memory();
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
@@ -4040,10 +4076,7 @@ using frealtyp = basetype_t<ftyp>;
     return 1;
 
  no_memory:
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
+    report_no_memory();
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
