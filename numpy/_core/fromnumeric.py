@@ -2870,12 +2870,12 @@ def cumulative_sum(x, /, *, axis=None, dtype=None, out=None,
     return _cumulative_func(x, um.add, axis, dtype, out, include_initial)
 
 
-def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
+def _cumsum_dispatcher(a, axis=None, dtype=None, out=None, *, reverse=False):
     return (a, out)
 
 
 @array_function_dispatch(_cumsum_dispatcher)
-def cumsum(a, axis=None, dtype=None, out=None):
+def cumsum(a, axis=None, dtype=None, out=None, *, reverse=False):
     """
     Return the cumulative sum of the elements along a given axis.
 
@@ -2897,6 +2897,10 @@ def cumsum(a, axis=None, dtype=None, out=None):
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary. See :ref:`ufuncs-output-type`
         for more details.
+    reverse : bool, keyword-only, optional
+        If True, perform a right-to-left cumulative sum along `axis`.
+        Equivalent to ``flip(cumsum(flip(a, axis=axis), axis=axis), axis=axis)``
+        but avoids extra copies when possible.
 
     Returns
     -------
@@ -2950,7 +2954,21 @@ def cumsum(a, axis=None, dtype=None, out=None):
     1000000.0050000029
 
     """
-    return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
+    if not reverse:
+        return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
+
+    arr = asanyarray(a)
+    if axis is None:
+        arr = arr.ravel()
+        axis = 0
+    arr_rev = np.flip(arr, axis=axis)
+
+    if out is None:
+        res = np.add.accumulate(arr_rev, axis=axis, dtype=dtype)
+        return np.flip(res, axis=axis)
+    out_rev = np.flip(out, axis=axis)
+    np.add.accumulate(arr_rev, axis=axis, dtype=dtype, out=out_rev)
+    return out
 
 
 def _ptp_dispatcher(a, axis=None, out=None, keepdims=None):
@@ -3444,12 +3462,12 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
                           keepdims=keepdims, initial=initial, where=where)
 
 
-def _cumprod_dispatcher(a, axis=None, dtype=None, out=None):
+def _cumprod_dispatcher(a, axis=None, dtype=None, out=None, *, reverse=False):
     return (a, out)
 
 
 @array_function_dispatch(_cumprod_dispatcher)
-def cumprod(a, axis=None, dtype=None, out=None):
+def cumprod(a, axis=None, dtype=None, out=None, *, reverse=False):
     """
     Return the cumulative product of elements along a given axis.
 
@@ -3470,6 +3488,10 @@ def cumprod(a, axis=None, dtype=None, out=None):
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type of the resulting values will be cast if necessary.
+    reverse : bool, keyword-only, optional
+        If True, perform a right-to-left cumulative product along `axis`.
+        Equivalent to ``flip(cumprod(flip(a, axis=axis), axis=axis), axis=axis)``
+        but avoids extra copies when possible.
 
     Returns
     -------
@@ -3511,7 +3533,21 @@ def cumprod(a, axis=None, dtype=None, out=None):
            [  4,  20, 120]])
 
     """
-    return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
+    if not reverse:
+        return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
+
+    arr = asanyarray(a)
+    if axis is None:
+        arr = arr.ravel()
+        axis = 0
+    arr_rev = np.flip(arr, axis=axis)
+
+    if out is None:
+        res = np.multiply.accumulate(arr_rev, axis=axis, dtype=dtype)
+        return np.flip(res, axis=axis)
+    out_rev = np.flip(out, axis=axis)
+    np.multiply.accumulate(arr_rev, axis=axis, dtype=dtype, out=out_rev)
+    return out
 
 
 def _ndim_dispatcher(a):
