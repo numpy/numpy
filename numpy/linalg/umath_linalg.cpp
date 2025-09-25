@@ -8,8 +8,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <iostream>
-
 #define NPY_TARGET_VERSION NPY_2_1_API_VERSION
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
