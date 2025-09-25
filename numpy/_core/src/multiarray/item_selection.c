@@ -1493,7 +1493,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         if (argpart == NULL) {
             if (strided_loop != NULL) {
                 char *const data[2] = {valptr, (char *)idxptr};
-                npy_intp strides[2] = {astride, rstride};
+                npy_intp strides[2] = {elsize, size(npy_intp)};
                 ret = strided_loop(context, data, &N, strides, NULL);
             }
             else {
