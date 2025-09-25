@@ -1474,6 +1474,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         if (needcopy) {
             char *args[2] = {it->dataptr, valbuffer};
             npy_intp strides[2] = {astride, elsize};
+
             if (NPY_UNLIKELY(cast_info.func(
                                  &cast_info.context, args, &N, strides,
                                  cast_info.auxdata) < 0)) {
