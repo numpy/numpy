@@ -1710,9 +1710,6 @@ class TestUfunc:
         assert_equal(a, [[0, 27], [14, 5]])
 
     def test_where_param_buffer_output(self):
-        # This test is temporarily skipped because it requires
-        # adding masking features to the nditer to work properly
-
         # With casting on output
         a = np.ones(10, np.int64)
         b = np.ones(10, np.int64)
@@ -1724,12 +1721,12 @@ class TestUfunc:
         # With casting and allocated output
         a = np.array([1], dtype=np.int64)
         m = np.array([True], dtype=bool)
-        assert_equal(np.sqrt(a, where=m), [1])
+        assert_equal(np.sqrt(a, where=m, out=None), [1])
 
         # No casting and allocated output
         a = np.array([1], dtype=np.float64)
         m = np.array([True], dtype=bool)
-        assert_equal(np.sqrt(a, where=m), [1])
+        assert_equal(np.sqrt(a, where=m, out=None), [1])
 
     def test_where_with_broadcasting(self):
         # See gh-17198
@@ -1742,6 +1739,15 @@ class TestUfunc:
         b_where = np.broadcast_to(b, a.shape)[where]
         assert_array_equal((a[where] < b_where), out[where].astype(bool))
         assert not out[~where].any()  # outside mask, out remains all 0
+
+    def test_where_warns(self):
+        a = np.arange(7)
+        mask = a % 2 == 0
+        with warnings.catch_warnings(record=True) as w_where:
+            warnings.simplefilter('always')
+            result = np.add(a, a, where=mask)
+        assert len(w_where) == 1
+        assert "'where'" in str(w_where[0])
 
     @staticmethod
     def identityless_reduce_arrs():
