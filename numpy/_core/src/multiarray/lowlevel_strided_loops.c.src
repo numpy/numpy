@@ -79,57 +79,6 @@
         a = (x)[7]; (x)[7] = (x)[8]; (x)[8] = a; \
         }
 
-/* half-to-double, copied from CPP to allow inlining */
-
-static NPY_GCC_OPT_3
-uint64_t ToDoubleBits(uint16_t h)
-{
-    uint16_t h_exp = (h&0x7c00u);
-    uint64_t d_sgn = ((uint64_t)h&0x8000u) << 48;
-    switch (h_exp) {
-        case 0x0000u: { // 0 or subnormal
-            uint16_t h_sig = (h&0x03ffu);
-            // Signed zero
-            if (h_sig == 0) {
-                return d_sgn;
-            }
-            // Subnormal
-            h_sig <<= 1;
-            while ((h_sig&0x0400u) == 0) {
-                h_sig <<= 1;
-                h_exp++;
-            }
-            uint64_t d_exp = ((uint64_t)(1023 - 15 - h_exp)) << 52;
-            uint64_t d_sig = ((uint64_t)(h_sig&0x03ffu)) << 42;
-            return d_sgn + d_exp + d_sig;
-        }
-        case 0x7c00u: // inf or NaN
-            // All-ones exponent and a copy of the significand
-            return d_sgn + 0x7ff0000000000000ULL + (((uint64_t)(h&0x03ffu)) << 42);
-        default: // normalized
-            // Just need to adjust the exponent and shift
-            return d_sgn + (((uint64_t)(h&0x7fffu) + 0xfc000u) << 42);
-    }
-}
-
-NPY_FINLINE
-npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
-    /*
-     * Use npymath versions for all the special cases, only inline the
-     * x86_64 non-intrinsic case. Someday we will rewrite this in CPP and
-     * can then explore inlining more
-     */
-    #if defined(NPY_HAVE_AVX512FP16)
-        return npy_halfbits_to_doublebits(h);
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
-        return npy_halfbits_to_doublebits(h);
-    #elif defined(__ARM_FP16_FORMAT_IEEE)
-        return npy_halfbits_to_doublebits(h);
-    #else
-        return (double)(ToDoubleBits(h));
-    #endif
-}
-
 /************* STRIDED COPYING/SWAPPING SPECIALIZED FUNCTIONS *************/
 
 /**begin repeat
@@ -765,6 +714,59 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
     #define EMULATED_FP16 1
     #define NATIVE_FP16 0
     typedef npy_half _npy_half;
+#endif
+
+#if EMULATED_FP16
+/* half-to-double, copied from CPP to allow inlining */
+
+static NPY_GCC_OPT_3
+uint64_t ToDoubleBits(uint16_t h)
+{
+    uint16_t h_exp = (h&0x7c00u);
+    uint64_t d_sgn = ((uint64_t)h&0x8000u) << 48;
+    switch (h_exp) {
+        case 0x0000u: { // 0 or subnormal
+            uint16_t h_sig = (h&0x03ffu);
+            // Signed zero
+            if (h_sig == 0) {
+                return d_sgn;
+            }
+            // Subnormal
+            h_sig <<= 1;
+            while ((h_sig&0x0400u) == 0) {
+                h_sig <<= 1;
+                h_exp++;
+            }
+            uint64_t d_exp = ((uint64_t)(1023 - 15 - h_exp)) << 52;
+            uint64_t d_sig = ((uint64_t)(h_sig&0x03ffu)) << 42;
+            return d_sgn + d_exp + d_sig;
+        }
+        case 0x7c00u: // inf or NaN
+            // All-ones exponent and a copy of the significand
+            return d_sgn + 0x7ff0000000000000ULL + (((uint64_t)(h&0x03ffu)) << 42);
+        default: // normalized
+            // Just need to adjust the exponent and shift
+            return d_sgn + (((uint64_t)(h&0x7fffu) + 0xfc000u) << 42);
+    }
+}
+
+NPY_FINLINE
+npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
+    /*
+     * Use npymath versions for all the special cases, only inline the
+     * x86_64 non-intrinsic case. Someday we will rewrite this in CPP and
+     * can then explore inlining more
+     */
+    #if defined(NPY_HAVE_AVX512FP16)
+        return npy_halfbits_to_doublebits(h);
+    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
+        return npy_halfbits_to_doublebits(h);
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        return npy_halfbits_to_doublebits(h);
+    #else
+        return (double)(ToDoubleBits(h));
+    #endif
+}
 #endif
 
 /**begin repeat
