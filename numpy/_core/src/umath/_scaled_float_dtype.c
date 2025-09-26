@@ -1047,6 +1047,7 @@ sfloat_init_sort(void)
     if (sort_meth == NULL) {
         return -1;
     }
+    // TODO: once registration method is in place, use it instead of setting hidden slot
     NPY_DT_SLOTS(&PyArray_SFloatDType)->sort_meth = sort_meth->method;
 
     spec.name = "sfloat_argsort";
@@ -1057,6 +1058,7 @@ sfloat_init_sort(void)
     slots[1].slot = NPY_METH_get_loop;
     slots[1].pfunc = &sfloat_argsort_get_loop;
 
+    // TODO: once registration method is in place, use it instead of setting hidden slot
     PyBoundArrayMethodObject *argsort_meth = PyArrayMethod_FromSpec_int(&spec, 0);
     if (argsort_meth == NULL) {
         return -1;
