@@ -1247,12 +1247,19 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
             memset(buffer, 0, N * elsize);
         }
 
-        if (swap) {
-            odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
+        if (strided_loop != NULL) {
+            // Descriptors have already been resolved
+            odescr = context->descriptors[1];
+            Py_INCREF(odescr);
         }
         else {
-            odescr = descr;
-            Py_INCREF(odescr);
+            if (swap) {
+                odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
+            }
+            else {
+                odescr = descr;
+                Py_INCREF(odescr);
+            }
         }
 
         NPY_ARRAYMETHOD_FLAGS to_transfer_flags;

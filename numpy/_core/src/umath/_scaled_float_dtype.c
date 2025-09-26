@@ -936,8 +936,18 @@ sfloat_sort_resolve_descriptors(
 {
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    Py_INCREF(given_descrs[0]);
-    loop_descrs[1] = given_descrs[0];
+
+    if (!PyArray_IsNativeByteOrder(given_descrs[0]->byteorder)) {
+        loop_descrs[1] = PyArray_DescrNewByteorder(given_descrs[0], NPY_SWAP);
+        if (loop_descrs[1] == NULL) {
+            return -1;
+        }
+    }
+    else {
+        loop_descrs[1] = given_descrs[0];
+        Py_INCREF(loop_descrs[1]);
+    }
+
     return NPY_NO_CASTING;
 }
 
