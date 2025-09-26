@@ -3735,7 +3735,6 @@ class TestSpecialMethods:
                     else:
                         kwargs["where"] = kwargs["where"][0]
 
-                print(f"{kwargs=}")
                 r = super().__array_ufunc__(ufunc, method, *inputs, **kwargs)
                 if r is not NotImplemented:
                     r = r.view(type(self))

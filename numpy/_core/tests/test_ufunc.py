@@ -1743,11 +1743,13 @@ class TestUfunc:
     def test_where_warns(self):
         a = np.arange(7)
         mask = a % 2 == 0
-        with warnings.catch_warnings(record=True) as w_where:
-            warnings.simplefilter('always')
-            result = np.add(a, a, where=mask)
-        assert len(w_where) == 1
-        assert "'where'" in str(w_where[0])
+        with pytest.warns(UserWarning, match="'where' used without 'out'"):
+            result1 = np.add(a, a, where=mask)
+        # Does not warn
+        result2 = np.add(a, a, where=mask, out=None)
+        # Sanity check
+        assert np.all(result1[::2] == [0, 4, 8, 12])
+        assert np.all(result2[::2] == [0, 4, 8, 12])
 
     @staticmethod
     def identityless_reduce_arrs():
