@@ -2824,6 +2824,7 @@ class TestGUFuncProcessCoreDims:
             umt.conv1d_full([], [])
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                    if isinstance(getattr(np, x), np.ufunc)])
 def test_ufunc_types(ufunc):
