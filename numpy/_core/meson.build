@@ -1279,6 +1279,7 @@ unique_hash_so = static_library(
   include_directories: [
     'include',
     'src/common',
+    'src/npymath',
   ],
   dependencies: [
     py_dep,
