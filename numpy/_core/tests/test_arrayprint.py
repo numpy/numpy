@@ -547,7 +547,7 @@ class TestArray2String:
         assert_equal(result, expected_repr)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-    @pytest.mark.thread_unsafe(reason="sys.getrefcounts is thread-unsafe")
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)

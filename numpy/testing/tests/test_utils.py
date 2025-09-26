@@ -2047,7 +2047,7 @@ def test_clear_and_catch_warnings_inherit():
 class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
 
-    @pytest.mark.thread_unsafe(reason="assert_no_gc_cycles is thread-unsafe?")
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_passes(self):
         def no_cycle():
             b = []
