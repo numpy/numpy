@@ -76,6 +76,7 @@ __all__ = [
     "matrix_norm",
     "vector_norm",
     "vecdot",
+    "weighted_gram_matrix"
 ]
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
@@ -504,3 +505,9 @@ def matmul(
     x1: _ArrayLikeComplex_co,
     x2: _ArrayLikeComplex_co,
 ) -> NDArray[complexfloating]: ...
+
+def weighted_gram_matrix(
+    X: _ArrayLikeComplex_co,
+    *,
+    weights: _ArrayLikeComplex_co | None = None,
+) -> NDArray[Any]: ...
