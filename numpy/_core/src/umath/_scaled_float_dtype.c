@@ -983,6 +983,8 @@ sfloat_default_argsort_loop(
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     assert(parameters->flags == NPY_SORT_DEFAULT);
+    assert(strides[0] == sizeof(npy_float64));
+    assert(strides[1] == sizeof(npy_intp));
 
     npy_intp N = dimensions[0];
     char *in = data[0];
