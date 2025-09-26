@@ -751,7 +751,6 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       loop. This is ``NULL`` if no parameters are needed. The type of the
       struct is specific to the registered function.
 
-   .. versionchanged:: NumPy 2.4
      .. versionchanged:: NumPy 2.4
         The `parameters` member was added in NumPy 2.4.
 
