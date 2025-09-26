@@ -21,7 +21,7 @@ except ModuleNotFoundError:
     HAVE_SCPDT = False
 
 try:
-    import pytest_run_parallel
+    import pytest_run_parallel  # noqa: F401
     PARALLEL_RUN_AVALIABLE = True
 except ModuleNotFoundError:
     PARALLEL_RUN_AVALIABLE = False
