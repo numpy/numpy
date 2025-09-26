@@ -254,7 +254,8 @@ def main(argv: list[str] | None = None) -> int:
         if not args.quiet:
             out.seek(0)
             sys.stdout.write(out.read())
-            print(f"Report written to: {report_path}")
+            print(f"Report written to: {report_path}\n\n\
+C API borrow-ref linter FAILED.")
 
     return 1
 
