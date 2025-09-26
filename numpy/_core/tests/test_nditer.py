@@ -3415,6 +3415,7 @@ def test_arbitrary_number_of_ops_error():
     with pytest.raises(ValueError, match="Too many operands to nditer"):
         np.nested_iters(args, [[0], []])
 
+
 @pytest.mark.thread_unsafe(reason="capfd is thread-unsafe?")
 def test_debug_print(capfd):
     """
