@@ -120,3 +120,4 @@ Rearranging elements
    flipud
    roll
    rot90
+   shifted
