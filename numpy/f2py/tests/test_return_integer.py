@@ -6,6 +6,7 @@ from . import util
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestReturnInteger(util.F2PyTest):
     def check_function(self, t, tname):
         assert t(123) == 123
@@ -37,6 +38,7 @@ class TestReturnInteger(util.F2PyTest):
             pytest.raises(OverflowError, t, 10000000011111111111111.23)
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFReturnInteger(TestReturnInteger):
     sources = [
         util.getpath("tests", "src", "return_integer", "foo77.f"),

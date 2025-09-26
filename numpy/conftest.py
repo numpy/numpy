@@ -20,6 +20,11 @@ try:
 except ModuleNotFoundError:
     HAVE_SCPDT = False
 
+try:
+    import pytest_run_parallel  # noqa: F401
+    PARALLEL_RUN_AVALIABLE = True
+except ModuleNotFoundError:
+    PARALLEL_RUN_AVALIABLE = False
 
 _old_fpu_mode = None
 _collect_results = {}
@@ -62,6 +67,17 @@ def pytest_configure(config):
         "slow: Tests that are very slow.")
     config.addinivalue_line("markers",
         "slow_pypy: Tests that are very slow on pypy.")
+    if not PARALLEL_RUN_AVALIABLE:
+        config.addinivalue_line("markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line("markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line("markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
 
 
 def pytest_addoption(parser):

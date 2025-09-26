@@ -8,6 +8,7 @@ from . import util
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestBlockDocString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "block_docstring", "foo.f")]
 

@@ -57,6 +57,7 @@ else:
 @pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
                     reason='Meson unable to find MSVC linker on win-arm64')
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="crashes sometimes during meson runs")
 def test_cython(tmp_path):
     import glob
     # build the examples in a temporary directory

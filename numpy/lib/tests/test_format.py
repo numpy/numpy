@@ -452,6 +452,7 @@ def test_roundtrip_truncated():
         if arr.dtype != object:
             assert_raises(ValueError, roundtrip_truncated, arr)
 
+
 def test_file_truncated(tmp_path):
     path = tmp_path / "a.npy"
     for arr in basic_arrays:
@@ -957,6 +958,7 @@ def test_large_file_support(tmpdir):
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_archive(tmpdir):
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.

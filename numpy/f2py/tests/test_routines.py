@@ -4,6 +4,7 @@ from . import util
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestRenamedFunc(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "routines", "funcfortranname.f"),
@@ -17,6 +18,7 @@ class TestRenamedFunc(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestRenamedSubroutine(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "routines", "subrout.f"),

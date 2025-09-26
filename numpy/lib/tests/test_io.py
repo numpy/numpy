@@ -193,6 +193,7 @@ class RoundtripTest:
             self.check_roundtrips(a)
 
 
+@pytest.mark.thread_unsafe(reason="some tests fail from RountripTest, file race?")
 class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
@@ -201,6 +202,7 @@ class TestSaveLoad(RoundtripTest):
         assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
 
 
+@pytest.mark.thread_unsafe(reason="some tests fail from RountripTest, file race?")
 class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
@@ -235,6 +237,7 @@ class TestSavezLoad(RoundtripTest):
     @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
@@ -630,6 +633,7 @@ class TestSaveTxt:
     @pytest.mark.skipif(sys.platform == 'win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
@@ -2806,6 +2810,7 @@ def test_npzfile_dict():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="assert_no_gc_cycles is thread-unsafe?")
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.

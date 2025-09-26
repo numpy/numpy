@@ -5577,6 +5577,7 @@ class TestLexsort:
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
         assert_raises(AxisError, np.lexsort, x, axis=2)
 
+@pytest.mark.thread_unsafe(reason="tmp_filename is thread-unsafe")
 class TestIO:
     """Test tofile, fromfile, tobytes, and fromstring"""
 
@@ -5829,6 +5830,7 @@ class TestIO:
                     sep=",", offset=1)
 
     @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
+    @pytest.mark.thread_unsafe(reason="os.dup thread-unsafe?")
     def test_fromfile_bad_dup(self, tmp_filename):
         def dup_str(fd):
             return 'abc'
@@ -6068,6 +6070,7 @@ class TestFromBuffer:
                 mm.close()  # cannot close while array uses the buffer
             del arr
             mm.close()
+
 
 class TestFlat:
     def _create_arrays(self):
@@ -6374,6 +6377,7 @@ class TestRecord:
                                      'offsets': [0, 8]}))
         v[:] = (4, 5)
         assert_equal(a[0].item(), (4, 1, 5))
+
 
 class TestView:
     def test_basic(self):
@@ -7128,6 +7132,7 @@ class TestDot:
     @pytest.mark.slow
     @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
     @requires_memory(free_bytes=18e9)  # complex case needs 18GiB+
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_huge_vectordot(self, dtype):
         # Large vector multiplications are chunked with 32bit BLAS
         # Test that the chunking does the right thing, see also gh-22262
@@ -8492,6 +8497,7 @@ class TestNewBufferProtocol:
             x = np.array([(1,), (2,)], dtype={'f0': (int, j)})
             self._check_roundtrip(x)
 
+    @pytest.mark.thread_unsafe(reason="sys.getrefcounts is thread-unsafe")
     def test_reference_leak(self):
         if HAS_REFCOUNT:
             count_1 = sys.getrefcount(np._core._internal)
@@ -8613,6 +8619,7 @@ class TestNewBufferProtocol:
         assert_equal(arr['a'], 3)
 
     @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
+    @pytest.mark.thread_unsafe(reason="_multiarray_tests is thread-unsafe?")
     def test_error_if_stored_buffer_info_is_corrupted(self, obj):
         """
         If a user extends a NumPy array before 1.20 and then runs it
@@ -9009,6 +9016,7 @@ class TestArrayInterface:
         # This fails due to going into the buffer protocol path
         (f, {'data': None, 'shape': ()}, TypeError),
         ])
+    @pytest.mark.thread_unsafe(reason="setup is thread_unsafe, sys.getrefcounts is thread-unsafe")
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
         self.f.iface = {'typestr': 'f8'}
@@ -9684,6 +9692,7 @@ class TestCTypes:
         assert_equal(ctypes, test_arr.ctypes._ctypes)
         assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
 
+    @pytest.mark.thread_unsafe(reason="modifies global state")
     def test_ctypes_is_not_available(self):
         from numpy._core import _internal
         _internal.ctypes = None
@@ -10591,6 +10600,7 @@ def test_argsort_largearrays(dtype):
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="sys.getrefcounts is thread-unsafe")
 def test_gh_22683():
     b = 777.68760986
     a = np.array([b] * 10000, dtype=object)

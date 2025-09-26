@@ -415,6 +415,7 @@ def test_new_policy(get_module):
                    reason=("bad interaction between getenv and "
                            "os.environ inside pytest"))
 @pytest.mark.parametrize("policy", ["0", "1", None])
+@pytest.mark.thread_unsafe(reason="modifies environment variables")
 def test_switch_owner(get_module, policy):
     a = get_module.get_array()
     assert np._core.multiarray.get_handler_name(a) is None

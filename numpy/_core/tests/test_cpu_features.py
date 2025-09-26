@@ -124,6 +124,7 @@ class AbstractTest:
         " therefore this test class cannot be properly executed."
     ),
 )
+@pytest.mark.thread_unsafe(reason="setup & tmp_path_factory threads-unsafe, modifies environment variables")
 class TestEnvPrivation:
     cwd = pathlib.Path(__file__).parent.resolve()
     env = os.environ.copy()

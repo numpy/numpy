@@ -74,6 +74,7 @@ def mixed_types_structured():
 
 
 @pytest.mark.parametrize('skiprows', [0, 1, 2, 3])
+@pytest.mark.thread_unsafe(reason="mixed_types_structured fixture is thread-unsafe?")
 def test_structured_dtype_and_skiprows_no_empty_lines(
         skiprows, mixed_types_structured):
     data, dtype, expected = mixed_types_structured
@@ -81,6 +82,7 @@ def test_structured_dtype_and_skiprows_no_empty_lines(
     assert_array_equal(a, expected[skiprows:])
 
 
+@pytest.mark.thread_unsafe(reason="mixed_types_structured fixture is thread-unsafe?")
 def test_unpack_structured(mixed_types_structured):
     data, dtype, expected = mixed_types_structured
 
