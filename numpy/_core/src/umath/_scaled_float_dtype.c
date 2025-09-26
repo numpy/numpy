@@ -891,7 +891,7 @@ sfloat_default_sort_loop(
         NpyAuxData *NPY_UNUSED(auxdata))
 {
     assert(data[0] == data[1]);
-    assert(strides[0] == strides[1]);
+    assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     assert(parameters->flags == NPY_SORT_DEFAULT);
 
