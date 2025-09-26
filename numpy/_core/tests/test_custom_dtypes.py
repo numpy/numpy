@@ -260,6 +260,16 @@ class TestSFloat:
         # original is unchanged
         assert_array_equal(a.view(np.float64), [6., 4., 2.])
 
+        sorted_a = np.sort(a, stable=True)
+        assert_array_equal(sorted_a.view(np.float64), [2., 4., 6.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_a = np.sort(a, stable=False)
+        assert_array_equal(sorted_a.view(np.float64), [2., 4., 6.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
     def test_argsort(self):
         a = self._get_array(1.)
         a = a[::-1]  # reverse it
@@ -275,6 +285,23 @@ class TestSFloat:
         assert_array_equal(indices, [1, 0])
         # original is unchanged
         assert_array_equal(a.view(np.float64), [6., 2.])
+
+        a = self._get_array(0.5, aligned=False)
+        a = a[::-1]  # reverse it
+        indices = np.argsort(a)
+        assert_array_equal(indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_indices = np.argsort(a, stable=True)
+        assert_array_equal(sorted_indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_indices = np.argsort(a, stable=False)
+        assert_array_equal(sorted_indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
 
     def test_astype_class(self):
         # Very simple test that we accept `.astype()` also on the class.
