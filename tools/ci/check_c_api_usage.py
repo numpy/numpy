@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import logging
 import os
 import re
 import sys
@@ -156,11 +155,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Number of worker threads (0=auto, 1=sequential).",
     )
     ap.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable debug logging (developer mode)"
-    )
-    ap.add_argument(
         "--root",
         default="numpy",
         type=str,
@@ -180,20 +174,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    # Logging setup: send to stdout so CI shows in inline with normal output.
-    level = logging.INFO
-    if args.quiet:
-        level = logging.WARNING
-    if args.verbose:
-        level = logging.DEBUG
-    logging.basicConfig(
-        level=level,
-        format="%(levelname)s: %(message)s",
-        stream=sys.stdout,
-        force=True,
-    )
-    log = logging.getLogger("borrowref_linter")
-
     if args.ext:
         exts = {e if e.startswith(".") else f".{e}" for e in args.ext}
     else:
@@ -202,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
 
     root = Path(args.root)
     if not root.exists():
-        log.error("root '%s' does not exist", root)
+        print(f"error: root '{root}' does not exist", file=sys.stderr)
         return 2
 
     files = sorted(iter_source_files(root, exts, excludes), key=str)
@@ -212,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         max_workers = min(32, (os.cpu_count() or 1) * 5)
     else:
         max_workers = max(1, args.jobs)
-    log.info("Scanning %d C/C++ source files...", len(files))
+    print(f'Scanning {len(files)} C/C++ source files...\n')
 
     # Output file (mirrors your shell behavior)
     tmpdir = Path(".tmp")
@@ -233,10 +213,18 @@ def main(argv: list[str] | None = None) -> int:
                 try:
                     all_hits.extend(fut.result())
                 except Exception as e:
-                    log.warning("Failed to scan %s: %s", fut_to_file[fut], e)
+                    print(f'Failed to scan {fut_to_file[fut]}: {e}')
+
     # Sort for deterministic output: by path, then line number
     all_hits.sort(key=lambda t: (t[2], t[1]))
 
+    # There no hits, linter passed
+    if not all_hits:
+        if not args.quiet:
+            print("All checks passed! C API borrow-ref linter found no issues.\n")
+        return 0
+
+    # There are some linter failures: create a log file
     with tempfile.NamedTemporaryFile(
         prefix="c_api_usage_report.",
         suffix=".txt",
@@ -262,17 +250,13 @@ def main(argv: list[str] | None = None) -> int:
                 "with a thread-safe API function.\n\n"
             )
 
-        if findings == 0:
-            out.write("C API borrow-ref linter found no issues.\n")
-
-        # Echo report and set exit status
         out.flush()
         if not args.quiet:
             out.seek(0)
             sys.stdout.write(out.read())
-    log.info("Report written to: %s", report_path)
+            print(f"Report written to: {report_path}")
 
-    return 1 if findings else 0
+    return 1
 
 
 if __name__ == "__main__":
