@@ -920,6 +920,7 @@ sfloat_sort_get_loop(
         *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_sort_loop;
     }
     else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
         return -1;
     }
     return 0;
@@ -1013,6 +1014,7 @@ sfloat_argsort_get_loop(
         *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_argsort_loop;
     }
     else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
         return -1;
     }
     return 0;
