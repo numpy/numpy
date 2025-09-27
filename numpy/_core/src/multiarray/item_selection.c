@@ -3140,8 +3140,9 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         context.parameters = &sort_params;
 
         // Arrays are always contiguous for sorting
-        npy_intp stride = PyArray_ITEMSIZE(op);
-        npy_intp strides[2] = {stride, stride};
+        npy_intp strides[2] = {
+            PyDataType_ELSIZE(loop_descrs[0]), PyDataType_ELSIZE(loop_descrs[1])
+        };
         // we ignore method flags for now
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
@@ -3256,9 +3257,9 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         context.parameters = &sort_params;
 
         // Arrays are always contiguous for sorting
-        npy_intp stride = PyArray_ITEMSIZE(op);
-        npy_intp ostride = PyDataType_ELSIZE(odescr);
-        npy_intp strides[2] = {stride, ostride};
+        npy_intp strides[2] = {
+            PyDataType_ELSIZE(loop_descrs[0]), PyDataType_ELSIZE(loop_descrs[1])
+        };
         // we ignore method flags for now
         NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
