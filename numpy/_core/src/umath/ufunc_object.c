@@ -66,6 +66,7 @@
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
 #include "number.h"
+#include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -3721,7 +3722,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (ret == NULL) {
         goto fail;
     }
-    
+
     Py_XDECREF(out);
 
     Py_DECREF(signature[0]);
@@ -4270,6 +4271,116 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     return NULL;
 }
 
+/*
+ * Check whether the input object is a known scalar and whether the ufunc has
+ * a suitable inner loop for it, assuming the output has the same data type as the
+ * input (this function is not called if output or any other argument was given).
+ * If a loop was found, call it and store the result.
+ *
+ * Returns -2 if a short-cut is not possible, 0 on success and -1 on error.
+ */
+static int
+try_trivial_scalar_call(
+    PyUFuncObject *ufunc, PyObject *const obj, PyObject **result)
+{
+    assert(ufunc->nin == 1 && ufunc->nout == 1 && !ufunc->core_enabled);
+    char in[sizeof(npy_clongdouble)], out[sizeof(npy_clongdouble)];  // storage
+    char *data[] = {in, out};
+    int ret = -2;
+    PyArray_Descr *dt;
+    if (obj == Py_False || obj == Py_True) {
+        *(npy_bool *)in = (obj == Py_True);
+        dt = PyArray_DescrFromType(NPY_BOOL);
+    }
+    else if (PyFloat_CheckExact(obj)) {
+        *(double *)in = PyFloat_AS_DOUBLE(obj);
+        dt = PyArray_DescrFromType(NPY_FLOAT64);
+    }
+    else if (PyLong_CheckExact(obj)) {
+        if (PyLong_AsInt64(obj, (int64_t *)in) < 0) {
+            PyErr_Clear();
+            return -2;
+        }
+        dt = PyArray_DescrFromType(NPY_INT64);
+    }
+    else if (PyComplex_CheckExact(obj)) {
+        Py_complex oop = PyComplex_AsCComplex(obj);
+        if (error_converting(oop.real)) {  // should never happen
+            PyErr_Clear();
+            return -2;
+        }
+        *(double *)in = oop.real;
+        *(double *)(in+sizeof(double)) = oop.imag;
+        dt = PyArray_DescrFromType(NPY_COMPLEX128);
+    }
+    else if (is_anyscalar_exact(obj)) {
+        dt = PyArray_DescrFromScalar(obj);
+        if (!PyDataType_ISNUMBER(dt)) {
+            goto fail;
+        }
+        data[0] = scalar_value(obj, dt);
+    }
+    else {
+        return -2;
+    }
+    // Try getting info from the (private) cache.  Fall back if not found,
+    // so that the the dtype gets registered and things will work next time.
+    PyArray_DTypeMeta *op_dtypes[2] = {NPY_DTYPE(dt), NULL};
+    PyObject *info = PyArrayIdentityHash_GetItem(
+        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+        (PyObject **)op_dtypes);
+    if (info == NULL) {
+        goto fail;
+    }
+    // Try getting method, falling back if not an arraymethod (e.g., a promotor)
+    PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)) {
+        goto fail;
+    }
+    // Try getting loop, for speed assuming output and input dtype are the same.
+    PyArrayMethod_Context context;
+    PyArray_Descr *descrs[2] = {dt, dt};
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = method;
+    npy_intp strides[2] = {0, 0};  // 0 ensures scalar math, not SIMD for half.
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (method->get_strided_loop(&context, 1, 0, strides,
+                                 &strided_loop, &auxdata, &flags) < 0) {
+        PyErr_Clear();  // Clear error, may just be because of wrong assumption.
+        goto fail;
+    }
+    // Call loop with single element.
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus();
+    }
+    npy_intp n = 1;
+    ret = strided_loop(&context, data, &n, strides, auxdata);
+    NPY_AUXDATA_FREE(auxdata);
+    if (ret == 0) {
+        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)
+                && npy_get_floatstatus() != 0) {
+            // If floating point errors occurred, decide what to do with them.
+            // (calling _check_ufunc_fperr directly adds ~15% of time as it
+            // needs buffer, errormask and name).
+            int buffersize, errormask;
+            if (_get_bufsize_errmask(&buffersize, &errormask) < 0
+                || _check_ufunc_fperr(errormask, ufunc_get_name_cstr(ufunc)) < 0) {
+                ret = -1;  // Real error, falling back would not help.
+                goto fail;
+            }
+        }
+        *result = PyArray_Scalar(out, dt, NULL);
+        if (*result == NULL) {
+            ret = -1;  // Real error (should never happen).
+        }
+    }
+  fail:
+    Py_DECREF(dt);
+    return ret;
+}
 
 /*
  * Main ufunc call implementation.
@@ -4288,6 +4399,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
 
+    if (!PyArray_Check(args[0]) && nin == 1 && nout == 1
+            && len_args == 1 && kwnames == NULL && !ufunc->core_enabled) {
+        // Possibly scalar input, try the fast path, falling back on failure.
+        PyObject *result = NULL;
+        if (try_trivial_scalar_call(ufunc, args[0], &result) != -2) {
+            return result;
+        }
+    }
     /* All following variables are cleared in the `fail` error path */
     ufunc_full_args full_args = {NULL, NULL};
     PyArrayObject *wheremask = NULL;
@@ -4301,7 +4420,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         return NULL;
     }
     memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2));
-    
+
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
     PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
@@ -4366,17 +4485,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
         if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
-            
+
             if (DEPRECATE(
                 "Passing more than 2 positional arguments to np.maximum and np.minimum "
-                "is deprecated. If you meant to use the third argument as an output, " 
+                "is deprecated. If you meant to use the third argument as an output, "
                 "use the `out` keyword argument instead. If you hoped to work with "
                 "more than 2 inputs, combine them into a single array and get the extrema "
                 "for the relevant axis.") < 0) {
                 return NULL;
             }
         }
-        
+
         if (all_none) {
             Py_SETREF(full_args.out, NULL);
         }
