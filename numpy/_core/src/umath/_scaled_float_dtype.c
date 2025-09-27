@@ -1074,6 +1074,8 @@ sfloat_init_sort(void)
     }
     // TODO: once registration method is in place, use it instead of setting hidden slot
     NPY_DT_SLOTS(&PyArray_SFloatDType)->sort_meth = sort_meth->method;
+    Py_INCREF(sort_meth->method);
+    Py_DECREF(sort_meth);
 
     spec.name = "sfloat_argsort";
     dtypes[1] = &PyArray_IntpDType;
