@@ -1027,6 +1027,8 @@ sfloat_argsort_resolve_descriptors(
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
+    assert(given_descrs[1] == NULL || given_descrs[1]->type_num == NPY_INTP);
+
     if (!PyArray_IsNativeByteOrder(given_descrs[0]->byteorder)) {
         loop_descrs[0] = PyArray_DescrNewByteorder(given_descrs[0], NPY_SWAP);
         if (loop_descrs[0] == NULL) {
