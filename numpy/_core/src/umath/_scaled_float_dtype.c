@@ -1083,6 +1083,8 @@ sfloat_init_sort(void)
         return -1;
     }
     NPY_DT_SLOTS(&PyArray_SFloatDType)->argsort_meth = argsort_meth->method;
+    Py_INCREF(argsort_meth->method);
+    Py_DECREF(argsort_meth);
 
     return 0;
 }
