@@ -747,8 +747,9 @@ def polyval(x, c, tensor=True):
         c = c + 0.0
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
-    if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,) * x.ndim)
+    nd = getattr(x, "ndim", None)
+    if tensor and isinstance(nd, int) and nd > 0:
+        c = c.reshape(c.shape + (1,) * nd)
 
     c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
