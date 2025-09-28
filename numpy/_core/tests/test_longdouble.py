@@ -1,18 +1,16 @@
 import platform
-import warnings
-
 import pytest
-
 import numpy as np
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.testing import (
-    IS_MUSL,
     assert_,
-    assert_array_equal,
     assert_equal,
     assert_raises,
+    assert_array_equal,
     temppath,
-)
+    assert_allclose,
+    IS_MUSL
+    )
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -323,25 +321,31 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
             np.fromstring("1,234", dtype=np.longdouble, sep=" ")
 
 
+# Maximum number that will pass the test in all platforms is:
+# 2^1023 + 2^1022 + ... + 2^970
+# largest number that can be stored in a double without loosing precision
+# Now gives an overflow error if te number is too big
+@pytest.mark.parametrize("sign", [1, -1])
 @pytest.mark.parametrize("int_val", [
-    # cases discussed in gh-10723
-    # and gh-9968
-    2 ** 1024, 0])
-def test_longdouble_from_int(int_val):
+    2 ** 1023, 0, 10, 3, 15653215315, 5511, 644861])
+def test_longdouble_from_int(sign, int_val):
     # for issue gh-9968
+    int_val *= sign
     str_val = str(int_val)
-    # we'll expect a RuntimeWarning on platforms
-    # with np.longdouble equivalent to np.double
-    # for large integer input
-    with warnings.catch_warnings(record=True) as w:
-        warnings.filterwarnings('always', '', RuntimeWarning)
-        # can be inf==inf on some platforms
-        assert np.longdouble(int_val) == np.longdouble(str_val)
-        # we can't directly compare the int and
-        # max longdouble value on all platforms
-        if np.allclose(np.finfo(np.longdouble).max,
-                       np.finfo(np.double).max) and w:
-            assert w[0].category is RuntimeWarning
+    assert np.longdouble(int_val) == np.longdouble(str_val)
+
+@pytest.mark.parametrize("sign", [1, -1])
+@pytest.mark.parametrize("int_val", [
+    1000, 1815361, 358165, 646153161, 1])
+def test_longdouble_from_int_rounding(sign, int_val):
+    int_val *= sign
+    flt_val = float(int_val)
+    assert_allclose(np.longdouble(int_val), flt_val)
+
+def test_longdouble_from_int_overflow():
+
+    with pytest.raises(OverflowError, match="Number too big to be represented as a np.longdouble --This is platform dependent--"):
+        a = np.longdouble(10**5000)
 
 @pytest.mark.parametrize("bool_val", [
     True, False])
