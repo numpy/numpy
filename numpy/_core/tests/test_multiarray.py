@@ -1868,11 +1868,9 @@ class TestBool:
     def test_cast_from_void(self):
         self._test_cast_from_flexible(np.void)
 
-    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_unicode(self):
         self._test_cast_from_flexible(np.str_)
 
-    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_bytes(self):
         self._test_cast_from_flexible(np.bytes_)
 
