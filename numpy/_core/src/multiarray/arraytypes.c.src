@@ -541,8 +541,8 @@ string_to_long_double(PyObject*op)
         errno = 0;
         temp = NumPyOS_ascii_strtold(s, &end);
         if (errno == ERANGE) {
-           if (PyErr_Warn(PyExc_RuntimeWarning,
-                   "overflow encountered in conversion from string") < 0) {
+           if (PyErr_WarnEx(PyExc_RuntimeWarning,
+                   "overflow encountered in conversion from string", 1) < 0) {
                Py_XDECREF(b);
                return 0;
            }
