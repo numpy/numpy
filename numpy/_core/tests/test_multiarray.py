@@ -5830,7 +5830,7 @@ class TestIO:
                     sep=",", offset=1)
 
     @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
-    @pytest.mark.thread_unsafe(reason="os.dup thread-unsafe?")
+    @pytest.mark.thread_unsafe(reason="monkey-patching of os.dup")
     def test_fromfile_bad_dup(self, tmp_filename):
         def dup_str(fd):
             return 'abc'
@@ -6377,7 +6377,6 @@ class TestRecord:
                                      'offsets': [0, 8]}))
         v[:] = (4, 5)
         assert_equal(a[0].item(), (4, 1, 5))
-
 
 class TestView:
     def test_basic(self):
@@ -8497,7 +8496,7 @@ class TestNewBufferProtocol:
             x = np.array([(1,), (2,)], dtype={'f0': (int, j)})
             self._check_roundtrip(x)
 
-    @pytest.mark.thread_unsafe(reason="sys.getrefcounts is thread-unsafe")
+    @pytest.mark.thread_unsafe(reason="test result depends on the reference count of a global object")
     def test_reference_leak(self):
         if HAS_REFCOUNT:
             count_1 = sys.getrefcount(np._core._internal)
@@ -8619,7 +8618,7 @@ class TestNewBufferProtocol:
         assert_equal(arr['a'], 3)
 
     @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
-    @pytest.mark.thread_unsafe(reason="_multiarray_tests is thread-unsafe?")
+    @pytest.mark.thread_unsafe(reason="_multiarray_tests used memoryview, which is thread-unsafe")
     def test_error_if_stored_buffer_info_is_corrupted(self, obj):
         """
         If a user extends a NumPy array before 1.20 and then runs it
@@ -9016,7 +9015,7 @@ class TestArrayInterface:
         # This fails due to going into the buffer protocol path
         (f, {'data': None, 'shape': ()}, TypeError),
         ])
-    @pytest.mark.thread_unsafe(reason="setup is thread_unsafe, sys.getrefcounts is thread-unsafe")
+    @pytest.mark.thread_unsafe(reason="setup is thread_unsafe, test result depends on the reference count of a global object")
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
         self.f.iface = {'typestr': 'f8'}
