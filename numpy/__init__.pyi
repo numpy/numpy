@@ -121,10 +121,7 @@ from numpy._typing import (  # type: ignore[deprecated]
     _FloatingCodes,
     _ComplexFloatingCodes,
     _InexactCodes,
-    _NumberCodes,
     _CharacterCodes,
-    _FlexibleCodes,
-    _GenericCodes,
     # Ufuncs
     _UFunc_Nin1_Nout1,
     _UFunc_Nin2_Nout1,
@@ -313,6 +310,10 @@ from numpy._core.arrayprint import (
 from numpy._core.einsumfunc import (
     einsum,
     einsum_path,
+)
+from numpy._core.getlimits import (
+    finfo,
+    iinfo,
 )
 
 from numpy._core.multiarray import (
@@ -779,9 +780,7 @@ _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, default=Any, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
 _InexactT = TypeVar("_InexactT", bound=inexact)
 _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
-_FloatingT_co = TypeVar("_FloatingT_co", bound=floating, default=floating, covariant=True)
 _IntegerT = TypeVar("_IntegerT", bound=integer)
-_IntegerT_co = TypeVar("_IntegerT_co", bound=integer, default=integer, covariant=True)
 _NonObjectScalarT = TypeVar("_NonObjectScalarT", bound=np.bool | number | flexible | datetime64 | timedelta64)
 
 _NBit = TypeVar("_NBit", bound=NBitBase, default=Any)  # pyright: ignore[reportDeprecated]
@@ -944,7 +943,7 @@ _CastingKind: TypeAlias = L["no", "equiv", "safe", "same_kind", "same_value", "u
 
 _OrderKACF: TypeAlias = L["K", "A", "C", "F"] | None
 _OrderACF: TypeAlias = L["A", "C", "F"] | None
-_OrderCF: TypeAlias = L["C", "F"] | None
+_OrderCF: TypeAlias = L["C", "F"] | None  # noqa: PYI047
 
 _ModeKind: TypeAlias = L["raise", "wrap", "clip"]
 _PartitionKind: TypeAlias = L["introselect"]
@@ -3577,7 +3576,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @abstractmethod
-    def __new__(self) -> None: ...
+    def __new__(cls) -> None: ...
     def __hash__(self) -> int: ...
     @overload
     def __array__(self, dtype: None = None, /) -> ndarray[tuple[()], dtype[Self]]: ...
@@ -5792,53 +5791,6 @@ class busdaycalendar:
     def weekmask(self) -> NDArray[np.bool]: ...
     @property
     def holidays(self) -> NDArray[datetime64]: ...
-
-class finfo(Generic[_FloatingT_co]):
-    dtype: Final[dtype[_FloatingT_co]]
-    bits: Final[int]
-    eps: Final[_FloatingT_co]
-    epsneg: Final[_FloatingT_co]
-    iexp: Final[int]
-    machep: Final[int]
-    max: Final[_FloatingT_co]
-    maxexp: Final[int]
-    min: Final[_FloatingT_co]
-    minexp: Final[int]
-    negep: Final[int]
-    nexp: Final[int]
-    nmant: Final[int]
-    precision: Final[int]
-    resolution: Final[_FloatingT_co]
-    smallest_subnormal: Final[_FloatingT_co]
-    @property
-    def smallest_normal(self) -> _FloatingT_co: ...
-    @property
-    def tiny(self) -> _FloatingT_co: ...
-    @overload
-    def __new__(cls, dtype: inexact[_NBit1] | _DTypeLike[inexact[_NBit1]]) -> finfo[floating[_NBit1]]: ...
-    @overload
-    def __new__(cls, dtype: complex | type[complex]) -> finfo[float64]: ...
-    @overload
-    def __new__(cls, dtype: str) -> finfo[floating]: ...
-
-class iinfo(Generic[_IntegerT_co]):
-    dtype: Final[dtype[_IntegerT_co]]
-    kind: Final[LiteralString]
-    bits: Final[int]
-    key: Final[LiteralString]
-    @property
-    def min(self) -> int: ...
-    @property
-    def max(self) -> int: ...
-
-    @overload
-    def __new__(
-        cls, dtype: _IntegerT_co | _DTypeLike[_IntegerT_co]
-    ) -> iinfo[_IntegerT_co]: ...
-    @overload
-    def __new__(cls, dtype: int | type[int]) -> iinfo[int_]: ...
-    @overload
-    def __new__(cls, dtype: str) -> iinfo[Any]: ...
 
 @final
 class nditer:

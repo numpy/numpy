@@ -1521,7 +1521,7 @@ cdef class Generator:
 
         Examples
         --------
-        An example from Glantz[1], pp 47-40:
+        An example from Glantz [1]_, pp 47-40:
 
         Two groups, children of diabetics (25 people) and children from people
         without diabetes (25 controls). Fasting blood glucose was measured,
@@ -3670,8 +3670,8 @@ cdef class Generator:
 
         The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
-        Williams in 1943 [2].  It may also be used to model the numbers of
-        occupants seen in cars [3].
+        Williams in 1943 [2]_.  It may also be used to model the numbers of
+        occupants seen in cars [3]_.
 
         References
         ----------
@@ -3699,7 +3699,7 @@ cdef class Generator:
         >>> bins = np.arange(-.5, max(s) + .5 )
         >>> count, bins, _ = plt.hist(s, bins=bins, label='Sample count')
 
-        #   plot against distribution
+        Plot against the distribution:
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
@@ -3773,7 +3773,7 @@ cdef class Generator:
 
         Covariance indicates the level to which two variables vary together.
         From the multivariate normal distribution, we draw N-dimensional
-        samples, :math:`X = [x_1, x_2, ... x_N]`.  The covariance matrix
+        samples, :math:`X = [x_1, x_2, ..., x_N]`.  The covariance matrix
         element :math:`C_{ij}` is the covariance of :math:`x_i` and :math:`x_j`.
         The element :math:`C_{ii}` is the variance of :math:`x_i` (i.e. its
         "spread").

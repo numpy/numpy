@@ -1110,7 +1110,7 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    If ``a.shape = (r0,r1,...,rN)`` and ``b.shape = (s0,s1,...,sN)``,
     the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::

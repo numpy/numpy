@@ -47,15 +47,18 @@ class DiffLinter:
         sys.exit(retcode)
 
     def run_check_c_api(self) -> tuple[int, str]:
-        # Running borrowed ref checker
+        """Run C-API borrowed-ref checker"""
         print("Running C API borrow-reference linter...")
-        borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci",
-                                           "check_c_api_usage.sh")
+        borrowed_ref_script = os.path.join(
+            self.repository_root, "tools", "ci", "check_c_api_usage.py"
+            )
         borrowed_res = subprocess.run(
-            ["bash", borrowed_ref_script],
+            [sys.executable, borrowed_ref_script],
+            cwd=self.repository_root,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            encoding="utf-8",
+            text=True,
+            check=False,
         )
 
         # Exit with non-zero if C API Check fails
