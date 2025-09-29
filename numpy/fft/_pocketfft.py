@@ -124,7 +124,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
 
     This function computes the one-dimensional *n*-point discrete Fourier
     Transform (DFT) with the efficient Fast Fourier Transform (FFT)
-    algorithm [CT].
+    algorithm [CT]_.
 
     Parameters
     ----------

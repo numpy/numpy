@@ -218,7 +218,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
-        pip install asv virtualenv packaging -r requirements/build_requirements.txt
+        pip install "asv<0.6.5" virtualenv packaging -r requirements/build_requirements.txt
     - name: Install NumPy
       run: |
         spin build -- -Dcpu-dispatch=none

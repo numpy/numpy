@@ -1354,6 +1354,12 @@ class TestCreation:
         with pytest.raises(ValueError, match="ndmax must be in the range"):
             np.array(data, ndmax=65)
 
+    def test_ndmax_less_than_ndim(self):
+        # np.array input bypasses recursive inference, allowing ndim > ndmax validation
+        data = np.array([[1, 2, 3], [4, 5, 6]])
+        with pytest.raises(ValueError, match="object too deep for desired array"):
+            np.array(data, ndmax=1, dtype=object)
+
 
 class TestStructured:
     def test_subarray_field_access(self):
@@ -1862,11 +1868,9 @@ class TestBool:
     def test_cast_from_void(self):
         self._test_cast_from_flexible(np.void)
 
-    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_unicode(self):
         self._test_cast_from_flexible(np.str_)
 
-    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_bytes(self):
         self._test_cast_from_flexible(np.bytes_)
 

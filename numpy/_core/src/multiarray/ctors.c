@@ -1304,12 +1304,12 @@ _array_from_buffer_3118(PyObject *memoryview)
             return NULL;
         }
 
-        if (PyErr_Warn(
+        if (PyErr_WarnEx(
                     PyExc_RuntimeWarning,
                     "A builtin ctypes object gave a PEP3118 format "
                     "string that does not match its itemsize, so a "
                     "best-guess will be made of the data type. "
-                    "Newer versions of python may behave correctly.") < 0) {
+                    "Newer versions of python may behave correctly.", 1) < 0) {
             Py_DECREF(descr);
             return NULL;
         }
@@ -1593,7 +1593,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         npy_free_coercion_cache(cache);
         goto cleanup;
     }
-    if (ndim > max_depth && (in_DType == NULL || in_DType->type_num != NPY_OBJECT)) {
+    if (ndim > max_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         npy_free_coercion_cache(cache);
@@ -2830,7 +2830,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         count = (src_count < dst_count) ? src_count : dst_count;
         if (cast_info.func(&cast_info.context,
                 args, &count, strides, cast_info.auxdata) < 0) {
-            res = -1;
             break;
         }
 

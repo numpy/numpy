@@ -863,12 +863,13 @@ NumPy also performs aggregation functions. In addition to ``min``, ``max``, and
 result of multiplying the elements together, ``std`` to get the standard
 deviation, and more. ::
 
+  >>> data = np.array([1, 2, 3])
   >>> data.max()
-  2.0
+  3
   >>> data.min()
-  1.0
+  1
   >>> data.sum()
-  3.0
+  6
 
 .. image:: images/np_aggregation.png
 

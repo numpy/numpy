@@ -1,0 +1,7 @@
+``'same_value'`` for casting by value
+-------------------------------------
+The ``casting`` kwarg now has a ``'same_value'`` option that checks the actual
+values can be round-trip cast without changing value. Currently it is only
+implemented in `ndarray.astype`. This will raise a ``ValueError`` if any of the
+values in the array would change as a result of the cast, including rounding of
+floats or overflowing of ints.

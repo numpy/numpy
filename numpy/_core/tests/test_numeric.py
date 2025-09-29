@@ -2835,16 +2835,12 @@ class TestClip:
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 
-    @pytest.mark.xfail(reason="propagation doesn't match spec")
     @pytest.mark.parametrize("arr, amin, amax", [
         (np.array([1] * 10, dtype='m8'),
          np.timedelta64('NaT'),
          np.zeros(10, dtype=np.int32)),
     ])
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_NaT_propagation(self, arr, amin, amax):
-        # NOTE: the expected function spec doesn't
-        # propagate NaT, but clip() now does
         expected = np.minimum(np.maximum(arr, amin), amax)
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)

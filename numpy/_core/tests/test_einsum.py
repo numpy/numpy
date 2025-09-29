@@ -79,6 +79,11 @@ class TestEinsum:
             b = np.ones((3, 4, 5))
             einsum_fn('aabcb,abc', a, b)
 
+        with pytest.raises(ValueError):
+            a = np.arange(3)
+            # einsum_path does not yet accept kwarg 'casting'
+            np.einsum('ij->j', [a, a], casting='same_value')
+
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)
         n1 = 26

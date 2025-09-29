@@ -178,10 +178,10 @@ else:
 def build_err_msg(
     arrays: Iterable[object],
     err_msg: object,
-    header: str = ...,
-    verbose: bool = ...,
-    names: Sequence[str] = ...,
-    precision: SupportsIndex | None = ...,
+    header: str = "Items are not equal:",
+    verbose: bool = True,
+    names: Sequence[str] = ...,  # = ('ACTUAL', 'DESIRED')
+    precision: SupportsIndex | None = 8,
 ) -> str: ...
 
 #

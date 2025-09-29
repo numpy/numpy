@@ -911,7 +911,7 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
     }
 }
 
-static int casting_parser(char const *str, Py_ssize_t length, void *data)
+static int casting_parser_full(char const *str, Py_ssize_t length, void *data, int can_use_same_value)
 {
     NPY_CASTING *casting = (NPY_CASTING *)data;
     if (length < 2) {
@@ -941,6 +941,10 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
             *casting = NPY_SAME_KIND_CASTING;
             return 0;
         }
+        if (can_use_same_value && length == 10 && strcmp(str, "same_value") == 0) {
+            *casting = NPY_SAME_VALUE_CASTING;
+            return 0;
+        }
         break;
     case 's':
         if (length == 6 && strcmp(str, "unsafe") == 0) {
@@ -952,6 +956,11 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
     return -1;
 }
 
+static int casting_parser(char const *str, Py_ssize_t length, void *data)
+{
+  return casting_parser_full(str, length, data, 0);
+}
+
 /*NUMPY_API
  * Convert any Python object, *obj*, to an NPY_CASTING enum.
  */
@@ -961,9 +970,25 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
     return string_converter_helper(
         obj, (void *)casting, casting_parser, "casting",
             "must be one of 'no', 'equiv', 'safe', "
-            "'same_kind', or 'unsafe'");
+            "'same_kind', 'unsafe'");
     return 0;
 }
+
+static int casting_parser_same_value(char const *str, Py_ssize_t length, void *data)
+{
+  return casting_parser_full(str, length, data, 1);
+}
+
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting)
+{
+    return string_converter_helper(
+        obj, (void *)casting, casting_parser_same_value, "casting",
+            "must be one of 'no', 'equiv', 'safe', "
+            "'same_kind', 'unsafe', 'same_value'");
+    return 0;
+}
+
 
 /*****************************
 * Other conversion functions
