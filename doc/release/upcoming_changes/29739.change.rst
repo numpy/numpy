@@ -1,0 +1,15 @@
+``DTypeLike`` ``TypeAlias`` no longer includes ``None``
+-------------------------------------------------------
+The type alias ``DTypeLike`` no longer includes ``None``. Instead of
+
+.. code-block:: python
+
+    var: DTypeLike = None
+
+you will need to type
+
+.. code-block:: python
+
+    var: DTypeLike | None = None
+
+instead.
