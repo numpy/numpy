@@ -325,8 +325,10 @@ class finfo:
         max_ = get_str("max")
 
         d['klass'] = c
-        return ((f"%(klass)s(resolution={resolution}, min={min_},"
-                 f" max={max_}, dtype={self.dtype}") % d)
+        fmt = ((f"%(klass)s(resolution={resolution}, min={min_},"
+                 f" max={max_}, dtype={self.dtype})" % d))
+        self._repr = fmt
+        return fmt
 
     @property
     def tiny(self):

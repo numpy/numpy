@@ -4341,11 +4341,17 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
 
-    NPY_ALLOC_WORKSPACE(finfo_value, char, 32, descr->elsize);
-    if (finfo_value == NULL) {
-        PyErr_NoMemory();
+    PyArrayObject *temp_array = NULL;
+    char *temp_data = NULL;
+    npy_intp dims[1] = {1};
+
+    Py_INCREF(descr);
+    temp_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+            descr, 1, dims, NULL, NULL, 0, NULL);
+    if (temp_array == NULL) {
         return NULL;
     }
+    temp_data = PyArray_BYTES(temp_array);
 
     static const struct {
         char *name;
@@ -4368,14 +4374,16 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     for (int i = 0; finfo_constants[i].name != NULL; i++) {
         PyObject *value_obj;
         if (!finfo_constants[i].is_int) {
-            int res = NPY_DT_CALL_get_constant(descr, finfo_constants[i].id, finfo_value);
+            memset(temp_data, 0, PyArray_DESCR(temp_array)->elsize);
+            int res = NPY_DT_CALL_get_constant(descr,
+                    finfo_constants[i].id, temp_data);
             if (res < 0) {
                 goto fail;
             }
             if (res == 0) {
                 continue;
             }
-            value_obj = NPY_DT_CALL_getitem(descr, finfo_value);
+            value_obj = PyArray_GETITEM(temp_array, temp_data);
         }
         else {
             npy_intp int_value;
@@ -4398,10 +4406,10 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         }
     }
 
-    npy_free_workspace(finfo_value);
+        Py_DECREF(temp_array);
     Py_RETURN_NONE;
   fail:
-    npy_free_workspace(finfo_value);
+        Py_XDECREF(temp_array);
     return NULL;
 }
 

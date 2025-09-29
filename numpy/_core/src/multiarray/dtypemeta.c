@@ -130,32 +130,6 @@ default_get_constant(PyArray_Descr *descr, int constant_id, void *data)
 
 
 static int
-legacy_fallback_setitem(PyArray_Descr *descr, PyObject *value, char *data)
-{
-    PyArrayObject_fields arr_fields = {
-        .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
-    };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
-    arr_fields.descr = descr;
-    return PyDataType_GetArrFuncs(descr)->setitem(value, data, &arr_fields);
-}
-
-
-PyObject *
-legacy_fallback_getitem(PyArray_Descr *descr, char *data)
-{
-    PyArrayObject_fields arr_fields = {
-        .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
-    };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
-    arr_fields.descr = descr;
-    return PyDataType_GetArrFuncs(descr)->getitem(data, &arr_fields);
-}
-
-
-static int
 legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
 {
     if (arr == NULL) {
@@ -1143,6 +1117,7 @@ dtypemeta_wrap_legacy_descriptor(
         return NULL;
     }
     memset(dt_slots, '\0', sizeof(NPY_DType_Slots));
+    dt_slots->get_constant = default_get_constant;
 
     PyArray_DTypeMeta *dtype_class = PyMem_Malloc(sizeof(PyArray_DTypeMeta));
     if (dtype_class == NULL) {
@@ -1203,20 +1178,21 @@ dtypemeta_wrap_legacy_descriptor(
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
     dt_slots->f = *arr_funcs;
+    dt_slots->setitem = arr_funcs->setitem;
+    dt_slots->getitem = arr_funcs->getitem;
 
     /* Set default functions (correct for most dtypes, override below) */
     dt_slots->default_descr = nonparametric_default_descr;
     dt_slots->discover_descr_from_pyobject = (
-            nonparametric_discover_descr_from_pyobject);
+        nonparametric_discover_descr_from_pyobject);
     dt_slots->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
-    // These may be overwritten, but if not provide fallback via array struct hack:
-    dt_slots->setitem = legacy_fallback_setitem;
-    dt_slots->getitem = legacy_fallback_getitem;
     dt_slots->ensure_canonical = ensure_native_byteorder;
     dt_slots->get_fill_zero_loop = NULL;
     dt_slots->finalize_descr = NULL;
+    dt_slots->setitem = legacy_setitem_using_DType;
+    dt_slots->getitem = legacy_getitem_using_DType;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */

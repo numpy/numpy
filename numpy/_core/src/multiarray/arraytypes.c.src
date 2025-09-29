@@ -4345,6 +4345,10 @@ BOOL_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
  *         LONG, ULONG, LONGLONG, ULONGLONG#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *        npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #IS_UNSIGNED = 0, 1, 0, 1, 0, 1,
+ *                0, 1, 0, 1#
+ * #MIN = NPY_MIN_BYTE, 0, NPY_MIN_SHORT, 0, NPY_MIN_INT, 0,
+ *        NPY_MIN_LONG, 0, NPY_MIN_LONGLONG, 0#
  */
 static int
 @NAME@_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
@@ -4358,7 +4362,11 @@ static int
             val = 1;
             break;
         case NPY_CONSTANT_minimum_finite:
-            val = NPY_MAX_@NAME@;
+#if @IS_UNSIGNED@
+            val = 0;
+#else
+            val = @MIN@;
+#endif
             break;
         case NPY_CONSTANT_maximum_finite:
             val = NPY_MAX_@NAME@;
@@ -4385,7 +4393,7 @@ static int
  * #NAME = HALF,FLOAT, DOUBLE, LONGDOUBLE#
  * #ABB = HALF, FLT, DBL, LDBL#
  * #type = npy_half, npy_float, npy_double, npy_longdouble#
- * #RADIX = 16384, 2, 2, 2#
+ * #RADIX = 2, 2, 2, 2#
  */
 static int
 @NAME@_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
@@ -4412,6 +4420,7 @@ static int
             break;
         case NPY_CONSTANT_finfo_radix:
             val = @RADIX@;
+            break;
         case NPY_CONSTANT_finfo_eps:
             val = @ABB@_EPSILON;
             break;
