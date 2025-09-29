@@ -5,7 +5,10 @@ import pytest
 from numpy import array
 from numpy.testing import IS_64BIT
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 
 @pytest.mark.slow
@@ -57,7 +60,6 @@ class TestReturnReal(util.F2PyTest):
 @pytest.mark.skipif(
     not IS_64BIT, reason="32-bit builds are buggy"
 )
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
     module_name = "c_ext_return_real"
@@ -95,7 +97,6 @@ end python module c_ext_return_real
         self.check_function(getattr(self.module, name), name)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFReturnReal(TestReturnReal):
     sources = [
         util.getpath("tests", "src", "return_real", "foo77.f"),

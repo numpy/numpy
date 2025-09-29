@@ -14,3 +14,5 @@ if IS_EDITABLE:
         "Editable install doesn't support tests with a compile step",
         allow_module_level=True
     )
+
+pytestmark = pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")

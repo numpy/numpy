@@ -10,10 +10,12 @@ import numpy as np
 from numpy.f2py import crackfortran
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestNoSpace(util.F2PyTest):
     # issue gh-15035: add handling for endsubroutine, endfunction with no space
     # between "end" and the block name
@@ -29,7 +31,6 @@ class TestNoSpace(util.F2PyTest):
         assert self.module.t0("23") == b"2"
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestPublicPrivate:
     def test_defaultPrivate(self):
         fpath = util.getpath("tests", "src", "crackfortran", "privatemod.f90")
@@ -70,7 +71,6 @@ class TestPublicPrivate:
         assert 'bar' not in pyf
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "operators.f90")
@@ -100,7 +100,6 @@ class TestModuleProcedure:
         assert mod['vars']['seta']['attrspec'] == ['public', ]
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
     sources = [util.getpath("tests", "src", "crackfortran", "gh17859.f")]
@@ -120,7 +119,6 @@ class TestExternal(util.F2PyTest):
         assert r == 123
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCrackFortran(util.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
     sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90"),
@@ -155,7 +153,6 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -259,7 +256,6 @@ class TestDimSpec(util.F2PyTest):
             assert sz == sz1, (n, n1, sz, sz1)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestModuleDeclaration:
     def test_dependencies(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "foo_deps.f90")
@@ -278,7 +274,6 @@ class TestEval(util.F2PyTest):
         assert eval_scalar('"123"', {}) == "'123'"
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFortranReader(util.F2PyTest):
     @pytest.mark.parametrize("encoding",
                              ['ascii', 'utf-8', 'utf-16', 'utf-32'])
@@ -295,7 +290,6 @@ class TestFortranReader(util.F2PyTest):
 
 
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestUnicodeComment(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
@@ -344,7 +338,6 @@ class TestNameArgsPatternBacktracking:
             assert nameargspattern.search(good_version_of_adversary)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
@@ -354,7 +347,6 @@ class TestFunctionReturn(util.F2PyTest):
         assert self.module.intproduct(3, 4) == 12
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFortranGroupCounters(util.F2PyTest):
     def test_end_if_comment(self):
         # gh-23533
@@ -365,7 +357,6 @@ class TestFortranGroupCounters(util.F2PyTest):
             assert False, f"'crackfortran.crackfortran' raised an exception {exc}"
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestF77CommonBlockReader:
     def test_gh22648(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "gh22648.pyf")
@@ -427,7 +418,6 @@ class TestParamEval:
                       dimspec=dimspec)
 
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestLowerF2PYDirective(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh27697.f90")]
     options = ['--lower']

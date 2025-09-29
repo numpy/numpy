@@ -2,10 +2,12 @@ import pytest
 
 from numpy import array
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestReturnLogical(util.F2PyTest):
     def check_function(self, t):
         assert t(True) == 1
@@ -48,7 +50,6 @@ class TestReturnLogical(util.F2PyTest):
         pytest.raises(ValueError, t, array([0, 0]))
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFReturnLogical(TestReturnLogical):
     sources = [
         util.getpath("tests", "src", "return_logical", "foo77.f"),

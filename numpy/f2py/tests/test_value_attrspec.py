@@ -1,9 +1,11 @@
 import pytest
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestValueAttr(util.F2PyTest):
     sources = [util.getpath("tests", "src", "value_attrspec", "gh21665.f90")]
 

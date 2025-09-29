@@ -4,7 +4,10 @@ import pytest
 
 from numpy import array
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 IS_S390X = platform.machine() == "s390x"
 
@@ -31,7 +34,6 @@ class TestReturnCharacter(util.F2PyTest):
             raise NotImplementedError
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFReturnCharacter(TestReturnCharacter):
     sources = [
         util.getpath("tests", "src", "return_character", "foo77.f"),

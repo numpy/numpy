@@ -8,11 +8,13 @@ from numpy.f2py.crackfortran import (
     _selected_real_kind_func as selected_real_kind,
 )
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 IS_PPC_OR_AIX = platform.machine().lower().startswith("ppc") or platform.system() == 'AIX'
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestKind(util.F2PyTest):
     sources = [util.getpath("tests", "src", "kind", "foo.f90")]
 

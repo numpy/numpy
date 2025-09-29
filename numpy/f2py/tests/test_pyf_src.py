@@ -2,6 +2,8 @@
 from numpy.f2py._src_pyf import process_str
 from numpy.testing import assert_equal
 
+from . import pytestmark  # noqa: F401
+
 pyf_src = """
 python module foo
     <_rd=real,double precision>

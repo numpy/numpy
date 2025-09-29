@@ -2,10 +2,12 @@ import pytest
 
 import numpy as np
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestSizeSumExample(util.F2PyTest):
     sources = [util.getpath("tests", "src", "size", "foo.f90")]
 

@@ -3,12 +3,14 @@ import pytest
 from numpy.f2py import crackfortran
 from numpy.testing import IS_WASM
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]
 

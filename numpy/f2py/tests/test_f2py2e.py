@@ -12,7 +12,10 @@ import pytest
 from numpy.f2py.f2py2e import main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
 
-from . import util
+from . import (
+    pytestmark,  # noqa: F401
+    util,
+)
 
 #######################
 # F2PY Test utilities #
