@@ -2,12 +2,10 @@ import pytest
 
 import numpy as np
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestParameters(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [

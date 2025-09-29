@@ -3,12 +3,10 @@ import tempfile
 
 import pytest
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestAssumedShapeSumExample(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),

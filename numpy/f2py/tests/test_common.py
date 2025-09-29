@@ -2,13 +2,11 @@ import pytest
 
 import numpy as np
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCommonBlock(util.F2PyTest):
     sources = [util.getpath("tests", "src", "common", "block.f")]
 
@@ -19,6 +17,7 @@ class TestCommonBlock(util.F2PyTest):
         assert self.module.block.ok == np.array(3, dtype=np.int32)
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCommonWithUse(util.F2PyTest):
     sources = [util.getpath("tests", "src", "common", "gh19161.f90")]
 

@@ -2,12 +2,10 @@ import pytest
 
 import numpy as np
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "char.f90")]
 
@@ -22,6 +20,7 @@ class TestString(util.F2PyTest):
         assert out == pytest.approx(expected)
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestDocStringArguments(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "string.f")]
 
@@ -39,6 +38,7 @@ class TestDocStringArguments(util.F2PyTest):
         assert d.tobytes() == b"D23"
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestFixedString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "fixed_string.f90")]
 

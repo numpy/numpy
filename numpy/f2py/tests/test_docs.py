@@ -5,10 +5,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
 def get_docdir():
@@ -25,15 +22,18 @@ def get_docdir():
     # Assumes that an editable install is used to run tests
     return parents[3] / "doc" / "source" / "f2py" / "code"
 
-def _path(*args):
-    return get_docdir().joinpath(*args)
 
-@pytest.mark.slow
-@pytest.mark.skipif(
+pytestmark = pytest.mark.skipif(
     not get_docdir().is_dir(),
     reason=f"Could not find f2py documentation sources"
     f"({get_docdir()} does not exist)",
 )
+
+def _path(*args):
+    return get_docdir().joinpath(*args)
+
+@pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestDocAdvanced(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/build-f2py']
     sources = [_path('asterisk1.f90'), _path('asterisk2.f90'),

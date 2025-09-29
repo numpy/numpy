@@ -3,12 +3,10 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestISOC(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "isocintrin", "isoCtests.f90"),

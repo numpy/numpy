@@ -6,10 +6,9 @@ import numpy as np
 from numpy.f2py.tests import util
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
-from . import pytestmark  # noqa: F401
-
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCharacterString(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -136,6 +135,7 @@ class TestCharacterString(util.F2PyTest):
         assert_array_equal(f(a), expected)
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -434,6 +434,7 @@ class TestCharacter(util.F2PyTest):
         assert_equal(f(b'B'), b"B")
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestMiscCharacter(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -577,6 +578,7 @@ class TestMiscCharacter(util.F2PyTest):
         assert_raises(Exception, lambda: f(b'c'))
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestStringScalarArr(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
 
@@ -597,6 +599,7 @@ class TestStringScalarArr(util.F2PyTest):
             assert out.dtype == expected
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestStringAssumedLength(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24008.f")]
 
@@ -605,6 +608,7 @@ class TestStringAssumedLength(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestStringOptionalInOut(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24662.f90")]
 
@@ -619,6 +623,7 @@ class TestStringOptionalInOut(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestNewCharHandling(util.F2PyTest):
     # from v1.24 onwards, gh-19388
     sources = [
@@ -633,6 +638,7 @@ class TestNewCharHandling(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestBCCharHandling(util.F2PyTest):
     # SciPy style, "incorrect" bindings with a hook
     sources = [

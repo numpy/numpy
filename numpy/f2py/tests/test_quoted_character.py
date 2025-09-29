@@ -5,12 +5,10 @@ import sys
 
 import pytest
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestQuotedCharacter(util.F2PyTest):
     sources = [util.getpath("tests", "src", "quoted_character", "foo.f")]
 

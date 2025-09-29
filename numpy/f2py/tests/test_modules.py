@@ -4,10 +4,7 @@ import pytest
 
 from numpy.testing import IS_PYPY
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
 @pytest.mark.slow
@@ -42,6 +39,7 @@ class TestModuleWithoutPublicEntities(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestModuleDocString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "modules", "module_data_docstring.f90")]
 
@@ -59,6 +57,7 @@ class TestModuleDocString(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestModuleAndSubroutine(util.F2PyTest):
     module_name = "example"
     sources = [
@@ -72,6 +71,7 @@ class TestModuleAndSubroutine(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestUsedModule(util.F2PyTest):
     module_name = "fmath"
     sources = [

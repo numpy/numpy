@@ -11,12 +11,10 @@ import pytest
 import numpy as np
 from numpy.testing import IS_PYPY
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
@@ -209,6 +207,7 @@ class TestF77CallbackPythonTLS(TestF77Callback):
     options = ["-DF2PY_USE_PYTHON_TLS"]
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestF90Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh17797.f90")]
 
@@ -222,6 +221,7 @@ class TestF90Callback(util.F2PyTest):
         assert r == 123 + 1 + 2 + 3
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestGH18335(util.F2PyTest):
     """The reproduction of the reported issue requires specific input that
     extensions may break the issue conditions, so the reproducer is
@@ -239,6 +239,7 @@ class TestGH18335(util.F2PyTest):
         assert r == 123 + 1
 
 
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestGH25211(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh25211.f"),
                util.getpath("tests", "src", "callback", "gh25211.pyf")]
@@ -256,6 +257,7 @@ class TestGH25211(util.F2PyTest):
 @pytest.mark.xfail(condition=(platform.system().lower() == 'darwin'),
                    run=False,
                    reason="Callback aborts cause CI failures on macOS")
+@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCBFortranCallstatement(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh26681.f90")]
     options = ['--lower']

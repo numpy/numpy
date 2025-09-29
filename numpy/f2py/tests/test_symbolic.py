@@ -30,13 +30,11 @@ from numpy.f2py.symbolic import (
     normalize,
 )
 
-from . import (
-    pytestmark,  # noqa: F401
-    util,
-)
+from . import util
 
 
 class TestSymbolic(util.F2PyTest):
+    @pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
     def test_eliminate_quotes(self):
         def worker(s):
             r, d = eliminate_quotes(s)
@@ -295,6 +293,7 @@ class TestSymbolic(util.F2PyTest):
                           z).substitute({x: y + z}) == as_ternary(y + z, y, z)
         assert as_eq(x, y).substitute({x: y + z}) == as_eq(y + z, y)
 
+    @pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
     def test_fromstring(self):
 
         x = as_symbol("x")
