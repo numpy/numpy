@@ -15,7 +15,6 @@ from . import util
 @pytest.mark.skipif(
     not IS_64BIT, reason="32-bit builds are buggy"
 )
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
     module_name = "multiline"
@@ -49,7 +48,6 @@ end python module {module_name}
     not IS_64BIT, reason="32-bit builds are buggy"
 )
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"

@@ -12,7 +12,6 @@ from . import util
 
 IS_PPC_OR_AIX = platform.machine().lower().startswith("ppc") or platform.system() == 'AIX'
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestKind(util.F2PyTest):
     sources = [util.getpath("tests", "src", "kind", "foo.f90")]
 

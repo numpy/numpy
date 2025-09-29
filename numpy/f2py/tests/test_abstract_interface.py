@@ -8,7 +8,6 @@ from . import util
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]
 

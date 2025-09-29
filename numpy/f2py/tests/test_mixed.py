@@ -7,7 +7,6 @@ from numpy.testing import IS_PYPY
 from . import util
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestMixed(util.F2PyTest):
     sources = [
         util.getpath("tests", "src", "mixed", "foo.f"),

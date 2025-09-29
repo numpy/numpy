@@ -9,7 +9,6 @@ import numpy.testing as npt
 from . import util
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [util.getpath("tests", "src", "regression", "inout.f90")]
@@ -26,7 +25,6 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestDataOnlyMultiModule(util.F2PyTest):
     # Check that modules without subroutines work
     sources = [util.getpath("tests", "src", "regression", "datonly.f90")]
@@ -39,7 +37,6 @@ class TestDataOnlyMultiModule(util.F2PyTest):
         assert self.module.simple_subroutine(5) == 1014
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestModuleWithDerivedType(util.F2PyTest):
     # Check that modules with derived types work
     sources = [util.getpath("tests", "src", "regression", "mod_derived_types.f90")]
@@ -50,7 +47,6 @@ class TestModuleWithDerivedType(util.F2PyTest):
         assert self.module.type_subroutine(10) == 210
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
@@ -72,7 +68,6 @@ class TestNegativeBounds(util.F2PyTest):
         assert np.allclose(rval, expval)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
@@ -98,7 +93,6 @@ def test_include_path():
         assert fname in fnames_in_dir
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestIncludeFiles(util.F2PyTest):
     sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
     options = [f"-I{util.getpath('tests', 'src', 'regression')}",
@@ -111,7 +105,6 @@ class TestIncludeFiles(util.F2PyTest):
         assert exp == res
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestF77Comments(util.F2PyTest):
     # Check that comments are stripped from F77 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
@@ -132,7 +125,6 @@ class TestF77Comments(util.F2PyTest):
         npt.assert_allclose(expected, res)
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestF90Contiuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
@@ -146,7 +138,6 @@ class TestF90Contiuation(util.F2PyTest):
         assert res[1] == 15
 
 
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestLowerF2PYDirectives(util.F2PyTest):
     # Check variables are cased correctly
     sources = [util.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
@@ -158,7 +149,6 @@ class TestLowerF2PYDirectives(util.F2PyTest):
 
 
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 def test_gh26623():
     # Including libraries with . should not generate an incorrect meson.build
     try:
@@ -173,7 +163,6 @@ def test_gh26623():
 
 @pytest.mark.slow
 @pytest.mark.skipif(platform.system() == "Windows", reason='Unsupported on this platform for now')
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 def test_gh25784():
     # Compile dubious file using passed flags
     try:
@@ -191,7 +180,6 @@ def test_gh25784():
 
 
 @pytest.mark.slow
-@pytest.mark.thread_unsafe(reason="f2py is thread-unsafe")
 class TestAssignmentOnlyModules(util.F2PyTest):
     # Ensure that variables are exposed without functions or subroutines in a module
     sources = [util.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
