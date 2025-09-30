@@ -139,7 +139,7 @@ def test_instances():
 
 
 def test_known_types():
-    
+
     # Test float16
     f16 = finfo(np.float16)
     assert_equal(f16.bits, 16)
@@ -147,7 +147,7 @@ def test_known_types():
     assert_equal(f16.nmant, 10)
     assert_equal(f16.minexp, -14)
     assert_equal(f16.maxexp, 16)
-    
+
     # Test float32
     f32 = finfo(np.float32)
     assert_equal(f32.bits, 32)
@@ -155,7 +155,7 @@ def test_known_types():
     assert_equal(f32.nmant, 24)
     assert_equal(f32.minexp, -125)
     assert_equal(f32.maxexp, 128)
-    
+
     # Test float64
     f64 = finfo(np.float64)
     assert_equal(f64.bits, 64)
@@ -163,7 +163,7 @@ def test_known_types():
     assert_equal(f64.nmant, 53)
     assert_equal(f64.minexp, -1021)
     assert_equal(f64.maxexp, 1024)
-    
+
     # Test longdouble (values vary by platform, just check they exist)
     fld = finfo(np.longdouble)
     assert_(fld.bits > 0)

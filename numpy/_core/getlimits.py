@@ -11,9 +11,8 @@ from functools import cached_property
 from numpy._utils import set_module
 
 from . import numeric, numerictypes as ntypes
-from .numeric import array, inf, nan
-from .umath import exp2, frexp, isnan, log10, nextafter
 from ._multiarray_umath import _populate_finfo_constants
+from .umath import frexp
 
 
 def _fr0(a):
@@ -311,7 +310,7 @@ class finfo:
             return self._repr
 
         c = self.__class__.__name__
-        
+
         # Use precision+1 digits in exponential notation
         fmt_str = _MACHAR_PARAMS.get(self.dtype.type, {}).get('fmt', '%s')
         if fmt_str != '%s' and hasattr(self, 'max') and hasattr(self, 'min'):
@@ -320,9 +319,9 @@ class finfo:
         else:
             max_str = str(self.max)
             min_str = str(self.min)
-        
+
         resolution_str = str(self.resolution)
-        
+
         repr_str = (f"{c}(resolution={resolution_str}, min={min_str},"
                     f" max={max_str}, dtype={self.dtype})")
         self._repr = repr_str

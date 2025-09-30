@@ -4388,6 +4388,52 @@ static int
 #define HALF_MANT_DIG 10
 #define HALF_DIG 3
 
+/*
+ * On PPC64 systems with IBM double-double format, the C standard library
+ * macros LDBL_* are often incorrect or buggy. IBM double-double is a
+ * pair of IEEE binary64 values (not a true IEEE quad), which provides
+ * about 106 bits of mantissa precision (53+53).
+ *
+ * Correct values for IBM double-double:
+ * - LDBL_MAX: same as DBL_MAX (1.7976931348623157e+308)
+ * - LDBL_MIN: same as DBL_MIN (2.2250738585072014e-308)
+ * - LDBL_EPSILON: ~2^-105 (2.46519032881566189191e-32)
+ * - LDBL_MANT_DIG: 106 (53+53)
+ * - LDBL_MIN_EXP: same as DBL_MIN_EXP (-1021)
+ * - LDBL_MAX_EXP: same as DBL_MAX_EXP (1024)
+ * - LDBL_DIG: 31 (decimal digits of precision)
+ * - LDBL_TRUE_MIN: same as DBL_TRUE_MIN (4.9406564584124654e-324)
+ */
+#if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
+    defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
+    /* Override incorrect glibc macros for IBM double-double */
+    #undef LDBL_EPSILON
+    #undef LDBL_MIN
+    #undef LDBL_MAX
+    #undef LDBL_MANT_DIG
+    #undef LDBL_MIN_EXP
+    #undef LDBL_MAX_EXP
+    #undef LDBL_DIG
+    #ifdef LDBL_TRUE_MIN
+        #undef LDBL_TRUE_MIN
+    #endif
+
+    /* Define correct values for IBM double-double */
+    #define LDBL_EPSILON 2.46519032881566189191e-32L
+    #define LDBL_MIN DBL_MIN
+    #define LDBL_MAX DBL_MAX
+    #define LDBL_MANT_DIG 106
+    #define LDBL_MIN_EXP DBL_MIN_EXP
+    #define LDBL_MAX_EXP DBL_MAX_EXP
+    #define LDBL_DIG 31
+    #ifdef DBL_TRUE_MIN
+        #define LDBL_TRUE_MIN DBL_TRUE_MIN
+    #else
+        /* Fallback: smallest positive subnormal double = 2^-1074 */
+        #define LDBL_TRUE_MIN 4.9406564584124654e-324L
+    #endif
+#endif
+
 /**begin repeat
  * #NAME = HALF,FLOAT, DOUBLE, LONGDOUBLE#
  * #ABB = HALF, FLT, DBL, LDBL#
