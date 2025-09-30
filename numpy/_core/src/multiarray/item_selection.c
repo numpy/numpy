@@ -3326,6 +3326,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
 
     op2 = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0);
     if (op2 == NULL) {
+        ret = NULL;
         goto fail;
     }
 
