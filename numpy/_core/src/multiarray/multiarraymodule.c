@@ -4352,7 +4352,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     } finfo_constants[] = {
         {"max", NPY_CONSTANT_maximum_finite, 0},
         {"min", NPY_CONSTANT_minimum_finite, 0},
-        {"_radix", NPY_CONSTANT_finfo_radix, 0},
+        {"_radix", NPY_CONSTANT_finfo_radix, 1},
         {"eps", NPY_CONSTANT_finfo_eps, 0},
         {"smallest_normal", NPY_CONSTANT_finfo_smallest_normal, 0},
         {"smallest_subnormal", NPY_CONSTANT_finfo_smallest_subnormal, 0},

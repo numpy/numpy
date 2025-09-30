@@ -253,9 +253,8 @@ class finfo:
 
     @cached_property
     def nexp(self):
-        # TODO: can nexp/iexp differ, do we need to query?
-        # Calculate exponent bits from it's range:
-        return math.ceil(math.log2(self.maxexp - -self.minexp))
+        # considering all ones (inf/nan) and all zeros (subnormal/zero)
+        return math.ceil(math.log2(self.maxexp - self.minexp + 2))
 
     @cached_property
     def iexp(self):

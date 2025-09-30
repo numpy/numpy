@@ -4392,7 +4392,7 @@ static int
  * #NAME = HALF,FLOAT, DOUBLE, LONGDOUBLE#
  * #ABB = HALF, FLT, DBL, LDBL#
  * #type = npy_half, npy_float, npy_double, npy_longdouble#
- * #RADIX = 2, 2, 2, 2#
+ * #RADIX = FLT_RADIX, FLT_RADIX, FLT_RADIX, FLT_RADIX#
  * #NEG_MAX = HALF_NEG_MAX, -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  */
 static int
@@ -4419,8 +4419,8 @@ static int
             val = (@type@)NPY_NANF;
             break;
         case NPY_CONSTANT_finfo_radix:
-            val = @RADIX@;
-            break;
+            *(npy_intp *)ptr = @RADIX@;
+            return 1;
         case NPY_CONSTANT_finfo_eps:
             val = @ABB@_EPSILON;
             break;
