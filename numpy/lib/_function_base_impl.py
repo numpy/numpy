@@ -4895,7 +4895,7 @@ def _quantile(
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
-        index_array = np.argsort(arr, axis=0, kind="stable")
+        index_array = np.argsort(arr, axis=0)
 
         # arr = arr[index_array, ...]  # but this adds trailing dimensions of
         # 1.
