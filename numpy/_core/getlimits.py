@@ -233,12 +233,12 @@ class finfo:
         # use double descriptor to populate constants for backward compatibility.
         # The old MachArLike code would match the float64 signature on such platforms
         # and return float64 scalars.
-        if (self.dtype.type == ntypes.longdouble and 
+        if (self.dtype.type == ntypes.longdouble and
             self.dtype.itemsize == numeric.dtype(ntypes.double).itemsize):
             populate_dtype = numeric.dtype(ntypes.double)
         else:
             populate_dtype = self.dtype
-            
+
         # Fills in all constants defined directly on the dtype (in C)
         _populate_finfo_constants(self, populate_dtype)
         return self
