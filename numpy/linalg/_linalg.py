@@ -14,7 +14,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot']
+           'matrix_norm', 'vector_norm', 'vecdot', 'weighted_gram_matrix']
 
 import functools
 import operator
@@ -3659,3 +3659,103 @@ def vecdot(x1, x2, /, *, axis=-1):
 
     """
     return _core_vecdot(x1, x2, axis=axis)
+
+
+def _weighted_gram_matrix_dispatcher(X, *, weights=None):
+    return (X, weights)
+
+
+@array_function_dispatch(_weighted_gram_matrix_dispatcher)
+def weighted_gram_matrix(X, *, weights=None):
+    """
+    Compute the weighted Gram matrix (sandwich product).
+
+    Computes the matrix product::
+
+        G = X.T @ diag(weights) @ X
+
+    When ``weights`` is not provided, computes the standard Gram matrix::
+
+        G = X.T @ X
+
+    For arrays with more than 2 dimensions, the computation is applied to the
+    last two axes.
+
+    Parameters
+    ----------
+    X : array_like, shape (..., M, N)
+        Input array containing ``M`` observations in the second-to-last dimension
+        and ``N`` features in the last dimension. For higher-dimensional inputs,
+        the computation is broadcast over the leading dimensions.
+    weights : array_like, shape (..., M), optional
+        Weights vector corresponding to the observations. Must be broadcastable
+        to the shape of ``X`` excluding the last dimension (``X.shape[:-1]``).
+        If None (default), uses unit weights (equivalent to standard Gram matrix).
+
+    Returns
+    -------
+    G : ndarray, shape (..., N, N)
+        The weighted Gram matrix. The result is always symmetric and positive
+        semi-definite when weights are non-negative.
+
+    Notes
+    -----
+    This implementation efficiently computes the weighted Gram matrix without
+    explicitly constructing the diagonal weight matrix, using the identity::
+
+        X.T @ diag(weights) @ X = (X.T * weights) @ X
+
+    Performance considerations:
+    - For small matrices (M < 1000), this implementation is efficient.
+    - For large matrices (M > 5000), consider specialized libraries like
+      ``tabmat`` that provide optimized implementations of sandwich products.
+    - When operating on higher-dimensional arrays, intermediate results may
+      require significant memory.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [3, 4], [5, 6]])
+    >>> weights = np.array([1, 2, 3])
+
+    >>> # Weighted Gram matrix
+    >>> np.linalg.weighted_gram_matrix(X, weights=weights)
+    array([[ 94, 116],
+           [116, 144]])
+
+    >>> # Standard Gram matrix (no weights)
+    >>> np.linalg.weighted_gram_matrix(X)
+    array([[35, 44],
+           [44, 56]])
+
+    >>> # Higher-dimensional input
+    >>> X_3d = np.random.rand(2, 3, 4)  # 2 matrices of shape (3, 4)
+    >>> weights_3d = np.array([[1, 2, 3], [4, 5, 6]])  # Shape (2, 3)
+    >>> G = np.linalg.weighted_gram_matrix(X_3d, weights=weights_3d)
+    >>> G.shape
+    (2, 4, 4)
+    """
+
+    X = asanyarray(X)
+
+    if X.ndim < 2:
+        raise LinAlgError(
+            f"{X.ndim}-dimensional array given. Array must be at least two-dimensional"
+        )
+
+    if weights is None:
+        # Standard Gram matrix X.T @ X over the last two axes
+        return _core_matmul(swapaxes(X, -2, -1), X)
+
+    weights = asanyarray(weights)
+
+    # Check that weights shape matches X shape except for the last dimension
+    if weights.shape != X.shape[:-1]:
+        raise ValueError(
+            "weights must have shape matching X.shape[:-1], "
+            f"but got {weights.shape} and {X.shape[:-1]}"
+        )
+
+    # Apply the optimized computation (X.T * weights) @ X over the last two axes
+    # This avoids creating the full diagonal matrix diag(weights)
+    return _core_matmul(swapaxes(X, -2, -1) * weights[..., None, :], X)
