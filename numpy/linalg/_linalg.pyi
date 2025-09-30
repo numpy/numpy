@@ -28,6 +28,7 @@ from numpy import (
 )
 from numpy._core.fromnumeric import matrix_transpose
 from numpy._core.numeric import tensordot
+from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
@@ -324,20 +325,26 @@ def matrix_rank(
 @overload
 def pinv(
     a: _ArrayLikeInt_co,
-    rcond: _ArrayLikeFloat_co = None,
+    rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = ...,
 ) -> NDArray[float64]: ...
 @overload
 def pinv(
     a: _ArrayLikeFloat_co,
-    rcond: _ArrayLikeFloat_co = None,
+    rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = ...,
 ) -> NDArray[floating]: ...
 @overload
 def pinv(
     a: _ArrayLikeComplex_co,
-    rcond: _ArrayLikeFloat_co = None,
+    rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = ...,
 ) -> NDArray[complexfloating]: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
