@@ -913,6 +913,10 @@ sfloat_sort_get_loop(
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
 
+    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+    }
+
     if (parameters->flags == NPY_SORT_STABLE) {
         *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_sort_loop;
     }
@@ -1006,6 +1010,10 @@ sfloat_argsort_get_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+    }
 
     if (parameters->flags == NPY_SORT_STABLE) {
         *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_argsort_loop;
