@@ -4389,7 +4389,8 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
             if (res == 0) {
                 continue;
             }
-            value_obj = PyArray_GETITEM(buffer_array, buffer_data);
+            // Return as 0-d array item to preserve numpy scalar type
+            value_obj = PyArray_ToScalar(buffer_data, buffer_array);
         }
         else {
             npy_intp int_value;

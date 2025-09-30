@@ -4379,8 +4379,9 @@ static int
 }
 /**end repeat**/
 
-#define HALF_MAX 31743
-#define HALF_MIN 64511
+#define HALF_MAX 31743       /* Bit pattern for 65504.0 */
+#define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
+#define HALF_NEG_MAX 64511   /* Bit pattern for -65504.0 */
 #define HALF_EPSILON 5120
 #define HALF_HAS_SUBNORM 1
 #define HALF_TRUE_MIN 1
@@ -4394,6 +4395,7 @@ static int
  * #ABB = HALF, FLT, DBL, LDBL#
  * #type = npy_half, npy_float, npy_double, npy_longdouble#
  * #RADIX = 2, 2, 2, 2#
+ * #NEG_MAX = HALF_NEG_MAX, -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  */
 static int
 @NAME@_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
@@ -4407,7 +4409,7 @@ static int
             val = 1;
             break;
         case NPY_CONSTANT_minimum_finite:
-            val = -@ABB@_MAX;
+            val = @NEG_MAX@;
             break;
         case NPY_CONSTANT_maximum_finite:
             val = @ABB@_MAX;
