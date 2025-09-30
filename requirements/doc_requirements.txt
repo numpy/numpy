@@ -6,6 +6,7 @@ sphinx-copybutton
 sphinx-design
 scipy
 matplotlib
+pyparsing<3.3
 pandas
 breathe>4.33.0
 ipython!=8.1.0
