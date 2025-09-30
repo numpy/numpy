@@ -215,14 +215,6 @@ class TestCtypesGetter(_DeprecationTestCase):
         self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
 
 
-class TestMachAr(_DeprecationTestCase):
-    # Deprecated 2022-11-22, NumPy 1.25
-    warning_cls = DeprecationWarning
-
-    def test_deprecated_module(self):
-        self.assert_deprecated(lambda: np._core.MachAr)
-
-
 class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
     # Deprecated 2021-11-08, NumPy 1.22
     @pytest.mark.parametrize("func",

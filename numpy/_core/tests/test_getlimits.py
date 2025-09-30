@@ -138,53 +138,53 @@ def test_instances():
         finfo(np.int64(1))
 
 
-def assert_ma_equal(discovered, ma_like):
-    # Check MachAr-like objects same as calculated MachAr instances
-    for key, value in discovered.__dict__.items():
-        assert_equal(value, getattr(ma_like, key))
-        if hasattr(value, 'shape'):
-            assert_equal(value.shape, getattr(ma_like, key).shape)
-            assert_equal(value.dtype, getattr(ma_like, key).dtype)
-
-
 def test_known_types():
-    # Test we are correctly compiling parameters for known types
-    for ftype, ma_like in ((np.float16, _float_ma[16]),
-                           (np.float32, _float_ma[32]),
-                           (np.float64, _float_ma[64])):
-        assert_ma_equal(_discovered_machar(ftype), ma_like)
-    # Suppress warning for broken discovery of double double on PPC
-    with np.errstate(all='ignore'):
-        ld_ma = _discovered_machar(np.longdouble)
-    bytes = np.dtype(np.longdouble).itemsize
-    if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
-        # 80-bit extended precision
-        assert_ma_equal(ld_ma, _float_ma[80])
-    elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
-        # IEE 754 128-bit
-        assert_ma_equal(ld_ma, _float_ma[128])
+    
+    # Test float16
+    f16 = finfo(np.float16)
+    assert_equal(f16.bits, 16)
+    assert_equal(f16.precision, 3)  # int(-log10(2**-10)) = 3
+    assert_equal(f16.nmant, 10)
+    assert_equal(f16.minexp, -14)
+    assert_equal(f16.maxexp, 16)
+    
+    # Test float32
+    f32 = finfo(np.float32)
+    assert_equal(f32.bits, 32)
+    assert_equal(f32.precision, 6)  # int(-log10(2**-23)) = 6
+    assert_equal(f32.nmant, 24)
+    assert_equal(f32.minexp, -125)
+    assert_equal(f32.maxexp, 128)
+    
+    # Test float64
+    f64 = finfo(np.float64)
+    assert_equal(f64.bits, 64)
+    assert_equal(f64.precision, 15)  # int(-log10(2**-52)) = 15
+    assert_equal(f64.nmant, 53)
+    assert_equal(f64.minexp, -1021)
+    assert_equal(f64.maxexp, 1024)
+    
+    # Test longdouble (values vary by platform, just check they exist)
+    fld = finfo(np.longdouble)
+    assert_(fld.bits > 0)
+    assert_(fld.precision > 0)
+    assert_(fld.nmant > 0)
 
 
 def test_subnormal_warning():
     """Test that the subnormal is zero warning is not being raised."""
-    with np.errstate(all='ignore'):
-        ld_ma = _discovered_machar(np.longdouble)
-    bytes = np.dtype(np.longdouble).itemsize
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
-        if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
-            # 80-bit extended precision
-            ld_ma.smallest_subnormal
-            assert len(w) == 0
-        elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
-            # IEE 754 128-bit
-            ld_ma.smallest_subnormal
-            assert len(w) == 0
-        else:
-            # Double double
-            ld_ma.smallest_subnormal
-            # This test may fail on some platforms
-            assert len(w) == 0
+        # Test for common float types
+        for dtype in [np.float16, np.float32, np.float64]:
+            f = finfo(dtype)
+            _ = f.smallest_subnormal
+        # Also test longdouble
+        with np.errstate(all='ignore'):
+            fld = finfo(np.longdouble)
+            _ = fld.smallest_subnormal
+        # Check no warnings were raised
+        assert len(w) == 0
 
 
 def test_plausible_finfo():

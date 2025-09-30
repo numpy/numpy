@@ -311,24 +311,23 @@ class finfo:
         if self._repr is not None:
             return self._repr
 
-        def get_str(name, pad=None):
-            if (val := getattr(self, name)) is None:
-                return "<undefined>"
-            if pad is not None:
-                s = str(val).ljust(pad)
-            return str(val)
-
         c = self.__class__.__name__
-        d = self.__dict__.copy()
-        resolution = get_str("resolution")
-        min_ = get_str("min")
-        max_ = get_str("max")
-
-        d['klass'] = c
-        fmt = ((f"%(klass)s(resolution={resolution}, min={min_},"
-                 f" max={max_}, dtype={self.dtype})" % d))
-        self._repr = fmt
-        return fmt
+        
+        # Use precision+1 digits in exponential notation
+        fmt_str = _MACHAR_PARAMS.get(self.dtype.type, {}).get('fmt', '%s')
+        if fmt_str != '%s' and hasattr(self, 'max') and hasattr(self, 'min'):
+            max_str = (fmt_str % self.max).strip()
+            min_str = (fmt_str % self.min).strip()
+        else:
+            max_str = str(self.max)
+            min_str = str(self.min)
+        
+        resolution_str = str(self.resolution)
+        
+        repr_str = (f"{c}(resolution={resolution_str}, min={min_str},"
+                    f" max={max_str}, dtype={self.dtype})")
+        self._repr = repr_str
+        return repr_str
 
     @property
     def tiny(self):

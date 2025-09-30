@@ -4387,7 +4387,7 @@ static int
 #define HALF_MAX_EXP 16
 #define HALF_MIN_EXP -14
 #define HALF_MANT_DIG 10
-#define HALF_DECIMAL_DIG 3
+#define HALF_DIG 3
 
 /**begin repeat
  * #NAME = HALF,FLOAT, DOUBLE, LONGDOUBLE#
@@ -4443,7 +4443,7 @@ static int
             *(npy_intp *)ptr = @ABB@_MAX_EXP;
             return 1;
         case NPY_CONSTANT_finfo_decimal_digits:
-            *(npy_intp *)ptr = @ABB@_DECIMAL_DIG;
+            *(npy_intp *)ptr = @ABB@_DIG;
             return 1;
         default:
             return 0;
