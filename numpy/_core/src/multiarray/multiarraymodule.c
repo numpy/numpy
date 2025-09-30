@@ -4345,19 +4345,6 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
 
-    PyArrayObject *buffer_array = NULL;
-    char *buffer_data = NULL;
-    npy_intp dims[1] = {1};
-
-    Py_INCREF(descr);
-    buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-            descr, 1, dims, NULL, NULL, 0, NULL);
-    if (buffer_array == NULL) {
-        Py_DECREF(descr);
-        return NULL;
-    }
-    buffer_data = PyArray_BYTES(buffer_array);
-
     static const struct {
         char *name;
         int id;
@@ -4376,21 +4363,43 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         {NULL, -1},
     };
 
+    int n_float_constants = 0;
+    for (int i = 0; finfo_constants[i].name != NULL; i++) {
+        if (!finfo_constants[i].is_int) {
+            n_float_constants++;
+        }
+    }
+
+    PyArrayObject *buffer_array = NULL;
+    char *buffer_data = NULL;
+    npy_intp dims[1] = {n_float_constants};
+
+    Py_INCREF(descr);
+    buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+            descr, 1, dims, NULL, NULL, 0, NULL);
+    if (buffer_array == NULL) {
+        Py_DECREF(descr);
+        return NULL;
+    }
+    buffer_data = PyArray_BYTES(buffer_array);
+    npy_intp elsize = PyArray_DESCR(buffer_array)->elsize;
+
     for (int i = 0; finfo_constants[i].name != NULL; i++) 
     {
         PyObject *value_obj;
         if (!finfo_constants[i].is_int) {
-            memset(buffer_data, 0, PyArray_DESCR(buffer_array)->elsize);
             int res = NPY_DT_CALL_get_constant(descr,
                     finfo_constants[i].id, buffer_data);
             if (res < 0) {
                 goto fail;
             }
             if (res == 0) {
+                buffer_data += elsize;  // Move to next element
                 continue;
             }
             // Return as 0-d array item to preserve numpy scalar type
             value_obj = PyArray_ToScalar(buffer_data, buffer_array);
+            buffer_data += elsize;  // Move to next element
         }
         else {
             npy_intp int_value;

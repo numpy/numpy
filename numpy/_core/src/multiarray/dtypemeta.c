@@ -1178,8 +1178,6 @@ dtypemeta_wrap_legacy_descriptor(
     dtype_class->scalar_type = descr->typeobj;
     dtype_class->type_num = descr->type_num;
     dt_slots->f = *arr_funcs;
-    dt_slots->setitem = arr_funcs->setitem;
-    dt_slots->getitem = arr_funcs->getitem;
 
     /* Set default functions (correct for most dtypes, override below) */
     dt_slots->default_descr = nonparametric_default_descr;
@@ -1191,8 +1189,8 @@ dtypemeta_wrap_legacy_descriptor(
     dt_slots->ensure_canonical = ensure_native_byteorder;
     dt_slots->get_fill_zero_loop = NULL;
     dt_slots->finalize_descr = NULL;
-    dt_slots->setitem = legacy_setitem_using_DType;
-    dt_slots->getitem = legacy_getitem_using_DType;
+    dt_slots->setitem = NULL;
+    dt_slots->getitem = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */
