@@ -232,10 +232,11 @@ class finfo:
         # On platforms where longdouble is the same size as double (e.g., Windows),
         # use double descriptor to populate constants for backward compatibility.
         # The old MachArLike code would match the float64 signature on such platforms
-        # and return float64 scalars.
+        # and return float64 scalars and use float64 as the dtype.
         if (self.dtype.type == ntypes.longdouble and
             self.dtype.itemsize == numeric.dtype(ntypes.double).itemsize):
             populate_dtype = numeric.dtype(ntypes.double)
+            self.dtype = populate_dtype  # Also update self.dtype for consistency
         else:
             populate_dtype = self.dtype
 
