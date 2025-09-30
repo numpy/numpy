@@ -4335,23 +4335,28 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     PyObject *finfo = PyTuple_GetItem(args, 0);
+    if (finfo == NULL || finfo == Py_None) {
+        PyErr_SetString(PyExc_TypeError, "First argument cannot be None");
+        return NULL;
+    }
     PyArray_Descr *descr = (PyArray_Descr *)PyTuple_GetItem(args, 1);
     if (!PyArray_DescrCheck(descr)) {
         PyErr_SetString(PyExc_TypeError, "Second argument must be a dtype");
         return NULL;
     }
 
-    PyArrayObject *temp_array = NULL;
-    char *temp_data = NULL;
+    PyArrayObject *buffer_array = NULL;
+    char *buffer_data = NULL;
     npy_intp dims[1] = {1};
 
     Py_INCREF(descr);
-    temp_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+    buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             descr, 1, dims, NULL, NULL, 0, NULL);
-    if (temp_array == NULL) {
+    if (buffer_array == NULL) {
+        Py_DECREF(descr);
         return NULL;
     }
-    temp_data = PyArray_BYTES(temp_array);
+    buffer_data = PyArray_BYTES(buffer_array);
 
     static const struct {
         char *name;
@@ -4371,19 +4376,20 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         {NULL, -1},
     };
 
-    for (int i = 0; finfo_constants[i].name != NULL; i++) {
+    for (int i = 0; finfo_constants[i].name != NULL; i++) 
+    {
         PyObject *value_obj;
         if (!finfo_constants[i].is_int) {
-            memset(temp_data, 0, PyArray_DESCR(temp_array)->elsize);
+            memset(buffer_data, 0, PyArray_DESCR(buffer_array)->elsize);
             int res = NPY_DT_CALL_get_constant(descr,
-                    finfo_constants[i].id, temp_data);
+                    finfo_constants[i].id, buffer_data);
             if (res < 0) {
                 goto fail;
             }
             if (res == 0) {
                 continue;
             }
-            value_obj = PyArray_GETITEM(temp_array, temp_data);
+            value_obj = PyArray_GETITEM(buffer_array, buffer_data);
         }
         else {
             npy_intp int_value;
@@ -4406,10 +4412,10 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         }
     }
 
-        Py_DECREF(temp_array);
-    Py_RETURN_NONE;
+  Py_DECREF(buffer_array);
+  Py_RETURN_NONE;
   fail:
-        Py_XDECREF(temp_array);
+    Py_XDECREF(buffer_array);
     return NULL;
 }
 
