@@ -940,17 +940,10 @@ sfloat_sort_resolve_descriptors(
         npy_intp *view_offset)
 {
     assert(!(given_descrs[1] != given_descrs[0] && given_descrs[1] != NULL));
+    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
 
-    if (!PyArray_IsNativeByteOrder(given_descrs[0]->byteorder)) {
-        loop_descrs[0] = PyArray_DescrNewByteorder(given_descrs[0], NPY_SWAP);
-        if (loop_descrs[0] == NULL) {
-            return -1;
-        }
-    }
-    else {
-        loop_descrs[0] = given_descrs[0];
-        Py_INCREF(loop_descrs[0]);
-    }
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(loop_descrs[0]);
     loop_descrs[1] = loop_descrs[0];
     Py_INCREF(loop_descrs[1]);
 
@@ -1038,17 +1031,10 @@ sfloat_argsort_resolve_descriptors(
         npy_intp *view_offset)
 {
     assert(given_descrs[1] == NULL || given_descrs[1]->type_num == NPY_INTP);
-
-    if (!PyArray_IsNativeByteOrder(given_descrs[0]->byteorder)) {
-        loop_descrs[0] = PyArray_DescrNewByteorder(given_descrs[0], NPY_SWAP);
-        if (loop_descrs[0] == NULL) {
-            return -1;
-        }
-    }
-    else {
-        loop_descrs[0] = given_descrs[0];
-        Py_INCREF(loop_descrs[0]);
-    }
+    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+    
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(loop_descrs[0]);
     loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
     if (loop_descrs[1] == NULL) {
         return -1;
