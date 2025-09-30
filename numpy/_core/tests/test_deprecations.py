@@ -241,18 +241,6 @@ class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
                 func([0., 1.], 0., interpolation="nearest", method="nearest")
 
 
-class TestScalarConversion(_DeprecationTestCase):
-    # 2023-01-02, 1.25.0
-    def test_float_conversion(self):
-        self.assert_deprecated(float, args=(np.array([3.14]),))
-
-    def test_behaviour(self):
-        b = np.array([[3.14]])
-        c = np.zeros(5)
-        with pytest.warns(DeprecationWarning):
-            c[0] = b
-
-
 class TestPyIntConversion(_DeprecationTestCase):
     message = r".*stop allowing conversion of out-of-bound.*"
 
