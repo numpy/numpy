@@ -4383,8 +4383,6 @@ static int
 #define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
 #define HALF_NEG_MAX 64511   /* Bit pattern for -65504.0 */
 #define HALF_EPSILON 5120
-#define HALF_HAS_SUBNORM 1
-#define HALF_TRUE_MIN 1
 #define HALF_MAX_EXP 16
 #define HALF_MIN_EXP -14
 #define HALF_MANT_DIG 10
@@ -4430,10 +4428,38 @@ static int
             val = @ABB@_MIN;
             break;
         case NPY_CONSTANT_finfo_smallest_subnormal:
-            if (@ABB@_HAS_SUBNORM == 0) {  // if -1 assume it's OK
-                return 0;
+            /*
+             * Prefer C11 *_TRUE_MIN macros when available (compile-time constant).
+             * Fall back to nextafter() for portability when macros are undefined.
+             * nextafter(0, 1) returns the smallest positive representable value,
+             * which is the smallest subnormal for IEEE 754 formats.
+             */
+            if (sizeof(@type@) == sizeof(npy_half)) {
+                /* float16: use bit pattern 0x0001 (2^-24) directly */
+                npy_uint16 bits = 0x0001;
+                memcpy(&val, &bits, sizeof(npy_half));
             }
-            val = @ABB@_TRUE_MIN;
+            else if (sizeof(@type@) == sizeof(npy_float)) {
+                #ifdef FLT_TRUE_MIN
+                    val = FLT_TRUE_MIN;
+                #else
+                    val = npy_nextafterf(0.0f, 1.0f);
+                #endif
+            }
+            else if (sizeof(@type@) == sizeof(npy_double)) {
+                #ifdef DBL_TRUE_MIN
+                    val = DBL_TRUE_MIN;
+                #else
+                    val = npy_nextafter(0.0, 1.0);
+                #endif
+            }
+            else {  // long double
+                #ifdef LDBL_TRUE_MIN
+                    val = LDBL_TRUE_MIN;
+                #else
+                    val = npy_nextafterl(0.0L, 1.0L);
+                #endif
+            }
             break;
         case NPY_CONSTANT_finfo_nmant:
             *(npy_intp *)ptr = @ABB@_MANT_DIG;
