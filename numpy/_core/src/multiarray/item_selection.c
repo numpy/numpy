@@ -1203,7 +1203,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     npy_intp astride = PyArray_STRIDE(op, axis);
     int swap = PyArray_ISBYTESWAPPED(op);
     int is_aligned = IsAligned(op);
-    int needcopy = !is_aligned || swap || astride != elsize;
+    int needcopy = 0;
     int needs_api;
 
     char *buffer = NULL;
@@ -1244,6 +1244,26 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     }
     size = it->size;
 
+    if (strided_loop != NULL) {
+        // Descriptors have already been resolved
+        odescr = context->descriptors[0];
+        Py_INCREF(odescr);
+    }
+    else {
+        if (swap) {
+            odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
+        }
+        else {
+            odescr = descr;
+            Py_INCREF(odescr);
+        }
+    }
+
+    needcopy = !is_aligned || astride != elsize;
+    if (!PyArray_EquivTypes(descr, odescr)) {
+        needcopy = 1;
+    }
+
     if (needcopy) {
         buffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (buffer == NULL) {
@@ -1252,21 +1272,6 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         }
         if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
             memset(buffer, 0, N * elsize);
-        }
-
-        if (strided_loop != NULL) {
-            // Descriptors have already been resolved
-            odescr = context->descriptors[1];
-            Py_INCREF(odescr);
-        }
-        else {
-            if (swap) {
-                odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
-            }
-            else {
-                odescr = descr;
-                Py_INCREF(odescr);
-            }
         }
 
         NPY_ARRAYMETHOD_FLAGS to_transfer_flags;
@@ -1397,7 +1402,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     npy_intp astride = PyArray_STRIDE(op, axis);
     int swap = PyArray_ISBYTESWAPPED(op);
     int is_aligned = IsAligned(op);
-    int needcopy = !is_aligned || swap || astride != elsize;
+    int needcopy = 0;
     int needs_api;
     int needidxbuffer;
 
@@ -1457,6 +1462,26 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
     size = it->size;
 
+    if (strided_loop != NULL) {
+        // Descriptors have already been resolved
+        odescr = context->descriptors[0];
+        Py_INCREF(odescr);
+    }
+    else {
+        if (swap) {
+            odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
+        }
+        else {
+            odescr = descr;
+            Py_INCREF(odescr);
+        }
+    }
+
+    needcopy = !is_aligned || astride != elsize;
+    if (!PyArray_EquivTypes(descr, odescr)) {
+        needcopy = 1;
+    }
+
     if (needcopy) {
         valbuffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (valbuffer == NULL) {
@@ -1465,14 +1490,6 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         }
         if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
             memset(valbuffer, 0, N * elsize);
-        }
-
-        if (swap) {
-            odescr = PyArray_DescrNewByteorder(descr, NPY_SWAP);
-        }
-        else {
-            odescr = descr;
-            Py_INCREF(odescr);
         }
 
         if (PyArray_GetDTypeTransferFunction(
