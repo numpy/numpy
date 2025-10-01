@@ -9,20 +9,24 @@ from numpy.testing import HAS_REFCOUNT, assert_, assert_array_equal, assert_rais
 class TestTake:
     def test_simple(self):
         a = [[1, 2], [3, 4]]
-        a_str = [[b'1', b'2'], [b'3', b'4']]
-        modes = ['raise', 'wrap', 'clip']
+        a_str = [[b"1", b"2"], [b"3", b"4"]]
+        modes = ["raise", "wrap", "clip"]
         indices = [-1, 4]
-        index_arrays = [np.empty(0, dtype=np.intp),
-                        np.empty((), dtype=np.intp),
-                        np.empty((1, 1), dtype=np.intp)]
-        real_indices = {'raise': {-1: 1, 4: IndexError},
-                        'wrap': {-1: 1, 4: 0},
-                        'clip': {-1: 0, 4: 1}}
+        index_arrays = [
+            np.empty(0, dtype=np.intp),
+            np.empty((), dtype=np.intp),
+            np.empty((1, 1), dtype=np.intp),
+        ]
+        real_indices = {
+            "raise": {-1: 1, 4: IndexError},
+            "wrap": {-1: 1, 4: 0},
+            "clip": {-1: 0, 4: 1},
+        }
         # Currently all types but object, use the same function generation.
         # So it should not be necessary to test all. However test also a non
         # refcounted struct on top of object, which has a size that hits the
         # default (non-specialized) path.
-        types = int, object, np.dtype([('', 'i2', 3)])
+        types = int, object, np.dtype([("", "i2", 3)])
         for t in types:
             # ta works, even if the array may be odd if buffer interface is used
             ta = np.array(a if np.issubdtype(t, np.number) else a_str, dtype=t)
@@ -36,8 +40,9 @@ class TestTake:
                         real_index = real_indices[mode][index]
                         if real_index is IndexError and index_array.size != 0:
                             index_array.put(0, index)
-                            assert_raises(IndexError, ta.take, index_array,
-                                          mode=mode, axis=1)
+                            assert_raises(
+                                IndexError, ta.take, index_array, mode=mode, axis=1
+                            )
                         elif index_array.size != 0:
                             index_array.put(0, index)
                             res = ta.take(index_array, mode=mode, axis=1)
@@ -50,25 +55,31 @@ class TestTake:
         objects = [object() for i in range(10)]
         if HAS_REFCOUNT:
             orig_rcs = [sys.getrefcount(o) for o in objects]
-        for mode in ('raise', 'clip', 'wrap'):
+        for mode in ("raise", "clip", "wrap"):
             a = np.array(objects)
             b = np.array([2, 2, 4, 5, 3, 5])
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
-                assert_(all(sys.getrefcount(o) == rc + 1
-                            for o, rc in zip(objects, orig_rcs)))
+                assert_(
+                    all(
+                        sys.getrefcount(o) == rc + 1 for o, rc in zip(objects, orig_rcs)
+                    )
+                )
             # not contiguous, example:
             a = np.array(objects * 2)[::2]
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
-                assert_(all(sys.getrefcount(o) == rc + 1
-                            for o, rc in zip(objects, orig_rcs)))
+                assert_(
+                    all(
+                        sys.getrefcount(o) == rc + 1 for o, rc in zip(objects, orig_rcs)
+                    )
+                )
 
     def test_unicode_mode(self):
         d = np.arange(10)
-        k = b'\xc3\xa4'.decode("UTF8")
+        k = b"\xc3\xa4".decode("UTF8")
         assert_raises(ValueError, d.take, 5, mode=k)
 
     def test_empty_partition(self):
@@ -105,7 +116,7 @@ class TestPutMask:
         zeros = arr.copy()
 
         np.putmask(arr, mask, vals)
-        assert_array_equal(arr[mask], vals[:len(mask)][mask])
+        assert_array_equal(arr[mask], vals[: len(mask)][mask])
         assert_array_equal(arr[~mask], zeros[~mask])
 
     @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
@@ -151,10 +162,10 @@ class TestPut:
                 indx_put = indx_put + len(arr)
 
         np.put(arr, indx_put, vals, mode=mode)
-        assert_array_equal(arr[indx], vals[:len(indx)])
+        assert_array_equal(arr[indx], vals[: len(indx)])
         untouched = np.ones(len(arr), dtype=bool)
         untouched[indx] = False
-        assert_array_equal(arr[untouched], zeros[:untouched.sum()])
+        assert_array_equal(arr[untouched], zeros[: untouched.sum()])
 
     @pytest.mark.parametrize("dtype", list(np.typecodes["All"])[1:] + ["i,O"])
     @pytest.mark.parametrize("mode", ["raise", "wrap", "clip"])
@@ -165,3 +176,21 @@ class TestPut:
         # Allowing empty values like this is weird...
         np.put(arr, [1, 2, 3], [])
         assert_array_equal(arr, arr_copy)
+
+
+class TestSearchSorted:
+    def test_large_uint64(self):
+        a = np.arange(2**62, 2**62 + 100, 1, dtype=np.uint64)
+        result = np.searchsorted(a, 2**62 + 25)
+        assert result == 25
+
+    def test_python_int_scalar(self):
+        a = np.arange(-1 * 2**62, -1 * 2**62 + 100, 1, dtype=np.int64)
+        result = np.searchsorted(a, -1 * 2**62 + 25)
+        assert result == 25
+
+    def test_out_of_bounds(self):
+        a = np.arange(2**7, 2**7 + 100, 1, np.uint8)
+        # `uint8` overflow for 1000.
+        with pytest.raises(OverflowError):
+            result = np.searchsorted(a, 1000)
