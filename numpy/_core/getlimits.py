@@ -228,20 +228,7 @@ class finfo:
         self.bits = self.dtype.itemsize * 8
         self._fmt = None
         self._repr = None
-
-        # On platforms where longdouble is the same size as double (e.g., Windows),
-        # use double descriptor to populate constants for backward compatibility.
-        # The old MachArLike code would match the float64 signature on such platforms
-        # and return float64 scalars and use float64 as the dtype.
-        if (self.dtype.type == ntypes.longdouble and
-            self.dtype.itemsize == numeric.dtype(ntypes.double).itemsize):
-            populate_dtype = numeric.dtype(ntypes.double)
-            self.dtype = populate_dtype  # Also update self.dtype for consistency
-        else:
-            populate_dtype = self.dtype
-
-        # Fills in all constants defined directly on the dtype (in C)
-        _populate_finfo_constants(self, populate_dtype)
+        _populate_finfo_constants(self, self.dtype)
         return self
 
     @cached_property
