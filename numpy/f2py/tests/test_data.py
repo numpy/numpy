@@ -35,7 +35,6 @@ class TestData(util.F2PyTest):
         assert mod[0]['vars']['my_array']['='] == '(/(1.0d0, 2.0d0), (-3.0d0, 4.0d0)/)'
         assert mod[0]['vars']['z']['='] == '(/3.5,  7.0/)'
 
-
 class TestDataF77(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "data_common.f")]
 

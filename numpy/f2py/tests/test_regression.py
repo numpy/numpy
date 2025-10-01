@@ -104,7 +104,6 @@ class TestIncludeFiles(util.F2PyTest):
         res = self.module.add(3.0, 4.0)
         assert exp == res
 
-
 class TestF77Comments(util.F2PyTest):
     # Check that comments are stripped from F77 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
@@ -124,7 +123,6 @@ class TestF77Comments(util.F2PyTest):
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
-
 class TestF90Contiuation(util.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
     sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
@@ -137,7 +135,6 @@ class TestF90Contiuation(util.F2PyTest):
         assert res[0] == 8
         assert res[1] == 15
 
-
 class TestLowerF2PYDirectives(util.F2PyTest):
     # Check variables are cased correctly
     sources = [util.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
@@ -146,7 +143,6 @@ class TestLowerF2PYDirectives(util.F2PyTest):
     def test_gh28014(self):
         self.module.inquire_next(3)
         assert True
-
 
 @pytest.mark.slow
 def test_gh26623():

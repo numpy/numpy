@@ -594,13 +594,11 @@ class TestStringScalarArr(util.F2PyTest):
             expected = '|S12'
             assert out.dtype == expected
 
-
 class TestStringAssumedLength(util.F2PyTest):
     sources = [util.getpath("tests", "src", "string", "gh24008.f")]
 
     def test_gh24008(self):
         self.module.greet("joe", "bob")
-
 
 @pytest.mark.slow
 class TestStringOptionalInOut(util.F2PyTest):
@@ -628,7 +626,6 @@ class TestNewCharHandling(util.F2PyTest):
     def test_gh25286(self):
         info = self.module.charint('T')
         assert info == 2
-
 
 @pytest.mark.slow
 class TestBCCharHandling(util.F2PyTest):

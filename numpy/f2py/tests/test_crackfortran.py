@@ -67,7 +67,6 @@ class TestPublicPrivate:
         pyf = crackfortran.crack2fortran(mod)
         assert 'bar' not in pyf
 
-
 class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "operators.f90")
@@ -334,7 +333,6 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
-
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
@@ -360,7 +358,6 @@ class TestF77CommonBlockReader:
         with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
             mod = crackfortran.crackfortran([str(fpath)])
         assert "Mismatch" not in stdout_f2py.getvalue()
-
 
 class TestParamEval:
     # issue gh-11612, array parameter parsing

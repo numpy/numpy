@@ -452,7 +452,6 @@ def test_roundtrip_truncated():
         if arr.dtype != object:
             assert_raises(ValueError, roundtrip_truncated, arr)
 
-
 def test_file_truncated(tmp_path):
     path = tmp_path / "a.npy"
     for arr in basic_arrays:
