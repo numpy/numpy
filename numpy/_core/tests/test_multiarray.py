@@ -3886,20 +3886,9 @@ class TestMethods:
                   '?', 'O']
         for dt in dtypes:
             a = np.array(7, dtype=dt)
-            b = np.array([7], dtype=dt)
-            c = np.array([[[[[7]]]]], dtype=dt)
-
             msg = f'dtype: {dt}'
             ap = complex(a)
             assert_equal(ap, a, msg)
-
-            with pytest.warns(DeprecationWarning):
-                bp = complex(b)
-            assert_equal(bp, b, msg)
-
-            with pytest.warns(DeprecationWarning):
-                cp = complex(c)
-            assert_equal(cp, c, msg)
 
     def test__complex__should_not_work(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -3908,7 +3897,11 @@ class TestMethods:
                   '?', 'O']
         for dt in dtypes:
             a = np.array([1, 2, 3], dtype=dt)
+            b = np.array([7], dtype=dt)
+            c = np.array([[[[[7]]]]], dtype=dt)
             assert_raises(TypeError, complex, a)
+            assert_raises(TypeError, complex, b)
+            assert_raises(TypeError, complex, c)
 
         dt = np.dtype([('a', 'f8'), ('b', 'i1')])
         b = np.array((1.0, 3), dtype=dt)
@@ -3921,8 +3914,7 @@ class TestMethods:
         assert_raises(TypeError, complex, d)
 
         e = np.array(['1+1j'], 'U')
-        with pytest.warns(DeprecationWarning):
-            assert_raises(TypeError, complex, e)
+        assert_raises(TypeError, complex, e)
 
 class TestCequenceMethods:
     def test_array_contains(self):
@@ -9244,10 +9236,8 @@ class TestConversion:
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
             assert_equal(int_func(np.array(0)), 0)
-            with pytest.warns(DeprecationWarning):
-                assert_equal(int_func(np.array([1])), 1)
-            with pytest.warns(DeprecationWarning):
-                assert_equal(int_func(np.array([[42]])), 42)
+            assert_raises(TypeError, int_func, np.array([1]))
+            assert_raises(TypeError, int_func, np.array([[42]]))
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
             # gh-9972
@@ -9260,9 +9250,24 @@ class TestConversion:
                     raise NotImplementedError
             assert_raises(NotImplementedError,
                 int_func, np.array(NotConvertible()))
-            with pytest.warns(DeprecationWarning):
-                assert_raises(NotImplementedError,
-                    int_func, np.array([NotConvertible()]))
+            assert_raises(TypeError,
+                int_func, np.array([NotConvertible()]))
+
+    def test_to_float_scalar(self):
+        float_funcs = (float, lambda x: x.__float__())
+        for float_func in float_funcs:
+            assert_equal(float_func(np.array(0)), 0.0)
+            assert_equal(float_func(np.array(1.0, np.float64)), 1.0)
+            assert_raises(TypeError, float_func, np.array([2]))
+            assert_raises(TypeError, float_func, np.array([3.14]))
+            assert_raises(TypeError, float_func, np.array([[4.0]]))
+
+            assert_equal(5.0, float_func(np.array('5')))
+            assert_equal(5.1, float_func(np.array('5.1')))
+            assert_equal(6.0, float_func(np.bytes_(b'6')))
+            assert_equal(6.1, float_func(np.bytes_(b'6.1')))
+            assert_equal(7.0, float_func(np.str_('7')))
+            assert_equal(7.1, float_func(np.str_('7.1')))
 
 
 class TestWhere:
