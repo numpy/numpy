@@ -256,7 +256,7 @@ class finfo:
     @cached_property
     def iexp(self):
         # Calculate exponent bits from it's range:
-        return math.ceil(math.log2(self.maxexp - -self.minexp))
+        return math.ceil(math.log2(self.maxexp - self.minexp))
 
     def __str__(self):
         if self._fmt is not None:
