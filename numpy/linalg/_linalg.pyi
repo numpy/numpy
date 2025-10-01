@@ -28,6 +28,7 @@ from numpy import (
 )
 from numpy._core.fromnumeric import matrix_transpose
 from numpy._core.numeric import tensordot
+from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
@@ -78,7 +79,7 @@ __all__ = [
     "vecdot",
 ]
 
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+_NumberT = TypeVar("_NumberT", bound=np.number)
 
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
@@ -182,33 +183,29 @@ def cholesky(a: _ArrayLikeFloat_co, /, *, upper: bool = False) -> NDArray[floati
 def cholesky(a: _ArrayLikeComplex_co, /, *, upper: bool = False) -> NDArray[complexfloating]: ...
 
 @overload
-def outer(x1: _ArrayLike[Never], x2: _ArrayLike[Never]) -> NDArray[Any]: ...
+def outer(x1: _ArrayLike[Never], x2: _ArrayLike[Never], /) -> NDArray[Any]: ...
 @overload
-def outer(x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co) -> NDArray[np.bool]: ...
+def outer(x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...
 @overload
-def outer(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co) -> NDArray[unsignedinteger]: ...
+def outer(x1: _ArrayLike[_NumberT], x2: _ArrayLike[_NumberT], /) -> NDArray[_NumberT]: ...
 @overload
-def outer(x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co) -> NDArray[signedinteger]: ...
+def outer(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
 @overload
-def outer(x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co) -> NDArray[floating]: ...
+def outer(x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
 @overload
-def outer(
-    x1: _ArrayLikeComplex_co,
-    x2: _ArrayLikeComplex_co,
-) -> NDArray[complexfloating]: ...
+def outer(x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
 @overload
-def outer(
-    x1: _ArrayLikeTD64_co,
-    x2: _ArrayLikeTD64_co,
-    out: None = ...,
-) -> NDArray[timedelta64]: ...
+def outer(x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...
 @overload
-def outer(x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co) -> NDArray[object_]: ...
+def outer(x1: _ArrayLikeTD64_co, x2: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
+@overload
+def outer(x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
 @overload
 def outer(
     x1: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     x2: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-) -> _ArrayT: ...
+    /,
+) -> NDArray[Any]: ...
 
 @overload
 def qr(a: _ArrayLikeInt_co, mode: _ModeKind = "reduced") -> QRResult: ...
@@ -324,20 +321,26 @@ def matrix_rank(
 @overload
 def pinv(
     a: _ArrayLikeInt_co,
-    rcond: _ArrayLikeFloat_co = None,
+    rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = ...,
 ) -> NDArray[float64]: ...
 @overload
 def pinv(
     a: _ArrayLikeFloat_co,
-    rcond: _ArrayLikeFloat_co = None,
+    rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = ...,
 ) -> NDArray[floating]: ...
 @overload
 def pinv(
     a: _ArrayLikeComplex_co,
-    rcond: _ArrayLikeFloat_co = None,
+    rcond: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | _NoValueType = ...,
 ) -> NDArray[complexfloating]: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
@@ -485,22 +488,12 @@ def cross(
 ) -> NDArray[complexfloating]: ...
 
 @overload
-def matmul(
-    x1: _ArrayLikeInt_co,
-    x2: _ArrayLikeInt_co,
-) -> NDArray[signedinteger]: ...
+def matmul(x1: _ArrayLike[_NumberT], x2: _ArrayLike[_NumberT], /) -> NDArray[_NumberT]: ...
 @overload
-def matmul(
-    x1: _ArrayLikeUInt_co,
-    x2: _ArrayLikeUInt_co,
-) -> NDArray[unsignedinteger]: ...
+def matmul(x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
 @overload
-def matmul(
-    x1: _ArrayLikeFloat_co,
-    x2: _ArrayLikeFloat_co,
-) -> NDArray[floating]: ...
+def matmul(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
 @overload
-def matmul(
-    x1: _ArrayLikeComplex_co,
-    x2: _ArrayLikeComplex_co,
-) -> NDArray[complexfloating]: ...
+def matmul(x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
+@overload
+def matmul(x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...

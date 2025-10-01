@@ -137,8 +137,7 @@ NOGIL_BUILD: Final[bool] = ...
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
 
-# NOTE: `warnings.catch_warnings` is incorrectly defined as invariant in typeshed
-class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]):  # type: ignore[type-var]  # pyright: ignore[reportInvalidTypeArguments]
+class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]):
     class_modules: ClassVar[tuple[types.ModuleType, ...]] = ()
     modules: Final[set[types.ModuleType]]
     @overload  # record: True
@@ -359,11 +358,11 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 #
-@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
-@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
 
 #

@@ -2715,7 +2715,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     Estimate a covariance matrix, given data and weights.
 
     Covariance indicates the level to which two variables vary together.
-    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ... x_N]^T`,
+    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ..., x_N]^T`,
     then the covariance matrix element :math:`C_{ij}` is the covariance of
     :math:`x_i` and :math:`x_j`. The element :math:`C_{ii}` is the variance
     of :math:`x_i`.
@@ -4895,7 +4895,7 @@ def _quantile(
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
-        index_array = np.argsort(arr, axis=0, kind="stable")
+        index_array = np.argsort(arr, axis=0)
 
         # arr = arr[index_array, ...]  # but this adds trailing dimensions of
         # 1.
