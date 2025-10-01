@@ -2056,7 +2056,9 @@ class TestLeaks:
             ('bound', A.iters),
             ('unbound', 0),
             ])
-    @pytest.mark.thread_unsafe(reason="sys.getrefcounts is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="test result depends on the reference count of a global object"
+    )
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.

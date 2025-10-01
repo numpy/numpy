@@ -6071,7 +6071,6 @@ class TestFromBuffer:
             del arr
             mm.close()
 
-
 class TestFlat:
     def _create_arrays(self):
         a = np.arange(20.0).reshape(4, 5)
@@ -9015,7 +9014,9 @@ class TestArrayInterface:
         # This fails due to going into the buffer protocol path
         (f, {'data': None, 'shape': ()}, TypeError),
         ])
-    @pytest.mark.thread_unsafe(reason="setup is thread_unsafe, test result depends on the reference count of a global object")
+    @pytest.mark.thread_unsafe(
+        reason="interface testing is thread-unsafe, test result depends on the reference count of a global object"
+    )
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
         self.f.iface = {'typestr': 'f8'}
@@ -10599,7 +10600,7 @@ def test_argsort_largearrays(dtype):
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-@pytest.mark.thread_unsafe(reason="sys.getrefcounts is thread-unsafe")
+@pytest.mark.thread_unsafe(reason="test result depends on the reference count of a global object")
 def test_gh_22683():
     b = 777.68760986
     a = np.array([b] * 10000, dtype=object)
