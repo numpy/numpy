@@ -1328,7 +1328,7 @@ def nested_iters(
     axes: Sequence[Sequence[SupportsIndex]],
     flags: Sequence[_NDIterFlagsKind] | None = ...,
     op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = ...,
-    op_dtypes: DTypeLike | None | Sequence[DTypeLike | None] = ...,
+    op_dtypes: DTypeLike | Sequence[DTypeLike | None] | None = ...,
     order: _OrderKACF = ...,
     casting: _CastingKind = ...,
     buffersize: SupportsIndex = ...,
