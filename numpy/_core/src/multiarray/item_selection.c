@@ -33,6 +33,7 @@
 #include "arraytypes.h"
 #include "array_coercion.h"
 #include "simd/simd.h"
+#include "abstractdtypes.h"
 
 static NPY_GCC_OPT_3 inline int
 npy_fasttake_impl(
@@ -2027,10 +2028,26 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArray_ArgBinSearchFunc *argbinsearch = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Find common type */
-    dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
+    /*
+     * Convert op2 to an array first to properly handle Python scalars with
+     * NEP 50 promotion rules. We use a temporary conversion to detect if
+     * op2 is a Python scalar and mark it appropriately.
+     */
+    PyArrayObject *op2_tmp = (PyArrayObject *)PyArray_FROM_O(op2);
+    if (op2_tmp == NULL) {
+        goto fail;
+    }
+    
+    /* Mark if op2 was a Python scalar for proper NEP 50 promotion */
+    npy_mark_tmp_array_if_pyscalar(op2, op2_tmp, NULL);
+    
+    /* Now use ResultType with both arrays for proper promotion */
+    PyArrayObject *arrs[2] = { op1, op2_tmp };
+    dtype = PyArray_ResultType(2, arrs, 0, NULL);
+    Py_DECREF(op2_tmp);
+    
     if (dtype == NULL) {
-        return NULL;
+        goto fail;
     }
 
     /* Look for binary search function */
@@ -2045,6 +2062,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         Py_DECREF(dtype);
         return NULL;
     }
+    
 
     /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
@@ -2070,6 +2088,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     /* dtype is stolen, after this we have no reference */
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
                                 1, 1, ap1_flags, NULL);
+
     if (ap1 == NULL) {
         goto fail;
     }
