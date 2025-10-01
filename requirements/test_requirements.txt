@@ -12,7 +12,7 @@ pytest-timeout
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # NOTE: Keep mypy in sync with environment.yml
-mypy==1.18.1; platform_python_implementation != "PyPy"
+mypy==1.18.2; platform_python_implementation != "PyPy"
 typing_extensions>=4.5.0
 # for optional f2py encoding detection
 charset-normalizer
