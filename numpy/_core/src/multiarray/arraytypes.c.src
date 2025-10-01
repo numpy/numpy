@@ -4383,6 +4383,7 @@ static int
 #define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
 #define HALF_NEG_MAX 64511   /* Bit pattern for -65504.0 */
 #define HALF_EPSILON 5120
+#define HALF_TRUE_MIN 0x0001 /* Bit pattern for smallest positive subnormal: 2^-24 */
 #define HALF_MAX_EXP 16
 #define HALF_MIN_EXP -14
 #define HALF_MANT_DIG 10
@@ -4398,6 +4399,20 @@ static int
     defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
     #undef LDBL_EPSILON
     #define LDBL_EPSILON 2.46519032881566189191e-32L  /* 2^-105 */
+#endif
+
+/*
+ * Define *_TRUE_MIN macros for smallest subnormal values if not available.
+ * Use nextafter(0, 1) to get the smallest positive representable value.
+ */
+#ifndef FLT_TRUE_MIN
+    #define FLT_TRUE_MIN npy_nextafterf(0.0f, 1.0f)
+#endif
+#ifndef DBL_TRUE_MIN
+    #define DBL_TRUE_MIN npy_nextafter(0.0, 1.0)
+#endif
+#ifndef LDBL_TRUE_MIN
+    #define LDBL_TRUE_MIN npy_nextafterl(0.0L, 1.0L)
 #endif
 
 /**begin repeat
@@ -4449,38 +4464,7 @@ static int
             val = @ABB@_MIN;
             break;
         case NPY_CONSTANT_finfo_smallest_subnormal:
-            /*
-             * Prefer C11 *_TRUE_MIN macros when available (compile-time constant).
-             * Fall back to nextafter() for portability when macros are undefined.
-             * nextafter(0, 1) returns the smallest positive representable value,
-             * which is the smallest subnormal for IEEE 754 formats.
-             */
-            if (sizeof(@type@) == sizeof(npy_half)) {
-                /* float16: use bit pattern 0x0001 (2^-24) directly */
-                npy_uint16 bits = 0x0001;
-                memcpy(&val, &bits, sizeof(npy_half));
-            }
-            else if (sizeof(@type@) == sizeof(npy_float)) {
-                #ifdef FLT_TRUE_MIN
-                    val = FLT_TRUE_MIN;
-                #else
-                    val = npy_nextafterf(0.0f, 1.0f);
-                #endif
-            }
-            else if (sizeof(@type@) == sizeof(npy_double)) {
-                #ifdef DBL_TRUE_MIN
-                    val = DBL_TRUE_MIN;
-                #else
-                    val = npy_nextafter(0.0, 1.0);
-                #endif
-            }
-            else {  // long double
-                #ifdef LDBL_TRUE_MIN
-                    val = LDBL_TRUE_MIN;
-                #else
-                    val = npy_nextafterl(0.0L, 1.0L);
-                #endif
-            }
+            val = @ABB@_TRUE_MIN;
             break;
         case NPY_CONSTANT_finfo_nmant:
             *(npy_intp *)ptr = @ABB@_MANT_DIG;
