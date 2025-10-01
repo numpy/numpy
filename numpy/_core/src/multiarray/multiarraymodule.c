@@ -4352,7 +4352,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     } finfo_constants[] = {
         {"max", NPY_CONSTANT_maximum_finite, 0},
         {"min", NPY_CONSTANT_minimum_finite, 0},
-        {"_radix", NPY_CONSTANT_finfo_radix, 1},
+        {"_radix", NPY_CONSTANT_finfo_radix, 0},
         {"eps", NPY_CONSTANT_finfo_eps, 0},
         {"smallest_normal", NPY_CONSTANT_finfo_smallest_normal, 0},
         {"smallest_subnormal", NPY_CONSTANT_finfo_smallest_subnormal, 0},
@@ -4360,11 +4360,11 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         {"minexp", NPY_CONSTANT_finfo_min_exp, 1},
         {"maxexp", NPY_CONSTANT_finfo_max_exp, 1},
         {"precision", NPY_CONSTANT_finfo_decimal_digits, 1},
-        {NULL, -1},
     };
+    static const int n_finfo_constants = sizeof(finfo_constants) / sizeof(finfo_constants[0]);
 
     int n_float_constants = 0;
-    for (int i = 0; finfo_constants[i].name != NULL; i++) {
+    for (int i = 0; i < n_finfo_constants; i++) {
         if (!finfo_constants[i].is_int) {
             n_float_constants++;
         }
@@ -4384,7 +4384,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     buffer_data = PyArray_BYTES(buffer_array);
     npy_intp elsize = PyArray_DESCR(buffer_array)->elsize;
 
-    for (int i = 0; finfo_constants[i].name != NULL; i++) 
+    for (int i = 0; i < n_finfo_constants; i++) 
     {
         PyObject *value_obj;
         if (!finfo_constants[i].is_int) {
