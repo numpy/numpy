@@ -5034,11 +5034,11 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __rpow__(self, other: complex, mod: None = None, /) -> float64 | complex128: ...
 
-    def __mod__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[override]
-    def __rmod__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[override]
+    def __mod__(self, other: _Float64_co, /) -> float64: ...
+    def __rmod__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
 
-    def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
-    def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
+    def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...
+    def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[misc]
 
 half: TypeAlias = float16
 single: TypeAlias = float32
