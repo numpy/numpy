@@ -83,7 +83,9 @@ class TestDetMatrix(DetCases, MatrixTestCase):
     pass
 
 
-@pytest.mark.thread_unsafe(reason="residuals not calculated properly for square tests")
+@pytest.mark.thread_unsafe(
+    reason="residuals not calculated properly for square tests (gh-29851)"
+)
 class TestLstsqMatrix(LstsqCases, MatrixTestCase):
     pass
 
