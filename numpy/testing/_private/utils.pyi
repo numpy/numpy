@@ -358,11 +358,11 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 #
-@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
-@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
 
 #
