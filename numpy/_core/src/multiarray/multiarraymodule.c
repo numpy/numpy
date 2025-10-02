@@ -4378,7 +4378,6 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             descr, 1, dims, NULL, NULL, 0, NULL);
     if (buffer_array == NULL) {
-        Py_DECREF(descr);
         return NULL;
     }
     buffer_data = PyArray_BYTES(buffer_array);
