@@ -2470,12 +2470,19 @@ class TestMethods:
         with pytest.raises(AssertionError):
             assert_array_equal(a, b)
 
-    def test__deepcopy___void_scalar(self):
-        # gh-xxxx
-        v = np.void('Rex', dtype=[('name', 'U10')])
-        w = v.__deepcopy__(None)
-        v[0] = None
-        assert w[0] == 'Rex'
+    def test__deepcopy___void_scalar(self, dtype):
+        # see comments in gh-29643
+        value = np.void('Rex', dtype=[('name', 'U10')])
+        value_deepcopy = value.__deepcopy__(None)
+        value[0] = None
+        assert value_deepcopy[0] == 'Rex'
+
+    @pytest.mark.parametrize("dtype", [np.int64, np.float32, np.float64])
+    def test__deepcopy__scalar(self):
+        # test optimization from gh-29656
+        value = dtype(1.1)
+        value_deepcopy = value.__deepcopy__(None)
+        assert value is value_deepcopy
 
     def test__deepcopy__catches_failure(self):
         class MyObj:
