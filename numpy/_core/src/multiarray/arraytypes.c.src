@@ -1351,7 +1351,7 @@ static void
     while (n--) {
         @type1@ t = (@type1@)*ip++;
 
-        *op++ = t;
+        *op++ = (@type2@)t;
 #if @steps@ == 2  /* complex type */
         *op++ = 0;
 #endif

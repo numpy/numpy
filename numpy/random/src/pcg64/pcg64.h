@@ -339,7 +339,8 @@ static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
 static inline uint64_t
 pcg_setseq_128_xsl_rr_64_boundedrand_r(pcg_state_setseq_128 *rng,
                                        uint64_t bound) {
-  uint64_t threshold = -bound % bound;
+  // MSVC warns on unary minus with unsigned
+  uint64_t threshold = (uint64_t)(0 - bound) % bound;
   for (;;) {
     uint64_t r = pcg_setseq_128_xsl_rr_64_random_r(rng);
     if (r >= threshold)

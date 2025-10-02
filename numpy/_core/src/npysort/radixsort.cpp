@@ -26,8 +26,7 @@ KEY_OF(UT x)
     if (std::is_floating_point<T>::value) {
         // For floats, we invert the key if the sign bit is set, else we invert
         // the sign bit.
-        return ((x) ^ (-((x) >> (sizeof(T) * 8 - 1)) |
-                       ((UT)1 << (sizeof(T) * 8 - 1))));
+        return x ^ ((UT)(- (int)(x >> (sizeof(T) * 8 - 1))) | ((UT)1 << (sizeof(T) * 8 - 1)));
     }
     else if (std::is_signed<T>::value) {
         // For signed ints, we flip the sign bit so the negatives are below the

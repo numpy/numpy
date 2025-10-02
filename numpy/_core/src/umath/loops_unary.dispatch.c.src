@@ -10,6 +10,11 @@
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
 
+#if defined(_MSC_VER)
+// Suppress warn C4146: -x is valid for unsigned (wraps around)
+#pragma warning(disable:4146)
+#endif
+
 /*******************************************************************************
  ** Scalar ops
  ******************************************************************************/

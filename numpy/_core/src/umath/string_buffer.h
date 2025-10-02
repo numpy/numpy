@@ -17,6 +17,12 @@
 #define CHECK_OVERFLOW(index) if (buf + (index) >= after) return 0
 #define MSB(val) ((val) >> 7 & 1)
 
+#ifdef _MSC_VER
+// MSVC sometimes complains (C4715: "not all control paths return a value")
+// on switch statements over enum classes, even though all enum values are covered.
+// This warning is suppressed here to avoid invasive changes.
+#   pragma warning(disable:4715)
+#endif
 
 enum class ENCODING {
     ASCII, UTF32, UTF8
