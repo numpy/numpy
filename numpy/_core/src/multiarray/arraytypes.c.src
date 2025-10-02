@@ -4398,7 +4398,7 @@ static int
 #if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
     defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
     #undef LDBL_EPSILON
-    #define LDBL_EPSILON 2.46519032881566189191e-32L  /* 2^-105 */
+    #define LDBL_EPSILON 0x1p-105L  /* 2^-105 */
 #endif
 
 /*
