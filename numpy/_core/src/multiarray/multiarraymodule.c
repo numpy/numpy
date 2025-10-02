@@ -4421,7 +4421,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
         }
     }
 
-  Py_DECREF(buffer_array);
+    Py_DECREF(buffer_array);
     Py_RETURN_NONE;
   fail:
     Py_XDECREF(buffer_array);
