@@ -498,10 +498,10 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtyp
 #define NPY_CONSTANT_finfo_smallest_normal 11
 #define NPY_CONSTANT_finfo_smallest_subnormal 12
 /* Constants that are always of integer type, value is `npy_intp/Py_ssize_t` */
-#define NPY_CONSTANT_finfo_nmant 13
-#define NPY_CONSTANT_finfo_min_exp 14
-#define NPY_CONSTANT_finfo_max_exp 15
-#define NPY_CONSTANT_finfo_decimal_digits 16
+#define NPY_CONSTANT_finfo_nmant (1 << 16) + 0
+#define NPY_CONSTANT_finfo_min_exp (1 << 16) + 1
+#define NPY_CONSTANT_finfo_max_exp (1 << 16) + 2
+#define NPY_CONSTANT_finfo_decimal_digits (1 << 16) + 3
 
 /* It may make sense to continue with other constants here, e.g. pi, etc? */
 
