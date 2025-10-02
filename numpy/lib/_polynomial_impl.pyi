@@ -137,20 +137,22 @@ def polyfit(
     x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co,
     deg: SupportsIndex | SupportsInt,
-    rcond: float | None = ...,
-    full: L[False] = ...,
-    w: _ArrayLikeFloat_co | None = ...,
-    cov: L[True, "unscaled"] = ...,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
 ) -> _2Tup[NDArray[float64]]: ...
 @overload
 def polyfit(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co,
     deg: SupportsIndex | SupportsInt,
-    rcond: float | None = ...,
-    full: L[False] = ...,
-    w: _ArrayLikeFloat_co | None = ...,
-    cov: L[True, "unscaled"] = ...,
+    rcond: float | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
 ) -> _2Tup[NDArray[complex128]]: ...
 @overload
 def polyfit(
