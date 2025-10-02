@@ -462,7 +462,7 @@ class Generator:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         endpoint: bool = False,
     ) -> Any: ...
     @overload
@@ -471,7 +471,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         endpoint: bool = False,
     ) -> NDArray[Any]: ...
 
