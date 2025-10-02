@@ -677,72 +677,72 @@ class ArrayFunctionInterceptor:
         self.called = True
         return "intercepted"
 
-def test_polyval2d_array_function_hook():
-    x = ArrayFunctionInterceptor()
-    y = ArrayFunctionInterceptor()
-    c = ArrayFunctionInterceptor()
-    result = np.polynomial.polynomial.polyval2d(x, y, c)
-    assert result == "intercepted"
+class TestArrayAPICompatibility:
+    """Array API compatibility tests for polynomial functions."""
 
-def test_polygrid2d_array_function_hook():
-    x = ArrayFunctionInterceptor()
-    y = ArrayFunctionInterceptor()
-    c = ArrayFunctionInterceptor()
-    result = np.polynomial.polynomial.polygrid2d(x, y, c)
-    assert result == "intercepted"
+    def test_polyval2d_array_function_hook(self):
+        x = ArrayFunctionInterceptor()
+        y = ArrayFunctionInterceptor()
+        c = ArrayFunctionInterceptor()
+        # Just check dispatch works
+        assert np.polynomial.polynomial.polyval2d(x, y, c) == "intercepted"
 
-def test_polyval_with_jax_array_tensor(self):
-    jnp = pytest.importorskip("jax.numpy")
-    b = jnp.array([[1, 2, 3], [2, 3, 4]])
-    c = jnp.array(b)
-    # tensor=True should broadcast like NumPy
-    np_result = poly.polyval(np.array(b), np.array(b), tensor=True)
-    jax_result = poly.polyval(b, c, tensor=True)
-    assert np.allclose(np_result, np.array(jax_result), atol=1e-12)
+    def test_polygrid2d_array_function_hook(self):
+        x = ArrayFunctionInterceptor()
+        y = ArrayFunctionInterceptor()
+        c = ArrayFunctionInterceptor()
+        assert np.polynomial.polynomial.polygrid2d(x, y, c) == "intercepted"
 
-def test_polyval_with_cupy_array_tensor(self):
-    cp = pytest.importorskip("cupy")
-    b = cp.array([[1, 2], [3, 4]])
-    c = cp.array([1., 2., 3.])
-    # tensor=True with CuPy
-    np_result = poly.polyval(np.array([[1, 2], [3, 4]]), [1., 2., 3.], tensor=True)
-    cp_result = poly.polyval(b, c, tensor=True)
-    assert np.allclose(cp.asnumpy(cp_result), np_result, atol=1e-12)
+    def test_polyval_with_jax_array_tensor(self):
+        jnp = pytest.importorskip("jax.numpy")
+        b = jnp.array([[1, 2, 3], [2, 3, 4]])
+        c = jnp.array(b)
+        np_result = poly.polyval(np.array(b), np.array(b), tensor=True)
+        jax_result = poly.polyval(b, c, tensor=True)
+        assert np.allclose(np_result, np.array(jax_result), atol=1e-12)
 
-def test_polyval_scalar_behavior_preserved(self):
-    # scalars must still work
-    assert poly.polyval(2, [1, 2, 3]) == 17
-    # polynomial objects must behave as algebraic scalars
-    p = poly.Polynomial([1, 2])
-    res = poly.polyval(p, [0, 1])
-    assert isinstance(res, poly.Polynomial)
+    def test_polyval_with_cupy_array_tensor(self):
+        cp = pytest.importorskip("cupy")
+        b = cp.array([[1, 2], [3, 4]])
+        c = cp.array([1.0, 2.0, 3.0])
+        np_result = poly.polyval(np.array([[1, 2], [3, 4]]),
+                                 [1.0, 2.0, 3.0], tensor=True)
+        cp_result = poly.polyval(b, c, tensor=True)
+        assert np.allclose(cp.asnumpy(cp_result), np_result, atol=1e-12)
 
-def test_polyval_zero_dim_array(self):
-    x = np.array(3.0)  # 0-D array
-    c = np.array([1., 2., 3.])
-    res = poly.polyval(x, c)
-    assert res.shape == ()  # still scalar
-    assert np.allclose(res, 1 + 2 * 3 + 3 * 9)
+    def test_polyval_scalar_behavior_preserved(self):
+        assert poly.polyval(2, [1, 2, 3]) == 17
+        p = poly.Polynomial([1, 2])
+        res = poly.polyval(p, [0, 1])
+        assert isinstance(res, poly.Polynomial)
 
-def test_polyval_empty_array(self):
-    res = poly.polyval(np.array([]), [1., 2., 3.])
-    assert res.shape == (0,)
+    def test_polyval_zero_dim_array(self):
+        x = np.array(3.0)
+        c = np.array([1.0, 2.0, 3.0])
+        res = poly.polyval(x, c)
+        assert res.shape == ()
+        assert np.allclose(res, 1 + 2 * 3 + 3 * 9)
 
-def test_polyval_object_dtype(self):
-    # object arrays should still work
-    arr = np.array([1, 2, 3], dtype=object)
-    coef = np.array([1, 2], dtype=object)
-    res = poly.polyval(arr, coef)
-    assert res.dtype == object
-    assert res.tolist() == [3, 5, 7]
+    def test_polyval_empty_array(self):
+        res = poly.polyval(np.array([]), [1.0, 2.0, 3.0])
+        assert res.shape == (0,)
 
-def test_polyval_tensor_true_vs_false(self):
-    x = np.array([1, 2])
-    c = np.array([[1, 2], [3, 4]])  # two polynomials
-    # tensor=True → broadcast evaluation
-    t_res = poly.polyval(x, c, tensor=True)
-    f_res = poly.polyval(x, c, tensor=False)
-    assert t_res.shape != f_res.shape  # shapes must differ
-    # both must be numerically consistent in their semantics
-    assert np.allclose(t_res[0], poly.polyval(x, c[:, 0]))
-    assert np.allclose(f_res, [poly.polyval(x, c[:, i]) for i in range(c.shape[1])])
+    def test_polyval_object_dtype(self):
+        arr = np.array([1, 2, 3], dtype=object)
+        coef = np.array([1, 2], dtype=object)
+        res = poly.polyval(arr, coef)
+        assert res.dtype == object
+        assert res.tolist() == [3, 5, 7]
+
+    def test_polyval_tensor_true_vs_false(self):
+        x = np.array([1, 2])
+        c = np.array([[1, 2], [3, 4]])
+
+        t_res = poly.polyval(x, c, tensor=True)
+        f_res = poly.polyval(x, c, tensor=False)
+
+        assert t_res.shape != f_res.shape
+        assert np.allclose(t_res[0], poly.polyval(x, c[:, 0]))
+
+        expected = np.array([poly.polyval(x, c[:, i]) for i in range(c.shape[1])])
+        assert np.allclose(f_res, expected)
