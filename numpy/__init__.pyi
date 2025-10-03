@@ -1553,10 +1553,10 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     @overload
     def __rmul__(self, value: SupportsIndex, /) -> dtype: ...
 
-    def __gt__(self, other: DTypeLike, /) -> builtins.bool: ...
-    def __ge__(self, other: DTypeLike, /) -> builtins.bool: ...
-    def __lt__(self, other: DTypeLike, /) -> builtins.bool: ...
-    def __le__(self, other: DTypeLike, /) -> builtins.bool: ...
+    def __gt__(self, other: DTypeLike | None, /) -> builtins.bool: ...
+    def __ge__(self, other: DTypeLike | None, /) -> builtins.bool: ...
+    def __lt__(self, other: DTypeLike | None, /) -> builtins.bool: ...
+    def __le__(self, other: DTypeLike | None, /) -> builtins.bool: ...
 
     # Explicitly defined `__eq__` and `__ne__` to get around mypy's
     # `strict_equality` option; even though their signatures are
@@ -2054,7 +2054,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         shape: _ShapeLike,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         buffer: _SupportsBuffer | None = ...,
         offset: SupportsIndex = ...,
         strides: _ShapeLike | None = ...,
@@ -2558,7 +2558,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def astype(
         self,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: builtins.bool = ...,
@@ -3618,7 +3618,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def astype(
         self,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None,
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: builtins.bool = ...,
@@ -5799,7 +5799,7 @@ class nditer:
         op: ArrayLike | Sequence[ArrayLike | None],
         flags: Sequence[_NDIterFlagsKind] | None = ...,
         op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = ...,
-        op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
+        op_dtypes: DTypeLike | Sequence[DTypeLike | None] | None = ...,
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         op_axes: Sequence[Sequence[SupportsIndex]] | None = ...,
@@ -6009,7 +6009,7 @@ class matrix(ndarray[_2DShapeT_co, _DTypeT_co]):
     def __new__(
         subtype,  # pyright: ignore[reportSelfClsParameterName]
         data: ArrayLike,
-        dtype: DTypeLike = ...,
+        dtype: DTypeLike | None = ...,
         copy: builtins.bool = ...,
     ) -> matrix[_2D, Incomplete]: ...
     def __array_finalize__(self, obj: object) -> None: ...

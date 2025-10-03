@@ -219,7 +219,7 @@ def asarray_chkfinite(
 @overload
 def asarray_chkfinite(
     a: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     order: _OrderKACF = None,
 ) -> NDArray[Any]: ...
 
@@ -472,7 +472,7 @@ def cov(
     fweights: ArrayLike | None = None,
     aweights: ArrayLike | None = None,
     *,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
 ) -> NDArray[Any]: ...
 
 # NOTE `bias` and `ddof` are deprecated and ignored

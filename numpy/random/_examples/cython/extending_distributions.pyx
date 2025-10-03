@@ -92,7 +92,6 @@ def uniforms_ex(bit_generator, Py_ssize_t n, dtype=np.float64):
         Desired dtype, either 'd' (or 'float64') or 'f' (or 'float32'). The
         default dtype value is 'd'
     """
-    cdef Py_ssize_t i
     cdef bitgen_t *rng
     cdef const char *capsule_name = "BitGenerator"
     cdef np.ndarray randoms
