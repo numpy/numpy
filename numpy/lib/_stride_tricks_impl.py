@@ -154,7 +154,10 @@ def sliding_window_view(x, window_shape, axis=None, *,
         as this should be used with caution: the returned view contains the
         same memory location multiple times, so writing to one location will
         cause others to change.
-
+        .. warning::
+            This function creates views with overlapping memory. When
+            ``writeable=True``, writing to the view will modify the original
+            array and may affect multiple positions in the view.
     Returns
     -------
     view : ndarray
@@ -298,6 +301,47 @@ def sliding_window_view(x, window_shape, axis=None, *,
     array([1., 2., 3., 4.])
 
     Note that a sliding window approach is often **not** optimal (see Notes).
+
+    Creating a view with `writeable=False` and then writing to it raises an error.
+
+    >>> x = np.arange(6)
+    >>> x.shape
+    (6,)
+    >>> x
+    array([0, 1, 2, 3, 4, 5])
+    >>> v = sliding_window_view(x, 3)   # create view with default writeable=False
+    >>> v.shape
+    (4, 3)
+    >>> v
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4],
+           [3, 4, 5]])
+    >>> v[0,1] = 10    # writing to view will raise error
+    Traceback (most recent call last):
+    File "", line 1, in 
+    ValueError: assignment destination is read-only
+
+
+    Creating a view with `writeable=True` and then writing to it changes the value in the original array and multiple view positions.
+
+    >>> v = sliding_window_view(x, 3, writeable=True)   # create view with writeable=True
+    >>> v
+    array([[0, 1, 2],
+           [1, 2, 3],
+           [2, 3, 4],
+           [3, 4, 5]])
+    >>> x
+    array([0, 1, 2, 3, 4, 5])
+    >>> v[0,1] = 10   # write to position in view
+    >>> x
+    array([ 0, 10,  2,  3,  4,  5])   # value modified in original array
+    >>> v   # all positions referencing that value have changed
+    array([[ 0, 10,  2],
+           [10,  2,  3],
+           [ 2,  3,  4],
+           [ 3,  4,  5]])
+
     """
     window_shape = (tuple(window_shape)
                     if np.iterable(window_shape)
