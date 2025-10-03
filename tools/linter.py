@@ -31,6 +31,18 @@ class DiffLinter:
         )
         return res.returncode, res.stdout
 
+    def run_cython_lint(self) -> tuple[int, str]:
+        print("Running cython-lint...")
+        command = ["cython-lint", "--no-pycodestyle", "numpy"]
+
+        res = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            cwd=self.repository_root,
+            encoding="utf-8",
+        )
+        return res.returncode, res.stdout
+
     def run_lint(self, fix: bool) -> None:
 
         # Ruff Linter
@@ -43,6 +55,13 @@ class DiffLinter:
         # C API Borrowed-ref Linter
         retcode, c_API_errors = self.run_check_c_api()
         c_API_errors and print(c_API_errors)
+
+        if retcode:
+            sys.exit(retcode)
+
+        # Cython Linter
+        retcode, cython_errors = self.run_cython_lint()
+        cython_errors and print(cython_errors)
 
         sys.exit(retcode)
 
