@@ -24,7 +24,8 @@ class TestTake:
         # default (non-specialized) path.
         types = int, object, np.dtype([('', 'i2', 3)])
         for t in types:
-            # ta works, even if the array may be odd if buffer interface is used
+            # ta works, even if the array may be odd if buffer interface is
+            # used
             ta = np.array(a if np.issubdtype(t, np.number) else a_str, dtype=t)
             tresult = list(ta.T.copy())
             for index_array in index_arrays:
@@ -169,8 +170,8 @@ class TestPut:
 
 class TestSearchSorted:
     def test_large_uint64(self):
-        a = np.arange(2**62, 2**62+100, 1, dtype=np.uint64)
-        result = np.searchsorted(a, 2**62+25)
+        a = np.arange(2**62, 2**62 + 100, 1, dtype=np.uint64)
+        result = np.searchsorted(a, 2**62 + 25)
         assert result == 25
 
     def test_python_int_scalar(self):
