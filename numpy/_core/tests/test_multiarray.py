@@ -2477,10 +2477,10 @@ class TestMethods:
         value[0] = None
         assert value_deepcopy[0] == 'Rex'
 
-    @pytest.mark.parametrize("dtype", [np.int64, np.float32, np.float64])
-    def test__deepcopy__scalar(self):
+    @pytest.mark.parametrize("sctype", [np.int64, np.float32, np.float64])
+    def test__deepcopy__scalar(self, sctype):
         # test optimization from gh-29656
-        value = dtype(1.1)
+        value = sctype(1.1)
         value_deepcopy = value.__deepcopy__(None)
         assert value is value_deepcopy
 
