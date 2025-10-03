@@ -2470,7 +2470,7 @@ class TestMethods:
         with pytest.raises(AssertionError):
             assert_array_equal(a, b)
 
-    def test__deepcopy___void_scalar(self, dtype):
+    def test__deepcopy___void_scalar(self):
         # see comments in gh-29643
         value = np.void('Rex', dtype=[('name', 'U10')])
         value_deepcopy = value.__deepcopy__(None)
