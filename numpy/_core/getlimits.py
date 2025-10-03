@@ -242,11 +242,11 @@ class finfo:
 
     @cached_property
     def machep(self):
-        return frexp(self.eps)[1]
+        return int(math.log2(self.eps))
 
     @cached_property
     def negep(self):
-        return frexp(self.epsneg)[1]
+        return int(math.log2(self.epsneg))
 
     @cached_property
     def nexp(self):

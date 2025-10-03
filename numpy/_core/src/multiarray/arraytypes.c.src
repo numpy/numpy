@@ -4379,14 +4379,18 @@ static int
 }
 /**end repeat**/
 
+/* 
+Keeping Half macros consistent with standard C 
+Refernce: https://en.cppreference.com/w/c/types/limits.html
+*/
 #define HALF_MAX 31743       /* Bit pattern for 65504.0 */
 #define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
 #define HALF_NEG_MAX 64511   /* Bit pattern for -65504.0 */
 #define HALF_EPSILON 5120
 #define HALF_TRUE_MIN 0x0001 /* Bit pattern for smallest positive subnormal: 2^-24 */
 #define HALF_MAX_EXP 16
-#define HALF_MIN_EXP -14
-#define HALF_MANT_DIG 10
+#define HALF_MIN_EXP -13
+#define HALF_MANT_DIG 11    /* 10 + 1 (implicit) */
 #define HALF_DIG 3
 
 /*
@@ -4467,10 +4471,15 @@ static int
             val = @ABB@_TRUE_MIN;
             break;
         case NPY_CONSTANT_finfo_nmant:
-            *(npy_intp *)ptr = @ABB@_MANT_DIG;
+            *(npy_intp *)ptr = @ABB@_MANT_DIG - 1;
             return 1;
         case NPY_CONSTANT_finfo_min_exp:
-            *(npy_intp *)ptr = @ABB@_MIN_EXP;
+            /*
+            Definition: Minimum negative integer such that FLT_RADIX raised by power one less than that integer is a normalized float, double and long double respectively
+
+            refernce: https://en.cppreference.com/w/c/types/limits.html
+            */
+            *(npy_intp *)ptr = @ABB@_MIN_EXP - 1;
             return 1;
         case NPY_CONSTANT_finfo_max_exp:
             *(npy_intp *)ptr = @ABB@_MAX_EXP;

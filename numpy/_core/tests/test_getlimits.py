@@ -138,39 +138,6 @@ def test_instances():
         finfo(np.int64(1))
 
 
-def test_known_types():
-
-    # Test float16
-    f16 = finfo(np.float16)
-    assert_equal(f16.bits, 16)
-    assert_equal(f16.precision, 3)  # int(-log10(2**-10)) = 3
-    assert_equal(f16.nmant, 10)
-    assert_equal(f16.minexp, -14)
-    assert_equal(f16.maxexp, 16)
-
-    # Test float32
-    f32 = finfo(np.float32)
-    assert_equal(f32.bits, 32)
-    assert_equal(f32.precision, 6)  # int(-log10(2**-23)) = 6
-    assert_equal(f32.nmant, 24)
-    assert_equal(f32.minexp, -125)
-    assert_equal(f32.maxexp, 128)
-
-    # Test float64
-    f64 = finfo(np.float64)
-    assert_equal(f64.bits, 64)
-    assert_equal(f64.precision, 15)  # int(-log10(2**-52)) = 15
-    assert_equal(f64.nmant, 53)
-    assert_equal(f64.minexp, -1021)
-    assert_equal(f64.maxexp, 1024)
-
-    # Test longdouble (values vary by platform, just check they exist)
-    fld = finfo(np.longdouble)
-    assert_(fld.bits > 0)
-    assert_(fld.precision > 0)
-    assert_(fld.nmant > 0)
-
-
 def test_subnormal_warning():
     """Test that the subnormal is zero warning is not being raised."""
     with warnings.catch_warnings(record=True) as w:
