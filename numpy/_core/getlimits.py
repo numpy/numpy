@@ -12,7 +12,6 @@ from numpy._utils import set_module
 
 from . import numeric, numerictypes as ntypes
 from ._multiarray_umath import _populate_finfo_constants
-from .umath import frexp
 
 
 def _fr0(a):

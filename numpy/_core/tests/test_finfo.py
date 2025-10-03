@@ -1,7 +1,8 @@
 import pytest
+
 import numpy as np
-from numpy._core import numerictypes as ntypes
 from numpy import exp2, log10
+from numpy._core import numerictypes as ntypes
 
 
 class MachArLike:
@@ -65,17 +66,17 @@ def float64_ma():
     (np.float64, "float64_ma"),
 ])
 @pytest.mark.parametrize("prop", [
-    'machep', 'negep', 'minexp', 'maxexp', 'nmant', 'iexp', 
+    'machep', 'negep', 'minexp', 'maxexp', 'nmant', 'iexp',
     'eps', 'epsneg', 'precision', 'resolution'
 ])
 def test_finfo_properties(dtype, ma_fixture, prop, request):
     """Test that finfo properties match expected machine arithmetic values."""
     ma = request.getfixturevalue(ma_fixture)
     finfo = np.finfo(dtype)
-    
+
     actual = getattr(finfo, prop)
     expected = getattr(ma, prop)
-    
+
     assert actual == expected, (
         f"finfo({dtype}) property '{prop}' mismatch: "
         f"expected {expected}, got {actual}"
