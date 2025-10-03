@@ -891,7 +891,7 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
 #    define _ROUND_TRIP(x) (x)
 #  elif @is_bool2@
 #    define _CONVERT_FN(x) ((npy_bool)!npy_half_iszero(x))
-#    define _ROUND_TRIP(x) npy_float_to_half((!npy_half_iszero(x))
+#    define _ROUND_TRIP(x) npy_float_to_half((float)(!npy_half_iszero(x)))
 #  else
 #    define _CONVERT_FN(x) ((_TYPE2)npy_half_to_float(x))
 #    define _ROUND_TRIP(x) npy_float_to_half((float)_CONVERT_FN(x))
