@@ -56,6 +56,9 @@ class DiffLinter:
         retcode, c_API_errors = self.run_check_c_api()
         c_API_errors and print(c_API_errors)
 
+        if retcode:
+            sys.exit(retcode)
+
         # Cython Linter
         retcode, cython_errors = self.run_cython_lint()
         cython_errors and print(cython_errors)
