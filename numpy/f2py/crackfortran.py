@@ -3022,10 +3022,6 @@ def param_eval(v, g_params, params, dimspec=None):
 
     return p
 
-def _raise_value_error(variable_name: str):
-    """Helper function to raise ValueError from within a lambda."""
-    raise ValueError(f"Variable '{variable_name}' not found in the provided values dictionary.")
-
 def balance_parentheses(s: str) -> str:
     """
     Attempts to balance parentheses in a string by adding opening or closing
@@ -3057,11 +3053,19 @@ def replace_variables_in_equation(d: str, params: dict) -> str:
         A new string with variables replaced by their values.
         Raises a ValueError if a variable in the equation is not found in variable_values (which is the parameter dictionary).
     """
-    string_equation=re.sub(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b',
-                  lambda match: str(params[match.group(0)])
-                                if match.group(0) in params
-                                else _raise_value_error(match.group(0)),
-                  d)
+    variable_pattern = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+
+    def replace_match(match):
+        variable_name = match.group(0)
+        if variable_name in params:
+            return str(params[variable_name])
+        else:
+            # If a variable is found in the equation but not in the parameter,
+            # it indicates an undefined variable for the current context.
+            raise ValueError(f"Variable '{variable_name}' not found in parameter dictionary.")
+
+    # Use re.sub with a function to replace each matched variable
+    string_equation = variable_pattern.sub(replace_match, d)
 
 
     balanced_dim=balance_parentheses(string_equation)
@@ -3129,8 +3133,8 @@ def param_parse(d, params):
     if "(" in d:
         # this dimension expression is an array
         # this dimension expression is also a parameter;
-        # parse it recursively using a helper function which also sorts out nested parentheses
-		return str(replace_variables_in_equation(d,params))
+        # parse it using a helper function which also sorts out nested parentheses
+        return str(replace_variables_in_equation(d,params))
     elif d in params:
         return str(params[d])
     else:
