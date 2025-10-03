@@ -4394,10 +4394,10 @@ Refernce: https://en.cppreference.com/w/c/types/limits.html
 #define HALF_DIG 3
 
 /*
- * On PPC64 systems with IBM double-double format, LDBL_EPSILON from the C
- * standard library is incorrect. IBM double-double is a pair of IEEE binary64
- * values (not a true IEEE quad), giving ~106 bits of mantissa precision (53+53).
- * The correct epsilon is 2^-105, but glibc incorrectly returns 2^-1074 (DBL_TRUE_MIN).
+ * On PPC64 systems with IBM double-double format pair of IEEE binary64
+ * values (not a true IEEE quad). We derived the values based on the Interval machine epsilon definition of epsilon,
+ * difference between 1.0 and the next representable floating-point number larger than 1.0
+ * ~106 bits of mantissa precision (53+53) gives epsilon of 2^-105, but glibc returns 2^-1074 (DBL_TRUE_MIN).
  */
 #if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
     defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
