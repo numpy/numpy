@@ -677,9 +677,6 @@ else:
 
     from ._array_api_info import __array_namespace_info__
 
-    # now that numpy core module is imported, can initialize limits
-    _core.getlimits._register_known_types()
-
     __all__ = list(
         __numpy_submodules__ |
         set(_core.__all__) |

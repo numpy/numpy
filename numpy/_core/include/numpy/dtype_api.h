@@ -379,6 +379,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
+#define NPY_DT_get_constant 12
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -389,7 +390,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 
 // used to separate dtype slots from arrfuncs slots
 // intended only for internal use but defined here for clarity
-#define _NPY_DT_ARRFUNCS_OFFSET (1 << 10)
+#define _NPY_DT_ARRFUNCS_OFFSET (1 << 11)
 
 // Cast is disabled
 // #define NPY_DT_PyArray_ArrFuncs_cast 0 + _NPY_DT_ARRFUNCS_OFFSET
@@ -478,6 +479,42 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_EnsureCanonical)(PyArray_Descr *dtype);
  * views and the descriptor returned by this function is attached to the array.
  */
 typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtype);
+
+/*
+ * Constants that can be queried and used e.g. by reduce identies defaults.
+ * These are also used to expose .finfo and .iinfo for example.
+ */
+/* Numerical constants */
+#define NPY_CONSTANT_zero 1
+#define NPY_CONSTANT_one 2
+#define NPY_CONSTANT_all_bits_set 3
+#define NPY_CONSTANT_maximum_finite 4
+#define NPY_CONSTANT_minimum_finite 5
+#define NPY_CONSTANT_inf 6
+#define NPY_CONSTANT_ninf 7
+#define NPY_CONSTANT_nan 8
+#define NPY_CONSTANT_finfo_radix 9
+#define NPY_CONSTANT_finfo_eps 10
+#define NPY_CONSTANT_finfo_smallest_normal 11
+#define NPY_CONSTANT_finfo_smallest_subnormal 12
+/* Constants that are always of integer type, value is `npy_intp/Py_ssize_t` */
+#define NPY_CONSTANT_finfo_nmant (1 << 16) + 0
+#define NPY_CONSTANT_finfo_min_exp (1 << 16) + 1
+#define NPY_CONSTANT_finfo_max_exp (1 << 16) + 2
+#define NPY_CONSTANT_finfo_decimal_digits (1 << 16) + 3
+
+/* It may make sense to continue with other constants here, e.g. pi, etc? */
+
+/*
+ * Function to get a constant value for the dtype.  Data may be unaligned, the
+ * function is always called with the GIL held.
+ *
+ * @param descr The dtype instance (i.e. self)
+ * @param ID The ID of the constant to get.
+ * @param data Pointer to the data to be written too, may be unaligned.
+ * @returns 1 on success, 0 if the constant is not available, or -1 with an error set.
+ */
+typedef int (PyArrayDTypeMeta_GetConstant)(PyArray_Descr *descr, int ID, void *data);
 
 /*
  * TODO: These two functions are currently only used for experimental DType

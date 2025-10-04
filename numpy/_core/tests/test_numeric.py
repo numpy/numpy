@@ -1000,7 +1000,7 @@ class TestFloatExceptions:
             if np.dtype(ftype).kind == 'f':
                 # Get some extreme values for the type
                 fi = np.finfo(ftype)
-                ft_tiny = fi._machar.tiny
+                ft_tiny = fi.tiny
                 ft_max = fi.max
                 ft_eps = fi.eps
                 underflow = 'underflow'
@@ -1009,7 +1009,7 @@ class TestFloatExceptions:
                 # 'c', complex, corresponding real dtype
                 rtype = type(ftype(0).real)
                 fi = np.finfo(rtype)
-                ft_tiny = ftype(fi._machar.tiny)
+                ft_tiny = ftype(fi.tiny)
                 ft_max = ftype(fi.max)
                 ft_eps = ftype(fi.eps)
                 # The complex types raise different exceptions

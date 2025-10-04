@@ -3,6 +3,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <limits.h>
+#include <float.h>
 #include <assert.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -15,6 +16,7 @@
 #include "npy_pycompat.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
+#include "numpy/dtype_api.h"
 
 #include "npy_config.h"
 #include "npy_sort.h"
@@ -4318,10 +4320,202 @@ PyArray_DescrFromType(int type)
 
 /*
  *****************************************************************************
+ **                           NEWSTYLE TYPE METHODS                         **
+ *****************************************************************************
+ */
+static int
+BOOL_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
+{
+    switch (constant_id) {
+        case NPY_CONSTANT_zero:
+        case NPY_CONSTANT_minimum_finite:
+            *(npy_bool *)ptr = NPY_FALSE;
+            return 1;
+        case NPY_CONSTANT_one:
+        case NPY_CONSTANT_maximum_finite:
+            *(npy_bool *)ptr = NPY_TRUE;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+/**begin repeat
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG#
+ * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *        npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #IS_UNSIGNED = 0, 1, 0, 1, 0, 1,
+ *                0, 1, 0, 1#
+ * #MIN = NPY_MIN_BYTE, 0, NPY_MIN_SHORT, 0, NPY_MIN_INT, 0,
+ *        NPY_MIN_LONG, 0, NPY_MIN_LONGLONG, 0#
+ */
+static int
+@NAME@_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
+{
+    @type@ val;
+    switch (constant_id) {
+        case NPY_CONSTANT_zero:
+            val = 0;
+            break;
+        case NPY_CONSTANT_one:
+            val = 1;
+            break;
+        case NPY_CONSTANT_minimum_finite:
+#if @IS_UNSIGNED@
+            val = 0;
+#else
+            val = @MIN@;
+#endif
+            break;
+        case NPY_CONSTANT_maximum_finite:
+            val = NPY_MAX_@NAME@;
+            break;
+        default:
+            return 0;
+    }
+    @NAME@_copyswap(ptr, &val, !PyArray_ISNBO(descr->byteorder), NULL);
+    return 1;
+}
+/**end repeat**/
+
+/* 
+Keeping Half macros consistent with standard C 
+Refernce: https://en.cppreference.com/w/c/types/limits.html
+*/
+#define HALF_MAX 31743       /* Bit pattern for 65504.0 */
+#define HALF_MIN 1024        /* Bit pattern for smallest positive normal: 2^-14 */
+#define HALF_NEG_MAX 64511   /* Bit pattern for -65504.0 */
+#define HALF_EPSILON 5120
+#define HALF_TRUE_MIN 0x0001 /* Bit pattern for smallest positive subnormal: 2^-24 */
+#define HALF_MAX_EXP 16
+#define HALF_MIN_EXP -13
+#define HALF_MANT_DIG 11    /* 10 + 1 (implicit) */
+#define HALF_DIG 3
+
+/*
+ * On PPC64 systems with IBM double-double format pair of IEEE binary64
+ * values (not a true IEEE quad). We derived the values based on the Interval machine epsilon definition of epsilon,
+ * difference between 1.0 and the next representable floating-point number larger than 1.0
+ * ~106 bits of mantissa precision (53+53) gives epsilon of 2^-105, but glibc returns 2^-1074 (DBL_TRUE_MIN).
+ */
+#if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
+    defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
+    #undef LDBL_EPSILON
+    #define LDBL_EPSILON 0x1p-105L  /* 2^-105 */
+#endif
+
+/*
+ * Define *_TRUE_MIN macros for smallest subnormal values if not available.
+ * Use nextafter(0, 1) to get the smallest positive representable value.
+ */
+#ifndef FLT_TRUE_MIN
+    #define FLT_TRUE_MIN npy_nextafterf(0.0f, 1.0f)
+#endif
+#ifndef DBL_TRUE_MIN
+    #define DBL_TRUE_MIN npy_nextafter(0.0, 1.0)
+#endif
+#ifndef LDBL_TRUE_MIN
+    #define LDBL_TRUE_MIN npy_nextafterl(0.0L, 1.0L)
+#endif
+
+/**begin repeat
+ * #NAME = HALF,FLOAT, DOUBLE, LONGDOUBLE#
+ * #ABB = HALF, FLT, DBL, LDBL#
+ * #type = npy_half, npy_float, npy_double, npy_longdouble#
+ * #RADIX = 16384, 2, 2, 2#
+ * #NEG_MAX = HALF_NEG_MAX, -FLT_MAX, -DBL_MAX, -LDBL_MAX#
+ */
+static int
+@NAME@_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
+{
+    @type@ val;
+    switch (constant_id) {
+        case NPY_CONSTANT_zero:
+            val = 0;
+            break;
+        case NPY_CONSTANT_one:
+            val = 1;
+            break;
+        case NPY_CONSTANT_minimum_finite:
+            val = @NEG_MAX@;
+            break;
+        case NPY_CONSTANT_maximum_finite:
+            #if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE) || \
+                defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE)
+                /* For IBM double-double, use nextafter(inf, 0) to get the true
+                 * maximum representable value (matches old MachArLike behavior) */
+                if (sizeof(@type@) == sizeof(npy_longdouble)) {
+                    val = npy_nextafterl((@type@)NPY_INFINITY, (@type@)0.0L);
+                    break;
+                }
+            #endif
+            val = @ABB@_MAX;
+            break;
+        case NPY_CONSTANT_inf:
+            val = (@type@)NPY_INFINITYF;
+            break;
+        case NPY_CONSTANT_nan:
+            val = (@type@)NPY_NANF;
+            break;
+        case NPY_CONSTANT_finfo_radix:
+            val = @RADIX@;
+            break;
+        case NPY_CONSTANT_finfo_eps:
+            val = @ABB@_EPSILON;
+            break;
+        case NPY_CONSTANT_finfo_smallest_normal:
+            val = @ABB@_MIN;
+            break;
+        case NPY_CONSTANT_finfo_smallest_subnormal:
+            val = @ABB@_TRUE_MIN;
+            break;
+        case NPY_CONSTANT_finfo_nmant:
+            *(npy_intp *)ptr = @ABB@_MANT_DIG - 1;
+            return 1;
+        case NPY_CONSTANT_finfo_min_exp:
+            /*
+            Definition: Minimum negative integer such that FLT_RADIX raised by power one less than that integer is a normalized float, double and long double respectively
+
+            refernce: https://en.cppreference.com/w/c/types/limits.html
+            */
+            *(npy_intp *)ptr = @ABB@_MIN_EXP - 1;
+            return 1;
+        case NPY_CONSTANT_finfo_max_exp:
+            *(npy_intp *)ptr = @ABB@_MAX_EXP;
+            return 1;
+        case NPY_CONSTANT_finfo_decimal_digits:
+            *(npy_intp *)ptr = @ABB@_DIG;
+            return 1;
+        default:
+            return 0;
+    }
+    @NAME@_copyswap(ptr, &val, !PyArray_ISNBO(descr->byteorder), NULL);
+    return 1;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         OBJECT, STRING, UNICODE, VOID,
+ *         DATETIME, TIMEDELTA#
+ */
+static int
+@NAME@_get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
+{
+    // TODO: We currently don't use this, but we could quickly for
+    // reduction identity/initial value so should implement these.
+    return 0;
+}
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
  **                             SETUP TYPE INFO                             **
  *****************************************************************************
  */
-
 
 /*
  * This function is called during numpy module initialization,
@@ -4331,6 +4525,7 @@ NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict)
 {
     PyObject *infodict = NULL;
+    PyArray_DTypeMeta *dtypemeta;  // borrowed
     int i;
 
     _PyArray_LegacyDescr *dtype;
@@ -4385,7 +4580,7 @@ set_typeinfo(PyObject *dict)
      *         PyArray_ComplexAbstractDType*3,
      *         PyArrayDescr_Type*6 #
      */
-    if (dtypemeta_wrap_legacy_descriptor(
+    dtypemeta = dtypemeta_wrap_legacy_descriptor(
             _builtin_descrs[NPY_@NAME@],
             &_Py@Name@_ArrFuncs,
             (PyTypeObject *)&@scls@,
@@ -4395,9 +4590,11 @@ set_typeinfo(PyObject *dict)
 #else
             NULL
 #endif
-            ) < 0) {
+            );
+    if (dtypemeta == NULL) {
         return -1;
     }
+    NPY_DT_SLOTS(dtypemeta)->get_constant = @NAME@_get_constant;
 
     /**end repeat**/
 
