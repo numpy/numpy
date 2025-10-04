@@ -177,14 +177,15 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
         }
         else if (((ARENA_EXPAND_FACTOR * arena->size) - arena->cursor) >
                  string_storage_size) {
-            newsize = ARENA_EXPAND_FACTOR * arena->size;
+            newsize = (size_t)(ARENA_EXPAND_FACTOR * arena->size);
         }
         else {
             newsize = arena->size + string_storage_size;
         }
-        if ((arena->cursor + size) >= newsize) {
+        // If there enough room for both the payload and its header
+        if ((arena->cursor + string_storage_size) > newsize) {
             // need extra room beyond the expansion factor, leave some padding
-            newsize = ARENA_EXPAND_FACTOR * (arena->cursor + size);
+            newsize = (size_t)(ARENA_EXPAND_FACTOR * (arena->cursor + string_storage_size));
         }
         // passing a NULL buffer to realloc is the same as malloc
         char *newbuf = r(arena->buffer, newsize);

@@ -24,10 +24,10 @@ KEY_OF(UT x)
     // fail. Possibly related to floating-point normalisation or multiple NaN
     // reprs? Not sure.
     if (std::is_floating_point<T>::value) {
+        using TI = std::make_signed_t<UT>;
         // For floats, we invert the key if the sign bit is set, else we invert
         // the sign bit.
-        return ((x) ^ (-((x) >> (sizeof(T) * 8 - 1)) |
-                       ((UT)1 << (sizeof(T) * 8 - 1))));
+        return x ^ ((UT)(-(TI)(x >> (sizeof(T) * 8 - 1))) | ((UT)1 << (sizeof(T) * 8 - 1)));
     }
     else if (std::is_signed<T>::value) {
         // For signed ints, we flip the sign bit so the negatives are below the

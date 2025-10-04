@@ -625,25 +625,26 @@ npy_fastputmask(
         npy_intp ni, npy_intp nv, npy_intp chunk)
 {
     if (chunk == 1) {
-        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
     }
-    if (chunk == 2) {
-        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    else if (chunk == 2) {
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
     }
-    if (chunk == 4) {
-        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    else if (chunk == 4) {
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
     }
-    if (chunk == 8) {
-        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    else if (chunk == 8) {
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
     }
-    if (chunk == 16) {
-        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    else if (chunk == 16) {
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
     }
-    if (chunk == 32) {
-        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    else if (chunk == 32) {
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
     }
-
-    return npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    else {
+        npy_fastputmask_impl(dest, src, mask_data, ni, nv, chunk);
+    }
 }
 
 
