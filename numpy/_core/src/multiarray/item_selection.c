@@ -2033,18 +2033,17 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
      * NEP 50 promotion rules. We use a temporary conversion to detect if
      * op2 is a Python scalar and mark it appropriately.
      */
-    PyArrayObject *op2_tmp = (PyArrayObject *)PyArray_FROM_O(op2);
-    if (op2_tmp == NULL) {
+    ap2 = (PyArrayObject *)PyArray_FROM_O(op2);
+    if (ap2 == NULL) {
         goto fail;
     }
     
     /* Mark if op2 was a Python scalar for proper NEP 50 promotion */
-    npy_mark_tmp_array_if_pyscalar(op2, op2_tmp, NULL);
+    npy_mark_tmp_array_if_pyscalar(op2, ap2, NULL);
     
     /* Now use ResultType with both arrays for proper promotion */
-    PyArrayObject *arrs[2] = { op1, op2_tmp };
+    PyArrayObject *arrs[2] = {op1, ap2};
     dtype = PyArray_ResultType(2, arrs, 0, NULL);
-    Py_DECREF(op2_tmp);
     
     if (dtype == NULL) {
         goto fail;
@@ -2063,15 +2062,24 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         return NULL;
     }
     
-
+    /* Reuse ap2 wherever possible */
     /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
-    ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
-                                0, 0,
-                                NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
-                                NULL);
-    if (ap2 == NULL) {
-        return NULL;
+    if (!PyArray_EquivTypes(PyArray_DESCR(ap2), dtype) ||
+        !PyArray_CHKFLAGS(ap2, NPY_ARRAY_CARRAY_RO) ||
+        !PyArray_CHKFLAGS(ap2, NPY_ARRAY_NOTSWAPPED)) {
+        PyArrayObject* old_ap2 = ap2;
+        ap2 = (PyArrayObject *)PyArray_CheckFromAny(old_ap2, dtype,
+                                    0, 0,
+                                    NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
+                                    NULL);
+        Py_DECREF(old_ap2);
+        if (ap2 == NULL) {
+            return NULL;
+        }
+    } else {
+        Py_DECREF(dtype);
     }
+    
     /*
      * The dtype reference we had was used for creating ap2, which may have
      * replaced it with another. So here we copy the dtype of ap2 and use it for `ap1`.
