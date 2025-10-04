@@ -510,7 +510,7 @@ def count_nonzero(a, axis=None, *, keepdims=False):
 
     Returns
     -------
-    count : int or array of int
+    count : numpy.intp or array of numpy.intp
         Number of non-zero values in the array along a given axis.
         Otherwise, the total number of non-zero values in the array
         is returned.
@@ -523,11 +523,11 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     --------
     >>> import numpy as np
     >>> np.count_nonzero(np.eye(4))
-    4
+    np.int64(4)
     >>> a = np.array([[0, 1, 7, 0],
     ...               [3, 0, 2, 19]])
     >>> np.count_nonzero(a)
-    5
+    np.int64(5)
     >>> np.count_nonzero(a, axis=0)
     array([1, 1, 2, 1])
     >>> np.count_nonzero(a, axis=1)
