@@ -2056,6 +2056,9 @@ class TestLeaks:
             ('bound', A.iters),
             ('unbound', 0),
             ])
+    @pytest.mark.thread_unsafe(
+        reason="test result depends on the reference count of a global object"
+    )
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
@@ -3961,6 +3964,7 @@ class TestQuantile:
         quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
         assert_equal(np.sort(quantile), quantile)
 
+    @pytest.mark.thread_unsafe(reason="gives unreliable results w/ hypothesis")
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=3, max_value=1000),

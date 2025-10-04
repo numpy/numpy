@@ -235,6 +235,7 @@ class TestSavezLoad(RoundtripTest):
     @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
@@ -630,6 +631,7 @@ class TestSaveTxt:
     @pytest.mark.skipif(sys.platform == 'win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
@@ -2806,6 +2808,7 @@ def test_npzfile_dict():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="garbage collector is global state")
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.

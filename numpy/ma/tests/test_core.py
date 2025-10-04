@@ -1046,6 +1046,7 @@ class TestMaskedArray:
         # w/ mask
         assert_equal(list(a[1]), [masked, 4])
 
+    @pytest.mark.thread_unsafe(reason="masked_print_option.set_display global state")
     def test_mvoid_print(self):
         # Test printing a mvoid
         mx = array([(1, 1), (2, 2)], dtype=[('a', int), ('b', int)])
@@ -1063,6 +1064,7 @@ class TestMaskedArray:
         mx = array([(1,), (2,)], dtype=[('a', 'O')])
         assert_equal(str(mx[0]), "(1,)")
 
+    @pytest.mark.thread_unsafe(reason="masked_print_option global state")
     def test_mvoid_multidim_print(self):
 
         # regression test for gh-6019
@@ -4331,6 +4333,7 @@ class TestMaskedArrayMathMethods:
         assert_equal(a.max(-1), [3, 6])
         assert_equal(a.max(1), [3, 6])
 
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     @requires_memory(free_bytes=2 * 10000 * 1000 * 2)
     def test_mean_overflow(self):
         # Test overflow in masked arrays

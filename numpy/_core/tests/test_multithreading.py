@@ -12,6 +12,7 @@ from numpy.testing._private.utils import run_threaded
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
 
+pytestmark = pytest.mark.thread_unsafe(reason="multithreading on parallel threads")
 
 def test_parallel_randomstate_creation():
     # if the coercion cache is enabled and not thread-safe, creating
