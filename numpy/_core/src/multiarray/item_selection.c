@@ -2068,7 +2068,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         !PyArray_CHKFLAGS(ap2, NPY_ARRAY_CARRAY_RO) ||
         !PyArray_CHKFLAGS(ap2, NPY_ARRAY_NOTSWAPPED)) {
         PyArrayObject* old_ap2 = ap2;
-        ap2 = (PyArrayObject *)PyArray_CheckFromAny(old_ap2, dtype,
+        ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
                                     0, 0,
                                     NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
                                     NULL);
