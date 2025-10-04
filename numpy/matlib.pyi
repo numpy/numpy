@@ -210,6 +210,7 @@ from numpy import (  # noqa: F401
     greater_equal,
     half,
     hamming,
+    hann,
     hanning,
     heaviside,
     histogram,
