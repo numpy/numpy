@@ -1762,7 +1762,6 @@ class TestUfunc:
 
     @pytest.mark.parametrize("a", identityless_reduce_arrs())
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-    @pytest.mark.thread_unsafe(reason="races to modify parameters")
     def test_identityless_reduction(self, a, pos):
         # np.minimum.reduce is an identityless reduction
         a[...] = 1

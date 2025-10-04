@@ -193,7 +193,6 @@ class RoundtripTest:
             self.check_roundtrips(a)
 
 
-@pytest.mark.thread_unsafe(reason="some tests fail from RountripTest, file race?")
 class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
@@ -202,7 +201,6 @@ class TestSaveLoad(RoundtripTest):
         assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
 
 
-@pytest.mark.thread_unsafe(reason="some tests fail from RountripTest, file race?")
 class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
         RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)

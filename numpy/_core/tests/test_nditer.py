@@ -2904,7 +2904,6 @@ def _is_buffered(iterator):
          np.zeros((9,), dtype='f8')[::3],
          np.zeros((9876, 3 * 10), dtype='f8')[::2, ::5],
          np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, ::-1]])
-@pytest.mark.thread_unsafe(reason="races to modify parameters")
 def test_iter_writemasked(a):
     # Note, the slicing above is to ensure that nditer cannot combine multiple
     # axes into one.  The repetition is just to make things a bit more
