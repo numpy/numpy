@@ -2061,7 +2061,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         Py_DECREF(dtype);
         return NULL;
     }
-    
     /* Reuse ap2 wherever possible */
     /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
     if (!PyArray_EquivTypes(PyArray_DESCR(ap2), dtype) ||
