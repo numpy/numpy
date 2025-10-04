@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <utility>
 #include "x86_simd_qsort.hpp"
+#include "highway_qsort.hpp"
 
 #define NOT_USED NPY_UNUSED(unused)
 #define DISABLE_HIGHWAY_OPTIMIZATION (defined(__arm__) || defined(__aarch64__))
@@ -33,7 +34,7 @@
 template<typename T>
 inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
 {
-#ifndef __CYGWIN__
+    assert(num >= 0 && kth >= 0);
     /*
      * Only defined for int16_t, uint16_t, float16, int32_t, uint32_t, float32,
      * int64_t, uint64_t, double
@@ -42,21 +43,20 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
         (std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_same_v<T, np::Half>) &&
         (sizeof(T) == sizeof(uint16_t) || sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
-        void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
-        if constexpr (sizeof(T) == sizeof(uint16_t)) {
-            #include "x86_simd_qsort_16bit.dispatch.h"
-            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
+        bool (*dispfunc)(TF*, size_t, size_t) = nullptr;
+        if constexpr (std::is_same_v<T, np::Half>) {
+            #include "highway_qsort_16bit.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSelect, <TF>);
         }
-        else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-            #include "x86_simd_qsort.dispatch.h"
-            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
+        else if constexpr (sizeof(T) <= sizeof(uint64_t) && sizeof(T) >= sizeof(uint16_t)) {
+            #include "highway_qsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSelect, <TF>);
         }
-        if (dispfunc) {
-            (*dispfunc)(reinterpret_cast<TF*>(v), num, kth);
+        if (dispfunc && (*dispfunc)(reinterpret_cast<TF*>(v),
+                                    static_cast<size_t>(num), static_cast<size_t>(kth))) {
             return true;
         }
     }
-#endif
     (void)v; (void)num; (void)kth; // to avoid unused arg warn
     return false;
 }

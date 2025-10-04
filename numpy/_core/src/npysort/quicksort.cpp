@@ -71,37 +71,24 @@
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
 
-// Disable AVX512 sorting on CYGWIN until we can figure
-// out why it has test failures
 template<typename T>
 inline bool quicksort_dispatch(T *start, npy_intp num)
 {
-#if !defined(__CYGWIN__)
+    assert(num >= 0);
     using TF = typename np::meta::FixedWidth<T>::Type;
-    void (*dispfunc)(TF*, intptr_t) = nullptr;
-    if (sizeof(T) == sizeof(uint16_t)) {
-    #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-        #include "x86_simd_qsort_16bit.dispatch.h"
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-    #else
+    void (*dispfunc)(TF*, size_t) = nullptr;
+    if constexpr (std::is_same_v<T, np::Half>) {
         #include "highway_qsort_16bit.dispatch.h"
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
-    #endif
     }
-    else if (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-    #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86) // x86 32-bit and 64-bit
-        #include "x86_simd_qsort.dispatch.h"
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSort, <TF>);
-    #else
+    else if constexpr (sizeof(T) <= sizeof(uint64_t) && sizeof(T) >= sizeof(uint16_t)) {
         #include "highway_qsort.dispatch.h"
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template QSort, <TF>);
-    #endif
     }
     if (dispfunc) {
-        (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<intptr_t>(num));
+        (*dispfunc)(reinterpret_cast<TF*>(start), static_cast<size_t>(num));
         return true;
     }
-#endif // __CYGWIN__
     (void)start; (void)num; // to avoid unused arg warn
     return false;
 }

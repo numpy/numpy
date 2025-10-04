@@ -376,6 +376,11 @@ def lint(ctx, fix):
     '--quick', '-q', is_flag=True, default=False,
     help="Run each benchmark only once (timings won't be accurate)"
 )
+@click.option(
+    '--cpu-affinity', default=None, multiple=False,
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+         "Default: not set"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
@@ -383,7 +388,7 @@ def lint(ctx, fix):
 )
 @meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
+def bench(ctx, tests, compare, verbose, quick, cpu_affinity, commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -425,6 +430,9 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
 
     if quick:
         bench_args = ['--quick'] + bench_args
+
+    if cpu_affinity:
+        bench_args += ['--cpu-affinity', cpu_affinity]
 
     if not compare:
         # No comparison requested; we build and benchmark the current version

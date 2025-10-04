@@ -3060,10 +3060,11 @@ class TestMethods:
             self.assert_partitioned(np.partition(d, 16, kind=k), [16])
             self.assert_partitioned(d[np.argpartition(d, 16, kind=k)], [16])
 
-            assert_array_equal(np.partition(d, -6, kind=k),
-                               np.partition(d, 41, kind=k))
-            assert_array_equal(np.partition(d, -16, kind=k),
-                               np.partition(d, 31, kind=k))
+            # Compare the kth element only; order within partitions is undefined
+            assert_equal(np.partition(d, -6, kind=k)[41],
+                         np.partition(d, 41, kind=k)[41])
+            assert_equal(np.partition(d, -16, kind=k)[31],
+                         np.partition(d, 31, kind=k)[31])
             self.assert_partitioned(np.partition(d, 41, kind=k), [41])
             self.assert_partitioned(d[np.argpartition(d, -6, kind=k)], [41])
 
