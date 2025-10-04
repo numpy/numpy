@@ -728,6 +728,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
           PyArray_Descr *const *descriptors;
+          void *parameters;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller
@@ -743,6 +744,15 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 
       An array of descriptors for the ufunc loop, filled in by
       ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+   .. c:member:: void *parameters
+
+      A pointer to a structure containing any runtime parameters needed by the
+      loop. This is ``NULL`` if no parameters are needed. The type of the
+      struct is specific to the registered function.
+
+     .. versionchanged:: NumPy 2.4
+        The `parameters` member was added in NumPy 2.4.
 
 .. c:type:: PyArrayMethod_Spec
 
