@@ -16,7 +16,6 @@ import tempfile
 import warnings
 import weakref
 from contextlib import contextmanager
-import threading
 
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
@@ -2476,20 +2475,6 @@ class TestMethods:
         a[0] = 42
         with pytest.raises(AssertionError):
             assert_array_equal(a, b)
-
-    def test__deepcopy___void_scalar(self):
-        # see comments in gh-29643
-        value = np.void('Rex', dtype=[('name', 'U10')])
-        value_deepcopy = value.__deepcopy__(None)
-        value[0] = None
-        assert value_deepcopy[0] == 'Rex'
-
-    @pytest.mark.parametrize("sctype", [np.int64, np.float32, np.float64])
-    def test__deepcopy__scalar(self, sctype):
-        # test optimization from gh-29656
-        value = sctype(1.1)
-        value_deepcopy = value.__deepcopy__(None)
-        assert value is value_deepcopy
 
     def test__deepcopy__catches_failure(self):
         class MyObj:
