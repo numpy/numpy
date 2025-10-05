@@ -173,7 +173,7 @@ enum NPY_TYPECHAR {
  * should be downstream compatible, but the actual algorithms used may be
  * different than before. The new approach should be more flexible and easier
  * to update.
- * 
+ *
  * Names with a leading underscore are private, and should only be used
  * internally by NumPy.
  *
@@ -187,7 +187,7 @@ typedef enum {
         NPY_HEAPSORT = 1,
         NPY_MERGESORT = 2,
         NPY_STABLESORT = 2,
-        // new style names 
+        // new style names
         _NPY_SORT_HEAPSORT = 1,
         NPY_SORT_DEFAULT = 0,
         NPY_SORT_STABLE = 2,
@@ -914,12 +914,20 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 
 /*
- * If set, the array owns the data: it will be free'd when the array
- * is deleted.
+ * If set, the array owns the data: if the data is not stored on the
+ * instance, it will be free'd when the array is deleted.
  *
  * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_OWNDATA         0x0004
+
+/*
+ * If set, the data is stored on the array instance.
+ *
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ * (MAYBE: allow it to be requested as well?)
+ */
+#define NPY_ARRAY_DATAONINSTANCE  0x0008
 
 /*
  * An array never has the next four set; they're only used as parameter
@@ -1957,7 +1965,7 @@ typedef struct {
  * #endif
  * #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
  * #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
- * 
+ *
  * #ifndef NPY_NO_DEPRECATED_API
  * #if defined(_WIN32)
  * #define _WARN___STR2__(x) #x

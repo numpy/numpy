@@ -100,14 +100,7 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                 return -1;
             }
         }
-        /* Reallocate space if needed - allocating 0 is forbidden */
-        PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
-            PyErr_SetString(PyExc_RuntimeError,
-                            "no memory handler found but OWNDATA flag set");
-            return -1;
-        }
+
         if (newnbytes < oldnbytes) {
             /* Clear now removed data (if dtype has references) */
             if (PyArray_ClearBuffer(
@@ -116,10 +109,52 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                 return -1;
             }
         }
-
-        new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
-                                       newnbytes == 0 ? 1 : newnbytes,
-                                       handler);
+        /* Reallocate space if needed - allocating 0 is forbidden */
+        PyObject *handler = PyArray_HANDLER(self);
+        if (handler != NULL) {
+            new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
+                                           newnbytes == 0 ? 1 : newnbytes,
+                                           handler);
+        }
+        else if (PyArray_CHKFLAGS(self, NPY_ARRAY_DATAONINSTANCE)) {
+            /*
+             * The data was stored on instance, so has no reference.
+             * If the data still fits, just keep it, otherwise allocate.
+             * TODO: make this a plain else; see comment in array_dealloc.
+             */
+            if (newnbytes <= oldnbytes) {
+                new_data = PyArray_DATA(self);
+            }
+            else {
+                handler = PyDataMem_GetHandler();
+                if (handler == NULL) {
+                    return -1;
+                }
+                new_data = PyDataMem_UserNEW(newnbytes == 0 ? 1 : newnbytes,
+                                             handler);
+                if (new_data != NULL) {
+                    PyArray_CLEARFLAGS(self, NPY_ARRAY_DATAONINSTANCE);
+                    /* Copy existing data. */
+                    memmove(new_data, PyArray_DATA(self),
+                            oldnbytes < newnbytes ? oldnbytes : newnbytes);
+                    /* Set mem_handler, new_data set below. */
+                    ((PyArrayObject_fields *)self)->mem_handler = handler;
+                }
+                else {
+                    Py_DECREF(handler);
+                    /* Error raised below. */
+                }
+            }
+        }
+        else {
+            /*
+             * Without a handler, data should be on the instance; if not,
+             * someone arbitrarily set NPY_ARRAY_OWNDATA, so raise.
+             */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return -1;
+        }
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
@@ -145,7 +180,6 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
             /* Different number of dimensions: need new dims & strides. */
             npy_free_cache_dim_array(self);
             ((PyArrayObject_fields *)self)->nd = new_nd;
-            /* Need new dimensions and strides arrays */
             dimptr = npy_alloc_cache_dim(2 * new_nd);
             if (dimptr == NULL) {
                 PyErr_SetString(PyExc_MemoryError,

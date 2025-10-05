@@ -237,7 +237,8 @@ def test_set_policy(get_module):
     get_handler_version = np._core.multiarray.get_handler_version
     orig_policy_name = get_handler_name()
 
-    a = np.arange(10).reshape((2, 5))  # a doesn't own its own data
+    # Large array so we are sure not to store on the instance.
+    a = np.empty(1000).reshape((-1, 5))  # a doesn't own its own data
     assert get_handler_name(a) is None
     assert get_handler_version(a) is None
     assert get_handler_name(a.base) == orig_policy_name
@@ -292,7 +293,8 @@ def test_policy_propagation(get_module):
 
     get_handler_name = np._core.multiarray.get_handler_name
     orig_policy_name = get_handler_name()
-    a = np.arange(10).view(MyArr).reshape((2, 5))
+    # Large array so we for sure do not store on the instance.
+    a = np.empty(1000).view(MyArr).reshape((-1, 5))
     assert get_handler_name(a) is None
     assert a.flags.owndata is False
 
