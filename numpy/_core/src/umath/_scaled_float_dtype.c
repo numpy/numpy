@@ -107,7 +107,7 @@ sfloat_getitem(char *data, PyArrayObject *arr)
 
 
 static int
-sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
+sfloat_setitem(PyArray_Descr *descr_, PyObject *obj, char *data)
 {
     if (!PyFloat_CheckExact(obj)) {
         PyErr_SetString(PyExc_NotImplementedError,
@@ -115,7 +115,7 @@ sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
         return -1;
     }
 
-    PyArray_SFloatDescr *descr = (PyArray_SFloatDescr *)PyArray_DESCR(arr);
+    PyArray_SFloatDescr *descr = (PyArray_SFloatDescr *)descr_;
     double value = PyFloat_AsDouble(obj);
     value /= descr->scaling;
 
@@ -131,9 +131,10 @@ NPY_DType_Slots sfloat_slots = {
     .default_descr = &sfloat_default_descr,
     .common_dtype = &sfloat_common_dtype,
     .common_instance = &sfloat_common_instance,
+    .setitem = &sfloat_setitem,
     .f = {
         .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
-        .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
+        .setitem = NULL,
     }
 };
 

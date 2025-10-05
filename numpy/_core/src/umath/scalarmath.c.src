@@ -1242,7 +1242,7 @@ static PyObject *
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1393,7 +1393,7 @@ static PyObject *
             return PyGenericArrType_Type.tp_as_number->nb_true_divide(a,b);
         case CONVERT_PYSCALAR:
             /* This is the special behavior, convert to float64 directly */
-            if (DOUBLE_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (DOUBLE_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1512,7 +1512,7 @@ static PyObject *
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1920,7 +1920,7 @@ static PyObject*
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&arg2, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&arg2) < 0) {
                 return NULL;
             }
             break;

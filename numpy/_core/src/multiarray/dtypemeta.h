@@ -288,8 +288,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->setitem(
-            v, itemptr, arr);
+    return NPY_DT_CALL_setitem(PyArray_DESCR(arr), v, itemptr);
 }
 
 // Like PyArray_DESCR_REPLACE, but calls ensure_canonical instead of DescrNew
