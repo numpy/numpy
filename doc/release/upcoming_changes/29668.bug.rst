@@ -1,0 +1,1 @@
+Fix ``__repr__`` for ``numpy.polynomial`` classes with non-standard dtypes.

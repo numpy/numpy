@@ -321,13 +321,13 @@ class ABCPolyBase(abc.ABC):
 
     def __repr__(self):
         s_coef = repr(self.coef)
-        coef = s_coef[s_coef.find('['):s_coef.rfind(']')+1]
+        coef = s_coef[s_coef.find('['):s_coef.rfind(']') + 1]
 
         s_domain = repr(self.domain)
-        domain = s_domain[s_domain.find('['):s_domain.rfind(']')+1]
+        domain = s_domain[s_domain.find('['):s_domain.rfind(']') + 1]
 
         s_window = repr(self.window)
-        window = s_window[s_window.find('['):s_window.rfind(']')+1]
+        window = s_window[s_window.find('['):s_window.rfind(']') + 1]
 
         return (f"{self.__class__.__name__}({coef}, "
             f"domain={domain}, window={window}, symbol='{self.symbol}')")
