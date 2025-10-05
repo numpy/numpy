@@ -2169,21 +2169,26 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
 
-    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)
-        && PyArray_DATA(self) != (char *)self + Py_TYPE(self)->tp_basicsize) {
+    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
         /*
          * Allocation will never be 0, see comment in ctors.c
          * line 820
          */
         PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+        if (handler != NULL) {
+            PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
+        }
+        else if (PyArray_DATA(self) !=
+                 (void *)((char *)self + Py_TYPE(self)->tp_basicsize)) {
+            /*
+             * Without a handler, data should be on the instance; if not,
+             * someone arbitrarily set NPY_ARRAY_OWNDATA, so raise.
+             */
             PyErr_SetString(PyExc_RuntimeError,
                             "no memory handler found but OWNDATA flag set");
             return NULL;
         }
-        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
-        PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
     fa->base = NULL;

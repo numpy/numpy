@@ -720,20 +720,46 @@ PyArray_NewFromDescr_int(
         }
     }
 
-    /*
-     * For an array scalar that is not too big, we allocate the required
-     * memory as part of the object, to avoid the overhead of allocating
-     * tracked memory with PyDataMem_UserNew.
-     * TODO: maybe do this generally for any small allocation, i.e.,
-     * calculate full nbytes up front and just use that here?
-     * Note that tp_alloc zeros any extra bytes, so it is only suitable
-     * for smallish allocations.
-     */
-    npy_bool data_in_object = (data == NULL
-                               && nd == 0
-                               && nbytes < subtype->tp_basicsize);
-    fa = (PyArrayObject_fields *) subtype->tp_alloc(
-            subtype, data_in_object ? nbytes : 0);
+    npy_bool data_on_instance = NPY_FALSE;
+    if (subtype == &PyArray_Type) {
+        /*
+         * For an array scalar that is not too big, we allocate the required
+         * memory as part of the object, to avoid the overhead of allocating
+         * tracked memory with PyDataMem_UserNew.
+         *
+         * We do this bypassing the standard tp_alloc. In principle, on python
+         * 3.13 it seemed possible not to, as long as one uses a PyVarObject
+         * and tp_itemsize=1, but on python 3.11 this gave problems with
+         * subclassing.  An advantage of the present approach is that it does
+         * not change the size of a regular instance.  Note that we mimic
+         * PyType_GenericAlloc here in zeroing the bytes (python 3.13 zeros
+         * only the extra ones, 3.11 all of them), so that does not have to
+         * be done later.
+         *
+         * TODO: maybe do this generally for any small allocation, i.e.,
+         * calculate full nbytes up front and just use that here?
+         *
+         * Note: alignment constraint written such that compiler can just
+         * show it is true.
+         */
+        size_t size = subtype->tp_basicsize;
+        if (data == NULL && nd == 0 && nbytes < subtype->tp_basicsize
+                && (sizeof(PyArrayObject_fields) & (sizeof(npy_intp)-1)) == 0) {
+            data_on_instance = NPY_TRUE;
+            size += nbytes;
+        }
+        char *alloc = PyObject_Malloc(size);
+        if (alloc == NULL) {
+            return PyErr_NoMemory();
+        }
+        memset(alloc, '\0', size);
+        PyObject_Init((PyObject *)alloc, subtype);
+        fa = (PyArrayObject_fields *)alloc;
+    }
+    else {
+        /* For subtypes, do not presume tp_alloc is the same. */
+        fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
+    }
     if (fa == NULL) {
         Py_DECREF(descr);
         return NULL;
@@ -857,7 +883,7 @@ PyArray_NewFromDescr_int(
             }
         }
 
-        if (data_in_object) {
+        if (data_on_instance) {
             /* extra data allocated in tp_alloc is already zeroed */
             data = (void *)((char *)fa + subtype->tp_basicsize);
         }
