@@ -720,7 +720,20 @@ PyArray_NewFromDescr_int(
         }
     }
 
-    fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
+    /*
+     * For an array scalar that is not too big, we allocate the required
+     * memory as part of the object, to avoid the overhead of allocating
+     * tracked memory with PyDataMem_UserNew.
+     * TODO: maybe do this generally for any small allocation, i.e.,
+     * calculate full nbytes up front and just use that here?
+     * Note that tp_alloc zeros any extra bytes, so it is only suitable
+     * for smallish allocations.
+     */
+    npy_bool data_in_object = (data == NULL
+                               && nd == 0
+                               && nbytes < subtype->tp_basicsize);
+    fa = (PyArrayObject_fields *) subtype->tp_alloc(
+            subtype, data_in_object ? nbytes : 0);
     if (fa == NULL) {
         Py_DECREF(descr);
         return NULL;
@@ -794,10 +807,6 @@ PyArray_NewFromDescr_int(
                 goto fail;
             }
         }
-        if (is_zero) {
-            nbytes = 0;
-        }
-
         /* Fill the strides (or copy them if they were passed in) */
         if (strides == NULL) {
             /* fill the strides and set the contiguity flags */
@@ -813,6 +822,14 @@ PyArray_NewFromDescr_int(
             PyArray_UpdateFlags((PyArrayObject *)fa,
                     NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
         }
+        if (is_zero) {
+            nbytes = 0;
+            /* Make sure all the strides are 0 */
+            for (int i = 0; i < nd; i++) {
+                fa->strides[i] = 0;
+            }
+        }
+
     }
     else {
         fa->dimensions = NULL;
@@ -840,47 +857,48 @@ PyArray_NewFromDescr_int(
             }
         }
 
-        /*
-         * We always want a zero-filled array allocated with calloc if
-         * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
-         * zero-filled array if zeroed is set and the zero-filling loop isn't
-         * defined, for better performance.
-         *
-         * If the zero-filling loop is defined and zeroed is set, allocate
-         * with malloc and let the zero-filling loop fill the array buffer
-         * with valid zero values for the dtype.
-         */
-        int use_calloc = (
+        if (data_in_object) {
+            /* extra data allocated in tp_alloc is already zeroed */
+            data = (void *)((char *)fa + subtype->tp_basicsize);
+        }
+        else {
+            /*
+             * We always want a zero-filled array allocated with calloc if
+             * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
+             * zero-filled array if zeroed is set and the zero-filling loop isn't
+             * defined, for better performance.
+             *
+             * If the zero-filling loop is defined and zeroed is set, allocate
+             * with malloc and let the zero-filling loop fill the array buffer
+             * with valid zero values for the dtype.
+             */
+            int use_calloc = (
                 PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
                 ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
 
-        /* Store the handler in case the default is modified */
-        fa->mem_handler = PyDataMem_GetHandler();
-        if (fa->mem_handler == NULL) {
-            goto fail;
-        }
-        /*
-         * Allocate something even for zero-space arrays
-         * e.g. shape=(0,) -- otherwise buffer exposure
-         * (a.data) doesn't work as it should.
-         */
-        if (nbytes == 0) {
-            nbytes = 1;
-            /* Make sure all the strides are 0 */
-            for (int i = 0; i < nd; i++) {
-                fa->strides[i] = 0;
+            /* Store the handler in case the default is modified */
+            fa->mem_handler = PyDataMem_GetHandler();
+            if (fa->mem_handler == NULL) {
+                goto fail;
             }
-        }
-
-        if (use_calloc) {
-            data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
-        }
-        else {
-            data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
-        }
-        if (data == NULL) {
-            raise_memory_error(fa->nd, fa->dimensions, descr);
-            goto fail;
+            /*
+             * Allocate something even for zero-space arrays
+             * e.g. shape=(0,) -- otherwise buffer exposure
+             * (a.data) doesn't work as it should.
+             */
+            if (nbytes == 0) {
+                nbytes = 1;
+            }
+            if (use_calloc) {
+                data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
+            }
+            else {
+                data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
+            }
+            if (data == NULL) {
+                raise_memory_error(fa->nd, fa->dimensions, descr);
+                goto fail;
+            }
         }
 
         /*
@@ -2389,7 +2407,7 @@ PyArray_FromInterface(PyObject *origin)
         goto fail;
     }
     if (use_scalar_assign) {
-        /* 
+        /*
          * NOTE(seberg): I honestly doubt anyone is using this scalar path and we
          * could probably just deprecate (or just remove it in a 3.0 version).
          */

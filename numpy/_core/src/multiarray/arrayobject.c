@@ -426,23 +426,26 @@ array_dealloc(PyArrayObject *self)
                 PyErr_WriteUnraisable(NULL);
             }
         }
-        if (fa->mem_handler == NULL) {
-            if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
-                char const *msg = "Trying to dealloc data, but a memory policy "
-                    "is not set. If you take ownership of the data, you must "
-                    "set a base owning the data (e.g. a PyCapsule).";
-                WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+        /* Deallocate data, if not a small allocation in the object */
+        if (fa->data != (void *)((char *)fa + Py_TYPE(self)->tp_basicsize)) {
+            if (fa->mem_handler == NULL) {
+                if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
+                    char const *msg = "Trying to dealloc data, but a memory policy "
+                        "is not set. If you take ownership of the data, you must "
+                        "set a base owning the data (e.g. a PyCapsule).";
+                    WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+                }
+                // Guess at malloc/free ???
+                free(fa->data);
             }
-            // Guess at malloc/free ???
-            free(fa->data);
-        }
-        else {
-            size_t nbytes = PyArray_NBYTES(self);
-            if (nbytes == 0) {
-                nbytes = 1;
+            else {
+                size_t nbytes = PyArray_NBYTES(self);
+                if (nbytes == 0) {
+                    nbytes = 1;
+                }
+                PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
+                Py_DECREF(fa->mem_handler);
             }
-            PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_DECREF(fa->mem_handler);
         }
     }
 
@@ -1224,6 +1227,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.ndarray",
     .tp_basicsize = sizeof(PyArrayObject_fields),
+    .tp_itemsize = 1,
     /* methods */
     .tp_dealloc = (destructor)array_dealloc,
     .tp_repr = (reprfunc)array_repr,
