@@ -2169,7 +2169,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
 
-    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
+    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)
+        && PyArray_DATA(self) != (char *)self + Py_TYPE(self)->tp_basicsize) {
         /*
          * Allocation will never be 0, see comment in ctors.c
          * line 820
