@@ -134,27 +134,39 @@ the module.
             return Py_BuildValue("d", p);
         }
 
-        /* This initiates the module using the above definitions. */
-        static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "spam",
-            NULL,
-            -1,
-            SpamMethods,
-            NULL,
-            NULL,
-            NULL,
-            NULL
+        static int
+        spam_exec(PyObject *m)
+        {
+            return 0;
+        }
+
+        /* This provides the the module's definitions. */
+
+        static struct PyModuleDef_Slot spam_slots[] = {
+            {Py_mod_exec, spam_exec},
+        #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+            // signal that this module can be imported in isolated subinterpreters
+            {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+        #endif
+        #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+            // signal that this module supports running without an active GIL
+            {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+        #endif
+            {0, NULL},
         };
 
+        static struct PyModuleDef moduledef = {
+            .m_base = PyModuleDef_HEAD_INIT,
+            .m_name = "spam",
+            .m_size = 0,
+            .m_methods = SpamMethods,
+            .m_slots = spam_slots,
+        };
+
+        /* This initialises the module using the above definitions. */
         PyMODINIT_FUNC PyInit_spam(void)
         {
-            PyObject *m;
-            m = PyModule_Create(&moduledef);
-            if (!m) {
-                return NULL;
-            }
-            return m;
+            return PyModuleDef_Init(&moduledef);
         }
 
 To use the ``setup.py`` file, place ``setup.py`` and ``spammodule.c``
@@ -303,29 +315,13 @@ the primary thing that must be changed to create your own ufunc.
         /* These are the input and return dtypes of logit.*/
         static const char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
 
-        static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "npufunc",
-            NULL,
-            -1,
-            LogitMethods,
-            NULL,
-            NULL,
-            NULL,
-            NULL
-        };
-
-        PyMODINIT_FUNC PyInit_npufunc(void)
+        static int
+        npufunc_exec(PyObject *m)
         {
-            PyObject *m, *logit, *d;
+            PyObject *logit, *d;
 
-            import_array();
-            import_umath();
-
-            m = PyModule_Create(&moduledef);
-            if (!m) {
-                return NULL;
-            }
+            import_array1(-1);
+            import_umath1(-1);
 
             logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 1, 1, 1,
                                             PyUFunc_None, "logit",
@@ -336,7 +332,36 @@ the primary thing that must be changed to create your own ufunc.
             PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
 
-            return m;
+            return 0;
+        }
+
+        /* This provides the the module's definitions. */
+
+        static struct PyModuleDef_Slot npufunc_slots[] = {
+            {Py_mod_exec, npufunc_exec},
+        #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+            // signal that this module can be imported in isolated subinterpreters
+            {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+        #endif
+        #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+            // signal that this module supports running without an active GIL
+            {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+        #endif
+            {0, NULL},
+        };
+
+        static struct PyModuleDef moduledef = {
+            .m_base = PyModuleDef_HEAD_INIT,
+            .m_name = "npufunc",
+            .m_size = 0,
+            .m_methods = LogitMethods,
+            .m_slots = npufunc_slots,
+        };
+
+        /* This initialises the module using the above definitions. */
+        PyMODINIT_FUNC PyInit_npufunc(void)
+        {
+            return PyModuleDef_Init(&moduledef);
         }
 
 This is a ``setup.py`` file for the above code. As before, the module
@@ -550,29 +575,13 @@ is the primary thing that must be changed to create your own ufunc.
                                       NPY_DOUBLE, NPY_DOUBLE,
                                       NPY_LONGDOUBLE, NPY_LONGDOUBLE};
 
-        static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "npufunc",
-            NULL,
-            -1,
-            LogitMethods,
-            NULL,
-            NULL,
-            NULL,
-            NULL
-        };
-
-        PyMODINIT_FUNC PyInit_npufunc(void)
+        static int
+        npufunc_exec(PyObject *m)
         {
-            PyObject *m, *logit, *d;
+            PyObject *logit, *d;
 
-            import_array();
-            import_umath();
-
-            m = PyModule_Create(&moduledef);
-            if (!m) {
-                return NULL;
-            }
+            import_array1(-1);
+            import_umath1(-1);
 
             logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 4, 1, 1,
                                             PyUFunc_None, "logit",
@@ -583,7 +592,36 @@ is the primary thing that must be changed to create your own ufunc.
             PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
 
-            return m;
+            return 0;
+        }
+
+        /* This provides the the module's definitions. */
+
+        static struct PyModuleDef_Slot npufunc_slots[] = {
+            {Py_mod_exec, npufunc_exec},
+        #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+            // signal that this module can be imported in isolated subinterpreters
+            {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+        #endif
+        #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+            // signal that this module supports running without an active GIL
+            {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+        #endif
+            {0, NULL},
+        };
+
+        static struct PyModuleDef moduledef = {
+            .m_base = PyModuleDef_HEAD_INIT,
+            .m_name = "npufunc",
+            .m_size = 0,
+            .m_methods = LogitMethods,
+            .m_slots = npufunc_slots,
+        };
+
+        /* This initialises the module using the above definitions. */
+        PyMODINIT_FUNC PyInit_npufunc(void)
+        {
+            return PyModuleDef_Init(&moduledef);
         }
 
 This is a ``setup.py`` file for the above code. As before, the module
@@ -741,29 +779,13 @@ as well as all other properties of a ufunc.
         static const char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
                                       NPY_DOUBLE, NPY_DOUBLE};
 
-        static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "npufunc",
-            NULL,
-            -1,
-            LogitMethods,
-            NULL,
-            NULL,
-            NULL,
-            NULL
-        };
-
-        PyMODINIT_FUNC PyInit_npufunc(void)
+        static int
+        npufunc_exec(PyObject *m)
         {
-            PyObject *m, *logit, *d;
+            PyObject *logit, *d;
 
-            import_array();
-            import_umath();
-
-            m = PyModule_Create(&moduledef);
-            if (!m) {
-                return NULL;
-            }
+            import_array1(-1);
+            import_umath1(-1);
 
             logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 1, 2, 2,
                                             PyUFunc_None, "logit",
@@ -774,7 +796,36 @@ as well as all other properties of a ufunc.
             PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
 
-            return m;
+            return 0;
+        }
+
+        /* This provides the the module's definitions. */
+
+        static struct PyModuleDef_Slot npufunc_slots[] = {
+            {Py_mod_exec, npufunc_exec},
+        #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+            // signal that this module can be imported in isolated subinterpreters
+            {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+        #endif
+        #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+            // signal that this module supports running without an active GIL
+            {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+        #endif
+            {0, NULL},
+        };
+
+        static struct PyModuleDef moduledef = {
+            .m_base = PyModuleDef_HEAD_INIT,
+            .m_name = "npufunc",
+            .m_size = 0,
+            .m_methods = LogitMethods,
+            .m_slots = npufunc_slots,
+        };
+
+        /* This initialises the module using the above definitions. */
+        PyMODINIT_FUNC PyInit_npufunc(void)
+        {
+            return PyModuleDef_Init(&moduledef);
         }
 
 
@@ -871,32 +922,16 @@ The C file is given below.
         /* These are the input and return dtypes of add_uint64_triplet. */
         static const char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
 
-        static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "struct_ufunc_test",
-            NULL,
-            -1,
-            StructUfuncTestMethods,
-            NULL,
-            NULL,
-            NULL,
-            NULL
-        };
-
-        PyMODINIT_FUNC PyInit_npufunc(void)
+        static int
+        struct_ufunc_test_exec(PyObject *m)
         {
-            PyObject *m, *add_triplet, *d;
+            PyObject *add_triplet, *d;
             PyObject *dtype_dict;
             PyArray_Descr *dtype;
             PyArray_Descr *dtypes[3];
 
-            import_array();
-            import_umath();
-
-            m = PyModule_Create(&moduledef);
-            if (m == NULL) {
-                return NULL;
-            }
+            import_array1(-1);
+            import_umath1(-1);
 
             /* Create a new ufunc object */
             add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
@@ -923,7 +958,36 @@ The C file is given below.
 
             PyDict_SetItemString(d, "add_triplet", add_triplet);
             Py_DECREF(add_triplet);
-            return m;
+            return 0;
+        }
+
+        /* This provides the the module's definitions. */
+
+        static struct PyModuleDef_Slot struct_ufunc_test_slots[] = {
+            {Py_mod_exec, struct_ufunc_test_exec},
+        #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+            // signal that this module can be imported in isolated subinterpreters
+            {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+        #endif
+        #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+            // signal that this module supports running without an active GIL
+            {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+        #endif
+            {0, NULL},
+        };
+
+        static struct PyModuleDef moduledef = {
+            .m_base = PyModuleDef_HEAD_INIT,
+            .m_name = "struct_ufunc_test",
+            .m_size = 0,
+            .m_methods = StructUfuncTestMethods,
+            .m_slots = struct_ufunc_test_slots,
+        };
+
+        /* This initialises the module using the above definitions. */
+        PyMODINIT_FUNC PyInit_npufunc(void)
+        {
+            return PyModuleDef_Init(&moduledef);
         }
 
 .. index::
