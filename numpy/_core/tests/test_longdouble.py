@@ -291,7 +291,8 @@ def test_array_repr():
     b = np.array([1], dtype=np.longdouble)
     if not np.all(a != b):
         raise ValueError("precision loss creating arrays")
-    assert_(repr(a) != repr(b))
+    with np.printoptions(precision=LD_INFO.precision + 1):
+        assert_(repr(a) != repr(b))
 
 #
 # Locale tests: scalar types formatting should be independent of the locale

@@ -106,15 +106,7 @@ from . import numerictypes as nt
 from .numerictypes import sctypeDict, sctypes
 
 multiarray.set_typeDict(nt.sctypeDict)
-from . import (
-    _machar,
-    einsumfunc,
-    fromnumeric,
-    function_base,
-    getlimits,
-    numeric,
-    shape_base,
-)
+from . import einsumfunc, fromnumeric, function_base, getlimits, numeric, shape_base
 from .einsumfunc import *
 from .fromnumeric import *
 from .function_base import *

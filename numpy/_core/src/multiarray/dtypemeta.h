@@ -68,6 +68,11 @@ typedef struct {
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
     /*
+     * Function to fetch constants.  Always defined, but may return "undefined"
+     * for all values.
+     */
+    PyArrayDTypeMeta_GetConstant *get_constant;
+    /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
@@ -89,7 +94,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 11
+#define NPY_NUM_DTYPE_SLOTS 12
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -124,6 +129,8 @@ typedef struct {
     NPY_DT_SLOTS(NPY_DTYPE(descr))->getitem(descr, data_ptr)
 #define NPY_DT_CALL_setitem(descr, value, data_ptr)  \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->setitem(descr, value, data_ptr)
+#define NPY_DT_CALL_get_constant(descr, constant_id, data_ptr)  \
+    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_constant(descr, constant_id, data_ptr)
 
 
 /*
@@ -153,7 +160,7 @@ NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *cls, PyTypeObject *pytype);
 
-NPY_NO_EXPORT int
+NPY_NO_EXPORT PyArray_DTypeMeta *
 dtypemeta_wrap_legacy_descriptor(
     _PyArray_LegacyDescr *descr, PyArray_ArrFuncs *arr_funcs,
     PyTypeObject *dtype_super_class, const char *name, const char *alias);
