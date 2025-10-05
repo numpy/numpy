@@ -142,10 +142,11 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
 
     if (new_nd > 0) {
         if (PyArray_NDIM(self) != new_nd) {
-            /* Different number of dimensions. */
+            /* Different number of dimensions: need new dims & strides. */
+            npy_free_cache_dim_array(self);
             ((PyArrayObject_fields *)self)->nd = new_nd;
             /* Need new dimensions and strides arrays */
-            dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
+            dimptr = npy_alloc_cache_dim(2 * new_nd);
             if (dimptr == NULL) {
                 PyErr_SetString(PyExc_MemoryError,
                                 "cannot allocate memory for array");

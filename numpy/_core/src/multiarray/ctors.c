@@ -743,15 +743,65 @@ PyArray_NewFromDescr_int(
             }
         }
     }
-
-    fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
-    if (fa == NULL) {
-        Py_DECREF(descr);
-        return NULL;
+    /*
+     * Create the array instance.
+     *
+     * For standard arrays, we allocate extra memory for the dimensions and
+     * strides, to avoid the overhead of another allocation.
+     *
+     * We do this bypassing the standard tp_alloc, basically copying the
+     * relevant code from PyType_GenericAlloc in Objects/typeobject.c.
+     * Note that we cannot use the standard machinery for variable size
+     * instances, as this would change the array object structure order.
+     *
+     * TODO: possible extensions:
+     * - Also store small bits of data.
+     * - Maybe extend to subtype as long as tp_itemsize == 0
+     *   && tp_alloc == PyObject_GenericAlloc?
+     */
+    if (subtype == &PyArray_Type) {
+        size_t size = subtype->tp_basicsize;
+        /* Alignment to intp should be guaranteed (last item is a pointer). */
+        assert(size % NPY_ALIGNOF(npy_intp) == 0);
+        /* Add space for dimensions and strides. */
+        size += sizeof(npy_intp) * nd * 2;
+        /* Allocate the object and extra space */
+        char *alloc = PyObject_Malloc(size);
+        if (alloc == NULL) {
+            Py_DECREF(descr);
+            return PyErr_NoMemory();
+        }
+        /* PyType_GenericAlloc zeroes the extra bytes, but we don't need to. */
+        fa = (PyArrayObject_fields *)PyObject_Init((PyObject *)alloc, subtype);
+        fa->dimensions = (npy_intp*)((char*)fa + subtype->tp_basicsize);
+    }
+    else {
+        /* For subtypes, do not presume tp_alloc is the same. */
+        fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
+        if (fa == NULL) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+        if (nd > 0) {
+            /* Allocate space for the dimensions and strides. */
+            fa->dimensions = npy_alloc_cache_dim(2 * nd);
+            if (fa->dimensions == NULL) {
+                PyErr_NoMemory();
+                goto fail;
+            }
+            /* Ensure this doesn't look like on-instance. */
+            assert(fa->dimensions != (npy_intp*)((char*)fa + subtype->tp_basicsize));
+        }
+    }
+    if (nd > 0) {
+        fa->strides = fa->dimensions + nd;
+    }
+    else {
+        fa->dimensions = NULL;
+        fa->strides = NULL;
     }
     fa->_buffer_info = NULL;
     fa->nd = nd;
-    fa->dimensions = NULL;
     fa->data = NULL;
     fa->mem_handler = NULL;
 
@@ -778,13 +828,6 @@ PyArray_NewFromDescr_int(
     NPY_traverse_info_init(&fill_zero_info);
 
     if (nd > 0) {
-        fa->dimensions = npy_alloc_cache_dim(2 * nd);
-        if (fa->dimensions == NULL) {
-            PyErr_NoMemory();
-            goto fail;
-        }
-        fa->strides = fa->dimensions + nd;
-
         /*
          * Copy dimensions, check them, and find total array size `nbytes`
          */
@@ -839,8 +882,6 @@ PyArray_NewFromDescr_int(
         }
     }
     else {
-        fa->dimensions = NULL;
-        fa->strides = NULL;
         fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
     }
 
