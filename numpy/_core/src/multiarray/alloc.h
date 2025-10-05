@@ -44,7 +44,12 @@ npy_free_cache_dim_obj(PyArray_Dims dims)
 static inline void
 npy_free_cache_dim_array(PyArrayObject * arr)
 {
-    npy_free_cache_dim(PyArray_DIMS(arr), PyArray_NDIM(arr));
+    /* deallocate if not part of the array instance */
+    if ((PyArray_DIMS(arr) != NULL)
+        && (PyArray_DIMS(arr) !=
+            (npy_intp *)((char*)arr + Py_TYPE(arr)->tp_basicsize))) {
+        npy_free_cache_dim(PyArray_DIMS(arr), PyArray_NDIM(arr));
+    }
 }
 
 extern PyDataMem_Handler default_handler;
