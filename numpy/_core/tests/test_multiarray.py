@@ -8680,11 +8680,23 @@ class TestArrayCreationCopyArgument:
             assert_raises(ValueError, _multiarray_tests.npy_ensurenocopy,
                             [1])
             for copy in self.false_vals:
-                assert_raises(ValueError, np.array, scalar, copy=copy)
-                assert_raises(ValueError, np.array, pyscalar, copy=copy)
+                for _scalar in (scalar, pyscalar):
+                    if isinstance(_scalar, (np.generic, float)):
+                        arr = np.array(_scalar, copy=copy)
+                        assert arr.base is _scalar
+                        assert arr.flags.writeable == scalar.flags.writeable
+                    else:
+                        assert_raises(ValueError, np.array, _scalar, copy=copy)
+
                 # Casting with a dtype (to unsigned integers) can be special:
                 with pytest.raises(ValueError):
                     np.array(pyscalar, dtype=np.int64, copy=copy)
+
+    def test_python_float_no_copy(self):
+        f = 1.5
+        arr = np.array(f, copy=False)
+        assert arr.base is f
+        assert not arr.flags.writeable
 
     def test_compatible_cast(self):
 
@@ -8724,9 +8736,10 @@ class TestArrayCreationCopyArgument:
                         assert res is not arr and res.flags.owndata
                         assert_array_equal(res, arr)
 
-                    assert_raises(ValueError, np.array,
-                                  arr, copy=False,
-                                  dtype=int2)
+                    with (pytest.raises(ValueError, match="avoid copy")
+                          if np.can_cast(int1, int2) else
+                          pytest.raises(TypeError, match="Cannot cast")):
+                        np.array(arr, copy=False, dtype=int2)
 
     def test_buffer_interface(self):
 
