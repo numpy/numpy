@@ -744,10 +744,46 @@ PyArray_NewFromDescr_int(
         }
     }
     /*
+     * Check dimensions and find total array size `nbytes`.
+     */
+    int is_zero = 0;
+    for (int i = 0; i < nd; i++) {
+        if (dims[i] == 0) {
+            /*
+             * Continue calculating the max size "as if" this were 1
+             * to get the proper overflow error
+             */
+            is_zero = 1;
+            continue;
+        }
+        if (dims[i] < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "negative dimensions are not allowed");
+            Py_DECREF(descr);
+            return NULL;
+        }
+        /*
+         * Care needs to be taken to avoid integer overflow when multiplying
+         * the dimensions together to get the total size of the array.
+         */
+        if (npy_mul_sizes_with_overflow(&nbytes, nbytes, dims[i])) {
+            PyErr_SetString(PyExc_ValueError,
+                            "array is too big; `arr.size * arr.dtype.itemsize` "
+                            "is larger than the maximum possible size.");
+            Py_DECREF(descr);
+            return NULL;
+        }
+    }
+    if (is_zero) {
+        nbytes = 0;
+    }
+    /*
      * Create the array instance.
      *
-     * For standard arrays, we allocate extra memory for the dimensions and
-     * strides, to avoid the overhead of another allocation.
+     * For standard, non-subclassed arrays, we allocate extra memory for
+     * the dimensions and strides, as well as the data themselves if small
+     * enough (and the default memory handler is used), to avoid the
+     * overhead of allocating tracked memory with PyDataMem_UserNew.
      *
      * We do this bypassing the standard tp_alloc, basically copying the
      * relevant code from PyType_GenericAlloc in Objects/typeobject.c.
@@ -755,40 +791,78 @@ PyArray_NewFromDescr_int(
      * instances, as this would change the array object structure order.
      *
      * TODO: possible extensions:
-     * - Also store small bits of data.
-     * - Maybe extend to subtype as long as tp_itemsize == 0
+     * - Maybe extend to subclasses as long as tp_itemsize == 0
      *   && tp_alloc == PyObject_GenericAlloc?
+     * - If one exposed the on-instance handler, one could always store
+     *   data on the instance if that is set.
      */
+    PyObject *mem_handler = NULL;
+    if (data == NULL) {
+        mem_handler = PyDataMem_GetHandler();
+        if (mem_handler == NULL) {
+            Py_DECREF(descr);
+            return NULL;
+        }
+    }
+
     if (subtype == &PyArray_Type) {
         size_t size = subtype->tp_basicsize;
+        size_t dim_offset = size;
         /* Alignment to intp should be guaranteed (last item is a pointer). */
-        assert(size % NPY_ALIGNOF(npy_intp) == 0);
+        assert(dim_offset % NPY_ALIGNOF(npy_intp) == 0);
         /* Add space for dimensions and strides. */
         size += sizeof(npy_intp) * nd * 2;
+        /* Possibly, add space for data. */
+        size_t data_offset = 0;
+        if (data == NULL && nbytes < size
+                && mem_handler == PyDataMem_DefaultHandler) {
+            /* Add space for the number of bytes (needed for possible resize) */
+            size += sizeof(npy_intp);
+            /* Round up if needed to ensure data will be aligned */
+            size_t align = NPY_ALIGNOF(npy_clongdouble);
+            data_offset = ((size + align - 1) / align) * align;
+            /* Always allocate at least one byte for the data. */
+            size = data_offset + (nbytes == 0 ? 1 : nbytes);
+        }
         /* Allocate the object and extra space */
         char *alloc = PyObject_Malloc(size);
         if (alloc == NULL) {
+            Py_XDECREF(mem_handler);
             Py_DECREF(descr);
             return PyErr_NoMemory();
         }
-        /* PyType_GenericAlloc zeroes the extra bytes, but we don't need to. */
+        /*
+         * PyType_GenericAlloc zeroes the extra bytes, but we don't need to,
+         * since we initialize below.  (Side note: Init cannot fail.)
+         */
         fa = (PyArrayObject_fields *)PyObject_Init((PyObject *)alloc, subtype);
         fa->dimensions = nd == 0 ? NULL :
             (npy_intp*)((char*)fa + subtype->tp_basicsize);
+        if (data_offset) {
+            fa->data = (char*)fa + data_offset;
+            /* Store number of bytes right before data */
+            *(npy_intp*)((char*)fa + data_offset - sizeof(npy_intp)) = nbytes;
+            Py_INCREF(npy_static_pydata.on_instance_handler);
+            Py_SETREF(mem_handler, npy_static_pydata.on_instance_handler);
+        }
+        else {
+            fa->data = NULL;
+        }
     }
     else {
         /* For subtypes, do not presume tp_alloc is the same. */
         fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
         if (fa == NULL) {
+            Py_XDECREF(mem_handler);
             Py_DECREF(descr);
             return NULL;
         }
         fa->dimensions = NULL;
+        fa->data = NULL;
     }
     fa->_buffer_info = NULL;
     fa->nd = nd;
-    fa->data = NULL;
-    fa->mem_handler = NULL;
+    fa->mem_handler = mem_handler;  /* NULL if it will not be needed */
 
     if (data == NULL) {
         fa->flags = NPY_ARRAY_DEFAULT;
@@ -824,49 +898,25 @@ PyArray_NewFromDescr_int(
             assert(fa->dimensions != (npy_intp*)((char*)fa + subtype->tp_basicsize));
         }
         fa->strides = fa->dimensions + nd;
-
-        /*
-         * Copy dimensions, check them, and find total array size `nbytes`
-         */
-        int is_zero = 0;
+        /* Fill dimensions. */
         for (int i = 0; i < nd; i++) {
             fa->dimensions[i] = dims[i];
-
-            if (fa->dimensions[i] == 0) {
-                /*
-                 * Continue calculating the max size "as if" this were 1
-                 * to get the proper overflow error
-                 */
-                is_zero = 1;
-                continue;
-            }
-
-            if (fa->dimensions[i] < 0) {
-                PyErr_SetString(PyExc_ValueError,
-                        "negative dimensions are not allowed");
-                goto fail;
-            }
-
-            /*
-             * Care needs to be taken to avoid integer overflow when multiplying
-             * the dimensions together to get the total size of the array.
-             */
-            if (npy_mul_sizes_with_overflow(&nbytes, nbytes, fa->dimensions[i])) {
-                PyErr_SetString(PyExc_ValueError,
-                        "array is too big; `arr.size * arr.dtype.itemsize` "
-                        "is larger than the maximum possible size.");
-                goto fail;
-            }
-        }
-        if (is_zero) {
-            nbytes = 0;
         }
 
         /* Fill the strides (or copy them if they were passed in) */
         if (strides == NULL) {
-            /* fill the strides and set the contiguity flags */
-            _array_fill_strides(fa->strides, dims, nd, descr->elsize,
-                                flags, &(fa->flags));
+            if (nbytes > 0) {
+                /* fill the strides and set the contiguity flags */
+                _array_fill_strides(fa->strides, dims, nd, descr->elsize,
+                                    flags, &(fa->flags));
+            }
+            else {
+                /* All strides are 0 */
+                for (int i = 0; i < nd; i++) {
+                    fa->strides[i] = 0;
+                }
+                fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
+            }
         }
         else {
             /* User to provided strides (user is responsible for correctness) */
@@ -883,7 +933,6 @@ PyArray_NewFromDescr_int(
         fa->strides = NULL;
         fa->flags |= NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS;
     }
-
 
     if (data == NULL) {
         /* This closely follows PyArray_ZeroContiguousBuffer. We can't use
@@ -918,33 +967,33 @@ PyArray_NewFromDescr_int(
                 PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
                 ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
 
-        /* Store the handler in case the default is modified */
-        fa->mem_handler = PyDataMem_GetHandler();
-        if (fa->mem_handler == NULL) {
-            goto fail;
-        }
-        /*
-         * Allocate something even for zero-space arrays
-         * e.g. shape=(0,) -- otherwise buffer exposure
-         * (a.data) doesn't work as it should.
-         */
-        if (nbytes == 0) {
-            nbytes = 1;
-            /* Make sure all the strides are 0 */
-            for (int i = 0; i < nd; i++) {
-                fa->strides[i] = 0;
+        if (fa->data != NULL) {
+            /* data on instance; zero if needed. */
+            data = fa->data;
+            if (use_calloc) {
+                memset(data, 0, nbytes);
             }
         }
-
-        if (use_calloc) {
-            data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
-        }
         else {
-            data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
-        }
-        if (data == NULL) {
-            raise_memory_error(fa->nd, fa->dimensions, descr);
-            goto fail;
+            /*
+             * Allocate something even for zero-space arrays
+             * e.g. shape=(0,) -- otherwise buffer exposure
+             * (a.data) doesn't work as it should.
+             */
+            if (nbytes == 0) {
+                nbytes = 1;
+            }
+
+            if (use_calloc) {
+                data = PyDataMem_UserNEW_ZEROED(nbytes, 1, fa->mem_handler);
+            }
+            else {
+                data = PyDataMem_UserNEW(nbytes, fa->mem_handler);
+            }
+            if (data == NULL) {
+                raise_memory_error(fa->nd, fa->dimensions, descr);
+                goto fail;
+            }
         }
 
         /*
@@ -1038,7 +1087,6 @@ PyArray_NewFromDescr_int(
 
  fail:
     NPY_traverse_info_xfree(&fill_zero_info);
-    Py_XDECREF(fa->mem_handler);
     Py_DECREF(fa);
     return NULL;
 }

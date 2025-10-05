@@ -5182,8 +5182,17 @@ _multiarray_umath_exec(PyObject *m) {
     if (PyDataMem_DefaultHandler == NULL) {
         return -1;
     }
+    /*
+     * Initialize the private on-instance PyDataMem_Handler singleton.
+     */
+    npy_static_pydata.on_instance_handler = PyCapsule_New(
+            &on_instance_handler, MEM_HANDLER_CAPSULE_NAME, NULL);
+    if (npy_static_pydata.on_instance_handler == NULL) {
+        return -1;
+    }
 #ifdef Py_GIL_DISABLED
-    if (PyUnstable_SetImmortal(PyDataMem_DefaultHandler) == 0) {
+    if (PyUnstable_SetImmortal(PyDataMem_DefaultHandler) == 0
+        || PyUnstable_SetImmortal(npy_static_pydata.on_instance_handler) == 0) {
         PyErr_SetString(PyExc_RuntimeError,
                         "Could not mark memory handler capsule as immortal");
         return -1;

@@ -151,6 +151,10 @@ typedef struct npy_static_pydata_struct {
     PyObject *dl_call_kwnames;
     PyObject *dl_cpu_device_tuple;
     PyObject *dl_max_version;
+    /*
+     * Used for helping with storing small arrays as part of the instance
+     */
+    PyObject *on_instance_handler;
 } npy_static_pydata_struct;
 
 
