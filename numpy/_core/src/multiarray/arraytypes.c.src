@@ -155,7 +155,7 @@ MyPyFloat_FromHalf(npy_half h)
 
 /*
  * Handle case of assigning from an array scalar in setitem.
- * NOTE/TODO(seberg): This was important, but is now only userd
+ * NOTE/TODO(seberg): This was important, but is now only used
  * for *nested* 0-D arrays which makes it dubious whether it should
  * remain used.
  * (At the point of writing, I did not want to worry about BC though.)
@@ -810,7 +810,7 @@ STRING_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
         Py_DECREF(temp);
         return -1;
     }
-    memcpy(ov, ptr, PyArray_MIN(descr->elsize,len));
+    memcpy(ov, ptr, PyArray_MIN(descr->elsize, len));
     /*
      * If string length is smaller than room in array
      * Then fill the rest of the element size with NULL
