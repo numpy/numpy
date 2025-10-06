@@ -130,6 +130,20 @@ default_get_constant(PyArray_Descr *descr, int constant_id, void *data)
 
 
 static int
+legacy_fallback_setitem(PyArray_Descr *descr, PyObject *value, char *data)
+{
+    PyArrayObject_fields arr_fields = {
+        .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
+        .descr = descr,
+    };
+    Py_SET_TYPE(&arr_fields, &PyArray_Type);
+    Py_SET_REFCNT(&arr_fields, 1);
+
+    return PyDataType_GetArrFuncs(descr)->setitem(value, data, &arr_fields);
+}
+
+
+static int
 legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
 {
     if (arr == NULL) {
@@ -138,9 +152,7 @@ legacy_setitem_using_DType(PyObject *obj, void *data, void *arr)
                 "supported for basic NumPy DTypes.");
         return -1;
     }
-    PyArrayDTypeMeta_SetItem *setitem;
-    setitem = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DESCR(arr)))->setitem;
-    return setitem(PyArray_DESCR(arr), obj, data);
+    return NPY_DT_CALL_setitem(PyArray_DESCR(arr), obj, data);
 }
 
 
@@ -1189,7 +1201,12 @@ dtypemeta_wrap_legacy_descriptor(
     dt_slots->ensure_canonical = ensure_native_byteorder;
     dt_slots->get_fill_zero_loop = NULL;
     dt_slots->finalize_descr = NULL;
-    dt_slots->setitem = NULL;
+    // May be overwritten, but if not provide fallback via array struct hack.
+    // `getitem` is a trickier because of structured dtypes returning views.
+    if (dt_slots->f.setitem == NULL) {
+        dt_slots->f.setitem = legacy_setitem_using_DType;
+    }
+    dt_slots->setitem = legacy_fallback_setitem;
     dt_slots->getitem = NULL;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {

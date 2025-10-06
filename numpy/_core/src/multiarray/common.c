@@ -328,6 +328,30 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     return 0;
 }
 
+
+/**
+ * Unpack a field from a structured dtype. The field index must be valid.
+ *
+ * @param descr The dtype to unpack.
+ * @param index The index of the field to unpack.
+ * @param odescr will be set to the field's dtype
+ * @param offset will be set to the field's offset
+ *
+ * @return -1 on failure, 0 on success.
+ */
+ NPY_NO_EXPORT int
+ _unpack_field_index(
+    _PyArray_LegacyDescr *descr,
+    npy_intp index,
+    PyArray_Descr **odescr,
+    npy_intp *offset)
+ {
+    PyObject *key = PyTuple_GET_ITEM(descr->names, index);
+    PyObject *tup = PyDict_GetItem(descr->fields, key);  // noqa: borrowed-ref OK
+    return _unpack_field(tup, odescr, offset);
+ }
+
+
 /*
  * check whether arrays with datatype dtype might have object fields. This will
  * only happen for structured dtypes (which may have hidden objects even if the
