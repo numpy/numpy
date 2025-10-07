@@ -1316,6 +1316,7 @@ class TestDTypeMakeCanonical:
 
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
+    @pytest.mark.thread_unsafe(reason="hynp.nested_dtypes thread unsafe?")
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
