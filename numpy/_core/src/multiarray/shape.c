@@ -115,18 +115,45 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 
         /* Reallocate space if needed - allocating 0 is forbidden */
         PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+        if (handler != NULL) {
+            new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
+                                           newnbytes == 0 ? 1 : newnbytes,
+                                           handler);
+        }
+        else if (PyArray_DATA(self) ==
+                 (void *)((char *)self + Py_TYPE(self)->tp_basicsize)) {
+            /*
+             * data was stored on instance, so has no reference.
+             * TODO: make this a plain else; see text in array_dealloc.
+             */
+            if (newnbytes <= oldnbytes) {
+                new_data = PyArray_DATA(self);
+            }
+            else {
+                handler = PyDataMem_GetHandler();
+                if (handler == NULL) {
+                    return NULL;
+                }
+                new_data = PyDataMem_UserNEW(newnbytes == 0 ? 1 : newnbytes,
+                                             handler);
+                if (new_data != NULL) {
+                    ((PyArrayObject_fields *)self)->mem_handler = handler;
+                    memcpy(new_data, PyArray_DATA(self), oldnbytes);
+                }
+            }
+        }
+        else {
+            /*
+             * Without a handler, data should be on the instance; if not,
+             * someone arbitrarily set NPY_ARRAY_OWNDATA, so raise.
+             */
             PyErr_SetString(PyExc_RuntimeError,
                             "no memory handler found but OWNDATA flag set");
             return NULL;
         }
-        new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
-                                       newnbytes == 0 ? elsize : newnbytes,
-                                       handler);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
-                    "cannot allocate memory for array");
+                            "cannot allocate memory for array");
             return NULL;
         }
         ((PyArrayObject_fields *)self)->data = new_data;
