@@ -727,24 +727,26 @@ PyArray_NewFromDescr_int(
          * memory as part of the object, to avoid the overhead of allocating
          * tracked memory with PyDataMem_UserNew.
          *
-         * We do this bypassing the standard tp_alloc. In principle, on python
-         * 3.13 it seemed possible not to, as long as one uses a PyVarObject
-         * and tp_itemsize=1, but on python 3.11 this gave problems with
-         * subclassing.  An advantage of the present approach is that it does
-         * not change the size of a regular instance.  Note that we mimic
-         * PyType_GenericAlloc here in zeroing the bytes (python 3.13 zeros
-         * only the extra ones, 3.11 all of them), so that does not have to
-         * be done later.
+         * We do this bypassing the standard tp_alloc, basically copying the
+         * relevant code from PyType_GenericAlloc in Objects/typeobject.c.
+         * In principle, on python 3.13 it seemed possible to use the
+         * default, as long as one uses a PyVarObject and tp_itemsize=1, but
+         * on python 3.11 this gave problems with subclassing.  An advantage
+         * of the present approach is that it does not change the size of a
+         * regular instance.
          *
-         * TODO: maybe do this generally for any small allocation, i.e.,
-         * calculate full nbytes up front and just use that here?
-         *
-         * Note: alignment constraint written such that compiler can just
-         * show it is true.
+         * TODO: possible extensions:
+         * - Maybe do this generally for any small allocation, i.e.,
+         *   calculate full nbytes up front and just use that here?
+         * - If so, also allocate space for the  strides here?
+         * - Maybe extend to subtype as long as tp_basicsize == <our size>
+         *   && tp_alloc == PyObject_GenericAlloc && tp_itemsize == 0.
          */
         size_t size = subtype->tp_basicsize;
-        if (data == NULL && nd == 0 && nbytes < subtype->tp_basicsize
-                && (sizeof(PyArrayObject_fields) & (sizeof(npy_intp)-1)) == 0) {
+        if (data == NULL && nd == 0 && nbytes < subtype->tp_basicsize) {
+            /* alignment is currently OK; ensure it remains so */
+            static_assert((sizeof(PyArrayObject_fields)
+                           & (sizeof(npy_intp) - 1)) == 0);
             data_on_instance = NPY_TRUE;
             size += nbytes;
         }
@@ -752,7 +754,7 @@ PyArray_NewFromDescr_int(
         if (alloc == NULL) {
             return PyErr_NoMemory();
         }
-        memset(alloc, '\0', size);
+        /* PyType_GenericAlloc would zero bytes here, but we don't need to */
         PyObject_Init((PyObject *)alloc, subtype);
         fa = (PyArrayObject_fields *)alloc;
     }
@@ -883,25 +885,28 @@ PyArray_NewFromDescr_int(
             }
         }
 
+        /*
+         * We always want a zero-filled array allocated with calloc if
+         * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
+         * zero-filled array if zeroed is set and the zero-filling loop isn't
+         * defined, for better performance.
+         *
+         * If the zero-filling loop is defined and zeroed is set, allocate
+         * with malloc and let the zero-filling loop fill the array buffer
+         * with valid zero values for the dtype.
+         */
+        int use_calloc = (
+            PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
+            ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
+
         if (data_on_instance) {
             /* extra data allocated in tp_alloc is already zeroed */
             data = (void *)((char *)fa + subtype->tp_basicsize);
+            if (use_calloc) {
+                memset(data, 0, nbytes);
+            }
         }
         else {
-            /*
-             * We always want a zero-filled array allocated with calloc if
-             * NPY_NEEDS_INIT is set on the dtype, for safety.  We also want a
-             * zero-filled array if zeroed is set and the zero-filling loop isn't
-             * defined, for better performance.
-             *
-             * If the zero-filling loop is defined and zeroed is set, allocate
-             * with malloc and let the zero-filling loop fill the array buffer
-             * with valid zero values for the dtype.
-             */
-            int use_calloc = (
-                PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT) ||
-                ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
-
             /* Store the handler in case the default is modified */
             fa->mem_handler = PyDataMem_GetHandler();
             if (fa->mem_handler == NULL) {
