@@ -720,30 +720,42 @@ PyArray_NewFromDescr_int(
         }
     }
 
+    /*
+     * Create the array instance.
+     *
+     * For an array scalar that is not too big, we allocate the required
+     * memory as part of the object, to avoid the overhead of allocating
+     * tracked memory with PyDataMem_UserNew.
+     *
+     * We do this bypassing the standard tp_alloc, basically copying the
+     * relevant code from PyType_GenericAlloc in Objects/typeobject.c.
+     * In principle, on python 3.13 it seemed possible to use the
+     * default, as long as one uses a PyVarObject and tp_itemsize=1, but
+     * on python 3.11 this gave problems with subclassing.  An advantage
+     * of the present approach is that it does not change the size of a
+     * regular instance.
+     *
+     * We only do this trickery if the memory handler is the default one;
+     * hence, we get it as a first step below.
+     *
+     * TODO: possible extensions:
+     * - Maybe do this generally for any small allocation, i.e.,
+     *   calculate full nbytes up front and just use that here?
+     * - If so, also allocate space for the strides here?
+     * - Maybe extend to subtype as long as tp_basicsize == <our size>
+     *   && tp_alloc == PyObject_GenericAlloc && tp_itemsize == 0.
+     */
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        Py_DECREF(descr);
+        return NULL;
+    }
+
     npy_bool data_on_instance = NPY_FALSE;
     if (subtype == &PyArray_Type) {
-        /*
-         * For an array scalar that is not too big, we allocate the required
-         * memory as part of the object, to avoid the overhead of allocating
-         * tracked memory with PyDataMem_UserNew.
-         *
-         * We do this bypassing the standard tp_alloc, basically copying the
-         * relevant code from PyType_GenericAlloc in Objects/typeobject.c.
-         * In principle, on python 3.13 it seemed possible to use the
-         * default, as long as one uses a PyVarObject and tp_itemsize=1, but
-         * on python 3.11 this gave problems with subclassing.  An advantage
-         * of the present approach is that it does not change the size of a
-         * regular instance.
-         *
-         * TODO: possible extensions:
-         * - Maybe do this generally for any small allocation, i.e.,
-         *   calculate full nbytes up front and just use that here?
-         * - If so, also allocate space for the  strides here?
-         * - Maybe extend to subtype as long as tp_basicsize == <our size>
-         *   && tp_alloc == PyObject_GenericAlloc && tp_itemsize == 0.
-         */
         size_t size = subtype->tp_basicsize;
-        if (data == NULL && nd == 0 && nbytes < subtype->tp_basicsize) {
+        if (data == NULL && mem_handler == PyDataMem_DefaultHandler
+                && nd == 0 && nbytes < subtype->tp_basicsize) {
             /* alignment is currently OK; ensure it remains so */
             static_assert((sizeof(PyArrayObject_fields)
                            & (sizeof(npy_intp) - 1)) == 0);
@@ -908,10 +920,7 @@ PyArray_NewFromDescr_int(
         }
         else {
             /* Store the handler in case the default is modified */
-            fa->mem_handler = PyDataMem_GetHandler();
-            if (fa->mem_handler == NULL) {
-                goto fail;
-            }
+            fa->mem_handler = mem_handler;
             /*
              * Allocate something even for zero-space arrays
              * e.g. shape=(0,) -- otherwise buffer exposure
