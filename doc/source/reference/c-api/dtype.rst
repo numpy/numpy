@@ -624,7 +624,7 @@ precision to match C standard conventions:
 * ``HALF_MIN``: 2^-14
 * ``HALF_EPSILON``: 2^-10
 * ``HALF_TRUE_MIN``: 2^-24
-* ``HALF_MANT_DIG``: 11 (excluding implicit bit)
+* ``HALF_MANT_DIG``: 11 (including implicit bit)
 
 **IBM double-double (PowerPC)**: On PowerPC systems using the IBM double-double
 format (a pair of IEEE binary64 values, not a true IEEE quad), NumPy provides
