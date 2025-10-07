@@ -119,6 +119,13 @@ typedef struct PyArrayMethod_Context_tag {
      * NPY_ARRAYMETHOD_CONTEXT_FLAGS
      */
     uint64_t flags;
+    
+    /*
+     * Optional run-time parameters to pass to the loop (currently used in sorting).
+     * Fixed parameters are expected to be passed via auxdata.
+     */
+    void *parameters;
+    
     /* Structure may grow (this is harmless for DType authors) */
  #endif
 } PyArrayMethod_Context;
@@ -525,5 +532,9 @@ typedef int (PyArrayDTypeMeta_GetConstant)(PyArray_Descr *descr, int ID, void *d
  */
 typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
+
+typedef struct {
+    NPY_SORTKIND flags;
+} PyArrayMethod_SortParameters;
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

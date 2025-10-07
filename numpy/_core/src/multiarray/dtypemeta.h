@@ -90,6 +90,12 @@ typedef struct {
      * dtype instance for backward compatibility.  (Keep this at end)
      */
     PyArray_ArrFuncs f;
+
+    /*
+     * Hidden slots for the sort and argsort arraymethods.
+     */
+    PyArrayMethodObject *sort_meth;
+    PyArrayMethodObject *argsort_meth;
 } NPY_DType_Slots;
 
 // This must be updated if new slots before within_dtype_castingimpl
