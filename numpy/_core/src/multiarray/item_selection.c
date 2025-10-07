@@ -3271,9 +3271,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     if (argsort_method != NULL) {
         PyArray_Descr *descr = PyArray_DESCR(op);
         PyArray_Descr *odescr = PyArray_DescrFromType(NPY_INTP);
-        if (odescr == NULL) {
-            return NULL;
-        }
         PyArray_DTypeMeta *dt = NPY_DTYPE(descr);
         PyArray_DTypeMeta *odt = NPY_DTYPE(odescr);
 
