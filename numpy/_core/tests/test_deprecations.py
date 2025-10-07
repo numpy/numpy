@@ -215,14 +215,6 @@ class TestCtypesGetter(_DeprecationTestCase):
         self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
 
 
-class TestMachAr(_DeprecationTestCase):
-    # Deprecated 2022-11-22, NumPy 1.25
-    warning_cls = DeprecationWarning
-
-    def test_deprecated_module(self):
-        self.assert_deprecated(lambda: np._core.MachAr)
-
-
 class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
     # Deprecated 2021-11-08, NumPy 1.22
     @pytest.mark.parametrize("func",
@@ -239,18 +231,6 @@ class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
         with pytest.warns(DeprecationWarning):
             with pytest.raises(TypeError):
                 func([0., 1.], 0., interpolation="nearest", method="nearest")
-
-
-class TestScalarConversion(_DeprecationTestCase):
-    # 2023-01-02, 1.25.0
-    def test_float_conversion(self):
-        self.assert_deprecated(float, args=(np.array([3.14]),))
-
-    def test_behaviour(self):
-        b = np.array([[3.14]])
-        c = np.zeros(5)
-        with pytest.warns(DeprecationWarning):
-            c[0] = b
 
 
 class TestPyIntConversion(_DeprecationTestCase):

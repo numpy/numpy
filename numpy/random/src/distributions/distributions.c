@@ -597,7 +597,7 @@ static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
     /* log(V) == log(0.0) ok here */
     /* if U==0.0 so that us==0.0, log is ok since always returns */
     if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
-        (-lam + k * loglam - random_loggam(k + 1))) {
+        (-lam + (double)k * loglam - random_loggam((double)k + 1))) {
       return k;
     }
   }
@@ -733,10 +733,10 @@ Step52:
   if (A > (t + rho))
     goto Step10;
 
-  x1 = y + 1;
-  f1 = m + 1;
-  z = n + 1 - m;
-  w = n - y + 1;
+  x1 = (double)y + 1;
+  f1 = (double)m + 1;
+  z = (double)n + 1 - (double)m;
+  w = (double)n - (double)y + 1;
   x2 = x1 * x1;
   f2 = f1 * f1;
   z2 = z * z;

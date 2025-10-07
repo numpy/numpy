@@ -125,8 +125,6 @@ class RoundtripTest:
 
             arr_reloaded = np.load(load_file, **load_kwds)
 
-            self.arr = arr
-            self.arr_reloaded = arr_reloaded
         finally:
             if not isinstance(target_file, BytesIO):
                 target_file.close()
@@ -134,6 +132,8 @@ class RoundtripTest:
                 if 'arr_reloaded' in locals():
                     if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
                         os.remove(target_file.name)
+
+        return arr, arr_reloaded
 
     def check_roundtrips(self, a):
         self.roundtrip(a)
@@ -195,26 +195,26 @@ class RoundtripTest:
 
 class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
-        RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
-        assert_equal(self.arr[0], self.arr_reloaded)
-        assert_equal(self.arr[0].dtype, self.arr_reloaded.dtype)
-        assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
+        arr, arr_reloaded = RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
+        assert_equal(arr[0], arr_reloaded)
+        assert_equal(arr[0].dtype, arr_reloaded.dtype)
+        assert_equal(arr[0].flags.fnc, arr_reloaded.flags.fnc)
 
 
 class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
-        RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+        arr, arr_reloaded = RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
-            for n, arr in enumerate(self.arr):
-                reloaded = self.arr_reloaded['arr_%d' % n]
-                assert_equal(arr, reloaded)
-                assert_equal(arr.dtype, reloaded.dtype)
-                assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+            for n, a in enumerate(arr):
+                reloaded = arr_reloaded['arr_%d' % n]
+                assert_equal(a, reloaded)
+                assert_equal(a.dtype, reloaded.dtype)
+                assert_equal(a.flags.fnc, reloaded.flags.fnc)
         finally:
             # delete tempfile, must be done here on windows
-            if self.arr_reloaded.fid:
-                self.arr_reloaded.fid.close()
-                os.remove(self.arr_reloaded.fid.name)
+            if arr_reloaded.fid:
+                arr_reloaded.fid.close()
+                os.remove(arr_reloaded.fid.name)
 
     def test_load_non_npy(self):
         """Test loading non-.npy files and name mapping in .npz."""

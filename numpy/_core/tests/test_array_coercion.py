@@ -266,11 +266,6 @@ class TestScalarDiscovery:
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
 
-        if type(scalar) is rational:
-            # Rational generally fails due to a missing cast. In the future
-            # object casts should automatically be defined based on `setitem`.
-            pytest.xfail("Rational to object cast is undefined currently.")
-
         # Use casting from object:
         arr = np.array(scalar, dtype=object).astype(scalar.dtype)
 

@@ -13,5 +13,5 @@ def bmat(
 ) -> matrix[tuple[int, int], Any]: ...
 
 def asmatrix(
-    data: ArrayLike, dtype: DTypeLike = None
+    data: ArrayLike, dtype: DTypeLike | None = None
 ) -> matrix[tuple[int, int], Any]: ...

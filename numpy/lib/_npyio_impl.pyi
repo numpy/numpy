@@ -159,7 +159,7 @@ def loadtxt(
 @overload
 def loadtxt(
     fname: _FName,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
     converters: Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any] | None = None,
@@ -197,7 +197,7 @@ def fromregex(
 def fromregex(
     file: _FNameRead,
     regexp: str | bytes | Pattern[Any],
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     encoding: str | None = None,
 ) -> NDArray[Any]: ...
 
@@ -262,7 +262,7 @@ def genfromtxt(
 @overload
 def genfromtxt(
     fname: _FName,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     comments: str = "#",
     delimiter: str | int | Iterable[int] | None = None,
     skip_header: int = 0,

@@ -26,7 +26,7 @@ def require(
 @overload
 def require(
     a: object,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     requirements: _E | Iterable[_RequirementsWithE] | None = None,
     *,
     like: _SupportsArrayFunc | None = None
@@ -34,7 +34,7 @@ def require(
 @overload
 def require(
     a: object,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     requirements: _Requirements | Iterable[_Requirements] | None = None,
     *,
     like: _SupportsArrayFunc | None = None
