@@ -145,6 +145,13 @@ typedef struct {
 } PyArrayMethod_Spec;
 
 
+// This is used for the convenience function `PyUFunc_AddLoopsFromSpecs`
+typedef struct {
+    const char *name;
+    PyArrayMethod_Spec *spec;
+} PyUFunc_LoopSlot;
+
+
 /*
  * ArrayMethod slots
  * -----------------

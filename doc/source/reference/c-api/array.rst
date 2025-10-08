@@ -1886,6 +1886,34 @@ with the rest of the ArrayMethod API.
    the main ufunc registration function.  This adds a new implementation/loop
    to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
 
+.. c:type:: PyUFunc_LoopSlot
+
+   Structure used to add multiple loops to ufuncs from ArrayMethod specs.
+   This is used in `PyUFunc_AddLoopsFromSpecs`.
+
+    .. c:struct:: PyUFunc_LoopSlot
+
+        .. c:member:: const char *name
+
+            The name of the ufunc to add the loop to.
+
+        .. c:member:: PyArrayMethod_Spec *spec
+
+            The ArrayMethod spec to use to create the loop.
+
+.. c:function:: int PyUFunc_AddLoopsFromSpecs( \
+                        PyUFunc_LoopSlot *slots)
+
+    .. versionadded:: 2.4
+
+    Add multiple loops to ufuncs from ArrayMethod specs. This also
+    handles the registration of methods for the ufunc-like functions
+    ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
+
+    The ``slots`` argument must be a  NULL-terminated array of
+    `PyUFunc_LoopSlot` (see above), which give the name of the
+    ufunc and spec needed to create the loop.
+
 .. c:function:: int PyUFunc_AddPromoter( \
                         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
 
@@ -2035,6 +2063,36 @@ code:
         loop_descrs[2] = PyArray_DescrFromType(NPY_FLOAT64);
         Py_INCREF(loop_descrs[2]);
     }
+
+.. _array-methods-sorting:
+
+Sorting and Argsorting
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Sorting and argsorting methods for dtypes can be registered using the
+ArrayMethod API. This is done by adding an ArrayMethod spec with the name
+``"sort"`` or ``"argsort"`` respectively.  The spec must have ``nin=1``
+and ``nout=1`` for both sort and argsort. Sorting is inplace, hence we
+enforce that ``data[0] == data[1]``. Argsorting returns a new array of
+indices, so the output must be of ``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_SortParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SORTKIND``
+values indicating the kind of sort to perform (that is, whether it is a
+stable and/or descending sort). If the strided loop depends on the flags,
+a good way to deal with this is to define :c:macro:`NPY_METH_get_loop`,
+and not set any of the other loop slots.
+
+.. c:struct:: PyArrayMethod_SortParameters
+
+    .. c:member:: NPY_SORTKIND flags
+
+        The flags passed to the sort operation. This is a bitwise OR of
+        ``NPY_SORTKIND`` values indicating the kind of sort to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
 
 API for calling array methods
 -----------------------------

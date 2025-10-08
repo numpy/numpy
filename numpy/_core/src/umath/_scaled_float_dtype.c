@@ -777,92 +777,6 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
 }
 
 
-/*
- * Add new ufunc loops (this is somewhat clumsy as of writing it, but should
- * get less so with the introduction of public API).
- */
-static int
-sfloat_init_ufuncs(void) {
-    PyArray_DTypeMeta *dtypes[3] = {
-            &PyArray_SFloatDType, &PyArray_SFloatDType, &PyArray_SFloatDType};
-    PyType_Slot slots[3] = {{0, NULL}};
-    PyArrayMethod_Spec spec = {
-        .nin = 2,
-        .nout =1,
-        .dtypes = dtypes,
-        .slots = slots,
-    };
-    spec.name = "sfloat_multiply";
-    spec.casting = NPY_NO_CASTING;
-
-    slots[0].slot = NPY_METH_resolve_descriptors;
-    slots[0].pfunc = &multiply_sfloats_resolve_descriptors;
-    slots[1].slot = NPY_METH_strided_loop;
-    slots[1].pfunc = &multiply_sfloats;
-    PyBoundArrayMethodObject *bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
-    if (bmeth == NULL) {
-        return -1;
-    }
-    int res = sfloat_add_loop("multiply",
-            bmeth->dtypes, (PyObject *)bmeth->method);
-    Py_DECREF(bmeth);
-    if (res < 0) {
-        return -1;
-    }
-
-    spec.name = "sfloat_add";
-    spec.casting = NPY_SAME_KIND_CASTING;
-
-    slots[0].slot = NPY_METH_resolve_descriptors;
-    slots[0].pfunc = &add_sfloats_resolve_descriptors;
-    slots[1].slot = NPY_METH_strided_loop;
-    slots[1].pfunc = &add_sfloats;
-    bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
-    if (bmeth == NULL) {
-        return -1;
-    }
-    res = sfloat_add_loop("add",
-            bmeth->dtypes, (PyObject *)bmeth->method);
-    Py_DECREF(bmeth);
-    if (res < 0) {
-        return -1;
-    }
-
-    /* N.B.: Wrapping isn't actually correct if scaling can be negative */
-    if (sfloat_add_wrapping_loop("hypot", dtypes) < 0) {
-        return -1;
-    }
-
-    /*
-     * Add a promoter for both directions of multiply with double.
-     */
-    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
-
-    PyArray_DTypeMeta *promoter_dtypes[3] = {
-            &PyArray_SFloatDType, double_DType, NULL};
-
-    PyObject *promoter = PyCapsule_New(
-            &promote_to_sfloat, "numpy._ufunc_promoter", NULL);
-    if (promoter == NULL) {
-        return -1;
-    }
-    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
-    if (res < 0) {
-        Py_DECREF(promoter);
-        return -1;
-    }
-    promoter_dtypes[0] = double_DType;
-    promoter_dtypes[1] = &PyArray_SFloatDType;
-    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
-    Py_DECREF(promoter);
-    if (res < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-
 NPY_NO_EXPORT int
 sfloat_stable_sort_loop(
         PyArrayMethod_Context *context,
@@ -1044,53 +958,120 @@ sfloat_argsort_resolve_descriptors(
 }
 
 
+/*
+ * Add new ufunc loops (this is somewhat clumsy as of writing it, but should
+ * get less so with the introduction of public API).
+ */
 static int
-sfloat_init_sort(void)
-{
-    PyArray_DTypeMeta *dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
-    PyType_Slot slots[3] = {
+sfloat_init_ufuncs(void) {
+    PyArray_DTypeMeta *all_sfloat_dtypes[3] = {
+            &PyArray_SFloatDType, &PyArray_SFloatDType, &PyArray_SFloatDType};
+    PyType_Slot multiply_slots[3] = {
+        {NPY_METH_resolve_descriptors, &multiply_sfloats_resolve_descriptors},
+        {NPY_METH_strided_loop, &multiply_sfloats},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec multiply_spec = {
+        .nin = 2,
+        .nout = 1,
+        .dtypes = all_sfloat_dtypes,
+        .slots = multiply_slots,
+        .name = "sfloat_multiply",
+        .casting = NPY_NO_CASTING,
+    };
+
+    PyType_Slot add_slots[3] = {
+        {NPY_METH_resolve_descriptors, &add_sfloats_resolve_descriptors},
+        {NPY_METH_strided_loop, &add_sfloats},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec add_spec = {
+        .nin = 2,
+        .nout = 1,
+        .dtypes = all_sfloat_dtypes,
+        .slots = add_slots,
+        .name = "sfloat_add",
+        .casting = NPY_SAME_KIND_CASTING,
+    };
+
+    PyArray_DTypeMeta *sort_dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
+    PyType_Slot sort_slots[3] = {
         {NPY_METH_resolve_descriptors, &sfloat_sort_resolve_descriptors},
         {NPY_METH_get_loop, &sfloat_sort_get_loop},
         {0, NULL}
     };
-    PyArrayMethod_Spec spec = {
+    PyArrayMethod_Spec sort_spec = {
         .nin = 1,
         .nout = 1,
-        .dtypes = dtypes,
-        .slots = slots,
+        .dtypes = sort_dtypes,
+        .slots = sort_slots,
     };
-    spec.name = "sfloat_sort";
-    spec.casting = NPY_NO_CASTING;
-    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    sort_spec.name = "sfloat_sort";
+    sort_spec.casting = NPY_NO_CASTING;
+    sort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    PyBoundArrayMethodObject *sort_meth = PyArrayMethod_FromSpec_int(&spec, 0);
-    if (sort_meth == NULL) {
+    PyArray_DTypeMeta *argsort_dtypes[2] = {&PyArray_SFloatDType, &PyArray_IntpDType};
+    PyType_Slot argsort_slots[3] = {
+        {NPY_METH_resolve_descriptors, &sfloat_argsort_resolve_descriptors},
+        {NPY_METH_get_loop, &sfloat_argsort_get_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec argsort_spec = {
+        .nin = 1,
+        .nout = 1,
+        .dtypes = argsort_dtypes,
+        .slots = argsort_slots,
+    };
+    argsort_spec.name = "sfloat_argsort";
+    argsort_spec.casting = NPY_NO_CASTING;
+    argsort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    PyUFunc_LoopSlot loops[] = {
+        {"multiply", &multiply_spec},
+        {"add", &add_spec},
+        {"sort", &sort_spec},
+        {"argsort", &argsort_spec},
+        {NULL, NULL}
+    };
+    if (PyUFunc_AddLoopsFromSpecs(loops) < 0) {
         return -1;
     }
-    // TODO: once registration method is in place, use it instead of setting hidden slot
-    NPY_DT_SLOTS(&PyArray_SFloatDType)->sort_meth = sort_meth->method;
-    Py_INCREF(sort_meth->method);
-    Py_DECREF(sort_meth);
 
-    spec.name = "sfloat_argsort";
-    dtypes[1] = &PyArray_IntpDType;
-
-    slots[0].slot = NPY_METH_resolve_descriptors;
-    slots[0].pfunc = &sfloat_argsort_resolve_descriptors;
-    slots[1].slot = NPY_METH_get_loop;
-    slots[1].pfunc = &sfloat_argsort_get_loop;
-
-    // TODO: once registration method is in place, use it instead of setting hidden slot
-    PyBoundArrayMethodObject *argsort_meth = PyArrayMethod_FromSpec_int(&spec, 0);
-    if (argsort_meth == NULL) {
+    /* N.B.: Wrapping isn't actually correct if scaling can be negative */
+    if (sfloat_add_wrapping_loop("hypot", all_sfloat_dtypes) < 0) {
         return -1;
     }
-    NPY_DT_SLOTS(&PyArray_SFloatDType)->argsort_meth = argsort_meth->method;
-    Py_INCREF(argsort_meth->method);
-    Py_DECREF(argsort_meth);
+
+    /*
+     * Add a promoter for both directions of multiply with double.
+     */
+    int res = -1;
+    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
+
+    PyArray_DTypeMeta *promoter_dtypes[3] = {
+            &PyArray_SFloatDType, double_DType, NULL};
+
+    PyObject *promoter = PyCapsule_New(
+            &promote_to_sfloat, "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        return -1;
+    }
+    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
+    if (res < 0) {
+        Py_DECREF(promoter);
+        return -1;
+    }
+    promoter_dtypes[0] = double_DType;
+    promoter_dtypes[1] = &PyArray_SFloatDType;
+    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
+    Py_DECREF(promoter);
+    if (res < 0) {
+        return -1;
+    }
 
     return 0;
 }
+
 
 /*
  * Python entry point, exported via `umathmodule.h` and `multiarraymodule.c`.
@@ -1125,10 +1106,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     }
 
     if (sfloat_init_ufuncs() < 0) {
-        return NULL;
-    }
-
-    if (sfloat_init_sort() < 0) {
         return NULL;
     }
 
