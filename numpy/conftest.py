@@ -20,12 +20,6 @@ try:
 except ModuleNotFoundError:
     HAVE_SCPDT = False
 
-try:
-    import pytest_run_parallel  # noqa: F401
-    PARALLEL_RUN_AVALIABLE = True
-except ModuleNotFoundError:
-    PARALLEL_RUN_AVALIABLE = False
-
 _old_fpu_mode = None
 _collect_results = {}
 
@@ -148,12 +142,6 @@ def check_fpu_mode(request):
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
-
-
-if not PARALLEL_RUN_AVALIABLE:
-    @pytest.fixture
-    def thread_index():
-        return 0
 
 
 if HAVE_SCPDT:
