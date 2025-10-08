@@ -303,7 +303,7 @@ class finfo:
         return fmt
 
     def __repr__(self):
-        if self._repr is not None:
+        if hasattr(self, "_repr") and self._repr is not None:
             return self._repr
 
         c = self.__class__.__name__
