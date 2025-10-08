@@ -20,6 +20,7 @@ try:
 except ModuleNotFoundError:
     HAVE_SCPDT = False
 
+
 _old_fpu_mode = None
 _collect_results = {}
 
