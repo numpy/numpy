@@ -120,11 +120,10 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                                            newnbytes == 0 ? 1 : newnbytes,
                                            handler);
         }
-        else if (PyArray_DATA(self) ==
-                 (void *)((char *)self + Py_TYPE(self)->tp_basicsize)) {
+        else if (_PyArray_DATA_ON_INSTANCE(self)) {
             /*
              * data was stored on instance, so has no reference.
-             * TODO: make this a plain else; see text in array_dealloc.
+             * TODO: make this a plain else; see comment in array_dealloc.
              */
             if (newnbytes <= oldnbytes) {
                 new_data = PyArray_DATA(self);

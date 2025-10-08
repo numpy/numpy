@@ -754,11 +754,8 @@ PyArray_NewFromDescr_int(
     npy_bool data_on_instance = NPY_FALSE;
     if (subtype == &PyArray_Type) {
         size_t size = subtype->tp_basicsize;
-        if (data == NULL && mem_handler == PyDataMem_DefaultHandler
-                && nd == 0 && nbytes < subtype->tp_basicsize) {
-            /* alignment is currently OK; ensure it remains so */
-            static_assert((sizeof(PyArrayObject_fields)
-                           & (sizeof(npy_intp) - 1)) == 0);
+        if (data == NULL && nd == 0 && nbytes < size
+                && mem_handler == PyDataMem_DefaultHandler) {
             data_on_instance = NPY_TRUE;
             size += nbytes;
         }
@@ -766,7 +763,7 @@ PyArray_NewFromDescr_int(
         if (alloc == NULL) {
             return PyErr_NoMemory();
         }
-        /* PyType_GenericAlloc would zero bytes here, but we don't need to */
+        /* PyType_GenericAlloc zeroes the extra bytes, but we don't need to */
         PyObject_Init((PyObject *)alloc, subtype);
         fa = (PyArrayObject_fields *)alloc;
     }
@@ -912,8 +909,7 @@ PyArray_NewFromDescr_int(
             ((cflags & _NPY_ARRAY_ZEROED) && (fill_zero_info.func == NULL)));
 
         if (data_on_instance) {
-            /* extra data allocated in tp_alloc is already zeroed */
-            data = (void *)((char *)fa + subtype->tp_basicsize);
+            data = (void *)&fa->_storage;
             if (use_calloc) {
                 memset(data, 0, nbytes);
             }

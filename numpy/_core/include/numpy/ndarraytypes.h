@@ -174,7 +174,7 @@ enum NPY_TYPECHAR {
  * should be downstream compatible, but the actual algorithms used may be
  * different than before. The new approach should be more flexible and easier
  * to update.
- * 
+ *
  * Names with a leading underscore are private, and should only be used
  * internally by NumPy.
  *
@@ -188,7 +188,7 @@ typedef enum {
         NPY_HEAPSORT = 1,
         NPY_MERGESORT = 2,
         NPY_STABLESORT = 2,
-        // new style names 
+        // new style names
         _NPY_SORT_HEAPSORT = 1,
         NPY_SORT_DEFAULT = 0,
         NPY_SORT_STABLE = 2,
@@ -816,6 +816,15 @@ typedef struct tagPyArrayObject_fields {
      */
 #if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
     PyObject *mem_handler;
+#endif
+    /*
+     * Private field used as a marker for where extra data for array scalars
+     * is stored, assigned as npy_clongdouble to enforce proper alignment.
+     * It is removed from tp_basicsize, and should never be accessed directly.
+     * It should remain at the end.
+     */
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
+    npy_clongdouble _storage[1];
 #endif
 } PyArrayObject_fields;
 
@@ -1647,6 +1656,15 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
     }
 #endif
 
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
+    static inline npy_bool
+    _PyArray_DATA_ON_INSTANCE(PyArrayObject *arr)
+    {
+        return (((PyArrayObject_fields *)arr)->data
+                == (void *)&((PyArrayObject_fields *)arr)->_storage);
+    }
+#endif
+
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 
 #define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) ||   \
@@ -1958,7 +1976,7 @@ typedef struct {
  * #endif
  * #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
  * #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
- * 
+ *
  * #ifndef NPY_NO_DEPRECATED_API
  * #if defined(_WIN32)
  * #define _WARN___STR2__(x) #x

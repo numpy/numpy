@@ -2179,8 +2179,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
         }
-        else if (PyArray_DATA(self) !=
-                 (void *)((char *)self + Py_TYPE(self)->tp_basicsize)) {
+        else if (!_PyArray_DATA_ON_INSTANCE(self)) {
             /*
              * Without a handler, data should be on the instance; if not,
              * someone arbitrarily set NPY_ARRAY_OWNDATA, so raise.
