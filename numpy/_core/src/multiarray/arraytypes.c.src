@@ -124,6 +124,9 @@ static float
 MyPyFloat_AsFloat(PyObject *obj)
 {
     double d_val = MyPyFloat_AsDouble(obj);
+    if (error_converting(d_val)) {
+        return -1;
+    }
     float res = (float)d_val;
     if (NPY_UNLIKELY(npy_isinf(res) && !npy_isinf(d_val))) {
         if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
@@ -138,6 +141,9 @@ static npy_half
 MyPyFloat_AsHalf(PyObject *obj)
 {
     double d_val = MyPyFloat_AsDouble(obj);
+    if (error_converting(d_val)) {
+        return -1;
+    }
     npy_half res = npy_double_to_half(d_val);
     if (NPY_UNLIKELY(npy_half_isinf(res) && !npy_isinf(d_val))) {
         if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {

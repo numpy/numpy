@@ -904,3 +904,24 @@ def test_empty_string():
     assert_array_equal(res, b"")
     assert res.shape == (2, 10)
     assert res.dtype == "S1"
+
+
+@pytest.mark.parametrize("dtype", ["S", "U", object])
+@pytest.mark.parametrize("res_dt,hug_val",
+    [("float16", "1e30"), ("float32", "1e200")])
+def test_string_to_float_coercion_errors(dtype, res_dt, hug_val):
+    # This test primarly tests setitem
+    val = np.array(["3M"], dtype=dtype)[0]  # use the scalar
+
+    with pytest.raises(ValueError):
+        np.array(val, dtype=res_dt)
+
+    val = np.array([hug_val], dtype=dtype)[0]  # use the scalar
+
+    with np.errstate(all="warn"):
+        with pytest.warns(RuntimeWarning):
+            np.array(val, dtype=res_dt)
+
+    with np.errstate(all="raise"):
+        with pytest.raises(FloatingPointError):
+            np.array(val, dtype=res_dt)
