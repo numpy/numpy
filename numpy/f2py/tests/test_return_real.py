@@ -39,8 +39,8 @@ class TestReturnReal(util.F2PyTest):
         pytest.raises(IndexError, t, [])
         pytest.raises(IndexError, t, ())
 
-        pytest.raises(Exception, t, t)  # noqa: B017
-        pytest.raises(Exception, t, {})  # noqa: B017
+        pytest.raises(TypeError, t, t)
+        pytest.raises(TypeError, t, {})
 
         try:
             r = t(10**400)
