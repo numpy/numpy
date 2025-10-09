@@ -98,6 +98,8 @@ class ndindex:
     def ndincr(self, /) -> None: ...
 
 class nd_grid(Generic[_BoolT_co]):
+    __slots__ = ("sparse",)
+
     sparse: _BoolT_co
     def __init__(self, sparse: _BoolT_co = ...) -> None: ...
     @overload
@@ -107,10 +109,14 @@ class nd_grid(Generic[_BoolT_co]):
 
 @final
 class MGridClass(nd_grid[L[False]]):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 @final
 class OGridClass(nd_grid[L[True]]):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
@@ -147,13 +153,19 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
 
 @final
 class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
+    __slots__ = ()
+
     def __init__(self, /) -> None: ...
 
 @final
 class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
+    __slots__ = ()
+
     def __init__(self, /) -> None: ...
 
 class IndexExpression(Generic[_BoolT_co]):
+    __slots__ = ("maketuple",)
+
     maketuple: _BoolT_co
     def __init__(self, maketuple: _BoolT_co) -> None: ...
     @overload

@@ -5663,6 +5663,8 @@ permute_dims = transpose
 pow = power
 
 class errstate:
+    __slots__ = "_all", "_call", "_divide", "_invalid", "_over", "_token", "_under"
+
     def __init__(
         self,
         *,
