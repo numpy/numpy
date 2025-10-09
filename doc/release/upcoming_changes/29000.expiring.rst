@@ -1,0 +1,10 @@
+Deprecated features removed in 2.2.0
+====================================
+
+The following deprecated functions and classes have been removed:
+
+* :mod:`numpy.linalg.linalg`
+  Previously deprecated, use :mod:`numpy.linalg` instead.
+
+* :mod:`numpy.fft.helpers`
+  Previously deprecated, use :mod:`numpy.fft` instead.
