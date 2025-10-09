@@ -258,11 +258,11 @@ class finfo:
         return math.ceil(math.log2(self.maxexp - self.minexp))
 
     def __str__(self):
-        if self._fmt is not None:
-            return self._fmt
+        if (fmt := getattr(self, "_fmt", None)) is not None:
+            return fmt
 
         def get_str(name, pad=None):
-            if (val := getattr(self, name)) is None:
+            if (val := getattr(self, name, None)) is None:
                 return "<undefined>"
             if pad is not None:
                 s = str(val).ljust(pad)
@@ -303,8 +303,8 @@ class finfo:
         return fmt
 
     def __repr__(self):
-        if self._repr is not None:
-            return self._repr
+        if (repr_str := getattr(self, "_repr", None)) is not None:
+            return repr_str
 
         c = self.__class__.__name__
 
@@ -324,7 +324,7 @@ class finfo:
         self._repr = repr_str
         return repr_str
 
-    @property
+    @cached_property
     def tiny(self):
         """Return the value for tiny, alias of smallest_normal.
 

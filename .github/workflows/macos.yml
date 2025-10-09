@@ -22,7 +22,7 @@ jobs:
     name: macOS x86-64 conda
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: macos-13
+    runs-on: macos-15-intel
     strategy:
       fail-fast: false
       matrix:
@@ -113,7 +113,7 @@ jobs:
       fail-fast: false
       matrix:
         build_runner:
-          - [ macos-13, "macos_x86_64" ]
+          - [ macos-15-intel, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
         version: ["3.11", "3.14t-dev"]
 
@@ -127,11 +127,6 @@ jobs:
     - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
         python-version: ${{ matrix.version }}
-
-    - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
-      if: ${{ matrix.build_runner[0] == 'macos-13' }}
-      with:
-        xcode-version: '14.3'
 
     - name: Install dependencies
       run: |
