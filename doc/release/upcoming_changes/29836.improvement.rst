@@ -16,6 +16,9 @@ several attribute calculations:
   all exponent patterns; ``nmant`` excludes the implicit bit; and ``minexp``
   follows the C standard definition.
 
+* longdouble constants, Specifically ``smallest_normal`` now follows the
+  C standard definitions as per respecitive platform.
+
 * Special handling added for PowerPC's IBM double-double format.
 
 * New test suite added in ``test_finfo.py`` to validate all
