@@ -17,6 +17,8 @@ class TooHardError(RuntimeError): ...
 class DTypePromotionError(TypeError): ...
 
 class AxisError(ValueError, IndexError):
+    __slots__ = "_msg", "axis", "ndim"
+
     axis: int | None
     ndim: int | None
     @overload
