@@ -14,6 +14,8 @@ __all__ = ["NDArrayOperatorsMixin"]
 # As such, only little type safety can be provided here.
 
 class NDArrayOperatorsMixin(ABC):
+    __slots__ = ()
+
     @abstractmethod
     def __array_ufunc__(
         self,
