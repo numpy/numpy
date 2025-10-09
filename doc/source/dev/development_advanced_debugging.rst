@@ -36,7 +36,8 @@ However, you can ensure that we can track down such issues more easily:
   consider creating an additional simpler test as well.
   This can be helpful, because often it is only easy to find which test
   triggers an issue and not which line of the test.
-* Never use ``np.empty`` if data is read/used. ``valgrind`` will notice this
+* Never use ``np.empty`` if data is read/used.
+  `Valgrind <https://valgrind.org/>`_ will notice this
   and report an error. When you do not care about values, you can generate
   random values instead.
 
@@ -131,7 +132,8 @@ to mark them, but expect some false positives.
 ``valgrind``
 ============
 
-Valgrind is a powerful tool to find certain memory access problems and should
+`Valgrind <https://valgrind.org/>`_ is a powerful tool
+to find certain memory access problems and should
 be run on complicated C code.
 Basic use of ``valgrind`` usually requires no more than::
 
