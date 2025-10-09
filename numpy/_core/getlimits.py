@@ -262,7 +262,7 @@ class finfo:
             return fmt
 
         def get_str(name, pad=None):
-            if (val := getattr(self, name)) is None:
+            if (val := getattr(self, name, None)) is None:
                 return "<undefined>"
             if pad is not None:
                 s = str(val).ljust(pad)
