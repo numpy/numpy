@@ -258,8 +258,8 @@ class finfo:
         return math.ceil(math.log2(self.maxexp - self.minexp))
 
     def __str__(self):
-        if hasattr(self, "_fmt") and self._fmt is not None:
-            return self._fmt
+        if (fmt := getattr(self, "_fmt", None)) is not None:
+            return fmt
 
         def get_str(name, pad=None):
             if (val := getattr(self, name)) is None:
@@ -303,8 +303,8 @@ class finfo:
         return fmt
 
     def __repr__(self):
-        if hasattr(self, "_repr") and self._repr is not None:
-            return self._repr
+        if (repr_str := getattr(self, "_repr", None)) is not None:
+            return repr_str
 
         c = self.__class__.__name__
 
