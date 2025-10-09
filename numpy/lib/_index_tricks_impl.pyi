@@ -107,7 +107,7 @@ class ndindex:
 
 class nd_grid(Generic[_BoolT_co]):
     sparse: _BoolT_co
-    def __init__(self, sparse: _BoolT_co = ...) -> None: ...
+    def __init__(self, sparse: _BoolT_co = ...) -> None: ...  # stubdefaulter: ignore[missing-default]
     @overload
     def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Incomplete]: ...
     @overload
@@ -135,10 +135,10 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
     def __init__(
         self,
         /,
-        axis: _AxisT_co = ...,
-        matrix: _MatrixT_co = ...,
-        ndmin: _NDMinT_co = ...,
-        trans1d: _Trans1DT_co = ...,
+        axis: _AxisT_co = 0,
+        matrix: _MatrixT_co = False,
+        ndmin: _NDMinT_co = 1,
+        trans1d: _Trans1DT_co = -1,
     ) -> None: ...
 
     # TODO(jorenham): annotate this
