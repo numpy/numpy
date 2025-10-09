@@ -170,7 +170,7 @@ Valgrind helps:
   Python allocators.)
 
 Even though using valgrind for memory leak detection is slow and less sensitive
-it can be a convenient: you can run most programs with valgrind without
+it can be convenient: you can run most programs with valgrind without
 modification.
 
 Things to be aware of:
@@ -233,7 +233,7 @@ The NumPy developers often use both ``gdb`` and ``lldb`` to debug Numpy. As a
 rule of thumb, ``gdb`` is often easier to use on Linux while ``lldb`` is easier
 to use on a Mac environment. They have disjoint user interfaces, so you will need to
 learn how to use whichever one you land on. The ``gdb`` to ``lldb`` `command map
-<https://lldb.llvm.org/use/map.html>`_ is a convnient reference for how to
+<https://lldb.llvm.org/use/map.html>`_ is a convenient reference for how to
 accomplish common recipes in both debuggers.
 
 
