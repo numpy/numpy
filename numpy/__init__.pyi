@@ -1641,11 +1641,11 @@ class flatiter(Generic[_ArrayT_co]):
         value: Any,
     ) -> None: ...
     @overload
-    def __array__(self: flatiter[ndarray[_1DShapeT, _DTypeT]], dtype: None = ..., /) -> ndarray[_1DShapeT, _DTypeT]: ...
+    def __array__(self: flatiter[ndarray[_1DShapeT, _DTypeT]], dtype: None = None, /) -> ndarray[_1DShapeT, _DTypeT]: ...
     @overload
     def __array__(self: flatiter[ndarray[_1DShapeT, Any]], dtype: _DTypeT, /) -> ndarray[_1DShapeT, _DTypeT]: ...
     @overload
-    def __array__(self: flatiter[ndarray[Any, _DTypeT]], dtype: None = ..., /) -> ndarray[_AnyShape, _DTypeT]: ...
+    def __array__(self: flatiter[ndarray[Any, _DTypeT]], dtype: None = None, /) -> ndarray[_AnyShape, _DTypeT]: ...
     @overload
     def __array__(self, dtype: _DTypeT, /) -> ndarray[_AnyShape, _DTypeT]: ...
 
@@ -2346,9 +2346,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     # 1D + 1D returns a scalar;
     # all other with at least 1 non-0D array return an ndarray.
     @overload
-    def dot(self, b: _ScalarLike_co, out: None = ...) -> NDArray[Any]: ...
+    def dot(self, b: _ScalarLike_co, out: None = None) -> NDArray[Any]: ...
     @overload
-    def dot(self, b: ArrayLike, out: None = ...) -> Any: ...
+    def dot(self, b: ArrayLike, out: None = None) -> Any: ...
     @overload
     def dot(self, b: ArrayLike, out: _ArrayT) -> _ArrayT: ...
 
@@ -2391,7 +2391,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
         dtype: DTypeLike | None = ...,
-        out: None = ...,
+        out: None = None,
     ) -> Any: ...
     @overload
     def trace(
@@ -2418,7 +2418,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self: NDArray[_ScalarT],
         indices: _IntLike_co,
         axis: SupportsIndex | None = ...,
-        out: None = ...,
+        out: None = None,
         mode: _ModeKind = ...,
     ) -> _ScalarT: ...
     @overload
@@ -2426,7 +2426,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: None = ...,
+        out: None = None,
         mode: _ModeKind = ...,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
     @overload
@@ -3660,7 +3660,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self,
         indices: _IntLike_co,
         axis: SupportsIndex | None = ...,
-        out: None = ...,
+        out: None = None,
         mode: _ModeKind = ...,
     ) -> Self: ...
     @overload
@@ -3668,7 +3668,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: None = ...,
+        out: None = None,
         mode: _ModeKind = ...,
     ) -> NDArray[Self]: ...
     @overload
@@ -5742,11 +5742,11 @@ class errstate:
         self,
         *,
         call: _ErrCall = ...,
-        all: _ErrKind | None = ...,
-        divide: _ErrKind | None = ...,
-        over: _ErrKind | None = ...,
-        under: _ErrKind | None = ...,
-        invalid: _ErrKind | None = ...,
+        all: _ErrKind | None = None,
+        divide: _ErrKind | None = None,
+        over: _ErrKind | None = None,
+        under: _ErrKind | None = None,
+        invalid: _ErrKind | None = None,
     ) -> None: ...
     def __enter__(self) -> None: ...
     def __exit__(
@@ -5877,37 +5877,37 @@ class memmap(ndarray[_ShapeT_co, _DTypeT_co]):
         subtype,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: type[uint8] = ...,
-        mode: _MemMapModeKind = ...,
-        offset: int = ...,
-        shape: int | tuple[int, ...] | None = ...,
-        order: _OrderKACF = ...,
+        mode: _MemMapModeKind = "r+",
+        offset: int = 0,
+        shape: int | tuple[int, ...] | None = None,
+        order: _OrderKACF = "C",
     ) -> memmap[Any, dtype[uint8]]: ...
     @overload
     def __new__(
         subtype,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: _DTypeLike[_ScalarT],
-        mode: _MemMapModeKind = ...,
-        offset: int = ...,
-        shape: int | tuple[int, ...] | None = ...,
-        order: _OrderKACF = ...,
+        mode: _MemMapModeKind = "r+",
+        offset: int = 0,
+        shape: int | tuple[int, ...] | None = None,
+        order: _OrderKACF = "C",
     ) -> memmap[Any, dtype[_ScalarT]]: ...
     @overload
     def __new__(
         subtype,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: DTypeLike,
-        mode: _MemMapModeKind = ...,
-        offset: int = ...,
-        shape: int | tuple[int, ...] | None = ...,
-        order: _OrderKACF = ...,
+        mode: _MemMapModeKind = "r+",
+        offset: int = 0,
+        shape: int | tuple[int, ...] | None = None,
+        order: _OrderKACF = "C",
     ) -> memmap[Any, dtype]: ...
     def __array_finalize__(self, obj: object) -> None: ...
     def __array_wrap__(
         self,
         array: memmap[_ShapeT_co, _DTypeT_co],
-        context: tuple[ufunc, tuple[Any, ...], int] | None = ...,
-        return_scalar: builtins.bool = ...,
+        context: tuple[ufunc, tuple[Any, ...], int] | None = None,
+        return_scalar: builtins.bool = False,
     ) -> Any: ...
     def flush(self) -> None: ...
 
@@ -5923,11 +5923,11 @@ class vectorize:
     def __init__(
         self,
         pyfunc: Callable[..., Any],
-        otypes: str | Iterable[DTypeLike] | None = ...,
-        doc: str | None = ...,
-        excluded: Iterable[int | str] | None = ...,
-        cache: builtins.bool = ...,
-        signature: str | None = ...,
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: builtins.bool = False,
+        signature: str | None = None,
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
@@ -5980,8 +5980,8 @@ class poly1d:
     def __init__(
         self,
         c_or_r: ArrayLike,
-        r: builtins.bool = ...,
-        variable: str | None = ...,
+        r: builtins.bool = False,
+        variable: str | None = None,
     ) -> None: ...
     def __len__(self) -> int: ...
     def __neg__(self) -> poly1d: ...
@@ -6011,8 +6011,8 @@ class matrix(ndarray[_2DShapeT_co, _DTypeT_co]):
     def __new__(
         subtype,  # pyright: ignore[reportSelfClsParameterName]
         data: ArrayLike,
-        dtype: DTypeLike | None = ...,
-        copy: builtins.bool = ...,
+        dtype: DTypeLike | None = None,
+        copy: builtins.bool = True,
     ) -> matrix[_2D, Incomplete]: ...
     def __array_finalize__(self, obj: object) -> None: ...
 
