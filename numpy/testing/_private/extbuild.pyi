@@ -10,7 +10,7 @@ def build_and_import_extension(
     *,
     prologue: str = "",
     build_dir: pathlib.Path | None = None,
-    include_dirs: Sequence[str] = [],
+    include_dirs: Sequence[str] | None = None,
     more_init: str = "",
 ) -> types.ModuleType: ...
 
@@ -20,6 +20,6 @@ def compile_extension_module(
     builddir: pathlib.Path,
     include_dirs: Sequence[str],
     source_string: str,
-    libraries: Sequence[str] = [],
-    library_dirs: Sequence[str] = [],
+    libraries: Sequence[str] | None = None,
+    library_dirs: Sequence[str] | None = None,
 ) -> pathlib.Path: ...
