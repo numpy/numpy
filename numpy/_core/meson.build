@@ -860,33 +860,20 @@ foreach gen_mtargets : [
     use_intel_sort ? [AVX512_SKX, AVX2] : []
   ],
   [
-    'x86_simd_qsort.dispatch.h',
-    'src/npysort/x86_simd_qsort.dispatch.cpp',
-    use_intel_sort ? [AVX512_SKX, AVX2] : []
-  ],
-  [
-    'x86_simd_qsort_16bit.dispatch.h',
-    'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
-    use_intel_sort ? [AVX512_SPR, AVX512_ICL] : []
-  ],
-  [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     use_highway ? [
-      ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
+     AVX512_ICL, AVX512_SKX, AVX2, SSE42, ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
     ] : []
   ],
   [
     'highway_qsort_16bit.dispatch.h',
     'src/npysort/highway_qsort_16bit.dispatch.cpp',
     use_highway ? [
-      ASIMDHP, VSX2,  # VXE FIXME: disable VXE due to runtime segfault
+      AVX512_SPR, AVX512_ICL, AVX2, SSE42, ASIMDHP, VSX2,  # VXE FIXME: disable VXE due to runtime segfault
     ] : []
   ],
 ]
-
-
-
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
     dispatch: gen_mtargets[2],
