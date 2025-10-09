@@ -285,10 +285,6 @@ fill_dl_tensor_information(
     }
 
     dl_tensor->ndim = ndim;
-    if (PyArray_IS_C_CONTIGUOUS(self)) {
-        /* No need to pass strides, so just NULL it again */
-        dl_tensor->strides = NULL;
-    }
     dl_tensor->byte_offset = 0;
 
     return 0;
@@ -351,9 +347,8 @@ create_dlpack_capsule(
         dl_tensor = &managed->dl_tensor;
     }
 
-    dl_tensor->shape = (int64_t *)((char *)ptr + offset);
-    /* Note that strides may be set to NULL later if C-contiguous */
-    dl_tensor->strides = dl_tensor->shape + ndim;
+    dl_tensor->shape = (ndim > 0) ? (int64_t *)((char *)ptr + offset) : NULL;
+    dl_tensor->strides = (ndim > 0) ? dl_tensor->shape + ndim : NULL;
 
     if (fill_dl_tensor_information(dl_tensor, self, result_device) < 0) {
         PyMem_Free(ptr);
