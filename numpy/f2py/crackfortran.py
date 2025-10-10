@@ -3043,7 +3043,7 @@ def balance_parentheses(s: str) -> str:
 def replace_variables_in_equation(d: str, params: dict) -> str:
     """
     Isolates variables in an equation string, looks up their values in a dictionary,
-    and replaces them in the string. 
+    and replaces them in the string.
 
     Args:
         equation_string: A string representing the mathematical equation.
@@ -3057,8 +3057,11 @@ def replace_variables_in_equation(d: str, params: dict) -> str:
 
     def replace_match(match):
         variable_name = match.group(0)
-        if variable_name in params:
+        if (variable_name in params) and '{' not in str(params[variable_name]):
             return str(params[variable_name])
+        #in the event its a data statement.
+        elif (variable_name in params) and '{' in str(params[variable_name]):
+            return ''
         else:
             # If a variable is found in the equation but not in the parameter,
             # it indicates an undefined variable for the current context.
@@ -3066,12 +3069,9 @@ def replace_variables_in_equation(d: str, params: dict) -> str:
 
     # Use re.sub with a function to replace each matched variable
     string_equation = variable_pattern.sub(replace_match, d)
-
-
-    balanced_dim=balance_parentheses(string_equation)
-    int_dim=eval(balanced_dim)
-    return(int_dim)
-
+    balanced_dim = balance_parentheses(string_equation)
+    int_dim = eval(balanced_dim)
+    return int_dim
 
 def param_parse(d, params):
     """Recursively parse array dimensions.
@@ -3134,7 +3134,7 @@ def param_parse(d, params):
         # this dimension expression is an array
         # this dimension expression is also a parameter;
         # parse it using a helper function which also sorts out nested parentheses
-        return str(replace_variables_in_equation(d,params))
+        return str(replace_variables_in_equation(d, params))
     elif d in params:
         return str(params[d])
     else:
