@@ -101,7 +101,7 @@ class finfo:
     nexp : int
         The number of bits in the exponent including its sign and bias.
     nmant : int
-        The number of explicit bits in the mantissa (excluding the implicit 
+        The number of explicit bits in the mantissa (excluding the implicit
         leading bit for normalized numbers).
     precision : int
         The approximate number of decimal digits to which this kind of
