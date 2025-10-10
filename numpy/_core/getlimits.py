@@ -89,17 +89,20 @@ class finfo:
         The largest representable number.
     maxexp : int
         The smallest positive power of the base (2) that causes overflow.
+        Corresponds to the C standard MAX_EXP.
     min : floating point number of the appropriate type
         The smallest representable number, typically ``-max``.
     minexp : int
         The most negative power of the base (2) consistent with there
-        being no leading 0's in the mantissa.
+        being no leading 0's in the mantissa. Corresponds to the C
+        standard MIN_EXP - 1.
     negep : int
         The exponent that yields `epsneg`.
     nexp : int
         The number of bits in the exponent including its sign and bias.
     nmant : int
-        The number of bits in the mantissa.
+        The number of explicit bits in the mantissa (excluding the implicit 
+        leading bit for normalized numbers).
     precision : int
         The approximate number of decimal digits to which this kind of
         float is precise.
