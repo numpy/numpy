@@ -4,6 +4,7 @@ import sys
 import pytest
 
 import numpy as np
+from numpy._core._exceptions import _UFuncNoLoopError
 from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
@@ -820,6 +821,20 @@ class TestMethods:
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), 2**61)
+
+    def test_expandtabs_length_not_cause_segfault(self, dt):
+        # see gh-28829
+        with pytest.raises(
+            _UFuncNoLoopError,
+            match="did not contain a loop with signature matching types",
+        ):
+            np._core.strings._expandtabs_length.reduce(np.zeros(200))
+
+        with pytest.raises(
+            _UFuncNoLoopError,
+            match="did not contain a loop with signature matching types",
+        ):
+            np.strings.expandtabs(np.zeros(200))
 
     FILL_ERROR = "The fill character must be exactly one character long"
 
