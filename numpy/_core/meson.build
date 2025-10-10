@@ -867,7 +867,9 @@ foreach gen_mtargets : [
   [
     'x86_simd_qsort_16bit.dispatch.h',
     'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
-    use_intel_sort ? [AVX512_SPR, AVX512_ICL] : []
+    # Do not enable AVX-512 on MSVC 32-bit (x86): it’s buggy there;
+    # Ref: NumPy issue numpy/numpy#29808
+    use_intel_sort and not (cc.get_id() == 'msvc' and cpu_family == 'x86') ? [AVX512_SPR, AVX512_ICL] : []
   ],
   [
     'highway_qsort.dispatch.h',

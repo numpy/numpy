@@ -86,7 +86,7 @@ def eye(
     N: int,
     M: int | None = None,
     k: int = 0,
-    dtype: None = ...,  # = float
+    dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     order: _OrderCF = "C",
     *,
     device: L["cpu"] | None = None,
@@ -141,7 +141,7 @@ def tri(
     N: int,
     M: int | None = None,
     k: int = 0,
-    dtype: None = ...,  # = float
+    dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     *,
     like: _SupportsArrayFunc | None = None
 ) -> NDArray[float64]: ...

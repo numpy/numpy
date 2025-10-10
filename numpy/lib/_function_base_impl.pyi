@@ -123,13 +123,13 @@ class _TrimZerosSequence(Protocol[_T_co]):
 def rot90(
     m: _ArrayLike[_ScalarT],
     k: int = 1,
-    axes: tuple[int, int] = ...,
+    axes: tuple[int, int] = (0, 1),
 ) -> NDArray[_ScalarT]: ...
 @overload
 def rot90(
     m: ArrayLike,
     k: int = 1,
-    axes: tuple[int, int] = ...,
+    axes: tuple[int, int] = (0, 1),
 ) -> NDArray[Any]: ...
 
 @overload

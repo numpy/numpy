@@ -46,7 +46,7 @@ dependencies:
   - breathe>4.33.0
   # For linting
   - cython-lint
-  - ruff=0.12.0
+  - ruff=0.14.0
   - gitpython
   # Used in some tests
   - cffi

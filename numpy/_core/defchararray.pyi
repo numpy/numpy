@@ -106,12 +106,12 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def __new__(
         subtype,
         shape: _ShapeLike,
-        itemsize: SupportsIndex | SupportsInt = ...,
-        unicode: L[False] = ...,
-        buffer: _SupportsBuffer = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike = ...,
-        order: _OrderKACF = ...,
+        itemsize: SupportsIndex | SupportsInt = 1,
+        unicode: L[False] = False,
+        buffer: _SupportsBuffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF = "C",
     ) -> _CharArray[bytes_]: ...
     @overload
     def __new__(
@@ -119,22 +119,22 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt,
         unicode: L[True],
-        buffer: _SupportsBuffer = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike = ...,
-        order: _OrderKACF = ...,
+        buffer: _SupportsBuffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF = "C",
     ) -> _CharArray[str_]: ...
     @overload
     def __new__(
         subtype,
         shape: _ShapeLike,
-        itemsize: SupportsIndex | SupportsInt = ...,
+        itemsize: SupportsIndex | SupportsInt = 1,
         *,
         unicode: L[True],
-        buffer: _SupportsBuffer = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike = ...,
-        order: _OrderKACF = ...,
+        buffer: _SupportsBuffer | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF = "C",
     ) -> _CharArray[str_]: ...
 
     def __array_finalize__(self, obj: object) -> None: ...
