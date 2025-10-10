@@ -4,6 +4,12 @@
 #include "conversion_utils.h"
 
 /*
+ * Internal version of PyArray_Resize that returns -1 on error, 0 otherwise.
+ */
+NPY_NO_EXPORT int
+PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck);
+
+/*
  * Creates a sorted stride perm matching the KEEPORDER behavior
  * of the NpyIter object. Because this operates based on multiple
  * input strides, the 'stride' member of the npy_stride_sort_item
