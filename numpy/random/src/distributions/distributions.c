@@ -851,9 +851,6 @@ double random_wald(bitgen_t *bitgen_state, double mean, double scale) {
   double d;
 
   Y = random_standard_normal(bitgen_state);
-  if (Y == 0) {
-    return mean;
-  }
   Y = mean * Y * Y;
   d = 1 + sqrt(1 + 4 * scale / Y);
   X = mean * (1 - 2 / d);
