@@ -295,8 +295,7 @@ from numpy._core._ufunc_config import (
     getbufsize,
     seterrcall,
     geterrcall,
-    _ErrKind,
-    _ErrCall,
+    errstate,
 )
 
 from numpy._core.arrayprint import (
@@ -755,8 +754,6 @@ _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _RealT_co = TypeVar("_RealT_co", covariant=True)
 _ImagT_co = TypeVar("_ImagT_co", covariant=True)
-
-_CallableT = TypeVar("_CallableT", bound=Callable[..., object])
 
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
@@ -5661,29 +5658,6 @@ bitwise_invert = invert
 bitwise_right_shift = right_shift
 permute_dims = transpose
 pow = power
-
-class errstate:
-    __slots__ = "_all", "_call", "_divide", "_invalid", "_over", "_token", "_under"
-
-    def __init__(
-        self,
-        *,
-        call: _ErrCall = ...,
-        all: _ErrKind | None = ...,
-        divide: _ErrKind | None = ...,
-        over: _ErrKind | None = ...,
-        under: _ErrKind | None = ...,
-        invalid: _ErrKind | None = ...,
-    ) -> None: ...
-    def __enter__(self) -> None: ...
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-        /,
-    ) -> None: ...
-    def __call__(self, func: _CallableT) -> _CallableT: ...
 
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet
