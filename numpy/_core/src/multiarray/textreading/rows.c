@@ -118,7 +118,7 @@ create_conv_funcs(
     if (error) {
         goto error;
     }
-    
+
     return conv_funcs;
 
   error:
@@ -174,8 +174,6 @@ read_rows(stream *s,
     Py_ssize_t current_num_fields;
     npy_intp row_size = out_descr->elsize;
     PyObject **conv_funcs = NULL;
-
-    bool needs_init = PyDataType_FLAGCHK(out_descr, NPY_NEEDS_INIT);
 
     int ndim = homogeneous ? 2 : 1;
     npy_intp result_shape[2] = {0, 1};
@@ -311,9 +309,6 @@ read_rows(stream *s,
                 if (data_array == NULL) {
                     goto error;
                 }
-                if (needs_init) {
-                    memset(PyArray_BYTES(data_array), 0, PyArray_NBYTES(data_array));
-                }
             }
             else {
                 assert(max_rows >=0);
@@ -354,22 +349,16 @@ read_rows(stream *s,
                         "providing a maximum number of rows to read may help.");
                 goto error;
             }
-
-            char *new_data = PyDataMem_UserRENEW(
-                    PyArray_BYTES(data_array), alloc_size ? alloc_size : 1,
-                    PyArray_HANDLER(data_array));
-            if (new_data == NULL) {
-                PyErr_NoMemory();
+            /*
+             * Resize the array.
+             */
+            result_shape[0] = new_rows;
+            PyArray_Dims new_dims = {dims, 2};
+            if (PyArray_Resize(data_array, &new_dims, 0, 0) == NULL) {
                 goto error;
             }
-            /* Replace the arrays data since it may have changed */
-            ((PyArrayObject_fields *)data_array)->data = new_data;
-            ((PyArrayObject_fields *)data_array)->dimensions[0] = new_rows;
-            data_ptr = new_data + row_count * row_size;
+            data_ptr = PyArray_DATA(data_array) + row_count * row_size;
             data_allocated_rows = new_rows;
-            if (needs_init) {
-                memset(data_ptr, '\0', (new_rows - row_count) * row_size);
-            }
         }
 
         for (Py_ssize_t i = 0; i < actual_num_fields; ++i) {
