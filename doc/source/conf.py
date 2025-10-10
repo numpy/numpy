@@ -290,10 +290,10 @@ html_theme_options = {
         "json_url": "https://numpy.org/doc/_static/versions.json",
     },
     "show_version_warning_banner": True,
-    "analytics": [
+    "analytics": {
         "plausible_analytics_domain": "numpy.org/doc/stable/",
-        "plausible_analytics_url": "https://views.scientific-python.org/js/script.file-downloads.hash.outbound-links.js",
-    ]
+        "plausible_analytics_url": ("https://views.scientific-python.org/js/script.js"),
+    },
 }
 
 html_title = f"{project} v{version} Manual"
