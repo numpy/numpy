@@ -1,10 +1,10 @@
-Deprecated features removed in 2.2.0
-====================================
+Remove numpy.linalg.linag and numpy.fft.helper
+----------------------------------------------
 
-The following deprecated functions and classes have been removed:
+The following were deprecated in NumPy 2.0 and have been moved to private modules
 
-* :mod:`numpy.linalg.linalg`
-  Previously deprecated, use :mod:`numpy.linalg` instead.
+* ``numpy.linalg.linalg``
+  Use :mod:`numpy.linalg` instead.
 
-* :mod:`numpy.fft.helper`
-  Previously deprecated, use :mod:`numpy.fft` instead.
+* ``numpy.fft.helper``
+  Use :mod:`numpy.fft` instead.
