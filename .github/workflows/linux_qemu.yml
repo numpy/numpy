@@ -236,7 +236,7 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install --break-system-packages -r /numpy/requirements/build_requirements.txt -r requirements/test_requirements.txt
+          python -m pip install --break-system-packages -r /numpy/requirements/build_requirements.txt -r /numpy/requirements/test_requirements.txt
         "
         docker commit the_container the_container
         mkdir -p "~/docker_${TOOLCHAIN_NAME}"
