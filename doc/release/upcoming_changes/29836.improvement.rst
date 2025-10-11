@@ -1,5 +1,5 @@
 ``numpy.finfo`` Refactor
------------------------------------------------------------------
+------------------------
 The ``numpy.finfo`` class has been completely refactored to obtain floating-point
 constants directly from C compiler macros rather than deriving them at runtime.
 This provides better accuracy, platform compatibility and corrected
