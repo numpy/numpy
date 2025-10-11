@@ -449,4 +449,3 @@ class Test_RISCV_Features(AbstractTest):
                     if 'v' in base_isa_part:
                         self.features_flags.add("V")
                     break
-
