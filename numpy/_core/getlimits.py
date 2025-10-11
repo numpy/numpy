@@ -143,6 +143,12 @@ class finfo:
     fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
     may have significantly reduced precision [2]_.
 
+    For ``longdouble``, the representation varies across platforms. On most
+    platforms it is IEEE 754 binary128 (quad precision) or binary64-extended
+    (80-bit extended precision). On PowerPC systems, it may use the IBM
+    double-double format (a pair of float64 values), which has special
+    characteristics for precision and range.
+
     This function can also be used for complex data types as well. If used,
     the output will be the same as the corresponding real float type
     (e.g. numpy.finfo(numpy.csingle) is the same as numpy.finfo(numpy.single)).

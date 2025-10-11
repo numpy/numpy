@@ -3544,11 +3544,12 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    If defined, allows the DType to expose constant values such as machine
    limits, special values (infinity, NaN), and floating-point characteristics.
    The *descr* is the descriptor instance, *constant_id* is one of the
-   ``NPY_CONSTANT_*`` macros, and *out* is a pointer to memory where the
-   constant value should be written. Returns 1 on success, 0 if the constant 
-   is not available, or -1 with an error set.
-   
-    **Constant IDs**:
+   ``NPY_CONSTANT_*`` macros, and *out* is a pointer to uninitialized memory
+   where the constant value should be written. The memory pointed to by *out*
+   may be unaligned. Returns 1 on success, 0 if the constant is not available,
+   or -1 with an error set.
+
+   **Constant IDs**:
 
     The following constant IDs are defined for retrieving dtype-specific values:
 
@@ -3648,30 +3649,6 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
        The number of decimal digits of precision. Corresponds to ``DIG`` from C
        standard macros (e.g., ``FLT_DIG``, ``DBL_DIG``).
-
-   **Platform-specific handling**:
-
-   **IEEE 754 half-precision (float16)**: NumPy defines custom macros for half
-   precision to match C standard conventions:
-
-   * ``HALF_MAX``: 65504.0
-   * ``HALF_MIN``: 2^-14
-   * ``HALF_EPSILON``: 2^-10
-   * ``HALF_TRUE_MIN``: 2^-24
-   * ``HALF_MANT_DIG``: 11 (including implicit bit)
-
-   **IBM double-double (PowerPC)**: On PowerPC systems using the IBM double-double
-   format (a pair of IEEE binary64 values, not a true IEEE quad), NumPy provides
-   special handling:
-
-   * ``LDBL_EPSILON`` is redefined to ``0x1p-105L`` (2^-105) based on the ~106 bits
-     of mantissa precision (53+53 bits from two doubles)
-   * The maximum representable value is computed using ``nextafter(inf, 0)`` to
-     match historical behavior
-
-   **Subnormal handling**: For platforms where ``FLT_TRUE_MIN``, ``DBL_TRUE_MIN``,
-   or ``LDBL_TRUE_MIN`` are not defined by the C compiler, NumPy computes them
-   using ``nextafter(0, 1)`` to obtain the smallest positive representable value.
 
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
