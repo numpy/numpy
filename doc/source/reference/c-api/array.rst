@@ -3564,8 +3564,8 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
    .. c:macro:: NPY_CONSTANT_minimum_finite
 
-       The minimum finite value representable by the dtype. For floating-point types, this is the most negative finite value
-       (e.g., -FLT_MAX).
+       The minimum finite value representable by the dtype. For floating-point types,
+       this is the most negative finite value (e.g., ``-FLT_MAX``).
 
    .. c:macro:: NPY_CONSTANT_maximum_finite
 
