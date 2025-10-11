@@ -130,9 +130,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/setuptools_requirement.txt
-        pip install pytest pytest-xdist pytest-timeout hypothesis
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false

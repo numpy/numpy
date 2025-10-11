@@ -76,7 +76,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         # Install OpenBLAS
         if [[ $USE_NIGHTLY_OPENBLAS == "true" ]]; then
             python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
@@ -113,7 +113,6 @@ jobs:
       env:
         TERM: xterm-256color
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         spin test -j auto -- --timeout=600 --durations=10
 
 
@@ -135,8 +134,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions pytest-timeout
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -171,8 +169,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions pytest-timeout
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -205,8 +202,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -234,7 +230,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install liblapack-dev pkg-config
 
@@ -244,7 +240,6 @@ jobs:
 
     - name: Test
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -276,6 +271,8 @@ jobs:
 
     - name: Test
       run: |
+        # do not use test_requirements.txt, it includes coverage which requires
+        # sqlite3, which is not available on OpenSUSE python
         pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
@@ -297,7 +294,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -361,7 +358,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -398,7 +395,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
