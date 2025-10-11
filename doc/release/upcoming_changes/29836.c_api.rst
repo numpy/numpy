@@ -1,5 +1,5 @@
 New ``NPY_DT_get_constant`` slot for DType constant retrieval
-----------------------------------------------------------------
+-------------------------------------------------------------
 A new slot ``NPY_DT_get_constant`` has been added to the DType API, allowing
 dtype implementations to provide constant values such as machine limits and
 special values. The slot function has the signature::
