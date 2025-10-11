@@ -431,3 +431,22 @@ class Test_LOONGARCH_Features(AbstractTest):
 
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
+
+
+is_riscv = re.match(r"^(riscv)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
+class Test_RISCV_Features(AbstractTest):
+    features = ["RVV"]
+    features_map = {"RVV": "V"}
+
+    def load_flags(self):
+        self.features_flags = set()
+        with open('/proc/cpuinfo') as fd:
+            for line in fd:
+                if line.startswith("isa"):
+                    isa_string = line.split(':', 1)[1].strip()
+                    base_isa_part = isa_string.split('_')[0]
+                    if 'v' in base_isa_part:
+                        self.features_flags.add("V")
+                    break
+
