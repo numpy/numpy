@@ -202,19 +202,13 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
 NPY_NO_EXPORT int
 PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 {
-    static PyObject *sort = NULL;
-    static PyObject *argsort = NULL;
-    if (sort == NULL) {
-        sort = npy_import("numpy", "sort");
-        if (sort == NULL) {
-            return -1;
-        }
+    if (npy_cache_import_runtime(
+            "numpy", "sort", &npy_runtime_imports.sort) < 0) {
+        return -1;
     }
-    if (argsort == NULL) {
-        argsort = npy_import("numpy", "argsort");
-        if (argsort == NULL) {
-            return -1;
-        }
+    if (npy_cache_import_runtime(
+            "numpy", "argsort", &npy_runtime_imports.argsort) < 0) {
+        return -1;
     }
 
     PyUFunc_LoopSlot *slot;
@@ -224,7 +218,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             return -1;
         }
 
-        if (ufunc == sort) {
+        if (ufunc == npy_runtime_imports.sort) {
             Py_DECREF(ufunc);
 
             PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
@@ -238,7 +232,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             Py_INCREF(sort_meth->method);
             Py_DECREF(sort_meth);
         }
-        else if (ufunc == argsort) {
+        else if (ufunc == npy_runtime_imports.argsort) {
             Py_DECREF(ufunc);
 
             PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
