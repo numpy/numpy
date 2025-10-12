@@ -947,7 +947,7 @@ sfloat_argsort_resolve_descriptors(
 {
     assert(given_descrs[1] == NULL || given_descrs[1]->type_num == NPY_INTP);
     assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
-    
+
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);
     loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
@@ -1026,11 +1026,12 @@ sfloat_init_ufuncs(void) {
     argsort_spec.casting = NPY_NO_CASTING;
     argsort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
+    /* here we chose weirdish names to test the lookup mechanism */
     PyUFunc_LoopSlot loops[] = {
         {"multiply", &multiply_spec},
-        {"add", &add_spec},
-        {"sort", &sort_spec},
-        {"argsort", &argsort_spec},
+        {"_core._multiarray_umath.add", &add_spec},
+        {"numpy:sort", &sort_spec},
+        {"numpy._core.fromnumeric:argsort", &argsort_spec},
         {NULL, NULL}
     };
     if (PyUFunc_AddLoopsFromSpecs(loops) < 0) {

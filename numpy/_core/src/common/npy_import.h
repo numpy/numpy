@@ -112,11 +112,20 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
 #endif
         Py_DECREF(value);
     }
-    return 0;    
+    return 0;
 }
 
 NPY_NO_EXPORT int
 init_import_mutex(void);
+
+/*! \brief Import a Python object from an entry point string.
+
+ * The name should be of the form "(module ':')? (object '.')* attr".
+ * If no module is present, it is assumed to be "numpy".
+ * On error, returns NULL.
+ */
+NPY_NO_EXPORT PyObject*
+npy_import_entry_point(const char *entry_point);
 
 #ifdef __cplusplus
 }

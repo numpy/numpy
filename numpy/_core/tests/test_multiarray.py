@@ -3,6 +3,7 @@ import collections.abc
 import ctypes
 import functools
 import gc
+import importlib
 import io
 import itertools
 import mmap
@@ -4474,6 +4475,37 @@ class TestCAPI:
                 match="Maximum allowed dimension"):
             # These converters currently convert overflows to a ValueError
             converter(2**64)
+
+    @pytest.mark.parametrize(
+        "entry_point",
+        [
+            module + item
+            for item in ("sin", "strings.str_len", "fft._pocketfft_umath.ifft")
+            for module in ("", "numpy:")
+        ] + [
+            "numpy.strings:str_len",
+            "functools:reduce",
+            "functools:reduce.__doc__"
+        ]
+    )
+    def test_import_entry_point(self, entry_point):
+        modname, _, items = entry_point.rpartition(":")
+        if modname:
+            module = obj = importlib.import_module(modname)
+        else:
+            module = np
+        exp = functools.reduce(getattr, items.split("."), module)
+        got = _multiarray_tests.npy_import_entry_point(entry_point)
+        assert got == exp
+
+    @pytest.mark.parametrize(
+        "entry_point",
+        ["sin.", "numpy:", "numpy:sin:__call__", "numpy.sin:__call__."]
+    )
+    def test_import_entry_point_errors(self, entry_point):
+        # Don't really care about precise error.
+        with pytest.raises((ImportError, AttributeError)):
+            _multiarray_tests.npy_import_entry_point(entry_point)
 
 
 class TestSubscripting:

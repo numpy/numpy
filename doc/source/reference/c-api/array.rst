@@ -1895,7 +1895,10 @@ with the rest of the ArrayMethod API.
 
         .. c:member:: const char *name
 
-            The name of the ufunc to add the loop to.
+            The name of the ufunc to add the loop to, in the form like that of
+            entry points, ``(module ':')? (object '.')* name``, with ``numpy``
+            the default module. Examples: ``sin``, ``strings.str_len``,
+            ``numpy.strings:str_len``.
 
         .. c:member:: PyArrayMethod_Spec *spec
 
