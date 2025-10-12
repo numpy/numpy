@@ -8,6 +8,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "npy_pycompat.h"
 #include "alloc.h"
+#include "shape.h"  // For PyArray_Resize_int
 
 #include <string.h>
 #include <stdbool.h>
@@ -177,6 +178,7 @@ read_rows(stream *s,
 
     int ndim = homogeneous ? 2 : 1;
     npy_intp result_shape[2] = {0, 1};
+    PyArray_Dims new_dims = {result_shape, ndim};  /* for resizing */
 
     bool data_array_allocated = data_array == NULL;
     /* Make sure we own `data_array` for the purpose of error handling */
@@ -353,11 +355,10 @@ read_rows(stream *s,
              * Resize the array.
              */
             result_shape[0] = new_rows;
-            PyArray_Dims new_dims = {dims, 2};
-            if (PyArray_Resize(data_array, &new_dims, 0, 0) == NULL) {
+            if (PyArray_Resize_int(data_array, &new_dims, 0) < 0) {
                 goto error;
             }
-            data_ptr = PyArray_DATA(data_array) + row_count * row_size;
+            data_ptr = (char *)PyArray_DATA(data_array) + row_count * row_size;
             data_allocated_rows = new_rows;
         }
 
@@ -463,20 +464,13 @@ read_rows(stream *s,
 
     /*
      * Note that if there is no data, `data_array` may still be NULL and
-     * row_count is 0.  In that case, always realloc just in case.
+     * row_count is 0.  In that case, always resize just in case.
      */
     if (data_array_allocated && data_allocated_rows != row_count) {
-        size_t size = row_count * row_size;
-        char *new_data = PyDataMem_UserRENEW(
-                PyArray_BYTES(data_array), size ? size : 1,
-                PyArray_HANDLER(data_array));
-        if (new_data == NULL) {
-            Py_DECREF(data_array);
-            PyErr_NoMemory();
-            return NULL;
+        result_shape[0] = row_count;
+        if (PyArray_Resize_int(data_array, &new_dims, 0) < 0) {
+            goto error;
         }
-        ((PyArrayObject_fields *)data_array)->data = new_data;
-        ((PyArrayObject_fields *)data_array)->dimensions[0] = row_count;
     }
 
     /*
