@@ -354,7 +354,7 @@ Project layout:
     add.pyf (optional)
     __init__.py  (can be empty)
 
-Example `meson.build`:
+Example ``meson.build``:
 
 .. code-block:: meson
 
@@ -379,12 +379,12 @@ Example `meson.build`:
    )
 
    # Install into site-packages under the f2py_examples package
-   install_subdir('.', install_dir: py.site_packages_dir() / 'f2py_examples',
+   install_subdir('.', install_dir: join_paths(py.site_packages_dir(), 'f2py_examples'),
                   strip_directory: false,
                   exclude_files: ['meson.build'])
 
    # Also install the built extension (place it beside __init__.py)
-   install_data(add_mod, install_dir: py.site_packages_dir() / 'f2py_examples')
+   install_data(add_mod, install_dir: join_paths(py.site_packages_dir(), 'f2py_examples'))
 
 For more details and advanced usage, see the Meson build guide in the
 user documentation or refer to SciPy's Meson build files for real-world
