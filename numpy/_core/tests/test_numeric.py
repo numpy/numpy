@@ -1966,9 +1966,9 @@ class TestNonzero:
     def test_nonzero_byteorder(self):
         values = [np.array([0., -0., 1, float('nan')]), np.array([0, 1]),
                   np.array([0, 12.3], dtype=np.float16)]
-        expected = [[2, 3], [1], [1]]
+        expected_values = [[2, 3], [1], [1]]
 
-        for A, expected in zip(values, expected):
+        for A, expected in zip(values, expected_values):
             A_byteswapped = (A.view(A.dtype.newbyteorder()).byteswap()).copy()
 
             assert_equal(np.nonzero(A)[0], expected)
@@ -1985,7 +1985,7 @@ class TestNonzero:
 
             assert np.count_nonzero(A) == expected
             assert np.count_nonzero(A_byteswapped) == expected
-            
+
     def test_nonzero_non_aligned_array(self):
         # gh-27523
         b = np.zeros(64 + 1, dtype=np.int8)[1:]
