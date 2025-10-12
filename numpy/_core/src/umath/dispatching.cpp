@@ -224,7 +224,6 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
             PyBoundArrayMethodObject *sort_meth = PyArrayMethod_FromSpec_int(slot->spec, 0);
             if (sort_meth == NULL) {
-                PyErr_Format(PyExc_TypeError, "Failed to create sort method for %R", dtype);
                 return -1;
             }
 
@@ -238,7 +237,6 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
             PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
             PyBoundArrayMethodObject *argsort_meth = PyArrayMethod_FromSpec_int(slot->spec, 0);
             if (argsort_meth == NULL) {
-                PyErr_Format(PyExc_TypeError, "Failed to create argsort method for %R", dtype);
                 return -1;
             }
 
