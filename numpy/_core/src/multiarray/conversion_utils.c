@@ -130,7 +130,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
      * dimension_from_scalar as soon as possible.
      */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
-        seq_obj = PySequence_Fast(obj,
+        seq_obj = PySequence_Fast(obj, // noqa: borrowed-ref - manual fix needed
                "expected a sequence of integers or a single integer.");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */
@@ -318,7 +318,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->len = (npy_intp) view.len;
 
     /*
-     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * Both of the deprecated functions PyObject_AsWriteBuffer and
      * PyObject_AsReadBuffer that this code replaces release the buffer. It is
      * up to the object that supplies the buffer to guarantee that the buffer
      * sticks around after the release.
@@ -438,15 +438,11 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    if (PyObject_IsTrue(object)) {
-        *val = NPY_TRUE;
-    }
-    else {
-        *val = NPY_FALSE;
-    }
-    if (PyErr_Occurred()) {
+    int bool_val = PyObject_IsTrue(object);
+    if (bool_val == -1) {
         return NPY_FAIL;
     }
+    *val = (npy_bool)bool_val;
     return NPY_SUCCEED;
 }
 
@@ -460,15 +456,11 @@ PyArray_OptionalBoolConverter(PyObject *object, int *val)
     if (object == Py_None) {
         return NPY_SUCCEED;
     }
-    if (PyObject_IsTrue(object)) {
-        *val = 1;
-    }
-    else {
-        *val = 0;
-    }
-    if (PyErr_Occurred()) {
+    int bool_val = PyObject_IsTrue(object);
+    if (bool_val == -1) {
         return NPY_FAIL;
     }
+    *val = (npy_bool)bool_val;
     return NPY_SUCCEED;
 }
 
@@ -919,7 +911,7 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
     }
 }
 
-static int casting_parser(char const *str, Py_ssize_t length, void *data)
+static int casting_parser_full(char const *str, Py_ssize_t length, void *data, int can_use_same_value)
 {
     NPY_CASTING *casting = (NPY_CASTING *)data;
     if (length < 2) {
@@ -949,6 +941,10 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
             *casting = NPY_SAME_KIND_CASTING;
             return 0;
         }
+        if (can_use_same_value && length == 10 && strcmp(str, "same_value") == 0) {
+            *casting = NPY_SAME_VALUE_CASTING;
+            return 0;
+        }
         break;
     case 's':
         if (length == 6 && strcmp(str, "unsafe") == 0) {
@@ -960,6 +956,11 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
     return -1;
 }
 
+static int casting_parser(char const *str, Py_ssize_t length, void *data)
+{
+  return casting_parser_full(str, length, data, 0);
+}
+
 /*NUMPY_API
  * Convert any Python object, *obj*, to an NPY_CASTING enum.
  */
@@ -969,9 +970,25 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
     return string_converter_helper(
         obj, (void *)casting, casting_parser, "casting",
             "must be one of 'no', 'equiv', 'safe', "
-            "'same_kind', or 'unsafe'");
+            "'same_kind', 'unsafe'");
     return 0;
 }
+
+static int casting_parser_same_value(char const *str, Py_ssize_t length, void *data)
+{
+  return casting_parser_full(str, length, data, 1);
+}
+
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting)
+{
+    return string_converter_helper(
+        obj, (void *)casting, casting_parser_same_value, "casting",
+            "must be one of 'no', 'equiv', 'safe', "
+            "'same_kind', 'unsafe', 'same_value'");
+    return 0;
+}
+
 
 /*****************************
 * Other conversion functions
@@ -1143,7 +1160,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     PyObject *seq_obj = NULL;
     if (!PyLong_CheckExact(seq) && PySequence_Check(seq)) {
-        seq_obj = PySequence_Fast(seq,
+        seq_obj = PySequence_Fast(seq, // noqa: borrowed-ref - manual fix needed
             "expected a sequence of integers or a single integer");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */
@@ -1215,11 +1232,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_INT64;
                     break;
-#ifdef NPY_INT128
-                case 16:
-                    newtype = NPY_INT128;
-                    break;
-#endif
             }
             break;
 
@@ -1237,11 +1249,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_UINT64;
                     break;
-#ifdef NPY_INT128
-                case 16:
-                    newtype = NPY_UINT128;
-                    break;
-#endif
             }
             break;
 

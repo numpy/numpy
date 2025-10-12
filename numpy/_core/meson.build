@@ -50,7 +50,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.1.x
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
-C_API_VERSION = '0x00000014'
+# 0x00000015 - 2.4.x
+C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -126,6 +127,21 @@ endif
 use_intel_sort = not get_option('disable-intel-sort') and cpu_family in ['x86', 'x86_64']
 if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
+endif
+
+# openMP related settings:
+if get_option('disable-threading') and get_option('enable-openmp')
+  error('Build options `disable-threading` and `enable-openmp` are conflicting. Please set at most one to true.')
+endif
+
+use_openmp = get_option('enable-openmp') and not get_option('disable-threading')
+
+# Setup openmp flags for x86-simd-sort:
+omp = []
+omp_dep = []
+if use_intel_sort and use_openmp
+  omp = dependency('openmp', required : true)
+  omp_dep = declare_dependency(dependencies: omp, compile_args: ['-DXSS_USE_OPENMP'])
 endif
 
 if not fs.exists('src/common/pythoncapi-compat')
@@ -343,14 +359,26 @@ endif
 optional_function_attributes = [
   ['optimize("unroll-loops")', 'OPTIMIZE_UNROLL_LOOPS'],
   ['optimize("O3")', 'OPTIMIZE_OPT_3'],
-  ['optimize("O2")', 'OPTIMIZE_OPT_2'],
-  ['optimize("nonnull (1)")', 'NONNULL'],
+  ['nonnull(1)', 'NONNULL'],
 ]
-#foreach attr: optional_function_attributes
-#  if cc.has_function_attribute(attr[0])
-#    cdata.set10('HAVE_ATTRIBUTE_' + attr[1], true)
-#  endif
-#endforeach
+if get_option('disable-optimization') == false
+  foreach attr: optional_function_attributes
+    test_code = '''
+      __attribute__((@0@)) void test_function(void *ptr) {
+        (void*)ptr;
+        return;
+      }
+      int main(void) {
+        int dummy = 0;
+        test_function(&dummy);
+        return 0;
+      }
+    '''.format(attr[0])
+    if cc.compiles(test_code, name: '__attribute__((' + attr[0] + '))', args: ['-Werror', '-Wattributes'])
+      cdata.set10('HAVE_ATTRIBUTE_' + attr[1], true)
+    endif
+  endforeach
+endif
 
 # Max possible optimization flags. We pass this flags to all our dispatch-able
 # (multi_targets) sources.
@@ -495,6 +523,7 @@ endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
 endif
+message(f'Long double format: @longdouble_format@')
 cdata.set10('HAVE_LDOUBLE_' + longdouble_format, true)
 
 if cc.has_header('endian.h')
@@ -749,7 +778,7 @@ _umath_tests_mtargets = mod_features.multi_targets(
     AVX2, SSE41, SSE2,
     ASIMDHP, ASIMD, NEON,
     VSX3, VSX2, VSX,
-    VXE, VX,
+    VXE, VX, RVV,
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
@@ -838,7 +867,9 @@ foreach gen_mtargets : [
   [
     'x86_simd_qsort_16bit.dispatch.h',
     'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
-    use_intel_sort ? [AVX512_SPR, AVX512_ICL] : []
+    # Do not enable AVX-512 on MSVC 32-bit (x86): it’s buggy there;
+    # Ref: NumPy issue numpy/numpy#29808
+    use_intel_sort and not (cc.get_id() == 'msvc' and cpu_family == 'x86') ? [AVX512_SPR, AVX512_ICL] : []
   ],
   [
     'highway_qsort.dispatch.h',
@@ -855,12 +886,15 @@ foreach gen_mtargets : [
     ] : []
   ],
 ]
+
+
+
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
     dispatch: gen_mtargets[2],
     # baseline: CPU_BASELINE, it doesn't provide baseline fallback
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, omp_dep],
     c_args: c_args_common + max_opt,
     cpp_args: cpp_args_common + max_opt,
     include_directories: [
@@ -1037,7 +1071,13 @@ foreach gen_mtargets : [
       VSX2,
       VX,
       LSX,
+      RVV
     ]
+  ],
+  [
+    'loops_half.dispatch.h',
+    src_file.process('src/umath/loops_half.dispatch.c.src'),
+    [AVX512_SPR, AVX512_SKX]
   ],
 ]
   mtargets = mod_features.multi_targets(
@@ -1082,6 +1122,7 @@ src_multiarray_umath_common = [
 ]
 if have_blas
   src_multiarray_umath_common += [
+    'src/common/blas_utils.c',
     'src/common/cblasfuncs.c',
     'src/common/python_xerbla.c',
   ]
@@ -1171,6 +1212,7 @@ src_multiarray = multiarray_gen_headers + [
   # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
   # links to the arm64 npymath library, see gh-22673
   'src/npymath/arm64_exports.c',
+  'src/multiarray/fnv.c',
 ]
 
 src_umath = umath_gen_headers + [
@@ -1269,7 +1311,7 @@ py.extension_module('_multiarray_umath',
     'src/umath',
     'src/highway'
   ],
-  dependencies: [blas_dep],
+  dependencies: [blas_dep, omp],
   link_with: [
     npymath_lib,
     unique_hash_so,
@@ -1350,8 +1392,6 @@ python_sources = [
   '_exceptions.pyi',
   '_internal.py',
   '_internal.pyi',
-  '_machar.py',
-  '_machar.pyi',
   '_methods.py',
   '_methods.pyi',
   '_simd.pyi',

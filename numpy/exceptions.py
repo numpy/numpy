@@ -7,8 +7,7 @@ specific, such as linear algebra errors.
 
 .. versionadded:: NumPy 1.25
 
-    The exceptions module is new in NumPy 1.25.  Older exceptions remain
-    available through the main NumPy namespace for compatibility.
+    The exceptions module is new in NumPy 1.25.
 
 .. currentmodule:: numpy.exceptions
 
@@ -171,7 +170,7 @@ class AxisError(ValueError, IndexError):
 
     """
 
-    __slots__ = ("axis", "ndim", "_msg")
+    __slots__ = ("_msg", "axis", "ndim")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
         if ndim is msg_prefix is None:
@@ -243,5 +242,5 @@ class DTypePromotionError(TypeError):
     DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 
-    """  # NOQA
+    """  # noqa: E501
     pass

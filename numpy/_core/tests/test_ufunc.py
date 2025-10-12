@@ -1,26 +1,33 @@
-import warnings
-import itertools
-import sys
 import ctypes as ct
+import itertools
 import pickle
+import sys
+import warnings
 
 import pytest
 from pytest import param
 
 import numpy as np
-import numpy._core.umath as ncu
-import numpy._core._umath_tests as umt
-import numpy.linalg._umath_linalg as uml
 import numpy._core._operand_flag_tests as opflag_tests
 import numpy._core._rational_tests as _rational_tests
+import numpy._core._umath_tests as umt
+import numpy._core.umath as ncu
+import numpy.linalg._umath_linalg as uml
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
-    )
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+)
 from numpy.testing._private.utils import requires_memory
-
 
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
@@ -484,8 +491,8 @@ class TestUfunc:
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
     @pytest.mark.parametrize("get_kwarg", [
-            lambda dt: {"dtype": dt},
-            lambda dt: {"signature": (dt, None, None)}])
+            param(lambda dt: {"dtype": dt}, id="dtype"),
+            param(lambda dt: {"signature": (dt, None, None)}, id="signature")])
     def test_signature_dtype_instances_allowed(self, get_kwarg):
         # We allow certain dtype instances when there is a clear singleton
         # and the given one is equivalent; mainly for backcompat.
@@ -495,13 +502,9 @@ class TestUfunc:
         assert int64 is not int64_2
 
         assert np.add(1, 2, **get_kwarg(int64_2)).dtype == int64
-        td = np.timedelta(2, "s")
+        td = np.timedelta64(2, "s")
         assert np.add(td, td, **get_kwarg("m8")).dtype == "m8[s]"
 
-    @pytest.mark.parametrize("get_kwarg", [
-            param(lambda x: {"dtype": x}, id="dtype"),
-            param(lambda x: {"signature": (x, None, None)}, id="signature")])
-    def test_signature_dtype_instances_allowed(self, get_kwarg):
         msg = "The `dtype` and `signature` arguments to ufuncs"
 
         with pytest.raises(TypeError, match=msg):
@@ -682,8 +685,8 @@ class TestUfunc:
                         tgt = float(x) / float(y)
                         rtol = max(np.finfo(dtout).resolution, 1e-15)
                         # The value of tiny for double double is NaN
-                        with suppress_warnings() as sup:
-                            sup.filter(UserWarning)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter('ignore', UserWarning)
                             if not np.isnan(np.finfo(dtout).tiny):
                                 atol = max(np.finfo(dtout).tiny, 3e-308)
                             else:
@@ -702,8 +705,8 @@ class TestUfunc:
                     tgt = complex(x) / complex(y)
                     rtol = max(np.finfo(dtout).resolution, 1e-15)
                     # The value of tiny for double double is NaN
-                    with suppress_warnings() as sup:
-                        sup.filter(UserWarning)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore', UserWarning)
                         if not np.isnan(np.finfo(dtout).tiny):
                             atol = max(np.finfo(dtout).tiny, 3e-308)
                         else:
@@ -1096,17 +1099,15 @@ class TestUfunc:
                 match=r"out=\.\.\. is only allowed as a keyword argument."):
             np.add.reduce(1, (), None, ...)
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        type_error = r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"
+        with pytest.raises(TypeError, match=type_error):
             np.negative(1, out=(...,))
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        with pytest.raises(TypeError, match=type_error):
             # We only allow out=... not individual args for now
             np.divmod(1, 2, out=(np.empty(()), ...))
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        with pytest.raises(TypeError, match=type_error):
             np.add.reduce(1, out=(...,))
 
     def test_axes_argument(self):
@@ -1450,7 +1451,7 @@ class TestUfunc:
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
-        msg = "matrix multiply on type %s" % d1.dtype.name
+        msg = f"matrix multiply on type {d1.dtype.name}"
 
         def permute_n(n):
             if n == 1:
@@ -1476,7 +1477,7 @@ class TestUfunc:
             return ret
 
         def broadcastable(s1, s2):
-            return s1 == s2 or s1 == 1 or s2 == 1
+            return s1 == s2 or 1 in {s1, s2}
 
         permute_3 = permute_n(3)
         slice_3 = slice_n(3) + ((slice(None, None, -1),) * 3,)
@@ -1496,8 +1497,7 @@ class TestUfunc:
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
                                        a1[..., np.newaxis, :], axis=-1),
-                                err_msg=msg + ' %s %s' % (str(a1.shape),
-                                                          str(a2.shape)))
+                                err_msg=msg + f' {str(a1.shape)} {str(a2.shape)}')
 
         assert_equal(ref, True, err_msg="reference check")
 
@@ -1553,7 +1553,8 @@ class TestUfunc:
 
         arr1d = np.array([HasComparisons()])
         assert_equal(arr1d == arr1d, np.array([True]))
-        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
+        # normal behavior is a cast
+        assert_equal(np.equal(arr1d, arr1d), np.array([True]))
         assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
 
     def test_object_array_reduction(self):
@@ -1709,9 +1710,6 @@ class TestUfunc:
         assert_equal(a, [[0, 27], [14, 5]])
 
     def test_where_param_buffer_output(self):
-        # This test is temporarily skipped because it requires
-        # adding masking features to the nditer to work properly
-
         # With casting on output
         a = np.ones(10, np.int64)
         b = np.ones(10, np.int64)
@@ -1723,12 +1721,12 @@ class TestUfunc:
         # With casting and allocated output
         a = np.array([1], dtype=np.int64)
         m = np.array([True], dtype=bool)
-        assert_equal(np.sqrt(a, where=m), [1])
+        assert_equal(np.sqrt(a, where=m, out=None), [1])
 
         # No casting and allocated output
         a = np.array([1], dtype=np.float64)
         m = np.array([True], dtype=bool)
-        assert_equal(np.sqrt(a, where=m), [1])
+        assert_equal(np.sqrt(a, where=m, out=None), [1])
 
     def test_where_with_broadcasting(self):
         # See gh-17198
@@ -1741,6 +1739,17 @@ class TestUfunc:
         b_where = np.broadcast_to(b, a.shape)[where]
         assert_array_equal((a[where] < b_where), out[where].astype(bool))
         assert not out[~where].any()  # outside mask, out remains all 0
+
+    def test_where_warns(self):
+        a = np.arange(7)
+        mask = a % 2 == 0
+        with pytest.warns(UserWarning, match="'where' used without 'out'"):
+            result1 = np.add(a, a, where=mask)
+        # Does not warn
+        result2 = np.add(a, a, where=mask, out=None)
+        # Sanity check
+        assert np.all(result1[::2] == [0, 4, 8, 12])
+        assert np.all(result2[::2] == [0, 4, 8, 12])
 
     @staticmethod
     def identityless_reduce_arrs():
@@ -1759,10 +1768,11 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         yield a
 
-    @pytest.mark.parametrize("a", identityless_reduce_arrs())
+    @pytest.mark.parametrize("arrs", identityless_reduce_arrs())
     @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-    def test_identityless_reduction(self, a, pos):
+    def test_identityless_reduction(self, arrs, pos):
         # np.minimum.reduce is an identityless reduction
+        a = arrs.copy()
         a[...] = 1
         a[pos] = 0
 
@@ -2105,7 +2115,7 @@ class TestUfunc:
     def test_array_wrap_array_priority(self):
         class ArrayPriorityBase(np.ndarray):
             @classmethod
-            def __array_wrap__(cls, array, context=None, return_scalar = False):
+            def __array_wrap__(cls, array, context=None, return_scalar=False):
                 return cls
 
         class ArrayPriorityMinus0(ArrayPriorityBase):
@@ -2120,15 +2130,16 @@ class TestUfunc:
         class ArrayPriorityMinus2000(ArrayPriorityBase):
             __array_priority__ = -2000
 
-        x = ArrayPriorityMinus1000(2)
-        xb = ArrayPriorityMinus1000b(2)
-        y = ArrayPriorityMinus2000(2)
+        x = np.ones(2).view(ArrayPriorityMinus1000)
+        xb = np.ones(2).view(ArrayPriorityMinus1000b)
+        y = np.ones(2).view(ArrayPriorityMinus2000)
 
         assert np.add(x, y) is ArrayPriorityMinus1000
         assert np.add(y, x) is ArrayPriorityMinus1000
         assert np.add(x, xb) is ArrayPriorityMinus1000
         assert np.add(xb, x) is ArrayPriorityMinus1000b
-        assert np.add(np.zeros(2), ArrayPriorityMinus0(2)) is ArrayPriorityMinus0
+        y_minus0 = np.zeros(2).view(ArrayPriorityMinus0)
+        assert np.add(np.zeros(2), y_minus0) is ArrayPriorityMinus0
         assert type(np.add(xb, x, np.zeros(2))) is np.ndarray
 
     @pytest.mark.parametrize("a", (
@@ -2999,6 +3010,45 @@ def test_reduce_casterrors(offset):
     # if the error happened immediately.
     # This does not define behaviour, the output is invalid and thus undefined
     assert out[()] < value * offset
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_reduction_no_reference_leak():
+    # Test that the generic reduction does not leak references.
+    # gh-29358
+    arr = np.array([1, 2, 3], dtype=np.int32)
+    count = sys.getrefcount(arr)
+
+    np.add.reduce(arr, dtype=np.int32, initial=0)
+    assert count == sys.getrefcount(arr)
+
+    np.add.accumulate(arr, dtype=np.int32)
+    assert count == sys.getrefcount(arr)
+
+    np.add.reduceat(arr, [0, 1], dtype=np.int32)
+    assert count == sys.getrefcount(arr)
+
+    # with `out=` the reference count is not changed
+    out = np.empty((), dtype=np.int32)
+    out_count = sys.getrefcount(out)
+
+    np.add.reduce(arr, dtype=np.int32, out=out, initial=0)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
+
+    out = np.empty(arr.shape, dtype=np.int32)
+    out_count = sys.getrefcount(out)
+
+    np.add.accumulate(arr, dtype=np.int32, out=out)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
+
+    out = np.empty((2,), dtype=np.int32)
+    out_count = sys.getrefcount(out)
+
+    np.add.reduceat(arr, [0, 1], dtype=np.int32, out=out)
+    assert count == sys.getrefcount(arr)
+    assert out_count == sys.getrefcount(out)
 
 
 def test_object_reduce_cleanup_on_failure():

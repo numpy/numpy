@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 if TYPE_CHECKING:
-    from numpy._typing import NDArray, ArrayLike, _SupportsArray
+    from numpy._typing import ArrayLike, NDArray, _SupportsArray
 
 x1: ArrayLike = True
 x2: ArrayLike = 5
@@ -22,9 +22,7 @@ x12: ArrayLike = memoryview(b'foo')
 
 
 class A:
-    def __array__(
-        self, dtype: None | np.dtype[Any] = None
-    ) -> NDArray[np.float64]:
+    def __array__(self, dtype: np.dtype | None = None) -> NDArray[np.float64]:
         return np.array([1.0, 2.0, 3.0])
 
 

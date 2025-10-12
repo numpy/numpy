@@ -1,10 +1,11 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
-
-import numpy as np
 import itertools
-from packaging import version
 import operator
 
+from packaging import version
+
+import numpy as np
+
+from .common import DLPACK_TYPES, TYPES1, Benchmark, get_squares_
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'bitwise_not',
@@ -37,7 +38,7 @@ missing_ufuncs = all_ufuncs - bench_ufuncs
 if len(missing_ufuncs) > 0:
     missing_ufunc_names = [f.__name__ for f in missing_ufuncs]
     raise NotImplementedError(
-        "Missing benchmarks for ufuncs %r" % missing_ufunc_names)
+        f"Missing benchmarks for ufuncs {missing_ufunc_names!r}")
 
 
 class ArrayFunctionDispatcher(Benchmark):
@@ -52,7 +53,7 @@ class ArrayFunctionDispatcher(Benchmark):
         except AttributeError:
             raise NotImplementedError
         self.args = []
-        for _, aarg in get_squares_().items():
+        for aarg in get_squares_().values():
             arg = (aarg,) * 1  # no nin
             try:
                 self.afdn(*arg)
@@ -99,7 +100,7 @@ class UFunc(Benchmark):
         except AttributeError:
             raise NotImplementedError
         self.args = []
-        for _, aarg in get_squares_().items():
+        for aarg in get_squares_().values():
             arg = (aarg,) * self.ufn.nin
             try:
                 self.ufn(*arg)
@@ -303,7 +304,7 @@ class DLPMethods(Benchmark):
 class NDArrayAsType(Benchmark):
     """ Benchmark for type conversion
     """
-    params = [list(itertools.combinations(TYPES1, 2))]
+    params = [list(itertools.product(TYPES1, TYPES1))]
     param_names = ['typeconv']
     timeout = 10
 
@@ -342,7 +343,7 @@ class UFuncSmall(Benchmark):
         self.f(self.array_5)
 
     def time_ufunc_small_array_inplace(self, ufuncname):
-        self.f(self.array_5, out = self.array_5)
+        self.f(self.array_5, out=self.array_5)
 
     def time_ufunc_small_int_array(self, ufuncname):
         self.f(self.array_int_3)
@@ -432,7 +433,7 @@ class CustomScalar(Benchmark):
 
 
 class CustomComparison(Benchmark):
-    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+    params = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
               np.uint32, np.uint64, np.float32, np.float64, np.bool)
     param_names = ['dtype']
 

@@ -25,113 +25,113 @@ _NormKind: TypeAlias = L["backward", "ortho", "forward"] | None
 
 def fft(
     a: ArrayLike,
-    n: None | int = ...,
-    axis: int = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def ifft(
     a: ArrayLike,
-    n: None | int = ...,
-    axis: int = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def rfft(
     a: ArrayLike,
-    n: None | int = ...,
-    axis: int = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def irfft(
     a: ArrayLike,
-    n: None | int = ...,
-    axis: int = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[float64] = ...,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: NDArray[float64] | None = None,
 ) -> NDArray[float64]: ...
 
 # Input array must be compatible with `np.conjugate`
 def hfft(
     a: _ArrayLikeNumber_co,
-    n: None | int = ...,
-    axis: int = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[float64] = ...,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: NDArray[float64] | None = None,
 ) -> NDArray[float64]: ...
 
 def ihfft(
     a: ArrayLike,
-    n: None | int = ...,
-    axis: int = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    n: int | None = None,
+    axis: int = -1,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def fftn(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def ifftn(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def rfftn(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def irfftn(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[float64] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
+    norm: _NormKind = None,
+    out: NDArray[float64] | None = None,
 ) -> NDArray[float64]: ...
 
 def fft2(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def ifft2(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def rfft2(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[complex128] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
 
 def irfft2(
     a: ArrayLike,
-    s: None | Sequence[int] = ...,
-    axes: None | Sequence[int] = ...,
-    norm: _NormKind = ...,
-    out: None | NDArray[float64] = ...,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = (-2, -1),
+    norm: _NormKind = None,
+    out: NDArray[float64] | None = None,
 ) -> NDArray[float64]: ...

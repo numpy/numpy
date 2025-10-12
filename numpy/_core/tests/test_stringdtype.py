@@ -2,26 +2,64 @@ import copy
 import itertools
 import os
 import pickle
+import string
 import sys
 import tempfile
 
-import numpy as np
 import pytest
 
-from numpy.dtypes import StringDType
+import numpy as np
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal, IS_PYPY
-from numpy.testing._private.utils import get_stringdtype_dtype as get_dtype
+from numpy.dtypes import StringDType
+from numpy.testing import IS_PYPY, assert_array_equal
 
+
+def random_unicode_string_list():
+    """Returns an array of 10 100-character strings containing random text"""
+    chars = list(string.ascii_letters + string.digits)
+    chars = np.array(chars, dtype="U1")
+    ret = np.random.choice(chars, size=100 * 10, replace=True)
+    return ret.view("U100")
+
+
+def get_dtype(na_object, coerce=True):
+    """Helper to work around pd_NA boolean behavior"""
+    # explicit is check for pd_NA because != with pd_NA returns pd_NA
+    if na_object is pd_NA or na_object != "unset":
+        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
+    else:
+        return np.dtypes.StringDType(coerce=coerce)
+
+
+@pytest.fixture(params=[True, False])
+def coerce(request):
+    """Coerce input to strings or raise an error for non-string input"""
+    return request.param
+
+
+@pytest.fixture(
+    params=["unset", None, pd_NA, np.nan, float("nan"), "__nan__"],
+    ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
+)
+def na_object(request):
+    """Possible values for the missing data sentinel"""
+    return request.param
+
+
+@pytest.fixture()
+def dtype(na_object, coerce):
+    """Cartesian project of missing data sentinel and string coercion options"""
+    return get_dtype(na_object, coerce)
 
 @pytest.fixture
 def string_list():
+    """Mix of short and long strings, some with unicode, some without"""
     return ["abc", "def", "ghi" * 10, "A¢☃€ 😊" * 100, "Abc" * 1000, "DEF"]
 
 
-# second copy for cast tests to do a cartesian product over dtypes
 @pytest.fixture(params=[True, False])
 def coerce2(request):
+    """Second copy of the coerce fixture for tests that need two instances"""
     return request.param
 
 
@@ -30,11 +68,13 @@ def coerce2(request):
     ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
 )
 def na_object2(request):
+    """Second copy of the na_object fixture for tests that need two instances"""
     return request.param
 
 
 @pytest.fixture()
 def dtype2(na_object2, coerce2):
+    """Second copy of the dtype fixture for tests that need two instances"""
     # explicit is check for pd_NA because != with pd_NA returns pd_NA
     if na_object2 is pd_NA or na_object2 != "unset":
         return StringDType(na_object=na_object2, coerce=coerce2)
@@ -128,8 +168,8 @@ def test_null_roundtripping():
 
 def test_string_too_large_error():
     arr = np.array(["a", "b", "c"], dtype=StringDType())
-    with pytest.raises(MemoryError):
-        arr * (2**63 - 2)
+    with pytest.raises(OverflowError):
+        arr * (sys.maxsize + 1)
 
 
 @pytest.mark.parametrize(
@@ -267,12 +307,13 @@ class TestStringLikeCasts:
                 sarr.astype("S20")
 
 
-def test_additional_unicode_cast(random_string_list, dtype):
-    arr = np.array(random_string_list, dtype=dtype)
+def test_additional_unicode_cast(dtype):
+    string_list = random_unicode_string_list()
+    arr = np.array(string_list, dtype=dtype)
     # test that this short-circuits correctly
     assert_array_equal(arr, arr.astype(arr.dtype))
     # tests the casts via the comparison promoter
-    assert_array_equal(arr, arr.astype(random_string_list.dtype))
+    assert_array_equal(arr, arr.astype(string_list.dtype))
 
 
 def test_insert_scalar(dtype, string_list):
@@ -517,6 +558,25 @@ def test_fancy_indexing(string_list):
                 a[ind] = b
                 assert_array_equal(a, b)
                 assert a[0] == 'd' * 25
+
+    # see gh-29279
+    data = [
+        ["AAAAAAAAAAAAAAAAA"],
+        ["BBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],
+        ["CCCCCCCCCCCCCCCCC"],
+        ["DDDDDDDDDDDDDDDDD"],
+    ]
+    sarr = np.array(data, dtype=np.dtypes.StringDType())
+    uarr = np.array(data, dtype="U30")
+    for ind in [[0], [1], [2], [3], [[0, 0]], [[1, 1, 3]], [[1, 1]]]:
+        assert_array_equal(sarr[ind], uarr[ind])
+
+
+def test_flatiter_indexing():
+    # see gh-29659
+    arr = np.array(['hello', 'world'], dtype='T')
+    arr.flat[:] = 9223372036854775
+    assert_array_equal(arr, np.array([9223372036854775] * 2, dtype='T'))
 
 
 def test_creation_functions():
@@ -1193,6 +1253,24 @@ def test_growing_strings(dtype):
     assert_array_equal(arr, uarr)
 
 
+def test_assign_medium_strings():
+    # see gh-29261
+    N = 9
+    src = np.array(
+        (
+            ['0' * 256] * 3 + ['0' * 255] + ['0' * 256] + ['0' * 255] +
+            ['0' * 256] * 2 + ['0' * 255]
+        ), dtype='T')
+    dst = np.array(
+        (
+            ['0' * 255] + ['0' * 256] * 2 + ['0' * 255] + ['0' * 256] +
+            ['0' * 255] + [''] * 5
+        ), dtype='T')
+
+    dst[1:N + 1] = src
+    assert_array_equal(dst[1:N + 1], src)
+
+
 UFUNC_TEST_DATA = [
     "hello" * 10,
     "Ae¢☃€ 😊" * 20,
@@ -1306,11 +1384,10 @@ def test_unary(string_array, unicode_array, function_name):
             # to avoid these errors we'd need to add NA support to _vec_string
             with pytest.raises((ValueError, TypeError)):
                 func(na_arr)
+        elif function_name == "splitlines":
+            assert func(na_arr)[0] == func(dtype.na_object)[()]
         else:
-            if function_name == "splitlines":
-                assert func(na_arr)[0] == func(dtype.na_object)[()]
-            else:
-                assert func(na_arr)[0] == func(dtype.na_object)
+            assert func(na_arr)[0] == func(dtype.na_object)
         return
     if function_name == "str_len" and not is_str:
         # str_len always errors for any non-string null, even NA ones because

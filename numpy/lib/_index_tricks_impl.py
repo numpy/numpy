@@ -1,20 +1,18 @@
 import functools
-import sys
 import math
+import sys
 import warnings
+from itertools import product
 
 import numpy as np
-from .._utils import set_module
 import numpy._core.numeric as _nx
+import numpy.matrixlib as matrixlib
+from numpy._core import linspace, overrides
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
-
-import numpy.matrixlib as matrixlib
-from numpy._core.multiarray import ravel_multi_index, unravel_index
-from numpy._core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -165,7 +163,7 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step * 1.0))))
+                        math.ceil((stop - start) / step))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
@@ -331,7 +329,7 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
-    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
 
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
@@ -690,10 +688,9 @@ class ndindex:
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        x = as_strided(_nx.zeros(1), shape=shape,
-                       strides=_nx.zeros_like(shape))
-        self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
-                              order='C')
+        if min(shape, default=0) < 0:
+            raise ValueError("negative dimensions are not allowed")
+        self._iter = product(*map(range, shape))
 
     def __iter__(self):
         return self
@@ -726,8 +723,7 @@ class ndindex:
             iteration.
 
         """
-        next(self._it)
-        return self._it.multi_index
+        return next(self._iter)
 
 
 # You can do all this with slice() plus a few special objects,

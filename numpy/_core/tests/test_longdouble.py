@@ -1,14 +1,18 @@
-import warnings
 import platform
+import warnings
+
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
-    temppath, IS_MUSL
-    )
 from numpy._core.tests._locales import CommaDecimalPointLocale
-
+from numpy.testing import (
+    IS_MUSL,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    temppath,
+)
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -40,7 +44,7 @@ repr_precision = len(repr(np.longdouble(0.1)))
 def test_str_roundtrip():
     # We will only see eps in repr if within printing precision.
     o = 1 + LD_INFO.eps
-    assert_equal(np.longdouble(str(o)), o, "str was %s" % str(o))
+    assert_equal(np.longdouble(str(o)), o, f"str was {str(o)}")
 
 
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
@@ -86,7 +90,7 @@ def test_fromstring():
     s = (" " + str(o)) * 5
     a = np.array([o] * 5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
-                 err_msg="reading '%s'" % s)
+                 err_msg=f"reading '{s}'")
 
 
 def test_fromstring_complex():
@@ -274,7 +278,7 @@ def test_format():
                     reason="Need strtold_l")
 def test_percent():
     o = 1 + LD_INFO.eps
-    assert_("%.40g" % o != '1')
+    assert_(f"{o:.40g}" != '1')
 
 
 @pytest.mark.skipif(longdouble_longer_than_double,
@@ -287,7 +291,8 @@ def test_array_repr():
     b = np.array([1], dtype=np.longdouble)
     if not np.all(a != b):
         raise ValueError("precision loss creating arrays")
-    assert_(repr(a) != repr(b))
+    with np.printoptions(precision=LD_INFO.precision + 1):
+        assert_(repr(a) != repr(b))
 
 #
 # Locale tests: scalar types formatting should be independent of the locale

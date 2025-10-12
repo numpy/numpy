@@ -1,7 +1,7 @@
 from typing import TypedDict, type_check_only
 
-from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import _ArrayLikeInt_co
+from numpy.random.bit_generator import BitGenerator, SeedSequence
 
 @type_check_only
 class _PCG64Internal(TypedDict):
@@ -16,8 +16,8 @@ class _PCG64State(TypedDict):
     uinteger: int
 
 class PCG64(BitGenerator):
-    def __init__(self, seed: None | _ArrayLikeInt_co | SeedSequence = ...) -> None: ...
-    def jumped(self, jumps: int = ...) -> PCG64: ...
+    def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
+    def jumped(self, jumps: int = 1) -> PCG64: ...
     @property
     def state(
         self,
@@ -30,8 +30,8 @@ class PCG64(BitGenerator):
     def advance(self, delta: int) -> PCG64: ...
 
 class PCG64DXSM(BitGenerator):
-    def __init__(self, seed: None | _ArrayLikeInt_co | SeedSequence = ...) -> None: ...
-    def jumped(self, jumps: int = ...) -> PCG64DXSM: ...
+    def __init__(self, seed: _ArrayLikeInt_co | SeedSequence | None = ...) -> None: ...
+    def jumped(self, jumps: int = 1) -> PCG64DXSM: ...
     @property
     def state(
         self,

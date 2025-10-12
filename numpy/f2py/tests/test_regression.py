@@ -1,6 +1,7 @@
 import os
-import pytest
 import platform
+
+import pytest
 
 import numpy as np
 import numpy.testing as npt
@@ -36,6 +37,16 @@ class TestDataOnlyMultiModule(util.F2PyTest):
         assert self.module.simple_subroutine(5) == 1014
 
 
+class TestModuleWithDerivedType(util.F2PyTest):
+    # Check that modules with derived types work
+    sources = [util.getpath("tests", "src", "regression", "mod_derived_types.f90")]
+
+    @pytest.mark.slow
+    def test_mtypes(self):
+        assert self.module.no_type_subroutine(10) == 110
+        assert self.module.type_subroutine(10) == 210
+
+
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
@@ -53,7 +64,7 @@ class TestNegativeBounds(util.F2PyTest):
             return xh - xl + 1
         rval = self.module.foo(is_=xlow, ie_=xhigh,
                         arr=xvec[:ubound(xlow, xhigh)])
-        expval = np.arange(11, dtype = np.float32)
+        expval = np.arange(11, dtype=np.float32)
         assert np.allclose(rval, expval)
 
 
@@ -147,7 +158,7 @@ def test_gh26623():
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(platform.system() not in ['Linux', 'Darwin'], reason='Unsupported on this platform for now')
+@pytest.mark.skipif(platform.system() == "Windows", reason='Unsupported on this platform for now')
 def test_gh25784():
     # Compile dubious file using passed flags
     try:
@@ -156,7 +167,7 @@ def test_gh25784():
             options=[
                 # Meson will collect and dedup these to pass to fortran_args:
                 "--f77flags='-ffixed-form -O2'",
-                "--f90flags=\"-ffixed-form -Og\"",
+                "--f90flags=\"-ffixed-form -g\"",
             ],
             module_name="Blah",
         )

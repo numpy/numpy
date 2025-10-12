@@ -1,0 +1,33 @@
+Fix ``flatiter`` indexing edge cases
+------------------------------------
+
+The ``flatiter`` object now shares the same index preparation logic as
+``ndarray``, ensuring consistent behavior and fixing several issues where
+invalid indices were previously accepted or misinterpreted.
+
+Key fixes and improvements:
+
+* Stricter index validation
+
+  - Boolean non-array indices like ``arr.flat[[True, True]]`` were
+    incorrectly treated as ``arr.flat[np.array([1, 1], dtype=int)]``.
+    They now raise an index error. Note that indices that match the
+    iterator's shape are expected to not raise in the future and be
+    handled as regular boolean indices. Use ``np.asarray(<index>)`` if
+    you want to match that behavior.
+  - Float non-array indices were also cast to integer and incorrectly
+    treated as ``arr.flat[np.array([1.0, 1.0], dtype=int)]``. This is now
+    deprecated and will be removed in a future version.
+  - 0-dimensional boolean indices like ``arr.flat[True]`` are also
+    deprecated and will be removed in a future version.
+
+* Consistent error types:
+
+  Certain invalid `flatiter` indices that previously raised `ValueError`
+  now correctly raise `IndexError`, aligning with `ndarray` behavior.
+
+* Improved error messages:
+
+  The error message for unsupported index operations now provides more
+  specific details, including explicitly listing the valid index types,
+  instead of the generic ``IndexError: unsupported index operation``.

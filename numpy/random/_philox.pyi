@@ -1,9 +1,9 @@
 from typing import TypedDict, type_check_only
 
 from numpy import uint64
-from numpy.typing import NDArray
-from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import _ArrayLikeInt_co
+from numpy.random.bit_generator import BitGenerator, SeedSequence
+from numpy.typing import NDArray
 
 @type_check_only
 class _PhiloxInternal(TypedDict):
@@ -22,9 +22,9 @@ class _PhiloxState(TypedDict):
 class Philox(BitGenerator):
     def __init__(
         self,
-        seed: None | _ArrayLikeInt_co | SeedSequence = ...,
-        counter: None | _ArrayLikeInt_co = ...,
-        key: None | _ArrayLikeInt_co = ...,
+        seed: _ArrayLikeInt_co | SeedSequence | None = ...,
+        counter: _ArrayLikeInt_co | None = ...,
+        key: _ArrayLikeInt_co | None = ...,
     ) -> None: ...
     @property
     def state(
@@ -35,5 +35,5 @@ class Philox(BitGenerator):
         self,
         value: _PhiloxState,
     ) -> None: ...
-    def jumped(self, jumps: int = ...) -> Philox: ...
+    def jumped(self, jumps: int = 1) -> Philox: ...
     def advance(self, delta: int) -> Philox: ...

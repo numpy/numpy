@@ -1,4 +1,4 @@
-from typing import Any, Final, TypedDict, type_check_only
+from typing import Final, TypedDict, type_check_only
 
 import numpy as np
 from numpy._typing import NDArray

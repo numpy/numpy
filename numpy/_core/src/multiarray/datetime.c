@@ -1233,6 +1233,10 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* TODO: support this */
+        return 0;
+    }
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
@@ -1278,6 +1282,10 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
                           NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
@@ -1325,6 +1333,10 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Force SAFE_CASTING */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         case NPY_UNSAFE_CASTING:
             return 1;
@@ -1352,6 +1364,10 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting)
 {
+    if ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        /* Use SAFE_CASTING, which implies SAME_VALUE */
+        casting = NPY_SAFE_CASTING;
+    }
     switch (casting) {
         case NPY_UNSAFE_CASTING:
             return 1;
@@ -2245,8 +2261,8 @@ invalid_time:
 }
 
 /*
- * Gets a tzoffset in minutes by calling the fromutc() function on
- * the Python datetime.tzinfo object.
+ * Gets a tzoffset in minutes by calling the astimezone() function on
+ * the Python datetime.datetime object.
  */
 NPY_NO_EXPORT int
 get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
@@ -2255,14 +2271,14 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
     npy_datetimestruct loc_dts;
 
     /* Create a Python datetime to give to the timezone object */
-    dt = PyDateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
-                            dts->hour, dts->min, 0, 0);
+    dt = PyDateTimeAPI->DateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
+                            dts->hour, dts->min, 0, 0, PyDateTime_TimeZone_UTC, PyDateTimeAPI->DateTimeType);
     if (dt == NULL) {
         return -1;
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(timezone_obj, "fromutc", "O", dt);
+    loc_dt = PyObject_CallMethod(dt, "astimezone", "O", timezone_obj);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;
@@ -3118,15 +3134,18 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
  */
 NPY_NO_EXPORT int
 cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
-                          PyArray_DatetimeMetaData *dst_meta,
-                          npy_timedelta src_dt,
-                          npy_timedelta *dst_dt)
+                            PyArray_DatetimeMetaData *dst_meta,
+                            npy_timedelta src_dt,
+                            npy_timedelta *dst_dt)
 {
     npy_int64 num = 0, denom = 0;
 
-    /* If the metadata is the same, short-circuit the conversion */
-    if (src_meta->base == dst_meta->base &&
-            src_meta->num == dst_meta->num) {
+    /*
+     * If the metadata is the same or if src_dt is NAT, short-circuit
+     * the conversion.
+     */
+    if ((src_meta->base == dst_meta->base && src_meta->num == dst_meta->num)
+            || src_dt == NPY_DATETIME_NAT) {
         *dst_dt = src_dt;
         return 0;
     }

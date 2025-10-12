@@ -1,19 +1,24 @@
 import functools
 import warnings
 
+import numpy as np
 import numpy._core.numeric as _nx
-from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
+from numpy._core import atleast_3d, overrides, vstack
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
-from numpy._core._multiarray_umath import _array_converter
-from numpy._core import overrides
-from numpy._core import vstack, atleast_3d
-from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.numeric import (
+    array,
+    asanyarray,
+    asarray,
+    normalize_axis_tuple,
+    zeros,
+    zeros_like,
+)
 from numpy._core.overrides import set_module
 from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
-
 
 __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
@@ -50,12 +55,12 @@ def _make_along_axis_idx(arr_shape, indices, axis):
     return tuple(fancy_index)
 
 
-def _take_along_axis_dispatcher(arr, indices, axis):
+def _take_along_axis_dispatcher(arr, indices, axis=None):
     return (arr, indices)
 
 
 @array_function_dispatch(_take_along_axis_dispatcher)
-def take_along_axis(arr, indices, axis):
+def take_along_axis(arr, indices, axis=-1):
     """
     Take values from the input array by matching 1d index and data slices.
 
@@ -71,13 +76,16 @@ def take_along_axis(arr, indices, axis):
     arr : ndarray (Ni..., M, Nk...)
         Source array
     indices : ndarray (Ni..., J, Nk...)
-        Indices to take along each 1d slice of `arr`. This must match the
-        dimension of arr, but dimensions Ni and Nj only need to broadcast
-        against `arr`.
-    axis : int
+        Indices to take along each 1d slice of ``arr``. This must match the
+        dimension of ``arr``, but dimensions Ni and Nj only need to broadcast
+        against ``arr``.
+    axis : int or None, optional
         The axis to take 1d slices along. If axis is None, the input array is
         treated as if it had first been flattened to 1d, for consistency with
         `sort` and `argsort`.
+
+        .. versionchanged:: 2.3
+            The default value is now ``-1``.
 
     Returns
     -------
@@ -164,15 +172,13 @@ def take_along_axis(arr, indices, axis):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = arr.flat
-        arr_shape = (len(arr),)  # flatiter has no .shape
+        arr = np.array(arr.flat)
         axis = 0
     else:
         axis = normalize_axis_index(axis, arr.ndim)
-        arr_shape = arr.shape
 
     # use the fancy index
-    return arr[_make_along_axis_idx(arr_shape, indices, axis)]
+    return arr[_make_along_axis_idx(arr.shape, indices, axis)]
 
 
 def _put_along_axis_dispatcher(arr, indices, values, axis):
@@ -256,15 +262,13 @@ def put_along_axis(arr, indices, values, axis):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = arr.flat
+        arr = np.array(arr.flat)
         axis = 0
-        arr_shape = (len(arr),)  # flatiter has no .shape
     else:
         axis = normalize_axis_index(axis, arr.ndim)
-        arr_shape = arr.shape
 
     # use the fancy index
-    arr[_make_along_axis_idx(arr_shape, indices, axis)] = values
+    arr[_make_along_axis_idx(arr.shape, indices, axis)] = values
 
 
 def _apply_along_axis_dispatcher(func1d, axis, arr, *args, **kwargs):
@@ -586,7 +590,7 @@ def expand_dims(a, axis):
     else:
         a = asanyarray(a)
 
-    if type(axis) not in (tuple, list):
+    if not isinstance(axis, (tuple, list)):
         axis = (axis,)
 
     out_ndim = len(axis) + a.ndim
@@ -646,11 +650,11 @@ def column_stack(tup):
     --------
     >>> import numpy as np
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.column_stack((a,b))
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
     arrays = []
@@ -706,18 +710,18 @@ def dstack(tup):
     --------
     >>> import numpy as np
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.dstack((a,b))
-    array([[[1, 2],
-            [2, 3],
-            [3, 4]]])
+    array([[[1, 4],
+            [2, 5],
+            [3, 6]]])
 
     >>> a = np.array([[1],[2],[3]])
-    >>> b = np.array([[2],[3],[4]])
+    >>> b = np.array([[4],[5],[6]])
     >>> np.dstack((a,b))
-    array([[[1, 2]],
-           [[2, 3]],
-           [[3, 4]]])
+    array([[[1, 4]],
+           [[2, 5]],
+           [[3, 6]]])
 
     """
     arrs = atleast_3d(*tup)
@@ -1106,7 +1110,7 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    If ``a.shape = (r0,r1,...,rN)`` and ``b.shape = (s0,s1,...,sN)``,
     the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::

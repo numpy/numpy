@@ -44,6 +44,7 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      */
 #if defined(HAVE_FALLOCATE) && defined(__linux__)
     int r;
+    npy_intp offset;
     /* small files not worth the system call */
     if (nbytes < 16 * 1024 * 1024) {
         return 0;
@@ -60,7 +61,8 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      * the flag "1" (=FALLOC_FL_KEEP_SIZE) is needed for the case of files
      * opened in append mode (issue #8329)
      */
-    r = fallocate(fileno(fp), 1, npy_ftell(fp), nbytes);
+    offset = npy_ftell(fp);
+    r = fallocate(fileno(fp), 1, offset, nbytes);
     NPY_END_ALLOW_THREADS;
 
     /*
@@ -68,7 +70,8 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      */
     if (r == -1 && errno == ENOSPC) {
         PyErr_Format(PyExc_OSError, "Not enough free space to write "
-                     "%"NPY_INTP_FMT" bytes", nbytes);
+                     "%"NPY_INTP_FMT" bytes after offset %"NPY_INTP_FMT,
+                     nbytes, offset);
         return -1;
     }
 #endif
@@ -426,7 +429,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     int retcode = raw_array_assign_scalar(
             PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
-            descr, (void *)value);
+            descr, (void *)value, NPY_UNSAFE_CASTING);
 
     if (PyDataType_REFCHK(descr)) {
         PyArray_ClearBuffer(descr, (void *)value, 0, 1, 1);

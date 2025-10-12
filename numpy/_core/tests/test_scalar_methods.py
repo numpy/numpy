@@ -4,13 +4,13 @@ Test the scalar constructors, which also do type-coercion
 import fractions
 import platform
 import types
-from typing import Any, Type
+from typing import Any, Literal
 
 import pytest
-import numpy as np
 
+import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises, IS_MUSL
+from numpy.testing import assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -143,7 +143,7 @@ class TestClassGetItem:
         np.signedinteger,
         np.floating,
     ])
-    def test_abc(self, cls: Type[np.number]) -> None:
+    def test_abc(self, cls: type[np.number]) -> None:
         alias = cls[Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is cls
@@ -164,15 +164,19 @@ class TestClassGetItem:
                 np.complexfloating[arg_tup]
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
-    def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:
+    def test_abc_non_numeric(self, cls: type[np.generic]) -> None:
         with pytest.raises(TypeError):
             cls[Any]
 
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        with pytest.raises(TypeError):
-            cls[Any]
+        if cls in {np.bool, np.datetime64}:
+            # these are intentionally subscriptable
+            assert cls[Any]
+        else:
+            with pytest.raises(TypeError):
+                cls[Any]
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
@@ -186,6 +190,10 @@ class TestClassGetItem:
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
 
+    @pytest.mark.parametrize("subscript", [Literal[True], Literal[False]])
+    def test_subscript_bool(self, subscript: Literal[True, False]) -> None:
+        assert isinstance(np.bool[subscript], types.GenericAlias)
+
 
 class TestBitCount:
     # derived in part from the cpython test "test_bit_count"
@@ -194,7 +202,7 @@ class TestBitCount:
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
             msg = f"Smoke test for {itype}({a}).bit_count()"
-            assert itype(a).bit_count() == bin(a).count("1"), msg
+            assert itype(a).bit_count() == a.bit_count(), msg
 
     def test_bit_count(self):
         for exp in [10, 17, 63]:

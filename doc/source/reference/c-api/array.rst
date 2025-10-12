@@ -1886,6 +1886,34 @@ with the rest of the ArrayMethod API.
    the main ufunc registration function.  This adds a new implementation/loop
    to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
 
+.. c:type:: PyUFunc_LoopSlot
+
+   Structure used to add multiple loops to ufuncs from ArrayMethod specs.
+   This is used in `PyUFunc_AddLoopsFromSpecs`.
+
+    .. c:struct:: PyUFunc_LoopSlot
+
+        .. c:member:: const char *name
+
+            The name of the ufunc to add the loop to.
+
+        .. c:member:: PyArrayMethod_Spec *spec
+
+            The ArrayMethod spec to use to create the loop.
+
+.. c:function:: int PyUFunc_AddLoopsFromSpecs( \
+                        PyUFunc_LoopSlot *slots)
+
+    .. versionadded:: 2.4
+
+    Add multiple loops to ufuncs from ArrayMethod specs. This also
+    handles the registration of methods for the ufunc-like functions
+    ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
+
+    The ``slots`` argument must be a  NULL-terminated array of
+    `PyUFunc_LoopSlot` (see above), which give the name of the
+    ufunc and spec needed to create the loop.
+
 .. c:function:: int PyUFunc_AddPromoter( \
                         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
 
@@ -2035,6 +2063,36 @@ code:
         loop_descrs[2] = PyArray_DescrFromType(NPY_FLOAT64);
         Py_INCREF(loop_descrs[2]);
     }
+
+.. _array-methods-sorting:
+
+Sorting and Argsorting
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Sorting and argsorting methods for dtypes can be registered using the
+ArrayMethod API. This is done by adding an ArrayMethod spec with the name
+``"sort"`` or ``"argsort"`` respectively.  The spec must have ``nin=1``
+and ``nout=1`` for both sort and argsort. Sorting is inplace, hence we
+enforce that ``data[0] == data[1]``. Argsorting returns a new array of
+indices, so the output must be of ``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_SortParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SORTKIND``
+values indicating the kind of sort to perform (that is, whether it is a
+stable and/or descending sort). If the strided loop depends on the flags,
+a good way to deal with this is to define :c:macro:`NPY_METH_get_loop`,
+and not set any of the other loop slots.
+
+.. c:struct:: PyArrayMethod_SortParameters
+
+    .. c:member:: NPY_SORTKIND flags
+
+        The flags passed to the sort operation. This is a bitwise OR of
+        ``NPY_SORTKIND`` values indicating the kind of sort to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
 
 API for calling array methods
 -----------------------------
@@ -2303,21 +2361,36 @@ Item selection and manipulation
 
 .. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
-    Return an array with the items of *self* sorted along *axis*. The array
-    is sorted using the algorithm denoted by *kind*, which is an integer/enum pointing
-    to the type of sorting algorithms used.
+    Return an array with the items of ``self`` sorted along ``axis``. The array
+    is sorted using an algorithm whose properties are specified by the value of
+    ``kind``, an integer/enum specifying the reguirements of the sorting
+    algorithm used. If ``self* ->descr`` is a data-type with fields defined,
+    then ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
 
-.. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.sort<numpy.ndarray.sort>`, though with a different meaning
+    of ``kind`` -- see ``NPY_SORTKIND`` below.
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
-    Return an array of indices such that selection of these indices
-    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
-    is a data-type with fields defined, then self->descr->names is used
-    to determine the sort order. A comparison where the first field is equal
-    will use the second field and so on. To alter the sort order of a
-    structured array, create a new data-type with a different order of names
-    and construct a view of the array with that new data-type.
+.. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
+
+    Return an array of indices such that selection of these indices along the
+    given ``axis`` would return a sorted version of ``self``.  The array is
+    sorted using an algorithm whose properties are specified by ``kind``, an
+    integer/enum specifying the reguirements of the sorting algorithm used. If
+    ``self->descr`` is a data-type with fields defined, then
+    ``self->descr->names`` is used to determine the sort order. A comparison
+    where the first field is equal will use the second field and so on. To
+    alter the sort order of a structured array, create a new data-type with a
+    different order of names and construct a view of the array with that new
+    data-type.
+
+    This is the C level function called by the ndarray method
+    :meth:`ndarray.argsort<numpy.ndarray.argsort>`, though with a different
+    meaning of ``kind`` -- see ``NPY_SORTKIND`` below.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -3814,7 +3887,7 @@ In this case, the helper C files typically do not have a canonical place
 where ``PyArray_ImportNumPyAPI`` should be called (although it is OK and
 fast to call it often).
 
-To solve this, NumPy provides the following pattern that the the main
+To solve this, NumPy provides the following pattern that the main
 file is modified to define ``PY_ARRAY_UNIQUE_SYMBOL`` before the include:
 
 .. code-block:: c
@@ -4321,7 +4394,11 @@ Enumerated Types
 .. c:enum:: NPY_SORTKIND
 
     A special variable-type which can take on different values to indicate
-    the sorting algorithm being used.
+    the sorting algorithm being used. These algorithm types have not been
+    treated strictly for some time, but rather treated as stable/not stable.
+    In NumPy 2.4 they are replaced by requirements (see below), but done in a
+    backwards compatible way. These values will continue to work, except that
+    that NPY_HEAPSORT will do the same thing as NPY_QUICKSORT.
 
     .. c:enumerator:: NPY_QUICKSORT
 
@@ -4335,11 +4412,32 @@ Enumerated Types
 
     .. c:enumerator:: NPY_NSORTS
 
-       Defined to be the number of sorts. It is fixed at three by the need for
-       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
-       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
-       of several stable sorting algorithms depending on the data type.
+        Defined to be the number of sorts. It is fixed at three by the need for
+        backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+        :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+        of several stable sorting algorithms depending on the data type.
 
+    In NumPy 2.4 the algorithm names are replaced by requirements. You can still use
+    the old values, a recompile is not needed, but they are reinterpreted such that
+
+    * NPY_QUICKSORT and NPY_HEAPSORT -> NPY_SORT_DEFAULT
+    * NPY_MERGESORT and NPY_STABLE -> NPY_SORT_STABLE
+
+    .. c:enumerator:: NPY_SORT_DEFAULT
+
+        The default sort for the type. For the NumPy builtin types it may be
+        stable or not, but will be ascending and sort NaN types to the end. It
+        is usually chosen for speed and/or low memory.
+
+    .. c:enumerator:: NPY_SORT_STABLE
+
+        (Requirement) Specifies that the sort must be stable.
+
+    .. c:enumerator:: NPY_SORT_DESCENDING
+
+        (Requirement) Specifies that the sort must be in descending order.
+        This functionality is not yet implemented for any of the NumPy types
+        and cannot yet be set from the Python interface.
 
 .. c:enum:: NPY_SCALARKIND
 
@@ -4451,6 +4549,13 @@ Enumerated Types
     .. c:enumerator:: NPY_UNSAFE_CASTING
 
        Allow any cast, no matter what kind of data loss may occur.
+
+.. c:macro:: NPY_SAME_VALUE_CASTING
+
+       Error if any values change during a cast. Currently
+       supported only in ``ndarray.astype(... casting='same_value')``
+
+       .. versionadded:: 2.4
 
 .. index::
    pair: ndarray; C-API

@@ -5,12 +5,10 @@ Does not include tests which fall under ``array_constructors``.
 
 """
 
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 class SubClass(npt.NDArray[np.int64]): ...
 
@@ -27,10 +25,10 @@ AR_O: npt.NDArray[np.object_]
 B: list[int]
 C: SubClass
 
-assert_type(np.count_nonzero(i8), int)
-assert_type(np.count_nonzero(AR_i8), int)
-assert_type(np.count_nonzero(B), int)
-assert_type(np.count_nonzero(AR_i8, keepdims=True), Any)
+assert_type(np.count_nonzero(i8), np.intp)
+assert_type(np.count_nonzero(AR_i8), np.intp)
+assert_type(np.count_nonzero(B), np.intp)
+assert_type(np.count_nonzero(AR_i8, keepdims=True), npt.NDArray[np.intp])
 assert_type(np.count_nonzero(AR_i8, axis=0), Any)
 
 assert_type(np.isfortran(i8), bool)
@@ -42,47 +40,47 @@ assert_type(np.argwhere(AR_i8), npt.NDArray[np.intp])
 assert_type(np.flatnonzero(i8), npt.NDArray[np.intp])
 assert_type(np.flatnonzero(AR_i8), npt.NDArray[np.intp])
 
-assert_type(np.correlate(B, AR_i8, mode="valid"), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.correlate(AR_i8, AR_i8, mode="same"), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.correlate(B, AR_i8, mode="valid"), npt.NDArray[np.signedinteger])
+assert_type(np.correlate(AR_i8, AR_i8, mode="same"), npt.NDArray[np.signedinteger])
 assert_type(np.correlate(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.correlate(AR_b, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
-assert_type(np.correlate(AR_i8, AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.correlate(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
-assert_type(np.correlate(AR_i8, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.correlate(AR_b, AR_u8), npt.NDArray[np.unsignedinteger])
+assert_type(np.correlate(AR_i8, AR_b), npt.NDArray[np.signedinteger])
+assert_type(np.correlate(AR_i8, AR_f8), npt.NDArray[np.floating])
+assert_type(np.correlate(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
 assert_type(np.correlate(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.correlate(AR_O, AR_O), npt.NDArray[np.object_])
 
-assert_type(np.convolve(B, AR_i8, mode="valid"), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.convolve(AR_i8, AR_i8, mode="same"), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.convolve(B, AR_i8, mode="valid"), npt.NDArray[np.signedinteger])
+assert_type(np.convolve(AR_i8, AR_i8, mode="same"), npt.NDArray[np.signedinteger])
 assert_type(np.convolve(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.convolve(AR_b, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
-assert_type(np.convolve(AR_i8, AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.convolve(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
-assert_type(np.convolve(AR_i8, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.convolve(AR_b, AR_u8), npt.NDArray[np.unsignedinteger])
+assert_type(np.convolve(AR_i8, AR_b), npt.NDArray[np.signedinteger])
+assert_type(np.convolve(AR_i8, AR_f8), npt.NDArray[np.floating])
+assert_type(np.convolve(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
 assert_type(np.convolve(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.convolve(AR_O, AR_O), npt.NDArray[np.object_])
 
-assert_type(np.outer(i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.outer(B, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.outer(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.outer(i8, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.outer(B, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.outer(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
 assert_type(np.outer(AR_i8, AR_i8, out=C), SubClass)
 assert_type(np.outer(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.outer(AR_b, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
-assert_type(np.outer(AR_i8, AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.convolve(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
-assert_type(np.outer(AR_i8, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.outer(AR_b, AR_u8), npt.NDArray[np.unsignedinteger])
+assert_type(np.outer(AR_i8, AR_b), npt.NDArray[np.signedinteger])
+assert_type(np.convolve(AR_i8, AR_f8), npt.NDArray[np.floating])
+assert_type(np.outer(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
 assert_type(np.outer(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.outer(AR_O, AR_O), npt.NDArray[np.object_])
 
-assert_type(np.tensordot(B, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.tensordot(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.tensordot(AR_i8, AR_i8, axes=0), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.tensordot(AR_i8, AR_i8, axes=(0, 1)), npt.NDArray[np.signedinteger[Any]])
+assert_type(np.tensordot(B, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.tensordot(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.tensordot(AR_i8, AR_i8, axes=0), npt.NDArray[np.signedinteger])
+assert_type(np.tensordot(AR_i8, AR_i8, axes=(0, 1)), npt.NDArray[np.signedinteger])
 assert_type(np.tensordot(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.tensordot(AR_b, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
-assert_type(np.tensordot(AR_i8, AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.tensordot(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
-assert_type(np.tensordot(AR_i8, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.tensordot(AR_b, AR_u8), npt.NDArray[np.unsignedinteger])
+assert_type(np.tensordot(AR_i8, AR_b), npt.NDArray[np.signedinteger])
+assert_type(np.tensordot(AR_i8, AR_f8), npt.NDArray[np.floating])
+assert_type(np.tensordot(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
 assert_type(np.tensordot(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
 
@@ -99,12 +97,12 @@ assert_type(np.rollaxis(AR_i8, 0, 1), npt.NDArray[np.int64])
 assert_type(np.moveaxis(AR_i8, 0, 1), npt.NDArray[np.int64])
 assert_type(np.moveaxis(AR_i8, (0, 1), (1, 2)), npt.NDArray[np.int64])
 
-assert_type(np.cross(B, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.cross(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.cross(AR_b, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
-assert_type(np.cross(AR_i8, AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.cross(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
-assert_type(np.cross(AR_i8, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(np.cross(B, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.cross(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.cross(AR_b, AR_u8), npt.NDArray[np.unsignedinteger])
+assert_type(np.cross(AR_i8, AR_b), npt.NDArray[np.signedinteger])
+assert_type(np.cross(AR_i8, AR_f8), npt.NDArray[np.floating])
+assert_type(np.cross(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
 assert_type(np.cross(AR_O, AR_O), npt.NDArray[np.object_])
 
 assert_type(np.indices([0, 1, 2]), npt.NDArray[np.int_])

@@ -36,10 +36,10 @@ New types are defined in C by two basic steps:
 
 Instead of special method names which define behavior for Python
 classes, there are "function tables" which point to functions that
-implement the desired results. Since Python 2.2, the PyTypeObject
-itself has become dynamic which allows C types that can be "sub-typed
-"from other C-types in C, and sub-classed in Python. The children
-types inherit the attributes and methods from their parent(s).
+implement the desired results. The PyTypeObject itself is dynamic
+which allows C types that can be "sub-typed" from other C-types in C,
+and sub-classed in Python. The children types inherit the attributes
+and methods from their parent(s).
 
 There are two major new types: the ndarray ( :c:data:`PyArray_Type` )
 and the ufunc ( :c:data:`PyUFunc_Type` ). Additional types play a
@@ -728,6 +728,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
           PyArray_Descr *const *descriptors;
+          void *parameters;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller
@@ -743,6 +744,15 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 
       An array of descriptors for the ufunc loop, filled in by
       ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+   .. c:member:: void *parameters
+
+      A pointer to a structure containing any runtime parameters needed by the
+      loop. This is ``NULL`` if no parameters are needed. The type of the
+      struct is specific to the registered function.
+
+     .. versionchanged:: NumPy 2.4
+        The `parameters` member was added in NumPy 2.4.
 
 .. c:type:: PyArrayMethod_Spec
 
@@ -1608,7 +1618,7 @@ for completeness and assistance in understanding the code.
    The C-structure associated with :c:var:`PyArrayMapIter_Type`.
    This structure is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
-   ``arrayobject.h`` header. This type is not exposed to Python and
+   ``multiarray/mapping.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
 
@@ -1618,7 +1628,7 @@ NumPy C-API and C complex
 When you use the NumPy C-API, you will have access to complex real declarations
 ``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
 standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
-`#define I ...`` (where the actual definition depends on the compiler), which
+``#define I ...`` (where the actual definition depends on the compiler), which
 means that any downstream user that does ``#include <numpy/arrayobject.h>``
 could get ``I`` defined, and using something like declaring ``double I;`` in
 their code will result in an obscure compiler error like

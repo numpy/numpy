@@ -190,7 +190,7 @@ cdef class RandomState:
         self._initialize_bit_generator(bit_generator)
 
     def __repr__(self):
-        return self.__str__() + ' at 0x{:X}'.format(id(self))
+        return f'{self} at 0x{id(self):X}'
 
     def __str__(self):
         _str = self.__class__.__name__
@@ -380,7 +380,6 @@ cdef class RandomState:
                 if len(state) > 3:
                     st['has_gauss'] = state[3]
                     st['gauss'] = state[4]
-                    value = st
 
         self._aug_state.gauss = st.get('gauss', 0.0)
         self._aug_state.has_gauss = st.get('has_gauss', 0)
@@ -437,7 +436,6 @@ cdef class RandomState:
                [-1.23204345, -1.75224494]])
 
         """
-        cdef double temp
         return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, None)
 
     def random(self, size=None):
@@ -1159,7 +1157,6 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
         cdef double _low, _high, range
         cdef object temp
@@ -1387,15 +1384,14 @@ cdef class RandomState:
         """
         if high is None:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint(1, {low} + 1) instead".format(low=low)),
+                           f"randint(1, {low} + 1) instead"),
                           DeprecationWarning)
             high = low
             low = 1
 
         else:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint({low}, {high} + 1) "
-                           "instead".format(low=low, high=high)),
+                           f"randint({low}, {high} + 1) instead"),
                           DeprecationWarning)
 
         return self.randint(low, int(high) + 1, size=size, dtype='l')
@@ -3326,7 +3322,6 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
@@ -3948,7 +3943,6 @@ cdef class RandomState:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
 
@@ -4148,7 +4142,8 @@ cdef class RandomState:
         >>> mean = [0, 0]
         >>> cov = [[1, 0], [0, 100]]  # diagonal covariance
 
-        Diagonal covariance means that points are oriented along x or y-axis:
+        Diagonal covariance means that the variables are independent, and the
+        probability density contours have their axes aligned with the coordinate axes:
 
         >>> import matplotlib.pyplot as plt
         >>> x, y = np.random.multivariate_normal(mean, cov, 5000).T
@@ -4248,7 +4243,7 @@ cdef class RandomState:
 
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
-        (u, s, v) = svd(cov)
+        (_u, s, v) = svd(cov)
 
         if check_valid != 'ignore':
             if check_valid != 'warn' and check_valid != 'raise':

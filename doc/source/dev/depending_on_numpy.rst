@@ -26,12 +26,13 @@ well known scientific Python projects, does **not** use semantic versioning.
 Instead, backwards incompatible API changes require deprecation warnings for at
 least two releases. For more details, see :ref:`NEP23`.
 
-NumPy has both a Python API and a C API. The C API can be used directly or via
-Cython, f2py, or other such tools. If your package uses the C API, then ABI
-(application binary interface) stability of NumPy is important. NumPy's ABI is
-forward but not backward compatible. This means: binaries compiled against a
-given target version of NumPy's C API will still run correctly with newer NumPy
-versions, but not with older versions.
+NumPy provides both a Python API and a C-API. The C-API can be accessed
+directly or through tools like Cython or f2py. If your package uses the
+C-API, it's important to understand NumPy's application binary interface
+(ABI) compatibility: NumPy's ABI is forward compatible but not backward
+compatible. This means that binaries compiled against an older version of
+NumPy will still work with newer versions, but binaries compiled against a
+newer version will not necessarily work with older ones.
 
 Modules can also be safely built against NumPy 2.0 or later in
 :ref:`CPython's abi3 mode <python:stable-abi>`, which allows
@@ -87,16 +88,16 @@ Build-time dependency
     <https://numpy.org/doc/1.24/dev/depending_on_numpy.html>`__.
 
 
-If a package either uses the NumPy C API directly or it uses some other tool
+If a package either uses the NumPy C-API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
 of the package.
 
-By default, NumPy will expose an API that is backwards compatible with the
-oldest NumPy version that supports the currently oldest compatible Python
-version.  NumPy 1.25.0 supports Python 3.9 and higher and NumPy 1.19 is the
-first version to support Python 3.9.  Thus, we guarantee that, when using
-defaults, NumPy 1.25 will expose a C-API compatible with NumPy 1.19.
-(the exact version is set within NumPy-internal header files).
+By default, NumPy exposes a API that is backward compatible with the earliest
+NumPy version that supports the oldest Python version currently supported by
+NumPy. For example, NumPy 1.25.0 supports Python 3.9 and above; and the
+earliest NumPy version to support Python 3.9 was 1.19. Therefore we guarantee
+NumPy 1.25 will, when using defaults, expose a C-API compatible with NumPy
+1.19. (the exact version is set within NumPy-internal header files).
 
 NumPy is also forward compatible for all minor releases, but a major release
 will require recompilation (see NumPy 2.0-specific advice further down).
@@ -157,7 +158,7 @@ frequently, (b) use a large part of NumPy's API surface, and (c) is
 worried that changes in NumPy may break your code, you can set an
 upper bound of ``<MAJOR.MINOR + N`` with N no less than 3, and
 ``MAJOR.MINOR`` being the current release of NumPy [*]_. If you use the NumPy
-C API (directly or via Cython), you can also pin the current major
+C-API (directly or via Cython), you can also pin the current major
 version to prevent ABI breakage. Note that setting an upper bound on
 NumPy may `affect the ability of your library to be installed
 alongside other, newer packages
@@ -200,7 +201,7 @@ release of the first release candidate for 2.0 (i.e., 2.0.0rc1). Our advice for
 handling your dependency on NumPy is as follows:
 
 1. In the main (development) branch of your package, do not add any constraints.
-2. If you rely on the NumPy C API (e.g. via direct use in C/C++, or via Cython
+2. If you rely on the NumPy C-API (e.g. via direct use in C/C++, or via Cython
    code that uses NumPy), add a ``numpy<2.0`` requirement in your
    package's dependency metadata for releases / in release branches. Do this
    until numpy ``2.0.0rc1`` is released and you can target that.
@@ -233,7 +234,7 @@ restrictive for your users. In that case, simply add ``numpy>=2.0`` (or
 go. We'll focus on the "keep compatibility with 1.xx and 2.x" now, which is a
 little more involved.
 
-*Example for a package using the NumPy C API (via C/Cython/etc.) which wants to support
+*Example for a package using the NumPy C-API (via C/Cython/etc.) which wants to support
 NumPy 1.23.5 and up*:
 
 .. code:: ini

@@ -65,6 +65,7 @@
 #include "mapping.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "number.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -1368,7 +1369,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
          * Get axes tuple for operand. If not a tuple already, make it one if
          * there is only one axis (its content is checked later).
          */
-        op_axes_tuple = PyList_GET_ITEM(axes, iop);
+        op_axes_tuple = PyList_GET_ITEM(axes, iop); // noqa: borrowed-ref - manual fix needed
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
@@ -2084,11 +2085,10 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                                     NPY_SIZEOF_INTP * nop);
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
@@ -2203,11 +2203,10 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
     }
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     /* Do the ufunc loop */
     if (wheremask != NULL) {
@@ -2553,11 +2552,10 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
             arr, out, wheremask, axis_flags, keepdims,
@@ -2629,12 +2627,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     assert(PyArray_EquivTypes(descrs[0], descrs[1])
            && PyArray_EquivTypes(descrs[0], descrs[2]));
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
-
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc,
+    context.method = ufuncimpl,
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3061,12 +3057,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         goto fail;
     }
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
-
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc,
+    context.method = ufuncimpl,
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3727,6 +3721,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (ret == NULL) {
         goto fail;
     }
+    
+    Py_XDECREF(out);
 
     Py_DECREF(signature[0]);
     Py_DECREF(signature[1]);
@@ -3753,6 +3749,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     return wrapped_result;
 
 fail:
+    Py_XDECREF(out);
+
     Py_XDECREF(signature[0]);
     Py_XDECREF(signature[1]);
     Py_XDECREF(signature[2]);
@@ -4319,10 +4317,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     /* Check number of arguments */
     if (NPY_UNLIKELY((len_args < nin) || (len_args > nop))) {
+        const char *verb = (len_args == 1) ? "was" : "were";
         PyErr_Format(PyExc_TypeError,
-                "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                ufunc_get_name_cstr(ufunc) , nin, nop, len_args);
+            "%s() takes from %d to %d positional arguments but "
+            "%zd %s given",
+            ufunc_get_name_cstr(ufunc), nin, nop, len_args, verb);
         goto fail;
     }
 
@@ -4363,6 +4362,21 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             Py_INCREF(tmp);
             PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
         }
+
+        /* Extra positional args but no keywords */
+        /* DEPRECATED NumPy 2.4, 2025-08 */
+        if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
+            
+            if (DEPRECATE(
+                "Passing more than 2 positional arguments to np.maximum and np.minimum "
+                "is deprecated. If you meant to use the third argument as an output, " 
+                "use the `out` keyword argument instead. If you hoped to work with "
+                "more than 2 inputs, combine them into a single array and get the extrema "
+                "for the relevant axis.") < 0) {
+                return NULL;
+            }
+        }
+        
         if (all_none) {
             Py_SETREF(full_args.out, NULL);
         }
@@ -4470,6 +4484,15 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         Py_DECREF(full_args.in);
         Py_XDECREF(full_args.out);
         return override;
+    }
+
+    /* Warn if "where" is used without "out", issue 29561 */
+    if ((where_obj != NULL) && (full_args.out == NULL) && (out_obj == NULL)) {
+        if (PyErr_WarnEx(PyExc_UserWarning,
+                "'where' used without 'out', expect unitialized memory in output. "
+                "If this is intentional, use out=None.", 1) < 0) {
+            goto fail;
+        }
     }
 
     if (outer) {
@@ -4939,7 +4962,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         function, arg_typenums, data);
 
     if (result == 0) {
-        cobj = PyDict_GetItemWithError(ufunc->userloops, key);
+        cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref OK
         if (cobj == NULL && PyErr_Occurred()) {
             result = -1;
         }
@@ -5070,7 +5093,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      */
     int add_new_loop = 1;
     for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
-        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j);
+        PyObject *item = PyList_GET_ITEM(ufunc->_loops, j); // noqa: borrowed-ref OK
         PyObject *existing_tuple = PyTuple_GET_ITEM(item, 0);
 
         int cmp = PyObject_RichCompareBool(existing_tuple, signature_tuple, Py_EQ);
@@ -5112,7 +5135,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     funcdata->nargs = 0;
 
     /* Get entry for this user-defined type*/
-    cobj = PyDict_GetItemWithError(ufunc->userloops, key);
+    cobj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref OK
     if (cobj == NULL && PyErr_Occurred()) {
         goto fail;
     }
@@ -5897,11 +5920,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     /* Use contiguous strides; if there is such a loop it may be faster */
     npy_intp strides[3] = {

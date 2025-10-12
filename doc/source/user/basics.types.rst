@@ -35,18 +35,6 @@ See :ref:`arrays.dtypes.constructing` for more information about specifying and
 constructing data type objects, including how to specify parameters like the
 byte order.
 
-To convert the type of an array, use the .astype() method. For example: ::
-
-    >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
-    array([0.,  1.,  2.])
-
-Note that, above, we could have used the *Python* float object as a dtype
-instead of `numpy.float64`.  NumPy knows that
-:class:`int` refers to `numpy.int_`, :class:`bool` means
-`numpy.bool`, that :class:`float` is `numpy.float64` and
-:class:`complex` is `numpy.complex128`.  The other data-types do not have
-Python equivalents.
-
 To determine the type of an array, look at the dtype attribute::
 
     >>> z.dtype
@@ -65,6 +53,28 @@ properties of the type, such as whether it is an integer::
 
     >>> np.issubdtype(d, np.floating)
     False
+
+To convert the type of an array, use the .astype() method. For example::
+
+    >>> z.astype(np.float64)                 #doctest: +NORMALIZE_WHITESPACE
+    array([0.,  1.,  2.])
+
+Note that, above, we could have used the *Python* float object as a dtype
+instead of `numpy.float64`.  NumPy knows that
+:class:`int` refers to `numpy.int_`, :class:`bool` means
+`numpy.bool`, that :class:`float` is `numpy.float64` and
+:class:`complex` is `numpy.complex128`.  The other data-types do not have
+Python equivalents.
+
+Sometimes the conversion can overflow, for instance when converting a `numpy.int64` value
+300 to `numpy.int8`. NumPy follows C casting rules, so that value would overflow and
+become 44 ``(300 - 256)``. If you wish to avoid such overflows, you can specify that the
+overflow action fail by using ``same_value`` for the ``casting`` argument (see also
+:ref:`overflow-errors`)::
+
+    >>> z.astype(np.float64, casting="same_value")   #doctest: +NORMALIZE_WHITESPACE
+    array([0.,  1.,  2.])
+
 
 Numerical Data Types
 --------------------

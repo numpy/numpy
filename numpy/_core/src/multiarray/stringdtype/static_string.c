@@ -177,14 +177,15 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
         }
         else if (((ARENA_EXPAND_FACTOR * arena->size) - arena->cursor) >
                  string_storage_size) {
-            newsize = ARENA_EXPAND_FACTOR * arena->size;
+            newsize = (size_t)(ARENA_EXPAND_FACTOR * arena->size);
         }
         else {
             newsize = arena->size + string_storage_size;
         }
-        if ((arena->cursor + size) >= newsize) {
+        // If there enough room for both the payload and its header
+        if ((arena->cursor + string_storage_size) > newsize) {
             // need extra room beyond the expansion factor, leave some padding
-            newsize = ARENA_EXPAND_FACTOR * (arena->cursor + size);
+            newsize = (size_t)(ARENA_EXPAND_FACTOR * (arena->cursor + string_storage_size));
         }
         // passing a NULL buffer to realloc is the same as malloc
         char *newbuf = r(arena->buffer, newsize);
@@ -404,7 +405,7 @@ NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
     }
 }
 
-static const char * const EMPTY_STRING = "";
+static const char EMPTY_STRING[] = "";
 
 /*NUMPY_API
  * Extract the packed contents of *packed_string* into *unpacked_string*.
@@ -478,7 +479,7 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         if (*flags == 0) {
             // string isn't previously allocated, so add to existing arena allocation
             char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
-            if (size < NPY_MEDIUM_STRING_MAX_SIZE) {
+            if (size <= NPY_MEDIUM_STRING_MAX_SIZE) {
                 *flags = NPY_STRING_INITIALIZED;
             }
             else {
