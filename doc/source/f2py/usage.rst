@@ -339,18 +339,19 @@ modules, especially starting with Python 3.12 and NumPy 2.x. Meson provides
 a robust and maintainable way to build Fortran extensions with f2py.
 
 To build a Fortran extension using f2py and Meson, you can use Meson's
-`custom_target` to invoke f2py and generate the extension module. The
+``custom_target`` to invoke f2py and generate the extension module. The
 following minimal example demonstrates how to do this:
 
-This example shows how to build the previously described `add` extension
-(from `add.pyf` and `add.f`) using Meson instead of distutils.
+This example shows how to build the ``add`` extension from the ``add.f`` and ``add.pyf``
+files described in the :ref:`f2py-examples` (note that you do not always need
+a ``.pyf`` file: in many cases ``f2py`` can figure out the annotations by itself).
 
 Project layout:
 
   f2py_examples/
     meson.build
     add.f
-    add.pyf
+    add.pyf (optional)
     __init__.py  (can be empty)
 
 Example `meson.build`:
@@ -384,11 +385,6 @@ Example `meson.build`:
 
    # Also install the built extension (place it beside __init__.py)
    install_data(add_mod, install_dir: py.site_packages_dir() / 'f2py_examples')
-
-.. note::
-   This uses a simple custom_target. For larger projects you may wish to
-   stage build outputs in a subdirectory and control install steps more
-   explicitly.
 
 For more details and advanced usage, see the Meson build guide in the
 user documentation or refer to SciPy's Meson build files for real-world
