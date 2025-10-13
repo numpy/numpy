@@ -27,7 +27,9 @@ if sys.version_info < (3, 12):
     FILES += [ROOT / "distutils" / "__init__.pyi"]
 
 
-@pytest.mark.thread_unsafe(reason="os.path has a thread-safety bug")
+@pytest.mark.thread_unsafe(
+    reason="os.path has a thread-safety bug (python/cpython#140054)"
+)
 class TestIsFile:
     def test_isfile(self):
         """Test if all ``.pyi`` files are properly installed."""

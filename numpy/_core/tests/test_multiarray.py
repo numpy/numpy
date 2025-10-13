@@ -9018,9 +9018,7 @@ class TestArrayInterface:
         # This fails due to going into the buffer protocol path
         (f, {'data': None, 'shape': ()}, TypeError),
         ])
-    @pytest.mark.thread_unsafe(
-        reason="interface testing is thread-unsafe, test result depends on the reference count of a global object"
-    )
+    @pytest.mark.thread_unsafe(reason="test result depends on the reference count of a global object")
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
         self.f.iface = {'typestr': 'f8'}
@@ -9709,7 +9707,7 @@ class TestCTypes:
         assert_equal(ctypes, test_arr.ctypes._ctypes)
         assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
 
-    @pytest.mark.thread_unsafe(reason="modifies global state")
+    @pytest.mark.thread_unsafe(reason="modifies global module state")
     def test_ctypes_is_not_available(self):
         from numpy._core import _internal
         _internal.ctypes = None
