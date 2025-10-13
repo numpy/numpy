@@ -307,6 +307,7 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
             const T *src1 = (T*)b_src1;
                   T *dst  = (T*)b_dst;
 
+            // Use signed type for strides to handle negative strides
             const npy_intp ssrc0 = b_ssrc0 / sizeof(T);
             const npy_intp ssrc1 = b_ssrc1 / sizeof(T);
             const npy_intp sdst  = b_sdst  / sizeof(T);
@@ -360,29 +361,82 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
                         }
                     }
                 }
-                // non-contig
+                // non-contiguous
                 else if (static_cast<D>(ssrc1) >= 0 && static_cast<D>(sdst) >= 0) {
-                    D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
-                    D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
-                    i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
-                    i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
-                    for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
-                        V b0 = hn::GatherIndex(_Tag<T>(), src1, i0);
-                        V b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i0);
-                        V r0 = op_func(a, b0);
-                        V r1 = op_func(a, b1);
-                        hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
-                        hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
-                    }
-                    for (; len > 0; len -= hstep, src1 += ssrc1*hstep, dst += sdst*hstep) {
-                        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
-                            V b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i0);
-                            V r = op_func(a, b);
-                            hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                    if constexpr (sizeof(T) == 4) {
+                        using V64 = Vec<double>;
+                        using D64 = Vec<int64_t>;
+
+                        bool can_vectorize = true;
+
+                        if (!(ssrc1 % 2 == 0 && sdst % 2 == 0)) {
+                            can_vectorize = false;
+                        }
+                        
+                        if (can_vectorize) {
+                            const int vstep64 = Lanes<double>();
+                            D64 i1 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(ssrc1 / 2));
+                            D64 i2 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(sdst / 2));
+
+                            // Reinterpret the scalar as 64-bit for broadcasting
+                            double a_as_double = *reinterpret_cast<const double*>(src0);
+                            V64 a64 = Set(a_as_double);
+
+                            for (; len >= vstep64; len -= vstep64, src1 += ssrc1 * vstep64, dst += sdst * vstep64)
+                            {
+                                V64 b64 = hn::GatherIndex(_Tag<double>(), reinterpret_cast<const double*>(src1), i1);
+                                V b = hn::BitCast(_Tag<T>(), b64);
+                                V a_broadcast = hn::BitCast(_Tag<T>(), a64);
+                                V r = op_func(a_broadcast, b);
+                                V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                hn::ScatterIndex(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i2);
+                            }
+                            // Handle remainder
+                            if (len > 0) {
+                                if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                                    V64 b64 = hn::MaskedGatherIndexOr(Set<double>(1.0),  hn::FirstN(_Tag<double>(), len), _Tag<double>(), 
+                                        reinterpret_cast<const double*>(src1), i1);
+                                    V b = hn::BitCast(_Tag<T>(), b64);
+                                    V a_broadcast = hn::BitCast(_Tag<T>(), a64);
+                                    V r = op_func(a_broadcast, b);
+                                    V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                    hn::ScatterIndexN(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i2, len);
+                                }else{
+                                    V64 b64 = hn::GatherIndexN(_Tag<double>(), reinterpret_cast<const double*>(src1), i1, len);
+                                    V b = hn::BitCast(_Tag<T>(), b64);
+                                    V a_broadcast = hn::BitCast(_Tag<T>(), a64);
+                                    V r = op_func(a_broadcast, b);
+                                    V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                    hn::ScatterIndexN(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i2, len);
+                                }
+                            }
                         } else {
-                            V b = hn::GatherIndexN(_Tag<T>(), src1, i0, len*2);
-                            V r = op_func(a, b);
-                            hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                            goto loop_scalar;
+                        }
+                    } else {
+                        D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
+                        D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                        i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
+                        i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
+                        
+                        for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
+                            V b0 = hn::GatherIndex(_Tag<T>(), src1, i0);
+                            V b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i0);
+                            V r0 = op_func(a, b0);
+                            V r1 = op_func(a, b1);
+                            hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
+                            hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
+                        }
+                        for (; len > 0; len -= hstep, src1 += ssrc1*hstep, dst += sdst*hstep) {
+                            if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                                V b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i0);
+                                V r = op_func(a, b);
+                                hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                            } else {
+                                V b = hn::GatherIndexN(_Tag<T>(), src1, i0, len*2);
+                                V r = op_func(a, b);
+                                hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                            }
                         }
                     }
                 }
@@ -414,29 +468,79 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
                         }
                     }
                 }
-                // non-contig
+                // non-contiguous
                 else if (static_cast<D>(ssrc0) >= 0 && static_cast<D>(sdst) >= 0) {
-                    D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
-                    D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
-                    i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
-                    i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
-                    for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
-                        V a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
-                        V a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
-                        V r0 = op_func(a0, b);
-                        V r1 = op_func(a1, b);
-                        hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
-                        hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
-                    }
-                    for (; len > 0; len -= hstep, src0 += ssrc0*hstep, dst += sdst*hstep) {
-                        if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
-                            V a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
-                            V r = op_func(a, b);
-                            hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                    // For 32-bit float complex, use 64-bit gather/scatter
+                    if constexpr (sizeof(T) == 4) {
+                        using V64 = Vec<double>;
+                        using D64 = Vec<int64_t>;
+
+                        bool can_vectorize = true;
+
+                        if (!(ssrc0 % 2 == 0 && sdst % 2 == 0)) {
+                            can_vectorize = false;
+                        }
+
+                        if (can_vectorize) {
+                            const int vstep64 = Lanes<double>();
+                            D64 i0 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(ssrc0 / 2));
+                            D64 i1 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(sdst / 2));
+
+                            double b_as_double = *reinterpret_cast<const double*>(src1);
+                            V64 b64 = Set(b_as_double);
+
+                            for (; len >= vstep64; len -= vstep64, src0 += ssrc0 * vstep64, dst += sdst * vstep64) {
+                                V64 a64 = hn::GatherIndex(_Tag<double>(), reinterpret_cast<const double*>(src0), i0);
+                                V a = hn::BitCast(_Tag<T>(), a64);
+                                V b_broadcast = hn::BitCast(_Tag<T>(), b64);
+                                V r = op_func(a, b_broadcast);
+                                V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                hn::ScatterIndex(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i1);
+                            }
+                            if (len > 0) {
+                                if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                                    V64 a64 = hn::MaskedGatherIndexOr(Set<double>(1.0), hn::FirstN(_Tag<double>(), len), _Tag<double>(), 
+                                        reinterpret_cast<const double*>(src0), i0);
+                                    V a = hn::BitCast(_Tag<T>(), a64);
+                                    V b_broadcast = hn::BitCast(_Tag<T>(), b64);
+                                    V r = op_func(a, b_broadcast);
+                                    V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                    hn::ScatterIndexN(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i1, len);
+                                }else{
+                                    V64 a64 = hn::GatherIndexN(_Tag<double>(), reinterpret_cast<const double*>(src0), i0, len);
+                                    V a = hn::BitCast(_Tag<T>(), a64);
+                                    V b_broadcast = hn::BitCast(_Tag<T>(), b64);
+                                    V r = op_func(a, b_broadcast);
+                                    V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                    hn::ScatterIndexN(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i1, len);
+                                }
+                            }
                         } else {
-                            V a = hn::GatherIndexN(_Tag<T>(), src0, i0, len*2);
-                            V r = op_func(a, b);
-                            hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                            goto loop_scalar;
+                        }
+                    } else {
+                        D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
+                        D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                        i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
+                        i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
+                        for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
+                            V a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
+                            V a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
+                            V r0 = op_func(a0, b);
+                            V r1 = op_func(a1, b);
+                            hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
+                            hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
+                        }
+                        for (; len > 0; len -= hstep, src0 += ssrc0*hstep, dst += sdst*hstep) {
+                            if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
+                                V a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
+                                V r = op_func(a, b);
+                                hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                            } else {
+                                V a = hn::GatherIndexN(_Tag<T>(), src0, i0, len*2);
+                                V r = op_func(a, b);
+                                hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                            }
                         }
                     }
                 }
@@ -447,29 +551,71 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
             // non-contiguous
             else if (static_cast<D>(ssrc0) >= 0 && static_cast<D>(ssrc1) >= 0 && static_cast<D>(sdst) >= 0) {
                 if constexpr (std::is_same_v<Op, OpMulComplex<T>>) {
-                    D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
-                    D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
-                    D_ i2 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
-                    i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
-                    i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
-                    i2 = hn::OddEven(Add(i2, Set<D>(1)), i2);
-                    for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
-                        src1 += ssrc1*vstep, dst += sdst*vstep) {
-                        V a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
-                        V a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
-                        V b0 = hn::GatherIndex(_Tag<T>(), src1, i1);
-                        V b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i1);
-                        V r0 = op_func(a0, b0);
-                        V r1 = op_func(a1, b1);
-                        hn::ScatterIndex(r0, _Tag<T>(), dst, i2);
-                        hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i2);
-                    }
-                    for (; len > 0; len -= hstep, src0 += ssrc0*hstep,
-                        src1 += ssrc1*hstep, dst += sdst*hstep) {
-                        V a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
-                        V b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i1);
-                        V r = op_func(a, b);
-                        hn::ScatterIndexN(r, _Tag<T>(), dst, i2, len*2);
+                    if constexpr (sizeof(T) == 4) {
+                        using V64 = Vec<double>;
+                        using D64 = Vec<int64_t>;
+
+                        bool can_vectorize = true;
+
+                        if (!(ssrc0 % 2 == 0 && ssrc1 % 2 == 0 && sdst % 2 == 0)) {
+                            can_vectorize = false;
+                        }
+
+                        if (can_vectorize) {
+                            const int vstep64 = Lanes<double>();
+                            D64 i0 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(ssrc0/2));
+                            D64 i1 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(ssrc1/2));
+                            D64 i2 = Mul(hn::Iota(_Tag<int64_t>(), 0), Set<int64_t>(sdst/2));
+
+                            for (; len >= vstep64; len -= vstep64, src0 += ssrc0  * vstep64,
+                                 src1 += ssrc1 * vstep64, dst += sdst * vstep64) {
+                                V64 a64 = hn::GatherIndex(_Tag<double>(), reinterpret_cast<const double*>(src0), i0);
+                                V64 b64 = hn::GatherIndex(_Tag<double>(), reinterpret_cast<const double*>(src1), i1);
+                                V a = hn::BitCast(_Tag<T>(), a64);
+                                V b = hn::BitCast(_Tag<T>(), b64);
+                                V r = op_func(a, b);
+                                V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                hn::ScatterIndex(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i2);
+                            }
+                            if (len > 0) {
+                                V64 a64 = hn::MaskedGatherIndexOr(Set<double>(1.0), hn::FirstN(_Tag<double>(), len), _Tag<double>(), 
+                                    reinterpret_cast<const double*>(src0), i0);
+                                V64 b64 = hn::MaskedGatherIndexOr(Set<double>(1.0), hn::FirstN(_Tag<double>(), len), _Tag<double>(), 
+                                    reinterpret_cast<const double*>(src1), i1);
+                                V a = hn::BitCast(_Tag<T>(), a64);
+                                V b = hn::BitCast(_Tag<T>(), b64);
+                                V r = op_func(a, b);
+                                V64 r64 = hn::BitCast(_Tag<double>(), r);
+                                hn::ScatterIndexN(r64, _Tag<double>(), reinterpret_cast<double*>(dst), i2, len);
+                            }
+                        } else {
+                            goto loop_scalar;
+                        }
+                    } else {
+                        D_ i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
+                        D_ i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
+                        D_ i2 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                        i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
+                        i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
+                        i2 = hn::OddEven(Add(i2, Set<D>(1)), i2);
+                        for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
+                            src1 += ssrc1*vstep, dst += sdst*vstep) {
+                            V a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
+                            V a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
+                            V b0 = hn::GatherIndex(_Tag<T>(), src1, i1);
+                            V b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i1);
+                            V r0 = op_func(a0, b0);
+                            V r1 = op_func(a1, b1);
+                            hn::ScatterIndex(r0, _Tag<T>(), dst, i2);
+                            hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i2);
+                        }
+                        for (; len > 0; len -= hstep, src0 += ssrc0*hstep,
+                            src1 += ssrc1*hstep, dst += sdst*hstep) {
+                            V a = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
+                            V b = hn::MaskedGatherIndexOr(Set<T>(1.0), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i1);
+                            V r = op_func(a, b);
+                            hn::ScatterIndexN(r, _Tag<T>(), dst, i2, len*2);
+                        }
                     }
                 } else {
                     goto loop_scalar;
@@ -479,7 +625,6 @@ complex_single_double_func(char **args, npy_intp const *dimensions, npy_intp con
                 // Only multiply is vectorized for the generic non-contig case.
                 goto loop_scalar;
             }
-
             return;
         }
     }
