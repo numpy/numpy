@@ -244,6 +244,25 @@ The ``spin`` `development workflow tool
 <https://github.com/scientific-python/spin>`_. has built-in support for working
 with both ``gdb`` and ``lldb`` via the ``spin gdb`` and ``spin lldb`` commands.
 
+.. note::
+
+   Building with ``-Dbuildtype=debug`` has a couple of important effects to
+   be aware of:
+
+   * **Assertions are enabled**: This build type does not define the ``NDEBUG``
+     macro, which means that any C-level assertions in the code will be
+     active. This is very useful for debugging, as it can help pinpoint
+     where an unexpected condition occurs.
+
+   * **Compiler flags may need overriding**: Some compiler toolchains,
+     particularly those from ``conda-forge``, may set optimization flags
+     like ``-O2`` by default. These can override the ``debug`` build type.
+     To ensure a true debug build in such environments, you may need to
+     manually unset or override this flag.
+
+   For more details on both points, see the `meson-python guide on
+   debug builds <https://mesonbuild.com/meson-python/how-to-guides/debug-builds.html>`_.
+
 For both debuggers, it's advisable to build NumPy in either the ``debug`` or
 ``debugoptimized`` meson build profile. To use ``debug`` you can pass the option
 via ``spin build``:
