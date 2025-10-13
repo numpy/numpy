@@ -3546,7 +3546,8 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    The *descr* is the descriptor instance, *constant_id* is one of the
    ``NPY_CONSTANT_*`` macros, and *out* is a pointer to uninitialized memory
    where the constant value should be written. The memory pointed to by *out*
-   may be unaligned. Returns 1 on success, 0 if the constant is not available,
+   may be unaligned and is uninitialized.
+   Returns 1 on success, 0 if the constant is not available,
    or -1 with an error set.
 
    **Constant IDs**:
