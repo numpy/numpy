@@ -4486,6 +4486,15 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         return override;
     }
 
+    /* Warn if "where" is used without "out", issue 29561 */
+    if ((where_obj != NULL) && (full_args.out == NULL) && (out_obj == NULL)) {
+        if (PyErr_WarnEx(PyExc_UserWarning,
+                "'where' used without 'out', expect unitialized memory in output. "
+                "If this is intentional, use out=None.", 1) < 0) {
+            goto fail;
+        }
+    }
+
     if (outer) {
         /* Outer uses special preparation of inputs (expand dims) */
         PyObject *new_in = prepare_input_arguments_for_outer(full_args.in, ufunc);

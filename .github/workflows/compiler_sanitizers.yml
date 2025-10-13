@@ -90,6 +90,9 @@ jobs:
       - name: Uninstall pytest-xdist (conflicts with TSAN)
         run: pip uninstall -y pytest-xdist
 
+      - name: Upgrade spin (gh-29777)
+        run: pip install -U spin
+
       - name: Build NumPy with ThreadSanitizer
         run: python -m spin build -- -Db_sanitize=thread
 

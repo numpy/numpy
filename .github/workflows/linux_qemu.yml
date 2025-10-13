@@ -108,7 +108,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -205,7 +205,7 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-          docker run --rm --privileged loongcr.lcpu.dev/multiarch/archlinux --reset -p yes
+          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -213,7 +213,7 @@ jobs:
         sudo apt install -y ninja-build gcc-14-${TOOLCHAIN_NAME} g++-14-${TOOLCHAIN_NAME} gfortran-14-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}

@@ -137,8 +137,7 @@ NOGIL_BUILD: Final[bool] = ...
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
 
-# NOTE: `warnings.catch_warnings` is incorrectly defined as invariant in typeshed
-class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]):  # type: ignore[type-var]  # pyright: ignore[reportInvalidTypeArguments]
+class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]):
     class_modules: ClassVar[tuple[types.ModuleType, ...]] = ()
     modules: Final[set[types.ModuleType]]
     @overload  # record: True
@@ -163,14 +162,14 @@ class suppress_warnings:
 # Contrary to runtime we can't do `os.name` checks while type checking,
 # only `sys.platform` checks
 if sys.platform == "win32" or sys.platform == "cygwin":
-    def memusage(processName: str = ..., instance: int = ...) -> int: ...
+    def memusage(processName: str = "python", instance: int = 0) -> int: ...
 elif sys.platform == "linux":
-    def memusage(_proc_pid_stat: StrOrBytesPath = ...) -> int | None: ...
+    def memusage(_proc_pid_stat: StrOrBytesPath | None = None) -> int | None: ...
 else:
     def memusage() -> NoReturn: ...
 
 if sys.platform == "linux":
-    def jiffies(_proc_pid_stat: StrOrBytesPath = ..., _load_time: list[float] = []) -> int: ...
+    def jiffies(_proc_pid_stat: StrOrBytesPath | None = None, _load_time: list[float] | None = None) -> int: ...
 else:
     def jiffies(_load_time: list[float] = []) -> int: ...
 
@@ -180,7 +179,7 @@ def build_err_msg(
     err_msg: object,
     header: str = "Items are not equal:",
     verbose: bool = True,
-    names: Sequence[str] = ...,  # = ('ACTUAL', 'DESIRED')
+    names: Sequence[str] = ("ACTUAL", "DESIRED"),  # = ('ACTUAL', 'DESIRED')
     precision: SupportsIndex | None = 8,
 ) -> str: ...
 
@@ -359,11 +358,11 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 #
-@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
-@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
 
 #

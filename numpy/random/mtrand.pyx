@@ -380,7 +380,6 @@ cdef class RandomState:
                 if len(state) > 3:
                     st['has_gauss'] = state[3]
                     st['gauss'] = state[4]
-                    value = st
 
         self._aug_state.gauss = st.get('gauss', 0.0)
         self._aug_state.has_gauss = st.get('has_gauss', 0)
@@ -437,7 +436,6 @@ cdef class RandomState:
                [-1.23204345, -1.75224494]])
 
         """
-        cdef double temp
         return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, None)
 
     def random(self, size=None):
@@ -1159,7 +1157,6 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
         cdef double _low, _high, range
         cdef object temp
@@ -3325,7 +3322,6 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
@@ -3947,7 +3943,6 @@ cdef class RandomState:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
 
@@ -4248,7 +4243,7 @@ cdef class RandomState:
 
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
-        (u, s, v) = svd(cov)
+        (_u, s, v) = svd(cov)
 
         if check_valid != 'ignore':
             if check_valid != 'warn' and check_valid != 'raise':

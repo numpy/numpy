@@ -1,0 +1,15 @@
+``numpy.typing.DTypeLike`` no longer accepts ``None``
+-----------------------------------------------------
+The type alias ``numpy.typing.DTypeLike`` no longer accepts ``None``. Instead of
+
+.. code-block:: python
+
+    dtype: DTypeLike = None
+
+it should now be
+
+.. code-block:: python
+
+    dtype: DTypeLike | None = None
+
+instead.

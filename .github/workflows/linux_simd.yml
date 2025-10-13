@@ -132,8 +132,7 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        python -m pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
     - name: Build
       run: |
         spin build -- ${{ matrix.config.args }}
@@ -208,8 +207,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+        python -m pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build
       run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
@@ -259,8 +257,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+        python -m pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
     - name: Build
       run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_spr

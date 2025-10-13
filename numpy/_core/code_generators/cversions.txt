@@ -80,5 +80,7 @@
 0x00000013 = 2b8f1f4da822491ff030b2b37dff07e3
 # Version 20 (NumPy 2.3.0)
 0x00000014 = e56b74d32a934d085e7c3414cb9999b8,
-# Version 21 (NumPy 2.4.0) Add 'same_value' casting, header additions
-0x00000015 = e56b74d32a934d085e7c3414cb9999b8,
+# Version 21 (NumPy 2.4.0)
+# Add 'same_value' casting, header additions.
+# General loop registration for ufuncs, sort, and argsort
+0x00000015 = fbd24fc5b2ba4f7cd3606ec6128de7a5

@@ -2073,9 +2073,9 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     The default threshold to detect rank deficiency is a test on the magnitude
     of the singular values of `A`.  By default, we identify singular values
     less than ``S.max() * max(M, N) * eps`` as indicating rank deficiency
-    (with the symbols defined above). This is the algorithm MATLAB uses [1].
+    (with the symbols defined above). This is the algorithm MATLAB uses [1]_.
     It also appears in *Numerical recipes* in the discussion of SVD solutions
-    for linear least squares [2].
+    for linear least squares [2]_.
 
     This default threshold is designed to detect rank deficiency accounting
     for the numerical errors of the SVD computation. Imagine that there

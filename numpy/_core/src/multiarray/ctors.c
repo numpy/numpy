@@ -1304,12 +1304,12 @@ _array_from_buffer_3118(PyObject *memoryview)
             return NULL;
         }
 
-        if (PyErr_Warn(
+        if (PyErr_WarnEx(
                     PyExc_RuntimeWarning,
                     "A builtin ctypes object gave a PEP3118 format "
                     "string that does not match its itemsize, so a "
                     "best-guess will be made of the data type. "
-                    "Newer versions of python may behave correctly.") < 0) {
+                    "Newer versions of python may behave correctly.", 1) < 0) {
             Py_DECREF(descr);
             return NULL;
         }

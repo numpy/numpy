@@ -3156,7 +3156,8 @@ class TestSpecialMethods:
         do_test(lambda a: np.add(0, 0, out=(a,)), lambda a: (0, 0, a))
 
         # Also check the where mask handling:
-        do_test(lambda a: np.add(a, 0, where=False), lambda a: (a, 0))
+        out = np.zeros([1], dtype=float)
+        do_test(lambda a: np.add(a, 0, where=False, out=None), lambda a: (a, 0))
         do_test(lambda a: np.add(0, 0, a, where=False), lambda a: (0, 0, a))
 
     def test_wrap_with_iterable(self):
@@ -3713,7 +3714,7 @@ class TestSpecialMethods:
 
                 kwargs = kwargs.copy()
                 if "out" in kwargs:
-                    kwargs["out"] = self._unwrap(kwargs["out"])
+                    kwargs["out"] = self._unwrap(kwargs["out"])[0]
                     if kwargs["out"] is NotImplemented:
                         return NotImplemented
 
@@ -3744,21 +3745,28 @@ class TestSpecialMethods:
 
         array = np.array([1, 2, 3])
         where = np.array([True, False, True])
-        expected = ufunc(array, where=where)
+        out = np.zeros(3, dtype=array.dtype)
+        expected = ufunc(array, where=where, out=out)
 
         with pytest.raises(TypeError):
-            ufunc(array, where=where.view(OverriddenArrayOld))
+            ufunc(
+                array,
+                where=where.view(OverriddenArrayOld),
+                out=out,
+            )
 
         result_1 = ufunc(
             array,
-            where=where.view(OverriddenArrayNew)
+            where=where.view(OverriddenArrayNew),
+            out=out,
         )
         assert isinstance(result_1, OverriddenArrayNew)
         assert np.all(np.array(result_1) == expected, where=where)
 
         result_2 = ufunc(
             array.view(OverriddenArrayNew),
-            where=where.view(OverriddenArrayNew)
+            where=where.view(OverriddenArrayNew),
+            out=out.view(OverriddenArrayNew),
         )
         assert isinstance(result_2, OverriddenArrayNew)
         assert np.all(np.array(result_2) == expected, where=where)
@@ -4707,6 +4715,18 @@ def test_reduceat():
     h1 = np.add.reduceat(a['value'], indx)
     np.setbufsize(ncu.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
+
+def test_negative_value_raises():
+    with pytest.raises(ValueError, match="buffer size must be non-negative"):
+        np.setbufsize(-5)
+
+    old = np.getbufsize()
+    try:
+        prev = np.setbufsize(4096)
+        assert prev == old
+        assert np.getbufsize() == 4096
+    finally:
+        np.setbufsize(old)
 
 def test_reduceat_empty():
     """Reduceat should work with empty arrays"""

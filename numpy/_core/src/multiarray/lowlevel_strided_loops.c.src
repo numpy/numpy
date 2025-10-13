@@ -79,57 +79,6 @@
         a = (x)[7]; (x)[7] = (x)[8]; (x)[8] = a; \
         }
 
-/* half-to-double, copied from CPP to allow inlining */
-
-static NPY_GCC_OPT_3
-uint64_t ToDoubleBits(uint16_t h)
-{
-    uint16_t h_exp = (h&0x7c00u);
-    uint64_t d_sgn = ((uint64_t)h&0x8000u) << 48;
-    switch (h_exp) {
-        case 0x0000u: { // 0 or subnormal
-            uint16_t h_sig = (h&0x03ffu);
-            // Signed zero
-            if (h_sig == 0) {
-                return d_sgn;
-            }
-            // Subnormal
-            h_sig <<= 1;
-            while ((h_sig&0x0400u) == 0) {
-                h_sig <<= 1;
-                h_exp++;
-            }
-            uint64_t d_exp = ((uint64_t)(1023 - 15 - h_exp)) << 52;
-            uint64_t d_sig = ((uint64_t)(h_sig&0x03ffu)) << 42;
-            return d_sgn + d_exp + d_sig;
-        }
-        case 0x7c00u: // inf or NaN
-            // All-ones exponent and a copy of the significand
-            return d_sgn + 0x7ff0000000000000ULL + (((uint64_t)(h&0x03ffu)) << 42);
-        default: // normalized
-            // Just need to adjust the exponent and shift
-            return d_sgn + (((uint64_t)(h&0x7fffu) + 0xfc000u) << 42);
-    }
-}
-
-NPY_FINLINE
-npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
-    /*
-     * Use npymath versions for all the special cases, only inline the
-     * x86_64 non-intrinsic case. Someday we will rewrite this in CPP and
-     * can then explore inlining more
-     */
-    #if defined(NPY_HAVE_AVX512FP16)
-        return npy_halfbits_to_doublebits(h);
-    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
-        return npy_halfbits_to_doublebits(h);
-    #elif defined(__ARM_FP16_FORMAT_IEEE)
-        return npy_halfbits_to_doublebits(h);
-    #else
-        return (double)(ToDoubleBits(h));
-    #endif
-}
-
 /************* STRIDED COPYING/SWAPPING SPECIALIZED FUNCTIONS *************/
 
 /**begin repeat
@@ -767,6 +716,59 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
     typedef npy_half _npy_half;
 #endif
 
+#if EMULATED_FP16
+/* half-to-double, copied from CPP to allow inlining */
+
+static NPY_GCC_OPT_3
+uint64_t ToDoubleBits(uint16_t h)
+{
+    uint16_t h_exp = (h&0x7c00u);
+    uint64_t d_sgn = ((uint64_t)h&0x8000u) << 48;
+    switch (h_exp) {
+        case 0x0000u: { // 0 or subnormal
+            uint16_t h_sig = (h&0x03ffu);
+            // Signed zero
+            if (h_sig == 0) {
+                return d_sgn;
+            }
+            // Subnormal
+            h_sig <<= 1;
+            while ((h_sig&0x0400u) == 0) {
+                h_sig <<= 1;
+                h_exp++;
+            }
+            uint64_t d_exp = ((uint64_t)(1023 - 15 - h_exp)) << 52;
+            uint64_t d_sig = ((uint64_t)(h_sig&0x03ffu)) << 42;
+            return d_sgn + d_exp + d_sig;
+        }
+        case 0x7c00u: // inf or NaN
+            // All-ones exponent and a copy of the significand
+            return d_sgn + 0x7ff0000000000000ULL + (((uint64_t)(h&0x03ffu)) << 42);
+        default: // normalized
+            // Just need to adjust the exponent and shift
+            return d_sgn + (((uint64_t)(h&0x7fffu) + 0xfc000u) << 42);
+    }
+}
+
+NPY_FINLINE
+npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
+    /*
+     * Use npymath versions for all the special cases, only inline the
+     * x86_64 non-intrinsic case. Someday we will rewrite this in CPP and
+     * can then explore inlining more
+     */
+    #if defined(NPY_HAVE_AVX512FP16)
+        return npy_halfbits_to_doublebits(h);
+    #elif defined(NPY_HAVE_VSX3) && defined(NPY_HAVE_VSX3_HALF_DOUBLE)
+        return npy_halfbits_to_doublebits(h);
+    #elif defined(__ARM_FP16_FORMAT_IEEE)
+        return npy_halfbits_to_doublebits(h);
+    #else
+        return ToDoubleBits(h);
+    #endif
+}
+#endif
+
 /**begin repeat
  *
  * #NAME1 = BOOL,
@@ -823,12 +825,12 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  * #type2max = 0,
  *          UCHAR_MAX, USHRT_MAX, UINT_MAX, ULONG_MAX, ULLONG_MAX,
  *          SCHAR_MAX,  SHRT_MAX,  INT_MAX,  LONG_MAX,  LLONG_MAX,
- *          65500, FLT_MAX, DBL_MAX, LDBL_MAX,
+ *          65500.0f, FLT_MAX, DBL_MAX, LDBL_MAX,
  *          FLT_MAX, DBL_MAX, LDBL_MAX#
  * #type2min = 0,
  *          0, 0, 0, 0, 0,
  *          SCHAR_MIN,  SHRT_MIN,  INT_MIN,  LONG_MIN,  LLONG_MIN,
- *          -65500, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
+ *          -65500.0f, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
  *          -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  * #is_bool2 = 1, 0*17#
  * #is_emu_half2 = 0*11, EMULATED_FP16, 0*6#
@@ -846,7 +848,10 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 #if !(NPY_USE_UNALIGNED_ACCESS && !@aligned@)
 
-/* For emulated half types, don't use actual double/float types in conversion */
+/*
+ * For emulated half types, don't use actual double/float types in conversion
+ * except for *_check_same_value_*(), follow _ROUND_TRIP and _TO_RTYPE1.
+ */
 #if @is_emu_half1@ || @is_emu_half2@
 
 #  if @is_float1@
@@ -894,13 +899,12 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 #elif @is_emu_half2@
 #  define _TO_RTYPE1(x) (@rtype1@)(x)
-
 #  if @is_float1@
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
-#    define _ROUND_TRIP(x) (@rtype1@)npy_halfbits_to_floatbits(_CONVERT_FN(x))
+#    define _ROUND_TRIP(x) npy_half_to_float(npy_float_to_half(x))
 #  elif @is_double1@
 #    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
-#    define _ROUND_TRIP(x) (@rtype1@)_npy_halfbits_to_doublebits(_CONVERT_FN(x))
+#    define _ROUND_TRIP(x) npy_half_to_double(npy_double_to_half(x))
 #  elif @is_emu_half1@
 #    define _CONVERT_FN(x) (x)
 #    define _ROUND_TRIP(x) (x)

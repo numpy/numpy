@@ -16,13 +16,11 @@ from numpy.lib.array_utils import normalize_axis_index
 from .c_distributions cimport *
 from libc cimport string
 from libc.math cimport sqrt
-from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int32_t, int64_t, INT64_MAX, SIZE_MAX)
+from libc.stdint cimport (uint64_t, int64_t, INT64_MAX, SIZE_MAX)
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8, _gen_mask)
 from ._pcg64 import PCG64
-from ._mt19937 import MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
@@ -352,7 +350,6 @@ cdef class Generator:
                [-1.23204345, -1.75224494]])
 
         """
-        cdef double temp
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
             return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
@@ -845,7 +842,7 @@ cdef class Generator:
 
         """
 
-        cdef int64_t val, t, loc, size_i, pop_size_i
+        cdef int64_t val, loc, size_i, pop_size_i
         cdef int64_t *idx_data
         cdef np.npy_intp j
         cdef uint64_t set_size, mask
@@ -1080,7 +1077,6 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
         cdef double _low, _high, rng
         cdef object temp
@@ -1370,7 +1366,6 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        cdef void *func
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
             return cont(&random_standard_gamma, &self._bitgen, size, self.lock, 1,
@@ -1521,7 +1516,7 @@ cdef class Generator:
 
         Examples
         --------
-        An example from Glantz[1], pp 47-40:
+        An example from Glantz [1]_, pp 47-40:
 
         Two groups, children of diabetics (25 people) and children from people
         without diabetes (25 controls). Fasting blood glucose was measured,
@@ -2932,7 +2927,6 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
@@ -3595,7 +3589,6 @@ cdef class Generator:
 
         """
         cdef double HYPERGEOM_MAX = 10**9
-        cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
 
@@ -3670,8 +3663,8 @@ cdef class Generator:
 
         The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
-        Williams in 1943 [2].  It may also be used to model the numbers of
-        occupants seen in cars [3].
+        Williams in 1943 [2]_.  It may also be used to model the numbers of
+        occupants seen in cars [3]_.
 
         References
         ----------
@@ -3699,7 +3692,7 @@ cdef class Generator:
         >>> bins = np.arange(-.5, max(s) + .5 )
         >>> count, bins, _ = plt.hist(s, bins=bins, label='Sample count')
 
-        #   plot against distribution
+        Plot against the distribution:
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
@@ -3773,7 +3766,7 @@ cdef class Generator:
 
         Covariance indicates the level to which two variables vary together.
         From the multivariate normal distribution, we draw N-dimensional
-        samples, :math:`X = [x_1, x_2, ... x_N]`.  The covariance matrix
+        samples, :math:`X = [x_1, x_2, ..., x_N]`.  The covariance matrix
         element :math:`C_{ij}` is the covariance of :math:`x_i` and :math:`x_j`.
         The element :math:`C_{ii}` is the variance of :math:`x_i` (i.e. its
         "spread").

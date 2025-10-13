@@ -14,7 +14,7 @@ class DummyArray:
     def __init__(
         self,
         interface: dict[str, Any],
-        base: NDArray[Any] | None = ...,
+        base: NDArray[Any] | None = None,
     ) -> None: ...
 
 @overload

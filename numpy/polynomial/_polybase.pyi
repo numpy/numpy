@@ -72,9 +72,9 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         self,
         /,
         coef: _SeriesLikeCoef_co,
-        domain: _SeriesLikeCoef_co | None = ...,
-        window: _SeriesLikeCoef_co | None = ...,
-        symbol: str = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        window: _SeriesLikeCoef_co | None = None,
+        symbol: str = "x",
     ) -> None: ...
 
     @overload
@@ -183,7 +183,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         self,
         /,
         m: SupportsIndex = 1,
-        k: _CoefLike_co | _SeriesLikeCoef_co = ...,  # = []
+        k: _CoefLike_co | _SeriesLikeCoef_co = [],
         lbnd: _CoefLike_co | None = None,
     ) -> Self: ...
 
@@ -246,7 +246,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def fromroots(
         cls,
         roots: _ArrayLikeCoef_co,
-        domain: _SeriesLikeCoef_co | None = ...,  # = []
+        domain: _SeriesLikeCoef_co | None = [],
         window: _SeriesLikeCoef_co | None = None,
         symbol: str = "x",
     ) -> Self: ...

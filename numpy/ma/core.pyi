@@ -2381,7 +2381,7 @@ def sort(
     endwith: bool | None = True,
     fill_value: _ScalarLike_co | None = None,
     *,
-    stable: Literal[False] | None = False,
+    stable: Literal[False] | None = None,
 ) -> _ArrayT: ...
 @overload
 def sort(
@@ -2392,7 +2392,7 @@ def sort(
     endwith: bool | None = True,
     fill_value: _ScalarLike_co | None = None,
     *,
-    stable: Literal[False] | None = False,
+    stable: Literal[False] | None = None,
 ) -> NDArray[Any]: ...
 @overload
 def compressed(x: _ArrayLike[_ScalarT_co]) -> _Array1D[_ScalarT_co]: ...
