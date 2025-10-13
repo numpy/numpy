@@ -213,7 +213,7 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 
     PyUFunc_LoopSlot *slot;
     for (slot = slots; slot->name != NULL; slot++) {
-        PyObject *ufunc = npy_import("numpy", slot->name);
+        PyObject *ufunc = npy_import_entry_point(slot->name);
         if (ufunc == NULL) {
             return -1;
         }

@@ -7,6 +7,7 @@
 #include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
+#include "npy_import.h"
 #include "common.h"
 #include "npy_argparse.h"
 #include "mem_overlap.h"
@@ -2238,6 +2239,15 @@ run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
     return PyArray_IntTupleFromIntp(1, vals);
 }
 
+static PyObject *
+_npy_import_entry_point(PyObject *NPY_UNUSED(self), PyObject *obj) {
+    PyObject *res = PyUnicode_AsASCIIString(obj);
+    if (res != NULL) {
+        Py_SETREF(res, npy_import_entry_point(PyBytes_AS_STRING(res)));
+    }
+    return res;
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
@@ -2422,6 +2432,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"run_intp_converter",
         run_intp_converter,
         METH_VARARGS, NULL},
+    {"npy_import_entry_point",
+        _npy_import_entry_point,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

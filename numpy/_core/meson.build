@@ -759,6 +759,7 @@ py.extension_module('_multiarray_tests',
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
     'src/common/npy_hashtable.cpp',
+    'src/common/npy_import.c',
     src_file.process('src/common/templ_common.h.src')
   ],
   c_args: c_args_common,
