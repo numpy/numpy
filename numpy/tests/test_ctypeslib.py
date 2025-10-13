@@ -305,7 +305,7 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_equal(ct, ctypes.c_uint16)
 
-    @pytest.mark.thread_unsafe(reason="some sort of data race?")
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_subarray(self):
         dt = np.dtype((np.int32, (2, 3)))
         ct = np.ctypeslib.as_ctypes_type(dt)
@@ -325,7 +325,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
-    @pytest.mark.thread_unsafe(reason="some sort of data race?")
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_structure_aligned(self):
         dt = np.dtype([
             ('a', np.uint16),
@@ -356,7 +356,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
-    @pytest.mark.thread_unsafe(reason="some sort of data race?")
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_padded_union(self):
         dt = np.dtype({
             'names': ['a', 'b'],
