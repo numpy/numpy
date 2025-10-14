@@ -1,6 +1,7 @@
 import builtins
 import collections.abc
 import functools
+import inspect
 import re
 import sys
 import warnings
@@ -2303,170 +2304,170 @@ def _get_vectorize_dtype(dtype):
 
 @set_module('numpy')
 class vectorize:
-    """
-    vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
-    cache=False, signature=None)
-
-    Returns an object that acts like pyfunc, but takes arrays as input.
-
-    Define a vectorized function which takes a nested sequence of objects or
-    numpy arrays as inputs and returns a single numpy array or a tuple of numpy
-    arrays. The vectorized function evaluates `pyfunc` over successive tuples
-    of the input arrays like the python map function, except it uses the
-    broadcasting rules of numpy.
-
-    The data type of the output of `vectorized` is determined by calling
-    the function with the first element of the input.  This can be avoided
-    by specifying the `otypes` argument.
-
-    Parameters
-    ----------
-    pyfunc : callable, optional
-        A python function or method.
-        Can be omitted to produce a decorator with keyword arguments.
-    otypes : str or list of dtypes, optional
-        The output data type. It must be specified as either a string of
-        typecode characters or a list of data type specifiers. There should
-        be one data type specifier for each output.
-    doc : str, optional
-        The docstring for the function. If None, the docstring will be the
-        ``pyfunc.__doc__``.
-    excluded : set, optional
-        Set of strings or integers representing the positional or keyword
-        arguments for which the function will not be vectorized. These will be
-        passed directly to `pyfunc` unmodified.
-
-    cache : bool, optional
-        If neither `otypes` nor `signature` are provided, and `cache` is ``True``, then
-        cache the number of outputs.
-
-    signature : string, optional
-        Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
-        vectorized matrix-vector multiplication. If provided, ``pyfunc`` will
-        be called with (and expected to return) arrays with shapes given by the
-        size of corresponding core dimensions. By default, ``pyfunc`` is
-        assumed to take scalars as input and output.
-
-    Returns
-    -------
-    out : callable
-        A vectorized function if ``pyfunc`` was provided,
-        a decorator otherwise.
-
-    See Also
-    --------
-    frompyfunc : Takes an arbitrary Python function and returns a ufunc
-
-    Notes
-    -----
-    The `vectorize` function is provided primarily for convenience, not for
-    performance. The implementation is essentially a for loop.
-
-    If neither `otypes` nor `signature` are specified, then a call to the function with
-    the first argument will be used to determine the number of outputs.  The results of
-    this call will be cached if `cache` is `True` to prevent calling the function
-    twice.  However, to implement the cache, the original function must be wrapped
-    which will slow down subsequent calls, so only do this if your function is
-    expensive.
-
-    The new keyword argument interface and `excluded` argument support
-    further degrades performance.
-
-    References
-    ----------
-    .. [1] :doc:`/reference/c-api/generalized-ufuncs`
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> def myfunc(a, b):
-    ...     "Return a-b if a>b, otherwise return a+b"
-    ...     if a > b:
-    ...         return a - b
-    ...     else:
-    ...         return a + b
-
-    >>> vfunc = np.vectorize(myfunc)
-    >>> vfunc([1, 2, 3, 4], 2)
-    array([3, 4, 1, 2])
-
-    The docstring is taken from the input function to `vectorize` unless it
-    is specified:
-
-    >>> vfunc.__doc__
-    'Return a-b if a>b, otherwise return a+b'
-    >>> vfunc = np.vectorize(myfunc, doc='Vectorized `myfunc`')
-    >>> vfunc.__doc__
-    'Vectorized `myfunc`'
-
-    The output type is determined by evaluating the first element of the input,
-    unless it is specified:
-
-    >>> out = vfunc([1, 2, 3, 4], 2)
-    >>> type(out[0])
-    <class 'numpy.int64'>
-    >>> vfunc = np.vectorize(myfunc, otypes=[float])
-    >>> out = vfunc([1, 2, 3, 4], 2)
-    >>> type(out[0])
-    <class 'numpy.float64'>
-
-    The `excluded` argument can be used to prevent vectorizing over certain
-    arguments.  This can be useful for array-like arguments of a fixed length
-    such as the coefficients for a polynomial as in `polyval`:
-
-    >>> def mypolyval(p, x):
-    ...     _p = list(p)
-    ...     res = _p.pop(0)
-    ...     while _p:
-    ...         res = res*x + _p.pop(0)
-    ...     return res
-
-    Here, we exclude the zeroth argument from vectorization whether it is
-    passed by position or keyword.
-
-    >>> vpolyval = np.vectorize(mypolyval, excluded={0, 'p'})
-    >>> vpolyval([1, 2, 3], x=[0, 1])
-    array([3, 6])
-    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
-    array([3, 6])
-
-    The `signature` argument allows for vectorizing functions that act on
-    non-scalar arrays of fixed length. For example, you can use it for a
-    vectorized calculation of Pearson correlation coefficient and its p-value:
-
-    >>> import scipy.stats
-    >>> pearsonr = np.vectorize(scipy.stats.pearsonr,
-    ...                 signature='(n),(n)->(),()')
-    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]])
-    (array([ 1., -1.]), array([ 0.,  0.]))
-
-    Or for a vectorized convolution:
-
-    >>> convolve = np.vectorize(np.convolve, signature='(n),(m)->(k)')
-    >>> convolve(np.eye(4), [1, 2, 1])
-    array([[1., 2., 1., 0., 0., 0.],
-           [0., 1., 2., 1., 0., 0.],
-           [0., 0., 1., 2., 1., 0.],
-           [0., 0., 0., 1., 2., 1.]])
-
-    Decorator syntax is supported.  The decorator can be called as
-    a function to provide keyword arguments:
-
-    >>> @np.vectorize
-    ... def identity(x):
-    ...     return x
-    ...
-    >>> identity([0, 1, 2])
-    array([0, 1, 2])
-    >>> @np.vectorize(otypes=[float])
-    ... def as_float(x):
-    ...     return x
-    ...
-    >>> as_float([0, 1, 2])
-    array([0., 1., 2.])
-    """
     def __init__(self, pyfunc=np._NoValue, otypes=None, doc=None,
                  excluded=None, cache=False, signature=None):
+        """
+        vectorize(pyfunc=np._NoValue, otypes=None, doc=None, excluded=None,
+        cache=False, signature=None)
+
+        Returns an object that acts like pyfunc, but takes arrays as input.
+
+        Define a vectorized function which takes a nested sequence of objects or
+        numpy arrays as inputs and returns a single numpy array or a tuple of numpy
+        arrays. The vectorized function evaluates `pyfunc` over successive tuples
+        of the input arrays like the python map function, except it uses the
+        broadcasting rules of numpy.
+
+        The data type of the output of `vectorized` is determined by calling
+        the function with the first element of the input.  This can be avoided
+        by specifying the `otypes` argument.
+
+        Parameters
+        ----------
+        pyfunc : callable, optional
+            A python function or method.
+            Can be omitted to produce a decorator with keyword arguments.
+        otypes : str or list of dtypes, optional
+            The output data type. It must be specified as either a string of
+            typecode characters or a list of data type specifiers. There should
+            be one data type specifier for each output.
+        doc : str, optional
+            The docstring for the function. If None, the docstring will be the
+            ``pyfunc.__doc__``.
+        excluded : set, optional
+            Set of strings or integers representing the positional or keyword
+            arguments for which the function will not be vectorized. These will be
+            passed directly to `pyfunc` unmodified.
+
+        cache : bool, optional
+            If neither `otypes` nor `signature` are provided, and `cache` is ``True``,
+            then cache the number of outputs.
+
+        signature : string, optional
+            Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
+            vectorized matrix-vector multiplication. If provided, ``pyfunc`` will
+            be called with (and expected to return) arrays with shapes given by the
+            size of corresponding core dimensions. By default, ``pyfunc`` is
+            assumed to take scalars as input and output.
+
+        Returns
+        -------
+        out : callable
+            A vectorized function if ``pyfunc`` was provided,
+            a decorator otherwise.
+
+        See Also
+        --------
+        frompyfunc : Takes an arbitrary Python function and returns a ufunc
+
+        Notes
+        -----
+        The `vectorize` function is provided primarily for convenience, not for
+        performance. The implementation is essentially a for loop.
+
+        If neither `otypes` nor `signature` are specified, then a call to the function
+        with the first argument will be used to determine the number of outputs.
+        The results of this call will be cached if `cache` is `True` to prevent
+        calling the function twice. However, to implement the cache,
+        the original function must be wrapped which will slow down subsequent calls,
+        so only do this if your function is expensive.
+
+        The new keyword argument interface and `excluded` argument support
+        further degrades performance.
+
+        References
+        ----------
+        .. [1] :doc:`/reference/c-api/generalized-ufuncs`
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> def myfunc(a, b):
+        ...     "Return a-b if a>b, otherwise return a+b"
+        ...     if a > b:
+        ...         return a - b
+        ...     else:
+        ...         return a + b
+
+        >>> vfunc = np.vectorize(myfunc)
+        >>> vfunc([1, 2, 3, 4], 2)
+        array([3, 4, 1, 2])
+
+        The docstring is taken from the input function to `vectorize` unless it
+        is specified:
+
+        >>> vfunc.__doc__
+        'Return a-b if a>b, otherwise return a+b'
+        >>> vfunc = np.vectorize(myfunc, doc='Vectorized `myfunc`')
+        >>> vfunc.__doc__
+        'Vectorized `myfunc`'
+
+        The output type is determined by evaluating the first element of the input,
+        unless it is specified:
+
+        >>> out = vfunc([1, 2, 3, 4], 2)
+        >>> type(out[0])
+        <class 'numpy.int64'>
+        >>> vfunc = np.vectorize(myfunc, otypes=[float])
+        >>> out = vfunc([1, 2, 3, 4], 2)
+        >>> type(out[0])
+        <class 'numpy.float64'>
+
+        The `excluded` argument can be used to prevent vectorizing over certain
+        arguments.  This can be useful for array-like arguments of a fixed length
+        such as the coefficients for a polynomial as in `polyval`:
+
+        >>> def mypolyval(p, x):
+        ...     _p = list(p)
+        ...     res = _p.pop(0)
+        ...     while _p:
+        ...         res = res*x + _p.pop(0)
+        ...     return res
+
+        Here, we exclude the zeroth argument from vectorization whether it is
+        passed by position or keyword.
+
+        >>> vpolyval = np.vectorize(mypolyval, excluded={0, 'p'})
+        >>> vpolyval([1, 2, 3], x=[0, 1])
+        array([3, 6])
+        >>> vpolyval(p=[1, 2, 3], x=[0, 1])
+        array([3, 6])
+
+        The `signature` argument allows for vectorizing functions that act on
+        non-scalar arrays of fixed length. For example, you can use it for a
+        vectorized calculation of Pearson correlation coefficient and its p-value:
+
+        >>> import scipy.stats
+        >>> pearsonr = np.vectorize(scipy.stats.pearsonr,
+        ...                 signature='(n),(n)->(),()')
+        >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]])
+        (array([ 1., -1.]), array([ 0.,  0.]))
+
+        Or for a vectorized convolution:
+
+        >>> convolve = np.vectorize(np.convolve, signature='(n),(m)->(k)')
+        >>> convolve(np.eye(4), [1, 2, 1])
+        array([[1., 2., 1., 0., 0., 0.],
+               [0., 1., 2., 1., 0., 0.],
+               [0., 0., 1., 2., 1., 0.],
+               [0., 0., 0., 1., 2., 1.]])
+
+        Decorator syntax is supported.  The decorator can be called as
+        a function to provide keyword arguments:
+
+        >>> @np.vectorize
+        ... def identity(x):
+        ...     return x
+        ...
+        >>> identity([0, 1, 2])
+        array([0, 1, 2])
+        >>> @np.vectorize(otypes=[float])
+        ... def as_float(x):
+        ...     return x
+        ...
+        >>> as_float([0, 1, 2])
+        array([0., 1., 2.])
+        """
 
         if (pyfunc != np._NoValue) and (not callable(pyfunc)):
             # Splitting the error message to keep
@@ -2488,6 +2489,12 @@ class vectorize:
             self.__doc__ = pyfunc.__doc__
         else:
             self._doc = doc
+
+        try:
+            self.__signature__ = inspect.signature(pyfunc)
+            self.__wrapped__ = pyfunc
+        except (ValueError, TypeError):
+            pass
 
         if isinstance(otypes, str):
             for char in otypes:
