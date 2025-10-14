@@ -723,7 +723,6 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                 res = nf(_ndat, axis=1, ddof=ddof)
                 assert_almost_equal(res, tgt)
 
-    @pytest.mark.thread_unsafe(reason="pytest.recwarn is thread-unsafe")
     def test_ddof_too_big(self, recwarn):
         nanfuncs = [np.nanvar, np.nanstd]
         stdfuncs = [np.var, np.std]

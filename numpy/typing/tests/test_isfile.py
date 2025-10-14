@@ -28,7 +28,8 @@ if sys.version_info < (3, 12):
 
 
 @pytest.mark.thread_unsafe(
-    reason="os.path has a thread-safety bug (python/cpython#140054)"
+    reason="os.path has a thread-safety bug (python/cpython#140054). "
+           "Expected to only be a problem in 3.14.0"
 )
 class TestIsFile:
     def test_isfile(self):

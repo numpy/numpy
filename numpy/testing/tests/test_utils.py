@@ -1879,7 +1879,9 @@ def test_suppress_warnings_type():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
-@pytest.mark.thread_unsafe(reason="uses deprecated thread-unsafe warnings")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_decorate_no_record():
     sup = suppress_warnings()
     sup.filter(UserWarning)
@@ -1898,7 +1900,9 @@ def test_suppress_warnings_decorate_no_record():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
-@pytest.mark.thread_unsafe(reason="uses deprecated thread-unsafe warnings")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_record():
     sup = suppress_warnings()
     log1 = sup.record()
@@ -1943,7 +1947,9 @@ def test_suppress_warnings_record():
 @pytest.mark.filterwarnings(
     "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
     ".*:DeprecationWarning")
-@pytest.mark.thread_unsafe(reason="uses deprecated thread-unsafe warnings")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_forwarding():
     def warn_other_module():
         # Apply along axis is implemented in python; stacklevel=2 means
