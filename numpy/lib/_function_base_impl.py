@@ -1986,6 +1986,14 @@ def trim_zeros(filt, trim='fb', axis=None):
     trim = trim.lower()
     if trim not in {"fb", "bf", "f", "b"}:
         raise ValueError(f"unexpected character(s) in `trim`: {trim!r}")
+    if axis is None:
+        axis_tuple = tuple(range(filt_.ndim))
+    else:
+        axis_tuple = _nx.normalize_axis_tuple(axis, filt_.ndim, argname="axis")
+
+    if not axis_tuple:
+        # No trimming requested -> return input unmodified.
+        return filt
 
     start, stop = _arg_trim_zeros(filt_)
     stop += 1  # Adjust for slicing
@@ -2000,20 +2008,13 @@ def trim_zeros(filt, trim='fb', axis=None):
         if 'b' not in trim:
             stop = (None,) * filt_.ndim
 
-    if len(start) == 1:
-        # filt is 1D -> don't use multi-dimensional slicing to preserve
+    sl = tuple(slice(start[ax], stop[ax]) if ax in axis_tuple else slice(None)
+               for ax in range(filt_.ndim))
+    if len(sl) == 1:
+        # filt is 1D -> avoid multi-dimensional slicing to preserve
         # non-array input types
-        sl = slice(start[0], stop[0])
-    elif axis is None:
-        # trim all axes
-        sl = tuple(slice(*x) for x in zip(start, stop))
-    else:
-        # only trim single axis
-        axis = normalize_axis_index(axis, filt_.ndim)
-        sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
-
-    trimmed = filt[sl]
-    return trimmed
+        return filt[sl[0]]
+    return filt[sl]
 
 
 def _extract_dispatcher(condition, arr):
