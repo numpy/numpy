@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from . import overrides
+from . import _private as _private, overrides
+from ._private import extbuild as extbuild
 from ._private.utils import (
     BLAS_SUPPORTS_FPE,
     HAS_LAPACK64,
