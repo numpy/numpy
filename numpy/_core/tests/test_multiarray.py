@@ -5833,7 +5833,6 @@ class TestIO:
                     sep=",", offset=1)
 
     @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
-    @pytest.mark.thread_unsafe(reason="monkey-patching of os.dup")
     def test_fromfile_bad_dup(self, tmp_filename):
         def dup_str(fd):
             return 'abc'
