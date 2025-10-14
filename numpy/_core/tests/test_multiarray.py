@@ -5581,7 +5581,6 @@ class TestLexsort:
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
         assert_raises(AxisError, np.lexsort, x, axis=2)
 
-@pytest.mark.thread_unsafe(reason="tmp_filename is thread-unsafe")
 class TestIO:
     """Test tofile, fromfile, tobytes, and fromstring"""
 
