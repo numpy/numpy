@@ -460,7 +460,7 @@ def cross(
     x2: _ArrayLikeUInt_co,
     /,
     *,
-    axis: int = ...,
+    axis: int = -1,
 ) -> NDArray[unsignedinteger]: ...
 @overload
 def cross(
@@ -468,7 +468,7 @@ def cross(
     x2: _ArrayLikeInt_co,
     /,
     *,
-    axis: int = ...,
+    axis: int = -1,
 ) -> NDArray[signedinteger]: ...
 @overload
 def cross(
@@ -476,7 +476,7 @@ def cross(
     x2: _ArrayLikeFloat_co,
     /,
     *,
-    axis: int = ...,
+    axis: int = -1,
 ) -> NDArray[floating]: ...
 @overload
 def cross(
@@ -484,7 +484,7 @@ def cross(
     x2: _ArrayLikeComplex_co,
     /,
     *,
-    axis: int = ...,
+    axis: int = -1,
 ) -> NDArray[complexfloating]: ...
 
 @overload

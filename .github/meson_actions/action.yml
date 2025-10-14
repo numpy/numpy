@@ -30,8 +30,7 @@ runs:
       TERM: xterm-256color
     run: |
       echo "::group::Installing Test Dependencies"
-      pip install pytest pytest-xdist pytest-timeout hypothesis typing_extensions
-      pip install -r requirements/setuptools_requirement.txt
+      python -m pip install -r requirements/test_requirements.txt
       echo "::endgroup::"
       echo "::group::Test NumPy"
       spin test -- --durations=10 --timeout=600

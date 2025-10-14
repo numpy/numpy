@@ -106,8 +106,10 @@ class ndindex:
     def ndincr(self, /) -> None: ...
 
 class nd_grid(Generic[_BoolT_co]):
+    __slots__ = ("sparse",)
+
     sparse: _BoolT_co
-    def __init__(self, sparse: _BoolT_co = ...) -> None: ...
+    def __init__(self, sparse: _BoolT_co = ...) -> None: ...  # stubdefaulter: ignore[missing-default]
     @overload
     def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Incomplete]: ...
     @overload
@@ -115,10 +117,14 @@ class nd_grid(Generic[_BoolT_co]):
 
 @final
 class MGridClass(nd_grid[L[False]]):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 @final
 class OGridClass(nd_grid[L[True]]):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
@@ -135,10 +141,10 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
     def __init__(
         self,
         /,
-        axis: _AxisT_co = ...,
-        matrix: _MatrixT_co = ...,
-        ndmin: _NDMinT_co = ...,
-        trans1d: _Trans1DT_co = ...,
+        axis: _AxisT_co = 0,
+        matrix: _MatrixT_co = False,
+        ndmin: _NDMinT_co = 1,
+        trans1d: _Trans1DT_co = -1,
     ) -> None: ...
 
     # TODO(jorenham): annotate this
@@ -155,13 +161,19 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
 
 @final
 class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
+    __slots__ = ()
+
     def __init__(self, /) -> None: ...
 
 @final
 class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
+    __slots__ = ()
+
     def __init__(self, /) -> None: ...
 
 class IndexExpression(Generic[_BoolT_co]):
+    __slots__ = ("maketuple",)
+
     maketuple: _BoolT_co
     def __init__(self, maketuple: _BoolT_co) -> None: ...
     @overload

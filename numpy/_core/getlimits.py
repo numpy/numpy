@@ -89,17 +89,20 @@ class finfo:
         The largest representable number.
     maxexp : int
         The smallest positive power of the base (2) that causes overflow.
+        Corresponds to the C standard MAX_EXP.
     min : floating point number of the appropriate type
         The smallest representable number, typically ``-max``.
     minexp : int
         The most negative power of the base (2) consistent with there
-        being no leading 0's in the mantissa.
+        being no leading 0's in the mantissa. Corresponds to the C
+        standard MIN_EXP - 1.
     negep : int
         The exponent that yields `epsneg`.
     nexp : int
         The number of bits in the exponent including its sign and bias.
     nmant : int
-        The number of bits in the mantissa.
+        The number of explicit bits in the mantissa (excluding the implicit
+        leading bit for normalized numbers).
     precision : int
         The approximate number of decimal digits to which this kind of
         float is precise.
@@ -139,6 +142,12 @@ class finfo:
     standard [1]_, NumPy floating point types make use of subnormal numbers to
     fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
     may have significantly reduced precision [2]_.
+
+    For ``longdouble``, the representation varies across platforms. On most
+    platforms it is IEEE 754 binary128 (quad precision) or binary64-extended
+    (80-bit extended precision). On PowerPC systems, it may use the IBM
+    double-double format (a pair of float64 values), which has special
+    characteristics for precision and range.
 
     This function can also be used for complex data types as well. If used,
     the output will be the same as the corresponding real float type
@@ -258,11 +267,11 @@ class finfo:
         return math.ceil(math.log2(self.maxexp - self.minexp))
 
     def __str__(self):
-        if self._fmt is not None:
-            return self._fmt
+        if (fmt := getattr(self, "_fmt", None)) is not None:
+            return fmt
 
         def get_str(name, pad=None):
-            if (val := getattr(self, name)) is None:
+            if (val := getattr(self, name, None)) is None:
                 return "<undefined>"
             if pad is not None:
                 s = str(val).ljust(pad)
@@ -303,8 +312,8 @@ class finfo:
         return fmt
 
     def __repr__(self):
-        if self._repr is not None:
-            return self._repr
+        if (repr_str := getattr(self, "_repr", None)) is not None:
+            return repr_str
 
         c = self.__class__.__name__
 
@@ -324,7 +333,7 @@ class finfo:
         self._repr = repr_str
         return repr_str
 
-    @property
+    @cached_property
     def tiny(self):
         """Return the value for tiny, alias of smallest_normal.
 

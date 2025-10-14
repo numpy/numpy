@@ -110,12 +110,16 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None): ...
 def corrcoef(x, y=None, rowvar=True, bias=..., allow_masked=True, ddof=...): ...
 
 class MAxisConcatenator(AxisConcatenator):
+    __slots__ = ()
+
     @staticmethod
     def concatenate(arrays: Incomplete, axis: int = 0) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @classmethod
     def makemat(cls, arr: Incomplete) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class mr_class(MAxisConcatenator):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 mr_: mr_class
