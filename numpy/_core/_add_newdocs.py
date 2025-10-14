@@ -6850,9 +6850,6 @@ add_newdoc('numpy._core.numerictypes', 'generic',
            refer_to_array_attribute('tolist'))
 
 add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('tostring'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
            refer_to_array_attribute('trace'))
 
 add_newdoc('numpy._core.numerictypes', 'generic',
