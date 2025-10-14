@@ -5613,6 +5613,16 @@ class TestLexsort:
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
         assert_raises(AxisError, np.lexsort, x, axis=2)
 
+
+def normalize_filename(tmp_path, param):
+    # Handles two cases, where filename should
+    # be a string, or a path object.
+    path = tmp_path / "file"
+    if param == "string":
+        return str(path)
+    return path
+
+
 class TestIO:
     """Test tofile, fromfile, tobytes, and fromstring"""
 
@@ -5624,14 +5634,11 @@ class TestIO:
         return x
 
     @pytest.fixture(params=["string", "path_obj"])
-    def tmp_filename(self, tmp_path, request):
-        # This fixture covers two cases:
-        # one where the filename is a string and
-        # another where it is a pathlib object
-        filename = tmp_path / "file"
-        if request.param == "string":
-            filename = str(filename)
-        yield filename
+    def param_filename(self, request):
+        # This fixtures returns string or path_obj
+        # so that every test doesn't need to have the
+        # paramterize marker.
+        return request.param
 
     def test_nofile(self):
         # this should probably be supported as a file
@@ -5662,19 +5669,22 @@ class TestIO:
         d = np.fromstring("1,2", sep=",", dtype=np.int64, count=0)
         assert d.shape == (0,)
 
-    def test_empty_files_text(self, tmp_filename):
+    def test_empty_files_text(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         with open(tmp_filename, 'w') as f:
             pass
         y = np.fromfile(tmp_filename)
         assert_(y.size == 0, "Array not empty")
 
-    def test_empty_files_binary(self, tmp_filename):
+    def test_empty_files_binary(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         with open(tmp_filename, 'wb') as f:
             pass
         y = np.fromfile(tmp_filename, sep=" ")
         assert_(y.size == 0, "Array not empty")
 
-    def test_roundtrip_file(self, tmp_filename):
+    def test_roundtrip_file(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         with open(tmp_filename, 'wb') as f:
             x.tofile(f)
@@ -5683,13 +5693,15 @@ class TestIO:
             y = np.fromfile(f, dtype=x.dtype)
         assert_array_equal(y, x.flat)
 
-    def test_roundtrip(self, tmp_filename):
+    def test_roundtrip(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         x.tofile(tmp_filename)
         y = np.fromfile(tmp_filename, dtype=x.dtype)
         assert_array_equal(y, x.flat)
 
-    def test_roundtrip_dump_pathlib(self, tmp_filename):
+    def test_roundtrip_dump_pathlib(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         p = pathlib.Path(tmp_filename)
         x.dump(p)
@@ -5722,8 +5734,9 @@ class TestIO:
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
-    def test_unseekable_fromfile(self, tmp_filename):
+    def test_unseekable_fromfile(self, tmp_path, param_filename):
         # gh-6246
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         x.tofile(tmp_filename)
 
@@ -5735,16 +5748,18 @@ class TestIO:
             f.tell = fail
             assert_raises(OSError, np.fromfile, f, dtype=x.dtype)
 
-    def test_io_open_unbuffered_fromfile(self, tmp_filename):
+    def test_io_open_unbuffered_fromfile(self, tmp_path, param_filename):
         # gh-6632
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         x.tofile(tmp_filename)
         with open(tmp_filename, 'rb', buffering=0) as f:
             y = np.fromfile(f, dtype=x.dtype)
             assert_array_equal(y, x.flat)
 
-    def test_largish_file(self, tmp_filename):
+    def test_largish_file(self, tmp_path, param_filename):
         # check the fallocate path on files > 16MB
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         d = np.zeros(4 * 1024 ** 2)
         d.tofile(tmp_filename)
         assert_equal(os.path.getsize(tmp_filename), d.nbytes)
@@ -5763,19 +5778,21 @@ class TestIO:
             d.tofile(f)
         assert_equal(os.path.getsize(tmp_filename), d.nbytes * 2)
 
-    def test_io_open_buffered_fromfile(self, tmp_filename):
+    def test_io_open_buffered_fromfile(self, tmp_path, param_filename):
         # gh-6632
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         x.tofile(tmp_filename)
         with open(tmp_filename, 'rb', buffering=-1) as f:
             y = np.fromfile(f, dtype=x.dtype)
         assert_array_equal(y, x.flat)
 
-    def test_file_position_after_fromfile(self, tmp_filename):
+    def test_file_position_after_fromfile(self, tmp_path, param_filename):
         # gh-4118
         sizes = [io.DEFAULT_BUFFER_SIZE // 8,
                  io.DEFAULT_BUFFER_SIZE,
                  io.DEFAULT_BUFFER_SIZE * 8]
+        tmp_filename = normalize_filename(tmp_path, param_filename)
 
         for size in sizes:
             with open(tmp_filename, 'wb') as f:
@@ -5791,11 +5808,12 @@ class TestIO:
                     pos = f.tell()
                 assert_equal(pos, 10, err_msg=err_msg)
 
-    def test_file_position_after_tofile(self, tmp_filename):
+    def test_file_position_after_tofile(self, tmp_path, param_filename):
         # gh-4118
         sizes = [io.DEFAULT_BUFFER_SIZE // 8,
                  io.DEFAULT_BUFFER_SIZE,
                  io.DEFAULT_BUFFER_SIZE * 8]
+        tmp_filename = normalize_filename(tmp_path, param_filename)
 
         for size in sizes:
             err_msg = "%d" % (size,)
@@ -5816,8 +5834,9 @@ class TestIO:
                 pos = f.tell()
             assert_equal(pos, 10, err_msg=err_msg)
 
-    def test_load_object_array_fromfile(self, tmp_filename):
+    def test_load_object_array_fromfile(self, tmp_path, param_filename):
         # gh-12300
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         with open(tmp_filename, 'w') as f:
             # Ensure we have a file with consistent contents
             pass
@@ -5829,7 +5848,8 @@ class TestIO:
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, tmp_filename, dtype=object)
 
-    def test_fromfile_offset(self, tmp_filename):
+    def test_fromfile_offset(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
         with open(tmp_filename, 'wb') as f:
             x.tofile(f)
@@ -5865,23 +5885,21 @@ class TestIO:
                     sep=",", offset=1)
 
     @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
-    def test_fromfile_bad_dup(self, tmp_filename):
+    def test_fromfile_bad_dup(self, tmp_path, param_filename, monkeypatch):
         def dup_str(fd):
             return 'abc'
 
         def dup_bigint(fd):
             return 2**68
 
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = self._create_data()
-        old_dup = os.dup
-        try:
-            with open(tmp_filename, 'wb') as f:
-                x.tofile(f)
-                for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
-                    os.dup = dup
-                    assert_raises(exc, np.fromfile, f)
-        finally:
-            os.dup = old_dup
+
+        with open(tmp_filename, 'wb') as f:
+            x.tofile(f)
+            for dup, exc in ((dup_str, TypeError), (dup_bigint, OSError)):
+                monkeypatch.setattr(os, "dup", dup)
+                assert_raises(exc, np.fromfile, f)
 
     def _check_from(self, s, value, filename, **kw):
         if 'sep' not in kw:
@@ -5923,38 +5941,44 @@ class TestIO:
         else:
             assert False, request.param
 
-    def test_nan(self, tmp_filename, decimal_sep_localization):
+    def test_nan(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b"nan +nan -nan NaN nan(foo) +NaN(BAR) -NAN(q_u_u_x_)",
             [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
             tmp_filename,
             sep=' ')
 
-    def test_inf(self, tmp_filename, decimal_sep_localization):
+    def test_inf(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b"inf +inf -inf infinity -Infinity iNfInItY -inF",
             [np.inf, np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf],
             tmp_filename,
             sep=' ')
 
-    def test_numbers(self, tmp_filename, decimal_sep_localization):
+    def test_numbers(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b"1.234 -1.234 .3 .3e55 -123133.1231e+133",
             [1.234, -1.234, .3, .3e55, -123133.1231e+133],
             tmp_filename,
             sep=' ')
 
-    def test_binary(self, tmp_filename):
+    def test_binary(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b'\x00\x00\x80?\x00\x00\x00@\x00\x00@@\x00\x00\x80@',
             np.array([1, 2, 3, 4]),
             tmp_filename,
             dtype='<f4')
 
-    def test_string(self, tmp_filename):
+    def test_string(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, sep=',')
 
-    def test_counted_string(self, tmp_filename, decimal_sep_localization):
+    def test_counted_string(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, count=4, sep=',')
         self._check_from(
@@ -5962,36 +5986,43 @@ class TestIO:
         self._check_from(
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, count=-1, sep=',')
 
-    def test_string_with_ws(self, tmp_filename):
+    def test_string_with_ws(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b'1 2  3     4   ', [1, 2, 3, 4], tmp_filename, dtype=int, sep=' ')
 
-    def test_counted_string_with_ws(self, tmp_filename):
+    def test_counted_string_with_ws(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b'1 2  3     4   ', [1, 2, 3], tmp_filename, count=3, dtype=int,
             sep=' ')
 
-    def test_ascii(self, tmp_filename, decimal_sep_localization):
+    def test_ascii(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b'1 , 2 , 3 , 4', [1., 2., 3., 4.], tmp_filename, sep=',')
         self._check_from(
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, dtype=float, sep=',')
 
-    def test_malformed(self, tmp_filename, decimal_sep_localization):
+    def test_malformed(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         with assert_raises(ValueError):
             self._check_from(
                 b'1.234 1,234', [1.234, 1.], tmp_filename, sep=' ')
 
-    def test_long_sep(self, tmp_filename):
+    def test_long_sep(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         self._check_from(
             b'1_x_3_x_4_x_5', [1, 3, 4, 5], tmp_filename, sep='_x_')
 
-    def test_dtype(self, tmp_filename):
+    def test_dtype(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         v = np.array([1, 2, 3, 4], dtype=np.int_)
         self._check_from(b'1,2,3,4', v, tmp_filename, sep=',', dtype=np.int_)
 
-    def test_dtype_bool(self, tmp_filename):
+    def test_dtype_bool(self, tmp_path, param_filename):
         # can't use _check_from because fromstring can't handle True/False
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         v = np.array([True, False, True, False], dtype=np.bool)
         s = b'1,0,-2.3,0'
         with open(tmp_filename, 'wb') as f:
@@ -6000,7 +6031,8 @@ class TestIO:
         assert_(y.dtype == '?')
         assert_array_equal(y, v)
 
-    def test_tofile_sep(self, tmp_filename, decimal_sep_localization):
+    def test_tofile_sep(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         with open(tmp_filename, 'w') as f:
             x.tofile(f, sep=',')
@@ -6010,7 +6042,8 @@ class TestIO:
         y = np.array([float(p) for p in s.split(',')])
         assert_array_equal(x, y)
 
-    def test_tofile_format(self, tmp_filename, decimal_sep_localization):
+    def test_tofile_format(self, tmp_path, param_filename, decimal_sep_localization):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.array([1.51, 2, 3.51, 4], dtype=float)
         with open(tmp_filename, 'w') as f:
             x.tofile(f, sep=',', format='%.2f')
@@ -6018,7 +6051,8 @@ class TestIO:
             s = f.read()
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
-    def test_tofile_cleanup(self, tmp_filename):
+    def test_tofile_cleanup(self, tmp_path, param_filename):
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.zeros((10), dtype=object)
         with open(tmp_filename, 'wb') as f:
             assert_raises(OSError, lambda: x.tofile(f, sep=''))
@@ -6029,8 +6063,9 @@ class TestIO:
         assert_raises(OSError, lambda: x.tofile(tmp_filename))
         os.remove(tmp_filename)
 
-    def test_fromfile_subarray_binary(self, tmp_filename):
+    def test_fromfile_subarray_binary(self, tmp_path, param_filename):
         # Test subarray dtypes which are absorbed into the shape
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         x = np.arange(24, dtype="i4").reshape(2, 3, 4)
         x.tofile(tmp_filename)
         res = np.fromfile(tmp_filename, dtype="(3,4)i4")
@@ -6041,8 +6076,9 @@ class TestIO:
             # binary fromstring raises
             np.fromstring(x_str, dtype="(3,4)i4")
 
-    def test_parsing_subarray_unsupported(self, tmp_filename):
+    def test_parsing_subarray_unsupported(self, tmp_path, param_filename):
         # We currently do not support parsing subarray dtypes
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         data = "12,42,13," * 50
         with pytest.raises(ValueError):
             expected = np.fromstring(data, dtype="(3,)i", sep=",")
@@ -6053,10 +6089,11 @@ class TestIO:
         with pytest.raises(ValueError):
             np.fromfile(tmp_filename, dtype="(3,)i", sep=",")
 
-    def test_read_shorter_than_count_subarray(self, tmp_filename):
+    def test_read_shorter_than_count_subarray(self, tmp_path, param_filename):
         # Test that requesting more values does not cause any problems
         # in conjunction with subarray dimensions being absorbed into the
         # array dimension.
+        tmp_filename = normalize_filename(tmp_path, param_filename)
         expected = np.arange(511 * 10, dtype="i").reshape(-1, 10)
 
         binary = expected.tobytes()
