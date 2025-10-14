@@ -3,6 +3,8 @@ from typing import TypedDict, type_check_only
 from numpy._typing import _ArrayLikeInt_co
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 
+__all__ = ["PCG64"]
+
 @type_check_only
 class _PCG64Internal(TypedDict):
     state: int
