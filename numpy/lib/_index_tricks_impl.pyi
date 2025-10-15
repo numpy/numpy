@@ -11,7 +11,7 @@ from typing import (
     final,
     overload,
 )
-from typing_extensions import TypeVar, deprecated
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy._core.multiarray import ravel_multi_index, unravel_index
@@ -100,10 +100,6 @@ class ndindex:
     #
     def __iter__(self) -> Self: ...
     def __next__(self) -> _AnyShape: ...
-
-    #
-    @deprecated("Deprecated since 1.20.0.")
-    def ndincr(self, /) -> None: ...
 
 class nd_grid(Generic[_BoolT_co]):
     __slots__ = ("sparse",)
