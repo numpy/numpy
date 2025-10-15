@@ -1,7 +1,6 @@
 import functools
 import math
 import sys
-import warnings
 from itertools import product
 
 import numpy as np
