@@ -154,39 +154,40 @@ class _TypeCodes(TypedDict):
 
 def isdtype(dtype: dtype | type[Any], kind: DTypeLike | tuple[DTypeLike, ...]) -> builtins.bool: ...
 
-def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> builtins.bool: ...
-
-typecodes: _TypeCodes
-ScalarType: tuple[
-    type[int],
-    type[float],
-    type[complex],
-    type[builtins.bool],
-    type[bytes],
-    type[str],
-    type[memoryview],
-    type[np.bool],
-    type[csingle],
-    type[cdouble],
-    type[clongdouble],
-    type[half],
-    type[single],
-    type[double],
-    type[longdouble],
-    type[byte],
-    type[short],
-    type[intc],
-    type[long],
-    type[longlong],
-    type[timedelta64],
-    type[datetime64],
-    type[object_],
-    type[bytes_],
-    type[str_],
-    type[ubyte],
-    type[ushort],
-    type[uintc],
-    type[ulong],
-    type[ulonglong],
-    type[void],
-]
+typecodes: Final[_TypeCodes] = ...
+ScalarType: Final[
+    tuple[
+        type[int],
+        type[float],
+        type[complex],
+        type[py_bool],
+        type[bytes],
+        type[str],
+        type[memoryview[Any]],
+        type[np.bool],
+        type[complex64],
+        type[complex128],
+        type[complex128 | complex192 | complex256],
+        type[float16],
+        type[float32],
+        type[float64],
+        type[float64 | float96 | float128],
+        type[int8],
+        type[int16],
+        type[int32],
+        type[int32 | int64],
+        type[int64],
+        type[datetime64],
+        type[timedelta64],
+        type[object_],
+        type[bytes_],
+        type[str_],
+        type[uint8],
+        type[uint16],
+        type[uint32],
+        type[uint32 | uint64],
+        type[uint64],
+        type[void],
+    ]
+] = ...
+typeDict: Final = sctypeDict
