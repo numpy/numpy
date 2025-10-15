@@ -215,24 +215,6 @@ class TestCtypesGetter(_DeprecationTestCase):
         self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
 
 
-class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
-    # Deprecated 2021-11-08, NumPy 1.22
-    @pytest.mark.parametrize("func",
-        [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
-    def test_deprecated(self, func):
-        self.assert_deprecated(
-            lambda: func([0., 1.], 0., interpolation="linear"))
-        self.assert_deprecated(
-            lambda: func([0., 1.], 0., interpolation="nearest"))
-
-    @pytest.mark.parametrize("func",
-            [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
-    def test_both_passed(self, func):
-        with pytest.warns(DeprecationWarning):
-            with pytest.raises(TypeError):
-                func([0., 1.], 0., interpolation="nearest", method="nearest")
-
-
 class TestPyIntConversion(_DeprecationTestCase):
     message = r".*stop allowing conversion of out-of-bound.*"
 
