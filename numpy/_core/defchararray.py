@@ -496,7 +496,6 @@ class chararray(ndarray):
     title
     tofile
     tolist
-    tostring
     translate
     transpose
     upper
