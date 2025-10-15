@@ -6013,9 +6013,9 @@ class matrix(ndarray[_2DShapeT_co, _DTypeT_co]):
     def __imul__(self, other: ArrayLike, /) -> Self: ...
 
     #
-    def __pow__(self, other: ArrayLike, mod: None = None, /) -> matrix[_2D, Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def __rpow__(self, other: ArrayLike, mod: None = None, /) -> matrix[_2D, Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def __ipow__(self, other: ArrayLike, /) -> Self: ...  # type: ignore[misc, override]
+    def __pow__(self, other: ArrayLike, /) -> matrix[_2D, Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __rpow__(self, other: ArrayLike, /) -> matrix[_2D, Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __ipow__(self, other: ArrayLike, /) -> Self: ...  # type: ignore[override]
 
     # keep in sync with `prod` and `mean`
     @overload  # type: ignore[override]
