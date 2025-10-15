@@ -288,21 +288,21 @@ def gradient(
 ) -> Any: ...
 
 @overload
-def diff(
+def diff(  # type: ignore[overload-overlap]
     a: _T,
     n: L[0],
     axis: SupportsIndex = -1,
-    prepend: ArrayLike = ...,
-    append: ArrayLike = ...,
+    prepend: ArrayLike | _NoValueType = ...,  # = _NoValue
+    append: ArrayLike | _NoValueType = ...,  # = _NoValue
 ) -> _T: ...
 @overload
 def diff(
     a: ArrayLike,
     n: int = 1,
     axis: SupportsIndex = -1,
-    prepend: ArrayLike = ...,
-    append: ArrayLike = ...,
-) -> NDArray[Any]: ...
+    prepend: ArrayLike | _NoValueType = ...,  # = _NoValue
+    append: ArrayLike | _NoValueType = ...,  # = _NoValue
+) -> NDArray[Incomplete]: ...
 
 @overload  # float scalar
 def interp(
