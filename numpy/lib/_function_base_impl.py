@@ -4163,7 +4163,7 @@ def percentile(a,
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
 
-     weights : array_like, optional
+    weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the percentile according to its associated weight.
         The weights array can either be 1-D (in which case its length must be
