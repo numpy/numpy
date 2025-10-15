@@ -20,6 +20,13 @@ NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj);
 
 /*
+ * For use in __setstate__, where pickle gives us an instance on which we
+ * have to replace all the actual data. Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+dealloc_all_but_self(PyArrayObject *self);
+
+/*
  * This flag is used to mark arrays which we would like to, in the future,
  * turn into views. It causes a warning to be issued on the first attempt to
  * write to the array (but the write is allowed to succeed).
