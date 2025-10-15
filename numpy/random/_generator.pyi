@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, MutableSequence
 from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
@@ -850,7 +850,12 @@ class Generator:
     def permuted(
         self, x: ArrayLike, *, axis: int | None = None, out: NDArray[Any] | None = None
     ) -> NDArray[Any]: ...
-    def shuffle(self, x: ArrayLike, axis: int = 0) -> None: ...
+
+    # axis must be 0 for MutableSequence
+    @overload
+    def shuffle(self, /, x: np.ndarray, axis: int = 0) -> None: ...
+    @overload
+    def shuffle(self, /, x: MutableSequence[Any], axis: Literal[0] = 0) -> None: ...
 
 def default_rng(
     seed: _ArrayLikeInt_co | SeedSequence | BitGenerator | Generator | RandomState | None = None
