@@ -417,9 +417,8 @@ from numpy.lib._arraypad_impl import (
     pad,
 )
 
-from numpy.lib._arraysetops_impl import (  # type: ignore[deprecated]
+from numpy.lib._arraysetops_impl import (
     ediff1d,
-    in1d,
     intersect1d,
     isin,
     setdiff1d,
@@ -700,7 +699,7 @@ __all__ = [  # noqa: RUF022
     "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
     "real_if_close", "typename", "mintypecode", "common_type",
     # lib._arraysetops_impl.__all__
-    "ediff1d", "in1d", "intersect1d", "isin", "setdiff1d", "setxor1d", "union1d",
+    "ediff1d", "intersect1d", "isin", "setdiff1d", "setxor1d", "union1d",
     "unique", "unique_all", "unique_counts", "unique_inverse", "unique_values",
     # lib._ufunclike_impl.__all__
     "fix", "isneginf", "isposinf",
