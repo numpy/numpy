@@ -247,4 +247,4 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if Path(item.fspath).parent == Path(__file__).parent / 'f2py' / 'tests':
             item.add_marker(pytest.mark.thread_unsafe(
-                reason="f2py tests are not thread-unsafe"))
+                reason="f2py tests are thread-unsafe"))
