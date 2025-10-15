@@ -11,7 +11,6 @@ from typing import (
     TypeAlias,
     TypeGuard,
     TypeVar,
-    Unpack,
     overload,
 )
 
@@ -127,7 +126,6 @@ from .multiarray import (
     WRAP as WRAP,
     _Array,
     _ConstructorEmpty,
-    _KwargsEmpty,
     arange,
     array,
     asanyarray,
