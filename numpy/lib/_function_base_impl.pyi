@@ -626,7 +626,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> floating: ...
 @overload
 def percentile(
@@ -638,7 +639,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> complexfloating: ...
 @overload
 def percentile(
@@ -650,7 +652,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> timedelta64: ...
 @overload
 def percentile(
@@ -662,7 +665,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> datetime64: ...
 @overload
 def percentile(
@@ -674,7 +678,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> Any: ...
 @overload
 def percentile(
@@ -686,7 +691,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> NDArray[floating]: ...
 @overload
 def percentile(
@@ -698,7 +704,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> NDArray[complexfloating]: ...
 @overload
 def percentile(
@@ -710,7 +717,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> NDArray[timedelta64]: ...
 @overload
 def percentile(
@@ -722,7 +730,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> NDArray[datetime64]: ...
 @overload
 def percentile(
@@ -734,7 +743,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
@@ -746,7 +756,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> Any: ...
 @overload
 def percentile(
@@ -758,7 +769,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
-    weights: _ArrayLikeFloat_co | None = ...,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> _ArrayT: ...
 @overload
 def percentile(
@@ -767,15 +779,183 @@ def percentile(
     axis: _ShapeLike | None = ...,
     *,
     out: _ArrayT,
-    overwrite_input: bool = ...,
-    method: _MethodKind = ...,
-    keepdims: bool = ...,
-    weights: _ArrayLikeFloat_co | None = ...,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: bool = False,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
 ) -> _ArrayT: ...
 
-# NOTE: Not an alias, but they do have identical signatures
-# (that we can reuse)
-quantile = percentile
+# NOTE: keep in sync with `percentile`
+@overload
+def quantile(
+    a: _ArrayLikeFloat_co,
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> floating: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co,
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> complexfloating: ...
+@overload
+def quantile(
+    a: _ArrayLikeTD64_co,
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> timedelta64: ...
+@overload
+def quantile(
+    a: _ArrayLikeDT64_co,
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> datetime64: ...
+@overload
+def quantile(
+    a: _ArrayLikeObject_co,
+    q: _FloatLike_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> Any: ...
+@overload
+def quantile(
+    a: _ArrayLikeFloat_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> NDArray[floating]: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> NDArray[complexfloating]: ...
+@overload
+def quantile(
+    a: _ArrayLikeTD64_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> NDArray[timedelta64]: ...
+@overload
+def quantile(
+    a: _ArrayLikeDT64_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> NDArray[datetime64]: ...
+@overload
+def quantile(
+    a: _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: L[False] = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> NDArray[object_]: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> Any: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: bool = False,
+    *,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> _ArrayT: ...
+@overload
+def quantile(
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
+    q: _ArrayLikeFloat_co,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayT,
+    overwrite_input: bool = False,
+    method: _MethodKind = "linear",
+    keepdims: bool = False,
+    weights: _ArrayLikeFloat_co | None = None,
+    interpolation: None = None,  # deprecated
+) -> _ArrayT: ...
 
 _ScalarT_fm = TypeVar(
     "_ScalarT_fm",
