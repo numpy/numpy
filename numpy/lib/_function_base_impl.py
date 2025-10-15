@@ -4090,8 +4090,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, weights=None,
-                           interpolation=None):
+                           method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -4104,8 +4103,7 @@ def percentile(a,
                method="linear",
                keepdims=False,
                *,
-               weights=None,
-               interpolation=None):
+               weights=None):
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -4174,11 +4172,6 @@ def percentile(a,
         See the notes for more details.
 
         .. versionadded:: 2.0.0
-
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -4275,10 +4268,6 @@ def percentile(a,
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "percentile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
@@ -4305,8 +4294,7 @@ def percentile(a,
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         method=None, keepdims=None, *, weights=None,
-                         interpolation=None):
+                         method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -4319,8 +4307,7 @@ def quantile(a,
              method="linear",
              keepdims=False,
              *,
-             weights=None,
-             interpolation=None):
+             weights=None):
     """
     Compute the q-th quantile of the data along the specified axis.
 
@@ -4389,11 +4376,6 @@ def quantile(a,
         See the notes for more details.
 
         .. versionadded:: 2.0.0
-
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -4536,10 +4518,6 @@ def quantile(a,
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "quantile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
@@ -4599,23 +4577,6 @@ def _quantile_is_valid(q):
     return True
 
 
-def _check_interpolation_as_method(method, interpolation, fname):
-    # Deprecated NumPy 1.22, 2021-11-08
-    warnings.warn(
-        f"the `interpolation=` argument to {fname} was renamed to "
-        "`method=`, which has additional options.\n"
-        "Users of the modes 'nearest', 'lower', 'higher', or "
-        "'midpoint' are encouraged to review the method they used. "
-        "(Deprecated NumPy 1.22)",
-        DeprecationWarning, stacklevel=4)
-    if method != "linear":
-        # sanity check, we assume this basically never happens
-        raise TypeError(
-            "You shall not pass both `method` and `interpolation`!\n"
-            "(`interpolation` is Deprecated in favor of `method`)")
-    return interpolation
-
-
 def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     """
     Compute the floating point indexes of an array for the linear
@@ -4651,7 +4612,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
         sample.
     previous_indexes : array_like
         The floor values of virtual_indexes.
-    interpolation : dict
+    method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
 
@@ -4809,7 +4770,7 @@ def _quantile(
     These methods are extended to this function using _ureduce
     See nanpercentile for parameter usage
     It computes the quantiles of the array for the given axis.
-    A linear interpolation is performed based on the `interpolation`.
+    A linear interpolation is performed based on the `method`.
 
     By default, the method is "linear" where alpha == beta == 1 which
     performs the 7th method of Hyndman&Fan.
