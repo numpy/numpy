@@ -405,6 +405,8 @@ from numpy._core.shape_base import (
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
+from ._globals import _CopyMode as _CopyMode
+from ._globals import _NoValue as _NoValue, _NoValueType
 
 from numpy.lib import (
     scimath as emath,
@@ -5870,12 +5872,13 @@ class vectorize:
     __doc__: str | None
     def __init__(
         self,
-        pyfunc: Callable[..., Any],
-        otypes: str | Iterable[DTypeLike] | None = ...,
-        doc: str | None = ...,
-        excluded: Iterable[int | str] | None = ...,
-        cache: builtins.bool = ...,
-        signature: str | None = ...,
+        /,
+        pyfunc: Callable[..., Any] | _NoValueType = ...,  # = _NoValue
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: builtins.bool = False,
+        signature: str | None = None,
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
