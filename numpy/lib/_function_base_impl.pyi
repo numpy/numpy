@@ -478,7 +478,7 @@ def cov(
 # NOTE `bias` and `ddof` are deprecated and ignored
 @overload
 def corrcoef(
-    m: _ArrayLikeFloat_co,
+    x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
@@ -488,7 +488,7 @@ def corrcoef(
 ) -> NDArray[floating]: ...
 @overload
 def corrcoef(
-    m: _ArrayLikeComplex_co,
+    x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
@@ -498,7 +498,7 @@ def corrcoef(
 ) -> NDArray[complexfloating]: ...
 @overload
 def corrcoef(
-    m: _ArrayLikeComplex_co,
+    x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
@@ -508,7 +508,7 @@ def corrcoef(
 ) -> NDArray[_ScalarT]: ...
 @overload
 def corrcoef(
-    m: _ArrayLikeComplex_co,
+    x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
