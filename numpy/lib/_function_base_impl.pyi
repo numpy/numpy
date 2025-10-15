@@ -232,7 +232,6 @@ def piecewise(
         Callable[Concatenate[NDArray[_ScalarT], _Pss], NDArray[_ScalarT | Any]]
         | _ScalarT | object
     ],
-    /,
     *args: _Pss.args,
     **kw: _Pss.kwargs,
 ) -> NDArray[_ScalarT]: ...
@@ -244,7 +243,6 @@ def piecewise(
         Callable[Concatenate[NDArray[Any], _Pss], NDArray[Any]]
         | object
     ],
-    /,
     *args: _Pss.args,
     **kw: _Pss.kwargs,
 ) -> NDArray[Any]: ...
