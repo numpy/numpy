@@ -2097,30 +2097,18 @@ array_setstate(PyArrayObject *self, PyObject *args)
      *    copy from the pickled data (may not match allocation currently if 0).
      * Compare with `PyArray_NewFromDescr`, raise MemoryError for simplicity.
      */
-    npy_bool empty = NPY_FALSE;
-    nbytes = 1;
+    nbytes = PyArray_ITEMSIZE(self);
     for (int i = 0; i < nd; i++) {
         if (dimensions[i] < 0) {
             PyErr_SetString(PyExc_TypeError,
                     "impossible dimension while unpickling array");
             return NULL;
         }
-        if (dimensions[i] == 0) {
-            empty = NPY_TRUE;
-        }
         overflowed = npy_mul_sizes_with_overflow(
                 &nbytes, nbytes, dimensions[i]);
         if (overflowed) {
             return PyErr_NoMemory();
         }
-    }
-    overflowed = npy_mul_sizes_with_overflow(
-            &nbytes, nbytes, PyArray_ITEMSIZE(self));
-    if (overflowed) {
-        return PyErr_NoMemory();
-    }
-    if (empty) {
-        nbytes = 0;
     }
 
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
@@ -2135,11 +2123,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
         /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
-            PyObject *tmp;
-            tmp = PyUnicode_AsLatin1String(rawdata);
-            Py_DECREF(rawdata);
-            rawdata = tmp;
-            if (tmp == NULL) {
+            Py_SETREF(rawdata, PyUnicode_AsLatin1String(rawdata));
+            if (rawdata == NULL) {
                 /* More informative error message */
                 PyErr_SetString(PyExc_ValueError,
                                 ("Failed to encode latin1 string when unpickling a Numpy array. "
