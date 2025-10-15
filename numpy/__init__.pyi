@@ -5529,11 +5529,10 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __ge__(self, other: _SupportsGT, /) -> bool_: ...
 
-class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]):
-    @abstractmethod
-    def __new__(cls) -> Self: ...
+@final  # cannot be subclassed at runtime
+class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]
 
-class void(flexible[bytes | tuple[Any, ...]]):
+class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
     def __new__(cls, value: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
     @overload
@@ -5547,13 +5546,13 @@ class void(flexible[bytes | tuple[Any, ...]]):
 
     def setfield(self, val: ArrayLike, dtype: DTypeLike, offset: int = ...) -> None: ...
 
-class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):
+class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):  # type: ignore[misc]
     @abstractmethod
     def __new__(cls) -> Self: ...
 
 # NOTE: Most `np.bytes_` / `np.str_` methods return their builtin `bytes` / `str` counterpart
 
-class bytes_(character[bytes], bytes):
+class bytes_(character[bytes], bytes):  # type: ignore[misc]
     @overload
     def __new__(cls, o: object = ..., /) -> Self: ...
     @overload
@@ -5562,7 +5561,7 @@ class bytes_(character[bytes], bytes):
     #
     def __bytes__(self, /) -> bytes: ...
 
-class str_(character[str], str):
+class str_(character[str], str):  # type: ignore[misc]
     @overload
     def __new__(cls, value: object = ..., /) -> Self: ...
     @overload
