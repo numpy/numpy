@@ -5764,15 +5764,16 @@ class broadcast:
 
 @final
 class busdaycalendar:
-    def __new__(
-        cls,
-        weekmask: ArrayLike = ...,
-        holidays: ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
-    ) -> busdaycalendar: ...
+    def __init__(
+        self,
+        /,
+        weekmask: str | Sequence[int | bool_ | integer] | _SupportsArray[dtype[bool_ | integer]] = "1111100",
+        holidays: Sequence[dt.date | datetime64] | _SupportsArray[dtype[datetime64]] | None = None,
+    ) -> None: ...
     @property
-    def weekmask(self) -> NDArray[np.bool]: ...
+    def weekmask(self) -> ndarray[tuple[int], dtype[bool_]]: ...
     @property
-    def holidays(self) -> NDArray[datetime64]: ...
+    def holidays(self) -> ndarray[tuple[int], dtype[datetime64[dt.date]]]: ...
 
 @final
 class nditer:
