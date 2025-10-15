@@ -626,7 +626,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> floating: ...
 @overload
 def percentile(
@@ -639,7 +638,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> complexfloating: ...
 @overload
 def percentile(
@@ -652,7 +650,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> timedelta64: ...
 @overload
 def percentile(
@@ -665,7 +662,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> datetime64: ...
 @overload
 def percentile(
@@ -678,7 +674,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> Any: ...
 @overload
 def percentile(
@@ -691,7 +686,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[floating]: ...
 @overload
 def percentile(
@@ -704,7 +698,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[complexfloating]: ...
 @overload
 def percentile(
@@ -717,7 +710,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[timedelta64]: ...
 @overload
 def percentile(
@@ -730,7 +722,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[datetime64]: ...
 @overload
 def percentile(
@@ -743,7 +734,6 @@ def percentile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
@@ -756,7 +746,6 @@ def percentile(
     keepdims: bool = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> Any: ...
 @overload
 def percentile(
@@ -769,7 +758,6 @@ def percentile(
     keepdims: bool = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> _ArrayT: ...
 @overload
 def percentile(
@@ -782,7 +770,6 @@ def percentile(
     method: _MethodKind = "linear",
     keepdims: bool = False,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> _ArrayT: ...
 
 # NOTE: keep in sync with `percentile`
@@ -797,7 +784,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> floating: ...
 @overload
 def quantile(
@@ -810,7 +796,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> complexfloating: ...
 @overload
 def quantile(
@@ -823,7 +808,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> timedelta64: ...
 @overload
 def quantile(
@@ -836,7 +820,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> datetime64: ...
 @overload
 def quantile(
@@ -849,7 +832,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> Any: ...
 @overload
 def quantile(
@@ -862,7 +844,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[floating]: ...
 @overload
 def quantile(
@@ -875,7 +856,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[complexfloating]: ...
 @overload
 def quantile(
@@ -888,7 +868,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[timedelta64]: ...
 @overload
 def quantile(
@@ -901,7 +880,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[datetime64]: ...
 @overload
 def quantile(
@@ -914,7 +892,6 @@ def quantile(
     keepdims: L[False] = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> NDArray[object_]: ...
 @overload
 def quantile(
@@ -927,7 +904,6 @@ def quantile(
     keepdims: bool = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> Any: ...
 @overload
 def quantile(
@@ -940,7 +916,6 @@ def quantile(
     keepdims: bool = False,
     *,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> _ArrayT: ...
 @overload
 def quantile(
@@ -953,7 +928,6 @@ def quantile(
     method: _MethodKind = "linear",
     keepdims: bool = False,
     weights: _ArrayLikeFloat_co | None = None,
-    interpolation: None = None,  # deprecated
 ) -> _ArrayT: ...
 
 _ScalarT_fm = TypeVar(
