@@ -415,6 +415,7 @@ def sort_complex(a: ArrayLike) -> NDArray[complexfloating]: ...
 def trim_zeros(
     filt: _TrimZerosSequence[_T],
     trim: L["f", "b", "fb", "bf"] = "fb",
+    axis: _ShapeLike | None = None,
 ) -> _T: ...
 
 @overload
