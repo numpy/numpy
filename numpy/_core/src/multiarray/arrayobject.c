@@ -380,25 +380,37 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
 
 /* array object functions */
 
-static void
-array_dealloc(PyArrayObject *self)
+/*
+ * Much of the actual work for dealloc, split off for use in __setstate__
+ * via clear_array_attributes function defined below.
+ * If not unraisable, will return -1 on error, 0 on success.
+ * If unraisable, always succeeds, though may print errors and warnings.
+ */
+static int
+_clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
+        if (!unraisable) {
+            return -1;
+        }
         PyErr_WriteUnraisable(NULL);
     }
+    fa->_buffer_info = NULL;
 
-    if (fa->weakreflist != NULL) {
-        PyObject_ClearWeakRefs((PyObject *)self);
-    }
     if (fa->base) {
         int retval;
         if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
         {
-            char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
+            char const * msg = "WRITEBACKIFCOPY detected in clearing of array. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing.";
+            /* For non-dealloc case, we simply error */
+            if (!unraisable) {
+                PyErr_SetString(PyExc_RuntimeError, msg);
+                return -1;
+            }
             /*
              * prevent reaching 0 twice and thus recursing into dealloc.
              * Increasing sys.gettotalrefcount, but path should not be taken.
@@ -408,25 +420,34 @@ array_dealloc(PyArrayObject *self)
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (retval < 0)
             {
-                PyErr_Print();
-                PyErr_Clear();
+                PyErr_WriteUnraisable(NULL);
             }
         }
         /*
          * If fa->base is non-NULL, it is something
          * to DECREF -- either a view or a buffer object
          */
-        Py_XDECREF(fa->base);
+        Py_CLEAR(fa->base);
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
         /* Free any internal references */
         if (PyDataType_REFCHK(fa->descr)) {
             if (PyArray_ClearArray(self) < 0) {
+                if (!unraisable) {
+                    return -1;
+                }
                 PyErr_WriteUnraisable(NULL);
             }
         }
+        /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
+            /* For non-dealloc case, we simply error */
+            if (!unraisable) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "no memory handler found but OWNDATA flag set");
+                return -1;
+            }
             if (npy_global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
@@ -442,14 +463,36 @@ array_dealloc(PyArrayObject *self)
                 nbytes = 1;
             }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_DECREF(fa->mem_handler);
+            Py_CLEAR(fa->mem_handler);
         }
+        fa->data = NULL;
     }
 
     /* must match allocation in PyArray_NewFromDescr */
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
-    Py_DECREF(fa->descr);
+    fa->dimensions = NULL;
+    Py_CLEAR(fa->descr);
+    return 0;
+}
+
+static void
+array_dealloc(PyArrayObject *self)
+{
+    // NPY_TRUE flags that errors are unraisable.
+    int ret = _clear_array_attributes(self, NPY_TRUE);
+    assert(ret == 0);  // should always succeed if unraisable.
+    // Only done on actual deallocation, nothing allocated by numpy.
+    if (((PyArrayObject_fields *)self)->weakreflist != NULL) {
+        PyObject_ClearWeakRefs((PyObject *)self);
+    }
     Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+NPY_NO_EXPORT int
+clear_array_attributes(PyArrayObject *self)
+{
+    // NPY_FALSE flags that errors can be raised.
+    return _clear_array_attributes(self, NPY_FALSE);
 }
 
 /*NUMPY_API
