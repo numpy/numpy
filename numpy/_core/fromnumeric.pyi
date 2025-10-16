@@ -193,6 +193,7 @@ def reshape(  # shape: index
     shape: SupportsIndex,
     order: _OrderACF = "C",
     *,
+    newshape: None = None,  # deprecated
     copy: bool | None = None,
 ) -> np.ndarray[tuple[int], np.dtype[_ScalarT]]: ...
 @overload
@@ -202,6 +203,7 @@ def reshape(  # shape: (int, ...) @ _AnyShapeT
     shape: _AnyShapeT,
     order: _OrderACF = "C",
     *,
+    newshape: None = None,  # deprecated
     copy: bool | None = None,
 ) -> np.ndarray[_AnyShapeT, np.dtype[_ScalarT]]: ...
 @overload  # shape: Sequence[index]
@@ -211,6 +213,7 @@ def reshape(
     shape: Sequence[SupportsIndex],
     order: _OrderACF = "C",
     *,
+    newshape: None = None,  # deprecated
     copy: bool | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload  # shape: index
@@ -220,6 +223,7 @@ def reshape(
     shape: SupportsIndex,
     order: _OrderACF = "C",
     *,
+    newshape: None = None,  # deprecated
     copy: bool | None = None,
 ) -> np.ndarray[tuple[int], np.dtype]: ...
 @overload
@@ -229,6 +233,7 @@ def reshape(  # shape: (int, ...) @ _AnyShapeT
     shape: _AnyShapeT,
     order: _OrderACF = "C",
     *,
+    newshape: None = None,  # deprecated
     copy: bool | None = None,
 ) -> np.ndarray[_AnyShapeT, np.dtype]: ...
 @overload  # shape: Sequence[index]
@@ -238,6 +243,7 @@ def reshape(
     shape: Sequence[SupportsIndex],
     order: _OrderACF = "C",
     *,
+    newshape: None = None,  # deprecated
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 @overload
