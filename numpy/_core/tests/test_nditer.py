@@ -3403,6 +3403,7 @@ def test_arbitrary_number_of_ops_nested():
 
 @pytest.mark.slow
 @requires_memory(9 * np.iinfo(np.intc).max)
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_arbitrary_number_of_ops_error():
     # A different error may happen for more than integer operands, but that
     # is too large to test nicely.
@@ -3415,6 +3416,7 @@ def test_arbitrary_number_of_ops_error():
         np.nested_iters(args, [[0], []])
 
 
+@pytest.mark.thread_unsafe(reason="capfd is thread-unsafe")
 def test_debug_print(capfd):
     """
     Matches the expected output of a debug print with the actual output.

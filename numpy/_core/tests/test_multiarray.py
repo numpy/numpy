@@ -7201,6 +7201,7 @@ class TestDot:
     @pytest.mark.slow
     @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
     @requires_memory(free_bytes=18e9)  # complex case needs 18GiB+
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_huge_vectordot(self, dtype):
         # Large vector multiplications are chunked with 32bit BLAS
         # Test that the chunking does the right thing, see also gh-22262
@@ -8565,6 +8566,7 @@ class TestNewBufferProtocol:
             x = np.array([(1,), (2,)], dtype={'f0': (int, j)})
             self._check_roundtrip(x)
 
+    @pytest.mark.thread_unsafe(reason="test result depends on the reference count of a global object")
     def test_reference_leak(self):
         if HAS_REFCOUNT:
             count_1 = sys.getrefcount(np._core._internal)
@@ -8686,6 +8688,7 @@ class TestNewBufferProtocol:
         assert_equal(arr['a'], 3)
 
     @pytest.mark.parametrize("obj", [np.ones(3), np.ones(1, dtype="i,i")[()]])
+    @pytest.mark.thread_unsafe(reason="_multiarray_tests used memoryview, which is thread-unsafe")
     def test_error_if_stored_buffer_info_is_corrupted(self, obj):
         """
         If a user extends a NumPy array before 1.20 and then runs it
@@ -9082,6 +9085,7 @@ class TestArrayInterface:
         # This fails due to going into the buffer protocol path
         (f, {'data': None, 'shape': ()}, TypeError),
         ])
+    @pytest.mark.thread_unsafe(reason="test result depends on the reference count of a global object")
     def test_scalar_interface(self, val, iface, expected):
         # Test scalar coercion within the array interface
         self.f.iface = {'typestr': 'f8'}
@@ -9770,6 +9774,7 @@ class TestCTypes:
         assert_equal(ctypes, test_arr.ctypes._ctypes)
         assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
 
+    @pytest.mark.thread_unsafe(reason="modifies global module state")
     def test_ctypes_is_not_available(self):
         from numpy._core import _internal
         _internal.ctypes = None
@@ -10677,6 +10682,7 @@ def test_argsort_largearrays(dtype):
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="test result depends on the reference count of a global object")
 def test_gh_22683():
     b = 777.68760986
     a = np.array([b] * 10000, dtype=object)

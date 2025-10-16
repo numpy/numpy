@@ -1796,6 +1796,7 @@ class TestUfunc:
     @requires_memory(6 * 1024**3)
     @pytest.mark.skipif(sys.maxsize < 2**32,
             reason="test array too large for 32bit platform")
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_identityless_reduction_huge_array(self):
         # Regression test for gh-20921 (copying identity incorrectly failed)
         arr = np.zeros((2, 2**31), 'uint8')
@@ -3247,6 +3248,7 @@ class TestLowlevelAPIAccess:
 
     @pytest.mark.skipif(not hasattr(ct, "pythonapi"),
             reason="`ctypes.pythonapi` required for capsule unpacking.")
+    @pytest.mark.thread_unsafe(reason="modifies global object in the ctypes API")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
         data_t = ct.c_char_p * 2

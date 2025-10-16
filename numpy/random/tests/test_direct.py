@@ -572,6 +572,9 @@ class TestDefaultRNG:
         assert rg2 is rg
         assert rg2.bit_generator is bg
 
+    @pytest.mark.thread_unsafe(
+        reason="np.random.set_bit_generator affects global state"
+    )
     def test_coercion_RandomState_Generator(self):
         # use default_rng to coerce RandomState to Generator
         rs = RandomState(1234)

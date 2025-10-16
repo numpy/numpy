@@ -136,6 +136,7 @@ def test_string_size_dtype_large_repr(str_dt):
 @pytest.mark.slow
 @requires_memory(2 * np.iinfo(np.intc).max)
 @pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_string_coercion_error(str_dt):
     very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
     try:
@@ -163,6 +164,7 @@ def test_large_string_coercion_error(str_dt):
 @pytest.mark.slow
 @requires_memory(2 * np.iinfo(np.intc).max)
 @pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_string_addition_error(str_dt):
     very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
 

@@ -2034,6 +2034,7 @@ def test_randomstate_ctor_old_style_pickle():
     assert_equal(state_a['gauss'], state_b['gauss'])
 
 
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_hot_swap(restore_singleton_bitgen):
     # GH 21808
     def_bg = np.random.default_rng(0)
@@ -2045,6 +2046,7 @@ def test_hot_swap(restore_singleton_bitgen):
     assert bg is second_bg
 
 
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_seed_alt_bit_gen(restore_singleton_bitgen):
     # GH 21808
     bg = PCG64(0)
@@ -2059,6 +2061,7 @@ def test_seed_alt_bit_gen(restore_singleton_bitgen):
     assert state["state"]["inc"] != new_state["state"]["inc"]
 
 
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_state_error_alt_bit_gen(restore_singleton_bitgen):
     # GH 21808
     state = np.random.get_state()
@@ -2068,6 +2071,7 @@ def test_state_error_alt_bit_gen(restore_singleton_bitgen):
         np.random.set_state(state)
 
 
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_swap_worked(restore_singleton_bitgen):
     # GH 21808
     np.random.seed(98765)
@@ -2086,6 +2090,7 @@ def test_swap_worked(restore_singleton_bitgen):
     assert new_state["state"]["inc"] == new_state["state"]["inc"]
 
 
+@pytest.mark.thread_unsafe(reason="np.random.set_bit_generator affects global state")
 def test_swapped_singleton_against_direct(restore_singleton_bitgen):
     np.random.set_bit_generator(PCG64(98765))
     singleton_vals = np.random.randint(0, 2 ** 30, 10)

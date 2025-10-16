@@ -1266,6 +1266,7 @@ class TestRandomDist:
         assert_array_almost_equal(actual, expected, decimal=15)
 
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_dirichlet_moderately_small_alpha(self):
         # Use alpha.max() < 0.1 to trigger stick breaking code path
         alpha = np.array([0.02, 0.04, 0.03])

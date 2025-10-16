@@ -1422,6 +1422,7 @@ def test__replace_nan():
         assert np.isnan(arr_nan[-1])
 
 
+@pytest.mark.thread_unsafe(reason="memmap is thread-unsafe (gh-29126)")
 def test_memmap_takes_fast_route(tmpdir):
     # We want memory mapped arrays to take the fast route through nanmax,
     # which avoids creating a mask by using fmax.reduce (see gh-28721). So we

@@ -533,6 +533,9 @@ class TestArray2String:
         )
 
     @given(hynp.from_dtype(np.dtype("U")))
+    @pytest.mark.thread_unsafe(
+        reason="gives unreliable results w/ hypothesis (HypothesisWorks/hypothesis#4562)"
+    )
     def test_any_text(self, text):
         # This test checks that, given any value that can be represented in an
         # array of dtype("U") (i.e. unicode string), ...
@@ -546,6 +549,7 @@ class TestArray2String:
         assert_equal(result, expected_repr)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_refcount(self):
         # make sure we do not hold references to the array due to a recursive
         # closure (gh-10620)

@@ -4046,6 +4046,7 @@ class TestSpecialMethods:
         res = a.__array_ufunc__(np.add, "__call__", a, a)
         assert_array_equal(res, a + a)
 
+    @pytest.mark.thread_unsafe(reason="modifies global module")
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"
