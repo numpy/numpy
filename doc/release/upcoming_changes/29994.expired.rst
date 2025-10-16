@@ -1,0 +1,7 @@
+Remove ``newshape`` parameter from ``numpy.reshape``
+----------------------------------------------------
+
+The ``newshape`` parameter was deprecated in NumPy 2.1.0 and has been
+removed from ``numpy.reshape``.
+
+Use the ``shape`` parameter instead.
