@@ -187,18 +187,6 @@ def _DType_reduce(DType):
     return _DType_reconstruct, (scalar_type,)
 
 
-def __getattr__(name):
-    # Deprecated 2022-11-22, NumPy 1.25.
-    if name == "MachAr":
-        import warnings
-        warnings.warn(
-            "The `np._core.MachAr` is considered private API (NumPy 1.24)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return _machar.MachAr
-    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
-
-
 import copyreg
 
 copyreg.pickle(ufunc, _ufunc_reduce)
