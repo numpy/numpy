@@ -459,7 +459,6 @@ else:
     from .lib._arraypad_impl import pad
     from .lib._arraysetops_impl import (
         ediff1d,
-        in1d,
         intersect1d,
         isin,
         setdiff1d,

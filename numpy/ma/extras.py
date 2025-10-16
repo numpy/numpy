@@ -1446,14 +1446,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     Test whether each element of an array is also present in a second
     array.
 
-    The output is always a masked array. See `numpy.in1d` for more details.
+    The output is always a masked array.
 
     We recommend using :func:`isin` instead of `in1d` for new code.
 
     See Also
     --------
     isin       : Version of this function that preserves the shape of ar1.
-    numpy.in1d : Equivalent function for ndarrays.
 
     Examples
     --------

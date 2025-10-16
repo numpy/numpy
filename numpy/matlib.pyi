@@ -222,7 +222,6 @@ from numpy import (  # noqa: F401
     i0,
     iinfo,
     imag,
-    in1d,
     index_exp,
     indices,
     inexact,
