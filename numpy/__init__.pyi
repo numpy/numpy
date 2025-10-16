@@ -990,7 +990,7 @@ _NDIterFlagsOp: TypeAlias = L[
     "updateifcopy",
     "virtual",
     "writeonly",
-    "writemasked"
+    "writemasked",
 ]
 
 _MemMapModeKind: TypeAlias = L[
@@ -5776,18 +5776,35 @@ class busdaycalendar:
 
 @final
 class nditer:
-    def __new__(
-        cls,
-        op: ArrayLike | Sequence[ArrayLike | None],
-        flags: Sequence[_NDIterFlagsKind] | None = ...,
-        op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = ...,
-        op_dtypes: DTypeLike | Sequence[DTypeLike | None] | None = ...,
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        op_axes: Sequence[Sequence[SupportsIndex]] | None = ...,
-        itershape: _ShapeLike | None = ...,
-        buffersize: SupportsIndex = ...,
-    ) -> nditer: ...
+    @overload
+    def __init__(
+        self,
+        /,
+        op: ArrayLike,
+        flags: Sequence[_NDIterFlagsKind] | None = None,
+        op_flags: Sequence[_NDIterFlagsOp] | None = None,
+        op_dtypes: DTypeLike | None = None,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "safe",
+        op_axes: Sequence[SupportsIndex] | None = None,
+        itershape: _ShapeLike | None = None,
+        buffersize: SupportsIndex = 0,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        /,
+        op: Sequence[ArrayLike | None],
+        flags: Sequence[_NDIterFlagsKind] | None = None,
+        op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = None,
+        op_dtypes: Sequence[DTypeLike | None] | None = None,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "safe",
+        op_axes: Sequence[Sequence[SupportsIndex]] | None = None,
+        itershape: _ShapeLike | None = None,
+        buffersize: SupportsIndex = 0,
+    ) -> None: ...
+
     def __enter__(self) -> nditer: ...
     def __exit__(
         self,
