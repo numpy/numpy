@@ -53,8 +53,14 @@ months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
 some additional SI-prefix seconds-based units. The `datetime64` data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
-letters, for a "Not A Time" value. The string "today" is also supported and
-returns the current UTC date with day precision.
+letters, for a "Not A Time" value. The string "now" is also supported and
+returns the current UTC time. By default, it uses second ('s') precision, but
+you can specify a different unit (e.g., 'M', 'D', 'h') to truncate the result
+to that precision. Units finer than seconds (such as 'ms' or 'ns') are
+supported but will show fractional parts as zeros, effectively truncating to
+whole seconds. The string "today" is also supported and returns the current UTC
+date with day precision. It also supports the same precision specifiers
+as ``now``.
 
 .. admonition:: Example
 
@@ -91,6 +97,17 @@ returns the current UTC date with day precision.
 
     >>> np.datetime64('nat')
     np.datetime64('NaT')
+
+    The current time (UTC, default second precision):
+
+    >>> np.datetime64('now')
+    np.datetime64('2025-08-05T02:22:14')  # result will depend on the current time
+
+    >>> np.datetime64('now', 'D')
+    np.datetime64('2025-08-05')
+    
+    >>> np.datetime64('now', 'ms')
+    np.datetime64('2025-08-05T02:22:14.000')
 
     The current date:
 
