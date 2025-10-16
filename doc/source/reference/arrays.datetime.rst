@@ -59,7 +59,8 @@ you can specify a different unit (e.g., 'M', 'D', 'h') to truncate the result
 to that precision. Units finer than seconds (such as 'ms' or 'ns') are
 supported but will show fractional parts as zeros, effectively truncating to
 whole seconds. The string "today" is also supported and returns the current UTC
-date with day precision.
+date with day precision. It also supports the same precision specifiers
+as ``now``.
 
 .. admonition:: Example
 
