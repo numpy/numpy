@@ -1,6 +1,6 @@
 # ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
-from _typeshed import StrOrBytesPath
+from _typeshed import Incomplete, StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from typing import (
     Any,
@@ -12,10 +12,10 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeVar
+from typing_extensions import Buffer, TypeVar
 
 import numpy as np
-from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer
+from numpy import _ByteOrder, _OrderKACF
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
@@ -55,25 +55,31 @@ class _SupportsReadInto(Protocol):
 ###
 
 # exported in `numpy.rec`
-class record(np.void):
-    def __getattribute__(self, attr: str) -> Any: ...
-    def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
+class record(np.void):  # type: ignore[misc]
+    __name__: ClassVar[Literal["record"]] = "record"
+    __module__: Literal["numpy"] = "numpy"
+
     def pprint(self) -> str: ...
+
+    def __getattribute__(self, attr: str, /) -> Any: ...
+    def __setattr__(self, attr: str, val: ArrayLike, /) -> None: ...
+
     @overload
-    def __getitem__(self, key: str | SupportsIndex) -> Any: ...
+    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...
     @overload
-    def __getitem__(self, key: list[str]) -> record: ...
+    def __getitem__(self, key: list[str], /) -> record: ...
 
 # exported in `numpy.rec`
 class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
-    __name__: ClassVar[Literal["record"]] = "record"
-    __module__: Literal["numpy"] = "numpy"
+    __name__: ClassVar[Literal["recarray"]] = "recarray"
+    __module__: Literal["numpy.rec"] = "numpy.rec"
+
     @overload
     def __new__(
         subtype,
         shape: _ShapeLike,
         dtype: None = None,
-        buf: _SupportsBuffer | None = None,
+        buf: Buffer | None = None,
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         *,
@@ -89,7 +95,7 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
         subtype,
         shape: _ShapeLike,
         dtype: DTypeLike | None,
-        buf: _SupportsBuffer | None = None,
+        buf: Buffer | None = None,
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         formats: None = None,
@@ -98,16 +104,18 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
         byteorder: None = None,
         aligned: Literal[False] = False,
         order: _OrderKACF = "C",
-    ) -> _RecArray[Any]: ...
-    def __array_finalize__(self, /, obj: object) -> None: ...
+    ) -> _RecArray[Incomplete]: ...
+
     def __getattribute__(self, attr: str, /) -> Any: ...
     def __setattr__(self, attr: str, val: ArrayLike, /) -> None: ...
+
+    def __array_finalize__(self, /, obj: object) -> None: ...
 
     #
     @overload
     def field(self, /, attr: int | str, val: ArrayLike) -> None: ...
     @overload
-    def field(self, /, attr: int | str, val: None = None) -> Any: ...
+    def field(self, /, attr: int | str, val: None = None) -> Incomplete: ...
 
 # exported in `numpy.rec`
 class format_parser:
@@ -174,7 +182,7 @@ def fromrecords(
 # exported in `numpy.rec`
 @overload
 def fromstring(
-    datastring: _SupportsBuffer,
+    datastring: Buffer,
     dtype: DTypeLike | None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
@@ -186,7 +194,7 @@ def fromstring(
 ) -> _RecArray[record]: ...
 @overload
 def fromstring(
-    datastring: _SupportsBuffer,
+    datastring: Buffer,
     dtype: None = None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
