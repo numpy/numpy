@@ -79,28 +79,6 @@ def write_release(version):
 
     os.system(f"cp {notes} {target_rst}")
 
-    with open(str(target_rst), 'a') as f:
-        f.writelines(textwrap.dedent(
-            """
-            Checksums
-            =========
-
-            MD5
-            ---
-            ::
-
-            """))
-        f.writelines([f'    {c}\n' for c in compute_hash(wheel_dir, md5)])
-
-        f.writelines(textwrap.dedent(
-            """
-            SHA256
-            ------
-            ::
-
-            """))
-        f.writelines([f'    {c}\n' for c in compute_hash(wheel_dir, sha256)])
-
     # translate README.rst to md for posting on GitHub
     subprocess.run(
         ["pandoc", "-s", "-o", str(target_md), str(target_rst), "--wrap=preserve"],
