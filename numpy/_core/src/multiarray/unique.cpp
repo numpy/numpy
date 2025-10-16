@@ -57,10 +57,9 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     return hash;
 }
 
-template <typename S, typename T, S (*real)(T), S (*imag)(T)>
-size_t hash_complex_large(const T *value, npy_bool equal_nan) {
-    S value_real = real(*value);
-    S value_imag = imag(*value);
+size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
+    npy_longdouble value_real = npy_creall(*value);
+    npy_longdouble value_imag = npy_cimagl(*value);
     int hasnan = npy_isnan(value_real) || npy_isnan(value_imag);
     if (equal_nan && hasnan) {
         return 0;
@@ -70,7 +69,7 @@ size_t hash_complex_large(const T *value, npy_bool equal_nan) {
     // SO we don't need to worry about NaN here.
     // Some large complex dtypes (e.g. npy_complex256) only use a subset of the bits in their storage.
     // To ensure that the hash is independent of the unused bits, we copy the real and imaginary parts into a byte array.
-    constexpr size_t size = sizeof(S);
+    constexpr size_t size = sizeof(npy_longdouble);
     unsigned char value_bytes[2 * size];
     std::memcpy(value_bytes, &value_real, size);
     std::memcpy(value_bytes + size, &value_imag, size);
@@ -441,7 +440,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     },
     {NPY_CLONGDOUBLE, unique_numeric<
         npy_clongdouble,
-        hash_complex_large<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
+        hash_complex_clongdouble,
         equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
         copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>
         >
@@ -464,7 +463,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     },
     {NPY_COMPLEX128, unique_numeric<
         npy_complex128,
-        hash_complex_large<npy_double, npy_complex128, npy_creal, npy_cimag>,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
         equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
         copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
         >
