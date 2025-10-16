@@ -14,7 +14,6 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (
@@ -238,21 +237,6 @@ def reshape(
     shape: Sequence[SupportsIndex],
     order: _OrderACF = "C",
     *,
-    copy: bool | None = None,
-) -> NDArray[Any]: ...
-@overload
-@deprecated(
-    "`newshape` keyword argument is deprecated, "
-    "use `shape=...` or pass shape positionally instead. "
-    "(deprecated in NumPy 2.1)",
-)
-def reshape(
-    a: ArrayLike,
-    /,
-    shape: None = None,
-    order: _OrderACF = "C",
-    *,
-    newshape: _ShapeLike,
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
