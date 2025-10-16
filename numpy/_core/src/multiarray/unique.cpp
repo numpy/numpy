@@ -51,11 +51,8 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
 
     // Now, equal_nan is false or neither of the values is not NaN.
     // SO we don't need to worry about NaN here.
-    size_t size = sizeof(S);
-    unsigned char value_bytes[2 * size];
-    std::memcpy(value_bytes, &value_real, size);
-    std::memcpy(value_bytes + size, &value_imag, size);
-    size_t hash = npy_fnv1a(value_bytes, 2 * size);
+    const unsigned char* value_bytes = reinterpret_cast<const unsigned char*>(value);
+    size_t hash = npy_fnv1a(value_bytes, sizeof(T));
 
     return hash;
 }
