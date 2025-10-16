@@ -488,6 +488,7 @@ else:
         flip,
         gradient,
         hamming,
+        hann,
         hanning,
         i0,
         insert,

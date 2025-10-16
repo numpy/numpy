@@ -12,5 +12,6 @@ Various windows
    bartlett
    blackman
    hamming
+   hann
    hanning
    kaiser
