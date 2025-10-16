@@ -11,7 +11,6 @@ from typing import (
     TypeAlias,
     TypeGuard,
     TypeVar,
-    Unpack,
     overload,
 )
 
@@ -127,7 +126,6 @@ from .multiarray import (
     WRAP as WRAP,
     _Array,
     _ConstructorEmpty,
-    _KwargsEmpty,
     arange,
     array,
     asanyarray,
@@ -739,7 +737,9 @@ def full(
     fill_value: _ScalarT,
     dtype: None = None,
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _Array[tuple[int], _ScalarT]: ...
 @overload
 def full(
@@ -747,7 +747,9 @@ def full(
     fill_value: Any,
     dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[tuple[int], _DTypeT]: ...
 @overload
 def full(
@@ -755,7 +757,9 @@ def full(
     fill_value: Any,
     dtype: type[_ScalarT],
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _Array[tuple[int], _ScalarT]: ...
 @overload
 def full(
@@ -763,7 +767,9 @@ def full(
     fill_value: Any,
     dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _Array[tuple[int], Any]: ...
 # known shape
 @overload
@@ -772,7 +778,9 @@ def full(
     fill_value: _ScalarT,
     dtype: None = None,
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _Array[_AnyShapeT, _ScalarT]: ...
 @overload
 def full(
@@ -780,7 +788,9 @@ def full(
     fill_value: Any,
     dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[_AnyShapeT, _DTypeT]: ...
 @overload
 def full(
@@ -788,7 +798,9 @@ def full(
     fill_value: Any,
     dtype: type[_ScalarT],
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _Array[_AnyShapeT, _ScalarT]: ...
 @overload
 def full(
@@ -796,7 +808,9 @@ def full(
     fill_value: Any,
     dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> _Array[_AnyShapeT, Any]: ...
 # unknown shape
 @overload
@@ -805,7 +819,9 @@ def full(
     fill_value: _ScalarT,
     dtype: None = None,
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def full(
@@ -813,7 +829,9 @@ def full(
     fill_value: Any,
     dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> np.ndarray[Any, _DTypeT]: ...
 @overload
 def full(
@@ -821,7 +839,9 @@ def full(
     fill_value: Any,
     dtype: type[_ScalarT],
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def full(
@@ -829,7 +849,9 @@ def full(
     fill_value: Any,
     dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
-    **kwargs: Unpack[_KwargsEmpty],
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
 @overload

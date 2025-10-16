@@ -231,7 +231,6 @@ def piecewise(
         Callable[Concatenate[NDArray[_ScalarT], _Pss], NDArray[_ScalarT | Any]]
         | _ScalarT | object
     ],
-    /,
     *args: _Pss.args,
     **kw: _Pss.kwargs,
 ) -> NDArray[_ScalarT]: ...
@@ -243,7 +242,6 @@ def piecewise(
         Callable[Concatenate[NDArray[Any], _Pss], NDArray[Any]]
         | object
     ],
-    /,
     *args: _Pss.args,
     **kw: _Pss.kwargs,
 ) -> NDArray[Any]: ...
@@ -288,21 +286,21 @@ def gradient(
 ) -> Any: ...
 
 @overload
-def diff(
+def diff(  # type: ignore[overload-overlap]
     a: _T,
     n: L[0],
     axis: SupportsIndex = -1,
-    prepend: ArrayLike = ...,
-    append: ArrayLike = ...,
+    prepend: ArrayLike | _NoValueType = ...,  # = _NoValue
+    append: ArrayLike | _NoValueType = ...,  # = _NoValue
 ) -> _T: ...
 @overload
 def diff(
     a: ArrayLike,
     n: int = 1,
     axis: SupportsIndex = -1,
-    prepend: ArrayLike = ...,
-    append: ArrayLike = ...,
-) -> NDArray[Any]: ...
+    prepend: ArrayLike | _NoValueType = ...,  # = _NoValue
+    append: ArrayLike | _NoValueType = ...,  # = _NoValue
+) -> NDArray[Incomplete]: ...
 
 @overload  # float scalar
 def interp(
@@ -417,6 +415,7 @@ def sort_complex(a: ArrayLike) -> NDArray[complexfloating]: ...
 def trim_zeros(
     filt: _TrimZerosSequence[_T],
     trim: L["f", "b", "fb", "bf"] = "fb",
+    axis: _ShapeLike | None = None,
 ) -> _T: ...
 
 @overload
@@ -478,7 +477,7 @@ def cov(
 # NOTE `bias` and `ddof` are deprecated and ignored
 @overload
 def corrcoef(
-    m: _ArrayLikeFloat_co,
+    x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
@@ -488,7 +487,7 @@ def corrcoef(
 ) -> NDArray[floating]: ...
 @overload
 def corrcoef(
-    m: _ArrayLikeComplex_co,
+    x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
@@ -498,7 +497,7 @@ def corrcoef(
 ) -> NDArray[complexfloating]: ...
 @overload
 def corrcoef(
-    m: _ArrayLikeComplex_co,
+    x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,
@@ -508,7 +507,7 @@ def corrcoef(
 ) -> NDArray[_ScalarT]: ...
 @overload
 def corrcoef(
-    m: _ArrayLikeComplex_co,
+    x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
     bias: _NoValueType = ...,

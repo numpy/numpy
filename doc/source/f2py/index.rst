@@ -45,6 +45,8 @@ end matches the NumPy version printed from ``python -m numpy.f2py``, then you
 can use the shorter version. If not, or if you cannot run ``f2py``, you should
 replace all calls to ``f2py`` mentioned in this guide with the longer version.
 
+For Meson build examples, see :doc:`usage`.
+
 .. toctree::
    :maxdepth: 3
 
