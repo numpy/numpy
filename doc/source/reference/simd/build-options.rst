@@ -239,6 +239,17 @@ On IBM/ZSYSTEM(S390X)
    * - ``VXE2``
      - ``VX`` ``VXE``
 
+On RISCV64
+~~~~~~~~~~~~~~~~~~~~~
+.. list-table::
+   :header-rows: 1
+   :align: left
+
+   * - Name
+     - Implies
+   * - ``RVV``
+     - 
+
 .. _opt-special-options:
 
 Special Options
@@ -287,6 +298,8 @@ Enables the minimum CPU features for each architecture:
    * - ARMv8/AArch64
      - ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``
    * - IBM/ZSYSTEM(S390X)
+     - ``NONE``
+   * - riscv64
      - ``NONE``
 
 
