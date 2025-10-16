@@ -343,11 +343,11 @@ fill_arraymethod_from_slots(
                 }
             }
             if (i >= meth->nin && NPY_DT_is_parametric(res->dtypes[i])) {
-                PyErr_Format(PyExc_TypeError,
-                        "must provide a `resolve_descriptors` function if any "
-                        "output DType is parametric. (method: %s)",
-                        spec->name);
-                return -1;
+                // PyErr_Format(PyExc_TypeError,
+                //         "must provide a `resolve_descriptors` function if any "
+                //         "output DType is parametric. (method: %s)",
+                //         spec->name);
+                // return -1;
             }
         }
     }

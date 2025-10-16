@@ -73,6 +73,11 @@ typedef struct {
      */
     PyArrayDTypeMeta_GetConstant *get_constant;
     /*
+     * Function to compare two values of this type, given a descriptor.
+     * Used for sorting if custom loops are not provided.
+     */
+    PyArrayDTypeMeta_CompareFuncWithDescr *sort_compare;
+    /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
@@ -100,7 +105,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 12
+#define NPY_NUM_DTYPE_SLOTS 13
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -173,6 +178,26 @@ dtypemeta_wrap_legacy_descriptor(
 
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs);
+
+NPY_NO_EXPORT int
+default_defaultsort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
+
+NPY_NO_EXPORT int
+default_stablesort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
+
+NPY_NO_EXPORT int
+default_defaultargsort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
+
+NPY_NO_EXPORT int
+default_stableargsort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
 
 /*
  * NumPy's builtin DTypes:
