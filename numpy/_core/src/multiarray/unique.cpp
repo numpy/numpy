@@ -70,7 +70,7 @@ size_t hash_complex_large(const T *value, npy_bool equal_nan) {
     // SO we don't need to worry about NaN here.
     // Some large complex dtypes (e.g. npy_complex256) only use a subset of the bits in their storage.
     // To ensure that the hash is independent of the unused bits, we copy the real and imaginary parts into a byte array.
-    size_t size = sizeof(S);
+    constexpr size_t size = sizeof(S);
     unsigned char value_bytes[2 * size];
     std::memcpy(value_bytes, &value_real, size);
     std::memcpy(value_bytes + size, &value_imag, size);
