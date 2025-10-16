@@ -144,4 +144,11 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
+      if: ${{ matrix.version != '3.14t-dev' || matrix.build_runner[0] != 'macos-15-intel' }}
       run: spin test -j2 -- --timeout=600 --durations=10
+  
+    - name: Test in multiple threads
+      if: ${{ matrix.version == '3.14t-dev' && matrix.build_runner[0] == 'macos-15-intel' }}
+      run:  |
+        pip install pytest-run-parallel
+        spin test -- --parallel-threads=4 --skip-thread-unsafe=1 --timeout=600 --durations=10
