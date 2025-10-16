@@ -1012,9 +1012,9 @@ def startswith(
 @overload
 def startswith(
     a: T_co,
-    suffix: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    prefix: T_co,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 
 def str_len(A: UST_co) -> NDArray[int_]: ...
