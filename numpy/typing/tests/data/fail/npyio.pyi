@@ -12,8 +12,8 @@ AR_i8: npt.NDArray[np.int64]
 
 np.load(str_file)  # type: ignore[arg-type]
 
-np.save(bytes_path, AR_i8)  # type: ignore[call-overload]
-np.save(str_path, AR_i8, fix_imports=True)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+np.save(bytes_path, AR_i8)  # type: ignore[arg-type]
+np.save(str_path, AR_i8, fix_imports=True)  # type: ignore[call-arg]
 
 np.savez(bytes_path, AR_i8)  # type: ignore[arg-type]
 
