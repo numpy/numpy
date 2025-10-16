@@ -69,11 +69,10 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     // SO we don't need to worry about NaN here.
     // Some large complex dtypes (e.g. npy_complex256) only use a subset of the bits in their storage.
     // To ensure that the hash is independent of the unused bits, we copy the real and imaginary parts into a byte array.
-    constexpr size_t size = sizeof(npy_longdouble);
-    unsigned char value_bytes[2 * size];
-    std::memcpy(value_bytes, &value_real, size);
-    std::memcpy(value_bytes + size, &value_imag, size);
-    size_t hash = npy_fnv1a(value_bytes, 2 * size);
+    unsigned char value_bytes[2 * NPY_SIZEOF_LONGDOUBLE];
+    std::memcpy(value_bytes, &value_real, NPY_SIZEOF_LONGDOUBLE);
+    std::memcpy(value_bytes + NPY_SIZEOF_LONGDOUBLE, &value_imag, NPY_SIZEOF_LONGDOUBLE);
+    size_t hash = npy_fnv1a(value_bytes, 2 * NPY_SIZEOF_LONGDOUBLE);
 
     return hash;
 }
