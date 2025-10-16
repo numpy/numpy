@@ -51,20 +51,13 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
 
     // Now, equal_nan is false or neither of the values is not NaN.
     // SO we don't need to worry about NaN here.
-    size_t hval = std::hash<S>{}(value_real);
-    #if NPY_SIZEOF_SIZE_T == 8
-        /* multiply by the 64 bit FNV magic prime */
-        /* hval *= 0x100000001b3ULL; */
-        hval += (hval << 1) + (hval << 4) + (hval << 5) +
-		        (hval << 7) + (hval << 8) + (hval << 40);
-    #else /* NPY_SIZEOF_SIZE_T == 4 */
-        /* multiply by the 32 bit FNV magic prime */
-        /* hval *= 0x01000193; */
-        hval += (hval<<1) + (hval<<4) + (hval<<7) + (hval<<8) + (hval<<24);
-    #endif
-    hval ^= std::hash<S>{}(value_imag);
+    size_t size = sizeof(S);
+    unsigned char value_bytes[2 * size];
+    std::memcpy(value_bytes, &value_real, size);
+    std::memcpy(value_bytes + size, &value_imag, size);
+    size_t hash = npy_fnv1a(value_bytes, 2 * size);
 
-    return hval;
+    return hash;
 }
 
 template <typename T>
