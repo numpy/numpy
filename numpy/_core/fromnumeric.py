@@ -1304,6 +1304,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indexes of the maximal elements of a N-dimensional array:
 
+    >>> a.flat[np.argmax(a)]
+    15
     >>> ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
     >>> ind
     (1, 2)
@@ -1402,6 +1404,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indices of the minimum elements of a N-dimensional array:
 
+    >>> a.flat[np.argmin(a)]
+    10
     >>> ind = np.unravel_index(np.argmin(a, axis=None), a.shape)
     >>> ind
     (0, 0)
