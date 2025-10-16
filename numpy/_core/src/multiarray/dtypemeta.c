@@ -332,7 +332,7 @@ wrap_default_sort_methods(PyArray_DTypeMeta *cls)
     PyBoundArrayMethodObject *sort_method = PyArrayMethod_FromSpec_int(
             &sort_spec, 1);
     if (sort_method == NULL) {
-        PyDataMem_Free(sort_name);
+        PyDataMem_FREE(sort_name);
         return -1;
     }
     NPY_DT_SLOTS(cls)->sort_meth = sort_method->method;
@@ -361,7 +361,7 @@ wrap_default_sort_methods(PyArray_DTypeMeta *cls)
     PyBoundArrayMethodObject *argsort_method = PyArrayMethod_FromSpec_int(
             &argsort_spec, 1);
     if (argsort_method == NULL) {
-        PyDataMem_Free(argsort_name);
+        PyDataMem_FREE(argsort_name);
         return -1;
     }
     NPY_DT_SLOTS(cls)->argsort_meth = argsort_method->method;
