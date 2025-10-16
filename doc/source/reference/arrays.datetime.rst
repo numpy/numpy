@@ -309,6 +309,66 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
+
+Converting datetime and timedelta to Python Object
+==================================================
+
+NumPy follows a strict protocol when converting `datetime64` and/or `timedelta64` to Python Objects (e.g., ``tuple``, ``list``, `datetime.datetime`). 
+
+The protocol is described in the following table:
+
+================================ ================================= ==================================
+         Input Type                         for `datetime64`               for `timedelta64`
+================================ ================================= ==================================
+          ``NaT``                             ``None``                           ``None``
+        ns/ps/fs/as                           ``int``                            ``int``
+        μs/ms/s/m/h                      `datetime.datetime`               `datetime.timedelta`
+      D/W (Linear units)                   `datetime.date`                 `datetime.timedelta` 
+    Y/M (Non-linear units)                 `datetime.date`                       ``int``
+        Generic units                      `datetime.date`                       ``int``
+================================ ================================= ==================================
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> type(np.datetime64('NaT').item())
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64('NaT').item())
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64(123, 'ns').item())
+    <class 'int'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').item())
+    <class 'datetime.datetime'>
+
+    >>> type(np.timedelta64(10, 'D').item())
+    <class 'datetime.timedelta'>
+
+
+In the case where conversion of `datetime64` and/or `timedelta64` is done against Python types like ``int``, ``float``, and ``str`` the corresponding return types will be ``np.str_``, ``np.int64`` and ``np.float64``.
+
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+    
+    >>> type(np.timedelta64(1, 'D').astype(int))
+    <class 'numpy.int64'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').astype(float))
+    <class 'numpy.float64'>
+
+    >>> type(np.timedelta64(123, 'ns').astype(str))
+    <class 'numpy.str_'>
+
+
 Business day functionality
 ==========================
 
