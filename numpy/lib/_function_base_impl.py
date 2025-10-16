@@ -2,7 +2,6 @@ import builtins
 import collections.abc
 import functools
 import re
-import sys
 import warnings
 
 import numpy as np
@@ -68,7 +67,7 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
+    'blackman', 'kaiser', 'trapezoid', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
@@ -2119,62 +2118,6 @@ def place(arr, mask, vals):
     return _place(arr, mask, vals)
 
 
-def disp(mesg, device=None, linefeed=True):
-    """
-    Display a message on a device.
-
-    .. deprecated:: 2.0
-        Use your own printing function instead.
-
-    Parameters
-    ----------
-    mesg : str
-        Message to display.
-    device : object
-        Device to write message. If None, defaults to ``sys.stdout`` which is
-        very similar to ``print``. `device` needs to have ``write()`` and
-        ``flush()`` methods.
-    linefeed : bool, optional
-        Option whether to print a line feed or not. Defaults to True.
-
-    Raises
-    ------
-    AttributeError
-        If `device` does not have a ``write()`` or ``flush()`` method.
-
-    Examples
-    --------
-    >>> import numpy as np
-
-    Besides ``sys.stdout``, a file-like object can also be used as it has
-    both required methods:
-
-    >>> from io import StringIO
-    >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
-    >>> buf.getvalue()
-    '"Display" in a file\\n'
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`disp` is deprecated, "
-        "use your own printing function instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    if device is None:
-        device = sys.stdout
-    if linefeed:
-        device.write(f'{mesg}\n')
-    else:
-        device.write(f'{mesg}')
-    device.flush()
-
-
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
 _CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME}(?:,{_DIMENSION_NAME})*)?'
@@ -2959,14 +2902,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : _NoValue, optional
-        Has no effect, do not use.
 
-        .. deprecated:: 1.10.0
-    ddof : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
@@ -3061,10 +2997,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
              1.        ]])
 
     """
-    if bias is not np._NoValue or ddof is not np._NoValue:
-        # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
@@ -5078,24 +5010,6 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
         y = np.asarray(y)
         ret = add.reduce(d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0, axis)
     return ret
-
-
-@set_module('numpy')
-def trapz(y, x=None, dx=1.0, axis=-1):
-    """
-    `trapz` is deprecated in NumPy 2.0.
-
-    Please use `trapezoid` instead, or one of the numerical integration
-    functions in `scipy.integrate`.
-    """
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`trapz` is deprecated. Use `trapezoid` instead, or one of the "
-        "numerical integration functions in `scipy.integrate`.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return trapezoid(y, x=x, dx=dx, axis=axis)
 
 
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):

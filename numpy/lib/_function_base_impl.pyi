@@ -14,7 +14,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeIs, deprecated
+from typing_extensions import TypeIs
 
 import numpy as np
 from numpy import (
@@ -87,7 +87,6 @@ __all__ = [
     "blackman",
     "kaiser",
     "trapezoid",
-    "trapz",
     "i0",
     "meshgrid",
     "delete",
@@ -990,10 +989,6 @@ def trapezoid(
     floating | complexfloating | timedelta64
     | NDArray[floating | complexfloating | timedelta64 | object_]
 ): ...
-
-@deprecated("Use 'trapezoid' instead")
-def trapz(y: ArrayLike, x: ArrayLike | None = None, dx: float = 1.0, axis: int = -1) -> generic | NDArray[generic]: ...
-
 @overload
 def meshgrid(
     *,

@@ -505,7 +505,6 @@ else:
         sinc,
         sort_complex,
         trapezoid,
-        trapz,
         trim_zeros,
         unwrap,
         vectorize,
