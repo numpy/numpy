@@ -1,8 +1,8 @@
 .. _ufunc-meson-example:
 
-===============================
+===================================
 Building a NumPy Ufunc with Meson
-===============================
+===================================
 
 This page provides a concrete example of how to build a C-based NumPy ufunc extension using Meson.
 
@@ -10,11 +10,11 @@ Project layout::
 
   ufunc_example/
     meson.build
-    your_ufunc_module.c
+    code/ufunc/your_ufunc_module.c
     __init__.py  (can be empty)
 
 The C source file ``your_ufunc_module.c`` should implement your ufunc logic.
-See ``doc/source/f2py/examples/your_ufunc_module.c`` for a minimal example.
+See ``doc/source/f2py/code/ufunc/your_ufunc_module.c`` for a minimal example.
 
 To build a NumPy ufunc extension, you need to include the NumPy headers. You can find the include path using Python:
 
@@ -52,4 +52,3 @@ To build and install the extension:
 .. note::
    This example assumes you have a minimal C ufunc implementation. For more advanced usage, see the official NumPy documentation:
    https://numpy.org/doc/stable/reference/c-api.ufunc.html
-   
