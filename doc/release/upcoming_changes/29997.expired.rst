@@ -7,5 +7,3 @@ The following long-deprecated APIs have been removed:
   ``scipy.integrate`` functions instead.
 * ``disp`` function — deprecated from 2.0 release and no longer functional. Use your own printing function instead.
 * ``bias`` and ``ddof`` arguments in ``numpy.corrcoef`` — these had no effect since NumPy 1.10.
-
-
