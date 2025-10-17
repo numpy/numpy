@@ -479,8 +479,6 @@ def corrcoef(
     x: _ArrayLikeFloat_co,
     y: _ArrayLikeFloat_co | None = None,
     rowvar: bool = True,
-    bias: _NoValueType = ...,
-    ddof: _NoValueType = ...,
     *,
     dtype: None = None,
 ) -> NDArray[floating]: ...
@@ -489,8 +487,6 @@ def corrcoef(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
-    bias: _NoValueType = ...,
-    ddof: _NoValueType = ...,
     *,
     dtype: None = None,
 ) -> NDArray[complexfloating]: ...
@@ -499,8 +495,6 @@ def corrcoef(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
-    bias: _NoValueType = ...,
-    ddof: _NoValueType = ...,
     *,
     dtype: _DTypeLike[_ScalarT],
 ) -> NDArray[_ScalarT]: ...
@@ -509,8 +503,6 @@ def corrcoef(
     x: _ArrayLikeComplex_co,
     y: _ArrayLikeComplex_co | None = None,
     rowvar: bool = True,
-    bias: _NoValueType = ...,
-    ddof: _NoValueType = ...,
     *,
     dtype: DTypeLike | None = None,
 ) -> NDArray[Any]: ...
