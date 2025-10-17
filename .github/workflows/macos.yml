@@ -145,10 +145,11 @@ jobs:
 
     - name: Test (fast tests)
       if: ${{ matrix.version != '3.14t-dev' || matrix.build_runner[0] != 'macos-14' }}
-      run: spin test -j2 -- --timeout=600 --durations=10
+      run: |
+        pip uninstall pytest-run-parallel
+        spin test -j2 -- --timeout=600 --durations=10
   
     - name: Test in multiple threads
       if: ${{ matrix.version == '3.14t-dev' && matrix.build_runner[0] == 'macos-14' }}
       run:  |
-        pip install pytest-run-parallel
-        spin test -p 4 -- --skip-thread-unsafe=1 --timeout=600 --durations=10
+        spin test -p 4 -- --timeout=600 --durations=10
