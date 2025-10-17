@@ -75,7 +75,7 @@ Testing a subset of NumPy::
 For detailed info on testing, see :ref:`testing-builds`
 
 Running tests in multiple threads
--------------------------
+---------------------------------
 
 To help with stress testing NumPy for thread safety, the test suite can be ran under
 ``pytest-run-parallel``. To install ``pytest-run-parallel``::
