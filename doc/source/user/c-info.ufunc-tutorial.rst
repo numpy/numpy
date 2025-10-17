@@ -157,42 +157,54 @@ the module.
             return m;
         }
 
-To use the ``setup.py`` file, place ``setup.py`` and ``spammodule.c``
-in the same folder. Then ``python setup.py build`` will build the module to
-import, or ``python setup.py install`` will install the module to your
-site-packages directory.
+.. note::
 
-    .. code-block:: python
+   For modern Python packaging, it is recommended to use a ``pyproject.toml`` and select
+   either ``meson-python`` or ``scikit-build-core`` as your build backend. Both are well-designed,
+   well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
-        '''
-            setup.py file for spammodule.c
+   Example ``pyproject.toml``:
 
-            Calling
-            $python setup.py build_ext --inplace
-            will build the extension library in the current file.
+   .. code-block:: toml
 
-            Calling
-            $python setup.py build
-            will build a file that looks like ./build/lib*, where
-            lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension,
-            such as .so
+      [build-system]
+      requires = ["meson-python", "numpy>=2.0"]
+      build-backend = "mesonpy"
 
-            Calling
-            $python setup.py install
-            will install the module in your site-packages file.
+.. tab-set::
 
-            See the setuptools section 'Building Extension Modules'
-            at setuptools.pypa.io for more information.
-        '''
+   .. tab-item:: meson
 
-        from setuptools import setup, Extension
-        import numpy as np
+      .. code-block:: meson
 
-        module1 = Extension('spam', sources=['spammodule.c'])
+         project('spam', 'c')
 
-        setup(name='spam', version='1.0', ext_modules=[module1])
+         py = import('python').find_installation()
 
+         sources = files('spammodule.c')
+
+         extension_module = py.extension_module(
+           'spam',
+           sources,
+           install: true,
+           subdir: 'spam'
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         pip install .
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+
+         module1 = Extension('spam', sources=['spammodule.c'])
+
+         setup(name='spam', version='1.0', ext_modules=[module1])
 
 Once the spam module is imported into python, you can call logit
 via ``spam.logit``. Note that the function used above cannot be applied
@@ -339,49 +351,48 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a ``setup.py`` file for the above code. As before, the module
-can be build via calling ``python setup.py build`` at the command prompt,
-or installed to site-packages via ``python setup.py install``. The module
-can also be placed into a local folder e.g. ``npufunc_directory`` below
-using ``python setup.py build_ext --inplace``.
+.. tab-set::
 
-    .. code-block:: python
+   .. tab-item:: meson
 
-        '''
-            setup.py file for single_type_logit.c
-            Note that since this is a numpy extension
-            we add an include_dirs=[get_include()] so that the
-            extension is built with numpy's C/C++ header files.
+      .. code-block:: meson
 
-            Calling
-            $python setup.py build_ext --inplace
-            will build the extension library in the npufunc_directory.
+         project('npufunc', 'c')
 
-            Calling
-            $python setup.py build
-            will build a file that looks like ./build/lib*, where
-            lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension,
-            such as .so
+         py = import('python').find_installation()
+         np_dep = dependency('numpy')
 
-            Calling
-            $python setup.py install
-            will install the module in your site-packages file.
+         sources = files('single_type_logit.c')
 
-            See the setuptools section 'Building Extension Modules'
-            at setuptools.pypa.io for more information.
-        '''
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
+         )
 
-        from setuptools import setup, Extension
-        from numpy import get_include
+      To build and install:
 
-        npufunc = Extension('npufunc',
-                            sources=['single_type_logit.c'],
-                            include_dirs=[get_include()])
+      .. code-block:: bash
 
-        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+         pip install .
 
+   .. tab-item:: setuptools
 
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+         
+         # Note: since this is a numpy extension, we add include_dirs=[get_include()]
+         # so that the extension is built with numpy's C/C++ header files.
+         npufunc = Extension('npufunc',
+                             sources=['single_type_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+    
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
@@ -403,7 +414,7 @@ Example NumPy ufunc with multiple dtypes
    pair: ufunc; adding new
 
 We finally give an example of a full ufunc, with inner loops for
-half-floats, floats, doubles, and long doubles. As in the previous
+floats, doubles, and long doubles. As in the previous
 sections we first give the ``.c`` file and then the corresponding
 ``setup.py`` file.
 
@@ -419,7 +430,6 @@ is the primary thing that must be changed to create your own ufunc.
         #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
         #include <math.h>
 
         /*
@@ -514,39 +524,13 @@ is the primary thing that must be changed to create your own ufunc.
         }
 
 
-        static void half_float_logit(char **args, const npy_intp *dimensions,
-                                    const npy_intp *steps, void *data)
-        {
-            npy_intp i;
-            npy_intp n = dimensions[0];
-            char *in = args[0], *out = args[1];
-            npy_intp in_step = steps[0], out_step = steps[1];
-
-            float tmp;
-
-            for (i = 0; i < n; i++) {
-
-                /* BEGIN main ufunc computation */
-                tmp = npy_half_to_float(*(npy_half *)in);
-                tmp /= 1 - tmp;
-                tmp = logf(tmp);
-                *((npy_half *)out) = npy_float_to_half(tmp);
-                /* END main ufunc computation */
-
-                in += in_step;
-                out += out_step;
-            }
-        }
-
 
         /*This gives pointers to the above functions*/
-        PyUFuncGenericFunction funcs[4] = {&half_float_logit,
-                                           &float_logit,
+        PyUFuncGenericFunction funcs[3] = {&float_logit,
                                            &double_logit,
                                            &long_double_logit};
 
-        static const char types[8] = {NPY_HALF, NPY_HALF,
-                                      NPY_FLOAT, NPY_FLOAT,
+        static const char types[6] = {NPY_FLOAT, NPY_FLOAT,
                                       NPY_DOUBLE, NPY_DOUBLE,
                                       NPY_LONGDOUBLE, NPY_LONGDOUBLE};
 
@@ -586,53 +570,52 @@ is the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a ``setup.py`` file for the above code. As before, the module
-can be build via calling ``python setup.py build`` at the command prompt,
-or installed to site-packages via ``python setup.py install``.
+.. tab-set::
 
-    .. code-block:: python
+   .. tab-item:: meson
 
-        '''
-            setup.py file for multi_type_logit.c
-            Note that since this is a numpy extension
-            we add an include_dirs=[get_include()] so that the
-            extension is built with numpy's C/C++ header files.
-            Furthermore, we also have to include the npymath
-            lib for half-float d-type.
+      .. code-block:: meson
 
-            Calling
-            $python setup.py build_ext --inplace
-            will build the extension library in the current file.
+         project('npufunc', 'c')
 
-            Calling
-            $python setup.py build
-            will build a file that looks like ./build/lib*, where
-            lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension,
-            such as .so
+         py = import('python').find_installation()
+         np_dep = dependency('numpy')
 
-            Calling
-            $python setup.py install
-            will install the module in your site-packages file.
+         sources = files('multi_type_logit.c')
 
-            See the setuptools section 'Building Extension Modules'
-            at setuptools.pypa.io for more information.
-        '''
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
+         )
 
-        from setuptools import setup, Extension
-        from numpy import get_include
-        from os import path
+      To build and install:
 
-        path_to_npymath = path.join(get_include(), '..', 'lib')
-        npufunc = Extension('npufunc',
-                            sources=['multi_type_logit.c'],
-                            include_dirs=[get_include()],
-                            # Necessary for the half-float d-type.
-                            library_dirs=[path_to_npymath],
-                            libraries=["npymath"])
+      .. code-block:: bash
 
-        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+         pip install .
 
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+         from os import path
+
+         path_to_npymath = path.join(get_include(), '..', 'lib')
+
+         # Note: since this is a numpy extension, we add include_dirs=[get_include()]
+         # so that the extension is built with numpy's C/C++ header files.
+         npufunc = Extension('npufunc',
+                             sources=['multi_type_logit.c'],
+                             include_dirs=[get_include()],
+                             library_dirs=[path_to_npymath],
+                             libraries=["npymath"])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
 After the above has been installed, it can be imported and used as follows.
 
@@ -644,7 +627,11 @@ np.float64(0.0)
 >>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
+.. note::
 
+   Supporting ``float16`` (half-precision) in custom ufuncs is more complex
+   due to its non-standard C representation and conversion requirements.
+   For most users, starting with ``float32`` and ``float64`` is recommended.
 
 .. _`sec:NumPy-many-arg`:
 
@@ -673,6 +660,48 @@ is replaced with
                             sources=['multi_arg_logit.c'],
                             include_dirs=[get_include()])
 
+.. tab-set::
+
+   .. tab-item:: meson
+
+      .. code-block:: meson
+
+         project('npufunc', 'c')
+
+         py = import('python').find_installation()
+         np_dep = dependency('numpy')
+
+         sources = files('multi_arg_logit.c')
+
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         pip install .
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+         
+         # Note: since this is a numpy extension, we add include_dirs=[get_include()]
+         # so that the extension is built with numpy's C/C++ header files. 
+         npufunc = Extension('npufunc',
+                             sources=['multi_arg_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
 The C file is given below. The ufunc generated takes two arguments ``A``
 and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
 element is ``logit(A * B)``. Note that it automatically supports broadcasting,
@@ -684,7 +713,6 @@ as well as all other properties of a ufunc.
         #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
         #include <math.h>
 
         /*
@@ -808,6 +836,48 @@ is replaced with
                             sources=['add_triplet.c'],
                             include_dirs=[get_include()])
 
+.. tab-set::
+
+   .. tab-item:: meson
+
+      .. code-block:: meson
+
+         project('npufunc', 'c')
+
+         py = import('python').find_installation()
+         np_dep = dependency('numpy')
+
+         sources = files('add_triplet.c')
+
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         pip install .
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+         
+         # Note: since this is a numpy extension, we add include_dirs=[get_include()]
+         # so that the extension is built with numpy's C/C++ header files.
+         npufunc = Extension('npufunc',
+                             sources=['add_triplet.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
 The C file is given below.
 
     .. code-block:: c
@@ -867,7 +937,7 @@ The C file is given below.
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "struct_ufunc_test",
+            "npufunc",
             NULL,
             -1,
             StructUfuncTestMethods,
