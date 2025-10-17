@@ -628,6 +628,7 @@ __all__ = [
 
 _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
+_NumericScalarT = TypeVar("_NumericScalarT", bound=number | timedelta64 | object_)
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeT = TypeVar("_ShapeT", bound=_Shape)
@@ -1071,54 +1072,37 @@ def outer(
     out: _ArrayT,
 ) -> _ArrayT: ...
 
+# keep in sync with numpy.linalg._linalg.tensordot (ignoring `/, *`)
 @overload
 def tensordot(
-    a: _ArrayLike[Never],
-    b: _ArrayLike[Never],
+    a: _ArrayLike[_NumericScalarT],
+    b: _ArrayLike[_NumericScalarT],
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[Any]: ...
+) -> NDArray[_NumericScalarT]: ...
 @overload
 def tensordot(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[np.bool]: ...
-@overload
-def tensordot(
-    a: _ArrayLikeUInt_co,
-    b: _ArrayLikeUInt_co,
-    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[unsignedinteger]: ...
+) -> NDArray[bool_]: ...
 @overload
 def tensordot(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[signedinteger]: ...
+) -> NDArray[int_ | Any]: ...
 @overload
 def tensordot(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[floating]: ...
+) -> NDArray[float64 | Any]: ...
 @overload
 def tensordot(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[complexfloating]: ...
-@overload
-def tensordot(
-    a: _ArrayLikeTD64_co,
-    b: _ArrayLikeTD64_co,
-    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[timedelta64]: ...
-@overload
-def tensordot(
-    a: _ArrayLikeObject_co,
-    b: _ArrayLikeObject_co,
-    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[object_]: ...
+) -> NDArray[complex128 | Any]: ...
 
 @overload
 def roll(
