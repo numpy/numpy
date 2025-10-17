@@ -565,10 +565,6 @@ class TestSelect:
         m = np.isnan(d)
         assert_equal(select([m], [d]), [0, 0, 0, np.nan, 0, 0])
 
-    def test_deprecated_empty(self):
-        assert_raises(ValueError, select, [], [], 3j)
-        assert_raises(ValueError, select, [], [])
-
     def test_non_bool_deprecation(self):
         choices = self.choices
         conditions = self.conditions[:]
@@ -2056,6 +2052,9 @@ class TestLeaks:
             ('bound', A.iters),
             ('unbound', 0),
             ])
+    @pytest.mark.thread_unsafe(
+        reason="test result depends on the reference count of a global object"
+    )
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
@@ -2475,28 +2474,6 @@ class TestCorrCoef:
         tgt2 = corrcoef(self.A, self.B)
         assert_almost_equal(tgt2, self.res2)
         assert_(np.all(np.abs(tgt2) <= 1.0))
-
-    def test_ddof(self):
-        # ddof raises DeprecationWarning
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            pytest.warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            warnings.simplefilter('ignore', DeprecationWarning)
-            # ddof has no or negligible effect on the function
-            assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
-            assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
-            assert_almost_equal(corrcoef(self.A, ddof=3), self.res1)
-            assert_almost_equal(corrcoef(self.A, self.B, ddof=3), self.res2)
-
-    def test_bias(self):
-        # bias raises DeprecationWarning
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            pytest.warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
-            pytest.warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            warnings.simplefilter('ignore', DeprecationWarning)
-            # bias has no or negligible effect on the function
-            assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
@@ -3961,6 +3938,10 @@ class TestQuantile:
         quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
         assert_equal(np.sort(quantile), quantile)
 
+    @pytest.mark.thread_unsafe(
+        reason="gives unreliable results w/ hypothesis "
+               "(HypothesisWorks/hypothesis#4562)"
+    )
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=3, max_value=1000),

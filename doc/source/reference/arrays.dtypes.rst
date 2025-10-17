@@ -254,12 +254,12 @@ One-character strings
 Array-protocol type strings (see :ref:`arrays.interface`)
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
-   where it is interpreted as the number of characters.  The item size
-   must correspond to an existing type, or an error will be raised.  The
-   supported kinds are
+   where it is interpreted as the number of characters, and except ``b1``
+   which represents boolean.  The item size must correspond to an existing
+   type, or an error will be raised.  The supported kinds are
 
-   ================   ========================
-   ``'?'``            boolean
+   =================  ========================
+   ``'?'``, ``'b1'``  boolean
    ``'b'``            (signed) byte
    ``'B'``            unsigned byte
    ``'i'``            (signed) integer
@@ -272,7 +272,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
    ``'U'``            Unicode string
    ``'V'``            raw data (:class:`void`)
-   ================   ========================
+   =================  ========================
 
    .. admonition:: Example
 

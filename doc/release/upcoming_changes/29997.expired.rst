@@ -1,0 +1,9 @@
+Removal of deprecated functions and arguments
+---------------------------------------------
+
+The following long-deprecated APIs have been removed:
+
+* ``numpy.trapz`` — deprecated since NumPy 2.0 (2023-08-18). Use ``numpy.trapezoid`` or
+  ``scipy.integrate`` functions instead.
+* ``disp`` function — deprecated from 2.0 release and no longer functional. Use your own printing function instead.
+* ``bias`` and ``ddof`` arguments in ``numpy.corrcoef`` — these had no effect since NumPy 1.10.

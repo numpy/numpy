@@ -1554,7 +1554,9 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     Parameters
     ----------
     file : file or str or Path
-        Open file object or filename.
+        An open file object, a string containing the filename, or a Path object.
+        When reading from a file object it must support random access
+        (i.e. it must have tell and seek methods).
     dtype : data-type
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
@@ -6848,9 +6850,6 @@ add_newdoc('numpy._core.numerictypes', 'generic',
 
 add_newdoc('numpy._core.numerictypes', 'generic',
            refer_to_array_attribute('tolist'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('tostring'))
 
 add_newdoc('numpy._core.numerictypes', 'generic',
            refer_to_array_attribute('trace'))

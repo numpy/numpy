@@ -111,7 +111,7 @@ def ndpointer(
 ) -> type[_concrete_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     ndim: int | None = None,
     *,
     shape: _ShapeLike,
@@ -126,7 +126,7 @@ def ndpointer(
 ) -> type[_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     ndim: int | None = None,
     shape: None = None,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,

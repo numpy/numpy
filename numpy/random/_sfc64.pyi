@@ -4,6 +4,8 @@ from numpy import uint64
 from numpy._typing import NDArray, _ArrayLikeInt_co
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 
+__all__ = ["SFC64"]
+
 @type_check_only
 class _SFC64Internal(TypedDict):
     state: NDArray[uint64]

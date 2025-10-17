@@ -729,7 +729,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         y: _ArrayLikeFloat_co,
         deg: int | _SeriesLikeInt_co,
         rcond: float | None = ...,
-        full: Literal[False] = ...,
+        full: Literal[False] = False,
         w: _SeriesLikeFloat_co | None = ...,
     ) -> _FloatArray: ...
     @overload
@@ -764,7 +764,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         y: _ArrayLikeComplex_co,
         deg: int | _SeriesLikeInt_co,
         rcond: float | None = ...,
-        full: Literal[False] = ...,
+        full: Literal[False] = False,
         w: _SeriesLikeFloat_co | None = ...,
     ) -> _ComplexArray: ...
     @overload
@@ -799,7 +799,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         y: _ArrayLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
         rcond: float | None = ...,
-        full: Literal[False] = ...,
+        full: Literal[False] = False,
         w: _SeriesLikeFloat_co | None = ...,
     ) -> _ObjectArray: ...
     @overload

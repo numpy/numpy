@@ -3,6 +3,8 @@ from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 from numpy._typing import DTypeLike, NDArray, _SupportsArrayFunc
 
+__all__ = ["require"]
+
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _Requirements: TypeAlias = Literal[
@@ -26,7 +28,7 @@ def require(
 @overload
 def require(
     a: object,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     requirements: _E | Iterable[_RequirementsWithE] | None = None,
     *,
     like: _SupportsArrayFunc | None = None
@@ -34,7 +36,7 @@ def require(
 @overload
 def require(
     a: object,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     requirements: _Requirements | Iterable[_Requirements] | None = None,
     *,
     like: _SupportsArrayFunc | None = None

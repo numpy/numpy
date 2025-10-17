@@ -14,7 +14,6 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (
@@ -238,21 +237,6 @@ def reshape(
     shape: Sequence[SupportsIndex],
     order: _OrderACF = "C",
     *,
-    copy: bool | None = None,
-) -> NDArray[Any]: ...
-@overload
-@deprecated(
-    "`newshape` keyword argument is deprecated, "
-    "use `shape=...` or pass shape positionally instead. "
-    "(deprecated in NumPy 2.1)",
-)
-def reshape(
-    a: ArrayLike,
-    /,
-    shape: None = None,
-    order: _OrderACF = "C",
-    *,
-    newshape: _ShapeLike,
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
@@ -792,7 +776,7 @@ def sum(
 def sum(
     a: ArrayLike,
     axis: _ShapeLike | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
     keepdims: bool | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -802,7 +786,7 @@ def sum(
 def sum(
     a: ArrayLike,
     axis: _ShapeLike | None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
     keepdims: bool | _NoValueType = ...,
     initial: _NumberLike_co | _NoValueType = ...,
@@ -812,7 +796,7 @@ def sum(
 def sum(
     a: ArrayLike,
     axis: _ShapeLike | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     *,
     out: _ArrayT,
     keepdims: bool | _NoValueType = ...,
@@ -930,21 +914,21 @@ def cumsum(
 def cumsum(
     a: ArrayLike,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
 ) -> NDArray[Any]: ...
 @overload
 def cumsum(
     a: ArrayLike,
     axis: SupportsIndex | None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
 def cumsum(
     a: ArrayLike,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     *,
     out: _ArrayT,
 ) -> _ArrayT: ...
@@ -985,7 +969,7 @@ def cumulative_sum(
     /,
     *,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
     include_initial: bool = False,
 ) -> NDArray[Any]: ...
@@ -995,7 +979,7 @@ def cumulative_sum(
     /,
     *,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: _ArrayT,
     include_initial: bool = False,
 ) -> _ArrayT: ...
@@ -1288,21 +1272,21 @@ def cumprod(
 def cumprod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
 ) -> NDArray[Any]: ...
 @overload
 def cumprod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: SupportsIndex | None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
 def cumprod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     *,
     out: _ArrayT,
 ) -> _ArrayT: ...
@@ -1384,7 +1368,7 @@ def cumulative_prod(
     /,
     *,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
     include_initial: bool = False,
 ) -> NDArray[Any]: ...
@@ -1394,7 +1378,7 @@ def cumulative_prod(
     /,
     *,
     axis: SupportsIndex | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: _ArrayT,
     include_initial: bool = False,
 ) -> _ArrayT: ...
@@ -1489,7 +1473,7 @@ def mean(
 def mean(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
     keepdims: bool | _NoValueType = ...,
     *,
@@ -1622,7 +1606,7 @@ def std(
 def std(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
     ddof: float = 0,
     keepdims: bool | _NoValueType = ...,
@@ -1635,7 +1619,7 @@ def std(
 def std(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
     ddof: float = 0,
     keepdims: bool | _NoValueType = ...,
@@ -1648,7 +1632,7 @@ def std(
 def std(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     *,
     out: _ArrayT,
     ddof: float = 0,
@@ -1714,7 +1698,7 @@ def var(
 def var(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     out: None = None,
     ddof: float = 0,
     keepdims: bool | _NoValueType = ...,
@@ -1727,7 +1711,7 @@ def var(
 def var(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None,
     out: _ArrayT,
     ddof: float = 0,
     keepdims: bool | _NoValueType = ...,
@@ -1740,7 +1724,7 @@ def var(
 def var(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None = None,
-    dtype: DTypeLike = None,
+    dtype: DTypeLike | None = None,
     *,
     out: _ArrayT,
     ddof: float = 0,

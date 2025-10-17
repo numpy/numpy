@@ -18,11 +18,14 @@ on:
       - main
       - maintenance/**
     paths-ignore:
-      - 'benchmarks/'
       - '.circlecl/'
+      - '.devcontainer/'
+      - 'benchmarks/'
+      - 'branding/'
       - 'docs/'
       - 'meson_cpu/'
       - 'tools/'
+      - 'vendored-meson/'
   workflow_dispatch:
 
 defaults:
@@ -46,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         os_python:
-          - [macos-latest, '3.13']
+          - [macos-latest, '3.14']
           - [ubuntu-latest, '3.12']
           - [windows-latest, '3.11']
     steps:
@@ -55,7 +58,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+    - uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
       with:
         python-version: ${{ matrix.os_python[1] }}
         activate-environment: true

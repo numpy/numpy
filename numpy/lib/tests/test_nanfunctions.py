@@ -723,22 +723,22 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
                 res = nf(_ndat, axis=1, ddof=ddof)
                 assert_almost_equal(res, tgt)
 
-    def test_ddof_too_big(self, recwarn):
+    def test_ddof_too_big(self):
         nanfuncs = [np.nanvar, np.nanstd]
         stdfuncs = [np.var, np.std]
         dsize = [len(d) for d in _rdat]
         for nf, rf in zip(nanfuncs, stdfuncs):
             for ddof in range(5):
-                with warnings.catch_warnings():
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
                     warnings.simplefilter('ignore', ComplexWarning)
                     tgt = [ddof >= d for d in dsize]
                     res = nf(_ndat, axis=1, ddof=ddof)
                     assert_equal(np.isnan(res), tgt)
                 if any(tgt):
-                    assert_(len(recwarn) == 1)
-                    recwarn.pop(RuntimeWarning)
+                    assert_(len(w) == 1)
                 else:
-                    assert_(len(recwarn) == 0)
+                    assert_(len(w) == 0)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
@@ -1422,6 +1422,7 @@ def test__replace_nan():
         assert np.isnan(arr_nan[-1])
 
 
+@pytest.mark.thread_unsafe(reason="memmap is thread-unsafe (gh-29126)")
 def test_memmap_takes_fast_route(tmpdir):
     # We want memory mapped arrays to take the fast route through nanmax,
     # which avoids creating a mask by using fmax.reduce (see gh-28721). So we

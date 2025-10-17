@@ -1,0 +1,12 @@
+Remove ``interpolation`` parameter from quantile and percentile functions
+-------------------------------------------------------------------------
+
+The ``interpolation`` parameter was deprecated in NumPy 1.22.0 and has been
+removed from the following functions:
+
+* ``numpy.percentile``
+* ``numpy.nanpercentile``
+* ``numpy.quantile``
+* ``numpy.nanquantile``
+
+Use the ``method`` parameter instead.

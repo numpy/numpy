@@ -34,7 +34,7 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
-          - [macos-13, macosx_x86_64, openblas]
+          - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
@@ -72,7 +72,7 @@ jobs:
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
 
       - name: Setup macOS
-        if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
+        if: matrix.buildplat[0] == 'macos-15-intel' || matrix.buildplat[0] == 'macos-14'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
           # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
@@ -84,10 +84,6 @@ jobs:
             # only target Sonoma onwards
             CIBW="MACOSX_DEPLOYMENT_TARGET=14.0 INSTALL_OPENBLAS=false RUNNER_OS=macOS"
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW" >> "$GITHUB_ENV"
-
-            # the macos-13 image that's used for building the x86_64 wheel can't test
-            # a wheel with deployment target >= 14 without further work
-            echo "CIBW_TEST_SKIP=*-macosx_x86_64" >> "$GITHUB_ENV"
           else
             # macosx_x86_64 with OpenBLAS
             # if INSTALL_OPENBLAS isn't specified then scipy-openblas is automatically installed
@@ -98,7 +94,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93  # v3.2.0
+        uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c  # v3.2.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 

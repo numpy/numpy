@@ -3,7 +3,6 @@ import collections.abc
 import functools
 import inspect
 import re
-import sys
 import warnings
 
 import numpy as np
@@ -69,7 +68,7 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
+    'blackman', 'kaiser', 'trapezoid', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
@@ -2120,62 +2119,6 @@ def place(arr, mask, vals):
     return _place(arr, mask, vals)
 
 
-def disp(mesg, device=None, linefeed=True):
-    """
-    Display a message on a device.
-
-    .. deprecated:: 2.0
-        Use your own printing function instead.
-
-    Parameters
-    ----------
-    mesg : str
-        Message to display.
-    device : object
-        Device to write message. If None, defaults to ``sys.stdout`` which is
-        very similar to ``print``. `device` needs to have ``write()`` and
-        ``flush()`` methods.
-    linefeed : bool, optional
-        Option whether to print a line feed or not. Defaults to True.
-
-    Raises
-    ------
-    AttributeError
-        If `device` does not have a ``write()`` or ``flush()`` method.
-
-    Examples
-    --------
-    >>> import numpy as np
-
-    Besides ``sys.stdout``, a file-like object can also be used as it has
-    both required methods:
-
-    >>> from io import StringIO
-    >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
-    >>> buf.getvalue()
-    '"Display" in a file\\n'
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`disp` is deprecated, "
-        "use your own printing function instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    if device is None:
-        device = sys.stdout
-    if linefeed:
-        device.write(f'{mesg}\n')
-    else:
-        device.write(f'{mesg}')
-    device.flush()
-
-
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
 _CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME}(?:,{_DIMENSION_NAME})*)?'
@@ -2933,13 +2876,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
+def _corrcoef_dispatcher(x, y=None, rowvar=None, *,
                          dtype=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
+def corrcoef(x, y=None, rowvar=True, *,
              dtype=None):
     """
     Return Pearson product-moment correlation coefficients.
@@ -2966,14 +2909,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : _NoValue, optional
-        Has no effect, do not use.
 
-        .. deprecated:: 1.10.0
-    ddof : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
@@ -2996,11 +2932,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     inequality abs(a) <= 1. The real and imaginary parts are clipped to the
     interval [-1,  1] in an attempt to improve on that situation but is not
     much help in the complex case.
-
-    This function accepts but discards arguments `bias` and `ddof`.  This is
-    for backwards compatibility with previous versions of this function.  These
-    arguments had no effect on the return values of the function and can be
-    safely ignored in this and previous versions of numpy.
 
     Examples
     --------
@@ -3068,10 +2999,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
              1.        ]])
 
     """
-    if bias is not np._NoValue or ddof is not np._NoValue:
-        # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
@@ -4097,8 +4024,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, weights=None,
-                           interpolation=None):
+                           method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -4111,8 +4037,7 @@ def percentile(a,
                method="linear",
                keepdims=False,
                *,
-               weights=None,
-               interpolation=None):
+               weights=None):
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -4170,7 +4095,7 @@ def percentile(a,
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
 
-     weights : array_like, optional
+    weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the percentile according to its associated weight.
         The weights array can either be 1-D (in which case its length must be
@@ -4181,11 +4106,6 @@ def percentile(a,
         See the notes for more details.
 
         .. versionadded:: 2.0.0
-
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -4282,10 +4202,6 @@ def percentile(a,
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "percentile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
@@ -4312,8 +4228,7 @@ def percentile(a,
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         method=None, keepdims=None, *, weights=None,
-                         interpolation=None):
+                         method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -4326,8 +4241,7 @@ def quantile(a,
              method="linear",
              keepdims=False,
              *,
-             weights=None,
-             interpolation=None):
+             weights=None):
     """
     Compute the q-th quantile of the data along the specified axis.
 
@@ -4396,11 +4310,6 @@ def quantile(a,
         See the notes for more details.
 
         .. versionadded:: 2.0.0
-
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -4543,10 +4452,6 @@ def quantile(a,
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "quantile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
@@ -4606,23 +4511,6 @@ def _quantile_is_valid(q):
     return True
 
 
-def _check_interpolation_as_method(method, interpolation, fname):
-    # Deprecated NumPy 1.22, 2021-11-08
-    warnings.warn(
-        f"the `interpolation=` argument to {fname} was renamed to "
-        "`method=`, which has additional options.\n"
-        "Users of the modes 'nearest', 'lower', 'higher', or "
-        "'midpoint' are encouraged to review the method they used. "
-        "(Deprecated NumPy 1.22)",
-        DeprecationWarning, stacklevel=4)
-    if method != "linear":
-        # sanity check, we assume this basically never happens
-        raise TypeError(
-            "You shall not pass both `method` and `interpolation`!\n"
-            "(`interpolation` is Deprecated in favor of `method`)")
-    return interpolation
-
-
 def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     """
     Compute the floating point indexes of an array for the linear
@@ -4658,7 +4546,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
         sample.
     previous_indexes : array_like
         The floor values of virtual_indexes.
-    interpolation : dict
+    method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
 
@@ -4816,7 +4704,7 @@ def _quantile(
     These methods are extended to this function using _ureduce
     See nanpercentile for parameter usage
     It computes the quantiles of the array for the given axis.
-    A linear interpolation is performed based on the `interpolation`.
+    A linear interpolation is performed based on the `method`.
 
     By default, the method is "linear" where alpha == beta == 1 which
     performs the 7th method of Hyndman&Fan.
@@ -5124,24 +5012,6 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
         y = np.asarray(y)
         ret = add.reduce(d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0, axis)
     return ret
-
-
-@set_module('numpy')
-def trapz(y, x=None, dx=1.0, axis=-1):
-    """
-    `trapz` is deprecated in NumPy 2.0.
-
-    Please use `trapezoid` instead, or one of the numerical integration
-    functions in `scipy.integrate`.
-    """
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`trapz` is deprecated. Use `trapezoid` instead, or one of the "
-        "numerical integration functions in `scipy.integrate`.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return trapezoid(y, x=x, dx=dx, axis=axis)
 
 
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):

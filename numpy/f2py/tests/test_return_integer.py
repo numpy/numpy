@@ -29,8 +29,8 @@ class TestReturnInteger(util.F2PyTest):
         pytest.raises(IndexError, t, [])
         pytest.raises(IndexError, t, ())
 
-        pytest.raises(Exception, t, t)
-        pytest.raises(Exception, t, {})
+        pytest.raises(TypeError, t, t)
+        pytest.raises(TypeError, t, {})
 
         if tname in ["t8", "s8"]:
             pytest.raises(OverflowError, t, 100000000000000000000000)
