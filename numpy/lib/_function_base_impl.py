@@ -2869,13 +2869,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
+def _corrcoef_dispatcher(x, y=None, rowvar=None, *,
                          dtype=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
+def corrcoef(x, y=None, rowvar=True, *,
              dtype=None):
     """
     Return Pearson product-moment correlation coefficients.

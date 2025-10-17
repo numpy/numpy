@@ -1729,8 +1729,8 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     return result
 
 
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
-             ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, allow_masked=True,
+             ):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -1751,6 +1751,11 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
+    allow_masked : bool, optional
+        If True, masked values are propagated pair-wise: if a value is masked
+        in `x`, the corresponding value is masked in `y`.
+        If False, raises an exception.  Because `bias` is deprecated, this
+        argument needs to be treated as keyword only to avoid a warning.
 
     See Also
     --------

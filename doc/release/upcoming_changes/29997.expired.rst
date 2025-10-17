@@ -1,12 +1,11 @@
-Removal of deprecated `trapz` function, `disp` method, and `bias`/`ddof` args in `corrcoef`
+Removal of deprecated `trapz` function, `disp` function, and `bias`/`ddof` args in `corrcoef`
 -------------------------------------------------------------------------------------------
 
 The following long-deprecated APIs have been removed:
 
 * ``numpy.trapz`` — deprecated since NumPy 2.0 (2023-08-18). Use ``numpy.trapezoid`` or
   ``scipy.integrate`` functions instead.
-* ``disp`` method — deprecated in earlier releases and no longer functional. Use your own printing function instead.
+* ``disp`` function — deprecated from 2.0 release and no longer functional. Use your own printing function instead.
 * ``bias`` and ``ddof`` arguments in ``numpy.corrcoef`` — these had no effect since NumPy 1.10.
 
-Associated tests and type stubs have been updated or removed accordingly.
 
