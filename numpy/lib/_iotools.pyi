@@ -49,8 +49,8 @@ class LineSplitter:
     def autostrip(self, /, method: Callable[[_T], Iterable[str]]) -> Callable[[_T], list[str]]: ...
 
 class NameValidator:
-    defaultexcludelist: ClassVar[Sequence[str]]
-    defaultdeletechars: ClassVar[Sequence[str]]
+    defaultexcludelist: ClassVar[Sequence[str]] = ...
+    defaultdeletechars: ClassVar[frozenset[str]] = ...
     excludelist: list[str]
     deletechars: set[str]
     case_converter: Callable[[str], str]
