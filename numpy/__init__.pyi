@@ -1721,7 +1721,7 @@ class _ArrayOrScalarCommon:
         kind: _SortKind | None = ...,
         order: str | Sequence[str] | None = ...,
         *,
-        stable: bool | None = ...,
+        stable: builtins.bool | None = ...,
     ) -> NDArray[intp]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
@@ -2382,7 +2382,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kind: _SortKind | None = ...,
         order: str | Sequence[str] | None = ...,
         *,
-        stable: bool | None = ...,
+        stable: builtins.bool | None = ...,
     ) -> None: ...
 
     # Keep in sync with `MaskedArray.trace`
