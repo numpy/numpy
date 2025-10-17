@@ -80,6 +80,15 @@ def changelog(token, revision_range):
 )
 @spin.util.extend_command(spin.cmds.meson.build)
 def build(*, parent_callback, with_scipy_openblas, **kwargs):
+    """
+    🔧 Build package with Meson/ninja.
+
+    Note:
+    -----
+    Debug builds (using `-- -Dbuildtype=debug`) include many additional checks
+    and assertions. They run significantly slower and are intended for
+    development and debugging — not for performance testing or production use.
+    """
     if with_scipy_openblas:
         _config_openblas(with_scipy_openblas)
     parent_callback(**kwargs)
