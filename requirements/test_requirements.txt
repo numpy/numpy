@@ -9,6 +9,7 @@ meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
 pytest-timeout
+pytest-run-parallel
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # NOTE: Keep mypy in sync with environment.yml
