@@ -143,10 +143,14 @@ else:
 )
 @click.option(
     "-p",
+    "--parallel-threads",
     "parallel",
-    metavar='PARALLEL',
+    metavar='PARALLEL_THREADS',
     default="1",
-    help="Run tests in the given number of parallel threads"
+    help="Run tests in the given number of parallel threads under pytest-run-parallel. "
+         "Can give a certain number of threads, or \"auto\" to have number of threads "
+         "automatically detected from avaliable CPUs. Use "
+         "`-- --skip-thread-unsafe=true` to only run tests that can run in parallel."
 )
 @spin.util.extend_command(spin.cmds.meson.test)
 def test(*, parent_callback, pytest_args, tests, markexpr, parallel, **kwargs):
