@@ -50,7 +50,7 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
-    // SO we don't need to worry about NaN here.
+    // So we don't need to worry about NaN here.
     const unsigned char* value_bytes = reinterpret_cast<const unsigned char*>(value);
     size_t hash = npy_fnv1a(value_bytes, sizeof(T));
 
@@ -66,9 +66,13 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
-    // SO we don't need to worry about NaN here.
-    // Some large complex dtypes (e.g. npy_complex256) only use a subset of the bits in their storage.
-    // To ensure that the hash is independent of the unused bits, we copy the real and imaginary parts into a byte array.
+    // So we don't need to worry about NaN here.
+    // Some floating-point complex dtypes (e.g., npy_complex256) include undefined or
+    // unused bits in their binary representation
+    // (see: https://github.com/numpy/numpy/blob/main/numpy/_core/src/npymath/npy_math_private.h#L254-L261).
+    // Because hashing the raw bit pattern would make the hash depend on those
+    // undefined bits, we extract the mantissa, exponent, and sign components
+    // explicitly and pack them into a buffer to ensure the hash is well-defined.
     #if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE) || defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE)
     constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
     const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
