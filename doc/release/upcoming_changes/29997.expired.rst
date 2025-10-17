@@ -1,5 +1,5 @@
-Removal of deprecated `trapz` function, `disp` function, and `bias`/`ddof` args in `corrcoef`
---------------------------------------------------------------------------------------------
+Removal of deprecated functions and arguments
+---------------------------------------------
 
 The following long-deprecated APIs have been removed:
 
