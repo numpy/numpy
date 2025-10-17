@@ -73,7 +73,9 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
     const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
     #else
-    union IEEEl2bitsrep bits_real{ .e = value_real }, bits_imag{ .e = value_imag };
+    union IEEEl2bitsrep bits_real, bits_imag;
+    bits_real.e = value_real;
+    bits_imag.e = value_imag;
 
     constexpr size_t SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
     constexpr size_t SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
