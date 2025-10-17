@@ -150,5 +150,7 @@ jobs:
     - name: Test in multiple threads
       if: ${{ matrix.version == '3.14t-dev' && matrix.build_runner[0] == 'macos-14' }}
       run:  |
+        export PYTHON_CONTEXT_AWARE_WARNINGS=1
+        export PYTHON_THREAD_INHERIT_CONTEXT=1
         pip install pytest-run-parallel
         spin test -p 4 -- --skip-thread-unsafe=1 --timeout=600 --durations=10
