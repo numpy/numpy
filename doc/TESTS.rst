@@ -74,6 +74,22 @@ Testing a subset of NumPy::
 
 For detailed info on testing, see :ref:`testing-builds`
 
+Running tests in multiple threads
+-------------------------
+
+To help with stress testing NumPy for thread safety, the test suite can be ran under
+``pytest-run-parallel``. To install ``pytest-run-parallel``::
+
+  $ pip install pytest-run-pparallel
+
+To run the test suite in parallel threads::
+
+  $ spin test -p auto # have pytest-run-parallel detect the number of avaliabel CPUs
+  $ spin test -p 4 # run 4 parallel threads
+  $ spin test -p auto -- --skip-thread-unsafe=true # run ONLY tests that can be ran in parallel
+
+When you write new tests (see below), it is worth testing to make sure they do not fail
+under ``pytest-run-parallel``, since the CI jobs makes use of it.
 
 Running doctests
 ----------------
