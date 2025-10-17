@@ -3,7 +3,6 @@ from typing import Any, Final, TypeVar, overload
 
 import numpy as np
 from numpy import _CastingKind
-from numpy._utils import set_module as set_module
 
 ###
 
