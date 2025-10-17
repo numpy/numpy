@@ -1751,19 +1751,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
-    allow_masked : bool, optional
-        If True, masked values are propagated pair-wise: if a value is masked
-        in `x`, the corresponding value is masked in `y`.
-        If False, raises an exception.  Because `bias` is deprecated, this
-        argument needs to be treated as keyword only to avoid a warning.
-    ddof : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
 
     See Also
     --------
@@ -1791,10 +1778,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
       dtype=float64)
 
     """
-    msg = 'bias and ddof have no effect and are deprecated'
-    if bias is not np._NoValue or ddof is not np._NoValue:
-        # 2015-03-15, 1.10
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
     # Estimate the covariance matrix.
     corr = cov(x, y, rowvar, allow_masked=allow_masked)
     # The non-masked version returns a masked value for a scalar.
