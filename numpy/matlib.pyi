@@ -450,7 +450,6 @@ from numpy import (  # noqa: F401
     trace,
     transpose,
     trapezoid,
-    trapz,
     tri,
     tril,
     tril_indices,

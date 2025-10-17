@@ -1729,8 +1729,8 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     return result
 
 
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
-             ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, allow_masked=True,
+             ):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -1751,31 +1751,16 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
     allow_masked : bool, optional
         If True, masked values are propagated pair-wise: if a value is masked
         in `x`, the corresponding value is masked in `y`.
         If False, raises an exception.  Because `bias` is deprecated, this
         argument needs to be treated as keyword only to avoid a warning.
-    ddof : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
 
     See Also
     --------
     numpy.corrcoef : Equivalent function in top-level NumPy module.
     cov : Estimate the covariance matrix.
-
-    Notes
-    -----
-    This function accepts but discards arguments `bias` and `ddof`.  This is
-    for backwards compatibility with previous versions of this function.  These
-    arguments had no effect on the return values of the function and can be
-    safely ignored in this and previous versions of numpy.
 
     Examples
     --------
@@ -1791,10 +1776,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, allow_masked=True,
       dtype=float64)
 
     """
-    msg = 'bias and ddof have no effect and are deprecated'
-    if bias is not np._NoValue or ddof is not np._NoValue:
-        # 2015-03-15, 1.10
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
     # Estimate the covariance matrix.
     corr = cov(x, y, rowvar, allow_masked=allow_masked)
     # The non-masked version returns a masked value for a scalar.
