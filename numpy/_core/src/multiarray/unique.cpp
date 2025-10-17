@@ -69,10 +69,48 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     // SO we don't need to worry about NaN here.
     // Some large complex dtypes (e.g. npy_complex256) only use a subset of the bits in their storage.
     // To ensure that the hash is independent of the unused bits, we copy the real and imaginary parts into a byte array.
-    unsigned char value_bytes[2 * NPY_SIZEOF_LONGDOUBLE];
-    std::memcpy(value_bytes, &value_real, NPY_SIZEOF_LONGDOUBLE);
-    std::memcpy(value_bytes + NPY_SIZEOF_LONGDOUBLE, &value_imag, NPY_SIZEOF_LONGDOUBLE);
-    size_t hash = npy_fnv1a(value_bytes, 2 * NPY_SIZEOF_LONGDOUBLE);
+    #if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE) || defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE)
+    constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
+    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
+    #else
+    union IEEEl2bitsrep bits_real{ .e = value_real }, bits_imag{ .e = value_imag };
+
+    constexpr size_t SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
+    constexpr size_t SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
+    constexpr size_t SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
+    constexpr size_t SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
+    unsigned char buffer[SIZEOF_BUFFER];
+    size_t offset = 0;
+
+    // Copy real part
+    ldouble_man_t manh_real = GET_LDOUBLE_MANH(bits_real);
+    ldouble_man_t manl_real = GET_LDOUBLE_MANL(bits_real);
+    ldouble_exp_t exp_real = GET_LDOUBLE_EXP(bits_real);
+    ldouble_sign_t sign_real = GET_LDOUBLE_SIGN(bits_real);
+    std::memcpy(buffer + offset, &manl_real, SIZEOF_LDOUBLE_MAN);
+    offset += SIZEOF_LDOUBLE_MAN;
+    std::memcpy(buffer + offset, &manh_real, SIZEOF_LDOUBLE_MAN);
+    offset += SIZEOF_LDOUBLE_MAN;
+    std::memcpy(buffer + offset, &exp_real, SIZEOF_LDOUBLE_EXP);
+    offset += SIZEOF_LDOUBLE_EXP;
+    std::memcpy(buffer + offset, &sign_real, SIZEOF_LDOUBLE_SIGN);
+    offset += SIZEOF_LDOUBLE_SIGN;
+
+    // Copy imaginary part
+    ldouble_man_t manh_imag = GET_LDOUBLE_MANH(bits_imag);
+    ldouble_man_t manl_imag = GET_LDOUBLE_MANL(bits_imag);
+    ldouble_exp_t exp_imag = GET_LDOUBLE_EXP(bits_imag);
+    ldouble_sign_t sign_imag = GET_LDOUBLE_SIGN(bits_imag);
+    std::memcpy(buffer + offset, &manl_imag, SIZEOF_LDOUBLE_MAN);
+    offset += SIZEOF_LDOUBLE_MAN;
+    std::memcpy(buffer + offset, &manh_imag, SIZEOF_LDOUBLE_MAN);
+    offset += SIZEOF_LDOUBLE_MAN;
+    std::memcpy(buffer + offset, &exp_imag, SIZEOF_LDOUBLE_EXP);
+    offset += SIZEOF_LDOUBLE_EXP;
+    std::memcpy(buffer + offset, &sign_imag, SIZEOF_LDOUBLE_SIGN);
+    #endif
+
+    size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
 
     return hash;
 }
