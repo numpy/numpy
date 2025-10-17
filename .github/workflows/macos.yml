@@ -1,10 +1,6 @@
 name: macOS tests
 
 on:
-  push:
-    branches:
-      # coverage comparison in the "full" step needs to run on main after merges
-      - integrations
   pull_request:
     branches:
       - main
@@ -111,7 +107,7 @@ jobs:
   accelerate:
     name: Accelerate - ${{ matrix.build_runner[1] }} - ${{ matrix.version }}
     # To enable this workflow on a fork, comment out:
-    # if: github.repository == 'numpy/numpy'
+    if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
       fail-fast: false
