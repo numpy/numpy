@@ -1693,8 +1693,8 @@ class _ArrayOrScalarCommon:
         kind: _SortKind | None = ...,
         order: str | Sequence[str] | None = ...,
         *,
-        stable: bool | None = ...,
-    ) -> NDArray[Any]: ...
+        stable: builtins.bool | None = ...,
+    ) -> NDArray[intp]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
     def argmax(self, /, axis: None = None, out: None = None, *, keepdims: L[False] = False) -> intp: ...
@@ -2354,7 +2354,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kind: _SortKind | None = ...,
         order: str | Sequence[str] | None = ...,
         *,
-        stable: bool | None = ...,
+        stable: builtins.bool | None = ...,
     ) -> None: ...
 
     @overload
