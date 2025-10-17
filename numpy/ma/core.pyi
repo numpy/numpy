@@ -2254,17 +2254,17 @@ trace: _frommethod
 var: _frommethod
 
 @overload
-def count(self: ArrayLike, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...
+def count(a: ArrayLike, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...
 @overload
-def count(self: ArrayLike, axis: _ShapeLike, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
+def count(a: ArrayLike, axis: _ShapeLike, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
 @overload
-def count(self: ArrayLike, axis: _ShapeLike | None = ..., *, keepdims: Literal[True]) -> NDArray[int_]: ...
+def count(a: ArrayLike, axis: _ShapeLike | None = None, *, keepdims: Literal[True]) -> NDArray[int_]: ...
 @overload
-def count(self: ArrayLike, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
+def count(a: ArrayLike, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
 
 @overload
 def argmin(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -2273,7 +2273,7 @@ def argmin(
 ) -> intp: ...
 @overload
 def argmin(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -2282,7 +2282,7 @@ def argmin(
 ) -> Any: ...
 @overload
 def argmin(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
@@ -2291,7 +2291,7 @@ def argmin(
 ) -> _ArrayT: ...
 @overload
 def argmin(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
     out: _ArrayT,
@@ -2302,7 +2302,7 @@ def argmin(
 #
 @overload
 def argmax(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -2311,7 +2311,7 @@ def argmax(
 ) -> intp: ...
 @overload
 def argmax(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -2320,7 +2320,7 @@ def argmax(
 ) -> Any: ...
 @overload
 def argmax(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
@@ -2329,7 +2329,7 @@ def argmax(
 ) -> _ArrayT: ...
 @overload
 def argmax(
-    self: ArrayLike,
+    a: ArrayLike,
     axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
     out: _ArrayT,
