@@ -225,7 +225,7 @@ def reshape(
 def reshape(  # shape: (int, ...) @ _AnyShapeT
     a: ArrayLike,
     /,
-    shape: _AnyShapeT,
+    shape: _AnyShapeT | None = None,
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
@@ -234,7 +234,7 @@ def reshape(  # shape: (int, ...) @ _AnyShapeT
 def reshape(
     a: ArrayLike,
     /,
-    shape: Sequence[SupportsIndex],
+    shape: Sequence[SupportsIndex] | None = None,
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
