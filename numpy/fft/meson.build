@@ -23,8 +23,6 @@ py.install_sources(
     '_pocketfft.pyi',
     '_helper.py',
     '_helper.pyi',
-    'helper.py',
-    'helper.pyi',
   ],
   subdir: 'numpy/fft'
 )

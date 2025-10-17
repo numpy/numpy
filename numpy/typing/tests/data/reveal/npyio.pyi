@@ -28,7 +28,7 @@ class BytesReader:
 bytes_writer: BytesWriter
 bytes_reader: BytesReader
 
-assert_type(npz_file.zip, zipfile.ZipFile)
+assert_type(npz_file.zip, zipfile.ZipFile | None)
 assert_type(npz_file.fid, IO[str] | None)
 assert_type(npz_file.files, list[str])
 assert_type(npz_file.allow_pickle, bool)

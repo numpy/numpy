@@ -469,7 +469,7 @@ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
                                RAND_INT_TYPE *mnix, double *pix, npy_intp d,
                                binomial_t *binomial) {
-  return random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
+  random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
 }
 
 double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {

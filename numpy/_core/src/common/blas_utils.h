@@ -1,6 +1,6 @@
-#include <stdbool.h>
-
 #include "numpy/numpyconfig.h" // for NPY_VISIBILITY_HIDDEN
+
+#include <stdbool.h>
 
 /* NPY_BLAS_CHECK_FPE_SUPPORT controls whether we need a runtime check
  * for floating-point error (FPE) support in BLAS.

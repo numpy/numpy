@@ -1316,6 +1316,9 @@ class TestDTypeMakeCanonical:
 
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
+    @pytest.mark.thread_unsafe(
+        reason="hynp.nested_dtypes thread unsafe (HypothesisWorks/hypothesis#4562)"
+    )
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
@@ -1324,6 +1327,9 @@ class TestDTypeMakeCanonical:
         assert np.can_cast(two_arg_result, canonical, casting="no")
 
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(
+        reason="gives unreliable results w/ hypothesis (HypothesisWorks/hypothesis#4562)"
+    )
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
                 subtype_strategy=hypothesis.extra.numpy.array_dtypes(),
@@ -1687,9 +1693,8 @@ class TestDTypeClasses:
 
     @pytest.mark.parametrize("name",
             ["Half", "Float", "Double", "CFloat", "CDouble"])
-    def test_float_alias_names(self, name):
-        with pytest.raises(AttributeError):
-            getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
+    def test_float_alias_names_not_present(self, name):
+        assert not hasattr(numpy.dtypes, f"{name}DType")
 
     def test_scalar_helper_all_dtypes(self):
         for dtype in np.dtypes.__all__:
@@ -1917,6 +1922,7 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
+    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1937,6 +1943,7 @@ class TestUserDType:
             del a
             assert sys.getrefcount(o) == startcount
 
+    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass

@@ -2,19 +2,17 @@
 Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
-import string
 import sys
 import tempfile
 import warnings
 from contextlib import contextmanager
+from pathlib import Path
 
 import hypothesis
 import pytest
 
 import numpy
-import numpy as np
 from numpy._core._multiarray_tests import get_fpu_mode
-from numpy._core.tests._natype import get_stringdtype_dtype, pd_NA
 from numpy.testing._private.utils import NOGIL_BUILD
 
 try:
@@ -23,6 +21,11 @@ try:
 except ModuleNotFoundError:
     HAVE_SCPDT = False
 
+try:
+    import pytest_run_parallel  # noqa: F401
+    PARALLEL_RUN_AVALIABLE = True
+except ModuleNotFoundError:
+    PARALLEL_RUN_AVALIABLE = False
 
 _old_fpu_mode = None
 _collect_results = {}
@@ -65,6 +68,17 @@ def pytest_configure(config):
         "slow: Tests that are very slow.")
     config.addinivalue_line("markers",
         "slow_pypy: Tests that are very slow on pypy.")
+    if not PARALLEL_RUN_AVALIABLE:
+        config.addinivalue_line("markers",
+            "parallel_threads(n): run the given test function in parallel "
+            "using `n` threads.",
+        )
+        config.addinivalue_line("markers",
+            "iterations(n): run the given test function `n` times in each thread",
+        )
+        config.addinivalue_line("markers",
+            "thread_unsafe: mark the test function as single-threaded",
+        )
 
 
 def pytest_addoption(parser):
@@ -166,7 +180,6 @@ if HAVE_SCPDT:
                 "This function is deprecated.",    # random_integers
                 "Data type alias 'a'",     # numpy.rec.fromfile
                 "Arrays of 2-dimensional vectors",   # matlib.cross
-                "`in1d` is deprecated",
                 "NumPy warning suppression and assertion utilities are deprecated."
         ]
         msg = "|".join(msgs)
@@ -229,28 +242,8 @@ if HAVE_SCPDT:
         'numpy/f2py/_backends/_distutils.py',
     ]
 
-
-@pytest.fixture
-def random_string_list():
-    chars = list(string.ascii_letters + string.digits)
-    chars = np.array(chars, dtype="U1")
-    ret = np.random.choice(chars, size=100 * 10, replace=True)
-    return ret.view("U100")
-
-
-@pytest.fixture(params=[True, False])
-def coerce(request):
-    return request.param
-
-
-@pytest.fixture(
-    params=["unset", None, pd_NA, np.nan, float("nan"), "__nan__"],
-    ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
-)
-def na_object(request):
-    return request.param
-
-
-@pytest.fixture()
-def dtype(na_object, coerce):
-    return get_stringdtype_dtype(na_object, coerce)
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        if Path(item.fspath).parent == Path(__file__).parent / 'f2py' / 'tests':
+            item.add_marker(pytest.mark.thread_unsafe(
+                reason="f2py tests are thread-unsafe"))

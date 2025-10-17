@@ -53,8 +53,14 @@ months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
 some additional SI-prefix seconds-based units. The `datetime64` data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
-letters, for a "Not A Time" value. The string "today" is also supported and
-returns the current UTC date with day precision.
+letters, for a "Not A Time" value. The string "now" is also supported and
+returns the current UTC time. By default, it uses second ('s') precision, but
+you can specify a different unit (e.g., 'M', 'D', 'h') to truncate the result
+to that precision. Units finer than seconds (such as 'ms' or 'ns') are
+supported but will show fractional parts as zeros, effectively truncating to
+whole seconds. The string "today" is also supported and returns the current UTC
+date with day precision. It also supports the same precision specifiers
+as ``now``.
 
 .. admonition:: Example
 
@@ -91,6 +97,17 @@ returns the current UTC date with day precision.
 
     >>> np.datetime64('nat')
     np.datetime64('NaT')
+
+    The current time (UTC, default second precision):
+
+    >>> np.datetime64('now')
+    np.datetime64('2025-08-05T02:22:14')  # result will depend on the current time
+
+    >>> np.datetime64('now', 'D')
+    np.datetime64('2025-08-05')
+    
+    >>> np.datetime64('now', 'ms')
+    np.datetime64('2025-08-05T02:22:14.000')
 
     The current date:
 
@@ -308,6 +325,66 @@ us / μs    microsecond      +/- 2.9e5 years         [290301 BC, 294241 AD]
    fs      femtosecond      +/- 2.6 hours           [  1969 AD,   1970 AD]
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
+
+
+Converting datetime and timedelta to Python Object
+==================================================
+
+NumPy follows a strict protocol when converting `datetime64` and/or `timedelta64` to Python Objects (e.g., ``tuple``, ``list``, `datetime.datetime`). 
+
+The protocol is described in the following table:
+
+================================ ================================= ==================================
+         Input Type                         for `datetime64`               for `timedelta64`
+================================ ================================= ==================================
+          ``NaT``                             ``None``                           ``None``
+        ns/ps/fs/as                           ``int``                            ``int``
+        μs/ms/s/m/h                      `datetime.datetime`               `datetime.timedelta`
+      D/W (Linear units)                   `datetime.date`                 `datetime.timedelta` 
+    Y/M (Non-linear units)                 `datetime.date`                       ``int``
+        Generic units                      `datetime.date`                       ``int``
+================================ ================================= ==================================
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+
+    >>> type(np.datetime64('NaT').item())
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64('NaT').item())
+    <class 'NoneType'>
+
+    >>> type(np.timedelta64(123, 'ns').item())
+    <class 'int'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').item())
+    <class 'datetime.datetime'>
+
+    >>> type(np.timedelta64(10, 'D').item())
+    <class 'datetime.timedelta'>
+
+
+In the case where conversion of `datetime64` and/or `timedelta64` is done against Python types like ``int``, ``float``, and ``str`` the corresponding return types will be ``np.str_``, ``np.int64`` and ``np.float64``.
+
+
+.. admonition:: Example
+
+  .. try_examples::
+
+    >>> import numpy as np
+    
+    >>> type(np.timedelta64(1, 'D').astype(int))
+    <class 'numpy.int64'>
+
+    >>> type(np.datetime64('2025-01-01T12:00:00.123456').astype(float))
+    <class 'numpy.float64'>
+
+    >>> type(np.timedelta64(123, 'ns').astype(str))
+    <class 'numpy.str_'>
+
 
 Business day functionality
 ==========================

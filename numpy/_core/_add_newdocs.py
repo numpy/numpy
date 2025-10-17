@@ -967,12 +967,13 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'K'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) is the default and preserves the input order for the output.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -1059,12 +1060,14 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     dtype : data-type, optional
         By default, the data-type is inferred from the input data.
     order : {'C', 'F', 'A', 'K'}, optional
-        Memory layout.  'A' and 'K' depend on the order of input array a.
-        'C' row-major (C-style),
-        'F' column-major (Fortran-style) memory representation.
-        'A' (any) means 'F' if `a` is Fortran contiguous, 'C' otherwise
-        'K' (keep) preserve input order
-        Defaults to 'C'.
+        The memory layout of the output.
+        'C' gives a row-major layout (C-style),
+        'F' gives a column-major layout (Fortran-style).
+        'C' and 'F' will copy if needed to ensure the output format.
+        'A' (any) is equivalent to 'F' if input a is non-contiguous or Fortran-contiguous, otherwise, it is equivalent to 'C'.
+        Unlike 'C' or 'F', 'A' does not ensure that the result is contiguous.
+        'K' (keep) preserves the input order for the output.
+        'C' is the default.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -1551,7 +1554,9 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     Parameters
     ----------
     file : file or str or Path
-        Open file object or filename.
+        An open file object, a string containing the filename, or a Path object.
+        When reading from a file object it must support random access
+        (i.e. it must have tell and seek methods).
     dtype : data-type
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
@@ -3209,7 +3214,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         'C' order otherwise, and 'K' means as close to the
         order the array elements appear in memory as possible.
         Default is 'K'.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'same_value', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'unsafe'
         for backwards compatibility.
 
@@ -3219,6 +3224,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         * 'same_kind' means only safe casts or casts within a kind,
           like float64 to float32, are allowed.
         * 'unsafe' means any data conversions may be done.
+        * 'same_value' means any data conversions may be done, but the values
+          must not change, including rounding of floats or overflow of ints
+
+        .. versionadded:: 2.4
+            Support for ``'same_value'`` was added.
+
     subok : bool, optional
         If True, then sub-classes will be passed-through (default), otherwise
         the returned array will be forced to be a base-class array.
@@ -3241,6 +3252,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     ComplexWarning
         When casting from complex to float or int. To avoid this,
         one should use ``a.real.astype(t)``.
+    ValueError
+        When casting using ``'same_value'`` and the values change or would
+        overflow
 
     Examples
     --------
@@ -3252,6 +3266,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     >>> x.astype(int)
     array([1, 2, 2])
 
+    >>> x.astype(int, casting="same_value")
+    Traceback (most recent call last):
+    ...
+    ValueError: could not cast 'same_value' double to long
+
+    >>> x[:2].astype(int, casting="same_value")
+    array([1, 2])
     """))
 
 
@@ -6829,9 +6850,6 @@ add_newdoc('numpy._core.numerictypes', 'generic',
 
 add_newdoc('numpy._core.numerictypes', 'generic',
            refer_to_array_attribute('tolist'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('tostring'))
 
 add_newdoc('numpy._core.numerictypes', 'generic',
            refer_to_array_attribute('trace'))

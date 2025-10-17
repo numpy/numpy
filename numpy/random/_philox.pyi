@@ -5,6 +5,8 @@ from numpy._typing import _ArrayLikeInt_co
 from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy.typing import NDArray
 
+__all__ = ["Philox"]
+
 @type_check_only
 class _PhiloxInternal(TypedDict):
     counter: NDArray[uint64]
@@ -35,5 +37,5 @@ class Philox(BitGenerator):
         self,
         value: _PhiloxState,
     ) -> None: ...
-    def jumped(self, jumps: int = ...) -> Philox: ...
+    def jumped(self, jumps: int = 1) -> Philox: ...
     def advance(self, delta: int) -> Philox: ...

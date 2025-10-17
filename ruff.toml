@@ -54,8 +54,6 @@ ignore = [
     "ISC002",  # Implicitly concatenated string literals over multiple lines
     # flake8-pie
     "PIE790",  # Unnecessary `pass` statement
-    # pandas-vet
-    "PD901",   # Avoid using the generic variable name `df` for DataFrames
     # perflint
     "PERF401", # Use a list comprehension to create a transformed list
     # pycodestyle/error

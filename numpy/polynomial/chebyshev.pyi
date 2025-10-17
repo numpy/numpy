@@ -128,13 +128,13 @@ _RT = TypeVar("_RT", bound=np.number | np.bool | np.object_)
 def chebinterpolate(
     func: np.ufunc,
     deg: _IntLike_co,
-    args: tuple[()] = ...,
+    args: tuple[()] = (),
 ) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
 @overload
 def chebinterpolate(
     func: Callable[[npt.NDArray[np.float64]], _RT],
     deg: _IntLike_co,
-    args: tuple[()] = ...,
+    args: tuple[()] = (),
 ) -> npt.NDArray[_RT]: ...
 @overload
 def chebinterpolate(
@@ -150,8 +150,8 @@ class Chebyshev(ABCPolyBase[L["T"]]):
         cls,
         func: Callable[[npt.NDArray[np.float64]], _CoefSeries],
         deg: _IntLike_co,
-        domain: _SeriesLikeCoef_co | None = ...,
-        args: tuple[()] = ...,
+        domain: _SeriesLikeCoef_co | None = None,
+        args: tuple[()] = (),
     ) -> Self: ...
     @overload
     @classmethod
@@ -162,7 +162,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
             _CoefSeries,
         ],
         deg: _IntLike_co,
-        domain: _SeriesLikeCoef_co | None = ...,
+        domain: _SeriesLikeCoef_co | None = None,
         *,
         args: Iterable[Any],
     ) -> Self: ...
