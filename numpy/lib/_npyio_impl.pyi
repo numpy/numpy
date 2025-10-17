@@ -43,6 +43,7 @@ __all__ = [
     "unpackbits",
 ]
 
+_T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, default=Any, covariant=True)
@@ -64,8 +65,8 @@ class BagObj(Generic[_T_co]):
 class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     _MAX_REPR_ARRAY_COUNT: ClassVar[int] = 5
 
-    zip: zipfile.ZipFile
-    fid: IO[str] | None
+    zip: zipfile.ZipFile | None = None
+    fid: IO[str] | None = None
     files: list[str]
     allow_pickle: bool
     pickle_kwargs: Mapping[str, Any] | None
@@ -91,6 +92,15 @@ class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     def __iter__(self) -> Iterator[str]: ...
     @override
     def __getitem__(self, key: str, /) -> NDArray[_ScalarT_co]: ...
+
+    #
+    @override
+    @overload
+    def get(self, key: str, default: None = None, /) -> NDArray[_ScalarT_co] | None: ...
+    @overload
+    def get(self, key: str, default: NDArray[_ScalarT_co] | _T, /) -> NDArray[_ScalarT_co] | _T: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
     def close(self) -> None: ...
 
 # NOTE: Returns a `NpzFile` if file is a zip file;
