@@ -2926,11 +2926,6 @@ def corrcoef(x, y=None, rowvar=True, *,
     interval [-1,  1] in an attempt to improve on that situation but is not
     much help in the complex case.
 
-    This function accepts but discards arguments `bias` and `ddof`.  This is
-    for backwards compatibility with previous versions of this function.  These
-    arguments had no effect on the return values of the function and can be
-    safely ignored in this and previous versions of numpy.
-
     Examples
     --------
     >>> import numpy as np

@@ -1762,13 +1762,6 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True,
     numpy.corrcoef : Equivalent function in top-level NumPy module.
     cov : Estimate the covariance matrix.
 
-    Notes
-    -----
-    This function accepts but discards arguments `bias` and `ddof`.  This is
-    for backwards compatibility with previous versions of this function.  These
-    arguments had no effect on the return values of the function and can be
-    safely ignored in this and previous versions of numpy.
-
     Examples
     --------
     >>> import numpy as np
