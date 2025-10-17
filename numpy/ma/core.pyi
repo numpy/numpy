@@ -3,7 +3,7 @@
 
 import datetime as dt
 from _typeshed import Incomplete
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
 from typing import (
     Any,
     Final,
@@ -478,7 +478,7 @@ class MaskedIterator(Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __getitem__(self, indx: _ArrayInt_co | tuple[_ArrayInt_co, ...], /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
     @overload
-    def __getitem__(self, indx: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...
+    def __getitem__(self, indx: SupportsIndex | tuple[SupportsIndex, ...], /) -> Incomplete: ...
     @overload
     def __getitem__(self, indx: _ToIndices, /) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
@@ -528,9 +528,8 @@ class MaskedIterator(Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # catch-all
     def __setitem__(self, index: _ToIndices, value: ArrayLike, /) -> None: ...
 
-    # TODO: If the mask is structured, then this will return `mvoid[(), _DTypeT_co]`,
-    # otherwise this returns scalars of dtype `_DTypeT_co`.
-    def __next__(self) -> Incomplete: ...
+    # TODO: Returns `mvoid[(), _DTypeT_co]` for masks with `np.void` dtype.
+    def __next__(self: MaskedIterator[Any, np.dtype[_ScalarT]]) -> _ScalarT: ...
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
