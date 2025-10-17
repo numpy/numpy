@@ -575,7 +575,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __new__(
         cls,
-        data: object,
+        data: object = None,
         mask: _ArrayLikeBool_co = nomask,
         dtype: DTypeLike | None = None,
         copy: bool = False,
