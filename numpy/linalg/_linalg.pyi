@@ -16,14 +16,12 @@ from numpy import (
     complex128,
     complexfloating,
     float64,
-    # other
     floating,
     int32,
     object_,
     signedinteger,
     timedelta64,
     unsignedinteger,
-    # re-exports
     vecdot,
 )
 from numpy._core.fromnumeric import matrix_transpose
@@ -38,9 +36,11 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
+    _NestedSequence,
 )
 from numpy.linalg import LinAlgError
 
@@ -301,9 +301,15 @@ def svd(
     hermitian: bool = False,
 ) -> NDArray[floating]: ...
 
-def svdvals(
-    x: _ArrayLikeInt_co | _ArrayLikeFloat_co | _ArrayLikeComplex_co
-) -> NDArray[floating]: ...
+# the ignored `overload-overlap` mypy error below is a false-positive
+@overload
+def svdvals(  # type: ignore[overload-overlap]
+    x: _ArrayLike[np.float64 | np.complex128 | np.integer | np.bool] | _NestedSequence[complex], /
+) -> NDArray[np.float64]: ...
+@overload
+def svdvals(x: _ArrayLike[np.float32 | np.complex64], /) -> NDArray[np.float32]: ...
+@overload
+def svdvals(x: _ArrayLikeNumber_co, /) -> NDArray[floating]: ...
 
 # TODO: Returns a scalar for 2D arrays and
 # a `(x.ndim - 2)`` dimensionl array otherwise
