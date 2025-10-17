@@ -1036,7 +1036,7 @@ def startswith(
 @overload
 def startswith(
     a: T_co,
-    suffix: T_co,
+    prefix: T_co,
     start: i_co = 0,
     end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
