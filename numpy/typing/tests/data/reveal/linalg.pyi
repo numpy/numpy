@@ -132,6 +132,13 @@ assert_type(np.linalg.vector_norm(AR_f8), np.floating)
 assert_type(np.linalg.vector_norm(AR_c16), np.floating)
 assert_type(np.linalg.vector_norm(AR_S), np.floating)
 
+assert_type(np.linalg.tensordot(AR_b, AR_b), npt.NDArray[np.bool])
+assert_type(np.linalg.tensordot(AR_i8, AR_i8), npt.NDArray[np.int64])
+assert_type(np.linalg.tensordot(AR_f8, AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.linalg.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
+assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
+
 assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), Any)
 assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), Any)
 assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), Any)
