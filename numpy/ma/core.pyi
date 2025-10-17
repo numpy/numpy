@@ -9,6 +9,7 @@ from typing import (
     Final,
     Generic,
     Literal,
+    LiteralString,
     Never,
     NoReturn,
     Self,
@@ -2222,123 +2223,41 @@ def ptp(
 ) -> _ArrayT: ...
 
 class _frommethod:
-    __name__: Any
-    __doc__: Any
-    reversed: Any
-    def __init__(self, methodname, reversed=...): ...
-    def getdoc(self): ...
-    def __call__(self, a, *args, **params): ...
+    def __init__(self, methodname: LiteralString, reversed: bool = False) -> None: ...
+    def __call__(self, /, a: ArrayLike, *args: Incomplete, **params: Incomplete) -> Incomplete: ...
+    def getdoc(self) -> str: ...
 
-all: _frommethod
-anomalies: _frommethod
-anom: _frommethod
-any: _frommethod
-compress: _frommethod
-cumprod: _frommethod
-cumsum: _frommethod
-copy: _frommethod
-diagonal: _frommethod
-harden_mask: _frommethod
-ids: _frommethod
-mean: _frommethod
-nonzero: _frommethod
-prod: _frommethod
-product: _frommethod
-ravel: _frommethod
-repeat: _frommethod
-soften_mask: _frommethod
-std: _frommethod
-sum: _frommethod
-swapaxes: _frommethod
-trace: _frommethod
-var: _frommethod
+all: Final[_frommethod] = ...
+anomalies: Final[_frommethod] = ...
+anom: Final[_frommethod] = ...
+any: Final[_frommethod] = ...
+compress: Final[_frommethod] = ...
+cumprod: Final[_frommethod] = ...
+cumsum: Final[_frommethod] = ...
+copy: Final[_frommethod] = ...
+diagonal: Final[_frommethod] = ...
+harden_mask: Final[_frommethod] = ...
+ids: Final[_frommethod] = ...
+mean: Final[_frommethod] = ...
+nonzero: Final[_frommethod] = ...
+prod: Final[_frommethod] = ...
+product: Final[_frommethod] = ...
+ravel: Final[_frommethod] = ...
+repeat: Final[_frommethod] = ...
+soften_mask: Final[_frommethod] = ...
+std: Final[_frommethod] = ...
+sum: Final[_frommethod] = ...
+swapaxes: Final[_frommethod] = ...
+trace: Final[_frommethod] = ...
+var: Final[_frommethod] = ...
 
-@overload
-def count(self: ArrayLike, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...
-@overload
-def count(self: ArrayLike, axis: _ShapeLike, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
-@overload
-def count(self: ArrayLike, axis: _ShapeLike | None = ..., *, keepdims: Literal[True]) -> NDArray[int_]: ...
-@overload
-def count(self: ArrayLike, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
+count: Final[_frommethod] = ...
 
-@overload
-def argmin(
-    self: ArrayLike,
-    axis: None = None,
-    fill_value: _ScalarLike_co | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> intp: ...
-@overload
-def argmin(
-    self: ArrayLike,
-    axis: SupportsIndex | None = None,
-    fill_value: _ScalarLike_co | None = None,
-    out: None = None,
-    *,
-    keepdims: bool | _NoValueType = ...,
-) -> Any: ...
-@overload
-def argmin(
-    self: ArrayLike,
-    axis: SupportsIndex | None = None,
-    fill_value: _ScalarLike_co | None = None,
-    *,
-    out: _ArrayT,
-    keepdims: bool | _NoValueType = ...,
-) -> _ArrayT: ...
-@overload
-def argmin(
-    self: ArrayLike,
-    axis: SupportsIndex | None,
-    fill_value: _ScalarLike_co | None,
-    out: _ArrayT,
-    *,
-    keepdims: bool | _NoValueType = ...,
-) -> _ArrayT: ...
+argmin: Final[_frommethod] = ...
+argmax: Final[_frommethod] = ...
 
-#
-@overload
-def argmax(
-    self: ArrayLike,
-    axis: None = None,
-    fill_value: _ScalarLike_co | None = None,
-    out: None = None,
-    *,
-    keepdims: Literal[False] | _NoValueType = ...,
-) -> intp: ...
-@overload
-def argmax(
-    self: ArrayLike,
-    axis: SupportsIndex | None = None,
-    fill_value: _ScalarLike_co | None = None,
-    out: None = None,
-    *,
-    keepdims: bool | _NoValueType = ...,
-) -> Any: ...
-@overload
-def argmax(
-    self: ArrayLike,
-    axis: SupportsIndex | None = None,
-    fill_value: _ScalarLike_co | None = None,
-    *,
-    out: _ArrayT,
-    keepdims: bool | _NoValueType = ...,
-) -> _ArrayT: ...
-@overload
-def argmax(
-    self: ArrayLike,
-    axis: SupportsIndex | None,
-    fill_value: _ScalarLike_co | None,
-    out: _ArrayT,
-    *,
-    keepdims: bool | _NoValueType = ...,
-) -> _ArrayT: ...
-
-minimum: _extrema_operation
-maximum: _extrema_operation
+minimum: Final[_extrema_operation] = ...
+maximum: Final[_extrema_operation] = ...
 
 @overload
 def take(
