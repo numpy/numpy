@@ -6,6 +6,7 @@ from _typeshed import Incomplete
 from collections.abc import Iterator, Sequence
 from typing import (
     Any,
+    Final,
     Generic,
     Literal,
     Never,
@@ -461,12 +462,17 @@ masked_print_option: _MaskedPrintOption
 
 def flatten_structured_array(a): ...
 
+# TODO: Support non-boolean mask dtypes, such as `np.void`. This will require adding an
+# additional generic type parameter to (at least) `MaskedArray` and `MaskedIterator` to
+# hold the dtype of the mask.
+
 class MaskedIterator(Generic[_ShapeT_co, _DTypeT_co]):
-    ma: MaskedArray[_ShapeT_co, _DTypeT_co]
-    dataiter: Any
-    maskiter: Any
+    ma: MaskedArray[_ShapeT_co, _DTypeT_co]  # readonly
+    dataiter: np.flatiter[ndarray[_ShapeT_co, _DTypeT_co]]  # readonly
+    maskiter: Final[np.flatiter[NDArray[np.bool]]]
+
     def __init__(self, ma: MaskedArray[_ShapeT_co, _DTypeT_co]) -> None: ...
-    def __iter__(self) -> Iterator[Any]: ...
+    def __iter__(self) -> Self: ...
 
     # Similar to `MaskedArray.__getitem__` but without the `void` case.
     @overload
@@ -522,7 +528,9 @@ class MaskedIterator(Generic[_ShapeT_co, _DTypeT_co]):
     @overload  # catch-all
     def __setitem__(self, index: _ToIndices, value: ArrayLike, /) -> None: ...
 
-    def __next__(self) -> Any: ...
+    # TODO: If the mask is structured, then this will return `mvoid[(), _DTypeT_co]`,
+    # otherwise this returns scalars of dtype `_DTypeT_co`.
+    def __next__(self) -> Incomplete: ...
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
