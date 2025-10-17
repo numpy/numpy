@@ -19,7 +19,7 @@ from typing import (
     TypeAlias,
     overload,
 )
-from typing_extensions import TypeIs, TypeVar
+from typing_extensions import TypeIs, TypeVar, override
 
 import numpy as np
 from numpy import (
@@ -310,6 +310,10 @@ _ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
 _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
 _ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
 _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
+
+_Ignored: TypeAlias = object
+
+###
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -2064,28 +2068,31 @@ isarray = isMaskedArray
 isMA = isMaskedArray
 
 # 0D float64 array
-class MaskedConstant(MaskedArray[_AnyShape, dtype[float64]]):
-    def __new__(cls): ...
-    __class__: Any
-    def __array_finalize__(self, obj): ...
-    def __array_wrap__(self, obj, context=..., return_scalar=...): ...
-    def __format__(self, format_spec): ...
-    def __reduce__(self): ...
-    def __iop__(self, other): ...
-    __iadd__: Any
-    __isub__: Any
-    __imul__: Any
-    __ifloordiv__: Any
-    __itruediv__: Any
-    __ipow__: Any
-    def copy(self, *args, **kwargs): ...
-    def __copy__(self): ...
-    def __deepcopy__(self, memo): ...
-    def __setattr__(self, attr, value): ...
+class MaskedConstant(MaskedArray[tuple[()], dtype[float64]]):
+    def __new__(cls) -> Self: ...
 
-masked: MaskedConstant
-masked_singleton: MaskedConstant
-masked_array = MaskedArray
+    # these overrides are no-ops
+    @override
+    def __iadd__(self, other: _Ignored, /) -> Self: ...
+    @override
+    def __isub__(self, other: _Ignored, /) -> Self: ...
+    @override
+    def __imul__(self, other: _Ignored, /) -> Self: ...
+    @override
+    def __ifloordiv__(self, other: _Ignored, /) -> Self: ...
+    @override
+    def __itruediv__(self, other: _Ignored, /) -> Self: ...
+    @override
+    def __ipow__(self, other: _Ignored, /) -> Self: ...
+    @override
+    def __deepcopy__(self, /, memo: _Ignored) -> Self: ...
+    @override
+    def copy(self, /, *args: _Ignored, **kwargs: _Ignored) -> Self: ...
+
+masked: Final[MaskedConstant] = ...
+masked_singleton: Final[MaskedConstant] = ...
+
+masked_array: TypeAlias = MaskedArray
 
 def array(
     data,
