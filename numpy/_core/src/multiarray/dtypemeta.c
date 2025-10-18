@@ -96,7 +96,7 @@ use_new_as_default(PyArray_DTypeMeta *self)
         return NULL;
     }
     /*
-     * Lets not trust that the DType is implemented correctly
+     * Let's not trust that the DType is implemented correctly
      * TODO: Should probably do an exact type-check (at least unless this is
      *       an abstract DType).
      */
