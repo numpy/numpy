@@ -1478,7 +1478,7 @@ class _FromStringWorker:
                 if isinstance(items, Expr):
                     return items
             if paren in ['ROUNDDIV', 'SQUARE']:
-                # Expression is a array constructor
+                # Expression is an array constructor
                 if isinstance(items, Expr):
                     items = (items,)
                 return as_array(items)
