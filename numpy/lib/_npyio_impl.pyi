@@ -21,7 +21,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import TypeVar, deprecated, override
+from typing_extensions import TypeVar, override
 
 import numpy as np
 from numpy._core.multiarray import packbits, unpackbits
@@ -115,19 +115,8 @@ def load(
     max_header_size: int = 10_000,
 ) -> Any: ...
 
-@overload
 def save(file: _FNameWriteBytes, arr: ArrayLike, allow_pickle: bool = True) -> None: ...
-@overload
-@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
-def save(file: _FNameWriteBytes, arr: ArrayLike, allow_pickle: bool, fix_imports: bool) -> None: ...
-@overload
-@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
-def save(file: _FNameWriteBytes, arr: ArrayLike, allow_pickle: bool = True, *, fix_imports: bool) -> None: ...
-
-#
 def savez(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
-
-#
 def savez_compressed(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
 
 # File-like objects only have to implement `__iter__` and,
