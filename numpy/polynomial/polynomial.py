@@ -751,9 +751,15 @@ def polyval(x, c, tensor=True):
         c = c + 0.0
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
-    if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,) * x.ndim)
-
+    nd = getattr(x, "ndim", -1)
+    if tensor and nd > 0:
+        c = c.reshape(c.shape + (1,) * nd)
+    elif not tensor and c.ndim > 1:
+        # Evaluate column-wise for 2D+ coefficient arrays
+        return np.array([
+        polyval(x, c[:, i], tensor=False)
+        for i in range(c.shape[1])
+    ])
     c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
         c0 = c[-i] + c0 * x
