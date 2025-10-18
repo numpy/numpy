@@ -1,0 +1,22 @@
+Add ``__trunc__`` method to NumPy scalar types
+==============================================
+
+NumPy scalar floating and integer types now implement the ``__trunc__`` special method, matching Python’s built-in numeric types. This enables direct use of :func:`math.trunc` and the ``__trunc__`` dunder method on NumPy scalars:
+
+Examples
+--------
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import math
+    >>> math.trunc(np.float16(np.pi))
+    3
+    >>> np.float16(-np.pi).__trunc__()
+    -3
+    >>> np.int32(42).__trunc__()
+    42
+
+Attempting to truncate infinite or NaN values for floating point types will now raise the same errors as Python floats.
+
+.. versionadded:: 2.3
