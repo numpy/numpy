@@ -2333,6 +2333,7 @@ class TestRegression:
             else:
                 assert_(t.__hash__ is not None)
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_scalar_copy(self):
         scalar_types = set(np._core.sctypeDict.values())
         values = {
@@ -2370,6 +2371,7 @@ class TestRegression:
             structure[0]['x'] = np.array([2])
             gc.collect()
 
+    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_dtype_scalar_squeeze(self):
         # gh-11384
         values = {
