@@ -1118,8 +1118,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         if t.shape == ():
             t = t.reshape(1)
             if m is not nomask:
-                m = make_mask(m, copy=True)
-                m.shape = (1,)
+                m = make_mask(m, copy=True).reshape((1,))
 
         if m is nomask:
             tr = self.f.reduce(t, axis)
@@ -2610,7 +2609,7 @@ def flatten_structured_array(a):
     if len(inishape) > 1:
         newshape = list(out.shape)
         newshape[0] = inishape
-        out.shape = tuple(flatten_sequence(newshape))
+        out = out.reshape(tuple(flatten_sequence(newshape)))
     return out
 
 
@@ -2726,8 +2725,7 @@ class MaskedIterator:
             _mask = self.maskiter.__getitem__(indx)
             if isinstance(_mask, ndarray):
                 # set shape to match that of data; this is needed for matrices
-                _mask.shape = result.shape
-                result._mask = _mask
+                result._mask = _mask.reshape(result.shape)
             elif isinstance(_mask, np.void):
                 return mvoid(result, mask=_mask, hardmask=self.ma._hardmask)
             elif _mask:  # Just a scalar, masked
@@ -2954,7 +2952,7 @@ class MaskedArray(ndarray):
                         # the shapes were the same, so we can at least
                         # avoid that path
                         if data._mask.shape != data.shape:
-                            data._mask.shape = data.shape
+                            data._mask = data._mask.reshape(data.shape)
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
@@ -3129,7 +3127,8 @@ class MaskedArray(ndarray):
         # Finalize the mask
         if self._mask is not nomask:
             try:
-                self._mask.shape = self.shape
+                new_mask = self._mask.reshape(self.shape)
+                self._mask = new_mask
             except ValueError:
                 self._mask = nomask
             except (TypeError, AttributeError):
@@ -3504,7 +3503,7 @@ class MaskedArray(ndarray):
             # Try to reset the shape of the mask (if we don't have a void).
             # This raises a ValueError if the dtype change won't work.
             try:
-                self._mask.shape = self.shape
+                self._mask = self._mask.reshape(self.shape)
             except (AttributeError, TypeError):
                 pass
 
@@ -3518,7 +3517,7 @@ class MaskedArray(ndarray):
         # Cannot use self._mask, since it may not (yet) exist when a
         # masked matrix sets the shape.
         if getmask(self) is not nomask:
-            self._mask.shape = self.shape
+            self._mask = self._mask.reshape(self.shape)
 
     def __setmask__(self, mask, copy=False):
         """
@@ -3587,7 +3586,7 @@ class MaskedArray(ndarray):
                 current_mask.flat = mask
         # Reshape if needed
         if current_mask.shape:
-            current_mask.shape = self.shape
+            self._mask = current_mask.reshape(self.shape)
         return
 
     _set_mask = __setmask__
@@ -4792,8 +4791,9 @@ class MaskedArray(ndarray):
 
         Notes
         -----
-        The reshaping operation cannot guarantee that a copy will not be made,
-        to modify the shape in place, use ``a.shape = s``
+        By default, the reshaping operation will make a copy if a view
+        with different strides is not possible. To ensure a view,
+        pass ``copy=False``.
 
         Examples
         --------
@@ -5723,7 +5723,7 @@ class MaskedArray(ndarray):
         --------
         >>> import numpy as np
         >>> x = np.ma.array(np.arange(4), mask=[1,1,0,0])
-        >>> x.shape = (2,2)
+        >>> x = x.reshape((2,2))
         >>> x
         masked_array(
           data=[[--, --],
@@ -6358,7 +6358,7 @@ class MaskedArray(ndarray):
         inishape = self.shape
         result = np.array(self._data.ravel(), dtype=object)
         result[_mask.ravel()] = None
-        result.shape = inishape
+        result = result.reshape(inishape)
         return result.tolist()
 
     def tobytes(self, fill_value=None, order='C'):
@@ -8261,9 +8261,9 @@ def inner(a, b):
     fa = filled(a, 0)
     fb = filled(b, 0)
     if fa.ndim == 0:
-        fa.shape = (1,)
+        fa = fa.reshape((1,))
     if fb.ndim == 0:
-        fb.shape = (1,)
+        fb = fb.reshape((1,))
     return np.inner(fa, fb).view(MaskedArray)
 
 
