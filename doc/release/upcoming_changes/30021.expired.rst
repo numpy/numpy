@@ -1,0 +1,5 @@
+Remove ``delimitor`` parameter from ``numpy.ma.mrecords.fromtextfile()``
+------------------------------------------------------------------------
+
+The ``delimitor`` parameter was deprecated in NumPy 1.22.0 and has been
+removed from ``numpy.ma.mrecords.fromtextfile()``. Use ``delimiter`` instead.

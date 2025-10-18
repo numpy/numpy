@@ -89,8 +89,6 @@ def fromtextfile(
     missingchar="",
     varnames=None,
     vartypes=None,
-    # NOTE: deprecated: NumPy 1.22.0, 2021-09-23
-    # delimitor=...,
 ): ...
 
 def addfield(mrecord, newfield, newfieldname=None): ...
