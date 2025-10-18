@@ -2271,6 +2271,7 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                                            ? codepoint_offsets[stop]
                                            : (unsigned char *)is.buf + is.size);
             npy_intp outsize = stop_bounded - start_bounded;
+            outsize = outsize < 0 ? 0 : outsize;
 
             if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
                 goto fail;
