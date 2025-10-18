@@ -23,7 +23,6 @@ from numpy._typing import (
     # array-likes
     _ArrayLikeFloat_co,
     _ArrayLikeNumber_co,
-    _ArrayLikeObject_co,
     _ComplexLike_co,
     _FloatLike_co,
     # scalar-likes
@@ -517,57 +516,6 @@ _AnyValF: TypeAlias = Callable[
 ]
 
 @type_check_only
-class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
-    @overload
-    def __call__(
-        self,
-        val_f: _AnyValF,
-        c: _SeriesLikeFloat_co,
-        /,
-        *args: _FloatLike_co,
-    ) -> np.floating: ...
-    @overload
-    def __call__(
-        self,
-        val_f: _AnyValF,
-        c: _SeriesLikeComplex_co,
-        /,
-        *args: _NumberLike_co,
-    ) -> np.complexfloating: ...
-    @overload
-    def __call__(
-        self,
-        val_f: _AnyValF,
-        c: _ArrayLikeFloat_co,
-        /,
-        *args: _ArrayLikeFloat_co,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        val_f: _AnyValF,
-        c: _ArrayLikeComplex_co,
-        /,
-        *args: _ArrayLikeComplex_co,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        val_f: _AnyValF,
-        c: _SeriesLikeObject_co,
-        /,
-        *args: _CoefObjectLike_co,
-    ) -> _SupportsCoefOps[Any]: ...
-    @overload
-    def __call__(
-        self,
-        val_f: _AnyValF,
-        c: _ArrayLikeCoef_co,
-        /,
-        *args: _ArrayLikeCoef_co,
-    ) -> _ObjectArray: ...
-
-@type_check_only
 class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -672,49 +620,6 @@ class _FuncVander3D(_Named[_Name_co], Protocol[_Name_co]):
         y: npt.ArrayLike,
         z: npt.ArrayLike,
         deg: _AnyDegrees,
-    ) -> _CoefArray: ...
-
-# keep in sync with the broadest overload of `._FuncVander`
-_AnyFuncVander: TypeAlias = Callable[
-    [npt.ArrayLike, SupportsIndex],
-    _CoefArray,
-]
-
-@type_check_only
-class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
-    @overload
-    def __call__(
-        self,
-        /,
-        vander_fs: Sequence[_AnyFuncVander],
-        points: Sequence[_ArrayLikeFloat_co],
-        degrees: Sequence[SupportsIndex],
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        vander_fs: Sequence[_AnyFuncVander],
-        points: Sequence[_ArrayLikeComplex_co],
-        degrees: Sequence[SupportsIndex],
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        vander_fs: Sequence[_AnyFuncVander],
-        points: Sequence[
-            _ArrayLikeObject_co | _ArrayLikeComplex_co,
-        ],
-        degrees: Sequence[SupportsIndex],
-    ) -> _ObjectArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        vander_fs: Sequence[_AnyFuncVander],
-        points: Sequence[npt.ArrayLike],
-        degrees: Sequence[SupportsIndex],
     ) -> _CoefArray: ...
 
 _FullFitResult: TypeAlias = Sequence[np.inexact | np.int32]
