@@ -500,15 +500,23 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         if (temp == NULL) {
             return -1;
         }
+        /* create new dimensions cache and fill it */
+        npy_intp new_nd = PyArray_NDIM(temp);
+        npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
+        if (new_dims == NULL) {
+            Py_DECREF(temp);
+            PyErr_NoMemory();
+            return -1;
+        }
+        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
+        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
+        /* Update self with new cache */
         npy_free_cache_dim_array(self);
-        ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
-        ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
-        ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);
+        ((PyArrayObject_fields *)self)->nd = new_nd;
+        ((PyArrayObject_fields *)self)->dimensions = new_dims;
+        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
         newtype = PyArray_DESCR(temp);
-        Py_INCREF(PyArray_DESCR(temp));
-        /* Fool deallocator not to delete these*/
-        ((PyArrayObject_fields *)temp)->nd = 0;
-        ((PyArrayObject_fields *)temp)->dimensions = NULL;
+        Py_INCREF(newtype);
         Py_DECREF(temp);
     }
 

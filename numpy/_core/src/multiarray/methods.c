@@ -1175,8 +1175,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     Py_ssize_t size = PyTuple_Size(args);
     int refcheck = 1;
     PyArray_Dims newshape;
-    PyObject *ret, *obj;
-
+    PyObject *obj;
 
     if (!NpyArg_ParseKeywords(kwds, "|i", kwlist,  &refcheck)) {
         return NULL;
@@ -1199,12 +1198,11 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    ret = PyArray_Resize(self, &newshape, refcheck, NPY_ANYORDER);
+    int ret = PyArray_Resize_int(self, &newshape, refcheck);
     npy_free_cache_dim_obj(newshape);
-    if (ret == NULL) {
+    if (ret < 0) {
         return NULL;
     }
-    Py_DECREF(ret);
     Py_RETURN_NONE;
 }
 
