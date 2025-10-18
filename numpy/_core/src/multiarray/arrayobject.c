@@ -426,7 +426,24 @@ array_dealloc(PyArrayObject *self)
                 PyErr_WriteUnraisable(NULL);
             }
         }
-        if (fa->mem_handler == NULL) {
+        if (fa->mem_handler != NULL) {
+            size_t nbytes = PyArray_NBYTES(self);
+            if (nbytes == 0) {
+                nbytes = 1;
+            }
+            PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
+            Py_DECREF(fa->mem_handler);
+        }
+        else if (!_PyArray_DATA_ON_INSTANCE(self)) {
+            /*
+             * Without a handler, data should be on the instance; if not,
+             * someone did something arbitrary, so warn and try free.
+             *
+             * TODO: strengthen this so we can refuse the temptation to guess?
+             * mem_handler = NULL should just signal no deallocation needed.
+             * If we do this, also remove the error paths in array_setstate
+             * and PyArray_Resize.
+             */
             if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
@@ -435,14 +452,6 @@ array_dealloc(PyArrayObject *self)
             }
             // Guess at malloc/free ???
             free(fa->data);
-        }
-        else {
-            size_t nbytes = PyArray_NBYTES(self);
-            if (nbytes == 0) {
-                nbytes = 1;
-            }
-            PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
-            Py_DECREF(fa->mem_handler);
         }
     }
 
@@ -1223,7 +1232,7 @@ array_iter(PyArrayObject *arr)
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.ndarray",
-    .tp_basicsize = sizeof(PyArrayObject_fields),
+    .tp_basicsize = offsetof(PyArrayObject_fields, _storage), // no default storage
     /* methods */
     .tp_dealloc = (destructor)array_dealloc,
     .tp_repr = (reprfunc)array_repr,
