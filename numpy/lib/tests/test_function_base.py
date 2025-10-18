@@ -1465,6 +1465,39 @@ class TestTrimZeros:
         with pytest.raises(ValueError, match=r"unexpected character\(s\) in `trim`"):
             trim_zeros(arr, trim=trim)
 
+    def test_axis_tuple(self):
+        a = np.zeros((4, 4))
+        a[1:3, 1:3] = 1
+
+        a_trim0 = np.zeros((2, 4))
+        a_trim0[:, 1:3] = 1
+
+        a_trim1 = np.zeros((4, 2))
+        a_trim1[1:3, :] = 1
+
+        a_trim_both = np.ones((2, 2))
+
+        res = trim_zeros(a, axis=())
+        assert_array_equal(res, a)
+
+        res = trim_zeros(a, axis=0)
+        assert_array_equal(res, a_trim0)
+
+        res = trim_zeros(a, axis=1)
+        assert_array_equal(res, a_trim1)
+
+        res = trim_zeros(a, axis=(-2,))
+        assert_array_equal(res, a_trim0)
+
+        res = trim_zeros(a, axis=(-1,))
+        assert_array_equal(res, a_trim1)
+
+        res = trim_zeros(a, axis=(0, -1))
+        assert_array_equal(res, a_trim_both)
+
+        res = trim_zeros(a, axis=None)
+        assert_array_equal(res, a_trim_both)
+
 
 class TestExtins:
 
