@@ -712,6 +712,7 @@ class TestArrayLikes:
         assert arr[0] is ArrayLike
 
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    @pytest.mark.thread_unsafe(reason="large slow test in parallel")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")

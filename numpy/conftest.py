@@ -117,7 +117,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         pytest.exit("GIL re-enabled during tests", returncode=1)
 
 # FIXME when yield tests are gone.
-@pytest.hookimpl()
+@pytest.hookimpl(tryfirst=True)
 def pytest_itemcollected(item):
     """
     Check FPU precision mode was not changed during test collection.
@@ -135,6 +135,11 @@ def pytest_itemcollected(item):
     elif mode != _old_fpu_mode:
         _collect_results[item] = (_old_fpu_mode, mode)
         _old_fpu_mode = mode
+
+    # mark f2py tests as thread unsafe
+    if Path(item.fspath).parent == Path(__file__).parent / 'f2py' / 'tests':
+        item.add_marker(pytest.mark.thread_unsafe(
+            reason="f2py tests are thread-unsafe"))
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -241,9 +246,3 @@ if HAVE_SCPDT:
         'numpy/random/_examples',
         'numpy/f2py/_backends/_distutils.py',
     ]
-
-def pytest_collection_modifyitems(config, items):
-    for item in items:
-        if Path(item.fspath).parent == Path(__file__).parent / 'f2py' / 'tests':
-            item.add_marker(pytest.mark.thread_unsafe(
-                reason="f2py tests are thread-unsafe"))

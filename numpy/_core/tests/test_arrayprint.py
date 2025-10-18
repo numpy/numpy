@@ -1324,6 +1324,7 @@ def test_printoptions_asyncio_safe():
     loop.close()
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support threads")
+@pytest.mark.thread_unsafe(reason="test is already explicitly multi-threaded")
 def test_multithreaded_array_printing():
     # the dragon4 implementation uses a static scratch space for performance
     # reasons this test makes sure it is set up in a thread-safe manner
