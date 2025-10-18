@@ -654,3 +654,18 @@ try_examples_global_warning_text = (
     " report them on the"
     " [NumPy issue tracker](https://github.com/numpy/numpy/issues)."
 )
+
+
+# -----------------------------------------------------------------------------
+# Reproducible builds
+# -----------------------------------------------------------------------------
+
+# Seed the random number generators with a fixed value to make build results
+# reproducible. The actual seed does not matter as long as it is deterministic.
+
+# Seed legacy RNG
+numpy.random.seed(42)
+# Monkeypatch default_rng to return a deterministically seeded instance
+numpy.random.default_rng = \
+    lambda seed=None, actual_default_rng=numpy.random.default_rng: \
+        actual_default_rng(seed if seed is not None else 42)
