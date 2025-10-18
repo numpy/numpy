@@ -25,7 +25,6 @@ from numpy import (
     vecdot,
 )
 from numpy._core.fromnumeric import matrix_transpose
-from numpy._core.numeric import tensordot
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
@@ -41,6 +40,7 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
     _NestedSequence,
+    _ShapeLike,
 )
 from numpy.linalg import LinAlgError
 
@@ -80,6 +80,7 @@ __all__ = [
 ]
 
 _NumberT = TypeVar("_NumberT", bound=np.number)
+_NumericScalarT = TypeVar("_NumericScalarT", bound=np.number | np.timedelta64 | np.object_)
 
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
@@ -437,6 +438,48 @@ def vector_norm(
     ord: float | None = 2,
     keepdims: bool = False,
 ) -> Any: ...
+
+# keep in sync with numpy._core.numeric.tensordot (ignoring `/, *`)
+@overload
+def tensordot(
+    a: _ArrayLike[_NumericScalarT],
+    b: _ArrayLike[_NumericScalarT],
+    /,
+    *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
+) -> NDArray[_NumericScalarT]: ...
+@overload
+def tensordot(
+    a: _ArrayLikeBool_co,
+    b: _ArrayLikeBool_co,
+    /,
+    *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
+) -> NDArray[np.bool_]: ...
+@overload
+def tensordot(
+    a: _ArrayLikeInt_co,
+    b: _ArrayLikeInt_co,
+    /,
+    *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
+) -> NDArray[np.int_ | Any]: ...
+@overload
+def tensordot(
+    a: _ArrayLikeFloat_co,
+    b: _ArrayLikeFloat_co,
+    /,
+    *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
+) -> NDArray[np.float64 | Any]: ...
+@overload
+def tensordot(
+    a: _ArrayLikeComplex_co,
+    b: _ArrayLikeComplex_co,
+    /,
+    *,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
+) -> NDArray[np.complex128 | Any]: ...
 
 # TODO: Returns a scalar or array
 def multi_dot(
