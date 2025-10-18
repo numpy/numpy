@@ -1,5 +1,4 @@
 # pyright: reportIncompatibleMethodOverride=false
-# ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 import datetime as dt
 from _typeshed import Incomplete
@@ -290,6 +289,9 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
 _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
+
+_Ignored: TypeAlias = object
+
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_AnyShape, dtype[_ScalarT]]
 
@@ -1186,124 +1188,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __rpow__(self: _MaskedArray[object_], other: Any, /) -> Any: ...
     @overload
     def __rpow__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
-
-    # Keep in sync with `ndarray.__iadd__`
-    @overload
-    def __iadd__(
-        self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(
-        self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(
-        self: _MaskedArray[complexfloating], other: _ArrayLikeComplex_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(
-        self: _MaskedArray[timedelta64 | datetime64], other: _ArrayLikeTD64_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(self: _MaskedArray[bytes_], other: _ArrayLikeBytes_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(
-        self: MaskedArray[Any, dtype[str_] | dtypes.StringDType],
-        other: _ArrayLikeStr_co | _ArrayLikeString_co,
-        /,
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(
-        self: _MaskedArray[object_], other: Any, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-
-    # Keep in sync with `ndarray.__isub__`
-    @overload
-    def __isub__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __isub__(
-        self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __isub__(
-        self: _MaskedArray[complexfloating], other: _ArrayLikeComplex_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __isub__(
-        self: _MaskedArray[timedelta64 | datetime64], other: _ArrayLikeTD64_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __isub__(
-        self: _MaskedArray[object_], other: Any, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-
-    # Keep in sync with `ndarray.__imul__`
-    @overload
-    def __imul__(
-        self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: MaskedArray[Any, dtype[integer] | dtype[character] | dtypes.StringDType], other: _ArrayLikeInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: _MaskedArray[complexfloating], other: _ArrayLikeComplex_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: _MaskedArray[object_], other: Any, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-
-    # Keep in sync with `ndarray.__ifloordiv__`
-    @overload
-    def __ifloordiv__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ifloordiv__(
-        self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ifloordiv__(
-        self: _MaskedArray[object_], other: Any, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-
-    # Keep in sync with `ndarray.__itruediv__`
-    @overload
-    def __itruediv__(
-        self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __itruediv__(
-        self: _MaskedArray[complexfloating],
-        other: _ArrayLikeComplex_co,
-        /,
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __itruediv__(
-        self: _MaskedArray[object_], other: Any, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-
-    # Keep in sync with `ndarray.__ipow__`
-    @overload
-    def __ipow__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ipow__(
-        self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ipow__(
-        self: _MaskedArray[complexfloating], other: _ArrayLikeComplex_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ipow__(
-        self: _MaskedArray[object_], other: Any, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
 
     #
     @property  # type: ignore[misc]
