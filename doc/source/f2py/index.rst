@@ -48,7 +48,6 @@ replace all calls to ``f2py`` mentioned in this guide with the longer version.
 .. toctree::
    :maxdepth: 3
 
-   ufunc_meson_example
    f2py-user
    f2py-reference
    windows/index

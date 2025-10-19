@@ -193,6 +193,44 @@ site-packages directory.
 
         setup(name='spam', version='1.0', ext_modules=[module1])
 
+.. tabs::
+
+   .. tab:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         import numpy as np
+
+         module1 = Extension('spam', sources=['spammodule.c'])
+
+         setup(name='spam', version='1.0', ext_modules=[module1])
+
+   .. tab:: meson
+
+      .. code-block:: meson
+
+         project('spam', 'c')
+
+         py = import('python').find_installation()
+         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+
+         sources = files('spammodule.c')
+
+         extension_module = py.extension_module(
+           'spam',
+           sources,
+           include_directories: [numpy_include],
+           install: true
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         meson setup builddir
+         meson compile -C builddir
+         meson install -C builddir
 
 Once the spam module is imported into python, you can call logit
 via ``spam.logit``. Note that the function used above cannot be applied
@@ -381,7 +419,47 @@ using ``python setup.py build_ext --inplace``.
 
         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
+.. tabs::
 
+   .. tab:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['single_type_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
+   .. tab:: meson
+
+      .. code-block:: meson
+
+         project('npufunc', 'c')
+
+         py = import('python').find_installation()
+         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+
+         sources = files('single_type_logit.c')
+
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           include_directories: [numpy_include],
+           install: true
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         meson setup builddir
+         meson compile -C builddir
+         meson install -C builddir
+    
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
@@ -673,6 +751,47 @@ is replaced with
                             sources=['multi_arg_logit.c'],
                             include_dirs=[get_include()])
 
+.. tabs::
+
+   .. tab:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['multi_arg_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
+   .. tab:: meson
+
+      .. code-block:: meson
+
+         project('npufunc', 'c')
+
+         py = import('python').find_installation()
+         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+
+         sources = files('multi_arg_logit.c')
+
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           include_directories: [numpy_include],
+           install: true
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         meson setup builddir
+         meson compile -C builddir
+         meson install -C builddir
+
 The C file is given below. The ufunc generated takes two arguments ``A``
 and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
 element is ``logit(A * B)``. Note that it automatically supports broadcasting,
@@ -807,6 +926,47 @@ is replaced with
         npufunc = Extension('npufunc',
                             sources=['add_triplet.c'],
                             include_dirs=[get_include()])
+
+.. tabs::
+
+   .. tab:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['add_triplet.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
+   .. tab:: meson
+
+      .. code-block:: meson
+
+         project('npufunc', 'c')
+
+         py = import('python').find_installation()
+         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+
+         sources = files('add_triplet.c')
+
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           include_directories: [numpy_include],
+           install: true
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         meson setup builddir
+         meson compile -C builddir
+         meson install -C builddir
 
 The C file is given below.
 
