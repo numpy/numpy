@@ -1001,7 +1001,7 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
             expect_resids = np.asarray(expect_resids)
             if np.asarray(b).ndim == 1:
                 expect_resids = expect_resids.reshape((1,))
-                assert_equal(residuals.shape, expect_resids.shape)
+            assert_equal(residuals.shape, expect_resids.shape)
         else:
             expect_resids = np.array([]).view(type(x))
         assert_almost_equal(residuals, expect_resids)

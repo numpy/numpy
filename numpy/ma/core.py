@@ -3127,8 +3127,7 @@ class MaskedArray(ndarray):
         # Finalize the mask
         if self._mask is not nomask:
             try:
-                new_mask = self._mask.reshape(self.shape)
-                self._mask = new_mask
+                self._mask = self._mask.reshape(self.shape)
             except ValueError:
                 self._mask = nomask
             except (TypeError, AttributeError):

@@ -109,8 +109,7 @@ class TestRegression:
         def rs():
             b.shape = (10,)
 
-        with warnings.catch_warnings():  # gh-28901
-            warnings.filterwarnings('ignore', category=DeprecationWarning)
+        with pytest.warns(DeprecationWarning):  # gh-29536
             assert_raises(AttributeError, rs)
 
     def test_bool(self):
