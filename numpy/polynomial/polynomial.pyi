@@ -1,11 +1,19 @@
-from typing import ClassVar, Final
+from typing import Any, ClassVar, Final, overload
 
 import numpy as np
+import numpy.typing as npt
+from numpy._typing import (
+    _ArrayLikeFloat_co,
+    _ArrayLikeNumber_co,
+    _FloatLike_co,
+    _NumberLike_co,
+)
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
     _Array1,
     _Array2,
+    _ArrayLikeCoef_co,
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
@@ -19,7 +27,6 @@ from ._polytypes import (
     _FuncVal,
     _FuncVal2D,
     _FuncVal3D,
-    _FuncValFromRoots,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
@@ -75,7 +82,38 @@ polyint: Final[_FuncInteg] = ...
 polyval: Final[_FuncVal] = ...
 polyval2d: Final[_FuncVal2D] = ...
 polyval3d: Final[_FuncVal3D] = ...
-polyvalfromroots: Final[_FuncValFromRoots] = ...
+
+@overload
+def polyvalfromroots(
+    x: _FloatLike_co,
+    r: _FloatLike_co,
+    tensor: bool = True,
+) -> np.float64 | Any: ...
+@overload
+def polyvalfromroots(
+    x: _NumberLike_co,
+    r: _NumberLike_co,
+    tensor: bool = True,
+) -> np.complex128 | Any: ...
+@overload
+def polyvalfromroots(
+    x: _ArrayLikeFloat_co,
+    r: _ArrayLikeFloat_co,
+    tensor: bool = True,
+) -> npt.NDArray[np.float64 | Any]: ...
+@overload
+def polyvalfromroots(
+    x: _ArrayLikeNumber_co,
+    r: _ArrayLikeNumber_co,
+    tensor: bool = True,
+) -> npt.NDArray[np.complex128 | Any]: ...
+@overload
+def polyvalfromroots(
+    x: _ArrayLikeCoef_co,
+    r: _ArrayLikeCoef_co,
+    tensor: bool = True,
+) -> npt.NDArray[np.object_ | Any]: ...
+
 polygrid2d: Final[_FuncVal2D] = ...
 polygrid3d: Final[_FuncVal3D] = ...
 polyvander: Final[_FuncVander] = ...

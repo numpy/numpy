@@ -288,57 +288,6 @@ class _FuncInteg(Protocol):
     ) -> _ObjectArray: ...
 
 @type_check_only
-class _FuncValFromRoots(Protocol):
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _FloatLike_co,
-        r: _FloatLike_co,
-        tensor: bool = ...,
-    ) -> np.floating: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _NumberLike_co,
-        r: _NumberLike_co,
-        tensor: bool = ...,
-    ) -> np.complexfloating: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _FloatLike_co | _ArrayLikeFloat_co,
-        r: _ArrayLikeFloat_co,
-        tensor: bool = ...,
-    ) -> _FloatArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _NumberLike_co | _ArrayLikeComplex_co,
-        r: _ArrayLikeComplex_co,
-        tensor: bool = ...,
-    ) -> _ComplexArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _CoefLike_co | _ArrayLikeCoef_co,
-        r: _ArrayLikeCoef_co,
-        tensor: bool = ...,
-    ) -> _ObjectArray: ...
-    @overload
-    def __call__(
-        self,
-        /,
-        x: _CoefLike_co,
-        r: _CoefLike_co,
-        tensor: bool = ...,
-    ) -> _SupportsCoefOps[Any]: ...
-
-@type_check_only
 class _FuncVal(Protocol):
     @overload
     def __call__(
