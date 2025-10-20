@@ -37,7 +37,7 @@ from ._polytypes import (
 
 __all__ = ["ABCPolyBase"]
 
-_NameT_co = TypeVar("_NameT_co", bound=str | None, default=str | None)
+_NameT_co = TypeVar("_NameT_co", bound=str | None, default=str | None, covariant=True)
 _PolyT = TypeVar("_PolyT", bound=ABCPolyBase)
 _AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 
