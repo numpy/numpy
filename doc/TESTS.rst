@@ -82,10 +82,10 @@ To help with stress testing NumPy for thread safety, the test suite can be run u
 
   $ pip install pytest-run-parallel
 
-To run the test suite in parallel threads::
+To run the test suite in multiple threads::
 
   $ spin test -p auto # have pytest-run-parallel detect the number of available cores
-  $ spin test -p 4 # run each test under 4 parallel threads
+  $ spin test -p 4 # run each test under 4 threads
   $ spin test -p auto -- --skip-thread-unsafe=true # run ONLY tests that are thread-safe
 
 When you write new tests (see below), it is worth testing to make sure they do not fail
