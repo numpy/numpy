@@ -144,16 +144,15 @@ else:
 @click.option(
     "-p",
     "--parallel-threads",
-    "parallel",
     metavar='PARALLEL_THREADS',
     default="1",
-    help="Run tests in the given number of parallel threads under pytest-run-parallel. "
-         "Can give a certain number of threads, or \"auto\" to have number of threads "
-         "automatically detected from avaliable CPUs. Use "
-         "`-- --skip-thread-unsafe=true` to only run tests that can run in parallel."
+    help="Run tests many times in number of parallel threads under pytest-run-parallel."
+         " Can be set to `auto` to use all cores. Use `spin test -p <number> -- "
+         "--skip-thread-unsafe=true` to only run tests that can run in parallel. "
+         "pytest-run-parallel must be installed to use."
 )
 @spin.util.extend_command(spin.cmds.meson.test)
-def test(*, parent_callback, pytest_args, tests, markexpr, parallel, **kwargs):
+def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **kwargs):
     """
     By default, spin will run `-m 'not slow'`. To run the full test suite, use
     `spin test -m full`
@@ -168,8 +167,8 @@ def test(*, parent_callback, pytest_args, tests, markexpr, parallel, **kwargs):
         if markexpr != "full":
             pytest_args = ('-m', markexpr) + pytest_args
 
-    if parallel != "1":
-        pytest_args = ('--parallel-threads', parallel) + pytest_args
+    if parallel_threads != "1":
+        pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
