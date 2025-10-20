@@ -97,7 +97,6 @@ _Tss = ParamSpec("_Tss")
 _ET = TypeVar("_ET", bound=BaseException, default=BaseException)
 _FT = TypeVar("_FT", bound=Callable[..., Any])
 _W_co = TypeVar("_W_co", bound=_WarnLog | None, default=_WarnLog | None, covariant=True)
-_T_or_bool = TypeVar("_T_or_bool", default=bool)
 
 _StrLike: TypeAlias = str | bytes
 _RegexLike: TypeAlias = _StrLike | Pattern[Any]
@@ -460,7 +459,7 @@ def temppath(
 ) -> _GeneratorContextManager[AnyStr]: ...
 
 #
-def check_support_sve(__cache: list[_T_or_bool] = []) -> _T_or_bool: ...  # noqa: PYI063
+def check_support_sve(__cache: list[bool] = ..., /) -> bool: ...  # stubdefaulter: ignore[missing-default]
 
 #
 def decorate_methods(
