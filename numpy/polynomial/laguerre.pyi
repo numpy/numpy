@@ -1,4 +1,4 @@
-from typing import Final, Literal as L
+from typing import ClassVar, Final, Literal as L
 
 import numpy as np
 
@@ -96,4 +96,7 @@ lagroots: _FuncRoots[L["lagroots"]]
 laggauss: _FuncGauss[L["laggauss"]]
 lagweight: _FuncWeight[L["lagweight"]]
 
-class Laguerre(ABCPolyBase[L["L"]]): ...
+class Laguerre(ABCPolyBase[L["L"]]):
+    basis_name: ClassVar[L["L"]] = "L"  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]

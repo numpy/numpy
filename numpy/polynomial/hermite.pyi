@@ -1,4 +1,4 @@
-from typing import Any, Final, Literal as L, TypeVar
+from typing import Any, ClassVar, Final, Literal as L, TypeVar
 
 import numpy as np
 
@@ -103,4 +103,7 @@ def _normed_hermite_n(
 hermgauss: _FuncGauss[L["hermgauss"]]
 hermweight: _FuncWeight[L["hermweight"]]
 
-class Hermite(ABCPolyBase[L["H"]]): ...
+class Hermite(ABCPolyBase[L["H"]]):
+    basis_name: ClassVar[L["H"]] = "H"  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]

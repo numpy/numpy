@@ -1,4 +1,4 @@
-from typing import Final, Literal as L
+from typing import ClassVar, Final, Literal as L
 
 import numpy as np
 
@@ -57,10 +57,10 @@ __all__ = [
     "polycompanion",
 ]
 
-polydomain: Final[_Array2[np.float64]]
-polyzero: Final[_Array1[np.int_]]
-polyone: Final[_Array1[np.int_]]
-polyx: Final[_Array2[np.int_]]
+polydomain: Final[_Array2[np.float64]] = ...
+polyzero: Final[_Array1[np.int_]] = ...
+polyone: Final[_Array1[np.int_]] = ...
+polyx: Final[_Array2[np.int_]] = ...
 
 polyline: _FuncLine[L["Polyline"]]
 polyfromroots: _FuncFromRoots[L["polyfromroots"]]
@@ -85,4 +85,7 @@ polyfit: _FuncFit[L["polyfit"]]
 polycompanion: _FuncCompanion[L["polycompanion"]]
 polyroots: _FuncRoots[L["polyroots"]]
 
-class Polynomial(ABCPolyBase[None]): ...
+class Polynomial(ABCPolyBase[None]):
+    basis_name: ClassVar[None] = None  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]

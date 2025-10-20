@@ -1,5 +1,14 @@
 from collections.abc import Callable, Iterable
-from typing import Any, Concatenate, Final, Literal as L, Self, TypeVar, overload
+from typing import (
+    Any,
+    ClassVar,
+    Concatenate,
+    Final,
+    Literal as L,
+    Self,
+    TypeVar,
+    overload,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -90,10 +99,10 @@ def _zseries_int(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]
 poly2cheb: _FuncPoly2Ortho[L["poly2cheb"]]
 cheb2poly: _FuncUnOp[L["cheb2poly"]]
 
-chebdomain: Final[_Array2[np.float64]]
-chebzero: Final[_Array1[np.int_]]
-chebone: Final[_Array1[np.int_]]
-chebx: Final[_Array2[np.int_]]
+chebdomain: Final[_Array2[np.float64]] = ...
+chebzero: Final[_Array1[np.int_]] = ...
+chebone: Final[_Array1[np.int_]] = ...
+chebx: Final[_Array2[np.int_]] = ...
 
 chebline: _FuncLine[L["chebline"]]
 chebfromroots: _FuncFromRoots[L["chebfromroots"]]
@@ -144,6 +153,10 @@ def chebinterpolate(
 ) -> npt.NDArray[_RT]: ...
 
 class Chebyshev(ABCPolyBase[L["T"]]):
+    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
     @overload
     @classmethod
     def interpolate(
