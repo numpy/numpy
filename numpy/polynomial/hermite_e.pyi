@@ -1,4 +1,4 @@
-from typing import ClassVar, Final, Literal as L, TypeVar
+from typing import Any, ClassVar, Final, Literal as L, TypeVar
 
 import numpy as np
 
@@ -103,5 +103,5 @@ hermeweight: Final[_FuncWeight] = ...
 
 class HermiteE(ABCPolyBase[L["He"]]):
     basis_name: ClassVar[L["He"]] = "He"  # pyright: ignore[reportIncompatibleMethodOverride]
-    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
-    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]

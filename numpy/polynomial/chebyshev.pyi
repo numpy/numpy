@@ -152,8 +152,8 @@ def chebinterpolate(
 
 class Chebyshev(ABCPolyBase[L["T"]]):
     basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride]
-    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
-    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     @overload
     @classmethod

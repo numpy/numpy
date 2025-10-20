@@ -1,4 +1,4 @@
-from typing import ClassVar, Final, Literal as L
+from typing import Any, ClassVar, Final, Literal as L
 
 import numpy as np
 
@@ -96,5 +96,5 @@ legweight: Final[_FuncWeight] = ...
 
 class Legendre(ABCPolyBase[L["P"]]):
     basis_name: ClassVar[L["P"]] = "P"  # pyright: ignore[reportIncompatibleMethodOverride]
-    domain: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
-    window: _Array2[np.float64] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
