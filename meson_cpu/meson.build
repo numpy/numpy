@@ -207,8 +207,17 @@ foreach opt_name, conf : parse_options
       endforeach
     else
       filterd = []
+      # filter out the features that are in the accumulate list 
+      # including any successor features
       foreach fet : result
-        if fet not in accumulate
+        escape = false
+        foreach fet2 : accumulate
+          if fet2 in mod_features.implicit_c(fet)
+            escape = true
+            break
+          endif
+        endforeach
+        if not escape
           filterd += fet
         endif
       endforeach

@@ -97,8 +97,23 @@ Having issues with AVX512 features?
 You may have some reservations about including of ``AVX512`` or
 any other CPU feature and you want to exclude from the dispatched features::
 
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f"
+
+which is equivalent to::
+
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd 
     -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl -avx512_spr"
+
+Since excluding ``AVX512F`` also excludes all CPU features that imply it.
+
+You can also enable the required features without enabling ``max``::
+
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2 fma3"
+
+.. note::
+  
+  Please refer to :ref:`opt-supported-features` to know which features
+  are implied by others.
 
 .. _opt-supported-features:
 
@@ -126,6 +141,10 @@ Special options
 
 - ``NATIVE``: Enables all CPU features that supported by the host CPU,
   this operation is based on the compiler flags (``-march=native``, ``-xHost``, ``/QxHost``)
+
+- ``DETECT``: Detects the features enabled by the compiler. This option is appended by default
+  to ``cpu-baseline`` if ``-march``, ``-mcpu``, ``-xhost``, or ``/QxHost`` is set in
+  the environment variable ``CFLAGS``.
 
 - ``MIN``: Enables the minimum CPU features that can safely run on a wide range of platforms:
 
