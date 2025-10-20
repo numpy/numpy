@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from decimal import Decimal
-from fractions import Fraction
-from typing import Any, Literal as L, LiteralString, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal as L, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 import numpy.polynomial as npp
@@ -17,7 +16,7 @@ _Ar_f_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating]]
 _Ar_c_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
 _Ar_O_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.object_]]
 
-_Ar_x_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.inexact | np.object_]]
+_Ar_x_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.float64 | Any]]
 _Ar_f_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.floating]]
 _Ar_c_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
 _Ar_O_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
@@ -103,7 +102,7 @@ assert_type(type(PS_herme).cast(PS_leg), npp.HermiteE)
 assert_type(PS_all.coef, _Ar_x_n)
 assert_type(PS_all.domain, _Ar_x_2)
 assert_type(PS_all.window, _Ar_x_2)
-assert_type(PS_all.symbol, LiteralString)
+assert_type(PS_all.symbol, str)
 
 # instance methods
 
@@ -113,7 +112,7 @@ assert_type(PS_all.has_samewindow(PS_all), bool)
 assert_type(PS_all.has_sametype(PS_all), bool)
 assert_type(PS_poly.has_sametype(PS_poly), bool)
 assert_type(PS_poly.has_sametype(PS_leg), bool)
-assert_type(PS_poly.has_sametype(NotADirectoryError), L[False])
+assert_type(PS_poly.has_sametype(NotADirectoryError), bool)
 
 assert_type(PS_poly.copy(), npp.Polynomial)
 assert_type(PS_cheb.copy(), npp.Chebyshev)
@@ -122,7 +121,7 @@ assert_type(PS_herme.copy(), npp.HermiteE)
 assert_type(PS_lag.copy(), npp.Laguerre)
 assert_type(PS_leg.copy(), npp.Legendre)
 
-assert_type(PS_leg.cutdeg(), npp.Legendre)
+assert_type(PS_leg.cutdeg(3), npp.Legendre)
 assert_type(PS_leg.trim(), npp.Legendre)
 assert_type(PS_leg.trim(tol=SC_f_co), npp.Legendre)
 assert_type(PS_leg.truncate(SC_i_co), npp.Legendre)
@@ -172,17 +171,16 @@ assert_type(repr(PS_all), str)
 assert_type(format(PS_all), str)
 
 assert_type(len(PS_all), int)
-assert_type(next(iter(PS_all)), np.inexact | object)
+assert_type(next(iter(PS_all)), np.float64 | Any)
 
-assert_type(PS_all(SC_f_co), np.float64 | np.complex128)
-assert_type(PS_all(SC_c_co), np.complex128)
-assert_type(PS_all(Decimal()), np.float64 | np.complex128)
-assert_type(PS_all(Fraction()), np.float64 | np.complex128)
-assert_type(PS_poly(SQ_f), npt.NDArray[np.float64] | npt.NDArray[np.complex128] | npt.NDArray[np.object_])
-assert_type(PS_poly(SQ_c), npt.NDArray[np.complex128] | npt.NDArray[np.object_])
+assert_type(PS_all(SC_f_co), np.float64 | Any)
+assert_type(PS_all(SC_c_co), np.complex128 | Any)
+assert_type(PS_all(Decimal()), np.float64 | Any)
+assert_type(PS_poly(SQ_f), npt.NDArray[np.float64 | Any])
+assert_type(PS_poly(SQ_c), npt.NDArray[np.complex128 | Any])
 assert_type(PS_poly(SQ_O), npt.NDArray[np.object_])
-assert_type(PS_poly(AR_f), npt.NDArray[np.float64] | npt.NDArray[np.complex128] | npt.NDArray[np.object_])
-assert_type(PS_poly(AR_c), npt.NDArray[np.complex128] | npt.NDArray[np.object_])
+assert_type(PS_poly(AR_f), npt.NDArray[np.float64 | Any])
+assert_type(PS_poly(AR_c), npt.NDArray[np.complex128 | Any])
 assert_type(PS_poly(AR_O), npt.NDArray[np.object_])
 assert_type(PS_all(PS_poly), npp.Polynomial)
 
