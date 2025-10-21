@@ -82,7 +82,6 @@ warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = [
-    'sphinx_tabs.tabs',
     'sphinx.ext.autodoc',
     'numpydoc',
     'sphinx.ext.intersphinx',

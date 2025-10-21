@@ -193,9 +193,9 @@ site-packages directory.
 
         setup(name='spam', version='1.0', ext_modules=[module1])
 
-.. tabs::
+.. tab-set::
 
-   .. tab:: setuptools
+   .. tab-item:: setuptools
 
       .. code-block:: python
 
@@ -206,7 +206,7 @@ site-packages directory.
 
          setup(name='spam', version='1.0', ext_modules=[module1])
 
-   .. tab:: meson
+   .. tab-item:: meson
 
       .. code-block:: meson
 
@@ -419,9 +419,9 @@ using ``python setup.py build_ext --inplace``.
 
         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
-.. tabs::
+.. tab-set::
 
-   .. tab:: setuptools
+   .. tab-item:: setuptools
 
       .. code-block:: python
 
@@ -434,7 +434,7 @@ using ``python setup.py build_ext --inplace``.
 
          setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
-   .. tab:: meson
+   .. tab-item:: meson
 
       .. code-block:: meson
 
@@ -711,6 +711,51 @@ or installed to site-packages via ``python setup.py install``.
 
         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
+.. tab-set::
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+         from os import path
+
+         path_to_npymath = path.join(get_include(), '..', 'lib')
+         npufunc = Extension('npufunc',
+                             sources=['multi_type_logit.c'],
+                             include_dirs=[get_include()],
+                             library_dirs=[path_to_npymath],
+                             libraries=["npymath"])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
+   .. tab-item:: meson
+
+      .. code-block:: meson
+
+         project('npufunc', 'c')
+
+         py = import('python').find_installation()
+         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+
+         sources = files('multi_type_logit.c')
+
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           include_directories: [numpy_include],
+           install: true
+         )
+
+      To build and install:
+
+      .. code-block:: bash
+
+         meson setup builddir
+         meson compile -C builddir
+         meson install -C builddir
+
 
 After the above has been installed, it can be imported and used as follows.
 
@@ -751,9 +796,9 @@ is replaced with
                             sources=['multi_arg_logit.c'],
                             include_dirs=[get_include()])
 
-.. tabs::
+.. tab-set::
 
-   .. tab:: setuptools
+   .. tab-item:: setuptools
 
       .. code-block:: python
 
@@ -766,7 +811,7 @@ is replaced with
 
          setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
-   .. tab:: meson
+   .. tab-item:: meson
 
       .. code-block:: meson
 
@@ -927,9 +972,9 @@ is replaced with
                             sources=['add_triplet.c'],
                             include_dirs=[get_include()])
 
-.. tabs::
+.. tab-set::
 
-   .. tab:: setuptools
+   .. tab-item:: setuptools
 
       .. code-block:: python
 
@@ -942,7 +987,7 @@ is replaced with
 
          setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
-   .. tab:: meson
+   .. tab-item:: meson
 
       .. code-block:: meson
 
@@ -1033,7 +1078,7 @@ The C file is given below.
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "struct_ufunc_test",
+            "npufunc",
             NULL,
             -1,
             StructUfuncTestMethods,
