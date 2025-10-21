@@ -56,23 +56,9 @@ jobs:
           uv pip install
           -r requirements/build_requirements.txt
           -r requirements/test_requirements.txt
-          .
 
-      # workaround for https://github.com/python/mypy/issues/20064
-      # also addressed in https://github.com/numpy/numpy/pull/30044
-      - name: upgrade hypothesis
-        run: uv pip install hypothesis==6.142.2
+      - name: spin build
+        run: spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
 
-      # TODO: use spin once #30039 is merged
-      # - name: spin build
-      #   run: spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
-      # - name: spin stubtest
-      #   run: spin stubtest
-
-      - name: stubtest
-        run: >-
-          stubtest
-          --ignore-disjoint-bases
-          --mypy-config-file=tools/stubtest/mypy.ini
-          --allowlist=tools/stubtest/allowlist.txt
-          numpy
+      - name: spin stubtest
+        run: spin stubtest
