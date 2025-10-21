@@ -361,6 +361,9 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
 
 class TestAddNewdocUFunc(_DeprecationTestCase):
     # Deprecated in Numpy 2.2, 2024-11
+    @pytest.mark.thread_unsafe(
+        reason="modifies and checks docstring which is global state"
+    )
     def test_deprecated(self):
         doc = struct_ufunc.add_triplet.__doc__
         # gh-26718

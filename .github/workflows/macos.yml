@@ -115,7 +115,7 @@ jobs:
         build_runner:
           - [ macos-15-intel, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
-        version: ["3.11", "3.14t-dev"]
+        version: ["3.11", "3.14t"]
 
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -144,4 +144,11 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
+      if: ${{ matrix.version != '3.14t' || matrix.build_runner[0] != 'macos-14' }}
       run: spin test -j2 -- --timeout=600 --durations=10
+  
+    - name: Test in multiple threads
+      if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-14' }}
+      run:  |
+        pip install pytest-run-parallel==0.7.0
+        spin test -p 4 -- --timeout=600 --durations=10

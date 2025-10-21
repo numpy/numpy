@@ -871,9 +871,7 @@ def recursionlimit(n):
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational]))
-@pytest.mark.thread_unsafe(
-    reason="gives unreliable results w/ hypothesis (HypothesisWorks/hypothesis#4562)"
-)
+@pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_left(o, op, type_):
     try:
         with recursionlimit(200):
@@ -885,9 +883,7 @@ def test_operator_object_left(o, op, type_):
 @given(sampled_from(objecty_things),
        sampled_from(binary_operators_for_scalar_ints),
        sampled_from(types + [rational]))
-@pytest.mark.thread_unsafe(
-    reason="gives unreliable results w/ hypothesis (HypothesisWorks/hypothesis#4562)"
-)
+@pytest.mark.thread_unsafe(reason="sets recursion limit globally")
 def test_operator_object_right(o, op, type_):
     try:
         with recursionlimit(200):

@@ -1003,6 +1003,7 @@ class TestCreation:
 
     @pytest.mark.skipif(not IS_64BIT,
                         reason="malloc may not fail on 32 bit systems")
+    @pytest.mark.thread_unsafe(reason="large slow test in parallel")
     def test_malloc_fails(self):
         # This test is guaranteed to fail due to a too large allocation
         with assert_raises(np._core._exceptions._ArrayMemoryError):
