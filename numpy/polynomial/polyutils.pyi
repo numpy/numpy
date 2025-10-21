@@ -1,35 +1,38 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Any, Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeObject_co,
     _FloatLike_co,
     _NumberLike_co,
 )
 
 from ._polytypes import (
     _AnyInt,
+    _AnyValF,
     _Array2,
     _ArrayLikeCoef_co,
     _CoefArray,
     _CoefLike_co,
+    _CoefObjectLike_co,
     _CoefSeries,
     _ComplexArray,
     _ComplexSeries,
     _FloatArray,
     _FloatSeries,
     _FuncBinOp,
-    _FuncValND,
-    _FuncVanderND,
     _ObjectArray,
     _ObjectSeries,
     _SeriesLikeCoef_co,
     _SeriesLikeComplex_co,
     _SeriesLikeFloat_co,
     _SeriesLikeInt_co,
+    _SeriesLikeObject_co,
+    _SupportsCoefOps,
     _Tuple2,
 )
 
@@ -43,18 +46,9 @@ __all__: Final[Sequence[str]] = [
     "trimseq",
 ]
 
-_AnyLineF: TypeAlias = Callable[
-    [_CoefLike_co, _CoefLike_co],
-    _CoefArray,
-]
-_AnyMulF: TypeAlias = Callable[
-    [npt.ArrayLike, npt.ArrayLike],
-    _CoefArray,
-]
-_AnyVanderF: TypeAlias = Callable[
-    [npt.ArrayLike, SupportsIndex],
-    _CoefArray,
-]
+_AnyLineF: TypeAlias = Callable[[_CoefLike_co, _CoefLike_co], _CoefArray]
+_AnyMulF: TypeAlias = Callable[[npt.ArrayLike, npt.ArrayLike], _CoefArray]
+_AnyVanderF: TypeAlias = Callable[[npt.ArrayLike, SupportsIndex], _CoefArray]
 
 @overload
 def as_series(
@@ -262,8 +256,57 @@ def _nth_slice(
     ndim: SupportsIndex,
 ) -> tuple[slice | None, ...]: ...
 
-_vander_nd: _FuncVanderND[Literal["_vander_nd"]]
-_vander_nd_flat: _FuncVanderND[Literal["_vander_nd_flat"]]
+# keep in sync with `vander_nd_flat`
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeFloat_co],
+    degrees: Sequence[SupportsIndex],
+) -> _FloatArray: ...
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ComplexArray: ...
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeObject_co | _ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ObjectArray: ...
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[npt.ArrayLike],
+    degrees: Sequence[SupportsIndex],
+) -> _CoefArray: ...
+
+# keep in sync with `vander_nd`
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeFloat_co],
+    degrees: Sequence[SupportsIndex],
+) -> _FloatArray: ...
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ComplexArray: ...
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeObject_co | _ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ObjectArray: ...
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[npt.ArrayLike],
+    degrees: Sequence[SupportsIndex],
+) -> _CoefArray: ...
 
 # keep in sync with `._polytypes._FuncFromRoots`
 @overload
@@ -282,7 +325,7 @@ def _fromroots(
 def _fromroots(
     line_f: _AnyLineF,
     mul_f: _AnyMulF,
-    roots: _SeriesLikeCoef_co,
+    roots: _SeriesLikeObject_co,
 ) -> _ObjectSeries: ...
 @overload
 def _fromroots(
@@ -291,8 +334,81 @@ def _fromroots(
     roots: _SeriesLikeCoef_co,
 ) -> _CoefSeries: ...
 
-_valnd: _FuncValND[Literal["_valnd"]]
-_gridnd: _FuncValND[Literal["_gridnd"]]
+# keep in sync with `_gridnd`
+@overload
+def _valnd(
+    val_f: _AnyValF,
+    c: _SeriesLikeFloat_co,
+    *args: _FloatLike_co,
+) -> np.floating: ...
+@overload
+def _valnd(
+    val_f: _AnyValF,
+    c: _SeriesLikeComplex_co,
+    *args: _NumberLike_co,
+) -> np.complexfloating: ...
+@overload
+def _valnd(
+    val_f: _AnyValF,
+    c: _ArrayLikeFloat_co,
+    *args: _ArrayLikeFloat_co,
+) -> _FloatArray: ...
+@overload
+def _valnd(
+    val_f: _AnyValF,
+    c: _ArrayLikeComplex_co,
+    *args: _ArrayLikeComplex_co,
+) -> _ComplexArray: ...
+@overload
+def _valnd(
+    val_f: _AnyValF,
+    c: _SeriesLikeObject_co,
+    *args: _CoefObjectLike_co,
+) -> _SupportsCoefOps[Any]: ...
+@overload
+def _valnd(
+    val_f: _AnyValF,
+    c: _ArrayLikeCoef_co,
+    *args: _ArrayLikeCoef_co,
+) -> _ObjectArray: ...
+
+# keep in sync with `_valnd`
+@overload
+def _gridnd(
+    val_f: _AnyValF,
+    c: _SeriesLikeFloat_co,
+    *args: _FloatLike_co,
+) -> np.floating: ...
+@overload
+def _gridnd(
+    val_f: _AnyValF,
+    c: _SeriesLikeComplex_co,
+    *args: _NumberLike_co,
+) -> np.complexfloating: ...
+@overload
+def _gridnd(
+    val_f: _AnyValF,
+    c: _ArrayLikeFloat_co,
+    *args: _ArrayLikeFloat_co,
+) -> _FloatArray: ...
+@overload
+def _gridnd(
+    val_f: _AnyValF,
+    c: _ArrayLikeComplex_co,
+    *args: _ArrayLikeComplex_co,
+) -> _ComplexArray: ...
+@overload
+def _gridnd(
+    val_f: _AnyValF,
+    c: _SeriesLikeObject_co,
+    *args: _CoefObjectLike_co,
+) -> _SupportsCoefOps[Any]: ...
+@overload
+def _gridnd(
+    val_f: _AnyValF,
+    c: _ArrayLikeCoef_co,
+    *args: _ArrayLikeCoef_co,
+) -> _ObjectArray: ...
 
 # keep in sync with `_polytypes._FuncBinOp`
 @overload
@@ -310,8 +426,8 @@ def _div(
 @overload
 def _div(
     mul_f: _AnyMulF,
-    c1: _SeriesLikeCoef_co,
-    c2: _SeriesLikeCoef_co,
+    c1: _SeriesLikeObject_co,
+    c2: _SeriesLikeObject_co,
 ) -> _Tuple2[_ObjectSeries]: ...
 @overload
 def _div(
@@ -320,37 +436,37 @@ def _div(
     c2: _SeriesLikeCoef_co,
 ) -> _Tuple2[_CoefSeries]: ...
 
-_add: Final[_FuncBinOp]
-_sub: Final[_FuncBinOp]
+_add: Final[_FuncBinOp] = ...
+_sub: Final[_FuncBinOp] = ...
 
 # keep in sync with `_polytypes._FuncPow`
 @overload
-def _pow(  # type: ignore[overload-overlap]
+def _pow(
     mul_f: _AnyMulF,
     c: _SeriesLikeFloat_co,
     pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
+    maxpower: _AnyInt | None,
 ) -> _FloatSeries: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _SeriesLikeComplex_co,
     pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
+    maxpower: _AnyInt | None,
 ) -> _ComplexSeries: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
-    c: _SeriesLikeCoef_co,
+    c: _SeriesLikeObject_co,
     pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
+    maxpower: _AnyInt | None,
 ) -> _ObjectSeries: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _SeriesLikeCoef_co,
     pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
+    maxpower: _AnyInt | None,
 ) -> _CoefSeries: ...
 
 # keep in sync with `_polytypes._FuncFit`
@@ -360,7 +476,6 @@ def _fit(  # type: ignore[overload-overlap]
     x: _SeriesLikeFloat_co,
     y: _ArrayLikeFloat_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeFloat_co | None = ...,
     rcond: _FloatLike_co | None = None,
     full: Literal[False] = False,
     w: _SeriesLikeFloat_co | None = None,
@@ -371,7 +486,6 @@ def _fit(
     x: _SeriesLikeComplex_co,
     y: _ArrayLikeComplex_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeComplex_co | None = ...,
     rcond: _FloatLike_co | None = None,
     full: Literal[False] = False,
     w: _SeriesLikeComplex_co | None = None,
@@ -382,7 +496,6 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _ArrayLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeCoef_co | None = ...,
     rcond: _FloatLike_co | None = None,
     full: Literal[False] = False,
     w: _SeriesLikeCoef_co | None = None,
@@ -393,10 +506,8 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeCoef_co | None,
     rcond: _FloatLike_co | None,
     full: Literal[True],
-    /,
     w: _SeriesLikeCoef_co | None = None,
 ) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 @overload
@@ -405,7 +516,6 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeCoef_co | None = ...,
     rcond: _FloatLike_co | None = None,
     *,
     full: Literal[True],
