@@ -47,6 +47,8 @@ class TestUfunclike:
         assert_equal(out, tgt)
         assert_equal(fix(3.14), 3)
 
+        assert_equal(fix(a), fix(a, out=a))
+
     def test_fix_with_subclass(self):
         class MyArray(np.ndarray):
             def __new__(cls, data, metadata=None):

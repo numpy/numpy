@@ -57,7 +57,7 @@ def fix(x, out=None):
 
     """
     # promote back to an array if flattened
-    res = nx.asanyarray(nx.ceil(x, out=out))
+    res = nx.asanyarray(nx.ceil(x, out=out, where=nx.less(x, 0)))
     res = nx.floor(x, out=res, where=nx.greater_equal(x, 0))
 
     # when no out argument is passed and no subclasses are involved, flatten
