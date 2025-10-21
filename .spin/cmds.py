@@ -560,13 +560,15 @@ def stubtest(*, concise: bool, build_dir: str) -> None:
 
     stubtest_dir = curdir.parent / 'tools' / 'stubtest'
     mypy_config = stubtest_dir / 'mypy.ini'
-    allowlist = stubtest_dir / 'allowlist.txt'
+    allowlists = [stubtest_dir / 'allowlist.txt']
+    if sys.version_info >= (3, 12):
+        allowlists.append(stubtest_dir / 'allowlist_py312.txt')
 
     cmd = [
         'stubtest',
         '--ignore-disjoint-bases',
         f'--mypy-config-file={mypy_config}',
-        f'--allowlist={allowlist}',
+        *(f'--allowlist={allowlist}' for allowlist in allowlists),
     ]
     if concise:
         cmd.append('--concise')
