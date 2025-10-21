@@ -31,13 +31,8 @@ numpy\.f2py\.__main__
 # inexpressible: the `dtype.type` class-attribute is `None` unless instantiated
 numpy(\..+)?\.dtype\.type
 
-# mypy false positive "... is not a Union" errors (py314 only?)
-numpy\.typing\.ArrayLike
-numpy\.typing\.DTypeLike
-
 # distutils
 numpy\.distutils.*
-numpy\.f2py\._backends\._distutils
 
 # import errors
 numpy\._build_utils.*
