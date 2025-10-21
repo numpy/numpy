@@ -5450,9 +5450,7 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __ge__(self, other: _SupportsGT, /) -> bool_: ...
 
-class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]):
-    @abstractmethod
-    def __new__(cls) -> Self: ...
+class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]
 
 class void(flexible[bytes | tuple[Any, ...]]):
     @overload

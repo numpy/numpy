@@ -1,6 +1,5 @@
-import builtins
-from typing import Any, TypedDict, type_check_only
-from typing import Literal as L
+from builtins import bool as py_bool
+from typing import Any, Final, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 from numpy import (
@@ -13,6 +12,8 @@ from numpy import (
     clongdouble,
     complex64,
     complex128,
+    complex192,
+    complex256,
     complexfloating,
     csingle,
     datetime64,
@@ -22,6 +23,8 @@ from numpy import (
     float16,
     float32,
     float64,
+    float96,
+    float128,
     floating,
     generic,
     half,
@@ -59,9 +62,8 @@ from numpy import (
     void,
 )
 from numpy._typing import DTypeLike
-from numpy._typing._extended_precision import complex192, complex256, float96, float128
 
-from ._type_aliases import sctypeDict  # noqa: F401
+from ._type_aliases import sctypeDict as sctypeDict
 from .multiarray import (
     busday_count,
     busday_offset,
@@ -142,19 +144,18 @@ __all__ = [
 
 @type_check_only
 class _TypeCodes(TypedDict):
-    Character: L['c']
-    Integer: L['bhilqnp']
-    UnsignedInteger: L['BHILQNP']
-    Float: L['efdg']
-    Complex: L['FDG']
-    AllInteger: L['bBhHiIlLqQnNpP']
-    AllFloat: L['efdgFDG']
-    Datetime: L['Mm']
-    All: L['?bhilqnpBHILQNPefdgFDGSUVOMm']
+    Character: L["c"]
+    Integer: L["bhilqnp"]
+    UnsignedInteger: L["BHILQNP"]
+    Float: L["efdg"]
+    Complex: L["FDG"]
+    AllInteger: L["bBhHiIlLqQnNpP"]
+    AllFloat: L["efdgFDG"]
+    Datetime: L["Mm"]
+    All: L["?bhilqnpBHILQNPefdgFDGSUVOMm"]
 
-def isdtype(dtype: dtype | type[Any], kind: DTypeLike | tuple[DTypeLike, ...]) -> builtins.bool: ...
-
-def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> builtins.bool: ...
+def isdtype(dtype: dtype | type, kind: DTypeLike | tuple[DTypeLike, ...]) -> py_bool: ...
+def issubdtype(arg1: DTypeLike | None, arg2: DTypeLike | None) -> py_bool: ...
 
 typecodes: Final[_TypeCodes] = ...
 ScalarType: Final[
