@@ -366,8 +366,8 @@ class memmap(ndarray):
 
         Notes
         -----
-        This method is only available on Python 3.8+ and systems that support
-        the `madvise` system call.
+        This method is only available on systems that support the `madvise`
+        system call.
 
         """
         if self._mmap is None:
