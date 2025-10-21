@@ -81,40 +81,25 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     constexpr size_t SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
     constexpr size_t SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
     unsigned char buffer[SIZEOF_BUFFER];
+
+    union IEEEl2bitsrep bits_real{value_real}, bits_imag{value_imag};
     size_t offset = 0;
 
-    union IEEEl2bitsrep bits_real, bits_imag;
-    bits_real.e = value_real;
-    bits_imag.e = value_imag;
+    for (const IEEEl2bitsrep &bits: {bits_real, bits_imag}) {
+        ldouble_man_t manh = GET_LDOUBLE_MANH(bits);
+        ldouble_man_t manl = GET_LDOUBLE_MANL(bits);
+        ldouble_exp_t exp = GET_LDOUBLE_EXP(bits);
+        ldouble_sign_t sign = GET_LDOUBLE_SIGN(bits);
 
-    // Copy real part
-    ldouble_man_t manh_real = GET_LDOUBLE_MANH(bits_real);
-    ldouble_man_t manl_real = GET_LDOUBLE_MANL(bits_real);
-    ldouble_exp_t exp_real = GET_LDOUBLE_EXP(bits_real);
-    ldouble_sign_t sign_real = GET_LDOUBLE_SIGN(bits_real);
-
-    std::memcpy(buffer + offset, &manl_real, SIZEOF_LDOUBLE_MAN);
-    offset += SIZEOF_LDOUBLE_MAN;
-    std::memcpy(buffer + offset, &manh_real, SIZEOF_LDOUBLE_MAN);
-    offset += SIZEOF_LDOUBLE_MAN;
-    std::memcpy(buffer + offset, &exp_real, SIZEOF_LDOUBLE_EXP);
-    offset += SIZEOF_LDOUBLE_EXP;
-    std::memcpy(buffer + offset, &sign_real, SIZEOF_LDOUBLE_SIGN);
-    offset += SIZEOF_LDOUBLE_SIGN;
-
-    // Copy imaginary part
-    ldouble_man_t manh_imag = GET_LDOUBLE_MANH(bits_imag);
-    ldouble_man_t manl_imag = GET_LDOUBLE_MANL(bits_imag);
-    ldouble_exp_t exp_imag = GET_LDOUBLE_EXP(bits_imag);
-    ldouble_sign_t sign_imag = GET_LDOUBLE_SIGN(bits_imag);
-
-    std::memcpy(buffer + offset, &manl_imag, SIZEOF_LDOUBLE_MAN);
-    offset += SIZEOF_LDOUBLE_MAN;
-    std::memcpy(buffer + offset, &manh_imag, SIZEOF_LDOUBLE_MAN);
-    offset += SIZEOF_LDOUBLE_MAN;
-    std::memcpy(buffer + offset, &exp_imag, SIZEOF_LDOUBLE_EXP);
-    offset += SIZEOF_LDOUBLE_EXP;
-    std::memcpy(buffer + offset, &sign_imag, SIZEOF_LDOUBLE_SIGN);
+        std::memcpy(buffer + offset, &manh, SIZEOF_LDOUBLE_MAN);
+        offset += SIZEOF_LDOUBLE_MAN;
+        std::memcpy(buffer + offset, &manl, SIZEOF_LDOUBLE_MAN);
+        offset += SIZEOF_LDOUBLE_MAN;
+        std::memcpy(buffer + offset, &exp, SIZEOF_LDOUBLE_EXP);
+        offset += SIZEOF_LDOUBLE_EXP;
+        std::memcpy(buffer + offset, &sign, SIZEOF_LDOUBLE_SIGN);
+        offset += SIZEOF_LDOUBLE_SIGN;
+    }
     #else
     constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
     const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
