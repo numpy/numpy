@@ -2,7 +2,6 @@ import ctypes
 import gc
 import operator
 import pickle
-import random
 import sys
 import types
 from itertools import permutations
@@ -1316,9 +1315,6 @@ class TestDTypeMakeCanonical:
 
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
-    @pytest.mark.thread_unsafe(
-        reason="hynp.nested_dtypes thread unsafe (HypothesisWorks/hypothesis#4562)"
-    )
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
@@ -1327,14 +1323,12 @@ class TestDTypeMakeCanonical:
         assert np.can_cast(two_arg_result, canonical, casting="no")
 
     @pytest.mark.slow
-    @pytest.mark.thread_unsafe(
-        reason="gives unreliable results w/ hypothesis (HypothesisWorks/hypothesis#4562)"
-    )
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
                 subtype_strategy=hypothesis.extra.numpy.array_dtypes(),
-                min_size=5, max_size=10, allow_subarrays=True))
-    def test_structured(self, dtype):
+                min_size=5, max_size=10, allow_subarrays=True),
+            random=hypothesis.strategies.randoms())
+    def test_structured(self, dtype, random):
         # Pick 4 of the fields at random.  This will leave empty space in the
         # dtype (since we do not canonicalize it here).
         field_subset = random.sample(dtype.names, k=4)

@@ -2,7 +2,7 @@ Cython
 wheel==0.38.1
 setuptools==65.5.1 ; python_version < '3.12'
 setuptools         ; python_version >= '3.12'
-hypothesis==6.137.1
+hypothesis==6.142.2
 pytest==7.4.0
 pytest-cov==4.1.0
 meson
