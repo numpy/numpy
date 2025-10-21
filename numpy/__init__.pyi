@@ -470,8 +470,6 @@ from numpy.lib._function_base_impl import (
     quantile,
 )
 
-from numpy._globals import _CopyMode
-
 from numpy.lib._histograms_impl import (
     histogram_bin_edges,
     histogram,
