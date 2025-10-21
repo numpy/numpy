@@ -521,6 +521,37 @@ def mypy(ctx):
     ctx.forward(test)
 
 
+@click.command()
+@click.option(
+    '--concise',
+    is_flag=True,
+    default=False,
+    help="Concise output format",
+)
+def stubtest(*, concise: bool) -> None:
+    """🧐 Run stubtest on NumPy's .pyi stubs
+
+    Requires mypy to be installed
+    """
+    ctx = click.get_current_context()
+    ctx.invoke(build)
+
+    stubtest_dir = curdir.parent / 'tools' / 'stubtest'
+    mypy_config = stubtest_dir / 'mypy.ini'
+    allowlist = stubtest_dir / 'allowlist.txt'
+
+    cmd = [
+        'stubtest',
+        '--ignore-disjoint-bases',
+        f'--mypy-config-file={mypy_config}',
+        f'--allowlist={allowlist}',
+    ]
+    if concise:
+        cmd.append('--concise')
+    cmd.append('numpy')
+    spin.util.run(cmd)
+
+
 @click.command(context_settings={
     'ignore_unknown_options': True
 })
