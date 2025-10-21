@@ -2,6 +2,7 @@ import decimal
 import math
 import operator
 import sys
+import typing
 import warnings
 from fractions import Fraction
 from functools import partial
@@ -1380,6 +1381,41 @@ class TestTrimZeros:
     c = a.astype(complex)
     d = a.astype(object)
 
+    def construct_input_output(
+            self,
+            rng: np.random.Generator,
+            shape: tuple[int, ...],
+            axis: int | typing.Sequence[int] | None,
+            trim: str) -> tuple[np.ndarray, np.ndarray]:
+        """Construct an input/output test pair for trim_zeros"""
+        # Standardize axis to a tuple.
+        if axis is None:
+            axis = tuple(range(len(shape)))
+        elif isinstance(axis, int):
+            axis = (len(shape) + axis if axis < 0 else axis,)
+        else:
+            axis = tuple(len(shape) + ax if ax < 0 else ax for ax in axis)
+
+        # Populate a random interior slice with nonzero entries.
+        data = np.zeros(shape)
+        i_start = rng.integers(low=0, high=np.array(shape) - 1)
+        i_end = rng.integers(low=i_start + 1, high=shape)
+        inner_shape = tuple(i_end - i_start)
+        inner_data = 1 + rng.random(inner_shape)
+        data[tuple(slice(i, j) for i, j in zip(i_start, i_end))] = inner_data
+
+        # Construct the expected output of N-dimensional trim_zeros
+        # with the given axis and trim arguments.
+        if 'f' not in trim:
+            i_start = np.array([None for _ in shape])
+        if 'b' not in trim:
+            i_end = np.array([None for _ in shape])
+        idx = tuple(slice(i, j) if ax in axis else slice(None)
+                    for ax, (i, j) in enumerate(zip(i_start, i_end)))
+        expected = data[idx]
+
+        return data, expected
+
     def values(self):
         attr_names = ('a', 'b', 'c', 'd')
         return (getattr(self, name) for name in attr_names)
@@ -1465,38 +1501,28 @@ class TestTrimZeros:
         with pytest.raises(ValueError, match=r"unexpected character\(s\) in `trim`"):
             trim_zeros(arr, trim=trim)
 
-    def test_axis_tuple(self):
-        a = np.zeros((4, 4))
-        a[1:3, 1:3] = 1
-
-        a_trim0 = np.zeros((2, 4))
-        a_trim0[:, 1:3] = 1
-
-        a_trim1 = np.zeros((4, 2))
-        a_trim1[1:3, :] = 1
-
-        a_trim_both = np.ones((2, 2))
-
-        res = trim_zeros(a, axis=())
-        assert_array_equal(res, a)
-
-        res = trim_zeros(a, axis=0)
-        assert_array_equal(res, a_trim0)
-
-        res = trim_zeros(a, axis=1)
-        assert_array_equal(res, a_trim1)
-
-        res = trim_zeros(a, axis=(-2,))
-        assert_array_equal(res, a_trim0)
-
-        res = trim_zeros(a, axis=(-1,))
-        assert_array_equal(res, a_trim1)
-
-        res = trim_zeros(a, axis=(0, -1))
-        assert_array_equal(res, a_trim_both)
-
-        res = trim_zeros(a, axis=None)
-        assert_array_equal(res, a_trim_both)
+    @pytest.mark.parametrize("shape, axis", [
+        [(5,), None],
+        [(5,), ()],
+        [(5,), 0],
+        [(5, 6), None],
+        [(5, 6), ()],
+        [(5, 6), 0],
+        [(5, 6), (-1,)],
+        [(5, 6, 7), None],
+        [(5, 6, 7), ()],
+        [(5, 6, 7), 1],
+        [(5, 6, 7), (0, 2)],
+        [(5, 6, 7, 8), None],
+        [(5, 6, 7, 8), ()],
+        [(5, 6, 7, 8), -2],
+        [(5, 6, 7, 8), (0, 1, 3)],
+    ])
+    @pytest.mark.parametrize("trim", ['fb', 'f', 'b'])
+    def test_multiple_axes(self, shape, axis, trim):
+        rng = np.random.default_rng(4321)
+        data, expected = self.construct_input_output(rng, shape, axis, trim)
+        assert_array_equal(trim_zeros(data, axis=axis, trim=trim), expected)
 
 
 class TestExtins:
