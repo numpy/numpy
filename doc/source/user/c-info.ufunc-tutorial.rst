@@ -193,18 +193,21 @@ site-packages directory.
 
         setup(name='spam', version='1.0', ext_modules=[module1])
 
+.. note::
+
+   For modern Python packaging, it is recommended to use a `pyproject.toml` and select
+   `meson-python` as your build backend. This makes your extension pip-installable and
+   compatible with current Python packaging standards.
+
+   Example `pyproject.toml`:
+
+   .. code-block:: toml
+
+      [build-system]
+      requires = ["meson-python", "numpy"]
+      build-backend = "mesonpy"
+
 .. tab-set::
-
-   .. tab-item:: setuptools
-
-      .. code-block:: python
-
-         from setuptools import setup, Extension
-         import numpy as np
-
-         module1 = Extension('spam', sources=['spammodule.c'])
-
-         setup(name='spam', version='1.0', ext_modules=[module1])
 
    .. tab-item:: meson
 
@@ -231,6 +234,17 @@ site-packages directory.
          meson setup builddir
          meson compile -C builddir
          meson install -C builddir
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         import numpy as np
+
+         module1 = Extension('spam', sources=['spammodule.c'])
+
+         setup(name='spam', version='1.0', ext_modules=[module1])
 
 Once the spam module is imported into python, you can call logit
 via ``spam.logit``. Note that the function used above cannot be applied
@@ -419,20 +433,21 @@ using ``python setup.py build_ext --inplace``.
 
         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
+.. note::
+
+   For modern Python packaging, it is recommended to use a `pyproject.toml` and select
+   `meson-python` as your build backend. This makes your extension pip-installable and
+   compatible with current Python packaging standards.
+
+   Example `pyproject.toml`:
+
+   .. code-block:: toml
+
+      [build-system]
+      requires = ["meson-python", "numpy"]
+      build-backend = "mesonpy"
+
 .. tab-set::
-
-   .. tab-item:: setuptools
-
-      .. code-block:: python
-
-         from setuptools import setup, Extension
-         from numpy import get_include
-
-         npufunc = Extension('npufunc',
-                             sources=['single_type_logit.c'],
-                             include_dirs=[get_include()])
-
-         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
    .. tab-item:: meson
 
@@ -459,6 +474,19 @@ using ``python setup.py build_ext --inplace``.
          meson setup builddir
          meson compile -C builddir
          meson install -C builddir
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['single_type_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
     
 After the above has been installed, it can be imported and used as follows.
 
@@ -711,24 +739,21 @@ or installed to site-packages via ``python setup.py install``.
 
         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
+.. note::
+
+   For modern Python packaging, it is recommended to use a `pyproject.toml` and select
+   `meson-python` as your build backend. This makes your extension pip-installable and
+   compatible with current Python packaging standards.
+
+   Example `pyproject.toml`:
+
+   .. code-block:: toml
+
+      [build-system]
+      requires = ["meson-python", "numpy"]
+      build-backend = "mesonpy"
+
 .. tab-set::
-
-   .. tab-item:: setuptools
-
-      .. code-block:: python
-
-         from setuptools import setup, Extension
-         from numpy import get_include
-         from os import path
-
-         path_to_npymath = path.join(get_include(), '..', 'lib')
-         npufunc = Extension('npufunc',
-                             sources=['multi_type_logit.c'],
-                             include_dirs=[get_include()],
-                             library_dirs=[path_to_npymath],
-                             libraries=["npymath"])
-
-         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
    .. tab-item:: meson
 
@@ -756,6 +781,22 @@ or installed to site-packages via ``python setup.py install``.
          meson compile -C builddir
          meson install -C builddir
 
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+         from os import path
+
+         path_to_npymath = path.join(get_include(), '..', 'lib')
+         npufunc = Extension('npufunc',
+                             sources=['multi_type_logit.c'],
+                             include_dirs=[get_include()],
+                             library_dirs=[path_to_npymath],
+                             libraries=["npymath"])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
 After the above has been installed, it can be imported and used as follows.
 
@@ -796,20 +837,21 @@ is replaced with
                             sources=['multi_arg_logit.c'],
                             include_dirs=[get_include()])
 
+.. note::
+
+   For modern Python packaging, it is recommended to use a `pyproject.toml` and select
+   `meson-python` as your build backend. This makes your extension pip-installable and
+   compatible with current Python packaging standards.
+
+   Example `pyproject.toml`:
+
+   .. code-block:: toml
+
+      [build-system]
+      requires = ["meson-python", "numpy"]
+      build-backend = "mesonpy"
+
 .. tab-set::
-
-   .. tab-item:: setuptools
-
-      .. code-block:: python
-
-         from setuptools import setup, Extension
-         from numpy import get_include
-
-         npufunc = Extension('npufunc',
-                             sources=['multi_arg_logit.c'],
-                             include_dirs=[get_include()])
-
-         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
    .. tab-item:: meson
 
@@ -836,6 +878,19 @@ is replaced with
          meson setup builddir
          meson compile -C builddir
          meson install -C builddir
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['multi_arg_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
 The C file is given below. The ufunc generated takes two arguments ``A``
 and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
@@ -972,20 +1027,21 @@ is replaced with
                             sources=['add_triplet.c'],
                             include_dirs=[get_include()])
 
+.. note::
+
+   For modern Python packaging, it is recommended to use a `pyproject.toml` and select
+   `meson-python` as your build backend. This makes your extension pip-installable and
+   compatible with current Python packaging standards.
+
+   Example `pyproject.toml`:
+
+   .. code-block:: toml
+
+      [build-system]
+      requires = ["meson-python", "numpy"]
+      build-backend = "mesonpy"
+
 .. tab-set::
-
-   .. tab-item:: setuptools
-
-      .. code-block:: python
-
-         from setuptools import setup, Extension
-         from numpy import get_include
-
-         npufunc = Extension('npufunc',
-                             sources=['add_triplet.c'],
-                             include_dirs=[get_include()])
-
-         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
    .. tab-item:: meson
 
@@ -1012,6 +1068,19 @@ is replaced with
          meson setup builddir
          meson compile -C builddir
          meson install -C builddir
+
+   .. tab-item:: setuptools
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['add_triplet.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
 
 The C file is given below.
 
