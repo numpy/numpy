@@ -73,10 +73,9 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     // Because hashing the raw bit pattern would make the hash depend on those
     // undefined bits, we extract the mantissa, exponent, and sign components
     // explicitly and pack them into a buffer to ensure the hash is well-defined.
-    #if defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE) || defined(HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE)
-    constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
-    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
-    #else
+    #if defined(HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE) || \
+        defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
+        defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE)
     constexpr size_t SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
     constexpr size_t SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
     constexpr size_t SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
@@ -116,6 +115,9 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     std::memcpy(buffer + offset, &exp_imag, SIZEOF_LDOUBLE_EXP);
     offset += SIZEOF_LDOUBLE_EXP;
     std::memcpy(buffer + offset, &sign_imag, SIZEOF_LDOUBLE_SIGN);
+    #else
+    constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
+    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
     #endif
 
     size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
