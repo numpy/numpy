@@ -544,13 +544,19 @@ def mypy(ctx):
     default=False,
     help="Concise output format",
 )
-def stubtest(*, concise: bool) -> None:
+@meson.build_dir_option
+def stubtest(*, concise: bool, build_dir: str) -> None:
     """🧐 Run stubtest on NumPy's .pyi stubs
 
     Requires mypy to be installed
     """
-    ctx = click.get_current_context()
-    ctx.invoke(build)
+    click.get_current_context().invoke(build)
+    meson._set_pythonpath(build_dir)
+    print(f"{build_dir = !r}")
+
+    import sysconfig
+    purellib = sysconfig.get_paths()["purelib"]
+    print(f"{purellib = !r}")
 
     stubtest_dir = curdir.parent / 'tools' / 'stubtest'
     mypy_config = stubtest_dir / 'mypy.ini'
@@ -565,6 +571,7 @@ def stubtest(*, concise: bool) -> None:
     if concise:
         cmd.append('--concise')
     cmd.append('numpy')
+
     spin.util.run(cmd)
 
 
