@@ -235,6 +235,7 @@ meson = 'vendored-meson/meson/meson.py'
 [tool.meson-python.args]
 install = ['--tags=runtime,python-runtime,tests,devel']
 
+
 [tool.spin]
 package = 'numpy'
 
@@ -246,6 +247,7 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:build",
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
+  ".spin/cmds.py:stubtest",
   ".spin/cmds.py:config_openblas",
   ".spin/cmds.py:lint",
 ]
