@@ -1,8 +1,13 @@
 source_root = meson.project_source_root()
 mod_features = import('features')
-
+# Use SSE for floating-point on x86-32 to ensure numeric consistency.
+# The x87 FPU's 80-bit internal precision causes unpredictable rounding
+# and overflow behavior when converting to smaller types. SSE maintains
+# strict 32/64-bit precision throughout all calculations.
+cpu_family = host_machine.cpu_family()
+SSE_FPMATH = cpu_family == 'x86'? ['-mfpmath=sse'] : []
 SSE = mod_features.new(
-  'SSE', 1,  args: '-msse',
+  'SSE', 1,  args: ['-msse'] + SSE_FPMATH,
   test_code: files(source_root + '/numpy/distutils/checks/cpu_sse.c')[0]
 )
 SSE2 = mod_features.new(
