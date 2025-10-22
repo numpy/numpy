@@ -227,7 +227,7 @@ confusion with builtin python type names, such as `numpy.bool_`.
     * - N/A
       - ``'P'``
       - ``uintptr_t``
-      - Guaranteed to hold pointers. Character code only (Python and C).
+      - Guaranteed to hold pointers without sign. Character code only (Python and C).
 
     * - `numpy.int32` or `numpy.int64`
       - `numpy.long`
