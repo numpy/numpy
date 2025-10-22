@@ -1,0 +1,8 @@
+Comparison assertions now show indices and calculations of max errors
+---------------------------------------------------------------------
+Verbose assertion errors raised by `assert_allclose`, `assert_array_equal`,
+`assert_array_almost_equal` and `assert_array_less` now show the calculation
+and the indices of the maximum absolute and relative differences among the
+violations. Assertion errors raised by `assert_array_almost_equal_nulp` and
+`assert_array_max_ulp` (which have no verbose toggle) now show the indices of
+the maximum ULP difference.
