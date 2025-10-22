@@ -4244,7 +4244,7 @@ def quantile(a,
         Input array or object that can be converted to an array.
     q : array_like of float
         Probability or sequence of probabilities of the quantiles to compute.
-        Values must be between 0 and 1 inclusive.
+        Values must be between 0 and 1 inclusive. Can be a scalar, 1D, or 2D array.
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the quantiles are computed. The default is
         to compute the quantile(s) along a flattened version of the array.
@@ -4624,7 +4624,7 @@ def _quantile_ureduce_func(
         # The code below works fine for nd, but it might not have useful
         # semantics. For now, keep the supported dimensions the same as it was
         # before.
-        raise ValueError("q must be a scalar or 1d")
+        raise ValueError("q must be a scalar, 1d or 2d array")
     if overwrite_input:
         if axis is None:
             axis = 0
