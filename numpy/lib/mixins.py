@@ -1,6 +1,7 @@
 """
 Mixin classes for custom array types that don't inherit from ndarray.
 """
+from numpy._core import umath as um
 
 __all__ = ['NDArrayOperatorsMixin']
 
@@ -135,7 +136,6 @@ class NDArrayOperatorsMixin:
     ArrayLike preserve a well-defined casting hierarchy.
 
     """
-    from numpy._core import umath as um
 
     __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
