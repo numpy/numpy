@@ -58,7 +58,7 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.11", "3.12", "3.13", "3.14-dev", "3.14t-dev"]
+        version: ["3.11", "3.12", "3.13", "3.14", "3.14t"]
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
