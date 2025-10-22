@@ -2,7 +2,6 @@ import decimal
 import math
 import operator
 import sys
-import typing
 import warnings
 from fractions import Fraction
 from functools import partial
@@ -1381,12 +1380,7 @@ class TestTrimZeros:
     c = a.astype(complex)
     d = a.astype(object)
 
-    def construct_input_output(
-            self,
-            rng: np.random.Generator,
-            shape: tuple[int, ...],
-            axis: int | typing.Sequence[int] | None,
-            trim: str) -> tuple[np.ndarray, np.ndarray]:
+    def construct_input_output(self, rng, shape, axis, trim):
         """Construct an input/output test pair for trim_zeros"""
         # Standardize axis to a tuple.
         if axis is None:
