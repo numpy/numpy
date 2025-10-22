@@ -5,7 +5,10 @@ on:
     branches:
       - main
       - maintenance/**
-
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
 
 permissions:
    contents: read  # to fetch code (actions/checkout)
@@ -146,7 +149,7 @@ jobs:
     - name: Test (fast tests)
       if: ${{ matrix.version != '3.14t' || matrix.build_runner[0] != 'macos-14' }}
       run: spin test -j2 -- --timeout=600 --durations=10
-  
+
     - name: Test in multiple threads
       if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-14' }}
       run:  |

@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -97,7 +101,7 @@ jobs:
       - name: Build and install
         run: |
           python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true" 2>&1 | tee build.log
-      
+
       - name: Check warnings
         uses: ./.github/check-warnings
         with:
