@@ -51,7 +51,12 @@ A.argmin(axis=0)
 A.argmin(out=B_int0)
 
 i4.argsort()
+i4.argsort(stable=True)
 A.argsort()
+A.argsort(stable=True)
+
+A.sort()
+A.sort(stable=True)
 
 i4.choose([()])
 _choices = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]], dtype=np.int32)

@@ -405,6 +405,8 @@ from numpy._core.shape_base import (
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
+from ._globals import _CopyMode as _CopyMode
+from ._globals import _NoValue as _NoValue, _NoValueType
 
 from numpy.lib import (
     scimath as emath,
@@ -467,8 +469,6 @@ from numpy.lib._function_base_impl import (
     interp,
     quantile,
 )
-
-from numpy._globals import _CopyMode
 
 from numpy.lib._histograms_impl import (
     histogram_bin_edges,
@@ -1691,7 +1691,7 @@ class _ArrayOrScalarCommon:
         kind: _SortKind | None = ...,
         order: str | Sequence[str] | None = ...,
         *,
-        stable: bool | None = ...,
+        stable: builtins.bool | None = ...,
     ) -> NDArray[Any]: ...
 
     @overload  # axis=None (default), out=None (default), keepdims=False (default)
@@ -2352,7 +2352,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         kind: _SortKind | None = ...,
         order: str | Sequence[str] | None = ...,
         *,
-        stable: bool | None = ...,
+        stable: builtins.bool | None = ...,
     ) -> None: ...
 
     @overload
@@ -3509,7 +3509,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @abstractmethod
-    def __new__(cls) -> Self: ...
+    def __new__(cls, /, *args: Any, **kwargs: Any) -> Self: ...
     def __hash__(self) -> int: ...
     @overload
     def __array__(self, dtype: None = None, /) -> ndarray[tuple[()], dtype[Self]]: ...
@@ -3770,8 +3770,8 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def dtype(self) -> _dtype[Self]: ...
 
 class number(generic[_NumberItemT_co], Generic[_NBit, _NumberItemT_co]):
-    @abstractmethod
-    def __new__(cls) -> Self: ...
+    @abstractmethod  # `SupportsIndex | str | bytes` equivs `_ConvertibleToInt & _ConvertibleToFloat`
+    def __new__(cls, value: SupportsIndex | str | bytes = 0, /) -> Self: ...
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
 
     def __neg__(self) -> Self: ...
@@ -4141,7 +4141,7 @@ class object_(_RealMixin, generic):
 
 class integer(_IntegralMixin, _RoundMixin, number[_NBit, int]):
     @abstractmethod
-    def __new__(cls) -> Self: ...
+    def __new__(cls, value: _ConvertibleToInt = 0, /) -> Self: ...
 
     # NOTE: `bit_count` and `__index__` are technically defined in the concrete subtypes
     def bit_count(self, /) -> int: ...
@@ -4677,7 +4677,7 @@ ulonglong: TypeAlias = unsignedinteger[_NBitLongLong]
 
 class inexact(number[_NBit, _InexactItemT_co], Generic[_NBit, _InexactItemT_co]):
     @abstractmethod
-    def __new__(cls) -> Self: ...
+    def __new__(cls, value: _ConvertibleToFloat | None = 0, /) -> Self: ...
 
 class floating(_RealMixin, _RoundMixin, inexact[_NBit1, float]):
     def __new__(cls, value: _ConvertibleToFloat | None = 0, /) -> Self: ...
@@ -5450,9 +5450,7 @@ class datetime64(_RealMixin, generic[_DT64ItemT_co], Generic[_DT64ItemT_co]):
     @overload
     def __ge__(self, other: _SupportsGT, /) -> bool_: ...
 
-class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]):
-    @abstractmethod
-    def __new__(cls) -> Self: ...
+class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co]): ...  # type: ignore[misc]
 
 class void(flexible[bytes | tuple[Any, ...]]):
     @overload
@@ -5470,7 +5468,7 @@ class void(flexible[bytes | tuple[Any, ...]]):
 
 class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):
     @abstractmethod
-    def __new__(cls) -> Self: ...
+    def __new__(cls, value: object = ..., /) -> Self: ...
 
 # NOTE: Most `np.bytes_` / `np.str_` methods return their builtin `bytes` / `str` counterpart
 
@@ -5870,12 +5868,13 @@ class vectorize:
     __doc__: str | None
     def __init__(
         self,
-        pyfunc: Callable[..., Any],
-        otypes: str | Iterable[DTypeLike] | None = ...,
-        doc: str | None = ...,
-        excluded: Iterable[int | str] | None = ...,
-        cache: builtins.bool = ...,
-        signature: str | None = ...,
+        /,
+        pyfunc: Callable[..., Any] | _NoValueType = ...,  # = _NoValue
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: builtins.bool = False,
+        signature: str | None = None,
     ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
