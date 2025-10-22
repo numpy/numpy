@@ -567,7 +567,7 @@ which inputs and outputs it converted. Hence, e.g.,
 Note that another approach would be to use ``getattr(ufunc,
 methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
 the result would be identical, but there is a difference if another operand
-also defines ``__array_ufunc__``. E.g., lets assume that we evaluate
+also defines ``__array_ufunc__``. E.g., let's assume that we evaluate
 ``np.add(a, b)``, where ``b`` is an instance of another class ``B`` that has
 an override.  If you use ``super`` as in the example,
 ``ndarray.__array_ufunc__`` will notice that ``b`` has an override, which

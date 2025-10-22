@@ -433,3 +433,18 @@ class Test_LOONGARCH_Features(AbstractTest):
 
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
+
+
+is_riscv = re.match(r"^(riscv)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
+class Test_RISCV_Features(AbstractTest):
+    features = ["RVV"]
+
+    def load_flags(self):
+        self.load_flags_auxv()
+        if not self.features_flags:
+            # Let the test fail and dump if we cannot read HWCAP.
+            return
+        hwcap = int(next(iter(self.features_flags)), 16)
+        if hwcap & (1 << 21):  # HWCAP_RISCV_V
+            self.features_flags.add("RVV")

@@ -54,12 +54,10 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     #
     def __mul__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     def __rmul__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def __imul__(self, other: ArrayLike, /) -> Self: ...
 
     #
     def __pow__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     def __rpow__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def __ipow__(self, other: ArrayLike, /) -> Self: ...
 
     # keep in sync with `prod` and `mean`
     @overload  # type: ignore[override]

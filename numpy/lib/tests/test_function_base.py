@@ -3938,10 +3938,6 @@ class TestQuantile:
         quantile = np.quantile([0., 1., 2., 3.], p0, method=method)
         assert_equal(np.sort(quantile), quantile)
 
-    @pytest.mark.thread_unsafe(
-        reason="gives unreliable results w/ hypothesis "
-               "(HypothesisWorks/hypothesis#4562)"
-    )
     @hypothesis.given(
             arr=arrays(dtype=np.float64,
                        shape=st.integers(min_value=3, max_value=1000),

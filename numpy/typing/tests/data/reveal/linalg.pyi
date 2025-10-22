@@ -10,8 +10,11 @@ from numpy.linalg._linalg import (
     SVDResult,
 )
 
+float_list_2d: list[list[float]]
 AR_i8: npt.NDArray[np.int64]
+AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
+AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
 AR_m: npt.NDArray[np.timedelta64]
@@ -79,6 +82,16 @@ assert_type(np.linalg.svd(AR_f8, compute_uv=False), npt.NDArray[np.floating])
 assert_type(np.linalg.svd(AR_c16, compute_uv=False), npt.NDArray[np.floating])
 assert_type(np.linalg.svd(AR_c16, True, False), npt.NDArray[np.floating])
 
+assert_type(np.linalg.svdvals(AR_b), npt.NDArray[np.float64])
+assert_type(np.linalg.svdvals(AR_i8), npt.NDArray[np.float64])
+assert_type(np.linalg.svdvals(AR_f4), npt.NDArray[np.float32])
+assert_type(np.linalg.svdvals(AR_c8), npt.NDArray[np.float32])
+assert_type(np.linalg.svdvals(AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.svdvals(AR_c16), npt.NDArray[np.float64])
+assert_type(np.linalg.svdvals([[1, 2], [3, 4]]), npt.NDArray[np.float64])
+assert_type(np.linalg.svdvals([[1.0, 2.0], [3.0, 4.0]]), npt.NDArray[np.float64])
+assert_type(np.linalg.svdvals([[1j, 2j], [3j, 4j]]), npt.NDArray[np.float64])
+
 assert_type(np.linalg.cond(AR_i8), Any)
 assert_type(np.linalg.cond(AR_f8), Any)
 assert_type(np.linalg.cond(AR_c16), Any)
@@ -118,6 +131,13 @@ assert_type(np.linalg.vector_norm(AR_i8), np.floating)
 assert_type(np.linalg.vector_norm(AR_f8), np.floating)
 assert_type(np.linalg.vector_norm(AR_c16), np.floating)
 assert_type(np.linalg.vector_norm(AR_S), np.floating)
+
+assert_type(np.linalg.tensordot(AR_b, AR_b), npt.NDArray[np.bool])
+assert_type(np.linalg.tensordot(AR_i8, AR_i8), npt.NDArray[np.int64])
+assert_type(np.linalg.tensordot(AR_f8, AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.linalg.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
+assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
 
 assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), Any)
 assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), Any)

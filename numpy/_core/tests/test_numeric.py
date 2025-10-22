@@ -1024,8 +1024,11 @@ class TestFloatExceptions:
                                    lambda a, b: a + b, ft_max, ft_max * ft_eps)
             self.assert_raises_fpe(overflow,
                                    lambda a, b: a - b, -ft_max, ft_max * ft_eps)
-            self.assert_raises_fpe(overflow,
-                                   np.power, ftype(2), ftype(2**fi.nexp))
+            # On AIX, pow() with double does not raise the overflow exception,
+            # it returns inf. Long double is the same as double.
+            if sys.platform != 'aix' or typecode not in 'dDgG':
+                self.assert_raises_fpe(overflow,
+                                       np.power, ftype(2), ftype(2**fi.nexp))
             self.assert_raises_fpe(divbyzero,
                                    lambda a, b: a / b, ftype(1), ftype(0))
             self.assert_raises_fpe(

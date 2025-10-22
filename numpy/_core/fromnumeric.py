@@ -201,12 +201,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, /, shape=None, order=None, *, copy=None):
+def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
     return (a,)
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, shape=None, order='C', *, copy=None):
+def reshape(a, /, shape, order='C', *, copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -295,9 +295,6 @@ def reshape(a, /, shape=None, order='C', *, copy=None):
            [3, 4],
            [5, 6]])
     """
-    if shape is None:
-        raise TypeError(
-            "reshape() missing 1 required positional argument: 'shape'")
     if copy is not None:
         return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
     return _wrapfunc(a, 'reshape', shape, order=order)

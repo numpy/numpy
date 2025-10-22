@@ -11,7 +11,7 @@ import pytest
 import numpy as np
 import numpy._core._struct_ufunc_tests as struct_ufunc
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import assert_raises, temppath
+from numpy.testing import assert_raises
 
 
 class _DeprecationTestCase:
@@ -359,31 +359,11 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
         self.assert_deprecated(np.dtype, args=(string,))
 
 
-class TestDeprecatedSaveFixImports(_DeprecationTestCase):
-    # Deprecated in Numpy 2.1, 2024-05
-    message = "The 'fix_imports' flag is deprecated and has no effect."
-
-    def test_deprecated(self):
-        with temppath(suffix='.npy') as path:
-            sample_args = (path, np.array(np.zeros((1024, 10))))
-            self.assert_not_deprecated(np.save, args=sample_args)
-            self.assert_deprecated(np.save, args=sample_args,
-                                kwargs={'fix_imports': True})
-            self.assert_deprecated(np.save, args=sample_args,
-                                kwargs={'fix_imports': False})
-            for allow_pickle in [True, False]:
-                self.assert_not_deprecated(np.save, args=sample_args,
-                                        kwargs={'allow_pickle': allow_pickle})
-                self.assert_deprecated(np.save, args=sample_args,
-                                    kwargs={'allow_pickle': allow_pickle,
-                                            'fix_imports': True})
-                self.assert_deprecated(np.save, args=sample_args,
-                                    kwargs={'allow_pickle': allow_pickle,
-                                            'fix_imports': False})
-
-
 class TestAddNewdocUFunc(_DeprecationTestCase):
     # Deprecated in Numpy 2.2, 2024-11
+    @pytest.mark.thread_unsafe(
+        reason="modifies and checks docstring which is global state"
+    )
     def test_deprecated(self):
         doc = struct_ufunc.add_triplet.__doc__
         # gh-26718

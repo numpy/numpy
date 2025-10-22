@@ -92,6 +92,7 @@ one of::
     $ spin test -v
     $ spin test numpy/random  # to run the tests in a specific module
     $ spin test -v -t numpy/_core/tests/test_nditer.py::test_iter_c_order
+    $ spin test -p auto # to run tests in parallel threads using pytest-run-parallel
 
 This builds NumPy first, so the first time it may take a few minutes.
 
