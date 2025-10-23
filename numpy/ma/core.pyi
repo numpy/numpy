@@ -427,16 +427,36 @@ def maximum_fill_value(obj): ...
 def set_fill_value(a, fill_value): ...
 def common_fill_value(a, b): ...
 
-#
+# keep in sync with `fix_invalid`, but return `ndarray` instead of `MaskedArray`
 @overload
-def filled(a: ndarray[_ShapeT_co, _DTypeT_co], fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
+def filled(a: ndarray[_ShapeT, _DTypeT], fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT, _DTypeT]: ...
 @overload
-def filled(a: _ArrayLike[_ScalarT_co], fill_value: _ScalarLike_co | None = None) -> NDArray[_ScalarT_co]: ...
+def filled(a: _ArrayLike[_ScalarT], fill_value: _ScalarLike_co | None = None) -> NDArray[_ScalarT]: ...
 @overload
-def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[Any]: ...
+def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[Incomplete]: ...
 
-#
-def fix_invalid(a, mask=..., copy=True, fill_value=None): ...
+# keep in sync with `filled`, but return `MaskedArray` instead of `ndarray`
+@overload
+def fix_invalid(
+    a: np.ndarray[_ShapeT, _DTypeT],
+    mask: _ArrayLikeBool_co = nomask,
+    copy: bool = True,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload
+def fix_invalid(
+    a: _ArrayLike[_ScalarT],
+    mask: _ArrayLikeBool_co = nomask,
+    copy: bool = True,
+    fill_value: _ScalarLike_co | None = None,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def fix_invalid(
+    a: ArrayLike,
+    mask: _ArrayLikeBool_co = nomask,
+    copy: bool = True,
+    fill_value: _ScalarLike_co | None = None,
+) -> _MaskedArray[Incomplete]: ...
 
 #
 @overload
@@ -444,7 +464,7 @@ def getdata(a: np.ndarray[_ShapeT, _DTypeT], subok: bool = True) -> np.ndarray[_
 @overload
 def getdata(a: _ArrayLike[_ScalarT], subok: bool = True) -> NDArray[_ScalarT]: ...
 @overload
-def getdata(a: ArrayLike, subok: bool = True) -> np.ndarray: ...
+def getdata(a: ArrayLike, subok: bool = True) -> NDArray[Incomplete]: ...
 
 get_data = getdata
 
@@ -535,7 +555,7 @@ def make_mask(
     shrink: bool = True,
     *,
     dtype: DTypeLike = ...,
-) -> NDArray[Any] | _NoMaskType: ...
+) -> NDArray[Incomplete] | _NoMaskType: ...
 
 #
 @overload  # known shape, dtype: unstructured (default)
