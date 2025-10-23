@@ -1620,8 +1620,10 @@ def _nanquantile_ureduce_func(
         part = a.ravel()
         wgt = None if weights is None else weights.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
-    # Note that this code could try to fill in `out` right away
+        if out is not None:
+            out[...] = result
     elif weights is None:
+        # Note that this code could try to fill in `out` right away
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
                                      overwrite_input, method, weights)
         # apply_along_axis fills in collapsed axis with results.
@@ -1630,29 +1632,26 @@ def _nanquantile_ureduce_func(
         if q.ndim != 0:
             from_ax = [axis + i for i in range(q.ndim)]
             result = np.moveaxis(result, from_ax, list(range(q.ndim)))
-    else:
-        # We need to apply along axis over 2 arrays, a and weights.
-        # move operation axes to end for simplicity:
-        a = np.moveaxis(a, axis, -1)
-        if weights is not None:
-            weights = np.moveaxis(weights, axis, -1)
+
         if out is not None:
-            result = out
-        else:
-            # weights are limited to `inverted_cdf` so the result dtype
-            # is known to be identical to that of `a` here:
-            result = np.empty_like(a, shape=q.shape + a.shape[:-1])
+            out[...] = result
+    else:
+        values_count = a.shape[axis]
+        # The dimensions of `q` are prepended to the output shape, so we need the
+        # axis being sampled from `arr` to be last.
+        if axis != 0:  # But moveaxis is slow, so only call it if necessary.
+            a = np.moveaxis(a, axis, destination=0)
 
-        for ii in np.ndindex(a.shape[:-1]):
-            result[(...,) + ii] = _nanquantile_1d(
-                    a[ii], q, weights=weights[ii],
-                    overwrite_input=overwrite_input, method=method,
-            )
-        # This path dealt with `out` already...
-        return result
+        isnan = np.isnan(a)
+        if isnan.any():
+            # overwrite if `overwrite_input` is True?
+            weights = np.where(isnan, 0., weights)
 
-    if out is not None:
-        out[...] = result
+        result, _ = fnb._weigthed_quantile(
+            a, q, weights, axis, values_count, out,
+            supports_nans=False
+        )
+
     return result
 
 
