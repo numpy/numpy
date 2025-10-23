@@ -77,7 +77,7 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
     _ndim_: ClassVar[int | None]
     _flags_: ClassVar[list[_FlagsKind] | None]
 
-    @overload
+    @overload  # type: ignore[override]
     @classmethod
     def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
