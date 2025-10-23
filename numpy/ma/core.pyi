@@ -1978,19 +1978,51 @@ masked_singleton: Final[MaskedConstant] = ...
 
 masked_array: TypeAlias = MaskedArray
 
+# keep in sync with `MaskedArray.__new__`
+@overload
 def array(
-    data,
-    dtype=None,
-    copy=False,
-    order=None,
-    mask=...,
-    fill_value=None,
-    keep_mask=True,
-    hard_mask=False,
-    shrink=True,
-    subok=True,
-    ndmin=0,
-): ...
+    data: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def array(
+    data: object,
+    dtype: _DTypeLike[_ScalarT],
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def array(
+    data: object,
+    dtype: DTypeLike | None = None,
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+
+#
 def is_masked(x: object) -> bool: ...
 
 class _extrema_operation(_MaskedUFunc):
