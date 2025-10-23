@@ -1252,9 +1252,10 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
     /* Use the default when datetime and timedelta are not involved */
-    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+    if ((!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) ||
+            (PyTypeNum_ISOBJECT(type_num1) || PyTypeNum_ISOBJECT(type_num2))) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands, type_tup,
+                                           out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -1327,14 +1328,6 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
         else {
             return raise_binary_type_reso_error(ufunc, operands);
         }
-    }
-    else if (PyTypeNum_ISOBJECT(type_num1) || PyTypeNum_ISOBJECT(type_num2)) {
-        /* Delegate to the default resolver. 
-        * This selects the generic O->O object loop (elementwise Python op),
-        * allowing operations with Python timedelta objects inside object arrays.
-        */
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
     }
     else {
         return raise_binary_type_reso_error(ufunc, operands);
