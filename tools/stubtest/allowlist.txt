@@ -1,7 +1,6 @@
 # intentional type-check-only deviations from runtime
 numpy\._typing.*
 numpy\.polynomial\._polytypes
-numpy\.typing\.mypy_plugin\..*
 
 # internal testing code
 numpy\.conftest.*
@@ -31,19 +30,8 @@ numpy\.f2py\.__main__
 # inexpressible: the `dtype.type` class-attribute is `None` unless instantiated
 numpy(\..+)?\.dtype\.type
 
-# distutils
-numpy\.distutils.*
-
 # import errors
-numpy\._build_utils.*
-numpy\._core\.code_generators.*
-numpy\._core\.include\.numpy\.libdivide
-numpy\._core\.src.*
-numpy\._pyinstaller.*
-numpy\.fft\.pocketfft
-numpy\.random\._examples\..*
-numpy\.random\.include
-numpy\.random\.src.*
+numpy\._pyinstaller\..*
 
 # known minor deviations from runtime
 numpy\.(\w+\.)*integer\.__index__
@@ -69,6 +57,7 @@ numpy\.core\.overrides
 numpy\.core\.records.*
 numpy\.core\.shape_base.*
 numpy\.core\.umath.*
+numpy\.typing\.mypy_plugin
 
 # ufuncs
 numpy\.(\w+\.)*abs
