@@ -73,7 +73,7 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
     # In practice these 4 classvars are defined in the dynamic class
     # returned by `ndpointer`
     _dtype_: ClassVar[_DTypeOptionalT]
-    _shape_: ClassVar[None]
+    _shape_: ClassVar[_AnyShape | None]
     _ndim_: ClassVar[int | None]
     _flags_: ClassVar[list[_FlagsKind] | None]
 
