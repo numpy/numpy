@@ -554,7 +554,9 @@ npy__cpu_init_features(void)
         // Skylake-X
         npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ]        = (reg[1] & (1 << 17)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512BW]        = (reg[1] & (1 << 30)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (1 << 31)) != 0;
+        // cast and use of unsigned int literal silences UBSan warning:
+        // "runtime error: left shift of 1 by 31 places cannot be represented in type 'int'"
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (int)(1u << 31)) != 0;
         // Cascade Lake
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VNNI]      = (reg[2] & (1 << 11)) != 0;
         // Cannon Lake
