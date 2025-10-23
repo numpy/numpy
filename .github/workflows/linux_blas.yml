@@ -40,6 +40,10 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
 
 defaults:
   run:
@@ -213,7 +217,7 @@ jobs:
     - name: Test
       run: spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
- 
+
   netlib-debian:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
@@ -404,4 +408,3 @@ jobs:
 
     - name: Test
       run: spin test -- numpy/linalg
-

@@ -4,6 +4,10 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}

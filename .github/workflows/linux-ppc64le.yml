@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
   workflow_dispatch:
 
 permissions:
