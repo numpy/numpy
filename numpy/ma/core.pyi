@@ -282,6 +282,7 @@ __all__ = [
 ]
 
 _ShapeT = TypeVar("_ShapeT", bound=_Shape)
+_ShapeOrAnyT = TypeVar("_ShapeOrAnyT", bound=_Shape, default=_AnyShape)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
@@ -315,11 +316,13 @@ _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsInd
 _ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
 _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
 
+_NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
+_MaskArray: TypeAlias = np.ndarray[_ShapeOrAnyT, np.dtype[np.bool_]]
+
 ###
 
 MaskType = np.bool_
 
-_NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
 nomask: Final[_NoMaskType] = ...
 
 class MaskedArrayFutureWarning(FutureWarning): ...
@@ -441,11 +444,11 @@ def fix_invalid(a, mask=..., copy=True, fill_value=None): ...
 
 #
 @overload
-def getmask(a: _ScalarLike_co) -> bool_: ...
+def getmask(a: _ScalarLike_co) -> _NoMaskType: ...
 @overload
-def getmask(a: MaskedArray[_ShapeT_co, Any]) -> np.ndarray[_ShapeT_co, dtype[bool_]] | bool_: ...
+def getmask(a: MaskedArray[_ShapeT, Any]) -> _MaskArray[_ShapeT] | _NoMaskType: ...
 @overload
-def getmask(a: ArrayLike) -> NDArray[bool_] | bool_: ...
+def getmask(a: ArrayLike) -> _MaskArray | _NoMaskType: ...
 
 get_mask = getmask
 
@@ -475,7 +478,7 @@ def make_mask(
     copy: bool = False,
     shrink: Literal[True] = True,
     dtype: _DTypeLikeBool = ...,
-) -> np.ndarray[_ShapeT, np.dtype[np.bool_]] | _NoMaskType: ...
+) -> _MaskArray[_ShapeT] | _NoMaskType: ...
 @overload  # m: ndarray, shrink=False (kwarg), dtype: bool-like (default)
 def make_mask(
     m: np.ndarray[_ShapeT],
@@ -483,7 +486,7 @@ def make_mask(
     *,
     shrink: Literal[False],
     dtype: _DTypeLikeBool = ...,
-) -> np.ndarray[_ShapeT, np.dtype[np.bool_]]: ...
+) -> _MaskArray[_ShapeT]: ...
 @overload  # m: ndarray, dtype: void-like
 def make_mask(
     m: np.ndarray[_ShapeT],
@@ -498,7 +501,7 @@ def make_mask(
     copy: bool = False,
     shrink: Literal[True] = True,
     dtype: _DTypeLikeBool = ...,
-) -> NDArray[np.bool_] | _NoMaskType: ...
+) -> _MaskArray | _NoMaskType: ...
 @overload  # m: array-like, shrink=False (kwarg), dtype: bool-like (default)
 def make_mask(
     m: ArrayLike,
@@ -506,7 +509,7 @@ def make_mask(
     *,
     shrink: Literal[False],
     dtype: _DTypeLikeBool = ...,
-) -> NDArray[np.bool_]: ...
+) -> _MaskArray: ...
 @overload  # m: array-like, dtype: void-like
 def make_mask(
     m: ArrayLike,
@@ -526,11 +529,11 @@ def make_mask(
 
 #
 @overload  # known shape, dtype: unstructured (default)
-def make_mask_none(newshape: _ShapeT, dtype: np.dtype | type | str | None = None) -> np.ndarray[_ShapeT, dtype[np.bool_]]: ...
+def make_mask_none(newshape: _ShapeT, dtype: np.dtype | type | str | None = None) -> _MaskArray[_ShapeT]: ...
 @overload  # known shape, dtype: structured
 def make_mask_none(newshape: _ShapeT, dtype: _VoidDTypeLike) -> np.ndarray[_ShapeT, dtype[np.void]]: ...
 @overload  # unknown shape, dtype: unstructured (default)
-def make_mask_none(newshape: _ShapeLike, dtype: np.dtype | type | str | None = None) -> NDArray[np.bool_]: ...
+def make_mask_none(newshape: _ShapeLike, dtype: np.dtype | type | str | None = None) -> _MaskArray: ...
 @overload  # unknown shape, dtype: structured
 def make_mask_none(newshape: _ShapeLike, dtype: _VoidDTypeLike) -> NDArray[np.void]: ...
 
