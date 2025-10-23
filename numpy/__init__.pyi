@@ -5334,7 +5334,7 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __add__(self: timedelta64[_AnyTD64Item], x: timedelta64[_AnyTD64Item] | _IntLike_co, /) -> timedelta64[_AnyTD64Item]: ...
     @overload
-    def __add__(self, x: timedelta64[None], /) -> timedelta64[None]: ...
+    def __add__(self, x: timedelta64[None], /) -> timedelta64[None]: ...  # type: ignore[overload-cannot-match]
     __radd__ = __add__
 
     @overload
@@ -5424,7 +5424,7 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __sub__(self: timedelta64[_AnyTD64Item], b: timedelta64[_AnyTD64Item] | _IntLike_co, /) -> timedelta64[_AnyTD64Item]: ...
     @overload
-    def __sub__(self, b: timedelta64[None], /) -> timedelta64[None]: ...
+    def __sub__(self, b: timedelta64[None], /) -> timedelta64[None]: ...  # type: ignore[overload-cannot-match]
 
     # NOTE: subtraction is not commutative, so __rsub__ differs from __sub__.
     # This confuses mypy, so we ignore the [misc] errors it reports.
@@ -5437,7 +5437,7 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __rsub__(self: timedelta64[_AnyTD64Item], a: timedelta64[_AnyTD64Item] | _IntLike_co, /) -> timedelta64[_AnyTD64Item]: ...  # type: ignore[misc]
     @overload
-    def __rsub__(self, a: timedelta64[None], /) -> timedelta64[None]: ...
+    def __rsub__(self, a: timedelta64[None], /) -> timedelta64[None]: ...  # type: ignore[overload-cannot-match]
     @overload
     def __rsub__(self, a: datetime64[None], /) -> datetime64[None]: ...  # type: ignore[misc]
 
