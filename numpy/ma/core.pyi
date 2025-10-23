@@ -313,8 +313,6 @@ _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsInd
 _ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
 _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
 
-_Ignored: TypeAlias = object
-
 ###
 
 MaskType = bool_
