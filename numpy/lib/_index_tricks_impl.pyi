@@ -133,14 +133,16 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
     ndmin: _NDMinT_co
     trans1d: _Trans1DT_co
 
-    #
+    # NOTE: mypy does not understand that these default values are the same as the
+    # TypeVar defaults. Since the workaround would require us to write 16 overloads,
+    # we ignore the assignment type errors here.
     def __init__(
         self,
         /,
-        axis: _AxisT_co = 0,
-        matrix: _MatrixT_co = False,
-        ndmin: _NDMinT_co = 1,
-        trans1d: _Trans1DT_co = -1,
+        axis: _AxisT_co = 0,  # type: ignore[assignment]
+        matrix: _MatrixT_co = False,  # type: ignore[assignment]
+        ndmin: _NDMinT_co = 1,  # type: ignore[assignment]
+        trans1d: _Trans1DT_co = -1,  # type: ignore[assignment]
     ) -> None: ...
 
     # TODO(jorenham): annotate this
