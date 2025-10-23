@@ -548,7 +548,68 @@ def make_mask_none(newshape: _ShapeLike, dtype: np.dtype | type | str | None = N
 def make_mask_none(newshape: _ShapeLike, dtype: _VoidDTypeLike) -> NDArray[np.void]: ...
 
 #
-def mask_or(m1, m2, copy=False, shrink=True): ...
+@overload  # nomask, scalar-like, shrink=True (default)
+def mask_or(
+    m1: _NoMaskType | Literal[False],
+    m2: _ScalarLike_co,
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _NoMaskType: ...
+@overload  # nomask, scalar-like, shrink=False (kwarg)
+def mask_or(
+    m1: _NoMaskType | Literal[False],
+    m2: _ScalarLike_co,
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[tuple[()]]: ...
+@overload  # scalar-like, nomask, shrink=True (default)
+def mask_or(
+    m1: _ScalarLike_co,
+    m2: _NoMaskType | Literal[False],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _NoMaskType: ...
+@overload  # scalar-like, nomask, shrink=False (kwarg)
+def mask_or(
+    m1: _ScalarLike_co,
+    m2: _NoMaskType | Literal[False],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[tuple[()]]: ...
+@overload  # ndarray, ndarray | nomask, shrink=True (default)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _MaskArray[_ShapeT] | _NoMaskType: ...
+@overload  # ndarray, ndarray | nomask, shrink=False (kwarg)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[_ShapeT]: ...
+@overload  # ndarray | nomask, ndarray, shrink=True (default)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _MaskArray[_ShapeT] | _NoMaskType: ...
+@overload  # ndarray | nomask, ndarray, shrink=False (kwarg)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[_ShapeT]: ...
+
+#
 def flatten_mask(mask): ...
 def masked_where(condition, a, copy=True): ...
 def masked_greater(x, value, copy=True): ...
