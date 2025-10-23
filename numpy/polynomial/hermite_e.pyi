@@ -1,6 +1,7 @@
 from typing import Any, ClassVar, Final, Literal as L, TypeVar
 
 import numpy as np
+from numpy._typing import _Shape
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
@@ -62,6 +63,8 @@ __all__ = [
     "hermeweight",
 ]
 
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+
 poly2herme: Final[_FuncPoly2Ortho] = ...
 herme2poly: Final[_FuncUnOp] = ...
 
@@ -92,11 +95,7 @@ hermefit: Final[_FuncFit] = ...
 hermecompanion: Final[_FuncCompanion] = ...
 hermeroots: Final[_FuncRoots] = ...
 
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
-def _normed_hermite_e_n(
-    x: np.ndarray[_ShapeT, np.dtype[np.float64]],
-    n: int | np.intp,
-) -> np.ndarray[_ShapeT, np.dtype[np.float64]]: ...
+def _normed_hermite_e_n(x: np.ndarray[_ShapeT, np.dtype[np.float64]], n: int) -> np.ndarray[_ShapeT, np.dtype[np.float64]]: ...
 
 hermegauss: Final[_FuncGauss] = ...
 hermeweight: Final[_FuncWeight] = ...

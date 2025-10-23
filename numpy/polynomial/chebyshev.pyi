@@ -82,16 +82,12 @@ __all__ = [
 ]
 
 _NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number | np.object_)
+_CoefScalarT = TypeVar("_CoefScalarT", bound=np.number | np.bool | np.object_)
+
 def _cseries_to_zseries(c: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
 def _zseries_to_cseries(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
-def _zseries_mul(
-    z1: npt.NDArray[_NumberOrObjectT],
-    z2: npt.NDArray[_NumberOrObjectT],
-) -> _Series[_NumberOrObjectT]: ...
-def _zseries_div(
-    z1: npt.NDArray[_NumberOrObjectT],
-    z2: npt.NDArray[_NumberOrObjectT],
-) -> _Series[_NumberOrObjectT]: ...
+def _zseries_mul(z1: npt.NDArray[_NumberOrObjectT], z2: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
+def _zseries_div(z1: npt.NDArray[_NumberOrObjectT], z2: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
 def _zseries_der(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
 def _zseries_int(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
 
@@ -129,8 +125,7 @@ chebweight: Final[_FuncWeight] = ...
 chebpts1: Final[_FuncPts] = ...
 chebpts2: Final[_FuncPts] = ...
 
-# keep in sync with `Chebyshev.interpolate`
-_RT = TypeVar("_RT", bound=np.number | np.bool | np.object_)
+# keep in sync with `Chebyshev.interpolate` (minus `domain` parameter)
 @overload
 def chebinterpolate(
     func: np.ufunc,
@@ -139,16 +134,16 @@ def chebinterpolate(
 ) -> npt.NDArray[np.float64 | np.complex128 | np.object_]: ...
 @overload
 def chebinterpolate(
-    func: Callable[[npt.NDArray[np.float64]], _RT],
+    func: Callable[[npt.NDArray[np.float64]], _CoefScalarT],
     deg: _IntLike_co,
     args: tuple[()] = (),
-) -> npt.NDArray[_RT]: ...
+) -> npt.NDArray[_CoefScalarT]: ...
 @overload
 def chebinterpolate(
-    func: Callable[Concatenate[npt.NDArray[np.float64], ...], _RT],
+    func: Callable[Concatenate[npt.NDArray[np.float64], ...], _CoefScalarT],
     deg: _IntLike_co,
     args: Iterable[Any],
-) -> npt.NDArray[_RT]: ...
+) -> npt.NDArray[_CoefScalarT]: ...
 
 class Chebyshev(ABCPolyBase[L["T"]]):
     basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -168,10 +163,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
     @classmethod
     def interpolate(
         cls,
-        func: Callable[
-            Concatenate[npt.NDArray[np.float64], ...],
-            _CoefSeries,
-        ],
+        func: Callable[Concatenate[npt.NDArray[np.float64], ...], _CoefSeries],
         deg: _IntLike_co,
         domain: _SeriesLikeCoef_co | None = None,
         *,
@@ -181,10 +173,7 @@ class Chebyshev(ABCPolyBase[L["T"]]):
     @classmethod
     def interpolate(
         cls,
-        func: Callable[
-            Concatenate[npt.NDArray[np.float64], ...],
-            _CoefSeries,
-        ],
+        func: Callable[Concatenate[npt.NDArray[np.float64], ...], _CoefSeries],
         deg: _IntLike_co,
         domain: _SeriesLikeCoef_co | None,
         args: Iterable[Any],
