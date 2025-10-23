@@ -2222,7 +2222,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def resize(self, /, *new_shape: SupportsIndex, refcheck: builtins.bool = ...) -> None: ...
 
-    def setflags(self, write: builtins.bool = ..., align: builtins.bool = ..., uic: builtins.bool = ...) -> None: ...
+    def setflags(self, write: builtins.bool = ..., align: builtins.bool = ..., uic: builtins.bool = ...) -> None: ...  # type: ignore[override]
 
     def squeeze(
         self,
@@ -5006,7 +5006,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     # reflected methods. But since they are identical to the non-reflected versions,
     # these errors appear to be false positives.
 
-    @overload
+    @overload  # type: ignore[override]
     def __add__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __add__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
@@ -5015,7 +5015,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __add__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __radd__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
     def __radd__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
@@ -5024,7 +5024,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __radd__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __sub__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __sub__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
@@ -5033,7 +5033,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __sub__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __rsub__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
     def __rsub__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
@@ -5042,7 +5042,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __rsub__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __mul__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __mul__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
@@ -5051,7 +5051,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __mul__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __rmul__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
     def __rmul__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
@@ -5060,7 +5060,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __rmul__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __truediv__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __truediv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
@@ -5069,7 +5069,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __truediv__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __rtruediv__(self, other: _Float64_co, /) -> float64: ...  # type: ignore[misc]
     @overload
     def __rtruediv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...  # type: ignore[misc]
@@ -5078,7 +5078,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __rtruediv__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __floordiv__(self, other: _Float64_co, /) -> float64: ...
     @overload
     def __floordiv__(self, other: complexfloating[_64Bit, _64Bit], /) -> complex128: ...
@@ -5096,7 +5096,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __rfloordiv__(self, other: complex, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __pow__(self, other: _Float64_co, mod: None = None, /) -> float64: ...
     @overload
     def __pow__(self, other: complexfloating[_64Bit, _64Bit], mod: None = None, /) -> complex128: ...
@@ -5107,7 +5107,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     @overload
     def __pow__(self, other: complex, mod: None = None, /) -> float64 | complex128: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __rpow__(self, other: _Float64_co, mod: None = None, /) -> float64: ...  # type: ignore[misc]
     @overload
     def __rpow__(self, other: complexfloating[_64Bit, _64Bit], mod: None = None, /) -> complex128: ...  # type: ignore[misc]
@@ -5153,59 +5153,63 @@ class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
     def __complex__(self, /) -> complex: ...
     def __abs__(self, /) -> floating[_NBit1 | _NBit2]: ...  # type: ignore[override]
 
-    @overload
+    @overload  # type: ignore[override]
     def __add__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __add__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __add__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
-    @overload
+
+    @overload  # type: ignore[override]
     def __radd__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __radd__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __radd__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __sub__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __sub__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __sub__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
-    @overload
+
+    @overload  # type: ignore[override]
     def __rsub__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __rsub__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __rsub__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __mul__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __mul__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __mul__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
-    @overload
+
+    @overload  # type: ignore[override]
     def __rmul__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __rmul__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __rmul__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __truediv__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __truediv__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __truediv__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
-    @overload
+
+    @overload  # type: ignore[override]
     def __rtruediv__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __rtruediv__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
     @overload
     def __rtruediv__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __pow__(self, other: _Complex64_co, mod: None = None, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __pow__(
@@ -5215,7 +5219,8 @@ class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
     def __pow__(
         self, other: number[_NBit], mod: None = None, /
     ) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
-    @overload
+
+    @overload  # type: ignore[override]
     def __rpow__(self, other: _Complex64_co, mod: None = None, /) -> complexfloating[_NBit1, _NBit2]: ...
     @overload
     def __rpow__(self, other: complex, mod: None = None, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
@@ -5242,37 +5247,37 @@ class complex128(complexfloating[_64Bit, _64Bit], complex):
     def __getnewargs__(self, /) -> tuple[float, float]: ...
 
     # complex128-specific operator overrides
-    @overload
+    @overload  # type: ignore[override]
     def __add__(self, other: _Complex128_co, /) -> complex128: ...
     @overload
     def __add__(self, other: complexfloating[_NBit1, _NBit2], /) -> complexfloating[_NBit1 | _64Bit, _NBit2 | _64Bit]: ...
-    def __radd__(self, other: _Complex128_co, /) -> complex128: ...
+    def __radd__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
 
-    @overload
+    @overload  # type: ignore[override]
     def __sub__(self, other: _Complex128_co, /) -> complex128: ...
     @overload
     def __sub__(self, other: complexfloating[_NBit1, _NBit2], /) -> complexfloating[_NBit1 | _64Bit, _NBit2 | _64Bit]: ...
-    def __rsub__(self, other: _Complex128_co, /) -> complex128: ...
+    def __rsub__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
 
-    @overload
+    @overload  # type: ignore[override]
     def __mul__(self, other: _Complex128_co, /) -> complex128: ...
     @overload
     def __mul__(self, other: complexfloating[_NBit1, _NBit2], /) -> complexfloating[_NBit1 | _64Bit, _NBit2 | _64Bit]: ...
-    def __rmul__(self, other: _Complex128_co, /) -> complex128: ...
+    def __rmul__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
 
-    @overload
+    @overload  # type: ignore[override]
     def __truediv__(self, other: _Complex128_co, /) -> complex128: ...
     @overload
     def __truediv__(self, other: complexfloating[_NBit1, _NBit2], /) -> complexfloating[_NBit1 | _64Bit, _NBit2 | _64Bit]: ...
-    def __rtruediv__(self, other: _Complex128_co, /) -> complex128: ...
+    def __rtruediv__(self, other: _Complex128_co, /) -> complex128: ...  # type: ignore[override]
 
-    @overload
+    @overload  # type: ignore[override]
     def __pow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...
     @overload
     def __pow__(
         self, other: complexfloating[_NBit1, _NBit2], mod: None = None, /
     ) -> complexfloating[_NBit1 | _64Bit, _NBit2 | _64Bit]: ...
-    def __rpow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...
+    def __rpow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...  # type: ignore[override]
 
 csingle: TypeAlias = complex64
 cdouble: TypeAlias = complex128
@@ -5668,7 +5673,7 @@ class ufunc:
     @property
     def __qualname__(self) -> LiteralString: ...
     @property
-    def __doc__(self) -> str: ...
+    def __doc__(self) -> str: ...  # type: ignore[override]
     @property
     def nin(self) -> int: ...
     @property
@@ -5995,7 +6000,7 @@ class memmap(ndarray[_ShapeT_co, _DTypeT_co]):
     def __array_finalize__(self, obj: object) -> None: ...
     def __array_wrap__(
         self,
-        array: memmap[_ShapeT_co, _DTypeT_co],
+        array: memmap[_ShapeT_co, _DTypeT_co],  # type: ignore[override]
         context: tuple[ufunc, tuple[Any, ...], int] | None = None,
         return_scalar: builtins.bool = False,
     ) -> Any: ...
