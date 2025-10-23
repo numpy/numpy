@@ -196,8 +196,8 @@ site-packages directory.
 .. note::
 
    For modern Python packaging, it is recommended to use a `pyproject.toml` and select
-   `meson-python` as your build backend. This makes your extension pip-installable and
-   compatible with current Python packaging standards.
+   either `meson-python` or `scikit-build-core` as your build backend. Both are well-designed,
+   well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
    Example `pyproject.toml`:
 
@@ -216,7 +216,7 @@ site-packages directory.
          project('spam', 'c')
 
          py = import('python').find_installation()
-         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+         np_dep = dependency('numpy')
 
          sources = files('spammodule.c')
 
@@ -224,16 +224,16 @@ site-packages directory.
            'spam',
            sources,
            include_directories: [numpy_include],
-           install: true
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'spam'
          )
 
       To build and install:
 
       .. code-block:: bash
 
-         meson setup builddir
-         meson compile -C builddir
-         meson install -C builddir
+         pip install .
 
    .. tab-item:: setuptools
 
@@ -436,8 +436,8 @@ using ``python setup.py build_ext --inplace``.
 .. note::
 
    For modern Python packaging, it is recommended to use a `pyproject.toml` and select
-   `meson-python` as your build backend. This makes your extension pip-installable and
-   compatible with current Python packaging standards.
+   either `meson-python` or `scikit-build-core` as your build backend. Both are well-designed,
+   well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
    Example `pyproject.toml`:
 
@@ -456,7 +456,7 @@ using ``python setup.py build_ext --inplace``.
          project('npufunc', 'c')
 
          py = import('python').find_installation()
-         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+         np_dep = dependency('numpy')
 
          sources = files('single_type_logit.c')
 
@@ -464,16 +464,16 @@ using ``python setup.py build_ext --inplace``.
            'npufunc',
            sources,
            include_directories: [numpy_include],
-           install: true
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
          )
 
       To build and install:
 
       .. code-block:: bash
 
-         meson setup builddir
-         meson compile -C builddir
-         meson install -C builddir
+         pip install .
 
    .. tab-item:: setuptools
 
@@ -742,8 +742,8 @@ or installed to site-packages via ``python setup.py install``.
 .. note::
 
    For modern Python packaging, it is recommended to use a `pyproject.toml` and select
-   `meson-python` as your build backend. This makes your extension pip-installable and
-   compatible with current Python packaging standards.
+   either `meson-python` or `scikit-build-core` as your build backend. Both are well-designed,
+   well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
    Example `pyproject.toml`:
 
@@ -762,7 +762,7 @@ or installed to site-packages via ``python setup.py install``.
          project('npufunc', 'c')
 
          py = import('python').find_installation()
-         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+         np_dep = dependency('numpy')
 
          sources = files('multi_type_logit.c')
 
@@ -770,16 +770,16 @@ or installed to site-packages via ``python setup.py install``.
            'npufunc',
            sources,
            include_directories: [numpy_include],
-           install: true
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
          )
 
       To build and install:
 
       .. code-block:: bash
 
-         meson setup builddir
-         meson compile -C builddir
-         meson install -C builddir
+         pip install .
 
    .. tab-item:: setuptools
 
@@ -840,8 +840,8 @@ is replaced with
 .. note::
 
    For modern Python packaging, it is recommended to use a `pyproject.toml` and select
-   `meson-python` as your build backend. This makes your extension pip-installable and
-   compatible with current Python packaging standards.
+   either `meson-python` or `scikit-build-core` as your build backend. Both are well-designed,
+   well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
    Example `pyproject.toml`:
 
@@ -860,7 +860,7 @@ is replaced with
          project('npufunc', 'c')
 
          py = import('python').find_installation()
-         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+         np_dep = dependency('numpy')
 
          sources = files('multi_arg_logit.c')
 
@@ -868,16 +868,16 @@ is replaced with
            'npufunc',
            sources,
            include_directories: [numpy_include],
-           install: true
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
          )
 
       To build and install:
 
       .. code-block:: bash
 
-         meson setup builddir
-         meson compile -C builddir
-         meson install -C builddir
+         pip install .
 
    .. tab-item:: setuptools
 
@@ -1030,8 +1030,8 @@ is replaced with
 .. note::
 
    For modern Python packaging, it is recommended to use a `pyproject.toml` and select
-   `meson-python` as your build backend. This makes your extension pip-installable and
-   compatible with current Python packaging standards.
+   either `meson-python` or `scikit-build-core` as your build backend. Both are well-designed,
+   well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
    Example `pyproject.toml`:
 
@@ -1050,7 +1050,7 @@ is replaced with
          project('npufunc', 'c')
 
          py = import('python').find_installation()
-         numpy_include = run_command(py.full_path(), '-c', 'import numpy; print(numpy.get_include())').stdout().strip()
+         np_dep = dependency('numpy')
 
          sources = files('add_triplet.c')
 
@@ -1058,16 +1058,16 @@ is replaced with
            'npufunc',
            sources,
            include_directories: [numpy_include],
-           install: true
+           dependencies: [np_dep],
+           install: true,
+           subdir: 'npufunc'
          )
 
       To build and install:
 
       .. code-block:: bash
 
-         meson setup builddir
-         meson compile -C builddir
-         meson install -C builddir
+         pip install .
 
    .. tab-item:: setuptools
 
