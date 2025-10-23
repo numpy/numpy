@@ -1,4 +1,5 @@
 import ctypes as ct
+import datetime
 import itertools
 import pickle
 import sys
@@ -725,6 +726,54 @@ class TestUfunc:
         res = np.true_divide(~a, a)
         assert_(res == 0.0)
         assert_(res.dtype.name == 'float64')
+
+    @pytest.mark.parametrize(
+        "inputs, divisor, expected",
+        [
+            (
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.int64(2),
+                np.array(
+                    [datetime.timedelta(seconds=10), datetime.timedelta(days=1)],
+                    dtype="object",
+                ),
+            ),
+            (
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.timedelta64(2, "s"),
+                np.array(
+                    [10.0, 24.0 * 60.0 * 60.0],
+                    dtype="object",
+                ),
+            ),
+            (
+                datetime.timedelta(seconds=2),
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.array(
+                    [1.0 / 10.0, 1.0 / (24.0 * 60.0 * 60.0)],
+                    dtype="object",
+                ),
+            ),
+        ],
+    )
+    def test_true_divide_object_by_timedelta(
+        self,
+        inputs: np.ndarray | type[np.generic],
+        divisor: np.ndarray | type[np.generic],
+        expected: np.ndarray,
+    ):
+        # gh-30025
+        results = inputs / divisor
+        assert_array_equal(results, expected)
 
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)

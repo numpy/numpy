@@ -1328,6 +1328,14 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             return raise_binary_type_reso_error(ufunc, operands);
         }
     }
+    else if (PyTypeNum_ISOBJECT(type_num1) || PyTypeNum_ISOBJECT(type_num2)) {
+        /* Delegate to the default resolver. 
+        * This selects the generic O->O object loop (elementwise Python op),
+        * allowing operations with Python timedelta objects inside object arrays.
+        */
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
+    }
     else {
         return raise_binary_type_reso_error(ufunc, operands);
     }
