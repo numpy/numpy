@@ -7,19 +7,10 @@ from typing import (
     TypeAlias,
     overload,
 )
-from typing_extensions import TypeVar
+from typing_extensions import Buffer, TypeVar
 
 import numpy as np
-from numpy import (
-    _OrderKACF,
-    _SupportsBuffer,
-    bytes_,
-    dtype,
-    int_,
-    ndarray,
-    object_,
-    str_,
-)
+from numpy import _OrderKACF, bytes_, dtype, int_, ndarray, object_, str_
 from numpy._core.multiarray import compare_chararrays
 from numpy._typing import (
     NDArray,
@@ -108,7 +99,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt = 1,
         unicode: L[False] = False,
-        buffer: _SupportsBuffer | None = None,
+        buffer: Buffer | np.ndarray | None = None,
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         order: _OrderKACF = "C",
@@ -119,7 +110,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt,
         unicode: L[True],
-        buffer: _SupportsBuffer | None = None,
+        buffer: Buffer | np.ndarray | None = None,
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         order: _OrderKACF = "C",
@@ -131,7 +122,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         itemsize: SupportsIndex | SupportsInt = 1,
         *,
         unicode: L[True],
-        buffer: _SupportsBuffer | None = None,
+        buffer: Buffer | np.ndarray | None = None,
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         order: _OrderKACF = "C",
