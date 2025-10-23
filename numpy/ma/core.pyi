@@ -91,6 +91,7 @@ from numpy._typing import (
     _CharLike_co,
     _DTypeLike,
     _DTypeLikeBool,
+    _DTypeLikeVoid,
     _IntLike_co,
     _NestedSequence,
     _ScalarLike_co,
@@ -316,8 +317,10 @@ _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | numbe
 
 ###
 
-MaskType = bool_
-nomask: bool_[Literal[False]]
+MaskType = np.bool_
+
+_NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
+nomask: Final[_NoMaskType] = ...
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
@@ -422,8 +425,6 @@ remainder: _DomainedBinaryOperation
 fmod: _DomainedBinaryOperation
 mod: _DomainedBinaryOperation
 
-def make_mask_descr(ndtype): ...
-
 @overload
 def getmask(a: _ScalarLike_co) -> bool_: ...
 @overload
@@ -439,7 +440,76 @@ def getmaskarray(arr): ...
 # which isn't necessarily a ndarray. Please open an issue if this causes issues.
 def is_mask(m: object) -> TypeIs[NDArray[bool_]]: ...
 
-def make_mask(m, copy=False, shrink=True, dtype=...): ...
+#
+@overload
+def make_mask_descr(ndtype: _VoidDTypeLike) -> np.dtype[np.void]: ...
+@overload
+def make_mask_descr(ndtype: _DTypeLike[np.generic] | str | type) -> np.dtype[np.bool_]: ...
+
+#
+@overload  # m is nomask
+def make_mask(
+    m: _NoMaskType,
+    copy: bool = False,
+    shrink: bool = True,
+    dtype: _DTypeLikeBool = ...,
+) -> _NoMaskType: ...
+@overload  # m: ndarray, shrink=True (default), dtype: bool-like (default)
+def make_mask(
+    m: np.ndarray[_ShapeT],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+    dtype: _DTypeLikeBool = ...,
+) -> np.ndarray[_ShapeT, np.dtype[np.bool_]] | _NoMaskType: ...
+@overload  # m: ndarray, shrink=False (kwarg), dtype: bool-like (default)
+def make_mask(
+    m: np.ndarray[_ShapeT],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+    dtype: _DTypeLikeBool = ...,
+) -> np.ndarray[_ShapeT, np.dtype[np.bool_]]: ...
+@overload  # m: ndarray, dtype: void-like
+def make_mask(
+    m: np.ndarray[_ShapeT],
+    copy: bool = False,
+    shrink: bool = True,
+    *,
+    dtype: _DTypeLikeVoid,
+) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+@overload  # m: array-like, shrink=True (default), dtype: bool-like (default)
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    shrink: Literal[True] = True,
+    dtype: _DTypeLikeBool = ...,
+) -> NDArray[np.bool_] | _NoMaskType: ...
+@overload  # m: array-like, shrink=False (kwarg), dtype: bool-like (default)
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+    dtype: _DTypeLikeBool = ...,
+) -> NDArray[np.bool_]: ...
+@overload  # m: array-like, dtype: void-like
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    shrink: bool = True,
+    *,
+    dtype: _DTypeLikeVoid,
+) -> NDArray[np.void]: ...
+@overload  # fallback
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    shrink: bool = True,
+    *,
+    dtype: DTypeLike = ...,
+) -> NDArray[Any] | _NoMaskType: ...
+
+#
 def make_mask_none(newshape, dtype=None): ...
 def mask_or(m1, m2, copy=False, shrink=True): ...
 def flatten_mask(mask): ...
