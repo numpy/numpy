@@ -1591,6 +1591,16 @@ def _nanquantile_unchecked(
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
+    if weights is not None:
+        print(a.shape, weights.shape, axis)
+        isnan = np.isnan(a)
+        if isnan.any():
+            # overwrite if `overwrite_input` is True?
+            weights = np.where(isnan, 0., weights)
+        return fnb._quantile_unchecked(
+            a, q, axis, out, overwrite_input, method, keepdims,
+            weights=weights, ignore_nans=True
+        )
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,

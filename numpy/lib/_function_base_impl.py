@@ -4481,7 +4481,8 @@ def _quantile_unchecked(a,
                         overwrite_input=False,
                         method="linear",
                         keepdims=False,
-                        weights=None):
+                        weights=None,
+                        ignore_nans=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
     return _ureduce(a,
                     func=_quantile_ureduce_func,
@@ -4491,7 +4492,8 @@ def _quantile_unchecked(a,
                     axis=axis,
                     out=out,
                     overwrite_input=overwrite_input,
-                    method=method)
+                    method=method,
+                    ignore_nans=ignore_nans)
 
 
 def _quantile_is_valid(q):
@@ -4620,6 +4622,7 @@ def _quantile_ureduce_func(
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
     method: str = "linear",
+    ignore_nans: bool = False
 ) -> np.ndarray:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
@@ -4646,7 +4649,8 @@ def _quantile_ureduce_func(
                        axis=axis,
                        method=method,
                        out=out,
-                       weights=wgt)
+                       weights=wgt,
+                       ignore_nans=ignore_nans)
     return result
 
 
@@ -4692,6 +4696,7 @@ def _quantile(
     method: str = "linear",
     out: np.ndarray | None = None,
     weights: "np.typing.ArrayLike | None" = None,
+    ignore_nans: bool = False
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
@@ -4707,12 +4712,13 @@ def _quantile(
     """
     # --- Setup
     arr = np.asanyarray(arr)
+    print(arr.shape, axis, ignore_nans, None if weights is None else weights.shape)
     values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
     if axis != 0:  # But moveaxis is slow, so only call it if necessary.
         arr = np.moveaxis(arr, axis, destination=0)
-    supports_nans = (
+    supports_nans = (not ignore_nans) and (
         np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
     )
 

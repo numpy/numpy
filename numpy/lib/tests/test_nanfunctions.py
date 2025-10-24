@@ -1146,6 +1146,8 @@ class TestNanFunctions_Percentile:
         )
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
+        tgt = np.percentile(mat, 42, axis=(0, 1),
+                            **self._get_w_args(mat, weighted, axis=(0, 1)))
         res = np.nanpercentile(
             nan_mat, 42, axis=(0, 1), out=resout,
             **self._get_w_args(nan_mat, weighted, axis=(0, 1))
