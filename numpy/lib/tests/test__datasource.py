@@ -88,7 +88,6 @@ def invalid_httpfile():
     return http_fakefile
 
 
-@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestDataSourceOpen:
     def test_ValidHTTP(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
@@ -157,7 +156,6 @@ class TestDataSourceOpen:
         assert_equal(magic_line, result)
 
 
-@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestDataSourceExists:
     def test_ValidHTTP(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
@@ -184,7 +182,6 @@ class TestDataSourceExists:
         assert_equal(ds.exists(tmpfile), False)
 
 
-@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestDataSourceAbspath:
     def test_ValidHTTP(self, tmp_path):
         ds = datasource.DataSource(tmp_path)
@@ -247,7 +244,6 @@ class TestDataSourceAbspath:
             os.sep = orig_os_sep
 
 
-@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestRepositoryAbspath:
     def test_ValidHTTP(self, tmp_path):
         repos = datasource.Repository(valid_baseurl(), tmp_path)
@@ -275,7 +271,6 @@ class TestRepositoryAbspath:
             os.sep = orig_os_sep
 
 
-@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestRepositoryExists:
     def test_ValidFile(self, tmp_path):
         # Create local temp file
@@ -305,7 +300,6 @@ class TestRepositoryExists:
         assert_(repos.exists(tmpfile))
 
 
-@pytest.mark.thread_unsafe(reason="mkdtemp thread-unsafe")
 class TestOpenFunc:
     def test_DataSourceOpen(self, tmp_path):
         local_file = valid_textfile(tmp_path)
