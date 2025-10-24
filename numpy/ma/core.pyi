@@ -91,6 +91,7 @@ from numpy._typing import (
     _CharLike_co,
     _DTypeLike,
     _DTypeLikeBool,
+    _DTypeLikeVoid,
     _IntLike_co,
     _NestedSequence,
     _ScalarLike_co,
@@ -281,10 +282,12 @@ __all__ = [
 ]
 
 _ShapeT = TypeVar("_ShapeT", bound=_Shape)
+_ShapeOrAnyT = TypeVar("_ShapeOrAnyT", bound=_Shape, default=_AnyShape)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
+_MArrayT = TypeVar("_MArrayT", bound=MaskedArray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
@@ -313,30 +316,18 @@ _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsInd
 _ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
 _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
 
+_NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
+_MaskArray: TypeAlias = np.ndarray[_ShapeOrAnyT, np.dtype[np.bool_]]
+
 ###
 
-MaskType = bool_
-nomask: bool_[Literal[False]]
+MaskType = np.bool_
+
+nomask: Final[_NoMaskType] = ...
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
 class MaskError(MAError): ...
-
-def default_fill_value(obj): ...
-def minimum_fill_value(obj): ...
-def maximum_fill_value(obj): ...
-def set_fill_value(a, fill_value): ...
-def common_fill_value(a, b): ...
-@overload
-def filled(a: ndarray[_ShapeT_co, _DTypeT_co], fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
-@overload
-def filled(a: _ArrayLike[_ScalarT_co], fill_value: _ScalarLike_co | None = None) -> NDArray[_ScalarT_co]: ...
-@overload
-def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[Any]: ...
-def getdata(a, subok=True): ...
-get_data = getdata
-
-def fix_invalid(a, mask=..., copy=True, fill_value=None): ...
 
 class _MaskedUFunc:
     f: Any
@@ -365,6 +356,15 @@ class _DomainedBinaryOperation(_MaskedUFunc):
     filly: Any
     def __init__(self, dbfunc, domain, fillx=..., filly=...): ...
     def __call__(self, a, b, *args, **kwargs): ...
+
+class _MaskedPrintOption:
+    def __init__(self, display): ...
+    def display(self): ...
+    def set_display(self, s): ...
+    def enabled(self): ...
+    def enable(self, shrink=1): ...
+
+masked_print_option: Final[_MaskedPrintOption] = ...
 
 exp: _MaskedUnaryOperation
 conjugate: _MaskedUnaryOperation
@@ -421,50 +421,371 @@ remainder: _DomainedBinaryOperation
 fmod: _DomainedBinaryOperation
 mod: _DomainedBinaryOperation
 
-def make_mask_descr(ndtype): ...
+# `obj` can be anything (even `object()`), and is too "flexible", so we can't
+# meaningfully annotate it, or its return type.
+def default_fill_value(obj: object) -> Any: ...
+def minimum_fill_value(obj: object) -> Any: ...
+def maximum_fill_value(obj: object) -> Any: ...
 
+#
+@overload  # returns `a.fill_value` if `a` is a `MaskedArray`
+def get_fill_value(a: _MaskedArray[_ScalarT]) -> _ScalarT: ...
+@overload  # otherwise returns `default_fill_value(a)`
+def get_fill_value(a: object) -> Any: ...
+
+# this is a noop if `a` isn't a `MaskedArray`, so we only accept `MaskedArray` input
+def set_fill_value(a: MaskedArray, fill_value: _ScalarLike_co) -> None: ...
+
+# the return type depends on the *values* of `a` and `b` (which cannot be known
+# statically), which is why we need to return an awkward `_ | None`
 @overload
-def getmask(a: _ScalarLike_co) -> bool_: ...
+def common_fill_value(a: _MaskedArray[_ScalarT], b: MaskedArray) -> _ScalarT | None: ...
 @overload
-def getmask(a: MaskedArray[_ShapeT_co, Any]) -> np.ndarray[_ShapeT_co, dtype[bool_]] | bool_: ...
+def common_fill_value(a: object, b: object) -> Any: ...
+
+# keep in sync with `fix_invalid`, but return `ndarray` instead of `MaskedArray`
 @overload
-def getmask(a: ArrayLike) -> NDArray[bool_] | bool_: ...
+def filled(a: ndarray[_ShapeT, _DTypeT], fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT, _DTypeT]: ...
+@overload
+def filled(a: _ArrayLike[_ScalarT], fill_value: _ScalarLike_co | None = None) -> NDArray[_ScalarT]: ...
+@overload
+def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[Incomplete]: ...
+
+# keep in sync with `filled`, but return `MaskedArray` instead of `ndarray`
+@overload
+def fix_invalid(
+    a: np.ndarray[_ShapeT, _DTypeT],
+    mask: _ArrayLikeBool_co = nomask,
+    copy: bool = True,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload
+def fix_invalid(
+    a: _ArrayLike[_ScalarT],
+    mask: _ArrayLikeBool_co = nomask,
+    copy: bool = True,
+    fill_value: _ScalarLike_co | None = None,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def fix_invalid(
+    a: ArrayLike,
+    mask: _ArrayLikeBool_co = nomask,
+    copy: bool = True,
+    fill_value: _ScalarLike_co | None = None,
+) -> _MaskedArray[Incomplete]: ...
+
+#
+@overload
+def getdata(a: np.ndarray[_ShapeT, _DTypeT], subok: bool = True) -> np.ndarray[_ShapeT, _DTypeT]: ...
+@overload
+def getdata(a: _ArrayLike[_ScalarT], subok: bool = True) -> NDArray[_ScalarT]: ...
+@overload
+def getdata(a: ArrayLike, subok: bool = True) -> NDArray[Incomplete]: ...
+
+get_data = getdata
+
+#
+@overload
+def getmask(a: _ScalarLike_co) -> _NoMaskType: ...
+@overload
+def getmask(a: MaskedArray[_ShapeT, Any]) -> _MaskArray[_ShapeT] | _NoMaskType: ...
+@overload
+def getmask(a: ArrayLike) -> _MaskArray | _NoMaskType: ...
 
 get_mask = getmask
 
-def getmaskarray(arr): ...
+# like `getmask`, but instead of `nomask` returns `make_mask_none(arr, arr.dtype?)`
+@overload
+def getmaskarray(arr: _ScalarLike_co) -> _MaskArray[tuple[()]]: ...
+@overload
+def getmaskarray(arr: np.ndarray[_ShapeT, Any]) -> _MaskArray[_ShapeT]: ...
 
 # It's sufficient for `m` to have dtype with type: `type[np.bool_]`,
 # which isn't necessarily a ndarray. Please open an issue if this causes issues.
 def is_mask(m: object) -> TypeIs[NDArray[bool_]]: ...
 
-def make_mask(m, copy=False, shrink=True, dtype=...): ...
-def make_mask_none(newshape, dtype=None): ...
-def mask_or(m1, m2, copy=False, shrink=True): ...
-def flatten_mask(mask): ...
-def masked_where(condition, a, copy=True): ...
-def masked_greater(x, value, copy=True): ...
-def masked_greater_equal(x, value, copy=True): ...
-def masked_less(x, value, copy=True): ...
-def masked_less_equal(x, value, copy=True): ...
-def masked_not_equal(x, value, copy=True): ...
-def masked_equal(x, value, copy=True): ...
-def masked_inside(x, v1, v2, copy=True): ...
-def masked_outside(x, v1, v2, copy=True): ...
-def masked_object(x, value, copy=True, shrink=True): ...
-def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True): ...
-def masked_invalid(a, copy=True): ...
+#
+@overload
+def make_mask_descr(ndtype: _VoidDTypeLike) -> np.dtype[np.void]: ...
+@overload
+def make_mask_descr(ndtype: _DTypeLike[np.generic] | str | type) -> np.dtype[np.bool_]: ...
 
-class _MaskedPrintOption:
-    def __init__(self, display): ...
-    def display(self): ...
-    def set_display(self, s): ...
-    def enabled(self): ...
-    def enable(self, shrink=1): ...
+#
+@overload  # m is nomask
+def make_mask(
+    m: _NoMaskType,
+    copy: bool = False,
+    shrink: bool = True,
+    dtype: _DTypeLikeBool = ...,
+) -> _NoMaskType: ...
+@overload  # m: ndarray, shrink=True (default), dtype: bool-like (default)
+def make_mask(
+    m: np.ndarray[_ShapeT],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+    dtype: _DTypeLikeBool = ...,
+) -> _MaskArray[_ShapeT] | _NoMaskType: ...
+@overload  # m: ndarray, shrink=False (kwarg), dtype: bool-like (default)
+def make_mask(
+    m: np.ndarray[_ShapeT],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+    dtype: _DTypeLikeBool = ...,
+) -> _MaskArray[_ShapeT]: ...
+@overload  # m: ndarray, dtype: void-like
+def make_mask(
+    m: np.ndarray[_ShapeT],
+    copy: bool = False,
+    shrink: bool = True,
+    *,
+    dtype: _DTypeLikeVoid,
+) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+@overload  # m: array-like, shrink=True (default), dtype: bool-like (default)
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    shrink: Literal[True] = True,
+    dtype: _DTypeLikeBool = ...,
+) -> _MaskArray | _NoMaskType: ...
+@overload  # m: array-like, shrink=False (kwarg), dtype: bool-like (default)
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+    dtype: _DTypeLikeBool = ...,
+) -> _MaskArray: ...
+@overload  # m: array-like, dtype: void-like
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    shrink: bool = True,
+    *,
+    dtype: _DTypeLikeVoid,
+) -> NDArray[np.void]: ...
+@overload  # fallback
+def make_mask(
+    m: ArrayLike,
+    copy: bool = False,
+    shrink: bool = True,
+    *,
+    dtype: DTypeLike = ...,
+) -> NDArray[Incomplete] | _NoMaskType: ...
 
-masked_print_option: _MaskedPrintOption
+#
+@overload  # known shape, dtype: unstructured (default)
+def make_mask_none(newshape: _ShapeT, dtype: np.dtype | type | str | None = None) -> _MaskArray[_ShapeT]: ...
+@overload  # known shape, dtype: structured
+def make_mask_none(newshape: _ShapeT, dtype: _VoidDTypeLike) -> np.ndarray[_ShapeT, dtype[np.void]]: ...
+@overload  # unknown shape, dtype: unstructured (default)
+def make_mask_none(newshape: _ShapeLike, dtype: np.dtype | type | str | None = None) -> _MaskArray: ...
+@overload  # unknown shape, dtype: structured
+def make_mask_none(newshape: _ShapeLike, dtype: _VoidDTypeLike) -> NDArray[np.void]: ...
 
-def flatten_structured_array(a): ...
+#
+@overload  # nomask, scalar-like, shrink=True (default)
+def mask_or(
+    m1: _NoMaskType | Literal[False],
+    m2: _ScalarLike_co,
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _NoMaskType: ...
+@overload  # nomask, scalar-like, shrink=False (kwarg)
+def mask_or(
+    m1: _NoMaskType | Literal[False],
+    m2: _ScalarLike_co,
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[tuple[()]]: ...
+@overload  # scalar-like, nomask, shrink=True (default)
+def mask_or(
+    m1: _ScalarLike_co,
+    m2: _NoMaskType | Literal[False],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _NoMaskType: ...
+@overload  # scalar-like, nomask, shrink=False (kwarg)
+def mask_or(
+    m1: _ScalarLike_co,
+    m2: _NoMaskType | Literal[False],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[tuple[()]]: ...
+@overload  # ndarray, ndarray | nomask, shrink=True (default)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _MaskArray[_ShapeT] | _NoMaskType: ...
+@overload  # ndarray, ndarray | nomask, shrink=False (kwarg)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[_ShapeT]: ...
+@overload  # ndarray | nomask, ndarray, shrink=True (default)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    copy: bool = False,
+    shrink: Literal[True] = True,
+) -> _MaskArray[_ShapeT] | _NoMaskType: ...
+@overload  # ndarray | nomask, ndarray, shrink=False (kwarg)
+def mask_or(
+    m1: np.ndarray[_ShapeT, np.dtype[_ScalarT]] | _NoMaskType | Literal[False],
+    m2: np.ndarray[_ShapeT, np.dtype[_ScalarT]],
+    copy: bool = False,
+    *,
+    shrink: Literal[False],
+) -> _MaskArray[_ShapeT]: ...
+
+#
+@overload
+def flatten_mask(mask: np.ndarray[_ShapeT]) -> _MaskArray[_ShapeT]: ...
+@overload
+def flatten_mask(mask: ArrayLike) -> _MaskArray: ...
+
+# NOTE: we currently don't know the field types of `void` dtypes, so it's not possible
+# to know the output dtype of the returned array.
+@overload
+def flatten_structured_array(a: MaskedArray[_ShapeT, np.dtype[np.void]]) -> MaskedArray[_ShapeT]: ...
+@overload
+def flatten_structured_array(a: np.ndarray[_ShapeT, np.dtype[np.void]]) -> np.ndarray[_ShapeT]: ...
+@overload  # for some reason this accepts unstructured array-likes, hence this fallback overload
+def flatten_structured_array(a: ArrayLike) -> np.ndarray: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_invalid(a: ndarray[_ShapeT, _DTypeT], copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_invalid(a: _ArrayLike[_ScalarT], copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_invalid(a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # array-like of known scalar-type
+def masked_where(
+    condition: _ArrayLikeBool_co, a: ndarray[_ShapeT, _DTypeT], copy: bool = True
+) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_where(condition: _ArrayLikeBool_co, a: _ArrayLike[_ScalarT], copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_where(condition: _ArrayLikeBool_co, a: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_greater(x: ndarray[_ShapeT, _DTypeT], value: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_greater(x: _ArrayLike[_ScalarT], value: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_greater(x: ArrayLike, value: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_greater_equal(x: ndarray[_ShapeT, _DTypeT], value: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_greater_equal(x: _ArrayLike[_ScalarT], value: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_greater_equal(x: ArrayLike, value: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_less(x: ndarray[_ShapeT, _DTypeT], value: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_less(x: _ArrayLike[_ScalarT], value: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_less(x: ArrayLike, value: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_less_equal(x: ndarray[_ShapeT, _DTypeT], value: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_less_equal(x: _ArrayLike[_ScalarT], value: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_less_equal(x: ArrayLike, value: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_not_equal(x: ndarray[_ShapeT, _DTypeT], value: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_not_equal(x: _ArrayLike[_ScalarT], value: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_not_equal(x: ArrayLike, value: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_equal(x: ndarray[_ShapeT, _DTypeT], value: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_equal(x: _ArrayLike[_ScalarT], value: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_equal(x: ArrayLike, value: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_inside(x: ndarray[_ShapeT, _DTypeT], v1: ArrayLike, v2: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_inside(x: _ArrayLike[_ScalarT], v1: ArrayLike, v2: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_inside(x: ArrayLike, v1: ArrayLike, v2: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with other the `masked_*` functions
+@overload  # known array with known shape and dtype
+def masked_outside(x: ndarray[_ShapeT, _DTypeT], v1: ArrayLike, v2: ArrayLike, copy: bool = True) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload  # array-like of known scalar-type
+def masked_outside(x: _ArrayLike[_ScalarT], v1: ArrayLike, v2: ArrayLike, copy: bool = True) -> _MaskedArray[_ScalarT]: ...
+@overload  # unknown array-like
+def masked_outside(x: ArrayLike, v1: ArrayLike, v2: ArrayLike, copy: bool = True) -> _MaskedArray[Incomplete]: ...
+
+# only intended for object arrays, so we assume that's how it's always used in practice
+@overload
+def masked_object(
+    x: np.ndarray[_ShapeT, np.dtype[np.object_]],
+    value: object,
+    copy: bool = True,
+    shrink: bool = True,
+) -> MaskedArray[_ShapeT, np.dtype[np.object_]]: ...
+@overload
+def masked_object(
+    x: _ArrayLikeObject_co,
+    value: object,
+    copy: bool = True,
+    shrink: bool = True,
+) -> _MaskedArray[np.object_]: ...
+
+# keep roughly in sync with `filled`
+@overload
+def masked_values(
+    x: np.ndarray[_ShapeT, _DTypeT],
+    value: _ScalarLike_co,
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+    copy: bool = True,
+    shrink: bool = True
+) -> MaskedArray[_ShapeT, _DTypeT]: ...
+@overload
+def masked_values(
+    x: _ArrayLike[_ScalarT],
+    value: _ScalarLike_co,
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+    copy: bool = True,
+    shrink: bool = True
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def masked_values(
+    x: ArrayLike,
+    value: _ScalarLike_co,
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+    copy: bool = True,
+    shrink: bool = True
+) -> _MaskedArray[Incomplete]: ...
 
 # TODO: Support non-boolean mask dtypes, such as `np.void`. This will require adding an
 # additional generic type parameter to (at least) `MaskedArray` and `MaskedIterator` to
@@ -1976,19 +2297,69 @@ masked_singleton: Final[MaskedConstant] = ...
 
 masked_array: TypeAlias = MaskedArray
 
+# keep in sync with `MaskedArray.__new__`
+@overload
 def array(
-    data,
-    dtype=None,
-    copy=False,
-    order=None,
-    mask=...,
-    fill_value=None,
-    keep_mask=True,
-    hard_mask=False,
-    shrink=True,
-    subok=True,
-    ndmin=0,
-): ...
+    data: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def array(
+    data: object,
+    dtype: _DTypeLike[_ScalarT],
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def array(
+    data: object,
+    dtype: DTypeLike | None = None,
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+
+# keep in sync with `array`
+@overload
+def asarray(a: _ArrayLike[_ScalarT], dtype: None = None, order: _OrderKACF | None = None) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asarray(a: object, dtype: _DTypeLike[_ScalarT], order: _OrderKACF | None = None) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asarray(a: object, dtype: DTypeLike | None = None, order: _OrderKACF | None = None) -> _MaskedArray[_ScalarT]: ...
+
+# keep in sync with `asarray` (but note the additional first overload)
+@overload
+def asanyarray(a: _MArrayT, dtype: None = None) -> _MArrayT: ...
+@overload
+def asanyarray(a: _ArrayLike[_ScalarT], dtype: None = None) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asanyarray(a: object, dtype: _DTypeLike[_ScalarT]) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asanyarray(a: object, dtype: DTypeLike | None = None) -> _MaskedArray[_ScalarT]: ...
+
+#
 def is_masked(x: object) -> bool: ...
 
 class _extrema_operation(_MaskedUFunc):
@@ -2331,8 +2702,6 @@ def allequal(a: ArrayLike, b: ArrayLike, fill_value: bool = True) -> bool: ...
 
 def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float = 1e-5, atol: float = 1e-8) -> bool: ...
 
-def asarray(a, dtype=None, order=None): ...
-def asanyarray(a, dtype=None): ...
 def fromflex(fxarray): ...
 
 class _convert2ma:

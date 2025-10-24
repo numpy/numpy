@@ -1,5 +1,14 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import (
+    Final,
+    Literal,
+    Protocol,
+    SupportsIndex,
+    TypeAlias,
+    TypeVar,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -17,7 +26,6 @@ from ._polytypes import (
     _ArrayLikeCoef_co,
     _CoefArray,
     _CoefLike_co,
-    _CoefObjectLike_co,
     _CoefSeries,
     _ComplexArray,
     _ComplexSeries,
@@ -31,18 +39,23 @@ from ._polytypes import (
     _SeriesLikeFloat_co,
     _SeriesLikeInt_co,
     _SeriesLikeObject_co,
-    _SupportsCoefOps,
     _Tuple2,
 )
 
 __all__ = ["as_series", "format_float", "getdomain", "mapdomain", "mapparms", "trimcoef", "trimseq"]
 
+_T = TypeVar("_T")
 _SeqT = TypeVar("_SeqT", bound=_CoefArray | Sequence[_CoefLike_co])
 
-_AnyValF: TypeAlias = Callable[[npt.ArrayLike, npt.ArrayLike, bool], _CoefArray]
-_AnyLineF: TypeAlias = Callable[[_CoefLike_co, _CoefLike_co], _CoefArray]
-_AnyMulF: TypeAlias = Callable[[npt.ArrayLike, npt.ArrayLike], _CoefArray]
-_AnyVanderF: TypeAlias = Callable[[npt.ArrayLike, SupportsIndex], _CoefArray]
+_AnyLineF: TypeAlias = Callable[[float, float], _CoefArray]
+_AnyMulF: TypeAlias = Callable[[np.ndarray | list[int], np.ndarray], _CoefArray]
+_AnyVanderF: TypeAlias = Callable[[np.ndarray, int], _CoefArray]
+
+@type_check_only
+class _ValFunc(Protocol[_T]):
+    def __call__(self, x: np.ndarray, c: _T, /, *, tensor: bool = True) -> _T: ...
+
+###
 
 @overload
 def as_series(alist: npt.NDArray[np.integer] | _FloatArray, trim: bool = True) -> list[_FloatSeries]: ...
@@ -206,32 +219,10 @@ def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeObject_co) 
 def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeCoef_co) -> _CoefSeries: ...
 
 # keep in sync with `_gridnd`
-@overload
-def _valnd(val_f: _AnyValF, c: _SeriesLikeFloat_co, *args: _FloatLike_co) -> np.floating: ...
-@overload
-def _valnd(val_f: _AnyValF, c: _SeriesLikeComplex_co, *args: _NumberLike_co) -> np.complexfloating: ...
-@overload
-def _valnd(val_f: _AnyValF, c: _ArrayLikeFloat_co, *args: _ArrayLikeFloat_co) -> _FloatArray: ...
-@overload
-def _valnd(val_f: _AnyValF, c: _ArrayLikeComplex_co, *args: _ArrayLikeComplex_co) -> _ComplexArray: ...
-@overload
-def _valnd(val_f: _AnyValF, c: _SeriesLikeObject_co, *args: _CoefObjectLike_co) -> _SupportsCoefOps[Any]: ...
-@overload
-def _valnd(val_f: _AnyValF, c: _ArrayLikeCoef_co, *args: _ArrayLikeCoef_co) -> _ObjectArray: ...
+def _valnd(val_f: _ValFunc[_T], c: _T, *args: npt.ArrayLike) -> _T: ...
 
 # keep in sync with `_valnd`
-@overload
-def _gridnd(val_f: _AnyValF, c: _SeriesLikeFloat_co, *args: _FloatLike_co) -> np.floating: ...
-@overload
-def _gridnd(val_f: _AnyValF, c: _SeriesLikeComplex_co, *args: _NumberLike_co) -> np.complexfloating: ...
-@overload
-def _gridnd(val_f: _AnyValF, c: _ArrayLikeFloat_co, *args: _ArrayLikeFloat_co) -> _FloatArray: ...
-@overload
-def _gridnd(val_f: _AnyValF, c: _ArrayLikeComplex_co, *args: _ArrayLikeComplex_co) -> _ComplexArray: ...
-@overload
-def _gridnd(val_f: _AnyValF, c: _SeriesLikeObject_co, *args: _CoefObjectLike_co) -> _SupportsCoefOps[Any]: ...
-@overload
-def _gridnd(val_f: _AnyValF, c: _ArrayLikeCoef_co, *args: _ArrayLikeCoef_co) -> _ObjectArray: ...
+def _gridnd(val_f: _ValFunc[_T], c: _T, *args: npt.ArrayLike) -> _T: ...
 
 # keep in sync with `_polytypes._FuncBinOp`
 @overload
