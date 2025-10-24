@@ -1592,7 +1592,6 @@ def _nanquantile_unchecked(
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
     if weights is not None:
-        print(a.shape, weights.shape, axis)
         isnan = np.isnan(a)
         if isnan.any():
             # overwrite if `overwrite_input` is True?
@@ -1604,7 +1603,6 @@ def _nanquantile_unchecked(
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,
-                        weights=weights,
                         keepdims=keepdims,
                         axis=axis,
                         out=out,
@@ -1615,7 +1613,6 @@ def _nanquantile_unchecked(
 def _nanquantile_ureduce_func(
         a: np.array,
         q: np.array,
-        weights: np.array,
         axis: int | None = None,
         out=None,
         overwrite_input: bool = False,
@@ -1628,14 +1625,13 @@ def _nanquantile_ureduce_func(
     """
     if axis is None or a.ndim == 1:
         part = a.ravel()
-        wgt = None if weights is None else weights.ravel()
-        result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
+        result = _nanquantile_1d(part, q, overwrite_input, method)
         if out is not None:
             out[...] = result
-    elif weights is None:
+    else:
         # Note that this code could try to fill in `out` right away
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method, weights)
+                                     overwrite_input, method)
         # apply_along_axis fills in collapsed axis with results.
         # Move those axes to the beginning to match percentile's
         # convention.
@@ -1645,37 +1641,19 @@ def _nanquantile_ureduce_func(
 
         if out is not None:
             out[...] = result
-    else:
-        values_count = a.shape[axis]
-        # The dimensions of `q` are prepended to the output shape, so we need the
-        # axis being sampled from `arr` to be last.
-        if axis != 0:  # But moveaxis is slow, so only call it if necessary.
-            a = np.moveaxis(a, axis, destination=0)
-            weights = np.moveaxis(weights, axis, destination=0)
-
-        isnan = np.isnan(a)
-        if isnan.any():
-            # overwrite if `overwrite_input` is True?
-            weights = np.where(isnan, 0., weights)
-
-        a, result, _ = fnb._weigthed_quantile(
-            a, q, weights, axis, values_count, out,
-            supports_nans=False
-        )
 
     return result
 
 
 def _nanquantile_1d(
-    arr1d, q, overwrite_input=False, method="linear", weights=None,
+    arr1d, q, overwrite_input=False, method="linear"
 ):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
     """
-    # TODO: What to do when arr1d = [1, np.nan] and weights = [0, 1]?
-    arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
-        second_arr1d=weights, overwrite_input=overwrite_input)
+    arr1d, _, overwrite_input = _remove_nan_1d(
+        arr1d, overwrite_input=overwrite_input)
     if arr1d.size == 0:
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
@@ -1685,7 +1663,6 @@ def _nanquantile_1d(
         q,
         overwrite_input=overwrite_input,
         method=method,
-        weights=weights,
     )
 
 

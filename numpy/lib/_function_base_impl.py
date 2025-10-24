@@ -4795,12 +4795,87 @@ def _quantile(
                         out=out)
     else:
         # Weighted case
+        # This implements method="inverted_cdf", the only supported weighted
+        # method, which needs to sort anyway.
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
-        arr, result, slices_having_nans = _weigthed_quantile(
-            arr, quantiles, weights, axis, values_count, out, supports_nans
-        )
+        index_array = np.argsort(arr, axis=0)
+
+        # arr = arr[index_array, ...]  # but this adds trailing dimensions of
+        # 1.
+        arr = np.take_along_axis(arr, index_array, axis=0)
+        if weights.shape == arr.shape:
+            weights = np.take_along_axis(weights, index_array, axis=0)
+        else:
+            # weights is 1d
+            weights = weights.reshape(-1)[index_array, ...]
+
+        if supports_nans:
+            # may contain nan, which would sort to the end
+            slices_having_nans = np.isnan(arr[-1, ...])
+        else:
+            # cannot contain nan
+            slices_having_nans = np.array(False, dtype=bool)
+
+        # We use the weights to calculate the empirical cumulative
+        # distribution function cdf
+        cdf = weights.cumsum(axis=0, dtype=np.float64)
+        cdf /= cdf[-1, ...]  # normalization to 1
+        # Search index i such that
+        #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
+        # is then equivalent to
+        #   cdf[i-1] < quantile <= cdf[i]
+        # Unfortunately, searchsorted only accepts 1-d arrays as first
+        # argument, so we will need to iterate over dimensions.
+
+        # Without the following cast, searchsorted can return surprising
+        # results, e.g.
+        #   np.searchsorted(np.array([0.2, 0.4, 0.6, 0.8, 1.]),
+        #                   np.array(0.4, dtype=np.float32), side="left")
+        # returns 2 instead of 1 because 0.4 is not binary representable.
+        if quantiles.dtype.kind == "f":
+            cdf = cdf.astype(quantiles.dtype)
+        # Weights must be non-negative, so we might have zero weights at the
+        # beginning leading to some leading zeros in cdf. The call to
+        # np.searchsorted for quantiles=0 will then pick the first element,
+        # but should pick the first one larger than zero. We
+        # therefore simply set 0 values in cdf to -1.
+        if np.any(cdf[0, ...] == 0):
+            cdf[cdf == 0] = -1
+
+        def find_cdf_1d(arr, cdf):
+            indices = np.searchsorted(cdf, quantiles, side="left")
+            # We might have reached the maximum with i = len(arr), e.g. for
+            # quantiles = 1, and need to cut it to len(arr) - 1.
+            indices = minimum(indices, values_count - 1)
+            result = take(arr, indices, axis=0)
+            return result
+
+        r_shape = arr.shape[1:]
+        if quantiles.ndim > 0:
+            r_shape = quantiles.shape + r_shape
+        if out is None:
+            result = np.empty_like(arr, shape=r_shape)
+        else:
+            if out.shape != r_shape:
+                msg = (f"Wrong shape of argument 'out', shape={r_shape} is "
+                       f"required; got shape={out.shape}.")
+                raise ValueError(msg)
+            result = out
+
+        # See apply_along_axis, which we do for axis=0. Note that Ni = (,)
+        # always, so we remove it here.
+        Nk = arr.shape[1:]
+        for kk in np.ndindex(Nk):
+            result[(...,) + kk] = find_cdf_1d(
+                arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
+            )
+
+        # Make result the same as in unweighted inverted_cdf.
+        if result.shape == () and result.dtype == np.dtype("O"):
+            result = result.item()
+
 
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
@@ -4809,88 +4884,6 @@ def _quantile(
         else:
             np.copyto(result, arr[-1, ...], where=slices_having_nans)
     return result
-
-
-def _weigthed_quantile(arr, quantiles, weights, axis, values_count, out, supports_nans):
-    # This implements method="inverted_cdf", the only supported weighted
-    # method, which needs to sort anyway.
-    index_array = np.argsort(arr, axis=0)
-
-    # arr = arr[index_array, ...]  # but this adds trailing dimensions of
-    # 1.
-    arr = np.take_along_axis(arr, index_array, axis=0)
-    if weights.shape == arr.shape:
-        weights = np.take_along_axis(weights, index_array, axis=0)
-    else:
-        # weights is 1d
-        weights = weights.reshape(-1)[index_array, ...]
-
-    if supports_nans:
-        # may contain nan, which would sort to the end
-        slices_having_nans = np.isnan(arr[-1, ...])
-    else:
-        # cannot contain nan
-        slices_having_nans = np.array(False, dtype=bool)
-
-    # We use the weights to calculate the empirical cumulative
-    # distribution function cdf
-    cdf = weights.cumsum(axis=0, dtype=np.float64)
-    cdf /= cdf[-1, ...]  # normalization to 1
-    # Search index i such that
-    #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
-    # is then equivalent to
-    #   cdf[i-1] < quantile <= cdf[i]
-    # Unfortunately, searchsorted only accepts 1-d arrays as first
-    # argument, so we will need to iterate over dimensions.
-
-    # Without the following cast, searchsorted can return surprising
-    # results, e.g.
-    #   np.searchsorted(np.array([0.2, 0.4, 0.6, 0.8, 1.]),
-    #                   np.array(0.4, dtype=np.float32), side="left")
-    # returns 2 instead of 1 because 0.4 is not binary representable.
-    if quantiles.dtype.kind == "f":
-        cdf = cdf.astype(quantiles.dtype)
-    # Weights must be non-negative, so we might have zero weights at the
-    # beginning leading to some leading zeros in cdf. The call to
-    # np.searchsorted for quantiles=0 will then pick the first element,
-    # but should pick the first one larger than zero. We
-    # therefore simply set 0 values in cdf to -1.
-    if np.any(cdf[0, ...] == 0):
-        cdf[cdf == 0] = -1
-
-    def find_cdf_1d(arr, cdf):
-        indices = np.searchsorted(cdf, quantiles, side="left")
-        # We might have reached the maximum with i = len(arr), e.g. for
-        # quantiles = 1, and need to cut it to len(arr) - 1.
-        indices = minimum(indices, values_count - 1)
-        result = take(arr, indices, axis=0)
-        return result
-
-    r_shape = arr.shape[1:]
-    if quantiles.ndim > 0:
-        r_shape = quantiles.shape + r_shape
-    if out is None:
-        result = np.empty_like(arr, shape=r_shape)
-    else:
-        if out.shape != r_shape:
-            msg = (f"Wrong shape of argument 'out', shape={r_shape} is "
-                    f"required; got shape={out.shape}.")
-            raise ValueError(msg)
-        result = out
-
-    # See apply_along_axis, which we do for axis=0. Note that Ni = (,)
-    # always, so we remove it here.
-    Nk = arr.shape[1:]
-    for kk in np.ndindex(Nk):
-        result[(...,) + kk] = find_cdf_1d(
-            arr[np.s_[:, ] + kk], cdf[np.s_[:, ] + kk]
-        )
-
-    # Make result the same as in unweighted inverted_cdf.
-    if result.shape == () and result.dtype == np.dtype("O"):
-        result = result.item()
-
-    return arr, result, slices_having_nans
 
 
 def _trapezoid_dispatcher(y, x=None, dx=None, axis=None):
