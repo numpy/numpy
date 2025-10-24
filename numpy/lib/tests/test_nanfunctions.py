@@ -1047,13 +1047,18 @@ class TestNanFunctions_Percentile:
         np.nanpercentile(ndat, 30)
         assert_equal(ndat, _ndat)
 
-    def test_keepdims(self):
+    @pytest.mark.parametrize("weighted", [False, True])
+    def test_keepdims(self, weighted):
         mat = np.eye(3)
+        if weighted:
+            w_args = {"weights": np.ones_like(mat), "method": "inverted_cdf"}
+        else:
+            w_args = {}
         for axis in [None, 0, 1]:
             tgt = np.percentile(mat, 70, axis=axis, out=None,
-                                overwrite_input=False)
+                                overwrite_input=False, **w_args)
             res = np.nanpercentile(mat, 70, axis=axis, out=None,
-                                   overwrite_input=False)
+                                   overwrite_input=False, **w_args)
             assert_(res.ndim == tgt.ndim)
 
         d = np.ones((3, 5, 7, 11))
