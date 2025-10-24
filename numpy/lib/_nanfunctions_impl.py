@@ -1641,13 +1641,14 @@ def _nanquantile_ureduce_func(
         # axis being sampled from `arr` to be last.
         if axis != 0:  # But moveaxis is slow, so only call it if necessary.
             a = np.moveaxis(a, axis, destination=0)
+            weights = np.moveaxis(weights, axis, destination=0)
 
         isnan = np.isnan(a)
         if isnan.any():
             # overwrite if `overwrite_input` is True?
             weights = np.where(isnan, 0., weights)
 
-        result, _ = fnb._weigthed_quantile(
+        a, result, _ = fnb._weigthed_quantile(
             a, q, weights, axis, values_count, out,
             supports_nans=False
         )

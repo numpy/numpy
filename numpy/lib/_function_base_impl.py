@@ -4779,7 +4779,10 @@ def _quantile(
                         out=out)
     else:
         # Weighted case
-        result, slices_having_nans = _weigthed_quantile(
+        weights = np.asanyarray(weights)
+        if axis != 0:
+            weights = np.moveaxis(weights, axis, destination=0)
+        arr, result, slices_having_nans = _weigthed_quantile(
             arr, quantiles, weights, axis, values_count, out, supports_nans
         )
 
@@ -4795,9 +4798,6 @@ def _quantile(
 def _weigthed_quantile(arr, quantiles, weights, axis, values_count, out, supports_nans):
     # This implements method="inverted_cdf", the only supported weighted
     # method, which needs to sort anyway.
-    weights = np.asanyarray(weights)
-    if axis != 0:
-        weights = np.moveaxis(weights, axis, destination=0)
     index_array = np.argsort(arr, axis=0)
 
     # arr = arr[index_array, ...]  # but this adds trailing dimensions of
@@ -4874,7 +4874,7 @@ def _weigthed_quantile(arr, quantiles, weights, axis, values_count, out, support
     if result.shape == () and result.dtype == np.dtype("O"):
         result = result.item()
 
-    return result, slices_having_nans
+    return arr, result, slices_having_nans
 
 
 def _trapezoid_dispatcher(y, x=None, dx=None, axis=None):
