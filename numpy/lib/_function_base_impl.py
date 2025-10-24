@@ -706,7 +706,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         is the default value, used wherever all conditions are false.
     funclist : list of callables, f(x,*args,**kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
-        condition is True.  It should take a 1d array as input and give an 1d
+        condition is True.  It should take a 1d array as input and give a 1d
         array or a scalar value as output.  If, instead of a callable,
         a scalar is provided then a constant function (``lambda x: scalar``) is
         assumed.
