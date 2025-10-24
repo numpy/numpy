@@ -4722,7 +4722,6 @@ def _quantile(
     """
     # --- Setup
     arr = np.asanyarray(arr)
-    print(arr.shape, axis, ignore_nans, None if weights is None else weights.shape)
     values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
@@ -4875,7 +4874,6 @@ def _quantile(
         # Make result the same as in unweighted inverted_cdf.
         if result.shape == () and result.dtype == np.dtype("O"):
             result = result.item()
-
 
     if np.any(slices_having_nans):
         if result.ndim == 0 and out is None:
