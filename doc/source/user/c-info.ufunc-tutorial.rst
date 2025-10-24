@@ -159,16 +159,16 @@ the module.
 
 .. note::
 
-   For modern Python packaging, it is recommended to use a `pyproject.toml` and select
-   either `meson-python` or `scikit-build-core` as your build backend. Both are well-designed,
+   For modern Python packaging, it is recommended to use a ``pyproject.toml`` and select
+   either ``meson-python`` or ``scikit-build-core`` as your build backend. Both are well-designed,
    well-maintained, and make your extension pip-installable and compatible with current Python packaging standards.
 
-   Example `pyproject.toml`:
+   Example ``pyproject.toml``:
 
    .. code-block:: toml
 
       [build-system]
-      requires = ["meson-python", "numpy"]
+      requires = ["meson-python", "numpy>=2.0"]
       build-backend = "mesonpy"
 
 .. tab-set::
@@ -353,14 +353,6 @@ the primary thing that must be changed to create your own ufunc.
 
             return m;
         }
-
-   Example `pyproject.toml`:
-
-   .. code-block:: toml
-
-      [build-system]
-      requires = ["meson-python", "numpy"]
-      build-backend = "mesonpy"
 
 .. tab-set::
 
@@ -608,14 +600,6 @@ is the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-   Example `pyproject.toml`:
-
-   .. code-block:: toml
-
-      [build-system]
-      requires = ["meson-python", "numpy"]
-      build-backend = "mesonpy"
-
 .. tab-set::
 
    .. tab-item:: meson
@@ -701,14 +685,6 @@ is replaced with
         npufunc = Extension('npufunc',
                             sources=['multi_arg_logit.c'],
                             include_dirs=[get_include()])
-
-   Example `pyproject.toml`:
-
-   .. code-block:: toml
-
-      [build-system]
-      requires = ["meson-python", "numpy"]
-      build-backend = "mesonpy"
 
 .. tab-set::
 
@@ -886,14 +862,6 @@ is replaced with
         npufunc = Extension('npufunc',
                             sources=['add_triplet.c'],
                             include_dirs=[get_include()])
-
-   Example `pyproject.toml`:
-
-   .. code-block:: toml
-
-      [build-system]
-      requires = ["meson-python", "numpy"]
-      build-backend = "mesonpy"
 
 .. tab-set::
 
