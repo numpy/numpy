@@ -285,6 +285,7 @@ _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=Tr
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
+_MArrayT = TypeVar("_MArrayT", bound=MaskedArray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
@@ -1976,19 +1977,69 @@ masked_singleton: Final[MaskedConstant] = ...
 
 masked_array: TypeAlias = MaskedArray
 
+# keep in sync with `MaskedArray.__new__`
+@overload
 def array(
-    data,
-    dtype=None,
-    copy=False,
-    order=None,
-    mask=...,
-    fill_value=None,
-    keep_mask=True,
-    hard_mask=False,
-    shrink=True,
-    subok=True,
-    ndmin=0,
-): ...
+    data: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def array(
+    data: object,
+    dtype: _DTypeLike[_ScalarT],
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def array(
+    data: object,
+    dtype: DTypeLike | None = None,
+    copy: bool = False,
+    order: _OrderKACF | None = None,
+    mask: _ArrayLikeBool_co = nomask,
+    fill_value: _ScalarLike_co | None = None,
+    keep_mask: bool = True,
+    hard_mask: bool = False,
+    shrink: bool = True,
+    subok: bool = True,
+    ndmin: int = 0,
+) -> _MaskedArray[_ScalarT]: ...
+
+# keep in sync with `array`
+@overload
+def asarray(a: _ArrayLike[_ScalarT], dtype: None = None, order: _OrderKACF | None = None) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asarray(a: object, dtype: _DTypeLike[_ScalarT], order: _OrderKACF | None = None) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asarray(a: object, dtype: DTypeLike | None = None, order: _OrderKACF | None = None) -> _MaskedArray[_ScalarT]: ...
+
+# keep in sync with `asarray` (but note the additional first overload)
+@overload
+def asanyarray(a: _MArrayT, dtype: None = None) -> _MArrayT: ...
+@overload
+def asanyarray(a: _ArrayLike[_ScalarT], dtype: None = None) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asanyarray(a: object, dtype: _DTypeLike[_ScalarT]) -> _MaskedArray[_ScalarT]: ...
+@overload
+def asanyarray(a: object, dtype: DTypeLike | None = None) -> _MaskedArray[_ScalarT]: ...
+
+#
 def is_masked(x: object) -> bool: ...
 
 class _extrema_operation(_MaskedUFunc):
@@ -2331,8 +2382,6 @@ def allequal(a: ArrayLike, b: ArrayLike, fill_value: bool = True) -> bool: ...
 
 def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float = 1e-5, atol: float = 1e-8) -> bool: ...
 
-def asarray(a, dtype=None, order=None): ...
-def asanyarray(a, dtype=None): ...
 def fromflex(fxarray): ...
 
 class _convert2ma:
