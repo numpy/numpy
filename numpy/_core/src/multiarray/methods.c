@@ -2175,14 +2175,19 @@ array_setstate(PyArrayObject *self, PyObject *args)
          * line 820
          */
         PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+        if (handler != NULL) {
+            PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
+        }
+        else if (!_PyArray_DATA_ON_INSTANCE(self)) {
+            /*
+             * Without a handler, data should be on the instance; if not,
+             * someone arbitrarily set NPY_ARRAY_OWNDATA, so raise.
+             */
             PyErr_SetString(PyExc_RuntimeError,
                             "no memory handler found but OWNDATA flag set");
             return NULL;
         }
-        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
-        PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
     fa->base = NULL;
