@@ -718,7 +718,7 @@ def get_masked_subclass(*arrays):
     return rcls
 
 
-def getdata(a, subok=True):
+def getdata(a, subok=True, return_pyscalar=False):
     """
     Return the data of a masked array as an ndarray.
 
@@ -732,6 +732,9 @@ def getdata(a, subok=True):
     subok : bool
         Whether to force the output to be a `pure` ndarray (False) or to
         return a subclass of ndarray if appropriate (True, default).
+    return_pyscalar : bool
+        Whether to force the ouput to remain a Python scalar if the input was
+        also a Python scalar (True), or to return an array in any case (False, default).
 
     See Also
     --------
@@ -764,7 +767,10 @@ def getdata(a, subok=True):
     try:
         data = a._data
     except AttributeError:
-        data = np.array(a, copy=None, subok=subok)
+        if type(a) in (int, float, complex) and return_pyscalar:
+            data = a
+        else:
+            data = np.array(a, copy=None, subok=subok)
     if not subok:
         return data.view(ndarray)
     return data
@@ -1066,7 +1072,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
 
         """
         # Get the data, as ndarray
-        (da, db) = (getdata(a), getdata(b))
+        (da, db) = (getdata(a, return_pyscalar=True), getdata(b, return_pyscalar=True))
         # Get the result
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
@@ -1142,7 +1148,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         Return the function applied to the outer product of a and b.
 
         """
-        (da, db) = (getdata(a), getdata(b))
+        (da, db) = (getdata(a, return_pyscalar=True), getdata(b, return_pyscalar=True))
         d = self.f.outer(da, db)
         ma = getmask(a)
         mb = getmask(b)
@@ -1209,7 +1215,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
     def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         # Get the data
-        (da, db) = (getdata(a), getdata(b))
+        (da, db) = (getdata(a, return_pyscalar=True), getdata(b, return_pyscalar=True))
         # Get the result
         with np.errstate(divide='ignore', invalid='ignore'):
             result = self.f(da, db, *args, **kwargs)
@@ -4424,8 +4430,13 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        other_data = getdata(other)
-        other_data = np.where(self._mask, other_data.dtype.type(0), other_data)
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.add.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
+        else:
+            other_dtype = other_data.dtype
+        other_data = np.where(self._mask, other_dtype.type(0), other_data)
         self._data.__iadd__(other_data)
         return self
 
@@ -4441,8 +4452,13 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        other_data = getdata(other)
-        other_data = np.where(self._mask, other_data.dtype.type(0), other_data)
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.subtract.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
+        else:
+            other_dtype = other_data.dtype
+        other_data = np.where(self._mask, other_dtype.type(0), other_data)
         self._data.__isub__(other_data)
         return self
 
@@ -4458,8 +4474,13 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        other_data = getdata(other)
-        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.multiply.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
+        else:
+            other_dtype = other_data.dtype
+        other_data = np.where(self._mask, other_dtype.type(1), other_data)
         self._data.__imul__(other_data)
         return self
 
@@ -4468,7 +4489,12 @@ class MaskedArray(ndarray):
         Floor divide self by other in-place.
 
         """
-        other_data = getdata(other)
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.floor_divide.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
+        else:
+            other_dtype = other_data.dtype
         dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
         other_mask = getmask(other)
         new_mask = mask_or(other_mask, dom_mask)
@@ -4476,9 +4502,9 @@ class MaskedArray(ndarray):
         if dom_mask.any():
             (_, fval) = ufunc_fills[np.floor_divide]
             other_data = np.where(
-                    dom_mask, other_data.dtype.type(fval), other_data)
+                    dom_mask, other_dtype.type(fval), other_data)
         self._mask |= new_mask
-        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        other_data = np.where(self._mask, other_dtype.type(1), other_data)
         self._data.__ifloordiv__(other_data)
         return self
 
@@ -4487,7 +4513,12 @@ class MaskedArray(ndarray):
         True divide self by other in-place.
 
         """
-        other_data = getdata(other)
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.true_divide.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
+        else:
+            other_dtype = other_data.dtype
         dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
         other_mask = getmask(other)
         new_mask = mask_or(other_mask, dom_mask)
@@ -4495,9 +4526,9 @@ class MaskedArray(ndarray):
         if dom_mask.any():
             (_, fval) = ufunc_fills[np.true_divide]
             other_data = np.where(
-                    dom_mask, other_data.dtype.type(fval), other_data)
+                    dom_mask, other_dtype.type(fval), other_data)
         self._mask |= new_mask
-        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        other_data = np.where(self._mask, other_dtype.type(1), other_data)
         self._data.__itruediv__(other_data)
         return self
 
@@ -4506,8 +4537,13 @@ class MaskedArray(ndarray):
         Raise self to the power other, in place.
 
         """
-        other_data = getdata(other)
-        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.power.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
+        else:
+            other_dtype = other_data.dtype
+        other_data = np.where(self._mask, other_dtype.type(1), other_data)
         other_mask = getmask(other)
         with np.errstate(divide='ignore', invalid='ignore'):
             self._data.__ipow__(other_data)
