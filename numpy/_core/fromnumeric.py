@@ -4,7 +4,6 @@
 import functools
 import math
 import types
-import warnings
 
 import numpy as np
 from numpy._utils import set_module
@@ -755,8 +754,6 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
 
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
@@ -868,8 +865,6 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         sequence of k-th it will partition all of them into their sorted
         position at once.
 
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
@@ -2008,15 +2003,6 @@ def nonzero(a):
     To group the indices by element, rather than dimension, use `argwhere`,
     which returns a row for each non-zero element.
 
-    .. note::
-
-       When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-       as ``nonzero(atleast_1d(a))``.
-
-       .. deprecated:: 1.17.0
-
-          Use `atleast_1d` explicitly if this behavior is deliberate.
-
     Parameters
     ----------
     a : array_like
@@ -2430,18 +2416,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     """
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
-        warnings.warn(
-            "Calling np.sum(generator) is deprecated, and in the future will "
-            "give a different result. Use np.sum(np.fromiter(generator)) or "
+        raise TypeError(
+            "Calling np.sum(generator) is deprecated."
+            "Use np.sum(np.fromiter(generator)) or "
             "the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2
         )
-
-        res = _sum_(a)
-        if out is not None:
-            out[...] = res
-            return out
-        return res
 
     return _wrapreduction(
         a, np.add, 'sum', axis, dtype, out,
