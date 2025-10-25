@@ -1,0 +1,9 @@
+Performance improvements to ``np.unique`` for complex dtypes
+------------------------------------------------------------
+The hash-based algorithm for unique extraction now also supports
+complex dtypes, offering noticeable performance gains.
+
+In our benchmarks on complex128 arrays with 200,000 elements,
+the hash-based approach was about 1.4–1.5× faster
+than the sort-based baseline when there were 20% of unique values,
+and about 5× faster when there were 0.2% of unique values.
