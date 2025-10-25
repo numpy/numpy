@@ -1,0 +1,6 @@
+Performance increase for scalar calculations
+--------------------------------------------
+The speed of calculations on scalars has been improved by about a factor 6 for
+ufuncs that take only one input (like ``np.sin(scalar)``), reducing the speed
+difference from their ``math`` equivalents from a factor 19 to 3 (the speed
+for arrays is left unchanged).
