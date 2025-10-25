@@ -2016,18 +2016,14 @@ def cond(x, p=None):
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
-    r = asarray(r)
     nan_mask = isnan(r)
     if nan_mask.any():
         nan_mask &= ~isnan(x).any(axis=(-2, -1))
         if r.ndim > 0:
             r[nan_mask] = inf
         elif nan_mask:
-            r[()] = inf
-
-    # Convention is to return scalars instead of 0d arrays
-    if r.ndim == 0:
-        r = r[()]
+            # Convention is to return scalars instead of 0d arrays.
+            r = r.dtype.type(inf)
 
     return r
 
