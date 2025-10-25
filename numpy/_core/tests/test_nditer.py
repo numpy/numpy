@@ -752,11 +752,11 @@ def test_iter_flags_errors():
     assert_raises(ValueError, nditer, a,
                 [], [['readonly', 'writeonly', 'readwrite']])
     # Python scalars are always readonly
-    assert_raises(TypeError, nditer, 1.5, [], [['writeonly']])
-    assert_raises(TypeError, nditer, 1.5, [], [['readwrite']])
+    assert_raises(ValueError, nditer, 1.5, [], [['writeonly']])
+    assert_raises(ValueError, nditer, 1.5, [], [['readwrite']])
     # Array scalars are always readonly
-    assert_raises(TypeError, nditer, np.int32(1), [], [['writeonly']])
-    assert_raises(TypeError, nditer, np.int32(1), [], [['readwrite']])
+    assert_raises(ValueError, nditer, np.int32(1), [], [['writeonly']])
+    assert_raises(ValueError, nditer, np.int32(1), [], [['readwrite']])
     # Check readonly array
     a.flags.writeable = False
     assert_raises(ValueError, nditer, a, [], [['writeonly']])
@@ -1034,9 +1034,9 @@ def test_iter_scalar_cast_errors():
     # Check that invalid casts are caught
 
     # Need to allow copying/buffering for write casts of scalars to occur
-    assert_raises(TypeError, nditer, np.float32(2), [],
+    assert_raises(ValueError, nditer, np.float32(2), [],
                 [['readwrite']], op_dtypes=[np.dtype('f8')])
-    assert_raises(TypeError, nditer, 2.5, [],
+    assert_raises(ValueError, nditer, 2.5, [],
                 [['readwrite']], op_dtypes=[np.dtype('f4')])
     # 'f8' -> 'f4' isn't a safe cast if the value would overflow
     assert_raises(TypeError, nditer, np.float64(1e60), [],
