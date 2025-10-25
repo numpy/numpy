@@ -221,7 +221,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
 int initumath(PyObject *m)
 {
-    PyObject *d, *s, *s2;
+    PyObject *d, *s, *s2, *_ldexp;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
@@ -316,6 +316,16 @@ int initumath(PyObject *m)
         return -1;
     }
     Py_DECREF(s);
+
+    res = PyDict_GetItemStringRef(d, "ldexp", &_ldexp);
+    if (res <= 0) {
+        return -1;
+    }
+    if (init_ldexp(_ldexp) < 0) {
+        Py_DECREF(_ldexp);
+        return -1;
+    }
+    Py_DECREF(_ldexp);
 
     if (init_string_ufuncs(d) < 0) {
         return -1;
