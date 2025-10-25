@@ -1110,7 +1110,9 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
 #      if @same_value@
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            @rtype1@ rtmp;
+            memcpy(&rtmp, &src_value[0], sizeof(rtmp));
+            if (@prefix@_check_same_value_@name1@_to_@name2@(rtmp) < 0) {
                 return -1;
             }
             if (src_value[1] != 0) {
@@ -1125,7 +1127,9 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
 #      if @same_value@
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            @rtype1@ rtmp;
+            memcpy(&rtmp, &src_value[0], sizeof(rtmp));
+            if (@prefix@_check_same_value_@name1@_to_@name2@(rtmp) < 0) {
                 return -1;
             }
             if (src_value[1] != 0) {
@@ -1157,7 +1161,9 @@ static GCC_CAST_OPT_LEVEL int
     dst_value = _CONVERT_FN(src_value);
 #   if !@is_bool2@
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+        @rtype1@ rtmp;
+        memcpy(&rtmp, &src_value, sizeof(rtmp));
+        if (@prefix@_check_same_value_@name1@_to_@name2@(rtmp) < 0) {
             return -1;
         }
 #     endif //same_value
