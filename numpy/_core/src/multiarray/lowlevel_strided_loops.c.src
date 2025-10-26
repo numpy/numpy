@@ -1111,7 +1111,12 @@ static GCC_CAST_OPT_LEVEL int
        dst_value = _CONVERT_FN(src_value[0]);
 #      if @same_value@
             @rtype1@ rtmp;
-            memcpy(&rtmp, &src_value[0], sizeof(rtmp));
+            #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 12
+                /* To avoid strict-aliasing issues */
+                memcpy(&rtmp, &src_value[0], sizeof(rtmp));
+            #else
+                rtmp = *(@rtype1@ *)&src_value[0];
+            #endif
             if (@prefix@_check_same_value_@name1@_to_@name2@(rtmp) < 0) {
                 return -1;
             }
@@ -1128,7 +1133,12 @@ static GCC_CAST_OPT_LEVEL int
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
 #      if @same_value@
             @rtype1@ rtmp;
-            memcpy(&rtmp, &src_value[0], sizeof(rtmp));
+            #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 12
+                /* To avoid strict-aliasing issues */
+                memcpy(&rtmp, &src_value[0], sizeof(rtmp));
+            #else
+                rtmp = *(@rtype1@ *)&src_value[0];
+            #endif
             if (@prefix@_check_same_value_@name1@_to_@name2@(rtmp) < 0) {
                 return -1;
             }
@@ -1162,7 +1172,12 @@ static GCC_CAST_OPT_LEVEL int
 #   if !@is_bool2@
 #     if @same_value@
         @rtype1@ rtmp;
-        memcpy(&rtmp, &src_value, sizeof(rtmp));
+        #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 12
+            /* To avoid strict-aliasing issues */
+            memcpy(&rtmp, &src_value, sizeof(rtmp));
+        #else
+            rtmp = *(@rtype1@ *)&src_value;
+        #endif
         if (@prefix@_check_same_value_@name1@_to_@name2@(rtmp) < 0) {
             return -1;
         }
