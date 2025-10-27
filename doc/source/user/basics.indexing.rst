@@ -277,11 +277,14 @@ operations. For example::
 Advanced indexing
 -----------------
 
-Advanced indexing is triggered when the selection object, *obj*, is a
-non-tuple sequence object, an :class:`ndarray` (of data type integer or bool),
+Advanced indexing is triggered when the selection object *obj* is a non-tuple
+sequence object, an :class:`ndarray` (of data type integer or bool),
 or a tuple with at least one sequence object or ndarray (of data type
-integer or bool). There are two types of advanced indexing: integer
-and Boolean.
+integer or bool). In short, advanced indexing occurs when one of the indices
+is an array or sequence, and :ref:`basic-indexing` occurs for all
+other cases (e.g., integer scalars, :class:`slice` objects, or tuples of
+only these). There are two types of advanced indexing: integer and Boolean.
+
 
 Advanced indexing always returns a *copy* of the data (contrast with
 basic slicing that returns a :term:`view`).
