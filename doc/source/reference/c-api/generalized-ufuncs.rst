@@ -244,8 +244,9 @@ In this case, the ufunc author might define the function like this:
         {
             npy_intp n = core_dim_sizes[0];
             if (n == 0) {
-                PyExc_SetString("minmax requires the core dimension "
-                                "to be at least 1.");
+                PyErr_SetString(PyExc_ValueError,
+                                "minmax requires the core dimension to "
+                                "be at least 1.");
                 return -1;
             }
             return 0;
