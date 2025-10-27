@@ -13,7 +13,7 @@ if compiler_id == 'clang'
   VSX.update(args: ['-mvsx', '-maltivec'])
 endif
 VSX2 = mod_features.new(
-  'VSX2', 2, implies: VSX, args: {'val': '-mcpu=power8', 'match': '.*vsx'},
+  'VSX2', 2, implies: VSX, args: ['-mcpu=power8', '-mvsx'],
   detect: {'val': 'VSX2', 'match': 'VSX'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_vsx2.c')[0],
 )
