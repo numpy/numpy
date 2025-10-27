@@ -74,7 +74,7 @@ jobs:
         run: |
           echo ${{ github.event.pull_request.number }} | tee pr_number.txt
       - name: Upload mypy_primer diff + PR number
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         if: ${{ matrix.shard-index == 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -82,7 +82,7 @@ jobs:
             diff_${{ matrix.shard-index }}.txt
             pr_number.txt
       - name: Upload mypy_primer diff
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         if: ${{ matrix.shard-index != 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -96,7 +96,7 @@ jobs:
       contents: read
     steps:
       - name: Merge artifacts
-        uses: actions/upload-artifact/merge@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact/merge@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: mypy_primer_diffs
           pattern: mypy_primer_diffs-*
