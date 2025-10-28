@@ -6,6 +6,7 @@
 __author__ = "Pierre GF Gerard-Marchant"
 
 import copy
+import inspect
 import itertools
 import operator
 import pickle
@@ -5963,3 +5964,16 @@ def test_uint_fill_value_and_filled():
     # And this ensures things like filled work:
     np.testing.assert_array_equal(
         a.filled(), np.array([999999, 1]).astype("uint16"), strict=True)
+
+
+@pytest.mark.parametrize(
+    ('fn', 'signature'),
+    [
+        (np.ma.nonzero, "(a)"),
+        (np.ma.anomalies, "(a, axis=None, dtype=None)"),
+        (np.ma.cumsum, "(a, axis=None, dtype=None, out=None)"),
+        (np.ma.compress, "(condition, a, axis=None, out=None)"),
+    ]
+)
+def test_frommethod_signature(fn, signature):
+    assert str(inspect.signature(fn)) == signature
