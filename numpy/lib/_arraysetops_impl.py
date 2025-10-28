@@ -145,7 +145,7 @@ def _unique_dispatcher(ar, return_index=None, return_inverse=None,
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None, *, equal_nan=True,
-           sorted=True):
+           sorted=True, is_sorted=False):
     """
     Find the unique elements of an array.
 
@@ -189,6 +189,10 @@ def unique(ar, return_index=False, return_inverse=False,
         notice.
 
         .. versionadded:: 2.3
+
+    is_sorted : bool, optional
+        If your array is already sorted, setting this to True will give
+        performance enchancements (Might replace sorted in function).
 
     Returns
     -------
@@ -295,7 +299,7 @@ def unique(ar, return_index=False, return_inverse=False,
             normalize_axis_index(axis, ar.ndim)
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
-                        sorted=sorted)
+                        sorted=sorted, is_sorted=is_sorted)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -342,14 +346,14 @@ def unique(ar, return_index=False, return_inverse=False,
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
                        equal_nan=equal_nan, inverse_shape=inverse_shape,
-                       axis=axis, sorted=sorted)
+                       axis=axis, sorted=sorted, is_sorted=is_sorted)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False, *, equal_nan=True, inverse_shape=None,
-              axis=None, sorted=True):
+              axis=None, sorted=True, is_sorted=False):
     """
     Find the unique elements of an array, ignoring shape.
 
@@ -377,41 +381,72 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
 
-    # If we don't use the hash map, we use the slower sorting method.
-    if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
-        aux = ar[perm]
-    else:
-        ar.sort()
+    if is_sorted:
+        # When ar is sorted, np.nonzero(mask) are the first occurences of each value
         aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool)
-    mask[:1] = True
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
+        mask = np.empty(aux.shape, dtype=np.bool)
+        mask[:1] = True
+        if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
-            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+            if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+                aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+            else:
+                aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
+            if aux_firstnan > 0:
+                mask[1:aux_firstnan] = (
+                    aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
+            mask[aux_firstnan] = True
+            mask[aux_firstnan + 1:] = False
         else:
-            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
-        if aux_firstnan > 0:
-            mask[1:aux_firstnan] = (
-                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
-        mask[aux_firstnan] = True
-        mask[aux_firstnan + 1:] = False
-    else:
-        mask[1:] = aux[1:] != aux[:-1]
+            mask[1:] = aux[1:] != aux[:-1]
+        perm = np.nonzero(mask)
 
-    ret = (aux[mask],)
-    if return_index:
-        ret += (perm[mask],)
-    if return_inverse:
-        imask = np.cumsum(mask) - 1
-        inv_idx = np.empty(mask.shape, dtype=np.intp)
-        inv_idx[perm] = imask
-        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
-    if return_counts:
-        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
-        ret += (np.diff(idx),)
-    return ret
+        ret = (aux[perm[0]],) # This is faster than using a bool mask in most cases
+        if return_index:
+            ret += (perm[0],)
+        if return_inverse:
+            inv_idx = np.cumsum(mask) - 1
+            ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        if return_counts:
+            idx = np.concatenate(perm + ([mask.size],))
+            ret += (np.diff(idx),)
+        return ret
+    else:
+        # If we don't use the hash map, we use the slower sorting method.
+        if optional_indices:
+            perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
+            aux = ar[perm]
+        else:
+            ar.sort()
+            aux = ar
+        mask = np.empty(aux.shape, dtype=np.bool)
+        mask[:1] = True
+        if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
+                np.isnan(aux[-1])):
+            if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+                aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+            else:
+                aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
+            if aux_firstnan > 0:
+                mask[1:aux_firstnan] = (
+                    aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
+            mask[aux_firstnan] = True
+            mask[aux_firstnan + 1:] = False
+        else:
+            mask[1:] = aux[1:] != aux[:-1]
+
+        ret = (aux[mask],)
+        if return_index:
+            ret += (perm[mask],)
+        if return_inverse:
+            imask = np.cumsum(mask) - 1
+            inv_idx = np.empty(mask.shape, dtype=np.intp)
+            inv_idx[perm] = imask
+            ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        if return_counts:
+            idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
+            ret += (np.diff(idx),)
+        return ret
 
 
 # Array API set functions
