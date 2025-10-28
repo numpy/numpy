@@ -41,6 +41,7 @@ from numpy._core.umath import (
     arctan2,
     cos,
     exp,
+    floor,
     frompyfunc,
     less_equal,
     minimum,
@@ -4568,9 +4569,8 @@ def _lerp(a, b, t, out=None):
     out : array_like
         Output array.
     """
-    diff_b_a = subtract(b, a)
-    # asanyarray is a stop-gap until gh-13105
-    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
+    diff_b_a = b - a
+    lerp_interpolation = add(a, diff_b_a * t, out=... if out is None else out)
     subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
              casting='unsafe', dtype=type(lerp_interpolation.dtype))
     if lerp_interpolation.ndim == 0 and out is None:
@@ -4662,8 +4662,8 @@ def _get_indexes(arr, virtual_indexes, valid_values_count):
     (previous_indexes, next_indexes): Tuple
         A Tuple of virtual_indexes neighbouring indexes
     """
-    previous_indexes = np.asanyarray(np.floor(virtual_indexes))
-    next_indexes = np.asanyarray(previous_indexes + 1)
+    previous_indexes = floor(virtual_indexes, out=...)
+    next_indexes = add(previous_indexes, 1, out=...)
     indexes_above_bounds = virtual_indexes >= valid_values_count - 1
     # When indexes is above max index, take the max value of the array
     if indexes_above_bounds.any():
