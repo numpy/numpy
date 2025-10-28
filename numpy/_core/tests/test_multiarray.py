@@ -6108,6 +6108,20 @@ class TestResize:
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.parametrize("dtype", ["O", "O,O"])
+    def test_obj_obj_shrinking(self, dtype):
+        # check that memory is freed when shrinking an array.
+        test_obj = object()
+        expected = sys.getrefcount(test_obj)
+        a = np.array([test_obj, test_obj, test_obj], dtype=dtype)
+        assert a.size == 3
+        a.resize((2, 1))  # two elements, not three!
+        assert a.size == 2
+        del a
+        # if all is well, then we reclaimed all references
+        assert sys.getrefcount(test_obj) == expected
+
     def test_empty_view(self):
         # check that sizes containing a zero don't trigger a reallocate for
         # already empty arrays
