@@ -2352,8 +2352,8 @@ class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def tolist(self): ...  # type: ignore[override]
 
 def isMaskedArray(x: object) -> TypeIs[MaskedArray]: ...
-isarray = isMaskedArray
-isMA = isMaskedArray
+def isarray(x: object) -> TypeIs[MaskedArray]: ...  # alias to isMaskedArray
+def isMA(x: object) -> TypeIs[MaskedArray]: ...  # alias to isMaskedArray
 
 # 0D float64 array
 class MaskedConstant(MaskedArray[tuple[()], dtype[float64]]):
