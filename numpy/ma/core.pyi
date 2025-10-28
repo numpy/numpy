@@ -2,9 +2,10 @@
 
 import datetime as dt
 from _typeshed import Incomplete
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
+    Concatenate,
     Final,
     Generic,
     Literal,
@@ -18,7 +19,7 @@ from typing import (
     TypeAlias,
     overload,
 )
-from typing_extensions import TypeIs, TypeVar, override
+from typing_extensions import ParamSpec, TypeIs, TypeVar, override
 
 import numpy as np
 from numpy import (
@@ -292,6 +293,15 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
 _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
+_UFuncT_co = TypeVar(
+    "_UFuncT_co",
+    # the `| Callable` simplifies self-binding to the ufunc's callable signature
+    bound=np.ufunc | Callable[..., object],
+    default=np.ufunc,
+    covariant=True,
+)
+_Pss = ParamSpec("_Pss")
+_T = TypeVar("_T")
 
 _Ignored: TypeAlias = object
 
@@ -319,6 +329,10 @@ _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | numbe
 _NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
 _MaskArray: TypeAlias = np.ndarray[_ShapeOrAnyT, np.dtype[np.bool_]]
 
+_FillValue: TypeAlias = complex | None  # int | float | complex | None
+_FillValueCallable: TypeAlias = Callable[[np.dtype | ArrayLike], _FillValue]
+_DomainCallable: TypeAlias = Callable[..., NDArray[np.bool_]]
+
 ###
 
 MaskType = np.bool_
@@ -329,33 +343,104 @@ class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
 class MaskError(MAError): ...
 
-class _MaskedUFunc:
-    f: Any
-    __doc__: Any
-    __name__: Any
-    def __init__(self, ufunc): ...
+# not generic at runtime
+class _MaskedUFunc(Generic[_UFuncT_co]):
+    f: _UFuncT_co  # readonly
+    def __init__(self, /, ufunc: _UFuncT_co) -> None: ...
 
-class _MaskedUnaryOperation(_MaskedUFunc):
-    fill: Any
-    domain: Any
-    def __init__(self, mufunc, fill=..., domain=...): ...
-    def __call__(self, a, *args, **kwargs): ...
+# not generic at runtime
+class _MaskedUnaryOperation(_MaskedUFunc[_UFuncT_co], Generic[_UFuncT_co]):
+    fill: Final[_FillValue]
+    domain: Final[_DomainCallable | None]
 
-class _MaskedBinaryOperation(_MaskedUFunc):
-    fillx: Any
-    filly: Any
-    def __init__(self, mbfunc, fillx=..., filly=...): ...
-    def __call__(self, a, b, *args, **kwargs): ...
-    def reduce(self, target, axis=0, dtype=None): ...
-    def outer(self, a, b): ...
-    def accumulate(self, target, axis=0): ...
+    def __init__(self, /, mufunc: _UFuncT_co, fill: _FillValue = 0, domain: _DomainCallable | None = None) -> None: ...
 
-class _DomainedBinaryOperation(_MaskedUFunc):
-    domain: Any
-    fillx: Any
-    filly: Any
-    def __init__(self, dbfunc, domain, fillx=..., filly=...): ...
-    def __call__(self, a, b, *args, **kwargs): ...
+    # NOTE: This might not work with overloaded callable signatures might not work on
+    # pyright, which is a long-standing issue, and is unique to pyright:
+    # https://github.com/microsoft/pyright/issues/9663
+    # https://github.com/microsoft/pyright/issues/10849
+    # https://github.com/microsoft/pyright/issues/10899
+    # https://github.com/microsoft/pyright/issues/11049
+    def __call__(
+        self: _MaskedUnaryOperation[Callable[Concatenate[Any, _Pss], _T]],
+        /,
+        a: ArrayLike,
+        *args: _Pss.args,
+        **kwargs: _Pss.kwargs,
+    ) -> _T: ...
+
+# not generic at runtime
+class _MaskedBinaryOperation(_MaskedUFunc[_UFuncT_co], Generic[_UFuncT_co]):
+    fillx: Final[_FillValue]
+    filly: Final[_FillValue]
+
+    def __init__(self, /, mbfunc: _UFuncT_co, fillx: _FillValue = 0, filly: _FillValue = 0) -> None: ...
+
+    # NOTE: See the comment in `_MaskedUnaryOperation.__call__`
+    def __call__(
+        self: _MaskedBinaryOperation[Callable[Concatenate[Any, Any, _Pss], _T]],
+        /,
+        a: ArrayLike,
+        b: ArrayLike,
+        *args: _Pss.args,
+        **kwargs: _Pss.kwargs,
+    ) -> _T: ...
+
+    # NOTE: We cannot meaningfully annotate the return (d)types of these methods until
+    # the signatures of the corresponding `numpy.ufunc` methods are specified.
+    def reduce(self, /, target: ArrayLike, axis: SupportsIndex = 0, dtype: DTypeLike | None = None) -> Incomplete: ...
+    def outer(self, /, a: ArrayLike, b: ArrayLike) -> _MaskedArray[Incomplete]: ...
+    def accumulate(self, /, target: ArrayLike, axis: SupportsIndex = 0) -> _MaskedArray[Incomplete]: ...
+
+# not generic at runtime
+class _DomainedBinaryOperation(_MaskedUFunc[_UFuncT_co], Generic[_UFuncT_co]):
+    domain: Final[_DomainCallable]
+    fillx: Final[_FillValue]
+    filly: Final[_FillValue]
+
+    def __init__(
+        self,
+        /,
+        dbfunc: _UFuncT_co,
+        domain: _DomainCallable,
+        fillx: _FillValue = 0,
+        filly: _FillValue = 0,
+    ) -> None: ...
+
+    # NOTE: See the comment in `_MaskedUnaryOperation.__call__`
+    def __call__(
+        self: _DomainedBinaryOperation[Callable[Concatenate[Any, Any, _Pss], _T]],
+        /,
+        a: ArrayLike,
+        b: ArrayLike,
+        *args: _Pss.args,
+        **kwargs: _Pss.kwargs,
+    ) -> _T: ...
+
+# not generic at runtime
+class _extrema_operation(_MaskedUFunc[_UFuncT_co], Generic[_UFuncT_co]):
+    compare: Final[_MaskedBinaryOperation]
+    fill_value_func: Final[_FillValueCallable]
+
+    def __init__(
+        self,
+        /,
+        ufunc: _UFuncT_co,
+        compare: _MaskedBinaryOperation,
+        fill_value: _FillValueCallable,
+    ) -> None: ...
+
+    # NOTE: This class is only used internally for `maximum` and `minimum`, so we are
+    # able to annotate the `__call__` method specifically for those two functions.
+    @overload
+    def __call__(self, /, a: _ArrayLike[_ScalarT], b: _ArrayLike[_ScalarT]) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def __call__(self, /, a: ArrayLike, b: ArrayLike) -> _MaskedArray[Incomplete]: ...
+
+    # NOTE: We cannot meaningfully annotate the return (d)types of these methods until
+    # the signatures of the corresponding `numpy.ufunc` methods are specified.
+    def reduce(self, /, target: ArrayLike, axis: SupportsIndex | _NoValueType = ...) -> Incomplete: ...
+    def outer(self, /, a: ArrayLike, b: ArrayLike) -> _MaskedArray[Incomplete]: ...
 
 class _MaskedPrintOption:
     def __init__(self, display): ...
@@ -2361,16 +2446,6 @@ def asanyarray(a: object, dtype: DTypeLike | None = None) -> _MaskedArray[_Scala
 
 #
 def is_masked(x: object) -> bool: ...
-
-class _extrema_operation(_MaskedUFunc):
-    compare: Any
-    fill_value_func: Any
-    def __init__(self, ufunc, compare, fill_value): ...
-    # NOTE: in practice `b` has a default value, but users should
-    # explicitly provide a value here as the default is deprecated
-    def __call__(self, a, b): ...
-    def reduce(self, target, axis=...): ...
-    def outer(self, a, b): ...
 
 @overload
 def min(
