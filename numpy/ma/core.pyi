@@ -100,6 +100,7 @@ from numpy._typing import (
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
+    _SupportsArrayFunc,
 )
 from numpy._typing._dtype_like import _VoidDTypeLike
 
@@ -295,6 +296,7 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
 _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
+_ArangeScalarT = TypeVar("_ArangeScalarT", bound=_ArangeScalar)
 _UFuncT_co = TypeVar(
     "_UFuncT_co",
     # the `| Callable` simplifies self-binding to the ufunc's callable signature
@@ -327,6 +329,7 @@ _ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
 _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
 _ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
 _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
+_ArangeScalar: TypeAlias = floating | integer | datetime64 | timedelta64
 
 _NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
 _MaskArray: TypeAlias = np.ndarray[_ShapeOrAnyT, np.dtype[np.bool_]]
@@ -3130,12 +3133,92 @@ def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float 
 
 def fromflex(fxarray): ...
 
+# TODO: convert to function
 class _convert2ma:
     def __init__(self, /, funcname: str, np_ret: str, np_ma_ret: str, params: dict[str, Any] | None = None) -> None: ...
     def __call__(self, /, *args: object, **params: object) -> Any: ...
     def getdoc(self, /, np_ret: str, np_ma_ret: str) -> str | None: ...
 
-arange: _convert2ma = ...
+@overload  # int, dtype=None (default)
+def arange(
+    start: int,
+    stop: int = ...,
+    step: int = ...,
+    /,
+    dtype: None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[np.int_]]: ...
+@overload  # float, dtype=None (default)
+def arange(
+    start: float,
+    stop: float = ...,
+    step: float = ...,
+    /,
+    dtype: None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[np.float64 | Any]]: ...
+@overload  # integer | floating | datetime64 | timedelta64, dtype=None (default)
+def arange(
+    start: _ArangeScalarT,
+    stop: _ArangeScalarT = ...,
+    step: _ArangeScalarT = ...,
+    /,
+    dtype: None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ArangeScalarT]]: ...
+@overload  # dtype: known dtype-like (positional)
+def arange(
+    start: _ArangeScalar,
+    stop: _ArangeScalar,
+    step: _ArangeScalar,
+    /,
+    dtype: _DTypeLike[_ScalarT],
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload  # dtype: known dtype-like (keyword)
+def arange(
+    start: _ArangeScalar,
+    stop: _ArangeScalar = ...,
+    step: _ArangeScalar = ...,
+    /,
+    *,
+    dtype: _DTypeLike[_ScalarT],
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload  # dtype: unknown dtype
+def arange(
+    start: _ArangeScalar,
+    stop: _ArangeScalar = ...,
+    step: _ArangeScalar = ...,
+    /,
+    dtype: DTypeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int]]: ...
+
+#
 clip: _convert2ma = ...
 empty: _convert2ma = ...
 empty_like: _convert2ma = ...
