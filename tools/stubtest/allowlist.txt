@@ -182,8 +182,3 @@ numpy\.linalg\._umath_linalg\.qr_complete
 numpy\.linalg\._umath_linalg\.qr_reduced
 numpy\.linalg\._umath_linalg\.solve
 numpy\.linalg\._umath_linalg\.solve1
-
-# ma.core._frommethod callables
-numpy\.ma\.(core\.)?argmax
-numpy\.ma\.(core\.)?argmin
-numpy\.ma\.(core\.)?count
