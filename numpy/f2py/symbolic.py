@@ -155,14 +155,14 @@ def ewarn(message):
 
 
 class Expr:
-    """Represents a Fortran expression as a op-data pair.
+    """Represents a Fortran expression as an op-data pair.
 
     Expr instances are hashable and sortable.
     """
 
     @staticmethod
     def parse(s, language=Language.C):
-        """Parse a Fortran expression to a Expr.
+        """Parse a Fortran expression to an Expr.
         """
         return fromstring(s, language=language)
 

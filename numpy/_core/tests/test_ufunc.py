@@ -1922,7 +1922,7 @@ class TestUfunc:
         assert_raises(ValueError, np.divide.reduce, a, axis=(0, 1))
 
     def test_reduce_zero_axis(self):
-        # If we have a n x m array and do a reduction with axis=1, then we are
+        # If we have an n x m array and do a reduction with axis=1, then we are
         # doing n reductions, and each reduction takes an m-element array. For
         # a reduction operation without an identity, then:
         #   n > 0, m > 0: fine
