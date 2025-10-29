@@ -121,6 +121,15 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                             "no memory handler found but OWNDATA flag set");
             return NULL;
         }
+        if (newnbytes < oldnbytes) {
+            /* Clear now removed data (if dtype has references) */
+            if (PyArray_ClearBuffer(
+                    PyArray_DESCR(self), PyArray_BYTES(self) + newnbytes,
+                    elsize, oldsize-newsize, PyArray_ISALIGNED(self)) < 0) {
+                return NULL;
+            }
+        }
+
         new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
                                        newnbytes == 0 ? elsize : newnbytes,
                                        handler);
@@ -130,17 +139,17 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             return NULL;
         }
         ((PyArrayObject_fields *)self)->data = new_data;
-    }
 
-    if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
-        /* Fill new memory with zeros (PyLong zero for object arrays) */
-        npy_intp stride = elsize;
-        npy_intp size = newsize - oldsize;
-        char *data = PyArray_BYTES(self) + oldnbytes;
-        int aligned = PyArray_ISALIGNED(self);
-        if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
-                                         stride, size, aligned) < 0) {
-            return NULL;
+        if (newnbytes > oldnbytes && PyArray_ISWRITEABLE(self)) {
+            /* Fill new memory with zeros (PyLong zero for object arrays) */
+            npy_intp stride = elsize;
+            npy_intp size = newsize - oldsize;
+            char *data = PyArray_BYTES(self) + oldnbytes;
+            int aligned = PyArray_ISALIGNED(self);
+            if (PyArray_ZeroContiguousBuffer(PyArray_DESCR(self), data,
+                                            stride, size, aligned) < 0) {
+                return NULL;
+            }
         }
     }
 
