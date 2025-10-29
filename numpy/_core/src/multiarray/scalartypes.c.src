@@ -160,7 +160,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  * valid self (a generic scalar) and an other item.
  * May fill self_item and/or other_arr (but not both) with non-NULL values.
  *
- * Why this dance?  When the other object is a exactly Python scalar something
+ * Why this dance?  When the other object is exactly a Python scalar something
  * awkward happens historically in NumPy.
  * NumPy doesn't define a result, but the ufunc would cast to `astype(object)`
  * which is the same as `scalar.item()`.  And that operation converts e.g.
