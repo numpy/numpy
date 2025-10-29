@@ -269,6 +269,7 @@ def choose(
     mode: _ModeKind = "raise",
 ) -> _ArrayT: ...
 
+# keep in sync with `ma.core.repeat`
 @overload
 def repeat(
     a: _ArrayLike[_ScalarT],
@@ -294,6 +295,7 @@ def repeat(
     axis: SupportsIndex,
 ) -> NDArray[Any]: ...
 
+#
 def put(
     a: NDArray[Any],
     ind: _ArrayLikeInt_co,
@@ -301,6 +303,7 @@ def put(
     mode: _ModeKind = "raise",
 ) -> None: ...
 
+# keep in sync with `ma.core.swapaxes`
 @overload
 def swapaxes(
     a: _ArrayLike[_ScalarT],
@@ -507,6 +510,7 @@ def squeeze(
     axis: _ShapeLike | None = None,
 ) -> NDArray[Any]: ...
 
+# keep in sync with `ma.core.diagonal`
 @overload
 def diagonal(
     a: _ArrayLike[_ScalarT],
@@ -522,6 +526,7 @@ def diagonal(
     axis2: SupportsIndex = 1,  # >= 2D array
 ) -> NDArray[Any]: ...
 
+# keep in sync with `ma.core.trace`
 @overload
 def trace(
     a: ArrayLike,  # >= 2D array

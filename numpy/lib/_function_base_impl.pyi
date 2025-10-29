@@ -251,6 +251,7 @@ def select(
     default: ArrayLike = 0,
 ) -> NDArray[Any]: ...
 
+# keep roughly in sync with `ma.core.copy`
 @overload
 def copy(
     a: _ArrayT,
