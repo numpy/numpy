@@ -1,5 +1,5 @@
 ``numpy.array2string`` and ``numpy.sum`` deprecations finalized
----------------------------------------------
+---------------------------------------------------------------
 
 The following long-deprecated APIs have been removed or converted to errors:
 
