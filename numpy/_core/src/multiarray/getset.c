@@ -521,7 +521,7 @@ static int
 non_unique_reference(PyObject *lhs)
 {
     // Return 1 if we have a guaranteed non-unique reference
-    // If 0 the object can be unique or non-unique
+    // When 0 is returned, the object can be unique or non-unique
 #if defined(PYPY_VERSION)
     // on pypy we cannot use reference counting
     return 0;
