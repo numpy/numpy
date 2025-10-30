@@ -1,0 +1,6 @@
+`numpy.fix` is deprecated
+-------------------------
+The `numpy.fix` function is deprecated and will be removed in a future version
+of NumPy. Use `numpy.trunc` instead, which provides identical functionality.
+Both functions round towards zero (truncate), but `numpy.trunc` is the standard
+name used across NumPy and other numerical libraries.
