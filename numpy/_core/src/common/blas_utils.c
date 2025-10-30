@@ -37,13 +37,13 @@ set_BLAS_causes_spurious_FPEs(void)
 {
     // These are all small, so just work on stack to not worry about error
     // handling.
-    double *x = PyMem_Malloc(20*20*3*sizeof(double));
+    double *x = PyMem_Calloc(20 * 20 * 3, sizeof(double));
     if (x == NULL) {
         PyErr_NoMemory();
         return -1;
     }
-    double *y = x + 20*20;
-    double *res = y + 20*20;
+    double *y = x + 20 * 20;
+    double *res = y + 20 * 20;
 
     npy_clear_floatstatus_barrier((char *)x);
 
