@@ -68,15 +68,7 @@ def fix(x, out=None):
         DeprecationWarning,
         stacklevel=2
     )
-    # promote back to an array if flattened
-    res = nx.ceil(x, out=... if out is None else out)
-    res = nx.floor(x, out=res, where=nx.greater_equal(x, 0))
-
-    # when no out argument is passed and no subclasses are involved, flatten
-    # scalars
-    if out is None and type(res) is nx.ndarray:
-        res = res[()]
-    return res
+    return nx.trunc(x, out=out)
 
 
 @array_function_dispatch(_dispatcher, verify=False, module='numpy')
