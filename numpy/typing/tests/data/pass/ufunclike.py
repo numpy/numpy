@@ -33,18 +33,12 @@ AR_LIKE_f = [1.0, 2.0, 3.0]
 AR_LIKE_O = [Object(), Object(), Object()]
 AR_U: np.ndarray[Any, np.dtype[np.str_]] = np.zeros(3, dtype="U5")
 
-with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore",
-        message="The function numpy.fix is deprecated in favor of numpy.trunc",
-        category=DeprecationWarning,
-    )
-    np.fix(AR_LIKE_b)
-    np.fix(AR_LIKE_u)
-    np.fix(AR_LIKE_i)
-    np.fix(AR_LIKE_f)
-    np.fix(AR_LIKE_O)
-    np.fix(AR_LIKE_f, out=AR_U)
+np.fix(AR_LIKE_b)
+np.fix(AR_LIKE_u)
+np.fix(AR_LIKE_i)
+np.fix(AR_LIKE_f)
+np.fix(AR_LIKE_O)
+np.fix(AR_LIKE_f, out=AR_U)
 
 np.isposinf(AR_LIKE_b)
 np.isposinf(AR_LIKE_u)
