@@ -88,8 +88,17 @@ To run the test suite in multiple threads::
   $ spin test -p 4 # run each test under 4 threads
   $ spin test -p auto -- --skip-thread-unsafe=true # run ONLY tests that are thread-safe
 
-When you write new tests (see below), it is worth testing to make sure they do not fail
-under ``pytest-run-parallel``, since the CI jobs makes use of it.
+When you write new tests, it is worth testing to make sure they do not fail
+under ``pytest-run-parallel``, since the CI jobs make use of it. Some tips on how to
+write thread-safe tests can be found `here <#writing-thread-safe-tests>`_.
+
+.. note::
+
+  Ideally you should run ``pytest-run-parallel`` using a `free-threaded build of Python
+  <https://docs.python.org/3/howto/free-threading-python.html>`_ that is 3.14 or
+  higher. If you decide to use a version of Python that is not free-threaded, you will
+  need to set the environment variables ``PYTHON_CONTEXT_AWARE_WARNINGS`` and 
+  ``PYTHON_THREAD_INHERIT_CONTEXT`` to 1.
 
 Running doctests
 ----------------
@@ -225,36 +234,34 @@ Similarly for methods::
       def test_simple(self):
           assert_(zzz() == 'Hello from zzz')
 
-Easier setup and teardown functions / methods
----------------------------------------------
+Setup and teardown methods
+--------------------------
 
-Testing looks for module-level or class method-level setup and teardown
-functions by name; thus::
-
-  def setup_module():
-      """Module-level setup"""
-      print('doing setup')
-
-  def teardown_module():
-      """Module-level teardown"""
-      print('doing teardown')
-
+NumPy originally used xunit setup and teardown, a feature of `pytest`. We now encourage
+the usage of setup and teardown methods that are called explicitly by the tests that
+need them::
 
   class TestMe:
-      def setup_method(self):
-          """Class-level setup"""
+      def setup(self):
           print('doing setup')
+          return 1
 
-      def teardown_method():
-          """Class-level teardown"""
+      def teardown(self):
           print('doing teardown')
 
+      def test_xyz(self):
+          x = self.setup()
+          assert x == 1
+          self.teardown()
 
-Setup and teardown functions to functions and methods are known as "fixtures",
-and they should be used sparingly.
+This approach is thread-safe, ensuring tests can run under ``pytest-run-parallel``.
+Using pytest setup fixtures (such as xunit setup methods) is generally not thread-safe
+and will likely cause thread-safety test failures.
+
 ``pytest`` supports more general fixture at various scopes which may be used
-automatically via special arguments.  For example,  the special argument name
-``tmpdir`` is used in test to create a temporary directory.
+automatically via special arguments. For example, the special argument name
+``tmp_path`` is used in tests to create temporary directories. However, 
+fixtures should be used sparingly.
 
 Parametric tests
 ----------------
@@ -397,9 +404,9 @@ Tests on random data
 Tests on random data are good, but since test failures are meant to expose
 new bugs or regressions, a test that passes most of the time but fails
 occasionally with no code changes is not helpful. Make the random data
-deterministic by setting the random number seed before generating it.  Use
-either Python's ``random.seed(some_number)`` or NumPy's
-``numpy.random.seed(some_number)``, depending on the source of random numbers.
+deterministic by setting the random number seed before generating it.
+Use ``rng = numpy.random.RandomState(some_number)`` to set a seed on a
+local instance of `numpy.random.RandomState`.
 
 Alternatively, you can use `Hypothesis`_ to generate arbitrary data.
 Hypothesis manages both Python's and Numpy's random seeds for you, and
@@ -410,6 +417,44 @@ The advantages over random generation include tools to replay and share
 failures without requiring a fixed seed, reporting *minimal* examples for
 each failure, and better-than-naive-random techniques for triggering bugs.
 
+Writing thread-safe tests
+-------------------------
+
+Writing thread-safe tests may require some trial-and-error. Generally you should
+follow the guidelines stated so far, especially when it comes to `setup methods
+<#setup-and-teardown-methods>`_ and `seeding random data <#tests-on-random-data>`_.
+Explicit setup and the usage of local RNG are thread-safe practices. Here are tips
+for some other common problems you may run into.
+
+Using ``pytest.mark.parametrize`` may occasionally cause thread-safety issues.
+To fix this, you can use ``copy()``::
+
+  @pytest.mark.parametrize('dimensionality', [3, 10, 25])
+  @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+  def test_solve(dimensionality, dtype):
+      dimen = dimensionality.copy()
+      d = dtype.copy()
+      # use these copied variables instead
+      ...
+
+If you are testing something that is inherently thread-unsafe, you can label your
+test with ``pytest.mark.thread_unsafe`` so that it will run under a single thread
+and not cause test failures::
+  
+  @pytest.mark.thread_unsafe(reason="reason this test is thread-unsafe")
+  def test_thread_unsafe():
+    ...
+
+Some examples of what should be labeled as thread-unsafe:
+
+- Usage of ``sys.stdout`` and ``sys.stderr``
+- Mutation of global data, like docstrings, modules, garbage collectors, etc.
+- Tests that require a lot of memory, since they could cause crashes.
+
+Additionally, some ``pytest`` fixtures are thread-unsafe, such as ``monkeypatch`` and
+``capsys``. However, ``pytest-run-parallel`` will automatically mark these as
+thread-unsafe if you decide to use them. Some fixtures have been patched to be
+thread-safe, like ``tmp_path``.
 
 Documentation for ``numpy.test``
 --------------------------------
