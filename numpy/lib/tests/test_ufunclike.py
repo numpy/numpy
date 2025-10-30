@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from numpy import fix, isneginf, isposinf
 from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
@@ -40,8 +42,10 @@ class TestUfunclike:
         out = np.zeros(a.shape, float)
         tgt = np.array([[1., 1., 1., 1.], [-1., -1., -1., -1.]])
 
-        with np.testing.suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "The function numpy.fix is deprecated")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "The function numpy.fix is deprecated", DeprecationWarning
+            )
             res = fix(a)
             assert_equal(res, tgt)
             res = fix(a, out)
@@ -69,8 +73,10 @@ class TestUfunclike:
 
         a = np.array([1.1, -1.1])
         m = MyArray(a, metadata='foo')
-        with np.testing.suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "The function numpy.fix is deprecated")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "The function numpy.fix is deprecated", DeprecationWarning
+            )
             f = fix(m)
             assert_array_equal(f, np.array([1, -1]))
             assert_(isinstance(f, MyArray))
@@ -91,8 +97,10 @@ class TestUfunclike:
         assert_equal(type(actual), type(expected))
 
         x = -3.4
-        with np.testing.suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "The function numpy.fix is deprecated")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "The function numpy.fix is deprecated", DeprecationWarning
+            )
             actual = np.fix(x)
             expected = np.float64(-3.0)
             assert_equal(actual, expected)

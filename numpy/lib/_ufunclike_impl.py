@@ -62,9 +62,12 @@ def fix(x, out=None):
 
     """
     # NumPy 2.4.0
-    warnings.warn('The function numpy.fix is deprecated in favor of numpy.trunc since NumPy 2.4.0.',
-                  DeprecationWarning,
-                  stacklevel=2)
+    warnings.warn(
+        'The function numpy.fix is deprecated in favor of numpy.trunc '
+        'since NumPy 2.4.0.',
+        DeprecationWarning,
+        stacklevel=2
+    )
     # promote back to an array if flattened
     res = nx.ceil(x, out=... if out is None else out)
     res = nx.floor(x, out=res, where=nx.greater_equal(x, 0))
