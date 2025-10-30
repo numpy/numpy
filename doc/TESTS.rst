@@ -434,6 +434,8 @@ To fix this, you can use ``copy()``::
   def test_solve(dimensionality, dtype):
       dimen = dimensionality.copy()
       d = dtype.copy()
+      # use these copied variables instead
+      ...
 
 If you are testing something that is inherently thread-unsafe, you can label your
 test with ``pytest.mark.thread_unsafe`` so that it will run under a single thread
