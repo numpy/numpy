@@ -61,7 +61,7 @@ def fix(x, out=None):
     array([ 2.,  2., -2., -2.])
 
     """
-    # NumPy 2.4.0
+    # NumPy 2.4.0, 2025-10-30
     warnings.warn(
         'The function numpy.fix is deprecated in favor of numpy.trunc '
         'since NumPy 2.4.0.',
