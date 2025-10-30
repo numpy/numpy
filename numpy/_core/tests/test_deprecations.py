@@ -5,6 +5,7 @@ to document how deprecations should eventually be turned into errors.
 """
 import contextlib
 import warnings
+from collections.abc import Callable
 
 import pytest
 
@@ -365,3 +366,33 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
     def test_round_emits_deprecation_warning_scalar(self):
         self.assert_deprecated(lambda: np.ma.round_(3.14))
+
+
+class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2025-11
+    # See gh-29619
+    message = "Using 'generic' unit for NumPy timedelta is deprecated"
+
+    @pytest.mark.parametrize('value', [
+        3, 10
+    ])
+    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int):
+        self.assert_deprecated(lambda x: np.timedelta64(x), args=(value,))
+
+    @pytest.mark.parametrize('value', [
+        np.timedelta64(3, "s"), np.timedelta64(10, "D")
+    ])
+    @pytest.mark.parametrize('generic_value', [
+        5, 2
+    ])
+    @pytest.mark.parametrize(
+        "op",
+        [
+            np.add,
+            np.subtract,
+        ],
+    )
+    def test_raise_warning_for_operation_with_generic_unit(
+        self, value: int, generic_value: int, op: Callable
+    ):
+        self.assert_deprecated(op, args=(value, generic_value))

@@ -1,4 +1,5 @@
 import copy
+import datetime
 import gc
 import pickle
 import sys
@@ -2319,7 +2320,6 @@ class TestRegression:
             else:
                 assert_(t.__hash__ is not None)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_scalar_copy(self):
         scalar_types = set(np._core.sctypeDict.values())
         values = {
@@ -2327,6 +2327,7 @@ class TestRegression:
             np.bytes_: b"a",
             np.str_: "a",
             np.datetime64: "2017-08-25",
+            np.timedelta64: datetime.timedelta(days=1)
         }
         for sctype in scalar_types:
             item = sctype(values.get(sctype, 1))
@@ -2357,12 +2358,12 @@ class TestRegression:
             structure[0]['x'] = np.array([2])
             gc.collect()
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_dtype_scalar_squeeze(self):
         # gh-11384
         values = {
             'S': b"a",
             'M': "2018-06-20",
+            'm': datetime.timedelta(days=3),
         }
         for ch in np.typecodes['All']:
             if ch in 'O':

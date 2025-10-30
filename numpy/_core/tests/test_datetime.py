@@ -377,7 +377,6 @@ class TestDateTime:
         arr = np.array([dt, dt]).astype('datetime64')
         assert_equal(arr.dtype, np.dtype('M8[us]'))
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     @pytest.mark.parametrize("unit", [
     # test all date / time units and use
     # "generic" to select generic unit
@@ -390,10 +389,12 @@ class TestDateTime:
             assert_equal(np.timedelta64(np.int64(123), unit),
                          np.timedelta64(123, unit))
         else:
-            assert_equal(np.timedelta64(np.int64(123)),
-                         np.timedelta64(123))
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                assert_equal(np.timedelta64(np.int64(123)), np.timedelta64(123))
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_timedelta_scalar_construction(self):
         # Construct with different units
         assert_equal(np.timedelta64(7, 'D'),
@@ -401,8 +402,12 @@ class TestDateTime:
         assert_equal(np.timedelta64(120, 's'),
                      np.timedelta64(2, 'm'))
 
-        # Default construction means 0
-        assert_equal(np.timedelta64(), np.timedelta64(0))
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            # Default construction means 0
+            assert_equal(np.timedelta64(), np.timedelta64(0))
 
         # None gets constructed as NaT
         assert_equal(np.timedelta64(None), np.timedelta64('NaT'))
@@ -414,11 +419,16 @@ class TestDateTime:
         assert_equal(str(np.timedelta64(3, 's')), '3 seconds')
         assert_equal(repr(np.timedelta64(-3, 's')),
                      "np.timedelta64(-3,'s')")
-        assert_equal(repr(np.timedelta64(12)),
-                     "np.timedelta64(12)")
 
-        # Construction from an integer produces generic units
-        assert_equal(np.timedelta64(12).dtype, np.dtype('m8'))
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_equal(repr(np.timedelta64(12)),
+                        "np.timedelta64(12)")
+
+            # Construction from an integer produces generic units
+            assert_equal(np.timedelta64(12).dtype, np.dtype('m8'))
 
         # When constructing from a scalar or zero-dimensional array,
         # it either keeps the units or you can override them.
@@ -1071,17 +1081,20 @@ class TestDateTime:
         # not even if "unsafe"
         assert_raises(TypeError, np.less, a, b, casting='unsafe')
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_datetime_like(self):
         a = np.array([3], dtype='m8[4D]')
         b = np.array(['2012-12-21'], dtype='M8[D]')
 
-        assert_equal(np.ones_like(a).dtype, a.dtype)
-        assert_equal(np.zeros_like(a).dtype, a.dtype)
-        assert_equal(np.empty_like(a).dtype, a.dtype)
-        assert_equal(np.ones_like(b).dtype, b.dtype)
-        assert_equal(np.zeros_like(b).dtype, b.dtype)
-        assert_equal(np.empty_like(b).dtype, b.dtype)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_equal(np.ones_like(a).dtype, a.dtype)
+            assert_equal(np.zeros_like(a).dtype, a.dtype)
+            assert_equal(np.empty_like(a).dtype, a.dtype)
+            assert_equal(np.ones_like(b).dtype, b.dtype)
+            assert_equal(np.zeros_like(b).dtype, b.dtype)
+            assert_equal(np.empty_like(b).dtype, b.dtype)
 
     def test_timedelta64_unary(self):
         for tda, tdb, tdzero in \
@@ -1131,7 +1144,6 @@ class TestDateTime:
         nat = np.timedelta64('nat', 'm')
         assert_equal(np.sign(nat), np.nan)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_datetime_add(self):
         for dta, dtb, dtc, dtnat, tda, tdb, tdc in \
                     [
@@ -1154,34 +1166,39 @@ class TestDateTime:
             # m8 + m8
             assert_equal(tda + tdb, tdc)
             assert_equal((tda + tdb).dtype, np.dtype('m8[h]'))
-            # m8 + bool
-            assert_equal(tdb + True, tdb + 1)
-            assert_equal((tdb + True).dtype, np.dtype('m8[h]'))
-            # m8 + int
-            assert_equal(tdb + 3 * 24, tdc)
-            assert_equal((tdb + 3 * 24).dtype, np.dtype('m8[h]'))
-            # bool + m8
-            assert_equal(False + tdb, tdb)
-            assert_equal((False + tdb).dtype, np.dtype('m8[h]'))
-            # int + m8
-            assert_equal(3 * 24 + tdb, tdc)
-            assert_equal((3 * 24 + tdb).dtype, np.dtype('m8[h]'))
-            # M8 + bool
-            assert_equal(dta + True, dta + 1)
-            assert_equal(dtnat + True, dtnat)
-            assert_equal((dta + True).dtype, np.dtype('M8[D]'))
-            # M8 + int
-            assert_equal(dta + 3, dtb)
-            assert_equal(dtnat + 3, dtnat)
-            assert_equal((dta + 3).dtype, np.dtype('M8[D]'))
-            # bool + M8
-            assert_equal(False + dta, dta)
-            assert_equal(False + dtnat, dtnat)
-            assert_equal((False + dta).dtype, np.dtype('M8[D]'))
-            # int + M8
-            assert_equal(3 + dta, dtb)
-            assert_equal(3 + dtnat, dtnat)
-            assert_equal((3 + dta).dtype, np.dtype('M8[D]'))
+
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                # m8 + bool
+                assert_equal(tdb + True, tdb + 1)
+                assert_equal((tdb + True).dtype, np.dtype('m8[h]'))
+                # m8 + int
+                assert_equal(tdb + 3 * 24, tdc)
+                assert_equal((tdb + 3 * 24).dtype, np.dtype('m8[h]'))
+                # bool + m8
+                assert_equal(False + tdb, tdb)
+                assert_equal((False + tdb).dtype, np.dtype('m8[h]'))
+                # int + m8
+                assert_equal(3 * 24 + tdb, tdc)
+                assert_equal((3 * 24 + tdb).dtype, np.dtype('m8[h]'))
+                # M8 + bool
+                assert_equal(dta + True, dta + 1)
+                assert_equal(dtnat + True, dtnat)
+                assert_equal((dta + True).dtype, np.dtype('M8[D]'))
+                # M8 + int
+                assert_equal(dta + 3, dtb)
+                assert_equal(dtnat + 3, dtnat)
+                assert_equal((dta + 3).dtype, np.dtype('M8[D]'))
+                # bool + M8
+                assert_equal(False + dta, dta)
+                assert_equal(False + dtnat, dtnat)
+                assert_equal((False + dta).dtype, np.dtype('M8[D]'))
+                # int + M8
+                assert_equal(3 + dta, dtb)
+                assert_equal(3 + dtnat, dtnat)
+                assert_equal((3 + dta).dtype, np.dtype('M8[D]'))
             # M8 + m8
             assert_equal(dta + tda, dtb)
             assert_equal(dtnat + tda, dtnat)
@@ -1202,7 +1219,6 @@ class TestDateTime:
             # M8 + M8
             assert_raises(TypeError, np.add, dta, dtb)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_datetime_subtract(self):
         for dta, dtb, dtc, dtd, dte, dtnat, tda, tdb, tdc in \
                     [
@@ -1230,27 +1246,31 @@ class TestDateTime:
             assert_equal(tda - tdb, tdc)
             assert_equal((tda - tdb).dtype, np.dtype('m8[h]'))
             assert_equal(tdb - tda, -tdc)
-            assert_equal((tdb - tda).dtype, np.dtype('m8[h]'))
-            # m8 - bool
-            assert_equal(tdc - True, tdc - 1)
-            assert_equal((tdc - True).dtype, np.dtype('m8[h]'))
-            # m8 - int
-            assert_equal(tdc - 3 * 24, -tdb)
-            assert_equal((tdc - 3 * 24).dtype, np.dtype('m8[h]'))
-            # int - m8
-            assert_equal(False - tdb, -tdb)
-            assert_equal((False - tdb).dtype, np.dtype('m8[h]'))
-            # int - m8
-            assert_equal(3 * 24 - tdb, tdc)
-            assert_equal((3 * 24 - tdb).dtype, np.dtype('m8[h]'))
-            # M8 - bool
-            assert_equal(dtb - True, dtb - 1)
-            assert_equal(dtnat - True, dtnat)
-            assert_equal((dtb - True).dtype, np.dtype('M8[D]'))
-            # M8 - int
-            assert_equal(dtb - 3, dta)
-            assert_equal(dtnat - 3, dtnat)
-            assert_equal((dtb - 3).dtype, np.dtype('M8[D]'))
+            assert_equal((tdb - tda).dtype, np.dtype("m8[h]"))
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                # m8 - bool
+                assert_equal(tdc - True, tdc - 1)
+                assert_equal((tdc - True).dtype, np.dtype('m8[h]'))
+                # m8 - int
+                assert_equal(tdc - 3 * 24, -tdb)
+                assert_equal((tdc - 3 * 24).dtype, np.dtype('m8[h]'))
+                # int - m8
+                assert_equal(False - tdb, -tdb)
+                assert_equal((False - tdb).dtype, np.dtype('m8[h]'))
+                # int - m8
+                assert_equal(3 * 24 - tdb, tdc)
+                assert_equal((3 * 24 - tdb).dtype, np.dtype('m8[h]'))
+                # M8 - bool
+                assert_equal(dtb - True, dtb - 1)
+                assert_equal(dtnat - True, dtnat)
+                assert_equal((dtb - True).dtype, np.dtype('M8[D]'))
+                # M8 - int
+                assert_equal(dtb - 3, dta)
+                assert_equal(dtnat - 3, dtnat)
+                assert_equal((dtb - 3).dtype, np.dtype('M8[D]'))
             # M8 - m8
             assert_equal(dtb - tda, dta)
             assert_equal(dtnat - tda, dtnat)
@@ -1353,10 +1373,6 @@ class TestDateTime:
         (np.timedelta64(1, 'm'),
          np.timedelta64(31, 's'),
          1),
-        # # m8 generic units
-        # (np.timedelta64(1890),
-        #  np.timedelta64(31),
-        #  60),
         # Y // M works
         (np.timedelta64(2, 'Y'),
          np.timedelta64('13', 'M'),
@@ -1369,9 +1385,12 @@ class TestDateTime:
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_generic_timedelta_floor_divide(self):
-        assert_equal(np.timedelta64(1890) // np.timedelta64(31), 60)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_equal(np.timedelta64(1890) // np.timedelta64(31), 60)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
@@ -1392,7 +1411,6 @@ class TestDateTime:
             assert_equal(actual, 0)
             assert_equal(actual.dtype, np.int64)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     @pytest.mark.parametrize("val1, val2", [
         # the smallest integer that can't be represented
         # exactly in a double should be preserved if we avoid
@@ -1403,12 +1421,16 @@ class TestDateTime:
         (9007199254740999, -2),
         ])
     def test_timedelta_floor_div_precision(self, val1, val2):
-        op1 = np.timedelta64(val1)
-        op2 = np.timedelta64(val2)
-        actual = op1 // op2
-        # Python reference integer floor
-        expected = val1 // val2
-        assert_equal(actual, expected)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            op1 = np.timedelta64(val1)
+            op2 = np.timedelta64(val2)
+            actual = op1 // op2
+            # Python reference integer floor
+            expected = val1 // val2
+            assert_equal(actual, expected)
 
     @pytest.mark.parametrize("val1, val2", [
         # years and months sometimes can't be unambiguously
@@ -1446,16 +1468,19 @@ class TestDateTime:
         expected = (op1 // op2, op1 % op2)
         assert_equal(divmod(op1, op2), expected)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     @pytest.mark.parametrize("op1, op2", [
         # m8 generic units
         (1890, 31),
     ])
     def test_generic_timedelta_divmod(self, op1, op2):
-        op1 = np.timedelta64(op1)
-        op2 = np.timedelta64(op2)
-        expected = (op1 // op2, op1 % op2)
-        assert_equal(divmod(op1, op2), expected)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            op1 = np.timedelta64(op1)
+            op2 = np.timedelta64(op2)
+            expected = (op1 // op2, op1 % op2)
+            assert_equal(divmod(op1, op2), expected)
 
     @pytest.mark.parametrize("op1, op2", [
         # Y and M are incompatible with all units except Y and M
@@ -1486,7 +1511,6 @@ class TestDateTime:
             actual = divmod(op1, op2)
         assert_equal(actual, expected)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_datetime_divide(self):
         for dta, tda, tdb, tdc, tdd in \
                     [
@@ -1538,6 +1562,11 @@ class TestDateTime:
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore', r".*encountered in divide", RuntimeWarning)
+            warnings.filterwarnings(
+                "ignore",
+                "Using 'generic' unit for NumPy timedelta is deprecated",
+                DeprecationWarning,
+            )
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -1987,7 +2016,6 @@ class TestDateTime:
                            timezone=ZoneInfo('US/Central'), casting='unsafe'),
                      '2010-02-15')
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_datetime_arange(self):
         # With two datetimes provided as strings
         a = np.arange('2010-01-05', '2010-01-10', dtype='M8[D]')
@@ -2002,26 +2030,35 @@ class TestDateTime:
             np.array(['1950-02-10', '1950-02-09', '1950-02-08',
                       '1950-02-07'], dtype='M8[D]'))
 
-        # Unit should be detected as months here
-        a = np.arange('1969-05', '1970-05', 2, dtype='M8')
-        assert_equal(a.dtype, np.dtype('M8[M]'))
-        assert_equal(a,
-            np.datetime64('1969-05') + np.arange(12, step=2))
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            # Unit should be detected as months here
+            a = np.arange("1969-05", "1970-05", 2, dtype="M8")
+            assert_equal(a.dtype, np.dtype('M8[M]'))
+            assert_equal(a,
+                np.datetime64('1969-05') + np.arange(12, step=2))
 
-        # datetime, integer|timedelta works as well
-        # produces arange (start, start + stop) in this case
-        a = np.arange('1969', 18, 3, dtype='M8')
-        assert_equal(a.dtype, np.dtype('M8[Y]'))
-        assert_equal(a,
-            np.datetime64('1969') + np.arange(18, step=3))
-        a = np.arange('1969-12-19', 22, np.timedelta64(2), dtype='M8')
-        assert_equal(a.dtype, np.dtype('M8[D]'))
-        assert_equal(a,
-            np.datetime64('1969-12-19') + np.arange(22, step=2))
+            # datetime, integer|timedelta works as well
+            # produces arange (start, start + stop) in this case
+            a = np.arange('1969', 18, 3, dtype='M8')
+            assert_equal(a.dtype, np.dtype('M8[Y]'))
+            assert_equal(a,
+                np.datetime64('1969') + np.arange(18, step=3))
+            a = np.arange('1969-12-19', 22, np.timedelta64(2), dtype='M8')
+            assert_equal(a.dtype, np.dtype('M8[D]'))
+            assert_equal(a,
+                np.datetime64('1969-12-19') + np.arange(22, step=2))
 
         # Step of 0 is disallowed
-        assert_raises(ValueError, np.arange, np.datetime64('today'),
-                                np.datetime64('today') + 3, 0)
+        assert_raises(
+            ValueError,
+            np.arange,
+            np.datetime64("today"),
+            np.datetime64("today") + np.timedelta64(3, "D"),
+            np.timedelta64(0, "D"),
+        )
         # Promotion across nonlinear unit boundaries is disallowed
         assert_raises(TypeError, np.arange, np.datetime64('2011-03-01', 'D'),
                                 np.timedelta64(5, 'M'))
@@ -2128,11 +2165,10 @@ class TestDateTime:
                                  "'remainder' cannot use operands with types"):
             val1 % val2
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_timedelta_arange_no_dtype(self):
         d = np.array(5, dtype="m8[D]")
-        assert_equal(np.arange(d, d + 1), d)
-        assert_equal(np.arange(d), np.arange(0, d))
+        assert_equal(np.arange(d, d + np.timedelta64(1, "D")), d)
+        assert_equal(np.arange(d), np.arange(np.timedelta64(0, "D"), d))
 
     def test_datetime_maximum_reduce(self):
         a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='M8[D]')
@@ -2639,7 +2675,6 @@ class TestDateTime:
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_datetime_hash_nat(self):
         nat1 = np.datetime64()
         nat2 = np.datetime64()
@@ -2693,9 +2728,12 @@ class TestDateTime:
         dt2 = np.datetime64(dt, unit)
         _assert_equal_hash(dt, dt2)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_timedelta_hash_generic(self):
-        assert_raises(ValueError, hash, np.timedelta64(123))  # generic
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_raises(ValueError, hash, np.timedelta64(123))  # generic
 
     @pytest.mark.parametrize('unit', ('Y', 'M'))
     def test_timedelta_hash_year_month(self, unit):

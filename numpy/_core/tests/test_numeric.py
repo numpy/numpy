@@ -1296,7 +1296,6 @@ class TestTypes:
     def test_valid_void_promotion(self, dtype1, dtype2):
         assert np.promote_types(dtype1, dtype2) == dtype1
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     @pytest.mark.parametrize("dtype",
             list(np.typecodes["All"]) +
             ["i,i", "10i", "S3", "S100", "U3", "U100", rational])
@@ -1759,7 +1758,6 @@ class TestNonzero:
         assert_raises(TypeError, np.count_nonzero,
                       m, axis=np.array([[1], [2]]))
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_count_nonzero_axis_all_dtypes(self):
         # More thorough test that the axis argument is respected
         # for all dtypes and responds correctly when presented with
@@ -1774,20 +1772,32 @@ class TestNonzero:
             err_msg = msg % (np.dtype(dt).name,)
 
             if dt != 'V':
-                if dt != 'M':
-                    m = np.zeros((3, 3), dtype=dt)
-                    n = np.ones(1, dtype=dt)
-
-                    m[0, 0] = n[0]
-                    m[1, 0] = n[0]
-
-                else:  # np.zeros doesn't work for np.datetime64
+                if dt == 'M':
+                    # np.zeros doesn't work for np.datetime64
                     m = np.array(['1970-01-01'] * 9)
                     m = m.reshape((3, 3))
 
                     m[0, 0] = '1970-01-12'
                     m[1, 0] = '1970-01-12'
                     m = m.astype(dt)
+
+                elif dt == 'm':
+                    with pytest.warns(
+                        DeprecationWarning,
+                        match="Using 'generic' unit for NumPy timedelta is deprecated",
+                    ):
+                        m = np.zeros((3, 3), dtype=dt)
+                        n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
+
+                else:
+                    m = np.zeros((3, 3), dtype=dt)
+                    n = np.ones(1, dtype=dt)
+
+                    m[0, 0] = n[0]
+                    m[1, 0] = n[0]
 
                 expected = np.array([2, 0, 0], dtype=np.intp)
                 assert_equal_w_dt(np.count_nonzero(m, axis=0),
