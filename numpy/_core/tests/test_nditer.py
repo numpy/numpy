@@ -1530,7 +1530,8 @@ def test_iter_copy():
 @pytest.mark.parametrize("dtype", np.typecodes["All"])
 @pytest.mark.parametrize("loop_dtype", np.typecodes["All"])
 @pytest.mark.filterwarnings(
-    "ignore::numpy.exceptions.ComplexWarning", "ignore::FutureWarning"
+    "ignore::numpy.exceptions.ComplexWarning",
+    "ignore::DeprecationWarning",
 )
 def test_iter_copy_casts(dtype, loop_dtype):
     # Ensure the dtype is never flexible:

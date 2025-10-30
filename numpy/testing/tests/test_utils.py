@@ -1335,11 +1335,14 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             assert_allclose(a, b)
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
     def test_timedelta(self):
         # see gh-18286
-        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
-        assert_allclose(a, a)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+            assert_allclose(a, a)
 
     def test_error_message_unsigned(self):
         """Check the message is formatted correctly when overflow can occur
