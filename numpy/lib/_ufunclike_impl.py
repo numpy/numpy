@@ -62,9 +62,12 @@ def fix(x, out=None):
 
     """
     # NumPy 2.4.0
-    warnings.warn('The function numpy.fix is deprecated in favor of numpy.trunc since NumPy 2.4.0.',
-                  DeprecationWarning,
-                  stacklevel=2)
+    warnings.warn(
+        'The function numpy.fix is deprecated in favor of numpy.trunc '
+        'since NumPy 2.4.0.',
+        DeprecationWarning,
+        stacklevel=2
+    )
     return nx.trunc(x, out=out)
 
 
