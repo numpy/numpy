@@ -3619,8 +3619,24 @@ def indices(
     hardmask: bool = False,
 ) -> tuple[_MaskedArray[Incomplete], ...]: ...
 
-#
-squeeze: _convert2ma = ...
+# keep roughly in sync with `_core.fromnumeric.squeeze`
+@overload
+def squeeze(
+    a: _ArrayLike[_ScalarT],
+    axis: _ShapeLike | None = None,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def squeeze(
+    a: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[Incomplete]: ...
 
+# TODO(jorenham): annotate
 def append(a, b, axis=None): ...
 def dot(a, b, strict=False, out=None): ...
