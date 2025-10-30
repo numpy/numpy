@@ -49,17 +49,6 @@ def fix(x, out=None):
     --------
     rint, trunc, floor, ceil
     around : Round to given number of decimals
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.fix(3.14)
-    3.0
-    >>> np.fix(3)
-    3
-    >>> np.fix([2.1, 2.9, -2.1, -2.9])
-    array([ 2.,  2., -2., -2.])
-
     """
     # NumPy 2.4.0, 2025-10-30
     warnings.warn(
