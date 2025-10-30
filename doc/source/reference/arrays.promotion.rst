@@ -114,9 +114,20 @@ cannot be coerced to the NumPy dtype, an error is raised:
   Traceback (most recent call last):
   ...
   OverflowError: Python int too large to convert to C long
+
+  For floating-point values, however, NumPy returns an infinity and emits a warning:
+
   >>> np.float32(1) + 1e300
+  Traceback (most recent call last):
+  ...
+  RuntimeWarning: overflow encountered in cast
+
+  >>> import warnings
+  >>> with warnings.catch_warnings():
+  ...     warnings.simplefilter('ignore')
+  ...     x = np.float32(1) + 1e300
+  >>> x
   np.float32(inf)
-  ... RuntimeWarning: overflow encountered in cast
 
 Second, since the Python float or integer precision is always ignored, a low
 precision NumPy scalar will keep using its lower precision unless explicitly
@@ -125,12 +136,19 @@ converted to a higher precision NumPy dtype or Python scalar (e.g. via ``int()``
 some calculations or lead to incorrect results, especially in the case of integer
 overflows:
 
-  >>> np.int8(100) + 100  # the result exceeds the capacity of int8
+  >>> import warnings
+  >>> with warnings.catch_warnings():
+  ...     warnings.simplefilter('ignore')
+  ...     x = np.int8(100) + 100  # the result exceeds the capacity of int8
+  >>> x
   np.int8(-56)
-  ... RuntimeWarning: overflow encountered in scalar add
 
-Note that NumPy warns when overflows occur for scalars, but not for arrays;
-e.g., ``np.array(100, dtype="uint8") + 100`` will *not* warn.
+
+Note that NumPy warns when overflows occur for scalars, but not for arrays:
+
+  >>> np.array(100, dtype="int8") + 100
+  np.int8(-56)   # overflows, does not warn
+
 
 Numerical promotion
 -------------------
