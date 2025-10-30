@@ -235,7 +235,7 @@ Similarly for methods::
           assert_(zzz() == 'Hello from zzz')
 
 Setup and teardown methods
----------------------------------------------
+--------------------------
 
 NumPy originally used xunit setup and teardown, a feature of `pytest`. We now encourage
 the usage of setup and teardown methods that are called explicitly by the tests that
