@@ -1,4 +1,5 @@
 import functools
+import inspect
 import operator
 import types
 import warnings
@@ -477,6 +478,9 @@ def _add_docstring(obj, doc, warn_on_python):
             "Prefer to attach it directly to the source.",
             UserWarning,
             stacklevel=3)
+
+    doc = inspect.cleandoc(doc)
+
     try:
         add_docstring(obj, doc)
     except Exception:
@@ -494,10 +498,10 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     ----------
     place : str
         The absolute name of the module to import from
-    obj : str or None
+    obj : str | None
         The name of the object to add documentation to, typically a class or
         function name.
-    doc : {str, Tuple[str, str], List[Tuple[str, str]]}
+    doc : str | tuple[str, str] | list[tuple[str, str]]
         If a string, the documentation to apply to `obj`
 
         If a tuple, then the first element is interpreted as an attribute
@@ -534,12 +538,10 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     if isinstance(doc, str):
         if "${ARRAY_FUNCTION_LIKE}" in doc:
             doc = overrides.get_array_function_like_doc(new, doc)
-        _add_docstring(new, doc.strip(), warn_on_python)
+        _add_docstring(new, doc, warn_on_python)
     elif isinstance(doc, tuple):
         attr, docstring = doc
-        _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
+        _add_docstring(getattr(new, attr), docstring, warn_on_python)
     elif isinstance(doc, list):
         for attr, docstring in doc:
-            _add_docstring(
-                getattr(new, attr), docstring.strip(), warn_on_python
-            )
+            _add_docstring(getattr(new, attr), docstring, warn_on_python)
