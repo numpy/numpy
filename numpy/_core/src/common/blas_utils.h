@@ -2,10 +2,14 @@
 
 #include <stdbool.h>
 
-/* NPY_BLAS_CHECK_FPE_SUPPORT controls whether we need a runtime check
+/* 
+ * NPY_BLAS_CHECK_FPE_SUPPORT controls whether we need a runtime check
  * for floating-point error (FPE) support in BLAS.
+ * The known culprit right now is SVM likely only on mac, but that is not
+ * quite clear.
+ * This checks always on all ARM (it is a small check overall).
  */
-#if defined(__APPLE__) && defined(__aarch64__) && defined(ACCELERATE_NEW_LAPACK)
+#if defined(__aarch64__)
 #define NPY_BLAS_CHECK_FPE_SUPPORT 1
 #else
 #define NPY_BLAS_CHECK_FPE_SUPPORT 0
@@ -13,7 +17,7 @@
 
 /* Initialize BLAS environment, if needed
  */
-NPY_VISIBILITY_HIDDEN void
+NPY_VISIBILITY_HIDDEN int
 npy_blas_init(void);
 
 /* Runtime check if BLAS supports floating-point errors.

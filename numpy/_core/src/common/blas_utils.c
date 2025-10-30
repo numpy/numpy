@@ -1,6 +1,9 @@
+#include <Python.h>
+
 #include "numpy/npy_math.h"     // npy_get_floatstatus_barrier
 #include "numpy/numpyconfig.h"  // NPY_VISIBILITY_HIDDEN
 #include "blas_utils.h"
+#include "npy_cblas.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -11,91 +14,49 @@
 #endif
 
 #if NPY_BLAS_CHECK_FPE_SUPPORT
-
-/* Return whether we're running on macOS 15.4 or later
+/*
+ * Static variable to cache runtime check of BLAS FPE support.
  */
-static inline bool
-is_macOS_version_15_4_or_later(void){
-#if !defined(__APPLE__)
-    return false;
-#else
-    char *osProductVersion = NULL;
-    size_t size = 0;
-    bool ret = false;
+ static bool blas_supports_fpe = true;
 
-    // Query how large OS version string should be
-    if(-1 == sysctlbyname("kern.osproductversion", NULL, &size, NULL, 0)){
-        goto cleanup;
-    }
-
-    osProductVersion = malloc(size + 1);
-
-    // Get the OS version string
-    if(-1 == sysctlbyname("kern.osproductversion", osProductVersion, &size, NULL, 0)){
-        goto cleanup;
-    }
-
-    osProductVersion[size] = '\0';
-
-    // Parse the version string
-    int major = 0, minor = 0;
-    if(2 > sscanf(osProductVersion, "%d.%d", &major, &minor)) {
-        goto cleanup;
-    }
-
-    if(major > 15 || (major == 15 && minor >= 4)) {
-        ret = true;
-    }
-
-cleanup:
-    if(osProductVersion){
-        free(osProductVersion);
-    }
-
-    return ret;
-#endif
-}
-
-/* ARM Scalable Matrix Extension (SME) raises all floating-point error flags
+/*
+ * ARM Scalable Matrix Extension (SME) raises all floating-point error flags
  * when it's used regardless of values or operations.  As a consequence,
  * when SME is used, all FPE state is lost and special handling is needed.
  *
  * For NumPy, SME is not currently used directly, but can be used via
  * BLAS / LAPACK libraries.  This function does a runtime check for whether
  * BLAS / LAPACK can use SME and special handling around FPE is required.
+ *
+ * This may be an Accelerate bug (at least OpenBLAS consider it that way)
+ * but when we find an ARM system with SVE we do a runtime check for whether
+ * FPEs are spuriously given.
  */
-static inline bool
-BLAS_can_use_ARM_SME(void)
+static inline int
+set_BLAS_causes_spurious_FPEs(void)
 {
-#if defined(__APPLE__) && defined(__aarch64__) && defined(ACCELERATE_NEW_LAPACK)
-    // ARM SME can be used by Apple's Accelerate framework for BLAS / LAPACK
-    // - macOS 15.4+
-    // - Apple silicon M4+
-
-    // Does OS / Accelerate support ARM SME?
-    if(!is_macOS_version_15_4_or_later()){
-        return false;
+    // These are all small, so just work on stack to not worry about error
+    // handling.
+    double *x = PyMem_Malloc(20*20*3*sizeof(double));
+    if (x == NULL) {
+        PyErr_NoMemory();
+        return -1;
     }
+    double *y = x + 20*20;
+    double *res = y + 20*20;
 
-    // Does hardware support SME?
-    int has_SME = 0;
-    size_t size = sizeof(has_SME);
-    if(-1 == sysctlbyname("hw.optional.arm.FEAT_SME", &has_SME, &size, NULL, 0)){
-        return false;
-    }
+    npy_clear_floatstatus_barrier((char *)x);
 
-    if(has_SME){
-        return true;
-    }
-#endif
+    CBLAS_FUNC(cblas_dgemm)(
+        CblasRowMajor, CblasNoTrans, CblasNoTrans, 20, 20, 20, 1.,
+        x, 20, y, 20, 0., res, 20);
+    PyMem_Free(x);
 
-    // default assume SME is not used
-    return false;
+    int fpe_status = npy_get_floatstatus_barrier((char *)x);
+    // Entries were all zero, so we shouldn't see any FPEs
+    blas_supports_fpe = fpe_status != 0;
+    return 0;
 }
-
-/* Static variable to cache runtime check of BLAS FPE support.
- */
-static bool blas_supports_fpe = true;
 
 #endif // NPY_BLAS_CHECK_FPE_SUPPORT
 
@@ -110,19 +71,20 @@ npy_blas_supports_fpe(void)
 #endif
 }
 
-NPY_VISIBILITY_HIDDEN void
+NPY_VISIBILITY_HIDDEN int
 npy_blas_init(void)
 {
 #if NPY_BLAS_CHECK_FPE_SUPPORT
-    blas_supports_fpe = !BLAS_can_use_ARM_SME();
+    return set_BLAS_causes_spurious_FPEs();
 #endif
+    return 0;
 }
 
 NPY_VISIBILITY_HIDDEN int
 npy_get_floatstatus_after_blas(void)
 {
 #if NPY_BLAS_CHECK_FPE_SUPPORT
-    if(!blas_supports_fpe){
+    if (!blas_supports_fpe){
         // BLAS does not support FPE and we need to return FPE state.
         // Instead of clearing and then grabbing state, just return
         // that no flags are set.
