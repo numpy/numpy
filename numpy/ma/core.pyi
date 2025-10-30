@@ -31,6 +31,7 @@ from numpy import (
     _HasDTypeWithRealAndImag,
     _ModeKind,
     _OrderACF,
+    _OrderCF,
     _OrderKACF,
     _PartitionKind,
     _SortKind,
@@ -103,6 +104,7 @@ from numpy._typing import (
     _Shape,
     _ShapeLike,
     _SupportsArrayFunc,
+    _SupportsDType,
 )
 from numpy._typing._dtype_like import _VoidDTypeLike
 
@@ -3292,18 +3294,156 @@ def clip(
     **kwargs: Unpack[_UFuncKwargs],
 ) -> Incomplete: ...
 
+# keep in sync with `_core.multiarray.ones`
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[np.float64]]: ...
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], _DTypeT]: ...
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: type[_ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: DTypeLike | None = ...,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int]]: ...
+@overload  # known shape
+def empty(
+    shape: _AnyShapeT,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT, np.dtype[np.float64]]: ...
+@overload
+def empty(
+    shape: _AnyShapeT,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT, _DTypeT]: ...
+@overload
+def empty(
+    shape: _AnyShapeT,
+    dtype: type[_ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT, np.dtype[_ScalarT]]: ...
+@overload
+def empty(
+    shape: _AnyShapeT,
+    dtype: DTypeLike | None = ...,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT]: ...
+@overload  # unknown shape
+def empty(
+    shape: _ShapeLike,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[np.float64]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShape, _DTypeT]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: type[_ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: DTypeLike | None = ...,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray: ...
+
+# this is a bit of a hack to avoid having to duplicate all those `empty` overloads for
+# `ones` and `zeros`, but may cause some type-checkers to report incorrect names in
+# case of errors
+ones = empty
+zeros = empty
+
 #
-empty: _convert2ma = ...
 empty_like: _convert2ma = ...
+ones_like: _convert2ma = ...
+zeros_like: _convert2ma = ...
+
+#
 frombuffer: _convert2ma = ...
 fromfunction: _convert2ma = ...
 identity: _convert2ma = ...
 indices: _convert2ma = ...
-ones: _convert2ma = ...
-ones_like: _convert2ma = ...
 squeeze: _convert2ma = ...
-zeros: _convert2ma = ...
-zeros_like: _convert2ma = ...
 
 def append(a, b, axis=None): ...
 def dot(a, b, strict=False, out=None): ...
