@@ -8761,6 +8761,10 @@ def _convert2ma(funcname: str, np_ret: str, np_ma_ret: str,
 
         return result
 
+    # workaround for a doctest bug in Python 3.11 that incorrectly assumes `__code__`
+    # exists on wrapped functions
+    del wrapper.__wrapped__
+
     # `arange`, `empty`, `empty_like`, `frombuffer`, and `zeros` have no signature
     try:
         signature = inspect.signature(func)
