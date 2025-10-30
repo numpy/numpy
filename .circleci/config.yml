@@ -17,7 +17,8 @@ jobs:
   build:
     <<: *defaults
     steps:
-      - checkout
+      - checkout:
+          method: blobless
 
       - run:
           name: check skip
@@ -110,7 +111,8 @@ jobs:
   deploy:
     <<: *defaults
     steps:
-      - checkout
+      - checkout:
+          method: blobless
 
       - attach_workspace:
           at: ~/repo
