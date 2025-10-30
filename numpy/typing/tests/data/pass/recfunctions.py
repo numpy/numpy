@@ -150,12 +150,15 @@ def test_stack_arrays() -> None:
 def test_find_duplicates() -> None:
     ndtype = np.dtype([("a", int)])
 
-    a = np.ma.ones(7, mask=[0, 0, 1, 0, 0, 0, 1]).view(ndtype)
-    assert_type(rfn.find_duplicates(a), np.ma.MaskedArray[Any, np.dtype[np.void]])
+    a = np.ma.ones(7).view(ndtype)
+    assert_type(
+        rfn.find_duplicates(a),
+        np.ma.MaskedArray[tuple[int], np.dtype[np.void]],
+    )
     assert_type(
         rfn.find_duplicates(a, ignoremask=True, return_index=True),
         tuple[
-            np.ma.MaskedArray[Any, np.dtype[np.void]],
-            np.ndarray[Any, np.dtype[np.int_]],
+            np.ma.MaskedArray[tuple[int], np.dtype[np.void]],
+            np.ndarray[tuple[int], np.dtype[np.int_]],
         ],
     )
