@@ -610,12 +610,21 @@ update_shape(int curr_ndim, int *max_ndim,
     return success;
 }
 
-#ifndef Py_GIL_DISABLED
 #define COERCION_CACHE_CACHE_SIZE 5
 static int _coercion_cache_num = 0;
 static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
+
+/* Thread-safe cache access using mutex */
+#if PY_VERSION_HEX < 0x30d00b3
+static PyThread_type_lock coercion_cache_mutex;
+#define LOCK_COERCION_CACHE                             \
+    if (coercion_cache_mutex) PyThread_acquire_lock(coercion_cache_mutex, WAIT_LOCK)
+#define UNLOCK_COERCION_CACHE                            \
+    if (coercion_cache_mutex) PyThread_release_lock(coercion_cache_mutex)
 #else
-#define COERCION_CACHE_CACHE_SIZE 0
+static PyMutex coercion_cache_mutex = {0};
+#define LOCK_COERCION_CACHE PyMutex_Lock(&coercion_cache_mutex)
+#define UNLOCK_COERCION_CACHE PyMutex_Unlock(&coercion_cache_mutex)
 #endif
 
 /*
@@ -628,15 +637,19 @@ npy_new_coercion_cache(
 {
     coercion_cache_obj *cache;
 #if COERCION_CACHE_CACHE_SIZE > 0
+    LOCK_COERCION_CACHE;
     if (_coercion_cache_num > 0) {
         _coercion_cache_num--;
         cache = _coercion_cache_cache[_coercion_cache_num];
+        UNLOCK_COERCION_CACHE;
     }
-    else
-#endif
-    {
+    else {
+        UNLOCK_COERCION_CACHE;
         cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
+#else
+    cache = PyMem_Malloc(sizeof(coercion_cache_obj));
+#endif
     if (cache == NULL) {
         Py_DECREF(arr_or_sequence);
         PyErr_NoMemory();
@@ -664,15 +677,19 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
     coercion_cache_obj *next = current->next;
     Py_DECREF(current->arr_or_sequence);
 #if COERCION_CACHE_CACHE_SIZE > 0
+    LOCK_COERCION_CACHE;
     if (_coercion_cache_num < COERCION_CACHE_CACHE_SIZE) {
         _coercion_cache_cache[_coercion_cache_num] = current;
         _coercion_cache_num++;
+        UNLOCK_COERCION_CACHE;
     }
-    else
-#endif
-    {
+    else {
+        UNLOCK_COERCION_CACHE;
         PyMem_Free(current);
     }
+#else
+    PyMem_Free(current);
+#endif
     return next;
 }
 
@@ -1442,4 +1459,16 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     Py_DECREF(out_dtype);
     Py_DECREF(shape_tuple);
     return res;
+}
+
+NPY_NO_EXPORT int
+init_coercion_cache_mutex(void) {
+#if PY_VERSION_HEX < 0x30d00b3
+    coercion_cache_mutex = PyThread_allocate_lock();
+    if (coercion_cache_mutex == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+#endif
+    return 0;
 }

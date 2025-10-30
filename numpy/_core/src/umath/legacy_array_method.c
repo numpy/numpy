@@ -33,28 +33,41 @@ typedef struct {
 
 
 /* Use a free list, since we should normally only need one at a time */
-#ifndef Py_GIL_DISABLED
 #define NPY_LOOP_DATA_CACHE_SIZE 5
 static int loop_data_num_cached = 0;
-static  legacy_array_method_auxdata *loop_data_cache[NPY_LOOP_DATA_CACHE_SIZE];
+static legacy_array_method_auxdata *loop_data_cache[NPY_LOOP_DATA_CACHE_SIZE];
+
+/* Thread-safe cache access using mutex */
+#if PY_VERSION_HEX < 0x30d00b3
+static PyThread_type_lock loop_data_cache_mutex;
+#define LOCK_LOOP_DATA_CACHE                             \
+    if (loop_data_cache_mutex) PyThread_acquire_lock(loop_data_cache_mutex, WAIT_LOCK)
+#define UNLOCK_LOOP_DATA_CACHE                            \
+    if (loop_data_cache_mutex) PyThread_release_lock(loop_data_cache_mutex)
 #else
-#define NPY_LOOP_DATA_CACHE_SIZE 0
+static PyMutex loop_data_cache_mutex = {0};
+#define LOCK_LOOP_DATA_CACHE PyMutex_Lock(&loop_data_cache_mutex)
+#define UNLOCK_LOOP_DATA_CACHE PyMutex_Unlock(&loop_data_cache_mutex)
 #endif
 
 static void
 legacy_array_method_auxdata_free(NpyAuxData *data)
 {
 #if NPY_LOOP_DATA_CACHE_SIZE > 0
+    LOCK_LOOP_DATA_CACHE;
     if (loop_data_num_cached < NPY_LOOP_DATA_CACHE_SIZE) {
         loop_data_cache[loop_data_num_cached] = (
                 (legacy_array_method_auxdata *)data);
         loop_data_num_cached++;
+        UNLOCK_LOOP_DATA_CACHE;
     }
-    else
-#endif
-    {
+    else {
+        UNLOCK_LOOP_DATA_CACHE;
         PyMem_Free(data);
     }
+#else
+    PyMem_Free(data);
+#endif
 }
 
 NpyAuxData *
@@ -63,13 +76,14 @@ get_new_loop_data(
 {
     legacy_array_method_auxdata *data;
 #if NPY_LOOP_DATA_CACHE_SIZE > 0
+    LOCK_LOOP_DATA_CACHE;
     if (NPY_LIKELY(loop_data_num_cached > 0)) {
         loop_data_num_cached--;
         data = loop_data_cache[loop_data_num_cached];
+        UNLOCK_LOOP_DATA_CACHE;
     }
-    else
-#endif
-    {
+    else {
+        UNLOCK_LOOP_DATA_CACHE;
         data = PyMem_Malloc(sizeof(legacy_array_method_auxdata));
         if (data == NULL) {
             return NULL;
@@ -77,6 +91,14 @@ get_new_loop_data(
         data->base.free = legacy_array_method_auxdata_free;
         data->base.clone = NULL;  /* no need for cloning (at least for now) */
     }
+#else
+    data = PyMem_Malloc(sizeof(legacy_array_method_auxdata));
+    if (data == NULL) {
+        return NULL;
+    }
+    data->base.free = legacy_array_method_auxdata_free;
+    data->base.clone = NULL;  /* no need for cloning (at least for now) */
+#endif
     data->loop = loop;
     data->user_data = user_data;
     data->pyerr_check = pyerr_check;
@@ -84,6 +106,18 @@ get_new_loop_data(
 }
 
 #undef NPY_LOOP_DATA_CACHE_SIZE
+
+NPY_NO_EXPORT int
+init_loop_data_cache_mutex(void) {
+#if PY_VERSION_HEX < 0x30d00b3
+    loop_data_cache_mutex = PyThread_allocate_lock();
+    if (loop_data_cache_mutex == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+#endif
+    return 0;
+}
 
 /*
  * This is a thin wrapper around the legacy loop signature.

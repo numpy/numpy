@@ -2900,6 +2900,9 @@ PyArray_Nonzero(PyArrayObject *self)
                     if (j >= count) {
                         break;
                     }
+                    if (++added_count > nonzero_count) {
+                        break;
+                    }
                     *multi_index++ = j++;
                 }
             }
@@ -2914,12 +2917,16 @@ PyArray_Nonzero(PyArrayObject *self)
                 while (multi_index + 4 < multi_index_end && (j < count - 4) ) {
                     *multi_index = j;
                     multi_index += data[0] != 0;
+                    if (data[0] != 0 && ++added_count > nonzero_count) break;
                     *multi_index = j + 1;
                     multi_index += data[stride] != 0;
+                    if (data[stride] != 0 && ++added_count > nonzero_count) break;
                     *multi_index = j + 2;
                     multi_index += data[stride * 2] != 0;
+                    if (data[stride * 2] != 0 && ++added_count > nonzero_count) break;
                     *multi_index = j + 3;
                     multi_index += data[stride * 3] != 0;
+                    if (data[stride * 3] != 0 && ++added_count > nonzero_count) break;
                     data += stride * 4;
                     j += 4;
                 }
@@ -2927,6 +2934,7 @@ PyArray_Nonzero(PyArrayObject *self)
                 while (multi_index < multi_index_end && (j < count) ) {
                     *multi_index = j;
                     multi_index += *data != 0;
+                    if (*data != 0 && ++added_count > nonzero_count) break;
                     data += stride;
                     ++j;
                 }
@@ -3001,6 +3009,9 @@ PyArray_Nonzero(PyArrayObject *self)
             /* avoid function call for bool */
             do {
                 if (**dataptr != 0) {
+                    if (++added_count > nonzero_count) {
+                        break;
+                    }
                     get_multi_index(iter, multi_index);
                     multi_index += ndim;
                 }
@@ -3032,8 +3043,8 @@ finish:
         return NULL;
     }
 
-    /* if executed `nonzero()` check for miscount due to side-effect */
-    if (!is_bool && added_count != nonzero_count) {
+    /* check for miscount due to side-effect (race condition) */
+    if (added_count != nonzero_count) {
         PyErr_SetString(PyExc_RuntimeError,
             "number of non-zero array elements "
             "changed during function execution.");

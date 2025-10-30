@@ -4946,6 +4946,10 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    if (init_coercion_cache_mutex() < 0) {
+        return -1;
+    }
+
     if (init_extobj() < 0) {
         return -1;
     }

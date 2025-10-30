@@ -333,5 +333,9 @@ int initumath(PyObject *m)
         return -1;
     }
 
+    if (init_loop_data_cache_mutex() < 0) {
+        return -1;
+    }
+
     return 0;
 }

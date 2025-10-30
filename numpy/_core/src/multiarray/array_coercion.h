@@ -58,4 +58,7 @@ npy_unlink_coercion_cache(coercion_cache_obj *current);
 NPY_NO_EXPORT int
 PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache);
 
+NPY_NO_EXPORT int
+init_coercion_cache_mutex(void);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_ */
