@@ -181,7 +181,8 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': b'???',
-                  'U': 'N/A'
+                  'U': 'N/A',
+                  'T': 'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
@@ -264,16 +265,17 @@ def default_fill_value(obj):
     The default filling value depends on the datatype of the input
     array or the type of the input scalar:
 
-       ========  ========
-       datatype  default
-       ========  ========
-       bool      True
-       int       999999
-       float     1.e20
-       complex   1.e20+0j
-       object    '?'
-       string    'N/A'
-       ========  ========
+       ===========  ========
+       datatype      default
+       ===========  ========
+       bool         True
+       int          999999
+       float        1.e20
+       complex      1.e20+0j
+       object       '?'
+       string       'N/A'
+       StringDType  'N/A'
+       ===========  ========
 
     For structured types, a structured scalar is returned, with each field the
     default fill value for its type.
@@ -498,7 +500,7 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
-    elif isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
+    elif isinstance(fill_value, str) and (ndtype.char not in 'OSTVU'):
         # Note this check doesn't work if fill_value is not a scalar
         err_msg = "Cannot set fill value of string with array of dtype %s"
         raise TypeError(err_msg % ndtype)
@@ -7045,7 +7047,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod:
+def _frommethod(methodname: str, reversed: bool = False):
     """
     Define functions from existing MaskedArray methods.
 
@@ -7053,44 +7055,47 @@ class _frommethod:
     ----------
     methodname : str
         Name of the method to transform.
-
+    reversed : bool, optional
+        Whether to reverse the first two arguments of the method. Default is False.
     """
+    method = getattr(MaskedArray, methodname)
+    assert callable(method)
 
-    def __init__(self, methodname, reversed=False):
-        self.__name__ = methodname
-        self.__qualname__ = methodname
-        self.__doc__ = self.getdoc()
-        self.reversed = reversed
+    signature = inspect.signature(method)
+    params = list(signature.parameters.values())
+    params[0] = params[0].replace(name="a")  # rename 'self' to 'a'
 
-    def getdoc(self):
-        "Return the doc of the function (from the doc of the method)."
-        meth = getattr(MaskedArray, self.__name__, None) or\
-            getattr(np, self.__name__, None)
-        signature = self.__name__ + get_object_signature(meth)
-        if meth is not None:
-            doc = f"""    {signature}
-{getattr(meth, '__doc__', None)}"""
-            return doc
+    if reversed:
+        assert len(params) >= 2
+        params[0], params[1] = params[1], params[0]
 
-    def __call__(self, a, *args, **params):
-        if self.reversed:
-            args = list(args)
-            a, args[0] = args[0], a
+        def wrapper(a, b, *args, **params):
+            return getattr(asanyarray(b), methodname)(a, *args, **params)
 
-        marr = asanyarray(a)
-        method_name = self.__name__
-        method = getattr(type(marr), method_name, None)
-        if method is None:
-            # use the corresponding np function
-            method = getattr(np, method_name)
+    else:
+        def wrapper(a, *args, **params):
+            return getattr(asanyarray(a), methodname)(*args, **params)
 
-        return method(marr, *args, **params)
+    wrapper.__signature__ = signature.replace(parameters=params)
+    wrapper.__name__ = wrapper.__qualname__ = methodname
+
+    # __doc__  is None when using `python -OO ...`
+    if method.__doc__ is not None:
+        str_signature = f"{methodname}{signature}"
+        # TODO: For methods with a docstring "Parameters" section, that do not already
+        # mention `a` (see e.g. `MaskedArray.var.__doc__`), it should be inserted there.
+        wrapper.__doc__ = f"    {str_signature}\n{method.__doc__}"
+
+    return wrapper
 
 
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
+argmax = _frommethod('argmax')
+argmin = _frommethod('argmin')
 compress = _frommethod('compress', reversed=True)
+count = _frommethod('count')
 cumprod = _frommethod('cumprod')
 cumsum = _frommethod('cumsum')
 copy = _frommethod('copy')
@@ -7114,7 +7119,6 @@ swapaxes = _frommethod('swapaxes')
 trace = _frommethod('trace')
 var = _frommethod('var')
 
-count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
@@ -7202,9 +7206,6 @@ def power(a, b, third=None):
         result._data[invalid] = result.fill_value
     return result
 
-
-argmin = _frommethod('argmin')
-argmax = _frommethod('argmax')
 
 def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
             fill_value=None, *, stable=None):

@@ -1,8 +1,8 @@
 #ifndef __NPY_SORT_COMMON_H__
 #define __NPY_SORT_COMMON_H__
 
-#include <stdlib.h>
 #include <numpy/ndarraytypes.h>
+#include <stdlib.h>
 #include <numpy/npy_math.h>
 #include "dtypemeta.h"
 

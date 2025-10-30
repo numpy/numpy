@@ -1,11 +1,11 @@
-from typing import Any, LiteralString, assert_type
+from typing import assert_type
 
 import numpy as np
-from numpy._typing import _64Bit
 
 f: float
 f8: np.float64
 c8: np.complex64
+c16: np.complex128
 
 i: int
 i8: np.int64
@@ -15,9 +15,10 @@ finfo_f8: np.finfo[np.float64]
 iinfo_i8: np.iinfo[np.int64]
 
 assert_type(np.finfo(f), np.finfo[np.float64])
-assert_type(np.finfo(f8), np.finfo[np.floating[_64Bit]])
+assert_type(np.finfo(f8), np.finfo[np.float64])
 assert_type(np.finfo(c8), np.finfo[np.float32])
-assert_type(np.finfo('f2'), np.finfo[np.floating])
+assert_type(np.finfo(c16), np.finfo[np.float64])
+assert_type(np.finfo("f2"), np.finfo[np.float16])
 
 assert_type(finfo_f8.dtype, np.dtype[np.float64])
 assert_type(finfo_f8.bits, int)
@@ -41,11 +42,12 @@ assert_type(finfo_f8.smallest_subnormal, np.float64)
 assert_type(np.iinfo(i), np.iinfo[np.int_])
 assert_type(np.iinfo(i8), np.iinfo[np.int64])
 assert_type(np.iinfo(u4), np.iinfo[np.uint32])
-assert_type(np.iinfo('i2'), np.iinfo[Any])
+assert_type(np.iinfo("i2"), np.iinfo[np.int16])
+assert_type(np.iinfo("u2"), np.iinfo[np.uint16])
 
 assert_type(iinfo_i8.dtype, np.dtype[np.int64])
-assert_type(iinfo_i8.kind, LiteralString)
+assert_type(iinfo_i8.kind, str)
 assert_type(iinfo_i8.bits, int)
-assert_type(iinfo_i8.key, LiteralString)
+assert_type(iinfo_i8.key, str)
 assert_type(iinfo_i8.min, int)
 assert_type(iinfo_i8.max, int)

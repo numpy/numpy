@@ -123,7 +123,7 @@ simd_reduce_c_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npyv_lanetype_@sfx@ 
     npyv_@sfx@ acc = npyv_setall_@sfx@(op1[0]);
     for (; len >= wstep; len -= wstep, ip += wstep) {
     #ifdef NPY_HAVE_SSE2
-        NPY_PREFETCH(ip + wstep, 0, 3);
+        NPY_PREFETCH((const char*)(ip + wstep), 0, 3);
     #endif
         npyv_@sfx@ v0 = npyv_load_@sfx@(ip + vstep * 0);
         npyv_@sfx@ v1 = npyv_load_@sfx@(ip + vstep * 1);

@@ -222,7 +222,6 @@ from numpy import (  # noqa: F401
     i0,
     iinfo,
     imag,
-    in1d,
     index_exp,
     indices,
     inexact,
@@ -451,7 +450,6 @@ from numpy import (  # noqa: F401
     trace,
     transpose,
     trapezoid,
-    trapz,
     tri,
     tril,
     tril_indices,
@@ -559,7 +557,7 @@ def eye(n: int, M: int | None, k: int, dtype: _DTypeLike[_ScalarT], order: _Orde
 @overload
 def eye(n: int, M: int | None = None, k: int = 0, *, dtype: _DTypeLike[_ScalarT], order: _Order = "C") -> _Matrix[_ScalarT]: ...
 @overload
-def eye(n: int, M: int | None = None, k: int = 0, dtype: npt.DTypeLike = ..., order: _Order = "C") -> _Matrix[Any]: ...
+def eye(n: int, M: int | None = None, k: int = 0, dtype: npt.DTypeLike | None = ..., order: _Order = "C") -> _Matrix[Any]: ...
 
 #
 @overload

@@ -60,12 +60,12 @@ _DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=dtype | None)
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 
 _FlagsKind: TypeAlias = L[
-    'C_CONTIGUOUS', 'CONTIGUOUS', 'C',
-    'F_CONTIGUOUS', 'FORTRAN', 'F',
-    'ALIGNED', 'A',
-    'WRITEABLE', 'W',
-    'OWNDATA', 'O',
-    'WRITEBACKIFCOPY', 'X',
+    "C_CONTIGUOUS", "CONTIGUOUS", "C",
+    "F_CONTIGUOUS", "FORTRAN", "F",
+    "ALIGNED", "A",
+    "WRITEABLE", "W",
+    "OWNDATA", "O",
+    "WRITEBACKIFCOPY", "X",
 ]
 
 # TODO: Add a shape typevar once we have variadic typevars (PEP 646)
@@ -73,11 +73,11 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
     # In practice these 4 classvars are defined in the dynamic class
     # returned by `ndpointer`
     _dtype_: ClassVar[_DTypeOptionalT]
-    _shape_: ClassVar[None]
+    _shape_: ClassVar[_AnyShape | None]
     _ndim_: ClassVar[int | None]
     _flags_: ClassVar[list[_FlagsKind] | None]
 
-    @overload
+    @overload  # type: ignore[override]
     @classmethod
     def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
@@ -96,40 +96,40 @@ c_intp = _c_intp
 
 @overload
 def ndpointer(
-    dtype: None = ...,
-    ndim: int = ...,
-    shape: _ShapeLike | None = ...,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    dtype: None = None,
+    ndim: int | None = None,
+    shape: _ShapeLike | None = None,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[None]]: ...
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
-    ndim: int = ...,
+    ndim: int | None = None,
     *,
     shape: _ShapeLike,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_concrete_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
-    dtype: DTypeLike,
-    ndim: int = ...,
+    dtype: DTypeLike | None,
+    ndim: int | None = None,
     *,
     shape: _ShapeLike,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_concrete_ndptr[dtype]]: ...
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
-    ndim: int = ...,
-    shape: None = ...,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    ndim: int | None = None,
+    shape: None = None,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
-    dtype: DTypeLike,
-    ndim: int = ...,
-    shape: None = ...,
-    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+    dtype: DTypeLike | None,
+    ndim: int | None = None,
+    shape: None = None,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = None,
 ) -> type[_ndptr[dtype]]: ...
 
 @overload
@@ -170,9 +170,9 @@ def as_ctypes_type(dtype: str) -> type[Any]: ...
 @overload
 def as_array(obj: ctypes._PointerLike, shape: Sequence[int]) -> NDArray[Any]: ...
 @overload
-def as_array(obj: _ArrayLike[_ScalarT], shape: _ShapeLike | None = ...) -> NDArray[_ScalarT]: ...
+def as_array(obj: _ArrayLike[_ScalarT], shape: _ShapeLike | None = None) -> NDArray[_ScalarT]: ...
 @overload
-def as_array(obj: object, shape: _ShapeLike | None = ...) -> NDArray[Any]: ...
+def as_array(obj: object, shape: _ShapeLike | None = None) -> NDArray[Any]: ...
 
 @overload
 def as_ctypes(obj: np.bool) -> ctypes.c_bool: ...
@@ -185,7 +185,7 @@ def as_ctypes(obj: intc) -> ctypes.c_int: ...
 @overload
 def as_ctypes(obj: long) -> ctypes.c_long: ...
 @overload
-def as_ctypes(obj: longlong) -> ctypes.c_longlong: ...
+def as_ctypes(obj: longlong) -> ctypes.c_longlong: ...  # type: ignore[overload-cannot-match]
 @overload
 def as_ctypes(obj: ubyte) -> ctypes.c_ubyte: ...
 @overload
@@ -195,7 +195,7 @@ def as_ctypes(obj: uintc) -> ctypes.c_uint: ...
 @overload
 def as_ctypes(obj: ulong) -> ctypes.c_ulong: ...
 @overload
-def as_ctypes(obj: ulonglong) -> ctypes.c_ulonglong: ...
+def as_ctypes(obj: ulonglong) -> ctypes.c_ulonglong: ...  # type: ignore[overload-cannot-match]
 @overload
 def as_ctypes(obj: single) -> ctypes.c_float: ...
 @overload
@@ -215,7 +215,7 @@ def as_ctypes(obj: NDArray[intc]) -> ctypes.Array[ctypes.c_int]: ...
 @overload
 def as_ctypes(obj: NDArray[long]) -> ctypes.Array[ctypes.c_long]: ...
 @overload
-def as_ctypes(obj: NDArray[longlong]) -> ctypes.Array[ctypes.c_longlong]: ...
+def as_ctypes(obj: NDArray[longlong]) -> ctypes.Array[ctypes.c_longlong]: ...  # type: ignore[overload-cannot-match]
 @overload
 def as_ctypes(obj: NDArray[ubyte]) -> ctypes.Array[ctypes.c_ubyte]: ...
 @overload
@@ -225,7 +225,7 @@ def as_ctypes(obj: NDArray[uintc]) -> ctypes.Array[ctypes.c_uint]: ...
 @overload
 def as_ctypes(obj: NDArray[ulong]) -> ctypes.Array[ctypes.c_ulong]: ...
 @overload
-def as_ctypes(obj: NDArray[ulonglong]) -> ctypes.Array[ctypes.c_ulonglong]: ...
+def as_ctypes(obj: NDArray[ulonglong]) -> ctypes.Array[ctypes.c_ulonglong]: ...  # type: ignore[overload-cannot-match]
 @overload
 def as_ctypes(obj: NDArray[single]) -> ctypes.Array[ctypes.c_float]: ...
 @overload

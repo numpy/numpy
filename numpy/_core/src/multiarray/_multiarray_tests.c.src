@@ -7,6 +7,7 @@
 #include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
+#include "npy_import.h"
 #include "common.h"
 #include "npy_argparse.h"
 #include "mem_overlap.h"
@@ -2089,10 +2090,18 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     switch (kind) {
-        case _NPY_SORT_UNDEFINED: return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
-        case NPY_QUICKSORT: return PyUnicode_FromString("NPY_QUICKSORT");
-        case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
-        case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
+        case _NPY_SORT_UNDEFINED:
+            return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
+        case NPY_QUICKSORT:
+            return PyUnicode_FromString("NPY_QUICKSORT");
+        case NPY_HEAPSORT:
+            return PyUnicode_FromString("NPY_HEAPSORT");
+        case NPY_STABLESORT:
+            return PyUnicode_FromString("NPY_STABLESORT");
+        default:
+            // the other possible values in NPY_SORTKIND can only
+            // be set with keywords.
+            break;
     }
     return PyLong_FromLong(kind);
 }
@@ -2162,12 +2171,17 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "O&", PyArray_CastingConverter, &casting)) {
         return NULL;
     }
-    switch (casting) {
+    switch ((int)casting) {
         case NPY_NO_CASTING: return PyUnicode_FromString("NPY_NO_CASTING");
         case NPY_EQUIV_CASTING: return PyUnicode_FromString("NPY_EQUIV_CASTING");
         case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+        case NPY_SAME_VALUE_CASTING: return PyUnicode_FromString("NPY_SAME_VALUE_CASTING");
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
         default: return PyLong_FromLong(casting);
     }
 }
@@ -2223,6 +2237,15 @@ run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
         return NULL;
     }
     return PyArray_IntTupleFromIntp(1, vals);
+}
+
+static PyObject *
+_npy_import_entry_point(PyObject *NPY_UNUSED(self), PyObject *obj) {
+    PyObject *res = PyUnicode_AsASCIIString(obj);
+    if (res != NULL) {
+        Py_SETREF(res, npy_import_entry_point(PyBytes_AS_STRING(res)));
+    }
+    return res;
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
@@ -2409,6 +2432,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"run_intp_converter",
         run_intp_converter,
         METH_VARARGS, NULL},
+    {"npy_import_entry_point",
+        _npy_import_entry_point,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

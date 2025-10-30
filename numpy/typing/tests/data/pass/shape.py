@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple, cast
+from typing import Any, NamedTuple
 
 import numpy as np
 

@@ -1,0 +1,31 @@
+../numpy/linalg/lapack_lite/f2c.c(194): warning C4244: 'return': conversion from 'double' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_c_lapack.c(230): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_c_lapack.c(250): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_c_lapack.c(1530): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(1625): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(1645): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(2865): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(2882): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(2894): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_config.c(1368): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c.c(194): warning C4244: 'return': conversion from 'double' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_c_lapack.c(230): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_c_lapack.c(250): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_c_lapack.c(1530): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(1625): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(1645): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(2865): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(2882): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+../numpy/linalg/lapack_lite/f2c_s_lapack.c(2894): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
+numpy/random/_generator.cp311-win_arm64.pyd.p/numpy/random/_generator.pyx.c(26966): warning C4244: 'function': conversion from 'int64_t' to 'double'
+numpy/random/_generator.cp311-win_arm64.pyd.p/numpy/random/_generator.pyx.c(39070): warning C4244: 'function': conversion from 'int64_t' to 'double'
+numpy/random/_generator.cp311-win32.pyd.p/numpy/random/_generator.pyx.c(26966): warning C4244: 'function': conversion from 'int64_t' to 'double'
+numpy/random/_generator.cp311-win32.pyd.p/numpy/random/_generator.pyx.c(39070): warning C4244: 'function': conversion from 'int64_t' to 'double'
+cl : Command line warning D9025 : overriding '/arch:SSE2' with '/arch:AVX2'
+cl : Command line warning D9025 : overriding '/arch:SSE2' with '/arch:AVX512'
+cl : Command line warning D9025 : overriding '/arch:SSE2' with '/arch:AVX2'
+D:\a\numpy\numpy\numpy\_core\src\npysort\x86-simd-sort/src/avx512-16bit-qsort.hpp(52): warning C4309: 'argument': truncation of constant value
+D:\a\numpy\numpy\numpy\_core\src\npysort\x86-simd-sort/src/avx512-16bit-qsort.hpp(53): warning C4309: 'argument': truncation of constant value
+D:\a\numpy\numpy\numpy\_core\src\npysort\x86-simd-sort/src/avx512-16bit-qsort.hpp(65): warning C4309: 'argument': truncation of constant value
+D:\a\numpy\numpy\numpy\_core\src\npysort\x86-simd-sort/src/avx512-16bit-qsort.hpp(139): warning C4556:
+

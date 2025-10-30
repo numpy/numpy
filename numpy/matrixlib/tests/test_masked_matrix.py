@@ -116,7 +116,7 @@ class TestMaskedMatrix:
         # Test setting
         test = masked_array(np.matrix([[1, 2, 3]]), mask=[0, 0, 1])
         testflat = test.flat
-        testflat[:] = testflat[[2, 1, 0]]
+        testflat[:] = testflat[np.array([2, 1, 0])]
         assert_equal(test, control)
         testflat[0] = 9
         # test that matrices keep the correct shape (#4615)
@@ -182,26 +182,26 @@ class TestMaskedMatrix:
 class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
-    def setup_method(self):
+    def _create_data(self):
         x = np.arange(5, dtype='float')
         mx = MMatrix(x, mask=[0, 1, 0, 0, 0])
-        self.data = (x, mx)
+        return x, mx
 
     def test_maskedarray_subclassing(self):
         # Tests subclassing MaskedArray
-        (x, mx) = self.data
+        mx = self._create_data()[1]
         assert_(isinstance(mx._data, np.matrix))
 
     def test_masked_unary_operations(self):
         # Tests masked_unary_operation
-        (x, mx) = self.data
+        x, mx = self._create_data()
         with np.errstate(divide='ignore'):
             assert_(isinstance(log(mx), MMatrix))
             assert_equal(log(x), np.log(x))
 
     def test_masked_binary_operations(self):
         # Tests masked_binary_operation
-        (x, mx) = self.data
+        x, mx = self._create_data()
         # Result should be a MMatrix
         assert_(isinstance(add(mx, mx), MMatrix))
         assert_(isinstance(add(mx, x), MMatrix))
@@ -215,7 +215,7 @@ class TestSubclassing:
 
     def test_masked_binary_operations2(self):
         # Tests domained_masked_binary_operation
-        (x, mx) = self.data
+        x, mx = self._create_data()
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
         assert_(isinstance(divide(mx, mx), MMatrix))
         assert_(isinstance(divide(mx, x), MMatrix))

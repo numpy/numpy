@@ -1,12 +1,9 @@
 project(
   'NumPy',
   'c', 'cpp', 'cython',
-  version: run_command(
-    # This should become `numpy/_version.py` in NumPy 2.0
-    ['numpy/_build_utils/gitversion.py'],
-    check: true).stdout().strip(),
-  license: 'BSD-3',
-  meson_version: '>=1.5.2',  # version in vendored-meson is 1.5.2
+  version: run_command(['numpy/_build_utils/gitversion.py'], check: true).stdout().strip(),
+  license: 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0',
+  meson_version: '>=1.8.3',  # version in vendored-meson
   default_options: [
     'buildtype=debugoptimized',
     'b_ndebug=if-release',

@@ -44,6 +44,9 @@ ${source_list},
                      inc_np,
 ${inc_list}
                      ],
+                     objects: [
+${obj_list}
+                     ],
                      dependencies : [
                      py_dep,
                      quadmath_dep,

@@ -201,13 +201,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, /, shape=None, order=None, *, newshape=None,
-                        copy=None):
+def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
     return (a,)
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
+def reshape(a, /, shape, order='C', *, copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -233,10 +232,6 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
         'A' means to read / write the elements in Fortran-like index
         order if ``a`` is Fortran *contiguous* in memory, C-like order
         otherwise.
-    newshape : int or tuple of ints
-        .. deprecated:: 2.1
-            Replaced by ``shape`` argument. Retained for backward
-            compatibility.
     copy : bool, optional
         If ``True``, then the array data is copied. If ``None``, a copy will
         only be made if it's required by ``order``. For ``False`` it raises
@@ -300,23 +295,6 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
            [3, 4],
            [5, 6]])
     """
-    if newshape is None and shape is None:
-        raise TypeError(
-            "reshape() missing 1 required positional argument: 'shape'")
-    if newshape is not None:
-        if shape is not None:
-            raise TypeError(
-                "You cannot specify 'newshape' and 'shape' arguments "
-                "at the same time.")
-        # Deprecated in NumPy 2.1, 2024-04-18
-        warnings.warn(
-            "`newshape` keyword argument is deprecated, "
-            "use `shape=...` or pass shape positionally instead. "
-            "(deprecated in NumPy 2.1)",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        shape = newshape
     if copy is not None:
         return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
     return _wrapfunc(a, 'reshape', shape, order=order)
@@ -1304,6 +1282,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indexes of the maximal elements of a N-dimensional array:
 
+    >>> a.flat[np.argmax(a)]
+    15
     >>> ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
     >>> ind
     (1, 2)
@@ -1402,6 +1382,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indices of the minimum elements of a N-dimensional array:
 
+    >>> a.flat[np.argmin(a)]
+    10
     >>> ind = np.unravel_index(np.argmin(a, axis=None), a.shape)
     >>> ind
     (0, 0)

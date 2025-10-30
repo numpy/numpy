@@ -260,6 +260,10 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
  * Supports the NPY_CAST_IS_VIEW check, and should be preferred to allow
  * extending cast-levels if necessary.
  * It is not valid for one of the arguments to be -1 to indicate an error.
+ * Pass through NPY_SAME_VALUE_CASTING_FLAG on casting1, unless both have the
+ * flag, in which case return max_casting | NPY_SAME_VALUE_CASTING_FLAG.
+ * Usually this will be exactly NPY_SAME_VALUE_CASTING, but the logic here
+ * should handle other 'casting with same_value' options
  *
  * @param casting1 First (left-hand) casting level to compare
  * @param casting2 Second (right-hand) casting level to compare
@@ -271,11 +275,14 @@ PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2)
     if (casting1 < 0 || casting2 < 0) {
         return -1;
     }
+    int both_same_casting = casting1 & casting2 & NPY_SAME_VALUE_CASTING_FLAG;
+    casting1 &= ~NPY_SAME_VALUE_CASTING_FLAG;
+    casting2 &= ~NPY_SAME_VALUE_CASTING_FLAG;
     /* larger casting values are less safe */
     if (casting1 > casting2) {
-        return casting1;
+        return casting1 | both_same_casting;
     }
-    return casting2;
+    return casting2 | both_same_casting;
 }
 
 
@@ -746,13 +753,13 @@ can_cast_pyscalar_scalar_to(
     }
     else if (PyDataType_ISFLOAT(to)) {
         if (flags & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0));
         }
         return 1;
     }
     else if (PyDataType_ISINTEGER(to)) {
         if (!(flags & NPY_ARRAY_WAS_PYTHON_INT)) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0));
         }
         return 1;
     }
@@ -828,7 +835,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
-    switch (casting) {
+    switch ((int)casting) {
         case NPY_NO_CASTING:
             return "'no'";
         case NPY_EQUIV_CASTING:
@@ -839,6 +846,16 @@ npy_casting_to_string(NPY_CASTING casting)
             return "'same_kind'";
         case NPY_UNSAFE_CASTING:
             return "'unsafe'";
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'no and same_value'";
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'equiv and same_value'";
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'safe and same_value'";
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'same_kind and same_value'";
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'same_value'";
         default:
             return "<unknown>";
     }
@@ -2116,9 +2133,9 @@ legacy_same_dtype_resolve_descriptors(
     if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
                 PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
         *view_offset = 0;
-        return NPY_NO_CASTING;
+        return NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
     }
-    return NPY_EQUIV_CASTING;
+    return NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
 }
 
 
@@ -2305,6 +2322,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     if (dtypes[0]->singleton->kind == dtypes[1]->singleton->kind
             && from_itemsize == to_itemsize) {
         spec.casting = NPY_EQUIV_CASTING;
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
 
         /* When there is no casting (equivalent C-types) use byteswap loops */
         slots[0].slot = NPY_METH_resolve_descriptors;
@@ -2319,13 +2337,17 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     }
     else if (_npy_can_cast_safely_table[from->type_num][to->type_num]) {
         spec.casting = NPY_SAFE_CASTING;
-    }
-    else if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
-             dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
-        spec.casting = NPY_SAME_KIND_CASTING;
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
     else {
-        spec.casting = NPY_UNSAFE_CASTING;
+        if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
+                dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
+            spec.casting = NPY_SAME_KIND_CASTING;
+        }
+        else {
+            spec.casting = NPY_UNSAFE_CASTING;
+        }
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
 
     /* Create a bound method, unbind and store it */
@@ -2463,10 +2485,10 @@ cast_to_string_resolve_descriptors(
         return -1;
     }
 
-    if (self->casting == NPY_UNSAFE_CASTING) {
+    if ((self->casting == NPY_UNSAFE_CASTING) || ((self->casting & NPY_SAME_VALUE_CASTING_FLAG) > 0)){
         assert(dtypes[0]->type_num == NPY_UNICODE &&
                dtypes[1]->type_num == NPY_STRING);
-        return NPY_UNSAFE_CASTING;
+        return self->casting;
     }
 
     if (loop_descrs[1]->elsize >= size) {

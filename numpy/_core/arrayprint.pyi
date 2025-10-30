@@ -77,14 +77,14 @@ class _FormatOptions(TypedDict):
 __docformat__: Final = "restructuredtext"  # undocumented
 
 def set_printoptions(
-    precision: SupportsIndex | None = ...,
-    threshold: int | None = ...,
-    edgeitems: int | None = ...,
-    linewidth: int | None = ...,
-    suppress: bool | None = ...,
-    nanstr: str | None = ...,
-    infstr: str | None = ...,
-    formatter: _FormatDict | None = ...,
+    precision: SupportsIndex | None = None,
+    threshold: int | None = None,
+    edgeitems: int | None = None,
+    linewidth: int | None = None,
+    suppress: bool | None = None,
+    nanstr: str | None = None,
+    infstr: str | None = None,
+    formatter: _FormatDict | None = None,
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     *,
@@ -189,36 +189,36 @@ def array2string(
 
 def format_float_scientific(
     x: _FloatLike_co,
-    precision: int | None = ...,
-    unique: bool = ...,
+    precision: int | None = None,
+    unique: bool = True,
     trim: _Trim = "k",
-    sign: bool = ...,
-    pad_left: int | None = ...,
-    exp_digits: int | None = ...,
-    min_digits: int | None = ...,
+    sign: bool = False,
+    pad_left: int | None = None,
+    exp_digits: int | None = None,
+    min_digits: int | None = None,
 ) -> str: ...
 def format_float_positional(
     x: _FloatLike_co,
-    precision: int | None = ...,
-    unique: bool = ...,
-    fractional: bool = ...,
+    precision: int | None = None,
+    unique: bool = True,
+    fractional: bool = True,
     trim: _Trim = "k",
-    sign: bool = ...,
-    pad_left: int | None = ...,
-    pad_right: int | None = ...,
-    min_digits: int | None = ...,
+    sign: bool = False,
+    pad_left: int | None = None,
+    pad_right: int | None = None,
+    min_digits: int | None = None,
 ) -> str: ...
 def array_repr(
     arr: NDArray[Any],
-    max_line_width: int | None = ...,
-    precision: SupportsIndex | None = ...,
-    suppress_small: bool | None = ...,
+    max_line_width: int | None = None,
+    precision: SupportsIndex | None = None,
+    suppress_small: bool | None = None,
 ) -> str: ...
 def array_str(
     a: NDArray[Any],
-    max_line_width: int | None = ...,
-    precision: SupportsIndex | None = ...,
-    suppress_small: bool | None = ...,
+    max_line_width: int | None = None,
+    precision: SupportsIndex | None = None,
+    suppress_small: bool | None = None,
 ) -> str: ...
 def printoptions(
     precision: SupportsIndex | None = ...,

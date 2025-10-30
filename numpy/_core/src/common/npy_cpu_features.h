@@ -26,8 +26,15 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_FMA4              = 12,
     NPY_CPU_FEATURE_FMA3              = 13,
     NPY_CPU_FEATURE_AVX2              = 14,
-    NPY_CPU_FEATURE_FMA               = 15, // AVX2 & FMA3, provides backward compatibility
-
+    NPY_CPU_FEATURE_LAHF              = 15,
+    NPY_CPU_FEATURE_CX16              = 16,
+    NPY_CPU_FEATURE_MOVBE             = 17,
+    NPY_CPU_FEATURE_BMI               = 18,
+    NPY_CPU_FEATURE_BMI2              = 19,
+    NPY_CPU_FEATURE_LZCNT             = 20,
+    NPY_CPU_FEATURE_GFNI              = 21,
+    NPY_CPU_FEATURE_VAES              = 22,
+    NPY_CPU_FEATURE_VPCLMULQDQ        = 23,
     NPY_CPU_FEATURE_AVX512F           = 30,
     NPY_CPU_FEATURE_AVX512CD          = 31,
     NPY_CPU_FEATURE_AVX512ER          = 32,
@@ -44,6 +51,8 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512VBMI2       = 43,
     NPY_CPU_FEATURE_AVX512BITALG      = 44,
     NPY_CPU_FEATURE_AVX512FP16        = 45,
+    NPY_CPU_FEATURE_AVX512BF16        = 46,
+
 
     // X86 CPU Groups
     // Knights Landing (F,CD,ER,PF)
@@ -56,10 +65,17 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512_CLX        = 104,
     // Cannon Lake     (F,CD,BW,DQ,VL,IFMA,VBMI)
     NPY_CPU_FEATURE_AVX512_CNL        = 105,
-    // Ice Lake        (F,CD,BW,DQ,VL,IFMA,VBMI,VNNI,VBMI2,BITALG,VPOPCNTDQ)
+    // Ice Lake        (F,CD,BW,DQ,VL,IFMA,VBMI,VNNI,VBMI2,BITALG,VPOPCNTDQ,GFNI,VPCLMULDQ,VAES)
     NPY_CPU_FEATURE_AVX512_ICL        = 106,
-    // Sapphire Rapids (Ice Lake, AVX512FP16)
+    // Sapphire Rapids (Ice Lake, AVX512FP16, AVX512BF16)
     NPY_CPU_FEATURE_AVX512_SPR        = 107,
+    // x86-64-v2 microarchitectures (SSE[1-4.*], POPCNT, LAHF, CX16)
+    // On 32-bit, cx16 is not available so it is not included
+    NPY_CPU_FEATURE_X86_V2 = 108,
+    // x86-64-v3 microarchitectures (X86_V2, AVX, AVX2, FMA3, BMI, BMI2, LZCNT, F16C, MOVBE)
+    NPY_CPU_FEATURE_X86_V3 = 109,
+    // x86-64-v4 microarchitectures (X86_V3, AVX512F, AVX512CD, AVX512VL, AVX512BW, AVX512DQ)
+    NPY_CPU_FEATURE_X86_V4 = NPY_CPU_FEATURE_AVX512_SKX,
 
     // IBM/POWER VSX
     // POWER7

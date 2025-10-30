@@ -23,7 +23,7 @@ if host_machine.endian() == 'little'
   VSX.update(implies: VSX2)
 endif
 VSX3 = mod_features.new(
-  'VSX3', 3, implies: VSX2, args: {'val': '-mcpu=power9', 'match': '.*[mcpu=|vsx].*'},
+  'VSX3', 3, implies: VSX2, args: {'val': '-mcpu=power9', 'match': '.*(?:mcpu=|vsx).*'},
   detect: {'val': 'VSX3', 'match': 'VSX.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_vsx3.c')[0],
   extra_tests: {
@@ -31,7 +31,7 @@ VSX3 = mod_features.new(
   }
 )
 VSX4 = mod_features.new(
-  'VSX4', 4, implies: VSX3, args: {'val': '-mcpu=power10', 'match': '.*[mcpu=|vsx].*'},
+  'VSX4', 4, implies: VSX3, args: {'val': '-mcpu=power10', 'match': '.*(?:mcpu=|vsx).*'},
   detect: {'val': 'VSX4', 'match': 'VSX.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_vsx4.c')[0],
   extra_tests: {

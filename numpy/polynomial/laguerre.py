@@ -1185,7 +1185,7 @@ def lagvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, ... , c_{10}, c_{11}, c_{12}, ...
 
     and ``np.dot(V, c.flat)`` and ``lagval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares

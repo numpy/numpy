@@ -47,22 +47,27 @@ The `~numpy.polynomial.polynomial.Polynomial` class is imported for brevity::
     from numpy.polynomial import Polynomial
 
 
-+------------------------+------------------------------+---------------------------------------+
-|  **How to...**         | Legacy (`numpy.poly1d`)      | `numpy.polynomial`                    |
-+------------------------+------------------------------+---------------------------------------+
-| Create a               | ``p = np.poly1d([1, 2, 3])`` | ``p = Polynomial([3, 2, 1])``         |
-| polynomial object      |                              |                                       |
-| from coefficients [1]_ |                              |                                       |
-+------------------------+------------------------------+---------------------------------------+
-| Create a polynomial    | ``r = np.poly([-1, 1])``     | ``p = Polynomial.fromroots([-1, 1])`` |
-| object from roots      | ``p = np.poly1d(r)``         |                                       |
-+------------------------+------------------------------+---------------------------------------+
-| Fit a polynomial of    |                              |                                       |
-| degree ``deg`` to data | ``np.polyfit(x, y, deg)``    | ``Polynomial.fit(x, y, deg)``         |
-+------------------------+------------------------------+---------------------------------------+
-
++------------------------+----------------------------------------+---------------------------------------+
+|  **How to...**         | Legacy (`numpy.poly1d`)                | `numpy.polynomial`                    |
++------------------------+----------------------------------------+---------------------------------------+
+| Create a               | ``p = np.poly1d([1, 2, 3])``           | ``p = Polynomial([3, 2, 1])``         |
+| polynomial object      |                                        |                                       |
+| from coefficients [1]_ |                                        |                                       |
++------------------------+----------------------------------------+---------------------------------------+
+| Create a polynomial    | ``r = np.poly([-1, 1])``               | ``p = Polynomial.fromroots([-1, 1])`` |
+| object from roots      | ``p = np.poly1d(r)``                   |                                       |
++------------------------+----------------------------------------+---------------------------------------+
+| Fit a polynomial of    |                                        |                                       |
+| degree ``deg`` to data | ``np.polyfit(x, y, deg)``              | ``Polynomial.fit(x, y, deg)``         |
++------------------------+----------------------------------------+---------------------------------------+
+| Evaluate a polynomial  | ``p(2.0)`` or                          | ``p(2.0)`` or ``polyval(2.0, p.coef)``|
+| at a point [2]_        | ``np.polyval([1, 2, 3], 2.0)``         | (use ``p.convert().coef`` after fit)  |
++------------------------+----------------------------------------+---------------------------------------+
 
 .. [1] Note the reversed ordering of the coefficients
+
+.. [2] When evaluating polynomials created with ``fit()``, use ``p(x)`` or
+   ``polyval(x, p.convert().coef)`` to handle domain/window scaling correctly.
 
 Transition Guide
 ~~~~~~~~~~~~~~~~
@@ -188,3 +193,4 @@ Documentation for legacy polynomials
    :maxdepth: 2
 
    routines.polynomials.poly1d
+   

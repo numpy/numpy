@@ -1,0 +1,10 @@
+Remove numpy.linalg.linalg and numpy.fft.helper
+-----------------------------------------------
+
+The following were deprecated in NumPy 2.0 and have been moved to private modules
+
+* ``numpy.linalg.linalg``
+  Use :mod:`numpy.linalg` instead.
+
+* ``numpy.fft.helper``
+  Use :mod:`numpy.fft` instead.

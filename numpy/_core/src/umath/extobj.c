@@ -398,7 +398,7 @@ _error_handler(const char *name, int method, PyObject *pyfunc, char *errtype,
     switch(method) {
     case UFUNC_ERR_WARN:
         PyOS_snprintf(msg, sizeof(msg), "%s encountered in %s", errtype, name);
-        if (PyErr_Warn(PyExc_RuntimeWarning, msg) < 0) {
+        if (PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1) < 0) {
             goto fail;
         }
         break;

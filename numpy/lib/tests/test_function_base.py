@@ -565,10 +565,6 @@ class TestSelect:
         m = np.isnan(d)
         assert_equal(select([m], [d]), [0, 0, 0, np.nan, 0, 0])
 
-    def test_deprecated_empty(self):
-        assert_raises(ValueError, select, [], [], 3j)
-        assert_raises(ValueError, select, [], [])
-
     def test_non_bool_deprecation(self):
         choices = self.choices
         conditions = self.conditions[:]
@@ -974,18 +970,20 @@ class TestDiff:
 
 class TestDelete:
 
-    def setup_method(self):
-        self.a = np.arange(5)
-        self.nd_a = np.arange(5).repeat(2).reshape(1, 5, 2)
+    def _create_arrays(self):
+        a = np.arange(5)
+        nd_a = np.arange(5).repeat(2).reshape(1, 5, 2)
+        return a, nd_a
 
     def _check_inverse_of_slicing(self, indices):
-        a_del = delete(self.a, indices)
-        nd_a_del = delete(self.nd_a, indices, axis=1)
+        a, nd_a = self._create_arrays()
+        a_del = delete(a, indices)
+        nd_a_del = delete(nd_a, indices, axis=1)
         msg = f'Delete failed for obj: {indices!r}'
-        assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
+        assert_array_equal(setxor1d(a_del, a[indices, ]), a,
                            err_msg=msg)
-        xor = setxor1d(nd_a_del[0, :, 0], self.nd_a[0, indices, 0])
-        assert_array_equal(xor, self.nd_a[0, :, 0], err_msg=msg)
+        xor = setxor1d(nd_a_del[0, :, 0], nd_a[0, indices, 0])
+        assert_array_equal(xor, nd_a[0, :, 0], err_msg=msg)
 
     def test_slices(self):
         lims = [-6, -2, 0, 1, 2, 4, 5]
@@ -997,11 +995,12 @@ class TestDelete:
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
+        a, _ = self._create_arrays()
         self._check_inverse_of_slicing(np.array([[0, 1], [2, 1]]))
         with pytest.raises(IndexError):
-            delete(self.a, [100])
+            delete(a, [100])
         with pytest.raises(IndexError):
-            delete(self.a, [-100])
+            delete(a, [-100])
 
         self._check_inverse_of_slicing([0, -1, 2, 2])
 
@@ -1009,13 +1008,13 @@ class TestDelete:
 
         # not legal, indexing with these would change the dimension
         with pytest.raises(ValueError):
-            delete(self.a, True)
+            delete(a, True)
         with pytest.raises(ValueError):
-            delete(self.a, False)
+            delete(a, False)
 
         # not enough items
         with pytest.raises(ValueError):
-            delete(self.a, [False] * 4)
+            delete(a, [False] * 4)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
@@ -1031,7 +1030,9 @@ class TestDelete:
     def test_subclass(self):
         class SubClass(np.ndarray):
             pass
-        a = self.a.view(SubClass)
+
+        a_orig, _ = self._create_arrays()
+        a = a_orig.view(SubClass)
         assert_(isinstance(delete(a, 0), SubClass))
         assert_(isinstance(delete(a, []), SubClass))
         assert_(isinstance(delete(a, [0, 1]), SubClass))
@@ -1056,12 +1057,13 @@ class TestDelete:
 
     @pytest.mark.parametrize("indexer", [np.array([1]), [1]])
     def test_single_item_array(self, indexer):
-        a_del_int = delete(self.a, 1)
-        a_del = delete(self.a, indexer)
+        a, nd_a = self._create_arrays()
+        a_del_int = delete(a, 1)
+        a_del = delete(a, indexer)
         assert_equal(a_del_int, a_del)
 
-        nd_a_del_int = delete(self.nd_a, 1, axis=1)
-        nd_a_del = delete(self.nd_a, np.array([1]), axis=1)
+        nd_a_del_int = delete(nd_a, 1, axis=1)
+        nd_a_del = delete(nd_a, np.array([1]), axis=1)
         assert_equal(nd_a_del_int, nd_a_del)
 
     def test_single_item_array_non_int(self):
@@ -1180,8 +1182,8 @@ class TestGradient:
         assert_(np.all(num_error < 0.03) == True)
 
         # test with unevenly spaced
-        np.random.seed(0)
-        x = np.sort(np.random.random(10))
+        rng = np.random.default_rng(0)
+        x = np.sort(rng.random(10))
         y = 2 * x ** 3 + 4 * x ** 2 + 2 * x
         analytical = 6 * x ** 2 + 8 * x + 2
         num_error = np.abs((np.gradient(y, x, edge_order=2) / analytical) - 1)
@@ -1378,6 +1380,36 @@ class TestTrimZeros:
     c = a.astype(complex)
     d = a.astype(object)
 
+    def construct_input_output(self, rng, shape, axis, trim):
+        """Construct an input/output test pair for trim_zeros"""
+        # Standardize axis to a tuple.
+        if axis is None:
+            axis = tuple(range(len(shape)))
+        elif isinstance(axis, int):
+            axis = (len(shape) + axis if axis < 0 else axis,)
+        else:
+            axis = tuple(len(shape) + ax if ax < 0 else ax for ax in axis)
+
+        # Populate a random interior slice with nonzero entries.
+        data = np.zeros(shape)
+        i_start = rng.integers(low=0, high=np.array(shape) - 1)
+        i_end = rng.integers(low=i_start + 1, high=shape)
+        inner_shape = tuple(i_end - i_start)
+        inner_data = 1 + rng.random(inner_shape)
+        data[tuple(slice(i, j) for i, j in zip(i_start, i_end))] = inner_data
+
+        # Construct the expected output of N-dimensional trim_zeros
+        # with the given axis and trim arguments.
+        if 'f' not in trim:
+            i_start = np.array([None for _ in shape])
+        if 'b' not in trim:
+            i_end = np.array([None for _ in shape])
+        idx = tuple(slice(i, j) if ax in axis else slice(None)
+                    for ax, (i, j) in enumerate(zip(i_start, i_end)))
+        expected = data[idx]
+
+        return data, expected
+
     def values(self):
         attr_names = ('a', 'b', 'c', 'd')
         return (getattr(self, name) for name in attr_names)
@@ -1462,6 +1494,29 @@ class TestTrimZeros:
         arr = self.a
         with pytest.raises(ValueError, match=r"unexpected character\(s\) in `trim`"):
             trim_zeros(arr, trim=trim)
+
+    @pytest.mark.parametrize("shape, axis", [
+        [(5,), None],
+        [(5,), ()],
+        [(5,), 0],
+        [(5, 6), None],
+        [(5, 6), ()],
+        [(5, 6), 0],
+        [(5, 6), (-1,)],
+        [(5, 6, 7), None],
+        [(5, 6, 7), ()],
+        [(5, 6, 7), 1],
+        [(5, 6, 7), (0, 2)],
+        [(5, 6, 7, 8), None],
+        [(5, 6, 7, 8), ()],
+        [(5, 6, 7, 8), -2],
+        [(5, 6, 7, 8), (0, 1, 3)],
+    ])
+    @pytest.mark.parametrize("trim", ['fb', 'f', 'b'])
+    def test_multiple_axes(self, shape, axis, trim):
+        rng = np.random.default_rng(4321)
+        data, expected = self.construct_input_output(rng, shape, axis, trim)
+        assert_array_equal(trim_zeros(data, axis=axis, trim=trim), expected)
 
 
 class TestExtins:
@@ -2050,6 +2105,9 @@ class TestLeaks:
             ('bound', A.iters),
             ('unbound', 0),
             ])
+    @pytest.mark.thread_unsafe(
+        reason="test result depends on the reference count of a global object"
+    )
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
@@ -2406,6 +2464,7 @@ class TestSinc:
         # resulting in nan
         assert_array_equal(sinc(x), np.asarray(1.0))
 
+
 class TestUnique:
 
     def test_simple(self):
@@ -2468,28 +2527,6 @@ class TestCorrCoef:
         tgt2 = corrcoef(self.A, self.B)
         assert_almost_equal(tgt2, self.res2)
         assert_(np.all(np.abs(tgt2) <= 1.0))
-
-    def test_ddof(self):
-        # ddof raises DeprecationWarning
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            pytest.warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            warnings.simplefilter('ignore', DeprecationWarning)
-            # ddof has no or negligible effect on the function
-            assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
-            assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
-            assert_almost_equal(corrcoef(self.A, ddof=3), self.res1)
-            assert_almost_equal(corrcoef(self.A, self.B, ddof=3), self.res2)
-
-    def test_bias(self):
-        # bias raises DeprecationWarning
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            pytest.warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
-            pytest.warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            warnings.simplefilter('ignore', DeprecationWarning)
-            # bias has no or negligible effect on the function
-            assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
@@ -3888,7 +3925,7 @@ class TestQuantile:
 
         q = np.quantile(x, .5)
         assert_equal(q, 1.75)
-        assert_equal(type(q), np.float64)
+        assert isinstance(q, float)
 
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))

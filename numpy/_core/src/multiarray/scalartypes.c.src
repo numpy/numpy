@@ -160,7 +160,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  * valid self (a generic scalar) and an other item.
  * May fill self_item and/or other_arr (but not both) with non-NULL values.
  *
- * Why this dance?  When the other object is a exactly Python scalar something
+ * Why this dance?  When the other object is exactly a Python scalar something
  * awkward happens historically in NumPy.
  * NumPy doesn't define a result, but the ufunc would cast to `astype(object)`
  * which is the same as `scalar.item()`.  And that operation converts e.g.
@@ -226,7 +226,7 @@ find_binary_operation_path(
      */
     int was_scalar;
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny_int(
-                other, NULL, NULL, 0, 0, 0, NULL, &was_scalar);
+                other, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL, &was_scalar);
     if (arr == NULL) {
         return -1;
     }
@@ -1940,33 +1940,6 @@ gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
     return self;
 }
 
-static PyObject *
-gentype_newbyteorder(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`newbyteorder` was removed from scalar types in NumPy 2.0. "
-                    "Use `sc.view(sc.dtype.newbyteorder(order))` instead.");
-    return NULL;
-}
-
-static PyObject *
-gentype_itemset(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`itemset` was removed from scalar types in NumPy 2.0 "
-                    "because scalars are immutable.");
-    return NULL;
-}
-
-static PyObject *
-gentype_ptp(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`ptp` was removed from scalar types in NumPy 2.0. "
-                    "For a scalar, the range of values always equals 0.");
-    return NULL;
-}
-
 
 static PyGetSetDef gentype_getsets[] = {
     {"ndim",
@@ -2010,15 +1983,6 @@ static PyGetSetDef gentype_getsets[] = {
         (setter)0, NULL, NULL},
     {"T",
         (getter)gentype_transpose_get,
-        (setter)0, NULL, NULL},
-    {"newbyteorder",
-        (getter)gentype_newbyteorder,
-        (setter)0, NULL, NULL},
-    {"itemset",
-        (getter)gentype_itemset,
-        (setter)0, NULL, NULL},
-    {"ptp",
-        (getter)gentype_ptp,
         (setter)0, NULL, NULL},
     {"device",
         (getter)array_device,
@@ -2093,12 +2057,11 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 
 /*
  * These gentype_* functions do not take keyword arguments.
- * The proper flag is METH_VARARGS.
+ * The proper flag is METH_VARARGS or METH_NOARGS.
  */
 /**begin repeat
  *
- * #name = tolist, item, __deepcopy__, __copy__,
- *         swapaxes, conj, conjugate, nonzero,
+ * #name = tolist, item, swapaxes, conj, conjugate, nonzero,
  *         fill, transpose#
  */
 static PyObject *
@@ -2107,6 +2070,34 @@ gentype_@name@(PyObject *self, PyObject *args)
     return gentype_generic_method(self, args, NULL, "@name@");
 }
 /**end repeat**/
+
+static PyObject *
+gentype___copy__(PyObject *self)
+{
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
+        // path via array
+        return gentype_generic_method(self, NULL, NULL, "__copy__");
+    }
+    return Py_NewRef(self);
+}
+
+static PyObject *
+gentype___deepcopy__(PyObject *self, PyObject *args)
+{
+    // note: maybe the signature needs to be updated as __deepcopy__ can accept the keyword memo
+
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    // if the number of arguments is not 1, we let gentype_generic_method do the
+    // error handling
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (PyTuple_Size(args)!=1)) {
+        // path via array
+        return gentype_generic_method(self, args, NULL, "__deepcopy__");
+    }
+    return Py_NewRef(self);
+}
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2158,7 +2149,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, any, all, astype, resize,
- *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
+ *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
 static PyObject *
@@ -2616,9 +2607,6 @@ static PyMethodDef gentype_methods[] = {
     {"tofile",
         (PyCFunction)gentype_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"tostring",
-        (PyCFunction)gentype_tostring,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2652,7 +2640,7 @@ static PyMethodDef gentype_methods[] = {
     /* for the copy module */
     {"__copy__",
         (PyCFunction)gentype___copy__,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
         METH_VARARGS, NULL},
@@ -2852,6 +2840,16 @@ static PyMethodDef numbertype_methods[] = {
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
+
+/**begin repeat
+ * #name = boolean,datetime#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* for typing */
+    {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+/**end repeat**/
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -4558,6 +4556,7 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    PyDatetimeArrType_Type.tp_methods = datetimetype_methods;
 
     /**begin repeat
      * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
@@ -4571,6 +4570,7 @@ initialize_numeric_types(void)
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
     PyBoolArrType_Type.tp_repr = genbool_type_repr;
+    PyBoolArrType_Type.tp_methods = booleantype_methods;
 
 
     /**begin repeat

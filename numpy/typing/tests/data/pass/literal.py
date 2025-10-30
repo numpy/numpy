@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
 from functools import partial
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
 import numpy as np
 
 if TYPE_CHECKING:

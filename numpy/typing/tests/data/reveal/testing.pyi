@@ -15,7 +15,7 @@ AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]
 
 bool_obj: bool
-suppress_obj: np.testing.suppress_warnings
+suppress_obj: np.testing.suppress_warnings  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 FT = TypeVar("FT", bound=Callable[..., Any])
 
 def func() -> int: ...
@@ -58,12 +58,12 @@ with np.testing.clear_and_catch_warnings(True) as c1:
 with np.testing.clear_and_catch_warnings() as c2:
     assert_type(c2, None)
 
-assert_type(np.testing.suppress_warnings("once"), np.testing.suppress_warnings)
-assert_type(np.testing.suppress_warnings()(func), Callable[[], int])
+assert_type(np.testing.suppress_warnings("once"), np.testing.suppress_warnings)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+assert_type(np.testing.suppress_warnings()(func), Callable[[], int])  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 assert_type(suppress_obj.filter(RuntimeWarning), None)
 assert_type(suppress_obj.record(RuntimeWarning), list[warnings.WarningMessage])
 with suppress_obj as c3:
-    assert_type(c3, np.testing.suppress_warnings)
+    assert_type(c3, np.testing.suppress_warnings)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
 assert_type(np.testing.verbose, int)
 assert_type(np.testing.IS_PYPY, bool)
@@ -90,7 +90,7 @@ assert_type(np.testing.assert_equal({1}, {1}), None)
 assert_type(np.testing.assert_equal([1, 2, 3], [1, 2, 3], err_msg="fail"), None)
 assert_type(np.testing.assert_equal(1, 1.0, verbose=True), None)
 
-assert_type(np.testing.print_assert_equal('Test XYZ of func xyz', [0, 1], [0, 1]), None)
+assert_type(np.testing.print_assert_equal("Test XYZ of func xyz", [0, 1], [0, 1]), None)
 
 assert_type(np.testing.assert_almost_equal(1.0, 1.1), None)
 assert_type(np.testing.assert_almost_equal([1, 2, 3], [1, 2, 3], err_msg="fail"), None)
@@ -172,8 +172,8 @@ assert_type(np.testing.assert_array_almost_equal_nulp(AR_i8, AR_f8, nulp=2), Non
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, maxulp=2), npt.NDArray[Any])
 assert_type(np.testing.assert_array_max_ulp(AR_i8, AR_f8, dtype=np.float32), npt.NDArray[Any])
 
-assert_type(np.testing.assert_warns(RuntimeWarning), contextlib._GeneratorContextManager[None])
-assert_type(np.testing.assert_warns(RuntimeWarning, func3, 5), bool)
+assert_type(np.testing.assert_warns(RuntimeWarning), contextlib._GeneratorContextManager[None])  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+assert_type(np.testing.assert_warns(RuntimeWarning, func3, 5), bool)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
 def func4(a: int, b: str) -> bool: ...
 

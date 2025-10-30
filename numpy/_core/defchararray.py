@@ -496,7 +496,6 @@ class chararray(ndarray):
     title
     tofile
     tolist
-    tostring
     translate
     transpose
     upper
@@ -719,7 +718,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind=None, order=None):
+    def argsort(self, axis=-1, kind=None, order=None, *, stable=None):
         """
         Return the indices that sort the array lexicographically.
 
@@ -737,7 +736,7 @@ class chararray(ndarray):
               dtype='|S5')
 
         """
-        return self.__array__().argsort(axis, kind, order)
+        return self.__array__().argsort(axis, kind, order, stable=stable)
     argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):

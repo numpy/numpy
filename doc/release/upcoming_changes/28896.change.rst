@@ -1,0 +1,56 @@
+Modulate dispatched x86 CPU features
+------------------------------------
+
+**IMPORTANT**: The default setting for `cpu-baseline`` on x86 has been raised to `x86-64-v2` microarchitecture.
+This can be changed to none during build time to support older CPUs,
+though SIMD optimizations for pre-2009 processors are no longer maintained.
+
+NumPy has reorganized x86 CPU features into microarchitecture-based groups instead of individual features, 
+aligning with Linux distribution standards and Google Highway requirements.
+
+Key changes:
+* Replaced individual x86 features with microarchitecture levels: ``X86_V2``, ``X86_V3``, and ``X86_V4``
+* Raised the baseline to ``X86_V2``
+* Improved ``-`` operator behavior to properly exclude successor features that imply the excluded feature
+* Added meson redirections for removed feature names to maintain backward compatibility
+* Removed compiler compatibility workarounds for partial feature support (e.g., AVX512 without mask operations)
+* Removed legacy AMD features (XOP, FMA4) and discontinued Intel Xeon Phi support
+
+New Feature Group Hierarchy:
+
+.. list-table::
+   :header-rows: 1
+   :align: left
+
+   * - Name
+     - Implies
+     - Includes
+   * - ``X86_V2``
+     - 
+     - ``SSE`` ``SSE2`` ``SSE3`` ``SSSE3`` ``SSE4_1`` ``SSE4_2`` ``POPCNT`` ``CX16`` ``LAHF``
+   * - ``X86_V3``
+     - ``X86_V2``
+     - ``AVX`` ``AVX2`` ``FMA3`` ``BMI`` ``BMI2`` ``LZCNT`` ``F16C`` ``MOVBE``
+   * - ``X86_V4``
+     - ``X86_V3``
+     - ``AVX512F`` ``AVX512CD`` ``AVX512VL`` ``AVX512BW`` ``AVX512DQ``
+   * - ``AVX512_ICL``
+     - ``X86_V4``
+     - ``AVX512VBMI`` ``AVX512VBMI2`` ``AVX512VNNI`` ``AVX512BITALG`` ``AVX512VPOPCNTDQ`` ``AVX512IFMA`` ``VAES`` ``GFNI`` ``VPCLMULQDQ``
+   * - ``AVX512_SPR``
+     - ``AVX512_ICL``
+     - ``AVX512FP16``
+
+
+These groups correspond to CPU generations:
+
+- ``X86_V2``: x86-64-v2 microarchitectures (CPUs since 2009)
+- ``X86_V3``: x86-64-v3 microarchitectures (CPUs since 2015)
+- ``X86_V4``: x86-64-v4 microarchitectures (AVX-512 capable CPUs)
+- ``AVX512_ICL``: Intel Ice Lake and similar CPUs
+- ``AVX512_SPR``: Intel Sapphire Rapids and newer CPUs
+
+.. note::
+    On 32-bit x86, ``cx16`` is excluded from ``X86_V2``.
+
+Documentation has been updated with details on using these new feature groups with the current meson build system.

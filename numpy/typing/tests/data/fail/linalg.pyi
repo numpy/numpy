@@ -32,6 +32,10 @@ np.linalg.eigh(AR_O, UPLO="bob")  # type: ignore[call-overload]
 
 np.linalg.svd(AR_O)  # type: ignore[arg-type]
 
+np.linalg.svdvals(AR_O)  # type: ignore[arg-type]
+np.linalg.svdvals(AR_M)  # type: ignore[arg-type]
+np.linalg.svdvals(x=AR_f8)  # type: ignore[call-overload]
+
 np.linalg.cond(AR_O)  # type: ignore[arg-type]
 np.linalg.cond(AR_f8, p="bob")  # type: ignore[arg-type]
 

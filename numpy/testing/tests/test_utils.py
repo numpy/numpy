@@ -36,6 +36,9 @@ from numpy.testing import (
 
 class _GenericTest:
 
+    def _assert_func(self, *args, **kwargs):
+        pass
+
     def _test_equal(self, a, b):
         self._assert_func(a, b)
 
@@ -82,8 +85,8 @@ class _GenericTest:
 
 class TestArrayEqual(_GenericTest):
 
-    def setup_method(self):
-        self._assert_func = assert_array_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_array_equal(*args, **kwargs)
 
     def test_generic_rank1(self):
         """Test rank 1 array for all dtypes."""
@@ -389,8 +392,8 @@ class TestBuildErrorMessage:
 
 class TestEqual(TestArrayEqual):
 
-    def setup_method(self):
-        self._assert_func = assert_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_equal(*args, **kwargs)
 
     def test_nan_items(self):
         self._assert_func(np.nan, np.nan)
@@ -484,8 +487,8 @@ class TestEqual(TestArrayEqual):
 
 class TestArrayAlmostEqual(_GenericTest):
 
-    def setup_method(self):
-        self._assert_func = assert_array_almost_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_array_almost_equal(*args, **kwargs)
 
     def test_closeness(self):
         # Note that in the course of time we ended up with
@@ -700,8 +703,8 @@ class TestArrayAlmostEqual(_GenericTest):
 
 class TestAlmostEqual(_GenericTest):
 
-    def setup_method(self):
-        self._assert_func = assert_almost_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_almost_equal(*args, **kwargs)
 
     def test_closeness(self):
         # Note that in the course of time we ended up with
@@ -870,8 +873,8 @@ class TestAlmostEqual(_GenericTest):
 
 class TestApproxEqual:
 
-    def setup_method(self):
-        self._assert_func = assert_approx_equal
+    def _assert_func(self, *args, **kwargs):
+        assert_approx_equal(*args, **kwargs)
 
     def test_simple_0d_arrays(self):
         x = np.array(1234.22)
@@ -913,8 +916,8 @@ class TestApproxEqual:
 
 class TestArrayAssertLess:
 
-    def setup_method(self):
-        self._assert_func = assert_array_less
+    def _assert_func(self, *args, **kwargs):
+        assert_array_less(*args, **kwargs)
 
     def test_simple_arrays(self):
         x = np.array([1.1, 2.2])
@@ -1140,7 +1143,10 @@ class TestArrayAssertLess:
         with pytest.raises(AssertionError):
             self._assert_func(x, y.astype(np.float32), strict=True)
 
-
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 class TestWarns:
 
     def test_warn(self):
@@ -1755,6 +1761,7 @@ def _get_fresh_mod():
     return my_mod
 
 
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_clear_and_catch_warnings():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1787,6 +1794,10 @@ def test_clear_and_catch_warnings():
     assert_warn_len_equal(my_mod, 0)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_module():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1833,6 +1844,10 @@ def test_suppress_warnings_module():
     assert_warn_len_equal(my_mod, 0)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
     my_mod = _get_fresh_mod()
@@ -1861,6 +1876,12 @@ def test_suppress_warnings_type():
     assert_warn_len_equal(my_mod, 0)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_decorate_no_record():
     sup = suppress_warnings()
     sup.filter(UserWarning)
@@ -1876,6 +1897,12 @@ def test_suppress_warnings_decorate_no_record():
         assert_equal(len(w), 1)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_record():
     sup = suppress_warnings()
     log1 = sup.record()
@@ -1913,9 +1940,16 @@ def test_suppress_warnings_record():
             warnings.warn('Some warning')
             warnings.warn('Some other warning')
             assert_equal(len(sup2.log), 1)
-        assert_equal(len(sup.log), 1)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 2)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*NumPy warning suppression and assertion utilities are deprecated"
+    ".*:DeprecationWarning")
+@pytest.mark.thread_unsafe(
+    reason="uses deprecated thread-unsafe warnings control utilities"
+)
 def test_suppress_warnings_forwarding():
     def warn_other_module():
         # Apply along axis is implemented in python; stacklevel=2 means
@@ -1931,7 +1965,8 @@ def test_suppress_warnings_forwarding():
             for i in range(2):
                 warnings.warn("Some warning")
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
     with suppress_warnings() as sup:
         sup.record()
@@ -1940,7 +1975,8 @@ def test_suppress_warnings_forwarding():
                 warnings.warn("Some warning")
                 warnings.warn("Some warning")
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
     with suppress_warnings() as sup:
         sup.record()
@@ -1950,7 +1986,8 @@ def test_suppress_warnings_forwarding():
                 warnings.warn("Some warning")
                 warn_other_module()
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
     with suppress_warnings() as sup:
         sup.record()
@@ -1960,7 +1997,8 @@ def test_suppress_warnings_forwarding():
                 warnings.warn("Some other warning")
                 warn_other_module()
 
-        assert_equal(len(sup.log), 2)
+        # includes a DeprecationWarning for suppress_warnings
+        assert_equal(len(sup.log), 3)
 
 
 def test_tempdir():
@@ -2001,6 +2039,7 @@ class my_cacw(clear_and_catch_warnings):
     class_modules = (sys.modules[__name__],)
 
 
+@pytest.mark.thread_unsafe(reason="checks global module & deprecated warnings")
 def test_clear_and_catch_warnings_inherit():
     # Test can subclass and add default modules
     my_mod = _get_fresh_mod()
@@ -2011,6 +2050,7 @@ def test_clear_and_catch_warnings_inherit():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="garbage collector is global state")
 class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
 

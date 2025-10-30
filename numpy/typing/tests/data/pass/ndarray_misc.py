@@ -9,13 +9,15 @@ function-based counterpart in `../from_numeric.py`.
 from __future__ import annotations
 
 import operator
-from typing import cast, Any
+from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
 
+
 class SubClass(npt.NDArray[np.float64]): ...
 class IntSubClass(npt.NDArray[np.intp]): ...
+
 
 i4 = np.int32(1)
 A: np.ndarray[Any, np.dtype[np.int32]] = np.array([[1]], dtype=np.int32)
@@ -51,7 +53,12 @@ A.argmin(axis=0)
 A.argmin(out=B_int0)
 
 i4.argsort()
+i4.argsort(stable=True)
 A.argsort()
+A.argsort(stable=True)
+
+A.sort()
+A.sort(stable=True)
 
 i4.choose([()])
 _choices = np.array([[0, 1, 2], [3, 4, 5], [6, 7, 8]], dtype=np.int32)
@@ -185,14 +192,3 @@ A_float = np.array([[1, 5], [2, 4], [np.nan, np.nan]])
 A_void: npt.NDArray[np.void] = np.empty(3, [("yop", float), ("yap", float)])
 A_void["yop"] = A_float[:, 0]
 A_void["yap"] = A_float[:, 1]
-
-# deprecated
-
-with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_data()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_shape()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_strides()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_as_parameter()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]

@@ -162,18 +162,37 @@ enum NPY_TYPECHAR {
 };
 
 /*
- * Changing this may break Numpy API compatibility
- * due to changing offsets in PyArray_ArrFuncs, so be
- * careful. Here we have reused the mergesort slot for
- * any kind of stable sort, the actual implementation will
- * depend on the data type.
+ * Changing this may break Numpy API compatibility due to changing offsets in
+ * PyArray_ArrFuncs, so be careful. Here we have reused the mergesort slot for
+ * any kind of stable sort, the actual implementation will depend on the data
+ * type.
+ *
+ * Updated in NumPy 2.4
+ *
+ * Updated with new names denoting requirements rather than specifying a
+ * particular algorithm. All the previous values are reused in a way that
+ * should be downstream compatible, but the actual algorithms used may be
+ * different than before. The new approach should be more flexible and easier
+ * to update.
+ * 
+ * Names with a leading underscore are private, and should only be used
+ * internally by NumPy.
+ *
+ * NPY_NSORTS remains the same for backwards compatibility, it should not be
+ * changed.
  */
+
 typedef enum {
-        _NPY_SORT_UNDEFINED=-1,
-        NPY_QUICKSORT=0,
-        NPY_HEAPSORT=1,
-        NPY_MERGESORT=2,
-        NPY_STABLESORT=2,
+        _NPY_SORT_UNDEFINED = -1,
+        NPY_QUICKSORT = 0,
+        NPY_HEAPSORT = 1,
+        NPY_MERGESORT = 2,
+        NPY_STABLESORT = 2,
+        // new style names 
+        _NPY_SORT_HEAPSORT = 1,
+        NPY_SORT_DEFAULT = 0,
+        NPY_SORT_STABLE = 2,
+        NPY_SORT_DESCENDING = 4,
 } NPY_SORTKIND;
 #define NPY_NSORTS (NPY_STABLESORT + 1)
 
@@ -214,6 +233,16 @@ typedef enum {
         NPY_KEEPORDER=2
 } NPY_ORDER;
 
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
+/*
+ * check that no values overflow/change during casting
+ * Used  explicitly only in the ArrayMethod creation or resolve_dtypes functions to
+ * indicate that a same-value cast is supported. In external APIs, use only
+ * NPY_SAME_VALUE_CASTING
+ */
+#define NPY_SAME_VALUE_CASTING_FLAG 64
+#endif
+
 /* For specifying allowed casting in operations which support it */
 typedef enum {
         _NPY_ERROR_OCCURRED_IN_CAST = -1,
@@ -227,6 +256,9 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
+        NPY_SAME_VALUE_CASTING=NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG,
+#endif
 } NPY_CASTING;
 
 typedef enum {
