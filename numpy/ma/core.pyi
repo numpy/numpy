@@ -3331,7 +3331,7 @@ def empty(
 @overload
 def empty(
     shape: SupportsIndex,
-    dtype: DTypeLike | None = ...,
+    dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
     *,
     device: Literal["cpu"] | None = None,
@@ -3375,7 +3375,7 @@ def empty(
 @overload
 def empty(
     shape: _AnyShapeT,
-    dtype: DTypeLike | None = ...,
+    dtype: DTypeLike | None = None,
     order: _OrderCF = "C",
     *,
     device: Literal["cpu"] | None = None,
@@ -3419,7 +3419,7 @@ def empty(
 @overload
 def empty(
     shape: _ShapeLike,
-    dtype: DTypeLike | None = ...,
+    dtype: DTypeLike | None = None,
     *,
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
@@ -3427,16 +3427,56 @@ def empty(
     hardmask: bool = False,
 ) -> MaskedArray: ...
 
-# this is a bit of a hack to avoid having to duplicate all those `empty` overloads for
-# `ones` and `zeros`, but may cause some type-checkers to report incorrect names in
-# case of errors
-ones = empty
-zeros = empty
+# keep in sync with `_core.multiarray.empty_like`
+@overload
+def empty_like(
+    a: _ArrayT,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> _ArrayT: ...
+@overload
+def empty_like(
+    a: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
+@overload
+def empty_like(
+    a: Any,
+    dtype: _DTypeLike[_ScalarT],
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> NDArray[_ScalarT]: ...
+@overload
+def empty_like(
+    a: Any,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> NDArray[Any]: ...
 
-#
-empty_like: _convert2ma = ...
-ones_like: _convert2ma = ...
-zeros_like: _convert2ma = ...
+# This is a bit of a hack to avoid having to duplicate all those `empty` overloads for
+# `ones` and `zeros`, that relies on the fact that empty/zeros/ones have identical
+# type signatures, but may cause some type-checkers to report incorrect names in case
+# of user errors. Mypy and Pyright seem to handle this just fine.
+ones = empty
+ones_like = empty_like
+zeros = empty
+zeros_like = empty_like
 
 #
 frombuffer: _convert2ma = ...
