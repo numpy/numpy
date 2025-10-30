@@ -6,7 +6,9 @@ from numpy._typing import NDArray, _AnyShape
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
+
 MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
+_NoMaskType: TypeAlias = np.bool[Literal[False]]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 class MaskedArraySubclass(MaskedArray[_ScalarT_co]): ...
@@ -347,13 +349,13 @@ assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
 assert_type(MAR_2d_f4.ravel(), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
 assert_type(MAR_1d.ravel(order="A"), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
 
-assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | np.bool)
+assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | _NoMaskType)
 # PyRight detects this one correctly, but mypy doesn't:
 # `Revealed type is "Union[numpy.ndarray[Any, Any], numpy.bool[Any]]"`
 assert_type(np.ma.getmask(MAR_1d), np.ndarray[tuple[int], np.dtype[np.bool]] | np.bool)  # type: ignore[assert-type]
-assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bool]] | np.bool)
-assert_type(np.ma.getmask([1, 2]), NDArray[np.bool] | np.bool)
-assert_type(np.ma.getmask(np.int64(1)), np.bool)
+assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bool]] | _NoMaskType)
+assert_type(np.ma.getmask([1, 2]), NDArray[np.bool] | _NoMaskType)
+assert_type(np.ma.getmask(np.int64(1)), _NoMaskType)
 
 assert_type(np.ma.is_mask(MAR_1d), bool)
 assert_type(np.ma.is_mask(AR_b), bool)

@@ -268,6 +268,16 @@ def unstructured_to_structured(
     copy: bool = False,
     casting: str = "unsafe",
 ) -> npt.NDArray[np.void]: ...
+@overload
+def unstructured_to_structured(
+    arr: npt.NDArray[Any],
+    dtype: None = None,
+    *,
+    names: _OneOrMany[str],
+    align: bool = False,
+    copy: bool = False,
+    casting: str = "unsafe",
+) -> npt.NDArray[np.void]: ...
 
 #
 def apply_along_fields(

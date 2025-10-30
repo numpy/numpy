@@ -1,0 +1,59 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.3.3 Release Notes
+=========================
+
+The NumPy 2.3.3 release is a patch release split between a number of maintenance
+updates and bug fixes. This release supports Python versions 3.11-3.14. Note
+that the 3.14.0 final is currently expected in Oct, 2025. This release is based
+on 3.14.0rc2.
+
+Contributors
+============
+
+A total of 13 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Aleksandr A. Voyt +
+* Bernard Roesler +
+* Charles Harris
+* Hunter Hogan +
+* Joren Hammudoglu
+* Maanas Arora
+* Matti Picus
+* Nathan Goldbaum
+* Raghuveer Devulapalli
+* Sanjay Kumar Sakamuri Kamalakar +
+* Tobias Markus +
+* Warren Weckesser
+* Zebreus +
+
+Pull requests merged
+====================
+
+A total of 23 pull requests were merged for this release.
+
+* `#29440 <https://github.com/numpy/numpy/pull/29440>`__: MAINT: Prepare 2.3.x for further development.
+* `#29446 <https://github.com/numpy/numpy/pull/29446>`__: BUG: Fix test_configtool_pkgconfigdir to resolve PKG_CONFIG_DIR...
+* `#29447 <https://github.com/numpy/numpy/pull/29447>`__: BLD: allow targeting webassembly without emscripten
+* `#29460 <https://github.com/numpy/numpy/pull/29460>`__: MAINT: Backport write_release.py
+* `#29473 <https://github.com/numpy/numpy/pull/29473>`__: MAINT: Bump pypa/cibuildwheel from 3.1.0 to 3.1.2
+* `#29500 <https://github.com/numpy/numpy/pull/29500>`__: BUG: Always return a real dtype from linalg.cond (gh-18304) (#29333)
+* `#29501 <https://github.com/numpy/numpy/pull/29501>`__: MAINT: Add .file entry to all .s SVML files
+* `#29556 <https://github.com/numpy/numpy/pull/29556>`__: BUG: Casting from one timedelta64 to another didn't handle NAT.
+* `#29562 <https://github.com/numpy/numpy/pull/29562>`__: BLD: update vendored Meson to 1.8.3 [wheel build]
+* `#29563 <https://github.com/numpy/numpy/pull/29563>`__: BUG: Fix metadata not roundtripping when pickling datetime (#29555)
+* `#29587 <https://github.com/numpy/numpy/pull/29587>`__: TST: update link and version for Intel SDE download
+* `#29593 <https://github.com/numpy/numpy/pull/29593>`__: TYP: add ``sorted`` kwarg to ``unique``
+* `#29672 <https://github.com/numpy/numpy/pull/29672>`__: MAINT: Update pythoncapi-compat from main.
+* `#29673 <https://github.com/numpy/numpy/pull/29673>`__: MAINT: Update cibuildwheel.
+* `#29674 <https://github.com/numpy/numpy/pull/29674>`__: MAINT: Fix typo in wheels.yml
+* `#29683 <https://github.com/numpy/numpy/pull/29683>`__: BUG, BLD: Correct regex for ppc64 VSX3/VSX4 feature detection
+* `#29684 <https://github.com/numpy/numpy/pull/29684>`__: TYP: ndarray.fill() takes no keyword arguments
+* `#29685 <https://github.com/numpy/numpy/pull/29685>`__: BUG: avoid thread-unsafe refcount check in temp elision
+* `#29687 <https://github.com/numpy/numpy/pull/29687>`__: CI: replace comment-hider action in mypy_primer workflow
+* `#29689 <https://github.com/numpy/numpy/pull/29689>`__: BLD: Add missing <unordered_map> include
+* `#29691 <https://github.com/numpy/numpy/pull/29691>`__: BUG: use correct input dtype in flatiter assignment
+* `#29700 <https://github.com/numpy/numpy/pull/29700>`__: TYP: fix np.bool method declarations
+* `#29701 <https://github.com/numpy/numpy/pull/29701>`__: BUG: Correct ambiguous logic for s390x CPU feature detection

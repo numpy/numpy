@@ -1,3 +1,7 @@
+#include "numpy/npy_math.h"     // npy_get_floatstatus_barrier
+#include "numpy/numpyconfig.h"  // NPY_VISIBILITY_HIDDEN
+#include "blas_utils.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,10 +9,6 @@
 #ifdef __APPLE__
 #include <sys/sysctl.h>
 #endif
-
-#include "numpy/numpyconfig.h"  // NPY_VISIBILITY_HIDDEN
-#include "numpy/npy_math.h"     // npy_get_floatstatus_barrier
-#include "blas_utils.h"
 
 #if NPY_BLAS_CHECK_FPE_SUPPORT
 

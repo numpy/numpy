@@ -865,12 +865,6 @@ The C file is given below.
             }
         }
 
-        /* This a pointer to the above function */
-        PyUFuncGenericFunction funcs[1] = {&add_uint64_triplet};
-
-        /* These are the input and return dtypes of add_uint64_triplet. */
-        static const char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
-
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "struct_ufunc_test",

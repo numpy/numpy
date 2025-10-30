@@ -17,7 +17,7 @@ def normalize_axis_tuple(
     ndim: int,
     argname: str | None = None,
     allow_duplicate: bool | None = False,
-) -> tuple[int, int]: ...
+) -> tuple[int, ...]: ...
 
 def normalize_axis_index(
     axis: int = ...,

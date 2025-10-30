@@ -2,7 +2,6 @@ from typing import Literal as L, TypeAlias, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _32Bit, _64Bit
 
 FalseType: TypeAlias = L[False]
 TrueType: TypeAlias = L[True]
@@ -43,11 +42,11 @@ assert_type(i4 | i4, np.int32)
 assert_type(i4 ^ i4, np.int32)
 assert_type(i4 & i4, np.int32)
 
-assert_type(i8 << i4, np.signedinteger[_32Bit] | np.signedinteger[_64Bit])
-assert_type(i8 >> i4, np.signedinteger[_32Bit] | np.signedinteger[_64Bit])
-assert_type(i8 | i4, np.signedinteger[_32Bit] | np.signedinteger[_64Bit])
-assert_type(i8 ^ i4, np.signedinteger[_32Bit] | np.signedinteger[_64Bit])
-assert_type(i8 & i4, np.signedinteger[_32Bit] | np.signedinteger[_64Bit])
+assert_type(i8 << i4, np.signedinteger)
+assert_type(i8 >> i4, np.signedinteger)
+assert_type(i8 | i4, np.signedinteger)
+assert_type(i8 ^ i4, np.signedinteger)
+assert_type(i8 & i4, np.signedinteger)
 
 assert_type(i8 << b_, np.int64)
 assert_type(i8 >> b_, np.int64)
@@ -85,11 +84,11 @@ assert_type(u4 | i4, np.signedinteger)
 assert_type(u4 ^ i4, np.signedinteger)
 assert_type(u4 & i4, np.signedinteger)
 
-assert_type(u4 << i, np.signedinteger)
-assert_type(u4 >> i, np.signedinteger)
-assert_type(u4 | i, np.signedinteger)
-assert_type(u4 ^ i, np.signedinteger)
-assert_type(u4 & i, np.signedinteger)
+assert_type(u4 << i, np.uint32)
+assert_type(u4 >> i, np.uint32)
+assert_type(u4 | i, np.uint32)
+assert_type(u4 ^ i, np.uint32)
+assert_type(u4 & i, np.uint32)
 
 assert_type(u8 << b_, np.uint64)
 assert_type(u8 >> b_, np.uint64)

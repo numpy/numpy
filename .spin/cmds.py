@@ -141,11 +141,24 @@ else:
     default=default,
     help="Run tests with the given markers"
 )
+@click.option(
+    "-p",
+    "--parallel-threads",
+    metavar='PARALLEL_THREADS',
+    default="1",
+    help="Run tests many times in number of parallel threads under pytest-run-parallel."
+         " Can be set to `auto` to use all cores. Use `spin test -p <number> -- "
+         "--skip-thread-unsafe=true` to only run tests that can run in parallel. "
+         "pytest-run-parallel must be installed to use."
+)
 @spin.util.extend_command(spin.cmds.meson.test)
-def test(*, parent_callback, pytest_args, tests, markexpr, **kwargs):
+def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **kwargs):
     """
     By default, spin will run `-m 'not slow'`. To run the full test suite, use
     `spin test -m full`
+
+    When pytest-run-parallel is avaliable, use `spin test -p auto` or
+    `spin test -p <num_of_threads>` to run tests sequentional in parallel threads.
     """  # noqa: E501
     if (not pytest_args) and (not tests):
         pytest_args = ('--pyargs', 'numpy')
@@ -153,6 +166,9 @@ def test(*, parent_callback, pytest_args, tests, markexpr, **kwargs):
     if '-m' not in pytest_args:
         if markexpr != "full":
             pytest_args = ('-m', markexpr) + pytest_args
+
+    if parallel_threads != "1":
+        pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
@@ -519,6 +535,48 @@ def mypy(ctx):
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+
+@click.command()
+@click.option(
+    '--concise',
+    is_flag=True,
+    default=False,
+    help="Concise output format",
+)
+@meson.build_dir_option
+def stubtest(*, concise: bool, build_dir: str) -> None:
+    """🧐 Run stubtest on NumPy's .pyi stubs
+
+    Requires mypy to be installed
+    """
+    click.get_current_context().invoke(build)
+    meson._set_pythonpath(build_dir)
+    print(f"{build_dir = !r}")
+
+    import sysconfig
+    purellib = sysconfig.get_paths()["purelib"]
+    print(f"{purellib = !r}")
+
+    stubtest_dir = curdir.parent / 'tools' / 'stubtest'
+    mypy_config = stubtest_dir / 'mypy.ini'
+    allowlists = [stubtest_dir / 'allowlist.txt']
+    if sys.version_info < (3, 12):
+        allowlists.append(stubtest_dir / 'allowlist_py311.txt')
+    else:
+        allowlists.append(stubtest_dir / 'allowlist_py312.txt')
+
+    cmd = [
+        'stubtest',
+        '--ignore-disjoint-bases',
+        f'--mypy-config-file={mypy_config}',
+        *(f'--allowlist={allowlist}' for allowlist in allowlists),
+    ]
+    if concise:
+        cmd.append('--concise')
+    cmd.append('numpy')
+
+    spin.util.run(cmd)
 
 
 @click.command(context_settings={

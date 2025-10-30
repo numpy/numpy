@@ -459,7 +459,6 @@ else:
     from .lib._arraypad_impl import pad
     from .lib._arraysetops_impl import (
         ediff1d,
-        in1d,
         intersect1d,
         isin,
         setdiff1d,
@@ -506,7 +505,6 @@ else:
         sinc,
         sort_complex,
         trapezoid,
-        trapz,
         trim_zeros,
         unwrap,
         vectorize,
@@ -676,9 +674,6 @@ else:
     __array_api_version__ = "2024.12"
 
     from ._array_api_info import __array_namespace_info__
-
-    # now that numpy core module is imported, can initialize limits
-    _core.getlimits._register_known_types()
 
     __all__ = list(
         __numpy_submodules__ |

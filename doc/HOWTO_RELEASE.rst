@@ -4,142 +4,113 @@ releases for NumPy.
 Current build and release info
 ==============================
 
-Useful info can be found in the following locations:
+Useful info can be found in `building-from-source` in the docs as well as in
+these three files:
 
-* **Source tree**
-
-  - `INSTALL.rst <https://github.com/numpy/numpy/blob/main/INSTALL.rst>`_
-  - `pavement.py <https://github.com/numpy/numpy/blob/main/pavement.py>`_
-
-* **NumPy docs**
-
-  - `HOWTO_RELEASE.rst <https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst>`_
-  - `RELEASE_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst>`_
-  - `BRANCH_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst>`_
+- `HOWTO_RELEASE.rst <https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst>`_
+- `RELEASE_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst>`_
+- `BRANCH_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst>`_
 
 Supported platforms and versions
 ================================
-:ref:`NEP 29 <NEP29>` outlines which Python versions
-are supported; For the first half of 2020, this will be Python >= 3.6. We test
-NumPy against all these versions every time we merge code to main.  Binary
-installers may be available for a subset of these versions (see below).
+:ref:`NEP 29 <NEP29>` outlines which Python versions are supported *at a
+minimum*. We usually decide to keep support for a given Python version slightly
+longer than that minimum, to avoid giving other projects issues - this is at
+the discretion of the release manager.
 
-* **OS X**
+* **macOS**
 
-  OS X versions >= 10.9 are supported, for Python version support see
-  :ref:`NEP 29 <NEP29>`. We build binary wheels for OSX that are compatible with
-  Python.org Python, system Python, homebrew and macports - see this
-  `OSX wheel building summary <https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_
-  for details.
+  We aim to support the same set of macOS versions as are supported by
+  Python.org and `cibuildwheel`_ for any given Python version.
+  We build binary wheels for macOS that are compatible with common Python
+  installation methods, e.g., from python.org, ``python-build-standalone`` (the
+  ones ``uv`` installs), system Python, conda-forge, Homebrew and MacPorts.
 
 * **Windows**
 
   We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
-  We build NumPy using the `mingw-w64 toolchain`_, `cibuildwheels`_ and GitHub
-  actions.
+  We build NumPy using the most convenient compilers, which are (as of Aug
+  2025) MSVC for x86/x86-64 and Clang-cl for arm64, `cibuildwheel`_ and GitHub
+  Actions.
 
-.. _cibuildwheels: https://cibuildwheel.readthedocs.io/en/stable/
+.. _cibuildwheel: https://cibuildwheel.readthedocs.io/en/stable/
 
 * **Linux**
 
-  We build and ship `manylinux_2_28 <https://www.python.org/dev/peps/pep-0600>`_
-  wheels for NumPy.  Many Linux distributions include their own binary builds
-  of NumPy.
+  We build and ship ``manylinux`` and ``musllinux`` wheels for x86-64 and
+  aarch64 platforms on PyPI. Wheels for 32-bit platforms are not currently
+  provided. We aim to support the lowest non-EOL versions, and upgrade roughly
+  in sync with `cibuildwheel`_. See
+  `pypa/manylinux <https://github.com/pypa/manylinux>`__ and
+  `this distro compatibility table <https://github.com/mayeut/pep600_compliance?tab=readme-ov-file#distro-compatibility>`__
+  for more details.
 
-* **BSD / Solaris**
+* **BSD / Solaris / AIX**
 
-  No binaries are provided, but successful builds on Solaris and BSD have been
-  reported.
+  No binary wheels are provided on PyPI, however we expect building from source
+  on these platforms to work fine.
 
-Tool chain
+Toolchains
 ==========
-We build all our wheels on cloud infrastructure - so this list of compilers is
-for information and debugging builds locally.  See the ``.travis.yml`` script
-in the `numpy wheels`_ repo for an outdated source of the build recipes using
-multibuild.
+For building wheels, we use the following toolchains:
 
-.. _numpy wheels : https://github.com/MacPython/numpy-wheels
+- Linux: we use the default compilers in the ``manylinux``/``musllinux`` Docker
+  images, which is usually a relatively recent GCC version.
+- macOS: we use the Apple Clang compilers and XCode version installed on the
+  GitHub Actions runner image.
+- Windows: for x86 and x86-64 we use the default MSVC and Visual Studio
+  toolchain installed on the relevant GitHub actions runner image. Note that in
+  the past it has sometimes been necessary to use an older toolchain to avoid
+  causing problems through the static ``libnpymath`` library for SciPy - please
+  inspect the `numpy/numpy-release <https://github.com/numpy/numpy-release>`__
+  code and CI logs in case the exact version numbers need to be determined.
 
-Compilers
----------
-The same gcc version is used as the one with which Python itself is built on
-each platform. At the moment this means:
-
-- OS X builds on travis currently use `clang`.  It appears that binary wheels
-  for OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs
-  when building against the Python from the Python.org installers;
-- Windows builds use the `mingw-w64 toolchain`_;
-- Manylinux2014 wheels use the gcc provided on the Manylinux docker images.
-
-You will need Cython for building the binaries.  Cython compiles the ``.pyx``
-files in the NumPy distribution to ``.c`` files.
-
-.. _mingw-w64 toolchain : https://mingwpy.github.io
+For building from source, minimum compiler versions are tracked in the top-level
+``meson.build`` file.
 
 OpenBLAS
 --------
 
-All the wheels link to a version of OpenBLAS_ supplied via the openblas-libs_ repo.
-The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
+Most wheels link to a version of OpenBLAS_ supplied via the openblas-libs_ repo.
+The shared object (or DLL) is shipped within the wheel, renamed to prevent name
 collisions with other OpenBLAS shared objects that may exist in the filesystem.
 
-.. _OpenBLAS: https://github.com/xianyi/OpenBLAS
+.. _OpenBLAS: https://github.com/OpenMathLib/OpenBLAS
 .. _openblas-libs: https://github.com/MacPython/openblas-libs
-
-
-Building source archives and wheels
------------------------------------
-The NumPy wheels and sdist are now built using cibuildwheel with
-github actions.
-
 
 Building docs
 -------------
-We are no longer building ``PDF`` files. All that will be needed is
-
-- virtualenv (pip).
-
-The other requirements will be filled automatically during the documentation
-build process.
-
+We are no longer building ``pdf`` files. The requirements for building the
+``html`` docs are no different than for regular development. See the README of
+the `numpy/doc <https://github.com/numpy/doc>`__ repository and the step by
+step instructions in ``doc/RELEASE_WALKTHROUGH.rst`` for more details.
 
 Uploading to PyPI
 -----------------
-The only application needed for uploading is
-
-- twine (pip).
-
-You will also need a PyPI token, which is best kept on a keyring. See the
-twine keyring_  documentation for how to do that.
-
-.. _keyring: https://twine.readthedocs.io/en/stable/#keyring-support
-
+Creating a release on PyPI and uploading wheels and sdist is automated in CI
+and uses `PyPI's trusted publishing <https://docs.pypi.org/trusted-publishers/>`__.
+See the README in the `numpy/numpy-release <https://github.com/numpy/numpy-release>`__
+repository and the step by step instructions in ``doc/RELEASE_WALKTHROUGH.rst``
+for more details.
 
 Generating author/PR lists
 --------------------------
 You will need a personal access token
 `<https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/>`_
-so that scripts can access the github NumPy repository.
-
-- gitpython (pip)
-- pygithub (pip)
+so that scripts can access the GitHub NumPy repository. With that token, the
+author/PR changelog content can be generated by running ``spin changelog``. It
+may require a few extra packages, like ``gitpython`` and ``pygithub``.
 
 
 What is released
 ================
 
-* **Wheels**
-  We currently support Python 3.10-3.13 on Windows, OSX, and Linux.
+On PyPI we release wheels for a number of platforms (as discussed higher up),
+and an sdist.
 
-  * Windows: 32-bit and 64-bit wheels built using Github actions;
-  * OSX: x64_86 and arm64 OSX wheels built using Github actions;
-  * Linux: x64_86 and aarch64 Manylinux2014 wheels built using Github actions.
-
-* **Other**
-  Release notes and changelog
-
-* **Source distribution**
-  We build source releases in the .tar.gz format.
+On GitHub Releases we release the same sdist (because the source archives which
+are autogenerated by GitHub itself aren't complete), as well as the release
+notes and changelog.
 
 
 Release process
@@ -147,30 +118,11 @@ Release process
 
 Agree on a release schedule
 ---------------------------
-A typical release schedule is one beta, two release candidates and a final
-release.  It's best to discuss the timing on the mailing list first, in order
-for people to get their commits in on time, get doc wiki edits merged, etc.
-After a date is set, create a new maintenance/x.y.z branch, add new empty
-release notes for the next version in the main branch and update the Trac
-Milestones.
-
-
-Make sure current branch builds a package correctly
----------------------------------------------------
-The CI builds wheels when a PR header begins with ``REL``. Your last
-PR before releasing should be so marked and all the tests should pass.
-You can also do::
-
-    git clean -fxdq
-    python setup.py bdist_wheel
-    python setup.py sdist
-
-For details of the build process itself, it is best to read the
-Step-by-Step Directions below.
-
-.. note:: The following steps are repeated for the beta(s), release
-   candidates(s) and the final release.
-
+A typical release schedule for a feature release is two release candidates and
+a final release.  It's best to discuss the timing on the mailing list first, in
+order for people to get their commits in on time. After a date is set, create a
+new ``maintenance/x.y.z`` branch, add new empty release notes for the next version
+in the main branch and update the Milestones on the issue tracker.
 
 Check deprecations
 ------------------

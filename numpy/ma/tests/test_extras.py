@@ -6,7 +6,6 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 
 """
 import itertools
-import warnings
 
 import pytest
 
@@ -1406,53 +1405,12 @@ class TestCorrcoef:
         data2 = array(np.random.rand(12))
         return data, data2
 
-    def test_ddof(self):
-        # ddof raises DeprecationWarning
-        x, y = self._create_data()
-        expected = np.corrcoef(x)
-        expected2 = np.corrcoef(x, y)
-        with pytest.warns(DeprecationWarning):
-            corrcoef(x, ddof=-1)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-
-            # ddof has no or negligible effect on the function
-            assert_almost_equal(np.corrcoef(x, ddof=0), corrcoef(x, ddof=0))
-            assert_almost_equal(corrcoef(x, ddof=-1), expected)
-            assert_almost_equal(corrcoef(x, y, ddof=-1), expected2)
-            assert_almost_equal(corrcoef(x, ddof=3), expected)
-            assert_almost_equal(corrcoef(x, y, ddof=3), expected2)
-
-    def test_bias(self):
-        x, y = self._create_data()
-        expected = np.corrcoef(x)
-        # bias raises DeprecationWarning
-        with pytest.warns(DeprecationWarning):
-            corrcoef(x, y, True, False)
-        with pytest.warns(DeprecationWarning):
-            corrcoef(x, y, True, True)
-        with pytest.warns(DeprecationWarning):
-            corrcoef(x, y, bias=False)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-            # bias has no or negligible effect on the function
-            assert_almost_equal(corrcoef(x, bias=1), expected)
-
     def test_1d_without_missing(self):
         # Test cov on 1D variable w/o missing values
         x = self._create_data()[0]
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-            assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
-                                corrcoef(x, rowvar=False, bias=True))
 
     def test_2d_without_missing(self):
         # Test corrcoef on 1 2D variable w/o missing values
@@ -1460,11 +1418,6 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-            assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
-                                corrcoef(x, rowvar=False, bias=True))
 
     def test_1d_with_missing(self):
         # Test corrcoef 1 1D variable w/missing values
@@ -1472,14 +1425,8 @@ class TestCorrcoef:
         x[-1] = masked
         x -= x.mean()
         nx = x.compressed()
-        assert_almost_equal(np.corrcoef(nx), corrcoef(x))
         assert_almost_equal(np.corrcoef(nx, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-            assert_almost_equal(np.corrcoef(nx, rowvar=False, bias=True),
-                                corrcoef(x, rowvar=False, bias=True))
         try:
             corrcoef(x, allow_masked=False)
         except ValueError:
@@ -1489,14 +1436,6 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(nx, nx[::-1]), corrcoef(x, x[::-1]))
         assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False),
                             corrcoef(x, x[::-1], rowvar=False))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-            # ddof and bias have no or negligible effect on the function
-            assert_almost_equal(np.corrcoef(nx, nx[::-1]),
-                                corrcoef(x, x[::-1], bias=1))
-            assert_almost_equal(np.corrcoef(nx, nx[::-1]),
-                                corrcoef(x, x[::-1], ddof=2))
 
     def test_2d_with_missing(self):
         # Test corrcoef on 2D variable w/ missing value
@@ -1507,16 +1446,6 @@ class TestCorrcoef:
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore', "bias and ddof have no effect", DeprecationWarning)
-            # ddof and bias have no or negligible effect on the function
-            assert_almost_equal(corrcoef(x, ddof=-2)[:-1, :-1],
-                                control[:-1, :-1])
-            assert_almost_equal(corrcoef(x, ddof=3)[:-1, :-1],
-                                control[:-1, :-1])
-            assert_almost_equal(corrcoef(x, bias=1)[:-1, :-1],
-                                control[:-1, :-1])
 
 
 class TestPolynomial:

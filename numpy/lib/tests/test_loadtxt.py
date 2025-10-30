@@ -40,10 +40,9 @@ def test_comment_multiple_chars(comment):
     assert_equal(a, [[1.5, 2.5], [3.0, 4.0], [5.5, 6.0]])
 
 
-@pytest.fixture
 def mixed_types_structured():
     """
-    Fixture providing heterogeneous input data with a structured dtype, along
+    Function providing heterogeneous input data with a structured dtype, along
     with the associated structured array.
     """
     data = StringIO(
@@ -74,15 +73,14 @@ def mixed_types_structured():
 
 
 @pytest.mark.parametrize('skiprows', [0, 1, 2, 3])
-def test_structured_dtype_and_skiprows_no_empty_lines(
-        skiprows, mixed_types_structured):
-    data, dtype, expected = mixed_types_structured
+def test_structured_dtype_and_skiprows_no_empty_lines(skiprows):
+    data, dtype, expected = mixed_types_structured()
     a = np.loadtxt(data, dtype=dtype, delimiter=";", skiprows=skiprows)
     assert_array_equal(a, expected[skiprows:])
 
 
-def test_unpack_structured(mixed_types_structured):
-    data, dtype, expected = mixed_types_structured
+def test_unpack_structured():
+    data, dtype, expected = mixed_types_structured()
 
     a, b, c, d = np.loadtxt(data, dtype=dtype, delimiter=";", unpack=True)
     assert_array_equal(a, expected["f0"])

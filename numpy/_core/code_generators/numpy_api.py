@@ -412,7 +412,7 @@ multiarray_funcs_api = {
 }
 
 ufunc_types_api = {
-    'PyUFunc_Type':                             (0,)
+    'PyUFunc_Type':                             (0,),
 }
 
 ufunc_funcs_api = {
@@ -468,6 +468,8 @@ ufunc_funcs_api = {
     'PyUFunc_AddPromoter':                           (44, MinVersion("2.0")),
     'PyUFunc_AddWrappingLoop':                       (45, MinVersion("2.0")),
     'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
+    # End 2.0 API
+    'PyUFunc_AddLoopsFromSpecs':                     (47, MinVersion("2.4")),
 }
 
 # List of all the dicts which define the C API

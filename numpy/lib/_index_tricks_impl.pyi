@@ -11,7 +11,7 @@ from typing import (
     final,
     overload,
 )
-from typing_extensions import TypeVar, deprecated
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy._core.multiarray import ravel_multi_index, unravel_index
@@ -61,21 +61,21 @@ _Trans1DT_co = TypeVar("_Trans1DT_co", bound=int, default=L[-1], covariant=True)
 
 class ndenumerate(Generic[_ScalarT_co]):
     @overload
-    def __new__(cls, arr: _FiniteNestedSequence[_SupportsArray[np.dtype[_ScalarT]]]) -> ndenumerate[_ScalarT]: ...
+    def __init__(self: ndenumerate[_ScalarT], arr: _FiniteNestedSequence[_SupportsArray[np.dtype[_ScalarT]]]) -> None: ...
     @overload
-    def __new__(cls, arr: str | _NestedSequence[str]) -> ndenumerate[np.str_]: ...
+    def __init__(self: ndenumerate[np.str_], arr: str | _NestedSequence[str]) -> None: ...
     @overload
-    def __new__(cls, arr: bytes | _NestedSequence[bytes]) -> ndenumerate[np.bytes_]: ...
+    def __init__(self: ndenumerate[np.bytes_], arr: bytes | _NestedSequence[bytes]) -> None: ...
     @overload
-    def __new__(cls, arr: bool | _NestedSequence[bool]) -> ndenumerate[np.bool]: ...
+    def __init__(self: ndenumerate[np.bool], arr: bool | _NestedSequence[bool]) -> None: ...
     @overload
-    def __new__(cls, arr: int | _NestedSequence[int]) -> ndenumerate[np.intp]: ...
+    def __init__(self: ndenumerate[np.intp], arr: int | _NestedSequence[int]) -> None: ...
     @overload
-    def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[np.float64]: ...
+    def __init__(self: ndenumerate[np.float64], arr: float | _NestedSequence[float]) -> None: ...
     @overload
-    def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[np.complex128]: ...
+    def __init__(self: ndenumerate[np.complex128], arr: complex | _NestedSequence[complex]) -> None: ...
     @overload
-    def __new__(cls, arr: object) -> ndenumerate[Any]: ...
+    def __init__(self: ndenumerate[Incomplete], arr: object) -> None: ...
 
     # The first overload is a (semi-)workaround for a mypy bug (tested with v1.10 and v1.11)
     @overload
@@ -101,13 +101,11 @@ class ndindex:
     def __iter__(self) -> Self: ...
     def __next__(self) -> _AnyShape: ...
 
-    #
-    @deprecated("Deprecated since 1.20.0.")
-    def ndincr(self, /) -> None: ...
-
 class nd_grid(Generic[_BoolT_co]):
+    __slots__ = ("sparse",)
+
     sparse: _BoolT_co
-    def __init__(self, sparse: _BoolT_co = ...) -> None: ...
+    def __init__(self, sparse: _BoolT_co = ...) -> None: ...  # stubdefaulter: ignore[missing-default]
     @overload
     def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Incomplete]: ...
     @overload
@@ -115,10 +113,14 @@ class nd_grid(Generic[_BoolT_co]):
 
 @final
 class MGridClass(nd_grid[L[False]]):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 @final
 class OGridClass(nd_grid[L[True]]):
+    __slots__ = ()
+
     def __init__(self) -> None: ...
 
 class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
@@ -131,14 +133,16 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
     ndmin: _NDMinT_co
     trans1d: _Trans1DT_co
 
-    #
+    # NOTE: mypy does not understand that these default values are the same as the
+    # TypeVar defaults. Since the workaround would require us to write 16 overloads,
+    # we ignore the assignment type errors here.
     def __init__(
         self,
         /,
-        axis: _AxisT_co = ...,
-        matrix: _MatrixT_co = ...,
-        ndmin: _NDMinT_co = ...,
-        trans1d: _Trans1DT_co = ...,
+        axis: _AxisT_co = 0,  # type: ignore[assignment]
+        matrix: _MatrixT_co = False,  # type: ignore[assignment]
+        ndmin: _NDMinT_co = 1,  # type: ignore[assignment]
+        trans1d: _Trans1DT_co = -1,  # type: ignore[assignment]
     ) -> None: ...
 
     # TODO(jorenham): annotate this
@@ -155,13 +159,19 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
 
 @final
 class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
+    __slots__ = ()
+
     def __init__(self, /) -> None: ...
 
 @final
 class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
+    __slots__ = ()
+
     def __init__(self, /) -> None: ...
 
 class IndexExpression(Generic[_BoolT_co]):
+    __slots__ = ("maketuple",)
+
     maketuple: _BoolT_co
     def __init__(self, maketuple: _BoolT_co) -> None: ...
     @overload

@@ -6,6 +6,10 @@
 #include "numpy/npy_common.h"
 #include "npy_atomic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Cached references to objects obtained via an import. All of these are
  * can be initialized at any time by npy_cache_import_runtime.
@@ -45,6 +49,8 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_var;
     PyObject *_view_is_safe;
     PyObject *_void_scalar_to_string;
+    PyObject *sort;
+    PyObject *argsort;
 } npy_runtime_imports_struct;
 
 NPY_VISIBILITY_HIDDEN extern npy_runtime_imports_struct npy_runtime_imports;
@@ -106,10 +112,23 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
 #endif
         Py_DECREF(value);
     }
-    return 0;    
+    return 0;
 }
 
 NPY_NO_EXPORT int
 init_import_mutex(void);
+
+/*! \brief Import a Python object from an entry point string.
+
+ * The name should be of the form "(module ':')? (object '.')* attr".
+ * If no module is present, it is assumed to be "numpy".
+ * On error, returns NULL.
+ */
+NPY_NO_EXPORT PyObject*
+npy_import_entry_point(const char *entry_point);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_ */

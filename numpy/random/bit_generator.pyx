@@ -34,7 +34,6 @@ SOFTWARE.
 """
 
 import abc
-import sys
 from itertools import cycle
 import re
 from secrets import randbits

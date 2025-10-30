@@ -173,6 +173,14 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Notes
     -----
+    .. warning::
+
+       This function creates views with overlapping memory. When
+       ``writeable=True``, writing to the view will modify the original array
+       and may affect multiple view positions. See the examples below and
+       :doc:`this guide </user/basics.copies>`
+       about the difference between copies and views.
+
     For many applications using a sliding window view can be convenient, but
     potentially very slow. Often specialized solutions exist, for example:
 
@@ -296,6 +304,31 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> moving_average = v.mean(axis=-1)
     >>> moving_average
     array([1., 2., 3., 4.])
+
+    The two examples below demonstrate the effect of ``writeable=True``.
+
+    Creating a view with the default ``writeable=False`` and then writing to
+    it raises an error.
+
+    >>> v = sliding_window_view(x, 3)
+    >>> v[0,1] = 10
+    Traceback (most recent call last):
+    ...
+    ValueError: assignment destination is read-only
+
+    Creating a view with ``writeable=True`` and then writing to it changes
+    the original array and multiple view positions.
+
+    >>> x = np.arange(6)  # reset x for the second example
+    >>> v = sliding_window_view(x, 3, writeable=True)
+    >>> v[0,1] = 10
+    >>> x
+    array([ 0, 10,  2,  3,  4,  5])
+    >>> v
+    array([[ 0, 10,  2],
+           [10,  2,  3],
+           [ 2,  3,  4],
+           [ 3,  4,  5]])
 
     Note that a sliding window approach is often **not** optimal (see Notes).
     """
