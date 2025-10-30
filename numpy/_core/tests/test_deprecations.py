@@ -458,3 +458,11 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
     def test_extremem_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
+
+
+class TestFixDeprecation(_DeprecationTestCase):
+    # Deprecated in Numpy 2.4, 2025-10-30
+    message = "The function numpy.fix is deprecated"
+
+    def test_assert_warns_deprecated(self):
+        self.assert_deprecated(lambda: np.fix(1))
