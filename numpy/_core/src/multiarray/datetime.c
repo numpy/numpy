@@ -2561,7 +2561,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             }
             /* If output is NaT, skip this warning. */
             if(*out != NPY_DATETIME_NAT && meta->base == NPY_FR_GENERIC) {
-                if (DEPRECATE_FUTUREWARNING(
+                if (DEPRECATE(
                             "Using 'generic' unit for NumPy timedelta is deprecated, "
                             "and will raise an error in the future. Please use a "
                             "specific units instead.") < 0) {
@@ -2580,7 +2580,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             meta->num = 1;
         }
         if (meta->base == NPY_FR_GENERIC) {
-            if (DEPRECATE_FUTUREWARNING(
+            if (DEPRECATE(
                         "Using 'generic' unit for NumPy timedelta is deprecated, "
                         "and will raise an error in the future. "
                         "Please use a specific units instead.") < 0) {
