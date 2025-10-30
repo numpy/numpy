@@ -9,7 +9,7 @@
  * quite clear.
  * This checks always on all ARM (it is a small check overall).
  */
-#if defined(__aarch64__)
+#if defined(__aarch64__) && defined(HAVE_CBLAS)
 #define NPY_BLAS_CHECK_FPE_SUPPORT 1
 #else
 #define NPY_BLAS_CHECK_FPE_SUPPORT 0
