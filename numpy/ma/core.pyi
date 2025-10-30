@@ -3545,8 +3545,81 @@ def identity(
     hardmask: bool = False,
 ) -> MaskedArray[tuple[int, int], np.dtype[Incomplete]]: ...
 
+# keep roughly in sync with `_core.numeric.indices`
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: type[int] = int,
+    sparse: Literal[False] = False,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[np.intp]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: type[int],
+    sparse: Literal[True],
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[np.intp], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: type[int] = int,
+    *,
+    sparse: Literal[True],
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[np.intp], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: _DTypeLike[_ScalarT],
+    sparse: Literal[False] = False,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: _DTypeLike[_ScalarT],
+    sparse: Literal[True],
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[_ScalarT], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike | None = int,
+    sparse: Literal[False] = False,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[Incomplete]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike | None,
+    sparse: Literal[True],
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[Incomplete], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike | None = int,
+    *,
+    sparse: Literal[True],
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[Incomplete], ...]: ...
+
 #
-indices: _convert2ma = ...
 squeeze: _convert2ma = ...
 
 def append(a, b, axis=None): ...
