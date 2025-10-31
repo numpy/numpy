@@ -8,7 +8,6 @@
 #include <cstring>
 #include <functional>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <numpy/npy_common.h>
@@ -154,6 +153,121 @@ void copy_complex(char *data, T *value) {
     return;
 }
 
+template <typename HashmapType>
+static PyObject*
+create_index_array_from_hashmap(
+    const HashmapType &hashmap,
+    npy_intp num_unique)
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyObject *index_array = PyArray_NewFromDescr(
+        &PyArray_Type,
+        PyArray_DescrFromType(NPY_INTP),
+        1, // ndim
+        &num_unique, // shape
+        NULL, // strides
+        NULL, // data
+        NPY_ARRAY_WRITEABLE, // flags
+        NULL // obj
+    );
+    if (index_array == NULL) {
+        return NULL;
+    }
+    NPY_DISABLE_C_API;
+
+    PyThreadState *_save = PyEval_SaveThread();
+    auto save_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save);
+    });
+
+    char *odata = PyArray_BYTES((PyArrayObject *)index_array);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)index_array)[0];
+    for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
+        *((npy_intp *)odata) = it->second.front();
+    }
+
+    return index_array;
+}
+
+template <typename HashmapType>
+static PyObject*
+create_inverse_array_from_hashmap(
+    const HashmapType &hashmap,
+    npy_intp isize)
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyObject *inverse_array = PyArray_NewFromDescr(
+        &PyArray_Type,
+        PyArray_DescrFromType(NPY_INTP),
+        1, // ndim
+        &isize, // shape
+        NULL, // strides
+        NULL, // data
+        NPY_ARRAY_WRITEABLE, // flags
+        NULL // obj
+    );
+    if (inverse_array == NULL) {
+        return NULL;
+    }
+    NPY_DISABLE_C_API;
+
+    PyThreadState *_save = PyEval_SaveThread();
+    auto save_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save);
+    });
+
+    char *odata = PyArray_BYTES((PyArrayObject *)inverse_array);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)inverse_array)[0];
+    npy_intp value = 0;
+    for (auto it = hashmap.begin(); it != hashmap.end(); it++, value++) {
+        for (npy_intp index : it->second) {
+            char *ptr = odata + index * ostride;
+            *((npy_intp *)ptr) = value;
+        }
+    }
+
+    return inverse_array;
+}
+
+template <typename HashmapType>
+static PyObject*
+create_counts_array_from_hashmap(
+    const HashmapType &hashmap,
+    npy_intp num_unique)
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyObject *counts_array = PyArray_NewFromDescr(
+        &PyArray_Type,
+        PyArray_DescrFromType(NPY_INTP),
+        1, // ndim
+        &num_unique, // shape
+        NULL, // strides
+        NULL, // data
+        NPY_ARRAY_WRITEABLE, // flags
+        NULL // obj
+    );
+    if (counts_array == NULL) {
+        return NULL;
+    }
+    NPY_DISABLE_C_API;
+
+    PyThreadState *_save = PyEval_SaveThread();
+    auto save_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save);
+    });
+
+    char *odata = PyArray_BYTES((PyArrayObject *)counts_array);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)counts_array)[0];
+    for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
+        *((npy_intp *)odata) = (npy_intp)it->second.size();
+    }
+
+    return counts_array;
+}
+
 template <
     typename T,
     size_t (*hash_func)(const T *, npy_bool),
@@ -161,7 +275,7 @@ template <
     void (*copy_func)(char *, T *)
 >
 static PyObject*
-unique_numeric(PyArrayObject *self, npy_bool equal_nan)
+unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of numeric (integer or complex).
@@ -185,12 +299,14 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
         return equal_func(lhs, rhs, equal_nan);
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // Reserve hashmap capacity in advance to minimize reallocations and collisions.
     // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
     // - Reserving for all elements (isize) may over-allocate when there are few unique values.
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
+    // Note: The hashmap stores a vector of indices for each unique value,
+    // where each index represents a position in the input array where the value appears.
+    std::unordered_map<T *, std::vector<npy_intp>, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -198,39 +314,86 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert((T *)idata);
+        hashmap[(T *)idata].emplace_back(i);
     }
 
-    npy_intp length = hashset.size();
+    npy_intp num_unique = hashmap.size();
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
+    // Always return a tuple of 4 elements: (unique, index, inverse, counts)
+    PyObject *res_obj = PyTuple_New(4);
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    PyObject *unique_array = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
         1, // ndim
-        &length, // shape
+        &num_unique, // shape
         NULL, // strides
         NULL, // data
         // This flag is needed to be able to call .sort on it.
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-
-    if (res_obj == NULL) {
+    if (unique_array == NULL) {
+        Py_DECREF(res_obj);
         return NULL;
     }
     NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    PyThreadState *_save2 = PyEval_SaveThread();
+
+    char *odata = PyArray_BYTES((PyArrayObject *)unique_array);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)unique_array)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        copy_func(odata, *it);
+    for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
+        copy_func(odata, it->first);
+    }
+
+    PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+    PyEval_RestoreThread(_save2);
+
+    // Index array (or None)
+    if (return_index) {
+        PyObject *index_array = create_index_array_from_hashmap(hashmap, num_unique);
+        if (index_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 1, index_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 1, Py_None);
+    }
+
+    // Inverse array (or None)
+    if (return_inverse) {
+        PyObject *inverse_array = create_inverse_array_from_hashmap(hashmap, isize);
+        if (inverse_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 2, Py_None);
+    }
+
+    // Counts array (or None)
+    if (return_counts) {
+        PyObject *counts_array = create_counts_array_from_hashmap(hashmap, num_unique);
+        if (counts_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 3, counts_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 3, Py_None);
     }
 
     return res_obj;
@@ -238,7 +401,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
 
 template <typename T>
 static PyObject*
-unique_string(PyArrayObject *self, npy_bool equal_nan)
+unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of fixed size strings.
@@ -265,12 +428,14 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
         return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // Reserve hashmap capacity in advance to minimize reallocations and collisions.
     // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
     // - Reserving for all elements (isize) may over-allocate when there are few unique values.
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
+    // Note: The hashmap stores a vector of indices for each unique value,
+    // where each index represents a position in the input array where the value appears.
+    std::unordered_map<T *, std::vector<npy_intp>, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -278,46 +443,93 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert((T *)idata);
+        hashmap[(T *)idata].emplace_back(i);
     }
 
-    npy_intp length = hashset.size();
+    npy_intp num_unique = hashmap.size();
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
+    // Always return a tuple of 4 elements: (unique, index, inverse, counts)
+    PyObject *res_obj = PyTuple_New(4);
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    PyObject *unique_array = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
         1, // ndim
-        &length, // shape
+        &num_unique, // shape
         NULL, // strides
         NULL, // data
         // This flag is needed to be able to call .sort on it.
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-
-    if (res_obj == NULL) {
+    if (unique_array == NULL) {
+        Py_DECREF(res_obj);
         return NULL;
     }
+
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    char *odata = PyArray_BYTES((PyArrayObject *)unique_array);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)unique_array)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        std::memcpy(odata, *it, itemsize);
+    for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
+        std::memcpy(odata, it->first, itemsize);
+    }
+
+    PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+    PyEval_RestoreThread(_save2);
+
+    // Index array (or None)
+    if (return_index) {
+        PyObject *index_array = create_index_array_from_hashmap(hashmap, num_unique);
+        if (index_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 1, index_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 1, Py_None);
+    }
+
+    // Inverse array (or None)
+    if (return_inverse) {
+        PyObject *inverse_array = create_inverse_array_from_hashmap(hashmap, isize);
+        if (inverse_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 2, Py_None);
+    }
+
+    // Counts array (or None)
+    if (return_counts) {
+        PyObject *counts_array = create_counts_array_from_hashmap(hashmap, num_unique);
+        if (counts_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 3, counts_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 3, Py_None);
     }
 
     return res_obj;
 }
 
 static PyObject*
-unique_vstring(PyArrayObject *self, npy_bool equal_nan)
+unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array.
@@ -363,12 +575,14 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         return std::memcmp(lhs->buf, rhs->buf, lhs->size) == 0;
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // Reserve hashmap capacity in advance to minimize reallocations and collisions.
     // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
     // - Reserving for all elements (isize) may over-allocate when there are few unique values.
     // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<npy_static_string *, decltype(hash), decltype(equal)> hashset(
+    // Note: The hashmap stores a vector of indices for each unique value,
+    // where each index represents a position in the input array where the value appears.
+    std::unordered_map<npy_static_string *, std::vector<npy_intp>, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -385,58 +599,106 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
                 "Failed to load string from packed static string. ");
             return NULL;
         }
-        hashset.insert(&unpacked_strings[i]);
+        hashmap[&unpacked_strings[i]].emplace_back(i);
     }
 
     NpyString_release_allocator(in_allocator);
 
-    npy_intp length = hashset.size();
+    npy_intp num_unique = hashmap.size();
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
+    // Always return a tuple of 4 elements: (unique, index, inverse, counts)
+    PyObject *res_obj = PyTuple_New(4);
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    PyObject *unique_array = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
         1, // ndim
-        &length, // shape
+        &num_unique, // shape
         NULL, // strides
         NULL, // data
         // This flag is needed to be able to call .sort on it.
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-    if (res_obj == NULL) {
+    if (unique_array == NULL) {
+        Py_DECREF(res_obj);
         return NULL;
     }
-    PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
+    PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)unique_array);
     Py_INCREF(res_descr);
     NPY_DISABLE_C_API;
 
     PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
 
     npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
     auto out_allocator_dealloc = finally([&]() {
         NpyString_release_allocator(out_allocator);
     });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    char *odata = PyArray_BYTES((PyArrayObject *)unique_array);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)unique_array)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+    for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
         int pack_status = 0;
-        if ((*it)->buf == NULL) {
+        if (it->first->buf == NULL) {
             pack_status = NpyString_pack_null(out_allocator, packed_string);
         } else {
-            pack_status = NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
+            pack_status = NpyString_pack(out_allocator, packed_string, it->first->buf, it->first->size);
         }
         if (pack_status == -1) {
             // string packing failed
+            Py_DECREF(res_obj);
             return NULL;
         }
+    }
+
+    PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+    PyEval_RestoreThread(_save2);
+
+    // Index array (or None)
+    if (return_index) {
+        PyObject *index_array = create_index_array_from_hashmap(hashmap, num_unique);
+        if (index_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 1, index_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 1, Py_None);
+    }
+
+    // Inverse array (or None)
+    if (return_inverse) {
+        PyObject *inverse_array = create_inverse_array_from_hashmap(hashmap, isize);
+        if (inverse_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 2, Py_None);
+    }
+
+    // Counts array (or None)
+    if (return_counts) {
+        PyObject *counts_array = create_counts_array_from_hashmap(hashmap, num_unique);
+        if (counts_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        PyTuple_SET_ITEM(res_obj, 3, counts_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 3, Py_None);
     }
 
     return res_obj;
@@ -444,7 +706,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
 
 
 // this map contains the functions used for each item size.
-typedef std::function<PyObject *(PyArrayObject *, npy_bool)> function_type;
+typedef std::function<PyObject *(PyArrayObject *, npy_bool, npy_bool, npy_bool, npy_bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
     {NPY_BYTE, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>>},
     {NPY_UBYTE, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>>},
@@ -522,11 +784,17 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
 {
     PyArrayObject *arr = NULL;
     npy_bool equal_nan = NPY_TRUE;  // default to True
+    npy_bool return_index = NPY_FALSE;
+    npy_bool return_inverse = NPY_FALSE;
+    npy_bool return_counts = NPY_FALSE;
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
                             "arr", &PyArray_Converter, &arr,
                             "|equal_nan",  &PyArray_BoolConverter, &equal_nan,
+                            "|return_index", &PyArray_BoolConverter, &return_index,
+                            "|return_inverse", &PyArray_BoolConverter, &return_inverse,
+                            "|return_counts", &PyArray_BoolConverter, &return_counts,
                             NULL, NULL, NULL
                             ) < 0
     ) {
@@ -540,7 +808,7 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
             Py_RETURN_NOTIMPLEMENTED;
         }
 
-        return unique_funcs[type](arr, equal_nan);
+        return unique_funcs[type](arr, equal_nan, return_index, return_inverse, return_counts);
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();
