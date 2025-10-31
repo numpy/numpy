@@ -1187,6 +1187,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/shape.c',
   'src/multiarray/strfuncs.c',
   'src/multiarray/stringdtype/casts.cpp',
+  'src/multiarray/stringdtype/sorts.c',
   'src/multiarray/stringdtype/dtype.c',
   'src/multiarray/stringdtype/utf8_utils.c',
   'src/multiarray/stringdtype/static_string.c',
