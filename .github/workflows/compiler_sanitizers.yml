@@ -49,12 +49,12 @@ jobs:
         pyenv --version
     - name: Set up LLVM
       run: |
-        brew install llvm
-        LLVM_PREFIX=$(brew --prefix llvm)
+        brew install llvm@20
+        LLVM_PREFIX=$(brew --prefix llvm@20)
         echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
         echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
         echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
-        echo CXXFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
+        echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
         CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14
