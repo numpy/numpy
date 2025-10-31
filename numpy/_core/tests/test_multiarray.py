@@ -4,6 +4,7 @@ import ctypes
 import functools
 import gc
 import importlib
+import inspect
 import io
 import itertools
 import mmap
@@ -10872,3 +10873,32 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
     a = np.array([1], dtype=dtype)
     b = a.__array__(None)
     assert_array_equal(a, b, strict=True)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "methodname",
+    [
+        "__array__", "__array_finalize__", "__array_wrap__",
+        "__copy__", "__deepcopy__", "__reduce__", "__setstate__",
+        "all", "any", "argmax", "argmin", "argsort", "argpartition", "astype",
+        "byteswap", "choose", "clip", "compress", "conj", "conjugate", "copy",
+        "cumprod", "cumsum", "diagonal", "dot", "dump", "dumps", "fill", "flatten",
+        "getfield", "item", "max", "mean", "min", "nonzero", "prod", "put", "ravel",
+        "repeat", "reshape", "resize", "round", "searchsorted", "setfield", "setflags",
+        "sort", "partition", "squeeze", "std", "sum", "swapaxes", "take", "tofile",
+        "tolist", "tobytes", "trace", "transpose", "var", "view",
+    ],
+)
+def test_array_method_signatures(methodname: str):
+    method = getattr(np.ndarray, methodname)
+    assert callable(method)
+
+    try:
+        sig = inspect.signature(method)
+    except ValueError as e:
+        pytest.fail(f"Could not get signature for np.ndarray.{methodname}: {e}")
+
+    assert "self" in sig.parameters
+    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
