@@ -685,7 +685,9 @@ def run_pipeline(lottery_key: str, sequence_length: int = 5,
     meta_inv = scaler.inverse_transform(meta_pred)[0]
     ga_inv = scaler.inverse_transform(ga_pred.reshape(1, -1))[0]
 
-    final_prediction = mode([np.round(meta_inv), np.round(ga_inv)], axis=0)[0][0]
+    final_prediction = mode(
+        [np.round(meta_inv), np.round(ga_inv)], axis=0, keepdims=False
+    ).mode
 
     if use_shap:
         explain_with_shap(transformer, X)
