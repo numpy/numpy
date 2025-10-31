@@ -124,6 +124,10 @@ add_newdoc_for_scalar_type('intc', '(value=0, /)', """
 Signed integer type, compatible with C ``int``.
 """)
 
+add_newdoc_for_scalar_type('long', '(value=0, /)', """
+Signed integer type, compatible with C ``long``.
+""")
+
 # TODO: These docs probably need an if to highlight the default rather than
 #       the C-types (and be correct).
 add_newdoc_for_scalar_type('int_', '(value=0, /)', """
@@ -150,8 +154,12 @@ add_newdoc_for_scalar_type('uint', '(value=0, /)', """
 Unsigned signed integer type, 64bit on 64bit systems and 32bit on 32bit systems.
 """)
 
+add_newdoc_for_scalar_type('ulong', '(value=0, /)', """
+Unsigned integer type, compatible with C ``unsigned long``.
+""")
+
 add_newdoc_for_scalar_type('ulonglong', '(value=0, /)', """
-Signed integer type, compatible with C ``unsigned long long``.
+Unsigned integer type, compatible with C ``unsigned long long``.
 """)
 
 add_newdoc_for_scalar_type('half', '(value=0, /)', """
