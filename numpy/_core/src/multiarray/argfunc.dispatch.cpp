@@ -213,40 +213,25 @@ simd_argfunc_large(T *ip, npy_intp len)
             acc_indices = hn::IfThenElse(hn::RebindMask(_Tag<UnsignedT>(), m_acc), hn::Add(vi, idx_dcba), acc_indices);
 
             if constexpr (IsFloatingPoint) {
-                auto nnan_a  = hn::Not(hn::IsNaN(a));
-                auto nnan_b  = hn::Not(hn::IsNaN(b));
-                auto nnan_c  = hn::Not(hn::IsNaN(c));
-                auto nnan_d  = hn::Not(hn::IsNaN(d));
-                auto nnan_ab = hn::And(nnan_a, nnan_b);
-                auto nnan_cd = hn::And(nnan_c, nnan_d);
-
-                npy_uint64 nnan = 0;
-                hn::StoreMaskBits(_Tag<T>(), hn::And(nnan_ab, nnan_cd), (uint8_t*)&nnan);
-#if HWY_IS_BIG_ENDIAN
-                static_assert(kMaxLanes<T> <= 8,
-                      "This conversion is not supported for SIMD widths "
-                      "larger than 256 bits.");
-                nnan = ((uint8_t *)&nnan)[0];
-#endif
-
-                if ((unsigned long long int)nnan != ((1ULL << vstep) - 1)) {
-                    npy_uint64 nnan_4[4];
-                    hn::StoreMaskBits(_Tag<T>(), nnan_a, (uint8_t*)&(nnan_4[0]));
-                    hn::StoreMaskBits(_Tag<T>(), nnan_b, (uint8_t*)&(nnan_4[1]));
-                    hn::StoreMaskBits(_Tag<T>(), nnan_c, (uint8_t*)&(nnan_4[2]));
-                    hn::StoreMaskBits(_Tag<T>(), nnan_d, (uint8_t*)&(nnan_4[3]));
-#if HWY_IS_BIG_ENDIAN
-                    nnan_4[0] = ((uint8_t *)&nnan_4[0])[0];
-                    nnan_4[1] = ((uint8_t *)&nnan_4[1])[0];
-                    nnan_4[2] = ((uint8_t *)&nnan_4[2])[0];
-                    nnan_4[3] = ((uint8_t *)&nnan_4[3])[0];
-#endif
-                    for (int ni = 0; ni < 4; ++ni) {
-                        for (int vi = 0; vi < vstep; ++vi) {
-                            if (!((nnan_4[ni] >> vi) & 1)) {
-                                return i + ni*vstep + vi;
-                            }
-                        }
+                auto nan_a = hn::IsNaN(a);
+                auto nan_b = hn::IsNaN(b);
+                auto nan_c = hn::IsNaN(c);
+                auto nan_d = hn::IsNaN(d);
+                auto has_nan = hn::Or(hn::Or(nan_a, nan_b), hn::Or(nan_c, nan_d));
+                
+                if (hn::CountTrue(_Tag<T>(), has_nan) > 0) {
+                    int pos=0;
+                    if ((pos = hn::FindFirstTrue(_Tag<T>(), nan_a)) >= 0) {
+                        return i + pos;
+                    }
+                    if ((pos = hn::FindFirstTrue(_Tag<T>(), nan_b)) >= 0) {
+                        return i + vstep + pos;
+                    }
+                    if ((pos = hn::FindFirstTrue(_Tag<T>(), nan_c)) >= 0) {
+                        return i + vstep * 2 + pos;
+                    }
+                    if ((pos = hn::FindFirstTrue(_Tag<T>(), nan_d)) >= 0) {
+                        return i + vstep * 3 + pos;
                     }
                 }
             }
@@ -261,20 +246,10 @@ simd_argfunc_large(T *ip, npy_intp len)
             acc_indices = hn::IfThenElse(hn::RebindMask(_Tag<UnsignedT>(), m_acc), hn::Add(vi, vindices_0), acc_indices);
 
             if constexpr (IsFloatingPoint) {
-                auto nnan_a = hn::Not(hn::IsNaN(a));
-
-                npy_uint64 nnan = 0;
-                hn::StoreMaskBits(_Tag<T>(), nnan_a, (uint8_t*)&nnan);
-#if HWY_IS_BIG_ENDIAN
-                nnan = ((uint8_t *)&nnan)[0];
-#endif
-
-                if ((unsigned long long int)nnan != ((1ULL << vstep) - 1)) {
-                    for (int vi = 0; vi < vstep; ++vi) {
-                        if (!((nnan >> vi) & 1)) {
-                            return i + vi;
-                        }
-                    }
+                auto nan_a = hn::IsNaN(a);
+                if (hn::CountTrue(_Tag<T>(), nan_a) > 0) {
+                    int pos = hn::FindFirstTrue(_Tag<T>(), nan_a);
+                    return i + pos;
                 }
             }
         }
