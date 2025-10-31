@@ -508,9 +508,11 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, void *varr)
 NPY_NO_EXPORT int
 npy_quicksort(void *start, npy_intp num, void *varr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr = varr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_with_arr_or_descr(arr, &elsize, &cmp);
+    
     char *vp;
     char *pl = (char *)start;
     char *pr = pl + (num - 1) * elsize;
@@ -613,9 +615,11 @@ NPY_NO_EXPORT int
 npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
 {
     char *v = (char *)vv;
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr = varr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_with_arr_or_descr(arr, &elsize, &cmp);
+    
     char *vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;
