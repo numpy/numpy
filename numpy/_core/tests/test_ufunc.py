@@ -1,4 +1,5 @@
 import ctypes as ct
+import inspect
 import itertools
 import pickle
 import sys
@@ -2974,6 +2975,21 @@ def test_ufunc_input_floatingpoint_error(bad_offset):
     with np.errstate(invalid="raise"), pytest.raises(FloatingPointError):
         # Force cast inputs, but the buffered cast of `arr` to intp fails:
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "methodname",
+    ["__call__", "accumulate", "at", "outer", "reduce", "reduceat", "resolve_dtypes"],
+)
+def test_ufunc_method_signatures(methodname: str):
+    method = getattr(np.ufunc, methodname)
+
+    try:
+        _ = inspect.signature(method)
+    except ValueError as e:
+        pytest.fail(e.args[0])
 
 
 def test_trivial_loop_invalid_cast():
