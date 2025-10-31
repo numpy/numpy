@@ -4264,13 +4264,13 @@ bool_ = bool
 @final
 class object_(_RealMixin, generic):
     @overload
-    def __new__(cls, nothing_to_see_here: None = None, /) -> None: ...  # type: ignore[misc]
+    def __new__(cls, value: None = None, /) -> None: ...  # type: ignore[misc]
     @overload
-    def __new__(cls, stringy: _AnyStr, /) -> _AnyStr: ...  # type: ignore[misc]
+    def __new__(cls, value: _AnyStr, /) -> _AnyStr: ...  # type: ignore[misc]
     @overload
-    def __new__(cls, array: ndarray[_ShapeT, Any], /) -> ndarray[_ShapeT, dtype[Self]]: ...  # type: ignore[misc]
+    def __new__(cls, value: ndarray[_ShapeT, Any], /) -> ndarray[_ShapeT, dtype[Self]]: ...  # type: ignore[misc]
     @overload
-    def __new__(cls, sequence: SupportsLenAndGetItem[object], /) -> NDArray[Self]: ...  # type: ignore[misc]
+    def __new__(cls, value: SupportsLenAndGetItem[object], /) -> NDArray[Self]: ...  # type: ignore[misc]
     @overload
     def __new__(cls, value: _T, /) -> _T: ...  # type: ignore[misc]
     @overload  # catch-all
@@ -5628,9 +5628,9 @@ class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co
 
 class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
-    def __new__(cls, value: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
+    def __new__(cls, length_or_data: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
     @overload
-    def __new__(cls, value: Any, /, dtype: _DTypeLikeVoid) -> Self: ...
+    def __new__(cls, length_or_data: object, /, dtype: _DTypeLikeVoid) -> Self: ...
 
     @overload
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
