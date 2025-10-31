@@ -321,16 +321,14 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         HashmapValueType &value = hashmap[(T *)idata];
-        if (return_index) {
-            if (value.first_index == -1) {
-                value.first_index = i;
-            }
+        if (return_index && value.first_index == -1) {
+            value.first_index = i;
         }
         if (return_inverse) {
             value.indices.emplace_back(i);
         }
         if (return_counts) {
-            value.count += 1;
+            value.count++;
         }
     }
 
@@ -461,16 +459,14 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         HashmapValueType &value = hashmap[(T *)idata];
-        if (return_index) {
-            if (value.first_index == -1) {
-                value.first_index = i;
-            }
+        if (return_index && value.first_index == -1) {
+            value.first_index = i;
         }
         if (return_inverse) {
             value.indices.emplace_back(i);
         }
         if (return_counts) {
-            value.count += 1;
+            value.count++;
         }
     }
 
@@ -628,16 +624,14 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
             return NULL;
         }
         HashmapValueType &value = hashmap[&unpacked_strings[i]];
-        if (return_index) {
-            if (value.first_index == -1) {
-                value.first_index = i;
-            }
+        if (return_index && value.first_index == -1) {
+            value.first_index = i;
         }
         if (return_inverse) {
             value.indices.emplace_back(i);
         }
         if (return_counts) {
-            value.count += 1;
+            value.count++;
         }
     }
 
