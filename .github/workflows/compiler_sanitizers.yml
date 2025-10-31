@@ -54,7 +54,7 @@ jobs:
         echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
         echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
         echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
-        echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
+        echo CXXFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
         CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14
