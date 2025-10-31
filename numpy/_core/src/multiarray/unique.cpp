@@ -153,6 +153,12 @@ void copy_complex(char *data, T *value) {
     return;
 }
 
+struct HashmapValueType {
+    npy_intp first_index = -1;
+    std::vector<npy_intp> indices;
+    npy_intp count = 0;
+};
+
 template <typename HashmapType>
 static PyObject*
 create_index_array_from_hashmap(
@@ -184,7 +190,7 @@ create_index_array_from_hashmap(
     char *odata = PyArray_BYTES((PyArrayObject *)index_array);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)index_array)[0];
     for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
-        *((npy_intp *)odata) = it->second.front();
+        *((npy_intp *)odata) = it->second.first_index;
     }
 
     return index_array;
@@ -222,7 +228,7 @@ create_inverse_array_from_hashmap(
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)inverse_array)[0];
     npy_intp value = 0;
     for (auto it = hashmap.begin(); it != hashmap.end(); it++, value++) {
-        for (npy_intp index : it->second) {
+        for (npy_intp index : it->second.indices) {
             char *ptr = odata + index * ostride;
             *((npy_intp *)ptr) = value;
         }
@@ -262,7 +268,7 @@ create_counts_array_from_hashmap(
     char *odata = PyArray_BYTES((PyArrayObject *)counts_array);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)counts_array)[0];
     for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
-        *((npy_intp *)odata) = (npy_intp)it->second.size();
+        *((npy_intp *)odata) = (npy_intp)it->second.count;
     }
 
     return counts_array;
@@ -306,7 +312,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     // Note: The hashmap stores a vector of indices for each unique value,
     // where each index represents a position in the input array where the value appears.
-    std::unordered_map<T *, std::vector<npy_intp>, decltype(hash), decltype(equal)> hashmap(
+    std::unordered_map<T *, HashmapValueType, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -314,7 +320,18 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashmap[(T *)idata].emplace_back(i);
+        HashmapValueType &value = hashmap[(T *)idata];
+        if (return_index) {
+            if (value.first_index == -1) {
+                value.first_index = i;
+            }
+        }
+        if (return_inverse) {
+            value.indices.emplace_back(i);
+        }
+        if (return_counts) {
+            value.count += 1;
+        }
     }
 
     npy_intp num_unique = hashmap.size();
@@ -435,7 +452,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     // Note: The hashmap stores a vector of indices for each unique value,
     // where each index represents a position in the input array where the value appears.
-    std::unordered_map<T *, std::vector<npy_intp>, decltype(hash), decltype(equal)> hashmap(
+    std::unordered_map<T *, HashmapValueType, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -443,7 +460,18 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashmap[(T *)idata].emplace_back(i);
+        HashmapValueType &value = hashmap[(T *)idata];
+        if (return_index) {
+            if (value.first_index == -1) {
+                value.first_index = i;
+            }
+        }
+        if (return_inverse) {
+            value.indices.emplace_back(i);
+        }
+        if (return_counts) {
+            value.count += 1;
+        }
     }
 
     npy_intp num_unique = hashmap.size();
@@ -582,7 +610,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     // Note: The hashmap stores a vector of indices for each unique value,
     // where each index represents a position in the input array where the value appears.
-    std::unordered_map<npy_static_string *, std::vector<npy_intp>, decltype(hash), decltype(equal)> hashmap(
+    std::unordered_map<npy_static_string *, HashmapValueType, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -599,7 +627,18 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
                 "Failed to load string from packed static string. ");
             return NULL;
         }
-        hashmap[&unpacked_strings[i]].emplace_back(i);
+        HashmapValueType &value = hashmap[&unpacked_strings[i]];
+        if (return_index) {
+            if (value.first_index == -1) {
+                value.first_index = i;
+            }
+        }
+        if (return_inverse) {
+            value.indices.emplace_back(i);
+        }
+        if (return_counts) {
+            value.count += 1;
+        }
     }
 
     NpyString_release_allocator(in_allocator);
