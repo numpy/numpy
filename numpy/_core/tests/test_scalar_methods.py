@@ -261,7 +261,7 @@ def test_array_wrap(scalar):
 @pytest.mark.parametrize(
     "sctype",
     [
-        *sctypes["int" ],
+        *sctypes["int"],
         *sctypes["uint"],
         *sctypes["float"],
         *sctypes["complex"],
@@ -282,7 +282,7 @@ def test_constructor_signatures(sctype: type[np.generic]) -> None:
 @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 @pytest.mark.parametrize(
     "sctype",
-    [np.integer, *sctypes["int" ], *sctypes["uint"], *sctypes["float"]],
+    [np.integer, *sctypes["int"], *sctypes["uint"], *sctypes["float"]],
 )
 def test_method_signatures_is_integer(sctype: type[np.integer | np.floating]) -> None:
     try:
