@@ -1786,6 +1786,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     Examples
     --------
     >>> import numpy as np
+
     >>> phase = np.linspace(0, np.pi, num=5)
     >>> phase[3:] += np.pi
     >>> phase
@@ -1803,6 +1804,23 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
             180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
             540.])
+
+    This example plots the unwrapping of the wrapped input signal `w`.
+    First generate `w`, then apply `unwrap` to get `u`.
+
+    >>> t = np.linspace(0, 25, 801)
+    >>> w = np.mod(1.5 * np.sin(1.1 * t + 0.26) * (1 - t / 6 + (t / 23) ** 3), 2.0) - 1
+    >>> u = np.unwrap(w, period=2.0)
+
+    Plot `w` and `u`.
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(t, w, label='w (a signal wrapped to [-1, 1])')
+    >>> plt.plot(t, u, linewidth=2.5, alpha=0.5, label='unwrap(w, period=2)')
+    >>> plt.xlabel('t')
+    >>> plt.grid(alpha=0.6)
+    >>> plt.legend(framealpha=1, shadow=True)
+    >>> plt.show()
     """
     p = asarray(p)
     nd = p.ndim
