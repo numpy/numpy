@@ -377,3 +377,19 @@ class Where(Benchmark):
 
     def time_interleaved_ones_x8(self):
         np.where(self.rep_ones_8)
+
+
+class Vectorize(Benchmark):
+    """
+    Performance tests for numpy.vectorize
+    """
+    def setup(self):
+        self.a = np.arange(10)
+        self.b = 20
+        self.c = 30
+    
+    def time_vectorize_positional_or_kw_args(self):
+        # Test performance of np.vectorize when there are no keyword only arguments.
+        def func(a, b, /, c):
+            return a + b + c
+        res = np.vectorize(func)(self.a, self.b, c=self.c)
