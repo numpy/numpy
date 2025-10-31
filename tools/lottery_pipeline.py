@@ -17,6 +17,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import MinMaxScaler
@@ -540,12 +541,12 @@ def tune_random_forest(X: np.ndarray, y: np.ndarray) -> RandomForestRegressor:
     return model
 
 
-def tune_xgboost(X: np.ndarray, y: np.ndarray) -> XGBRegressor:
+def tune_xgboost(X: np.ndarray, y: np.ndarray) -> MultiOutputRegressor:
     X_flat = X.reshape(X.shape[0], -1)
 
     def objective(params: Sequence[float]) -> float:
         n_estimators, learning_rate, max_depth = params
-        model = XGBRegressor(
+        base_model = XGBRegressor(
             n_estimators=int(n_estimators),
             learning_rate=float(learning_rate),
             max_depth=int(max_depth),
@@ -555,6 +556,7 @@ def tune_xgboost(X: np.ndarray, y: np.ndarray) -> XGBRegressor:
             random_state=SEED,
             n_jobs=1,
         )
+        model = MultiOutputRegressor(base_model)
         scores: List[float] = []
         for train_idx, val_idx in TimeSeriesSplit(n_splits=3).split(X_flat):
             model.fit(X_flat[train_idx], y[train_idx])
@@ -568,7 +570,7 @@ def tune_xgboost(X: np.ndarray, y: np.ndarray) -> XGBRegressor:
         n_calls=20,
         random_state=SEED,
     )
-    model = XGBRegressor(
+    base_model = XGBRegressor(
         n_estimators=int(result.x[0]),
         learning_rate=float(result.x[1]),
         max_depth=int(result.x[2]),
@@ -578,11 +580,12 @@ def tune_xgboost(X: np.ndarray, y: np.ndarray) -> XGBRegressor:
         random_state=SEED,
         n_jobs=1,
     )
+    model = MultiOutputRegressor(base_model)
     model.fit(X_flat, y)
     return model
 
 
-def stack_models(transformer: keras.Model, rf: RandomForestRegressor, xgb: XGBRegressor,
+def stack_models(transformer: keras.Model, rf: RandomForestRegressor, xgb: MultiOutputRegressor,
                  X: np.ndarray, y: np.ndarray) -> Ridge:
     X_flat = X.reshape(X.shape[0], -1)
     transformer_preds = transformer.predict(X, verbose=0)
