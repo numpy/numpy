@@ -5,8 +5,11 @@
 #include <Python.h>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
 #include <functional>
+#include <map>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -35,17 +38,19 @@ FinalAction<F> finally(F f) {
 }
 
 template <typename T>
-size_t hash_integer(const T *value, npy_bool equal_nan) {
+size_t hash_integer(const T *value) {
     return std::hash<T>{}(*value);
 }
 
-template <typename S, typename T, S (*real)(T), S (*imag)(T)>
-size_t hash_complex(const T *value, npy_bool equal_nan) {
+template <typename S, typename T, S (*real)(T), S (*imag)(T), npy_bool equal_nan>
+size_t hash_complex(const T *value) {
     S value_real = real(*value);
     S value_imag = imag(*value);
-    int hasnan = npy_isnan(value_real) || npy_isnan(value_imag);
-    if (equal_nan && hasnan) {
-        return 0;
+
+    if constexpr (equal_nan) {
+        if (npy_isnan(value_real) || npy_isnan(value_imag)) {
+            return 0;
+        }
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
@@ -56,12 +61,15 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     return hash;
 }
 
-size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
+template <npy_bool equal_nan>
+size_t hash_complex_clongdouble(const npy_clongdouble *value) {
     npy_longdouble value_real = npy_creall(*value);
     npy_longdouble value_imag = npy_cimagl(*value);
-    int hasnan = npy_isnan(value_real) || npy_isnan(value_imag);
-    if (equal_nan && hasnan) {
-        return 0;
+
+    if constexpr (equal_nan) {
+        if (npy_isnan(value_real) || npy_isnan(value_imag)) {
+            return 0;
+        }
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
@@ -110,12 +118,12 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
 }
 
 template <typename T>
-int equal_integer(const T *lhs, const T *rhs, npy_bool equal_nan) {
+int equal_integer(const T *lhs, const T *rhs) {
     return *lhs == *rhs;
 }
 
-template <typename S, typename T, S (*real)(T), S (*imag)(T)>
-int equal_complex(const T *lhs, const T *rhs, npy_bool equal_nan) {
+template <typename S, typename T, S (*real)(T), S (*imag)(T), npy_bool equal_nan>
+int equal_complex(const T *lhs, const T *rhs) {
     S lhs_real = real(*lhs);
     S lhs_imag = imag(*lhs);
     int lhs_isnan = npy_isnan(lhs_real) || npy_isnan(lhs_imag);
@@ -153,10 +161,39 @@ void copy_complex(char *data, T *value) {
     return;
 }
 
+template <
+    npy_bool return_index,
+    npy_bool return_inverse,
+    npy_bool return_counts
+>
 struct HashmapValueType {
-    npy_intp first_index = -1;
-    std::vector<npy_intp> indices;
-    npy_intp count = 0;
+    std::conditional_t<return_index, npy_intp, std::monostate> first_index;
+    std::conditional_t<return_inverse, std::vector<npy_intp>, std::monostate> indices;
+    std::conditional_t<return_counts, npy_intp, std::monostate> count;
+
+    HashmapValueType()
+    {
+        if constexpr (return_index) {
+            first_index = -1;
+        }
+        if constexpr (return_counts) {
+            count = 0;
+        }
+    }
+
+    void update(npy_intp index) {
+        if constexpr (return_index) {
+            if (first_index == -1) {
+                first_index = index;
+            }
+        }
+        if constexpr (return_inverse) {
+            indices.emplace_back(index);
+        }
+        if constexpr (return_counts) {
+            count++;
+        }
+    }
 };
 
 template <typename HashmapType>
@@ -268,7 +305,7 @@ create_counts_array_from_hashmap(
     char *odata = PyArray_BYTES((PyArrayObject *)counts_array);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)counts_array)[0];
     for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
-        *((npy_intp *)odata) = (npy_intp)it->second.count;
+        *((npy_intp *)odata) = it->second.count;
     }
 
     return counts_array;
@@ -276,12 +313,15 @@ create_counts_array_from_hashmap(
 
 template <
     typename T,
-    size_t (*hash_func)(const T *, npy_bool),
-    int (*equal_func)(const T *, const T *, npy_bool),
-    void (*copy_func)(char *, T *)
+    size_t (*hash_func)(const T *),
+    int (*equal_func)(const T *, const T *),
+    void (*copy_func)(char *, T *),
+    npy_bool return_index,
+    npy_bool return_inverse,
+    npy_bool return_counts
 >
 static PyObject*
-unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
+unique_numeric(PyArrayObject *self)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of numeric (integer or complex).
@@ -298,13 +338,6 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
 
-    auto hash = [equal_nan](const T *value) -> size_t {
-        return hash_func(value, equal_nan);
-    };
-    auto equal = [equal_nan](const T *lhs, const T *rhs) -> bool {
-        return equal_func(lhs, rhs, equal_nan);
-    };
-
     // Reserve hashmap capacity in advance to minimize reallocations and collisions.
     // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
     // - Reserving for all elements (isize) may over-allocate when there are few unique values.
@@ -312,24 +345,15 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     // Note: The hashmap stores a vector of indices for each unique value,
     // where each index represents a position in the input array where the value appears.
-    std::unordered_map<T *, HashmapValueType, decltype(hash), decltype(equal)> hashmap(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
+    std::unordered_map<T *, HashmapValueType<return_index, return_inverse, return_counts>, decltype(hash_func), decltype(equal_func)> hashmap(
+        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash_func, equal_func
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        HashmapValueType &value = hashmap[(T *)idata];
-        if (return_index && value.first_index == -1) {
-            value.first_index = i;
-        }
-        if (return_inverse) {
-            value.indices.emplace_back(i);
-        }
-        if (return_counts) {
-            value.count++;
-        }
+        hashmap[(T *)idata].update(i);
     }
 
     npy_intp num_unique = hashmap.size();
@@ -373,7 +397,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     PyEval_RestoreThread(_save2);
 
     // Index array (or None)
-    if (return_index) {
+    if constexpr (return_index) {
         PyObject *index_array = create_index_array_from_hashmap(hashmap, num_unique);
         if (index_array == NULL) {
             Py_DECREF(res_obj);
@@ -386,7 +410,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     }
 
     // Inverse array (or None)
-    if (return_inverse) {
+    if constexpr (return_inverse) {
         PyObject *inverse_array = create_inverse_array_from_hashmap(hashmap, isize);
         if (inverse_array == NULL) {
             Py_DECREF(res_obj);
@@ -399,7 +423,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     }
 
     // Counts array (or None)
-    if (return_counts) {
+    if constexpr (return_counts) {
         PyObject *counts_array = create_counts_array_from_hashmap(hashmap, num_unique);
         if (counts_array == NULL) {
             Py_DECREF(res_obj);
@@ -414,9 +438,14 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     return res_obj;
 }
 
-template <typename T>
+template <
+    typename T,
+    npy_bool return_index,
+    npy_bool return_inverse,
+    npy_bool return_counts
+>
 static PyObject*
-unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
+unique_string(PyArrayObject *self)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of fixed size strings.
@@ -450,7 +479,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     // Note: The hashmap stores a vector of indices for each unique value,
     // where each index represents a position in the input array where the value appears.
-    std::unordered_map<T *, HashmapValueType, decltype(hash), decltype(equal)> hashmap(
+    std::unordered_map<T *, HashmapValueType<return_index, return_inverse, return_counts>, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -458,16 +487,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        HashmapValueType &value = hashmap[(T *)idata];
-        if (return_index && value.first_index == -1) {
-            value.first_index = i;
-        }
-        if (return_inverse) {
-            value.indices.emplace_back(i);
-        }
-        if (return_counts) {
-            value.count++;
-        }
+        hashmap[(T *)idata].update(i);
     }
 
     npy_intp num_unique = hashmap.size();
@@ -511,7 +531,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     PyEval_RestoreThread(_save2);
 
     // Index array (or None)
-    if (return_index) {
+    if constexpr (return_index) {
         PyObject *index_array = create_index_array_from_hashmap(hashmap, num_unique);
         if (index_array == NULL) {
             Py_DECREF(res_obj);
@@ -524,7 +544,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     }
 
     // Inverse array (or None)
-    if (return_inverse) {
+    if constexpr (return_inverse) {
         PyObject *inverse_array = create_inverse_array_from_hashmap(hashmap, isize);
         if (inverse_array == NULL) {
             Py_DECREF(res_obj);
@@ -537,7 +557,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     }
 
     // Counts array (or None)
-    if (return_counts) {
+    if constexpr (return_counts) {
         PyObject *counts_array = create_counts_array_from_hashmap(hashmap, num_unique);
         if (counts_array == NULL) {
             Py_DECREF(res_obj);
@@ -552,8 +572,14 @@ unique_string(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, np
     return res_obj;
 }
 
+template <
+    npy_bool equal_nan,
+    npy_bool return_index,
+    npy_bool return_inverse,
+    npy_bool return_counts
+>
 static PyObject*
-unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
+unique_vstring(PyArrayObject *self)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array.
@@ -572,9 +598,9 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
 
     // variables for the vstring
     npy_string_allocator *in_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
-    auto hash = [equal_nan](const npy_static_string *value) -> size_t {
+    auto hash = [](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
-            if (equal_nan) {
+            if constexpr (equal_nan) {
                 return 0;
             } else {
                 return std::hash<const npy_static_string *>{}(value);
@@ -582,9 +608,9 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
         }
         return npy_fnv1a(value->buf, value->size * sizeof(char));
     };
-    auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
+    auto equal = [](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
         if (lhs->buf == NULL && rhs->buf == NULL) {
-            if (equal_nan) {
+            if constexpr (equal_nan) {
                 return true;
             } else {
                 return lhs == rhs;
@@ -606,7 +632,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     // Note: The hashmap stores a vector of indices for each unique value,
     // where each index represents a position in the input array where the value appears.
-    std::unordered_map<npy_static_string *, HashmapValueType, decltype(hash), decltype(equal)> hashmap(
+    std::unordered_map<npy_static_string *, HashmapValueType<return_index, return_inverse, return_counts>, decltype(hash), decltype(equal)> hashmap(
         std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
     );
 
@@ -623,16 +649,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
                 "Failed to load string from packed static string. ");
             return NULL;
         }
-        HashmapValueType &value = hashmap[&unpacked_strings[i]];
-        if (return_index && value.first_index == -1) {
-            value.first_index = i;
-        }
-        if (return_inverse) {
-            value.indices.emplace_back(i);
-        }
-        if (return_counts) {
-            value.count++;
-        }
+        hashmap[&unpacked_strings[i]].update(i);
     }
 
     NpyString_release_allocator(in_allocator);
@@ -696,7 +713,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     PyEval_RestoreThread(_save2);
 
     // Index array (or None)
-    if (return_index) {
+    if constexpr (return_index) {
         PyObject *index_array = create_index_array_from_hashmap(hashmap, num_unique);
         if (index_array == NULL) {
             Py_DECREF(res_obj);
@@ -709,7 +726,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     }
 
     // Inverse array (or None)
-    if (return_inverse) {
+    if constexpr (return_inverse) {
         PyObject *inverse_array = create_inverse_array_from_hashmap(hashmap, isize);
         if (inverse_array == NULL) {
             Py_DECREF(res_obj);
@@ -722,7 +739,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     }
 
     // Counts array (or None)
-    if (return_counts) {
+    if constexpr (return_counts) {
         PyObject *counts_array = create_counts_array_from_hashmap(hashmap, num_unique);
         if (counts_array == NULL) {
             Py_DECREF(res_obj);
@@ -739,65 +756,1000 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
 
 
 // this map contains the functions used for each item size.
-typedef std::function<PyObject *(PyArrayObject *, npy_bool, npy_bool, npy_bool, npy_bool)> function_type;
-std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>>},
-    {NPY_UBYTE, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>>},
-    {NPY_SHORT, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>>},
-    {NPY_USHORT, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>>},
-    {NPY_INT, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>>},
-    {NPY_UINT, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>>},
-    {NPY_LONG, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>>},
-    {NPY_ULONG, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>>},
-    {NPY_LONGLONG, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>>},
-    {NPY_ULONGLONG, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>>},
-    {NPY_CFLOAT, unique_numeric<
+typedef std::function<PyObject *(PyArrayObject *)> function_type;
+std::map<std::tuple<int, npy_bool, npy_bool, npy_bool, npy_bool>, function_type> unique_funcs = {
+    {{NPY_BYTE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_BYTE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UBYTE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_SHORT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_short, hash_integer<npy_short>, equal_integer<npy_short>, copy_integer<npy_short>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_USHORT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ushort, hash_integer<npy_ushort>, equal_integer<npy_ushort>, copy_integer<npy_ushort>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int, hash_integer<npy_int>, equal_integer<npy_int>, copy_integer<npy_int>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint, hash_integer<npy_uint>, equal_integer<npy_uint>, copy_integer<npy_uint>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_long, hash_integer<npy_long>, equal_integer<npy_long>, copy_integer<npy_long>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulong, hash_integer<npy_ulong>, equal_integer<npy_ulong>, copy_integer<npy_ulong>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_LONGLONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_longlong, hash_integer<npy_longlong>, equal_integer<npy_longlong>, copy_integer<npy_longlong>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_ULONGLONG, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_ulonglong, hash_integer<npy_ulonglong>, equal_integer<npy_ulonglong>, copy_integer<npy_ulonglong>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_CFLOAT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
         npy_cfloat,
-        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf>,
-        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf>,
-        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
         >
     },
-    {NPY_CDOUBLE, unique_numeric<
+    {{NPY_CFLOAT, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CFLOAT, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cfloat,
+        hash_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_cfloat, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
         npy_cdouble,
-        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag>,
-        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag>,
-        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
         >
     },
-    {NPY_CLONGDOUBLE, unique_numeric<
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CDOUBLE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_cdouble,
+        hash_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_cdouble, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
         npy_clongdouble,
-        hash_complex_clongdouble,
-        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl>,
-        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
         >
     },
-    {NPY_INT8, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>>},
-    {NPY_INT16, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>>},
-    {NPY_INT32, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>>},
-    {NPY_INT64, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>>},
-    {NPY_UINT8, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>>},
-    {NPY_UINT16, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>>},
-    {NPY_UINT32, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>>},
-    {NPY_UINT64, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>>},
-    {NPY_DATETIME, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>>},
-    {NPY_COMPLEX64, unique_numeric<
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_FALSE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_FALSE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_CLONGDOUBLE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_clongdouble,
+        hash_complex_clongdouble<NPY_TRUE>,
+        equal_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, NPY_TRUE>,
+        copy_complex<npy_longdouble, npy_clongdouble, npy_creall, npy_cimagl, npy_csetreall, npy_csetimagl>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_INT8, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT8, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT8, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT8, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT8, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT8, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT8, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT8, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT8, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT8, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT8, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT8, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT8, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT8, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT8, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT8, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int8, hash_integer<npy_int8>, equal_integer<npy_int8>, copy_integer<npy_int8>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT16, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT16, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT16, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT16, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT16, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT16, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT16, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT16, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT16, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT16, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT16, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT16, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT16, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT16, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT16, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT16, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int16, hash_integer<npy_int16>, equal_integer<npy_int16>, copy_integer<npy_int16>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT32, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT32, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT32, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT32, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT32, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT32, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT32, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT32, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT32, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT32, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT32, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT32, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT32, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT32, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT32, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT32, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int32, hash_integer<npy_int32>, equal_integer<npy_int32>, copy_integer<npy_int32>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT64, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT64, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT64, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT64, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT64, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT64, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT64, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT64, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT64, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT64, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT64, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT64, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_INT64, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_INT64, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_INT64, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_INT64, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_int64, hash_integer<npy_int64>, equal_integer<npy_int64>, copy_integer<npy_int64>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT8, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint8, hash_integer<npy_uint8>, equal_integer<npy_uint8>, copy_integer<npy_uint8>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT16, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint16, hash_integer<npy_uint16>, equal_integer<npy_uint16>, copy_integer<npy_uint16>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT32, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint32, hash_integer<npy_uint32>, equal_integer<npy_uint32>, copy_integer<npy_uint32>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UINT64, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_DATETIME, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<npy_uint64, hash_integer<npy_uint64>, equal_integer<npy_uint64>, copy_integer<npy_uint64>, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
         npy_complex64,
-        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf>,
-        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf>,
-        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
         >
     },
-    {NPY_COMPLEX128, unique_numeric<
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_FALSE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX64, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex64,
+        hash_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        equal_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, NPY_TRUE>,
+        copy_complex<npy_float, npy_complex64, npy_crealf, npy_cimagf, npy_csetrealf, npy_csetimagf>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
         npy_complex128,
-        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
-        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag>,
-        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
         >
     },
-    {NPY_STRING, unique_string<npy_byte>},
-    {NPY_UNICODE, unique_string<npy_ucs4>},
-    {NPY_VSTRING, unique_vstring},
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_FALSE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_FALSE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_FALSE, NPY_TRUE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_FALSE
+        >
+    },
+    {{NPY_COMPLEX128, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_numeric<
+        npy_complex128,
+        hash_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        equal_complex<npy_double, npy_complex128, npy_creal, npy_cimag, NPY_TRUE>,
+        copy_complex<npy_double, npy_complex128, npy_creal, npy_cimag, npy_csetreal, npy_csetimag>,
+        NPY_TRUE, NPY_TRUE, NPY_TRUE
+        >
+    },
+    {{NPY_STRING, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_string<npy_byte, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_STRING, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_string<npy_byte, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_STRING, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_string<npy_byte, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_STRING, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_string<npy_byte, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_STRING, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_string<npy_byte, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_STRING, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_string<npy_byte, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_STRING, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_string<npy_byte, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_STRING, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_string<npy_byte, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_STRING, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_string<npy_byte, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_STRING, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_string<npy_byte, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_STRING, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_string<npy_byte, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_STRING, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_string<npy_byte, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_STRING, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_string<npy_byte, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_STRING, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_string<npy_byte, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_STRING, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_string<npy_byte, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_STRING, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_string<npy_byte, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_string<npy_ucs4, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_string<npy_ucs4, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_string<npy_ucs4, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_string<npy_ucs4, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_string<npy_ucs4, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_string<npy_ucs4, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_string<npy_ucs4, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_string<npy_ucs4, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_string<npy_ucs4, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_string<npy_ucs4, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_string<npy_ucs4, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_string<npy_ucs4, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_string<npy_ucs4, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_string<npy_ucs4, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_UNICODE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_string<npy_ucs4, NPY_TRUE, NPY_TRUE, NPY_FALSE>},   
+    {{NPY_UNICODE, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_string<npy_ucs4, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_vstring<NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_vstring<NPY_FALSE, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_vstring<NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_vstring<NPY_FALSE, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_vstring<NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_vstring<NPY_FALSE, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_vstring<NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_vstring<NPY_FALSE, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE}, unique_vstring<NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE}, unique_vstring<NPY_TRUE, NPY_FALSE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE}, unique_vstring<NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE}, unique_vstring<NPY_TRUE, NPY_FALSE, NPY_TRUE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE}, unique_vstring<NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE}, unique_vstring<NPY_TRUE, NPY_TRUE, NPY_FALSE, NPY_TRUE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE}, unique_vstring<NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_FALSE>},
+    {{NPY_VSTRING, NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE}, unique_vstring<NPY_TRUE, NPY_TRUE, NPY_TRUE, NPY_TRUE>},
 };
 
 
@@ -835,13 +1787,13 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
     }
 
     try {
-        auto type = PyArray_TYPE(arr);
+        int type = PyArray_TYPE(arr);
         // we only support data types present in our unique_funcs map
-        if (unique_funcs.find(type) == unique_funcs.end()) {
+        if (unique_funcs.find(std::make_tuple(type, equal_nan, return_index, return_inverse, return_counts)) == unique_funcs.end()) {
             Py_RETURN_NOTIMPLEMENTED;
         }
 
-        return unique_funcs[type](arr, equal_nan, return_index, return_inverse, return_counts);
+        return unique_funcs[std::make_tuple(type, equal_nan, return_index, return_inverse, return_counts)](arr);
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();
