@@ -2331,14 +2331,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     squeeze: Any
 
-    # keep in sync with `ndarray.swapaxes`
-    def swapaxes(
-        self,
-        axis1: SupportsIndex,
-        axis2: SupportsIndex,
-        /,
-    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
-
     #
     def toflex(self) -> Incomplete: ...
     def torecords(self) -> Incomplete: ...
@@ -2637,6 +2629,8 @@ def repeat(a: ArrayLike, repeats: _ArrayLikeInt_co, axis: None = None) -> Masked
 def repeat(a: ArrayLike, repeats: _ArrayLikeInt_co, axis: SupportsIndex) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with `_core.fromnumeric.swapaxes`
+@overload
+def swapaxes(a: _MArrayT, axis1: SupportsIndex, axis2: SupportsIndex) -> _MArrayT: ...
 @overload
 def swapaxes(a: _ArrayLike[_ScalarT], axis1: SupportsIndex, axis2: SupportsIndex) -> _MaskedArray[_ScalarT]: ...
 @overload
