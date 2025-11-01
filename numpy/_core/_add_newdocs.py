@@ -160,6 +160,19 @@ add_newdoc('numpy._core', 'flatiter', ('copy',
 
 add_newdoc('numpy._core', 'nditer',
     """
+    nditer(
+        op,
+        flags=None,
+        op_flags=None,
+        op_dtypes=None,
+        order='K',
+        casting='safe',
+        op_axes=None,
+        itershape=None,
+        buffersize=0,
+    )
+    --
+
     nditer(op, flags=None, op_flags=None, op_dtypes=None, order='K',
         casting='safe', op_axes=None, itershape=None, buffersize=0)
 
@@ -171,63 +184,62 @@ add_newdoc('numpy._core', 'nditer',
     ----------
     op : ndarray or sequence of array_like
         The array(s) to iterate over.
-
     flags : sequence of str, optional
-          Flags to control the behavior of the iterator.
+        Flags to control the behavior of the iterator.
 
-          * ``buffered`` enables buffering when required.
-          * ``c_index`` causes a C-order index to be tracked.
-          * ``f_index`` causes a Fortran-order index to be tracked.
-          * ``multi_index`` causes a multi-index, or a tuple of indices
-            with one per iteration dimension, to be tracked.
-          * ``common_dtype`` causes all the operands to be converted to
-            a common data type, with copying or buffering as necessary.
-          * ``copy_if_overlap`` causes the iterator to determine if read
-            operands have overlap with write operands, and make temporary
-            copies as necessary to avoid overlap. False positives (needless
-            copying) are possible in some cases.
-          * ``delay_bufalloc`` delays allocation of the buffers until
-            a reset() call is made. Allows ``allocate`` operands to
-            be initialized before their values are copied into the buffers.
-          * ``external_loop`` causes the ``values`` given to be
-            one-dimensional arrays with multiple values instead of
-            zero-dimensional arrays.
-          * ``grow_inner`` allows the ``value`` array sizes to be made
-            larger than the buffer size when both ``buffered`` and
-            ``external_loop`` is used.
-          * ``ranged`` allows the iterator to be restricted to a sub-range
-            of the iterindex values.
-          * ``refs_ok`` enables iteration of reference types, such as
-            object arrays.
-          * ``reduce_ok`` enables iteration of ``readwrite`` operands
-            which are broadcasted, also known as reduction operands.
-          * ``zerosize_ok`` allows `itersize` to be zero.
+        * ``buffered`` enables buffering when required.
+        * ``c_index`` causes a C-order index to be tracked.
+        * ``f_index`` causes a Fortran-order index to be tracked.
+        * ``multi_index`` causes a multi-index, or a tuple of indices
+          with one per iteration dimension, to be tracked.
+        * ``common_dtype`` causes all the operands to be converted to
+          a common data type, with copying or buffering as necessary.
+        * ``copy_if_overlap`` causes the iterator to determine if read
+          operands have overlap with write operands, and make temporary
+          copies as necessary to avoid overlap. False positives (needless
+          copying) are possible in some cases.
+        * ``delay_bufalloc`` delays allocation of the buffers until
+          a reset() call is made. Allows ``allocate`` operands to
+          be initialized before their values are copied into the buffers.
+        * ``external_loop`` causes the ``values`` given to be
+          one-dimensional arrays with multiple values instead of
+          zero-dimensional arrays.
+        * ``grow_inner`` allows the ``value`` array sizes to be made
+          larger than the buffer size when both ``buffered`` and
+          ``external_loop`` is used.
+        * ``ranged`` allows the iterator to be restricted to a sub-range
+          of the iterindex values.
+        * ``refs_ok`` enables iteration of reference types, such as
+          object arrays.
+        * ``reduce_ok`` enables iteration of ``readwrite`` operands
+          which are broadcasted, also known as reduction operands.
+        * ``zerosize_ok`` allows `itersize` to be zero.
     op_flags : list of list of str, optional
-          This is a list of flags for each operand. At minimum, one of
-          ``readonly``, ``readwrite``, or ``writeonly`` must be specified.
+        This is a list of flags for each operand. At minimum, one of
+        ``readonly``, ``readwrite``, or ``writeonly`` must be specified.
 
-          * ``readonly`` indicates the operand will only be read from.
-          * ``readwrite`` indicates the operand will be read from and written to.
-          * ``writeonly`` indicates the operand will only be written to.
-          * ``no_broadcast`` prevents the operand from being broadcasted.
-          * ``contig`` forces the operand data to be contiguous.
-          * ``aligned`` forces the operand data to be aligned.
-          * ``nbo`` forces the operand data to be in native byte order.
-          * ``copy`` allows a temporary read-only copy if required.
-          * ``updateifcopy`` allows a temporary read-write copy if required.
-          * ``allocate`` causes the array to be allocated if it is None
-            in the ``op`` parameter.
-          * ``no_subtype`` prevents an ``allocate`` operand from using a subtype.
-          * ``arraymask`` indicates that this operand is the mask to use
-            for selecting elements when writing to operands with the
-            'writemasked' flag set. The iterator does not enforce this,
-            but when writing from a buffer back to the array, it only
-            copies those elements indicated by this mask.
-          * ``writemasked`` indicates that only elements where the chosen
-            ``arraymask`` operand is True will be written to.
-          * ``overlap_assume_elementwise`` can be used to mark operands that are
-            accessed only in the iterator order, to allow less conservative
-            copying when ``copy_if_overlap`` is present.
+        * ``readonly`` indicates the operand will only be read from.
+        * ``readwrite`` indicates the operand will be read from and written to.
+        * ``writeonly`` indicates the operand will only be written to.
+        * ``no_broadcast`` prevents the operand from being broadcasted.
+        * ``contig`` forces the operand data to be contiguous.
+        * ``aligned`` forces the operand data to be aligned.
+        * ``nbo`` forces the operand data to be in native byte order.
+        * ``copy`` allows a temporary read-only copy if required.
+        * ``updateifcopy`` allows a temporary read-write copy if required.
+        * ``allocate`` causes the array to be allocated if it is None
+          in the ``op`` parameter.
+        * ``no_subtype`` prevents an ``allocate`` operand from using a subtype.
+        * ``arraymask`` indicates that this operand is the mask to use
+          for selecting elements when writing to operands with the
+          'writemasked' flag set. The iterator does not enforce this,
+          but when writing from a buffer back to the array, it only
+          copies those elements indicated by this mask.
+        * ``writemasked`` indicates that only elements where the chosen
+          ``arraymask`` operand is True will be written to.
+        * ``overlap_assume_elementwise`` can be used to mark operands that are
+          accessed only in the iterator order, to allow less conservative
+          copying when ``copy_if_overlap`` is present.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -428,10 +440,22 @@ add_newdoc('numpy._core', 'nditer',
 
     """)
 
+# nditer attributes
+
+add_newdoc('numpy._core', 'nditer', ('operands',
+    """
+    operands[`Slice`]
+
+    The array(s) to be iterated over. Valid only before the iterator is closed.
+    """))
+
 # nditer methods
 
 add_newdoc('numpy._core', 'nditer', ('copy',
     """
+    copy($self, /)
+    --
+
     copy()
 
     Get a copy of the iterator in its current state.
@@ -450,15 +474,11 @@ add_newdoc('numpy._core', 'nditer', ('copy',
 
     """))
 
-add_newdoc('numpy._core', 'nditer', ('operands',
-    """
-    operands[`Slice`]
-
-    The array(s) to be iterated over. Valid only before the iterator is closed.
-    """))
-
 add_newdoc('numpy._core', 'nditer', ('debug_print',
     """
+    debug_print($self, /)
+    --
+
     debug_print()
 
     Print the current state of the `nditer` instance and debug info to stdout.
@@ -467,6 +487,9 @@ add_newdoc('numpy._core', 'nditer', ('debug_print',
 
 add_newdoc('numpy._core', 'nditer', ('enable_external_loop',
     """
+    enable_external_loop($self, /)
+    --
+
     enable_external_loop()
 
     When the "external_loop" was not used during construction, but
@@ -477,6 +500,9 @@ add_newdoc('numpy._core', 'nditer', ('enable_external_loop',
 
 add_newdoc('numpy._core', 'nditer', ('iternext',
     """
+    iternext($self, /)
+    --
+
     iternext()
 
     Check whether iterations are left, and perform a single internal iteration
@@ -492,6 +518,9 @@ add_newdoc('numpy._core', 'nditer', ('iternext',
 
 add_newdoc('numpy._core', 'nditer', ('remove_axis',
     """
+    remove_axis($self, i, /)
+    --
+
     remove_axis(i, /)
 
     Removes axis `i` from the iterator. Requires that the flag "multi_index"
@@ -501,6 +530,9 @@ add_newdoc('numpy._core', 'nditer', ('remove_axis',
 
 add_newdoc('numpy._core', 'nditer', ('remove_multi_index',
     """
+    remove_multi_index($self, /)
+    --
+
     remove_multi_index()
 
     When the "multi_index" flag was specified, this removes it, allowing
@@ -510,32 +542,50 @@ add_newdoc('numpy._core', 'nditer', ('remove_multi_index',
 
 add_newdoc('numpy._core', 'nditer', ('reset',
     """
+    reset($self, /)
+    --
+
     reset()
 
     Reset the iterator to its initial state.
 
     """))
 
+add_newdoc('numpy._core', 'nditer', ('close',
+    """
+    close($self, /)
+    --
+
+    close()
+
+    Resolve all writeback semantics in writeable operands.
+
+    See Also
+    --------
+    :ref:`nditer-context-manager`
+
+    """))
+
+# nested_iters
+
 add_newdoc('numpy._core', 'nested_iters',
     """
-    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None, \
-    order="K", casting="safe", buffersize=0)
+    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None,
+    order='K', casting='safe', buffersize=0)
 
     Create nditers for use in nested loops
 
     Create a tuple of `nditer` objects which iterate in nested loops over
     different axes of the op argument. The first iterator is used in the
-    outermost loop, the last in the innermost loop. Advancing one will change
-    the subsequent iterators to point at its new element.
+    outermost loop, the last in the innermost loop. Advancing one will
+    change the subsequent iterators to point at its new element.
 
     Parameters
     ----------
     op : ndarray or sequence of array_like
         The array(s) to iterate over.
-
     axes : list of list of int
         Each item is used as an "op_axes" argument to an nditer
-
     flags, op_flags, op_dtypes, order, casting, buffersize (optional)
         See `nditer` parameters of the same name
 
@@ -579,20 +629,6 @@ add_newdoc('numpy._core', 'nested_iters',
      (1, 1) 11
 
     """)
-
-add_newdoc('numpy._core', 'nditer', ('close',
-    """
-    close()
-
-    Resolve all writeback semantics in writeable operands.
-
-    See Also
-    --------
-
-    :ref:`nditer-context-manager`
-
-    """))
-
 
 ###############################################################################
 #
