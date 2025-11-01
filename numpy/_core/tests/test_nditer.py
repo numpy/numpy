@@ -1,3 +1,4 @@
+import inspect
 import subprocess
 import sys
 import textwrap
@@ -11,6 +12,7 @@ import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_array_equal,
@@ -3496,3 +3498,27 @@ def test_debug_print(capfd):
         # The actual output may have additional pointers listed that are
         # stripped from the example output:
         assert res_line.startswith(expected_line.strip())
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+def test_signature_constructor():
+    sig = inspect.signature(np.nditer)
+
+    assert sig.parameters
+    assert "self" not in sig.parameters
+    assert "args" not in sig.parameters
+    assert "kwargs" not in sig.parameters
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "method",
+    [fn for name, fn in vars(np.nditer).items() if callable(fn) and name[0] != "_"],
+)
+def test_signature_methods(method):
+    sig = inspect.signature(method)
+
+    assert "self" in sig.parameters
+    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
