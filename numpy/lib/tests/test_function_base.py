@@ -2070,6 +2070,41 @@ class TestVectorize:
             def foo():
                 return "bar"
 
+    def test_positional_only(self):
+        # Test np.vectorize when there are some positional only arguments.
+        def func(a, b, /, c, d, e, f):
+            return sum((a, b, c, d, e, f))
+        res = np.vectorize(func)(np.arange(3), np.arange(3), c=1, d=2, e=3, f=4)
+        assert_array_equal(res, [10, 12, 14])
+
+    def test_kw_only(self):
+        # Test np.vectorize when there are some keyword only arguments.
+        def func(a, b, /, c, d, *, e, f):
+            return sum((a, b, c, d, e, f))
+        res = np.vectorize(func)(np.arange(3), np.arange(3), c=1, d=2, e=3, f=4)
+        assert_array_equal(res, [10, 12, 14])
+
+    def test_all_kw_args(self):
+        # Test np.vectorize when every argument is passed as kwarg.
+        def func(a, b, c=-1):
+            return a + b + c
+        res = np.vectorize(func)(a=np.arange(3), b=np.arange(3), c=np.arange(3))
+        assert_array_equal(res, [0, 3, 6])
+
+    def test_error_missing_params(self):
+        # Test np.vectorize when some positional arguments are missing.
+        def func(a, b, c=-1):
+            return a + b + c
+        with pytest.raises(TypeError):
+            res = np.vectorize(func)(a=20, c=30)
+
+    def test_error_positional_only_args(self):
+        # Test np.vectorize when positional arguments are passed as keyword arguments.
+        def func(a, b, /, c):
+            return a + b + c
+        with pytest.raises(TypeError):
+            res = np.vectorize(func)(np.arange(5), b=20, c=30)
+
     def test_positional_regression_9477(self):
         # This supplies the first keyword argument as a positional,
         # to ensure that they are still properly forwarded after the
