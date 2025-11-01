@@ -1765,7 +1765,7 @@ class TestUfunc:
         # Not contiguous and not aligned
         a = np.empty((3 * 4 * 5 * 8 + 1,), dtype='i1')
         a = a[1:].view(dtype='f8')
-        a.shape = (3, 4, 5)
+        a = a.reshape((3, 4, 5))
         a = a[1:, 1:, 1:]
         yield a
 
