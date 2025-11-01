@@ -364,18 +364,41 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     optional_indices = return_index or return_inverse
 
     # masked arrays are not supported yet.
-    if not optional_indices and not return_counts and not np.ma.is_masked(ar):
+    if not np.ma.is_masked(ar):
         # First we convert the array to a numpy array, later we wrap it back
         # in case it was a subclass of numpy.ndarray.
         conv = _array_converter(ar)
         ar_, = conv
 
-        if (hash_unique := _unique_hash(ar_, equal_nan=equal_nan)) \
+        if (res := _unique_hash(
+                ar_, equal_nan=equal_nan,
+                return_index=return_index, return_inverse=return_inverse,
+                return_counts=return_counts)) \
             is not NotImplemented:
+            hash_unique, hash_indices, hash_inverse, hash_counts = res
             if sorted:
-                hash_unique.sort()
+                order = np.argsort(hash_unique)
+                hash_unique = hash_unique[order]
+                if return_index:
+                    hash_indices = hash_indices[order]
+                if return_inverse:
+                    inverse_order = np.empty_like(order)
+                    inverse_order[order] = np.arange(order.size)
+                    hash_inverse = inverse_order[hash_inverse]
+                if return_counts:
+                    hash_counts = hash_counts[order]
+
             # We wrap the result back in case it was a subclass of numpy.ndarray.
-            return (conv.wrap(hash_unique),)
+            ret = (conv.wrap(hash_unique),)
+            if return_index:
+                ret += (hash_indices,)
+            if return_inverse:
+                ret += (hash_inverse.reshape(inverse_shape) if axis is None
+                        else hash_inverse,)
+            if return_counts:
+                ret += (hash_counts,)
+
+            return ret
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
