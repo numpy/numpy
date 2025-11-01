@@ -4264,13 +4264,13 @@ bool_ = bool
 @final
 class object_(_RealMixin, generic):
     @overload
-    def __new__(cls, nothing_to_see_here: None = None, /) -> None: ...  # type: ignore[misc]
+    def __new__(cls, value: None = None, /) -> None: ...  # type: ignore[misc]
     @overload
-    def __new__(cls, stringy: _AnyStr, /) -> _AnyStr: ...  # type: ignore[misc]
+    def __new__(cls, value: _AnyStr, /) -> _AnyStr: ...  # type: ignore[misc]
     @overload
-    def __new__(cls, array: ndarray[_ShapeT, Any], /) -> ndarray[_ShapeT, dtype[Self]]: ...  # type: ignore[misc]
+    def __new__(cls, value: ndarray[_ShapeT, Any], /) -> ndarray[_ShapeT, dtype[Self]]: ...  # type: ignore[misc]
     @overload
-    def __new__(cls, sequence: SupportsLenAndGetItem[object], /) -> NDArray[Self]: ...  # type: ignore[misc]
+    def __new__(cls, value: SupportsLenAndGetItem[object], /) -> NDArray[Self]: ...  # type: ignore[misc]
     @overload
     def __new__(cls, value: _T, /) -> _T: ...  # type: ignore[misc]
     @overload  # catch-all
@@ -5628,9 +5628,9 @@ class flexible(_RealMixin, generic[_FlexibleItemT_co], Generic[_FlexibleItemT_co
 
 class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
-    def __new__(cls, value: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
+    def __new__(cls, length_or_data: _IntLike_co | bytes, /, dtype: None = None) -> Self: ...
     @overload
-    def __new__(cls, value: Any, /, dtype: _DTypeLikeVoid) -> Self: ...
+    def __new__(cls, length_or_data: object, /, dtype: _DTypeLikeVoid) -> Self: ...
 
     @overload
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
@@ -5648,18 +5648,18 @@ class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):  # t
 
 class bytes_(character[bytes], bytes):  # type: ignore[misc]
     @overload
-    def __new__(cls, o: object = ..., /) -> Self: ...
+    def __new__(cls, value: object = b"", /) -> Self: ...
     @overload
-    def __new__(cls, s: str, /, encoding: str, errors: str = ...) -> Self: ...
+    def __new__(cls, value: str, /, encoding: str, errors: str = "strict") -> Self: ...
 
     #
     def __bytes__(self, /) -> bytes: ...
 
 class str_(character[str], str):  # type: ignore[misc]
     @overload
-    def __new__(cls, value: object = ..., /) -> Self: ...
+    def __new__(cls, value: object = "", /) -> Self: ...
     @overload
-    def __new__(cls, value: bytes, /, encoding: str = ..., errors: str = ...) -> Self: ...
+    def __new__(cls, value: bytes, /, encoding: str, errors: str = "strict") -> Self: ...
 
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
