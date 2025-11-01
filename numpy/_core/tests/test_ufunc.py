@@ -2842,7 +2842,14 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        args = [np.ones((3, 3), t) for t in inp]
+        if 'm' in inp:
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                args = [np.ones((3, 3), t) for t in inp]
+        else:
+            args = [np.ones((3, 3), t) for t in inp]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)
