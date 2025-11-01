@@ -1291,3 +1291,12 @@ class TestUnique:
         arr1d = np.array([np.nan, 0, 0, np.nan])
         with pytest.raises(TypeError, match="integer argument expected"):
             np.unique(arr1d, axis=0.0, equal_nan=False)
+
+    @pytest.mark.parametrize('dt', [np.dtype('F'), np.dtype('D')])
+    @pytest.mark.parametrize('values', [[complex(0.0, -1), complex(-0.0, -1), 0],
+                                        [-200, complex(-200, -0.0), -1],
+                                        [-25, 3, -5j, complex(-25, -0.0), 3j]])
+    def test_unique_complex_signed_zeros(self, dt, values):
+        z = np.array(values, dtype=dt)
+        u = np.unique(z)
+        assert len(u) == len(values) - 1
