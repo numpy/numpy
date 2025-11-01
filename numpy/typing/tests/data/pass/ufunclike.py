@@ -12,6 +12,9 @@ class Object:
     def __floor__(self) -> Object:
         return self
 
+    def __trunc__(self) -> Object:
+        return self
+
     def __ge__(self, value: object) -> bool:
         return True
 

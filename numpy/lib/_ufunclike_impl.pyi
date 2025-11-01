@@ -14,21 +14,25 @@ __all__ = ["fix", "isneginf", "isposinf"]
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 @overload
+@deprecated("'fix' is deprecated in favor of 'trunc'")
 def fix(  # type: ignore[misc]
     x: _FloatLike_co,
     out: None = None,
 ) -> floating: ...
 @overload
+@deprecated("'fix' is deprecated in favor of 'trunc'")
 def fix(
     x: _ArrayLikeFloat_co,
     out: None = None,
 ) -> NDArray[floating]: ...
 @overload
+@deprecated("'fix' is deprecated in favor of 'trunc'")
 def fix(
     x: _ArrayLikeObject_co,
     out: None = None,
 ) -> NDArray[object_]: ...
 @overload
+@deprecated("'fix' is deprecated in favor of 'trunc'")
 def fix(
     x: _ArrayLikeFloat_co | _ArrayLikeObject_co,
     out: _ArrayT,
