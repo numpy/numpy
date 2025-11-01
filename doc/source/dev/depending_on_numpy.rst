@@ -128,14 +128,9 @@ compatible with a new major release of NumPy and may not be compatible with
 very old versions.
 
 For conda-forge packages, please see
-`here <https://conda-forge.org/docs/maintainer/knowledge_base.html#building-against-numpy>`__.
-
-as of now, it is usually as easy as including::
-
-    host:
-      - numpy
-    run:
-      - {{ pin_compatible('numpy') }}
+`here <https://conda-forge.org/docs/maintainer/knowledge_base.html#building-against-numpy>`__
+for instructions on how to declare a dependency on ``numpy`` when using the C
+API.
 
 
 Runtime dependency & version ranges
