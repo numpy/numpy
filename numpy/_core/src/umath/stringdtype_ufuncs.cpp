@@ -24,6 +24,7 @@
 
 #include "stringdtype/static_string.h"
 #include "stringdtype/dtype.h"
+#include "stringdtype/sorts.h"
 #include "stringdtype/utf8_utils.h"
 
 #include <vector>
@@ -3125,6 +3126,10 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     if (add_promoter(umath, "_slice", slice_promoter_dtypes, 5,
                      slice_promoter) < 0) {
+        return -1;
+    }
+
+    if (init_stringdtype_sorts() < 0) {
         return -1;
     }
 

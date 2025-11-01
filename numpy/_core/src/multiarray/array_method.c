@@ -342,13 +342,13 @@ fill_arraymethod_from_slots(
                     return -1;
                 }
             }
-            if (i >= meth->nin && NPY_DT_is_parametric(res->dtypes[i])) {
-                PyErr_Format(PyExc_TypeError,
-                        "must provide a `resolve_descriptors` function if any "
-                        "output DType is parametric. (method: %s)",
-                        spec->name);
-                return -1;
-            }
+            // if (i >= meth->nin && NPY_DT_is_parametric(res->dtypes[i])) {
+            //     PyErr_Format(PyExc_TypeError,
+            //             "must provide a `resolve_descriptors` function if any "
+            //             "output DType is parametric. (method: %s)",
+            //             spec->name);
+            //     return -1;
+            // }
         }
     }
     if (meth->get_strided_loop != &npy_default_get_strided_loop) {
