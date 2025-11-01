@@ -6,7 +6,7 @@ import ctypes as ct
 import array as _array
 import datetime as dt
 from abc import abstractmethod
-from types import EllipsisType, GetSetDescriptorType, ModuleType, TracebackType, MappingProxyType, GenericAlias
+from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
 from fractions import Fraction
 from uuid import UUID
@@ -2229,16 +2229,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         axis: SupportsIndex | tuple[SupportsIndex, ...] | None = ...,
     ) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
-    def swapaxes(
-        self,
-        axis1: SupportsIndex,
-        axis2: SupportsIndex,
-    ) -> ndarray[_AnyShape, _DTypeT_co]: ...
+    def swapaxes(self, axis1: SupportsIndex, axis2: SupportsIndex, /) -> Self: ...
 
     @overload
     def transpose(self, axes: _ShapeLike | None, /) -> Self: ...
     @overload
-    def transpose(self, *axes: SupportsIndex) -> Self: ...
+    def transpose(self, /, *axes: SupportsIndex) -> Self: ...
 
     @overload
     def all(
@@ -5671,7 +5667,7 @@ class ufunc:
     @property
     def __name__(self) -> LiteralString: ...
     @property
-    def __qualname__(self) -> LiteralString: ...
+    def __qualname__(self) -> LiteralString: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
     def __doc__(self) -> str: ...  # type: ignore[override]
     @property
@@ -5700,18 +5696,43 @@ class ufunc:
     @property
     def signature(self) -> LiteralString | None: ...
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+    def __call__(self, /, *args: Any, **kwargs: Any) -> Any: ...
+
     # The next four methods will always exist, but they will just
     # raise a ValueError ufuncs with that don't accept two input
     # arguments and return one output argument. Because of that we
     # can't type them very precisely.
-    def reduce(self, /, *args: Any, **kwargs: Any) -> Any: ...
-    def accumulate(self, /, *args: Any, **kwargs: Any) -> NDArray[Any]: ...
-    def reduceat(self, /, *args: Any, **kwargs: Any) -> NDArray[Any]: ...
-    def outer(self, *args: Any, **kwargs: Any) -> Any: ...
-    # Similarly at won't be defined for ufuncs that return multiple
+    def accumulate(
+        self,
+        array: ArrayLike,
+        /,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: ndarray | EllipsisType | None = None,
+    ) -> NDArray[Incomplete]: ...
+    def reduce(
+        self,
+        array: ArrayLike,
+        /,
+        axis: _ShapeLike | None = 0,
+        dtype: DTypeLike | None = None,
+        out: ndarray | EllipsisType | None = None,
+        **kwargs: Incomplete,
+    ) -> Incomplete: ...
+    def reduceat(
+        self,
+        array: ArrayLike,
+        /,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex = 0,
+        dtype: DTypeLike | None = None,
+        out: ndarray | EllipsisType | None = None,
+    ) -> NDArray[Incomplete]: ...
+    def outer(self, A: ArrayLike, B: ArrayLike, /, **kwargs: Incomplete) -> NDArray[Incomplete]: ...
+
+    # Similarly `at` won't be defined for ufuncs that return multiple
     # outputs, so we can't type it very precisely.
-    def at(self, /, *args: Any, **kwargs: Any) -> None: ...
+    def at(self, a: ndarray, indices: _ArrayLikeInt_co, b: ArrayLike | None = None, /) -> None: ...
 
     #
     def resolve_dtypes(

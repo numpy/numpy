@@ -18,10 +18,11 @@ from typing import (
     SupportsIndex,
     SupportsInt,
     TypeAlias,
+    Unpack,
     final,
     overload,
 )
-from typing_extensions import ParamSpec, TypeIs, TypeVar, override
+from typing_extensions import Buffer, ParamSpec, TypeIs, TypeVar, override
 
 import numpy as np
 from numpy import (
@@ -30,6 +31,7 @@ from numpy import (
     _HasDTypeWithRealAndImag,
     _ModeKind,
     _OrderACF,
+    _OrderCF,
     _OrderKACF,
     _PartitionKind,
     _SortKind,
@@ -67,6 +69,7 @@ from numpy import (
     unsignedinteger,
     void,
 )
+from numpy._core.fromnumeric import _UFuncKwargs  # type-check only
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
@@ -100,6 +103,8 @@ from numpy._typing import (
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
+    _SupportsArrayFunc,
+    _SupportsDType,
 )
 from numpy._typing._dtype_like import _VoidDTypeLike
 
@@ -295,6 +300,7 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number)
 _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
+_ArangeScalarT = TypeVar("_ArangeScalarT", bound=_ArangeScalar)
 _UFuncT_co = TypeVar(
     "_UFuncT_co",
     # the `| Callable` simplifies self-binding to the ufunc's callable signature
@@ -327,6 +333,7 @@ _ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
 _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
 _ConvertibleToTD64: TypeAlias = dt.timedelta | int | _CharLike_co | character | number | timedelta64 | np.bool | None
 _ConvertibleToDT64: TypeAlias = dt.date | int | _CharLike_co | character | number | datetime64 | np.bool | None
+_ArangeScalar: TypeAlias = floating | integer | datetime64 | timedelta64
 
 _NoMaskType: TypeAlias = np.bool_[Literal[False]]  # type of `np.False_`
 _MaskArray: TypeAlias = np.ndarray[_ShapeOrAnyT, np.dtype[np.bool_]]
@@ -2324,14 +2331,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     squeeze: Any
 
-    # keep in sync with `ndarray.swapaxes`
-    def swapaxes(
-        self,
-        axis1: SupportsIndex,
-        axis2: SupportsIndex,
-        /,
-    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
-
     #
     def toflex(self) -> Incomplete: ...
     def torecords(self) -> Incomplete: ...
@@ -2630,6 +2629,8 @@ def repeat(a: ArrayLike, repeats: _ArrayLikeInt_co, axis: None = None) -> Masked
 def repeat(a: ArrayLike, repeats: _ArrayLikeInt_co, axis: SupportsIndex) -> _MaskedArray[Incomplete]: ...
 
 # keep in sync with `_core.fromnumeric.swapaxes`
+@overload
+def swapaxes(a: _MArrayT, axis1: SupportsIndex, axis2: SupportsIndex) -> _MArrayT: ...
 @overload
 def swapaxes(a: _ArrayLike[_ScalarT], axis1: SupportsIndex, axis2: SupportsIndex) -> _MaskedArray[_ScalarT]: ...
 @overload
@@ -3130,24 +3131,508 @@ def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float 
 
 def fromflex(fxarray): ...
 
-class _convert2ma:
-    def __init__(self, /, funcname: str, np_ret: str, np_ma_ret: str, params: dict[str, Any] | None = None) -> None: ...
-    def __call__(self, /, *args: object, **params: object) -> Any: ...
-    def getdoc(self, /, np_ret: str, np_ma_ret: str) -> str | None: ...
-
-arange: _convert2ma = ...
-clip: _convert2ma = ...
-empty: _convert2ma = ...
-empty_like: _convert2ma = ...
-frombuffer: _convert2ma = ...
-fromfunction: _convert2ma = ...
-identity: _convert2ma = ...
-indices: _convert2ma = ...
-ones: _convert2ma = ...
-ones_like: _convert2ma = ...
-squeeze: _convert2ma = ...
-zeros: _convert2ma = ...
-zeros_like: _convert2ma = ...
-
 def append(a, b, axis=None): ...
 def dot(a, b, strict=False, out=None): ...
+
+# internal wrapper functions for the functions below
+def _convert2ma(
+    funcname: str,
+    np_ret: str,
+    np_ma_ret: str,
+    params: dict[str, Any] | None = None,
+) -> Callable[..., Any]: ...
+
+# keep roughly in sync with `_core.multiarray.arange`
+@overload  # int, dtype=None (default)
+def arange(
+    start: int,
+    stop: int = ...,
+    step: int = ...,
+    /,
+    dtype: None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[np.int_]]: ...
+@overload  # float, dtype=None (default)
+def arange(
+    start: float,
+    stop: float = ...,
+    step: float = ...,
+    /,
+    dtype: None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[np.float64 | Any]]: ...
+@overload  # integer | floating | datetime64 | timedelta64, dtype=None (default)
+def arange(
+    start: _ArangeScalarT,
+    stop: _ArangeScalarT = ...,
+    step: _ArangeScalarT = ...,
+    /,
+    dtype: None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ArangeScalarT]]: ...
+@overload  # dtype: known dtype-like (positional)
+def arange(
+    start: _ArangeScalar,
+    stop: _ArangeScalar,
+    step: _ArangeScalar,
+    /,
+    dtype: _DTypeLike[_ScalarT],
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload  # dtype: known dtype-like (keyword)
+def arange(
+    start: _ArangeScalar,
+    stop: _ArangeScalar = ...,
+    step: _ArangeScalar = ...,
+    /,
+    *,
+    dtype: _DTypeLike[_ScalarT],
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload  # dtype: unknown dtype
+def arange(
+    start: _ArangeScalar,
+    stop: _ArangeScalar = ...,
+    step: _ArangeScalar = ...,
+    /,
+    dtype: DTypeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int]]: ...
+
+# based on `_core.fromnumeric.clip`
+@overload
+def clip(
+    a: _ScalarT,
+    a_min: ArrayLike | _NoValueType | None = ...,
+    a_max: ArrayLike | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    min: ArrayLike | _NoValueType | None = ...,
+    max: ArrayLike | _NoValueType | None = ...,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+    dtype: None = None,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> _ScalarT: ...
+@overload
+def clip(
+    a: NDArray[_ScalarT],
+    a_min: ArrayLike | _NoValueType | None = ...,
+    a_max: ArrayLike | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    min: ArrayLike | _NoValueType | None = ...,
+    max: ArrayLike | _NoValueType | None = ...,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+    dtype: None = None,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: ArrayLike | None,
+    a_max: ArrayLike | None,
+    out: _MArrayT,
+    *,
+    min: ArrayLike | _NoValueType | None = ...,
+    max: ArrayLike | _NoValueType | None = ...,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+    dtype: DTypeLike | None = None,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> _MArrayT: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: ArrayLike | _NoValueType | None = ...,
+    a_max: ArrayLike | _NoValueType | None = ...,
+    *,
+    out: _MArrayT,
+    min: ArrayLike | _NoValueType | None = ...,
+    max: ArrayLike | _NoValueType | None = ...,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+    dtype: DTypeLike | None = None,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> _MArrayT: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: ArrayLike | _NoValueType | None = ...,
+    a_max: ArrayLike | _NoValueType | None = ...,
+    out: None = None,
+    *,
+    min: ArrayLike | _NoValueType | None = ...,
+    max: ArrayLike | _NoValueType | None = ...,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+    dtype: DTypeLike | None = None,
+    **kwargs: Unpack[_UFuncKwargs],
+) -> Incomplete: ...
+
+# keep in sync with `_core.multiarray.ones`
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[np.float64]]: ...
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], _DTypeT]: ...
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: type[_ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload
+def empty(
+    shape: SupportsIndex,
+    dtype: DTypeLike | None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int]]: ...
+@overload  # known shape
+def empty(
+    shape: _AnyShapeT,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT, np.dtype[np.float64]]: ...
+@overload
+def empty(
+    shape: _AnyShapeT,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT, _DTypeT]: ...
+@overload
+def empty(
+    shape: _AnyShapeT,
+    dtype: type[_ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT, np.dtype[_ScalarT]]: ...
+@overload
+def empty(
+    shape: _AnyShapeT,
+    dtype: DTypeLike | None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShapeT]: ...
+@overload  # unknown shape
+def empty(
+    shape: _ShapeLike,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[np.float64]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[_AnyShape, _DTypeT]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: type[_ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def empty(
+    shape: _ShapeLike,
+    dtype: DTypeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray: ...
+
+# keep in sync with `_core.multiarray.empty_like`
+@overload
+def empty_like(
+    a: _MArrayT,
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> _MArrayT: ...
+@overload
+def empty_like(
+    a: _ArrayLike[_ScalarT],
+    dtype: None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def empty_like(
+    a: object,
+    dtype: _DTypeLike[_ScalarT],
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def empty_like(
+    a: object,
+    dtype: DTypeLike | None = None,
+    order: _OrderKACF = "K",
+    subok: bool = True,
+    shape: _ShapeLike | None = None,
+    *,
+    device: Literal["cpu"] | None = None,
+) -> _MaskedArray[Incomplete]: ...
+
+# This is a bit of a hack to avoid having to duplicate all those `empty` overloads for
+# `ones` and `zeros`, that relies on the fact that empty/zeros/ones have identical
+# type signatures, but may cause some type-checkers to report incorrect names in case
+# of user errors. Mypy and Pyright seem to handle this just fine.
+ones = empty
+ones_like = empty_like
+zeros = empty
+zeros_like = empty_like
+
+# keep in sync with `_core.multiarray.frombuffer`
+@overload
+def frombuffer(
+    buffer: Buffer,
+    *,
+    count: SupportsIndex = -1,
+    offset: SupportsIndex = 0,
+    like: _SupportsArrayFunc | None = None,
+) -> _MaskedArray[np.float64]: ...
+@overload
+def frombuffer(
+    buffer: Buffer,
+    dtype: _DTypeLike[_ScalarT],
+    count: SupportsIndex = -1,
+    offset: SupportsIndex = 0,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def frombuffer(
+    buffer: Buffer,
+    dtype: DTypeLike | None = float,
+    count: SupportsIndex = -1,
+    offset: SupportsIndex = 0,
+    *,
+    like: _SupportsArrayFunc | None = None,
+) -> _MaskedArray[Incomplete]: ...
+
+# keep roughly in sync with `_core.numeric.fromfunction`
+def fromfunction(
+    function: Callable[..., np.ndarray[_ShapeT, _DTypeT]],
+    shape: Sequence[int],
+    *,
+    dtype: DTypeLike | None = float,
+    like: _SupportsArrayFunc | None = None,
+    **kwargs: object,
+) -> MaskedArray[_ShapeT, _DTypeT]: ...
+
+# keep roughly in sync with `_core.numeric.identity`
+@overload
+def identity(
+    n: int,
+    dtype: None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int, int], np.dtype[np.float64]]: ...
+@overload
+def identity(
+    n: int,
+    dtype: _DTypeLike[_ScalarT],
+    *,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int, int], np.dtype[_ScalarT]]: ...
+@overload
+def identity(
+    n: int,
+    dtype: DTypeLike | None = None,
+    *,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> MaskedArray[tuple[int, int], np.dtype[Incomplete]]: ...
+
+# keep roughly in sync with `_core.numeric.indices`
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: type[int] = int,
+    sparse: Literal[False] = False,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[np.intp]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: type[int],
+    sparse: Literal[True],
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[np.intp], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: type[int] = int,
+    *,
+    sparse: Literal[True],
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[np.intp], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: _DTypeLike[_ScalarT],
+    sparse: Literal[False] = False,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: _DTypeLike[_ScalarT],
+    sparse: Literal[True],
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[_ScalarT], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike | None = int,
+    sparse: Literal[False] = False,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[Incomplete]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike | None,
+    sparse: Literal[True],
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[Incomplete], ...]: ...
+@overload
+def indices(
+    dimensions: Sequence[int],
+    dtype: DTypeLike | None = int,
+    *,
+    sparse: Literal[True],
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> tuple[_MaskedArray[Incomplete], ...]: ...
+
+# keep roughly in sync with `_core.fromnumeric.squeeze`
+@overload
+def squeeze(
+    a: _ArrayLike[_ScalarT],
+    axis: _ShapeLike | None = None,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def squeeze(
+    a: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _MaskedArray[Incomplete]: ...

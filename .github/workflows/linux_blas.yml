@@ -89,16 +89,13 @@ jobs:
         fi
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
-        echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $GITHUB_ENV
-        ld_library_path=$(python -c"import scipy_openblas32 as ob32; print(ob32.get_lib_dir())")
-        echo "LD_LIBRARY_PATH=$ld_library_path" >> $GITHUB_ENV
 
     - name: Build
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       env:
         TERM: xterm-256color
       run:
-        spin build -- --werror -Dallow-noblas=false
+        spin build -- --werror -Dallow-noblas=false -Dpkg_config_path=${PWD}/.openblas
 
     - name: Check build-internal dependencies
       run:

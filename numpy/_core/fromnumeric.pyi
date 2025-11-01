@@ -303,19 +303,13 @@ def put(
     mode: _ModeKind = "raise",
 ) -> None: ...
 
-# keep in sync with `ma.core.swapaxes`
+# keep in sync with `ndarray.swapaxes` and `ma.core.swapaxes`
 @overload
-def swapaxes(
-    a: _ArrayLike[_ScalarT],
-    axis1: SupportsIndex,
-    axis2: SupportsIndex,
-) -> NDArray[_ScalarT]: ...
+def swapaxes(a: _ArrayT, axis1: SupportsIndex, axis2: SupportsIndex) -> _ArrayT: ...
 @overload
-def swapaxes(
-    a: ArrayLike,
-    axis1: SupportsIndex,
-    axis2: SupportsIndex,
-) -> NDArray[Any]: ...
+def swapaxes(a: _ArrayLike[_ScalarT], axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[_ScalarT]: ...
+@overload
+def swapaxes(a: ArrayLike, axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[Any]: ...
 
 @overload
 def transpose(

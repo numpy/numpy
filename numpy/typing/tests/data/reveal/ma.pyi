@@ -374,7 +374,7 @@ assert_type(MAR_c16.imag, MaskedArray[np.float64])
 assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
 assert_type(MAR_b.swapaxes(0, 1), MaskedArray[np.bool])
-assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
+assert_type(MAR_2d_f4.swapaxes(1, 0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 
 assert_type(MAR_2d_f4[AR_i8], MaskedArray[np.float32])
 assert_type(MAR_2d_f4[[1, 2, 3]], MaskedArray[np.float32])

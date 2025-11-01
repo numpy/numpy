@@ -5977,3 +5977,20 @@ def test_uint_fill_value_and_filled():
 )
 def test_frommethod_signature(fn, signature):
     assert str(inspect.signature(fn)) == signature
+
+
+@pytest.mark.parametrize(
+    ('fn', 'signature'),
+    [
+        (np.ma.empty, "(*args, fill_value=None, hardmask=False, **kwargs)"),
+        (np.ma.empty_like, "(*args, **kwargs)"),
+        (np.ma.squeeze, "(a, axis=None, *, fill_value=None, hardmask=False)"),
+        (
+            np.ma.identity,
+            "(n, dtype=None, *, like=None, fill_value=None, hardmask=False)",
+        ),
+    ]
+)
+def test_convert2ma_signature(fn, signature):
+    assert str(inspect.signature(fn)) == signature
+    assert fn.__module__ == 'numpy.ma.core'

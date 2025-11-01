@@ -4799,7 +4799,7 @@ add_newdoc('numpy._core.umath', '_add_newdoc_ufunc',
 
 add_newdoc('numpy._core.multiarray', 'get_handler_name',
     """
-    get_handler_name(a: ndarray) -> str,None
+    get_handler_name(a: ndarray) -> str | None
 
     Return the name of the memory handler used by `a`. If not provided, return
     the name of the memory handler that will be used to allocate data for the
@@ -5171,6 +5171,9 @@ add_newdoc('numpy._core', 'ufunc', ('signature',
 
 add_newdoc('numpy._core', 'ufunc', ('reduce',
     """
+    reduce($self, array, /, axis=0, dtype=None, out=None, **kwargs)
+    --
+
     reduce(array, axis=0, dtype=None, out=None, keepdims=False, initial=<no value>, where=True)
 
     Reduces `array`'s dimension by one, by applying ufunc along one axis.
@@ -5297,6 +5300,9 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
 
 add_newdoc('numpy._core', 'ufunc', ('accumulate',
     """
+    accumulate($self, array, /, axis=0, dtype=None, out=None)
+    --
+
     accumulate(array, axis=0, dtype=None, out=None)
 
     Accumulate the result of applying the operator to all elements.
@@ -5375,6 +5381,9 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
 
 add_newdoc('numpy._core', 'ufunc', ('reduceat',
     """
+    reduceat($self, array, /, indices, axis=0, dtype=None, out=None)
+    --
+
     reduceat(array, indices, axis=0, dtype=None, out=None)
 
     Performs a (local) reduce with specified slices over a single axis.
@@ -5483,6 +5492,9 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
 
 add_newdoc('numpy._core', 'ufunc', ('outer',
     r"""
+    outer($self, A, B, /, **kwargs)
+    --
+
     outer(A, B, /, **kwargs)
 
     Apply the ufunc `op` to all pairs (a, b) with a in `A` and b in `B`.
@@ -5554,6 +5566,9 @@ add_newdoc('numpy._core', 'ufunc', ('outer',
 
 add_newdoc('numpy._core', 'ufunc', ('at',
     """
+    at($self, a, indices, b=None, /)
+    --
+
     at(a, indices, b=None, /)
 
     Performs unbuffered in place operation on operand 'a' for elements
@@ -5605,6 +5620,9 @@ add_newdoc('numpy._core', 'ufunc', ('at',
 
 add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
     """
+    resolve_dtypes($self, dtypes, *, signature=None, casting=None, reduction=False)
+    --
+
     resolve_dtypes(dtypes, *, signature=None, casting=None, reduction=False)
 
     Find the dtypes NumPy will use for the operation.  Both input and
@@ -5677,6 +5695,9 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
 
 add_newdoc('numpy._core', 'ufunc', ('_resolve_dtypes_and_context',
     """
+    _resolve_dtypes_and_context($self, dtypes, *, signature=None, casting=None, reduction=False)
+    --
+
     _resolve_dtypes_and_context(dtypes, *, signature=None, casting=None, reduction=False)
 
     See `numpy.ufunc.resolve_dtypes` for parameter information.  This
@@ -5700,6 +5721,9 @@ add_newdoc('numpy._core', 'ufunc', ('_resolve_dtypes_and_context',
 
 add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
     """
+    _get_strided_loop($self, call_info, /, *, fixed_strides=None)
+    --
+
     _get_strided_loop(call_info, /, *, fixed_strides=None)
 
     This function fills in the ``call_info`` capsule to include all
@@ -6453,7 +6477,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('__le__',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('__gt__',
     """
-    __ge__(value, /)
+    __gt__(value, /)
 
     Return ``self > value``.
 
