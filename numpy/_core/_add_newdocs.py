@@ -80,7 +80,6 @@ add_newdoc('numpy._core', 'flatiter', ('base',
 
     """))
 
-
 add_newdoc('numpy._core', 'flatiter', ('coords',
     """
     An N-dimensional tuple of current coordinates.
@@ -98,7 +97,6 @@ add_newdoc('numpy._core', 'flatiter', ('coords',
     (0, 1)
 
     """))
-
 
 add_newdoc('numpy._core', 'flatiter', ('index',
     """
@@ -118,17 +116,25 @@ add_newdoc('numpy._core', 'flatiter', ('index',
 
     """))
 
-# flatiter functions
+# flatiter methods
 
 add_newdoc('numpy._core', 'flatiter', ('__array__',
-    """__array__(type=None) Get array from iterator
+    """
+    __array__($self, dtype=None, /, *, copy=None)
+    --
+
+    flat.__array__([dtype], *, copy=None)
+
+    Get array from iterator
 
     """))
 
-
 add_newdoc('numpy._core', 'flatiter', ('copy',
     """
-    copy()
+    copy($self, /)
+    --
+
+    flat.copy()
 
     Get a copy of the iterator as a 1-D array.
 
