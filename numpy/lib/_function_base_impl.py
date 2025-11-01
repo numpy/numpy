@@ -3859,11 +3859,21 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         else:
             keep = set(range(nd)) - set(axis)
             nkeep = len(keep)
-            # swap axis that should not be reduced to front
-            for i, s in enumerate(sorted(keep)):
-                a = a.swapaxes(i, s)
-            # merge reduced axis
-            a = a.reshape(a.shape[:nkeep] + (-1,))
+
+            def reshape_arr(a):
+                # swap axis that should not be reduced to front
+                for i, s in enumerate(sorted(keep)):
+                    a = a.swapaxes(i, s)
+                # merge reduced axis
+                return a.reshape(a.shape[:nkeep] + (-1,))
+
+            a = reshape_arr(a)
+
+            weights = kwargs.get("weights")
+            if weights is not None:
+                weights = np.asanyarray(weights)
+                kwargs["weights"] = reshape_arr(weights)
+
             kwargs['axis'] = -1
     elif keepdims and out is not None:
         index_out = (0, ) * nd
@@ -4500,7 +4510,8 @@ def _quantile_unchecked(a,
                         overwrite_input=False,
                         method="linear",
                         keepdims=False,
-                        weights=None):
+                        weights=None,
+                        ignore_nans=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
     return _ureduce(a,
                     func=_quantile_ureduce_func,
@@ -4510,7 +4521,8 @@ def _quantile_unchecked(a,
                     axis=axis,
                     out=out,
                     overwrite_input=overwrite_input,
-                    method=method)
+                    method=method,
+                    ignore_nans=ignore_nans)
 
 
 def _quantile_is_valid(q):
@@ -4638,6 +4650,7 @@ def _quantile_ureduce_func(
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
     method: str = "linear",
+    ignore_nans: bool = False
 ) -> np.ndarray:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
@@ -4664,7 +4677,8 @@ def _quantile_ureduce_func(
                        axis=axis,
                        method=method,
                        out=out,
-                       weights=wgt)
+                       weights=wgt,
+                       ignore_nans=ignore_nans)
     return result
 
 
@@ -4710,6 +4724,7 @@ def _quantile(
     method: str = "linear",
     out: np.ndarray | None = None,
     weights: "np.typing.ArrayLike | None" = None,
+    ignore_nans: bool = False
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
@@ -4730,7 +4745,7 @@ def _quantile(
     # axis being sampled from `arr` to be last.
     if axis != 0:  # But moveaxis is slow, so only call it if necessary.
         arr = np.moveaxis(arr, axis, destination=0)
-    supports_nans = (
+    supports_nans = (not ignore_nans) and (
         np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
     )
 
