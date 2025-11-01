@@ -43,9 +43,8 @@ size_t hash_integer(const T *value, npy_bool equal_nan) {
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 size_t hash_complex(const T *value, npy_bool equal_nan) {
-    S value_real = real(*value);
-    S value_imag = imag(*value);
-    int hasnan = npy_isnan(value_real) || npy_isnan(value_imag);
+    std::complex<S> z = *reinterpret_cast<const std::complex<S> *>(value);
+    int hasnan = npy_isnan(z.real()) || npy_isnan(z.imag());
     if (equal_nan && hasnan) {
         return 0;
     }
@@ -53,30 +52,37 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     // Now, equal_nan is false or neither of the values is not NaN.
     // So we don't need to worry about NaN here.
 
-    std::complex<S> tmp = *reinterpret_cast<const std::complex<S> *>(value);
-    // Get rid of -0.0 in tmp.
-    if (value_real == 0) {
-        tmp.real(0.0);
+    // Convert -0.0 to 0.0.
+    if (z.real() == 0.0) {
+        z.real(NPY_PZERO);
     }
-    if (value_imag == 0) {
-        tmp.imag(0.0);
+    if (z.imag() == 0.0) {
+        z.imag(NPY_PZERO);
     }
-    const unsigned char* value_bytes = reinterpret_cast<const unsigned char*>(&tmp);
-    size_t hash = npy_fnv1a(value_bytes, sizeof(T));
 
+    size_t hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
     return hash;
 }
 
 size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
-    npy_longdouble value_real = npy_creall(*value);
-    npy_longdouble value_imag = npy_cimagl(*value);
-    int hasnan = npy_isnan(value_real) || npy_isnan(value_imag);
+    std::complex<long double> z =
+        *reinterpret_cast<const std::complex<long double> *>(value);
+    int hasnan = npy_isnan(z.real()) || npy_isnan(z.imag());
     if (equal_nan && hasnan) {
         return 0;
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
     // So we don't need to worry about NaN here.
+
+    // Convert -0.0 to 0.0.
+    if (z.real() == 0.0) {
+        z.real(NPY_PZEROL);
+    }
+    if (z.imag() == 0.0) {
+        z.imag(NPY_PZEROL);
+    }
+
     // Some floating-point complex dtypes (e.g., npy_complex256) include undefined or
     // unused bits in their binary representation
     // (see: https://github.com/numpy/numpy/blob/main/numpy/_core/src/npymath/npy_math_private.h#L254-L261).
@@ -87,17 +93,13 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
         defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
         defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE)
 
-    // Get rid of -0.0.
-    value_real = (value_real == 0.0) ? 0.0 : value_real;
-    value_imag = (value_imag == 0.0) ? 0.0 : value_imag;
-
     constexpr size_t SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
     constexpr size_t SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
     constexpr size_t SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
     constexpr size_t SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
     unsigned char buffer[SIZEOF_BUFFER];
 
-    union IEEEl2bitsrep bits_real{value_real}, bits_imag{value_imag};
+    union IEEEl2bitsrep bits_real{z.real()}, bits_imag{z.imag()};
     size_t offset = 0;
 
     for (const IEEEl2bitsrep &bits: {bits_real, bits_imag}) {
@@ -116,17 +118,10 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
         offset += SIZEOF_LDOUBLE_SIGN;
     }
     #else
-    std::complex<long double> tmp =
-        *reinterpret_cast<const std::complex<long double> *>(value);
-    // Get rid of -0.0 in tmp.
-    if (value_real == 0) {
-        tmp.real(0.0);
-    }
-    if (value_imag == 0) {
-        tmp.imag(0.0);
-    }
-    constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
-    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(&tmp);
+
+    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(&z);
+    constexpr size_t SIZEOF_BUFFER = sizeof(z);
+
     #endif
 
     size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
