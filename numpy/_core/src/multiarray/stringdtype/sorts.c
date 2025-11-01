@@ -13,7 +13,7 @@
 #include "static_string.h"
 
 int
-_cmp(char *a, char *b, PyArray_StringDTypeObject *descr)
+_cmp(char *a, char *b, PyArray_StringDTypeObject *descr, int descending)
 {
     npy_string_allocator *allocator = descr->allocator;
     int has_null = descr->na_object != NULL;
@@ -34,6 +34,8 @@ _cmp(char *a, char *b, PyArray_StringDTypeObject *descr)
     else if (NPY_UNLIKELY(a_is_null || b_is_null)) {
         if (has_null && !has_string_na) {
             if (has_nan_na) {
+                // we do not consider descending here, as NaNs are always
+                // sorted to the end
                 if (a_is_null) {
                     return 1;
                 }
@@ -56,26 +58,30 @@ _cmp(char *a, char *b, PyArray_StringDTypeObject *descr)
             }
         }
     }
-    return NpyString_cmp(&s_a, &s_b);
+    int cmp = NpyString_cmp(&s_a, &s_b);
+    if (descending) {
+        cmp = -cmp;
+    }
+    return cmp;
 }
 
 static void
 string_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
-                  PyArray_StringDTypeObject *sdescr)
+                  PyArray_StringDTypeObject *sdescr, int descending)
 {
     char *pi, *pj, *pk, *pm;
 
     if (pr - pl > SMALL_STRING_MERGESORT * elsize) {
         /* merge sort */
         pm = pl + (((pr - pl) / elsize) >> 1) * elsize;
-        string_mergesort0(pl, pm, pw, vp, elsize, sdescr);
-        string_mergesort0(pm, pr, pw, vp, elsize, sdescr);
+        string_mergesort0(pl, pm, pw, vp, elsize, sdescr, descending);
+        string_mergesort0(pm, pr, pw, vp, elsize, sdescr, descending);
         memcpy(pw, pl, pm - pl);
         pi = pw + (pm - pl);
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (_cmp(pm, pj, sdescr) < 0) {
+            if (_cmp(pm, pj, sdescr, descending) < 0) {
                 memcpy(pk, pm, elsize);
                 pm += elsize;
                 pk += elsize;
@@ -94,7 +100,7 @@ string_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
             memcpy(vp, pi, elsize);
             pj = pi;
             pk = pi - elsize;
-            while (pj > pl && _cmp(vp, pk, sdescr) < 0) {
+            while (pj > pl && _cmp(vp, pk, sdescr, descending) < 0) {
                 memcpy(pj, pk, elsize);
                 pj -= elsize;
                 pk -= elsize;
@@ -113,6 +119,9 @@ stringdtype_stablesort(PyArrayMethod_Context *context, char *const *data,
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
 
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    int descending = (parameters->flags & NPY_SORT_DESCENDING);
+
     int num = (int)dimensions[0];
     npy_intp elsize = descr->elsize;
     char *pl = (char *)data[0];
@@ -130,7 +139,7 @@ stringdtype_stablesort(PyArrayMethod_Context *context, char *const *data,
     vp = (char *)malloc(elsize);
 
     if (pw != NULL && vp != NULL) {
-        string_mergesort0(pl, pr, pw, vp, elsize, sdescr);
+        string_mergesort0(pl, pr, pw, vp, elsize, sdescr, descending);
         err = 0;
     }
 
@@ -147,29 +156,14 @@ stringdtype_sort_get_loop(PyArrayMethod_Context *context, int aligned,
                           PyArrayMethod_StridedLoop **out_loop,
                           NpyAuxData **out_transferdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArrayMethod_SortParameters *parameters =
-            (PyArrayMethod_SortParameters *)context->parameters;
-
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
-    switch (parameters->flags) {
-        case NPY_SORT_DEFAULT:
-            *out_loop = &stringdtype_stablesort;  // default to mergesort
-            break;
-        case NPY_SORT_STABLE:
-            *out_loop = &stringdtype_stablesort;
-            break;
-        default:
-            npy_gil_error(PyExc_ValueError, "Unsupported sort kind for StringDType");
-            return -1;
-    }
-
+    *out_loop = &stringdtype_stablesort;  // default to mergesort
     return 0;
 }
 
 static void
 string_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw, npy_intp elsize,
-                   PyArray_StringDTypeObject *sdescr)
+                   PyArray_StringDTypeObject *sdescr, int descending)
 {
     char *vp;
     npy_intp vi, *pi, *pj, *pk, *pm;
@@ -177,8 +171,8 @@ string_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw, npy_intp e
     if (pr - pl > SMALL_STRING_MERGESORT) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
-        string_amergesort0(pl, pm, v, pw, elsize, sdescr);
-        string_amergesort0(pm, pr, v, pw, elsize, sdescr);
+        string_amergesort0(pl, pm, v, pw, elsize, sdescr, descending);
+        string_amergesort0(pm, pr, v, pw, elsize, sdescr, descending);
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
@@ -186,7 +180,7 @@ string_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw, npy_intp e
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (_cmp(v + (*pm) * elsize, v + (*pj) * elsize, sdescr) < 0) {
+            if (_cmp(v + (*pm) * elsize, v + (*pj) * elsize, sdescr, descending) < 0) {
                 *pk++ = *pm++;
             }
             else {
@@ -204,7 +198,7 @@ string_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw, npy_intp e
             vp = v + vi * elsize;
             pj = pi;
             pk = pi - 1;
-            while (pj > pl && _cmp(vp, v + (*pk) * elsize, sdescr) < 0) {
+            while (pj > pl && _cmp(vp, v + (*pk) * elsize, sdescr, descending) < 0) {
                 *pj-- = *pk--;
             }
             *pj = vi;
@@ -222,6 +216,9 @@ stringdtype_stableargsort(PyArrayMethod_Context *context, char *const *data,
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
 
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    int descending = (parameters->flags & NPY_SORT_DESCENDING);
+
     int num = (int)dimensions[0];
     npy_intp elsize = descr->elsize;
     npy_intp *pl, *pr, *pw;
@@ -237,7 +234,7 @@ stringdtype_stableargsort(PyArrayMethod_Context *context, char *const *data,
     if (pw == NULL) {
         return -2;
     }
-    string_amergesort0(pl, pr, (char *)data[0], pw, elsize, sdescr);
+    string_amergesort0(pl, pr, (char *)data[0], pw, elsize, sdescr, descending);
     free(pw);
     NpyString_release_allocator(allocator);
 
@@ -251,23 +248,8 @@ stringdtype_argsort_get_loop(PyArrayMethod_Context *context, int aligned,
                              NpyAuxData **out_transferdata,
                              NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    PyArrayMethod_SortParameters *parameters =
-            (PyArrayMethod_SortParameters *)context->parameters;
-
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
-
-    switch (parameters->flags) {
-        case NPY_SORT_DEFAULT:
-            *out_loop = &stringdtype_stableargsort;  // default to mergesort
-            break;
-        case NPY_SORT_STABLE:
-            *out_loop = &stringdtype_stableargsort;
-            break;
-        default:
-            npy_gil_error(PyExc_ValueError, "Unsupported sort kind for StringDType");
-            return -1;
-    }
-
+    *out_loop = &stringdtype_stableargsort;  // default to mergesort
     return 0;
 }
 
