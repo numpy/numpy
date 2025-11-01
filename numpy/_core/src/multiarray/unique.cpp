@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include <algorithm>
+#include <complex>
 #include <cstring>
 #include <functional>
 #include <unordered_map>
@@ -51,7 +52,16 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
 
     // Now, equal_nan is false or neither of the values is not NaN.
     // So we don't need to worry about NaN here.
-    const unsigned char* value_bytes = reinterpret_cast<const unsigned char*>(value);
+
+    std::complex<S> tmp = *reinterpret_cast<const std::complex<S> *>(value);
+    // Get rid of -0.0 in tmp.
+    if (value_real == 0) {
+        tmp.real(0.0);
+    }
+    if (value_imag == 0) {
+        tmp.imag(0.0);
+    }
+    const unsigned char* value_bytes = reinterpret_cast<const unsigned char*>(&tmp);
     size_t hash = npy_fnv1a(value_bytes, sizeof(T));
 
     return hash;
@@ -76,6 +86,11 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     #if defined(HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE) || \
         defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
         defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE)
+
+    // Get rid of -0.0.
+    value_real = (value_real == 0.0) ? 0.0 : value_real;
+    value_imag = (value_imag == 0.0) ? 0.0 : value_imag;
+
     constexpr size_t SIZEOF_LDOUBLE_MAN = sizeof(ldouble_man_t);
     constexpr size_t SIZEOF_LDOUBLE_EXP = sizeof(ldouble_exp_t);
     constexpr size_t SIZEOF_LDOUBLE_SIGN = sizeof(ldouble_sign_t);
@@ -101,8 +116,17 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
         offset += SIZEOF_LDOUBLE_SIGN;
     }
     #else
+    std::complex<long double> tmp =
+        *reinterpret_cast<const std::complex<long double> *>(value);
+    // Get rid of -0.0 in tmp.
+    if (value_real == 0) {
+        tmp.real(0.0);
+    }
+    if (value_imag == 0) {
+        tmp.imag(0.0);
+    }
     constexpr size_t SIZEOF_BUFFER = NPY_SIZEOF_CLONGDOUBLE;
-    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(value);
+    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(&tmp);
     #endif
 
     size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
