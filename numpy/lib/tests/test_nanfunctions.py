@@ -946,7 +946,7 @@ class TestNanFunctions_Median:
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
     def test_allnans(self, dtype, axis):
         mat = np.full((3, 3), np.nan, dtype=dtype)
-        with pytest.warns(RuntimeWarning) as r:
+        with pytest.warns((RuntimeWarning, DeprecationWarning)) as r:
             output = np.nanmedian(mat, axis=axis)
             assert output.dtype == mat.dtype
             assert np.isnan(output).all()
@@ -962,7 +962,7 @@ class TestNanFunctions_Median:
                 assert_(len(_filtered_record) == 3)
 
             # Check scalar
-            scalar = np.array([np.nan], dtype=dtype)[0]
+            scalar = np.full((1, 1), np.nan, dtype=dtype)[0, 0]
             output_scalar = np.nanmedian(scalar)
             assert output_scalar.dtype == scalar.dtype
             assert np.isnan(output_scalar)
