@@ -735,12 +735,7 @@ class TestPrintOptions:
         # str is unaffected
         assert_equal(str(x), "1")
 
-        # check `style` arg raises
-        pytest.warns(DeprecationWarning, np.array2string,
-                                         np.array(1.), style=repr)
-        # but not in legacy mode
-        np.array2string(np.array(1.), style=repr, legacy='1.13')
-        # gh-10934 style was broken in legacy mode, check it works
+        # check it works
         np.array2string(np.array(1.), legacy='1.13')
 
     def test_float_spacing(self):

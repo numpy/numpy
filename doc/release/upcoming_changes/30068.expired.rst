@@ -1,0 +1,11 @@
+``numpy.array2string`` and ``numpy.sum`` deprecations finalized
+---------------------------------------------------------------
+
+The following long-deprecated APIs have been removed or converted to errors:
+
+* The ``style`` parameter has been removed from ``numpy.array2string``.
+  This argument had no effect since Numpy 1.14.0.
+
+* Calling ``np.sum(generator)`` directly on a generator object now raises a `TypeError`.
+  This behavior was deprecated in NumPy 1.15.0. Use ``np.sum(np.fromiter(generator))``
+  or the python ``sum`` builtin instead.
