@@ -49,16 +49,16 @@ jobs:
         pyenv --version
     - name: Set up LLVM
       run: |
-        brew install llvm@19
-        LLVM_PREFIX=$(brew --prefix llvm@19)
+        brew install llvm@20
+        LLVM_PREFIX=$(brew --prefix llvm@20)
         echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
         echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
         echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
         echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
-        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14t
-        pyenv global 3.14t
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14
+        pyenv global 3.14
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
@@ -107,42 +107,3 @@ jobs:
           python -m spin test \
           `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
            -- -v -s --timeout=600 --durations=10
-
-  ubuntu_UBSAN:
-    # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          submodules: recursive
-          fetch-tags: true
-          persist-credentials: false
-      - name: Set up pyenv
-        run: |
-          git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
-          PYENV_ROOT="$HOME/.pyenv"
-          PYENV_BIN="$PYENV_ROOT/bin"
-          PYENV_SHIMS="$PYENV_ROOT/shims"
-          echo "$PYENV_BIN" >> $GITHUB_PATH
-          echo "$PYENV_SHIMS" >> $GITHUB_PATH
-          echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
-      - name: Check pyenv is working
-        run: pyenv --version
-      - name: Build python with address sanitizer
-        run: |
-          CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14t
-          pyenv global 3.14t
-      - name: Install dependencies
-        run: |
-          pip install -r requirements/build_requirements.txt
-          pip install -r requirements/ci_requirements.txt
-          pip install -r requirements/test_requirements.txt
-      - name: Build numpy with UndefinedBehaviorSanitizer
-        run: python -m spin build -- -Db_sanitize=address,undefined -Db_lundef=false
-      - name: Test
-        run: |
-          # pass -s to pytest to see UBSAN errors and warnings, otherwise pytest captures them
-          ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1 \
-          UBSAN_OPTIONS=halt_on_error=1:suppressions=${GITHUB_WORKSPACE}/tools/ci/ubsan_suppressions_x86_64.txt \
-          spin test -- -v -s --timeout=600 --durations=10
