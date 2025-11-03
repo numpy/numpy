@@ -66,6 +66,8 @@ def test_warning_calls():
     for path in base.rglob("*.py"):
         if base / "testing" in path.parents:
             continue
+        if base / "typing" / "tests" / "data" in path.parents:
+            continue
         if path == base / "__init__.py":
             continue
         if path == base / "random" / "__init__.py":
