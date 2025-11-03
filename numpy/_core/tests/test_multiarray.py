@@ -591,6 +591,32 @@ class TestArrayConstruction:
         else:
             func(a=3)
 
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.parametrize("func",
+            [np.array,
+             np.asarray,
+             np.asanyarray,
+             np.ascontiguousarray,
+             np.asfortranarray])
+    def test_array_signature(self, func):
+        sig = inspect.signature(func)
+
+        assert len(sig.parameters) >= 3
+
+        arg0 = "object" if func is np.array else "a"
+        assert arg0 in sig.parameters
+        assert sig.parameters[arg0].default is inspect.Parameter.empty
+        assert sig.parameters[arg0].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+        assert "dtype" in sig.parameters
+        assert sig.parameters["dtype"].default is None
+        assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+        assert "like" in sig.parameters
+        assert sig.parameters["like"].default is None
+        assert sig.parameters["like"].kind is inspect.Parameter.KEYWORD_ONLY
+
 
 class TestAssignment:
     def test_assignment_broadcasting(self):
