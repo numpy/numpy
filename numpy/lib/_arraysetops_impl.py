@@ -402,7 +402,26 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     ret = (aux[mask],)
     if return_index:
-        ret += (perm[mask],)
+        indices = perm[mask]
+        # For complex NaN with equal_nan, we need to return the index of the
+        # NaN with the smallest original index (issue #30113)
+        if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind == "c" and
+                np.isnan(aux[-1])):
+            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
+            if aux_firstnan < len(aux):
+                # Find all NaN positions in sorted array
+                nan_positions = np.where(np.isnan(aux[aux_firstnan:]))[0] + aux_firstnan
+                if len(nan_positions) > 0:
+                    # Find which NaN has minimum original index
+                    min_nan_idx = np.argmin(perm[nan_positions])
+                    # Replace the index in the result
+                    # Find where aux_firstnan appears in mask
+                    mask_nan_pos = np.where(mask)[0]
+                    for i, pos in enumerate(mask_nan_pos):
+                        if pos == aux_firstnan:
+                            indices[i] = perm[nan_positions[min_nan_idx]]
+                            break
+        ret += (indices,)
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)

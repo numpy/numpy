@@ -1,0 +1,8 @@
+``np.unique`` with ``return_index`` now returns correct indices for complex NaN
+-------------------------------------------------------------------------------
+Fixed a bug where `numpy.unique` with ``return_index=True`` and
+``equal_nan=True`` would not return the index of the first occurrence of NaN
+values in complex arrays. Previously, after sorting, it would return the index
+of the first NaN in the sorted order rather than the first NaN in the original
+array order. The function now correctly returns the index of the first NaN
+occurrence in the input array.

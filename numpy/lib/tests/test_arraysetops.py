@@ -773,7 +773,7 @@ class TestUnique:
         # test for ticket 2111 - complex
         a = [2.0 - 1j, np.nan, 1.0 + 1j, complex(0.0, np.nan), complex(1.0, np.nan)]
         ua = [1.0 + 1j, 2.0 - 1j, complex(0.0, np.nan)]
-        ua_idx = [2, 0, 3]
+        ua_idx = [2, 0, 1]  # Fixed: NaN first appears at index 1, not 3 (issue #30113)
         ua_inv = [1, 2, 0, 2, 2]
         ua_cnt = [1, 1, 3]
         # order of unique values is not guaranteed
@@ -1202,6 +1202,24 @@ class TestUnique:
         not_unq = np.unique(a, equal_nan=False)
         assert_array_equal(unq, np.array([1, np.nan]))
         assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
+
+    def test_unique_complex_nan_return_index(self):
+        # issue 30113 - return_index should return first occurrence for complex NaN
+        a = np.array([1.+1.j, np.nan, complex(0.0, np.nan), complex(1.0, np.nan)])
+        unq, idx = np.unique(a, return_index=True, equal_nan=True)
+        
+        # The unique values should be [1+1j, nan] (all NaN values are equal)
+        assert len(unq) == 2
+        assert unq[0] == 1.+1.j
+        assert np.isnan(unq[1])
+        
+        # The indices should be [0, 1] - first occurrence of each unique value
+        # Not [0, 2] which would be wrong
+        assert_array_equal(idx, np.array([0, 1]))
+        
+        # Verify that indexing with returned indices gives the unique values
+        assert a[idx[0]] == unq[0]
+        assert np.isnan(a[idx[1]]) and np.isnan(unq[1])
 
     def test_unique_array_api_functions(self):
         arr = np.array(
