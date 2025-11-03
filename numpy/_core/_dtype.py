@@ -21,6 +21,29 @@ _kind_to_stem = {
 
 
 def _kind_name(dtype):
+    """
+    Get the human-readable name stem for a dtype kind.
+    
+    Parameters
+    ----------
+    dtype : numpy.dtype
+        The dtype whose kind name is requested.
+    
+    Returns
+    -------
+    str
+        The name stem (e.g., 'int', 'float', 'complex') for the dtype kind.
+    
+    Raises
+    ------
+    RuntimeError
+        If the dtype kind is not recognized.
+    
+    Examples
+    --------
+    For np.dtype('int32').kind == 'i': returns 'int'
+    For np.dtype('float64').kind == 'f': returns 'float'
+    """
     try:
         return _kind_to_stem[dtype.kind]
     except KeyError as e:
@@ -59,6 +82,26 @@ def _unpack_field(dtype, offset, title=None):
 
 
 def _isunsized(dtype):
+    """
+    Check if a dtype has an unspecified size.
+    
+    Parameters
+    ----------
+    dtype : numpy.dtype
+        The dtype to check.
+    
+    Returns
+    -------
+    bool
+        True if the dtype has itemsize of 0 (unspecified size),
+        False otherwise.
+    
+    Notes
+    -----
+    This is equivalent to the C macro PyDataType_ISUNSIZED.
+    Common for flexible dtypes like 'S' (bytes) or 'U' (unicode)
+    without a specified length.
+    """
     # PyDataType_ISUNSIZED
     return dtype.itemsize == 0
 
@@ -99,6 +142,22 @@ def _construction_repr(dtype, include_align=False, short=False):
 
 
 def _scalar_str(dtype, short):
+    """
+    Create a string representation for a scalar dtype.
+    
+    Parameters
+    ----------
+    dtype : numpy.dtype
+        The scalar dtype to represent.
+    short : bool
+        If True, use short form with type character (e.g., '<f8').
+        If False, use long form with type name (e.g., 'float64').
+    
+    Returns
+    -------
+    str
+        String representation of the dtype suitable for dtype construction.
+    """
     byteorder = _byte_order_str(dtype)
 
     if dtype.type == np.bool:
@@ -162,7 +221,30 @@ def _scalar_str(dtype, short):
 
 
 def _byte_order_str(dtype):
-    """ Normalize byteorder to '<' or '>' """
+    """
+    Normalize byteorder to '<' or '>'.
+    
+    Parameters
+    ----------
+    dtype : numpy.dtype
+        The dtype whose byteorder should be normalized.
+    
+    Returns
+    -------
+    str
+        The normalized byteorder character:
+        - '<' for little-endian
+        - '>' for big-endian
+        - '' for not applicable (e.g., single-byte types)
+    
+    Notes
+    -----
+    This function converts the special byteorder characters:
+    - '=' (native) to '<' or '>' depending on the system
+    - '|' (not applicable) to ''
+    - 'S' (swapped) is not used in practice as dtypes are created
+      with concrete endianness after calling newbyteorder()
+    """
     # hack to obtain the native and swapped byte order characters
     swapped = np.dtype(int).newbyteorder('S')
     native = swapped.newbyteorder('S')
@@ -171,7 +253,9 @@ def _byte_order_str(dtype):
     if byteorder == '=':
         return native.byteorder
     if byteorder == 'S':
-        # TODO: this path can never be reached
+        # NOTE: This path is unreachable in practice because newbyteorder('S')
+        # immediately resolves 'S' to the concrete swapped byteorder ('<' or '>')
+        # and stores that in the dtype. Keeping this for defensive programming.
         return swapped.byteorder
     elif byteorder == '|':
         return ''
@@ -180,7 +264,31 @@ def _byte_order_str(dtype):
 
 
 def _datetime_metadata_str(dtype):
-    # TODO: this duplicates the C metastr_to_unicode functionality
+    """
+    Create a string representation of datetime/timedelta metadata.
+    
+    Parameters
+    ----------
+    dtype : numpy.dtype
+        A datetime64 or timedelta64 dtype.
+    
+    Returns
+    -------
+    str
+        Metadata string in the format '[unit]' or '[count*unit]'.
+        Returns empty string for generic datetime types.
+    
+    Examples
+    --------
+    For np.dtype('datetime64[D]'): returns '[D]'
+    For np.dtype('datetime64[10s]'): returns '[10s]'
+    For np.dtype('datetime64'): returns ''
+    
+    Notes
+    -----
+    This function duplicates the C metastr_to_unicode functionality
+    to avoid crossing the Python/C boundary unnecessarily.
+    """
     unit, count = np.datetime_data(dtype)
     if unit == 'generic':
         return ''
