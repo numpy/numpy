@@ -638,6 +638,9 @@ add_newdoc('numpy._core', 'nested_iters',
 
 add_newdoc('numpy._core', 'broadcast',
     """
+    broadcast(*arrays)
+    --
+
     Produce an object that mimics broadcasting.
 
     Parameters
@@ -807,8 +810,13 @@ add_newdoc('numpy._core', 'broadcast', ('size',
 
     """))
 
+# methods
+
 add_newdoc('numpy._core', 'broadcast', ('reset',
     """
+    reset($self, /)
+    --
+
     reset()
 
     Reset the broadcasted result's iterator(s).
