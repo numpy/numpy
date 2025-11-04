@@ -66,7 +66,7 @@ assert_type(np.inner(AR_f8, AR_i8), Any)
 assert_type(np.where([True, True, False]), tuple[npt.NDArray[np.intp], ...])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
-assert_type(np.lexsort([0, 1, 2]), Any)
+assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
 
 assert_type(np.can_cast(np.dtype("i8"), int), bool)
 assert_type(np.can_cast(AR_f8, "f8"), bool)
@@ -94,16 +94,19 @@ assert_type(np.copyto(AR_f8, [1., 1.5, 1.6]), None)
 
 assert_type(np.putmask(AR_f8, [True, True, False], 1.5), None)
 
-assert_type(np.packbits(AR_i8), npt.NDArray[np.uint8])
-assert_type(np.packbits(AR_u1), npt.NDArray[np.uint8])
+assert_type(np.packbits(AR_i8),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_u1),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_i8, axis=1), npt.NDArray[np.uint8])
+assert_type(np.packbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
-assert_type(np.unpackbits(AR_u1), npt.NDArray[np.uint8])
+assert_type(np.unpackbits(AR_u1), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.unpackbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
 assert_type(np.shares_memory(1, 2), bool)
-assert_type(np.shares_memory(AR_f8, AR_f8, max_work=1), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=-1), bool)
 
 assert_type(np.may_share_memory(1, 2), bool)
-assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=1), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=0), bool)
 
 assert_type(np.promote_types(np.int32, np.int64), np.dtype)
 assert_type(np.promote_types("f4", float), np.dtype)

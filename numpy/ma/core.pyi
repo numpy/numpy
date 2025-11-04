@@ -3431,6 +3431,7 @@ def empty(
 @overload
 def empty_like(
     a: _MArrayT,
+    /,
     dtype: None = None,
     order: _OrderKACF = "K",
     subok: bool = True,
@@ -3441,6 +3442,7 @@ def empty_like(
 @overload
 def empty_like(
     a: _ArrayLike[_ScalarT],
+    /,
     dtype: None = None,
     order: _OrderKACF = "K",
     subok: bool = True,
@@ -3450,7 +3452,8 @@ def empty_like(
 ) -> _MaskedArray[_ScalarT]: ...
 @overload
 def empty_like(
-    a: object,
+    a: Incomplete,
+    /,
     dtype: _DTypeLike[_ScalarT],
     order: _OrderKACF = "K",
     subok: bool = True,
@@ -3460,7 +3463,8 @@ def empty_like(
 ) -> _MaskedArray[_ScalarT]: ...
 @overload
 def empty_like(
-    a: object,
+    a: Incomplete,
+    /,
     dtype: DTypeLike | None = None,
     order: _OrderKACF = "K",
     subok: bool = True,
