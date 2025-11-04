@@ -1847,7 +1847,7 @@ add_newdoc('numpy._core.multiarray', 'correlate',
 
 add_newdoc('numpy._core.multiarray', 'arange',
     """
-    arange(*args, device=None, like=None, **kwargs)
+    arange(start_or_stop, /, stop=None, step=1, *, dtype=None, device=None, like=None)
     --
 
     arange([start,] stop[, step,], dtype=None, *, device=None, like=None)

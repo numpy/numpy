@@ -10962,7 +10962,7 @@ class TestTextSignatures:
         assert sig.parameters
 
     @pytest.mark.parametrize(("func", "parameter_names"), [
-        (np.arange, ("args", "device", "like", "kwargs")),
+        (np.arange, ("start_or_stop", "stop", "step", "dtype", "device", "like")),
         (np.busdaycalendar, ("weekmask", "holidays")),
         (np.char.compare_chararrays, ("a1", "a2", "cmp", "rstrip")),
         (np.datetime_data, ("dtype",)),
