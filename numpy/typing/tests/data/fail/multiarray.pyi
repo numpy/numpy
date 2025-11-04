@@ -26,10 +26,10 @@ np.copyto(AR_LIKE_f, AR_f8)  # type: ignore[arg-type]
 np.putmask(AR_LIKE_f, [True, True, False], 1.5)  # type: ignore[arg-type]
 
 np.packbits(AR_f8)  # type: ignore[arg-type]
-np.packbits(AR_u1, bitorder=">")  # type: ignore[arg-type]
+np.packbits(AR_u1, bitorder=">")  # type: ignore[call-overload]
 
 np.unpackbits(AR_i8)  # type: ignore[arg-type]
-np.unpackbits(AR_u1, bitorder=">")  # type: ignore[arg-type]
+np.unpackbits(AR_u1, bitorder=">")  # type: ignore[call-overload]
 
 np.shares_memory(1, 1, max_work=i8)  # type: ignore[arg-type]
 np.may_share_memory(1, 1, max_work=i8)  # type: ignore[arg-type]

@@ -10902,3 +10902,37 @@ def test_array_method_signatures(methodname: str):
 
     assert "self" in sig.parameters
     assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize("func", [np.empty_like, np.concatenate])
+def test_c_func_dispatcher_text_signature(func):
+    text_sig = func.__wrapped__.__text_signature__
+    assert text_sig.startswith("(") and text_sig.endswith(")")
+
+    sig = inspect.signature(func)
+    assert sig == inspect.signature(func.__wrapped__)
+    assert not hasattr(func, "__signature__")
+
+    with pytest.raises(ValueError):
+        inspect.signature(func, follow_wrapped=False)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "func",
+    [
+        np.inner, np.where, np.lexsort, np.can_cast, np.min_scalar_type, np.result_type,
+        np.dot, np.vdot, np.bincount, np.ravel_multi_index, np.unravel_index, np.copyto,
+        np.putmask, np.packbits, np.unpackbits, np.shares_memory, np.may_share_memory,
+        np.is_busday, np.busday_offset, np.busday_count, np.datetime_as_string,
+    ],
+)
+def test_c_func_dispatcher_signature(func):
+    sig = inspect.signature(func)
+
+    assert hasattr(func, "__signature__")
+    assert sig == func.__signature__
+    assert sig.parameters
