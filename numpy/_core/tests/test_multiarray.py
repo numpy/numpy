@@ -10902,65 +10902,86 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-@pytest.mark.parametrize(
-    "methodname",
-    [
-        "__array__", "__array_finalize__", "__array_function__", "__array_ufunc__",
-        "__array_wrap__", "__complex__", "__copy__", "__deepcopy__",
-        "__reduce__", "__reduce_ex__", "__setstate__",
-        "all", "any", "argmax", "argmin", "argsort", "argpartition", "astype",
-        "byteswap", "choose", "clip", "compress", "conj", "conjugate", "copy",
-        "cumprod", "cumsum", "diagonal", "dot", "dump", "dumps", "fill", "flatten",
-        "getfield", "item", "max", "mean", "min", "nonzero", "prod", "put", "ravel",
-        "repeat", "reshape", "resize", "round", "searchsorted", "setfield", "setflags",
-        "sort", "partition", "squeeze", "std", "sum", "swapaxes", "take", "tofile",
-        "tolist", "tobytes", "trace", "transpose", "var", "view",
-        "__array_namespace__", "__dlpack__", "__dlpack_device__", "to_device",
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestTextSignatures:
+    @pytest.mark.parametrize(
+        "methodname",
+        [
+            "__array__", "__array_finalize__", "__array_function__", "__array_ufunc__",
+            "__array_wrap__", "__complex__", "__copy__", "__deepcopy__",
+            "__reduce__", "__reduce_ex__", "__setstate__",
+            "all", "any", "argmax", "argmin", "argsort", "argpartition", "astype",
+            "byteswap", "choose", "clip", "compress", "conj", "conjugate", "copy",
+            "cumprod", "cumsum", "diagonal", "dot", "dump", "dumps", "fill", "flatten",
+            "getfield", "item", "max", "mean", "min", "nonzero", "prod", "put", "ravel",
+            "repeat", "reshape", "resize", "round", "searchsorted", "setfield",
+            "setflags", "sort", "partition", "squeeze", "std", "sum", "swapaxes",
+            "take", "tofile", "tolist", "tobytes", "trace", "transpose", "var", "view",
+            "__array_namespace__", "__dlpack__", "__dlpack_device__", "to_device",
     ],
-)
-def test_array_method_signatures(methodname: str):
-    method = getattr(np.ndarray, methodname)
-    assert callable(method)
+    )
+    def test_array_method_signatures(self, methodname: str):
+        method = getattr(np.ndarray, methodname)
+        assert callable(method)
 
-    try:
-        sig = inspect.signature(method)
-    except ValueError as e:
-        pytest.fail(f"Could not get signature for np.ndarray.{methodname}: {e}")
+        try:
+            sig = inspect.signature(method)
+        except ValueError as e:
+            pytest.fail(f"Could not get signature for np.ndarray.{methodname}: {e}")
 
-    assert "self" in sig.parameters
-    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert "self" in sig.parameters
+        assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
 
+    @pytest.mark.parametrize("func", [np.empty_like, np.concatenate])
+    def test_c_func_dispatcher_text_signature(self, func):
+        text_sig = func.__wrapped__.__text_signature__
+        assert text_sig.startswith("(") and text_sig.endswith(")")
 
-@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-@pytest.mark.parametrize("func", [np.empty_like, np.concatenate])
-def test_c_func_dispatcher_text_signature(func):
-    text_sig = func.__wrapped__.__text_signature__
-    assert text_sig.startswith("(") and text_sig.endswith(")")
+        sig = inspect.signature(func)
+        assert sig == inspect.signature(func.__wrapped__)
+        assert not hasattr(func, "__signature__")
 
-    sig = inspect.signature(func)
-    assert sig == inspect.signature(func.__wrapped__)
-    assert not hasattr(func, "__signature__")
+        with pytest.raises(ValueError):
+            inspect.signature(func, follow_wrapped=False)
 
-    with pytest.raises(ValueError):
-        inspect.signature(func, follow_wrapped=False)
+    @pytest.mark.parametrize(
+        "func",
+        [
+            np.inner, np.where, np.lexsort, np.can_cast, np.min_scalar_type,
+            np.result_type, np.dot, np.vdot, np.bincount, np.ravel_multi_index,
+            np.unravel_index, np.copyto, np.putmask, np.packbits, np.unpackbits,
+            np.shares_memory, np.may_share_memory, np.is_busday, np.busday_offset,
+            np.busday_count, np.datetime_as_string,
+        ],
+    )
+    def test_c_func_dispatcher_signature(self, func):
+        sig = inspect.signature(func)
 
+        assert hasattr(func, "__signature__")
+        assert sig == func.__signature__
+        assert sig.parameters
 
-@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-@pytest.mark.parametrize(
-    "func",
-    [
-        np.inner, np.where, np.lexsort, np.can_cast, np.min_scalar_type, np.result_type,
-        np.dot, np.vdot, np.bincount, np.ravel_multi_index, np.unravel_index, np.copyto,
-        np.putmask, np.packbits, np.unpackbits, np.shares_memory, np.may_share_memory,
-        np.is_busday, np.busday_offset, np.busday_count, np.datetime_as_string,
-    ],
-)
-def test_c_func_dispatcher_signature(func):
-    sig = inspect.signature(func)
+    @pytest.mark.parametrize(("func", "parameter_names"), [
+        (np.arange, ("args", "device", "like", "kwargs")),
+        (np.busdaycalendar, ("weekmask", "holidays")),
+        (np.char.compare_chararrays, ("a1", "a2", "cmp", "rstrip")),
+        (np.datetime_data, ("dtype",)),
+        (np.from_dlpack, ("x", "device", "copy")),
+        (np.frombuffer, ("buffer", "dtype", "count", "offset", "like")),
+        (np.fromfile, ("file", "dtype", "count", "sep", "offset", "like")),
+        (np.fromiter, ("iter", "dtype", "count", "like")),
+        (np.frompyfunc, ("func", "nin", "nout", "kwargs")),
+        (np.fromstring, ("string", "dtype", "count", "sep", "like")),
+        (np.nested_iters, (
+            "op", "axes", "flags", "op_flags", "op_dtypes", "order", "casting",
+            "buffersize",
+        )),
+        (np.promote_types, ("type1", "type2")),
+    ])
+    def test_add_newdoc_function_signature(self, func, parameter_names):
+        assert not hasattr(func, "__signature__")
+        assert getattr(func, "__text_signature__", None)
 
-    assert hasattr(func, "__signature__")
-    assert sig == func.__signature__
-    assert sig.parameters
+        sig = inspect.signature(func)
+        assert sig.parameters
+        assert tuple(sig.parameters) == parameter_names

@@ -570,6 +570,18 @@ add_newdoc('numpy._core', 'nditer', ('close',
 
 add_newdoc('numpy._core', 'nested_iters',
     """
+    nested_iters(
+        op,
+        axes,
+        flags=None,
+        op_flags=None,
+        op_dtypes=None,
+        order='K',
+        casting='safe',
+        buffersize=0,
+    )
+    --
+
     nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None,
     order='K', casting='safe', buffersize=0)
 
@@ -1469,6 +1481,9 @@ add_newdoc('numpy._core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy._core.multiarray', 'fromstring',
     """
+    fromstring(string, dtype=None, count=-1, *, sep, like=None)
+    --
+
     fromstring(string, dtype=float, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
@@ -1478,7 +1493,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     string : str
         A string containing the data.
     dtype : data-type, optional
-        The data type of the array; default: float.  For binary input data,
+        The data type of the array; default: `numpy.float64`.  For binary input data,
         the data must be in exactly this format. Most builtin numeric types are
         supported and extension types may be supported.
     count : int, optional
@@ -1530,6 +1545,9 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
 add_newdoc('numpy._core.multiarray', 'compare_chararrays',
     """
     compare_chararrays(a1, a2, cmp, rstrip)
+    --
+
+    compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
     comparison operator specified by `cmp`.
@@ -1540,20 +1558,20 @@ add_newdoc('numpy._core.multiarray', 'compare_chararrays',
         Arrays to be compared.
     cmp : {"<", "<=", "==", ">=", ">", "!="}
         Type of comparison.
-    rstrip : Boolean
-        If True, the spaces at the end of Strings are removed before the comparison.
+    rstrip : bool
+        If True, the spaces at the end of strings are removed before the comparison.
 
     Returns
     -------
     out : ndarray
-        The output array of type Boolean with the same shape as a and b.
+        The output array of type `numpy.bool` with the same shape as `a1` and `a2`.
 
     Raises
     ------
     ValueError
         If `cmp` is not valid.
     TypeError
-        If at least one of `a` or `b` is a non-string array
+        If at least one of `a1` or `a2` is a non-string array
 
     Examples
     --------
@@ -1567,6 +1585,9 @@ add_newdoc('numpy._core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy._core.multiarray', 'fromiter',
     """
+    fromiter(iter, dtype, count=-1, *, like=None)
+    --
+
     fromiter(iter, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
@@ -1622,6 +1643,9 @@ add_newdoc('numpy._core.multiarray', 'fromiter',
 
 add_newdoc('numpy._core.multiarray', 'fromfile',
     """
+    fromfile(file, dtype=None, count=-1, sep='', offset=0, *, like=None)
+    --
+
     fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
@@ -1707,6 +1731,9 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
 
 add_newdoc('numpy._core.multiarray', 'frombuffer',
     """
+    frombuffer(buffer, dtype=None, count=-1, offset=0, *, like=None)
+    --
+
     frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
@@ -1716,7 +1743,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     buffer : buffer_like
         An object that exposes the buffer interface.
     dtype : data-type, optional
-        Data-type of the returned array; default: float.
+        Data-type of the returned array.  Default is `numpy.float64`.
     count : int, optional
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
@@ -1768,6 +1795,9 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
 add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """
     from_dlpack(x, /, *, device=None, copy=None)
+    --
+
+    from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
     protocol. Generally, the returned NumPy array is a view of the input
@@ -1817,6 +1847,9 @@ add_newdoc('numpy._core.multiarray', 'correlate',
 
 add_newdoc('numpy._core.multiarray', 'arange',
     """
+    arange(*args, device=None, like=None, **kwargs)
+    --
+
     arange([start,] stop[, step,], dtype=None, *, device=None, like=None)
 
     Return evenly spaced values within a given interval.
@@ -1941,13 +1974,16 @@ add_newdoc('numpy._core.multiarray', '_get_ndarray_c_version',
 add_newdoc('numpy._core.multiarray', '_reconstruct',
     """_reconstruct(subtype, shape, dtype)
 
-    Construct an empty array. Used by Pickles.
+    Construct an empty array. Used by Pickle.
 
     """)
 
 add_newdoc('numpy._core.multiarray', 'promote_types',
     """
-    promote_types(type1, type2)
+    promote_types(type1, type2, /)
+    --
+
+    promote_types(type1, type2, /)
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
@@ -5064,6 +5100,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy._core.umath', 'frompyfunc',
     """
+    frompyfunc(func, /, nin, nout, **kwargs)
+    --
+
     frompyfunc(func, /, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
@@ -6875,6 +6914,9 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('__lt__',
 add_newdoc('numpy._core.multiarray', 'busdaycalendar',
     """
     busdaycalendar(weekmask='1111100', holidays=None)
+    --
+
+    busdaycalendar(weekmask='1111100', holidays=None)
 
     A business day calendar object that efficiently stores information
     defining valid days for the busday family of functions.
@@ -6997,6 +7039,9 @@ add_newdoc('numpy._core.multiarray', 'normalize_axis_index',
 
 add_newdoc('numpy._core.multiarray', 'datetime_data',
     """
+    datetime_data(dtype, /)
+    --
+
     datetime_data(dtype, /)
 
     Get information about the step size of a date or time type.
