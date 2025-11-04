@@ -18,7 +18,7 @@ from typing import (
 from typing_extensions import CapsuleType
 
 import numpy as np
-from numpy import (
+from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
     _AnyShapeT,
     _CastingKind,
     _CopyMode,
