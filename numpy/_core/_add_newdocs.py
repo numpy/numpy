@@ -1293,7 +1293,10 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
 
 add_newdoc('numpy._core.multiarray', 'empty',
     """
-    empty(shape, dtype=float, order='C', *, device=None, like=None)
+    empty(shape, dtype=None, order='C', *, device=None, like=None)
+    --
+
+    empty(shape, dtype=None, order='C', *, device=None, like=None)
 
     Return a new array of given shape and type, without initializing entries.
 
@@ -1306,8 +1309,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
         `numpy.float64`.
     order : {'C', 'F'}, optional, default: 'C'
         Whether to store multi-dimensional data in row-major
-        (C-style) or column-major (Fortran-style) order in
-        memory.
+        (C-style) or column-major (Fortran-style) order in memory.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -1363,11 +1365,14 @@ add_newdoc('numpy._core.multiarray', 'scalar',
     string. If `obj` is not given, it will be interpreted as None for object
     type and as zeros for all other types.
 
-    """)
+    """)  # sufficient null bytes for all number dtypes
 
 add_newdoc('numpy._core.multiarray', 'zeros',
     """
-    zeros(shape, dtype=float, order='C', *, like=None)
+    zeros(shape, dtype=None, order='C', *, device=None, like=None)
+    --
+
+    zeros(shape, dtype=None, order='C', *, device=None, like=None)
 
     Return a new array of given shape and type, filled with zeros.
 
@@ -1380,8 +1385,12 @@ add_newdoc('numpy._core.multiarray', 'zeros',
         `numpy.float64`.
     order : {'C', 'F'}, optional, default: 'C'
         Whether to store multi-dimensional data in row-major
-        (C-style) or column-major (Fortran-style) order in
-        memory.
+        (C-style) or column-major (Fortran-style) order in memory.
+    device : str, optional
+        The device on which to place the created array. Default: ``None``.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1423,7 +1432,8 @@ add_newdoc('numpy._core.multiarray', 'zeros',
     """)
 
 add_newdoc('numpy._core.multiarray', 'set_typeDict',
-    """set_typeDict(dict)
+    """
+    set_typeDict(dict)
 
     Set the internal dictionary that can look up an array type using a
     registered code.
