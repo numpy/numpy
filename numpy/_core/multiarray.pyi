@@ -957,110 +957,102 @@ def frombuffer(
     like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
-@overload
-def arange(  # type: ignore[misc]
-    stop: _IntLike_co,
-    /, *,
-    dtype: None = None,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[signedinteger]: ...
-@overload
-def arange(  # type: ignore[misc]
-    start: _IntLike_co,
-    stop: _IntLike_co,
-    step: _IntLike_co = ...,
-    dtype: None = None,
-    *,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[signedinteger]: ...
-@overload
-def arange(  # type: ignore[misc]
-    stop: _FloatLike_co,
-    /, *,
-    dtype: None = None,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[floating]: ...
-@overload
-def arange(  # type: ignore[misc]
-    start: _FloatLike_co,
-    stop: _FloatLike_co,
-    step: _FloatLike_co = ...,
-    dtype: None = None,
-    *,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[floating]: ...
-@overload
-def arange(
-    stop: _TD64Like_co,
-    /, *,
-    dtype: None = None,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[timedelta64]: ...
-@overload
-def arange(
-    start: _TD64Like_co,
-    stop: _TD64Like_co,
-    step: _TD64Like_co = ...,
-    dtype: None = None,
-    *,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[timedelta64]: ...
-@overload
-def arange(  # both start and stop must always be specified for datetime64
-    start: datetime64,
-    stop: datetime64,
-    step: datetime64 = ...,
-    dtype: None = None,
-    *,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[datetime64]: ...
-@overload
-def arange(
-    stop: Any,
-    /, *,
-    dtype: _DTypeLike[_ScalarT],
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[_ScalarT]: ...
-@overload
-def arange(
-    start: Any,
-    stop: Any,
-    step: Any = ...,
-    dtype: _DTypeLike[_ScalarT] = ...,
-    *,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[_ScalarT]: ...
-@overload
-def arange(
-    stop: Any, /,
-    *,
-    dtype: DTypeLike | None = ...,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[Any]: ...
-@overload
-def arange(
-    start: Any,
-    stop: Any,
-    step: Any = ...,
-    dtype: DTypeLike | None = ...,
-    *,
-    device: L["cpu"] | None = ...,
-    like: _SupportsArrayFunc | None = ...,
-) -> _Array1D[Any]: ...
+_ArangeScalar: TypeAlias = np.integer | np.floating | np.datetime64 | np.timedelta64
+_ArangeScalarT = TypeVar("_ArangeScalarT", bound=_ArangeScalar)
 
-def datetime_data(
-    dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64], /,
-) -> tuple[str, int]: ...
+# keep in sync with ma.core.arange
+# NOTE: The `float64 | Any` return types needed to avoid incompatible overlapping overloads
+@overload  # dtype=<known>
+def arange(
+    start_or_stop: _ArangeScalar | float,
+    /,
+    stop: _ArangeScalar | float | None = None,
+    step: _ArangeScalar | float = 1,
+    *,
+    dtype: _DTypeLike[_ArangeScalarT],
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[_ArangeScalarT]: ...
+@overload  # (int-like, int-like?, int-like?)
+def arange(
+    start_or_stop: _IntLike_co,
+    /,
+    stop: _IntLike_co | None = None,
+    step: _IntLike_co = 1,
+    *,
+    dtype: type[int] | _DTypeLike[np.int_] | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.int_]: ...
+@overload  # (float, float-like?, float-like?)
+def arange(
+    start_or_stop: float | floating,
+    /,
+    stop: _FloatLike_co | None = None,
+    step: _FloatLike_co = 1,
+    *,
+    dtype: type[float] | _DTypeLike[np.float64] | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64 | Any]: ...
+@overload  # (float-like, float, float-like?)
+def arange(
+    start_or_stop: _FloatLike_co,
+    /,
+    stop: float | floating,
+    step: _FloatLike_co = 1,
+    *,
+    dtype: type[float] | _DTypeLike[np.float64] | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64 | Any]: ...
+@overload  # (timedelta, timedelta-like?, timedelta-like?)
+def arange(
+    start_or_stop: np.timedelta64,
+    /,
+    stop: _TD64Like_co | None = None,
+    step: _TD64Like_co = 1,
+    *,
+    dtype: _DTypeLike[np.timedelta64] | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.timedelta64[Incomplete]]: ...
+@overload  # (timedelta-like, timedelta, timedelta-like?)
+def arange(
+    start_or_stop: _TD64Like_co,
+    /,
+    stop: np.timedelta64,
+    step: _TD64Like_co = 1,
+    *,
+    dtype: _DTypeLike[np.timedelta64] | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.timedelta64[Incomplete]]: ...
+@overload  # (datetime, datetime, timedelta-like) (requires both start and stop)
+def arange(
+    start_or_stop: np.datetime64,
+    /,
+    stop: np.datetime64,
+    step: _TD64Like_co = 1,
+    *,
+    dtype: _DTypeLike[np.datetime64] | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.datetime64[Incomplete]]: ...
+@overload  # dtype=<unknown>
+def arange(
+    start_or_stop: _ArangeScalar | float,
+    /,
+    stop: _ArangeScalar | float | None = None,
+    step: _ArangeScalar | float = 1,
+    *,
+    dtype: DTypeLike | None = None,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Incomplete]: ...
+
+#
+def datetime_data(dtype: str | _DTypeLike[datetime64 | timedelta64], /) -> tuple[str, int]: ...
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
 # so a lot of different argument types are allowed here
