@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import math
 import platform
@@ -18,6 +19,7 @@ from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_almost_equal,
@@ -3370,6 +3372,35 @@ class TestCreationFuncs:
         assert_(sys.getrefcount(dim) == beg)
         np.full([dim] * 10, 0)
         assert_(sys.getrefcount(dim) == beg)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.parametrize("func", [np.empty, np.zeros, np.ones, np.full])
+    def test_signatures(self, func):
+        sig = inspect.signature(func)
+        params = sig.parameters
+
+        assert len(params) in {5, 6}
+
+        assert 'shape' in params
+        assert params["shape"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["shape"].default is inspect.Parameter.empty
+
+        assert 'dtype' in params
+        assert params["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["dtype"].default is None
+
+        assert 'order' in params
+        assert params["order"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["order"].default == "C"
+
+        assert 'device' in params
+        assert params["device"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["device"].default is None
+
+        assert 'like' in params
+        assert params["like"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["like"].default is None
 
 
 class TestLikeFuncs:

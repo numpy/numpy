@@ -189,7 +189,10 @@ assert_type(np.ones(_shape_2d), np.ndarray[tuple[int, int], np.dtype[np.float64]
 assert_type(np.ones(_shape_nd), np.ndarray[tuple[int, ...], np.dtype[np.float64]])
 assert_type(np.ones(_shape_1d, dtype=np.int64), np.ndarray[tuple[int], np.dtype[np.int64]])
 assert_type(np.ones(_shape_like), npt.NDArray[np.float64])
-assert_type(np.ones(_shape_like, dtype=np.dtypes.Int64DType()), np.ndarray[Any, np.dtypes.Int64DType])
+assert_type(
+    np.ones(_shape_like, dtype=np.dtypes.Int64DType()),
+    np.ndarray[tuple[Any, ...], np.dtypes.Int64DType],
+)
 assert_type(np.ones(_shape_like, dtype=int), npt.NDArray[Any])
 assert_type(np.ones(mixed_shape), npt.NDArray[np.float64])
 

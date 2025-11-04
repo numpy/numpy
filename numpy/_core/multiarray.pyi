@@ -1,6 +1,6 @@
 # TODO: Sort out any and all missing functions in this namespace
 import datetime as dt
-from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
+from _typeshed import Incomplete, StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
@@ -10,9 +10,7 @@ from typing import (
     Protocol,
     SupportsIndex,
     TypeAlias,
-    TypedDict,
     TypeVar,
-    Unpack,
     final,
     overload,
     type_check_only,
@@ -32,7 +30,6 @@ from numpy import (  # type: ignore[attr-defined]
     _SupportsBuffer,
     _SupportsFileMethods,
     broadcast,
-    # Re-exports
     busdaycalendar,
     complexfloating,
     correlate,
@@ -54,7 +51,6 @@ from numpy import (  # type: ignore[attr-defined]
     signedinteger,
     str_,
     timedelta64,
-    # The rest
     ufunc,
     uint8,
     unsignedinteger,
@@ -62,10 +58,9 @@ from numpy import (  # type: ignore[attr-defined]
 )
 from numpy._typing import (
     ArrayLike,
-    # DTypes
     DTypeLike,
-    # Arrays
     NDArray,
+    _AnyShape,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeBytes_co,
@@ -82,7 +77,6 @@ from numpy._typing import (
     _IntLike_co,
     _NestedSequence,
     _ScalarLike_co,
-    # Shapes
     _Shape,
     _ShapeLike,
     _SupportsArrayFunc,
@@ -192,18 +186,15 @@ __all__ = [
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _DTypeT = TypeVar("_DTypeT", bound=np.dtype)
-_ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
-_ArrayT_co = TypeVar(
-    "_ArrayT_co",
-    bound=ndarray[Any, Any],
-    covariant=True,
-)
+_ArrayT = TypeVar("_ArrayT", bound=ndarray)
+_ArrayT_co = TypeVar("_ArrayT_co", bound=ndarray, covariant=True)
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+# TODO: fix the names of these typevars
 _ReturnType = TypeVar("_ReturnType")
 _IDType = TypeVar("_IDType")
 _Nin = TypeVar("_Nin", bound=int)
 _Nout = TypeVar("_Nout", bound=int)
 
-_ShapeT = TypeVar("_ShapeT", bound=_Shape)
 _Array: TypeAlias = ndarray[_ShapeT, dtype[_ScalarT]]
 _Array1D: TypeAlias = ndarray[tuple[int], dtype[_ScalarT]]
 
@@ -237,11 +228,6 @@ class _SupportsArray(Protocol[_ArrayT_co]):
     def __array__(self, /) -> _ArrayT_co: ...
 
 @type_check_only
-class _KwargsEmpty(TypedDict, total=False):
-    device: L["cpu"] | None
-    like: _SupportsArrayFunc | None
-
-@type_check_only
 class _ConstructorEmpty(Protocol):
     # 1-D shape
     @overload
@@ -250,8 +236,10 @@ class _ConstructorEmpty(Protocol):
         /,
         shape: SupportsIndex,
         dtype: None = None,
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> _Array1D[float64]: ...
     @overload
     def __call__(
@@ -259,8 +247,10 @@ class _ConstructorEmpty(Protocol):
         /,
         shape: SupportsIndex,
         dtype: _DTypeT | _SupportsDType[_DTypeT],
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> ndarray[tuple[int], _DTypeT]: ...
     @overload
     def __call__(
@@ -268,18 +258,22 @@ class _ConstructorEmpty(Protocol):
         /,
         shape: SupportsIndex,
         dtype: type[_ScalarT],
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> _Array1D[_ScalarT]: ...
     @overload
     def __call__(
         self,
         /,
         shape: SupportsIndex,
-        dtype: DTypeLike | None = ...,
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array1D[Any]: ...
+        dtype: DTypeLike | None = None,
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
+    ) -> _Array1D[Incomplete]: ...
 
     # known shape
     @overload
@@ -288,8 +282,10 @@ class _ConstructorEmpty(Protocol):
         /,
         shape: _AnyShapeT,
         dtype: None = None,
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> _Array[_AnyShapeT, float64]: ...
     @overload
     def __call__(
@@ -297,8 +293,10 @@ class _ConstructorEmpty(Protocol):
         /,
         shape: _AnyShapeT,
         dtype: _DTypeT | _SupportsDType[_DTypeT],
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> ndarray[_AnyShapeT, _DTypeT]: ...
     @overload
     def __call__(
@@ -306,18 +304,22 @@ class _ConstructorEmpty(Protocol):
         /,
         shape: _AnyShapeT,
         dtype: type[_ScalarT],
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> _Array[_AnyShapeT, _ScalarT]: ...
     @overload
     def __call__(
         self,
         /,
         shape: _AnyShapeT,
-        dtype: DTypeLike | None = ...,
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_AnyShapeT, Any]: ...
+        dtype: DTypeLike | None = None,
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
+    ) -> _Array[_AnyShapeT, Incomplete]: ...
 
     # unknown shape
     @overload
@@ -325,34 +327,42 @@ class _ConstructorEmpty(Protocol):
         self, /,
         shape: _ShapeLike,
         dtype: None = None,
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> NDArray[float64]: ...
     @overload
     def __call__(
         self, /,
         shape: _ShapeLike,
         dtype: _DTypeT | _SupportsDType[_DTypeT],
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[Any, _DTypeT]: ...
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
+    ) -> ndarray[_AnyShape, _DTypeT]: ...
     @overload
     def __call__(
         self, /,
         shape: _ShapeLike,
         dtype: type[_ScalarT],
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
     ) -> NDArray[_ScalarT]: ...
     @overload
     def __call__(
         self,
         /,
         shape: _ShapeLike,
-        dtype: DTypeLike | None = ...,
-        order: _OrderCF = ...,
-        **kwargs: Unpack[_KwargsEmpty],
-    ) -> NDArray[Any]: ...
+        dtype: DTypeLike | None = None,
+        order: _OrderCF = "C",
+        *,
+        device: L["cpu"] | None = None,
+        like: _SupportsArrayFunc | None = None,
+    ) -> NDArray[Incomplete]: ...
 
 # using `Final` or `TypeAlias` will break stubtest
 error = Exception
