@@ -5989,7 +5989,13 @@ def test_frommethod_signature(fn, signature):
                 "fill_value=None, hardmask=False)"
             ),
         ),
-        (np.ma.empty_like, "(*args, **kwargs)"),
+        (
+            np.ma.empty_like,
+            (
+                "(prototype, /, dtype=None, order='K', subok=True, shape=None, *, "
+                "device=None)"
+            ),
+        ),
         (np.ma.squeeze, "(a, axis=None, *, fill_value=None, hardmask=False)"),
         (
             np.ma.identity,
