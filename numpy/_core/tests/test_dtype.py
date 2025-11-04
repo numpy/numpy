@@ -2035,3 +2035,25 @@ def test_dtype_newbyteorder_signature():
     assert "new_order" in sig.parameters
     assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
     assert sig.parameters["new_order"].default == "S"
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize("typename", np.dtypes.__all__)
+def test_dtypes_dtype_signature(typename: str):
+    dtype_type = getattr(np.dtypes, typename)
+    sig = inspect.signature(dtype_type)
+
+    match typename.lower().removesuffix("dtype"):
+        case "bytes" | "str" | "void":
+            params_expect = {"size"}
+        case "datetime64" | "timedelta64":
+            params_expect = {"unit"}
+        case "string":
+            # `na_object` cannot be used in the text signature because of its
+            # `np._NoValue` default, which isn't supported by `inspect.signature`,
+            # so `**kwargs` is used instead.
+            params_expect = {"coerce", "kwargs"}
+        case _:
+            params_expect = set()
+
+    assert set(sig.parameters) == params_expect

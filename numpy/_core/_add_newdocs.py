@@ -7225,6 +7225,9 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
+    StringDType(*, coerce=True, **kwargs)
+    --
+
     StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.

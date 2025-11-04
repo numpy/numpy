@@ -1175,6 +1175,41 @@ dtypemeta_wrap_legacy_descriptor(
         Py_DECREF(dtype_class);
         return NULL;
     }
+
+    /* Set the text signature for inspect.signature() */
+    const char *base_doc = ((PyTypeObject *)dtype_class)->tp_doc;
+    const char *short_name = name + 13;  /* Skip "numpy.dtypes." */
+    const char *signature;
+
+    /* Build text signature and prepend to docstring */
+    switch (descr->type_num) {
+        case NPY_STRING:
+        case NPY_UNICODE:
+        case NPY_VOID:
+            signature = "(size, /)";  // bytes_, str_, void_
+            break;
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
+            signature = "(unit, /)";  // datetime64, timedelta64
+            break;
+        default:
+            signature = "()";
+            break;
+    }
+    size_t new_doc_size = strlen(base_doc)
+            + strlen(short_name)
+            + strlen(signature)
+            + 6;  // == len("\n--\n\n") + null terminator
+    char *new_doc = PyMem_Malloc(new_doc_size);
+    if (new_doc == NULL) {
+        Py_DECREF(dtype_class);
+        PyErr_NoMemory();
+        return NULL;
+    }
+    snprintf(new_doc, new_doc_size, "%s%s\n--\n\n%s",
+             short_name, signature, base_doc);
+    ((PyTypeObject *)dtype_class)->tp_doc = new_doc;
+
     dt_slots->castingimpls = PyDict_New();
     if (dt_slots->castingimpls == NULL) {
         Py_DECREF(dtype_class);
