@@ -4205,6 +4205,19 @@ class TestBroadcast:
                                              r"arg 2 with shape \(2,\)"):
             np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
 
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_signatures(self):
+        sig_new = inspect.signature(np.broadcast)
+        assert len(sig_new.parameters) == 1
+        assert "arrays" in sig_new.parameters
+        assert sig_new.parameters["arrays"].kind == inspect.Parameter.VAR_POSITIONAL
+
+        sig_reset = inspect.signature(np.broadcast.reset)
+        assert len(sig_reset.parameters) == 1
+        assert "self" in sig_reset.parameters
+        assert sig_reset.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
 
 class TestKeepdims:
 
