@@ -6030,6 +6030,9 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
 
 add_newdoc('numpy._core.multiarray', 'dtype',
     """
+    dtype(dtype, align=False, copy=False, metadata={})
+    --
+
     dtype(dtype, align=False, copy=False, [metadata])
 
     Create a data type object.
@@ -6596,6 +6599,9 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('type',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('newbyteorder',
     """
+    newbyteorder($self, new_order='S', /)
+    --
+
     newbyteorder(new_order='S', /)
 
     Return a new dtype with a different byte order.
