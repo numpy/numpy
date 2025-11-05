@@ -995,9 +995,6 @@ def qr(a, mode='reduced'):
 
     Returns
     -------
-    When mode is 'reduced' or 'complete', the result will be a namedtuple with
-    the attributes `Q` and `R`.
-
     Q : ndarray of float or complex, optional
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
@@ -1026,6 +1023,9 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
+    When mode is 'reduced' or 'complete', the result will be a namedtuple with
+    the attributes ``Q`` and ``R``.
+
     This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
     ``dorgqr``, and ``zungqr``.
 
@@ -1696,9 +1696,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Returns
     -------
-    When `compute_uv` is True, the result is a namedtuple with the following
-    attribute names:
-
     U : { (..., M, M), (..., M, K) } array
         Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
         size as those of the input `a`. The size of the last two dimensions
@@ -1726,6 +1723,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Notes
     -----
+    When `compute_uv` is True, the result is a namedtuple with the following
+    attribute names: `U`, `S`, and `Vh`.
+
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
