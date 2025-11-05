@@ -8633,9 +8633,6 @@ def asanyarray(a, dtype=None):
         Input data, in any form that can be converted to an array.
     dtype : dtype, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('FORTRAN') memory
-        representation.  Default is 'C'.
 
     Returns
     -------
