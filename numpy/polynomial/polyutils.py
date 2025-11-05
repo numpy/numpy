@@ -696,7 +696,7 @@ def _pow(mul_f, c, pow, maxpower):
     else:
         prd = np.array([1])
         while power:
-            if power > 1:
+            if power & 1:
                 prd = mul_f(prd, c)
             c = mul_f(c, c)
             power = power >> 1
