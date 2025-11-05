@@ -1024,7 +1024,7 @@ def qr(a, mode='reduced'):
     Notes
     -----
     When mode is 'reduced' or 'complete', the result will be a namedtuple with
-    the attributes `Q` and `R`.
+    the attributes ``Q`` and ``R``.
 
     This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
     ``dorgqr``, and ``zungqr``.
