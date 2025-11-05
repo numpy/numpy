@@ -10880,8 +10880,9 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
 @pytest.mark.parametrize(
     "methodname",
     [
-        "__array__", "__array_finalize__", "__array_wrap__",
-        "__copy__", "__deepcopy__", "__reduce__", "__setstate__",
+        "__array__", "__array_finalize__", "__array_function__", "__array_ufunc__",
+        "__array_wrap__", "__complex__", "__copy__", "__deepcopy__",
+        "__reduce__", "__reduce_ex__", "__setstate__",
         "all", "any", "argmax", "argmin", "argsort", "argpartition", "astype",
         "byteswap", "choose", "clip", "compress", "conj", "conjugate", "copy",
         "cumprod", "cumsum", "diagonal", "dot", "dump", "dumps", "fill", "flatten",
@@ -10889,6 +10890,7 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
         "repeat", "reshape", "resize", "round", "searchsorted", "setfield", "setflags",
         "sort", "partition", "squeeze", "std", "sum", "swapaxes", "take", "tofile",
         "tolist", "tobytes", "trace", "transpose", "var", "view",
+        "__array_namespace__", "__dlpack__", "__dlpack_device__", "to_device",
     ],
 )
 def test_array_method_signatures(methodname: str):
