@@ -694,11 +694,12 @@ def _pow(mul_f, c, pow, maxpower):
     elif power == 1:
         return c
     else:
-        # This can be made more efficient by using powers of two
-        # in the usual way.
-        prd = c
-        for i in range(2, power + 1):
-            prd = mul_f(prd, c)
+        prd = np.array([1])
+        while power:
+            if power > 1:
+                prd = mul_f(prd, c)
+            c = mul_f(c, c)
+            power = power >> 1
         return prd
 
 
