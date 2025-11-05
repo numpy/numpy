@@ -1107,10 +1107,11 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
     else:
         new_shape_ab = None
 
-    # then we want to permute the matmul produced output:
+    # then we might need to permute the matmul produced output:
     out_produced = "".join((*singletons, *bat_inds, *a_keep, *b_keep))
-    perm_ab = tuple(out_produced.index(ix) for ix in out)
-    if perm_ab == tuple(range(len(perm_ab))):
+    if out_produced != out:
+        perm_ab = tuple(out_produced.index(ix) for ix in out)
+    else:
         perm_ab = None
 
     return (
@@ -1162,6 +1163,11 @@ def bmm_einsum(eq, a, b, out=None, **kwargs):
     Returns
     -------
     array_like
+
+    Notes
+    -----
+    A fuller description of this algorithm, and original source for this
+    implementation, can be found at https://github.com/jcmgray/einsum_bmm.
     """
     (
         eq_a,
