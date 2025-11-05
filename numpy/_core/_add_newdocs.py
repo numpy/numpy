@@ -855,6 +855,19 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 
 add_newdoc('numpy._core.multiarray', 'array',
     """
+    array(
+        object,
+        dtype=None,
+        *,
+        copy=True,
+        order='K',
+        subok=False,
+        ndmin=0,
+        ndmax=None,
+        like=None,
+    )
+    --
+
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
           ndmax=None, like=None)
 
@@ -933,7 +946,7 @@ add_newdoc('numpy._core.multiarray', 'array',
     ones : Return a new array setting values to one.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
-    copy: Return an array copy of the given object.
+    copy : Return an array copy of the given object.
 
 
     Notes
@@ -1005,6 +1018,9 @@ add_newdoc('numpy._core.multiarray', 'array',
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
     asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
+    --
+
+    asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an array.
 
@@ -1053,12 +1069,10 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     --------
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
+    asfortranarray : Convert input to an ndarray with column-major memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
     fromiter : Create an array from an iterator.
-    fromfunction : Construct an array by executing a function on grid
-                   positions.
+    fromfunction : Construct an array by executing a function on grid positions.
 
     Examples
     --------
@@ -1097,6 +1111,9 @@ add_newdoc('numpy._core.multiarray', 'asarray',
 
 add_newdoc('numpy._core.multiarray', 'asanyarray',
     """
+    asanyarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
+    --
+
     asanyarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an ndarray, but pass ndarray subclasses through.
@@ -1148,13 +1165,10 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     --------
     asarray : Similar function which always returns ndarrays.
     ascontiguousarray : Convert input to a contiguous array.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
-    asarray_chkfinite : Similar function which checks input for NaNs and
-                        Infs.
+    asfortranarray : Convert input to an ndarray with column-major memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
     fromiter : Create an array from an iterator.
-    fromfunction : Construct an array by executing a function on grid
-                   positions.
+    fromfunction : Construct an array by executing a function on grid positions.
 
     Examples
     --------
@@ -1175,6 +1189,9 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
 
 add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     """
+    ascontiguousarray(a, dtype=None, *, like=None)
+    --
+
     ascontiguousarray(a, dtype=None, *, like=None)
 
     Return a contiguous array (ndim >= 1) in memory (C order).
@@ -1197,8 +1214,7 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
 
     See Also
     --------
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
+    asfortranarray : Convert input to an ndarray with column-major memory order.
     require : Return an ndarray that satisfies requirements.
     ndarray.flags : Information about the memory layout of the array.
 
@@ -1238,6 +1254,9 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
 
 add_newdoc('numpy._core.multiarray', 'asfortranarray',
     """
+    asfortranarray(a, dtype=None, *, like=None)
+    --
+
     asfortranarray(a, dtype=None, *, like=None)
 
     Return an array (ndim >= 1) laid out in Fortran order in memory.
