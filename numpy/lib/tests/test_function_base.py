@@ -4191,6 +4191,16 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
+    def test_quantile_q_ndim_limit_error_message(self):
+        a = np.random.rand(10)
+        q_3d = np.random.rand(1, 2, 3) 
+        expected_msg = "q must be a scalar, 1d or 2d array"
+        with pytest.raises(ValueError, match=expected_msg):
+            np.quantile(a, q_3d)
+        q_4d = np.random.rand(1, 1, 1, 1)
+        with pytest.raises(ValueError, match=expected_msg):
+            np.quantile(a, q_4d)
+
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
