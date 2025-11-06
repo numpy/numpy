@@ -52,8 +52,8 @@ cdef double philox_double(void*st) noexcept nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
 
 cdef class Philox(BitGenerator):
-    """
-    Philox(seed=None, counter=None, key=None)
+    # the first line is used to populate `__text_signature__`
+    """Philox(seed=None, counter=None, key=None)\n--
 
     Container for the Philox (4x64) pseudo-random number generator.
 
@@ -194,7 +194,7 @@ cdef class Philox(BitGenerator):
 
     cdef _reset_state_variables(self):
         cdef philox_state *rng_state = &self.rng_state
-         
+
         rng_state[0].has_uint32 = 0
         rng_state[0].uinteger = 0
         rng_state[0].buffer_pos = PHILOX_BUFFER_SIZE
