@@ -98,6 +98,7 @@ from numpy._typing import (
     _DTypeLike,
     _DTypeLikeBool,
     _DTypeLikeVoid,
+    _FloatLike_co,
     _IntLike_co,
     _NestedSequence,
     _ScalarLike_co,
@@ -105,6 +106,7 @@ from numpy._typing import (
     _ShapeLike,
     _SupportsArrayFunc,
     _SupportsDType,
+    _TD64Like_co,
 )
 from numpy._typing._dtype_like import _VoidDTypeLike
 
@@ -315,6 +317,7 @@ _Ignored: TypeAlias = object
 
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_AnyShape, dtype[_ScalarT]]
+_Masked1D: TypeAlias = MaskedArray[tuple[int], dtype[_ScalarT]]
 
 _MaskedArrayUInt_co: TypeAlias = _MaskedArray[unsignedinteger | np.bool]
 _MaskedArrayInt_co: TypeAlias = _MaskedArray[integer | np.bool]
@@ -3142,85 +3145,111 @@ def _convert2ma(
     params: dict[str, Any] | None = None,
 ) -> Callable[..., Any]: ...
 
-# keep roughly in sync with `_core.multiarray.arange`
-@overload  # int, dtype=None (default)
+# keep in sync with `_core.multiarray.arange`
+@overload  # dtype=<known>
 def arange(
-    start: int,
-    stop: int = ...,
-    step: int = ...,
+    start_or_stop: _ArangeScalar | float,
     /,
-    dtype: None = None,
+    stop: _ArangeScalar | float | None = None,
+    step: _ArangeScalar | float | None = 1,
     *,
+    dtype: _DTypeLike[_ArangeScalarT],
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
-) -> MaskedArray[tuple[int], np.dtype[np.int_]]: ...
-@overload  # float, dtype=None (default)
+) -> _Masked1D[_ArangeScalarT]: ...
+@overload  # (int-like, int-like?, int-like?)
 def arange(
-    start: float,
-    stop: float = ...,
-    step: float = ...,
+    start_or_stop: _IntLike_co,
     /,
-    dtype: None = None,
+    stop: _IntLike_co | None = None,
+    step: _IntLike_co | None = 1,
     *,
+    dtype: type[int] | _DTypeLike[np.int_] | None = None,
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
-) -> MaskedArray[tuple[int], np.dtype[np.float64 | Any]]: ...
-@overload  # integer | floating | datetime64 | timedelta64, dtype=None (default)
+) -> _Masked1D[np.int_]: ...
+@overload  # (float, float-like?, float-like?)
 def arange(
-    start: _ArangeScalarT,
-    stop: _ArangeScalarT = ...,
-    step: _ArangeScalarT = ...,
+    start_or_stop: float | floating,
     /,
-    dtype: None = None,
+    stop: _FloatLike_co | None = None,
+    step: _FloatLike_co | None = 1,
     *,
+    dtype: type[float] | _DTypeLike[np.float64] | None = None,
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
-) -> MaskedArray[tuple[int], np.dtype[_ArangeScalarT]]: ...
-@overload  # dtype: known dtype-like (positional)
+) -> _Masked1D[np.float64 | Any]: ...
+@overload  # (float-like, float, float-like?)
 def arange(
-    start: _ArangeScalar,
-    stop: _ArangeScalar,
-    step: _ArangeScalar,
+    start_or_stop: _FloatLike_co,
     /,
-    dtype: _DTypeLike[_ScalarT],
+    stop: float | floating,
+    step: _FloatLike_co | None = 1,
     *,
+    dtype: type[float] | _DTypeLike[np.float64] | None = None,
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
-) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
-@overload  # dtype: known dtype-like (keyword)
+) -> _Masked1D[np.float64 | Any]: ...
+@overload  # (timedelta, timedelta-like?, timedelta-like?)
 def arange(
-    start: _ArangeScalar,
-    stop: _ArangeScalar = ...,
-    step: _ArangeScalar = ...,
+    start_or_stop: np.timedelta64,
     /,
+    stop: _TD64Like_co | None = None,
+    step: _TD64Like_co | None = 1,
     *,
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[np.timedelta64] | None = None,
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
-) -> MaskedArray[tuple[int], np.dtype[_ScalarT]]: ...
-@overload  # dtype: unknown dtype
+) -> _Masked1D[np.timedelta64[Incomplete]]: ...
+@overload  # (timedelta-like, timedelta, timedelta-like?)
 def arange(
-    start: _ArangeScalar,
-    stop: _ArangeScalar = ...,
-    step: _ArangeScalar = ...,
+    start_or_stop: _TD64Like_co,
     /,
+    stop: np.timedelta64,
+    step: _TD64Like_co | None = 1,
+    *,
+    dtype: _DTypeLike[np.timedelta64] | None = None,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _Masked1D[np.timedelta64[Incomplete]]: ...
+@overload  # (datetime, datetime, timedelta-like) (requires both start and stop)
+def arange(
+    start_or_stop: np.datetime64,
+    /,
+    stop: np.datetime64,
+    step: _TD64Like_co | None = 1,
+    *,
+    dtype: _DTypeLike[np.datetime64] | None = None,
+    device: Literal["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _Masked1D[np.datetime64[Incomplete]]: ...
+@overload  # dtype=<unknown>
+def arange(
+    start_or_stop: _ArangeScalar | float,
+    /,
+    stop: _ArangeScalar | float | None = None,
+    step: _ArangeScalar | float | None = 1,
+    *,
     dtype: DTypeLike | None = None,
-    *,
     device: Literal["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
-) -> MaskedArray[tuple[int]]: ...
+) -> _Masked1D[Incomplete]: ...
 
 # based on `_core.fromnumeric.clip`
 @overload
