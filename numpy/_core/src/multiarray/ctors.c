@@ -992,15 +992,16 @@ PyArray_NewFromDescr(
         int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj)
 {
-    if (subtype == NULL) {
+    if (descr == NULL) {
         PyErr_SetString(PyExc_ValueError,
-            "subtype is NULL in PyArray_NewFromDescr");
+                        "descr is NULL in PyArray_NewFromDescr");
         return NULL;
     }
 
-    if (descr == NULL) {
+    if (subtype == NULL) {
         PyErr_SetString(PyExc_ValueError,
-            "descr is NULL in PyArray_NewFromDescr");
+            "subtype is NULL in PyArray_NewFromDescr");
+        Py_DECREF(descr);
         return NULL;
     }
 
