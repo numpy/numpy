@@ -863,13 +863,13 @@ add_newdoc('numpy._core.multiarray', 'array',
         order='K',
         subok=False,
         ndmin=0,
-        ndmax=None,
+        ndmax=0,
         like=None,
     )
     --
 
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-          ndmax=None, like=None)
+          ndmax=0, like=None)
 
     Create an array.
 
@@ -920,8 +920,9 @@ add_newdoc('numpy._core.multiarray', 'array',
         needed to meet this requirement.
     ndmax : int, optional
         Specifies the maximum number of dimensions to create when inferring
-        shape from nested sequences. By default, NumPy recurses through all
-        nesting levels (up to the compile-time constant ``NPY_MAXDIMS``).
+        shape from nested sequences. By default (ndmax=0), NumPy recurses
+        through all nesting levels (up to the compile-time constant
+        ``NPY_MAXDIMS``).
         Setting ``ndmax`` stops recursion at the specified depth, preserving
         deeper nested structures as objects instead of promoting them to
         higher-dimensional arrays. In this case, ``dtype=object`` is required.
