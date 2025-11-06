@@ -2899,7 +2899,8 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for the sys module */
     {"__sizeof__",
         (PyCFunction) array_sizeof,
-        METH_NOARGS, NULL},
+        METH_NOARGS,
+        "__sizeof__($self, /)\n--\n\nSize in memory."},
 
     /* for the copy module */
     {"__copy__",
@@ -2928,11 +2929,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     {"__complex__",
         (PyCFunction) array_complex,
-        METH_VARARGS, NULL},
+        METH_VARARGS,
+        "__complex__($self, /)\n--\n\ncomplex(self)"},
 
     {"__format__",
         (PyCFunction) array_format,
-        METH_VARARGS, NULL},
+        METH_VARARGS,
+        "__format__($self, spec, /)\n--\n\nformat(self[, spec])"},
 
     {"__class_getitem__",
         (PyCFunction)array_class_getitem,
