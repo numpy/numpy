@@ -464,7 +464,7 @@ def array(
     order: _OrderKACF = "K",
     subok: L[True],
     ndmin: int = 0,
-    ndmax: int | None = None,
+    ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _ArrayT: ...
 @overload
@@ -476,7 +476,7 @@ def array(
     order: _OrderKACF = "K",
     subok: L[True],
     ndmin: L[0] = 0,
-    ndmax: int | None = None,
+    ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> _ArrayT: ...
 @overload
@@ -488,7 +488,7 @@ def array(
     order: _OrderKACF = "K",
     subok: bool = False,
     ndmin: int = 0,
-    ndmax: int | None = None,
+    ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
@@ -500,7 +500,7 @@ def array(
     order: _OrderKACF = "K",
     subok: bool = False,
     ndmin: int = 0,
-    ndmax: int | None = None,
+    ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
@@ -512,7 +512,7 @@ def array(
     order: _OrderKACF = "K",
     subok: bool = False,
     ndmin: int = 0,
-    ndmax: int | None = None,
+    ndmax: int = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
 
