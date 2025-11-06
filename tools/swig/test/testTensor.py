@@ -99,7 +99,7 @@ class TensorTestCase(unittest.TestCase):
         "Test max function with wrong dimensions"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         max = Tensor.__dict__[self.typeStr + "Max"]
-        self.assertRaises(TypeError, max, [0, -1, 2, -3])
+        self.assertRaises(TypeError, max, [0, 1, 2, 3])
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMin(self):
