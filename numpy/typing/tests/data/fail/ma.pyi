@@ -11,6 +11,8 @@ MAR_1d_f8: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
 MAR_b: MaskedArray[np.bool]
 MAR_c: MaskedArray[np.complex128]
 MAR_td64: MaskedArray[np.timedelta64]
+MAR_dt64: MaskedArray[np.datetime64]
+MAR_o: MaskedArray[np.object_]
 
 AR_b: npt.NDArray[np.bool]
 
@@ -153,3 +155,6 @@ np.ma.MaskedArray(np.array([1, 2, 3]), keep_mask="yes")  # type: ignore[call-ove
 np.ma.MaskedArray(np.array([1, 2, 3]), subok=None)  # type: ignore[call-overload]
 np.ma.MaskedArray(np.array([1, 2, 3]), ndim=None)  # type: ignore[call-overload]
 np.ma.MaskedArray(np.array([1, 2, 3]), order="Corinthian")  # type: ignore[call-overload]
+
+# https://github.com/numpy/numpy/issues/30173
+MAR_dt64 / MAR_o  # type: ignore[operator]

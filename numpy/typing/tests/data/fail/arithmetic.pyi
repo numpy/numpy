@@ -14,6 +14,7 @@ AR_f: npt.NDArray[np.longdouble]
 AR_c: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
+AR_O: npt.NDArray[np.object_]
 
 ANY: Any
 
@@ -44,6 +45,11 @@ AR_M - AR_LIKE_c  # type: ignore[operator]
 
 AR_m - AR_LIKE_M  # type: ignore[operator]
 AR_LIKE_m - AR_M  # type: ignore[operator]
+
+# array division
+
+# https://github.com/numpy/numpy/issues/30173
+AR_LIKE_M / AR_O  # type: ignore[operator]
 
 # array floor division
 

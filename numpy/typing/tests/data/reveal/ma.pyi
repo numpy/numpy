@@ -932,7 +932,6 @@ assert_type(AR_LIKE_u / MAR_o, Any)
 assert_type(AR_LIKE_i / MAR_o, Any)
 assert_type(AR_LIKE_f / MAR_o, Any)
 assert_type(AR_LIKE_td64 / MAR_o, Any)
-assert_type(AR_LIKE_dt64 / MAR_o, Any)
 assert_type(AR_LIKE_o / MAR_o, Any)
 
 # MaskedArray floor division

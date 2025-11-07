@@ -269,7 +269,6 @@ assert_type(AR_LIKE_u / AR_O, Any)
 assert_type(AR_LIKE_i / AR_O, Any)
 assert_type(AR_LIKE_f / AR_O, Any)
 assert_type(AR_LIKE_m / AR_O, Any)
-assert_type(AR_LIKE_M / AR_O, Any)
 assert_type(AR_LIKE_O / AR_O, Any)
 
 # Array floor division
