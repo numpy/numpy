@@ -114,7 +114,7 @@ get_wrapping_auxdata(void)
     }
     else {
         res = PyMem_Calloc(1, sizeof(wrapping_auxdata));
-        if (res < 0) {
+        if (res == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
