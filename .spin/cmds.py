@@ -454,7 +454,7 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
         meson._set_pythonpath(build_dir)
 
         p = spin.util.run(
-            ['python', '-c', 'import numpy as np; print(np.__version__)'],
+            [sys.executable, '-c', 'import numpy as np; print(np.__version__)'],
             cwd='benchmarks',
             echo=False,
             output=False
