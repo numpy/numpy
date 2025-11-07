@@ -795,6 +795,7 @@ init_stringdtype_sorts(void)
     if (sort_method == NULL) {
         return -1;
     }
+    Py_DECREF(NPY_DT_SLOTS(stringdtype)->sort_meth);
     NPY_DT_SLOTS(stringdtype)->sort_meth = sort_method->method;
     Py_INCREF(sort_method->method);
     Py_DECREF(sort_method);
@@ -818,6 +819,7 @@ init_stringdtype_sorts(void)
     if (argsort_method == NULL) {
         return -1;
     }
+    Py_DECREF(NPY_DT_SLOTS(stringdtype)->argsort_meth);
     NPY_DT_SLOTS(stringdtype)->argsort_meth = argsort_method->method;
     Py_INCREF(argsort_method->method);
     Py_DECREF(argsort_method);
