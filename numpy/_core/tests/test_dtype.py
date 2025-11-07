@@ -2018,9 +2018,10 @@ class TestDTypeSignatures:
         assert sig.parameters["copy"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
         assert sig.parameters["copy"].default is False
 
-        assert "metadata" in sig.parameters
-        assert sig.parameters["metadata"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
-        assert sig.parameters["metadata"].default == {}
+        # the optional `metadata` parameter has no default, so `**kwargs` must be used
+        assert "kwargs" in sig.parameters
+        assert sig.parameters["kwargs"].kind is inspect.Parameter.VAR_KEYWORD
+        assert sig.parameters["kwargs"].default is inspect.Parameter.empty
 
     def test_signature_dtype_newbyteorder(self):
         sig = inspect.signature(np.dtype.newbyteorder)

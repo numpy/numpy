@@ -6192,7 +6192,7 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
 
 add_newdoc('numpy._core.multiarray', 'dtype',
     """
-    dtype(dtype, align=False, copy=False, metadata={})
+    dtype(dtype, align=False, copy=False, **kwargs)
     --
 
     dtype(dtype, align=False, copy=False, [metadata])
