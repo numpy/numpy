@@ -508,7 +508,7 @@ def test_sort_corpus(dtype, length):
     if not hasattr(dtype, "na_object"):
         return
 
-    # make sure NAs get sorted to the end of the array and string NAs get 
+    # make sure NAs get sorted to the end of the array and string NAs get
     # sorted like normal strings
     for _ in range(4):
         corpus.insert(np.random.randint(0, len(corpus)), dtype.na_object)
