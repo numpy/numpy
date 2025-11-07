@@ -7391,8 +7391,58 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
     """)
 
+##############################################################################
+#
+# Documentation for `dtypes.*` classes
+#
+##############################################################################
+
+for _dtype_name, _signature, _sctype_name in (
+    ("BoolDType", "()", "bool"),
+    ("Int8DType", "()", "int8"),
+    ("UInt8DType", "()", "uint8"),
+    ("Int16DType", "()", "int16"),
+    ("UInt16DType", "()", "uint16"),
+    ("Int32DType", "()", "int32"),
+    ("IntDType", "()", "intc"),
+    ("UInt32DType", "()", "uint32"),
+    ("UIntDType", "()", "uintc"),
+    ("Int64DType", "()", "int64"),
+    ("UInt64DType", "()", "uint64"),
+    ("LongLongDType", "()", "longlong"),
+    ("ULongLongDType", "()", "ulonglong"),
+    ("Float16DType", "()", "float16"),
+    ("Float32DType", "()", "float32"),
+    ("Float64DType", "()", "float64"),
+    ("LongDoubleDType", "()", "longdouble"),
+    ("Complex64DType", "()", "complex64"),
+    ("Complex128DType", "()", "complex128"),
+    ("CLongDoubleDType", "()", "clongdouble"),
+    ("ObjectDType", "()", "object"),
+    ("BytesDType", "(size, /)", "bytes_"),
+    ("StrDType", "(size, /)", "str_"),
+    ("VoidDType", "(length, /)", "void"),
+    ("DateTime64DType", "(unit, /)", "datetime64"),
+    ("TimeDelta64DType", "(unit, /)", "timedelta64"),
+):
+    add_newdoc('numpy.dtypes', _dtype_name,
+        f"""
+        {_dtype_name}{_signature}
+        --
+
+        DType class corresponding to the `numpy.{_sctype_name}` scalar type.
+
+        Please see `numpy.dtype` for the typical way to create dtype instances and
+        :ref:`arrays.dtypes` for additional information.
+        """)
+    del _dtype_name, _signature, _sctype_name  # avoid namespace pollution
+
+
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
+    StringDType(*, coerce=True, **kwargs)
+    --
+
     StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.

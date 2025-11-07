@@ -1999,39 +1999,61 @@ def test_creating_dtype_with_dtype_class_errors():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-def test_dtype_signature():
-    sig = inspect.signature(np.dtype)
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestDTypeSignatures:
+    def test_signature_dtype(self):
+        sig = inspect.signature(np.dtype)
 
-    assert len(sig.parameters) == 4
+        assert len(sig.parameters) == 4
 
-    assert "dtype" in sig.parameters
-    assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
-    assert sig.parameters["dtype"].default is inspect.Parameter.empty
+        assert "dtype" in sig.parameters
+        assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["dtype"].default is inspect.Parameter.empty
 
-    assert "align" in sig.parameters
-    assert sig.parameters["align"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
-    assert sig.parameters["align"].default is False
+        assert "align" in sig.parameters
+        assert sig.parameters["align"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["align"].default is False
 
-    assert "copy" in sig.parameters
-    assert sig.parameters["copy"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
-    assert sig.parameters["copy"].default is False
+        assert "copy" in sig.parameters
+        assert sig.parameters["copy"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["copy"].default is False
 
-    assert "metadata" in sig.parameters
-    assert sig.parameters["metadata"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
-    assert sig.parameters["metadata"].default == {}
+        assert "metadata" in sig.parameters
+        assert sig.parameters["metadata"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["metadata"].default == {}
 
-@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-def test_dtype_newbyteorder_signature():
-    sig = inspect.signature(np.dtype.newbyteorder)
+    def test_signature_dtype_newbyteorder(self):
+        sig = inspect.signature(np.dtype.newbyteorder)
 
-    assert len(sig.parameters) == 2
+        assert len(sig.parameters) == 2
 
-    assert "self" in sig.parameters
-    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
-    assert sig.parameters["self"].default is inspect.Parameter.empty
+        assert "self" in sig.parameters
+        assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["self"].default is inspect.Parameter.empty
 
-    assert "new_order" in sig.parameters
-    assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
-    assert sig.parameters["new_order"].default == "S"
+        assert "new_order" in sig.parameters
+        assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["new_order"].default == "S"
+
+    @pytest.mark.parametrize("typename", np.dtypes.__all__)
+    def test_signature_dtypes_classes(self, typename: str):
+        dtype_type = getattr(np.dtypes, typename)
+        sig = inspect.signature(dtype_type)
+
+        match typename.lower().removesuffix("dtype"):
+            case "bytes" | "str":
+                params_expect = {"size"}
+            case "void":
+                params_expect = {"length"}
+            case "datetime64" | "timedelta64":
+                params_expect = {"unit"}
+            case "string":
+                # `na_object` cannot be used in the text signature because of its
+                # `np._NoValue` default, which isn't supported by `inspect.signature`,
+                # so `**kwargs` is used instead.
+                params_expect = {"coerce", "kwargs"}
+            case _:
+                params_expect = set()
+
+        params_actual = set(sig.parameters)
+        assert params_actual == params_expect
