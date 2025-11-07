@@ -731,10 +731,7 @@ stringdtype_get_sort_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
-
-    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
-        *flags |= NPY_METH_REQUIRES_PYAPI;
-    }
+    *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     if (parameters->flags == NPY_SORT_STABLE) {
         *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_stablesort_loop;
@@ -759,10 +756,7 @@ stringdtype_get_argsort_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
-
-    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
-        *flags |= NPY_METH_REQUIRES_PYAPI;
-    }
+    *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     if (parameters->flags == NPY_SORT_STABLE) {
         *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_stableargsort_loop;
