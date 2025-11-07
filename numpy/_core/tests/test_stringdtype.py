@@ -419,6 +419,34 @@ def test_stdlib_copy(dtype, string_list):
     assert_array_equal(copy.deepcopy(arr), arr)
 
 
+def check_sort(dtype, strings, arr_sorted):
+    arr = np.array(strings, dtype=dtype)
+    na_object = getattr(arr.dtype, "na_object", "")
+    if na_object is None and None in strings:
+        with pytest.raises(
+            ValueError,
+            match="Cannot compare null that is not a nan-like value",
+        ):
+            np.argsort(arr)
+        argsorted = None
+    elif na_object is pd_NA or na_object != '':
+        argsorted = None
+    else:
+        argsorted = np.argsort(arr)
+    np.random.default_rng().shuffle(arr)
+    if na_object is None and None in strings:
+        with pytest.raises(
+            ValueError,
+            match="Cannot compare null that is not a nan-like value",
+        ):
+            arr.sort()
+    else:
+        arr.sort()
+        assert np.array_equal(arr, arr_sorted, equal_nan=True)
+    if argsorted is not None:
+        assert np.array_equal(argsorted, np.argsort(strings))
+
+
 @pytest.mark.parametrize(
     "strings",
     [
@@ -439,37 +467,10 @@ def test_stdlib_copy(dtype, string_list):
 def test_sort(dtype, strings):
     """Test that sorting matches python's internal sorting."""
 
-    def test_sort(strings, arr_sorted):
-        arr = np.array(strings, dtype=dtype)
-        na_object = getattr(arr.dtype, "na_object", "")
-        if na_object is None and None in strings:
-            with pytest.raises(
-                ValueError,
-                match="Cannot compare null that is not a nan-like value",
-            ):
-                np.argsort(arr)
-            argsorted = None
-        elif na_object is pd_NA or na_object != '':
-            argsorted = None
-        else:
-            argsorted = np.argsort(arr)
-        np.random.default_rng().shuffle(arr)
-        if na_object is None and None in strings:
-            with pytest.raises(
-                ValueError,
-                match="Cannot compare null that is not a nan-like value",
-            ):
-                arr.sort()
-        else:
-            arr.sort()
-            assert np.array_equal(arr, arr_sorted, equal_nan=True)
-        if argsorted is not None:
-            assert np.array_equal(argsorted, np.argsort(strings))
-
     # make a copy so we don't mutate the lists in the fixture
     strings = strings.copy()
     arr_sorted = np.array(sorted(strings), dtype=dtype)
-    test_sort(strings, arr_sorted)
+    check_sort(dtype, strings, arr_sorted)
 
     if not hasattr(dtype, "na_object"):
         return
@@ -488,8 +489,40 @@ def test_sort(dtype, strings):
     else:
         arr_sorted = np.array(sorted(strings), dtype=dtype)
 
-    test_sort(strings, arr_sorted)
+    check_sort(dtype, strings, arr_sorted)
 
+@pytest.mark.parametrize("length", [8, 16, 32, 64, None])
+def test_sort_corpus(dtype, length):
+    corpusdir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data", "string_sort_corpus.txt"
+    )
+    with open(corpusdir, "r", encoding="utf-8") as f:
+        corpus = f.read().split()
+
+    if length is not None:
+        corpus = corpus[:length]
+
+    corpus_sorted = np.array(sorted(corpus), dtype=dtype)
+    check_sort(dtype, corpus, corpus_sorted)
+
+    if not hasattr(dtype, "na_object"):
+        return
+
+    # make sure NAs get sorted to the end of the array and string NAs get 
+    # sorted like normal strings
+    for _ in range(4):
+        corpus.insert(np.random.randint(0, len(corpus)), dtype.na_object)
+    # can't use append because doing that with NA converts
+    # the result to object dtype
+    if not isinstance(dtype.na_object, str):
+        corpus_sorted = np.array(
+            corpus_sorted.tolist() + [dtype.na_object] * 4,
+            dtype=dtype,
+        )
+    else:
+        corpus_sorted = np.array(sorted(corpus), dtype=dtype)
+
+    check_sort(dtype, corpus, corpus_sorted)
 
 @pytest.mark.parametrize(
     "strings",

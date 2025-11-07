@@ -122,7 +122,7 @@ stringdtype_stablesort(PyArrayMethod_Context *context, char *const *data,
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     int descending = (parameters->flags & NPY_SORT_DESCENDING);
 
-    int num = (int)dimensions[0];
+    npy_intp num = dimensions[0];
     npy_intp elsize = descr->elsize;
     char *pl = (char *)data[0];
     char *pr = pl + num * elsize;
@@ -219,7 +219,7 @@ stringdtype_stableargsort(PyArrayMethod_Context *context, char *const *data,
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     int descending = (parameters->flags & NPY_SORT_DESCENDING);
 
-    int num = (int)dimensions[0];
+    npy_intp num = dimensions[0];
     npy_intp elsize = descr->elsize;
     npy_intp *pl, *pr, *pw;
 
