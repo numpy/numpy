@@ -7425,17 +7425,26 @@ for _dtype_name, _signature, _sctype_name in (
     ("DateTime64DType", "(unit, /)", "datetime64"),
     ("TimeDelta64DType", "(unit, /)", "timedelta64"),
 ):
+    _extra_docs = ""
+    if _dtype_name in {"VoidDType", "DateTime64DType", "TimeDelta64DType"}:
+        _extra_docs = f"""
+        .. warning::
+            ``np.dtypes.{_dtype_name}`` cannot be instantiated directly.
+            Use ``np.dtype("{_sctype_name}[{{unit}}]")`` instead.
+        """
+
     add_newdoc('numpy.dtypes', _dtype_name,
         f"""
         {_dtype_name}{_signature}
         --
 
         DType class corresponding to the `numpy.{_sctype_name}` scalar type.
-
-        Please see `numpy.dtype` for the typical way to create dtype instances and
-        :ref:`arrays.dtypes` for additional information.
+        {_extra_docs}
+        See `numpy.dtype` for the typical way to create dtype instances
+        and :ref:`arrays.dtypes` for additional information.
         """)
-    del _dtype_name, _signature, _sctype_name  # avoid namespace pollution
+
+    del _dtype_name, _signature, _sctype_name, _extra_docs  # avoid namespace pollution
 
 
 add_newdoc('numpy._core.multiarray', 'StringDType',
