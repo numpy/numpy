@@ -429,7 +429,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 
     }
 
-    /* Non-contiguous, No References, No Init Path.  */
+    /* Non-contiguous, Has References and/or Init Path.  */
     PyArrayObject *contig = (PyArrayObject *)PyArray_Ravel(self, order);
     if (contig == NULL) {
         return NULL;
