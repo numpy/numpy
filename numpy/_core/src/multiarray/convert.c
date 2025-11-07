@@ -369,6 +369,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         
         /* Writable Buffer */
         char* dest = PyBytes_AS_STRING(ret);
+        memset(dest, 0, numbytes);
         
         /* Strides compute */
         npy_intp *strides = PyArray_malloc(PyArray_NDIM(self) * sizeof(npy_intp));
@@ -396,6 +397,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
             }
         }
 
+        Py_INCREF(PyArray_DESCR(self));
         /* Array view */
         PyArrayObject *dest_array = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type,

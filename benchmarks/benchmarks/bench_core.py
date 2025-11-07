@@ -14,6 +14,8 @@ class Core(Benchmark):
         self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
         self.float64_dtype = np.dtype(np.float64)
+        self.noncontig = np.arange(10000).reshape(100, 100).T
+        assert not self.noncontig.flags.contiguous
 
     def time_array_1(self):
         np.array(1)
@@ -47,6 +49,12 @@ class Core(Benchmark):
 
     def time_can_cast(self):
         np.can_cast(self.l10x10, self.float64_dtype)
+        
+    def time_tobytes_noncontiguous(self):
+        self.noncontig.tobytes()
+        
+    def time_tobytes_contiguous(self):
+        np.ascontiguousarray(self.noncontig).tobytes()
 
     def time_can_cast_same_kind(self):
         np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
