@@ -16,6 +16,7 @@ import tempfile
 import warnings
 import weakref
 from contextlib import contextmanager
+import time
 
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
