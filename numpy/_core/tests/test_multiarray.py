@@ -10418,7 +10418,7 @@ def test_tobytes_noncontiguous_not_slower_than_copy(shape):
     arr = rng.standard_normal(shape, dtype=np.float32)
     noncontig = arr.transpose(1, 2, 0)
 
-    # correctness   
+    # correctness
     expected = np.ascontiguousarray(noncontig).tobytes()
     got = noncontig.tobytes()
     assert got == expected

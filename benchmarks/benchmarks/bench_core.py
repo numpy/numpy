@@ -49,10 +49,10 @@ class Core(Benchmark):
 
     def time_can_cast(self):
         np.can_cast(self.l10x10, self.float64_dtype)
-        
+
     def time_tobytes_noncontiguous(self):
         self.noncontig.tobytes()
-        
+
     def time_tobytes_contiguous(self):
         np.ascontiguousarray(self.noncontig).tobytes()
 
