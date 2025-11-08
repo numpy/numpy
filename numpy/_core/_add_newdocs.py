@@ -80,7 +80,6 @@ add_newdoc('numpy._core', 'flatiter', ('base',
 
     """))
 
-
 add_newdoc('numpy._core', 'flatiter', ('coords',
     """
     An N-dimensional tuple of current coordinates.
@@ -98,7 +97,6 @@ add_newdoc('numpy._core', 'flatiter', ('coords',
     (0, 1)
 
     """))
-
 
 add_newdoc('numpy._core', 'flatiter', ('index',
     """
@@ -118,17 +116,25 @@ add_newdoc('numpy._core', 'flatiter', ('index',
 
     """))
 
-# flatiter functions
+# flatiter methods
 
 add_newdoc('numpy._core', 'flatiter', ('__array__',
-    """__array__(type=None) Get array from iterator
+    """
+    __array__($self, dtype=None, /, *, copy=None)
+    --
+
+    flat.__array__([dtype], *, copy=None)
+
+    Get array from iterator
 
     """))
 
-
 add_newdoc('numpy._core', 'flatiter', ('copy',
     """
-    copy()
+    copy($self, /)
+    --
+
+    flat.copy()
 
     Get a copy of the iterator as a 1-D array.
 
@@ -154,6 +160,19 @@ add_newdoc('numpy._core', 'flatiter', ('copy',
 
 add_newdoc('numpy._core', 'nditer',
     """
+    nditer(
+        op,
+        flags=None,
+        op_flags=None,
+        op_dtypes=None,
+        order='K',
+        casting='safe',
+        op_axes=None,
+        itershape=None,
+        buffersize=0,
+    )
+    --
+
     nditer(op, flags=None, op_flags=None, op_dtypes=None, order='K',
         casting='safe', op_axes=None, itershape=None, buffersize=0)
 
@@ -165,63 +184,62 @@ add_newdoc('numpy._core', 'nditer',
     ----------
     op : ndarray or sequence of array_like
         The array(s) to iterate over.
-
     flags : sequence of str, optional
-          Flags to control the behavior of the iterator.
+        Flags to control the behavior of the iterator.
 
-          * ``buffered`` enables buffering when required.
-          * ``c_index`` causes a C-order index to be tracked.
-          * ``f_index`` causes a Fortran-order index to be tracked.
-          * ``multi_index`` causes a multi-index, or a tuple of indices
-            with one per iteration dimension, to be tracked.
-          * ``common_dtype`` causes all the operands to be converted to
-            a common data type, with copying or buffering as necessary.
-          * ``copy_if_overlap`` causes the iterator to determine if read
-            operands have overlap with write operands, and make temporary
-            copies as necessary to avoid overlap. False positives (needless
-            copying) are possible in some cases.
-          * ``delay_bufalloc`` delays allocation of the buffers until
-            a reset() call is made. Allows ``allocate`` operands to
-            be initialized before their values are copied into the buffers.
-          * ``external_loop`` causes the ``values`` given to be
-            one-dimensional arrays with multiple values instead of
-            zero-dimensional arrays.
-          * ``grow_inner`` allows the ``value`` array sizes to be made
-            larger than the buffer size when both ``buffered`` and
-            ``external_loop`` is used.
-          * ``ranged`` allows the iterator to be restricted to a sub-range
-            of the iterindex values.
-          * ``refs_ok`` enables iteration of reference types, such as
-            object arrays.
-          * ``reduce_ok`` enables iteration of ``readwrite`` operands
-            which are broadcasted, also known as reduction operands.
-          * ``zerosize_ok`` allows `itersize` to be zero.
+        * ``buffered`` enables buffering when required.
+        * ``c_index`` causes a C-order index to be tracked.
+        * ``f_index`` causes a Fortran-order index to be tracked.
+        * ``multi_index`` causes a multi-index, or a tuple of indices
+          with one per iteration dimension, to be tracked.
+        * ``common_dtype`` causes all the operands to be converted to
+          a common data type, with copying or buffering as necessary.
+        * ``copy_if_overlap`` causes the iterator to determine if read
+          operands have overlap with write operands, and make temporary
+          copies as necessary to avoid overlap. False positives (needless
+          copying) are possible in some cases.
+        * ``delay_bufalloc`` delays allocation of the buffers until
+          a reset() call is made. Allows ``allocate`` operands to
+          be initialized before their values are copied into the buffers.
+        * ``external_loop`` causes the ``values`` given to be
+          one-dimensional arrays with multiple values instead of
+          zero-dimensional arrays.
+        * ``grow_inner`` allows the ``value`` array sizes to be made
+          larger than the buffer size when both ``buffered`` and
+          ``external_loop`` is used.
+        * ``ranged`` allows the iterator to be restricted to a sub-range
+          of the iterindex values.
+        * ``refs_ok`` enables iteration of reference types, such as
+          object arrays.
+        * ``reduce_ok`` enables iteration of ``readwrite`` operands
+          which are broadcasted, also known as reduction operands.
+        * ``zerosize_ok`` allows `itersize` to be zero.
     op_flags : list of list of str, optional
-          This is a list of flags for each operand. At minimum, one of
-          ``readonly``, ``readwrite``, or ``writeonly`` must be specified.
+        This is a list of flags for each operand. At minimum, one of
+        ``readonly``, ``readwrite``, or ``writeonly`` must be specified.
 
-          * ``readonly`` indicates the operand will only be read from.
-          * ``readwrite`` indicates the operand will be read from and written to.
-          * ``writeonly`` indicates the operand will only be written to.
-          * ``no_broadcast`` prevents the operand from being broadcasted.
-          * ``contig`` forces the operand data to be contiguous.
-          * ``aligned`` forces the operand data to be aligned.
-          * ``nbo`` forces the operand data to be in native byte order.
-          * ``copy`` allows a temporary read-only copy if required.
-          * ``updateifcopy`` allows a temporary read-write copy if required.
-          * ``allocate`` causes the array to be allocated if it is None
-            in the ``op`` parameter.
-          * ``no_subtype`` prevents an ``allocate`` operand from using a subtype.
-          * ``arraymask`` indicates that this operand is the mask to use
-            for selecting elements when writing to operands with the
-            'writemasked' flag set. The iterator does not enforce this,
-            but when writing from a buffer back to the array, it only
-            copies those elements indicated by this mask.
-          * ``writemasked`` indicates that only elements where the chosen
-            ``arraymask`` operand is True will be written to.
-          * ``overlap_assume_elementwise`` can be used to mark operands that are
-            accessed only in the iterator order, to allow less conservative
-            copying when ``copy_if_overlap`` is present.
+        * ``readonly`` indicates the operand will only be read from.
+        * ``readwrite`` indicates the operand will be read from and written to.
+        * ``writeonly`` indicates the operand will only be written to.
+        * ``no_broadcast`` prevents the operand from being broadcasted.
+        * ``contig`` forces the operand data to be contiguous.
+        * ``aligned`` forces the operand data to be aligned.
+        * ``nbo`` forces the operand data to be in native byte order.
+        * ``copy`` allows a temporary read-only copy if required.
+        * ``updateifcopy`` allows a temporary read-write copy if required.
+        * ``allocate`` causes the array to be allocated if it is None
+          in the ``op`` parameter.
+        * ``no_subtype`` prevents an ``allocate`` operand from using a subtype.
+        * ``arraymask`` indicates that this operand is the mask to use
+          for selecting elements when writing to operands with the
+          'writemasked' flag set. The iterator does not enforce this,
+          but when writing from a buffer back to the array, it only
+          copies those elements indicated by this mask.
+        * ``writemasked`` indicates that only elements where the chosen
+          ``arraymask`` operand is True will be written to.
+        * ``overlap_assume_elementwise`` can be used to mark operands that are
+          accessed only in the iterator order, to allow less conservative
+          copying when ``copy_if_overlap`` is present.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -422,10 +440,22 @@ add_newdoc('numpy._core', 'nditer',
 
     """)
 
+# nditer attributes
+
+add_newdoc('numpy._core', 'nditer', ('operands',
+    """
+    operands[`Slice`]
+
+    The array(s) to be iterated over. Valid only before the iterator is closed.
+    """))
+
 # nditer methods
 
 add_newdoc('numpy._core', 'nditer', ('copy',
     """
+    copy($self, /)
+    --
+
     copy()
 
     Get a copy of the iterator in its current state.
@@ -444,15 +474,11 @@ add_newdoc('numpy._core', 'nditer', ('copy',
 
     """))
 
-add_newdoc('numpy._core', 'nditer', ('operands',
-    """
-    operands[`Slice`]
-
-    The array(s) to be iterated over. Valid only before the iterator is closed.
-    """))
-
 add_newdoc('numpy._core', 'nditer', ('debug_print',
     """
+    debug_print($self, /)
+    --
+
     debug_print()
 
     Print the current state of the `nditer` instance and debug info to stdout.
@@ -461,6 +487,9 @@ add_newdoc('numpy._core', 'nditer', ('debug_print',
 
 add_newdoc('numpy._core', 'nditer', ('enable_external_loop',
     """
+    enable_external_loop($self, /)
+    --
+
     enable_external_loop()
 
     When the "external_loop" was not used during construction, but
@@ -471,6 +500,9 @@ add_newdoc('numpy._core', 'nditer', ('enable_external_loop',
 
 add_newdoc('numpy._core', 'nditer', ('iternext',
     """
+    iternext($self, /)
+    --
+
     iternext()
 
     Check whether iterations are left, and perform a single internal iteration
@@ -486,6 +518,9 @@ add_newdoc('numpy._core', 'nditer', ('iternext',
 
 add_newdoc('numpy._core', 'nditer', ('remove_axis',
     """
+    remove_axis($self, i, /)
+    --
+
     remove_axis(i, /)
 
     Removes axis `i` from the iterator. Requires that the flag "multi_index"
@@ -495,6 +530,9 @@ add_newdoc('numpy._core', 'nditer', ('remove_axis',
 
 add_newdoc('numpy._core', 'nditer', ('remove_multi_index',
     """
+    remove_multi_index($self, /)
+    --
+
     remove_multi_index()
 
     When the "multi_index" flag was specified, this removes it, allowing
@@ -504,32 +542,62 @@ add_newdoc('numpy._core', 'nditer', ('remove_multi_index',
 
 add_newdoc('numpy._core', 'nditer', ('reset',
     """
+    reset($self, /)
+    --
+
     reset()
 
     Reset the iterator to its initial state.
 
     """))
 
+add_newdoc('numpy._core', 'nditer', ('close',
+    """
+    close($self, /)
+    --
+
+    close()
+
+    Resolve all writeback semantics in writeable operands.
+
+    See Also
+    --------
+    :ref:`nditer-context-manager`
+
+    """))
+
+# nested_iters
+
 add_newdoc('numpy._core', 'nested_iters',
     """
-    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None, \
-    order="K", casting="safe", buffersize=0)
+    nested_iters(
+        op,
+        axes,
+        flags=None,
+        op_flags=None,
+        op_dtypes=None,
+        order='K',
+        casting='safe',
+        buffersize=0,
+    )
+    --
+
+    nested_iters(op, axes, flags=None, op_flags=None, op_dtypes=None,
+    order='K', casting='safe', buffersize=0)
 
     Create nditers for use in nested loops
 
     Create a tuple of `nditer` objects which iterate in nested loops over
     different axes of the op argument. The first iterator is used in the
-    outermost loop, the last in the innermost loop. Advancing one will change
-    the subsequent iterators to point at its new element.
+    outermost loop, the last in the innermost loop. Advancing one will
+    change the subsequent iterators to point at its new element.
 
     Parameters
     ----------
     op : ndarray or sequence of array_like
         The array(s) to iterate over.
-
     axes : list of list of int
         Each item is used as an "op_axes" argument to an nditer
-
     flags, op_flags, op_dtypes, order, casting, buffersize (optional)
         See `nditer` parameters of the same name
 
@@ -574,20 +642,6 @@ add_newdoc('numpy._core', 'nested_iters',
 
     """)
 
-add_newdoc('numpy._core', 'nditer', ('close',
-    """
-    close()
-
-    Resolve all writeback semantics in writeable operands.
-
-    See Also
-    --------
-
-    :ref:`nditer-context-manager`
-
-    """))
-
-
 ###############################################################################
 #
 # broadcast
@@ -596,6 +650,9 @@ add_newdoc('numpy._core', 'nditer', ('close',
 
 add_newdoc('numpy._core', 'broadcast',
     """
+    broadcast(*arrays)
+    --
+
     Produce an object that mimics broadcasting.
 
     Parameters
@@ -765,8 +822,13 @@ add_newdoc('numpy._core', 'broadcast', ('size',
 
     """))
 
+# methods
+
 add_newdoc('numpy._core', 'broadcast', ('reset',
     """
+    reset($self, /)
+    --
+
     reset()
 
     Reset the broadcasted result's iterator(s).
@@ -805,8 +867,21 @@ add_newdoc('numpy._core', 'broadcast', ('reset',
 
 add_newdoc('numpy._core.multiarray', 'array',
     """
+    array(
+        object,
+        dtype=None,
+        *,
+        copy=True,
+        order='K',
+        subok=False,
+        ndmin=0,
+        ndmax=0,
+        like=None,
+    )
+    --
+
     array(object, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-          ndmax=None, like=None)
+          ndmax=0, like=None)
 
     Create an array.
 
@@ -857,8 +932,9 @@ add_newdoc('numpy._core.multiarray', 'array',
         needed to meet this requirement.
     ndmax : int, optional
         Specifies the maximum number of dimensions to create when inferring
-        shape from nested sequences. By default, NumPy recurses through all
-        nesting levels (up to the compile-time constant ``NPY_MAXDIMS``).
+        shape from nested sequences. By default (ndmax=0), NumPy recurses
+        through all nesting levels (up to the compile-time constant
+        ``NPY_MAXDIMS``).
         Setting ``ndmax`` stops recursion at the specified depth, preserving
         deeper nested structures as objects instead of promoting them to
         higher-dimensional arrays. In this case, ``dtype=object`` is required.
@@ -883,7 +959,7 @@ add_newdoc('numpy._core.multiarray', 'array',
     ones : Return a new array setting values to one.
     zeros : Return a new array setting values to zero.
     full : Return a new array of given shape filled with value.
-    copy: Return an array copy of the given object.
+    copy : Return an array copy of the given object.
 
 
     Notes
@@ -955,6 +1031,9 @@ add_newdoc('numpy._core.multiarray', 'array',
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
     asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
+    --
+
+    asarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an array.
 
@@ -1003,12 +1082,10 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     --------
     asanyarray : Similar function which passes through subclasses.
     ascontiguousarray : Convert input to a contiguous array.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
+    asfortranarray : Convert input to an ndarray with column-major memory order.
     asarray_chkfinite : Similar function which checks input for NaNs and Infs.
     fromiter : Create an array from an iterator.
-    fromfunction : Construct an array by executing a function on grid
-                   positions.
+    fromfunction : Construct an array by executing a function on grid positions.
 
     Examples
     --------
@@ -1047,6 +1124,9 @@ add_newdoc('numpy._core.multiarray', 'asarray',
 
 add_newdoc('numpy._core.multiarray', 'asanyarray',
     """
+    asanyarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
+    --
+
     asanyarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an ndarray, but pass ndarray subclasses through.
@@ -1098,13 +1178,10 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     --------
     asarray : Similar function which always returns ndarrays.
     ascontiguousarray : Convert input to a contiguous array.
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
-    asarray_chkfinite : Similar function which checks input for NaNs and
-                        Infs.
+    asfortranarray : Convert input to an ndarray with column-major memory order.
+    asarray_chkfinite : Similar function which checks input for NaNs and Infs.
     fromiter : Create an array from an iterator.
-    fromfunction : Construct an array by executing a function on grid
-                   positions.
+    fromfunction : Construct an array by executing a function on grid positions.
 
     Examples
     --------
@@ -1125,6 +1202,9 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
 
 add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     """
+    ascontiguousarray(a, dtype=None, *, like=None)
+    --
+
     ascontiguousarray(a, dtype=None, *, like=None)
 
     Return a contiguous array (ndim >= 1) in memory (C order).
@@ -1147,8 +1227,7 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
 
     See Also
     --------
-    asfortranarray : Convert input to an ndarray with column-major
-                     memory order.
+    asfortranarray : Convert input to an ndarray with column-major memory order.
     require : Return an ndarray that satisfies requirements.
     ndarray.flags : Information about the memory layout of the array.
 
@@ -1188,6 +1267,9 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
 
 add_newdoc('numpy._core.multiarray', 'asfortranarray',
     """
+    asfortranarray(a, dtype=None, *, like=None)
+    --
+
     asfortranarray(a, dtype=None, *, like=None)
 
     Return an array (ndim >= 1) laid out in Fortran order in memory.
@@ -1251,7 +1333,10 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
 
 add_newdoc('numpy._core.multiarray', 'empty',
     """
-    empty(shape, dtype=float, order='C', *, device=None, like=None)
+    empty(shape, dtype=None, order='C', *, device=None, like=None)
+    --
+
+    empty(shape, dtype=None, order='C', *, device=None, like=None)
 
     Return a new array of given shape and type, without initializing entries.
 
@@ -1264,8 +1349,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
         `numpy.float64`.
     order : {'C', 'F'}, optional, default: 'C'
         Whether to store multi-dimensional data in row-major
-        (C-style) or column-major (Fortran-style) order in
-        memory.
+        (C-style) or column-major (Fortran-style) order in memory.
     device : str, optional
         The device on which to place the created array. Default: ``None``.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -1321,11 +1405,14 @@ add_newdoc('numpy._core.multiarray', 'scalar',
     string. If `obj` is not given, it will be interpreted as None for object
     type and as zeros for all other types.
 
-    """)
+    """)  # sufficient null bytes for all number dtypes
 
 add_newdoc('numpy._core.multiarray', 'zeros',
     """
-    zeros(shape, dtype=float, order='C', *, like=None)
+    zeros(shape, dtype=None, order='C', *, device=None, like=None)
+    --
+
+    zeros(shape, dtype=None, order='C', *, device=None, like=None)
 
     Return a new array of given shape and type, filled with zeros.
 
@@ -1338,8 +1425,12 @@ add_newdoc('numpy._core.multiarray', 'zeros',
         `numpy.float64`.
     order : {'C', 'F'}, optional, default: 'C'
         Whether to store multi-dimensional data in row-major
-        (C-style) or column-major (Fortran-style) order in
-        memory.
+        (C-style) or column-major (Fortran-style) order in memory.
+    device : str, optional
+        The device on which to place the created array. Default: ``None``.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1381,7 +1472,8 @@ add_newdoc('numpy._core.multiarray', 'zeros',
     """)
 
 add_newdoc('numpy._core.multiarray', 'set_typeDict',
-    """set_typeDict(dict)
+    """
+    set_typeDict(dict)
 
     Set the internal dictionary that can look up an array type using a
     registered code.
@@ -1390,6 +1482,9 @@ add_newdoc('numpy._core.multiarray', 'set_typeDict',
 
 add_newdoc('numpy._core.multiarray', 'fromstring',
     """
+    fromstring(string, dtype=None, count=-1, *, sep, like=None)
+    --
+
     fromstring(string, dtype=float, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
@@ -1399,7 +1494,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     string : str
         A string containing the data.
     dtype : data-type, optional
-        The data type of the array; default: float.  For binary input data,
+        The data type of the array; default: `numpy.float64`.  For binary input data,
         the data must be in exactly this format. Most builtin numeric types are
         supported and extension types may be supported.
     count : int, optional
@@ -1451,6 +1546,9 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
 add_newdoc('numpy._core.multiarray', 'compare_chararrays',
     """
     compare_chararrays(a1, a2, cmp, rstrip)
+    --
+
+    compare_chararrays(a1, a2, cmp, rstrip)
 
     Performs element-wise comparison of two string arrays using the
     comparison operator specified by `cmp`.
@@ -1461,20 +1559,20 @@ add_newdoc('numpy._core.multiarray', 'compare_chararrays',
         Arrays to be compared.
     cmp : {"<", "<=", "==", ">=", ">", "!="}
         Type of comparison.
-    rstrip : Boolean
-        If True, the spaces at the end of Strings are removed before the comparison.
+    rstrip : bool
+        If True, the spaces at the end of strings are removed before the comparison.
 
     Returns
     -------
     out : ndarray
-        The output array of type Boolean with the same shape as a and b.
+        The output array of type `numpy.bool` with the same shape as `a1` and `a2`.
 
     Raises
     ------
     ValueError
         If `cmp` is not valid.
     TypeError
-        If at least one of `a` or `b` is a non-string array
+        If at least one of `a1` or `a2` is a non-string array
 
     Examples
     --------
@@ -1488,6 +1586,9 @@ add_newdoc('numpy._core.multiarray', 'compare_chararrays',
 
 add_newdoc('numpy._core.multiarray', 'fromiter',
     """
+    fromiter(iter, dtype, count=-1, *, like=None)
+    --
+
     fromiter(iter, dtype, count=-1, *, like=None)
 
     Create a new 1-dimensional array from an iterable object.
@@ -1543,6 +1644,9 @@ add_newdoc('numpy._core.multiarray', 'fromiter',
 
 add_newdoc('numpy._core.multiarray', 'fromfile',
     """
+    fromfile(file, dtype=None, count=-1, sep='', offset=0, *, like=None)
+    --
+
     fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
@@ -1628,6 +1732,9 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
 
 add_newdoc('numpy._core.multiarray', 'frombuffer',
     """
+    frombuffer(buffer, dtype=None, count=-1, offset=0, *, like=None)
+    --
+
     frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
@@ -1637,7 +1744,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     buffer : buffer_like
         An object that exposes the buffer interface.
     dtype : data-type, optional
-        Data-type of the returned array; default: float.
+        Data-type of the returned array.  Default is `numpy.float64`.
     count : int, optional
         Number of items to read. ``-1`` means all data in the buffer.
     offset : int, optional
@@ -1689,6 +1796,9 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
 add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """
     from_dlpack(x, /, *, device=None, copy=None)
+    --
+
+    from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
     protocol. Generally, the returned NumPy array is a view of the input
@@ -1738,6 +1848,9 @@ add_newdoc('numpy._core.multiarray', 'correlate',
 
 add_newdoc('numpy._core.multiarray', 'arange',
     """
+    arange(start_or_stop, /, stop=None, step=1, *, dtype=None, device=None, like=None)
+    --
+
     arange([start,] stop[, step,], dtype=None, *, device=None, like=None)
 
     Return evenly spaced values within a given interval.
@@ -1862,13 +1975,16 @@ add_newdoc('numpy._core.multiarray', '_get_ndarray_c_version',
 add_newdoc('numpy._core.multiarray', '_reconstruct',
     """_reconstruct(subtype, shape, dtype)
 
-    Construct an empty array. Used by Pickles.
+    Construct an empty array. Used by Pickle.
 
     """)
 
 add_newdoc('numpy._core.multiarray', 'promote_types',
     """
-    promote_types(type1, type2)
+    promote_types(type1, type2, /)
+    --
+
+    promote_types(type1, type2, /)
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
@@ -2255,8 +2371,10 @@ add_newdoc('numpy._core.multiarray', 'c_einsum',
 
 add_newdoc('numpy._core.multiarray', 'ndarray',
     """
-    ndarray(shape, dtype=float, buffer=None, offset=0,
-            strides=None, order=None)
+    ndarray(shape, dtype=None, buffer=None, offset=0, strides=None, order=None)
+    --
+
+    ndarray(shape, dtype=float, buffer=None, offset=0, strides=None, order=None)
 
     An array object represents a multidimensional, homogeneous array
     of fixed-size items.  An associated data-type object describes the
@@ -2279,6 +2397,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
         Shape of created array.
     dtype : data-type, optional
         Any object that can be interpreted as a numpy data type.
+        Default is `numpy.float64`.
     buffer : object exposing buffer interface, optional
         Used to fill the array with data.
     offset : int, optional
@@ -2396,21 +2515,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_priority__',
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
-    """
-    a.__dlpack__(*, stream=None, max_version=None, dl_device=None, copy=None)
-
-    DLPack Protocol: Part of the Array API.
-
-    """))
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
-    """
-    a.__dlpack_device__()
-
-    DLPack Protocol: Part of the Array API.
-
-    """))
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('base',
     """
@@ -2982,6 +3086,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
             [5, 7]]])
 
     """))
+
 ##############################################################################
 #
 # ndarray methods
@@ -2991,6 +3096,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mT',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
     """
+    __array__($self, dtype=None, /, *, copy=None)
+    --
+
     a.__array__([dtype], *, copy=None)
 
     For ``dtype`` parameter it returns a new reference to self if
@@ -3010,6 +3118,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array__',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_finalize__',
     """
+    __array_finalize__($self, obj, /)
+    --
+
     a.__array_finalize__(obj, /)
 
     Present so subclasses can call super. Does nothing.
@@ -3017,29 +3128,60 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_finalize__',
     """))
 
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_function__',
+    """
+    __array_function__($self, /, func, types, args, kwargs)
+    --
+
+    a.__array_function__(func, types, args, kwargs)
+
+    See :ref:`NEP 18 <NEP18>` and :ref:`NEP 35 <NEP35>` for details.
+
+    """))
+
+
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_namespace__',
+    """
+    __array_namespace__($self, /, *, api_version=None)
+    --
+
+    a.__array_namespace__(*, api_version=None)
+
+    For Array API compatibility.
+
+    """))
+
+
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_ufunc__',
+    """
+    __array_ufunc__($self, ufunc, method, /, *inputs, **kwargs)
+    --
+
+    a.__array_ufunc__(ufunc, method, /, *inputs, **kwargs)
+
+    See :ref:`NEP 13 <NEP13>` for details.
+
+    """))
+
+
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_wrap__',
     """
-    a.__array_wrap__(array[, context], /)
+    __array_wrap__($self, array, context=None, return_scalar=True, /)
+    --
+
+    a.__array_wrap__(array[, context[, return_scalar]], /)
 
     Returns a view of `array` with the same type as self.
 
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__copy__',
-    """
-    a.__copy__()
-
-    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
-
-    Equivalent to ``a.copy(order='K')``.
-
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     """
-    a.__class_getitem__(item, /)
+    __class_getitem__($cls, item, /)
+    --
+
+    ndarray[shape, dtype]
 
     Return a parametrized wrapper around the `~numpy.ndarray` type.
 
@@ -3052,11 +3194,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
 
     Examples
     --------
-    >>> from typing import Any
     >>> import numpy as np
 
-    >>> np.ndarray[Any, np.dtype[np.uint8]]
-    numpy.ndarray[typing.Any, numpy.dtype[numpy.uint8]]
+    >>> np.ndarray[tuple[int], np.dtype[np.uint8]]
+    numpy.ndarray[tuple[int], numpy.dtype[numpy.uint8]]
 
     See Also
     --------
@@ -3067,8 +3208,25 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     """))
 
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__copy__',
+    """
+    __copy__($self, /)
+    --
+
+    a.__copy__()
+
+    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
+
+    Equivalent to ``a.copy(order='K')``.
+
+    """))
+
+
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__deepcopy__',
     """
+    __deepcopy__($self, memo, /)
+    --
+
     a.__deepcopy__(memo, /)
 
     Used if :func:`copy.deepcopy` is called on an array.
@@ -3076,9 +3234,49 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__deepcopy__',
     """))
 
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack__',
+    """
+    __dlpack__($self, /, *, stream=None, max_version=None, dl_device=None, copy=None)
+    --
+
+    a.__dlpack__(*, stream=None, max_version=None, dl_device=None, copy=None)
+
+    Exports the array for consumption by ``from_dlpack()`` as a DLPack capsule.
+
+    """))
+
+
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__dlpack_device__',
+    """
+    __dlpack_device__($self, /)
+    --
+
+    a.__dlpack_device__()
+
+    Returns device type (``1``) and device ID (``0``) in DLPack format.
+    Meant for use within ``from_dlpack()``.
+
+    """))
+
+
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce__',
     """
+    __reduce__($self, /)
+    --
+
     a.__reduce__()
+
+    For pickling.
+
+    """))
+
+
+add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce_ex__',
+    """
+    __reduce_ex__($self, protocol, /)
+    --
+
+    a.__reduce_ex__(protocol, /)
 
     For pickling.
 
@@ -3087,6 +3285,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__reduce__',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__setstate__',
     """
+    __setstate__($self, state, /)
+    --
+
     a.__setstate__(state, /)
 
     For unpickling.
@@ -3109,6 +3310,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__setstate__',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('all',
     """
+    all($self, /, axis=None, out=None, keepdims=False, *, where=True)
+    --
+
     a.all(axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
 
     Returns True if all elements evaluate to True.
@@ -3124,6 +3328,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('all',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('any',
     """
+    any($self, /, axis=None, out=None, keepdims=False, *, where=True)
+    --
+
     a.any(axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
 
     Returns True if any of the elements of `a` evaluate to True.
@@ -3139,6 +3346,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('any',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('argmax',
     """
+    argmax($self, /, axis=None, out=None, *, keepdims=False)
+    --
+
     a.argmax(axis=None, out=None, *, keepdims=False)
 
     Return indices of the maximum values along the given axis.
@@ -3154,6 +3364,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argmax',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('argmin',
     """
+    argmin($self, /, axis=None, out=None, *, keepdims=False)
+    --
+
     a.argmin(axis=None, out=None, *, keepdims=False)
 
     Return indices of the minimum values along the given axis.
@@ -3169,7 +3382,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argmin',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('argsort',
     """
-    a.argsort(axis=-1, kind=None, order=None)
+    argsort($self, /, axis=-1, kind=None, order=None, *, stable=None)
+    --
+
+    a.argsort(axis=-1, kind=None, order=None, *, stable=None)
 
     Returns the indices that would sort this array.
 
@@ -3184,6 +3400,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argsort',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
     """
+    argpartition($self, kth, /, axis=-1, kind='introselect', order=None)
+    --
+
     a.argpartition(kth, axis=-1, kind='introselect', order=None)
 
     Returns the indices that would partition this array.
@@ -3199,6 +3418,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     """
+    astype($self, /, dtype, order='K', casting='unsafe', subok=True, copy=True)
+    --
+
     a.astype(dtype, order='K', casting='unsafe', subok=True, copy=True)
 
     Copy of the array, cast to a specified type.
@@ -3278,6 +3500,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
     """
+    byteswap($self, /, inplace=False)
+    --
+
     a.byteswap(inplace=False)
 
     Swap the bytes of the array elements
@@ -3333,6 +3558,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('choose',
     """
+    choose($self, /, choices, out=None, mode='raise')
+    --
+
     a.choose(choices, out=None, mode='raise')
 
     Use an index array to construct a new array from a set of choices.
@@ -3348,6 +3576,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('choose',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('clip',
     """
+    clip($self, /, min=None, max=None, out=None, **kwargs)
+    --
+
     a.clip(min=np._NoValue, max=np._NoValue, out=None, **kwargs)
 
     Return an array whose values are limited to ``[min, max]``.
@@ -3364,6 +3595,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('clip',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('compress',
     """
+    compress($self, /, condition, axis=None, out=None)
+    --
+
     a.compress(condition, axis=None, out=None)
 
     Return selected slices of this array along given axis.
@@ -3379,6 +3613,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('compress',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('conj',
     """
+    conj($self, /)
+    --
+
     a.conj()
 
     Complex-conjugate all elements.
@@ -3394,6 +3631,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('conj',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('conjugate',
     """
+    conjugate($self, /)
+    --
+
     a.conjugate()
 
     Return the complex conjugate, element-wise.
@@ -3409,6 +3649,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('conjugate',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
     """
+    copy($self, /, order='C')
+    --
+
     a.copy(order='C')
 
     Return a copy of the array.
@@ -3482,6 +3725,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('cumprod',
     """
+    cumprod($self, /, axis=None, dtype=None, out=None)
+    --
+
     a.cumprod(axis=None, dtype=None, out=None)
 
     Return the cumulative product of the elements along the given axis.
@@ -3497,6 +3743,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('cumprod',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('cumsum',
     """
+    cumsum($self, /, axis=None, dtype=None, out=None)
+    --
+
     a.cumsum(axis=None, dtype=None, out=None)
 
     Return the cumulative sum of the elements along the given axis.
@@ -3512,6 +3761,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('cumsum',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('diagonal',
     """
+    diagonal($self, /, offset=0, axis1=0, axis2=1)
+    --
+
     a.diagonal(offset=0, axis1=0, axis2=1)
 
     Return specified diagonals. In NumPy 1.9 the returned array is a
@@ -3527,11 +3779,23 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('diagonal',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('dot'))
+add_newdoc('numpy._core.multiarray', 'ndarray', ('dot',
+    """
+    dot($self, other, /, out=None)
+    --
+
+    a.dot(other, /, out=None)
+
+    Refer to :func:`numpy.dot` for full documentation.
+
+    """))
 
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('dump',
     """
+    dump($self, /, file)
+    --
+
     a.dump(file)
 
     Dump a pickle of the array to the specified file.
@@ -3547,6 +3811,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dump',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('dumps',
     """
+    dumps($self, /)
+    --
+
     a.dumps()
 
     Returns the pickle of the array as a string.
@@ -3561,6 +3828,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dumps',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
     """
+    fill($self, /, value)
+    --
+
     a.fill(value)
 
     Fill the array with a scalar value.
@@ -3605,6 +3875,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('flatten',
     """
+    flatten($self, /, order='C')
+    --
+
     a.flatten(order='C')
 
     Return a copy of the array collapsed into one dimension.
@@ -3644,6 +3917,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('flatten',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('getfield',
     """
+    getfield($self, /, dtype, offset=0)
+    --
+
     a.getfield(dtype, offset=0)
 
     Returns a field of the given array as a certain type.
@@ -3687,6 +3963,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('getfield',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
     """
+    item($self, /, *args)
+    --
+
     a.item(*args)
 
     Copy an element of an array to a standard Python scalar and return it.
@@ -3753,6 +4032,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('max',
     """
+    max($self, /, axis=None, out=None, **kwargs)
+    --
+
     a.max(axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
 
     Return the maximum along a given axis.
@@ -3768,6 +4050,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('max',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('mean',
     """
+    mean($self, /, axis=None, dtype=None, out=None, **kwargs)
+    --
+
     a.mean(axis=None, dtype=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
 
     Returns the average of the array elements along given axis.
@@ -3783,6 +4068,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('mean',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('min',
     """
+    min($self, /, axis=None, out=None, **kwargs)
+    --
+
     a.min(axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
 
     Return the minimum along a given axis.
@@ -3798,6 +4086,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('min',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('nonzero',
     """
+    nonzero($self, /)
+    --
+
     a.nonzero()
 
     Return the indices of the elements that are non-zero.
@@ -3813,6 +4104,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nonzero',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('prod',
     """
+    prod($self, /, axis=None, dtype=None, out=None, **kwargs)
+    --
+
     a.prod(axis=None, dtype=None, out=None, keepdims=np._NoValue,
         initial=np._NoValue, where=np._NoValue)
 
@@ -3829,6 +4123,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('prod',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('put',
     """
+    put($self, indices, values, /, mode='raise')
+    --
+
     a.put(indices, values, mode='raise')
 
     Set ``a.flat[n] = values[n]`` for all `n` in indices.
@@ -3844,6 +4141,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('ravel',
     """
+    ravel($self, /, order='C')
+    --
+
     a.ravel([order])
 
     Return a flattened array.
@@ -3861,6 +4161,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('ravel',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('repeat',
     """
+    repeat($self, repeats, /, axis=None)
+    --
+
     a.repeat(repeats, axis=None)
 
     Repeat elements of an array.
@@ -3876,6 +4179,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('repeat',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('reshape',
     """
+    reshape($self, /, *shape, order='C', copy=None)
+    --
+
     a.reshape(shape, /, *, order='C', copy=None)
 
     Returns an array containing the same data with a new shape.
@@ -3898,6 +4204,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('reshape',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('resize',
     """
+    resize($self, /, *new_shape, refcheck=True)
+    --
+
     a.resize(new_shape, refcheck=True)
 
     Change shape and size of array in-place.
@@ -3992,6 +4301,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('resize',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('round',
     """
+    round($self, /, decimals=0, out=None)
+    --
+
     a.round(decimals=0, out=None)
 
     Return `a` with each element rounded to the given number of decimals.
@@ -4007,6 +4319,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('round',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('searchsorted',
     """
+    searchsorted($self, v, /, side='left', sorter=None)
+    --
+
     a.searchsorted(v, side='left', sorter=None)
 
     Find indices where elements of v should be inserted in a to maintain order.
@@ -4022,6 +4337,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('searchsorted',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('setfield',
     """
+    setfield($self, val, /, dtype, offset=0)
+    --
+
     a.setfield(val, dtype, offset=0)
 
     Put a value into a specified place in a field defined by a data-type.
@@ -4074,6 +4392,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('setfield',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('setflags',
     """
+    setflags($self, /, *, write=None, align=None, uic=None)
+    --
+
     a.setflags(write=None, align=None, uic=None)
 
     Set array flags WRITEABLE, ALIGNED, WRITEBACKIFCOPY,
@@ -4151,7 +4472,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('setflags',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
     """
-    a.sort(axis=-1, kind=None, order=None)
+    sort($self, /, axis=-1, kind=None, order=None, *, stable=None)
+    --
+
+    a.sort(axis=-1, kind=None, order=None, *, stable=None)
 
     Sort an array in-place. Refer to `numpy.sort` for full documentation.
 
@@ -4171,6 +4495,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    stable : bool, optional
+        Sort stability. If ``True``, the returned array will maintain
+        the relative order of ``a`` values which compare as equal.
+        If ``False`` or ``None``, this is not guaranteed. Internally,
+        this option selects ``kind='stable'``. Default: ``None``.
+
+        .. versionadded:: 2.0.0
 
     See Also
     --------
@@ -4211,6 +4542,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
     """
+    partition($self, kth, /, axis=-1, kind='introselect', order=None)
+    --
+
     a.partition(kth, axis=-1, kind='introselect', order=None)
 
     Partially sorts the elements in the array in such a way that the value of
@@ -4270,6 +4604,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('squeeze',
     """
+    squeeze($self, /, axis=None)
+    --
+
     a.squeeze(axis=None)
 
     Remove axes of length one from `a`.
@@ -4285,6 +4622,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('squeeze',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
     """
+    std($self, /, axis=None, dtype=None, out=None, ddof=0, **kwargs)
+    --
+
     a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *, where=np._NoValue, mean=np._NoValue)
 
     Returns the standard deviation of the array elements along given axis.
@@ -4300,6 +4640,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('sum',
     """
+    sum($self, /, axis=None, dtype=None, out=None, **kwargs)
+    --
+
     a.sum(axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
 
     Return the sum of the array elements over the given axis.
@@ -4315,7 +4658,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('sum',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('swapaxes',
     """
-    a.swapaxes(axis1, axis2)
+    swapaxes($self, axis1, axis2, /)
+    --
+
+    a.swapaxes(axis1, axis2, /)
 
     Return a view of the array with `axis1` and `axis2` interchanged.
 
@@ -4330,6 +4676,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('swapaxes',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('take',
     """
+    take($self, indices, /, axis=None, out=None, mode='raise')
+    --
+
     a.take(indices, axis=None, out=None, mode='raise')
 
     Return an array formed from the elements of `a` at the given indices.
@@ -4343,9 +4692,37 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('take',
     """))
 
 
+add_newdoc('numpy._core.multiarray', 'ndarray', ('to_device',
+    """
+    to_device($self, device, /, *, stream=None)
+    --
+
+    a.to_device(device, /, *, stream=None)
+
+    For Array API compatibility.  Since NumPy only supports CPU arrays, this
+    method is a no-op that returns the same array.
+
+    Parameters
+    ----------
+    device : "cpu"
+        Must be ``"cpu"``.
+    stream : None, optional
+        Currently unsupported.
+
+    Returns
+    -------
+    out : Self
+        Returns the same array.
+
+    """))
+
+
 add_newdoc('numpy._core.multiarray', 'ndarray', ('tofile',
     """
-    a.tofile(fid, sep="", format="%s")
+    tofile($self, fid, /, sep='', format='%s')
+    --
+
+    a.tofile(fid, sep='', format='%s')
 
     Write array to a file as text or binary (default).
 
@@ -4385,6 +4762,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tofile',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('tolist',
     """
+    tolist($self, /)
+    --
+
     a.tolist()
 
     Return the array as an ``a.ndim``-levels deep nested list of Python scalars.
@@ -4448,7 +4828,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tolist',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes', """
+add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes',
+    """
+    tobytes($self, /, order='C')
+    --
+
     a.tobytes(order='C')
 
     Construct Python bytes containing the raw data bytes in the array.
@@ -4491,6 +4875,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes', """
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
     """
+    trace($self, /, offset=0, axis1=0, axis2=1, dtype=None, out=None)
+    --
+
     a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
 
     Return the sum along diagonals of the array.
@@ -4506,6 +4893,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
     """
+    transpose($self, /, *axes)
+    --
+
     a.transpose(*axes)
 
     Returns a view of the array with axes transposed.
@@ -4563,6 +4953,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('var',
     """
+    var($self, /, axis=None, dtype=None, out=None, ddof=0, **kwargs)
+    --
+
     a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *, where=np._NoValue, mean=np._NoValue)
 
     Returns the variance of the array elements, along given axis.
@@ -4578,6 +4971,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('var',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
     """
+    view($self, /, *args, **kwargs)
+    --
+
     a.view([dtype][, type])
 
     New view of array with the same data.
@@ -4705,6 +5101,9 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy._core.umath', 'frompyfunc',
     """
+    frompyfunc(func, /, nin, nout, **kwargs)
+    --
+
     frompyfunc(func, /, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
@@ -6516,6 +6915,9 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('__lt__',
 add_newdoc('numpy._core.multiarray', 'busdaycalendar',
     """
     busdaycalendar(weekmask='1111100', holidays=None)
+    --
+
+    busdaycalendar(weekmask='1111100', holidays=None)
 
     A business day calendar object that efficiently stores information
     defining valid days for the busday family of functions.
@@ -6638,6 +7040,9 @@ add_newdoc('numpy._core.multiarray', 'normalize_axis_index',
 
 add_newdoc('numpy._core.multiarray', 'datetime_data',
     """
+    datetime_data(dtype, /)
+    --
+
     datetime_data(dtype, /)
 
     Get information about the step size of a date or time type.

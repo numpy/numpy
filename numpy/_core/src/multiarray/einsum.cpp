@@ -20,14 +20,14 @@
 #include <array_assign.h>   //PyArray_AssignRawScalar
 
 #include <ctype.h>
-
+extern "C" {
 #include "convert.h"
 #include "common.h"
 #include "ctors.h"
 
 #include "einsum_sumprod.h"
 #include "einsum_debug.h"
-
+}
 
 /*
  * Parses the subscripts for one operand into an output of 'ndim'
@@ -40,7 +40,6 @@
  *  - subscripts="abbcbc",  ndim=6 -> op_labels=[97, 98, -1, 99, -3, -2]
  *  - subscripts="ab...bc", ndim=6 -> op_labels=[97, 98, 0, 0, -3, 99]
  */
-
 static int
 parse_operand_subscripts(char *subscripts, int length,
                          int ndim, int iop, char *op_labels,
@@ -131,13 +130,13 @@ parse_operand_subscripts(char *subscripts, int length,
         /* If it is a proper label, find any duplicates of it. */
         if (label > 0) {
             /* Search for the next matching label. */
-            char *next = memchr(op_labels + idim + 1, label, ndim - idim - 1);
+            char *next = (char*)memchr(op_labels + idim + 1, label, ndim - idim - 1);
 
             while (next != NULL) {
                 /* The offset from next to op_labels[idim] (negative). */
                 *next = (char)((op_labels + idim) - next);
                 /* Search for the next matching label. */
-                next = memchr(next + 1, label, op_labels + ndim - 1 - next);
+                next = (char*)memchr(next + 1, label, op_labels + ndim - 1 - next);
             }
         }
     }
@@ -322,7 +321,7 @@ get_single_op_view(PyArrayObject *op, char *labels,
                 Py_TYPE(op), PyArray_DESCR(op),
                 ndim_output, new_dims, new_strides, PyArray_DATA(op),
                 PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
-                (PyObject *)op, (PyObject *)op, 0);
+                (PyObject *)op, (PyObject *)op, (_NPY_CREATION_FLAGS)0);
 
         if (*ret == NULL) {
             return -1;
@@ -472,7 +471,7 @@ prepare_op_axes(int ndim, int iop, char *labels, int *axes,
         }
         /* It's a labeled dimension, find the matching one */
         else {
-            char *match = memchr(labels, label, ndim);
+            char *match = (char*)memchr(labels, label, ndim);
             /* If the op doesn't have the label, broadcast it */
             if (match == NULL) {
                 axes[i] = -1;
@@ -1112,6 +1111,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * the strides that are fixed for the whole loop.
      */
     stride = NpyIter_GetInnerStrideArray(iter);
+
     sop = get_sum_of_products_function(nop,
                         NpyIter_GetDescrArray(iter)[0]->type_num,
                         NpyIter_GetDescrArray(iter)[0]->elsize,

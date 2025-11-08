@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import math
 import platform
@@ -18,6 +19,7 @@ from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_almost_equal,
@@ -3371,6 +3373,35 @@ class TestCreationFuncs:
         np.full([dim] * 10, 0)
         assert_(sys.getrefcount(dim) == beg)
 
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.parametrize("func", [np.empty, np.zeros, np.ones, np.full])
+    def test_signatures(self, func):
+        sig = inspect.signature(func)
+        params = sig.parameters
+
+        assert len(params) in {5, 6}
+
+        assert 'shape' in params
+        assert params["shape"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["shape"].default is inspect.Parameter.empty
+
+        assert 'dtype' in params
+        assert params["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["dtype"].default is None
+
+        assert 'order' in params
+        assert params["order"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["order"].default == "C"
+
+        assert 'device' in params
+        assert params["device"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["device"].default is None
+
+        assert 'like' in params
+        assert params["like"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["like"].default is None
+
 
 class TestLikeFuncs:
     '''Test ones_like, zeros_like, empty_like and full_like'''
@@ -4173,6 +4204,19 @@ class TestBroadcast:
         with pytest.raises(ValueError, match=r"arg 0 with shape \(1, 3\) and "
                                              r"arg 2 with shape \(2,\)"):
             np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_signatures(self):
+        sig_new = inspect.signature(np.broadcast)
+        assert len(sig_new.parameters) == 1
+        assert "arrays" in sig_new.parameters
+        assert sig_new.parameters["arrays"].kind == inspect.Parameter.VAR_POSITIONAL
+
+        sig_reset = inspect.signature(np.broadcast.reset)
+        assert len(sig_reset.parameters) == 1
+        assert "self" in sig_reset.parameters
+        assert sig_reset.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
 
 
 class TestKeepdims:

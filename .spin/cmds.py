@@ -392,6 +392,11 @@ def lint(ctx, fix):
     '--quick', '-q', is_flag=True, default=False,
     help="Run each benchmark only once (timings won't be accurate)"
 )
+@click.option(
+    '--factor', '-f', default=1.05,
+    help="The factor above or below which a benchmark result is "
+         "considered reportable. This is passed on to the asv command."
+)
 @click.argument(
     'commits', metavar='',
     required=False,
@@ -399,7 +404,7 @@ def lint(ctx, fix):
 )
 @meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
+def bench(ctx, tests, compare, verbose, quick, factor, commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -454,7 +459,7 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
         meson._set_pythonpath(build_dir)
 
         p = spin.util.run(
-            ['python', '-c', 'import numpy as np; print(np.__version__)'],
+            [sys.executable, '-c', 'import numpy as np; print(np.__version__)'],
             cwd='benchmarks',
             echo=False,
             output=False
@@ -482,7 +487,7 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
             )
 
         cmd_compare = [
-            'asv', 'continuous', '--factor', '1.05',
+            'asv', 'continuous', '--factor', str(factor),
         ] + bench_args + [commit_a, commit_b]
         _run_asv(cmd_compare)
 

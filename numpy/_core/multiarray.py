@@ -114,11 +114,20 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
 def empty_like(
-    prototype, dtype=None, order=None, subok=None, shape=None, *, device=None
+    prototype, dtype=None, order="K", subok=True, shape=None, *, device=None
 ):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True, shape=None, *,
-               device=None)
+    empty_like(
+        prototype,
+        /,
+        dtype=None,
+        order='K',
+        subok=True,
+        shape=None,
+        *,
+        device=None,
+    )
+    --
 
     Return a new array with the same shape and type as a given array.
 
@@ -186,15 +195,18 @@ def empty_like(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
-def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
+def concatenate(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     """
     concatenate(
-        (a1, a2, ...),
+        arrays,
+        /,
         axis=0,
         out=None,
+        *,
         dtype=None,
-        casting="same_kind"
+        casting="same_kind",
     )
+    --
 
     Join a sequence of arrays along an existing axis.
 
@@ -295,7 +307,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
-def inner(a, b):
+def inner(a, b, /):
     """
     inner(a, b, /)
 
@@ -389,7 +401,7 @@ def inner(a, b):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
-def where(condition, x=None, y=None):
+def where(condition, x=None, y=None, /):
     """
     where(condition, [x, y], /)
 
@@ -465,7 +477,7 @@ def where(condition, x=None, y=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.lexsort)
-def lexsort(keys, axis=None):
+def lexsort(keys, axis=-1):
     """
     lexsort(keys, axis=-1)
 
@@ -586,7 +598,7 @@ def lexsort(keys, axis=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.can_cast)
-def can_cast(from_, to, casting=None):
+def can_cast(from_, to, casting="safe"):
     """
     can_cast(from_, to, casting='safe')
 
@@ -648,7 +660,7 @@ def can_cast(from_, to, casting=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
-def min_scalar_type(a):
+def min_scalar_type(a, /):
     """
     min_scalar_type(a, /)
 
@@ -862,7 +874,7 @@ def dot(a, b, out=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
-def vdot(a, b):
+def vdot(a, b, /):
     r"""
     vdot(a, b, /)
 
@@ -925,7 +937,7 @@ def vdot(a, b):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
-def bincount(x, weights=None, minlength=None):
+def bincount(x, /, weights=None, minlength=0):
     """
     bincount(x, /, weights=None, minlength=0)
 
@@ -1001,7 +1013,7 @@ def bincount(x, weights=None, minlength=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.ravel_multi_index)
-def ravel_multi_index(multi_index, dims, mode=None, order=None):
+def ravel_multi_index(multi_index, dims, mode="raise", order="C"):
     """
     ravel_multi_index(multi_index, dims, mode='raise', order='C')
 
@@ -1059,7 +1071,7 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
-def unravel_index(indices, shape=None, order=None):
+def unravel_index(indices, shape, order="C"):
     """
     unravel_index(indices, shape, order='C')
 
@@ -1104,7 +1116,7 @@ def unravel_index(indices, shape=None, order=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.copyto)
-def copyto(dst, src, casting=None, where=None):
+def copyto(dst, src, casting="same_kind", where=True):
     """
     copyto(dst, src, casting='same_kind', where=True)
 
@@ -1156,7 +1168,7 @@ def copyto(dst, src, casting=None, where=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
 def putmask(a, /, mask, values):
     """
-    putmask(a, mask, values)
+    putmask(a, /, mask, values)
 
     Changes elements of an array based on conditional and input values.
 
@@ -1200,7 +1212,7 @@ def putmask(a, /, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(a, axis=None, bitorder='big'):
+def packbits(a, /, axis=None, bitorder="big"):
     """
     packbits(a, /, axis=None, bitorder='big')
 
@@ -1257,7 +1269,7 @@ def packbits(a, axis=None, bitorder='big'):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(a, axis=None, count=None, bitorder='big'):
+def unpackbits(a, /, axis=None, count=None, bitorder="big"):
     """
     unpackbits(a, /, axis=None, count=None, bitorder='big')
 
@@ -1337,9 +1349,9 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
-def shares_memory(a, b, max_work=None):
+def shares_memory(a, b, /, max_work=-1):
     """
-    shares_memory(a, b, /, max_work=None)
+    shares_memory(a, b, /, max_work=-1)
 
     Determine if two arrays share memory.
 
@@ -1416,9 +1428,9 @@ def shares_memory(a, b, max_work=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
-def may_share_memory(a, b, max_work=None):
+def may_share_memory(a, b, /, max_work=0):
     """
-    may_share_memory(a, b, /, max_work=None)
+    may_share_memory(a, b, /, max_work=0)
 
     Determine if two arrays might share memory
 
@@ -1458,14 +1470,14 @@ def may_share_memory(a, b, max_work=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.is_busday)
-def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
+def is_busday(dates, weekmask="1111100", holidays=None, busdaycal=None, out=None):
     """
     is_busday(
         dates,
         weekmask='1111100',
         holidays=None,
         busdaycal=None,
-        out=None
+        out=None,
     )
 
     Calculates which of the given dates are valid days, and which are not.
@@ -1517,7 +1529,7 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_offset)
-def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
+def busday_offset(dates, offsets, roll="raise", weekmask="1111100", holidays=None,
                   busdaycal=None, out=None):
     """
     busday_offset(
@@ -1527,7 +1539,7 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
         weekmask='1111100',
         holidays=None,
         busdaycal=None,
-        out=None
+        out=None,
     )
 
     First adjusts the date to fall on a valid day according to
@@ -1619,7 +1631,7 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_count)
-def busday_count(begindates, enddates, weekmask=None, holidays=None,
+def busday_count(begindates, enddates, weekmask="1111100", holidays=(),
                  busdaycal=None, out=None):
     """
     busday_count(
@@ -1692,9 +1704,8 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
     return (begindates, enddates, weekmask, holidays, out)
 
 
-@array_function_from_c_func_and_dispatcher(
-    _multiarray_umath.datetime_as_string)
-def datetime_as_string(arr, unit=None, timezone=None, casting=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.datetime_as_string)
+def datetime_as_string(arr, unit=None, timezone="naive", casting="same_kind"):
     """
     datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind')
 

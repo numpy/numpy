@@ -51,8 +51,8 @@ cdef double pcg64_cm_double(void* st) noexcept nogil:
     return uint64_to_double(pcg64_cm_next64(<pcg64_state *>st))
 
 cdef class PCG64(BitGenerator):
-    """
-    PCG64(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """PCG64(seed=None)\n--
 
     BitGenerator for the PCG-64 pseudo-random number generator.
 
@@ -284,8 +284,8 @@ cdef class PCG64(BitGenerator):
 
 
 cdef class PCG64DXSM(BitGenerator):
-    """
-    PCG64DXSM(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """PCG64DXSM(seed=None)\n--
 
     BitGenerator for the PCG-64 DXSM pseudo-random number generator.
 

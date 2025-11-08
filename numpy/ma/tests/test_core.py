@@ -5982,8 +5982,20 @@ def test_frommethod_signature(fn, signature):
 @pytest.mark.parametrize(
     ('fn', 'signature'),
     [
-        (np.ma.empty, "(*args, fill_value=None, hardmask=False, **kwargs)"),
-        (np.ma.empty_like, "(*args, **kwargs)"),
+        (
+            np.ma.empty,
+            (
+                "(shape, dtype=None, order='C', *, device=None, like=None, "
+                "fill_value=None, hardmask=False)"
+            ),
+        ),
+        (
+            np.ma.empty_like,
+            (
+                "(prototype, /, dtype=None, order='K', subok=True, shape=None, *, "
+                "device=None)"
+            ),
+        ),
         (np.ma.squeeze, "(a, axis=None, *, fill_value=None, hardmask=False)"),
         (
             np.ma.identity,

@@ -280,6 +280,11 @@ jobs:
       run: |
         cd tools
         pytest --pyargs numpy -m "not slow"
+    - name: Test SWIG binding
+      run: |
+        sudo apt update
+        sudo apt install make swig
+        make -C tools/swig/test test
 
   array_api_tests:
     needs: [smoke_test]

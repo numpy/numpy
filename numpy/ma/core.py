@@ -8616,7 +8616,7 @@ def asarray(a, dtype=None, order=None):
                         subok=False, order=order)
 
 
-def asanyarray(a, dtype=None):
+def asanyarray(a, dtype=None, order='A'):
     """
     Convert the input to a masked array, conserving subclasses.
 
@@ -8629,9 +8629,14 @@ def asanyarray(a, dtype=None):
         Input data, in any form that can be converted to an array.
     dtype : dtype, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('FORTRAN') memory
-        representation.  Default is 'C'.
+    order : {'C', 'F', 'A'}, optional
+        Specify the order of the array.  If order is 'C', then the array
+        will be in C-contiguous order (last-index varies the fastest).
+        If order is 'F', then the returned array will be in
+        Fortran-contiguous order (first-index varies the fastest).
+        If order is 'A' (default), then the returned array may be
+        in any order (either C-, Fortran-contiguous, or even discontiguous),
+        unless a copy is required, in which case it will be C-contiguous.
 
     Returns
     -------
@@ -8661,9 +8666,18 @@ def asanyarray(a, dtype=None):
     """
     # workaround for #8666, to preserve identity. Ideally the bottom line
     # would handle this for us.
-    if isinstance(a, MaskedArray) and (dtype is None or dtype == a.dtype):
+    if (
+        isinstance(a, MaskedArray)
+        and (dtype is None or dtype == a.dtype)
+        and (
+            order == 'A'
+            or order == 'C' and a.flags.carray
+            or order == 'F' and a.flags.f_contiguous
+        )
+    ):
         return a
-    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
+    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True,
+                        order=order)
 
 
 ##############################################################################
