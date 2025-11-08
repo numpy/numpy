@@ -1,0 +1,13 @@
+New ``__numpy_dtype__`` protocol
+--------------------------------
+NumPy now has a new ``__numpy_dtype__`` protocol. NumPy will check
+for this attribute when converting to a NumPy dtype via ``np.dtype(obj)``
+or any ``dtype=`` argument.
+
+Downstream projects are encouraged to implement this for all dtype like
+objects which may previously have used a ``.dtype`` attribute that returned
+a NumPy dtype.
+For array-like objects we encourage you to implement ``__numpy_dtype__``
+with a warning or error to _prevent_ using e.g. ``dtype=dataframe`` in
+NumPy functions (it may be good to go via a Deprecation).
+We expect deprecating coercion via ``.dtype`` in the future.
