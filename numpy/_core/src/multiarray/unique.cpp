@@ -282,9 +282,9 @@ create_inverse_array_from_hashmap(
     char *odata = PyArray_BYTES((PyArrayObject *)inverse_array);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)inverse_array)[0];
     npy_intp value = 0;
-    for (auto it = hashmap.begin(); it != hashmap.end(); it++, value++) {
-        for (npy_intp index : it->second.indices) {
-            char *ptr = odata + index * ostride;
+    for (auto it1 = hashmap.begin(); it1 != hashmap.end(); it1++, value++) {
+        for (auto it2 = it1->second.indices.begin(); it2 != it1->second.indices.end(); it2++) {
+            char *ptr = odata + (*it2) * ostride;
             *((npy_intp *)ptr) = value;
         }
     }
