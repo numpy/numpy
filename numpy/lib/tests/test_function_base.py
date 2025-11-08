@@ -3854,28 +3854,30 @@ class TestPercentile:
     @pytest.mark.parametrize("method", quantile_methods)
     def test_percentile_gh_29003(self, qtype, method):
         zero = qtype(0)
-        one = qtype(0)
-        data = [zero] * 65521
-        a = np.array(data)
+        one = qtype(1)
+        a = np.zeros(65521, qtype)
         a[:20_000] = one
         z = np.percentile(a, 50, method=method)
         assert z == zero
         assert z.dtype == a.dtype
-        z = np.percentile(a, .9, method=method)
+        z = np.percentile(a, 99, method=method)
         assert z == one
         assert z.dtype == a.dtype
 
     def test_percentile_gh_29003_Fraction(self):
         zero = Fraction(0)
-        one = Fraction(0)
-        data = [zero] * 65521
-        a = np.array(data)
+        one = Fraction(1)
+        a = np.array([zero] * 65521)
         a[:20_000] = one
         z = np.percentile(a, 50)
         assert z == zero
         z = np.percentile(a, Fraction(50))
         assert z == zero
         assert np.array(z).dtype == a.dtype
+
+        z = np.percentile(a, 99, method=method)
+        assert z == one
+        assert z.dtype == a.dtype
 
 
 class TestQuantile:
@@ -4255,7 +4257,7 @@ class TestQuantile:
         q = .999
         value = np.quantile(a, q)
         assert value == q * 50_000
-
+        assert value.dtype == np.float16
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
