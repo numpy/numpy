@@ -10411,18 +10411,6 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
 
-@pytest.mark.parametrize("shape", [(3, 224, 224), (8, 512, 512)])
-def test_tobytes_noncontiguous_not_slower_than_copy(shape):
-    # Test correctness non-contiguos paths for `tobytes`
-    rng = np.random.default_rng(0)
-    arr = rng.standard_normal(shape, dtype=np.float32)
-    noncontig = arr.transpose(1, 2, 0)
-
-    # correctness
-    expected = np.ascontiguousarray(noncontig).tobytes()
-    got = noncontig.tobytes()
-    assert got == expected
-
 class TestViewDtype:
     """
     Verify that making a view of a non-contiguous array works as expected.

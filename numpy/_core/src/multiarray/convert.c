@@ -369,32 +369,10 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         
         /* Writable Buffer */
         char* dest = PyBytes_AS_STRING(ret);
-        memset(dest, 0, numbytes);
-        
-        /* Strides compute */
-        npy_intp *strides = PyArray_malloc(PyArray_NDIM(self) * sizeof(npy_intp));
-        if (strides == NULL) {
-            Py_DECREF(ret);
-            return PyErr_NoMemory();
-        }
 
-        npy_intp itemsize = PyArray_ITEMSIZE(self);
-
-        if (order == NPY_CORDER) {
-            /* C-order: last dimension varies fastest */
-            npy_intp stride = itemsize;
-            for (int i = PyArray_NDIM(self) - 1; i >= 0; i--) {
-                strides[i] = stride;
-                stride *= PyArray_DIM(self, i);
-            }
-        }
-        else {
-            /* Fortran-order: first dimension varies fastest */
-            npy_intp stride = itemsize;
-            for (int i = 0; i < PyArray_NDIM(self); i++) {
-                strides[i] = stride;
-                stride *= PyArray_DIM(self, i);
-            }
+        int flags = NPY_ARRAY_WRITEABLE;
+        if (order == NPY_FORTRANORDER) {
+            flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
 
         Py_INCREF(PyArray_DESCR(self));
@@ -404,20 +382,16 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
             PyArray_DESCR(self),
             PyArray_NDIM(self),
             PyArray_DIMS(self),
-            strides,
+            NULL, // strides
             dest,
-            NPY_ARRAY_WRITEABLE,
+            flags,
             NULL
         );
-
-        PyArray_free(strides);
 
         if (dest_array == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
-
-        PyArray_CLEARFLAGS(dest_array, NPY_ARRAY_OWNDATA);
         
         /* Copy directly from source to destination with proper ordering */
         if (PyArray_CopyInto(dest_array, self) < 0) {
