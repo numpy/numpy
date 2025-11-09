@@ -2246,11 +2246,11 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def tolist(self, /) -> Any: ...
 
-    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.4")
     @overload
+    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.4")
     def resize(self, new_shape: _ShapeLike, /, *, refcheck: builtins.bool = True) -> None: ...
-    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.4")
     @overload
+    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.4")
     def resize(self, /, *new_shape: SupportsIndex, refcheck: builtins.bool = True) -> None: ...
 
     def squeeze(
