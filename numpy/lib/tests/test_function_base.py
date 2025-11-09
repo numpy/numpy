@@ -3875,9 +3875,11 @@ class TestPercentile:
         assert z == zero
         assert np.array(z).dtype == a.dtype
 
-        z = np.percentile(a, 99, method=method)
+        z = np.percentile(a, 99)
         assert z == one
-        assert z.dtype == a.dtype
+        z = np.percentile(a, Fraction(99))
+        assert z == one
+        assert np.array(z).dtype == a.dtype
 
 
 class TestQuantile:

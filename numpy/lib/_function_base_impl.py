@@ -129,7 +129,7 @@ _QuantileMethods = {
     # `_compute_virtual_index(n, quantiles, 1, 1)`.
     # They are mathematically equivalent.
     'linear': {
-        'get_virtual_index': lambda n, quantiles: (n - np.int64(1)) * quantiles,
+        'get_virtual_index': lambda n, quantiles: (n - 1) * quantiles,
         'fix_gamma': lambda gamma, _: gamma,
     },
     'median_unbiased': {
