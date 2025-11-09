@@ -136,7 +136,7 @@ class TestHistogram:
         a = np.array([1, 1, 0], dtype=np.uint8)
         int_hist, int_edges = np.histogram(a)
 
-        # Should raise an warning on booleans
+        # Should raise a warning on booleans
         # Ensure that the histograms are equivalent, need to suppress
         # the warnings to get the actual outputs
         with pytest.warns(RuntimeWarning, match='Converting input from .*'):
