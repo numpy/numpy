@@ -3853,6 +3853,7 @@ class TestPercentile:
     @pytest.mark.parametrize("qtype", [np.float16, np.float32])
     @pytest.mark.parametrize("method", quantile_methods)
     def test_percentile_gh_29003(self, qtype, method):
+        # test that with float16 or float32 input we do not get overflow
         zero = qtype(0)
         one = qtype(1)
         a = np.zeros(65521, qtype)
@@ -3877,6 +3878,7 @@ class TestPercentile:
 
         z = np.percentile(a, 99)
         assert z == one
+        # test that with only Fraction input the return type is a Fraction
         z = np.percentile(a, Fraction(99))
         assert z == one
         assert np.array(z).dtype == a.dtype
