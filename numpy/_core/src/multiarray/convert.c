@@ -335,11 +335,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
     npy_intp numbytes;
-    npy_intp i;
-    char *dptr;
-    int elsize;
     PyObject *ret;
-    PyArrayIterObject *it;
 
     if (order == NPY_ANYORDER)
         order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
