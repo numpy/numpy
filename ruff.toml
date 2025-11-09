@@ -90,7 +90,6 @@ ignore = [
 "numpy/_core/tests/test_multiarray.py" = ["E501"]
 "numpy/_core/tests/test_nditer*py" = ["E501"]
 "numpy/_core/tests/test_umath.py" = ["E501"]
-"numpy/_core/tests/test_numeric.py" = ["E501"]
 "numpy/_core/tests/test_numerictypes.py" = ["E501"]
 "numpy/_core/tests/test_regression.py" = ["E501"]
 "numpy/_core/_add_newdocs.py" = ["E501"]
