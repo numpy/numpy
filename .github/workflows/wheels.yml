@@ -62,7 +62,7 @@ jobs:
       - name: pkg-config-for-win
         if: runner.os == 'windows'
         run: |
-          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+		  python3 -m pip install pykg-config
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)

@@ -13,8 +13,7 @@ steps:
 - script: python -m pip install -r requirements/test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
-- powershell: |
-    choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+- script: python -m pip install pykg-config
   displayName: 'Install utilities'
 
 - powershell: |
