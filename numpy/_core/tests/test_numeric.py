@@ -4255,7 +4255,6 @@ class TestTensordot:
     def test_zero_dimensional(self):
         # gh-12130
         arr_0d = np.array(1)
-
         # contracting no axes is well defined
         ret = np.tensordot(arr_0d, arr_0d, ([], []))
         assert_array_equal(ret, arr_0d)
