@@ -74,9 +74,9 @@ For comparison and general edification of the reader we provide
 a simple implementation of a C extension of ``logit`` that uses no
 numpy.
 
-To do this we need two files. The first is the C file which contains
-the actual code, and the second is the ``setup.py`` file used to create
-the module.
+To do this we need three files. The first is the C file which contains
+the actual code, and the others are two project files that describe
+how to create the module.
 
     .. code-block:: c
 
@@ -157,65 +157,91 @@ the module.
             return m;
         }
 
-To use the ``setup.py`` file, place ``setup.py`` and ``spammodule.c``
-in the same folder. Then ``python setup.py build`` will build the module to
-import, or ``python setup.py install`` will install the module to your
-site-packages directory.
+To create the module, one proceeds as one would for a Python package, creating
+a ``pyproject.toml`` file, which defines a build back-end, and then another
+file for that backend which describes how to compile the code. For the backend,
+we recommend ``meson-python``, as we use it for numpy itself, but below we
+also show how to use the older ``setuptools``.
 
-    .. code-block:: python
+.. tab-set::
 
-        '''
-            setup.py file for spammodule.c
+   .. tab-item:: meson
 
-            Calling
-            $python setup.py build_ext --inplace
-            will build the extension library in the current file.
+      Sample ``pyproject.toml`` and ``meson.build``.
 
-            Calling
-            $python setup.py build
-            will build a file that looks like ./build/lib*, where
-            lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension,
-            such as .so
+      .. code-block:: toml
 
-            Calling
-            $python setup.py install
-            will install the module in your site-packages file.
+         [project]
+         name = "spam"
+         version = "0.1"
 
-            See the setuptools section 'Building Extension Modules'
-            at setuptools.pypa.io for more information.
-        '''
+         [build-system]
+         requires = ["meson-python"]
+         build-backend = "mesonpy"
 
-        from setuptools import setup, Extension
-        import numpy as np
+      .. code-block:: meson
 
-        module1 = Extension('spam', sources=['spammodule.c'])
+         project('spam', 'c')
 
-        setup(name='spam', version='1.0', ext_modules=[module1])
+         py = import('python').find_installation()
 
+         sources = files('spammodule.c')
 
-Once the spam module is imported into python, you can call logit
+         extension_module = py.extension_module(
+           'spam',
+           sources,
+           install: true,
+         )
+
+   .. tab-item:: setuptools
+
+      Sample ``pyproject.toml`` and ``setup.py``.
+
+      .. code-block:: toml
+
+         [project]
+         name = "spam"
+         version = "0.1"
+
+         [build-system]
+         requires = ["setuptools"]
+         build-backend = "setuptools.build_meta"
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+
+         spammodule = Extension('spam', sources=['spammodule.c'])
+
+         setup(name='spam', version='1.0',
+               ext_modules=[spammodule])
+
+With either of the above, one can build and install the ``spam`` package with,
+
+.. code-block:: bash
+
+   pip install .
+
+Once the ``spam`` module is imported into python, you can call logit
 via ``spam.logit``. Note that the function used above cannot be applied
 as-is to numpy arrays. To do so we must call :py:func:`numpy.vectorize`
-on it. For example, if a python interpreter is opened in the file containing
-the spam library or spam has been installed, one can perform the
-following commands:
+on it. For example::
 
->>> import numpy as np
->>> import spam
->>> spam.logit(0)
--inf
->>> spam.logit(1)
-inf
->>> spam.logit(0.5)
-0.0
->>> x = np.linspace(0,1,10)
->>> spam.logit(x)
-TypeError: only length-1 arrays can be converted to Python scalars
->>> f = np.vectorize(spam.logit)
->>> f(x)
-array([       -inf, -2.07944154, -1.25276297, -0.69314718, -0.22314355,
-    0.22314355,  0.69314718,  1.25276297,  2.07944154,         inf])
+    >>> import numpy as np
+    >>> import spam
+    >>> spam.logit(0)
+    -inf
+    >>> spam.logit(1)
+    inf
+    >>> spam.logit(0.5)
+    0.0
+    >>> x = np.linspace(0,1,10)
+    >>> spam.logit(x)
+    TypeError: only length-1 arrays can be converted to Python scalars
+    >>> f = np.vectorize(spam.logit)
+    >>> f(x)
+    array([       -inf, -2.07944154, -1.25276297, -0.69314718, -0.22314355,
+        0.22314355,  0.69314718,  1.25276297,  2.07944154,         inf])
 
 THE RESULTING LOGIT FUNCTION IS NOT FAST! ``numpy.vectorize`` simply
 loops over ``spam.logit``. The loop is done at the C level, but the numpy
@@ -236,8 +262,7 @@ Example NumPy ufunc for one dtype
 
 For simplicity we give a ufunc for a single dtype, the ``'f8'``
 ``double``. As in the previous section, we first give the ``.c`` file
-and then the ``setup.py`` file used to create the module containing the
-ufunc.
+and then the files used to create a ``npufunc`` module containing the ufunc.
 
 The place in the code corresponding to the actual computations for
 the ufunc are marked with ``/* BEGIN main ufunc computation */`` and
@@ -339,59 +364,77 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a ``setup.py`` file for the above code. As before, the module
-can be build via calling ``python setup.py build`` at the command prompt,
-or installed to site-packages via ``python setup.py install``. The module
-can also be placed into a local folder e.g. ``npufunc_directory`` below
-using ``python setup.py build_ext --inplace``.
+For the files needed to create the module, the main difference from our
+previous example is that we now need to declare dependencies on numpy.
 
-    .. code-block:: python
+.. tab-set::
 
-        '''
-            setup.py file for single_type_logit.c
-            Note that since this is a numpy extension
-            we add an include_dirs=[get_include()] so that the
-            extension is built with numpy's C/C++ header files.
+   .. tab-item:: meson
 
-            Calling
-            $python setup.py build_ext --inplace
-            will build the extension library in the npufunc_directory.
+      Sample ``pyproject.toml`` and ``meson.build``.
 
-            Calling
-            $python setup.py build
-            will build a file that looks like ./build/lib*, where
-            lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension,
-            such as .so
+      .. code-block:: toml
 
-            Calling
-            $python setup.py install
-            will install the module in your site-packages file.
+         [project]
+         name = "npufunc"
+         dependencies = ["numpy"]
+         version = "0.1"
 
-            See the setuptools section 'Building Extension Modules'
-            at setuptools.pypa.io for more information.
-        '''
+         [build-system]
+         requires = ["meson-python", "numpy"]
+         build-backend = "mesonpy"
 
-        from setuptools import setup, Extension
-        from numpy import get_include
+      .. code-block:: meson
 
-        npufunc = Extension('npufunc',
-                            sources=['single_type_logit.c'],
-                            include_dirs=[get_include()])
+         project('npufunc', 'c')
 
-        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+         py = import('python').find_installation()
+         np_dep = dependency('numpy')
 
+         sources = files('single_type_logit.c')
 
-After the above has been installed, it can be imported and used as follows.
+         extension_module = py.extension_module(
+           'npufunc',
+           sources,
+           dependencies: [np_dep],
+           install: true,
+         )
 
->>> import numpy as np
->>> import npufunc
->>> npufunc.logit(0.5)
-np.float64(0.0)
->>> a = np.linspace(0,1,5)
->>> npufunc.logit(a)
-array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
+   .. tab-item:: setuptools
 
+      Sample ``pyproject.toml`` and ``setup.py``.
+
+      .. code-block:: toml
+
+         [project]
+         name = "npufunc"
+         dependencies = ["numpy"]
+         version = "0.1"
+
+         [build-system]
+         requires = ["setuptools", "numpy"]
+         build-backend = "setuptools.build_meta"
+
+      .. code-block:: python
+
+         from setuptools import setup, Extension
+         from numpy import get_include
+
+         npufunc = Extension('npufunc',
+                             sources=['single_type_logit.c'],
+                             include_dirs=[get_include()])
+
+         setup(name='npufunc', version='1.0', ext_modules=[npufunc])
+
+After the above has been installed, it can be imported and used as follows::
+
+    >>> import numpy as np
+    >>> import npufunc
+    >>> npufunc.logit(0.5)
+    np.float64(0.0)
+    >>> a = np.linspace(0, 1, 5)
+    >>> npufunc.logit(a)
+    array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
 .. _`sec:NumPy-many-loop`:
@@ -402,10 +445,10 @@ Example NumPy ufunc with multiple dtypes
 .. index::
    pair: ufunc; adding new
 
-We finally give an example of a full ufunc, with inner loops for
-half-floats, floats, doubles, and long doubles. As in the previous
-sections we first give the ``.c`` file and then the corresponding
-``setup.py`` file.
+We now extend the above to a full ``logit`` ufunc, with inner loops for
+floats, doubles, and long doubles. Here, we can use the same build files
+as above, except we need to change the source file from ``single_type_logit.c``
+to ``multi_type_logit.c``.
 
 The places in the code corresponding to the actual computations for
 the ufunc are marked with ``/* BEGIN main ufunc computation */`` and
@@ -419,7 +462,6 @@ is the primary thing that must be changed to create your own ufunc.
         #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
         #include <math.h>
 
         /*
@@ -514,39 +556,13 @@ is the primary thing that must be changed to create your own ufunc.
         }
 
 
-        static void half_float_logit(char **args, const npy_intp *dimensions,
-                                    const npy_intp *steps, void *data)
-        {
-            npy_intp i;
-            npy_intp n = dimensions[0];
-            char *in = args[0], *out = args[1];
-            npy_intp in_step = steps[0], out_step = steps[1];
-
-            float tmp;
-
-            for (i = 0; i < n; i++) {
-
-                /* BEGIN main ufunc computation */
-                tmp = npy_half_to_float(*(npy_half *)in);
-                tmp /= 1 - tmp;
-                tmp = logf(tmp);
-                *((npy_half *)out) = npy_float_to_half(tmp);
-                /* END main ufunc computation */
-
-                in += in_step;
-                out += out_step;
-            }
-        }
-
 
         /*This gives pointers to the above functions*/
-        PyUFuncGenericFunction funcs[4] = {&half_float_logit,
-                                           &float_logit,
+        PyUFuncGenericFunction funcs[3] = {&float_logit,
                                            &double_logit,
                                            &long_double_logit};
 
-        static const char types[8] = {NPY_HALF, NPY_HALF,
-                                      NPY_FLOAT, NPY_FLOAT,
+        static const char types[6] = {NPY_FLOAT, NPY_FLOAT,
                                       NPY_DOUBLE, NPY_DOUBLE,
                                       NPY_LONGDOUBLE, NPY_LONGDOUBLE};
 
@@ -586,92 +602,40 @@ is the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a ``setup.py`` file for the above code. As before, the module
-can be build via calling ``python setup.py build`` at the command prompt,
-or installed to site-packages via ``python setup.py install``.
-
-    .. code-block:: python
-
-        '''
-            setup.py file for multi_type_logit.c
-            Note that since this is a numpy extension
-            we add an include_dirs=[get_include()] so that the
-            extension is built with numpy's C/C++ header files.
-            Furthermore, we also have to include the npymath
-            lib for half-float d-type.
-
-            Calling
-            $python setup.py build_ext --inplace
-            will build the extension library in the current file.
-
-            Calling
-            $python setup.py build
-            will build a file that looks like ./build/lib*, where
-            lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension,
-            such as .so
-
-            Calling
-            $python setup.py install
-            will install the module in your site-packages file.
-
-            See the setuptools section 'Building Extension Modules'
-            at setuptools.pypa.io for more information.
-        '''
-
-        from setuptools import setup, Extension
-        from numpy import get_include
-        from os import path
-
-        path_to_npymath = path.join(get_include(), '..', 'lib')
-        npufunc = Extension('npufunc',
-                            sources=['multi_type_logit.c'],
-                            include_dirs=[get_include()],
-                            # Necessary for the half-float d-type.
-                            library_dirs=[path_to_npymath],
-                            libraries=["npymath"])
-
-        setup(name='npufunc', version='1.0', ext_modules=[npufunc])
-
-
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
 >>> import npufunc
 >>> npufunc.logit(0.5)
 np.float64(0.0)
->>> a = np.linspace(0,1,5)
+>>> a = np.linspace(0, 1, 5, dtype="f4")
 >>> npufunc.logit(a)
-array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
+<python-input-4>:1: RuntimeWarning: divide by zero encountered in logit
+array([      -inf, -1.0986123,  0.       ,  1.0986123,        inf],
+      dtype=float32)
 
+.. note::
 
+   Supporting ``float16`` (half-precision) in custom ufuncs is more complex
+   due to its non-standard C representation and conversion requirements.  The
+   above code can process ``float16`` input, but will do so by converting it
+   to ``float32``. The result will then be ``float32`` too, but one can
+   convert it back to ``float16`` by passing in a suitable output, as in
+   ``npufunc.logit(a, out=np.empty_like(a))``. For examples of actual
+   ``float16`` loops, see the numpy source code.
 
 .. _`sec:NumPy-many-arg`:
 
 Example NumPy ufunc with multiple arguments/return values
 =========================================================
 
-Our final example is a ufunc with multiple arguments. It is a modification
-of the code for a logit ufunc for data with a single dtype. We
-compute ``(A * B, logit(A * B))``.
+Creating a ufunc with multiple arguments is not difficult. Here, we make a
+modification of the code for a logit ufunc, where we compute ``(A * B,
+logit(A * B))``. For simplicity, we only create a loop for doubles.
 
-We only give the C code as the setup.py file is exactly the same as
-the ``setup.py`` file in `Example NumPy ufunc for one dtype`_, except that
-the line
-
-    .. code-block:: python
-
-        npufunc = Extension('npufunc',
-                            sources=['single_type_logit.c'],
-                            include_dirs=[get_include()])
-
-is replaced with
-
-    .. code-block:: python
-
-        npufunc = Extension('npufunc',
-                            sources=['multi_arg_logit.c'],
-                            include_dirs=[get_include()])
+We again only give the C code as the files needed to create the module are the
+same as before, but with the source file name replaced by
+``multi_arg_logit.c``.
 
 The C file is given below. The ufunc generated takes two arguments ``A``
 and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
@@ -684,7 +648,6 @@ as well as all other properties of a ufunc.
         #include <Python.h>
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
         #include <math.h>
 
         /*
@@ -786,29 +749,12 @@ Example NumPy ufunc with structured array dtype arguments
 This example shows how to create a ufunc for a structured array dtype.
 For the example we show a trivial ufunc for adding two arrays with dtype
 ``'u8,u8,u8'``. The process is a bit different from the other examples since
-a call to :c:func:`PyUFunc_FromFuncAndData` doesn't fully register ufuncs for
+a call to :c:func:`PyUFunc_FromFuncAndData` cannot register ufuncs for
 custom dtypes and structured array dtypes. We need to also call
 :c:func:`PyUFunc_RegisterLoopForDescr` to finish setting up the ufunc.
 
-We only give the C code as the ``setup.py`` file is exactly the same as
-the ``setup.py`` file in `Example NumPy ufunc for one dtype`_, except that
-the line
-
-    .. code-block:: python
-
-        npufunc = Extension('npufunc',
-                            sources=['single_type_logit.c'],
-                            include_dirs=[get_include()])
-
-is replaced with
-
-    .. code-block:: python
-
-        npufunc = Extension('npufunc',
-                            sources=['add_triplet.c'],
-                            include_dirs=[get_include()])
-
-The C file is given below.
+We only give the C code as the files needed to construct the module are again
+exactly the same as before, except that the source file is now ``add_triplet.c``.
 
     .. code-block:: c
 
@@ -867,7 +813,7 @@ The C file is given below.
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "struct_ufunc_test",
+            "npufunc",
             NULL,
             -1,
             StructUfuncTestMethods,
@@ -907,7 +853,7 @@ The C file is given below.
             dtypes[2] = dtype;
 
             /* Register ufunc for structured dtype */
-            PyUFunc_RegisterLoopForDescr(add_triplet,
+            PyUFunc_RegisterLoopForDescr((PyUFuncObject *)add_triplet,
                                          dtype,
                                          &add_uint64_triplet,
                                          dtypes,
@@ -920,37 +866,11 @@ The C file is given below.
             return m;
         }
 
-.. index::
-   pair: ufunc; adding new
+Sample usage::
 
-The returned ufunc object is a callable Python object. It should be
-placed in a (module) dictionary under the same name as was used in the
-name argument to the ufunc-creation routine. The following example is
-adapted from the umath module
-
-    .. code-block:: c
-
-        static PyUFuncGenericFunction atan2_functions[] = {
-                              PyUFunc_ff_f, PyUFunc_dd_d,
-                              PyUFunc_gg_g, PyUFunc_OO_O_method};
-        static void *atan2_data[] = {
-                              (void *)atan2f, (void *)atan2,
-                              (void *)atan2l, (void *)"arctan2"};
-        static const char atan2_signatures[] = {
-                      NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-                      NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
-                      NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE
-                      NPY_OBJECT, NPY_OBJECT, NPY_OBJECT};
-        ...
-        /* in the module initialization code */
-        PyObject *f, *dict, *module;
-        ...
-        dict = PyModule_GetDict(module);
-        ...
-        f = PyUFunc_FromFuncAndData(atan2_functions,
-            atan2_data, atan2_signatures, 4, 2, 1,
-            PyUFunc_None, "arctan2",
-            "a safe and correct arctan(x1/x2)", 0);
-        PyDict_SetItemString(dict, "arctan2", f);
-        Py_DECREF(f);
-        ...
+    >>> import npufunc
+    >>> import numpy as np
+    >>> a = np.array([(1, 2, 3), (4, 5, 6)], "u8,u8,u8")
+    >>> npufunc.add_triplet(a, a)
+    array([(2,  4,  6), (8, 10, 12)],
+          dtype=[('f0', '<u8'), ('f1', '<u8'), ('f2', '<u8')])
