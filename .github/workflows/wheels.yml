@@ -62,7 +62,7 @@ jobs:
       - name: pkg-config-for-win
         if: runner.os == 'windows'
         run: |
-		  python3 -m pip install pykg-config
+          python3 -m pip install pykg-config
           $CIBW = "${{ github.workspace }}/.openblas"
           # pkgconfig needs a complete path, and not just "./openblas since the
           # build is run in a tmp dir (?)
