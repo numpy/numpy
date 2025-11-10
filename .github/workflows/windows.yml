@@ -40,16 +40,11 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
 
-    - name: Install pkg-config
-      run: |
-        python -m pip install pykg-config
-        echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
-
     - name: Install NumPy (Clang-cl)
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
         pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini -Dpkg_config_path=$PWD/.openblas
 
     - name: Meson Log
       shell: bash

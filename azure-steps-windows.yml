@@ -13,9 +13,6 @@ steps:
 - script: python -m pip install -r requirements/test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
-- script: python -m pip install pykg-config
-  displayName: 'Install utilities'
-
 - powershell: |
     # Note: ensure the `pip install .` command remains the last one here,
     # to avoid "green on failure" issues
@@ -25,13 +22,11 @@ steps:
     elseif ( Test-Path env:_USE_BLAS_ILP64 ) {
         pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=64
-        $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        python -m pip install . -v -Csetup-args="--vsenv"
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dpkg_config_path=$pwd/.openblas"
     } else {
         pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=32
-        $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        python -m pip install . -v -Csetup-args="--vsenv" 
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dpkg_config_path=$pwd/.openblas"
     }
   displayName: 'Build NumPy'
 

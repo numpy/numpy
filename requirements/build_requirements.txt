@@ -3,3 +3,4 @@ Cython>=3.0.6
 ninja
 spin==0.15
 build
+pypkg-config; sys_platform == 'win32'
