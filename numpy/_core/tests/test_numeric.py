@@ -1661,7 +1661,7 @@ class TestNonzero:
         # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
         #              dtype=[('a', 'i4'), ('b', 'i2')])
         x = np.array(
-            [1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+            [(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
             dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')]
         )
         assert_equal(np.count_nonzero(x['a']), 3)
@@ -2267,7 +2267,7 @@ class TestArrayComparisons:
         assert_(type(res) is bool)
         res = np.array_equiv(
             np.array([1, 2]),
-            np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+            np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
         )
         assert_(not res)
         assert_(type(res) is bool)
@@ -3231,7 +3231,7 @@ class TestIsclose:
                     assert len(w) == 1
                     assert issubclass(w[-1].category, RuntimeWarning)
                     expected = f"One of rtol or atol is not valid, atol: {i}, rtol: {j}"
-                    assert expected, in str(w[-1].message)
+                    assert expected in str(w[-1].message)
 
 
 class TestStdVar:
