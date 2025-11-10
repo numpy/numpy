@@ -2265,8 +2265,9 @@ class TestArrayComparisons:
         res = np.array_equiv(np.array([1, 2]), np.array([[1], [2]]))
         assert_(not res)
         assert_(type(res) is bool)
-        res = np.array_equiv(np.array([1, 2]), np.array(
-            [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        res = np.array_equiv(
+            np.array([1, 2]),
+            np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         )
         assert_(not res)
         assert_(type(res) is bool)
