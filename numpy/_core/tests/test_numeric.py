@@ -3218,7 +3218,7 @@ class TestIsclose:
         for i in b:
             for j in b:
                 # Making sure that i and j are not both numbers,
-                #because that won't create a warning
+                # because that won't create a warning
                 if (i == 1) and (j == 1):
                     continue
 
