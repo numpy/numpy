@@ -353,11 +353,11 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         return PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
     
-    /* Avoid Ravel where possible for lesser copies. */
+    /* Avoid Ravel where possible for fewer copies. */
     if (!PyDataType_REFCHK(PyArray_DESCR(self)) && 
         ((PyArray_DESCR(self)->flags & NPY_NEEDS_INIT) == 0)) {
         
-        /* Allocate final Byte Object */
+        /* Allocate final Bytes Object */
         ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
         if (ret == NULL) {
             return NULL;

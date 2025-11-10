@@ -3792,6 +3792,18 @@ class TestMethods:
         assert_(isinstance(a.ravel('A'), ArraySubclass))
         assert_(isinstance(a.ravel('K'), ArraySubclass))
 
+    @pytest.mark.parametrize("shape", [(3, 224, 224), (8, 512, 512)])
+    def test_tobytes_no_copy_fastpath(self, shape):
+        # Test correctness of non-contiguous paths for `tobytes`
+        rng = np.random.default_rng(0)
+        arr = rng.standard_normal(shape, dtype=np.float32)
+        noncontig = arr.transpose(1, 2, 0)
+
+        # correctness
+        expected = np.ascontiguousarray(noncontig).tobytes()
+        got = noncontig.tobytes()
+        assert got == expected
+
     def test_swapaxes(self):
         a = np.arange(1 * 2 * 3 * 4).reshape(1, 2, 3, 4).copy()
         idx = np.indices(a.shape)

@@ -72,18 +72,6 @@ class TestRegression:
         a = np.ones(2)
         assert_(a is np.asarray(a, order='F'))
 
-    @pytest.mark.parametrize("shape", [(3, 224, 224), (8, 512, 512)])
-    def test_tobytes_no_copy_fastpath(self, shape):
-        # Test correctness of non-contiguous paths for `tobytes`
-        rng = np.random.default_rng(0)
-        arr = rng.standard_normal(shape, dtype=np.float32)
-        noncontig = arr.transpose(1, 2, 0)
-
-        # correctness
-        expected = np.ascontiguousarray(noncontig).tobytes()
-        got = noncontig.tobytes()
-        assert got == expected
-
     def test_ravel_with_order(self):
         # Check that ravel works when order='F' and array C/F-contiguous
         a = np.ones(2)
