@@ -3,7 +3,7 @@ from distutils.unixccompiler import UnixCCompiler
 class PathScaleCCompiler(UnixCCompiler):
 
     """
-    PathScale compiler compatible with an gcc built Python.
+    PathScale compiler compatible with a gcc built Python.
     """
 
     compiler_type = 'pathcc'

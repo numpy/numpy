@@ -4731,7 +4731,7 @@ def _quantile(
     if weights is None:
         # --- Computation of indexes
         # Index where to find the value in the sorted array.
-        # Virtual because it is a floating point value, not an valid index.
+        # Virtual because it is a floating point value, not a valid index.
         # The nearest neighbours are used for interpolation
         try:
             method_props = _QuantileMethods[method]

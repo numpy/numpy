@@ -156,7 +156,7 @@ create_conv_funcs(
  *        returned array can differ for strings.
  * @param homogeneous Whether the datatype of the array is not homogeneous,
  *        i.e. not structured.  In this case the number of columns has to be
- *        discovered an the returned array will be 2-dimensional rather than
+ *        discovered and the returned array will be 2-dimensional rather than
  *        1-dimensional.
  *
  * @returns Returns the result as an array object or NULL on error.  The result

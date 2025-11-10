@@ -209,7 +209,7 @@ class TestBuiltin:
                       'formats': ['i4', 'f4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
-        # This is an safe cast (not equiv) due to the different names:
+        # This is a safe cast (not equiv) due to the different names:
         assert np.can_cast(x, y, casting="safe")
 
     @pytest.mark.parametrize(
