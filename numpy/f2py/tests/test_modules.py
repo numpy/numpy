@@ -24,6 +24,23 @@ class TestModuleFilterPublicEntities(util.F2PyTest):
 
 
 @pytest.mark.slow
+class TestBuildInSourceDirectory(util.F2PyTest):
+    sources = [
+        util.getpath(
+            "tests", "src", "modules", "gh26920",
+            "two_mods_with_one_public_routine.f90"
+        )
+    ]
+    # we filter the only public function mod2
+    only = ["mod1_func1", ]
+    options = ["--build-dir", util.get_module_dir()]
+
+    def test_gh26920(self):
+        # if it compiles and can be loaded, things are fine
+        pass
+
+
+@pytest.mark.slow
 class TestModuleWithoutPublicEntities(util.F2PyTest):
     sources = [
         util.getpath(
