@@ -1660,9 +1660,10 @@ class TestNonzero:
 
         # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
         #              dtype=[('a', 'i4'), ('b', 'i2')])
-        x = np.array([
-            (1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)
-            ], dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')])
+        x = np.array(
+            [1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+            dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')]
+        )
         assert_equal(np.count_nonzero(x['a']), 3)
         assert_equal(np.count_nonzero(x['b']), 4)
         assert_equal(np.count_nonzero(x['c']), 3)
