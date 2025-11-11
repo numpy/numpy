@@ -216,7 +216,10 @@ def _prepare_sources(mname, sources, bdir):
     bdir = Path(bdir)
     for generated_source in generated_sources:
         if generated_source.exists():
-            shutil.copy(generated_source, bdir / generated_source.name)
+            try:
+                shutil.copy(generated_source, bdir / generated_source.name)
+            except shutil.SameFileError:
+                pass
             extended_sources.append(generated_source.name)
             generated_source.unlink()
     extended_sources = [
