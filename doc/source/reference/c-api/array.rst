@@ -2097,6 +2097,10 @@ and not set any of the other loop slots.
 These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
 along with other ufunc loops.
 
+Alternatively, custom sorting and argsorting for a DType can be
+registered by defining the DType slot :c:macro:`NPY_DT_sort_compare`
+with a comparison function.
+
 API for calling array methods
 -----------------------------
 
@@ -3712,6 +3716,17 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
        The number of decimal digits of precision. Corresponds to ``DIG`` from C
        standard macros (e.g., ``FLT_DIG``, ``DBL_DIG``).
 
+.. c:macro:: NPY_DT_sort_compare
+
+.. c:type:: int (PyArrayDTypeMeta_CompareFuncWithDescr)( \
+                char *a, char *b, PyArray_Descr *descr)
+
+   If defined, implements a comparison function for sorting arrays of this DType,
+   which can be used instead of the full sort loops (see :ref:`array-methods-sorting`).
+   If defined, NumPy will use this function to implement all sorting algorithms for
+   the DType. Should return a negative value if *a* < *b*, zero if *a* == *b*, and
+   a positive value if *a* > *b*.
+
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3738,6 +3753,8 @@ DType API slots but for now we have exposed the legacy
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_compare
 
    Computes a comparison for `numpy.sort`, implements ``PyArray_CompareFunc``.
+   This slot may be deprecated in the future in favor of the
+   ``NPY_DT_sort_compare`` DType API slot.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argmax
 
@@ -3781,13 +3798,17 @@ DType API slots but for now we have exposed the legacy
 
    An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
    defining custom sorting implementations for each of the sorting
-   algorithms numpy implements.
+   algorithms numpy implements. This slot may be deprecated in the future
+   in favor of the ArrayMethod API for sorting
+   (see :ref:`array-methods-sorting`).
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
 
    An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
    allows defining custom argsorting implementations for each of the
-   sorting algorithms numpy implements.
+   sorting algorithms numpy implements. This slot may be deprecated in
+   the future in favor of the ArrayMethod API for argsorting
+   (see :ref:`array-methods-sorting`).
 
 Macros and Static Inline Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

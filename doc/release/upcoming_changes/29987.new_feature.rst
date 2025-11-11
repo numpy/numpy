@@ -1,0 +1,5 @@
+`NPY_DT_sort_compare` DType slot for custom sorting
+---------------------------------------------------
+User-defined dtypes can now implement custom sorting using the new
+`NPY_DT_sort_compare` DType slot. This mechanism can be used in place of the
+`NPY_DT_PyArray_ArrFuncs_compare` slot which may be deprecated in the future.
