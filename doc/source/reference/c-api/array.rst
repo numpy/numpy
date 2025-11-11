@@ -784,7 +784,7 @@ cannot not be accessed directly.
     Allows setting of the itemsize, this is *only* relevant for string/bytes
     datatypes as it is the current pattern to define one with a new size.
 
-.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+.. c:function:: npy_intp PyDataType_ALIGNMENT(PyArray_Descr *descr)
 
     The alignment of the datatype.
 
