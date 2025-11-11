@@ -463,8 +463,8 @@ compare(void *a, void *b, void *arr)
 int
 stringdtype_sort_compare(void *a, void *b, void *descr)
 {
-    PyArray_StringDTypeObject *descr_obj = (PyArray_StringDTypeObject *)descr;
-    int ret = _compare(a, b, descr_obj, descr_obj);
+    PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
+    int ret = _compare(a, b, sdescr, sdescr);
     return ret;
 }
 
