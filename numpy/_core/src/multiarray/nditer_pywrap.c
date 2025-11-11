@@ -916,7 +916,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
         }
         if (!PyTuple_Check(item) && !PyList_Check(item)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Each item in axes must be a an integer tuple");
+                    "Each item in axes must be an integer tuple");
             Py_DECREF(item);
             return NULL;
         }
