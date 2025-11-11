@@ -47,19 +47,20 @@ extern "C" {
  */
 
 static inline void
-fill_sort_data_with_arr_or_descr(void *varr_or_descr,
-    npy_intp *elsize, PyArray_CompareFunc **cmp)
+fill_sort_data_with_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
 {
-    if (PyArray_Check(varr_or_descr)) {
-        PyArrayObject *arr = (PyArrayObject *)varr_or_descr;
-        *elsize = PyArray_ITEMSIZE(arr);
-        *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
-    }
-    else {
-        PyArray_Descr *descr = (PyArray_Descr *)varr_or_descr;
-        *elsize = descr->elsize;
-        *cmp = (PyArray_CompareFunc *)NPY_DT_SLOTS(NPY_DTYPE(descr))->sort_compare;
-    }
+    PyArrayObject *arr = (PyArrayObject *)varr;
+    *elsize = PyArray_ITEMSIZE(arr);
+    *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+}
+
+static inline void
+fill_sort_data_with_context(
+    PyArrayMethod_Context *context, npy_intp *elsize, PyArray_CompareFunc **cmp)
+{
+    PyArray_Descr *descr = (PyArray_Descr *)context->descriptors[0];
+    *elsize = descr->elsize;
+    *cmp = (PyArray_CompareFunc *)NPY_DT_SLOTS(NPY_DTYPE(descr))->sort_compare;
 }
 
 /*

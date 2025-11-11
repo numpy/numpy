@@ -182,71 +182,6 @@ PyArray_ArrFuncs default_funcs = {
 
 
 NPY_NO_EXPORT int
-wrap_legacy_sort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata, PyArray_SortFunc *sortfunc)
-{
-    char *start = data[0];
-    npy_intp num = dimensions[0];
-    void *arr = context->descriptors[0];
-    return sortfunc(start, num, arr);
-}
-
-
-NPY_NO_EXPORT int
-wrap_legacy_argsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata, PyArray_ArgSortFunc *argsortfunc)
-{
-    char *start = data[0];
-    npy_intp num = dimensions[0];
-    void *arr = context->descriptors[0];
-    npy_intp *out = (npy_intp *)data[1];
-    return argsortfunc(start, out, num, arr);
-}
-
-
-NPY_NO_EXPORT int
-default_defaultsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata)
-{
-    return wrap_legacy_sort_loop(context, data, dimensions, strides, transferdata,
-        &npy_quicksort);
-}
-
-
-NPY_NO_EXPORT int
-default_stablesort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata)
-{
-    return wrap_legacy_sort_loop(context, data, dimensions, strides, transferdata,
-        &npy_mergesort);
-}
-
-
-NPY_NO_EXPORT int
-default_defaultargsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata)
-{
-    return wrap_legacy_argsort_loop(context, data, dimensions, strides, transferdata,
-        &npy_aquicksort);
-}
-
-
-NPY_NO_EXPORT int
-default_stableargsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata)
-{
-    return wrap_legacy_argsort_loop(context, data, dimensions, strides, transferdata,
-        &npy_amergesort);
-}
-
-
-NPY_NO_EXPORT int
 default_sort_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
@@ -262,10 +197,10 @@ default_sort_get_loop(
     }
 
     if (parameters->flags == NPY_SORT_STABLE) {
-        *out_loop = (PyArrayMethod_StridedLoop *)default_stablesort_loop;
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_mergesort_loop;
     }
     else if (parameters->flags == NPY_SORT_DEFAULT) {
-        *out_loop = (PyArrayMethod_StridedLoop *)default_defaultsort_loop;
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_quicksort_loop;
     }
     else {
         PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
@@ -291,10 +226,10 @@ default_argsort_get_loop(
     }
 
     if (parameters->flags == NPY_SORT_STABLE) {
-        *out_loop = (PyArrayMethod_StridedLoop *)default_stableargsort_loop;
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_amergesort_loop;
     }
     else if (parameters->flags == NPY_SORT_DEFAULT) {
-        *out_loop = (PyArrayMethod_StridedLoop *)default_defaultargsort_loop;
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_aquicksort_loop;
     }
     else {
         PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");

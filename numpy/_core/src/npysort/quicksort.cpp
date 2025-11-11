@@ -506,13 +506,33 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, void *varr)
  */
 
 NPY_NO_EXPORT int
-npy_quicksort(void *start, npy_intp num, void *varr)
+npy_quicksort_loop(PyArrayMethod_Context *context,
+                   char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+                   NpyAuxData *transferdata)
 {
-    void *arr = varr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_with_arr_or_descr(arr, &elsize, &cmp);
+    fill_sort_data_with_context(context, &elsize, &cmp);
+
+    return npy_quicksort_impl(data[0], dimensions[0], context->descriptors[0],
+                              elsize, cmp);
+}
+
+NPY_NO_EXPORT int
+npy_quicksort(void *start, npy_intp num, void *varr)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_with_array(varr, &elsize, &cmp);
+
+    return npy_quicksort_impl(start, num, varr, elsize, cmp);
+}
     
+NPY_NO_EXPORT int
+npy_quicksort_impl(void *start, npy_intp num, void *varr,
+                   npy_intp elsize, PyArray_CompareFunc *cmp)
+{
+    void *arr = varr;
     char *vp;
     char *pl = (char *)start;
     char *pr = pl + (num - 1) * elsize;
@@ -612,14 +632,34 @@ npy_quicksort(void *start, npy_intp num, void *varr)
 }
 
 NPY_NO_EXPORT int
+npy_aquicksort_loop(PyArrayMethod_Context *context,
+                    char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+                    NpyAuxData *transferdata)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_with_context(context, &elsize, &cmp);
+
+    return npy_aquicksort_impl(data[0], (npy_intp *)data[1], dimensions[0],
+                               context->descriptors[0], elsize, cmp);
+}
+
+NPY_NO_EXPORT int
 npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_with_array(varr, &elsize, &cmp);
+
+    return npy_aquicksort_impl(vv, tosort, num, varr, elsize, cmp);
+}
+
+NPY_NO_EXPORT int
+npy_aquicksort_impl(void *vv, npy_intp *tosort, npy_intp num, void *varr,
+                   npy_intp elsize, PyArray_CompareFunc *cmp)
 {
     char *v = (char *)vv;
     void *arr = varr;
-    npy_intp elsize;
-    PyArray_CompareFunc *cmp;
-    fill_sort_data_with_arr_or_descr(arr, &elsize, &cmp);
-    
     char *vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;

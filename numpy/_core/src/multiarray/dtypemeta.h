@@ -179,26 +179,6 @@ dtypemeta_wrap_legacy_descriptor(
 NPY_NO_EXPORT void
 initialize_legacy_dtypemeta_aliases(_PyArray_LegacyDescr **_builtin_descrs);
 
-NPY_NO_EXPORT int
-default_defaultsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata);
-
-NPY_NO_EXPORT int
-default_stablesort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata);
-
-NPY_NO_EXPORT int
-default_defaultargsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata);
-
-NPY_NO_EXPORT int
-default_stableargsort_loop(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata);
-
 /*
  * NumPy's builtin DTypes:
  */

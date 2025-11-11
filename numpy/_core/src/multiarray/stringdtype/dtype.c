@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "npy_sort.h"
 
 /*
  * Internal helper to create new instances
@@ -685,7 +686,7 @@ stringdtype_defaultsort_loop(
 {
     return stringdtype_wrap_sort_loop(
             context, data, dimensions, strides, transferdata,
-            &default_defaultsort_loop);
+            &npy_quicksort_loop);
 }
 
 int
@@ -696,7 +697,7 @@ stringdtype_stablesort_loop(
 {
     return stringdtype_wrap_sort_loop(
             context, data, dimensions, strides, transferdata,
-            &default_stablesort_loop);
+            &npy_mergesort_loop);
 }
 
 int
@@ -707,7 +708,7 @@ stringdtype_defaultargsort_loop(
 {
     return stringdtype_wrap_sort_loop(
             context, data, dimensions, strides, transferdata,
-            &default_defaultargsort_loop);
+            &npy_aquicksort_loop);
 }
 
 int
@@ -718,7 +719,7 @@ stringdtype_stableargsort_loop(
 {
     return stringdtype_wrap_sort_loop(
             context, data, dimensions, strides, transferdata,
-            &default_stableargsort_loop);
+            &npy_amergesort_loop);
 }
 
 int
