@@ -1176,6 +1176,10 @@ array_assign_boolean_subscript(PyArrayObject *self,
     }
 
     v_data = PyArray_DATA(v);
+    if (v_stride == 0) {
+        /* Scalar/broadcast values benefit from KEEPORDER to match self layout */
+        order = NPY_KEEPORDER;
+    }
 
     /* Create an iterator for the data */
     int res = 0;

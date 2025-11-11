@@ -84,6 +84,27 @@ class ScalarIndexing(Benchmark):
             arr[indx] = val
 
 
+class BooleanAssignmentOrder(Benchmark):
+    params = ['C', 'F']
+    param_names = ['order']
+
+    def setup(self, order):
+        shape = (64, 64, 64)
+        self.base = np.zeros(shape, dtype=np.uint32, order=order)
+        # emulate gh-30156: boolean assignment into a sliced Fortran/C view
+        self.view = self.base[1:-1, 1:-1, 1:-1]
+        mask = np.random.RandomState(0).rand(*self.view.shape) > 0.5
+        if order == 'F':
+            mask = np.asfortranarray(mask)
+        else:
+            mask = np.ascontiguousarray(mask)
+        self.mask = mask
+        self.value = np.uint32(7)
+
+    def time_boolean_assign_scalar(self, order):
+        self.view[self.mask] = self.value
+
+
 class IndexingSeparate(Benchmark):
     def setup(self):
         self.tmp_dir = mkdtemp()
