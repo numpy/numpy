@@ -159,8 +159,8 @@ CASES += apply_tag('square', [
                array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
                array(
                    [[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]],
-                    dtype=cdouble
-                )),
+                   dtype=cdouble
+               )),
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
                np.empty((0,), dtype=double),
