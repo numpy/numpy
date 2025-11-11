@@ -1,0 +1,4 @@
+Removed ``numpy.in1d``
+----------------------
+
+``numpy.in1d`` has been deprecated since NumPy 2.0 and is now removed in favor of ``numpy.isin``.

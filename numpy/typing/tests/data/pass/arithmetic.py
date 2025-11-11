@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from typing import Any, cast
+
+import pytest
+
 import numpy as np
 import numpy.typing as npt
-import pytest
 
 c16 = np.complex128(1)
 f8 = np.float64(1)
@@ -23,11 +25,11 @@ b_ = np.bool(1)
 b = bool(1)
 c = complex(1)
 f = float(1)
-i = int(1)
+i = 1
 
 
 class Object:
-    def __array__(self, dtype: np.typing.DTypeLike = None,
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
                   copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self

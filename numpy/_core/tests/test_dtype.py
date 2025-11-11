@@ -2,7 +2,6 @@ import ctypes
 import gc
 import operator
 import pickle
-import random
 import sys
 import types
 from itertools import permutations
@@ -1327,8 +1326,9 @@ class TestDTypeMakeCanonical:
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
                 subtype_strategy=hypothesis.extra.numpy.array_dtypes(),
-                min_size=5, max_size=10, allow_subarrays=True))
-    def test_structured(self, dtype):
+                min_size=5, max_size=10, allow_subarrays=True),
+            random=hypothesis.strategies.randoms())
+    def test_structured(self, dtype, random):
         # Pick 4 of the fields at random.  This will leave empty space in the
         # dtype (since we do not canonicalize it here).
         field_subset = random.sample(dtype.names, k=4)
@@ -1687,9 +1687,8 @@ class TestDTypeClasses:
 
     @pytest.mark.parametrize("name",
             ["Half", "Float", "Double", "CFloat", "CDouble"])
-    def test_float_alias_names(self, name):
-        with pytest.raises(AttributeError):
-            getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
+    def test_float_alias_names_not_present(self, name):
+        assert not hasattr(numpy.dtypes, f"{name}DType")
 
     def test_scalar_helper_all_dtypes(self):
         for dtype in np.dtypes.__all__:
@@ -1917,6 +1916,7 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
+    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1937,6 +1937,7 @@ class TestUserDType:
             del a
             assert sys.getrefcount(o) == startcount
 
+    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass

@@ -250,9 +250,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     Notes
     -----
-    `formatter` is always reset with a call to `set_printoptions`.
 
-    Use `printoptions` as a context manager to set the values temporarily.
+    * ``formatter`` is always reset with a call to `set_printoptions`.
+    * Use `printoptions` as a context manager to set the values temporarily.
+    * These print options apply only to NumPy ndarrays, not to scalars.
 
     Examples
     --------
@@ -352,6 +353,10 @@ def get_printoptions():
 
         For a full description of these options, see `set_printoptions`.
 
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
+
     See Also
     --------
     set_printoptions, printoptions
@@ -409,6 +414,10 @@ def printoptions(*args, **kwargs):
     See Also
     --------
     set_printoptions, get_printoptions
+
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
 
     """
     token = _set_printoptions(*args, **kwargs)
@@ -610,7 +619,7 @@ def _array2string(a, options, separator=' ', prefix=""):
 def _array2string_dispatcher(
         a, max_line_width=None, precision=None,
         suppress_small=None, separator=None, prefix=None,
-        style=None, formatter=None, threshold=None,
+        formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
         *, legacy=None):
     return (a,)
@@ -619,7 +628,7 @@ def _array2string_dispatcher(
 @array_function_dispatch(_array2string_dispatcher, module='numpy')
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
-                 style=np._NoValue, formatter=None, threshold=None,
+                 formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
                  *, legacy=None):
     """
@@ -654,10 +663,6 @@ def array2string(a, max_line_width=None, precision=None,
         wrapping is forced at the column ``max_line_width - len(suffix)``.
         It should be noted that the content of prefix and suffix strings are
         not included in the output.
-    style : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.14.0
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -777,16 +782,8 @@ def array2string(a, max_line_width=None, precision=None,
     options.update(overrides)
 
     if options['legacy'] <= 113:
-        if style is np._NoValue:
-            style = repr
-
         if a.shape == () and a.dtype.names is None:
-            return style(a.item())
-    elif style is not np._NoValue:
-        # Deprecation 11-9-2017  v1.14
-        warnings.warn("'style' argument is deprecated and no longer functional"
-                      " except in 1.13 'legacy' mode",
-                      DeprecationWarning, stacklevel=2)
+            return repr(a.item())
 
     if options['legacy'] > 113:
         options['linewidth'] -= len(suffix)

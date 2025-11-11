@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 AR_U: np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]
@@ -11,9 +12,7 @@ AR_U.join(b"_")  # type: ignore[arg-type]
 AR_S.join("_")  # type: ignore[arg-type]
 
 AR_U.ljust(5, fillchar=b"a")  # type: ignore[arg-type]
-AR_S.ljust(5, fillchar="a")  # type: ignore[arg-type]
 AR_U.rjust(5, fillchar=b"a")  # type: ignore[arg-type]
-AR_S.rjust(5, fillchar="a")  # type: ignore[arg-type]
 
 AR_U.lstrip(chars=b"a")  # type: ignore[arg-type]
 AR_S.lstrip(chars="a")  # type: ignore[arg-type]

@@ -2,15 +2,17 @@
 Test the scalar constructors, which also do type-coercion
 """
 import fractions
+import inspect
 import platform
+import sys
 import types
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
 import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import IS_PYPY, assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -171,8 +173,12 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        with pytest.raises(TypeError):
-            cls[Any]
+        if cls in {np.bool, np.datetime64}:
+            # these are intentionally subscriptable
+            assert cls[Any]
+        else:
+            with pytest.raises(TypeError):
+                cls[Any]
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
@@ -185,6 +191,10 @@ class TestClassGetItem:
 
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
+
+    @pytest.mark.parametrize("subscript", [Literal[True], Literal[False]])
+    def test_subscript_bool(self, subscript: Literal[True, False]) -> None:
+        assert isinstance(np.bool[subscript], types.GenericAlias)
 
 
 class TestBitCount:
@@ -244,3 +254,53 @@ def test_array_wrap(scalar):
     arr1d = np.array([3], dtype=np.int8)
     assert scalar.__array_wrap__(arr1d) is arr1d
     assert scalar.__array_wrap__(arr1d, None, True) is arr1d
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "sctype",
+    [
+        *sctypes["int"],
+        *sctypes["uint"],
+        *sctypes["float"],
+        *sctypes["complex"],
+        *sctypes["others"],
+        np.datetime64,
+        np.timedelta64,
+    ],
+)
+def test_constructor_signatures(sctype: type[np.generic]) -> None:
+    try:
+        sig = inspect.signature(sctype)
+    except ValueError:
+        pytest.fail(f"missing signature: {sctype}")
+
+    assert sig.parameters
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "sctype",
+    [np.integer, *sctypes["int"], *sctypes["uint"], *sctypes["float"]],
+)
+def test_method_signatures_is_integer(sctype: type[np.integer | np.floating]) -> None:
+    try:
+        sig = inspect.signature(sctype.is_integer)
+    except ValueError:
+        pytest.fail(f"missing signature: {sctype.__name__}.is_integer")
+
+    assert len(sig.parameters) == 1
+    assert sig.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize("sctype", sctypes["float"])
+def test_method_signatures_as_integer_ratio(sctype: type[np.floating]) -> None:
+    try:
+        sig = inspect.signature(sctype.as_integer_ratio)
+    except ValueError:
+        pytest.fail(f"missing signature: {sctype.__name__}.as_integer_ratio")
+
+    assert len(sig.parameters) == 1
+    assert sig.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY

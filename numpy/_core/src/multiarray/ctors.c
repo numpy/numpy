@@ -992,15 +992,16 @@ PyArray_NewFromDescr(
         int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj)
 {
-    if (subtype == NULL) {
+    if (descr == NULL) {
         PyErr_SetString(PyExc_ValueError,
-            "subtype is NULL in PyArray_NewFromDescr");
+                        "descr is NULL in PyArray_NewFromDescr");
         return NULL;
     }
 
-    if (descr == NULL) {
+    if (subtype == NULL) {
         PyErr_SetString(PyExc_ValueError,
-            "descr is NULL in PyArray_NewFromDescr");
+            "subtype is NULL in PyArray_NewFromDescr");
+        Py_DECREF(descr);
         return NULL;
     }
 
@@ -1304,12 +1305,12 @@ _array_from_buffer_3118(PyObject *memoryview)
             return NULL;
         }
 
-        if (PyErr_Warn(
+        if (PyErr_WarnEx(
                     PyExc_RuntimeWarning,
                     "A builtin ctypes object gave a PEP3118 format "
                     "string that does not match its itemsize, so a "
                     "best-guess will be made of the data type. "
-                    "Newer versions of python may behave correctly.") < 0) {
+                    "Newer versions of python may behave correctly.", 1) < 0) {
             Py_DECREF(descr);
             return NULL;
         }
@@ -1508,6 +1509,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
         return NULL;
     }
 
+    /*
+     * The internal implementation treats 0 as actually wanting a zero-dimensional
+     * array, but the API for this function has typically treated it as
+     * "anything is fine", so convert here.
+     * TODO: should we use another value as a placeholder instead?
+     */
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
+    }
+
     int was_scalar;
     PyObject* ret =  PyArray_FromAny_int(
             op, dt_info.descr, dt_info.dtype,
@@ -1563,7 +1574,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
     Py_BEGIN_CRITICAL_SECTION(op);
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            op, NPY_MAXDIMS, dims, &cache, in_DType, in_descr, &dtype,
+            op, max_depth, dims, &cache, in_DType, in_descr, &dtype,
             copy, &was_copied_by__array__);
 
     if (ndim < 0) {
@@ -1583,7 +1594,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         npy_free_coercion_cache(cache);
         goto cleanup;
     }
-    if (max_depth != 0 && ndim > max_depth) {
+    if (ndim > max_depth) {
         PyErr_SetString(PyExc_ValueError,
                 "object too deep for desired array");
         npy_free_coercion_cache(cache);
@@ -1783,7 +1794,7 @@ cleanup:;
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
-                     int max_depth, int requires, PyObject *context)
+                     int max_depth, int requirements, PyObject *context)
 {
     npy_dtype_info dt_info = {NULL, NULL};
 
@@ -1798,8 +1809,13 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
         return NULL;
     }
 
+    /* See comment in PyArray_FromAny for rationale */
+    if (max_depth == 0 || max_depth > NPY_MAXDIMS) {
+        max_depth = NPY_MAXDIMS;
+    }
+
     PyObject* ret =  PyArray_CheckFromAny_int(
-        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requires,
+        op, dt_info.descr, dt_info.dtype, min_depth, max_depth, requirements,
         context);
 
     Py_XDECREF(dt_info.descr);
@@ -1814,11 +1830,11 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
-                         int max_depth, int requires, PyObject *context)
+                         int max_depth, int requirements, PyObject *context)
 {
     PyObject *obj;
     Py_XINCREF(in_descr);  /* take ownership as we may replace it */
-    if (requires & NPY_ARRAY_NOTSWAPPED) {
+    if (requirements & NPY_ARRAY_NOTSWAPPED) {
         if (!in_descr && PyArray_Check(op)) {
             in_descr = PyArray_DESCR((PyArrayObject *)op);
             Py_INCREF(in_descr);
@@ -1833,16 +1849,16 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
-                              max_depth, requires, context, &was_scalar);
+                              max_depth, requirements, context, &was_scalar);
     Py_XDECREF(in_descr);
     if (obj == NULL) {
         return NULL;
     }
 
-    if ((requires & NPY_ARRAY_ELEMENTSTRIDES)
+    if ((requirements & NPY_ARRAY_ELEMENTSTRIDES)
             && !PyArray_ElementStrides(obj)) {
         PyObject *ret;
-        if (requires & NPY_ARRAY_ENSURENOCOPY) {
+        if (requirements & NPY_ARRAY_ENSURENOCOPY) {
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
             return NULL;
         }
@@ -2815,7 +2831,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         count = (src_count < dst_count) ? src_count : dst_count;
         if (cast_info.func(&cast_info.context,
                 args, &count, strides, cast_info.auxdata) < 0) {
-            res = -1;
             break;
         }
 

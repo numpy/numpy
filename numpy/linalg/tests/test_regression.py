@@ -33,7 +33,7 @@ class TestRegression:
                      1.51971555e-15 + 0.j,
                      -1.51308713e-15 + 0.j])
         a = arange(13 * 13, dtype=float64)
-        a.shape = (13, 13)
+        a = a.reshape((13, 13))
         a = a % 17
         va, ve = linalg.eig(a)
         va.sort()
@@ -165,6 +165,7 @@ class TestRegression:
         res = np.linalg.matrix_rank(x, rtol=rtol)
         assert res.shape == (4,)
 
+    @pytest.mark.thread_unsafe(reason="test is already testing threads with openblas")
     def test_openblas_threading(self):
         # gh-27036
         # Test whether matrix multiplication involving a large matrix always

@@ -1,0 +1,6 @@
+Warning emitted when using `where` without `out`
+------------------------------------------------
+Ufuncs called with a ``where`` mask and without an ``out`` positional or kwarg will
+now emit a warning. This usage tends to trip up users who expect some value in
+output locations where the mask is ``False`` (the ufunc will not touch those
+locations). The warning can be supressed by using ``out=None``.

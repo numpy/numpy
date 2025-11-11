@@ -7,7 +7,7 @@ from typing import (
     TypeAlias,
     overload,
 )
-from typing_extensions import TypeVar, deprecated
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy._typing import (
@@ -20,7 +20,6 @@ from numpy._typing import (
 
 __all__ = [
     "ediff1d",
-    "in1d",
     "intersect1d",
     "isin",
     "setdiff1d",
@@ -108,6 +107,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> NDArray[_ScalarT]: ...
 @overload  # unknown scalar-type, FFF
 def unique(
@@ -118,6 +118,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> _AnyArray: ...
 @overload  # known scalar-type, TFF
 def unique(
@@ -128,6 +129,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray]: ...
 @overload  # unknown scalar-type, TFF
 def unique(
@@ -138,6 +140,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray]: ...
 @overload  # known scalar-type, FTF (positional)
 def unique(
@@ -148,6 +151,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray]: ...
 @overload  # known scalar-type, FTF (keyword)
 def unique(
@@ -158,6 +162,7 @@ def unique(
     return_counts: L[False] = False,
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray]: ...
 @overload  # unknown scalar-type, FTF (positional)
 def unique(
@@ -168,6 +173,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray]: ...
 @overload  # unknown scalar-type, FTF (keyword)
 def unique(
@@ -178,6 +184,7 @@ def unique(
     return_counts: L[False] = False,
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray]: ...
 @overload  # known scalar-type, FFT (positional)
 def unique(
@@ -188,6 +195,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray]: ...
 @overload  # known scalar-type, FFT (keyword)
 def unique(
@@ -198,6 +206,7 @@ def unique(
     return_counts: L[True],
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray]: ...
 @overload  # unknown scalar-type, FFT (positional)
 def unique(
@@ -208,6 +217,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray]: ...
 @overload  # unknown scalar-type, FFT (keyword)
 def unique(
@@ -218,6 +228,7 @@ def unique(
     return_counts: L[True],
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray]: ...
 @overload  # known scalar-type, TTF
 def unique(
@@ -228,6 +239,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, TTF
 def unique(
@@ -238,6 +250,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray, _IntArray]: ...
 @overload  # known scalar-type, TFT (positional)
 def unique(
@@ -248,6 +261,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray, _IntArray]: ...
 @overload  # known scalar-type, TFT (keyword)
 def unique(
@@ -258,6 +272,7 @@ def unique(
     return_counts: L[True],
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, TFT (positional)
 def unique(
@@ -268,6 +283,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, TFT (keyword)
 def unique(
@@ -278,6 +294,7 @@ def unique(
     return_counts: L[True],
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray, _IntArray]: ...
 @overload  # known scalar-type, FTT (positional)
 def unique(
@@ -288,6 +305,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray, _IntArray]: ...
 @overload  # known scalar-type, FTT (keyword)
 def unique(
@@ -298,6 +316,7 @@ def unique(
     return_counts: L[True],
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, FTT (positional)
 def unique(
@@ -308,6 +327,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, FTT (keyword)
 def unique(
@@ -318,6 +338,7 @@ def unique(
     return_counts: L[True],
     axis: SupportsIndex | None = None,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray, _IntArray]: ...
 @overload  # known scalar-type, TTT
 def unique(
@@ -328,6 +349,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[NDArray[_ScalarT], _IntArray, _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, TTT
 def unique(
@@ -338,6 +360,7 @@ def unique(
     axis: SupportsIndex | None = None,
     *,
     equal_nan: bool = True,
+    sorted: bool = True,
 ) -> tuple[_AnyArray, _IntArray, _IntArray, _IntArray]: ...
 
 #
@@ -430,17 +453,6 @@ def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _A
 
 #
 def isin(
-    element: ArrayLike,
-    test_elements: ArrayLike,
-    assume_unique: bool = False,
-    invert: bool = False,
-    *,
-    kind: L["sort", "table"] | None = None,
-) -> NDArray[np.bool]: ...
-
-#
-@deprecated("Use 'isin' instead")
-def in1d(
     element: ArrayLike,
     test_elements: ArrayLike,
     assume_unique: bool = False,

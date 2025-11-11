@@ -1,7 +1,6 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
 from typing import Any, assert_type
-from typing import Literal as L
 
 import numpy as np
 import numpy.typing as npt

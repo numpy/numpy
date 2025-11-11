@@ -12,7 +12,7 @@ def test_recursive_fill_fields() -> None:
         [(1, 10.0), (2, 20.0)],
         dtype=[("A", np.int64), ("B", np.float64)],
     )
-    b = np.zeros((int(3),), dtype=a.dtype)
+    b = np.zeros((3,), dtype=a.dtype)
     out = rfn.recursive_fill_fields(a, b)
     assert_type(out, np.ndarray[tuple[int], np.dtype[np.void]])
 
@@ -51,8 +51,8 @@ def test_get_fieldstructure() -> None:
 def test_merge_arrays() -> None:
     assert_type(
         rfn.merge_arrays((
-            np.ones((int(2),), np.int_),
-            np.ones((int(3),), np.float64),
+            np.ones((2,), np.int_),
+            np.ones((3,), np.float64),
         )),
         np.recarray[tuple[int], np.dtype[np.void]],
     )
@@ -60,7 +60,7 @@ def test_merge_arrays() -> None:
 
 def test_drop_fields() -> None:
     ndtype = [("a", np.int64), ("b", [("b_a", np.double), ("b_b", np.int64)])]
-    a = np.ones((int(3),), dtype=ndtype)
+    a = np.ones((3,), dtype=ndtype)
 
     assert_type(
         rfn.drop_fields(a, "a"),
@@ -78,7 +78,7 @@ def test_drop_fields() -> None:
 
 def test_rename_fields() -> None:
     ndtype = [("a", np.int64), ("b", [("b_a", np.double), ("b_b", np.int64)])]
-    a = np.ones((int(3),), dtype=ndtype)
+    a = np.ones((3,), dtype=ndtype)
 
     assert_type(
         rfn.rename_fields(a, {"a": "A", "b_b": "B_B"}),
@@ -92,7 +92,7 @@ def test_repack_fields() -> None:
     assert_type(rfn.repack_fields(dt), np.dtype[np.void])
     assert_type(rfn.repack_fields(dt.type(0)), np.void)
     assert_type(
-        rfn.repack_fields(np.ones((int(3),), dtype=dt)),
+        rfn.repack_fields(np.ones((3,), dtype=dt)),
         np.ndarray[tuple[int], np.dtype[np.void]],
     )
 
@@ -133,14 +133,14 @@ def test_require_fields() -> None:
 
 
 def test_stack_arrays() -> None:
-    x = np.zeros((int(2),), np.int32)
+    x = np.zeros((2,), np.int32)
     assert_type(
         rfn.stack_arrays(x),
         np.ndarray[tuple[int], np.dtype[np.int32]],
     )
 
-    z = np.ones((int(2),), [("A", "|S3"), ("B", float)])
-    zz = np.ones((int(2),), [("A", "|S3"), ("B", np.float64), ("C", np.float64)])
+    z = np.ones((2,), [("A", "|S3"), ("B", float)])
+    zz = np.ones((2,), [("A", "|S3"), ("B", np.float64), ("C", np.float64)])
     assert_type(
         rfn.stack_arrays((z, zz)),
         np.ma.MaskedArray[tuple[Any, ...], np.dtype[np.void]],
@@ -150,12 +150,15 @@ def test_stack_arrays() -> None:
 def test_find_duplicates() -> None:
     ndtype = np.dtype([("a", int)])
 
-    a = np.ma.ones(7, mask=[0, 0, 1, 0, 0, 0, 1]).view(ndtype)
-    assert_type(rfn.find_duplicates(a), np.ma.MaskedArray[Any, np.dtype[np.void]])
+    a = np.ma.ones(7).view(ndtype)
+    assert_type(
+        rfn.find_duplicates(a),
+        np.ma.MaskedArray[tuple[int], np.dtype[np.void]],
+    )
     assert_type(
         rfn.find_duplicates(a, ignoremask=True, return_index=True),
         tuple[
-            np.ma.MaskedArray[Any, np.dtype[np.void]],
-            np.ndarray[Any, np.dtype[np.int_]],
+            np.ma.MaskedArray[tuple[int], np.dtype[np.void]],
+            np.ndarray[tuple[int], np.dtype[np.int_]],
         ],
     )

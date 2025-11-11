@@ -826,6 +826,10 @@ typedef enum {
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #scalar_type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *                npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *                npy_half, npy_float, npy_double, npy_longdouble,
+ *                npy_float, npy_double, npy_longdouble#
  * #c = x*14, f, , l#
  */
 
@@ -846,10 +850,10 @@ typedef enum {
         *result = npy_float_to_half((float)(value))
 #elif defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
     #define CONVERT_TO_RESULT(value)  \
-        npy_csetreal@c@(result, value);  \
+        npy_csetreal@c@(result, ((@scalar_type@)(value)));  \
         npy_csetimag@c@(result, 0)
 #else
-    #define CONVERT_TO_RESULT(value) *result = value
+    #define CONVERT_TO_RESULT(value) *result = ((@type@)(value))
 #endif
 
 
@@ -1242,7 +1246,7 @@ static PyObject *
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1386,14 +1390,14 @@ static PyObject *
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
-            other_val = other_val_conv;  /* Need a float value */
+            other_val = (double)other_val_conv;  /* Need a float value */
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_true_divide(a,b);
         case CONVERT_PYSCALAR:
             /* This is the special behavior, convert to float64 directly */
-            if (DOUBLE_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (DOUBLE_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1405,12 +1409,12 @@ static PyObject *
     npy_clear_floatstatus_barrier((char*)&arg1);
 
     if (is_forward) {
-        arg1 = PyArrayScalar_VAL(a, @Name@);
+        arg1 = (double)PyArrayScalar_VAL(a, @Name@);
         arg2 = other_val;
     }
     else {
         arg1 = other_val;
-        arg2 = PyArrayScalar_VAL(b, @Name@);
+        arg2 = (double)PyArrayScalar_VAL(b, @Name@);
     }
 
     /* Note that arguments are already float64, so we can just divide */
@@ -1512,7 +1516,7 @@ static PyObject *
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&other_val) < 0) {
                 return NULL;
             }
             break;
@@ -1831,7 +1835,7 @@ static PyObject *
     }
     return @func@(@to_ctype@(npy_creal@n@(PyArrayScalar_VAL(obj, @Name@))));
 #else
-    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
+    return @func@((double)(@to_ctype@(PyArrayScalar_VAL(obj, @Name@))));
 #endif
 }
 /**end repeat**/
@@ -1920,7 +1924,7 @@ static PyObject*
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
         case CONVERT_PYSCALAR:
-            if (@NAME@_setitem(other, (char *)&arg2, NULL) < 0) {
+            if (@NAME@_setitem(NULL, other, (char *)&arg2) < 0) {
                 return NULL;
             }
             break;

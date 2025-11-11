@@ -1,6 +1,6 @@
 import contextlib
 from collections.abc import Callable
-from typing import Any, assert_type
+from typing import assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -12,7 +12,7 @@ func_int: Callable[[np.integer], str]
 
 assert_type(np.get_printoptions(), _FormatOptions)
 assert_type(
-    np.array2string(AR, formatter={'float_kind': func_float, 'int_kind': func_int}),
+    np.array2string(AR, formatter={"float_kind": func_float, "int_kind": func_int}),
     str,
 )
 assert_type(np.format_float_scientific(1.0), str)

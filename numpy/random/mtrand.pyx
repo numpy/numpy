@@ -119,8 +119,8 @@ cdef object int64_to_long(object x):
 
 
 cdef class RandomState:
-    """
-    RandomState(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """RandomState(seed=None)\n--
 
     Container for the slow Mersenne Twister pseudo-random number generator.
     Consider using a different BitGenerator with the Generator container
@@ -380,7 +380,6 @@ cdef class RandomState:
                 if len(state) > 3:
                     st['has_gauss'] = state[3]
                     st['gauss'] = state[4]
-                    value = st
 
         self._aug_state.gauss = st.get('gauss', 0.0)
         self._aug_state.has_gauss = st.get('has_gauss', 0)
@@ -437,7 +436,6 @@ cdef class RandomState:
                [-1.23204345, -1.75224494]])
 
         """
-        cdef double temp
         return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, None)
 
     def random(self, size=None):
@@ -544,16 +542,16 @@ cdef class RandomState:
 
         Examples
         --------
-        A real world example: Assume a company has 10000 customer support 
+        A real world example: Assume a company has 10000 customer support
         agents and the average time between customer calls is 4 minutes.
 
         >>> n = 10000
         >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
 
-        What is the probability that a customer will call in the next 
-        4 to 5 minutes? 
-        
-        >>> x = ((time_between_calls < 5).sum())/n 
+        What is the probability that a customer will call in the next
+        4 to 5 minutes?
+
+        >>> x = ((time_between_calls < 5).sum())/n
         >>> y = ((time_between_calls < 4).sum())/n
         >>> x-y
         0.08 # may vary
@@ -1089,9 +1087,9 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than or equal to high.  The high limit may be included in the 
-            returned array of floats due to floating-point rounding in the 
-            equation ``low + (high-low) * random_sample()``.  The default value 
+            less than or equal to high.  The high limit may be included in the
+            returned array of floats due to floating-point rounding in the
+            equation ``low + (high-low) * random_sample()``.  The default value
             is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -1159,7 +1157,6 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
         cdef double _low, _high, range
         cdef object temp
@@ -2229,14 +2226,14 @@ cdef class RandomState:
         Does their energy intake deviate systematically from the recommended
         value of 7725 kJ? Our null hypothesis will be the absence of deviation,
         and the alternate hypothesis will be the presence of an effect that could be
-        either positive or negative, hence making our test 2-tailed. 
+        either positive or negative, hence making our test 2-tailed.
 
         Because we are estimating the mean and we have N=11 values in our sample,
-        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
-        compute the t statistic using the empirical mean and empirical standard 
-        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and
+        compute the t statistic using the empirical mean and empirical standard
+        deviation of our intake. We use a ddof of 1 to base the computation of our
         empirical standard deviation on an unbiased estimate of the variance (note:
-        the final estimate is not unbiased due to the concave nature of the square 
+        the final estimate is not unbiased due to the concave nature of the square
         root).
 
         >>> np.mean(intake)
@@ -2254,18 +2251,18 @@ cdef class RandomState:
         >>> s = np.random.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        Does our t statistic land in one of the two critical regions found at 
+        Does our t statistic land in one of the two critical regions found at
         both tails of the distribution?
 
         >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
         0.018318  #random < 0.05, statistic is in critical region
 
-        The probability value for this 2-tailed test is about 1.83%, which is 
-        lower than the 5% pre-determined significance threshold. 
+        The probability value for this 2-tailed test is about 1.83%, which is
+        lower than the 5% pre-determined significance threshold.
 
         Therefore, the probability of observing values as extreme as our intake
-        conditionally on the null hypothesis being true is too low, and we reject 
-        the null hypothesis of no deviation. 
+        conditionally on the null hypothesis being true is too low, and we reject
+        the null hypothesis of no deviation.
 
         """
         return cont(&legacy_standard_t, &self._aug_state, size, self.lock, 1,
@@ -3325,7 +3322,6 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
@@ -3947,7 +3943,6 @@ cdef class RandomState:
         #   answer = 0.003 ... pretty unlikely!
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
 
@@ -4147,7 +4142,8 @@ cdef class RandomState:
         >>> mean = [0, 0]
         >>> cov = [[1, 0], [0, 100]]  # diagonal covariance
 
-        Diagonal covariance means that points are oriented along x or y-axis:
+        Diagonal covariance means that the variables are independent, and the
+        probability density contours have their axes aligned with the coordinate axes:
 
         >>> import matplotlib.pyplot as plt
         >>> x, y = np.random.multivariate_normal(mean, cov, 5000).T
@@ -4247,7 +4243,7 @@ cdef class RandomState:
 
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
-        (u, s, v) = svd(cov)
+        (_u, s, v) = svd(cov)
 
         if check_valid != 'ignore':
             if check_valid != 'warn' and check_valid != 'raise':

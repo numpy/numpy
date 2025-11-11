@@ -317,8 +317,7 @@ def tensorsolve(a, b, axes=None):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(2*3*4)
-    >>> a.shape = (2*3, 4, 2, 3, 4)
+    >>> a = np.eye(2*3*4).reshape((2*3, 4, 2, 3, 4))
     >>> rng = np.random.default_rng()
     >>> b = rng.normal(size=(2*3, 4))
     >>> x = np.linalg.tensorsolve(a, b)
@@ -495,8 +494,7 @@ def tensorinv(a, ind=2):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(4*6)
-    >>> a.shape = (4, 6, 8, 3)
+    >>> a = np.eye(4*6).reshape((4, 6, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
@@ -505,8 +503,7 @@ def tensorinv(a, ind=2):
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
-    >>> a = np.eye(4*6)
-    >>> a.shape = (24, 8, 3)
+    >>> a = np.eye(4*6).reshape((24, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
@@ -998,9 +995,6 @@ def qr(a, mode='reduced'):
 
     Returns
     -------
-    When mode is 'reduced' or 'complete', the result will be a namedtuple with
-    the attributes `Q` and `R`.
-
     Q : ndarray of float or complex, optional
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
@@ -1029,6 +1023,9 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
+    When mode is 'reduced' or 'complete', the result will be a namedtuple with
+    the attributes ``Q`` and ``R``.
+
     This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
     ``dorgqr``, and ``zungqr``.
 
@@ -1699,9 +1696,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Returns
     -------
-    When `compute_uv` is True, the result is a namedtuple with the following
-    attribute names:
-
     U : { (..., M, M), (..., M, K) } array
         Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
         size as those of the input `a`. The size of the last two dimensions
@@ -1729,6 +1723,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Notes
     -----
+    When `compute_uv` is True, the result is a namedtuple with the following
+    attribute names: `U`, `S`, and `Vh`.
+
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
@@ -2011,6 +2008,7 @@ def cond(x, p=None):
         # contain nans in the entries where inversion failed.
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
+        result_t = _realType(result_t)  # condition number is always real
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
@@ -2018,18 +2016,14 @@ def cond(x, p=None):
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
-    r = asarray(r)
     nan_mask = isnan(r)
     if nan_mask.any():
         nan_mask &= ~isnan(x).any(axis=(-2, -1))
         if r.ndim > 0:
             r[nan_mask] = inf
         elif nan_mask:
-            r[()] = inf
-
-    # Convention is to return scalars instead of 0d arrays
-    if r.ndim == 0:
-        r = r[()]
+            # Convention is to return scalars instead of 0d arrays.
+            r = r.dtype.type(inf)
 
     return r
 
@@ -2075,9 +2069,9 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     The default threshold to detect rank deficiency is a test on the magnitude
     of the singular values of `A`.  By default, we identify singular values
     less than ``S.max() * max(M, N) * eps`` as indicating rank deficiency
-    (with the symbols defined above). This is the algorithm MATLAB uses [1].
+    (with the symbols defined above). This is the algorithm MATLAB uses [1]_.
     It also appears in *Numerical recipes* in the discussion of SVD solutions
-    for linear least squares [2].
+    for linear least squares [2]_.
 
     This default threshold is designed to detect rank deficiency accounting
     for the numerical errors of the SVD computation. Imagine that there
@@ -2944,7 +2938,7 @@ def multi_dot(arrays, *, out=None):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Assume we have three matrices
-    :math:`A_{10 \times 100}, B_{100 \times 5}, C_{5 \times 50}`.
+    :math:`A_{10 \\times 100}, B_{100 \\times 5}, C_{5 \\times 50}`.
 
     The costs for the two different parenthesizations are as follows::
 

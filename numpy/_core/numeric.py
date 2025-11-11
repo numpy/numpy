@@ -523,11 +523,11 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     --------
     >>> import numpy as np
     >>> np.count_nonzero(np.eye(4))
-    4
+    np.int64(4)
     >>> a = np.array([[0, 1, 7, 0],
     ...               [3, 0, 2, 19]])
     >>> np.count_nonzero(a)
-    5
+    np.int64(5)
     >>> np.count_nonzero(a, axis=0)
     array([1, 1, 2, 1])
     >>> np.count_nonzero(a, axis=1)
@@ -1106,10 +1106,9 @@ def tensordot(a, b, axes=2):
 
     An extended example taking advantage of the overloading of + and \\*:
 
-    >>> a = np.array(range(1, 9))
-    >>> a.shape = (2, 2, 2)
+    >>> a = np.array(range(1, 9)).reshape((2, 2, 2))
     >>> A = np.array(('a', 'b', 'c', 'd'), dtype=object)
-    >>> A.shape = (2, 2)
+    >>> A = A.reshape((2, 2))
     >>> a; A
     array([[[1, 2],
             [3, 4]],

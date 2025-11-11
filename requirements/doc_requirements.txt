@@ -5,7 +5,7 @@ pydata-sphinx-theme>=0.15.2
 sphinx-copybutton
 sphinx-design
 scipy
-matplotlib
+matplotlib!=3.10.6
 pandas
 breathe>4.33.0
 ipython!=8.1.0

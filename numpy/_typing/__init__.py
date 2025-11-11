@@ -1,7 +1,8 @@
 """Private counterpart of ``numpy.typing``."""
 
+import sys
+
 from ._array_like import (
-    ArrayLike as ArrayLike,
     NDArray as NDArray,
     _ArrayLike as _ArrayLike,
     _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
@@ -84,7 +85,6 @@ from ._char_codes import (
 
 #
 from ._dtype_like import (
-    DTypeLike as DTypeLike,
     _DTypeLike as _DTypeLike,
     _DTypeLikeBool as _DTypeLikeBool,
     _DTypeLikeBytes as _DTypeLikeBytes,
@@ -118,8 +118,8 @@ from ._nbit import (
 )
 
 #
-from ._nbit_base import (
-    NBitBase as NBitBase,  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+from ._nbit_base import (  # type: ignore[deprecated]
+    NBitBase as NBitBase,  # pyright: ignore[reportDeprecated]
     _8Bit as _8Bit,
     _16Bit as _16Bit,
     _32Bit as _32Bit,
@@ -156,3 +156,17 @@ from ._ufunc import (
     _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
     _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
 )
+
+# wrapping the public aliases in `TypeAliasType` helps with introspection readability
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+
+    from ._array_like import ArrayLike as _ArrayLikeAlias
+    from ._dtype_like import DTypeLike as _DTypeLikeAlias
+
+    ArrayLike = TypeAliasType("ArrayLike", _ArrayLikeAlias)
+    DTypeLike = TypeAliasType("DTypeLike", _DTypeLikeAlias)
+
+else:
+    from ._array_like import ArrayLike as ArrayLike
+    from ._dtype_like import DTypeLike as DTypeLike

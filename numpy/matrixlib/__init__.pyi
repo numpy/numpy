@@ -1,5 +1,3 @@
-from numpy import matrix
-
-from .defmatrix import asmatrix, bmat
+from .defmatrix import asmatrix, bmat, matrix
 
 __all__ = ["matrix", "bmat", "asmatrix"]
