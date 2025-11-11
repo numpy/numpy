@@ -90,15 +90,14 @@ class BooleanAssignmentOrder(Benchmark):
 
     def setup(self, order):
         shape = (64, 64, 64)
+        # emulate gh-30156: boolean assignment into a Fortran/C array
         self.base = np.zeros(shape, dtype=np.uint32, order=order)
-        # emulate gh-30156: boolean assignment into a sliced Fortran/C view
-        self.view = self.base[1:-1, 1:-1, 1:-1]
-        mask = np.random.RandomState(0).rand(*self.view.shape) > 0.5
+        mask = np.random.RandomState(0).rand(*self.base.shape) > 0.5
         self.mask = mask.copy(order)
         self.value = np.uint32(7)
 
     def time_boolean_assign_scalar(self, order):
-        self.view[self.mask] = self.value
+        self.base[self.mask] = self.value
 
 
 class IndexingSeparate(Benchmark):
