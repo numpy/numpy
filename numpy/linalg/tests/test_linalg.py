@@ -204,20 +204,31 @@ CASES += apply_tag('nonsquare', [
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=csingle)),
     LinalgCase("cdouble_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble
+                ),
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
+                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_1_2",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble
+                ),
                array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
+                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble
+                ),
+               array(
+                   [[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]],
+                    dtype=cdouble
+                )),
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(8)),
@@ -640,8 +651,8 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         res = linalg.eig(a)
         eigenvalues, eigenvectors = res.eigenvalues, res.eigenvectors
         assert_allclose(matmul(a, eigenvectors),
-                        np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
-                        rtol=get_rtol(eigenvalues.dtype))
+            np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
+            rtol=get_rtol(eigenvalues.dtype))
         assert_(consistent_subclass(eigenvectors, a))
 
 
