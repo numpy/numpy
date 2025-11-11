@@ -204,7 +204,10 @@ def _prepare_sources(mname, sources, bdir):
     # Copy sources
     for source in sources:
         if Path(source).exists() and Path(source).is_file():
-            shutil.copy(source, bdir)
+            try:
+                shutil.copy(source, bdir)
+            except shutil.SameFileError:
+                pass
     generated_sources = [
         Path(f"{mname}module.c"),
         Path(f"{mname}-f2pywrappers2.f90"),
