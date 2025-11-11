@@ -98,13 +98,13 @@ def array2string(
     suppress_small: bool | None = None,
     separator: str = " ",
     prefix: str = "",
+    *,
     formatter: _FormatDict | None = None,
     threshold: int | None = None,
     edgeitems: int | None = None,
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     suffix: str = "",
-    *,
     legacy: _Legacy | None = None,
 ) -> str: ...
 

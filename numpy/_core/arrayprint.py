@@ -619,18 +619,18 @@ def _array2string(a, options, separator=' ', prefix=""):
 def _array2string_dispatcher(
         a, max_line_width=None, precision=None,
         suppress_small=None, separator=None, prefix=None,
-        formatter=None, threshold=None,
+        *, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
-        *, legacy=None):
+        legacy=None):
     return (a,)
 
 
 @array_function_dispatch(_array2string_dispatcher, module='numpy')
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
-                 formatter=None, threshold=None,
+                 *, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
-                 *, legacy=None):
+                 legacy=None):
     """
     Return a string representation of an array.
 

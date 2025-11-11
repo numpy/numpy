@@ -4,7 +4,8 @@
 The following long-deprecated APIs have been removed or converted to errors:
 
 * The ``style`` parameter has been removed from ``numpy.array2string``.
-  This argument had no effect since Numpy 1.14.0.
+  This argument had no effect since Numpy 1.14.0.  Any arguments following
+  it, such as ``formatter`` have now been made keyword-only.
 
 * Calling ``np.sum(generator)`` directly on a generator object now raises a `TypeError`.
   This behavior was deprecated in NumPy 1.15.0. Use ``np.sum(np.fromiter(generator))``
