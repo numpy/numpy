@@ -192,9 +192,9 @@ CASES += apply_tag('nonsquare', [
                array([2., 1., 3.], dtype=double)),
     LinalgCase("csingle_nsq_1",
                array(
-                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
-                    dtype=csingle,
-                ),
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                   dtype=csingle,
+               ),
                array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("csingle_nsq_2",
                array(
