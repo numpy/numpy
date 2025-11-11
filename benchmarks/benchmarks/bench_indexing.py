@@ -94,11 +94,7 @@ class BooleanAssignmentOrder(Benchmark):
         # emulate gh-30156: boolean assignment into a sliced Fortran/C view
         self.view = self.base[1:-1, 1:-1, 1:-1]
         mask = np.random.RandomState(0).rand(*self.view.shape) > 0.5
-        if order == 'F':
-            mask = np.asfortranarray(mask)
-        else:
-            mask = np.ascontiguousarray(mask)
-        self.mask = mask
+        self.mask = mask.copy(order)
         self.value = np.uint32(7)
 
     def time_boolean_assign_scalar(self, order):

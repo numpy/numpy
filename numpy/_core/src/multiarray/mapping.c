@@ -1173,13 +1173,11 @@ array_assign_boolean_subscript(PyArrayObject *self,
     }
     else {
         v_stride = 0;
+        /* If the same value is repeated, iteration order does not matter */
+        order = NPY_KEEPORDER;
     }
 
     v_data = PyArray_DATA(v);
-    if (v_stride == 0) {
-        /* Scalar/broadcast values benefit from KEEPORDER to match self layout */
-        order = NPY_KEEPORDER;
-    }
 
     /* Create an iterator for the data */
     int res = 0;
