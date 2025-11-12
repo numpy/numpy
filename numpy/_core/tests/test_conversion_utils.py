@@ -174,10 +174,12 @@ class TestCastingConverter(StringConverterTestCase):
         self._check("safe", "NPY_SAFE_CASTING")
         self._check("unsafe", "NPY_UNSAFE_CASTING")
         self._check("same_kind", "NPY_SAME_KIND_CASTING")
+        # same_value casting is now supported
+        self._check("same_value", "NPY_SAME_VALUE_CASTING")
 
     def test_invalid(self):
-        # Currently, 'same_value' is supported only in ndarray.astype
-        self._check_value_error("same_value")
+        # All valid casting modes should now be accepted
+        pass
 
 class TestIntpConverter:
     """ Tests of PyArray_IntpConverter """

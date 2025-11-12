@@ -611,7 +611,7 @@ def can_cast(from_, to, casting="safe"):
         Data type, NumPy scalar, or array to cast from.
     to : dtype or dtype specifier
         Data type to cast to.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'same_value', 'unsafe'}, optional
         Controls what kind of data casting may occur.
 
         * 'no' means the data types should not be cast at all.
@@ -619,6 +619,9 @@ def can_cast(from_, to, casting="safe"):
         * 'safe' means only casts which can preserve values are allowed.
         * 'same_kind' means only safe casts or casts within a kind,
           like float64 to float32, are allowed.
+        * 'same_value' means any data conversions may be done, but the values
+          must be identical after casting (no precision loss, overflow, or
+          underflow). This casting mode validates that the cast is reversible.
         * 'unsafe' means any data conversions may be done.
 
     Returns
@@ -631,6 +634,9 @@ def can_cast(from_, to, casting="safe"):
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
+    
+    .. versionchanged:: 2.4
+       Added support for ``'same_value'`` casting.
 
     See also
     --------
@@ -654,6 +660,15 @@ def can_cast(from_, to, casting="safe"):
     False
     >>> np.can_cast('i4', 'S4')
     False
+
+    Using 'same_value' casting for safe conversions
+
+    >>> np.can_cast(np.int32, np.int64, casting='same_value')
+    True
+    >>> np.can_cast(np.float64, np.float32, casting='same_value')
+    False
+    >>> np.can_cast(np.int32, np.int32, casting='same_value')
+    True
 
     """
     return (from_,)

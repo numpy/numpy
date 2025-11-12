@@ -99,8 +99,34 @@ typedef enum {
 } NPY_ARRAYMETHOD_FLAGS;
 
 
+/**
+ * NPY_ARRAYMETHOD_CONTEXT_FLAGS - Flags for PyArrayMethod_Context
+ *
+ * These flags provide additional context to ArrayMethod operations,
+ * allowing for specialized behavior during casting and other operations.
+ */
 typedef enum {
-    /* Casting via same_value logic */
+    /*
+     * NPY_SAME_VALUE_CONTEXT_FLAG - Enable same-value casting validation
+     *
+     * When this flag is set in PyArrayMethod_Context.flags, it indicates
+     * that casting operations should validate that the resulting values
+     * are identical to the original values. This is used to implement
+     * the 'same_value' casting mode introduced for ndarray.astype().
+     *
+     * Same-value casting ensures that:
+     * - No data is lost during the cast operation
+     * - The cast is reversible (original_array == cast_array.astype(original_dtype))
+     * - Overflow, underflow, or precision loss will raise an error
+     *
+     * This flag is automatically set when casting='same_value' is specified
+     * in operations that support it (currently ndarray.astype()).
+     *
+     * Example usage in casting contexts:
+     *   context.flags |= NPY_SAME_VALUE_CONTEXT_FLAG;
+     *
+     * See also: NPY_SAME_VALUE_CASTING, NPY_SAME_VALUE_CASTING_FLAG
+     */
     NPY_SAME_VALUE_CONTEXT_FLAG=1,
 } NPY_ARRAYMETHOD_CONTEXT_FLAGS;
 

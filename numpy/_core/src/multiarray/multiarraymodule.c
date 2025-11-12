@@ -3483,7 +3483,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
     if (npy_parse_arguments("can_cast", args, len_args, kwnames,
             "from_", NULL, &from_obj,
             "to", &PyArray_DescrConverter2, &d2,
-            "|casting", &PyArray_CastingConverter, &casting,
+            "|casting", &PyArray_CastingConverterSameValue, &casting,
             NULL, NULL, NULL) < 0) {
         goto finish;
     }
