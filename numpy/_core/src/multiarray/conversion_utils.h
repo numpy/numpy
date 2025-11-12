@@ -3,8 +3,12 @@
 
 #include "numpy/ndarraytypes.h"
 
-NPY_NO_EXPORT int
-PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
+/*
+ * NOTE: Functions that are part of the public NumPy C API (defined in
+ * numpy_api.py) should NOT be declared here, as they are already defined
+ * as macros in __multiarray_api.h. Only internal (NPY_NO_EXPORT) functions
+ * that are NOT in the public API should be declared in this header.
+ */
 
 NPY_NO_EXPORT int
 PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val);
@@ -30,34 +34,7 @@ NPY_NO_EXPORT int
 PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copyflag);
 
 NPY_NO_EXPORT int
-PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
-
-NPY_NO_EXPORT int
-PyArray_BoolConverter(PyObject *object, npy_bool *val);
-
-NPY_NO_EXPORT int
 PyArray_OptionalBoolConverter(PyObject *object, int *val);
-
-NPY_NO_EXPORT int
-PyArray_ByteorderConverter(PyObject *obj, char *endian);
-
-NPY_NO_EXPORT int
-PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind);
-
-NPY_NO_EXPORT int
-PyArray_SearchsideConverter(PyObject *obj, void *addr);
-
-NPY_NO_EXPORT int
-PyArray_PyIntAsInt(PyObject *o);
-
-NPY_NO_EXPORT npy_intp
-PyArray_PyIntAsIntp(PyObject *o);
-
-NPY_NO_EXPORT npy_intp
-PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals);
-
-NPY_NO_EXPORT int
-PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
@@ -73,14 +50,11 @@ PyArray_PyIntFromIntp(npy_intp const value)
 #endif
 }
 
-NPY_NO_EXPORT PyObject *
-PyArray_IntTupleFromIntp(int len, npy_intp const *vals);
+NPY_NO_EXPORT npy_intp
+PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals);
 
 NPY_NO_EXPORT int
 PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val);
-
-NPY_NO_EXPORT int
-PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 
 NPY_NO_EXPORT int
 PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
