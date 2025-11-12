@@ -6,8 +6,9 @@ not value-level checking. It should be conservative and only return True
 for casts that are guaranteed to preserve all possible values.
 """
 
-import numpy as np
 import pytest
+
+import numpy as np
 
 
 class TestCanCastSameValue:
