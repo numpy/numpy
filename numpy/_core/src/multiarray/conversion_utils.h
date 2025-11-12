@@ -85,8 +85,10 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 NPY_NO_EXPORT int
 PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting);
 
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
 NPY_NO_EXPORT int
 PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
+#endif
 
 /*
  * Converts an axis parameter into an ndim-length C-array of

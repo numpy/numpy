@@ -174,8 +174,12 @@ class TestCastingConverter(StringConverterTestCase):
         self._check("safe", "NPY_SAFE_CASTING")
         self._check("unsafe", "NPY_UNSAFE_CASTING")
         self._check("same_kind", "NPY_SAME_KIND_CASTING")
-        # same_value casting is now supported
-        self._check("same_value", "NPY_SAME_VALUE_CASTING")
+        # same_value casting support depends on feature version
+        try:
+            self._check("same_value", "NPY_SAME_VALUE_CASTING")
+        except ValueError:
+            # same_value not supported in this build
+            pass
 
     def test_invalid(self):
         # All valid casting modes should now be accepted

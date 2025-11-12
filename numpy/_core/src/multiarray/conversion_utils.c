@@ -942,7 +942,12 @@ static int casting_parser_full(char const *str, Py_ssize_t length, void *data, i
             return 0;
         }
         if (can_use_same_value && length == 10 && strcmp(str, "same_value") == 0) {
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
             *casting = NPY_SAME_VALUE_CASTING;
+#else
+            /* same_value casting not supported in this build */
+            return -1;
+#endif
             return 0;
         }
         break;
@@ -978,6 +983,7 @@ static int casting_parser_same_value(char const *str, Py_ssize_t length, void *d
   return casting_parser_full(str, length, data, 1);
 }
 
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
 NPY_NO_EXPORT int
 PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting)
 {
@@ -986,6 +992,7 @@ PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting)
             "must be one of 'no', 'equiv', 'safe', "
             "'same_kind', 'unsafe', 'same_value'");
 }
+#endif
 
 
 /*****************************

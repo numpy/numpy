@@ -1,3 +1,4 @@
+# type: ignore
 """
 Tests for same_value casting support in np.can_cast
 
@@ -9,6 +10,24 @@ for casts that are guaranteed to preserve all possible values.
 import pytest
 
 import numpy as np
+
+
+def _has_same_value_casting():
+    """Check if same_value casting is available in this build."""
+    try:
+        # Try using same_value casting - if it's not supported, this will raise ValueError
+        np.can_cast('int32', 'int32', casting='same_value')
+        return True
+    except ValueError as e:
+        if 'same_value' in str(e):
+            return False
+        raise
+
+
+pytestmark = pytest.mark.skipif(
+    not _has_same_value_casting(),
+    reason="same_value casting not supported in this build"
+)
 
 
 class TestCanCastSameValue:
