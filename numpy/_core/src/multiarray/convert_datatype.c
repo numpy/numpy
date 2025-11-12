@@ -275,9 +275,13 @@ PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2)
     if (casting1 < 0 || casting2 < 0) {
         return -1;
     }
+#if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
     int both_same_casting = casting1 & casting2 & NPY_SAME_VALUE_CASTING_FLAG;
     casting1 &= ~NPY_SAME_VALUE_CASTING_FLAG;
     casting2 &= ~NPY_SAME_VALUE_CASTING_FLAG;
+#else
+    int both_same_casting = 0;
+#endif
     /* larger casting values are less safe */
     if (casting1 > casting2) {
         return casting1 | both_same_casting;

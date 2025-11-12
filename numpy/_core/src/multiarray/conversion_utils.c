@@ -944,11 +944,11 @@ static int casting_parser_full(char const *str, Py_ssize_t length, void *data, i
         if (can_use_same_value && length == 10 && strcmp(str, "same_value") == 0) {
 #if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
             *casting = NPY_SAME_VALUE_CASTING;
+            return 0;
 #else
             /* same_value casting not supported in this build */
             return -1;
 #endif
-            return 0;
         }
         break;
     case 's':
