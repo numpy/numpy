@@ -82,6 +82,12 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val);
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 
+NPY_NO_EXPORT int
+PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting);
+
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
+
 /*
  * Converts an axis parameter into an ndim-length C-array of
  * boolean flags, True for each axis specified.

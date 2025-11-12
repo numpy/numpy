@@ -971,7 +971,6 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
         obj, (void *)casting, casting_parser, "casting",
             "must be one of 'no', 'equiv', 'safe', "
             "'same_kind', 'unsafe'");
-    return 0;
 }
 
 static int casting_parser_same_value(char const *str, Py_ssize_t length, void *data)
@@ -986,7 +985,6 @@ PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting)
         obj, (void *)casting, casting_parser_same_value, "casting",
             "must be one of 'no', 'equiv', 'safe', "
             "'same_kind', 'unsafe', 'same_value'");
-    return 0;
 }
 
 
