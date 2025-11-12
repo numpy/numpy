@@ -713,19 +713,7 @@ def result_type(*arrays_and_dtypes):
     result_type(*arrays_and_dtypes)
 
     Returns the type that results from applying the NumPy
-    type promotion rules to the arguments.
-
-    Type promotion in NumPy works similarly to the rules in languages
-    like C++, with some slight differences.  When both scalars and
-    arrays are used, the array's type takes precedence and the actual value
-    of the scalar is taken into account.
-
-    For example, calculating 3*a, where a is an array of 32-bit floats,
-    intuitively should result in a 32-bit float output.  If the 3 is a
-    32-bit integer, the NumPy rules indicate it can't convert losslessly
-    into a 32-bit float, so a 64-bit float should be the result type.
-    By examining the value of the constant, '3', we see that it fits in
-    an 8-bit integer, which can be cast losslessly into the 32-bit float.
+    :ref:`type promotion <arrays.promotion>` rules to the arguments.
 
     Parameters
     ----------
@@ -740,27 +728,6 @@ def result_type(*arrays_and_dtypes):
     See also
     --------
     dtype, promote_types, min_scalar_type, can_cast
-
-    Notes
-    -----
-    The specific algorithm used is as follows.
-
-    Categories are determined by first checking which of boolean,
-    integer (int/uint), or floating point (float/complex) the maximum
-    kind of all the arrays and the scalars are.
-
-    If there are only scalars or the maximum category of the scalars
-    is higher than the maximum category of the arrays,
-    the data types are combined with :func:`promote_types`
-    to produce the return value.
-
-    Otherwise, `min_scalar_type` is called on each scalar, and
-    the resulting data types are all combined with :func:`promote_types`
-    to produce the return value.
-
-    The set of int values is not a subset of the uint values for types
-    with the same number of bits, something not reflected in
-    :func:`min_scalar_type`, but handled as a special case in `result_type`.
 
     Examples
     --------
