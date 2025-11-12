@@ -21,13 +21,33 @@ jobs:
   build-ios:
     permissions:
       contents: read  # to fetch code (actions/checkout)
-    name: Test (${{ matrix.runs-on }} ${{ matrix.accelerated && 'accelerated' || 'non-accelerated' }})
+    name: Test (${{ matrix.arch }} ${{ matrix.accelerated && 'accelerated' || 'non-accelerated' }})
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
       matrix:
-        runs-on: ["macos-14", "macos-15-intel"]
-        accelerated: [true, false]
+        include:
+          # Accelerated
+          - runs-on: "macos-14"
+            accelerated: true
+            arch: arm64_iphoneos
+          - runs-on: "macos-14"
+            accelerated: true
+            arch: arm64_iphonesimulator
+          - runs-on: "macos-15-intel"
+            accelerated: true
+            arch: x86_64_iphonesimulator
+
+          # Non-accelerated
+          - runs-on: "macos-14"
+            accelerated: false
+            arch: arm64_iphonesimulator
+          - runs-on: "macos-14"
+            accelerated: false
+            arch: arm64_iphoneos
+          - runs-on: "macos-15-intel"
+            accelerated: false
+            arch: x86_64_iphonesimulator
 
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -53,3 +73,4 @@ jobs:
         uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c  # v3.2.1
         env:
           CIBW_PLATFORM: ios
+          CIBW_ARCHS: ${{ matrix.arch }}
