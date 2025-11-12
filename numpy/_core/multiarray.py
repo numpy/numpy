@@ -635,9 +635,6 @@ def can_cast(from_, to, casting="safe"):
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
-    
-    .. versionchanged:: 2.4
-       Added support for ``'same_value'`` casting.
 
     .. versionchanged:: 2.4
        Added support for ``'same_value'`` casting.

@@ -1,4 +1,4 @@
-# type: ignore
+# type: ignore[misc]
 """
 Tests for same_value casting support in np.can_cast
 
@@ -15,7 +15,7 @@ import numpy as np
 def _has_same_value_casting():
     """Check if same_value casting is available in this build."""
     try:
-        # Try using same_value casting - if it's not supported, this will raise ValueError
+        # Try using same_value casting - if not supported, raises ValueError
         np.can_cast('int32', 'int32', casting='same_value')
         return True
     except ValueError as e:
