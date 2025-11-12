@@ -533,6 +533,15 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
     PyArrayMethodObject *castingimpl = (PyArrayMethodObject *)meth;
 
     if (PyArray_MinCastSafety(castingimpl->casting, casting) == casting) {
+        /* Fast path: check if same_value casting requires special handling */
+        if (casting & NPY_SAME_VALUE_CASTING_FLAG) {
+            NPY_CASTING base_casting = castingimpl->casting & ~NPY_SAME_VALUE_CASTING_FLAG;
+            /* Only allow no/equiv/safe casts with same_value flag */
+            if (base_casting > NPY_SAFE_CASTING) {
+                Py_DECREF(meth);
+                return 0;  /* Reject same_kind and unsafe casts */
+            }
+        }
         /* No need to check using `castingimpl.resolve_descriptors()` */
         Py_DECREF(meth);
         return 1;
@@ -547,6 +556,24 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
     if (safety < 0) {
         return -1;
     }
+    
+    /* Special handling for same_value casting */
+    if (casting & NPY_SAME_VALUE_CASTING_FLAG) {
+        /* For same_value casting, we need to be conservative since we can't 
+         * check actual values. Only allow casts that are guaranteed safe
+         * at the type level. */
+        NPY_CASTING base_safety = safety & ~NPY_SAME_VALUE_CASTING_FLAG;
+        NPY_CASTING requested_safety = casting & ~NPY_SAME_VALUE_CASTING_FLAG;
+        
+        /* Only allow no/equiv/safe casts with same_value flag */
+        if (base_safety > NPY_SAFE_CASTING) {
+            return 0;  /* Reject same_kind and unsafe casts */
+        }
+        
+        /* The base cast must be safe enough for the requested level */
+        return PyArray_MinCastSafety(base_safety, requested_safety) == requested_safety;
+    }
+    
     return PyArray_MinCastSafety(safety, casting) == casting;
 }
 

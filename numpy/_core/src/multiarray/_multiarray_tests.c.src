@@ -2168,7 +2168,7 @@ static PyObject *
 run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
 {
     NPY_CASTING casting;
-    if (!PyArg_ParseTuple(args, "O&", PyArray_CastingConverter, &casting)) {
+    if (!PyArg_ParseTuple(args, "O&", PyArray_CastingConverterSameValue, &casting)) {
         return NULL;
     }
     switch ((int)casting) {
