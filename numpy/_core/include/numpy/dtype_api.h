@@ -545,6 +545,7 @@ typedef struct {
     NPY_SORTKIND flags;
 } PyArrayMethod_SortParameters;
 
-typedef int (PyArrayDTypeMeta_CompareFuncWithDescr)(char *, char *, PyArray_Descr *);
+typedef int (PyArrayDTypeMeta_CompareFuncWithContext)(
+        char *, char *, PyArrayMethod_Context *context);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

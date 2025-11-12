@@ -2085,7 +2085,8 @@ struct contains a ``flags`` field which is a bitwise OR of ``NPY_SORTKIND``
 values indicating the kind of sort to perform (that is, whether it is a
 stable and/or descending sort). If the strided loop depends on the flags,
 a good way to deal with this is to define :c:macro:`NPY_METH_get_loop`,
-and not set any of the other loop slots.
+and not set any of the other loop slots. Note that for both ascending and
+descending sorts, NaN-like values should be sorted to the end.
 
 .. c:struct:: PyArrayMethod_SortParameters
 
@@ -3718,14 +3719,22 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
 .. c:macro:: NPY_DT_sort_compare
 
-.. c:type:: int (PyArrayDTypeMeta_CompareFuncWithDescr)( \
-                char *a, char *b, PyArray_Descr *descr)
+.. c:type:: int (PyArrayDTypeMeta_CompareFuncWithContext)( \
+                char *a, char *b, PyArrayMethod_Context *context)
 
    If defined, implements a comparison function for sorting arrays of this DType,
    which can be used instead of the full sort loops (see :ref:`array-methods-sorting`).
    If defined, NumPy will use this function to implement all sorting algorithms for
-   the DType. Should return a negative value if *a* < *b*, zero if *a* == *b*, and
-   a positive value if *a* > *b*.
+   the DType.
+
+   The `parameters` member of the *context* can be used to access the sorting parameters
+   of type ``PyArrayMethod_SortParameters``, which are the same as passed to the sort
+   ArrayMethods. This can be used to determine if the sort is ascending or descending.
+
+   The function must return a negative value if *a* < *b*, zero if *a* == *b*,
+   and a positive value if *a* > *b*. If the sort is descending, the comparison
+   result should be inverted, however NaN handling should remain the same (i.e., NaNs
+   are always considered larger than any other value, regardless of sort order).
 
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^

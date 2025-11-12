@@ -460,18 +460,30 @@ compare(void *a, void *b, void *arr)
     return ret;
 }
 
-// We assume the allocator mutex is already held.
 int
-stringdtype_sort_compare(void *a, void *b, void *descr)
+stringdtype_sort_compare(void *a, void *b, PyArrayMethod_Context *context)
 {
+    PyArray_Descr *descr = context->descriptors[0];
+    PyArrayMethod_SortParameters *sort_params =
+            (PyArrayMethod_SortParameters *)context->parameters;
+    int descending = sort_params->flags & NPY_SORT_DESCENDING;
+
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
-    int ret = _compare(a, b, sdescr, sdescr);
+    int ret = _compare_with_descending(a, b, sdescr, sdescr, descending);
     return ret;
 }
 
+// We assume the allocator mutex is already held.
 int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
          PyArray_StringDTypeObject *descr_b)
+{
+    return _compare_with_descending(a, b, descr_a, descr_b, 0);
+}
+
+int
+_compare_with_descending(void *a, void *b, PyArray_StringDTypeObject *descr_a,
+                         PyArray_StringDTypeObject *descr_b, int descending)
 {
     npy_string_allocator *allocator_a = descr_a->allocator;
     npy_string_allocator *allocator_b = descr_b->allocator;
@@ -500,6 +512,8 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     else if (NPY_UNLIKELY(a_is_null || b_is_null)) {
         if (has_null && !has_string_na) {
             if (has_nan_na) {
+                // We do not consider descending here, as NaN-like values
+                // are always sorted to the end.
                 if (a_is_null) {
                     return 1;
                 }
@@ -523,7 +537,11 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
             }
         }
     }
-    return NpyString_cmp(&s_a, &s_b);
+    int cmp = NpyString_cmp(&s_a, &s_b);
+    if (descending) {
+        cmp = -cmp;
+    }
+    return cmp;
 }
 
 // PyArray_ArgFunc

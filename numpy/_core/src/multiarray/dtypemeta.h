@@ -76,7 +76,7 @@ typedef struct {
      * Function to compare two values of this type, given a descriptor.
      * Used for sorting if custom loops are not provided.
      */
-    PyArrayDTypeMeta_CompareFuncWithDescr *sort_compare;
+    PyArrayDTypeMeta_CompareFuncWithContext *sort_compare;
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:

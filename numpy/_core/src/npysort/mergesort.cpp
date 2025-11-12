@@ -389,8 +389,7 @@ npy_mergesort_loop(PyArrayMethod_Context *context,
     PyArray_CompareFunc *cmp;
     fill_sort_data_with_context(context, &elsize, &cmp);
 
-    return npy_mergesort_impl(data[0], dimensions[0], context->descriptors[0],
-                              elsize, cmp);
+    return npy_mergesort_impl(data[0], dimensions[0], context, elsize, cmp);
 }
 
 NPY_NO_EXPORT int
@@ -489,7 +488,7 @@ npy_amergesort_loop(PyArrayMethod_Context *context,
     fill_sort_data_with_context(context, &elsize, &cmp);
 
     return npy_amergesort_impl(data[0], (npy_intp *)data[1], dimensions[0],
-                               context->descriptors[0], elsize, cmp);
+                               context, elsize, cmp);
 }
 
 NPY_NO_EXPORT int
