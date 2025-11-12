@@ -1533,6 +1533,46 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
     npy_intp new_len = 0, line_pos = 0;
 
     Buffer<enc> tmp = buf;
+
+    if (enc == ENCODING::UTF8) {
+        Buffer<enc> chunk_start = buf;
+
+        for (size_t i = 0; i < len; i++) {
+            npy_ucs4 ch = *tmp;
+            if (ch == '\t') {
+                std::ptrdiff_t span = tmp - chunk_start;
+                if (span > 0) {
+                    size_t copy_len = (size_t)span;
+                    chunk_start.buffer_memcpy(out, copy_len);
+                    out.advance_chars_or_bytes(copy_len);
+                    new_len += span;
+                }
+                if (tabsize > 0) {
+                    npy_intp incr = tabsize - (line_pos % tabsize);
+                    line_pos += incr;
+                    new_len += out.buffer_memset((npy_ucs4) ' ', incr);
+                    out += incr;
+                }
+                chunk_start = tmp + 1;
+            }
+            else {
+                line_pos++;
+                if (ch == '\n' || ch == '\r') {
+                    line_pos = 0;
+                }
+            }
+            tmp++;
+        }
+        std::ptrdiff_t span = tmp - chunk_start;
+        if (span > 0) {
+            size_t copy_len = (size_t)span;
+            chunk_start.buffer_memcpy(out, copy_len);
+            out.advance_chars_or_bytes(copy_len);
+            new_len += span;
+        }
+        return new_len;
+    }
+
     for (size_t i = 0; i < len; i++) {
         npy_ucs4 ch = *tmp;
         if (ch == '\t') {
