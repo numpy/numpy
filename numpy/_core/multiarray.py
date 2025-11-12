@@ -701,8 +701,7 @@ def result_type(*arrays_and_dtypes):
     result_type(*arrays_and_dtypes)
 
     Returns the type that results from applying the NumPy
-    type promotion rules to the arguments
-    (`see also <https://numpy.org/doc/stable/reference/arrays.promotion.html>`_).
+    :ref:`type promotion <arrays.promotion>` rules to the arguments.
 
     Parameters
     ----------
