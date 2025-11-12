@@ -3483,9 +3483,9 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
     PyObject *retobj = NULL;
     NPY_CASTING casting = NPY_SAFE_CASTING;
 #if NPY_FEATURE_VERSION >= NPY_2_4_API_VERSION
-    PyArray_ArgParserConverter casting_converter = &PyArray_CastingConverterSameValue;
+    int (*casting_converter)(PyObject *, NPY_CASTING *) = PyArray_CastingConverterSameValue;
 #else
-    PyArray_ArgParserConverter casting_converter = &PyArray_CastingConverter;
+    int (*casting_converter)(PyObject *, NPY_CASTING *) = PyArray_CastingConverter;
 #endif
 
     NPY_PREPARE_ARGPARSER;
