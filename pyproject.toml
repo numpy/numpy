@@ -201,6 +201,7 @@ build-dir = "build"
 # The build will use Accelerate on iOS 16.4 or above; but fall back to non-BLAS
 # for older iOS versions (because blas isn't available for iOS).
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=true build-dir=build"
+before-build = []
 before-test = []
 test-requires = [
     "hypothesis==6.81.1",

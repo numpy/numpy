@@ -53,4 +53,3 @@ jobs:
         uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c  # v3.2.1
         env:
           CIBW_PLATFORM: ios
-          CIBW_ARCHS_IOS: arm64_iphoneos arm64_iphonesimulator x86_64_iphonesimulator

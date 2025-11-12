@@ -38,10 +38,10 @@ jobs:
           - [macos, macos-14, macosx_arm64, accelerate]
           - [windows, windows-2022, win_amd64, ""]
           - [windows, windows-11-arm, win_arm64, ""]
-          - [ios, macos-15-intel, ios_x86_64_iphonesimulator, ""]
+          - [ios, macos-15-intel, ios_x86_64_iphonesimulator, openblas]
           - [ios, macos-14, ios_arm64_iphonesimulator, accelerate]
-          - [ios, macos-14, ios_arm64, ""]
-        python: ["cp311"]
+          - [ios, macos-14, ios_arm64_iphoneos, openblas]
+        python: ["cp313"]
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[2] == 'win32' }}  # used in cibw_test_command.sh
@@ -82,7 +82,7 @@ jobs:
           echo "FC=gfortran-13" >> "$GITHUB_ENV"
           echo "F77=gfortran-13" >> "$GITHUB_ENV"
           echo "F90=gfortran-13" >> "$GITHUB_ENV"
-          if [[ ${{ matrix.buildplat[3] }} == 'accelerate' ]]; then
+          if [[ "${{ matrix.buildplat[3] }}" == 'accelerate' ]]; then
             # macosx_arm64 and macosx_x86_64 with accelerate
             # only target Sonoma onwards
             CIBW="MACOSX_DEPLOYMENT_TARGET=14.0 INSTALL_OPENBLAS=false RUNNER_OS=macOS"
