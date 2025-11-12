@@ -99,7 +99,7 @@ jobs:
       - name: Setup iOS
         if: matrix.buildplat[0] == 'ios'
         run: |
-          if [[ ${{ matrix.buildplat[3] }} == 'accelerate' ]]; then
+          if [[ "${{ matrix.buildplat[3] }}" == 'accelerate' ]]; then
             # Accelerate with ILP64 requires iOS 16.4 or higher
             CIBW="IPHONEOS_DEPLOYMENT_TARGET=17.0 INSTALL_OPENBLAS=false RUNNER_OS=iOS"
           else
