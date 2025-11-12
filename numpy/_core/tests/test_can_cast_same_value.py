@@ -34,12 +34,13 @@ class TestCanCastSameValue:
         # These should fail because some values could be lost
         assert not np.can_cast(np.int64, np.int32, casting='same_value')
         assert not np.can_cast(np.float64, np.float32, casting='same_value')
-        assert not np.can_cast(np.int32, np.uint32, casting='same_value')  # Could lose sign
-        
+        # Could lose sign
+        assert not np.can_cast(np.int32, np.uint32, casting='same_value')
+
         # Any float to integer conversion could lose decimal part
         assert not np.can_cast(np.float32, np.int32, casting='same_value')
         assert not np.can_cast(np.float64, np.int64, casting='same_value')
-        
+
         # Integer to float could lose precision for large integers
         assert not np.can_cast(np.int64, np.float64, casting='same_value')
         assert not np.can_cast(np.int32, np.float32, casting='same_value')
@@ -55,10 +56,12 @@ class TestCanCastSameValue:
         # same_value should be more restrictive than unsafe
         assert not np.can_cast(np.float64, np.int32, casting='same_value')
         assert np.can_cast(np.float64, np.int32, casting='unsafe')
-        
-        # same_value should be more restrictive than safe for questionable cases
+
+        # same_value should be more restrictive than safe
+        # for questionable cases
         assert not np.can_cast(np.int64, np.float64, casting='same_value')
-        # Note: This might be True for safe casting, but same_value is more conservative
+        # Note: This might be True for safe casting,
+        # but same_value is more conservative
 
     def test_parameter_validation(self):
         """Test that invalid casting parameters are rejected"""
@@ -71,7 +74,7 @@ class TestCanCastSameValue:
         assert np.can_cast(np.bool_, np.int8, casting='same_value')
         assert np.can_cast(np.bool_, np.int32, casting='same_value')
         assert np.can_cast(np.bool_, np.int64, casting='same_value')
-        
-        # Integer to bool could lose information (any non-zero -> True)
+
+        # Integer to bool is potentially lossy (non-zero values)
         assert not np.can_cast(np.int8, np.bool_, casting='same_value')
         assert not np.can_cast(np.int32, np.bool_, casting='same_value')

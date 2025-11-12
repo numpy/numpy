@@ -187,7 +187,8 @@ def empty_like(
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],
+           #  uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
@@ -611,7 +612,8 @@ def can_cast(from_, to, casting="safe"):
         Data type, NumPy scalar, or array to cast from.
     to : dtype or dtype specifier
         Data type to cast to.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'same_value', 'unsafe'}, optional
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'same_value', 'unsafe'}, \
+              optional
         Controls what kind of data casting may occur.
 
         * 'no' means the data types should not be cast at all.
@@ -634,7 +636,7 @@ def can_cast(from_, to, casting="safe"):
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
-    
+
     .. versionchanged:: 2.4
        Added support for ``'same_value'`` casting.
 
@@ -1485,7 +1487,8 @@ def may_share_memory(a, b, /, max_work=0):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.is_busday)
-def is_busday(dates, weekmask="1111100", holidays=None, busdaycal=None, out=None):
+def is_busday(dates, weekmask="1111100", holidays=None, busdaycal=None,
+              out=None):
     """
     is_busday(
         dates,
@@ -1544,8 +1547,8 @@ def is_busday(dates, weekmask="1111100", holidays=None, busdaycal=None, out=None
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_offset)
-def busday_offset(dates, offsets, roll="raise", weekmask="1111100", holidays=None,
-                  busdaycal=None, out=None):
+def busday_offset(dates, offsets, roll="raise", weekmask="1111100",
+                  holidays=None, busdaycal=None, out=None):
     """
     busday_offset(
         dates,
@@ -1719,7 +1722,8 @@ def busday_count(begindates, enddates, weekmask="1111100", holidays=(),
     return (begindates, enddates, weekmask, holidays, out)
 
 
-@array_function_from_c_func_and_dispatcher(_multiarray_umath.datetime_as_string)
+@array_function_from_c_func_and_dispatcher(
+    _multiarray_umath.datetime_as_string)
 def datetime_as_string(arr, unit=None, timezone="naive", casting="same_kind"):
     """
     datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind')
