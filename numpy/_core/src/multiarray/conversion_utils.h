@@ -83,9 +83,6 @@ NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
 
 NPY_NO_EXPORT int
-PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting);
-
-NPY_NO_EXPORT int
 PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
 
 /*
