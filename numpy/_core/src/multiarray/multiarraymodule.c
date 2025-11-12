@@ -3468,6 +3468,10 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *const *args, Py_ssize_t l
     return PyArray_Return((PyArrayObject *)PyArray_LexSort(obj, axis));
 }
 
+
+/* Forward declaration for same_value casting support */
+NPY_NO_EXPORT int PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
+
 static PyObject *
 array_can_cast_safely(PyObject *NPY_UNUSED(self),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
