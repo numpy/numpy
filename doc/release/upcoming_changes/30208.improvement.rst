@@ -1,0 +1,12 @@
+Runtime signature introspection support has been significantly improved
+-----------------------------------------------------------------------
+Many NumPy functions, classes, and methods that previously raised ``ValueError`` when passed
+to ``inspect.signature()`` now return meaningful signatures. This improves support for runtime type
+checking, IDE autocomplete, documentation generation, and runtime introspection capabilities across
+the NumPy API.
+
+Over three hundred classes and functions have been updated in total, including, but not limited to,
+core classes such as `ndarray`, `generic`, `dtype`, `ufunc`, `broadcast`, `nditer`, etc.,
+most methods of `ndarray` and scalar types, array constructor functions (`array`, `empty`,
+`arange`, `fromiter`, etc.), and many other commonly used functions, including `dot`, `concat`,
+`where`, `bincount`, `can_cast`, and numerous others.
