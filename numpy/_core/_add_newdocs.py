@@ -6192,6 +6192,9 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
 
 add_newdoc('numpy._core.multiarray', 'dtype',
     """
+    dtype(dtype, align=False, copy=False, **kwargs)
+    --
+
     dtype(dtype, align=False, copy=False, [metadata])
 
     Create a data type object.
@@ -6758,6 +6761,9 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('type',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('newbyteorder',
     """
+    newbyteorder($self, new_order='S', /)
+    --
+
     newbyteorder(new_order='S', /)
 
     Return a new dtype with a different byte order.
@@ -7385,8 +7391,67 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
     """)
 
+##############################################################################
+#
+# Documentation for `dtypes.*` classes
+#
+##############################################################################
+
+for _dtype_name, _signature, _sctype_name in (
+    ("BoolDType", "()", "bool"),
+    ("Int8DType", "()", "int8"),
+    ("UInt8DType", "()", "uint8"),
+    ("Int16DType", "()", "int16"),
+    ("UInt16DType", "()", "uint16"),
+    ("Int32DType", "()", "int32"),
+    ("IntDType", "()", "intc"),
+    ("UInt32DType", "()", "uint32"),
+    ("UIntDType", "()", "uintc"),
+    ("Int64DType", "()", "int64"),
+    ("UInt64DType", "()", "uint64"),
+    ("LongLongDType", "()", "longlong"),
+    ("ULongLongDType", "()", "ulonglong"),
+    ("Float16DType", "()", "float16"),
+    ("Float32DType", "()", "float32"),
+    ("Float64DType", "()", "float64"),
+    ("LongDoubleDType", "()", "longdouble"),
+    ("Complex64DType", "()", "complex64"),
+    ("Complex128DType", "()", "complex128"),
+    ("CLongDoubleDType", "()", "clongdouble"),
+    ("ObjectDType", "()", "object"),
+    ("BytesDType", "(size, /)", "bytes_"),
+    ("StrDType", "(size, /)", "str_"),
+    ("VoidDType", "(length, /)", "void"),
+    ("DateTime64DType", "(unit, /)", "datetime64"),
+    ("TimeDelta64DType", "(unit, /)", "timedelta64"),
+):
+    _extra_docs = ""
+    if _dtype_name in {"VoidDType", "DateTime64DType", "TimeDelta64DType"}:
+        _extra_docs = f"""
+        .. warning::
+            ``np.dtypes.{_dtype_name}`` cannot be instantiated directly.
+            Use ``np.dtype("{_sctype_name}[{{unit}}]")`` instead.
+        """
+
+    add_newdoc('numpy.dtypes', _dtype_name,
+        f"""
+        {_dtype_name}{_signature}
+        --
+
+        DType class corresponding to the `numpy.{_sctype_name}` scalar type.
+        {_extra_docs}
+        See `numpy.dtype` for the typical way to create dtype instances
+        and :ref:`arrays.dtypes` for additional information.
+        """)
+
+    del _dtype_name, _signature, _sctype_name, _extra_docs  # avoid namespace pollution
+
+
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
+    StringDType(*, coerce=True, **kwargs)
+    --
+
     StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.

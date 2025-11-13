@@ -1,5 +1,6 @@
 import ctypes
 import gc
+import inspect
 import operator
 import pickle
 import sys
@@ -17,6 +18,7 @@ from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_PYPY,
     IS_PYSTON,
     IS_WASM,
     assert_,
@@ -1994,3 +1996,65 @@ def test_creating_dtype_with_dtype_class_errors():
     # Regression test for #25031, calling `np.dtype` with itself segfaulted.
     with pytest.raises(TypeError, match="Cannot convert np.dtype into a"):
         np.array(np.ones(10), dtype=np.dtype)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestDTypeSignatures:
+    def test_signature_dtype(self):
+        sig = inspect.signature(np.dtype)
+
+        assert len(sig.parameters) == 4
+
+        assert "dtype" in sig.parameters
+        assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["dtype"].default is inspect.Parameter.empty
+
+        assert "align" in sig.parameters
+        assert sig.parameters["align"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["align"].default is False
+
+        assert "copy" in sig.parameters
+        assert sig.parameters["copy"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["copy"].default is False
+
+        # the optional `metadata` parameter has no default, so `**kwargs` must be used
+        assert "kwargs" in sig.parameters
+        assert sig.parameters["kwargs"].kind is inspect.Parameter.VAR_KEYWORD
+        assert sig.parameters["kwargs"].default is inspect.Parameter.empty
+
+    def test_signature_dtype_newbyteorder(self):
+        sig = inspect.signature(np.dtype.newbyteorder)
+
+        assert len(sig.parameters) == 2
+
+        assert "self" in sig.parameters
+        assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["self"].default is inspect.Parameter.empty
+
+        assert "new_order" in sig.parameters
+        assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["new_order"].default == "S"
+
+    @pytest.mark.parametrize("typename", np.dtypes.__all__)
+    def test_signature_dtypes_classes(self, typename: str):
+        dtype_type = getattr(np.dtypes, typename)
+        sig = inspect.signature(dtype_type)
+
+        match typename.lower().removesuffix("dtype"):
+            case "bytes" | "str":
+                params_expect = {"size"}
+            case "void":
+                params_expect = {"length"}
+            case "datetime64" | "timedelta64":
+                params_expect = {"unit"}
+            case "string":
+                # `na_object` cannot be used in the text signature because of its
+                # `np._NoValue` default, which isn't supported by `inspect.signature`,
+                # so `**kwargs` is used instead.
+                params_expect = {"coerce", "kwargs"}
+            case _:
+                params_expect = set()
+
+        params_actual = set(sig.parameters)
+        assert params_actual == params_expect
