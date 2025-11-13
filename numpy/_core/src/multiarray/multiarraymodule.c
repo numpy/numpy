@@ -4429,7 +4429,6 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 
-
 static PyObject *
 _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 {
@@ -4449,12 +4448,20 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 
 
 static PyObject *
-_blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
-    if (npy_blas_supports_fpe()) {
-        Py_RETURN_TRUE;
+_blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
+    if (arg == Py_None) {
+        return PyBool_FromLong(npy_blas_supports_fpe());
+    }
+    else if (arg == Py_True) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(true));
+    }
+    else if (arg == Py_False) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(false));
     }
     else {
-        Py_RETURN_FALSE;
+        PyErr_SetString(PyExc_TypeError,
+            "BLAS FPE support must be None, True, or False");
+        return NULL;
     }
 }
 
@@ -4700,7 +4707,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
     {"_blas_supports_fpe", (PyCFunction)_blas_supports_fpe,
-        METH_NOARGS, NULL},
+        METH_O, "BLAS FPE support pass None, True, or False and returns new value"},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
@@ -4914,10 +4921,6 @@ _multiarray_umath_exec(PyObject *m) {
     }
     /* Initialize CPU dispatch tracer */
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
-        return -1;
-    }
-
-    if (npy_blas_init() < 0) {
         return -1;
     }
 
