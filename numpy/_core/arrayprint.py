@@ -3,7 +3,7 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-__all__ = ["array2string", "array_str", "array_repr", "array_format",
+__all__ = ["array2string", "array_str", "array_repr",
            "set_printoptions", "get_printoptions",
            "printoptions", "format_float_positional",
            "format_float_scientific"]
@@ -1860,16 +1860,6 @@ def _array_format_implementation(a, format_spec):
         raise ValueError("Precision not allowed in integer format specifier")
 
     return array2string(a, **options)
-
-
-def _array_format_dispatcher(a, format_spec):
-    return (a, format_spec)
-
-
-@array_function_dispatch(_array_format_dispatcher, module='numpy')
-def array_format(a, format_spec):
-
-    return _array_format_implementation(a, format_spec)
 
 
 # needed if __array_function__ is disabled
