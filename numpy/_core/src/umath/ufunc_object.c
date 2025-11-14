@@ -6656,9 +6656,21 @@ ufunc_get_inspect_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
         return NULL;
     }
 
-    return PyObject_CallFunctionObjArgs(
+    signature = PyObject_CallFunctionObjArgs(
             npy_runtime_imports._ufunc_inspect_signature_builder,
             (PyObject *)ufunc, NULL);
+    if (signature == NULL) {
+        return NULL;
+    }
+
+    // Cache the result in the instance dict for next time
+    if (PyDict_SetItem(ufunc->dict, npy_interned_str.__signature__,
+                       signature) < 0) {
+        Py_DECREF(signature);
+        return NULL;
+    }
+
+    return signature;
 }
 
 static PyObject *
