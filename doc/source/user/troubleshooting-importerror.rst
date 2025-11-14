@@ -6,9 +6,9 @@
    to this page.
 
 
-***************************
-Troubleshooting ImportError
-***************************
+***************
+Troubleshooting
+***************
 
 .. note::
 
@@ -60,49 +60,27 @@ See also the `conda user-guide <https://docs.conda.io/projects/conda/en/latest/u
 If you use an external editor/development environment it will have to be set
 up correctly.  See below for solutions for some common setups.
 
-Using PyCharm with Anaconda/conda Python
-----------------------------------------
+Using PyCharm with Anaconda Python
+----------------------------------
 
 There are fairly common issues when using PyCharm together with Anaconda,
 please see the `PyCharm support <https://www.jetbrains.com/help/pycharm/conda-support-creating-conda-virtual-environment.html>`_
 
-Using VSCode with Anaconda/conda Python (or environments)
----------------------------------------------------------
+Using VS Code with Anaconda Python (or environments)
+----------------------------------------------------
 
 A commonly reported issue is related to the environment activation within
 VSCode. Please see the `VSCode support <https://code.visualstudio.com/docs/python/environments>`_
 for information on how to correctly set up VSCode with virtual environments
 or conda.
 
-Using Eclipse/PyDev with Anaconda/conda Python (or environments)
-----------------------------------------------------------------
+Using Eclipse/PyDev with Anaconda Python (or environments)
+----------------------------------------------------------
 
 Please see the
-`Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
+`Anaconda Documentation <https://docs.anaconda.com/working-with-conda/ide-tutorials/eclipse-pydev/>`_
 on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.
-
-
-Raspberry Pi
-------------
-
-There are sometimes issues reported on Raspberry Pi setups when installing
-using ``pip3 install`` (or ``pip`` install). These will typically mention::
-
-    libf77blas.so.3: cannot open shared object file: No such file or directory
-
-
-The solution will be to either::
-
-    sudo apt-get install libatlas-base-dev
-
-to install the missing libraries expected by the self-compiled NumPy
-(ATLAS is a possible provider of linear algebra).
-
-*Alternatively* use the NumPy provided by Raspbian. In which case run::
-
-    pip3 uninstall numpy  # remove previously installed version
-    apt install python3-numpy
 
 
 Debug build on Windows
@@ -116,7 +94,7 @@ need to recompile the entire stack of python modules you work with
 including NumPy
 
 
-All Setups
+All setups
 ----------
 
 Occasionally there may be simple issues with old or bad installations
@@ -124,7 +102,7 @@ of NumPy. In this case you may just try to uninstall and reinstall NumPy.
 Make sure that NumPy is not found after uninstalling.
 
 
-Development Setup
+Development setup
 -----------------
 
 If you are using a development setup, make sure to run ``git clean -xdf``
@@ -133,7 +111,7 @@ any modifications you made, e.g. ``site.cfg``).
 In many cases files from old builds may lead to incorrect builds.
 
 
-Check Environment Variables
+Check environment variables
 ---------------------------
 
 In general how to set and check your environment variables depends on
@@ -148,38 +126,135 @@ This may mainly help you if you are not running the python and/or NumPy
 version you are expecting to run.
 
 
-C-API incompatibility
----------------------------
+Downstream ImportError, AttributeError or C-API/ABI incompatibility
+===================================================================
 
-If you see an error like:
+If you see a message such as::
 
+    A module that was compiled using NumPy 1.x cannot be run in
+    NumPy 2.0.0 as it may crash. To support both 1.x and 2.x
+    versions of NumPy, modules must be compiled with NumPy 2.0.
+    Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+either as an ``ImportError`` or with::
+
+    AttributeError: _ARRAY_API not found
+
+or other errors such as::
 
     RuntimeError: module compiled against API version v1 but this version of numpy is v2
 
+or when a package implemented with Cython::
 
-You may have:
+    ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
 
-* A bad extension "wheel" (binary install) that should use
-  `oldest-support-numpy <https://pypi.org/project/oldest-supported-numpy/>`_ (
-  with manual constraints if necessary) to build their binary packages.
+This means that a package depending on NumPy was build in a way that is not
+compatible with the NumPy version found.
+If this error is due to a recent upgrade to NumPy 2, the easiest solution may
+be to simply downgrade NumPy to ``'numpy<2'``.
 
-* An environment issue messing with package versions.
+To understand the cause, search the traceback (from the back) to find the first
+line that isn't inside NumPy to see which package has the incompatibility.
+Note your NumPy version and the version of the incompatible package to
+help you find the best solution.
 
-* Incompatible package versions somehow enforced manually.
+There can be various reasons for the incompatibility:
 
-* An extension module compiled locally against a very recent version
-  followed by a NumPy downgrade.
+* You have recently upgraded NumPy, most likely to NumPy 2, and the other
+  module now also needs to be upgraded.  (NumPy 2 was released in June 2024.)
 
-* A compiled extension copied to a different computer with an
-  older NumPy version.
+* You have version constraints and ``pip`` may
+  have installed a combination of incompatible packages.
 
-The best thing to do if you see this error is to contact
-the maintainers of the package that is causing problem
-so that they can solve the problem properly.
+* You have compiled locally or have copied a compiled extension from
+  elsewhere (which is, in general, a bad idea).
 
-However, while you wait for a solution, a work around
-that usually works is to upgrade the NumPy version:
+The best solution will usually be to upgrade the failing package:
+
+* If you installed it for example through ``pip``, try upgrading it with
+  ``pip install package_name --upgrade``.
+
+* If it is your own package or it is build locally, you need recompiled
+  for the new NumPy version (for details see :ref:`depending_on_numpy`).
+  It may be that a reinstall of the package is sufficient to fix it.
+
+When these steps fail, you should inform the package maintainers since they
+probably need to make a new, compatible, release.
+
+However, upgrading may not always be possible because a compatible version does
+not yet exist or cannot be installed for other reasons.  In that case:
+
+* Install a compatible NumPy version:
+
+  * Try downgrading NumPy with ``pip install 'numpy<2'``
+    (NumPy 2 was released in June 2024).
+  * If your NumPy version is old, you can try upgrading it for
+    example with ``pip install numpy --upgrade``.
+
+* Add additional version pins to the failing package to help ``pip``
+  resolve compatible versions of NumPy and the package.
 
 
-    pip install numpy --upgrade
 
+Segfaults or crashes
+====================
+
+NumPy tries to use advanced CPU features (SIMD) to speed up operations. If you
+are getting an "illegal instruction" error or a segfault, one cause could be
+that the environment claims it can support one or more of these features but
+actually cannot. This can happen inside a docker image or a VM (qemu, VMWare,
+...)
+
+You can use the output of ``np.show_runtime()`` to show which SIMD features are
+detected. For instance::
+
+    >>> np.show_runtime()
+    WARNING: `threadpoolctl` not found in system! Install it by `pip install \
+    threadpoolctl`. Once installed, try `np.show_runtime` again for more detailed
+    build information
+    [{'simd_extensions': {'baseline': ['SSE', 'SSE2', 'SSE3'],
+                          'found': ['SSSE3',
+                                    'SSE41',
+                                    'POPCNT',
+                                    'SSE42',
+                                    'AVX',
+                                    'F16C',
+                                    'FMA3',
+                                    'AVX2'],
+                          'not_found': ['AVX512F',
+                                        'AVX512CD',
+                                        'AVX512_KNL',
+                                        'AVX512_KNM',
+                                        'AVX512_SKX',
+                                        'AVX512_CLX',
+                                        'AVX512_CNL',
+                                        'AVX512_ICL']}}]
+
+In this case, it shows AVX2 and FMA3 under the ``found`` section, so you can
+try disabling them by setting ``NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"`` in your
+environment before running python (for cmd.exe on windows)::
+
+    >SET NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
+    >python <myprogram.py>
+
+By installing threadpoolctl ``np.show_runtime()`` will show additional information::
+
+    ...
+    {'architecture': 'Zen',
+      'filepath': '/tmp/venv3/lib/python3.9/site-packages/numpy.libs/libopenblas64_p-r0-15028c96.3.21.so',
+      'internal_api': 'openblas',
+      'num_threads': 24,
+      'prefix': 'libopenblas',
+      'threading_layer': 'pthreads',
+      'user_api': 'blas',
+      'version': '0.3.21'}]
+
+If you use the wheel from PyPI, it contains code from the OpenBLAS project to
+speed up matrix operations. This code too can try to use SIMD instructions. It
+has a different mechanism for choosing which to use, based on a CPU
+architecture, You can override this architecture by setting
+``OPENBLAS_CORETYPE``: a minimal value for ``x86_64`` is
+``OPENBLAS_CORETYPE=Haswell``.  This too needs to be set before running your
+python (this time for posix)::
+
+    $ OPENBLAS_CORETYPE=Haswell python <myprogram.py>

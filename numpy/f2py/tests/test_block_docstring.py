@@ -1,10 +1,13 @@
 import sys
+
 import pytest
-from . import util
 
 from numpy.testing import IS_PYPY
 
+from . import util
 
+
+@pytest.mark.slow
 class TestBlockDocString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "block_docstring", "foo.f")]
 

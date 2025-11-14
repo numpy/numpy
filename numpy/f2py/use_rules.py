@@ -1,29 +1,19 @@
-#!/usr/bin/env python3
 """
-
 Build 'use others module data' mechanism for f2py2e.
 
-Unfinished.
-
-Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2000/09/10 12:35:43 $
-Pearu Peterson
-
 """
 __version__ = "$Revision: 1.3 $"[10:-1]
 
 f2py_version = 'See `f2py -v`'
 
 
-from .auxfuncs import (
-    applyrules, dictappend, gentitle, hasnote, outmess
-)
-
+from .auxfuncs import applyrules, dictappend, gentitle, hasnote, outmess
 
 usemodule_rules = {
     'body': """
@@ -52,7 +42,7 @@ capi_fail:
 def buildusevars(m, r):
     ret = {}
     outmess(
-        '\t\tBuilding use variable hooks for module "%s" (feature only for F90/F95)...\n' % (m['name']))
+        f"\t\tBuilding use variable hooks for module \"{m['name']}\" (feature only for F90/F95)...\n")
     varsmap = {}
     revmap = {}
     if 'map' in r:
@@ -62,24 +52,20 @@ def buildusevars(m, r):
                     r['map'][k], k, revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]] = k
-    if 'only' in r and r['only']:
+    if r.get('only'):
         for v in r['map'].keys():
             if r['map'][v] in m['vars']:
 
                 if revmap[r['map'][v]] == v:
                     varsmap[v] = r['map'][v]
                 else:
-                    outmess('\t\t\tIgnoring map "%s=>%s". See above.\n' %
-                            (v, r['map'][v]))
+                    outmess(f"\t\t\tIgnoring map \"{v}=>{r['map'][v]}\". See above.\n")
             else:
                 outmess(
-                    '\t\t\tNo definition for variable "%s=>%s". Skipping.\n' % (v, r['map'][v]))
+                    f"\t\t\tNo definition for variable \"{v}=>{r['map'][v]}\". Skipping.\n")
     else:
         for v in m['vars'].keys():
-            if v in revmap:
-                varsmap[v] = revmap[v]
-            else:
-                varsmap[v] = v
+            varsmap[v] = revmap.get(v, v)
     for v in varsmap.keys():
         ret = dictappend(ret, buildusevar(v, varsmap[v], m['vars'], m['name']))
     return ret
@@ -95,9 +81,9 @@ def buildusevar(name, realname, vars, usemodulename):
            'usemodulename': usemodulename,
            'USEMODULENAME': usemodulename.upper(),
            'texname': name.replace('_', '\\_'),
-           'begintitle': gentitle('%s=>%s' % (name, realname)),
-           'endtitle': gentitle('end of %s=>%s' % (name, realname)),
-           'apiname': '#modulename#_use_%s_from_%s' % (realname, usemodulename)
+           'begintitle': gentitle(f'{name}=>{realname}'),
+           'endtitle': gentitle(f'end of {name}=>{realname}'),
+           'apiname': f'#modulename#_use_{realname}_from_{usemodulename}'
            }
     nummap = {0: 'Ro', 1: 'Ri', 2: 'Rii', 3: 'Riii', 4: 'Riv',
               5: 'Rv', 6: 'Rvi', 7: 'Rvii', 8: 'Rviii', 9: 'Rix'}

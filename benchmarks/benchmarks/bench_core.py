@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Core(Benchmark):
@@ -14,6 +14,7 @@ class Core(Benchmark):
         self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
         self.float64_dtype = np.dtype(np.float64)
+        self.arr = np.arange(10000).reshape(100, 100)
 
     def time_array_1(self):
         np.array(1)
@@ -45,6 +46,15 @@ class Core(Benchmark):
     def time_array_l_view(self):
         np.array(self.l_view)
 
+    def time_can_cast(self):
+        np.can_cast(self.l10x10, self.float64_dtype)
+
+    def time_tobytes_noncontiguous(self):
+        self.arr.T.tobytes()
+
+    def time_can_cast_same_kind(self):
+        np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
+
     def time_vstack_l(self):
         np.vstack(self.l)
 
@@ -65,6 +75,9 @@ class Core(Benchmark):
 
     def time_empty_100(self):
         np.empty(100)
+
+    def time_empty_like(self):
+        np.empty_like(self.l10x10)
 
     def time_eye_100(self):
         np.eye(100)
@@ -128,7 +141,7 @@ class CorrConv(Benchmark):
 
     def setup(self, size1, size2, mode):
         self.x1 = np.linspace(0, 1, num=size1)
-        self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
         np.correlate(self.x1, self.x2, mode=mode)
@@ -142,7 +155,8 @@ class CountNonzero(Benchmark):
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, np.float32,
+         np.float64, str, object]
     ]
 
     def setup(self, numaxes, size, dtype):
@@ -161,9 +175,34 @@ class CountNonzero(Benchmark):
                 self.x.ndim - 1, self.x.ndim - 2))
 
 
+class Nonzero(Benchmark):
+    params = [
+        [bool, np.uint8, np.uint64, np.int64, np.float32, np.float64],
+        [(1_000_000,), (1000, 1000), (100, ), (2, )]
+    ]
+    param_names = ["dtype", "shape"]
+
+    def setup(self, dtype, size):
+        self.x = np.random.randint(0, 3, size=size).astype(dtype)
+        self.x_sparse = np.zeros(size).astype(dtype)
+        self.x_sparse[1] = 1
+        self.x_sparse[-1] = 1
+        self.x_dense = np.ones(size).astype(dtype)
+
+    def time_nonzero(self, dtype, size):
+        np.nonzero(self.x)
+
+    def time_nonzero_sparse(self, dtype, size):
+        np.nonzero(self.x_sparse)
+
+    def time_nonzero_dense(self, dtype, size):
+        np.nonzero(self.x_dense)
+
+
 class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[bool, np.uintp]]
+
     def setup(self, dtype):
         self.d = np.ones(10000, dtype=dtype)
         self.d2 = np.ones((200, 1000), dtype=dtype)
@@ -206,13 +245,68 @@ class Indices(Benchmark):
     def time_indices(self):
         np.indices((1000, 500))
 
-class VarComplex(Benchmark):
-    params = [10**n for n in range(0, 9)]
-    def setup(self, n):
-        self.arr = np.random.randn(n) + 1j * np.random.randn(n)
 
-    def teardown(self, n):
-        del self.arr
+class StatsMethods(Benchmark):
+    params = [['int64', 'uint64', 'float32', 'float64',
+               'complex64', 'bool_'],
+              [100, 10000]]
+    param_names = ['dtype', 'size']
 
-    def time_var(self, n):
-        self.arr.var()
+    def setup(self, dtype, size):
+        self.data = np.ones(size, dtype=dtype)
+        if dtype.startswith('complex'):
+            self.data = np.random.randn(size) + 1j * np.random.randn(size)
+
+    def time_min(self, dtype, size):
+        self.data.min()
+
+    def time_max(self, dtype, size):
+        self.data.max()
+
+    def time_mean(self, dtype, size):
+        self.data.mean()
+
+    def time_std(self, dtype, size):
+        self.data.std()
+
+    def time_prod(self, dtype, size):
+        self.data.prod()
+
+    def time_var(self, dtype, size):
+        self.data.var()
+
+    def time_sum(self, dtype, size):
+        self.data.sum()
+
+
+class NumPyChar(Benchmark):
+    def setup(self):
+        self.A = np.array([100 * 'x', 100 * 'y'])
+        self.B = np.array(1000 * ['aa'])
+
+        self.C = np.array([100 * 'x' + 'z', 100 * 'y' + 'z' + 'y', 100 * 'x'])
+        self.D = np.array(1000 * ['ab'] + 1000 * ['ac'])
+
+    def time_isalpha_small_list_big_string(self):
+        np.char.isalpha(self.A)
+
+    def time_isalpha_big_list_small_string(self):
+        np.char.isalpha(self.B)
+
+    def time_add_small_list_big_string(self):
+        np.char.add(self.A, self.A)
+
+    def time_add_big_list_small_string(self):
+        np.char.add(self.B, self.B)
+
+    def time_find_small_list_big_string(self):
+        np.char.find(self.C, 'z')
+
+    def time_find_big_list_small_string(self):
+        np.char.find(self.D, 'b')
+
+    def time_startswith_small_list_big_string(self):
+        np.char.startswith(self.A, 'x')
+
+    def time_startswith_big_list_small_string(self):
+        np.char.startswith(self.B, 'a')

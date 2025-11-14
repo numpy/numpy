@@ -1,0 +1,7 @@
+Multiple axes are now supported in ``numpy.trim_zeros``
+-------------------------------------------------------
+The ``axis`` argument of `numpy.trim_zeros` now accepts a sequence; for example
+``np.trim_zeros(x, axis=(0, 1))`` will trim the zeros from a multi-dimensional
+array ``x`` along axes 0 and 1. This fixes issue
+`gh‑29945 <https://github.com/numpy/numpy/issues/29945>`__ and was implemented
+in pull request `gh‑29947 <https://github.com/numpy/numpy/pull/29947>`__.

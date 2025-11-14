@@ -6,6 +6,12 @@ F2PY examples
 Below are some examples of F2PY usage. This list is not comprehensive, but can
 be used as a starting point when wrapping your own code.
 
+.. note::
+
+   The best place to look for examples is the `NumPy issue tracker`_, or the
+   test cases for ``f2py``. Some more use cases are in
+   :ref:`f2py-boilerplating`.
+
 F2PY walkthrough: a basic extension module
 ------------------------------------------
 
@@ -30,11 +36,6 @@ Python just like any other extension module.
 
 Creating a compiled extension module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-
-    This usage depends heavily on ``numpy.distutils``, see :ref:`f2py-bldsys`
-    for more details.
 
 You can also get f2py to both compile :file:`add.f` along with the produced
 extension module leaving only a shared-library extension file that can
@@ -218,7 +219,7 @@ multi-step extension module generation. In this case, after running
 
 .. code-block:: python
 
-	python -m numpy.f2py myroutine.f90 -h myroutine.pyf
+	python -m numpy.f2py myroutine.f90 -m myroutine -h myroutine.pyf
 
 the following signature file is generated:
 
@@ -240,6 +241,8 @@ Read more
 
 * `Wrapping C codes using f2py <https://scipy.github.io/old-wiki/pages/Cookbook/f2py_and_NumPy.html>`_
 * `F2py section on the SciPy Cookbook <https://scipy-cookbook.readthedocs.io/items/F2Py.html>`_
-* `F2py example: Interactive System for Ice sheet Simulation <http://websrv.cs.umt.edu/isis/index.php/F2py_example>`_
 * `"Interfacing With Other Languages" section on the SciPy Cookbook.
   <https://scipy-cookbook.readthedocs.io/items/idx_interfacing_with_other_languages.html>`_
+
+.. _`NumPy issue tracker`: https://github.com/numpy/numpy/issues?q=is%3Aissue+label%3A%22component%3A+numpy.f2py%22+is%3Aclosed
+.. _`test cases`: https://github.com/numpy/numpy/tree/main/doc/source/f2py/code

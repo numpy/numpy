@@ -1,5 +1,8 @@
 import os
+import sys
 from pathlib import Path
+
+import pytest
 
 import numpy as np
 from numpy.testing import assert_
@@ -8,9 +11,8 @@ ROOT = Path(np.__file__).parents[0]
 FILES = [
     ROOT / "py.typed",
     ROOT / "__init__.pyi",
-    ROOT / "ctypeslib.pyi",
-    ROOT / "core" / "__init__.pyi",
-    ROOT / "distutils" / "__init__.pyi",
+    ROOT / "ctypeslib" / "__init__.pyi",
+    ROOT / "_core" / "__init__.pyi",
     ROOT / "f2py" / "__init__.pyi",
     ROOT / "fft" / "__init__.pyi",
     ROOT / "lib" / "__init__.pyi",
@@ -21,8 +23,14 @@ FILES = [
     ROOT / "random" / "__init__.pyi",
     ROOT / "testing" / "__init__.pyi",
 ]
+if sys.version_info < (3, 12):
+    FILES += [ROOT / "distutils" / "__init__.pyi"]
 
 
+@pytest.mark.thread_unsafe(
+    reason="os.path has a thread-safety bug (python/cpython#140054). "
+           "Expected to only be a problem in 3.14.0"
+)
 class TestIsFile:
     def test_isfile(self):
         """Test if all ``.pyi`` files are properly installed."""

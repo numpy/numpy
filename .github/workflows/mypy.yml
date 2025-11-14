@@ -1,0 +1,81 @@
+name: Run MyPy
+
+# Mypy is too slow to run as part of regular CI. The purpose of the jobs in
+# this file is to cover running Mypy across:
+#
+#   - OSes: Linux, Windows and macOS
+#   - Python versions: lowest/highest supported versions, and an intermediate one
+#
+# The build matrix aims for sparse coverage across those two dimensions.
+# Use of BLAS/LAPACK and SIMD is disabled on purpose, because those things
+# don't matter for static typing and this speeds up the builds.
+#
+# This is a separate job file so it's easy to trigger by hand.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '.circlecl/'
+      - '.devcontainer/'
+      - 'benchmarks/'
+      - 'branding/'
+      - 'docs/'
+      - 'meson_cpu/'
+      - 'tools/'
+      - 'vendored-meson/'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  mypy:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    name: "MyPy"
+    runs-on: ${{ matrix.os_python[0] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os_python:
+          - [macos-latest, '3.14']
+          - [ubuntu-latest, '3.12']
+          - [windows-latest, '3.11']
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v7.1.3
+      with:
+        python-version: ${{ matrix.os_python[1] }}
+        activate-environment: true
+        cache-dependency-glob: |
+          requirements/build_requirements.txt
+          requirements/test_requirements.txt
+    - name: Install dependencies
+      # orjson makes mypy faster but the default requirements.txt
+      # can't install it because orjson doesn't support 32 bit Linux
+      run: >-
+        uv pip install
+        -r requirements/build_requirements.txt
+        -r requirements/test_requirements.txt
+        orjson
+    - name: Build
+      run: |
+        spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
+    - name: Run Mypy
+      run: |
+        spin mypy

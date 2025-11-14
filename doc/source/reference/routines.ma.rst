@@ -31,6 +31,7 @@ From existing data
    ma.fromfunction
 
    ma.MaskedArray.copy
+   ma.diagflat
 
 
 Ones and zeros
@@ -72,6 +73,9 @@ Inspecting the array
    ma.isMaskedArray
    ma.isMA
    ma.isarray
+   ma.isin
+   ma.in1d
+   ma.unique
 
 
    ma.MaskedArray.all
@@ -141,7 +145,6 @@ Changing the number of dimensions
    ma.hstack
    ma.hsplit
    ma.mr_
-   ma.row_stack
    ma.vstack
 
 
@@ -394,6 +397,17 @@ Clipping and rounding
    ma.MaskedArray.clip
    ma.MaskedArray.round
 
+Set operations
+~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated/
+
+
+   ma.intersect1d
+   ma.setdiff1d
+   ma.setxor1d
+   ma.union1d
+
 
 Miscellanea
 ~~~~~~~~~~~
@@ -402,10 +416,25 @@ Miscellanea
 
    ma.allequal
    ma.allclose
+   ma.amax
+   ma.amin
    ma.apply_along_axis
    ma.apply_over_axes
    ma.arange
    ma.choose
+   ma.compress_nd
+   ma.convolve
+   ma.correlate
    ma.ediff1d
+   ma.flatten_mask
+   ma.flatten_structured_array
+   ma.fromflex
    ma.indices
+   ma.left_shift
+   ma.ndim
+   ma.put
+   ma.putmask
+   ma.right_shift
+   ma.round_
+   ma.take
    ma.where

@@ -1,12 +1,13 @@
 import sys
-import pytest
+import sysconfig
 import weakref
 from pathlib import Path
 
+import pytest
+
 import numpy as np
-from numpy.ctypeslib import ndpointer, load_library, as_array
-from numpy.distutils.misc_util import get_shared_lib_extension
-from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
+from numpy.ctypeslib import as_array, load_library, ndpointer
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 try:
     import ctypes
@@ -17,17 +18,24 @@ else:
     test_cdll = None
     if hasattr(sys, 'gettotalrefcount'):
         try:
-            cdll = load_library('_multiarray_umath_d', np.core._multiarray_umath.__file__)
+            cdll = load_library(
+                '_multiarray_umath_d', np._core._multiarray_umath.__file__
+            )
         except OSError:
             pass
         try:
-            test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+            test_cdll = load_library(
+                '_multiarray_tests', np._core._multiarray_tests.__file__
+            )
         except OSError:
             pass
     if cdll is None:
-        cdll = load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
+        cdll = load_library(
+            '_multiarray_umath', np._core._multiarray_umath.__file__)
     if test_cdll is None:
-        test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+        test_cdll = load_library(
+            '_multiarray_tests', np._core._multiarray_tests.__file__
+        )
 
     c_forward_pointer = test_cdll.forward_pointer
 
@@ -38,7 +46,7 @@ else:
                     reason="Known to fail on cygwin")
 class TestLoadLibrary:
     def test_basic(self):
-        loader_path = np.core._multiarray_umath.__file__
+        loader_path = np._core._multiarray_umath.__file__
 
         out1 = load_library('_multiarray_umath', loader_path)
         out2 = load_library(Path('_multiarray_umath'), loader_path)
@@ -52,12 +60,9 @@ class TestLoadLibrary:
         # Regression for #801: load_library with a full library name
         # (including extension) does not work.
         try:
-            try:
-                so = get_shared_lib_extension(is_python_ext=True)
-                # Should succeed
-                load_library('_multiarray_umath%s' % so, np.core._multiarray_umath.__file__)
-            except ImportError:
-                print("No distutils available, skipping test.")
+            so_ext = sysconfig.get_config_var('EXT_SUFFIX')
+            load_library(f'_multiarray_umath{so_ext}',
+                         np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"
                    " (import error was: %s)" % str(e))
@@ -119,6 +124,7 @@ class TestNdpointer:
         assert_(p.from_param(x))
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
+    @pytest.mark.thread_unsafe(reason="checks that global ndpointer cache is updating")
     def test_cache(self):
         assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
 
@@ -145,12 +151,12 @@ class TestNdpointerCFunc:
     @pytest.mark.parametrize(
         'dt', [
             float,
-            np.dtype(dict(
-                formats=['<i4', '<i4'],
-                names=['a', 'b'],
-                offsets=[0, 2],
-                itemsize=6
-            ))
+            np.dtype({
+                'formats': ['<i4', '<i4'],
+                'names': ['a', 'b'],
+                'offsets': [0, 2],
+                'itemsize': 6
+            })
         ], ids=[
             'float',
             'overlapping-fields'
@@ -173,6 +179,7 @@ class TestNdpointerCFunc:
             arr.__array_interface__['data']
         )
 
+    @pytest.mark.thread_unsafe(reason="mutates global test vars")
     def test_vague_return_value(self):
         """ Test that vague ndpointer return values do not promote to arrays """
         arr = np.zeros((2, 3))
@@ -200,7 +207,7 @@ class TestAsArray:
         assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
 
     def test_pointer(self):
-        from ctypes import c_int, cast, POINTER
+        from ctypes import POINTER, c_int, cast
 
         p = cast((c_int * 10)(*range(10)), POINTER(c_int))
 
@@ -215,8 +222,12 @@ class TestAsArray:
         # shape argument is required
         assert_raises(TypeError, as_array, p)
 
+    @pytest.mark.skipif(
+            sys.version_info[:2] == (3, 12),
+            reason="Broken in 3.12.0rc1, see gh-24399",
+    )
     def test_struct_array_pointer(self):
-        from ctypes import c_int16, Structure, pointer
+        from ctypes import Structure, c_int16, pointer
 
         class Struct(Structure):
             _fields_ = [('a', c_int16)]
@@ -243,6 +254,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0]), shape=(2,)))
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes
@@ -293,6 +305,7 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_equal(ct, ctypes.c_uint16)
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_subarray(self):
         dt = np.dtype((np.int32, (2, 3)))
         ct = np.ctypeslib.as_ctypes_type(dt)
@@ -312,6 +325,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_structure_aligned(self):
         dt = np.dtype([
             ('a', np.uint16),
@@ -328,11 +342,11 @@ class TestAsCtypesType:
         ])
 
     def test_union(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 0],
-            formats=[np.uint16, np.uint32]
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 0],
+            'formats': [np.uint16, np.uint32]
+        })
 
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
@@ -342,13 +356,14 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_padded_union(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 0],
-            formats=[np.uint16, np.uint32],
-            itemsize=5,
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 0],
+            'formats': [np.uint16, np.uint32],
+            'itemsize': 5,
+        })
 
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
@@ -360,9 +375,9 @@ class TestAsCtypesType:
         ])
 
     def test_overlapping(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 2],
-            formats=[np.uint32, np.uint32]
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 2],
+            'formats': [np.uint32, np.uint32]
+        })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)

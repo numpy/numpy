@@ -7,8 +7,8 @@ Writing custom array containers
 Numpy's dispatch mechanism, introduced in numpy version v1.16 is the
 recommended approach for writing custom N-dimensional array containers that are
 compatible with the numpy API and provide custom implementations of numpy
-functionality. Applications include `dask <http://dask.pydata.org>`_ arrays, an
-N-dimensional array distributed across multiple nodes, and `cupy
+functionality. Applications include `dask <https://docs.dask.org/en/stable/>`_
+arrays, an N-dimensional array distributed across multiple nodes, and `cupy
 <https://docs-cupy.chainer.org/en/stable/>`_ arrays, an N-dimensional array on
 a GPU.
 
@@ -22,7 +22,11 @@ example that has rather narrow utility but illustrates the concepts involved.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 
 Our custom array can be instantiated like:
@@ -41,6 +45,21 @@ array([[1., 0., 0., 0., 0.],
        [0., 0., 1., 0., 0.],
        [0., 0., 0., 1., 0.],
        [0., 0., 0., 0., 1.]])
+
+The ``__array__`` method can optionally accept a `dtype` argument. If provided,
+this argument specifies the desired data type for the resulting NumPy array.
+Your implementation should attempt to convert the data to this `dtype`
+if possible. If the conversion is not supported, it's generally best
+to fall back to a default type or raise a `TypeError` or `ValueError`.
+
+Here's an example demonstrating its use with `dtype` specification:
+
+>>> np.asarray(arr, dtype=np.float32)
+array([[1., 0., 0., 0., 0.],
+       [0., 1., 0., 0., 0.],
+       [0., 0., 1., 0., 0.],
+       [0., 0., 0., 1., 0.],
+       [0., 0., 0., 0., 1.]], dtype=float32)
 
 If we operate on ``arr`` with a numpy function, numpy will again use the
 ``__array__`` interface to convert it to an array and then apply the function
@@ -84,7 +103,11 @@ For this example we will only handle the method ``__call__``
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -96,10 +119,10 @@ For this example we will only handle the method ``__call__``
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -135,7 +158,11 @@ conveniently by inheriting from the mixin
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -147,10 +174,10 @@ conveniently by inheriting from the mixin
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -173,7 +200,11 @@ functions to our custom variants.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -186,10 +217,10 @@ functions to our custom variants.
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -271,9 +302,38 @@ array([[1., 0., 0., 0., 0.],
        [0., 0., 0., 1., 0.],
        [0., 0., 0., 0., 1.]])
 
+
+The implementation of ``DiagonalArray`` in this example only handles the
+``np.sum`` and ``np.mean`` functions for brevity. Many other functions in the
+Numpy API are also available to wrap and a full-fledged custom array container
+can explicitly support all functions that Numpy makes available to wrap.
+
+Numpy provides some utilities to aid testing of custom array containers that
+implement the ``__array_ufunc__`` and ``__array_function__`` protocols in the
+``numpy.testing.overrides`` namespace.
+
+To check if a Numpy function can be overridden via ``__array_ufunc__``, you can
+use :func:`~numpy.testing.overrides.allows_array_ufunc_override`:
+
+>>> from numpy.testing.overrides import allows_array_ufunc_override
+>>> allows_array_ufunc_override(np.add)
+True
+
+Similarly, you can check if a function can be overridden via
+``__array_function__`` using
+:func:`~numpy.testing.overrides.allows_array_function_override`.
+
+Lists of every overridable function in the Numpy API are also available via
+:func:`~numpy.testing.overrides.get_overridable_numpy_array_functions` for
+functions that support the ``__array_function__`` protocol and
+:func:`~numpy.testing.overrides.get_overridable_numpy_ufuncs` for functions that
+support the ``__array_ufunc__`` protocol. Both functions return sets of
+functions that are present in the Numpy public API. User-defined ufuncs or
+ufuncs defined in other libraries that depend on Numpy are not present in
+these sets.
+
 Refer to the `dask source code <https://github.com/dask/dask>`_ and
 `cupy source code <https://github.com/cupy/cupy>`_  for more fully-worked
 examples of custom array containers.
 
 See also :doc:`NEP 18<neps:nep-0018-array-function-protocol>`.
-

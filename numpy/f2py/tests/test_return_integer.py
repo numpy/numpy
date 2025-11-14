@@ -1,9 +1,11 @@
 import pytest
 
 from numpy import array
+
 from . import util
 
 
+@pytest.mark.slow
 class TestReturnInteger(util.F2PyTest):
     def check_function(self, t, tname):
         assert t(123) == 123
@@ -13,15 +15,13 @@ class TestReturnInteger(util.F2PyTest):
         assert t([123]) == 123
         assert t((123, )) == 123
         assert t(array(123)) == 123
-        assert t(array([123])) == 123
-        assert t(array([[123]])) == 123
-        assert t(array([123], "b")) == 123
-        assert t(array([123], "h")) == 123
-        assert t(array([123], "i")) == 123
-        assert t(array([123], "l")) == 123
-        assert t(array([123], "B")) == 123
-        assert t(array([123], "f")) == 123
-        assert t(array([123], "d")) == 123
+        assert t(array(123, "b")) == 123
+        assert t(array(123, "h")) == 123
+        assert t(array(123, "i")) == 123
+        assert t(array(123, "l")) == 123
+        assert t(array(123, "B")) == 123
+        assert t(array(123, "f")) == 123
+        assert t(array(123, "d")) == 123
 
         # pytest.raises(ValueError, t, array([123],'S3'))
         pytest.raises(ValueError, t, "abc")
@@ -29,8 +29,8 @@ class TestReturnInteger(util.F2PyTest):
         pytest.raises(IndexError, t, [])
         pytest.raises(IndexError, t, ())
 
-        pytest.raises(Exception, t, t)
-        pytest.raises(Exception, t, {})
+        pytest.raises(TypeError, t, t)
+        pytest.raises(TypeError, t, {})
 
         if tname in ["t8", "s8"]:
             pytest.raises(OverflowError, t, 100000000000000000000000)
@@ -44,12 +44,12 @@ class TestFReturnInteger(TestReturnInteger):
     ]
 
     @pytest.mark.parametrize("name",
-                             "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","))
+                             ["t0", "t1", "t2", "t4", "t8", "s0", "s1", "s2", "s4", "s8"])
     def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
     @pytest.mark.parametrize("name",
-                             "t0,t1,t2,t4,t8,s0,s1,s2,s4,s8".split(","))
+                             ["t0", "t1", "t2", "t4", "t8", "s0", "s1", "s2", "s4", "s8"])
     def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_integer, name),
                             name)

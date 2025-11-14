@@ -1,16 +1,22 @@
 from typing import Any, TypeVar
 
 from numpy import dtype
-from numpy.ma import MaskedArray
 
-__all__: list[str]
+from . import MaskedArray
 
-# TODO: Set the `bound` to something more suitable once we
-# have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
-_DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+__all__ = [
+    "MaskedRecords",
+    "mrecarray",
+    "fromarrays",
+    "fromrecords",
+    "fromtextfile",
+    "addfield",
+]
 
-class MaskedRecords(MaskedArray[_ShapeType, _DType_co]):
+_ShapeT_co = TypeVar("_ShapeT_co", covariant=True, bound=tuple[int, ...])
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
+
+class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         shape,
@@ -42,49 +48,47 @@ class MaskedRecords(MaskedArray[_ShapeType, _DType_co]):
     def __setattr__(self, attr, val): ...
     def __getitem__(self, indx): ...
     def __setitem__(self, indx, value): ...
-    def view(self, dtype=..., type=...): ...
+    def view(self, dtype=None, type=None): ...
     def harden_mask(self): ...
     def soften_mask(self): ...
     def copy(self): ...
-    def tolist(self, fill_value=...): ...
+    def tolist(self, fill_value=None): ...
     def __reduce__(self): ...
 
 mrecarray = MaskedRecords
 
 def fromarrays(
     arraylist,
-    dtype=...,
-    shape=...,
-    formats=...,
-    names=...,
-    titles=...,
-    aligned=...,
-    byteorder=...,
-    fill_value=...,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    fill_value=None,
 ): ...
 
 def fromrecords(
     reclist,
-    dtype=...,
-    shape=...,
-    formats=...,
-    names=...,
-    titles=...,
-    aligned=...,
-    byteorder=...,
-    fill_value=...,
+    dtype=None,
+    shape=None,
+    formats=None,
+    names=None,
+    titles=None,
+    aligned=False,
+    byteorder=None,
+    fill_value=None,
     mask=...,
 ): ...
 
 def fromtextfile(
     fname,
-    delimiter=...,
-    commentchar=...,
-    missingchar=...,
-    varnames=...,
-    vartypes=...,
-    # NOTE: deprecated: NumPy 1.22.0, 2021-09-23
-    # delimitor=...,
+    delimiter=None,
+    commentchar="#",
+    missingchar="",
+    varnames=None,
+    vartypes=None,
 ): ...
 
-def addfield(mrecord, newfield, newfieldname=...): ...
+def addfield(mrecord, newfield, newfieldname=None): ...

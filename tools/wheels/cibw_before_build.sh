@@ -1,58 +1,53 @@
 set -xe
 
-PROJECT_DIR="$1"
-PLATFORM=$(PYTHONPATH=tools python -c "import openblas_support; print(openblas_support.get_plat())")
+PROJECT_DIR="${1:-$PWD}"
 
-# Update license
-if [[ $RUNNER_OS == "Linux" ]] ; then
-    cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
-elif [[ $RUNNER_OS == "macOS" ]]; then
-    cat $PROJECT_DIR/tools/wheels/LICENSE_osx.txt >> $PROJECT_DIR/LICENSE.txt
-elif [[ $RUNNER_OS == "Windows" ]]; then
-    cat $PROJECT_DIR/tools/wheels/LICENSE_win32.txt >> $PROJECT_DIR/LICENSE.txt
+# remove any cruft from a previous run
+rm -rf build
+
+if [[ $(python -c"import sys; print(sys.maxsize)") < $(python -c"import sys; print(2**33)") ]]; then
+    echo "No BLAS used for 32-bit wheels"
+    export INSTALL_OPENBLAS=false
+elif [ -z $INSTALL_OPENBLAS ]; then
+    # the macos_arm64 build might not set this variable
+    export INSTALL_OPENBLAS=true
 fi
 
-# Install Openblas
-if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
-    basedir=$(python tools/openblas_support.py)
-    cp -r $basedir/lib/* /usr/local/lib
-    cp $basedir/include/* /usr/local/include
-    if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
-        sudo mkdir -p /opt/arm64-builds/lib /opt/arm64-builds/include
-        sudo chown -R $USER /opt/arm64-builds
-        cp -r $basedir/lib/* /opt/arm64-builds/lib
-        cp $basedir/include/* /opt/arm64-builds/include
+# Install OpenBLAS from scipy-openblas32|64
+if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
+    # By default, use scipy-openblas64
+    # On 32-bit platforms and on win-arm64, use scipy-openblas32
+    OPENBLAS=openblas64
+    # Possible values for RUNNER_ARCH in GitHub Actions are: X86, X64, ARM, or ARM64
+    if [[ $RUNNER_ARCH == "X86" || $RUNNER_ARCH == "ARM" ]] ; then
+        OPENBLAS=openblas32
+    elif [[ $RUNNER_ARCH == "ARM64" && $RUNNER_OS == "Windows" ]] ; then
+        OPENBLAS=openblas32
     fi
-elif [[ $RUNNER_OS == "Windows" ]]; then
-    PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
-    target=$(python tools/openblas_support.py)
-    mkdir -p openblas
-    cp $target openblas
+
+    # The PKG_CONFIG_PATH environment variable will be pointed to this path in
+    # pyproject.toml and .github/workflows/wheels.yml. Note that
+    # `pkgconf_path` here is only a bash variable local to this file.
+    pkgconf_path=$PROJECT_DIR/.openblas
+    echo pkgconf_path is $pkgconf_path, OPENBLAS is ${OPENBLAS}
+    rm -rf $pkgconf_path
+    mkdir -p $pkgconf_path
+    python -m pip install -r $PROJECT_DIR/requirements/ci_requirements.txt
+    python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $pkgconf_path/scipy-openblas.pc
+
+    # Copy scipy-openblas DLL's to a fixed location so we can point delvewheel
+    # at it in `repair_windows.sh` (needed only on Windows because of the lack
+    # of RPATH support).
+    if [[ $RUNNER_OS == "Windows" ]]; then
+        python <<EOF
+import os, scipy_${OPENBLAS}, shutil
+srcdir = os.path.join(os.path.dirname(scipy_${OPENBLAS}.__file__), "lib")
+shutil.copytree(srcdir, os.path.join("$pkgconf_path", "lib"))
+EOF
+    fi
 fi
 
-# Install GFortran
-if [[ $RUNNER_OS == "macOS" ]]; then
-    # same version of gfortran as the openblas-libs and numpy-wheel builds
-    curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
-    GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
-    KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
-    if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
-        echo sha256 mismatch
-        exit 1
-    fi
-
-    hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
-    sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
-    otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
-
-    # arm64 stuff from gfortran_utils
-    if [[ $PLATFORM == "macosx-arm64" ]]; then
-        source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
-        install_arm64_cross_gfortran
-    fi
-
-    # Manually symlink gfortran-4.9 to plain gfortran for f2py.
-    # No longer needed after Feb 13 2020 as gfortran is already present
-    # and the attempted link errors. Keep this for future reference.
-    # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
+if [[ $RUNNER_OS == "Windows" ]]; then
+    # delvewheel is the equivalent of delocate/auditwheel for windows.
+    python -m pip install delvewheel wheel
 fi

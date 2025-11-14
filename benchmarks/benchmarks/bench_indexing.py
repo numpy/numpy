@@ -1,34 +1,57 @@
-from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
-
-from os.path import join as pjoin
 import shutil
-from numpy import memmap, float32, array
-import numpy as np
+from os.path import join as pjoin
 from tempfile import mkdtemp
+
+import numpy as np
+from numpy import array, float32, memmap
+
+from .common import TYPES1, Benchmark, get_indexes_, get_indexes_rand_, get_square_
 
 
 class Indexing(Benchmark):
-    params = [["indexes_", "indexes_rand_"],
+    params = [TYPES1 + ["object", "O,i"],
+              ["indexes_", "indexes_rand_"],
               ['I', ':,I', 'np.ix_(I, I)'],
               ['', '=1']]
-    param_names = ['indexes', 'sel', 'op']
+    param_names = ['dtype', 'indexes', 'sel', 'op']
 
-    def setup(self, indexes, sel, op):
+    def setup(self, dtype, indexes, sel, op):
         sel = sel.replace('I', indexes)
 
-        ns = {'squares_': get_squares_(),
+        ns = {'a': get_square_(dtype),
               'np': np,
               'indexes_': get_indexes_(),
               'indexes_rand_': get_indexes_rand_()}
 
-        code = "def run():\n    for a in squares_.values(): a[%s]%s"
+        code = "def run():\n    a[%s]%s"
         code = code % (sel, op)
 
         exec(code, ns)
         self.func = ns['run']
 
-    def time_op(self, indexes, sel, op):
+    def time_op(self, dtype, indexes, sel, op):
         self.func()
+
+
+class IndexingWith1DArr(Benchmark):
+    # Benchmark similar to the take one
+    params = [
+        [(1000,), (1000, 1), (1000, 2), (2, 1000, 1), (1000, 3)],
+        TYPES1 + ["O", "i,O"]]
+    param_names = ["shape", "dtype"]
+
+    def setup(self, shape, dtype):
+        self.arr = np.ones(shape, dtype)
+        self.index = np.arange(1000)
+        # index the second dimension:
+        if len(shape) == 3:
+            self.index = (slice(None), self.index)
+
+    def time_getitem_ordered(self, shape, dtype):
+        self.arr[self.index]
+
+    def time_setitem_ordered(self, shape, dtype):
+        self.arr[self.index] = 0
 
 
 class ScalarIndexing(Benchmark):
@@ -59,6 +82,22 @@ class ScalarIndexing(Benchmark):
         val = np.int16(43)
         for i in range(100):
             arr[indx] = val
+
+
+class BooleanAssignmentOrder(Benchmark):
+    params = ['C', 'F']
+    param_names = ['order']
+
+    def setup(self, order):
+        shape = (64, 64, 64)
+        # emulate gh-30156: boolean assignment into a Fortran/C array
+        self.base = np.zeros(shape, dtype=np.uint32, order=order)
+        mask = np.random.RandomState(0).rand(*self.base.shape) > 0.5
+        self.mask = mask.copy(order)
+        self.value = np.uint32(7)
+
+    def time_boolean_assign_scalar(self, order):
+        self.base[self.mask] = self.value
 
 
 class IndexingSeparate(Benchmark):
@@ -102,3 +141,40 @@ class IndexingStructured0D(Benchmark):
 
     def time_scalar_all(self):
         self.b['a'] = self.a['a']
+
+
+class FlatIterIndexing(Benchmark):
+    def setup(self):
+        self.a = np.ones((200, 50000))
+        self.m_all = np.repeat(True, 200 * 50000)
+        self.m_half = np.copy(self.m_all)
+        self.m_half[::2] = False
+        self.m_none = np.repeat(False, 200 * 50000)
+        self.m_index_2d = np.arange(200 * 50000).reshape((100, 100000))
+
+    def time_flat_bool_index_none(self):
+        self.a.flat[self.m_none]
+
+    def time_flat_bool_index_half(self):
+        self.a.flat[self.m_half]
+
+    def time_flat_bool_index_all(self):
+        self.a.flat[self.m_all]
+
+    def time_flat_fancy_index_2d(self):
+        self.a.flat[self.m_index_2d]
+
+    def time_flat_empty_tuple_index(self):
+        self.a.flat[()]
+
+    def time_flat_ellipsis_index(self):
+        self.a.flat[...]
+
+    def time_flat_bool_index_0d(self):
+        self.a.flat[True]
+
+    def time_flat_int_index(self):
+        self.a.flat[1_000_000]
+
+    def time_flat_slice_index(self):
+        self.a.flat[1_000_000:2_000_000]

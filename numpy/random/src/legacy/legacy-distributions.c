@@ -11,7 +11,7 @@
 #include "include/legacy-distributions.h"
 
 
-static NPY_INLINE double legacy_double(aug_bitgen_t *aug_state) {
+static inline double legacy_double(aug_bitgen_t *aug_state) {
   return aug_state->bit_generator->next_double(aug_state->bit_generator->state);
 }
 
@@ -228,6 +228,44 @@ double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
   return scale * legacy_standard_exponential(aug_state);
 }
 
+static RAND_INT_TYPE legacy_random_binomial_inversion(
+    bitgen_t *bitgen_state, RAND_INT_TYPE n, double p, binomial_t *binomial
+)
+{
+  double q, qn, np, px, U;
+  RAND_INT_TYPE X, bound;
+
+  if (!(binomial->has_binomial) || (binomial->nsave != n) ||
+      (binomial->psave != p)) {
+    binomial->nsave = n;
+    binomial->psave = p;
+    binomial->has_binomial = 1;
+    binomial->q = q = 1.0 - p;
+    binomial->r = qn = exp(n * log(q));
+    binomial->c = np = n * p;
+    binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
+  } else {
+    q = binomial->q;
+    qn = binomial->r;
+    np = binomial->c;
+    bound = binomial->m;
+  }
+  X = 0;
+  px = qn;
+  U = next_double(bitgen_state);
+  while (U > px) {
+    X++;
+    if (X > bound) {
+      X = 0;
+      px = qn;
+      U = next_double(bitgen_state);
+    } else {
+      U -= px;
+      px = ((n - X + 1) * p * px) / (X * q);
+    }
+  }
+  return X;
+}
 
 static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
                                                      double p,
@@ -237,14 +275,14 @@ static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
 
   if (p <= 0.5) {
     if (p * n <= 30.0) {
-      return random_binomial_inversion(bitgen_state, n, p, binomial);
+      return legacy_random_binomial_inversion(bitgen_state, n, p, binomial);
     } else {
       return random_binomial_btpe(bitgen_state, n, p, binomial);
     }
   } else {
     q = 1.0 - p;
     if (q * n <= 30.0) {
-      return n - random_binomial_inversion(bitgen_state, n, q, binomial);
+      return n - legacy_random_binomial_inversion(bitgen_state, n, q, binomial);
     } else {
       return n - random_binomial_btpe(bitgen_state, n, q, binomial);
     }
@@ -388,7 +426,31 @@ int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) {
 }
 
 int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
-  return (int64_t)random_zipf(bitgen_state, a);
+  double am1, b;
+
+  am1 = a - 1.0;
+  b = pow(2.0, am1);
+  while (1) {
+    double T, U, V, X;
+
+    U = 1.0 - next_double(bitgen_state);
+    V = next_double(bitgen_state);
+    X = floor(pow(U, -1.0 / am1));
+    /*
+     * The real result may be above what can be represented in a signed
+     * long. Since this is a straightforward rejection algorithm, we can
+     * just reject this value. This function then models a Zipf
+     * distribution truncated to sys.maxint.
+     */
+    if (X > (double)RAND_INT_MAX || X < 1.0) {
+      continue;
+    }
+
+    T = pow(1.0 + 1.0 / X, am1);
+    if (V * X * (T - 1.0) / (b - 1.0) <= T / b) {
+      return (RAND_INT_TYPE)X;
+    }
+  }
 }
 
 
@@ -407,7 +469,7 @@ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
 void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
                                RAND_INT_TYPE *mnix, double *pix, npy_intp d,
                                binomial_t *binomial) {
-  return random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
+  random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
 }
 
 double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {

@@ -1,7 +1,7 @@
 from .common import Benchmark
 
 try:
-    from numpy.core.overrides import array_function_dispatch
+    from numpy._core.overrides import array_function_dispatch
 except ImportError:
     # Don't fail at import time with old Numpy versions
     def array_function_dispatch(*args, **kwargs):

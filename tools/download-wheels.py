@@ -23,18 +23,26 @@ While in the repository root::
     $ python tools/download-wheels.py 1.19.0 -w ~/wheelhouse
 
 """
+import argparse
 import os
 import re
 import shutil
-import argparse
 
 import urllib3
 from bs4 import BeautifulSoup
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 # Edit these for other projects.
-STAGING_URL = "https://anaconda.org/multibuild-wheels-staging/numpy"
+
+# The first URL is used to get the file names as it avoids the need for paging
+# when the number of files exceeds the page length. Note that files/page is not
+# stable and can change when the page layout changes. The second URL is used to
+# retrieve the files themselves. This workaround is copied from SciPy.
+NAMES_URL = "https://pypi.anaconda.org/multibuild-wheels-staging/simple/numpy/"
+FILES_URL = "https://anaconda.org/multibuild-wheels-staging/numpy"
+
+# Name prefix of the files to download.
 PREFIX = "numpy"
 
 # Name endings of the files to download.
@@ -58,13 +66,13 @@ def get_wheel_names(version):
     """
     http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED")
     tmpl = re.compile(rf"^.*{PREFIX}-{version}{SUFFIX}")
-    index_url = f"{STAGING_URL}/files"
-    index_html = http.request("GET", index_url)
-    soup = BeautifulSoup(index_html.data, "html.parser")
-    return soup.findAll(text=tmpl)
+    index_url = f"{NAMES_URL}"
+    index_html = http.request('GET', index_url)
+    soup = BeautifulSoup(index_html.data, 'html.parser')
+    return sorted(soup.find_all(string=tmpl))
 
 
-def download_wheels(version, wheelhouse):
+def download_wheels(version, wheelhouse, test=False):
     """Download release wheels.
 
     The release wheels for the given NumPy version are downloaded
@@ -82,12 +90,19 @@ def download_wheels(version, wheelhouse):
     wheel_names = get_wheel_names(version)
 
     for i, wheel_name in enumerate(wheel_names):
-        wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
+        wheel_url = f"{FILES_URL}/{version}/download/{wheel_name}"
         wheel_path = os.path.join(wheelhouse, wheel_name)
         with open(wheel_path, "wb") as f:
             with http.request("GET", wheel_url, preload_content=False,) as r:
-                print(f"{i + 1:<4}{wheel_name}")
-                shutil.copyfileobj(r, f)
+                info = r.info()
+                length = int(info.get('Content-Length', '0'))
+                if length == 0:
+                    length = 'unknown size'
+                else:
+                    length = f"{(length / 1024 / 1024):.2f}MB"
+                print(f"{i + 1:<4}{wheel_name} {length}")
+                if not test:
+                    shutil.copyfileobj(r, f)
     print(f"\nTotal files downloaded: {len(wheel_names)}")
 
 
@@ -101,6 +116,10 @@ if __name__ == "__main__":
         default=os.path.join(os.getcwd(), "release", "installers"),
         help="Directory in which to store downloaded wheels\n"
              "[defaults to <cwd>/release/installers]")
+    parser.add_argument(
+        "-t", "--test",
+        action='store_true',
+        help="only list available wheels, do not download")
 
     args = parser.parse_args()
 
@@ -110,4 +129,4 @@ if __name__ == "__main__":
             f"{wheelhouse} wheelhouse directory is not present."
             " Perhaps you need to use the '-w' flag to specify one.")
 
-    download_wheels(args.version, wheelhouse)
+    download_wheels(args.version, wheelhouse, test=args.test)

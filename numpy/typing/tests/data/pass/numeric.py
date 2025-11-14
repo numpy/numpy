@@ -1,21 +1,21 @@
 """
-Tests for :mod:`numpy.core.numeric`.
+Tests for :mod:`numpy._core.numeric`.
 
 Does not include tests which fall under ``array_constructors``.
-
 """
 
-from __future__ import annotations
+from typing import Any
 
 import numpy as np
 
-class SubClass(np.ndarray):
-    ...
+
+class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.float64]]): ...
+
 
 i8 = np.int64(1)
 
 A = np.arange(27).reshape(3, 3, 3)
-B: list[list[list[int]]] = A.tolist()
+B = A.tolist()
 C = np.empty((27, 27)).view(SubClass)
 
 np.count_nonzero(i8)

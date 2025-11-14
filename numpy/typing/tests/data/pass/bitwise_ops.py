@@ -6,10 +6,10 @@ u8 = np.uint64(1)
 i4 = np.int32(1)
 u4 = np.uint32(1)
 
-b_ = np.bool_(1)
+b_ = np.bool(1)
 
 b = bool(1)
-i = int(1)
+i = 1
 
 AR = np.array([0, 1, 2], dtype=np.int32)
 AR.setflags(write=False)
@@ -20,6 +20,12 @@ i8 >> i8
 i8 | i8
 i8 ^ i8
 i8 & i8
+
+i << AR
+i >> AR
+i | AR
+i ^ AR
+i & AR
 
 i8 << AR
 i8 >> AR
@@ -62,12 +68,6 @@ u8 >> u8
 u8 | u8
 u8 ^ u8
 u8 & u8
-
-u8 << AR
-u8 >> AR
-u8 | AR
-u8 ^ AR
-u8 & AR
 
 u4 << u4
 u4 >> u4

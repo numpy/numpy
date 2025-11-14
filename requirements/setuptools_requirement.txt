@@ -1,0 +1,2 @@
+setuptools==65.5.1 ; python_version < '3.12'
+setuptools         ; python_version >= '3.12'

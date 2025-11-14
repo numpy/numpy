@@ -106,10 +106,8 @@ References
   Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
   (https://web.archive.org/web/20080221202153/https://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
-"""
+"""  # noqa: E501
 import numpy as np
-import numpy.linalg as la
-from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -150,8 +148,8 @@ def _cseries_to_zseries(c):
 
     """
     n = c.size
-    zs = np.zeros(2*n-1, dtype=c.dtype)
-    zs[n-1:] = c/2
+    zs = np.zeros(2 * n - 1, dtype=c.dtype)
+    zs[n - 1:] = c / 2
     return zs + zs[::-1]
 
 
@@ -174,8 +172,8 @@ def _zseries_to_cseries(zs):
         Chebyshev coefficients, ordered from  low to high.
 
     """
-    n = (zs.size + 1)//2
-    c = zs[n-1:].copy()
+    n = (zs.size + 1) // 2
+    c = zs[n - 1:].copy()
     c[1:n] *= 2
     return c
 
@@ -246,9 +244,9 @@ def _zseries_div(z1, z2):
     lc2 = len(z2)
     if lc2 == 1:
         z1 /= z2
-        return z1, z1[:1]*0
+        return z1, z1[:1] * 0
     elif lc1 < lc2:
-        return z1[:1]*0, z1
+        return z1[:1] * 0, z1
     else:
         dlen = lc1 - lc2
         scl = z2[0]
@@ -260,17 +258,17 @@ def _zseries_div(z1, z2):
             r = z1[i]
             quo[i] = z1[i]
             quo[dlen - i] = r
-            tmp = r*z2
-            z1[i:i+lc2] -= tmp
-            z1[j:j+lc2] -= tmp
+            tmp = r * z2
+            z1[i:i + lc2] -= tmp
+            z1[j:j + lc2] -= tmp
             i += 1
             j -= 1
         r = z1[i]
         quo[i] = r
-        tmp = r*z2
-        z1[i:i+lc2] -= tmp
+        tmp = r * z2
+        z1[i:i + lc2] -= tmp
         quo /= scl
-        rem = z1[i+1:i-1+lc2].copy()
+        rem = z1[i + 1:i - 1 + lc2].copy()
         return quo, rem
 
 
@@ -299,9 +297,9 @@ def _zseries_der(zs):
     division.
 
     """
-    n = len(zs)//2
+    n = len(zs) // 2
     ns = np.array([-1, 0, 1], dtype=zs.dtype)
-    zs *= np.arange(-n, n+1)*2
+    zs *= np.arange(-n, n + 1) * 2
     d, r = _zseries_div(zs, ns)
     return d
 
@@ -330,12 +328,12 @@ def _zseries_int(zs):
     dividing the resulting zs by two.
 
     """
-    n = 1 + len(zs)//2
+    n = 1 + len(zs) // 2
     ns = np.array([-1, 0, 1], dtype=zs.dtype)
     zs = _zseries_mul(zs, ns)
-    div = np.arange(-n, n+1)*2
+    div = np.arange(-n, n + 1) * 2
     zs[:n] /= div[:n]
-    zs[n+1:] /= div[n+1:]
+    zs[n + 1:] /= div[n + 1:]
     zs[n] = 0
     return zs
 
@@ -378,10 +376,10 @@ def poly2cheb(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(range(4))
     >>> p
-    Polynomial([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1])
+    Polynomial([0., 1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> c = p.convert(kind=P.Chebyshev)
     >>> c
-    Chebyshev([1.  , 3.25, 1.  , 0.75], domain=[-1.,  1.], window=[-1.,  1.])
+    Chebyshev([1.  , 3.25, 1.  , 0.75], domain=[-1.,  1.], window=[-1., ...
     >>> P.chebyshev.poly2cheb(range(4))
     array([1.  , 3.25, 1.  , 0.75])
 
@@ -430,15 +428,15 @@ def cheb2poly(c):
     >>> from numpy import polynomial as P
     >>> c = P.Chebyshev(range(4))
     >>> c
-    Chebyshev([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1])
+    Chebyshev([0., 1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
-    Polynomial([-2., -8.,  4., 12.], domain=[-1.,  1.], window=[-1.,  1.])
+    Polynomial([-2., -8.,  4., 12.], domain=[-1.,  1.], window=[-1.,  1.], ...
     >>> P.chebyshev.cheb2poly(range(4))
     array([-2.,  -8.,   4.,  12.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polymulx, polysub
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -451,7 +449,7 @@ def cheb2poly(c):
         for i in range(n - 1, 1, -1):
             tmp = c0
             c0 = polysub(c[i - 2], c1)
-            c1 = polyadd(tmp, polymulx(c1)*2)
+            c1 = polyadd(tmp, polymulx(c1) * 2)
         return polyadd(c0, polymulx(c1))
 
 
@@ -461,7 +459,7 @@ def cheb2poly(c):
 #
 
 # Chebyshev default domain.
-chebdomain = np.array([-1, 1])
+chebdomain = np.array([-1., 1.])
 
 # Chebyshev coefficients representing zero.
 chebzero = np.array([0])
@@ -519,11 +517,11 @@ def chebfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Chebyshev form, where the `r_n` are the roots specified in `roots`.
-    If a zero has multiplicity n, then it must appear in `roots` n times.
-    For instance, if 2 is a root of multiplicity three and 3 is a root of
-    multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
-    roots can appear in any order.
+    in Chebyshev form, where the :math:`r_n` are the roots specified in
+    `roots`.  If a zero has multiplicity n, then it must appear in `roots`
+    n times.  For instance, if 2 is a root of multiplicity three and 3 is a
+    root of multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3].
+    The roots can appear in any order.
 
     If the returned coefficients are `c`, then
 
@@ -670,10 +668,9 @@ def chebmulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
+    See Also
+    --------
+    chebadd, chebsub, chebmul, chebdiv, chebpow
 
     Examples
     --------
@@ -689,10 +686,10 @@ def chebmulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1] = c[0]
     if len(c) > 1:
-        tmp = c[1:]/2
+        tmp = c[1:] / 2
         prd[2:] = tmp
         prd[0:-2] += tmp
     return prd
@@ -796,15 +793,15 @@ def chebdiv(c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     # note: this is more efficient than `pu._div(chebmul, c1, c2)`
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         z1 = _cseries_to_zseries(c1)
         z2 = _cseries_to_zseries(c2)
@@ -900,8 +897,6 @@ def chebder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -935,11 +930,11 @@ def chebder(c, m=1, scl=1, axis=0):
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt = pu._deprecate_as_int(m, "the order of derivation")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of derivation")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -947,17 +942,17 @@ def chebder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 2, -1):
-                der[j - 1] = (2*j)*c[j]
-                c[j - 2] += (j*c[j])/(j - 2)
+                der[j - 1] = (2 * j) * c[j]
+                c[j - 2] += (j * c[j]) / (j - 2)
             if n > 1:
-                der[1] = 4*c[2]
+                der[1] = 4 * c[2]
             der[0] = c[1]
             c = der
     c = np.moveaxis(c, 0, iaxis)
@@ -1001,8 +996,6 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -1054,8 +1047,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt = pu._deprecate_as_int(m, "the order of integration")
-    iaxis = pu._deprecate_as_int(axis, "the axis")
+    cnt = pu._as_int(m, "the order of integration")
+    iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -1064,13 +1057,13 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
     c = np.moveaxis(c, iaxis, 0)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -1078,13 +1071,13 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             if n > 1:
-                tmp[2] = c[1]/4
+                tmp[2] = c[1] / 4
             for j in range(2, n):
-                tmp[j + 1] = c[j]/(2*(j + 1))
-                tmp[j - 1] -= c[j]/(2*(j - 1))
+                tmp[j + 1] = c[j] / (2 * (j + 1))
+                tmp[j - 1] -= c[j] / (2 * (j - 1))
             tmp[0] += k[i] - chebval(lbnd, tmp)
             c = tmp
     c = np.moveaxis(c, 0, iaxis)
@@ -1104,7 +1097,7 @@ def chebval(x, c, tensor=True):
     or its elements must support multiplication and addition both with
     themselves and with the elements of `c`.
 
-    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    If `c` is a 1-D array, then ``p(x)`` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
     value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
     x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
@@ -1134,8 +1127,6 @@ def chebval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -1156,7 +1147,7 @@ def chebval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
     if len(c) == 1:
         c0 = c[0]
@@ -1165,14 +1156,14 @@ def chebval(x, c, tensor=True):
         c0 = c[0]
         c1 = c[1]
     else:
-        x2 = 2*x
+        x2 = 2 * x
         c0 = c[-2]
         c1 = c[-1]
         for i in range(3, len(c) + 1):
             tmp = c0
             c0 = c[-i] - c1
-            c1 = tmp + c1*x2
-    return c0 + c1*x
+            c1 = tmp + c1 * x2
+    return c0 + c1 * x
 
 
 def chebval2d(x, y, c):
@@ -1195,7 +1186,7 @@ def chebval2d(x, y, c):
     Parameters
     ----------
     x, y : array_like, compatible objects
-        The two dimensional series is evaluated at the points `(x, y)`,
+        The two dimensional series is evaluated at the points ``(x, y)``,
         where `x` and `y` must have the same shape. If `x` or `y` is a list
         or tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and if it isn't an ndarray it is treated as a scalar.
@@ -1214,12 +1205,6 @@ def chebval2d(x, y, c):
     See Also
     --------
     chebval, chebgrid2d, chebval3d, chebgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(chebval, c, x, y)
 
@@ -1254,7 +1239,7 @@ def chebgrid2d(x, y, c):
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
         Array of coefficients ordered so that the coefficient of the term of
-        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        multi-degree i,j is contained in ``c[i,j]``. If `c` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
@@ -1267,12 +1252,6 @@ def chebgrid2d(x, y, c):
     See Also
     --------
     chebval, chebval2d, chebval3d, chebgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(chebval, c, x, y)
 
@@ -1299,7 +1278,7 @@ def chebval3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible object
         The three dimensional series is evaluated at the points
-        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
+        ``(x, y, z)``, where `x`, `y`, and `z` must have the same shape.  If
         any of `x`, `y`, or `z` is a list or tuple, it is first converted
         to an ndarray, otherwise it is left unchanged and if it isn't an
         ndarray it is  treated as a scalar.
@@ -1318,12 +1297,6 @@ def chebval3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(chebval, c, x, y, z)
 
@@ -1336,7 +1309,7 @@ def chebgrid3d(x, y, z, c):
 
     .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * T_i(a) * T_j(b) * T_k(c)
 
-    where the points `(a, b, c)` consist of all triples formed by taking
+    where the points ``(a, b, c)`` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
     a grid with `x` in the first dimension, `y` in the second, and `z` in
     the third.
@@ -1355,7 +1328,7 @@ def chebgrid3d(x, y, z, c):
     ----------
     x, y, z : array_like, compatible objects
         The three dimensional series is evaluated at the points in the
-        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        Cartesian product of `x`, `y`, and `z`.  If `x`, `y`, or `z` is a
         list or tuple, it is first converted to an ndarray, otherwise it is
         left unchanged and, if it isn't an ndarray, it is treated as a
         scalar.
@@ -1374,12 +1347,6 @@ def chebgrid3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(chebval, c, x, y, z)
 
@@ -1392,10 +1359,10 @@ def chebvander(x, deg):
 
     .. math:: V[..., i] = T_i(x),
 
-    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    where ``0 <= i <= deg``. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Chebyshev polynomial.
 
-    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    If `c` is a 1-D array of coefficients of length ``n + 1`` and `V` is the
     matrix ``V = chebvander(x, n)``, then ``np.dot(V, c)`` and
     ``chebval(x, c)`` are the same up to roundoff.  This equivalence is
     useful both for least squares fitting and for the evaluation of a large
@@ -1419,21 +1386,21 @@ def chebvander(x, deg):
         the converted `x`.
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=False, ndmin=1) + 0.0
+    x = np.array(x, copy=None, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
     # Use forward recursion to generate the entries.
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
-        x2 = 2*x
+        x2 = 2 * x
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = v[i-1]*x2 - v[i-2]
+            v[i] = v[i - 1] * x2 - v[i - 2]
     return np.moveaxis(v, 0, -1)
 
 
@@ -1441,12 +1408,12 @@ def chebvander2d(x, y, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+    points ``(x, y)``. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (deg[1] + 1)*i + j] = T_i(x) * T_j(y),
 
-    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
-    `V` index the points `(x, y)` and the last index encodes the degrees of
+    where ``0 <= i <= deg[0]`` and ``0 <= j <= deg[1]``. The leading indices of
+    `V` index the points ``(x, y)`` and the last index encodes the degrees of
     the Chebyshev polynomials.
 
     If ``V = chebvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
@@ -1480,12 +1447,6 @@ def chebvander2d(x, y, deg):
     See Also
     --------
     chebvander, chebvander3d, chebval2d, chebval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((chebvander, chebvander), (x, y), deg)
 
@@ -1494,13 +1455,13 @@ def chebvander3d(x, y, z, deg):
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
-    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    points ``(x, y, z)``. If `l`, `m`, `n` are the given degrees in `x`, `y`, `z`,
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
 
-    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
-    indices of `V` index the points `(x, y, z)` and the last index encodes
+    where ``0 <= i <= l``, ``0 <= j <= m``, and ``0 <= j <= n``.  The leading
+    indices of `V` index the points ``(x, y, z)`` and the last index encodes
     the degrees of the Chebyshev polynomials.
 
     If ``V = chebvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
@@ -1534,12 +1495,6 @@ def chebvander3d(x, y, z, deg):
     See Also
     --------
     chebvander, chebvander3d, chebval2d, chebval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((chebvander, chebvander, chebvander), (x, y, z), deg)
 
@@ -1575,7 +1530,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
-        default value is len(x)*eps, where eps is the relative precision of
+        default value is ``len(x)*eps``, where eps is the relative precision of
         the float type, about 2e-16 in most cases.
     full : bool, optional
         Switch determining nature of return value. When it is False (the
@@ -1587,8 +1542,6 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1615,7 +1568,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', np.RankWarning)
+        >>> warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
     See Also
     --------
@@ -1648,8 +1601,8 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     decomposition of `V`.
 
     If some of the singular values of `V` are so small that they are
-    neglected, then a `RankWarning` will be issued. This means that the
-    coefficient values may be poorly determined. Using a lower order fit
+    neglected, then a `~exceptions.RankWarning` will be issued. This means that
+    the coefficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
@@ -1690,29 +1643,23 @@ def chebcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.array([1.] + [np.sqrt(.5)]*(n-1))
-    top = mat.reshape(-1)[1::n+1]
-    bot = mat.reshape(-1)[n::n+1]
+    scl = np.array([1.] + [np.sqrt(.5)] * (n - 1))
+    top = mat.reshape(-1)[1::n + 1]
+    bot = mat.reshape(-1)[n::n + 1]
     top[0] = np.sqrt(.5)
-    top[1:] = 1/2
+    top[1:] = 1 / 2
     bot[...] = top
-    mat[:, -1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
+    mat[:, -1] -= (c[:-1] / c[-1]) * (scl / scl[-1]) * .5
     return mat
 
 
@@ -1768,11 +1715,11 @@ def chebroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = chebcompanion(c)[::-1,::-1]
-    r = la.eigvals(m)
+    m = chebcompanion(c)[::-1, ::-1]
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1784,8 +1731,6 @@ def chebinterpolate(func, deg, args=()):
     points of the first kind in the interval [-1, 1]. The interpolating
     series tends to a minmax approximation to `func` with increasing `deg`
     if the function is continuous in the interval.
-
-    .. versionadded:: 1.14.0
 
     Parameters
     ----------
@@ -1808,14 +1753,13 @@ def chebinterpolate(func, deg, args=()):
     Examples
     --------
     >>> import numpy.polynomial.chebyshev as C
-    >>> C.chebfromfunction(lambda x: np.tanh(x) + 0.5, 8)
+    >>> C.chebinterpolate(lambda x: np.tanh(x) + 0.5, 8)
     array([  5.00000000e-01,   8.11675684e-01,  -9.86864911e-17,
             -5.42457905e-02,  -2.71387850e-16,   4.51658839e-03,
              2.46716228e-17,  -3.79694221e-04,  -3.26899002e-16])
 
     Notes
     -----
-
     The Chebyshev polynomials used in the interpolation are orthogonal when
     sampled at the Chebyshev points of the first kind. If it is desired to
     constrain some of the coefficients they can simply be set to the desired
@@ -1839,7 +1783,7 @@ def chebinterpolate(func, deg, args=()):
     m = chebvander(xcheb, deg)
     c = np.dot(m.T, yfunc)
     c[0] /= order
-    c[1:] /= 0.5*order
+    c[1:] /= 0.5 * order
 
     return c
 
@@ -1867,9 +1811,6 @@ def chebgauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. For Gauss-Chebyshev there are closed form solutions for
     the sample points and weights. If n = `deg`, then
@@ -1879,12 +1820,12 @@ def chebgauss(deg):
     .. math:: w_i = \\pi / n
 
     """
-    ideg = pu._deprecate_as_int(deg, "deg")
+    ideg = pu._as_int(deg, "deg")
     if ideg <= 0:
         raise ValueError("deg must be a positive integer")
 
-    x = np.cos(np.pi * np.arange(1, 2*ideg, 2) / (2.0*ideg))
-    w = np.ones(ideg)*(np.pi/ideg)
+    x = np.cos(np.pi * np.arange(1, 2 * ideg, 2) / (2.0 * ideg))
+    w = np.ones(ideg) * (np.pi / ideg)
 
     return x, w
 
@@ -1906,14 +1847,8 @@ def chebweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
-    w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
+    w = 1. / (np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
 
 
@@ -1937,12 +1872,6 @@ def chebpts1(npts):
     See Also
     --------
     chebpts2
-
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
-
     """
     _npts = int(npts)
     if _npts != npts:
@@ -1950,7 +1879,7 @@ def chebpts1(npts):
     if _npts < 1:
         raise ValueError("npts must be >= 1")
 
-    x = 0.5 * np.pi / _npts * np.arange(-_npts+1, _npts+1, 2)
+    x = 0.5 * np.pi / _npts * np.arange(-_npts + 1, _npts + 1, 2)
     return np.sin(x)
 
 
@@ -1959,7 +1888,8 @@ def chebpts2(npts):
     Chebyshev points of the second kind.
 
     The Chebyshev points of the second kind are the points ``cos(x)``,
-    where ``x = [pi*k/(npts - 1) for k in range(npts)]``.
+    where ``x = [pi*k/(npts - 1) for k in range(npts)]`` sorted in ascending
+    order.
 
     Parameters
     ----------
@@ -1970,12 +1900,6 @@ def chebpts2(npts):
     -------
     pts : ndarray
         The Chebyshev points of the second kind.
-
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
-
     """
     _npts = int(npts)
     if _npts != npts:
@@ -1996,7 +1920,7 @@ class Chebyshev(ABCPolyBase):
 
     The Chebyshev class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the
-    methods listed below.
+    attributes and methods listed below.
 
     Parameters
     ----------
@@ -2006,11 +1930,15 @@ class Chebyshev(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is [-1., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
+        Window, see `domain` for its use. The default value is [-1., 1.].
+    symbol : str, optional
+        Symbol used to represent the independent variable in string
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
 
-        .. versionadded:: 1.6.0
+        .. versionadded:: 1.24
 
     """
     # Virtual Functions
@@ -2036,8 +1964,6 @@ class Chebyshev(ABCPolyBase):
         tends to a minmax approximation of `func` when the function is
         continuous in the domain.
 
-        .. versionadded:: 1.14.0
-
         Parameters
         ----------
         func : function
@@ -2060,7 +1986,7 @@ class Chebyshev(ABCPolyBase):
 
         Notes
         -----
-        See `numpy.polynomial.chebfromfunction` for more details.
+        See `numpy.polynomial.chebinterpolate` for more details.
 
         """
         if domain is None:

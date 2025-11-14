@@ -2,9 +2,13 @@ import os
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, _assert_valid_refcount,
-    )
+    _assert_valid_refcount,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 class TestRegression:
@@ -69,7 +73,7 @@ class TestRegression:
         u = np.poly1d([1, 2, 3])
         v = np.poly1d([1, 2, 3, 4, 5])
         q, r = np.polydiv(u, v)
-        assert_equal(q*v + r, u)
+        assert_equal(q * v + r, u)
 
     def test_poly_eq(self):
         # Ticket #554
@@ -128,24 +132,20 @@ class TestRegression:
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
 
-    def test_asfarray_none(self):
-        # Test for changeset r5065
-        assert_array_equal(np.array([np.nan]), np.asfarray([None]))
-
     def test_large_fancy_indexing(self):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8
-        thesize = int((2**nbits)**(1.0/5.0)+1)
+        thesize = int((2**nbits)**(1.0 / 5.0) + 1)
 
         def dp():
             n = 3
-            a = np.ones((n,)*5)
+            a = np.ones((n,) * 5)
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)] = 0
 
         def dp2():
             n = 3
-            a = np.ones((n,)*5)
+            a = np.ones((n,) * 5)
             i = np.random.randint(0, n, size=thesize)
             a[np.ix_(i, i, i, i, i)]
 
@@ -156,22 +156,6 @@ class TestRegression:
         dt = np.dtype([('a', 'f4'), ('b', 'i4')])
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
-
-    def test_who_with_0dim_array(self):
-        # ticket #1243
-        import os
-        import sys
-
-        oldstdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        try:
-            try:
-                np.who({'foo': np.array(1)})
-            except Exception:
-                raise AssertionError("ticket #1243")
-        finally:
-            sys.stdout.close()
-            sys.stdout = oldstdout
 
     def test_include_dirs(self):
         # As a sanity check, just test that get_include
@@ -200,7 +184,7 @@ class TestRegression:
         try:
             append_fields(base, names, data, dlist)
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
@@ -229,12 +213,12 @@ class TestRegression:
         try:
             np.nansum(a)
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_py3_compat(self):
         # gh-2561
         # Test if the oldstyle class test is bypassed in python3
-        class C():
+        class C:
             """Old-style class in python2, normal class in python3"""
             pass
 
@@ -242,6 +226,6 @@ class TestRegression:
         try:
             np.info(C(), output=out)
         except AttributeError:
-            raise AssertionError()
+            raise AssertionError
         finally:
             out.close()

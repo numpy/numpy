@@ -1,10 +1,12 @@
 from os.path import join, sep, dirname
 
+import pytest
+
 from numpy.distutils.misc_util import (
     appendpath, minrelpath, gpaths, get_shared_lib_extension, get_info
     )
 from numpy.testing import (
-    assert_, assert_equal
+    assert_, assert_equal, IS_EDITABLE
     )
 
 ajoin = lambda *paths: join(*((sep,)+paths))
@@ -73,6 +75,10 @@ class TestSharedExtension:
         assert_(get_shared_lib_extension(is_python_ext=True))
 
 
+@pytest.mark.skipif(
+    IS_EDITABLE,
+    reason="`get_info` .ini lookup method incompatible with editable install"
+)
 def test_installed_npymath_ini():
     # Regression test for gh-7707.  If npymath.ini wasn't installed, then this
     # will give an error.

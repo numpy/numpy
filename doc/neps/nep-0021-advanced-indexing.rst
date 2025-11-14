@@ -6,7 +6,7 @@ NEP 21 — Simplified and explicit advanced indexing
 
 :Author: Sebastian Berg
 :Author: Stephan Hoyer <shoyer@google.com>
-:Status: Draft
+:Status: Deferred
 :Type: Standards Track
 :Created: 2015-08-27
 
@@ -123,7 +123,7 @@ with shape ``(1,)``, not a 2D sub-matrix with shape ``(1, 1)``.
 Mixed indexing seems so tricky that it is tempting to say that it never should
 be used. However, it is not easy to avoid, because NumPy implicitly adds full
 slices if there are fewer indices than the full dimensionality of the indexed
-array. This means that indexing a 2D array like `x[[0, 1]]`` is equivalent to
+array. This means that indexing a 2D array like ``x[[0, 1]]`` is equivalent to
 ``x[[0, 1], :]``. These cases are not surprising, but they constrain the
 behavior of mixed indexing.
 
@@ -143,7 +143,7 @@ exactly.
 
 Vectorized indexing in particular can be challenging to implement with array
 storage backends not based on NumPy. In contrast, indexing by 1D arrays along
-at least one dimension in the style of outer indexing is much more acheivable.
+at least one dimension in the style of outer indexing is much more achievable.
 This has led many libraries (including dask and h5py) to attempt to define a
 safe subset of NumPy-style indexing that is equivalent to outer indexing, e.g.,
 by only allowing indexing with an array along at most one dimension. However,
@@ -198,7 +198,7 @@ motivational use-cases for the general ideas and is likely a good start for
 anyone not intimately familiar with advanced indexing.
 
 
-Detailed Description
+Detailed description
 --------------------
 
 Proposed rules
@@ -219,7 +219,7 @@ be deduced:
    no transposing should be done. The axes created by the integer array
    indices are always inserted at the front, even for a single index.
 
-4. Boolean indexing is conceptionally outer indexing. Broadcasting
+4. Boolean indexing is conceptually outer indexing. Broadcasting
    together with other advanced indices in the manner of legacy
    indexing is generally not helpful or well defined.
    A user who wishes the "``nonzero``" plus broadcast behaviour can thus
@@ -236,7 +236,7 @@ be deduced:
    For the beginning, this probably means cases where ``arr[ind]`` and
    ``arr.oindex[ind]`` return different results give deprecation warnings.
    This includes every use of vectorized indexing with multiple integer arrays.
-   Due to the transposing behaviour, this means that``arr[0, :, index_arr]``
+   Due to the transposing behaviour, this means that ``arr[0, :, index_arr]``
    will be deprecated, but ``arr[:, 0, index_arr]`` will not for the time being.
 
 7. To ensure that existing subclasses of `ndarray` that override indexing
@@ -285,7 +285,7 @@ Open Questions
   Copying always "fixes" this possible inconsistency.
 
 * The final state to morph plain indexing in is not fixed in this PEP.
-  It is for example possible that `arr[index]`` will be equivalent to
+  It is for example possible that ``arr[index]`` will be equivalent to
   ``arr.oindex`` at some point in the future.
   Since such a change will take years, it seems unnecessary to make
   specific decisions at this time.
@@ -377,7 +377,7 @@ instead of ``arr.oindex[indices]``). Functionally, this would be equivalent,
 but indexing is such a common operation that we think it is important to
 minimize syntax and worth implementing it directly on `ndarray` objects
 themselves. Indexing attributes also define a clear interface that is easier
-for alternative array implementations to copy, nonwithstanding ongoing
+for alternative array implementations to copy, notwithstanding ongoing
 efforts to make it easier to override NumPy functions [2]_.
 
 Discussion
@@ -649,15 +649,14 @@ eventualities.
 Copyright
 ---------
 
-This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
+This document is placed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication [1]_.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] To the extent possible under law, the person who associated CC0 
    with this work has waived all copyright and related or neighboring
    rights to this work. The CC0 license may be found at
    https://creativecommons.org/publicdomain/zero/1.0/
-.. [2] e.g., see NEP 18,
-   http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+.. [2] e.g., see :doc:`nep-0018-array-function-protocol`

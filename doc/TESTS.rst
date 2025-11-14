@@ -1,4 +1,4 @@
-NumPy/SciPy Testing Guidelines
+NumPy/SciPy testing guidelines
 ==============================
 
 .. contents::
@@ -56,23 +56,66 @@ messages about which modules don't have tests::
   >>> numpy.test(label='full', verbose=2)  # or numpy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of NumPy, for
-example, the ``core`` module, use the following::
+example, the ``_core`` module, use the following::
 
-  >>> numpy.core.test()
+  >>> numpy._core.test()
 
 Running tests from the command line
 -----------------------------------
 
-If you want to build NumPy in order to work on NumPy itself, use
-``runtests.py``.To run NumPy's full test suite::
+If you want to build NumPy in order to work on NumPy itself, use the ``spin``
+utility. To run NumPy's full test suite::
 
-  $ python runtests.py
+  $ spin test -m full
 
 Testing a subset of NumPy::
 
-  $python runtests.py -t numpy/core/tests
+  $ spin test -t numpy/_core/tests
 
 For detailed info on testing, see :ref:`testing-builds`
+
+Running tests in multiple threads
+---------------------------------
+
+To help with stress testing NumPy for thread safety, the test suite can be run under
+`pytest-run-parallel`_. To install ``pytest-run-parallel``::
+
+  $ pip install pytest-run-parallel
+
+To run the test suite in multiple threads::
+
+  $ spin test -p auto # have pytest-run-parallel detect the number of available cores
+  $ spin test -p 4 # run each test under 4 threads
+  $ spin test -p auto -- --skip-thread-unsafe=true # run ONLY tests that are thread-safe
+
+When you write new tests, it is worth testing to make sure they do not fail
+under ``pytest-run-parallel``, since the CI jobs make use of it. Some tips on how to
+write thread-safe tests can be found `here <#writing-thread-safe-tests>`_.
+
+.. note::
+
+  Ideally you should run ``pytest-run-parallel`` using a `free-threaded build of Python
+  <https://docs.python.org/3/howto/free-threading-python.html>`_ that is 3.14 or
+  higher. If you decide to use a version of Python that is not free-threaded, you will
+  need to set the environment variables ``PYTHON_CONTEXT_AWARE_WARNINGS`` and 
+  ``PYTHON_THREAD_INHERIT_CONTEXT`` to 1.
+
+Running doctests
+----------------
+
+NumPy documentation contains code examples, "doctests". To check that the examples
+are correct, install the ``scipy-doctest`` package::
+
+  $ pip install scipy-doctest
+
+and run one of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -- -k 'det and not slogdet'
+
+Note that the doctests are not run when you use ``spin test``.
+
 
 Other methods of running tests
 ------------------------------
@@ -82,8 +125,8 @@ Run tests using your favourite IDE such as `vscode`_ or `pycharm`_
 Writing your own tests
 ''''''''''''''''''''''
 
-If you are writing a package that you'd like to become part of NumPy,
-please write the tests as you develop the package.
+If you are writing code that you'd like to become part of NumPy,
+please write the tests as you develop your code.
 Every Python module, extension module, or subpackage in the NumPy
 package directory should have a corresponding ``test_<name>.py`` file.
 Pytest examines these files for test methods (named ``test*``) and test
@@ -114,10 +157,25 @@ a test class::
           with pytest.raises(ValueError, match='.*some matching regex.*'):
               ...
 
-Within these test methods, ``assert`` and related functions are used to test
-whether a certain assumption is valid. If the assertion fails, the test fails.
-``pytest`` internally rewrites the ``assert`` statement to give informative
-output when it fails, so should be preferred over the legacy variant
+Within these test methods, the ``assert`` statement or a specialized assertion
+function is used to test whether a certain assumption is valid. If the
+assertion fails, the test fails. Common assertion functions include:
+
+- :func:`numpy.testing.assert_equal` for testing exact elementwise equality
+  between a result array and a reference,
+- :func:`numpy.testing.assert_allclose` for testing near elementwise equality
+  between a result array and a reference (i.e. with specified relative and
+  absolute tolerances), and
+- :func:`numpy.testing.assert_array_less` for testing (strict) elementwise
+  ordering between a result array and a reference.
+
+By default, these assertion functions only compare the numerical values in the
+arrays. Consider using the ``strict=True`` option to check the array dtype
+and shape, too.
+
+When you need custom assertions, use the Python ``assert`` statement. Note that
+``pytest`` internally rewrites ``assert`` statements to give informative
+output when it fails, so it should be preferred over the legacy variant
 ``numpy.testing.assert_``. Whereas plain ``assert`` statements are ignored
 when running Python in optimized mode with ``-O``, this is not an issue when
 running tests with pytest.
@@ -125,16 +183,17 @@ running tests with pytest.
 Similarly, the pytest functions :func:`pytest.raises` and :func:`pytest.warns`
 should be preferred over their legacy counterparts
 :func:`numpy.testing.assert_raises` and :func:`numpy.testing.assert_warns`,
-since the pytest variants are more broadly used and allow more explicit
-targeting of warnings and errors when used with the ``match`` regex.
-
+which are more broadly used. These versions also accept a ``match``
+parameter, which should always be used to precisely target the intended
+warning or error.
 
 Note that ``test_`` functions or methods should not have a docstring, because
 that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
-(``#``) if necessary.
+(``#``) to describe the intent of the test and help the unfamiliar reader to
+interpret the code.
 
-Also since much of NumPy is legacy code that was
+Also, since much of NumPy is legacy code that was
 originally written without unit tests, there are still several modules
 that don't have tests yet. Please feel free to choose one of these
 modules and develop tests for it.
@@ -175,40 +234,53 @@ Similarly for methods::
       def test_simple(self):
           assert_(zzz() == 'Hello from zzz')
 
-Easier setup and teardown functions / methods
----------------------------------------------
+Setup and teardown methods
+--------------------------
 
-Testing looks for module-level or class-level setup and teardown functions by
-name; thus::
-
-  def setup():
-      """Module-level setup"""
-      print('doing setup')
-
-  def teardown():
-      """Module-level teardown"""
-      print('doing teardown')
-
+NumPy originally used xunit setup and teardown, a feature of `pytest`. We now encourage
+the usage of setup and teardown methods that are called explicitly by the tests that
+need them::
 
   class TestMe:
-      def setup():
-          """Class-level setup"""
+      def setup(self):
           print('doing setup')
+          return 1
 
-      def teardown():
-          """Class-level teardown"""
+      def teardown(self):
           print('doing teardown')
 
+      def test_xyz(self):
+          x = self.setup()
+          assert x == 1
+          self.teardown()
 
-Setup and teardown functions to functions and methods are known as "fixtures",
-and their use is not encouraged.
+This approach is thread-safe, ensuring tests can run under ``pytest-run-parallel``.
+Using pytest setup fixtures (such as xunit setup methods) is generally not thread-safe
+and will likely cause thread-safety test failures.
+
+``pytest`` supports more general fixture at various scopes which may be used
+automatically via special arguments. For example, the special argument name
+``tmp_path`` is used in tests to create temporary directories. However, 
+fixtures should be used sparingly.
 
 Parametric tests
 ----------------
 
-One very nice feature of testing is allowing easy testing across a range
-of parameters - a nasty problem for standard unit tests. Use the
-``pytest.mark.parametrize`` decorator.
+One very nice feature of ``pytest`` is the ease of testing across a range
+of parameter values using the ``pytest.mark.parametrize`` decorator. For example,
+suppose you wish to test ``linalg.solve`` for all combinations of three
+array sizes and two data types::
+
+  @pytest.mark.parametrize('dimensionality', [3, 10, 25])
+  @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+  def test_solve(dimensionality, dtype):
+      np.random.seed(842523)
+      A = np.random.random(size=(dimensionality, dimensionality)).astype(dtype)
+      b = np.random.random(size=dimensionality).astype(dtype)
+      x = np.linalg.solve(A, b)
+      eps = np.finfo(dtype).eps
+      assert_allclose(A @ x, b, rtol=eps*1e2, atol=0)
+      assert x.dtype == np.dtype(dtype)
 
 Doctests
 --------
@@ -291,46 +363,6 @@ found and run::
 Tips & Tricks
 '''''''''''''
 
-Creating many similar tests
----------------------------
-
-If you have a collection of tests that must be run multiple times with
-minor variations, it can be helpful to create a base class containing
-all the common tests, and then create a subclass for each variation.
-Several examples of this technique exist in NumPy; below are excerpts
-from one in `numpy/linalg/tests/test_linalg.py
-<https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py>`__::
-
-  class LinalgTestCase:
-      def test_single(self):
-          a = array([[1., 2.], [3., 4.]], dtype=single)
-          b = array([2., 1.], dtype=single)
-          self.do(a, b)
-
-      def test_double(self):
-          a = array([[1., 2.], [3., 4.]], dtype=double)
-          b = array([2., 1.], dtype=double)
-          self.do(a, b)
-
-      ...
-
-  class TestSolve(LinalgTestCase):
-      def do(self, a, b):
-          x = linalg.solve(a, b)
-          assert_allclose(b, dot(a, x))
-          assert imply(isinstance(b, matrix), isinstance(x, matrix))
-
-  class TestInv(LinalgTestCase):
-      def do(self, a, b):
-          a_inv = linalg.inv(a)
-          assert_allclose(dot(a, a_inv), identity(asarray(a).shape[0]))
-          assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
-
-In this case, we wanted to test solving a linear algebra problem using
-matrices of several data types, using ``linalg.solve`` and
-``linalg.inv``.  The common test cases (for single-precision,
-double-precision, etc. matrices) are collected in ``LinalgTestCase``.
-
 Known failures & skipping tests
 -------------------------------
 
@@ -372,9 +404,9 @@ Tests on random data
 Tests on random data are good, but since test failures are meant to expose
 new bugs or regressions, a test that passes most of the time but fails
 occasionally with no code changes is not helpful. Make the random data
-deterministic by setting the random number seed before generating it.  Use
-either Python's ``random.seed(some_number)`` or NumPy's
-``numpy.random.seed(some_number)``, depending on the source of random numbers.
+deterministic by setting the random number seed before generating it.
+Use ``rng = numpy.random.RandomState(some_number)`` to set a seed on a
+local instance of `numpy.random.RandomState`.
 
 Alternatively, you can use `Hypothesis`_ to generate arbitrary data.
 Hypothesis manages both Python's and Numpy's random seeds for you, and
@@ -385,6 +417,44 @@ The advantages over random generation include tools to replay and share
 failures without requiring a fixed seed, reporting *minimal* examples for
 each failure, and better-than-naive-random techniques for triggering bugs.
 
+Writing thread-safe tests
+-------------------------
+
+Writing thread-safe tests may require some trial-and-error. Generally you should
+follow the guidelines stated so far, especially when it comes to `setup methods
+<#setup-and-teardown-methods>`_ and `seeding random data <#tests-on-random-data>`_.
+Explicit setup and the usage of local RNG are thread-safe practices. Here are tips
+for some other common problems you may run into.
+
+Using ``pytest.mark.parametrize`` may occasionally cause thread-safety issues.
+To fix this, you can use ``copy()``::
+
+  @pytest.mark.parametrize('dimensionality', [3, 10, 25])
+  @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+  def test_solve(dimensionality, dtype):
+      dimen = dimensionality.copy()
+      d = dtype.copy()
+      # use these copied variables instead
+      ...
+
+If you are testing something that is inherently thread-unsafe, you can label your
+test with ``pytest.mark.thread_unsafe`` so that it will run under a single thread
+and not cause test failures::
+  
+  @pytest.mark.thread_unsafe(reason="reason this test is thread-unsafe")
+  def test_thread_unsafe():
+    ...
+
+Some examples of what should be labeled as thread-unsafe:
+
+- Usage of ``sys.stdout`` and ``sys.stderr``
+- Mutation of global data, like docstrings, modules, garbage collectors, etc.
+- Tests that require a lot of memory, since they could cause crashes.
+
+Additionally, some ``pytest`` fixtures are thread-unsafe, such as ``monkeypatch`` and
+``capsys``. However, ``pytest-run-parallel`` will automatically mark these as
+thread-unsafe if you decide to use them. Some fixtures have been patched to be
+thread-safe, like ``tmp_path``.
 
 Documentation for ``numpy.test``
 --------------------------------
@@ -397,3 +467,4 @@ Documentation for ``numpy.test``
 .. _Hypothesis: https://hypothesis.readthedocs.io/en/latest/
 .. _vscode: https://code.visualstudio.com/docs/python/testing#_enable-a-test-framework
 .. _pycharm: https://www.jetbrains.com/help/pycharm/testing-your-first-python-application.html
+.. _pytest-run-parallel: https://github.com/Quansight-Labs/pytest-run-parallel

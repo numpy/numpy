@@ -1,0 +1,46 @@
+
+Contributors
+============
+
+A total of 13 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andrew Nelson
+* Anton Prosekin +
+* Charles Harris
+* Chongyun Lee +
+* Ivan A. Melnikov +
+* Jake Lishman +
+* Mahder Gebremedhin +
+* Mateusz Sokół
+* Matti Picus
+* Munira Alduraibi +
+* Ralf Gommers
+* Rohit Goswami
+* Sayed Adel
+
+Pull requests merged
+====================
+
+A total of 20 pull requests were merged for this release.
+
+* `#24742 <https://github.com/numpy/numpy/pull/24742>`__: MAINT: Update cibuildwheel version
+* `#24748 <https://github.com/numpy/numpy/pull/24748>`__: MAINT: fix version string in wheels built with setup.py
+* `#24771 <https://github.com/numpy/numpy/pull/24771>`__: BLD, BUG: Fix build failure for host flags e.g. ``-march=native``...
+* `#24773 <https://github.com/numpy/numpy/pull/24773>`__: DOC: Updated the f2py docs to remove a note on -fimplicit-none
+* `#24776 <https://github.com/numpy/numpy/pull/24776>`__: BUG: Fix SIMD f32 trunc test on s390x when baseline is none
+* `#24785 <https://github.com/numpy/numpy/pull/24785>`__: BLD: add libquadmath to licences and other tweaks (#24753)
+* `#24786 <https://github.com/numpy/numpy/pull/24786>`__: MAINT: Activate ``use-compute-credits`` for Cirrus.
+* `#24803 <https://github.com/numpy/numpy/pull/24803>`__: BLD: updated vendored-meson/meson for mips64 fix
+* `#24804 <https://github.com/numpy/numpy/pull/24804>`__: MAINT: fix licence path win
+* `#24813 <https://github.com/numpy/numpy/pull/24813>`__: BUG: Fix order of Windows OS detection macros.
+* `#24831 <https://github.com/numpy/numpy/pull/24831>`__: BUG, SIMD: use scalar cmul on bad Apple clang x86_64 (#24828)
+* `#24840 <https://github.com/numpy/numpy/pull/24840>`__: BUG: Fix DATA statements for f2py
+* `#24870 <https://github.com/numpy/numpy/pull/24870>`__: API: Add ``NumpyUnpickler`` for backporting
+* `#24872 <https://github.com/numpy/numpy/pull/24872>`__: MAINT: Xfail test failing on PyPy.
+* `#24879 <https://github.com/numpy/numpy/pull/24879>`__: BLD: fix math func feature checks, fix FreeBSD build, add CI...
+* `#24899 <https://github.com/numpy/numpy/pull/24899>`__: ENH: meson: implement BLAS/LAPACK auto-detection and many CI...
+* `#24902 <https://github.com/numpy/numpy/pull/24902>`__: DOC: add a 1.26.1 release notes section for BLAS/LAPACK build...
+* `#24906 <https://github.com/numpy/numpy/pull/24906>`__: MAINT: Backport ``numpy._core`` stubs. Remove ``NumpyUnpickler``
+* `#24911 <https://github.com/numpy/numpy/pull/24911>`__: MAINT: Bump pypa/cibuildwheel from 2.16.1 to 2.16.2
+* `#24912 <https://github.com/numpy/numpy/pull/24912>`__: BUG: loongarch doesn't use REAL(10)

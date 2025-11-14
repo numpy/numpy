@@ -1,0 +1,114 @@
+#ifndef __NPY_SORT_H__
+#define __NPY_SORT_H__
+
+/* Python include is for future object sorts */
+#include <Python.h>
+#include <numpy/npy_common.h>
+#include <numpy/ndarraytypes.h>
+
+#define NPY_ENOMEM 1
+#define NPY_ECOMP 2
+
+static inline int npy_get_msb(npy_uintp unum)
+{
+    int depth_limit = 0;
+    while (unum >>= 1)  {
+        depth_limit++;
+    }
+    return depth_limit;
+}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble, datetime, timedelta#
+ */
+
+NPY_NO_EXPORT int quicksort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int heapsort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int mergesort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int timsort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong#
+ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+NPY_NO_EXPORT int radixsort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int aradixsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+#ifdef __cplusplus
+}
+#endif
+
+/**end repeat**/
+
+
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #suff = string, unicode#
+ */
+
+NPY_NO_EXPORT int quicksort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int heapsort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int mergesort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int timsort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+NPY_NO_EXPORT int npy_quicksort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_heapsort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_mergesort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_timsort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

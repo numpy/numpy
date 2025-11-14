@@ -1,79 +1,97 @@
 """
-**Note:** almost all functions in the ``numpy.lib`` namespace
-are also present in the main ``numpy`` namespace.  Please use the
-functions as ``np.<funcname>`` where possible.
-
 ``numpy.lib`` is mostly a space for implementing functions that don't
 belong in core or in another NumPy submodule with a clear purpose
 (e.g. ``random``, ``fft``, ``linalg``, ``ma``).
 
-Most contains basic functions that are used by several submodules and are
-useful to have in the main name-space.
+``numpy.lib``'s private submodules contain basic functions that are used by
+other public modules and are useful to have in the main name-space.
 
 """
-import math
-
-from numpy.version import version as __version__
 
 # Public submodules
-# Note: recfunctions and (maybe) format are public too, but not imported
-from . import mixins
-from . import scimath as emath
+# Note: recfunctions is public, but not imported
+from numpy._core._multiarray_umath import add_docstring, tracemalloc_domain
+from numpy._core.function_base import add_newdoc
 
 # Private submodules
 # load module names. See https://github.com/networkx/networkx/issues/5838
-from . import type_check
-from . import index_tricks
-from . import function_base
-from . import nanfunctions
-from . import shape_base
-from . import stride_tricks
-from . import twodim_base
-from . import ufunclike
-from . import histograms
-from . import polynomial
-from . import utils
-from . import arraysetops
-from . import npyio
-from . import arrayterator
-from . import arraypad
-from . import _version
+from . import (
+    _arraypad_impl,
+    _arraysetops_impl,
+    _arrayterator_impl,
+    _function_base_impl,
+    _histograms_impl,
+    _index_tricks_impl,
+    _nanfunctions_impl,
+    _npyio_impl,
+    _polynomial_impl,
+    _shape_base_impl,
+    _stride_tricks_impl,
+    _twodim_base_impl,
+    _type_check_impl,
+    _ufunclike_impl,
+    _utils_impl,
+    _version,
+    array_utils,
+    format,
+    introspect,
+    mixins,
+    npyio,
+    scimath,
+    stride_tricks,
+)
 
-from .type_check import *
-from .index_tricks import *
-from .function_base import *
-from .nanfunctions import *
-from .shape_base import *
-from .stride_tricks import *
-from .twodim_base import *
-from .ufunclike import *
-from .histograms import *
+# numpy.lib namespace members
+from ._arrayterator_impl import Arrayterator
+from ._version import NumpyVersion
 
-from .polynomial import *
-from .utils import *
-from .arraysetops import *
-from .npyio import *
-from .arrayterator import Arrayterator
-from .arraypad import *
-from ._version import *
-from numpy.core._multiarray_umath import tracemalloc_domain
+__all__ = [
+    "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
+    "format", "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
+    "stride_tricks", "tracemalloc_domain",
+]
 
-__all__ = ['emath', 'math', 'tracemalloc_domain', 'Arrayterator']
-__all__ += type_check.__all__
-__all__ += index_tricks.__all__
-__all__ += function_base.__all__
-__all__ += shape_base.__all__
-__all__ += stride_tricks.__all__
-__all__ += twodim_base.__all__
-__all__ += ufunclike.__all__
-__all__ += arraypad.__all__
-__all__ += polynomial.__all__
-__all__ += utils.__all__
-__all__ += arraysetops.__all__
-__all__ += npyio.__all__
-__all__ += nanfunctions.__all__
-__all__ += histograms.__all__
+add_newdoc.__module__ = "numpy.lib"
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester
+
+def __getattr__(attr):
+    # Warn for deprecated/removed aliases
+    import math
+    import warnings
+
+    if attr == "math":
+        warnings.warn(
+            "`np.lib.math` is a deprecated alias for the standard library "
+            "`math` module (Deprecated Numpy 1.25). Replace usages of "
+            "`numpy.lib.math` with `math`", DeprecationWarning, stacklevel=2)
+        return math
+    elif attr == "emath":
+        raise AttributeError(
+            "numpy.lib.emath was an alias for emath module that was removed "
+            "in NumPy 2.0. Replace usages of numpy.lib.emath with "
+            "numpy.emath.",
+            name=None
+        )
+    elif attr in (
+        "histograms", "type_check", "nanfunctions", "function_base",
+        "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base",
+        "shape_base", "polynomial", "index_tricks",
+    ):
+        raise AttributeError(
+            f"numpy.lib.{attr} is now private. If you are using a public "
+            "function, it should be available in the main numpy namespace, "
+            "otherwise check the NumPy 2.0 migration guide.",
+            name=None
+        )
+    elif attr == "arrayterator":
+        raise AttributeError(
+            "numpy.lib.arrayterator submodule is now private. To access "
+            "Arrayterator class use numpy.lib.Arrayterator.",
+            name=None
+        )
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")

@@ -1,4 +1,4 @@
-Multithreaded Generation
+Multithreaded generation
 ========================
 
 The four core distributions (:meth:`~.Generator.random`,
@@ -9,8 +9,8 @@ well-behaved (writable and aligned). Under normal circumstances, arrays
 created using the common constructors such as :meth:`numpy.empty` will satisfy
 these requirements.
 
-This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
-using multiple threads.  Threads are long-lived so that repeated calls do not
+This example makes use of :mod:`concurrent.futures` to fill an array using
+multiple threads.  Threads are long-lived so that repeated calls do not
 require any additional overheads from thread creation.
 
 The random numbers generated are reproducible in the sense that the same
@@ -104,8 +104,8 @@ that does not use an existing array due to array creation overhead.
 
     Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
-Note that if `threads` is not set by the user, it will be determined by
-`multiprocessing.cpu_count()`.
+Note that if ``threads`` is not set by the user, it will be determined by
+``multiprocessing.cpu_count()``.
 
 .. code-block:: ipython
 

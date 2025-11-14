@@ -70,7 +70,7 @@ the following code is valid:
 .. code-block:: python
 
     >>> x = np.array([1, 2])
-    >>> x.dtype = np.bool_
+    >>> x.dtype = np.bool
 
 This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should instead use the `numpy.ndarray.view`
@@ -93,7 +93,7 @@ Please see : :ref:`Data type objects <arrays.dtypes>`
 Number precision
 ~~~~~~~~~~~~~~~~
 
-The precision of `numpy.number` subclasses is treated as a covariant generic
+The precision of `numpy.number` subclasses is treated as a invariant generic
 parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 
@@ -125,21 +125,21 @@ During runtime numpy aggressively casts any passed 0D arrays into their
 corresponding `~numpy.generic` instance. Until the introduction of shape
 typing (see :pep:`646`) it is unfortunately not possible to make the
 necessary distinction between 0D and >0D arrays. While thus not strictly
-correct, all operations are that can potentially perform a 0D-array -> scalar
-cast are currently annotated as exclusively returning an `ndarray`.
+correct, all operations that can potentially perform a 0D-array -> scalar
+cast are currently annotated as exclusively returning an `~numpy.ndarray`.
 
-If it is known in advance that an operation _will_ perform a
+If it is known in advance that an operation *will* perform a
 0D-array -> scalar cast, then one can consider manually remedying the
 situation with either `typing.cast` or a ``# type: ignore`` comment.
 
 Record array dtypes
 ~~~~~~~~~~~~~~~~~~~
 
-The dtype of `numpy.recarray`, and the `numpy.rec` functions in general,
-can be specified in one of two ways:
+The dtype of `numpy.recarray`, and the :ref:`routines.array-creation.rec`
+functions in general, can be specified in one of two ways:
 
 * Directly via the ``dtype`` argument.
-* With up to five helper arguments that operate via `numpy.format_parser`:
+* With up to five helper arguments that operate via `numpy.rec.format_parser`:
   ``formats``, ``names``, ``titles``, ``aligned`` and ``byteorder``.
 
 These two approaches are currently typed as being mutually exclusive,
@@ -155,14 +155,39 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NBitBase,
-    NDArray,
-)
+# pyright: reportDeprecated=false
+
+from numpy._typing import ArrayLike, DTypeLike, NBitBase, NDArray
 
 __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
+
+
+__DIR = __all__ + [k for k in globals() if k.startswith("__") and k.endswith("__")]
+__DIR_SET = frozenset(__DIR)
+
+
+def __dir__() -> list[str]:
+    return __DIR
+
+def __getattr__(name: str) -> object:
+    if name == "NBitBase":
+        import warnings
+
+        # Deprecated in NumPy 2.3, 2025-05-01
+        warnings.warn(
+            "`NBitBase` is deprecated and will be removed from numpy.typing in the "
+            "future. Use `@typing.overload` or a `TypeVar` with a scalar-type as upper "
+            "bound, instead. (deprecated in NumPy 2.3)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return NBitBase
+
+    if name in __DIR_SET:
+        return globals()[name]
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 if __doc__ is not None:
     from numpy._typing._add_docstring import _docstrings
@@ -171,5 +196,6 @@ if __doc__ is not None:
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

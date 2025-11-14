@@ -3,9 +3,44 @@ Release notes
 *************
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
+    2.4.0 <release/2.4.0-notes>
+    2.3.4 <release/2.3.4-notes>
+    2.3.3 <release/2.3.3-notes>
+    2.3.2 <release/2.3.2-notes>
+    2.3.1 <release/2.3.1-notes>
+    2.3.0 <release/2.3.0-notes>
+    2.2.6 <release/2.2.6-notes>
+    2.2.5 <release/2.2.5-notes>
+    2.2.4 <release/2.2.4-notes>
+    2.2.3 <release/2.2.3-notes>
+    2.2.2 <release/2.2.2-notes>
+    2.2.1 <release/2.2.1-notes>
+    2.2.0 <release/2.2.0-notes>
+    2.1.3 <release/2.1.3-notes>
+    2.1.2 <release/2.1.2-notes>
+    2.1.1 <release/2.1.1-notes>
+    2.1.0 <release/2.1.0-notes>
+    2.0.2 <release/2.0.2-notes>
+    2.0.1 <release/2.0.1-notes>
+    2.0.0 <release/2.0.0-notes>
+    1.26.4 <release/1.26.4-notes>
+    1.26.3 <release/1.26.3-notes>
+    1.26.2 <release/1.26.2-notes>
+    1.26.1 <release/1.26.1-notes>
+    1.26.0 <release/1.26.0-notes>
+    1.25.2 <release/1.25.2-notes>
+    1.25.1 <release/1.25.1-notes>
+    1.25.0 <release/1.25.0-notes>
+    1.24.4 <release/1.24.4-notes>
+    1.24.3 <release/1.24.3-notes>
+    1.24.2 <release/1.24.2-notes>
+    1.24.1 <release/1.24.1-notes>
     1.24.0 <release/1.24.0-notes>
+    1.23.5 <release/1.23.5-notes>
+    1.23.4 <release/1.23.4-notes>
+    1.23.3 <release/1.23.3-notes>
     1.23.2 <release/1.23.2-notes>
     1.23.1 <release/1.23.1-notes>
     1.23.0 <release/1.23.0-notes>

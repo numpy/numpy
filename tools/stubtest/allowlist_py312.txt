@@ -1,0 +1,8 @@
+# python >= 3.12
+
+# false positive "... is not a Union" errors
+numpy\.typing\.ArrayLike
+numpy\.typing\.DTypeLike
+
+# only exists before Python 3.12
+numpy\.f2py\._backends\._distutils

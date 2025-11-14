@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark
 
 
 class ScalarMath(Benchmark):
@@ -8,6 +8,7 @@ class ScalarMath(Benchmark):
     # the function call overhead to some degree.
     params = [TYPES1]
     param_names = ["type"]
+
     def setup(self, typename):
         self.num = np.dtype(typename).type(2)
         self.int32 = np.int32(2)
@@ -65,3 +66,15 @@ class ScalarMath(Benchmark):
         other + int32
         other + int32
         other + int32
+
+
+class ScalarStr(Benchmark):
+    # Test scalar to str conversion
+    params = [TYPES1]
+    param_names = ["type"]
+
+    def setup(self, typename):
+        self.a = np.array([100] * 100, dtype=typename)
+
+    def time_str_repr(self, typename):
+        res = [str(x) for x in self.a]

@@ -114,7 +114,7 @@ def get_pythonexe():
     return pythonexe
 
 def find_executable(exe, path=None, _cache={}):
-    """Return full path of a executable or None.
+    """Return full path of an executable or None.
 
     Symbolic links are not followed.
     """
@@ -276,14 +276,13 @@ def _exec_command(command, use_shell=None, use_tee = None, **env):
     # Inherit environment by default
     env = env or None
     try:
-        # universal_newlines is set to False so that communicate()
+        # text is set to False so that communicate()
         # will return bytes. We need to decode the output ourselves
         # so that Python will not raise a UnicodeDecodeError when
         # it encounters an invalid character; rather, we simply replace it
-        proc = subprocess.Popen(command, shell=use_shell, env=env,
+        proc = subprocess.Popen(command, shell=use_shell, env=env, text=False,
                                 stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                universal_newlines=False)
+                                stderr=subprocess.STDOUT)
     except OSError:
         # Return 127, as os.spawn*() and /bin/sh do
         return 127, ''
@@ -307,7 +306,7 @@ def _quote_arg(arg):
     """
     Quote the argument for safe use in a shell command line.
     """
-    # If there is a quote in the string, assume relevants parts of the
+    # If there is a quote in the string, assume relevant parts of the
     # string are already quoted (e.g. '-I"C:\\Program Files\\..."')
     if '"' not in arg and ' ' in arg:
         return '"%s"' % arg

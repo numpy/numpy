@@ -1,16 +1,17 @@
 .. _NEP30:
 
 ======================================================
-NEP 30 — Duck typing for NumPy arrays - Implementation
+NEP 30 — Duck typing for NumPy arrays - implementation
 ======================================================
 
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>
 :Author: Stephan Hoyer <shoyer@google.com>
-:Status: Draft
+:Status: Superseded
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2019-07-31
 :Updated: 2019-07-31
-:Resolution:
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
 
 Abstract
 --------
@@ -101,14 +102,14 @@ a complete implementation would look like the following:
 The implementation above exemplifies the simplest case, but the overall idea
 is that libraries will implement a ``__duckarray__`` method that returns the
 original object, and an ``__array__`` method that either creates and returns an
-appropriate NumPy array, or raises a``TypeError`` to prevent unintentional use
+appropriate NumPy array, or raises a ``TypeError`` to prevent unintentional use
 as an object in a NumPy array (if ``np.asarray`` is called on an arbitrary
 object that does not implement ``__array__``, it will create a NumPy array
 scalar).
 
 In case of existing libraries that don't already implement ``__array__`` but
 would like to use duck array typing, it is advised that they introduce
-both ``__array__`` and``__duckarray__`` methods.
+both ``__array__`` and ``__duckarray__`` methods.
 
 Usage
 -----
@@ -175,7 +176,7 @@ Previous proposals and discussion
 ---------------------------------
 
 The duck typing protocol proposed here was described in a high level in
-`NEP 22 <https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html>`_.
+:ref:`NEP 22 <NEP22>`.
 
 Additionally, longer discussions about the protocol and related proposals
 took place in

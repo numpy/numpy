@@ -1,4 +1,6 @@
-C API Deprecations
+.. _c_api_deprecations:
+
+C API deprecations
 ==================
 
 Background
@@ -33,7 +35,7 @@ value of preserving ABI compatibility. By deprecating this direct
 access, we will in the future be able to improve NumPy's performance
 in ways we cannot presently.
 
-Deprecation Mechanism NPY_NO_DEPRECATED_API
+Deprecation mechanism NPY_NO_DEPRECATED_API
 -------------------------------------------
 
 In C, there is no equivalent to the deprecation warnings that Python
@@ -58,3 +60,7 @@ On compilers which support a #warning mechanism, NumPy issues a
 compiler warning if you do not define the symbol NPY_NO_DEPRECATED_API.
 This way, the fact that there are deprecations will be flagged for
 third-party developers who may not have read the release notes closely.
+
+Note that defining NPY_NO_DEPRECATED_API is not sufficient to make your
+extension ABI compatible with a given NumPy version. See
+:ref:`for-downstream-package-authors`.

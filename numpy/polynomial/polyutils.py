@@ -4,14 +4,6 @@ Utility classes and functions for the polynomial modules.
 This module provides: error and warning objects; a polynomial base class;
 and some routines used in both the `polynomial` and `chebyshev` modules.
 
-Warning objects
----------------
-
-.. autosummary::
-   :toctree: generated/
-
-   RankWarning  raised in least-squares fit for rank-deficient matrix.
-
 Functions
 ---------
 
@@ -26,27 +18,15 @@ Functions
    mapparms     parameters of the linear map between domains.
 
 """
-import operator
 import functools
+import operator
 import warnings
 
 import numpy as np
 
-from numpy.core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.core.umath import absolute
-
 __all__ = [
-    'RankWarning', 'as_series', 'trimseq',
-    'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
+    'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
     'format_float']
-
-#
-# Warnings and Exceptions
-#
-
-class RankWarning(UserWarning):
-    """Issued by chebfit when the design matrix is rank deficient."""
-    pass
 
 #
 # Helper functions to convert inputs to 1-D arrays
@@ -57,8 +37,7 @@ def trimseq(seq):
     Parameters
     ----------
     seq : sequence
-        Sequence of Poly series coefficients. This routine fails for
-        empty sequences.
+        Sequence of Poly series coefficients.
 
     Returns
     -------
@@ -72,13 +51,13 @@ def trimseq(seq):
     Do not lose the type info if the sequence contains unknown objects.
 
     """
-    if len(seq) == 0:
+    if len(seq) == 0 or seq[-1] != 0:
         return seq
     else:
         for i in range(len(seq) - 1, -1, -1):
             if seq[i] != 0:
                 break
-        return seq[:i+1]
+        return seq[:i + 1]
 
 
 def as_series(alist, trim=True):
@@ -113,6 +92,7 @@ def as_series(alist, trim=True):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polyutils as pu
     >>> a = np.arange(4)
     >>> pu.as_series(a)
@@ -131,28 +111,32 @@ def as_series(alist, trim=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
-    if min([a.size for a in arrays]) == 0:
-        raise ValueError("Coefficient array is empty")
-    if any(a.ndim != 1 for a in arrays):
-        raise ValueError("Coefficient array is not 1-d")
+    arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
+    for a in arrays:
+        if a.size == 0:
+            raise ValueError("Coefficient array is empty")
+        if a.ndim != 1:
+            raise ValueError("Coefficient array is not 1-d")
     if trim:
         arrays = [trimseq(a) for a in arrays]
 
-    if any(a.dtype == np.dtype(object) for a in arrays):
+    try:
+        dtype = np.common_type(*arrays)
+    except Exception as e:
+        object_dtype = np.dtypes.ObjectDType()
+        has_one_object_type = False
         ret = []
         for a in arrays:
-            if a.dtype != np.dtype(object):
-                tmp = np.empty(len(a), dtype=np.dtype(object))
+            if a.dtype != object_dtype:
+                tmp = np.empty(len(a), dtype=object_dtype)
                 tmp[:] = a[:]
                 ret.append(tmp)
             else:
+                has_one_object_type = True
                 ret.append(a.copy())
-    else:
-        try:
-            dtype = np.common_type(*arrays)
-        except Exception as e:
+        if not has_one_object_type:
             raise ValueError("Coefficient arrays have no common type") from e
+    else:
         ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
     return ret
 
@@ -185,10 +169,6 @@ def trimcoef(c, tol=0):
     ValueError
         If `tol` < 0
 
-    See Also
-    --------
-    trimseq
-
     Examples
     --------
     >>> from numpy.polynomial import polyutils as pu
@@ -207,7 +187,7 @@ def trimcoef(c, tol=0):
     [c] = as_series([c])
     [ind] = np.nonzero(np.abs(c) > tol)
     if len(ind) == 0:
-        return c[:1]*0
+        return c[:1] * 0
     else:
         return c[:ind[-1] + 1].copy()
 
@@ -239,6 +219,7 @@ def getdomain(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polyutils as pu
     >>> points = np.arange(4)**2 - 5; points
     array([-5, -4, -1,  4])
@@ -300,8 +281,8 @@ def mapparms(old, new):
     """
     oldlen = old[1] - old[0]
     newlen = new[1] - new[0]
-    off = (old[1]*new[0] - old[0]*new[1])/oldlen
-    scl = newlen/oldlen
+    off = (old[1] * new[0] - old[0] * new[1]) / oldlen
+    scl = newlen / oldlen
     return off, scl
 
 def mapdomain(x, old, new):
@@ -344,6 +325,7 @@ def mapdomain(x, old, new):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polyutils as pu
     >>> old_domain = (-1,1)
     >>> new_domain = (0,2*np.pi)
@@ -367,9 +349,10 @@ def mapdomain(x, old, new):
     array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ]) # may vary
 
     """
-    x = np.asanyarray(x)
+    if type(x) not in (int, float, complex) and not isinstance(x, np.generic):
+        x = np.asanyarray(x)
     off, scl = mapparms(old, new)
-    return off + scl*x
+    return off + scl * x
 
 
 def _nth_slice(i, ndim):
@@ -422,7 +405,7 @@ def _vander_nd(vander_fs, points, degrees):
     -------
     vander_nd : ndarray
         An array of shape ``points[0].shape + tuple(d + 1 for d in degrees)``.
-    """
+    """  # noqa: E501
     n_dims = len(vander_fs)
     if n_dims != len(points):
         raise ValueError(
@@ -434,7 +417,7 @@ def _vander_nd(vander_fs, points, degrees):
         raise ValueError("Unable to guess a dtype or shape when no points are given")
 
     # convert to the same shape and type
-    points = tuple(np.array(tuple(points), copy=False) + 0.0)
+    points = tuple(np.asarray(tuple(points)) + 0.0)
 
     # produce the vandermonde matrix for each dimension, placing the last
     # axis of each in an independent trailing axis of the output
@@ -479,7 +462,7 @@ def _fromroots(line_f, mul_f, roots):
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [mul_f(p[i], p[i+m]) for i in range(m)]
+            tmp = [mul_f(p[i], p[i + m]) for i in range(m)]
             if r:
                 tmp[0] = mul_f(tmp[0], p[-1])
             p = tmp
@@ -500,7 +483,7 @@ def _valnd(val_f, c, *args):
     """
     args = [np.asanyarray(a) for a in args]
     shape0 = args[0].shape
-    if not all((a.shape == shape0 for a in args[1:])):
+    if not all(a.shape == shape0 for a in args[1:]):
         if len(args) == 3:
             raise ValueError('x, y, z are incompatible')
         elif len(args) == 2:
@@ -550,21 +533,21 @@ def _div(mul_f, c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
-            p = mul_f([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
+            p = mul_f([0] * i + [1], c2)
+            q = rem[-1] / p[-1]
+            rem = rem[:-1] - q * p[:-1]
             quo[i] = q
         return quo, trimseq(rem)
 
@@ -651,7 +634,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
 
     # set rcond
     if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
+        rcond = len(x) * np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
     if issubclass(lhs.dtype.type, np.complexfloating):
@@ -661,22 +644,22 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     scl[scl == 0] = 1
 
     # Solve the least squares problem.
-    c, resids, rank, s = np.linalg.lstsq(lhs.T/scl, rhs.T, rcond)
-    c = (c.T/scl).T
+    c, resids, rank, s = np.linalg.lstsq(lhs.T / scl, rhs.T, rcond)
+    c = (c.T / scl).T
 
     # Expand c to include non-fitted coefficients which are set to zero
     if deg.ndim > 0:
         if c.ndim == 2:
-            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
+            cc = np.zeros((lmax + 1, c.shape[1]), dtype=c.dtype)
         else:
-            cc = np.zeros(lmax+1, dtype=c.dtype)
+            cc = np.zeros(lmax + 1, dtype=c.dtype)
         cc[deg] = c
         c = cc
 
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=2)
+        warnings.warn(msg, np.exceptions.RankWarning, stacklevel=2)
 
     if full:
         return c, [resids, rank, s, rcond]
@@ -717,44 +700,31 @@ def _pow(mul_f, c, pow, maxpower):
         return prd
 
 
-def _deprecate_as_int(x, desc):
+def _as_int(x, desc):
     """
-    Like `operator.index`, but emits a deprecation warning when passed a float
+    Like `operator.index`, but emits a custom exception when passed an
+    incorrect type
 
     Parameters
     ----------
-    x : int-like, or float with integral value
+    x : int-like
         Value to interpret as an integer
     desc : str
         description to include in any error message
 
     Raises
     ------
-    TypeError : if x is a non-integral float or non-numeric
-    DeprecationWarning : if x is an integral float
+    TypeError : if x is a float or non-numeric
     """
     try:
         return operator.index(x)
     except TypeError as e:
-        # Numpy 1.17.0, 2019-03-11
-        try:
-            ix = int(x)
-        except TypeError:
-            pass
-        else:
-            if ix == x:
-                warnings.warn(
-                    f"In future, this will raise TypeError, as {desc} will "
-                    "need to be an integer not just an integral float.",
-                    DeprecationWarning,
-                    stacklevel=3
-                )
-                return ix
-
-        raise TypeError(f"{desc} must be an integer") from e
+        raise TypeError(f"{desc} must be an integer, received {x}") from e
 
 
 def format_float(x, parens=False):
+    from numpy._core.multiarray import dragon4_positional, dragon4_scientific
+
     if not np.issubdtype(type(x), np.floating):
         return str(x)
 
@@ -767,8 +737,8 @@ def format_float(x, parens=False):
 
     exp_format = False
     if x != 0:
-        a = absolute(x)
-        if a >= 1.e8 or a < 10**min(0, -(opts['precision']-1)//2):
+        a = np.abs(x)
+        if a >= 1.e8 or a < 10**min(0, -(opts['precision'] - 1) // 2):
             exp_format = True
 
     trim, unique = '0', True
@@ -777,7 +747,7 @@ def format_float(x, parens=False):
 
     if exp_format:
         s = dragon4_scientific(x, precision=opts['precision'],
-                               unique=unique, trim=trim, 
+                               unique=unique, trim=trim,
                                sign=opts['sign'] == '+')
         if parens:
             s = '(' + s + ')'

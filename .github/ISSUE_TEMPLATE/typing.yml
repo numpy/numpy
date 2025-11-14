@@ -1,0 +1,68 @@
+name: Static Typing
+description: Report an issue with the NumPy typing hints.
+title: "TYP: <Please write a comprehensive title after the 'TYP: ' prefix>"
+labels: [41 - Static typing]
+
+body:
+- type: markdown
+  attributes:
+    value: >
+      Thank you for taking the time to report this issue.
+      Please make sure that this issue hasn't already been reported before.
+
+- type: textarea
+  attributes:
+    label: "Describe the issue:"
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: "Reproduce the code example:"
+    description: >
+      A short code example that reproduces the error in your type-checker. It
+      should be self-contained, i.e., can be run as-is via e.g.
+      `mypy myproblem.py` or `pyright myproblem.py`.
+    placeholder: |
+      import numpy as np
+      import numpy.typing as npt
+      << your code here >>
+    render: python
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: "Error message:"
+    description: >
+      Please include all relevant error messages from your type-checker or IDE.
+    render: shell
+
+- type: textarea
+  attributes:
+    label: "Python and NumPy Versions:"
+    description: >
+      Output from `import sys, numpy; print(numpy.__version__); print(sys.version)`.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: "Type-checker version and settings:"
+    description: >
+      Please include the exact version of the type-checker you are using.
+      Popular (static) type checkers include Mypy, Pyright / Pylance, Pytype,
+      Pyre, PyCharm, etc.
+      Also include the full CLI command used to run the type-checker, and
+      all of the relevant configuration options.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: "Additional typing packages."
+    description: |
+      If you are using `typing-extensions` or typing-stub packages, please
+      list their versions here.
+  validations:
+    required: false

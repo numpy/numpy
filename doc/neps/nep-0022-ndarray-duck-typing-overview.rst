@@ -37,7 +37,7 @@ inappropriate, and users find they need sparse arrays, lazily
 evaluated arrays (as in dask), compressed arrays (as in blosc), arrays
 stored in GPU memory, arrays stored in alternative formats such as
 Arrow, and so forth – yet users still want to work with these arrays
-using the familiar NumPy APIs, and re-use existing code with minimal
+using the familiar NumPy APIs, and reuse existing code with minimal
 (ideally zero) porting overhead. As a working shorthand, we call these
 “duck arrays”, by analogy with Python’s “duck typing”: a “duck array”
 is a Python object which “quacks like” a numpy array in the sense that
@@ -75,7 +75,7 @@ extended to work with duck array objects. In some cases this is easy
 difficult. Here are some principles we’ve found useful so far:
 
 
-Principle 1: Focus on “full” duck arrays, but don’t rule out “partial” duck arrays
+Principle 1: focus on “full” duck arrays, but don’t rule out “partial” duck arrays
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We can distinguish between two classes:
@@ -159,7 +159,7 @@ example of what this might look like, see the documentation for
 <http://dask.pydata.org/en/latest/array-api.html#dask.array.from_array>`__.
 
 
-Principle 2: Take advantage of duck typing
+Principle 2: take advantage of duck typing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``ndarray`` has a very large API surface area::
@@ -207,7 +207,7 @@ arrays room to experiment.
 But, we do provide some more detailed advice for duck array
 implementers and consumers below.
 
-Principle 3: Focus on protocols
+Principle 3: focus on protocols
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Historically, numpy has had lots of success at interoperating with
@@ -249,15 +249,14 @@ semantics.
 Conclusion: protocols are one honking great idea – let’s do more of
 those.
 
-Principle 4: Reuse existing methods when possible
+Principle 4: reuse existing methods when possible
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It’s tempting to try to define cleaned up versions of ndarray methods
 with a more minimal interface to allow for easier implementation. For
 example, ``__array_reshape__`` could drop some of the strange
 arguments accepted by ``reshape`` and ``__array_basic_getitem__``
-could drop all the `strange edge cases
-<http://www.numpy.org/neps/nep-0021-advanced-indexing.html>`__ of
+could drop all the :doc:`strange edge cases <nep-0021-advanced-indexing>` of
 NumPy’s advanced indexing.
 
 But as discussed above, we don’t really know what APIs we need for
@@ -267,7 +266,7 @@ and ``__getitem__`` have the advantage of already being widely
 used/exercised by libraries that use duck arrays, and in practice, any
 serious duck array type is going to have to implement them anyway.
 
-Principle 5: Make it easy to do the right thing
+Principle 5: make it easy to do the right thing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Making duck arrays work well is going to be a community effort.
@@ -341,7 +340,7 @@ to support (at least) these features:
   example, because they use some kinds of sparse or compressed
   storage, or are in read-only shared memory), and it turns out that
   frequently-used code like the default implementation of ``np.mean``
-  needs to check this (to decide whether it can re-use temporary
+  needs to check this (to decide whether it can reuse temporary
   arrays).
 
 We intentionally do not describe exactly how to add support for these

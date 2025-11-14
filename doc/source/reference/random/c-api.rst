@@ -3,13 +3,12 @@ C API for random
 
 .. currentmodule:: numpy.random
 
-.. versionadded:: 1.19.0
-
 Access to various distributions below is available via Cython or C-wrapper
 libraries like CFFI. All the functions accept a :c:type:`bitgen_t` as their
 first argument.  To access these from Cython or C, you must link with the
-``npyrandom`` library which is part of the NumPy distribution, located in
-``numpy/random/lib``.
+``npyrandom`` static library which is part of the NumPy distribution, located
+in ``numpy/random/lib``. Note that you must *also* link with ``npymath``,
+see :ref:`linking-npymath`.
 
 
 .. c:type:: bitgen_t

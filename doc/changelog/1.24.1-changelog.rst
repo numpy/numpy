@@ -1,0 +1,43 @@
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andrew Nelson
+* Ben Greiner +
+* Charles Harris
+* Clément Robert
+* Matteo Raso
+* Matti Picus
+* Melissa Weber Mendonça
+* Miles Cranmer
+* Ralf Gommers
+* Rohit Goswami
+* Sayed Adel
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 18 pull requests were merged for this release.
+
+* `#22820 <https://github.com/numpy/numpy/pull/22820>`__: BLD: add workaround in setup.py for newer setuptools
+* `#22830 <https://github.com/numpy/numpy/pull/22830>`__: BLD: CIRRUS_TAG redux
+* `#22831 <https://github.com/numpy/numpy/pull/22831>`__: DOC: fix a couple typos in 1.23 notes
+* `#22832 <https://github.com/numpy/numpy/pull/22832>`__: BUG: Fix refcounting errors found using pytest-leaks
+* `#22834 <https://github.com/numpy/numpy/pull/22834>`__: BUG, SIMD: Fix invalid value encountered in several ufuncs
+* `#22837 <https://github.com/numpy/numpy/pull/22837>`__: TST: ignore more np.distutils.log imports
+* `#22839 <https://github.com/numpy/numpy/pull/22839>`__: BUG: Do not use getdata() in np.ma.masked_invalid
+* `#22847 <https://github.com/numpy/numpy/pull/22847>`__: BUG: Ensure correct behavior for rows ending in delimiter in...
+* `#22848 <https://github.com/numpy/numpy/pull/22848>`__: BUG, SIMD: Fix the bitmask of the boolean comparison
+* `#22857 <https://github.com/numpy/numpy/pull/22857>`__: BLD: Help raspian arm + clang 13 about __builtin_mul_overflow
+* `#22858 <https://github.com/numpy/numpy/pull/22858>`__: API: Ensure a full mask is returned for masked_invalid
+* `#22866 <https://github.com/numpy/numpy/pull/22866>`__: BUG: Polynomials now copy properly (#22669)
+* `#22867 <https://github.com/numpy/numpy/pull/22867>`__: BUG, SIMD: Fix memory overlap in ufunc comparison loops
+* `#22868 <https://github.com/numpy/numpy/pull/22868>`__: BUG: Fortify string casts against floating point warnings
+* `#22875 <https://github.com/numpy/numpy/pull/22875>`__: TST: Ignore nan-warnings in randomized out tests
+* `#22883 <https://github.com/numpy/numpy/pull/22883>`__: MAINT: restore npymath implementations needed for freebsd
+* `#22884 <https://github.com/numpy/numpy/pull/22884>`__: BUG: Fix integer overflow in in1d for mixed integer dtypes #22877
+* `#22887 <https://github.com/numpy/numpy/pull/22887>`__: BUG: Use whole file for encoding checks with ``charset_normalizer``.

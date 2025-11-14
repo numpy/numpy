@@ -1,0 +1,119 @@
+name: Windows tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  clangcl_python64bit_openblas32:
+    name: x86-64, LP64 OpenBLAS
+    runs-on: windows-2022
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - name: Setup Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: "3.14t"
+
+    - name: Install build dependencies from PyPI
+      run: |
+        pip install -r requirements/build_requirements.txt
+
+    - name: Install pkg-config
+      run: |
+        choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
+
+    - name: Install NumPy (Clang-cl)
+      run: |
+        "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
+        pip install -r requirements/ci_requirements.txt
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
+
+    - name: Meson Log
+      shell: bash
+      if: ${{ failure()  }}
+      run: |
+        cat build/meson-logs/meson-log.txt
+
+    - name: Install test dependencies
+      run: |
+        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install threadpoolctl
+
+    - name: Run test suite
+      run: |
+        spin test -- --timeout=600 --durations=10
+
+  msvc_python32bit_no_openblas:
+    name: MSVC, ${{ matrix.architecture }} Python , no BLAS
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            architecture: x86
+          - os: windows-11-arm
+            architecture: arm64
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.11'
+          architecture: ${{ matrix.architecture }}
+
+      - name: Setup MSVC
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: ${{ matrix.architecture }}
+
+      - name: Build and install
+        run: |
+          python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true" 2>&1 | tee build.log
+
+      - name: Check warnings
+        uses: ./.github/check-warnings
+        with:
+          log-file: ./build.log
+          allowlist: ./.github/check-warnings/msvc-allowed-warnings.txt
+          warning-regex: "warning C|Command line warning"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install -r requirements/test_requirements.txt
+
+      - name: Run test suite (fast)
+        run: |
+          cd tools
+          python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10

@@ -1,0 +1,26 @@
+``numpy.finfo`` Refactor
+------------------------
+The ``numpy.finfo`` class has been completely refactored to obtain floating-point
+constants directly from C compiler macros rather than deriving them at runtime.
+This provides better accuracy, platform compatibility and corrected
+several attribute calculations:
+
+* Constants like ``eps``, ``min``, ``max``, ``smallest_normal``, and
+  ``smallest_subnormal`` now come directly from standard C macros (``FLT_EPSILON``,
+  ``DBL_MIN``, etc.), ensuring platform-correct values.
+
+* The deprecated ``MachAr`` runtime discovery mechanism has been removed.
+
+* Derived attributes have been corrected to match standard definitions:
+  ``machep`` and ``negep`` now use ``int(log2(eps))``; ``nexp`` accounts for
+  all exponent patterns; ``nmant`` excludes the implicit bit; and ``minexp``
+  follows the C standard definition.
+
+* longdouble constants, Specifically ``smallest_normal`` now follows the
+  C standard definitions as per respecitive platform.
+
+* Special handling added for PowerPC's IBM double-double format.
+
+* New test suite added in ``test_finfo.py`` to validate all
+  ``finfo`` properties against expected machine arithmetic values for
+  float16, float32, and float64 types.

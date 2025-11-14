@@ -1,4 +1,3 @@
-#!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 from numpy cimport npy_intp
 
@@ -28,18 +27,24 @@ cdef extern from "numpy/random/distributions.h":
 
     ctypedef s_binomial_t binomial_t
 
+    float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
     double random_standard_uniform(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill(bitgen_t* bitgen_state, npy_intp cnt, double *out) nogil
+    void random_standard_uniform_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out) nogil
+    
     double random_standard_exponential(bitgen_t *bitgen_state) nogil
-    double random_standard_exponential_f(bitgen_t *bitgen_state) nogil
+    float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
     void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out) nogil
-    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, npy_intp cnt, double *out) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out) nogil
     void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out) nogil
-    void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out) nogil
+    
     double random_standard_normal(bitgen_t* bitgen_state) nogil
+    float random_standard_normal_f(bitgen_t *bitgen_state) nogil
     void random_standard_normal_fill(bitgen_t *bitgen_state, npy_intp count, double *out) nogil
     void random_standard_normal_fill_f(bitgen_t *bitgen_state, npy_intp count, float *out) nogil
     double random_standard_gamma(bitgen_t *bitgen_state, double shape) nogil
+    float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
 
     float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill_f(bitgen_t* bitgen_state, npy_intp cnt, float *out) nogil

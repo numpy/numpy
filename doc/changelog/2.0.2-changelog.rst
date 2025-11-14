@@ -1,0 +1,45 @@
+
+Contributors
+============
+
+A total of 13 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bruno Oliveira +
+* Charles Harris
+* Chris Sidebottom
+* Christian Heimes +
+* Christopher Sidebottom
+* Mateusz Sokół
+* Matti Picus
+* Nathan Goldbaum
+* Pieter Eendebak
+* Raghuveer Devulapalli
+* Ralf Gommers
+* Sebastian Berg
+* Yair Chuchem +
+
+Pull requests merged
+====================
+
+A total of 19 pull requests were merged for this release.
+
+* `#27000 <https://github.com/numpy/numpy/pull/27000>`__: REL: Prepare for the NumPy 2.0.1 release [wheel build]
+* `#27001 <https://github.com/numpy/numpy/pull/27001>`__: MAINT: prepare 2.0.x for further development
+* `#27021 <https://github.com/numpy/numpy/pull/27021>`__: BUG: cfuncs.py: fix crash when sys.stderr is not available
+* `#27022 <https://github.com/numpy/numpy/pull/27022>`__: DOC: Fix migration note for ``alltrue`` and ``sometrue``
+* `#27061 <https://github.com/numpy/numpy/pull/27061>`__: BUG: use proper input and output descriptor in array_assign_subscript...
+* `#27073 <https://github.com/numpy/numpy/pull/27073>`__: BUG: Mirror VQSORT_ENABLED logic in Quicksort
+* `#27074 <https://github.com/numpy/numpy/pull/27074>`__: BUG: Bump Highway to latest master
+* `#27077 <https://github.com/numpy/numpy/pull/27077>`__: BUG: Off by one in memory overlap check
+* `#27122 <https://github.com/numpy/numpy/pull/27122>`__: BUG: Use the new ``npyv_loadable_stride_`` functions for ldexp and...
+* `#27126 <https://github.com/numpy/numpy/pull/27126>`__: BUG: Bump Highway to latest
+* `#27128 <https://github.com/numpy/numpy/pull/27128>`__: BUG: add missing error handling in public_dtype_api.c
+* `#27129 <https://github.com/numpy/numpy/pull/27129>`__: BUG: fix another cast setup in array_assign_subscript
+* `#27130 <https://github.com/numpy/numpy/pull/27130>`__: BUG: Fix building NumPy in FIPS mode
+* `#27131 <https://github.com/numpy/numpy/pull/27131>`__: BLD: update vendored Meson for cross-compilation patches
+* `#27146 <https://github.com/numpy/numpy/pull/27146>`__: MAINT: Scipy openblas 0.3.27.44.4
+* `#27151 <https://github.com/numpy/numpy/pull/27151>`__: BUG: Do not accidentally store dtype metadata in ``np.save``
+* `#27195 <https://github.com/numpy/numpy/pull/27195>`__: REV: Revert undef I and document it
+* `#27213 <https://github.com/numpy/numpy/pull/27213>`__: BUG: Fix NPY_RAVEL_AXIS on backwards compatible NumPy 2 builds
+* `#27279 <https://github.com/numpy/numpy/pull/27279>`__: BUG: Fix array_equal for numeric and non-numeric scalar types

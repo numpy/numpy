@@ -1,3 +1,5 @@
+#cython: binding=True
+
 """
 BitGenerator base class and SeedSequence used to seed the BitGenerators.
 
@@ -5,7 +7,7 @@ SeedSequence is derived from Melissa E. O'Neill's C++11 `std::seed_seq`
 implementation, as it has a lot of nice properties that we want.
 
 https://gist.github.com/imneme/540829265469e673d045
-http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
 
 The MIT License (MIT)
 
@@ -32,7 +34,6 @@ SOFTWARE.
 """
 
 import abc
-import sys
 from itertools import cycle
 import re
 from secrets import randbits
@@ -68,12 +69,12 @@ def _int_to_uint32_array(n):
         raise ValueError("expected non-negative integer")
     if n == 0:
         arr.append(np.uint32(n))
-    if isinstance(n, np.unsignedinteger):
-        # Cannot do n & MASK32, convert to python int
-        n = int(n)
+
+    # NumPy ints may not like `n & MASK32` or ``//= 2**32` so use Python int
+    n = int(n)
     while n > 0:
         arr.append(np.uint32(n & MASK32))
-        n //= (2**32)
+        n //= 2**32
     return np.array(arr, dtype=np.uint32)
 
 def _coerce_to_uint32_array(x):
@@ -190,7 +191,7 @@ class ISeedSequence(abc.ABC):
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
+            the same `n_words`. This is a convenience for `BitGenerator`\ s that
             express their states as `uint64` arrays.
 
         Returns
@@ -212,6 +213,9 @@ class ISpawnableSeedSequence(ISeedSequence):
         Spawn a number of child `SeedSequence` s by extending the
         `spawn_key`.
 
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
         Parameters
         ----------
         n_children : int
@@ -222,8 +226,10 @@ class ISpawnableSeedSequence(ISeedSequence):
         """
 
 
-cdef class SeedlessSeedSequence():
-    """
+cdef class SeedlessSeedSequence:
+    # the first line is used to populate `__text_signature__`
+    """SeedlessSeedSequence()\n--
+
     A seed sequence for BitGenerators with no need for seed state.
 
     See Also
@@ -243,9 +249,9 @@ cdef class SeedlessSeedSequence():
 ISpawnableSeedSequence.register(SeedlessSeedSequence)
 
 
-cdef class SeedSequence():
-    """
-    SeedSequence(entropy=None, *, spawn_key=(), pool_size=4)
+cdef class SeedSequence:
+    # the first line is used to populate `__text_signature__`
+    """SeedSequence(entropy=None, *, spawn_key=(), pool_size=4, n_children_spawned=0)\n--
 
     SeedSequence mixes sources of entropy in a reproducible way to set the
     initial state for independent and very probably non-overlapping
@@ -260,6 +266,7 @@ cdef class SeedSequence():
     ----------
     entropy : {None, int, sequence[int]}, optional
         The entropy for creating a `SeedSequence`.
+        All integer values must be non-negative.
     spawn_key : {(), sequence[int]}, optional
         An additional source of entropy based on the position of this
         `SeedSequence` in the tree of such objects created with the
@@ -299,7 +306,7 @@ cdef class SeedSequence():
         elif not isinstance(entropy, (int, np.integer, list, tuple, range,
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
-                            'entropy not {}'.format(entropy))
+                            f'entropy not {entropy}')
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size
@@ -411,8 +418,8 @@ cdef class SeedSequence():
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
-            express their states as `uint64` arrays.
+            the same `n_words`. This is a convenience for `BitGenerator`\ s
+            that express their states as `uint64` arrays.
 
         Returns
         -------
@@ -450,6 +457,9 @@ cdef class SeedSequence():
         Spawn a number of child `SeedSequence` s by extending the
         `spawn_key`.
 
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.
+
         Parameters
         ----------
         n_children : int
@@ -457,6 +467,12 @@ cdef class SeedSequence():
         Returns
         -------
         seqs : list of `SeedSequence` s
+
+        See Also
+        --------
+        random.Generator.spawn, random.BitGenerator.spawn :
+            Equivalent method on the generator and bit generator.
+
         """
         cdef uint32_t i
 
@@ -475,9 +491,9 @@ cdef class SeedSequence():
 ISpawnableSeedSequence.register(SeedSequence)
 
 
-cdef class BitGenerator():
-    """
-    BitGenerator(seed=None)
+cdef class BitGenerator:
+    # the first line is used to populate `__text_signature__`
+    """BitGenerator(seed=None)\n--
 
     Base Class for generic BitGenerators, which provide a stream
     of random bits based on different algorithms. Must be overridden.
@@ -490,6 +506,7 @@ cdef class BitGenerator():
         ``array_like[ints]`` is passed, then it will be passed to
         `~numpy.random.SeedSequence` to derive the initial `BitGenerator` state.
         One may also pass in a `SeedSequence` instance.
+        All integer values must be non-negative.
 
     Attributes
     ----------
@@ -521,14 +538,27 @@ cdef class BitGenerator():
 
     # Pickling support:
     def __getstate__(self):
-        return self.state
+        return self.state, self._seed_seq
 
-    def __setstate__(self, state):
-        self.state = state
+    def __setstate__(self, state_seed_seq):
+
+        if isinstance(state_seed_seq, dict):
+            # Legacy path
+            # Prior to 2.0.x only the state of the underlying bit generator
+            # was preserved and any seed sequence information was lost
+            self.state = state_seed_seq
+        else:
+            self._seed_seq = state_seed_seq[1]
+            self.state = state_seed_seq[0]
 
     def __reduce__(self):
         from ._pickle import __bit_generator_ctor
-        return __bit_generator_ctor, (self.state['bit_generator'],), self.state
+
+        return (
+            __bit_generator_ctor,
+            (type(self), ),
+            (self.state, self._seed_seq)
+        )
 
     @property
     def state(self):
@@ -548,6 +578,59 @@ cdef class BitGenerator():
     @state.setter
     def state(self, value):
         raise NotImplementedError('Not implemented in base BitGenerator')
+
+    @property
+    def seed_seq(self):
+        """
+        Get the seed sequence used to initialize the bit generator.
+
+        .. versionadded:: 1.25.0
+
+        Returns
+        -------
+        seed_seq : ISeedSequence
+            The SeedSequence object used to initialize the BitGenerator.
+            This is normally a `np.random.SeedSequence` instance.
+
+        """
+        return self._seed_seq
+
+    def spawn(self, int n_children):
+        """
+        spawn(n_children)
+
+        Create new independent child bit generators.
+
+        See :ref:`seedsequence-spawn` for additional notes on spawning
+        children.  Some bit generators also implement ``jumped``
+        as a different approach for creating independent streams.
+
+        .. versionadded:: 1.25.0
+
+        Parameters
+        ----------
+        n_children : int
+
+        Returns
+        -------
+        child_bit_generators : list of BitGenerators
+
+        Raises
+        ------
+        TypeError
+            When the underlying SeedSequence does not implement spawning.
+
+        See Also
+        --------
+        random.Generator.spawn, random.SeedSequence.spawn :
+            Equivalent method on the generator and seed sequence.
+
+        """
+        if not isinstance(self._seed_seq, ISpawnableSeedSequence):
+            raise TypeError(
+                "The underlying SeedSequence does not implement spawning.")
+
+        return [type(self)(seed=s) for s in self._seed_seq.spawn(n_children)]
 
     def random_raw(self, size=None, output=True):
         """

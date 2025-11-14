@@ -1,0 +1,30 @@
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* @DWesl
+* Aayush Agrawal +
+* Adam Knapp +
+* Charles Harris
+* Navpreet Singh +
+* Sebastian Berg
+* Tania Allard
+
+Pull requests merged
+====================
+
+A total of 10 pull requests were merged for this release.
+
+* `#22489 <https://github.com/numpy/numpy/pull/22489>`__: TST, MAINT: Replace most setup with setup_method (also teardown)
+* `#22490 <https://github.com/numpy/numpy/pull/22490>`__: MAINT, CI: Switch to cygwin/cygwin-install-action@v2
+* `#22494 <https://github.com/numpy/numpy/pull/22494>`__: TST: Make test_partial_iteration_cleanup robust but require leak...
+* `#22592 <https://github.com/numpy/numpy/pull/22592>`__: MAINT: Ensure graceful handling of large header sizes
+* `#22593 <https://github.com/numpy/numpy/pull/22593>`__: TYP: Spelling alignment for array flag literal
+* `#22594 <https://github.com/numpy/numpy/pull/22594>`__: BUG: Fix bounds checking for ``random.logseries``
+* `#22595 <https://github.com/numpy/numpy/pull/22595>`__: DEV: Update GH actions and Dockerfile for Gitpod
+* `#22596 <https://github.com/numpy/numpy/pull/22596>`__: CI: Only fetch in actions/checkout
+* `#22597 <https://github.com/numpy/numpy/pull/22597>`__: BUG: Decrement ref count in gentype_reduce if allocated memory...
+* `#22625 <https://github.com/numpy/numpy/pull/22625>`__: BUG: Histogramdd breaks on big arrays in Windows

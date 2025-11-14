@@ -1,3 +1,5 @@
+#cython: binding=True
+
 import numpy as np
 cimport numpy as np
 
@@ -21,19 +23,19 @@ cdef extern from "src/sfc64/sfc64.h":
     void sfc64_set_state(sfc64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)
 
 
-cdef uint64_t sfc64_uint64(void* st) nogil:
+cdef uint64_t sfc64_uint64(void* st) noexcept nogil:
     return sfc64_next64(<sfc64_state *>st)
 
-cdef uint32_t sfc64_uint32(void *st) nogil:
+cdef uint32_t sfc64_uint32(void *st) noexcept nogil:
     return sfc64_next32(<sfc64_state *> st)
 
-cdef double sfc64_double(void* st) nogil:
+cdef double sfc64_double(void* st) noexcept nogil:
     return uint64_to_double(sfc64_next64(<sfc64_state *>st))
 
 
 cdef class SFC64(BitGenerator):
-    """
-    SFC64(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """SFC64(seed=None)\n--
 
     BitGenerator for Chris Doty-Humphrey's Small Fast Chaotic PRNG.
 
@@ -48,38 +50,38 @@ cdef class SFC64(BitGenerator):
 
     Notes
     -----
-    ``SFC64`` is a 256-bit implementation of Chris Doty-Humphrey's Small Fast
-    Chaotic PRNG ([1]_). ``SFC64`` has a few different cycles that one might be
+    `SFC64` is a 256-bit implementation of Chris Doty-Humphrey's Small Fast
+    Chaotic PRNG ([1]_). `SFC64` has a few different cycles that one might be
     on, depending on the seed; the expected period will be about
-    :math:`2^{255}` ([2]_). ``SFC64`` incorporates a 64-bit counter which means
+    :math:`2^{255}` ([2]_). `SFC64` incorporates a 64-bit counter which means
     that the absolute minimum cycle length is :math:`2^{64}` and that distinct
     seeds will not run into each other for at least :math:`2^{64}` iterations.
 
-    ``SFC64`` provides a capsule containing function pointers that produce
+    `SFC64` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     **State and Seeding**
 
-    The ``SFC64`` state vector consists of 4 unsigned 64-bit values. The last
+    The `SFC64` state vector consists of 4 unsigned 64-bit values. The last
     is a 64-bit counter that increments by 1 each iteration.
 
     The input seed is processed by `SeedSequence` to generate the first
-    3 values, then the ``SFC64`` algorithm is iterated a small number of times
+    3 values, then the `SFC64` algorithm is iterated a small number of times
     to mix.
 
     **Compatibility Guarantee**
 
-    ``SFC64`` makes a guarantee that a fixed seed will always produce the same
+    `SFC64` makes a guarantee that a fixed seed will always produce the same
     random integer stream.
 
     References
     ----------
     .. [1] `"PractRand"
-            <http://pracrand.sourceforge.net/RNG_engines.txt>`_
+            <https://pracrand.sourceforge.net/RNG_engines.txt>`_
     .. [2] `"Random Invertible Mapping Statistics"
-            <http://www.pcg-random.org/posts/random-invertible-mapping-statistics.html>`_
+            <https://www.pcg-random.org/posts/random-invertible-mapping-statistics.html>`_
     """
 
     cdef sfc64_state rng_state
@@ -133,8 +135,7 @@ cdef class SFC64(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'RNG'.format(self.__class__.__name__))
+            raise ValueError('state must be for a {self.__class__.__name__} RNG')
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
         state_vec[:] = value['state']['state']
         has_uint32 = value['has_uint32']

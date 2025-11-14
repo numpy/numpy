@@ -1,8 +1,9 @@
-import os
 import textwrap
+
 import pytest
 
 from numpy.testing import IS_PYPY
+
 from . import util
 
 
@@ -13,6 +14,7 @@ class TestMixed(util.F2PyTest):
         util.getpath("tests", "src", "mixed", "foo_free.f90"),
     ]
 
+    @pytest.mark.slow
     def test_all(self):
         assert self.module.bar11() == 11
         assert self.module.foo_fixed.bar12() == 12

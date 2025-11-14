@@ -2,14 +2,27 @@ import pytest
 
 import numpy as np
 import numpy.ma as ma
+from numpy.lib.recfunctions import (
+    append_fields,
+    apply_along_fields,
+    assign_fields_by_name,
+    drop_fields,
+    find_duplicates,
+    get_fieldstructure,
+    join_by,
+    merge_arrays,
+    recursive_fill_fields,
+    rename_fields,
+    repack_fields,
+    require_fields,
+    stack_arrays,
+    structured_to_unstructured,
+    unstructured_to_structured,
+)
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
 from numpy.testing import assert_, assert_raises
-from numpy.lib.recfunctions import (
-    drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
-    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
-    repack_fields, unstructured_to_structured, structured_to_unstructured,
-    apply_along_fields, require_fields, assign_fields_by_name)
+
 get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
@@ -19,19 +32,14 @@ zip_dtype = np.lib.recfunctions._zip_dtype
 
 class TestRecFunctions:
     # Misc tests
-
-    def setup(self):
+    def test_zip_descr(self):
+        # Test zip_descr
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array([('A', 1.), ('B', 2.)],
                      dtype=[('A', '|S3'), ('B', float)])
         w = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
                      dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
-        self.data = (w, x, y, z)
-
-    def test_zip_descr(self):
-        # Test zip_descr
-        (w, x, y, z) = self.data
 
         # Std array
         test = zip_descr((x, x), flatten=True)
@@ -228,19 +236,20 @@ class TestRecFunctions:
         dt = np.dtype((np.record, dt))
         assert_(repack_fields(dt).type is np.record)
 
-    def test_structured_to_unstructured(self):
+    @pytest.mark.thread_unsafe(reason="memmap is thread-unsafe (gh-29126)")
+    def test_structured_to_unstructured(self, tmp_path):
         a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
         out = structured_to_unstructured(a)
-        assert_equal(out, np.zeros((4,5), dtype='f8'))
+        assert_equal(out, np.zeros((4, 5), dtype='f8'))
 
-        b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+        b = np.array([(1, 2, 5), (4, 5, 7), (7, 8, 11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
-        assert_equal(out, np.array([ 3. ,  5.5,  9. , 11. ]))
+        assert_equal(out, np.array([3.,  5.5,  9., 11.]))
         out = np.mean(structured_to_unstructured(b[['x']]), axis=-1)
-        assert_equal(out, np.array([ 1. ,  4. ,  7. , 10. ]))
+        assert_equal(out, np.array([1.,  4. ,  7., 10.]))  # noqa: E203
 
-        c = np.arange(20).reshape((4,5))
+        c = np.arange(20).reshape((4, 5))
         out = unstructured_to_structured(c, a.dtype)
         want = np.array([( 0, ( 1.,  2), [ 3.,  4.]),
                          ( 5, ( 6.,  7), [ 8.,  9.]),
@@ -251,20 +260,25 @@ class TestRecFunctions:
                             ('c', 'f4', (2,))])
         assert_equal(out, want)
 
-        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8, 11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         assert_equal(apply_along_fields(np.mean, d),
-                     np.array([ 8.0/3,  16.0/3,  26.0/3, 11. ]))
+                     np.array([ 8.0 / 3,  16.0 / 3,  26.0 / 3, 11.]))
         assert_equal(apply_along_fields(np.mean, d[['x', 'z']]),
-                     np.array([ 3. ,  5.5,  9. , 11. ]))
+                     np.array([ 3.,  5.5,  9., 11.]))
 
         # check that for uniform field dtypes we get a view, not a copy:
-        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8, 11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
-        assert_(dd.base is d)
-        assert_(ddd.base is d)
+        assert_(np.shares_memory(dd, d))
+        assert_(np.shares_memory(ddd, d))
+
+        # check that reversing the order of attributes works
+        dd_attrib_rev = structured_to_unstructured(d[['z', 'x']])
+        assert_equal(dd_attrib_rev, [[5, 1], [7, 4], [11, 7], [12, 10]])
+        assert_(np.shares_memory(dd_attrib_rev, d))
 
         # including uniform fields with subarrays unpacked
         d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
@@ -273,8 +287,30 @@ class TestRecFunctions:
                             ('x2', ('i4', (2, 2)))])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
-        assert_(dd.base is d)
-        assert_(ddd.base is d)
+        assert_(np.shares_memory(dd, d))
+        assert_(np.shares_memory(ddd, d))
+
+        # check that reversing with sub-arrays works as expected
+        d_rev = d[::-1]
+        dd_rev = structured_to_unstructured(d_rev)
+        assert_equal(dd_rev, [[8, 9, 10, 11, 12, 13, 14],
+                              [1, 2, 3, 4, 5, 6, 7]])
+
+        # check that sub-arrays keep the order of their values
+        d_attrib_rev = d[['x2', 'x1', 'x0']]
+        dd_attrib_rev = structured_to_unstructured(d_attrib_rev)
+        assert_equal(dd_attrib_rev, [[4, 5, 6, 7, 2, 3, 1],
+                                     [11, 12, 13, 14, 9, 10, 8]])
+
+        # with ignored field at the end
+        d = np.array([(1, [2,  3], [[4, 5], [6, 7]], 32),
+                      (8, [9, 10], [[11, 12], [13, 14]], 64)],
+                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)),
+                            ('x2', ('i4', (2, 2))), ('ignored', 'u1')])
+        dd = structured_to_unstructured(d[['x0', 'x1', 'x2']])
+        assert_(np.shares_memory(dd, d))
+        assert_equal(dd, [[1, 2, 3, 4, 5, 6, 7],
+                          [8, 9, 10, 11, 12, 13, 14]])
 
         # test that nested fields with identical names don't break anything
         point = np.dtype([('x', int), ('y', int)])
@@ -283,13 +319,12 @@ class TestRecFunctions:
         res = structured_to_unstructured(arr, dtype=int)
         assert_equal(res, np.zeros((10, 6), dtype=int))
 
-
         # test nested combinations of subarrays and structured arrays, gh-13333
         def subarray(dt, shape):
             return np.dtype((dt, shape))
 
         def structured(*dts):
-            return np.dtype([('x{}'.format(i), dt) for i, dt in enumerate(dts)])
+            return np.dtype([(f'x{i}', dt) for i, dt in enumerate(dts)])
 
         def inspect(dt, dtype=None):
             arr = np.zeros((), dt)
@@ -316,7 +351,45 @@ class TestRecFunctions:
         assert_raises(NotImplementedError, structured_to_unstructured,
                                            np.zeros(3, dt), dtype=np.int32)
         assert_raises(NotImplementedError, unstructured_to_structured,
-                                           np.zeros((3,0), dtype=np.int32))
+                                           np.zeros((3, 0), dtype=np.int32))
+
+        # test supported ndarray subclasses
+        d_plain = np.array([(1, 2), (3, 4)], dtype=[('a', 'i4'), ('b', 'i4')])
+        dd_expected = structured_to_unstructured(d_plain, copy=True)
+
+        # recarray
+        d = d_plain.view(np.recarray)
+
+        dd = structured_to_unstructured(d, copy=False)
+        ddd = structured_to_unstructured(d, copy=True)
+        assert_(np.shares_memory(d, dd))
+        assert_(type(dd) is np.recarray)
+        assert_(type(ddd) is np.recarray)
+        assert_equal(dd, dd_expected)
+        assert_equal(ddd, dd_expected)
+
+        # memmap
+        d = np.memmap(tmp_path / 'memmap',
+                      mode='w+',
+                      dtype=d_plain.dtype,
+                      shape=d_plain.shape)
+        d[:] = d_plain
+        dd = structured_to_unstructured(d, copy=False)
+        ddd = structured_to_unstructured(d, copy=True)
+        assert_(np.shares_memory(d, dd))
+        assert_(type(dd) is np.memmap)
+        assert_(type(ddd) is np.memmap)
+        assert_equal(dd, dd_expected)
+        assert_equal(ddd, dd_expected)
+
+    def test_unstructured_to_structured(self):
+        # test if dtype is the args of np.dtype
+        a = np.zeros((20, 2))
+        test_dtype_args = [('x', float), ('y', float)]
+        test_dtype = np.dtype(test_dtype_args)
+        field1 = unstructured_to_structured(a, dtype=test_dtype_args)  # now
+        field2 = unstructured_to_structured(a, dtype=test_dtype)  # before
+        assert_equal(field1, field2)
 
     def test_field_assignment_by_name(self):
         a = np.ones(2, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
@@ -324,11 +397,11 @@ class TestRecFunctions:
 
         assert_equal(require_fields(a, newdt), np.ones(2, newdt))
 
-        b = np.array([(1,2), (3,4)], dtype=newdt)
+        b = np.array([(1, 2), (3, 4)], dtype=newdt)
         assign_fields_by_name(a, b, zero_unassigned=False)
-        assert_equal(a, np.array([(1,1,2),(1,3,4)], dtype=a.dtype))
+        assert_equal(a, np.array([(1, 1, 2), (1, 3, 4)], dtype=a.dtype))
         assign_fields_by_name(a, b)
-        assert_equal(a, np.array([(0,1,2),(0,3,4)], dtype=a.dtype))
+        assert_equal(a, np.array([(0, 1, 2), (0, 3, 4)], dtype=a.dtype))
 
         # test nested fields
         a = np.ones(2, dtype=[('a', [('b', 'f8'), ('c', 'u1')])])
@@ -336,9 +409,9 @@ class TestRecFunctions:
         assert_equal(require_fields(a, newdt), np.ones(2, newdt))
         b = np.array([((2,),), ((3,),)], dtype=newdt)
         assign_fields_by_name(a, b, zero_unassigned=False)
-        assert_equal(a, np.array([((1,2),), ((1,3),)], dtype=a.dtype))
+        assert_equal(a, np.array([((1, 2),), ((1, 3),)], dtype=a.dtype))
         assign_fields_by_name(a, b)
-        assert_equal(a, np.array([((0,2),), ((0,3),)], dtype=a.dtype))
+        assert_equal(a, np.array([((0, 2),), ((0, 3),)], dtype=a.dtype))
 
         # test unstructured code path for 0d arrays
         a, b = np.array(3), np.array(0)
@@ -372,7 +445,7 @@ class TestRecursiveFillFields:
 class TestMergeArrays:
     # Test merge_arrays
 
-    def setup(self):
+    def _create_arrays(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array(
@@ -380,11 +453,11 @@ class TestMergeArrays:
         w = np.array(
             [(1, (2, 3.0, ())), (4, (5, 6.0, ()))],
             dtype=[('a', int), ('b', [('ba', float), ('bb', int), ('bc', [])])])
-        self.data = (w, x, y, z)
+        return w, x, y, z
 
     def test_solo(self):
         # Test merge_arrays on a single array.
-        (_, x, _, z) = self.data
+        _, x, _, z = self._create_arrays()
 
         test = merge_arrays(x)
         control = np.array([(1,), (2,)], dtype=[('f0', int)])
@@ -399,7 +472,7 @@ class TestMergeArrays:
 
     def test_solo_w_flatten(self):
         # Test merge_arrays on a single array w & w/o flattening
-        w = self.data[0]
+        w = self._create_arrays()[0]
         test = merge_arrays(w, flatten=False)
         assert_equal(test, w)
 
@@ -411,7 +484,7 @@ class TestMergeArrays:
     def test_standard(self):
         # Test standard & standard
         # Test merge arrays
-        (_, x, y, _) = self.data
+        _, x, y, _ = self._create_arrays()
         test = merge_arrays((x, y), usemask=False)
         control = np.array([(1, 10), (2, 20), (-1, 30)],
                            dtype=[('f0', int), ('f1', int)])
@@ -426,7 +499,7 @@ class TestMergeArrays:
 
     def test_flatten(self):
         # Test standard & flexible
-        (_, x, _, z) = self.data
+        _, x, _, z = self._create_arrays()
         test = merge_arrays((x, z), flatten=True)
         control = np.array([(1, 'A', 1.), (2, 'B', 2.)],
                            dtype=[('f0', int), ('A', '|S3'), ('B', float)])
@@ -440,7 +513,7 @@ class TestMergeArrays:
 
     def test_flatten_wflexible(self):
         # Test flatten standard & nested
-        (w, x, _, _) = self.data
+        w, x, _, _ = self._create_arrays()
         test = merge_arrays((x, w), flatten=True)
         control = np.array([(1, 1, 2, 3.0), (2, 4, 5, 6.0)],
                            dtype=[('f0', int),
@@ -448,16 +521,15 @@ class TestMergeArrays:
         assert_equal(test, control)
 
         test = merge_arrays((x, w), flatten=False)
-        controldtype = [('f0', int),
-                                ('f1', [('a', int),
-                                        ('b', [('ba', float), ('bb', int), ('bc', [])])])]
+        f1_descr = [('a', int), ('b', [('ba', float), ('bb', int), ('bc', [])])]
+        controldtype = [('f0', int), ('f1', f1_descr)]
         control = np.array([(1., (1, (2, 3.0, ()))), (2, (4, (5, 6.0, ())))],
                            dtype=controldtype)
         assert_equal(test, control)
 
     def test_wmasked_arrays(self):
         # Test merge_arrays masked arrays
-        (_, x, _, _) = self.data
+        x = self._create_arrays()[1]
         mx = ma.array([1, 2, 3], mask=[1, 0, 0])
         test = merge_arrays((x, mx), usemask=True)
         control = ma.array([(1, 1), (2, 2), (-1, 3)],
@@ -479,7 +551,7 @@ class TestMergeArrays:
 
     def test_w_shorter_flex(self):
         # Test merge_arrays w/ a shorter flexndarray.
-        z = self.data[-1]
+        z = self._create_arrays()[-1]
 
         # Fixme, this test looks incomplete and broken
         #test = merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
@@ -487,13 +559,12 @@ class TestMergeArrays:
         #                   dtype=[('A', '|S3'), ('B', float), ('C', int)])
         #assert_equal(test, control)
 
-        # Hack to avoid pyflakes warnings about unused variables
         merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
         np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
                  dtype=[('A', '|S3'), ('B', float), ('C', int)])
 
     def test_singlerecord(self):
-        (_, x, y, z) = self.data
+        _, x, y, z = self._create_arrays()
         test = merge_arrays((x[0], y[0], z[0]), usemask=False)
         control = np.array([(1, 10, ('A', 1))],
                            dtype=[('f0', int),
@@ -505,18 +576,18 @@ class TestMergeArrays:
 class TestAppendFields:
     # Test append_fields
 
-    def setup(self):
+    def _create_arrays(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array(
             [('A', 1.), ('B', 2.)], dtype=[('A', '|S3'), ('B', float)])
         w = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
                      dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
-        self.data = (w, x, y, z)
+        return w, x, y, z
 
     def test_append_single(self):
         # Test simple case
-        (_, x, _, _) = self.data
+        x = self._create_arrays()[1]
         test = append_fields(x, 'A', data=[10, 20, 30])
         control = ma.array([(1, 10), (2, 20), (-1, 30)],
                            mask=[(0, 0), (0, 0), (1, 0)],
@@ -525,7 +596,7 @@ class TestAppendFields:
 
     def test_append_double(self):
         # Test simple case
-        (_, x, _, _) = self.data
+        x = self._create_arrays()[1]
         test = append_fields(x, ('A', 'B'), data=[[10, 20, 30], [100, 200]])
         control = ma.array([(1, 10, 100), (2, 20, 200), (-1, 30, -1)],
                            mask=[(0, 0, 0), (0, 0, 0), (1, 0, 1)],
@@ -534,7 +605,7 @@ class TestAppendFields:
 
     def test_append_on_flex(self):
         # Test append_fields on flexible type arrays
-        z = self.data[-1]
+        z = self._create_arrays()[-1]
         test = append_fields(z, 'C', data=[10, 20, 30])
         control = ma.array([('A', 1., 10), ('B', 2., 20), (-1, -1., 30)],
                            mask=[(0, 0, 0), (0, 0, 0), (1, 1, 0)],
@@ -543,7 +614,7 @@ class TestAppendFields:
 
     def test_append_on_nested(self):
         # Test append_fields on nested fields
-        w = self.data[0]
+        w = self._create_arrays()[0]
         test = append_fields(w, 'C', data=[10, 20, 30])
         control = ma.array([(1, (2, 3.0), 10),
                             (4, (5, 6.0), 20),
@@ -558,18 +629,18 @@ class TestAppendFields:
 
 class TestStackArrays:
     # Test stack_arrays
-    def setup(self):
+    def _create_arrays(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array(
             [('A', 1.), ('B', 2.)], dtype=[('A', '|S3'), ('B', float)])
         w = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
                      dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
-        self.data = (w, x, y, z)
+        return w, x, y, z
 
     def test_solo(self):
         # Test stack_arrays on single arrays
-        (_, x, _, _) = self.data
+        x = self._create_arrays()[1]
         test = stack_arrays((x,))
         assert_equal(test, x)
         assert_(test is x)
@@ -580,7 +651,7 @@ class TestStackArrays:
 
     def test_unnamed_fields(self):
         # Tests combinations of arrays w/o named fields
-        (_, x, y, _) = self.data
+        _, x, y, _ = self._create_arrays()
 
         test = stack_arrays((x, x), usemask=False)
         control = np.array([1, 2, 1, 2])
@@ -596,7 +667,7 @@ class TestStackArrays:
 
     def test_unnamed_and_named_fields(self):
         # Test combination of arrays w/ & w/o named fields
-        (_, x, _, z) = self.data
+        _, x, _, z = self._create_arrays()
 
         test = stack_arrays((x, z))
         control = ma.array([(1, -1, -1), (2, -1, -1),
@@ -628,7 +699,7 @@ class TestStackArrays:
 
     def test_matching_named_fields(self):
         # Test combination of arrays w/ matching field names
-        (_, x, _, z) = self.data
+        _, x, _, z = self._create_arrays()
         zz = np.array([('a', 10., 100.), ('b', 20., 200.), ('c', 30., 300.)],
                       dtype=[('A', '|S3'), ('B', float), ('C', float)])
         test = stack_arrays((z, zz))
@@ -656,7 +727,7 @@ class TestStackArrays:
 
     def test_defaults(self):
         # Test defaults: no exception raised if keys of defaults are not fields.
-        (_, _, _, z) = self.data
+        z = self._create_arrays()[-1]
         zz = np.array([('a', 10., 100.), ('b', 20., 200.), ('c', 30., 300.)],
                       dtype=[('A', '|S3'), ('B', float), ('C', float)])
         defaults = {'A': '???', 'B': -999., 'C': -9999., 'D': -99999.}
@@ -714,8 +785,8 @@ class TestStackArrays:
                 (b'b', [20.0], 200.0),
                 (b'c', [30.0], 300.0)],
             mask=[
-                (False, [False],  True),
-                (False, [False],  True),
+                (False, [False], True),
+                (False, [False], True),
                 (False, [False], False),
                 (False, [False], False),
                 (False, [False], False)
@@ -728,18 +799,18 @@ class TestStackArrays:
 
 
 class TestJoinBy:
-    def setup(self):
-        self.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
+    def _create_arrays(self):
+        a = np.array(list(zip(np.arange(10), np.arange(50, 60),
                                    np.arange(100, 110))),
                           dtype=[('a', int), ('b', int), ('c', int)])
-        self.b = np.array(list(zip(np.arange(5, 15), np.arange(65, 75),
+        b = np.array(list(zip(np.arange(5, 15), np.arange(65, 75),
                                    np.arange(100, 110))),
                           dtype=[('a', int), ('b', int), ('d', int)])
+        return a, b
 
     def test_inner_join(self):
         # Basic test of join_by
-        a, b = self.a, self.b
-
+        a, b = self._create_arrays()
         test = join_by('a', a, b, jointype='inner')
         control = np.array([(5, 55, 65, 105, 100), (6, 56, 66, 106, 101),
                             (7, 57, 67, 107, 102), (8, 58, 68, 108, 103),
@@ -749,8 +820,7 @@ class TestJoinBy:
         assert_equal(test, control)
 
     def test_join(self):
-        a, b = self.a, self.b
-
+        a, b = self._create_arrays()
         # Fixme, this test is broken
         #test = join_by(('a', 'b'), a, b)
         #control = np.array([(5, 55, 105, 100), (6, 56, 106, 101),
@@ -759,8 +829,6 @@ class TestJoinBy:
         #                   dtype=[('a', int), ('b', int),
         #                          ('c', int), ('d', int)])
         #assert_equal(test, control)
-
-        # Hack to avoid pyflakes unused variable warnings
         join_by(('a', 'b'), a, b)
         np.array([(5, 55, 105, 100), (6, 56, 106, 101),
                   (7, 57, 107, 102), (8, 58, 108, 103),
@@ -772,14 +840,13 @@ class TestJoinBy:
         # tests the bug in https://stackoverflow.com/q/44769632/102441
         foo = np.array([(1,)],
                        dtype=[('key', int)])
-        bar = np.array([(1, np.array([1,2,3]))],
+        bar = np.array([(1, np.array([1, 2, 3]))],
                        dtype=[('key', int), ('value', 'uint16', 3)])
         res = join_by('key', foo, bar)
         assert_equal(res, bar.view(ma.MaskedArray))
 
     def test_outer_join(self):
-        a, b = self.a, self.b
-
+        a, b = self._create_arrays()
         test = join_by(('a', 'b'), a, b, 'outer')
         control = ma.array([(0, 50, 100, -1), (1, 51, 101, -1),
                             (2, 52, 102, -1), (3, 53, 103, -1),
@@ -806,8 +873,7 @@ class TestJoinBy:
         assert_equal(test, control)
 
     def test_leftouter_join(self):
-        a, b = self.a, self.b
-
+        a, b = self._create_arrays()
         test = join_by(('a', 'b'), a, b, 'leftouter')
         control = ma.array([(0, 50, 100, -1), (1, 51, 101, -1),
                             (2, 52, 102, -1), (3, 53, 103, -1),
@@ -893,7 +959,7 @@ class TestJoinBy:
 
 class TestJoinBy2:
     @classmethod
-    def setup(cls):
+    def setup_method(cls):
         cls.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
                                   np.arange(100, 110))),
                          dtype=[('a', int), ('b', int), ('c', int)])
@@ -956,19 +1022,17 @@ class TestJoinBy2:
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
+
 class TestAppendFieldsObj:
     """
     Test append_fields with arrays containing objects
     """
     # https://github.com/numpy/numpy/issues/2346
 
-    def setup(self):
-        from datetime import date
-        self.data = dict(obj=date(2000, 1, 1))
-
     def test_append_to_objects(self):
         "Test append_fields when the base array contains objects"
-        obj = self.data['obj']
+        from datetime import date
+        obj = date(2000, 1, 1)
         x = np.array([(obj, 1.), (obj, 2.)],
                       dtype=[('A', object), ('B', float)])
         y = np.array([10, 20], dtype=int)

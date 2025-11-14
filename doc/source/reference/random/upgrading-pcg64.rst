@@ -2,7 +2,7 @@
 
 .. currentmodule:: numpy.random
 
-Upgrading ``PCG64`` with ``PCG64DXSM``
+Upgrading `PCG64` with `PCG64DXSM`
 ======================================
 
 Uses of the `PCG64` `BitGenerator` in a massively-parallel context have been
@@ -19,10 +19,10 @@ Does this affect me?
 
 If you
 
-  1. only use a single `Generator` instance,
-  2. only use `RandomState` or the functions in `numpy.random`,
-  3. only use the `PCG64.jumped` method to generate parallel streams,
-  4. explicitly use a `BitGenerator` other than `PCG64`,
+1. only use a single `Generator` instance,
+2. only use `RandomState` or the functions in `numpy.random`,
+3. only use the `PCG64.jumped` method to generate parallel streams,
+4. explicitly use a `BitGenerator` other than `PCG64`,
 
 then this weakness does not affect you at all. Carry on.
 
@@ -47,7 +47,7 @@ swamped by the remaining streams in most applications.
 
 .. _upgrading-pcg64-details:
 
-Technical Details
+Technical details
 -----------------
 
 Like many PRNG algorithms, `PCG64` is constructed from a transition function,
@@ -81,7 +81,7 @@ the probability of creating such a collision.
 `Empirically <https://github.com/numpy/numpy/issues/16313>`_, it has been
 determined that if one shares the lower 58 bits of state and shares an
 increment, then the pair of streams, when interleaved, will fail 
-`PractRand <http://pracrand.sourceforge.net/>`_ in
+`PractRand <https://pracrand.sourceforge.net/>`_ in
 a reasonable amount of time, after drawing a few gigabytes of data. Following
 the standard Birthday Paradox calculations for a collision of 58 bits, we can
 see that we can create :math:`2^{29}`, or about half a billion, streams which is when

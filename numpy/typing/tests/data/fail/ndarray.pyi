@@ -8,4 +8,4 @@ import numpy as np
 #
 # for more context.
 float_array = np.array([1.0])
-float_array.dtype = np.bool_  # E: Property "dtype" defined in "ndarray" is read-only
+float_array.dtype = np.bool  # type: ignore[assignment, misc]

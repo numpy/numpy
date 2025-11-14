@@ -5,7 +5,9 @@ import subprocess
 import sys
 from textwrap import indent, dedent
 import pytest
+from numpy.testing import IS_WASM
 
+@pytest.mark.skipif(IS_WASM, reason="cannot start subprocess in wasm")
 @pytest.mark.slow
 def test_multi_fortran_libs_link(tmp_path):
     '''
@@ -16,7 +18,7 @@ def test_multi_fortran_libs_link(tmp_path):
     # We need to make sure we actually have an f77 compiler.
     # This is nontrivial, so we'll borrow the utilities
     # from f2py tests:
-    from numpy.f2py.tests.util import has_f77_compiler
+    from numpy.distutils.tests.utilities import has_f77_compiler
     if not has_f77_compiler():
         pytest.skip('No F77 compiler found')
 
@@ -54,7 +56,7 @@ def test_multi_fortran_libs_link(tmp_path):
                 from numpy.distutils.core import setup
                 setup(**configuration(top_path="").todict())'''))
 
-    # build the test extensino and "install" into a temporary directory
+    # build the test extension and "install" into a temporary directory
     build_dir = tmp_path
     subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
                            '--prefix', str(tmp_path / 'installdir'),

@@ -5,7 +5,7 @@ NEP 46 — NumPy sponsorship guidelines
 =====================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Accepted
+:Status: Active
 :Type: Process
 :Created: 2020-12-27
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081424.html
@@ -18,7 +18,7 @@ This NEP provides guidelines on how the NumPy project will acknowledge
 financial and in-kind support.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 In the past few years, the NumPy project has gotten significant financial
@@ -85,8 +85,7 @@ Sponsors will get acknowledged through:
 - a small logo displayed on the front page of the NumPy website
 - prominent logo placement on https://numpy.org/about/
 - logos displayed in talks about NumPy by maintainers
-- announcements of the sponsorship on the NumPy mailing list and the numpy-team
-  Twitter account
+- announcements of the sponsorship on the NumPy mailing list
 
 In addition to Sponsors, we already have the concept of Institutional Partner
 (defined in NumPy's
@@ -108,11 +107,12 @@ About page) will be added to acknowledge all current and previous sponsors,
 partners, and any other entities and individuals who provided $5,000 or more of
 financial or in-kind support. This page will include relevant details of
 support (dates, amounts, names, and purpose); no logos will be used on this
-page. The rationale for the $5,000 minimum level is to keep the amount of work
-maintaining the page reasonable; the level is the equivalent of, e.g., one GSoC
-or a person-week's worth of engineering time in a Western country, which seems
-like a reasonable lower limit.
-
+page. Such support, if provided for a specific enhancements or fix, may be
+acknowledged in the appropriate release note snippet. The rationale for the
+$5,000 minimum level is to keep the amount of work maintaining the page
+reasonable; the level is the equivalent of, e.g., one GSoC or a person-week's
+worth of engineering time in a Western country, which seems like a reasonable
+lower limit.
 
 Implementation
 --------------
@@ -127,7 +127,6 @@ The following content changes need to be made:
   eligibility requirements and benefits.
 - Update https://numpy.org/about with details on how to get in touch with the
   NumPy project about sponsorship related matters (see next section).
-
 
 NumPy Funding Team
 ~~~~~~~~~~~~~~~~~~
@@ -204,7 +203,7 @@ to a more suitable platform, such as `Open Collective <https://opencollective.co
 in the future, we should reconsider listing all individual donations.
 
 
-Related Work
+Related work
 ------------
 
 Here we provide a few examples of how other projects handle sponsorship
@@ -238,7 +237,7 @@ Discussion
 - `PR with review of the NEP draft <https://github.com/numpy/numpy/pull/18084>`__
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 - `Inside NumPy: preparing for the next decade <https://github.com/numpy/archive/blob/main/content/inside_numpy_presentation_SciPy2019.pdf>`__ presentation at SciPy'19 discussing the impact of the first NumPy grant.

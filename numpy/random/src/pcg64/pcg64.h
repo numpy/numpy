@@ -19,7 +19,7 @@
  * For additional information about the PCG random number generation scheme,
  * including its license and other licensing options, visit
  *
- *     http://www.pcg-random.org
+ *     https://www.pcg-random.org
  *
  * Relicensed MIT in May 2019
  *
@@ -52,8 +52,11 @@
 
 #include <inttypes.h>
 
-#if defined(_WIN32) && !defined (__MINGW32__)
+#ifdef _WIN32
 #include <stdlib.h>
+#endif
+
+#if defined(_WIN32) && !defined (__MINGW32__)
 #define inline __forceinline
 #endif
 

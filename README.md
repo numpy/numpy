@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="/branding/logo/primary/numpylogo.svg" width="300">
+<img src="https://raw.githubusercontent.com/numpy/numpy/main/branding/logo/primary/numpylogo.svg" width="300">
 </h1><br>
 
 
@@ -11,16 +11,20 @@ https://pypi.org/project/numpy/)
 https://anaconda.org/conda-forge/numpy)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg)](
 https://stackoverflow.com/questions/tagged/numpy)
-[![Nature Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
+[![Nature Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41586--020--2649--2-blue)](
 https://doi.org/10.1038/s41586-020-2649-2)
+[![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=numpy)](https://insights.linuxfoundation.org/project/numpy)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://securityscorecards.dev/viewer/?uri=github.com/numpy/numpy)
+[![Typing](https://img.shields.io/pypi/types/numpy)](https://pypi.org/project/numpy/)
+
 
 NumPy is the fundamental package for scientific computing with Python.
 
-- **Website:** https://www.numpy.org
+- **Website:** https://numpy.org
 - **Documentation:** https://numpy.org/doc
 - **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
 - **Source code:** https://github.com/numpy/numpy
-- **Contributing:** https://www.numpy.org/devdocs/dev/index.html
+- **Contributing:** https://numpy.org/devdocs/dev/index.html
 - **Bug reports:** https://github.com/numpy/numpy/issues
 - **Report a security vulnerability:** https://tidelift.com/docs/security
 
@@ -35,7 +39,7 @@ Testing:
 
 NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
 
-    python -c 'import numpy; numpy.test()'
+    python -c "import numpy, sys; sys.exit(numpy.test() is False)"
 
 Code of Conduct
 ----------------------

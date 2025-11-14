@@ -33,6 +33,7 @@ From existing data
    asanyarray
    ascontiguousarray
    asmatrix
+   astype
    copy
    frombuffer
    from_dlpack
@@ -44,34 +45,34 @@ From existing data
 
 .. _routines.array-creation.rec:
 
-Creating record arrays (:mod:`numpy.rec`)
------------------------------------------
+Creating record arrays
+----------------------
 
-.. note:: :mod:`numpy.rec` is the preferred alias for
-   :mod:`numpy.core.records`.
+.. note:: Please refer to :ref:`arrays.classes.rec` for
+   record arrays.
 
 .. autosummary::
    :toctree: generated/
 
-   core.records.array
-   core.records.fromarrays
-   core.records.fromrecords
-   core.records.fromstring
-   core.records.fromfile
+   rec.array
+   rec.fromarrays
+   rec.fromrecords
+   rec.fromstring
+   rec.fromfile
 
 .. _routines.array-creation.char:
 
 Creating character arrays (:mod:`numpy.char`)
 ---------------------------------------------
 
-.. note:: :mod:`numpy.char` is the preferred alias for
-   :mod:`numpy.core.defchararray`.
+.. note:: :mod:`numpy.char` is used to create character
+   arrays.
 
 .. autosummary::
    :toctree: generated/
 
-   core.defchararray.array
-   core.defchararray.asarray
+   char.array
+   char.asarray
 
 Numerical ranges
 ----------------
@@ -98,10 +99,9 @@ Building matrices
    triu
    vander
 
-The Matrix class
+The matrix class
 ----------------
 .. autosummary::
    :toctree: generated/
 
-   mat
    bmat

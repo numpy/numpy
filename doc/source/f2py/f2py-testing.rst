@@ -45,10 +45,21 @@ class present in ``util.py``.
 
 This class many helper functions for parsing and compiling test source files. Its child 
 classes can override its ``sources`` data member to provide their own source files.
-This superclass will then compile the added source files upon object creation andtheir
+This superclass will then compile the added source files upon object creation and their
 functions will be appended to ``self.module`` data member. Thus, the child classes will
 be able to access the fortran functions specified in source file by calling
 ``self.module.[fortran_function_name]``.
+
+.. versionadded:: v2.0.0b1
+
+Each of the ``f2py`` tests should run without failure if no Fortran compilers
+are present on the host machine. To facilitate this, the ``CompilerChecker`` is
+used, essentially providing a ``meson`` dependent set of utilities namely
+``has_{c,f77,f90,fortran}_compiler()``.
+
+For the CLI tests in ``test_f2py2e``, flags which are expected to call ``meson``
+or otherwise depend on a compiler need to call ``compiler_check_f2pycli()``
+instead of ``f2pycli()``.
 
 Example
 ~~~~~~~
@@ -70,9 +81,9 @@ A test can be implemented as follows::
 	    def test_module(self):
 	        k = np.array([1, 2, 3], dtype=np.float64)
 	        w = np.array([1, 2, 3], dtype=np.float64)
-	        self.module.subb(k)
+	        self.module.addb(k)
 	        assert np.allclose(k, w + 1)
-	        self.module.subc([w, k])
+	        self.module.addc([w, k])
 	        assert np.allclose(k, w + 1)
 
 We override the ``sources`` data member to provide the source file. The source files

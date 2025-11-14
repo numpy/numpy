@@ -12,13 +12,6 @@ nd.item(1)
 nd.item(0, 1)
 nd.item((0, 1))
 
-# tolist is pretty simple
-
-# itemset
-scalar_array.itemset(3)
-nd.itemset(3, 0)
-nd.itemset((0, 0), 3)
-
 # tobytes
 nd.tobytes()
 nd.tobytes("C")
@@ -81,14 +74,8 @@ complex_array.getfield(float, offset=8)
 
 # setflags
 nd.setflags()
-
-nd.setflags(True)
 nd.setflags(write=True)
-
-nd.setflags(True, True)
 nd.setflags(write=True, align=True)
-
-nd.setflags(True, True, False)
 nd.setflags(write=True, align=True, uic=False)
 
 # fill is pretty simple

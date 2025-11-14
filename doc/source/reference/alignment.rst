@@ -1,7 +1,7 @@
 :orphan:
 
 ****************
-Memory Alignment
+Memory alignment
 ****************
 
 .. This document has been moved to ../dev/alignment.rst.

@@ -1,10 +1,12 @@
 import os
+import pytest
 import sys
 from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
-from numpy.testing import tempdir, assert_, assert_warns
+from numpy.testing import tempdir, assert_, IS_WASM
+
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
 # emulate them import StringIO from the io module.
@@ -66,7 +68,7 @@ def test_exec_command_stdout():
     # Test posix version:
     with redirect_stdout(StringIO()):
         with redirect_stderr(TemporaryFile()):
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 exec_command.exec_command("cd '.'")
 
     if os.name == 'posix':
@@ -74,14 +76,14 @@ def test_exec_command_stdout():
         with emulate_nonposix():
             with redirect_stdout(StringIO()):
                 with redirect_stderr(TemporaryFile()):
-                    with assert_warns(DeprecationWarning):
+                    with pytest.warns(DeprecationWarning):
                         exec_command.exec_command("cd '.'")
 
 def test_exec_command_stderr():
     # Test posix version:
     with redirect_stdout(TemporaryFile(mode='w+')):
         with redirect_stderr(StringIO()):
-            with assert_warns(DeprecationWarning):
+            with pytest.warns(DeprecationWarning):
                 exec_command.exec_command("cd '.'")
 
     if os.name == 'posix':
@@ -89,12 +91,13 @@ def test_exec_command_stderr():
         with emulate_nonposix():
             with redirect_stdout(TemporaryFile()):
                 with redirect_stderr(StringIO()):
-                    with assert_warns(DeprecationWarning):
+                    with pytest.warns(DeprecationWarning):
                         exec_command.exec_command("cd '.'")
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 class TestExecCommand:
-    def setup(self):
+    def setup_method(self):
         self.pyexe = get_pythonexe()
 
     def check_nt(self, **kws):
@@ -203,7 +206,7 @@ class TestExecCommand:
     def test_basic(self):
         with redirect_stdout(StringIO()):
             with redirect_stderr(StringIO()):
-                with assert_warns(DeprecationWarning):
+                with pytest.warns(DeprecationWarning):
                     if os.name == "posix":
                         self.check_posix(use_tee=0)
                         self.check_posix(use_tee=1)

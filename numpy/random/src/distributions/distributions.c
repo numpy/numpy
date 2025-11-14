@@ -9,14 +9,14 @@
 #include <assert.h>
 
 /* Inline generators for internal use */
-static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
+static inline uint32_t next_uint32(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint32(bitgen_state->state);
 }
-static NPY_INLINE uint64_t next_uint64(bitgen_t *bitgen_state) {
+static inline uint64_t next_uint64(bitgen_t *bitgen_state) {
   return bitgen_state->next_uint64(bitgen_state->state);
 }
 
-static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
+static inline float next_float(bitgen_t *bitgen_state) {
   return (next_uint32(bitgen_state) >> 8) * (1.0f / 16777216.0f);
 }
 
@@ -403,11 +403,29 @@ float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) {
   return scale * random_standard_gamma_f(bitgen_state, shape);
 }
 
+#define BETA_TINY_THRESHOLD 3e-103
+
+/*
+ *  Note: random_beta assumes that a != 0 and b != 0.
+ */
 double random_beta(bitgen_t *bitgen_state, double a, double b) {
   double Ga, Gb;
 
   if ((a <= 1.0) && (b <= 1.0)) {
     double U, V, X, Y, XpY;
+
+    if (a < BETA_TINY_THRESHOLD && b < BETA_TINY_THRESHOLD) {
+      /*
+       * When a and b are this small, the probability that the
+       * sample would be a double precision float that is not
+       * 0 or 1 is less than approx. 1e-100.  So we use the
+       * proportion a/(a + b) and a single uniform sample to
+       * generate the result.
+       */
+      U = next_double(bitgen_state);
+      return (a + b)*U < a;
+    }
+
     /* Use Johnk's algorithm */
 
     while (1) {
@@ -417,17 +435,24 @@ double random_beta(bitgen_t *bitgen_state, double a, double b) {
       Y = pow(V, 1.0 / b);
       XpY = X + Y;
       /* Reject if both U and V are 0.0, which is approx 1 in 10^106 */
-      if ((XpY <= 1.0) && (XpY > 0.0)) {
-        if (X + Y > 0) {
+      if ((XpY <= 1.0) && (U + V > 0.0)) {
+        if ((X > 0) && (Y > 0)) {
           return X / XpY;
         } else {
-          double logX = log(U) / a;
-          double logY = log(V) / b;
-          double logM = logX > logY ? logX : logY;
-          logX -= logM;
-          logY -= logM;
-
-          return exp(logX - log(exp(logX) + exp(logY)));
+          /*
+           * Either X or Y underflowed to 0, so we lost information in
+           * U**(1/a) or V**(1/b). We still compute X/(X+Y) here, but we
+           * work with logarithms as much as we can to avoid the underflow.
+           */
+          double logX = log(U)/a;
+          double logY = log(V)/b;
+          double delta = logX - logY;
+          if (delta > 0) {
+            return exp(-log1p(exp(-delta)));
+          }
+          else {
+            return exp(delta - log1p(exp(delta)));
+          }
         }
       }
     }
@@ -443,12 +468,15 @@ double random_chisquare(bitgen_t *bitgen_state, double df) {
 }
 
 double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) {
-  return ((random_chisquare(bitgen_state, dfnum) * dfden) /
-          (random_chisquare(bitgen_state, dfden) * dfnum));
+  double subexpr1 = random_chisquare(bitgen_state, dfnum) * dfden;
+  double subexpr2 = random_chisquare(bitgen_state, dfden) * dfnum;
+  return subexpr1 / subexpr2;
 }
 
 double random_standard_cauchy(bitgen_t *bitgen_state) {
-  return random_standard_normal(bitgen_state) / random_standard_normal(bitgen_state);
+  double subexpr1 = random_standard_normal(bitgen_state);
+  double subexpr2 = random_standard_normal(bitgen_state);
+  return subexpr1 / subexpr2;
 }
 
 double random_pareto(bitgen_t *bitgen_state, double a) {
@@ -569,7 +597,7 @@ static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
     /* log(V) == log(0.0) ok here */
     /* if U==0.0 so that us==0.0, log is ok since always returns */
     if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
-        (-lam + k * loglam - random_loggam(k + 1))) {
+        (-lam + (double)k * loglam - random_loggam((double)k + 1))) {
       return k;
     }
   }
@@ -705,10 +733,10 @@ Step52:
   if (A > (t + rho))
     goto Step10;
 
-  x1 = y + 1;
-  f1 = m + 1;
-  z = n + 1 - m;
-  w = n - y + 1;
+  x1 = (double)y + 1;
+  f1 = (double)m + 1;
+  z = (double)n + 1 - (double)m;
+  w = (double)n - (double)y + 1;
   x2 = x1 * x1;
   f2 = f1 * f1;
   z2 = z * z;
@@ -745,7 +773,7 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
     binomial->psave = p;
     binomial->has_binomial = 1;
     binomial->q = q = 1.0 - p;
-    binomial->r = qn = exp(n * log(q));
+    binomial->r = qn = exp(n * log1p(-p));
     binomial->c = np = n * p;
     binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
   } else {
@@ -820,12 +848,12 @@ double random_noncentral_f(bitgen_t *bitgen_state, double dfnum, double dfden,
 
 double random_wald(bitgen_t *bitgen_state, double mean, double scale) {
   double U, X, Y;
-  double mu_2l;
+  double d;
 
-  mu_2l = mean / (2 * scale);
   Y = random_standard_normal(bitgen_state);
   Y = mean * Y * Y;
-  X = mean + mu_2l * (Y - sqrt(4 * scale * Y + Y * Y));
+  d = 1 + sqrt(1 + 4 * scale / Y);
+  X = mean * (1 - 2 / d);
   U = next_double(bitgen_state);
   if (U <= mean / (mean + X)) {
     return X;
@@ -960,7 +988,15 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
 }
 
 int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  double z = ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  /*
+   * The constant 9.223372036854776e+18 is the smallest double that is
+   * larger than INT64_MAX.
+   */
+  if (z >= 9.223372036854776e+18) {
+    return INT64_MAX;
+  }
+  return (int64_t) z;
 }
 
 int64_t random_geometric(bitgen_t *bitgen_state, double p) {
@@ -972,14 +1008,34 @@ int64_t random_geometric(bitgen_t *bitgen_state, double p) {
 }
 
 RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
-  double am1, b;
+  double am1, b, Umin;
 
+  if (a >= 1025) {
+    /*
+     * If a exceeds 1025, the calculation of b will overflow and the loop
+     * will not terminate.  It is safe to simply return 1 here, because the
+     * probability of generating a value greater than 1 in this case is
+     * less than 3e-309.
+     */
+    return (RAND_INT_TYPE) 1;
+  }
   am1 = a - 1.0;
   b = pow(2.0, am1);
+  /*
+   * In the while loop, X is generated from the uniform distribution (Umin, 1].
+   * Values below Umin would result in X being rejected because it is too
+   * large, so there is no point in including them in the distribution of U.
+   */
+  Umin = pow((double) RAND_INT_MAX, -am1);
   while (1) {
-    double T, U, V, X;
+    double U01, T, U, V, X;
 
-    U = 1.0 - next_double(bitgen_state);
+    /*
+     * U is sampled from (Umin, 1]. Note that Umin might be 0, and we don't
+     * want U to be 0.
+     */
+    U01 = next_double(bitgen_state);
+    U = U01*Umin + (1 - U01);
     V = next_double(bitgen_state);
     X = floor(pow(U, -1.0 / am1));
     /*
@@ -1047,7 +1103,7 @@ uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max) {
 }
 
 /* Bounded generators */
-static NPY_INLINE uint64_t gen_mask(uint64_t max) {
+static inline uint64_t gen_mask(uint64_t max) {
   uint64_t mask = max;
   mask |= mask >> 1;
   mask |= mask >> 2;
@@ -1059,8 +1115,8 @@ static NPY_INLINE uint64_t gen_mask(uint64_t max) {
 }
 
 /* Generate 16 bit random numbers using a 32 bit buffer. */
-static NPY_INLINE uint16_t buffered_uint16(bitgen_t *bitgen_state, int *bcnt,
-                                           uint32_t *buf) {
+static inline uint16_t buffered_uint16(bitgen_t *bitgen_state, int *bcnt,
+                                       uint32_t *buf) {
   if (!(bcnt[0])) {
     buf[0] = next_uint32(bitgen_state);
     bcnt[0] = 1;
@@ -1073,8 +1129,8 @@ static NPY_INLINE uint16_t buffered_uint16(bitgen_t *bitgen_state, int *bcnt,
 }
 
 /* Generate 8 bit random numbers using a 32 bit buffer. */
-static NPY_INLINE uint8_t buffered_uint8(bitgen_t *bitgen_state, int *bcnt,
-                                         uint32_t *buf) {
+static inline uint8_t buffered_uint8(bitgen_t *bitgen_state, int *bcnt,
+                                     uint32_t *buf) {
   if (!(bcnt[0])) {
     buf[0] = next_uint32(bitgen_state);
     bcnt[0] = 3;
@@ -1087,8 +1143,8 @@ static NPY_INLINE uint8_t buffered_uint8(bitgen_t *bitgen_state, int *bcnt,
 }
 
 /* Static `masked rejection` function called by random_bounded_uint64(...) */
-static NPY_INLINE uint64_t bounded_masked_uint64(bitgen_t *bitgen_state,
-                                                 uint64_t rng, uint64_t mask) {
+static inline uint64_t bounded_masked_uint64(bitgen_t *bitgen_state,
+                                             uint64_t rng, uint64_t mask) {
   uint64_t val;
 
   while ((val = (next_uint64(bitgen_state) & mask)) > rng)
@@ -1099,7 +1155,7 @@ static NPY_INLINE uint64_t bounded_masked_uint64(bitgen_t *bitgen_state,
 
 /* Static `masked rejection` function called by
  * random_buffered_bounded_uint32(...) */
-static NPY_INLINE uint32_t
+static inline uint32_t
 buffered_bounded_masked_uint32(bitgen_t *bitgen_state, uint32_t rng,
                                uint32_t mask, int *bcnt, uint32_t *buf) {
   /*
@@ -1118,7 +1174,7 @@ buffered_bounded_masked_uint32(bitgen_t *bitgen_state, uint32_t rng,
 
 /* Static `masked rejection` function called by
  * random_buffered_bounded_uint16(...) */
-static NPY_INLINE uint16_t
+static inline uint16_t
 buffered_bounded_masked_uint16(bitgen_t *bitgen_state, uint16_t rng,
                                uint16_t mask, int *bcnt, uint32_t *buf) {
   uint16_t val;
@@ -1131,10 +1187,11 @@ buffered_bounded_masked_uint16(bitgen_t *bitgen_state, uint16_t rng,
 
 /* Static `masked rejection` function called by
  * random_buffered_bounded_uint8(...) */
-static NPY_INLINE uint8_t buffered_bounded_masked_uint8(bitgen_t *bitgen_state,
-                                                        uint8_t rng,
-                                                        uint8_t mask, int *bcnt,
-                                                        uint32_t *buf) {
+static inline uint8_t buffered_bounded_masked_uint8(bitgen_t *bitgen_state,
+                                                    uint8_t rng,
+                                                    uint8_t mask,
+                                                    int *bcnt,
+                                                    uint32_t *buf) {
   uint8_t val;
 
   while ((val = (buffered_uint8(bitgen_state, bcnt, buf) & mask)) > rng)
@@ -1143,10 +1200,10 @@ static NPY_INLINE uint8_t buffered_bounded_masked_uint8(bitgen_t *bitgen_state,
   return val;
 }
 
-static NPY_INLINE npy_bool buffered_bounded_bool(bitgen_t *bitgen_state,
-                                                 npy_bool off, npy_bool rng,
-                                                 npy_bool mask, int *bcnt,
-                                                 uint32_t *buf) {
+static inline npy_bool buffered_bounded_bool(bitgen_t *bitgen_state,
+                                             npy_bool off, npy_bool rng,
+                                             npy_bool mask, int *bcnt,
+                                             uint32_t *buf) {
   if (rng == 0)
     return off;
   if (!(bcnt[0])) {
@@ -1160,8 +1217,8 @@ static NPY_INLINE npy_bool buffered_bounded_bool(bitgen_t *bitgen_state,
 }
 
 /* Static `Lemire rejection` function called by random_bounded_uint64(...) */
-static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
-                                                 uint64_t rng) {
+static inline uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
+                                             uint64_t rng) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
    *
@@ -1245,7 +1302,7 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
 
 /* Static `Lemire rejection` function called by
  * random_buffered_bounded_uint32(...) */
-static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
+static inline uint32_t buffered_bounded_lemire_uint32(
     bitgen_t *bitgen_state, uint32_t rng, int *bcnt, uint32_t *buf) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
@@ -1285,7 +1342,7 @@ static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
 
 /* Static `Lemire rejection` function called by
  * random_buffered_bounded_uint16(...) */
-static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
+static inline uint16_t buffered_bounded_lemire_uint16(
     bitgen_t *bitgen_state, uint16_t rng, int *bcnt, uint32_t *buf) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
@@ -1321,9 +1378,9 @@ static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
 
 /* Static `Lemire rejection` function called by
  * random_buffered_bounded_uint8(...) */
-static NPY_INLINE uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
-                                                        uint8_t rng, int *bcnt,
-                                                        uint32_t *buf) {
+static inline uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
+                                                    uint8_t rng, int *bcnt,
+                                                    uint32_t *buf) {
   /*
    * Uses Lemire's algorithm - https://arxiv.org/abs/1805.10941
    *

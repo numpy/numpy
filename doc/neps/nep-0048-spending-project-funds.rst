@@ -7,7 +7,7 @@ NEP 48 — Spending NumPy project funds
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Inessa Pawson <inessa@albuscode.org>
 :Author: Stefan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
+:Status: Active
 :Type: Informational
 :Created: 2021-02-07
 :Resolution:
@@ -24,7 +24,7 @@ how decisions regarding spending funds get made, how funds get administered,
 and transparency around these topics.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 NumPy is a fiscally sponsored project of NumFOCUS, a 501(c)(3) nonprofit
@@ -125,7 +125,7 @@ a volunteer in a reasonable amount of time.
 There are also many tasks, activities, and projects outside of
 development work that are important and could enhance the project or community
 - think of, for example, user surveys, translations, outreach, dedicated
-mentoring of newcomers, community organizating, website improvements, and
+mentoring of newcomers, community organizing, website improvements, and
 administrative tasks.
 
 Time of people to perform tasks is also not the only thing that funds can be
@@ -376,7 +376,7 @@ That leaves about $25,000 in available funds at the time of writing, and
 that amount is currently growing at a rate of about $3,000/month.
 
 
-Related Work
+Related work
 ------------
 
 See references.  We assume that other open source projects have also developed
@@ -398,7 +398,7 @@ Discussion
 
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Pauli Virtanen et al., "SciPy 1.0: fundamental algorithms for scientific

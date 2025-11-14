@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
-import numpy as np
+from typing import Any, cast
+
 import pytest
+
+import numpy as np
+import numpy.typing as npt
 
 c16 = np.complex128(1)
 f8 = np.float64(1)
@@ -17,16 +20,17 @@ u4 = np.uint32(1)
 dt = np.datetime64(1, "D")
 td = np.timedelta64(1, "D")
 
-b_ = np.bool_(1)
+b_ = np.bool(1)
 
 b = bool(1)
 c = complex(1)
 f = float(1)
-i = int(1)
+i = 1
 
 
 class Object:
-    def __array__(self) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
+                  copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret
@@ -56,14 +60,15 @@ class Object:
         return self
 
 
-AR_b: np.ndarray[Any, np.dtype[np.bool_]] = np.array([True])
-AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
-AR_i: np.ndarray[Any, np.dtype[np.int64]] = np.array([1])
-AR_f: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0])
-AR_c: np.ndarray[Any, np.dtype[np.complex128]] = np.array([1j])
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64(1, "D")])
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64(1, "D")])
-AR_O: np.ndarray[Any, np.dtype[np.object_]] = np.array([Object()])
+AR_b: npt.NDArray[np.bool] = np.array([True])
+AR_u: npt.NDArray[np.uint32] = np.array([1], dtype=np.uint32)
+AR_i: npt.NDArray[np.int64] = np.array([1])
+AR_integer: npt.NDArray[np.integer] = cast(npt.NDArray[np.integer], AR_i)
+AR_f: npt.NDArray[np.float64] = np.array([1.0])
+AR_c: npt.NDArray[np.complex128] = np.array([1j])
+AR_m: npt.NDArray[np.timedelta64] = np.array([np.timedelta64(1, "D")])
+AR_M: npt.NDArray[np.datetime64] = np.array([np.datetime64(1, "D")])
+AR_O: npt.NDArray[np.object_] = np.array([Object()])
 
 AR_LIKE_b = [True]
 AR_LIKE_u = [np.uint32(1)]
@@ -250,6 +255,13 @@ AR_m // AR_LIKE_m
 
 AR_LIKE_m // AR_m
 
+AR_m /= f
+AR_m //= f
+AR_m /= AR_f
+AR_m /= AR_LIKE_f
+AR_m //= AR_f
+AR_m //= AR_LIKE_f
+
 AR_O // AR_LIKE_b
 AR_O // AR_LIKE_u
 AR_O // AR_LIKE_i
@@ -272,6 +284,10 @@ AR_u *= AR_LIKE_u
 AR_i *= AR_LIKE_b
 AR_i *= AR_LIKE_u
 AR_i *= AR_LIKE_i
+
+AR_integer *= AR_LIKE_b
+AR_integer *= AR_LIKE_u
+AR_integer *= AR_LIKE_i
 
 AR_f *= AR_LIKE_b
 AR_f *= AR_LIKE_u
@@ -304,6 +320,10 @@ AR_u **= AR_LIKE_u
 AR_i **= AR_LIKE_b
 AR_i **= AR_LIKE_u
 AR_i **= AR_LIKE_i
+
+AR_integer **= AR_LIKE_b
+AR_integer **= AR_LIKE_u
+AR_integer **= AR_LIKE_i
 
 AR_f **= AR_LIKE_b
 AR_f **= AR_LIKE_u

@@ -1,14 +1,22 @@
-import numpy as np
-from numpy.core._rational_tests import rational
-from numpy.testing import (
-    assert_equal, assert_array_equal, assert_raises, assert_,
-    assert_raises_regex, assert_warns,
-    )
-from numpy.lib.stride_tricks import (
-    as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
-    broadcast_shapes, sliding_window_view,
-    )
 import pytest
+
+import numpy as np
+from numpy._core._rational_tests import rational
+from numpy.lib._stride_tricks_impl import (
+    _broadcast_shape,
+    as_strided,
+    broadcast_arrays,
+    broadcast_shapes,
+    broadcast_to,
+    sliding_window_view,
+)
+from numpy.testing import (
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -219,7 +227,7 @@ def test_same_as_ufunc():
     ]
     for input_shapes, expected_shape in data:
         assert_same_as_ufunc(input_shapes[0], input_shapes[1],
-                             "Shapes: %s %s" % (input_shapes[0], input_shapes[1]))
+                             f"Shapes: {input_shapes[0]} {input_shapes[1]}")
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_same_as_ufunc(input_shapes[1], input_shapes[0])
         # Try them transposed, too.
@@ -341,7 +349,7 @@ def test_broadcast_shapes_raises():
         [(2, 3), (2,)],
         [(3,), (3,), (4,)],
         [(1, 3, 4), (2, 3, 3)],
-        [(1, 2), (3,1), (3,2), (10, 5)],
+        [(1, 2), (3, 1), (3, 2), (10, 5)],
         [2, (2, 3)],
     ]
     for input_shapes in data:
@@ -373,7 +381,7 @@ def test_as_strided():
     a['num'] = np.arange(1, 5)
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     expected_num = [[1, 2, 3, 4]] * 3
-    expected_obj = [[None]*4]*3
+    expected_obj = [[None] * 4] * 3
     assert_equal(a_view.dtype, dt)
     assert_array_equal(expected_num, a_view['num'])
     assert_array_equal(expected_obj, a_view['obj'])
@@ -409,7 +417,7 @@ class TestSlidingWindowView:
 
     def test_2d(self):
         i, j = np.ogrid[:3, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         shape = (2, 2)
         arr_view = sliding_window_view(arr, shape)
         expected = np.array([[[[0, 1], [10, 11]],
@@ -422,7 +430,7 @@ class TestSlidingWindowView:
 
     def test_2d_with_axis(self):
         i, j = np.ogrid[:3, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         arr_view = sliding_window_view(arr, 3, 0)
         expected = np.array([[[0, 10, 20],
                               [1, 11, 21],
@@ -432,7 +440,7 @@ class TestSlidingWindowView:
 
     def test_2d_repeated_axis(self):
         i, j = np.ogrid[:3, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         arr_view = sliding_window_view(arr, (2, 3), (1, 1))
         expected = np.array([[[[0, 1, 2],
                                [1, 2, 3]]],
@@ -444,7 +452,7 @@ class TestSlidingWindowView:
 
     def test_2d_without_axis(self):
         i, j = np.ogrid[:4, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         shape = (2, 3)
         arr_view = sliding_window_view(arr, shape)
         expected = np.array([[[[0, 1, 2], [10, 11, 12]],
@@ -457,7 +465,7 @@ class TestSlidingWindowView:
 
     def test_errors(self):
         i, j = np.ogrid[:4, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         with pytest.raises(ValueError, match='cannot contain negative values'):
             sliding_window_view(arr, (-1, 3))
         with pytest.raises(
@@ -578,14 +586,15 @@ def test_writeable():
 
     # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
-    for is_broadcast, results in [(False, broadcast_arrays(original,)),
-                                  (True, broadcast_arrays(0, original))]:
-        for result in results:
+    test_cases = [((False,), broadcast_arrays(original,)),
+                  ((True, False), broadcast_arrays(0, original))]
+    for is_broadcast, results in test_cases:
+        for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
-            if is_broadcast:
-                with assert_warns(FutureWarning):
+            if array_is_broadcast:
+                with pytest.warns(FutureWarning):
                     assert_equal(result.flags.writeable, True)
-                with assert_warns(DeprecationWarning):
+                with pytest.warns(DeprecationWarning):
                     result[:] = 0
                 # Warning not emitted, writing to the array resets it
                 assert_equal(result.flags.writeable, True)
@@ -623,11 +632,12 @@ def test_writeable_memoryview():
     # See gh-13929.
     original = np.array([1, 2, 3])
 
-    for is_broadcast, results in [(False, broadcast_arrays(original,)),
-                                  (True, broadcast_arrays(0, original))]:
-        for result in results:
+    test_cases = [((False, ), broadcast_arrays(original,)),
+                  ((True, False), broadcast_arrays(0, original))]
+    for is_broadcast, results in test_cases:
+        for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
-            if is_broadcast:
+            if array_is_broadcast:
                 # memoryview(result, writable=True) will give warning but cannot
                 # be tested using the python API.
                 assert memoryview(result).readonly

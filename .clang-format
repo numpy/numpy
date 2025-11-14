@@ -10,7 +10,7 @@ AllowShortEnumsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AlwaysBreakAfterReturnType: TopLevel
 BreakBeforeBraces: Stroustrup
-ColumnLimit: 79
+ColumnLimit: 88
 ContinuationIndentWidth: 8
 DerivePointerAlignment: false
 IndentWidth: 4
@@ -27,6 +27,7 @@ IncludeCategories:
     Priority:        1
   - Regex:           '^<[[:alnum:]_.]+"'
     Priority:        2
+IndentPPDirectives: AfterHash
 Language: Cpp
 PointerAlignment: Right
 ReflowComments: true

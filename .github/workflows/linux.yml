@@ -1,0 +1,364 @@
+name: Linux tests
+
+# This file is meant for testing across supported Python versions, build types
+# and interpreters (PyPy, python-dbg, a pre-release Python in summer time),
+# build-via-sdist, run benchmarks, measure code coverage, and other build
+# options.
+
+on:
+  push:
+    branches:
+      # coverage comparison in the "full" step needs to run on main after merges
+      - main
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  lint:
+    # To enable this job and subsequent jobs on a fork, comment out:
+    if: github.repository == 'numpy/numpy' && github.event_name != 'push'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.11'
+    - name: Install linter requirements
+      run:
+        python -m pip install -r requirements/linter_requirements.txt
+    - name: Run linter on PR
+      env:
+        BASE_REF: ${{ github.base_ref }}
+      run:
+        python tools/linter.py
+
+  smoke_test:
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
+    strategy:
+      matrix:
+        version: ["3.11", "3.12", "3.13", "3.14", "3.14t"]
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: ${{ matrix.version }}
+    - uses: ./.github/meson_actions
+
+  pypy:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: 'pypy3.11-v7.3.20'
+    - name: Setup using scipy-openblas
+      run: |
+        python -m pip install -r requirements/ci_requirements.txt
+        spin config-openblas --with-scipy-openblas=32
+    - uses: ./.github/meson_actions
+
+  debug:
+    needs: [smoke_test]
+    runs-on: ubuntu-24.04
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - name: Install debug Python
+      run: |
+        sudo apt-get update
+        sudo apt-get install python3-dbg ninja-build
+    - name: Build NumPy and install into venv
+      run: |
+        python3-dbg -m venv venv
+        source venv/bin/activate
+        pip install -U pip
+        pip install . -v -Csetup-args=-Dbuildtype=debug -Csetup-args=-Dallow-noblas=true
+    - name: Install test dependencies
+      run: |
+        source venv/bin/activate
+        pip install -r requirements/test_requirements.txt
+    - name: Run test suite
+      run: |
+        source venv/bin/activate
+        cd tools
+        pytest --timeout=600 --durations=10 --pyargs numpy -m "not slow"
+
+  full:
+    # Install as editable, then run the full test suite with code coverage
+    needs: [smoke_test]
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.11'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
+    - name: Install gfortran and setup OpenBLAS (MacPython build)
+      run: |
+        set -xe
+        sudo apt update
+        sudo apt install gfortran libgfortran5
+        python -m pip install -r requirements/ci32_requirements.txt
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
+
+    - name: Install as editable
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        pip install -e . --no-build-isolation
+    - name: Run full test suite
+      run: |
+        pytest numpy --durations=10 --timeout=600 --cov-report=html:build/coverage
+        # TODO: gcov
+      env:
+        PYTHONOPTIMIZE: 2
+
+  armhf_test:
+    # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
+    # running on aarch64 (ARM 64-bit) GitHub runners.
+    needs: [smoke_test]
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - name: Creates new container
+      run: |
+        docker run --name the_container --interactive \
+          -v $(pwd):/numpy arm32v7/ubuntu:24.04 /bin/linux32 /bin/bash -c "
+          apt update &&
+          apt install -y ninja-build cmake git python3 python-is-python3 python3-dev python3-pip python3-venv
+        "
+        docker commit the_container the_container
+
+    - name: Meson Build
+      run: |
+        docker run --rm -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy the_container \
+          /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy &&
+            python -m venv venv &&
+            source venv/bin/activate &&
+            python -m pip install -r /numpy/requirements/build_requirements.txt &&
+            python -m pip install -r /numpy/requirements/test_requirements.txt &&
+            spin build
+          '"
+
+    - name: Meson Log
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Run Tests
+      run: |
+        docker run --rm -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy the_container \
+          /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy && source venv/bin/activate && spin test -m full -- --timeout=600 --durations=10
+          '"
+
+  benchmark:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.11'
+    - name: Install build and benchmarking dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install libopenblas-dev ninja-build
+        pip install "asv<0.6.5" virtualenv packaging -r requirements/build_requirements.txt
+    - name: Install NumPy
+      run: |
+        spin build -- -Dcpu-dispatch=none
+    # Ensure to keep the below steps as single-line bash commands (it's a
+    # workaround for asv#1333, and it may have side-effects on multi-line commands)
+    - name: Appease asv's need for machine info
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        asv machine --yes --config benchmarks/asv.conf.json
+    - name: Run benchmarks
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        spin bench --quick
+    # These are run on CircleCI
+    # - name: Check docstests
+    #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+    #   run: |
+    #     pip install -r requirements/doc_requirements.txt -r requirements/test_requirements.txt
+    #     spin check-docs -v
+    #     spin check-tutorials -v
+
+  sdist:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.11'
+    - name: Install gfortran and setup OpenBLAS (sdist build)
+      run: |
+        set -xe
+        python -m pip install -r requirements/ci_requirements.txt
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas64 as ob64; print(ob64.get_pkg_config())" > ./.openblas/scipy-openblas.pc
+    - name: Build a wheel via an sdist
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        pip install build
+        python -m build
+        pip install dist/numpy*.whl
+    - name: Install test dependencies
+      run: |
+        pip install -r requirements/test_requirements.txt
+    - name: Run test suite
+      run: |
+        cd tools
+        pytest --pyargs numpy -m "not slow"
+    - name: Test SWIG binding
+      run: |
+        sudo apt update
+        sudo apt install make swig
+        make -C tools/swig/test test
+
+  array_api_tests:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - name: Checkout NumPy
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - name: Checkout array-api-tests
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        repository: data-apis/array-api-tests
+        ref: '3c273cd34d51c64ed893737306d36adab23a94a1'  # v2025.05.23
+        submodules: 'true'
+        path: 'array-api-tests'
+        persist-credentials: false
+    - name: Set up Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.11'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install -r array-api-tests/requirements.txt
+    - name: Build and install NumPy
+      run: |
+        python -m pip install . -v -Csetup-args=-Dallow-noblas=true -Csetup-args=-Dcpu-baseline=none -Csetup-args=-Dcpu-dispatch=none
+    - name: Run the test suite
+      env:
+        ARRAY_API_TESTS_MODULE: numpy
+        PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
+      run: |
+        cd ${GITHUB_WORKSPACE}/array-api-tests
+        pytest array_api_tests -v -c pytest.ini -n 4 --max-examples=1000 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
+
+  custom_checks:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.11'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
+        pip install vulture
+    - name: Build and install NumPy
+      run: |
+        # Install using the fastest way to build (no BLAS, no SIMD)
+        spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
+    - name: Check build-internal dependencies
+      run: |
+        ninja -C build -t missingdeps
+    - name: Check installed test and stub files
+      run: |
+        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy')
+    - name: Check for unreachable code paths in Python modules
+      run: |
+        # Need the explicit `bash -c` here because `grep` returns exit code 1 for no matches
+        bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/,vendored-meson/ | grep 'unreachable'"
+    - name: Check usage of install_tag
+      run: |
+        rm -rf build-install
+        ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
+        python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests

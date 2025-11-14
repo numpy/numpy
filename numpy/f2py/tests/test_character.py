@@ -1,10 +1,13 @@
-import pytest
 import textwrap
-from numpy.testing import assert_array_equal, assert_equal, assert_raises
+
+import pytest
+
 import numpy as np
 from numpy.f2py.tests import util
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
 
+@pytest.mark.slow
 class TestCharacterString(util.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
@@ -14,7 +17,7 @@ class TestCharacterString(util.F2PyTest):
     code = ''
     for length in length_list:
         fsuffix = length
-        clength = dict(star='(*)').get(length, length)
+        clength = {'star': '(*)'}.get(length, length)
 
         code += textwrap.dedent(f"""
 
@@ -101,7 +104,7 @@ class TestCharacterString(util.F2PyTest):
                       {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length],
                       ], dtype='S')
 
-        expected = np.array([[c for c in s] for s in a], dtype='u1')
+        expected = np.array([list(s) for s in a], dtype='u1')
         assert_array_equal(f(a), expected)
 
     @pytest.mark.parametrize("length", length_list)
@@ -113,7 +116,7 @@ class TestCharacterString(util.F2PyTest):
             [{'1': 'a', '3': 'abc', 'star': 'abcde' * 3}[length],
              {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length]], dtype='S')
 
-        a = np.array([[c for c in s] for s in expected], dtype='u1')
+        a = np.array([list(s) for s in expected], dtype='u1')
         assert_array_equal(f(a), expected)
 
     @pytest.mark.parametrize("length", length_list)
@@ -126,7 +129,7 @@ class TestCharacterString(util.F2PyTest):
                       [{'1': 'f', '3': 'fgh', 'star': 'fghij' * 3}[length],
                        {'1': 'F', '3': 'FGH', 'star': 'FGHIJ' * 3}[length]]],
                      dtype='S')
-        expected = np.array([[[c for c in item] for item in row] for row in a],
+        expected = np.array([[list(item) for item in row] for row in a],
                             dtype='u1', order='F')
         assert_array_equal(f(a), expected)
 
@@ -457,9 +460,10 @@ class TestMiscCharacter(util.F2PyTest):
          character(len=*), intent(in) :: x(:)
          !f2py intent(out) x
          integer :: i
-         do i=1, size(x)
-           print*, "x(",i,")=", x(i)
-         end do
+         ! Uncomment for debug printing:
+         !do i=1, size(x)
+         !   print*, "x(",i,")=", x(i)
+         !end do
        end subroutine {fprefix}_gh4519
 
        pure function {fprefix}_gh3425(x) result (y)
@@ -511,6 +515,7 @@ class TestMiscCharacter(util.F2PyTest):
        end subroutine {fprefix}_character_bc_old
     """)
 
+    @pytest.mark.slow
     def test_gh18684(self):
         # Test character(len=5) and character*5 usages
         f = getattr(self.module, self.fprefix + '_gh18684')
@@ -535,13 +540,13 @@ class TestMiscCharacter(util.F2PyTest):
         f = getattr(self.module, self.fprefix + '_gh4519')
 
         for x, expected in [
-                ('a', dict(shape=(), dtype=np.dtype('S1'))),
-                ('text', dict(shape=(), dtype=np.dtype('S4'))),
+                ('a', {'shape': (), 'dtype': np.dtype('S1')}),
+                ('text', {'shape': (), 'dtype': np.dtype('S4')}),
                 (np.array(['1', '2', '3'], dtype='S1'),
-                 dict(shape=(3,), dtype=np.dtype('S1'))),
+                 {'shape': (3,), 'dtype': np.dtype('S1')}),
                 (['1', '2', '34'],
-                 dict(shape=(3,), dtype=np.dtype('S2'))),
-                (['', ''], dict(shape=(2,), dtype=np.dtype('S1')))]:
+                 {'shape': (3,), 'dtype': np.dtype('S2')}),
+                (['', ''], {'shape': (2,), 'dtype': np.dtype('S1')})]:
             r = f(x)
             for k, v in expected.items():
                 assert_equal(getattr(r, k), v)
@@ -568,3 +573,69 @@ class TestMiscCharacter(util.F2PyTest):
         assert_equal(len(a), 2)
 
         assert_raises(Exception, lambda: f(b'c'))
+
+
+class TestStringScalarArr(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "scalar_string.f90")]
+
+    def test_char(self):
+        for out in (self.module.string_test.string,
+                    self.module.string_test.string77):
+            expected = ()
+            assert out.shape == expected
+            expected = '|S8'
+            assert out.dtype == expected
+
+    def test_char_arr(self):
+        for out in (self.module.string_test.strarr,
+                    self.module.string_test.strarr77):
+            expected = (5, 7)
+            assert out.shape == expected
+            expected = '|S12'
+            assert out.dtype == expected
+
+class TestStringAssumedLength(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24008.f")]
+
+    def test_gh24008(self):
+        self.module.greet("joe", "bob")
+
+@pytest.mark.slow
+class TestStringOptionalInOut(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "string", "gh24662.f90")]
+
+    def test_gh24662(self):
+        self.module.string_inout_optional()
+        a = np.array('hi', dtype='S32')
+        self.module.string_inout_optional(a)
+        assert "output string" in a.tobytes().decode()
+        with pytest.raises(Exception):  # noqa: B017
+            aa = "Hi"
+            self.module.string_inout_optional(aa)
+
+
+@pytest.mark.slow
+class TestNewCharHandling(util.F2PyTest):
+    # from v1.24 onwards, gh-19388
+    sources = [
+        util.getpath("tests", "src", "string", "gh25286.pyf"),
+        util.getpath("tests", "src", "string", "gh25286.f90")
+    ]
+    module_name = "_char_handling_test"
+
+    def test_gh25286(self):
+        info = self.module.charint('T')
+        assert info == 2
+
+@pytest.mark.slow
+class TestBCCharHandling(util.F2PyTest):
+    # SciPy style, "incorrect" bindings with a hook
+    sources = [
+        util.getpath("tests", "src", "string", "gh25286_bc.pyf"),
+        util.getpath("tests", "src", "string", "gh25286.f90")
+    ]
+    module_name = "_char_handling_test"
+
+    def test_gh25286(self):
+        info = self.module.charint('T')
+        assert info == 2

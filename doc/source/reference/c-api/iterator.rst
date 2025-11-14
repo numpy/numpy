@@ -1,4 +1,4 @@
-Array Iterator API
+Array iterator API
 ==================
 
 .. sectionauthor:: Mark Wiebe
@@ -7,9 +7,7 @@ Array Iterator API
    pair: iterator; C-API
    pair: C-API; iterator
 
-.. versionadded:: 1.6
-
-Array Iterator
+Array iterator
 --------------
 
 The array iterator encapsulates many of the key features in ufuncs,
@@ -26,8 +24,10 @@ which may be of interest for those using this C API. In many instances,
 testing out ideas by creating the iterator in Python is a good idea
 before writing the C iteration code.
 
-Simple Iteration Example
-------------------------
+.. _iteration-example:
+
+Iteration example
+-----------------
 
 The best way to become familiar with the iterator is to look at its
 usage within the NumPy codebase itself. For example, here is a slightly
@@ -115,10 +115,10 @@ number of non-zero elements in an array.
         return nonzero_count;
     }
 
-Simple Multi-Iteration Example
+Multi-iteration example
 ------------------------------
 
-Here is a simple copy function using the iterator.  The ``order`` parameter
+Here is a copy function using the iterator.  The ``order`` parameter
 is used to control the memory layout of the allocated result, typically
 :c:data:`NPY_KEEPORDER` is desired.
 
@@ -203,7 +203,67 @@ is used to control the memory layout of the allocated result, typically
     }
 
 
-Iterator Data Types
+Multi index tracking example
+----------------------------
+
+This example shows you how to work with the :c:data:`NPY_ITER_MULTI_INDEX` flag. For simplicity, we assume the argument is a two-dimensional array.
+
+.. code-block:: c
+
+   int PrintMultiIndex(PyArrayObject *arr) {
+       NpyIter *iter;
+       NpyIter_IterNextFunc *iternext;
+       npy_intp multi_index[2];
+
+       iter = NpyIter_New(
+           arr, NPY_ITER_READONLY | NPY_ITER_MULTI_INDEX | NPY_ITER_REFS_OK,
+           NPY_KEEPORDER, NPY_NO_CASTING, NULL);
+       if (iter == NULL) {
+           return -1;
+       }
+       if (NpyIter_GetNDim(iter) != 2) {
+           NpyIter_Deallocate(iter);
+           PyErr_SetString(PyExc_ValueError, "Array must be 2-D");
+           return -1;
+       }
+       if (NpyIter_GetIterSize(iter) != 0) {
+           iternext = NpyIter_GetIterNext(iter, NULL);
+           if (iternext == NULL) {
+               NpyIter_Deallocate(iter);
+               return -1;
+           }
+           NpyIter_GetMultiIndexFunc *get_multi_index =
+               NpyIter_GetGetMultiIndex(iter, NULL);
+           if (get_multi_index == NULL) {
+               NpyIter_Deallocate(iter);
+               return -1;
+           }
+
+           do {
+               get_multi_index(iter, multi_index);
+               printf("multi_index is [%" NPY_INTP_FMT ", %" NPY_INTP_FMT "]\n",
+                      multi_index[0], multi_index[1]);
+           } while (iternext(iter));
+       }
+       if (!NpyIter_Deallocate(iter)) {
+           return -1;
+       }
+       return 0;
+   }
+
+When called with a 2x3 array, the above example prints:
+
+.. code-block:: sh
+
+   multi_index is [0, 0]
+   multi_index is [0, 1]
+   multi_index is [0, 2]
+   multi_index is [1, 0]
+   multi_index is [1, 1]
+   multi_index is [1, 2]
+
+
+Iterator data types
 ---------------------
 
 The iterator layout is an internal detail, and user code only sees
@@ -231,7 +291,7 @@ an incomplete struct.
    This is a function pointer for getting the current iterator multi-index,
    returned by :c:func:`NpyIter_GetGetMultiIndex`.
 
-Construction and Destruction
+Construction and destruction
 ----------------------------
 
 .. c:function:: NpyIter* NpyIter_New( \
@@ -330,7 +390,7 @@ Construction and Destruction
     Causes the iterator to track a multi-index.
     This prevents the iterator from coalescing axes to
     produce bigger inner loops. If the loop is also not buffered
-    and no index is being tracked (`NpyIter_RemoveAxis` can be called),
+    and no index is being tracked (:c:func:`NpyIter_RemoveAxis` can be called),
     then the iterator size can be ``-1`` to indicate that the iterator
     is too large. This can happen due to complex broadcasting and
     will result in errors being created when the setting the iterator
@@ -372,8 +432,11 @@ Construction and Destruction
     arrays or structured arrays containing an object type)
     may be accepted and used in the iterator.  If this flag
     is enabled, the caller must be sure to check whether
-    :c:expr:`NpyIter_IterationNeedsAPI(iter)` is true, in which case
+    ``NpyIter_IterationNeedsAPI(iter)`` is true, in which case
     it may not release the GIL during iteration.
+    If you are working with known dtypes `NpyIter_GetTransferFlags` is
+    a faster and more precise way to check for whether the iterator needs
+    the API due to buffering.
 
 .. c:macro:: NPY_ITER_ZEROSIZE_OK
 
@@ -495,7 +558,7 @@ Construction and Destruction
     Indicate how the user of the iterator will read or write
     to ``op[i]``.  Exactly one of these flags must be specified
     per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
-    for a user-provided operand may trigger `WRITEBACKIFCOPY``
+    for a user-provided operand may trigger ``WRITEBACKIFCOPY``
     semantics. The data will be written back to the original array
     when ``NpyIter_Deallocate`` is called.
 
@@ -577,8 +640,6 @@ Construction and Destruction
 
 .. c:macro:: NPY_ITER_ARRAYMASK
 
-    .. versionadded:: 1.7
-
     Indicates that this operand is the mask to use for
     selecting elements when writing to operands which have
     the :c:data:`NPY_ITER_WRITEMASKED` flag applied to them.
@@ -600,8 +661,6 @@ Construction and Destruction
     of input masks.
 
 .. c:macro:: NPY_ITER_WRITEMASKED
-
-    .. versionadded:: 1.7
 
     This array is the mask for all `writemasked <numpy.nditer>`
     operands. Code uses the ``writemasked`` flag which indicates 
@@ -653,7 +712,7 @@ Construction and Destruction
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
 
-    **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling
+    **Note**: Before NumPy 1.8 ``oa_ndim == 0`` was used for signalling
     that ``op_axes`` and ``itershape`` are unused. This is deprecated and
     should be replaced with -1. Better backward compatibility may be
     achieved by using :c:func:`NpyIter_MultiNew` for this case.
@@ -766,6 +825,20 @@ Construction and Destruction
     Deallocates the iterator object and resolves any needed writebacks.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+.. c:function:: NPY_ARRAYMETHOD_FLAGS NpyIter_GetTransferFlags(NpyIter *iter)
+
+    .. versionadded:: 2.3
+
+    Fetches the `NPY_METH_RUNTIME_FLAGS` which provide the information on
+    whether buffering needs the Python GIL (`NPY_METH_REQUIRES_PYAPI`) or
+    floating point errors may be set (`NPY_METH_NO_FLOATINGPOINT_ERRORS`).
+
+    Prior to NumPy 2.3, the public function available was
+    ``NpyIter_IterationNeedsAPI``, which is still available and additionally
+    checks for object (or similar) dtypes and not exclusively for
+    buffering/iteration needs itself.
+    In general, this function should be preferred.
 
 .. c:function:: int NpyIter_Reset(NpyIter* iter, char** errmsg)
 
@@ -894,9 +967,9 @@ Construction and Destruction
 
     Returns the number of elements being iterated.  This is the product
     of all the dimensions in the shape.  When a multi index is being tracked
-    (and `NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
+    (and :c:func:`NpyIter_RemoveAxis` may be called) the size may be ``-1`` to
     indicate an iterator is too large.  Such an iterator is invalid, but
-    may become valid after `NpyIter_RemoveAxis` is called. It is not
+    may become valid after :c:func:`NpyIter_RemoveAxis` is called. It is not
     necessary to check for this case.
 
 .. c:function:: npy_intp NpyIter_GetIterIndex(NpyIter* iter)
@@ -1065,8 +1138,6 @@ Construction and Destruction
 
 .. c:function:: npy_bool NpyIter_IsFirstVisit(NpyIter* iter, int iop)
 
-    .. versionadded:: 1.7
-
     Checks to see whether this is the first time the elements of the
     specified reduction operand which the iterator points at are being
     seen for the first time. The function returns a reasonable answer
@@ -1087,7 +1158,7 @@ Construction and Destruction
     checks are the responsibility of the caller, and should be done
     outside of any inner loops.
 
-Functions For Iteration
+Functions for iteration
 -----------------------
 
 .. c:function:: NpyIter_IterNextFunc* NpyIter_GetIterNext( \
@@ -1280,7 +1351,7 @@ functions provide that information.
 .. index::
     pair: iterator; C-API
 
-Converting from Previous NumPy Iterators
+Converting from previous NumPy iterators
 ----------------------------------------
 
 The old iterator API includes functions like PyArrayIter_Check,

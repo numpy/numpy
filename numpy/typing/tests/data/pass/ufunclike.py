@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from typing import Any
+
 import numpy as np
 
 
@@ -10,10 +12,14 @@ class Object:
     def __floor__(self) -> Object:
         return self
 
+    def __trunc__(self) -> Object:
+        return self
+
     def __ge__(self, value: object) -> bool:
         return True
 
-    def __array__(self) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
+                  copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret

@@ -1,10 +1,11 @@
-import sys
 import datetime as dt
 
 import pytest
+
 import numpy as np
 
-b =  np.bool_()
+b = np.bool()
+b_ = np.bool_()
 u8 = np.uint64()
 i8 = np.int64()
 f8 = np.float64()
@@ -89,9 +90,18 @@ np.datetime64(0, ('ms', 3))
 np.datetime64("2019")
 np.datetime64(b"2019")
 np.datetime64("2019", "D")
+np.datetime64("2019", "us")
+np.datetime64("2019", "as")
+np.datetime64(np.datetime64())
 np.datetime64(np.datetime64())
 np.datetime64(dt.datetime(2000, 5, 3))
+np.datetime64(dt.datetime(2000, 5, 3), "D")
+np.datetime64(dt.datetime(2000, 5, 3), "us")
+np.datetime64(dt.datetime(2000, 5, 3), "as")
 np.datetime64(dt.date(2000, 5, 3))
+np.datetime64(dt.date(2000, 5, 3), "D")
+np.datetime64(dt.date(2000, 5, 3), "us")
+np.datetime64(dt.date(2000, 5, 3), "as")
 np.datetime64(None)
 np.datetime64(None, "D")
 
@@ -110,16 +120,18 @@ np.timedelta64(None, "D")
 np.void(1)
 np.void(np.int64(1))
 np.void(True)
-np.void(np.bool_(True))
+np.void(np.bool(True))
 np.void(b"test")
 np.void(np.bytes_("test"))
+np.void(object(), [("a", "O"), ("b", "O")])
+np.void(object(), dtype=[("a", "O"), ("b", "O")])
 
 # Protocols
 i8 = np.int64()
 u8 = np.uint64()
 f8 = np.float64()
 c16 = np.complex128()
-b_ = np.bool_()
+b = np.bool()
 td = np.timedelta64()
 U = np.str_("1")
 S = np.bytes_("1")
@@ -128,12 +140,12 @@ AR = np.array(1, dtype=np.float64)
 int(i8)
 int(u8)
 int(f8)
-int(b_)
+int(b)
 int(td)
 int(U)
 int(S)
 int(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     int(c16)
 
 float(i8)
@@ -144,7 +156,7 @@ float(td)
 float(U)
 float(S)
 float(AR)
-with pytest.warns(np.ComplexWarning):
+with pytest.warns(np.exceptions.ComplexWarning):
     float(c16)
 
 complex(i8)
@@ -173,18 +185,10 @@ c16.byteswap()
 c16.transpose()
 
 # Aliases
-np.str0()
-np.bool8()
-np.bytes0()
-np.string_()
-np.object0()
-np.void0(0)
-
 np.byte()
 np.short()
 np.intc()
 np.intp()
-np.int0()
 np.int_()
 np.longlong()
 
@@ -192,25 +196,17 @@ np.ubyte()
 np.ushort()
 np.uintc()
 np.uintp()
-np.uint0()
 np.uint()
 np.ulonglong()
 
 np.half()
 np.single()
 np.double()
-np.float_()
 np.longdouble()
-np.longfloat()
 
 np.csingle()
-np.singlecomplex()
 np.cdouble()
-np.complex_()
-np.cfloat()
 np.clongdouble()
-np.clongfloat()
-np.longcomplex()
 
 b.item()
 i8.item()

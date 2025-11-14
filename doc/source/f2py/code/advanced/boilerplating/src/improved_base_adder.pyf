@@ -1,0 +1,19 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module adder ! in
+    interface  ! in :adder
+        module adder ! in :adder:adder_base.f90
+            subroutine zadd(a,b,c,n) ! in :adder:adder_base.f90:adder
+                integer intent(hide),depend(a) :: n=len(a)
+                double complex dimension(n),intent(in) :: a
+                double complex dimension(n),intent(in),depend(n) :: b
+                double complex dimension(n),intent(out),depend(n) :: c
+            end subroutine zadd
+        end module adder
+    end interface
+end python module adder
+
+! This file was auto-generated with f2py (version:2.0.0.dev0+git20240101.bab7280).
+! See:
+! https://numpy.org/doc/stable/f2py/

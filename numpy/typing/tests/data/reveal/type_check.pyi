@@ -1,6 +1,7 @@
+from typing import Any, Literal, assert_type
+
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _128Bit
 
 f8: np.float64
 f: float
@@ -10,64 +11,57 @@ AR_i8: npt.NDArray[np.int64]
 AR_i4: npt.NDArray[np.int32]
 AR_f2: npt.NDArray[np.float16]
 AR_f8: npt.NDArray[np.float64]
-AR_f16: npt.NDArray[np.floating[_128Bit]]
+AR_f16: npt.NDArray[np.longdouble]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 
 AR_LIKE_f: list[float]
 
-class RealObj:
+class ComplexObj:
     real: slice
-
-class ImagObj:
     imag: slice
 
-reveal_type(np.mintypecode(["f8"], typeset="qfQF"))
+assert_type(np.mintypecode(["f8"], typeset="qfQF"), str)
 
-reveal_type(np.asfarray(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.asfarray(AR_LIKE_f))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.asfarray(AR_f8, dtype="c16"))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
-reveal_type(np.asfarray(AR_f8, dtype="i8"))  # E: ndarray[Any, dtype[floating[Any]]]
+assert_type(np.real(ComplexObj()), slice)
+assert_type(np.real(AR_f8), npt.NDArray[np.float64])
+assert_type(np.real(AR_c16), npt.NDArray[np.float64])
+assert_type(np.real(AR_LIKE_f), npt.NDArray[Any])
 
-reveal_type(np.real(RealObj()))  # E: slice
-reveal_type(np.real(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.real(AR_c16))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.real(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
+assert_type(np.imag(ComplexObj()), slice)
+assert_type(np.imag(AR_f8), npt.NDArray[np.float64])
+assert_type(np.imag(AR_c16), npt.NDArray[np.float64])
+assert_type(np.imag(AR_LIKE_f), npt.NDArray[Any])
 
-reveal_type(np.imag(ImagObj()))  # E: slice
-reveal_type(np.imag(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.imag(AR_c16))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.imag(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
+assert_type(np.iscomplex(f8), np.bool)
+assert_type(np.iscomplex(AR_f8), npt.NDArray[np.bool])
+assert_type(np.iscomplex(AR_LIKE_f), npt.NDArray[np.bool])
 
-reveal_type(np.iscomplex(f8))  # E: bool_
-reveal_type(np.iscomplex(AR_f8))  # E: ndarray[Any, dtype[bool_]]
-reveal_type(np.iscomplex(AR_LIKE_f))  # E: ndarray[Any, dtype[bool_]]
+assert_type(np.isreal(f8), np.bool)
+assert_type(np.isreal(AR_f8), npt.NDArray[np.bool])
+assert_type(np.isreal(AR_LIKE_f), npt.NDArray[np.bool])
 
-reveal_type(np.isreal(f8))  # E: bool_
-reveal_type(np.isreal(AR_f8))  # E: ndarray[Any, dtype[bool_]]
-reveal_type(np.isreal(AR_LIKE_f))  # E: ndarray[Any, dtype[bool_]]
+assert_type(np.iscomplexobj(f8), bool)
+assert_type(np.isrealobj(f8), bool)
 
-reveal_type(np.iscomplexobj(f8))  # E: bool
-reveal_type(np.isrealobj(f8))  # E: bool
+assert_type(np.nan_to_num(f8), np.float64)
+assert_type(np.nan_to_num(f, copy=True), Any)
+assert_type(np.nan_to_num(AR_f8, nan=1.5), npt.NDArray[np.float64])
+assert_type(np.nan_to_num(AR_LIKE_f, posinf=9999), npt.NDArray[Any])
 
-reveal_type(np.nan_to_num(f8))  # E: {float64}
-reveal_type(np.nan_to_num(f, copy=True))  # E: Any
-reveal_type(np.nan_to_num(AR_f8, nan=1.5))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.nan_to_num(AR_LIKE_f, posinf=9999))  # E: ndarray[Any, dtype[Any]]
+assert_type(np.real_if_close(AR_f8), npt.NDArray[np.float64])
+assert_type(np.real_if_close(AR_c16), npt.NDArray[np.float64 | np.complex128])
+assert_type(np.real_if_close(AR_c8), npt.NDArray[np.float32 | np.complex64])
+assert_type(np.real_if_close(AR_LIKE_f), npt.NDArray[Any])
 
-reveal_type(np.real_if_close(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.real_if_close(AR_c16))  # E: Union[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{complex128}]]]
-reveal_type(np.real_if_close(AR_c8))  # E: Union[ndarray[Any, dtype[{float32}]], ndarray[Any, dtype[{complex64}]]]
-reveal_type(np.real_if_close(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
+assert_type(np.typename("h"), Literal["short"])
+assert_type(np.typename("B"), Literal["unsigned char"])
+assert_type(np.typename("V"), Literal["void"])
+assert_type(np.typename("S1"), Literal["character"])
 
-reveal_type(np.typename("h"))  # E: Literal['short']
-reveal_type(np.typename("B"))  # E: Literal['unsigned char']
-reveal_type(np.typename("V"))  # E: Literal['void']
-reveal_type(np.typename("S1"))  # E: Literal['character']
-
-reveal_type(np.common_type(AR_i4))  # E: Type[{float64}]
-reveal_type(np.common_type(AR_f2))  # E: Type[{float16}]
-reveal_type(np.common_type(AR_f2, AR_i4))  # E: Type[{float64}]
-reveal_type(np.common_type(AR_f16, AR_i4))  # E: Type[{float128}]
-reveal_type(np.common_type(AR_c8, AR_f2))  # E: Type[{complex64}]
-reveal_type(np.common_type(AR_f2, AR_c8, AR_i4))  # E: Type[{complex128}]
+assert_type(np.common_type(AR_i4), type[np.float64])
+assert_type(np.common_type(AR_f2), type[np.float16])
+assert_type(np.common_type(AR_f2, AR_i4), type[np.float64])
+assert_type(np.common_type(AR_f16, AR_i4), type[np.longdouble])
+assert_type(np.common_type(AR_c8, AR_f2), type[np.complex64])
+assert_type(np.common_type(AR_f2, AR_c8, AR_i4), type[np.complexfloating])

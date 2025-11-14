@@ -1,69 +1,73 @@
-from typing import Any
+from typing import Any, TypeAlias, assert_type
+
 import numpy as np
 import numpy.typing as npt
 
-mat: np.matrix[Any, np.dtype[np.int64]]
-ar_f8: npt.NDArray[np.float64]
+_Shape2D: TypeAlias = tuple[int, int]
 
-reveal_type(mat * 5)  # E: matrix[Any, Any]
-reveal_type(5 * mat)  # E: matrix[Any, Any]
+mat: np.matrix[_Shape2D, np.dtype[np.int64]]
+ar_f8: npt.NDArray[np.float64]
+ar_ip: npt.NDArray[np.intp]
+
+assert_type(mat * 5, np.matrix)
+assert_type(5 * mat, np.matrix)
 mat *= 5
 
-reveal_type(mat**5)  # E: matrix[Any, Any]
+assert_type(mat**5, np.matrix)
 mat **= 5
 
-reveal_type(mat.sum())  # E: Any
-reveal_type(mat.mean())  # E: Any
-reveal_type(mat.std())  # E: Any
-reveal_type(mat.var())  # E: Any
-reveal_type(mat.prod())  # E: Any
-reveal_type(mat.any())  # E: bool_
-reveal_type(mat.all())  # E: bool_
-reveal_type(mat.max())  # E: {int64}
-reveal_type(mat.min())  # E: {int64}
-reveal_type(mat.argmax())  # E: {intp}
-reveal_type(mat.argmin())  # E: {intp}
-reveal_type(mat.ptp())  # E: {int64}
+assert_type(mat.sum(), Any)
+assert_type(mat.mean(), Any)
+assert_type(mat.std(), Any)
+assert_type(mat.var(), Any)
+assert_type(mat.prod(), Any)
+assert_type(mat.any(), np.bool)
+assert_type(mat.all(), np.bool)
+assert_type(mat.max(), np.int64)
+assert_type(mat.min(), np.int64)
+assert_type(mat.argmax(), np.intp)
+assert_type(mat.argmin(), np.intp)
+assert_type(mat.ptp(), np.int64)
 
-reveal_type(mat.sum(axis=0))  # E: matrix[Any, Any]
-reveal_type(mat.mean(axis=0))  # E: matrix[Any, Any]
-reveal_type(mat.std(axis=0))  # E: matrix[Any, Any]
-reveal_type(mat.var(axis=0))  # E: matrix[Any, Any]
-reveal_type(mat.prod(axis=0))  # E: matrix[Any, Any]
-reveal_type(mat.any(axis=0))  # E: matrix[Any, dtype[bool_]]
-reveal_type(mat.all(axis=0))  # E: matrix[Any, dtype[bool_]]
-reveal_type(mat.max(axis=0))  # E: matrix[Any, dtype[{int64}]]
-reveal_type(mat.min(axis=0))  # E: matrix[Any, dtype[{int64}]]
-reveal_type(mat.argmax(axis=0))  # E: matrix[Any, dtype[{intp}]]
-reveal_type(mat.argmin(axis=0))  # E: matrix[Any, dtype[{intp}]]
-reveal_type(mat.ptp(axis=0))  # E: matrix[Any, dtype[{int64}]]
+assert_type(mat.sum(axis=0), np.matrix)
+assert_type(mat.mean(axis=0), np.matrix)
+assert_type(mat.std(axis=0), np.matrix)
+assert_type(mat.var(axis=0), np.matrix)
+assert_type(mat.prod(axis=0), np.matrix)
+assert_type(mat.any(axis=0), np.matrix[_Shape2D, np.dtype[np.bool]])
+assert_type(mat.all(axis=0), np.matrix[_Shape2D, np.dtype[np.bool]])
+assert_type(mat.max(axis=0), np.matrix[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.min(axis=0), np.matrix[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.argmax(axis=0), np.matrix[_Shape2D, np.dtype[np.intp]])
+assert_type(mat.argmin(axis=0), np.matrix[_Shape2D, np.dtype[np.intp]])
+assert_type(mat.ptp(axis=0), np.matrix[_Shape2D, np.dtype[np.int64]])
 
-reveal_type(mat.sum(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.mean(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.std(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.var(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.prod(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.any(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.all(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.max(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.min(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.argmax(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.argmin(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(mat.ptp(out=ar_f8))  # E: ndarray[Any, dtype[{float64}]]
+assert_type(mat.sum(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.mean(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.std(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.var(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.prod(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.any(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.all(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.max(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.min(out=ar_f8), npt.NDArray[np.float64])
+assert_type(mat.argmax(out=ar_ip), npt.NDArray[np.intp])
+assert_type(mat.argmin(out=ar_ip), npt.NDArray[np.intp])
+assert_type(mat.ptp(out=ar_f8), npt.NDArray[np.float64])
 
-reveal_type(mat.T)  # E: matrix[Any, dtype[{int64}]]
-reveal_type(mat.I)  # E: matrix[Any, Any]
-reveal_type(mat.A)  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(mat.A1)  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(mat.H)  # E: matrix[Any, dtype[{int64}]]
-reveal_type(mat.getT())  # E: matrix[Any, dtype[{int64}]]
-reveal_type(mat.getI())  # E: matrix[Any, Any]
-reveal_type(mat.getA())  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(mat.getA1())  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(mat.getH())  # E: matrix[Any, dtype[{int64}]]
+assert_type(mat.T, np.matrix[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.I, np.matrix)
+assert_type(mat.A, np.ndarray[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.A1, npt.NDArray[np.int64])
+assert_type(mat.H, np.matrix[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.getT(), np.matrix[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.getI(), np.matrix)
+assert_type(mat.getA(), np.ndarray[_Shape2D, np.dtype[np.int64]])
+assert_type(mat.getA1(), npt.NDArray[np.int64])
+assert_type(mat.getH(), np.matrix[_Shape2D, np.dtype[np.int64]])
 
-reveal_type(np.bmat(ar_f8))  # E: matrix[Any, Any]
-reveal_type(np.bmat([[0, 1, 2]]))  # E: matrix[Any, Any]
-reveal_type(np.bmat("mat"))  # E: matrix[Any, Any]
+assert_type(np.bmat(ar_f8), np.matrix)
+assert_type(np.bmat([[0, 1, 2]]), np.matrix)
+assert_type(np.bmat("mat"), np.matrix)
 
-reveal_type(np.asmatrix(ar_f8, dtype=np.int64))  # E: matrix[Any, Any]
+assert_type(np.asmatrix(ar_f8, dtype=np.int64), np.matrix)

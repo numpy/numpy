@@ -76,7 +76,7 @@ The report references NumPy version 1.18.4, so that is the version you need to
 install in this case.
 
 Since this bug is tied to a release and not a specific commit, a pre-built wheel
-installed in your virtual environment via `pip` will suffice::
+installed in your virtual environment via ``pip`` will suffice::
 
     pip install numpy==1.18.4
 
@@ -86,7 +86,7 @@ report. To learn how to do that, visit
 
 
 ********************
-1. Reproduce the bug
+3. Reproduce the bug
 ********************
 
 The issue reported in `#16354 <https://github.com/numpy/numpy/issues/16354>`_ is

@@ -1,16 +1,25 @@
 # To enable this workflow on a fork, comment out:
 #
 # if: github.repository == 'numpy/numpy'
+
+name: CircleCI artifact redirector
+
 on: [status]
+
+permissions: read-all
+
 jobs:
   circleci_artifacts_redirector_job:
     runs-on: ubuntu-latest
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[circle skip]') && !contains(github.event.head_commit.message, '[skip circle]')  && github.event.context == 'ci/circleci: build'"
     name: Run CircleCI artifacts redirector
-    # if: github.repository == 'numpy/numpy'
+    permissions:
+      statuses: write
     steps:
       - name: GitHub Action step
-        uses: larsoner/circleci-artifacts-redirector-action@master
+        uses: larsoner/circleci-artifacts-redirector-action@5d358ff96e96429a5c64a969bb4a574555439f4f # master
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          api-token: ${{ secrets.CIRCLE_TOKEN }}
           artifact-path: 0/doc/build/html/index.html
           circleci-jobs: build

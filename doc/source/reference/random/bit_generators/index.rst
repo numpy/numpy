@@ -1,6 +1,8 @@
 .. currentmodule:: numpy.random
 
-Bit Generators
+.. _random-bit-generators:
+
+Bit generators
 ==============
 
 The random values produced by :class:`~Generator`
@@ -32,9 +34,9 @@ The included BitGenerators are:
   fastest generator of the four. See the `SFC author's page`_ for (a little)
   more detail.
 
-.. _`PCG author's page`: http://www.pcg-random.org/
+.. _`PCG author's page`: https://www.pcg-random.org/
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html
-.. _`SFC author's page`: http://pracrand.sourceforge.net/RNG_engines.txt
+.. _`SFC author's page`: https://pracrand.sourceforge.net/RNG_engines.txt
 
 .. autosummary::
     :toctree: generated/
@@ -50,7 +52,9 @@ The included BitGenerators are:
     Philox <philox>
     SFC64 <sfc64>
 
-Seeding and Entropy
+.. _seeding_and_entropy:
+
+Seeding and entropy
 ===================
 
 A BitGenerator provides a stream of random values. In order to generate
@@ -87,7 +91,7 @@ user, which is up to you.
     # If the user did not provide a seed, it should return `None`.
     seed = get_user_seed()
     ss = SeedSequence(seed)
-    print('seed = {}'.format(ss.entropy))
+    print(f'seed = {ss.entropy}')
     bg = PCG64(ss)
 
 .. end_block
@@ -127,6 +131,16 @@ of 12 instances:
 
 .. end_block
 
+If you already have an initial random generator instance, you can shorten
+the above by using the `~BitGenerator.spawn` method:
+
+.. code-block:: python
+
+    from numpy.random import PCG64, SeedSequence
+    # High quality initial entropy
+    entropy = 0x87351080e25cb0fad77a44a3be03b491
+    base_bitgen = PCG64(entropy)
+    generators = base_bitgen.spawn(12)
 
 An alternative way is to use the fact that a `~SeedSequence` can be initialized
 by a tuple of elements. Here we use a base entropy value and an integer

@@ -3,7 +3,7 @@ NumPy security
 
 Security issues can be reported privately as described in the project README
 and when opening a `new issue on the issue tracker <https://github.com/numpy/numpy/issues/new/choose>`_.
-The `Python security reporting guidlines <https://www.python.org/dev/security/>`_
+The `Python security reporting guidelines <https://www.python.org/dev/security/>`_
 are a good resource and its notes apply also to NumPy.
 
 NumPy's maintainers are not security experts.  However, we are conscientious
@@ -23,7 +23,11 @@ to have the same privilege as the process/Python interpreter.
 That said, NumPy should be generally safe to use on *data* provided by
 unprivileged users and read through safe API functions (e.g. loaded from a
 text file or ``.npy`` file without pickle support).
-Malicious *values* or *data sizes* should never lead to privilege escalation. 
+Malicious *values* or *data sizes* should never lead to privilege escalation.
+Note that the above refers to array data.  We do not currently consider for
+example ``f2py`` to be safe:
+it is typically used to compile a program that is then run.
+Any ``f2py`` invocation must thus use the same privilege as the later execution.
 
 The following points may be useful or should be noted when working with
 untrusted data:

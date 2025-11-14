@@ -74,7 +74,7 @@ New possibilities for the "data-type"
 Reference counting for ``PyArray_Descr *`` objects.
 ```````````````````````````````````````````````````
 
-Most functions that take ``PyArary_Descr *`` as arguments and return a
+Most functions that take ``PyArray_Descr *`` as arguments and return a
 ``PyObject *`` steal the reference unless otherwise noted in the code:
 
 Functions that return ``PyArray_Descr *`` objects return a new

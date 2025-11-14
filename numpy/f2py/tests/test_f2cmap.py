@@ -1,5 +1,7 @@
-from . import util
 import numpy as np
+
+from . import util
+
 
 class TestF2Cmap(util.F2PyTest):
     sources = [
@@ -8,7 +10,7 @@ class TestF2Cmap(util.F2PyTest):
     ]
 
     # gh-15095
-    def test_long_long_map(self):
+    def test_gh15095(self):
         inp = np.ones(3)
         out = self.module.func1(inp)
         exp_out = 3

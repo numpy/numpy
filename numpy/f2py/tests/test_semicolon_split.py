@@ -1,6 +1,8 @@
 import platform
+
 import pytest
-import numpy as np
+
+from numpy.testing import IS_64BIT
 
 from . import util
 
@@ -11,8 +13,7 @@ from . import util
     "but not when run in isolation",
 )
 @pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
+    not IS_64BIT, reason="32-bit builds are buggy"
 )
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
@@ -44,9 +45,9 @@ end python module {module_name}
     "but not when run in isolation",
 )
 @pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
+    not IS_64BIT, reason="32-bit builds are buggy"
 )
+@pytest.mark.slow
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"

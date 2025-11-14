@@ -1,11 +1,14 @@
 import platform
+
 import pytest
-import numpy as np
 
 from numpy import array
+from numpy.testing import IS_64BIT
+
 from . import util
 
 
+@pytest.mark.slow
 class TestReturnReal(util.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t4", "s0", "s4"]:
@@ -20,15 +23,13 @@ class TestReturnReal(util.F2PyTest):
         assert abs(t([234]) - 234) <= err
         assert abs(t((234, )) - 234.0) <= err
         assert abs(t(array(234)) - 234.0) <= err
-        assert abs(t(array([234])) - 234.0) <= err
-        assert abs(t(array([[234]])) - 234.0) <= err
-        assert abs(t(array([234], "b")) + 22) <= err
-        assert abs(t(array([234], "h")) - 234.0) <= err
-        assert abs(t(array([234], "i")) - 234.0) <= err
-        assert abs(t(array([234], "l")) - 234.0) <= err
-        assert abs(t(array([234], "B")) - 234.0) <= err
-        assert abs(t(array([234], "f")) - 234.0) <= err
-        assert abs(t(array([234], "d")) - 234.0) <= err
+        assert abs(t(array(234).astype("b")) + 22) <= err
+        assert abs(t(array(234, "h")) - 234.0) <= err
+        assert abs(t(array(234, "i")) - 234.0) <= err
+        assert abs(t(array(234, "l")) - 234.0) <= err
+        assert abs(t(array(234, "B")) - 234.0) <= err
+        assert abs(t(array(234, "f")) - 234.0) <= err
+        assert abs(t(array(234, "d")) - 234.0) <= err
         if tname in ["t0", "t4", "s0", "s4"]:
             assert t(1e200) == t(1e300)  # inf
 
@@ -38,8 +39,8 @@ class TestReturnReal(util.F2PyTest):
         pytest.raises(IndexError, t, [])
         pytest.raises(IndexError, t, ())
 
-        pytest.raises(Exception, t, t)
-        pytest.raises(Exception, t, {})
+        pytest.raises(TypeError, t, t)
+        pytest.raises(TypeError, t, {})
 
         try:
             r = t(10**400)
@@ -54,8 +55,7 @@ class TestReturnReal(util.F2PyTest):
     "but not when run in isolation",
 )
 @pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
+    not IS_64BIT, reason="32-bit builds are buggy"
 )
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
@@ -89,7 +89,7 @@ end interface
 end python module c_ext_return_real
     """
 
-    @pytest.mark.parametrize("name", "t4,t8,s4,s8".split(","))
+    @pytest.mark.parametrize("name", ["t4", "t8", "s4", "s8"])
     def test_all(self, name):
         self.check_function(getattr(self.module, name), name)
 
@@ -100,10 +100,10 @@ class TestFReturnReal(TestReturnReal):
         util.getpath("tests", "src", "return_real", "foo90.f90"),
     ]
 
-    @pytest.mark.parametrize("name", "t0,t4,t8,td,s0,s4,s8,sd".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t4", "t8", "td", "s0", "s4", "s8", "sd"])
     def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
-    @pytest.mark.parametrize("name", "t0,t4,t8,td,s0,s4,s8,sd".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t4", "t8", "td", "s0", "s4", "s8", "sd"])
     def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_real, name), name)

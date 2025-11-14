@@ -2,15 +2,21 @@
 
 Note that tests with MaskedArray and linalg are done in separate files.
 """
-import pytest
-
 import textwrap
 import warnings
 
+import pytest
+
 import numpy as np
-from numpy.testing import (assert_, assert_equal, assert_raises,
-                           assert_raises_regex, assert_array_equal,
-                           assert_almost_equal, assert_array_almost_equal)
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 def test_fancy_indexing():
@@ -225,7 +231,7 @@ def test_nanfunctions_matrices_general():
         assert_(res.shape == (3, 3))
         res = f(mat)
         assert_(isinstance(res, np.matrix))
-        assert_(res.shape == (1, 3*3))
+        assert_(res.shape == (1, 3 * 3))
 
 
 def test_average_matrix():
@@ -238,25 +244,25 @@ def test_average_matrix():
 
     r = np.average(a, axis=0, weights=w)
     assert_equal(type(r), np.matrix)
-    assert_equal(r, [[2.5, 10.0/3]])
+    assert_equal(r, [[2.5, 10.0 / 3]])
 
 
-def test_trapz_matrix():
+def test_dot_matrix():
     # Test to make sure matrices give the same answer as ndarrays
     # 2018-04-29: moved here from core.tests.test_function_base.
     x = np.linspace(0, 5)
-    y = x * x
-    r = np.trapz(y, x)
+    y = np.linspace(-5, 0)
     mx = np.matrix(x)
     my = np.matrix(y)
-    mr = np.trapz(my, mx)
+    r = np.dot(x, y)
+    mr = np.dot(mx, my.T)
     assert_almost_equal(mr, r)
 
 
 def test_ediff1d_matrix():
     # 2018-04-29: moved here from core.tests.test_arraysetops.
-    assert(isinstance(np.ediff1d(np.matrix(1)), np.matrix))
-    assert(isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix))
+    assert isinstance(np.ediff1d(np.matrix(1)), np.matrix)
+    assert isinstance(np.ediff1d(np.matrix(1), to_begin=1), np.matrix)
 
 
 def test_apply_along_axis_matrix():
@@ -332,8 +338,8 @@ def test_array_equal_error_message_matrix():
     Arrays are not equal
 
     (shapes (2,), (1, 2) mismatch)
-     x: array([1, 2])
-     y: matrix([[1, 2]])""")
+     ACTUAL: array([1, 2])
+     DESIRED: matrix([[1, 2]])""")
     assert_equal(msg, msg_reference)
 
 

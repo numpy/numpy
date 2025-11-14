@@ -2,63 +2,53 @@
 
 .. currentmodule:: numpy.random
 
-What's New or Different
+What's new or different
 -----------------------
 
-.. warning::
+NumPy 1.17.0 introduced `Generator` as an improved replacement for
+the :ref:`legacy <legacy>` `RandomState`. Here is a quick comparison of the two
+implementations.
 
-  The Box-Muller method used to produce NumPy's normals is no longer available
-  in `Generator`.  It is not possible to reproduce the exact random
-  values using ``Generator`` for the normal distribution or any other
-  distribution that relies on the normal such as the `Generator.gamma` or
-  `Generator.standard_t`. If you require bitwise backward compatible
-  streams, use `RandomState`, i.e., `RandomState.gamma` or
-  `RandomState.standard_t`.
+======================= ================== =============
+Feature                 Older Equivalent   Notes
+----------------------- ------------------ -------------
+`Generator`             `RandomState`      `Generator` requires a stream
+                                           source, called a `BitGenerator`
+                                           A number of these are provided.
+                                           `RandomState` uses the Mersenne
+                                           Twister `MT19937` by default,
+                                           but can also be instantiated
+                                           with any BitGenerator.
+----------------------- ------------------ -------------
+`~.Generator.random`    `random_sample`,   Access the values in a
+                        `rand`             BitGenerator, convert them to
+                                           ``float64`` in the interval
+                                           ``[0.0., 1.0)``. In addition
+                                           to the ``size`` kwarg, now
+                                           supports ``dtype='d'`` or
+                                           ``dtype='f'``, and an ``out``
+                                           kwarg to fill a user-supplied
+                                           array.
 
-Quick comparison of legacy :ref:`mtrand <legacy>` to the new `Generator`
+                                           Many other distributions are also
+                                           supported.
+----------------------- ------------------ -------------
+`~.Generator.integers`  `randint`,         Use the ``endpoint`` kwarg to
+                        `random_integers`  adjust the inclusion or exclusion
+                                           of the ``high`` interval endpoint.
+======================= ================== =============
 
-================== ==================== =============
-Feature            Older Equivalent     Notes
------------------- -------------------- -------------
-`~.Generator`      `~.RandomState`      ``Generator`` requires a stream
-                                        source, called a `BitGenerator`
-                                        A number of these are provided.
-                                        ``RandomState`` uses
-                                        the Mersenne Twister `~.MT19937` by
-                                        default, but can also be instantiated
-                                        with any BitGenerator.
------------------- -------------------- -------------
-``random``         ``random_sample``,   Access the values in a BitGenerator,
-                   ``rand``             convert them to ``float64`` in the
-                                        interval ``[0.0.,`` `` 1.0)``.
-                                        In addition to the ``size`` kwarg, now
-                                        supports ``dtype='d'`` or ``dtype='f'``,
-                                        and an ``out`` kwarg to fill a user-
-                                        supplied array.
-
-                                        Many other distributions are also
-                                        supported.
------------------- -------------------- -------------
-``integers``       ``randint``,         Use the ``endpoint`` kwarg to adjust
-                   ``random_integers``  the inclusion or exclusion of the
-                                        ``high`` interval endpoint
-================== ==================== =============
-
-And in more detail:
-
-* Simulate from the complex normal distribution
-  (`~.Generator.complex_normal`)
 * The normal, exponential and gamma generators use 256-step Ziggurat
   methods which are 2-10 times faster than NumPy's default implementation in
   `~.Generator.standard_normal`, `~.Generator.standard_exponential` or
-  `~.Generator.standard_gamma`.
-
+  `~.Generator.standard_gamma`. Because of the change in algorithms, it is not
+  possible to reproduce the exact random values using `Generator` for these
+  distributions or any distribution method that relies on them.
 
 .. ipython:: python
 
-  from  numpy.random import Generator, PCG64
   import numpy.random
-  rng = Generator(PCG64())
+  rng = np.random.default_rng()
   %timeit -n 1 rng.standard_normal(100000)
   %timeit -n 1 numpy.random.standard_normal(100000)
 
@@ -74,18 +64,25 @@ And in more detail:
 
 
 * `~.Generator.integers` is now the canonical way to generate integer
-  random numbers from a discrete uniform distribution. The ``rand`` and
-  ``randn`` methods are only available through the legacy `~.RandomState`.
-  This replaces both ``randint`` and the deprecated ``random_integers``.
-* The Box-Muller method used to produce NumPy's normals is no longer available.
+  random numbers from a discrete uniform distribution. This replaces both
+  `randint` and the deprecated `random_integers`.
+* The `rand` and `randn` methods are only available through the legacy
+  `~.RandomState`.
+* `Generator.random` is now the canonical way to generate floating-point
+  random numbers, which replaces `RandomState.random_sample`,
+  `sample`, and `ranf`, all of which were aliases. This is consistent with
+  Python's `random.random`.
 * All bit generators can produce doubles, uint64s and
   uint32s via CTypes (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).
   This allows these bit generators to be used in numba.
 * The bit generators can be used in downstream projects via
   Cython.
+* All bit generators use `SeedSequence` to :ref:`convert seed integers to
+  initialized states <seeding_and_entropy>`.
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
   to produce either single or double precision uniform random variables for
-  select distributions
+  select distributions. `~.Generator.integers` accepts a ``dtype`` argument
+  with any signed or unsigned integer dtype.
 
   * Uniforms (`~.Generator.random` and `~.Generator.integers`)
   * Normals (`~.Generator.standard_normal`)
@@ -94,9 +91,10 @@ And in more detail:
 
 .. ipython:: python
 
-  rng = Generator(PCG64(0))
-  rng.random(3, dtype='d')
-  rng.random(3, dtype='f')
+  rng = np.random.default_rng()
+  rng.random(3, dtype=np.float64)
+  rng.random(3, dtype=np.float32)
+  rng.integers(0, 256, size=3, dtype=np.uint8)
 
 * Optional ``out`` argument that allows existing arrays to be filled for
   select distributions
@@ -111,6 +109,7 @@ And in more detail:
 
 .. ipython:: python
 
+  rng = np.random.default_rng()
   existing = np.zeros(4)
   rng.random(out=existing[:2])
   print(existing)
@@ -121,9 +120,12 @@ And in more detail:
 
 .. ipython:: python
 
-  rng = Generator(PCG64(123456789))
+  rng = np.random.default_rng()
   a = np.arange(12).reshape((3, 4))
   a
   rng.choice(a, axis=1, size=5)
   rng.shuffle(a, axis=1)        # Shuffle in-place
   a
+
+* Added a method to sample from the complex normal distribution
+  (`~.Generator.complex_normal`)

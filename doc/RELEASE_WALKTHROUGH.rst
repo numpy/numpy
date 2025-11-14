@@ -1,14 +1,15 @@
-This is a walkthrough of the NumPy 1.21.0 release on Linux, modified for
-building with GitHub Actions and cibuildwheels and uploading to the
-`anaconda.org staging repository for NumPy <https://anaconda.org/multibuild-wheels-staging/numpy>`_.
-The commands can be copied into the command line, but be sure to replace 1.21.0
-by the correct version. This should be read together with the
+This is a walkthrough of the NumPy 2.4.0 release on Linux, which will be the
+first feature release using the `numpy/numpy-release
+<https://github.com/numpy/numpy-release>`__ repository.
+
+The commands can be copied into the command line, but be sure to replace 2.4.0
+with the correct version. This should be read together with the
 :ref:`general release guide <prepare_release>`.
 
 Facility preparation
 ====================
 
-Before beginning to make a release, use the ``*_requirements.txt`` files to
+Before beginning to make a release, use the ``requirements/*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
 software. You will also need a GitHub personal access token (PAT) to push the
@@ -20,84 +21,125 @@ documentation. There are a few ways to streamline things:
   online twine documentation for details.
 
 
-Release preparation
-===================
+Prior to release
+================
 
 Add/drop Python versions
 ------------------------
 
-When adding or dropping Python versions, three files need to be edited:
-
-- .github/workflows/wheels.yml  # for github cibuildwheel
-- .travis.yml  # for cibuildwheel aarch64 builds
-- setup.py  # for classifier and minimum version check.
-
+When adding or dropping Python versions, multiple config and CI files need to
+be edited in addition to changing the minimum version in ``pyproject.toml``.
 Make these changes in an ordinary PR against main and backport if necessary.
-Using the `BLD:` prefix (build label) for the commit summary will cause the
-wheel builds to be run so that the changes will be tested, We currently release
-wheels for new Python versions after the first Python rc once manylinux and
-cibuildwheel support it. For Python 3.11 we were able to release within a week
-of the rc1 announcement.
+We currently release wheels for new Python versions after the first Python RC
+once manylinux and cibuildwheel support that new Python version.
 
-Backport Pull Requests
+
+Backport pull requests
 ----------------------
 
 Changes that have been marked for this release must be backported to the
-maintenance/1.21.x branch.
+maintenance/2.4.x branch.
 
-Update release documentation
+
+Update 2.4.0 milestones
+-----------------------
+
+Look at the issues/prs with 2.4.0 milestones and either push them off to a
+later version, or maybe remove the milestone. You may need to add a milestone.
+
+Check the numpy-release repo
 ----------------------------
 
-Four documents usually need to be updated or created before making a release:
+The things to check are the ``cibuildwheel`` version in
+``.github/workflows/wheels.yml`` and the ``openblas`` versions in
+``openblas_requirements.txt``.
+
+
+Make a release PR
+=================
+
+Four documents usually need to be updated or created for the release PR:
 
 - The changelog
-- The release-notes
+- The release notes
 - The ``.mailmap`` file
-- The ``doc/source/release.rst`` file
+- The ``pyproject.toml`` file
 
-These changes should be made as an ordinary PR against the maintenance branch.
-After release all files except ``doc/source/release.rst``  will need to be
-forward ported to the main branch.
+These changes should be made in an ordinary PR against the maintenance branch.
+Other small, miscellaneous fixes may be part of this PR. The commit message
+might be something like::
+
+    REL: Prepare for the NumPy 2.4.0 release
+
+    - Create 2.4.0-changelog.rst.
+    - Update 2.4.0-notes.rst.
+    - Update .mailmap.
+    - Update pyproject.toml
+
+
+Set the release version
+-----------------------
+
+Check the ``pyproject.toml`` file and set the release version and update the
+classifier if needed::
+
+    $ gvim pyproject.toml
+
+
+Check the ``doc/source/release.rst`` file
+-----------------------------------------
+
+make sure that the release notes have an entry in the ``release.rst`` file::
+
+    $ gvim doc/source/release.rst
+
 
 Generate the changelog
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 The changelog is generated using the changelog tool::
 
-    $ python tools/changelog.py $GITHUB v1.20.0..maintenance/1.21.x > doc/changelog/1.21.0-changelog.rst
+    $ spin changelog $GITHUB v2.3.0..maintenance/2.4.x > doc/changelog/2.4.0-changelog.rst
 
 where ``GITHUB`` contains your GitHub access token. The text will need to be
-checked for non-standard contributor names and dependabot entries removed. It
-is also a good idea to remove any links that may be present in the PR titles
-as they don't translate well to markdown, replace them with monospaced text. The
-non-standard contributor names should be fixed by updating the ``.mailmap``
-file, which is a lot of work. It is best to make several trial runs before
-reaching this point and ping the malefactors using a GitHub issue to get the
-needed information.
+checked for non-standard contributor names. It is also a good idea to remove
+any links that may be present in the PR titles as they don't translate well to
+Markdown, replace them with monospaced text. The non-standard contributor names
+should be fixed by updating the ``.mailmap`` file, which is a lot of work. It
+is best to make several trial runs before reaching this point and ping the
+malefactors using a GitHub issue to get the needed information.
+
 
 Finish the release notes
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
-If this is the first release in a series the release note is generated, see
-the release note in ``doc/release/upcoming_changes/README.rst`` to see how to
-do this. Generating the release notes will also delete all the news
-fragment files in ``doc/release/upcoming_changes/``.
+If there are any release notes snippets in ``doc/release/upcoming_changes/``,
+run ``spin notes``, which will incorporate the snippets into the
+``doc/source/release/notes-towncrier.rst`` file and delete the snippets::
 
-The generated release note will always need some fixups, the introduction will
-need to be written, and significant changes should be called out. For patch
-releases the changelog text may also be appended, but not for the initial
-release as it is too long. Check previous release notes to see how this is
-done. Note that the ``:orphan:`` markup at the top, if present, will need
-changing to ``.. currentmodule:: numpy`` and the ``doc/source/release.rst``
-index file will need updating.
+    $ spin notes
+    $ gvim doc/source/release/notes-towncrier.rst doc/source/release/2.4.0-notes.rst
+    
+Once the ``notes-towncrier`` contents has been incorporated into release note
+the ``.. include:: notes-towncrier.rst`` directive can be removed.  The notes
+will always need some fixups, the introduction will need to be written, and
+significant changes should be called out. For patch releases the changelog text
+may also be appended, but not for the initial release as it is too long. Check
+previous release notes to see how this is done.
 
-Check the ``pavement.py`` file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Check that the pavement.py file points to the correct release notes. It should
-have been updated after the last release, but if not, fix it now::
+Test the wheel builds
+---------------------
 
-    $ gvim pavement.py
+After the release PR is merged, go to the ``numpy-release`` repository in your
+browser and manually trigger the workflow on the ``maintenance/2.4.x`` branch
+using the ``Run workflow`` button in ``actions``.  Make sure that the upload
+target is ``none`` in the *evironment* dropdown. The wheels take about 1 hour
+to build, but sometimes GitHub is very slow. If some wheel builds fail for
+unrelated reasons, you can re-run them as normal in the GitHub Actions UI with
+``re-run failed``. After the wheels are built review the results, checking that
+the number of artifacts are correct, the wheel names are as expected, etc. If
+everything looks good, proceed with the release.
 
 
 Release walkthrough
@@ -109,178 +151,79 @@ need to make adjustments if you have not forked the repository but simply
 cloned it locally. You can also edit ``.git/config`` and add ``upstream`` if it
 isn't already present.
 
-1. Prepare the release commit
------------------------------
+
+1. Tag the release commit
+-------------------------
 
 Checkout the branch for the release, make sure it is up to date, and clean the
 repository::
 
-    $ git checkout maintenance/1.21.x
-    $ git pull upstream maintenance/1.21.x
+    $ git checkout maintenance/2.4.x
+    $ git pull upstream maintenance/2.4.x
     $ git submodule update
     $ git clean -xdfq
 
 Sanity check::
 
-    $ python3 runtests.py -m "full"
+    $ python3 -m spin test -m full
 
 Tag the release and push the tag. This requires write permission for the numpy
 repository::
 
-    $ git tag -a -s v1.21.0 -m"NumPy 1.21.0 release"
-    $ git push upstream v1.21.0
+    $ git tag -a -s v2.4.0 -m"NumPy 2.4.0 release"
+    $ git push upstream v2.4.0
 
-2. Build wheels
----------------
+If you need to delete the tag due to error::
 
-Build wheels via cibuildwheel (preferred)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Tagging the build at the beginning of this process will trigger a wheel build
-via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
-on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
-hours. The CI run on travis (for aarch64) takes less time.
-
-If you wish to manually trigger a wheel build, you can do so:
-
-- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
-  on it and choose the tag to build
-- On travis_ there is a "More Options" button, click on it and choose a branch
-  to build. There does not appear to be an option to build a tag.
-
-.. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
-.. _travis : https://app.travis-ci.com/github/numpy/numpy
-
-Build wheels with multibuild (outdated)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Build source releases
-^^^^^^^^^^^^^^^^^^^^^
-
-Paver is used to build the source releases. It will create the ``release`` and
-``release/installers`` directories and put the ``*.zip`` and ``*.tar.gz``
-source releases in the latter. ::
-
-    $ paver sdist  # sdist will do a git clean -xdfq, so we omit that
+   $ git tag -d v2.4.0
+   $ git push --delete upstream v2.4.0
 
 
-Build wheels via MacPython/numpy-wheels
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Trigger the wheels build by pointing the numpy-wheels repository at this
-commit. This can take up to an hour. The numpy-wheels repository is cloned from
-`<https://github.com/MacPython/numpy-wheels>`_. If this is the first release in
-a series, start with a pull as the repo may have been accessed and changed by
-someone else, then create a new branch for the series. If the branch already
-exists skip this::
-
-    $ cd ../numpy-wheels
-    $ git checkout main
-    $ git pull upstream main
-    $ git branch v1.21.x
-
-Checkout the new branch and edit the ``azure-pipelines.yml`` and
-``.travis.yml`` files to make sure they have the correct version, and put in
-the commit hash for the ``REL`` commit created above for ``BUILD_COMMIT``
-variable. The ``azure/posix.yml`` and ``.travis.yml`` files may also need the
-Cython versions updated to keep up with Python releases, but generally just
-do::
-
-    $ git checkout v1.21.x
-    $ gvim azure-pipelines.yml .travis.yml
-    $ git commit -a -m"NumPy 1.21.0 release."
-    $ git push upstream HEAD
-
-Now wait. If you get nervous at the amount of time taken -- the builds can take
-a while -- you can check the build progress by following the links
-provided at `<https://github.com/MacPython/numpy-wheels>`_ to check the
-build status. Check if all the needed wheels have been built and
-uploaded to the staging repository before proceeding.
-
-Note that sometimes builds, like tests, fail for unrelated reasons and you will
-need to rerun them. You will need to be logged in under 'numpy' to do this
-on azure.
-
-3. Download wheels
-------------------
-
-When the wheels have all been successfully built and staged, download them from the
-Anaconda staging directory using the ``tools/download-wheels.py`` script::
-
-    $ cd ../numpy
-    $ python3 tools/download-wheels.py 1.21.0
-
-
-4. Generate the README files
-----------------------------
-
-This needs to be done after all installers are downloaded, but before the pavement
-file is updated for continued development::
-
-    $ paver write_release
-
-
-5. Reset the maintenance branch into a development state (skip for prereleases)
--------------------------------------------------------------------------------
-
-Create release notes for next release and edit them to set the version. These
-notes will be a skeleton and have little content::
-
-    $ cp doc/source/release/template.rst doc/source/release/1.21.1-notes.rst
-    $ gvim doc/source/release/1.21.1-notes.rst
-    $ git add doc/source/release/1.21.1-notes.rst
-
-Add new release notes to the documentation release list and update the
-``RELEASE_NOTES`` variable in ``pavement.py``::
-
-    $ gvim doc/source/release.rst pavement.py
-
-Commit the result::
-
-    $ git commit -a -m"REL: prepare 1.21.x for further development"
-    $ git push upstream HEAD
-
-
-6. Upload to PyPI
------------------
-
-Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
-after recent PyPI changes, version ``3.4.1`` was used here::
-
-    $ cd ../numpy
-    $ twine upload release/installers/*.whl
-    $ twine upload release/installers/numpy-1.21.0.zip  # Upload last.
-
-If one of the commands breaks in the middle, you may need to selectively upload
-the remaining files because PyPI does not allow the same file to be uploaded
-twice. The source file should be uploaded last to avoid synchronization
-problems that might occur if pip users access the files while this is in
-process, causing pip to build from source rather than downloading a binary
-wheel. PyPI only allows a single source distribution, here we have
-chosen the zip archive.
-
-
-7. Upload files to github
+2. Build wheels and sdist
 -------------------------
 
-Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0
-tag``, click on it and hit the edit button for that tag. There are two ways to
-add files, using an editable text window and as binary uploads. Start by
-editing the ``release/README.md`` that is translated from the rst version using
-pandoc. Things that will need fixing: PR lines from the changelog, if included,
-are wrapped and need unwrapping, links should be changed to monospaced text.
-Then copy the contents to the clipboard and paste them into the text window. It
-may take several tries to get it look right. Then
+Go to the ``numpy-release`` repository in your browser and manually trigger the
+workflow on the ``maintenance/2.4.x`` branch using the ``Run workflow`` button
+in ``actions``.  Make sure that the upload target is ``pypi`` in the
+*evironment* dropdown. the wheels take about 1 hour to build, but sometimes
+GitHub is very slow. If some wheel builds fail for unrelated reasons, you can
+re-run them as normal in the GitHub Actions UI with ``re-run failed``. After
+the wheels are built review the results, checking that the number of artifacts
+are correct, the wheel names are as expected, etc. If everything looks good
+trigger the upload.
 
-- Upload ``release/installers/numpy-1.21.0.tar.gz`` as a binary file.
-- Upload ``release/installers/numpy-1.21.0.zip`` as a binary file.
+
+3. Upload files to GitHub Releases
+----------------------------------
+
+Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v2.4.0``
+tag, click on it and hit the edit button for that tag and update the title to
+"v2.4.0 (<date>)". There are two ways to add files, using an editable text
+window and as binary uploads. The text window needs markdown, so translate the
+release notes from rst to md::
+
+    $ python tools/write_release.py 2.4.0
+
+this will create a ``release/README.md`` file that you can edit. Check the
+result to see that it looks correct. Things that may need fixing: wrapped lines
+that need unwrapping and links that should be changed to monospaced text. Then
+copy the contents to the clipboard and paste them into the text window. It may
+take several tries to get it look right. Then
+
+- Download the sdist (``numpy-2.4.0.tar.gz``) from PyPI and upload it to GitHub
+  as a binary file. You cannot do this using pip.
 - Upload ``release/README.rst`` as a binary file.
-- Upload ``doc/changelog/1.21.0-changelog.rst`` as a binary file.
+- Upload ``doc/changelog/2.4.0-changelog.rst`` as a binary file.
 - Check the pre-release button if this is a pre-releases.
-- Hit the ``{Publish,Update} release`` button at the bottom.
+- Hit the ``Publish release`` button at the bottom.
+
+.. note::
+   Please ensure that all 3 files are uploaded are present and the
+   release text is complete. Releases are configured to be immutable, so
+   mistakes can't (easily) be fixed anymore.
 
 
-8. Upload documents to numpy.org (skip for prereleases)
+4. Upload documents to numpy.org (skip for prereleases)
 -------------------------------------------------------
 
 .. note:: You will need a GitHub personal access token to push the update.
@@ -290,11 +233,10 @@ and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
 ``doc/build/merge`` and updates it with the new documentation::
 
     $ git clean -xdfq
-    $ git co v1.21.0
-    $ pushd doc
-    $ make docenv && source docenv/bin/activate
-    $ make merge-doc
-    $ pushd build/merge
+    $ git co v2.4.0
+    $ rm -rf doc/build  # want version to be current
+    $ python -m spin docs merge-doc --build
+    $ pushd doc/build/merge
 
 If the release series is a new one, you will need to add a new section to the
 ``doc/build/merge/index.html`` front page just after the "insert here" comment::
@@ -302,92 +244,111 @@ If the release series is a new one, you will need to add a new section to the
     $ gvim index.html +/'insert here'
 
 Further, update the version-switcher json file to add the new release and
-update the version marked `(stable)`::
+update the version marked ``(stable)`` and ``preferred``::
 
     $ gvim _static/versions.json
 
-Otherwise, only the ``zip`` link should be updated with the new tag name. Since
-we are no longer generating ``pdf`` files, remove the line for the ``pdf``
-files if present::
+Then run ``update.py`` to update the version in ``_static``::
 
-    $ gvim index.html +/'tag v1.21'
+    $ python3 update.py
 
 You can "test run" the new documentation in a browser to make sure the links
-work::
+work, although the version dropdown will not change, it pulls its information
+from ``numpy.org``::
 
     $ firefox index.html  # or google-chrome, etc.
 
 Update the stable link and update::
 
-    $ ln -sfn 1.21 stable
+    $ ln -sfn 2.4 stable
     $ ls -l  # check the link
 
 Once everything seems satisfactory, update, commit and upload the changes::
 
-    $ python3 update.py
-    $ git commit -a -m"Add documentation for v1.21.0"
-    $ git push
-    $ deactivate
-    $ popd
+    $ git commit -a -m"Add documentation for v2.4.0"
+    $ git push git@github.com:numpy/doc
     $ popd
 
 
-9. Announce the release on numpy.org (skip for prereleases)
+5. Reset the maintenance branch into a development state (skip for prereleases)
+-------------------------------------------------------------------------------
+
+Create release notes for next release and edit them to set the version. These
+notes will be a skeleton and have little content::
+
+    $ git checkout -b begin-2.4.1 maintenance/2.4.x
+    $ cp doc/source/release/template.rst doc/source/release/2.4.1-notes.rst
+    $ gvim doc/source/release/2.4.1-notes.rst
+    $ git add doc/source/release/2.4.1-notes.rst
+
+Add a link to the new release notes::
+
+    $ gvim doc/source/release.rst
+
+Update the ``version`` in ``pyproject.toml``::
+
+    $ gvim pyproject.toml
+
+Commit the result, edit the commit message, note the files in the commit, and
+add a line ``[skip azp] [skip cirrus] [skip actions]``, then push::
+
+    $ git commit -a -m"MAINT: Prepare 2.4.x for further development"
+    $ git rebase -i HEAD^
+    $ git push origin HEAD
+
+Go to GitHub and make a PR. It should be merged quickly.
+
+
+6. Announce the release on numpy.org (skip for prereleases)
 -----------------------------------------------------------
 
 This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
 
     $ cd ../numpy.org
-    $ git checkout master
-    $ git pull upstream master
-    $ git checkout -b announce-numpy-1.21.0
+    $ git checkout main
+    $ git pull upstream main
+    $ git checkout -b announce-numpy-2.4.0
     $ gvim content/en/news.md
 
 - For all releases, go to the bottom of the page and add a one line link. Look
   to the previous links for example.
 - For the ``*.0`` release in a cycle, add a new section at the top with a short
   description of the new features and point the news link to it.
+- Edit the newsHeader and date fields at the top of news.md
+- Also edit the buttonText on line 14 in content/en/config.yaml
 
 commit and push::
 
-    $ git commit -a -m"announce the NumPy 1.21.0 release"
-    $ git push origin HEAD
-
-Go to your Github fork and make a pull request.
-
-10. Announce to mailing lists
------------------------------
-
-The release should be announced on the numpy-discussion, scipy-devel,
-scipy-user, and python-announce-list mailing lists. Look at previous
-announcements for the basic template. The contributor and PR lists are the same
-as generated for the release notes above. If you crosspost, make sure that
-python-announce-list is BCC so that replies will not be sent to that list.
-
-
-11. Post-release tasks (skip for prereleases)
----------------------------------------------
-
-Checkout main and forward port the documentation changes::
-
-    $ git checkout -b post-1.21.0-release-update
-    $ git checkout maintenance/1.21.x doc/source/release/1.21.0-notes.rst
-    $ git checkout maintenance/1.21.x doc/changelog/1.21.0-changelog.rst
-    $ git checkout maintenance/1.21.x .mailmap  # only if updated for release.
-    $ gvim doc/source/release.rst  # Add link to new notes
-    $ git add doc/changelog/1.21.0-changelog.rst doc/source/release/1.21.0-notes.rst
-    $ git status  # check status before commit
-    $ git commit -a -m"REL: Update main after 1.21.0 release."
+    $ git commit -a -m"announce the NumPy 2.4.0 release"
     $ git push origin HEAD
 
 Go to GitHub and make a PR.
 
-12. Update oldest-supported-numpy
----------------------------------
 
-If this release is the first one to support a new Python version, or the first
-to provide wheels for a new platform or PyPy version, the version pinnings
-in https://github.com/scipy/oldest-supported-numpy should be updated.
-Either submit a PR with changes to ``setup.cfg`` there, or open an issue with
-info on needed changes.
+7. Announce to mailing lists
+----------------------------
+
+The release should be announced on the numpy-discussion and
+python-announce-list mailing lists. Look at previous announcements for the
+basic template. The contributor and PR lists are the same as generated for the
+release notes above. If you cross-post, make sure that python-announce-list is
+BCC so that replies will not be sent to that list.
+
+
+8. Post-release update main (skip for prereleases)
+--------------------------------------------------
+
+Checkout main and forward port the documentation changes. You may also want
+to update these notes if procedures have changed or improved::
+
+    $ git checkout -b post-2.4.0-release-update main
+    $ git checkout maintenance/2.4.x doc/source/release/2.4.0-notes.rst
+    $ git checkout maintenance/2.4.x doc/changelog/2.4.0-changelog.rst
+    $ git checkout maintenance/2.4.x .mailmap  # only if updated for release.
+    $ gvim doc/source/release.rst  # Add link to new notes
+    $ git status  # check status before commit
+    $ git commit -a -m"MAINT: Update main after 2.4.0 release."
+    $ git push origin HEAD
+
+Go to GitHub and make a PR.
 
