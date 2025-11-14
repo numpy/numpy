@@ -855,6 +855,8 @@ def _ufunc_doc_signature_formatter(ufunc):
     Builds a signature string which resembles PEP 457
 
     This is used to construct the first line of the docstring
+
+    Keep in sync with `_ufunc_inspect_signature_builder`.
     """
 
     # input arguments are simple
@@ -895,7 +897,7 @@ def _ufunc_doc_signature_formatter(ufunc):
 
 def _ufunc_inspect_signature_builder(ufunc):
     """
-    Builds a ``__text_signature__`` string.
+    Builds a ``__signature__`` string.
 
     Should be kept in sync with `_ufunc_doc_signature_formatter`.
     """
@@ -924,6 +926,11 @@ def _ufunc_inspect_signature_builder(ufunc):
 
     if ufunc.signature is None:
         params.append(Parameter("where", Parameter.KEYWORD_ONLY, default=True))
+    else:
+        # NOTE: not all gufuncs support the `axis` parameters
+        params.append(Parameter("axes", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("axis", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("keepdims", Parameter.KEYWORD_ONLY, default=False))
 
     params.extend((
         Parameter("casting", Parameter.KEYWORD_ONLY, default='same_kind'),
@@ -932,10 +939,6 @@ def _ufunc_inspect_signature_builder(ufunc):
         Parameter("subok", Parameter.KEYWORD_ONLY, default=True),
         Parameter("signature", Parameter.KEYWORD_ONLY, default=None),
     ))
-
-    if ufunc.signature is not None:
-        # some gufuncs additionally support an `axis` parameters
-        params.append(Parameter("kwargs", Parameter.VAR_KEYWORD))
 
     return Signature(params)
 
