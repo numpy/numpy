@@ -7,11 +7,6 @@
  *
  * See LICENSE.txt for the license.
  *
- * Einsum to Rule them
- * Einsum to Find them
- * Einsum to Bring them all and in
- * The elegance bind them
- * --Akaddun Persson
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -36,8 +31,6 @@
 #else  // NPY_HAVE_NEON
 #    define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 #endif  // NPY_HAVE_NEON
-
-// TODO: Squash commits
 
 /* Converts a value from storage type T to the Temptype.
  * Centralizes norminal use and the specalized use case of npy_half_to_float
@@ -228,7 +221,8 @@ scaller_sum_of_arr(const T *data, npy_intp count)
     return accum;
 }
 
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD capable version.*/
+/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
 template <typename T, typename Temptype,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
                                           (std::is_same<T, npy_float>::value ||
@@ -335,7 +329,8 @@ scaller_sum_of_products_muladd(const T *data, T *data_out, Temptype scalar,
 }
 
 /* calculate the multiply and add operation such as dataout = data*scalar+dataout*/
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD capable version.*/
+/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
 template <typename T, typename Temptype,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
                                           (std::is_same<T, npy_float>::value ||
@@ -432,7 +427,8 @@ scaller_sum_of_arr_products_contig_contig_outstride0_two(const T *data0, const T
     return accum;
 }
 
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD capable version.*/
+/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
 template <typename T, typename Temptype,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
                                           (std::is_same<T, npy_float>::value ||
@@ -984,8 +980,8 @@ sum_of_products_contig_one(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
     if (count > 0) {
         Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, 6, -1, -1>::apply(
                 data0, data_out, count);
-        return;
     }
+    return;
 }
 
 template <typename T, typename Temptype, int NOP>
@@ -1103,8 +1099,8 @@ scaller_sum_of_products_contig_two(const T *data0, const T *data1, npy_intp coun
     }
 }
 
-
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD capable version.*/
+/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
 template <typename T, typename Temptype, bool Is_Complex, bool Is_logical,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
                                           (std::is_same<T, npy_float>::value ||
@@ -1212,12 +1208,12 @@ sum_of_products_contig_three(int nop, char **dataptr,
             data_out += 8;
             count -= 8;
         }
-
-        if (count-- == 0) {
-            return;
-        }
-        Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
+       
+        if(count > 0){
+             Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
                 data0, data1, data2, data_out, count);
+        }
+       return;
     }
     else {  // complex
         complex_sum_of_products_contig<T, Temptype, 3>(dataptr, count);
@@ -1391,6 +1387,7 @@ sum_of_products_contig_one<npy_bool, npy_bool, false, true>(int nop, char **data
     if (count > 0) {
         bool_sum_of_products_contig_one(data0, data_out, count);
     }
+    return;
 }
 
 static inline void
@@ -1480,6 +1477,7 @@ sum_of_products_contig_two<npy_bool, npy_bool, false, true>(int nop, char **data
     if (count > 0) {
         bool_sum_of_products_contig_two(data0, data1, data_out, count);
     }
+    return;
 }
 
 static inline void
@@ -1586,6 +1584,7 @@ sum_of_products_contig_three<npy_bool, npy_bool, false, true>(int nop, char **da
     if (count > 0) {
         bool_sum_of_products_contig_three(data0, data1, data2, data_out, count);
     }
+    return;
 }
 
 template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
@@ -2138,19 +2137,20 @@ inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY
  *
  * Returns NULL when no specialization exists for the given dtype. Callers must
  * fall back to a safe generic implementation in that case.
- * 
- * Architecture is based on historical einsum_sumprod c.src 
+ *
+ * Architecture is based on historical einsum_sumprod c.src
  * - T: The storage type
  * - Temptype: The computation type. Small helper function `to` and `from` are used
  *            to centralizes generic use of casting between T and Temptype and
  *            handles special cases like npy_half to npy_float conversion.
  * - Is_Complex: Switches between real and complex arithmetic paths.
- * - Is_logical: Flag that whe combined with T/Temptype allow a single template definition 
- *      to cover numeric, complex, boolean, and object types, with explicit specializations 
- *      where object/boolean behavior diverges. Used to avoid conflict whne npy_bool and npy_uint8 
- *     resolve to the same type.
- * - Wrappers are used to create a consistent interface between NPY_SIMD_F32 and NPY_SIMD_F64 
- * 
+ * - Is_logical: Flag that whe combined with T/Temptype allow a single template
+ * definition to cover numeric, complex, boolean, and object types, with explicit
+ * specializations where object/boolean behavior diverges. Used to avoid conflict whne
+ * npy_bool and npy_uint8 resolve to the same type.
+ * - Wrappers are used to create a consistent interface between NPY_SIMD_F32 and
+ * NPY_SIMD_F64
+ *
  */
 sum_of_products_fn
 get_sum_of_products_function(int nop, int type_num, npy_intp itemsize,
