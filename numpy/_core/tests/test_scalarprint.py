@@ -54,7 +54,7 @@ class TestRealScalars:
         def check(v):
             assert_equal(str(np.float32(v)), str(v))
             assert_equal(format(np.float32(v)), str(v))
-            assert_equal(repr(np.float32(v)), str(v))
+            assert_equal(repr(np.float32(v)), f"np.float32({str(v)})")
 
         check(101.1)
         check(1.01)

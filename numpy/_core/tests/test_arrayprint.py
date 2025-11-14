@@ -648,12 +648,12 @@ class TestArray2String:
 
 class TestFormatSpec:
     def test_nil_spec(self):
-        from numpy.core.arrayprint import _parse_format_spec
+        from numpy._core.arrayprint import _parse_format_spec
 
         assert_equal(_parse_format_spec(""), {})
 
     def test_unkown_spec(self):
-        from numpy.core.arrayprint import _parse_format_spec
+        from numpy._core.arrayprint import _parse_format_spec
 
         # j is an unknown format specifier
         with assert_raises(ValueError):
@@ -662,27 +662,27 @@ class TestFormatSpec:
             _parse_format_spec("jj")  # Invalid format specifier
 
     def test_sign(self):
-        from numpy.core.arrayprint import _parse_format_spec
+        from numpy._core.arrayprint import _parse_format_spec
 
         assert_equal(_parse_format_spec("+"), {"sign": "+"})
         assert_equal(_parse_format_spec("-"), {"sign": "-"})
         assert_equal(_parse_format_spec(" "), {"sign": " "})
 
     def test_precision(self):
-        from numpy.core.arrayprint import _parse_format_spec
+        from numpy._core.arrayprint import _parse_format_spec
 
         assert_equal(_parse_format_spec(".42"), {"precision": 42})
         with assert_raises(ValueError):
             _parse_format_spec(".")
 
     def test_type(self):
-        from numpy.core.arrayprint import _parse_format_spec
+        from numpy._core.arrayprint import _parse_format_spec
 
         assert_equal(_parse_format_spec("f"), {"suppress_small": True})
         assert_equal(_parse_format_spec("e"), {"exp_format": True})
 
     def test_numeric(self):
-        from numpy.core.arrayprint import _parse_format_spec
+        from numpy._core.arrayprint import _parse_format_spec
 
         assert_equal(_parse_format_spec("+.2f"), {
             "sign": "+", "precision": 2, "suppress_small": True

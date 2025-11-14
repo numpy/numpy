@@ -98,7 +98,7 @@ array_format(PyArrayObject *self, PyObject *args)
     // ndim > 0
     PyObject *format_func = NULL;
 
-    npy_cache_import_runtime("numpy.core.arrayprint", "_default_array_format", &format_func);
+    npy_cache_import_runtime("numpy._core.arrayprint", "_default_array_format", &format_func);
     if (format_func == NULL) {
         npy_PyErr_SetStringChained(PyExc_RuntimeError,
                 "Unable to configure default ndarray.__format__");

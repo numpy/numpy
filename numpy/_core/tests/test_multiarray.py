@@ -9839,6 +9839,7 @@ class TestFormat:
         assert_equal(f'{a}', str(a))
 
     def test_1d_format(self):
+        from numpy._core.arrayprint import array_format
         # gh-5543
         fmtspc = "+.4f"
 
@@ -9847,13 +9848,13 @@ class TestFormat:
             format(a, fmtspc)
 
         a = np.array([-np.pi, np.pi],  dtype="float")
-        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+        assert_equal(format(a, fmtspc), array_format(a, fmtspc))
 
         a = np.array([-np.pi, np.pi],  dtype=np.longdouble)
-        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+        assert_equal(format(a, fmtspc), array_format(a, fmtspc))
 
         a = np.array([complex(-np.pi, np.pi)], dtype="complex")
-        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+        assert_equal(format(a, fmtspc), array_format(a, fmtspc))
 
     def test_object_dtype(self):
         # as suggested in gh-5543, if dtype is object treat it as such
