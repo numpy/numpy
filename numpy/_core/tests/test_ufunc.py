@@ -3336,3 +3336,35 @@ class TestLowlevelAPIAccess:
         t[28][414] = 1
         tc = np.cos(t)
         assert_equal(tc[0][0], tc[28][414])
+
+
+def test_ufunc_inspect_signature():
+    assert hasattr(np.exp, "__signature__")
+    assert isinstance(np.exp.__signature__, inspect.Signature)
+
+    assert inspect.signature(np.exp) == np.exp.__signature__
+    assert np.atan.__signature__ != np.atan2.__signature__
+
+    sig11 = inspect.signature(np.sin)
+    assert "x" in sig11.parameters
+    assert "x1" not in sig11.parameters
+    assert sig11.parameters["out"].default is None
+
+    sig21 = inspect.signature(np.add)
+    assert "x" not in sig21.parameters
+    assert "x1" in sig21.parameters
+    assert "x2" in sig21.parameters
+    assert "x3" not in sig21.parameters
+    assert sig21.parameters["out"].default is None
+
+    sig12 = inspect.signature(np.frexp)
+    assert "x" in sig12.parameters
+    assert "x1" not in sig12.parameters
+    assert sig12.parameters["out"].default == (None, None)
+
+    sig22 = inspect.signature(np.divmod)
+    assert "x" not in sig22.parameters
+    assert "x1" in sig22.parameters
+    assert "x2" in sig22.parameters
+    assert "x3" not in sig22.parameters
+    assert sig22.parameters["out"].default == (None, None)

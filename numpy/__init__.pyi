@@ -5,6 +5,7 @@ import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
+import inspect
 from abc import abstractmethod
 from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
@@ -5740,6 +5741,8 @@ class ufunc:
     def __qualname__(self) -> LiteralString: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
     def __doc__(self) -> str: ...  # type: ignore[override]
+    @property
+    def __signature__(self) -> inspect.Signature: ...
     @property
     def nin(self) -> int: ...
     @property
