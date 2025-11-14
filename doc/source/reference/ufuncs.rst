@@ -183,7 +183,7 @@ possess. None of the attributes can be set.
    pair: ufunc; attributes
 
 
-================== =================================================================
+=================  =================================================================
 **__doc__**        A docstring for each ufunc. The first part of the docstring is
                    dynamically generated from the number of outputs, the name, and
                    the number of inputs. The second part of the docstring is
