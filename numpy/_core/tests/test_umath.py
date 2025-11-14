@@ -1,4 +1,5 @@
 import fnmatch
+import inspect
 import itertools
 import operator
 import platform
@@ -4053,6 +4054,7 @@ class TestSpecialMethods:
         expected_dict = (
             {} if IS_PYPY else {"__module__": "numpy", "__qualname__": "add"}
         )
+        expected_dict["__signature__"] = inspect.signature(np.add)
 
         np.add.__doc__ = new_doc
         assert np.add.__doc__ == new_doc
