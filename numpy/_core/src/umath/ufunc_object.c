@@ -6674,6 +6674,19 @@ ufunc_get_inspect_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
+ufunc_getattro(PyObject *obj, PyObject *name)
+{
+    // __signature__ special-casing to prevent class attribute access
+    if (PyUnicode_Check(name) &&
+        PyUnicode_CompareWithASCIIString(name, "__signature__") == 0) {
+        return ufunc_get_inspect_signature((PyUFuncObject *)obj, NULL);
+    }
+    
+    // For all other attributes, use default behavior
+    return PyObject_GenericGetAttr(obj, name);
+}
+
+static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(ufunc->nin);
@@ -6762,9 +6775,6 @@ static PyGetSetDef ufunc_getset[] = {
     {"__name__",
         (getter)ufunc_get_name,
         NULL, NULL, NULL},
-    {"__signature__",
-        (getter)ufunc_get_inspect_signature,
-        NULL, NULL, NULL},
     {"nin",
         (getter)ufunc_get_nin,
         NULL, NULL, NULL},
@@ -6820,7 +6830,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
-    .tp_getattro = PyObject_GenericGetAttr,
+    .tp_getattro = ufunc_getattro,
     .tp_setattro = PyObject_GenericSetAttr,
     // TODO when Python 3.12 is the minimum supported version,
     // use Py_TPFLAGS_MANAGED_DICT
