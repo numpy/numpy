@@ -138,7 +138,7 @@ jobs:
             pyver: '3.11'
 
     # To enable this job on a fork, comment out:
-    if: github.repository == 'andyfaff/numpy'
+    if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

@@ -75,24 +75,13 @@ stages:
             /bin/bash -xc "source /numpy/tools/ci/run_32_bit_linux_docker.sh"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
 
-  - job: Windows
-    timeoutInMinutes: 120
-    pool:
-      vmImage: 'windows-2022'
-    strategy:
-      maxParallel: 3
-      matrix:
-          Python311-64bit-fast:
-            PYTHON_VERSION: '3.11'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: fast
-            BITS: 64
-          Python312-64bit-full:
-            PYTHON_VERSION: '3.12'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: full
-            BITS: 64
-            _USE_BLAS_ILP64: '1'
+#  - job: Windows
+#    timeoutInMinutes: 120
+#    pool:
+#      vmImage: 'windows-2022'
+#    strategy:
+#      maxParallel: 3
+#      matrix:
 # TODO pypy: uncomment when pypy3.11 comes out
 #          PyPy311-64bit-fast:
 #            PYTHON_VERSION: 'pypy3.11'
@@ -101,5 +90,5 @@ stages:
 #            BITS: 64
 #            _USE_BLAS_ILP64: '1'
 
-    steps:
-    - template: azure-steps-windows.yml
+#    steps:
+#    - template: azure-steps-windows.yml
