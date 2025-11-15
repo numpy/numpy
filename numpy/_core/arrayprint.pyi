@@ -35,6 +35,7 @@ _Legacy: TypeAlias = Literal["1.13", _LegacyNoStyle]
 _Sign: TypeAlias = Literal["-", "+", " "]
 _Trim: TypeAlias = Literal["k", ".", "0", "-"]
 _ReprFunc: TypeAlias = Callable[[NDArray[Any]], str]
+_TrimOptions: TypeAlias = Literal["k", ".", "0", "-"]
 
 @type_check_only
 class _FormatDict(TypedDict, total=False):
@@ -67,6 +68,8 @@ class _FormatOptions(TypedDict):
     formatter: _FormatDict | None
     sign: _Sign
     floatmode: _FloatMode
+    exp_format: bool
+    trim: _TrimOptions
     legacy: _Legacy
 
 ###
@@ -85,6 +88,8 @@ def set_printoptions(
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     *,
+    exp_format: bool | None = None,
+    trim: _TrimOptions | None = None,
     legacy: _Legacy | None = None,
     override_repr: _ReprFunc | None = None,
 ) -> None: ...
@@ -105,6 +110,8 @@ def array2string(
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     suffix: str = "",
+    exp_format: bool | None = None,
+    trim: _TrimOptions | None = None,
     legacy: _Legacy | None = None,
 ) -> str: ...
 
