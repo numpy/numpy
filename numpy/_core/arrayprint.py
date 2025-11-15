@@ -481,8 +481,16 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, exp_format, trim, **kwargs):
+                    formatter, exp_format=None, trim=None, **kwargs):
     # note: extra arguments in kwargs are ignored
+
+    # this will avoid overwrite the default format args inside each data type
+    # if the caller doesn't specify one
+    format_args = {}
+    if exp_format is not None:
+        format_args["exp_format"] = exp_format
+    if trim is not None:
+        format_args["trim"] = trim
 
     # wrapped in lambdas to avoid taking a code path
     # with the wrong type of data
@@ -491,20 +499,16 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'int': lambda: IntegerFormat(data, sign),
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            exp_format=exp_format, trim=trim,
-            legacy=legacy,),
+            legacy=legacy, **format_args),
         'longfloat': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            exp_format=exp_format, trim=trim,
-            legacy=legacy,),
+            legacy=legacy, **format_args),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign,
-            exp_format=exp_format, trim=trim,
-            legacy=legacy,),
+            legacy=legacy, **format_args),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign,
-            exp_format=exp_format, trim=trim,
-            legacy=legacy,),
+            legacy=legacy, **format_args),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,

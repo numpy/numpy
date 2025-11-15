@@ -22,9 +22,6 @@ default_format_options_dict = {
     "infstr": "inf",
     "sign": "-",
     "formatter": None,
-    'exp_format': False,  # force exp formatting as Python do when ".2e"
-    'trim': '.',  # Controls post-processing trimming of trailing digits
-                  # see Dragon4 arguments at `arrayprint.py::format_float_scientific`
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
     'legacy': sys.maxsize,
