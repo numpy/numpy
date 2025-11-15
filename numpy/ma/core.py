@@ -134,19 +134,6 @@ def doc_note(initialdoc, note):
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
-# TODO: remove/deprecate once `ma.extras._fromnxfunction.getdoc` no longer uses it
-def get_object_signature(obj):
-    """
-    Get the signature from obj
-
-    """
-    try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
-        sig = ''
-    return sig
-
-
 ###############################################################################
 #                              Exceptions                                     #
 ###############################################################################

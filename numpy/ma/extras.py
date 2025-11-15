@@ -19,6 +19,7 @@ __all__ = [
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     ]
 
+import functools
 import itertools
 import warnings
 
@@ -244,151 +245,93 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction:
+
+def _fromnxfunction_function(_fromnxfunction):
     """
-    Defines a wrapper to adapt NumPy functions to masked arrays.
-
-
-    An instance of `_fromnxfunction` can be called with the same parameters
-    as the wrapped NumPy function. The docstring of `newfunc` is adapted from
-    the wrapped function as well, see `getdoc`.
-
-    This class should not be used directly. Instead, one of its extensions that
-    provides support for a specific type of input should be used.
+    Decorator to wrap a "_fromnxfunction" function, wrapping a numpy function as a
+    masked array function, with proper docstring and name.
 
     Parameters
     ----------
-    funcname : str
-        The name of the function to be adapted. The function should be
-        in the NumPy namespace (i.e. ``np.funcname``).
+    _fromnxfunction : ({params}) -> ndarray, {params}) -> masked_array
+        Wrapper function that calls the wrapped numpy function
+
+    Returns
+    -------
+    decorator : (f: ({params}) -> ndarray) -> ({params}) -> masked_array
+        Function that accepts a numpy function and returns a masked array function
 
     """
+    def decorator(npfunc, /):
+        def wrapper(*args, **kwargs):
+            return _fromnxfunction(npfunc, *args, **kwargs)
 
-    def __init__(self, funcname):
-        self.__name__ = funcname
-        self.__qualname__ = funcname
-        self.__doc__ = self.getdoc()
+        functools.update_wrapper(wrapper, npfunc, assigned=("__name__", "__qualname__"))
+        wrapper.__doc__ = ma.doc_note(
+            npfunc.__doc__,
+            "The function is applied to both the ``_data`` and the ``_mask``, if any.",
+        )
+        return wrapper
 
-    def getdoc(self):
-        """
-        Retrieve the docstring and signature from the function.
-
-        The ``__doc__`` attribute of the function is used as the docstring for
-        the new masked array version of the function. A note on application
-        of the function to the mask is appended.
-
-        Parameters
-        ----------
-        None
-
-        """
-        npfunc = getattr(np, self.__name__, None)
-        doc = getattr(npfunc, '__doc__', None)
-        if doc:
-            sig = ma.get_object_signature(npfunc)
-            doc = ma.doc_note(doc, "The function is applied to both the _data "
-                                   "and the _mask, if any.")
-            if sig:
-                sig = self.__name__ + sig + "\n\n"
-            return sig + doc
-        return
-
-    def __call__(self, *args, **params):
-        pass
+    return decorator
 
 
-class _fromnxfunction_single(_fromnxfunction):
+@_fromnxfunction_function
+def _fromnxfunction_single(npfunc, a, /, *args, **kwargs):
     """
-    A version of `_fromnxfunction` that is called with a single array
-    argument followed by auxiliary args that are passed verbatim for
-    both the data and mask calls.
+    Wraps a NumPy function that can be called with a single array argument followed by
+    auxiliary args that are passed verbatim for both the data and mask calls.
     """
-    def __call__(self, x, *args, **params):
-        func = getattr(np, self.__name__)
-        if isinstance(x, ndarray):
-            _d = func(x.__array__(), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            return masked_array(_d, mask=_m)
-        else:
-            _d = func(np.asarray(x), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            return masked_array(_d, mask=_m)
+    return masked_array(
+        data=npfunc(np.asarray(a), *args, **kwargs),
+        mask=npfunc(getmaskarray(a), *args, **kwargs),
+    )
 
 
-class _fromnxfunction_seq(_fromnxfunction):
+@_fromnxfunction_function
+def _fromnxfunction_seq(npfunc, arys, /, *args, **kwargs):
     """
-    A version of `_fromnxfunction` that is called with a single sequence
-    of arrays followed by auxiliary args that are passed verbatim for
-    both the data and mask calls.
+    Wraps a NumPy function that can be called with a single sequence of arrays followed
+    by auxiliary args that are passed verbatim for both the data and mask calls.
     """
-    def __call__(self, x, *args, **params):
-        func = getattr(np, self.__name__)
-        _d = func(tuple(np.asarray(a) for a in x), *args, **params)
-        _m = func(tuple(getmaskarray(a) for a in x), *args, **params)
-        return masked_array(_d, mask=_m)
+    return masked_array(
+        data=npfunc(tuple(np.asarray(a) for a in arys), *args, **kwargs),
+        mask=npfunc(tuple(getmaskarray(a) for a in arys), *args, **kwargs),
+    )
 
-
-class _fromnxfunction_args(_fromnxfunction):
+@_fromnxfunction_function
+def _fromnxfunction_allargs(npfunc, /, *arys, **kwargs):
     """
-    A version of `_fromnxfunction` that is called with multiple array
-    arguments. The first non-array-like input marks the beginning of the
-    arguments that are passed verbatim for both the data and mask calls.
-    Array arguments are processed independently and the results are
-    returned in a list. If only one array is found, the return value is
-    just the processed array instead of a list.
+    Wraps a NumPy function that can be called with multiple array arguments.
+    All args are converted to arrays even if they are not so already.
+    This makes it possible to process scalars as 1-D arrays.
+    Only keyword arguments are passed through verbatim for the data and mask calls.
+    Arrays arguments are processed independently and the results are returned in a list.
+    If only one arg is present, the return value is just the processed array instead of
+    a list.
     """
-    def __call__(self, *args, **params):
-        func = getattr(np, self.__name__)
-        arrays = []
-        args = list(args)
-        while len(args) > 0 and issequence(args[0]):
-            arrays.append(args.pop(0))
-        res = []
-        for x in arrays:
-            _d = func(np.asarray(x), *args, **params)
-            _m = func(getmaskarray(x), *args, **params)
-            res.append(masked_array(_d, mask=_m))
-        if len(arrays) == 1:
-            return res[0]
-        return res
+    out = tuple(
+        masked_array(
+            data=npfunc(np.asarray(a), **kwargs),
+            mask=npfunc(getmaskarray(a), **kwargs),
+        )
+        for a in arys
+    )
+    return out[0] if len(out) == 1 else out
 
 
-class _fromnxfunction_allargs(_fromnxfunction):
-    """
-    A version of `_fromnxfunction` that is called with multiple array
-    arguments. Similar to `_fromnxfunction_args` except that all args
-    are converted to arrays even if they are not so already. This makes
-    it possible to process scalars as 1-D arrays. Only keyword arguments
-    are passed through verbatim for the data and mask calls. Arrays
-    arguments are processed independently and the results are returned
-    in a list. If only one arg is present, the return value is just the
-    processed array instead of a list.
-    """
-    def __call__(self, *args, **params):
-        func = getattr(np, self.__name__)
-        res = []
-        for x in args:
-            _d = func(np.asarray(x), **params)
-            _m = func(getmaskarray(x), **params)
-            res.append(masked_array(_d, mask=_m))
-        if len(args) == 1:
-            return res[0]
-        return res
+atleast_1d = _fromnxfunction_allargs(np.atleast_1d)
+atleast_2d = _fromnxfunction_allargs(np.atleast_2d)
+atleast_3d = _fromnxfunction_allargs(np.atleast_3d)
 
+vstack = row_stack = _fromnxfunction_seq(np.vstack)
+hstack = _fromnxfunction_seq(np.hstack)
+column_stack = _fromnxfunction_seq(np.column_stack)
+dstack = _fromnxfunction_seq(np.dstack)
+stack = _fromnxfunction_seq(np.stack)
 
-atleast_1d = _fromnxfunction_allargs('atleast_1d')
-atleast_2d = _fromnxfunction_allargs('atleast_2d')
-atleast_3d = _fromnxfunction_allargs('atleast_3d')
-
-vstack = row_stack = _fromnxfunction_seq('vstack')
-hstack = _fromnxfunction_seq('hstack')
-column_stack = _fromnxfunction_seq('column_stack')
-dstack = _fromnxfunction_seq('dstack')
-stack = _fromnxfunction_seq('stack')
-
-hsplit = _fromnxfunction_single('hsplit')
-
-diagflat = _fromnxfunction_single('diagflat')
+hsplit = _fromnxfunction_single(np.hsplit)
+diagflat = _fromnxfunction_single(np.diagflat)
 
 
 #####--------------------------------------------------------------------------
