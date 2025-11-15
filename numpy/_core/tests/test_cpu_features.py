@@ -12,6 +12,7 @@ from numpy._core._multiarray_umath import (
     __cpu_dispatch__,
     __cpu_features__,
 )
+from numpy.testing import HAS_SUBPROCESSES
 
 
 def assert_features_equal(actual, desired, fname):
@@ -117,13 +118,7 @@ class AbstractTest:
                     hwcap_value[1].upper().decode().split()
                 )
 
-@pytest.mark.skipif(
-    sys.platform == 'emscripten',
-    reason=(
-        "The subprocess module is not available on WASM platforms and"
-        " therefore this test class cannot be properly executed."
-    ),
-)
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.thread_unsafe(reason="setup & tmp_path_factory threads-unsafe, modifies environment variables")
 class TestEnvPrivation:
     cwd = pathlib.Path(__file__).parent.resolve()

@@ -23,7 +23,7 @@ import pytest
 import numpy
 from numpy._utils import asunicode
 from numpy.f2py._backends._meson import MesonBackend
-from numpy.testing import IS_WASM, temppath
+from numpy.testing import IS_IOS, IS_WASM, temppath
 
 #
 # Check if compilers are available at all...
@@ -104,7 +104,7 @@ class CompilerChecker:
             self.compilers_checked = True
 
 
-if not IS_WASM:
+if not IS_WASM and not IS_IOS:
     checker = CompilerChecker()
     checker.check_compilers()
 
