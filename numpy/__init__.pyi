@@ -5735,14 +5735,14 @@ class str_(character[str], str):  # type: ignore[misc]
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
 class ufunc:
+    __signature__: Final[inspect.Signature]
+
     @property
     def __name__(self) -> LiteralString: ...
     @property
     def __qualname__(self) -> LiteralString: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
     def __doc__(self) -> str: ...  # type: ignore[override]
-    @property
-    def __signature__(self) -> inspect.Signature: ...
     @property
     def nin(self) -> int: ...
     @property
