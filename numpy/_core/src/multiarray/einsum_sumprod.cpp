@@ -221,22 +221,38 @@ scaller_sum_of_arr(const T *data, npy_intp count)
     return accum;
 }
 
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+/* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
 template <typename T, typename Temptype,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          (std::is_same<T, npy_float>::value ||
-                                           std::is_same<T, npy_double>::value),
+                                          std::is_same<T, npy_float>::value,
                                   int>::type = 0>
 static inline NPY_GCC_OPT_3 Temptype
 sum_of_arr(T *data, npy_intp count)
 {
-#if (NPY_SIMD_F32 || NPY_SIMD_F64)
+#if NPY_SIMD_F32
     return floating_point_sum_of_arr<typename SumSIMD<T, Temptype>::SimdType>(data,
                                                                               count);
-#else   // !(NPY_SIMD_F32 || NPY_SIMD_F64)
+#else   // !NPY_SIMD_F32
     return scaller_sum_of_arr<T, Temptype>(data, count);
-#endif  // (NPY_SIMD_F32 || NPY_SIMD_F64)
+#endif  // NPY_SIMD_F32
+}
+
+/* Template where (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
+template <typename T, typename Temptype,
+          typename std::enable_if<std::is_same<T, Temptype>::value &&
+                                          std::is_same<T, npy_double>::value,
+                                  int>::type = 0>
+static inline NPY_GCC_OPT_3 Temptype
+sum_of_arr(T *data, npy_intp count)
+{
+#if NPY_SIMD_F64
+    return floating_point_sum_of_arr<typename SumSIMD<T, Temptype>::SimdType>(data,
+                                                                              count);
+#else   // ! NPY_SIMD_F64
+    return scaller_sum_of_arr<T, Temptype>(data, count);
+#endif  //  NPY_SIMD_F64
 }
 
 template <typename T, typename Temptype,
@@ -329,23 +345,41 @@ scaller_sum_of_products_muladd(const T *data, T *data_out, Temptype scalar,
 }
 
 /* calculate the multiply and add operation such as dataout = data*scalar+dataout*/
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+/* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
 template <typename T, typename Temptype,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          (std::is_same<T, npy_float>::value ||
-                                           std::is_same<T, npy_double>::value),
+                                          std::is_same<T, npy_float>::value,
                                   int>::type = 0>
 static inline NPY_GCC_OPT_3 void
 sum_of_products_muladd(T *data, T *data_out, Temptype scalar, npy_intp count)
 {
-#if (NPY_SIMD_F32 || NPY_SIMD_F64)
+#if NPY_SIMD_F32
     floating_point_sum_of_products_muladd<typename SumSIMD<T, Temptype>::SimdType>(
             data, data_out, scalar, count);
 
-#else   // !(NPY_SIMD_F32 || NPY_SIMD_F64)
+#else   // !NPY_SIMD_F32
     scaller_sum_of_products_muladd<T, Temptype>(data, data_out, scalar, count);
-#endif  // (NPY_SIMD_F32 || NPY_SIMD_F64)
+#endif  // NPY_SIMD_F32
+}
+
+/* calculate the multiply and add operation such as dataout = data*scalar+dataout*/
+/* Template where (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
+template <typename T, typename Temptype,
+          typename std::enable_if<std::is_same<T, Temptype>::value &&
+                                          std::is_same<T, npy_double>::value,
+                                  int>::type = 0>
+static inline NPY_GCC_OPT_3 void
+sum_of_products_muladd(T *data, T *data_out, Temptype scalar, npy_intp count)
+{
+#if NPY_SIMD_F64
+    floating_point_sum_of_products_muladd<typename SumSIMD<T, Temptype>::SimdType>(
+            data, data_out, scalar, count);
+
+#else   // !NPY_SIMD_F64
+    scaller_sum_of_products_muladd<T, Temptype>(data, data_out, scalar, count);
+#endif  //  NPY_SIMD_F64
 }
 
 template <typename T, typename Temptype,
@@ -427,24 +461,40 @@ scaller_sum_of_arr_products_contig_contig_outstride0_two(const T *data0, const T
     return accum;
 }
 
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+/* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
 template <typename T, typename Temptype,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          (std::is_same<T, npy_float>::value ||
-                                           std::is_same<T, npy_double>::value),
+                                          std::is_same<T, npy_float>::value,
                                   int>::type = 0>
 static NPY_GCC_OPT_3 Temptype
 sum_of_arr_products_contig_contig_outstride0_two(T *data0, T *data1, npy_intp count)
 {
-#if (NPY_SIMD_F32 || NPY_SIMD_F64)
+#if NPY_SIMD_F32
     return floating_point_sum_of_arr_products_contig_contig_outstride0_two<
             typename SumSIMD<T, Temptype>::SimdType>(data0, data1, count);
-
-#else   // !(NPY_SIMD_F32 || NPY_SIMD_F64)
+#else   // !NPY_SIMD_F32
     return scaller_sum_of_arr_products_contig_contig_outstride0_two<T, Temptype>(
             data0, data1, count);
-#endif  // (NPY_SIMD_F32 || NPY_SIMD_F64)
+#endif  // NPY_SIMD_F32
+}
+
+/* Template where (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
+template <typename T, typename Temptype,
+          typename std::enable_if<std::is_same<T, Temptype>::value &&
+                                          std::is_same<T, npy_double>::value,
+                                  int>::type = 0>
+static NPY_GCC_OPT_3 Temptype
+sum_of_arr_products_contig_contig_outstride0_two(T *data0, T *data1, npy_intp count)
+{
+#if NPY_SIMD_F64
+    return floating_point_sum_of_arr_products_contig_contig_outstride0_two<
+            typename SumSIMD<T, Temptype>::SimdType>(data0, data1, count);
+#else   // !NPY_SIMD_F64
+    return scaller_sum_of_arr_products_contig_contig_outstride0_two<T, Temptype>(
+            data0, data1, count);
+#endif  // NPY_SIMD_F64
 }
 
 template <typename T, typename Temptype,
@@ -1099,12 +1149,11 @@ scaller_sum_of_products_contig_two(const T *data0, const T *data1, npy_intp coun
     }
 }
 
-/* Template where (npy_float, npy_float) || (npy_double, npy_double) will allow the SIMD
+/* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
 template <typename T, typename Temptype, bool Is_Complex, bool Is_logical,
           typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          (std::is_same<T, npy_float>::value ||
-                                           std::is_same<T, npy_double>::value),
+                                          std::is_same<T, npy_float>::value,
                                   int>::type = 0>
 static void
 sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
@@ -1116,15 +1165,39 @@ sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
         T *data_out = (T *)dataptr[2];
 
         NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_two (%d)\n", (int)count);
-
-#if (NPY_SIMD_F32 || NPY_SIMD_F64)
-
+#if NPY_SIMD_F32
         floating_point_sum_of_products_contig_two<
                 typename SumSIMD<T, Temptype>::SimdType>(data0, data1, data_out, count);
-
-#else   // !(NPY_SIMD_F32 || NPY_SIMD_F64)
+#else   // !NPY_SIMD_F32
         scaller_sum_of_products_contig_two<T, Temptype>(data0, data1, count, data_out);
-#endif  // (NPY_SIMD_F32 || NPY_SIMD_F64)
+#endif  // NPY_SIMD_F32
+    }
+    else {  // complex
+        complex_sum_of_products_contig<T, Temptype, 2>(dataptr, count);
+    }
+}
+
+/* Template where (npy_double, npy_double) will allow the SIMD
+ * capable version.*/
+template <typename T, typename Temptype, bool Is_Complex, bool Is_logical,
+          typename std::enable_if<std::is_same<T, Temptype>::value &&
+                                          std::is_same<T, npy_double>::value,
+                                  int>::type = 0>
+static void
+sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
+                           npy_intp count)
+{
+    if constexpr (!Is_Complex) {
+        T *data0 = (T *)dataptr[0];
+        T *data1 = (T *)dataptr[1];
+        T *data_out = (T *)dataptr[2];
+        NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_two (%d)\n", (int)count);
+#if NPY_SIMD_F64
+        floating_point_sum_of_products_contig_two<
+                typename SumSIMD<T, Temptype>::SimdType>(data0, data1, data_out, count);
+#else   // ! NPY_SIMD_F64
+        scaller_sum_of_products_contig_two<T, Temptype>(data0, data1, count, data_out);
+#endif  // NPY_SIMD_F64
     }
     else {  // complex
         complex_sum_of_products_contig<T, Temptype, 2>(dataptr, count);
@@ -1197,7 +1270,6 @@ sum_of_products_contig_three(int nop, char **dataptr,
         T *data_out = (T *)dataptr[3];
 
         NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_three (%d)\n", (int)count);
-
         /* Unroll the loop by 8 */
         while (count >= 8) {
             Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
@@ -1208,12 +1280,11 @@ sum_of_products_contig_three(int nop, char **dataptr,
             data_out += 8;
             count -= 8;
         }
-       
-        if(count > 0){
-             Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
-                data0, data1, data2, data_out, count);
+        if (count > 0) {
+            Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
+                    data0, data1, data2, data_out, count);
         }
-       return;
+        return;
     }
     else {  // complex
         complex_sum_of_products_contig<T, Temptype, 3>(dataptr, count);
