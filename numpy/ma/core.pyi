@@ -575,6 +575,9 @@ def fix_invalid(
 ) -> _MaskedArray[Incomplete]: ...
 
 #
+def get_masked_subclass(*arrays: object) -> type[MaskedArray]: ...
+
+#
 @overload
 def getdata(a: np.ndarray[_ShapeT, _DTypeT], subok: bool = True) -> np.ndarray[_ShapeT, _DTypeT]: ...
 @overload
