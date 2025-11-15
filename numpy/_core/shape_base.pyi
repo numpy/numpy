@@ -22,6 +22,7 @@ _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 ###
 
+# keep in sync with `numpy.ma.extras.atleast_1d`
 @overload
 def atleast_1d(a0: _ArrayLike[_ScalarT], /) -> NDArray[_ScalarT]: ...
 @overload
@@ -35,7 +36,7 @@ def atleast_1d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[A
 @overload
 def atleast_1d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
-#
+# keep in sync with `numpy.ma.extras.atleast_2d`
 @overload
 def atleast_2d(a0: _ArrayLike[_ScalarT], /) -> NDArray[_ScalarT]: ...
 @overload
@@ -49,7 +50,7 @@ def atleast_2d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[A
 @overload
 def atleast_2d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
-#
+# keep in sync with `numpy.ma.extras.atleast_3d`
 @overload
 def atleast_3d(a0: _ArrayLike[_ScalarT], /) -> NDArray[_ScalarT]: ...
 @overload
@@ -63,7 +64,7 @@ def atleast_3d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[A
 @overload
 def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
-#
+# keep in sync with `numpy.ma.extras.vstack`
 @overload
 def vstack(
     tup: Sequence[_ArrayLike[_ScalarT]],
@@ -86,6 +87,7 @@ def vstack(
     casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 
+# keep in sync with `numpy.ma.extras.hstack`
 @overload
 def hstack(
     tup: Sequence[_ArrayLike[_ScalarT]],
@@ -108,6 +110,7 @@ def hstack(
     casting: _CastingKind = "same_kind"
 ) -> NDArray[Any]: ...
 
+# keep in sync with `numpy.ma.extras.stack`
 @overload
 def stack(
     arrays: Sequence[_ArrayLike[_ScalarT]],
