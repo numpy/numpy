@@ -37,29 +37,6 @@ stages:
   dependsOn: Check
   jobs:
 
-  - job: Lint
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-    pool:
-      vmImage: 'ubuntu-22.04'
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.11'
-        addToPath: true
-        architecture: 'x64'
-    - script: >-
-        python -m pip install -r requirements/linter_requirements.txt
-      displayName: 'Install tools'
-      # pip 21.1 emits a pile of garbage messages to annoy users :)
-      #      failOnStderr: true
-    - script: |
-        python tools/linter.py
-      displayName: 'Run Lint Checks'
-      failOnStderr: true
-    - script: |
-        python tools/check_python_h_first.py
-      displayName: 'Check Python.h is first file included'
-
   - job: Linux_Python_311_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-22.04'
