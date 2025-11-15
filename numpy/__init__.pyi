@@ -2287,8 +2287,10 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def tolist(self, /) -> Any: ...
 
     @overload
+    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.4")
     def resize(self, new_shape: _ShapeLike, /, *, refcheck: builtins.bool = True) -> None: ...
     @overload
+    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.4")
     def resize(self, /, *new_shape: SupportsIndex, refcheck: builtins.bool = True) -> None: ...
 
     def squeeze(
@@ -3736,6 +3738,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def searchsorted(self: Never, /, v: Never, side: Never = ..., sorter: Never = ...) -> Never: ...  # type: ignore[misc]
 
     # NOTE: this wont't raise, but won't do anything either
+    @deprecated("Resizing a NumPy generic inplace has been deprecated in NumPy 2.4")
     def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = False) -> None: ...
 
     #
