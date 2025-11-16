@@ -403,7 +403,7 @@ jobs:
 
         spin config-openblas --with-scipy-openblas=32
         export PKG_CONFIG_PATH=/numpy/.openblas
-        python -m pip install . -v -Dallow-noblas=false
+        python -m pip install . -v -Csetup-args="-Dallow-noblas=true"
 
     - name: test
       run: |
