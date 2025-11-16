@@ -369,14 +369,14 @@ jobs:
 
 
 
-  Linux_Python_311_32bit_full_with_asserts:
+  Linux_Python_311_32bit_full:
     name: i686, cp311, full, with asserts
     needs: [smoke_test]
     runs-on: ubuntu-latest
     container:
        # There are few options for i686 images at https://quay.io/organization/pypa,
        # use the glibc2.17 one (manylinux2014)
-      image: quay.io/pypa/manylinux2014_i686
+      image: quay.io/pypa/manylinux_2_28_i686
 
     steps:
     - name: Checkout and initialize submodules
@@ -401,13 +401,10 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements/ci32_requirements.txt
         pip install -r requirements/test_requirements.txt
-        
-        export CFLAGS="-msse2 -std=c99 -UNDEBUG"
-        export F77=gfortran-5
-        export F90=gfortran-5
+
         spin config-openblas --with-scipy-openblas=32
         export PKG_CONFIG_PATH=/numpy/.openblas
-        python -m pip install . -v
+        python -m pip install . -v -Dallow-noblas=false
 
     - name: test
       run: |
