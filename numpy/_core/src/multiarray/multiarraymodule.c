@@ -4351,6 +4351,25 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 
 
 static PyObject *
+_blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
+    if (arg == Py_None) {
+        return PyBool_FromLong(npy_blas_supports_fpe());
+    }
+    else if (arg == Py_True) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(true));
+    }
+    else if (arg == Py_False) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(false));
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "BLAS FPE support must be None, True, or False");
+        return NULL;
+    }
+}
+
+
+static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
 #if !defined(PYPY_VERSION)
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
@@ -4588,6 +4607,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
+    {"_blas_supports_fpe", (PyCFunction)_blas_supports_fpe,
+        METH_O, "BLAS FPE support pass None, True, or False and returns new value"},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
@@ -4812,10 +4833,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         goto err;
     }
-
-#if NPY_BLAS_CHECK_FPE_SUPPORT
-    npy_blas_init();
-#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,

@@ -1105,6 +1105,7 @@ endforeach
 # ------------------------------
 src_multiarray_umath_common = [
   'src/common/array_assign.c',
+  'src/common/blas_utils.c',
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
@@ -1119,7 +1120,6 @@ src_multiarray_umath_common = [
 ]
 if have_blas
   src_multiarray_umath_common += [
-    'src/common/blas_utils.c',
     'src/common/cblasfuncs.c',
     'src/common/python_xerbla.c',
   ]
