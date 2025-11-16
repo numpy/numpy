@@ -53,6 +53,10 @@ jobs:
         BASE_REF: ${{ github.base_ref }}
       run:
         python tools/linter.py
+    - name: Check Python.h is first file included
+      run: |
+        python tools/check_python_h_first.py
+        
 
   smoke_test:
     # To enable this job on a fork, comment out:

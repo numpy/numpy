@@ -37,29 +37,6 @@ stages:
   dependsOn: Check
   jobs:
 
-  - job: Lint
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-    pool:
-      vmImage: 'ubuntu-22.04'
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.11'
-        addToPath: true
-        architecture: 'x64'
-    - script: >-
-        python -m pip install -r requirements/linter_requirements.txt
-      displayName: 'Install tools'
-      # pip 21.1 emits a pile of garbage messages to annoy users :)
-      #      failOnStderr: true
-    - script: |
-        python tools/linter.py
-      displayName: 'Run Lint Checks'
-      failOnStderr: true
-    - script: |
-        python tools/check_python_h_first.py
-      displayName: 'Check Python.h is first file included'
-
   - job: Linux_Python_311_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-22.04'
@@ -75,24 +52,13 @@ stages:
             /bin/bash -xc "source /numpy/tools/ci/run_32_bit_linux_docker.sh"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
 
-  - job: Windows
-    timeoutInMinutes: 120
-    pool:
-      vmImage: 'windows-2022'
-    strategy:
-      maxParallel: 3
-      matrix:
-          Python311-64bit-fast:
-            PYTHON_VERSION: '3.11'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: fast
-            BITS: 64
-          Python312-64bit-full:
-            PYTHON_VERSION: '3.12'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: full
-            BITS: 64
-            _USE_BLAS_ILP64: '1'
+#  - job: Windows
+#    timeoutInMinutes: 120
+#    pool:
+#      vmImage: 'windows-2022'
+#    strategy:
+#      maxParallel: 3
+#      matrix:
 # TODO pypy: uncomment when pypy3.11 comes out
 #          PyPy311-64bit-fast:
 #            PYTHON_VERSION: 'pypy3.11'
@@ -101,5 +67,5 @@ stages:
 #            BITS: 64
 #            _USE_BLAS_ILP64: '1'
 
-    steps:
-    - template: azure-steps-windows.yml
+#    steps:
+#    - template: azure-steps-windows.yml
