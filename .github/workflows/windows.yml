@@ -163,7 +163,7 @@ jobs:
           pip install -r requirements/ci_requirements.txt
           spin config-openblas --with-scipy-openblas=${{ matrix.BLAS }}
           $env:PKG_CONFIG_PATH="$pwd/.openblas"
-          python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args=-Dallow-noblas=false
+          python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
 
       - name: Run test suite ${{ matrix.TEST_MODE }}
         run: |

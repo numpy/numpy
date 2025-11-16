@@ -3722,21 +3722,24 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def trace(  # type: ignore[misc]
         self: Never,
         /,
-        offset: Never = ...,
-        axis1: Never = ...,
-        axis2: Never = ...,
-        dtype: Never = ...,
-        out: Never = ...,
+        offset: L[0] = 0,
+        axis1: L[0] = 0,
+        axis2: L[1] = 1,
+        dtype: None = None,
+        out: None = None,
     ) -> Never: ...
-    def diagonal(self: Never, /, offset: Never = ..., axis1: Never = ..., axis2: Never = ...) -> Never: ...  # type: ignore[misc]
+    def diagonal(self: Never, /, offset: L[0] = 0, axis1: L[0] = 0, axis2: L[1] = 1) -> Never: ...  # type: ignore[misc]
     def swapaxes(self: Never, axis1: Never, axis2: Never, /) -> Never: ...  # type: ignore[misc]
-    def sort(self: Never, /, axis: Never = ..., kind: Never = ..., order: Never = ...) -> Never: ...  # type: ignore[misc]
+    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None) -> Never: ...  # type: ignore[misc]
     def nonzero(self: Never, /) -> Never: ...  # type: ignore[misc]
-    def setfield(self: Never, /, val: Never, dtype: Never, offset: Never = ...) -> None: ...  # type: ignore[misc]
-    def searchsorted(self: Never, /, v: Never, side: Never = ..., sorter: Never = ...) -> Never: ...  # type: ignore[misc]
+    def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
+    def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
 
     # NOTE: this wont't raise, but won't do anything either
-    def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = False) -> None: ...
+    @overload
+    def resize(self, /, *, refcheck: builtins.bool = True) -> None: ...
+    @overload
+    def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = True) -> None: ...
 
     #
     def byteswap(self, /, inplace: L[False] = False) -> Self: ...
@@ -3745,84 +3748,74 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def astype(
         self,
+        /,
         dtype: _DTypeLike[_ScalarT],
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        subok: builtins.bool = ...,
-        copy: builtins.bool | _CopyMode = ...,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: builtins.bool = True,
+        copy: builtins.bool | _CopyMode = True,
     ) -> _ScalarT: ...
     @overload
     def astype(
         self,
+        /,
         dtype: DTypeLike | None,
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        subok: builtins.bool = ...,
-        copy: builtins.bool | _CopyMode = ...,
-    ) -> Any: ...
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: builtins.bool = True,
+        copy: builtins.bool | _CopyMode = True,
+    ) -> Incomplete: ...
 
     # NOTE: `view` will perform a 0D->scalar cast,
     # thus the array `type` is irrelevant to the output type
     @overload
-    def view(self, type: type[NDArray[Any]] = ...) -> Self: ...
+    def view(self, type: type[ndarray] = ...) -> Self: ...
     @overload
-    def view(
-        self,
-        dtype: _DTypeLike[_ScalarT],
-        type: type[NDArray[Any]] = ...,
-    ) -> _ScalarT: ...
+    def view(self, /, dtype: _DTypeLike[_ScalarT], type: type[ndarray] = ...) -> _ScalarT: ...
     @overload
-    def view(
-        self,
-        dtype: DTypeLike,
-        type: type[NDArray[Any]] = ...,
-    ) -> Any: ...
+    def view(self, /, dtype: DTypeLike, type: type[ndarray] = ...) -> Incomplete: ...
 
     @overload
-    def getfield(
-        self,
-        dtype: _DTypeLike[_ScalarT],
-        offset: SupportsIndex = ...
-    ) -> _ScalarT: ...
+    def getfield(self, /, dtype: _DTypeLike[_ScalarT], offset: SupportsIndex = 0) -> _ScalarT: ...
     @overload
-    def getfield(
-        self,
-        dtype: DTypeLike,
-        offset: SupportsIndex = ...
-    ) -> Any: ...
+    def getfield(self, /, dtype: DTypeLike, offset: SupportsIndex = 0) -> Incomplete: ...
 
     @overload
     def take(
         self,
         indices: _IntLike_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> Self: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> NDArray[Self]: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         *,
         out: _ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
+        /,
         axis: SupportsIndex | None,
         out: _ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
 
     def repeat(self, repeats: _ArrayLikeInt_co, /, axis: SupportsIndex | None = None) -> ndarray[tuple[int], dtype[Self]]: ...

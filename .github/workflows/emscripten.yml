@@ -10,6 +10,9 @@ on:
       - '**.md'
       - '**.rst'
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 env:
   FORCE_COLOR: 3
 
@@ -20,8 +23,6 @@ concurrency:
 
 jobs:
   build-wasm-emscripten:
-    permissions:
-      contents: read  # to fetch code (actions/checkout)
     name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
