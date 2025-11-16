@@ -368,7 +368,6 @@ jobs:
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
 
 
-
   Linux_Python_311_32bit_full:
     name: i686, cp311, full, with asserts
     needs: [smoke_test]
