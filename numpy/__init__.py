@@ -870,6 +870,23 @@ else:
             del w
     del _mac_os_check
 
+    def blas_fpe_check():
+        # Check if BLAS adds spurious FPEs, mostly seen on M4 arms with Accelerate.
+        with errstate(all='raise'):
+            x = ones((20, 20))
+            try:
+                x @ x
+            except FloatingPointError:
+                res = _core._multiarray_umath._blas_supports_fpe(False)
+                if res:  # res was not modified (hardcoded to True for now)
+                    warnings.warn(
+                        "Spurious warnings given by blas but suppression not "
+                        "set up on this platform. Please open a NumPy issue.",
+                        UserWarning, stacklevel=2)
+
+    blas_fpe_check()
+    del blas_fpe_check
+
     def hugepage_setup():
         """
         We usually use madvise hugepages support, but on some old kernels it
