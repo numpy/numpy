@@ -1148,7 +1148,7 @@ class TestEinsum:
         arrays = [np.random.rand(*shape) for shape in shapes]
         self.optimize_compare(eq, operands=arrays)
 
-        eq ="'cacc,bcb->"
+        eq = "cacc,bcb->"
         shapes = ((1, 1, 1, 1), (1, 4, 1))
         arrays = [np.random.rand(*shape) for shape in shapes]
         self.optimize_compare(eq, operands=arrays)
