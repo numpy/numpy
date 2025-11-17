@@ -152,7 +152,7 @@ jobs:
 
       - name: pkg-config
         run: |
-          choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          python -m pip install pkgconf
 
       - name: Dependencies
         run: |
