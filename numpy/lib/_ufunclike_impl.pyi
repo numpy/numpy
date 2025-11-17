@@ -14,6 +14,7 @@ __all__ = ["fix", "isneginf", "isposinf"]
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
+@overload
 @deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
 def fix(  # type: ignore[misc]
     x: _FloatLike_co,
