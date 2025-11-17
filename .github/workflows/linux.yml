@@ -402,8 +402,8 @@ jobs:
         pip install -r requirements/test_requirements.txt
 
         spin config-openblas --with-scipy-openblas=32
-        export PKG_CONFIG_PATH=/numpy/.openblas
-        python -m pip install . -v -Csetup-args="-Dallow-noblas=true"
+        export PKG_CONFIG_PATH=$(pwd)/.openblas
+        python -m pip install . -v -Csetup-args="-Dallow-noblas=false"
 
     - name: test
       run: |
