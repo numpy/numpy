@@ -4379,6 +4379,10 @@ try_trivial_scalar_call(
     ret = strided_loop(&context, data, &n, strides, auxdata);
     NPY_AUXDATA_FREE(auxdata);
     if (ret == 0) {
+        if (PyErr_Occurred()) {
+            ret = -1;
+            goto bail;
+        }
         if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
             // Check for any unmasked floating point errors (note: faster
             // than _check_ufunc_fperr as one doesn't need mask up front).
