@@ -2069,7 +2069,7 @@ class Configuration:
         If __hg_version__.py existed before, nothing is done.
 
         This is intended for working with source directories that are
-        in an Mercurial repository.
+        in a Mercurial repository.
         """
         target = njoin(self.local_path, '__hg_version__.py')
         revision = self._get_hg_revision(self.local_path)

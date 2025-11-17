@@ -53,6 +53,10 @@ jobs:
         BASE_REF: ${{ github.base_ref }}
       run:
         python tools/linter.py
+    - name: Check Python.h is first file included
+      run: |
+        python tools/check_python_h_first.py
+        
 
   smoke_test:
     # To enable this job on a fork, comment out:
@@ -362,3 +366,47 @@ jobs:
         rm -rf build-install
         ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
+
+
+  Linux_Python_311_32bit_full:
+    name: i686, cp311, full
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    container:
+       # There are few options for i686 images at https://quay.io/organization/pypa,
+       # use the glibc2.28 one
+      image: quay.io/pypa/manylinux_2_28_i686
+
+    steps:
+    - name: Checkout and initialize submodules
+      # actions/checkout doesn't work in a container image
+      run: |
+        git config --global --add safe.directory $PWD
+        if [ $GITHUB_EVENT_NAME != pull_request ]; then
+            git clone --recursive --branch=$GITHUB_REF_NAME https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git reset --hard $GITHUB_SHA
+        else
+            git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git fetch origin $GITHUB_REF:my_ref_name
+            git checkout $GITHUB_BASE_REF
+            git -c user.email="you@example.com" merge --no-commit my_ref_name
+        fi
+        git submodule update --init --recursive
+
+    - name: build
+      run: |
+        python3.11 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements/ci32_requirements.txt
+        pip install -r requirements/test_requirements.txt
+
+        spin config-openblas --with-scipy-openblas=32
+        export PKG_CONFIG_PATH=$(pwd)/.openblas
+        python -m pip install . -v -Csetup-args="-Dallow-noblas=false"
+
+    - name: test
+      run: |
+        source venv/bin/activate
+        cd tools
+        python -m pytest --pyargs numpy

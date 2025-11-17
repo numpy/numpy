@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   clangcl_python64bit_openblas32:
-    name: x86-64, LP64 OpenBLAS
+    name: Clang-cl, x86-64, fast, openblas32
     runs-on: windows-2022
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
@@ -66,8 +66,10 @@ jobs:
       run: |
         spin test -- --timeout=600 --durations=10
 
+
+  #=======================================================================================
   msvc_python32bit_no_openblas:
-    name: MSVC, ${{ matrix.architecture }} Python , no BLAS
+    name: MSVC, ${{ matrix.architecture }}, fast, no BLAS
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -117,3 +119,59 @@ jobs:
         run: |
           cd tools
           python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10
+
+  #=======================================================================================
+  msvc_python64bit_openblas:
+    name: MSVC, x86_64, ${{ matrix.TEST_MODE }}, openblas${{ matrix.BLAS }}
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - BLAS: 64
+            TEST_MODE: full
+            pyver: '3.14'
+          - BLAS: 32
+            TEST_MODE: fast
+            pyver: '3.11'
+
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.pyver }}
+
+      - name: pkg-config
+        run: |
+          choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+
+      - name: Dependencies
+        run: |
+          python -m pip install -r requirements/test_requirements.txt
+
+      - name: Build and install
+        run: |
+          pip install -r requirements/ci_requirements.txt
+          spin config-openblas --with-scipy-openblas=${{ matrix.BLAS }}
+          $env:PKG_CONFIG_PATH="$pwd/.openblas"
+          python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
+
+      - name: Run test suite ${{ matrix.TEST_MODE }}
+        run: |
+          cd tools
+          # Get a gfortran onto the path for f2py tests
+          $env:PATH = "c:\\rtools45\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+          If ( "${{ matrix.TEST_MODE }}" -eq "full" ) {
+            python -m pytest --pyargs numpy -rsx -n2 --durations=10
+          } else {
+            python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10 -rsx
+          }

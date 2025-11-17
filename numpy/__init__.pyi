@@ -1177,8 +1177,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: type[float64 | ct.c_double] | _Float64Codes | _DoubleCodes | None,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...
     ) -> dtype[float64]: ...
 
@@ -1188,8 +1189,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _DTypeLike[_ScalarT],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[_ScalarT]: ...
 
@@ -1207,48 +1209,54 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: type[builtins.bool | np.bool | ct.c_bool] | _BoolCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[np.bool]: ...
     @overload
     def __new__(
         cls,
         dtype: type[int],  # also accepts `type[builtins.bool]`
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[int_ | np.bool]: ...
     @overload
     def __new__(
         cls,
         dtype: type[float],  # also accepts `type[int | bool]`
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[float64 | int_ | np.bool]: ...
     @overload
     def __new__(
         cls,
         dtype: type[complex],  # also accepts `type[float | int | bool]`
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[complex128 | float64 | int_ | np.bool]: ...
     @overload
     def __new__(
         cls,
         dtype: type[bytes | ct.c_char] | _BytesCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[bytes_]: ...
     @overload
     def __new__(
         cls,
         dtype: type[str] | _StrCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[str_]: ...
     # NOTE: These `memoryview` overloads assume PEP 688, which requires mypy to
@@ -1261,8 +1269,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: type[void | memoryview] | _VoidDTypeLike | _VoidCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[void]: ...
     # NOTE: `_: type[object]` would also accept e.g. `type[object | complex]`,
@@ -1271,8 +1280,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: type[object_ | _BuiltinObjectLike | ct.py_object[Any]] | _ObjectCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[object_]: ...
 
@@ -1281,48 +1291,54 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _UInt8Codes | _UByteCodes | type[ct.c_uint8 | ct.c_ubyte],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[uint8]: ...
     @overload
     def __new__(
         cls,
         dtype: _UInt16Codes | _UShortCodes | type[ct.c_uint16 | ct.c_ushort],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[uint16]: ...
     @overload
     def __new__(
         cls,
         dtype: _UInt32Codes | _UIntCCodes | type[ct.c_uint32 | ct.c_uint],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[uint32]: ...
     @overload
     def __new__(
         cls,
         dtype: _UInt64Codes | _ULongLongCodes | type[ct.c_uint64 | ct.c_ulonglong],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[uint64]: ...
     @overload
     def __new__(
         cls,
         dtype: _UIntPCodes | type[ct.c_void_p | ct.c_size_t],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[uintp]: ...
     @overload
     def __new__(
         cls,
         dtype: _ULongCodes | type[ct.c_ulong],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[ulong]: ...
 
@@ -1331,48 +1347,54 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _Int8Codes | _ByteCodes | type[ct.c_int8 | ct.c_byte],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[int8]: ...
     @overload
     def __new__(
         cls,
         dtype: _Int16Codes | _ShortCodes | type[ct.c_int16 | ct.c_short],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[int16]: ...
     @overload
     def __new__(
         cls,
         dtype: _Int32Codes | _IntCCodes | type[ct.c_int32 | ct.c_int],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[int32]: ...
     @overload
     def __new__(
         cls,
         dtype: _Int64Codes | _LongLongCodes | type[ct.c_int64 | ct.c_longlong],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[int64]: ...
     @overload
     def __new__(
         cls,
         dtype: _IntPCodes | type[intp | ct.c_ssize_t],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[intp]: ...
     @overload
     def __new__(
         cls,
         dtype: _LongCodes | type[ct.c_long],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[long]: ...
 
@@ -1381,16 +1403,18 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _Float16Codes | _HalfCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[float16]: ...
     @overload
     def __new__(
         cls,
         dtype: _Float32Codes | _SingleCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[float32]: ...
     # float64 codes are covered by overload 1
@@ -1398,8 +1422,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _LongDoubleCodes | type[ct.c_longdouble],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[longdouble]: ...
 
@@ -1408,24 +1433,27 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _Complex64Codes | _CSingleCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[complex64]: ...
     @overload
     def __new__(
         cls,
         dtype: _Complex128Codes | _CDoubleCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[complex128]: ...
     @overload
     def __new__(
         cls,
         dtype: _CLongDoubleCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[clongdouble]: ...
 
@@ -1434,16 +1462,18 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _TD64Codes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[timedelta64]: ...
     @overload
     def __new__(
         cls,
         dtype: _DT64Codes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[datetime64]: ...
 
@@ -1452,9 +1482,10 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: dtypes.StringDType | _StringCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
-        metadata: dict[builtins.str, Any] = ...
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
+        metadata: dict[builtins.str, Any] = ...,
     ) -> dtypes.StringDType: ...
 
     # Combined char-codes and ctypes, analogous to the scalar-type hierarchy
@@ -1462,56 +1493,63 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: _UnsignedIntegerCodes | _UnsignedIntegerCType,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[unsignedinteger]: ...
     @overload
     def __new__(
         cls,
         dtype: _SignedIntegerCodes | _SignedIntegerCType,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[signedinteger]: ...
     @overload
     def __new__(
         cls,
         dtype: _IntegerCodes | _IntegerCType,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[integer]: ...
     @overload
     def __new__(
         cls,
         dtype: _FloatingCodes | _FloatingCType,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[floating]: ...
     @overload
     def __new__(
         cls,
         dtype: _ComplexFloatingCodes,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[complexfloating]: ...
     @overload
     def __new__(
         cls,
         dtype: _InexactCodes | _FloatingCType,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[inexact]: ...
     @overload
     def __new__(
         cls,
         dtype: _CharacterCodes | type[bytes | builtins.str | ct.c_char],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[character]: ...
 
@@ -1520,8 +1558,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: builtins.str,
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype: ...
 
@@ -1535,8 +1574,9 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     def __new__(
         cls,
         dtype: type[object],
-        align: builtins.bool = ...,
-        copy: builtins.bool = ...,
+        align: builtins.bool = False,
+        copy: builtins.bool = False,
+        *,
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[object_ | Any]: ...
 
@@ -3682,21 +3722,24 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def trace(  # type: ignore[misc]
         self: Never,
         /,
-        offset: Never = ...,
-        axis1: Never = ...,
-        axis2: Never = ...,
-        dtype: Never = ...,
-        out: Never = ...,
+        offset: L[0] = 0,
+        axis1: L[0] = 0,
+        axis2: L[1] = 1,
+        dtype: None = None,
+        out: None = None,
     ) -> Never: ...
-    def diagonal(self: Never, /, offset: Never = ..., axis1: Never = ..., axis2: Never = ...) -> Never: ...  # type: ignore[misc]
+    def diagonal(self: Never, /, offset: L[0] = 0, axis1: L[0] = 0, axis2: L[1] = 1) -> Never: ...  # type: ignore[misc]
     def swapaxes(self: Never, axis1: Never, axis2: Never, /) -> Never: ...  # type: ignore[misc]
-    def sort(self: Never, /, axis: Never = ..., kind: Never = ..., order: Never = ...) -> Never: ...  # type: ignore[misc]
+    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None) -> Never: ...  # type: ignore[misc]
     def nonzero(self: Never, /) -> Never: ...  # type: ignore[misc]
-    def setfield(self: Never, /, val: Never, dtype: Never, offset: Never = ...) -> None: ...  # type: ignore[misc]
-    def searchsorted(self: Never, /, v: Never, side: Never = ..., sorter: Never = ...) -> Never: ...  # type: ignore[misc]
+    def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
+    def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
 
     # NOTE: this wont't raise, but won't do anything either
-    def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = False) -> None: ...
+    @overload
+    def resize(self, /, *, refcheck: builtins.bool = True) -> None: ...
+    @overload
+    def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = True) -> None: ...
 
     #
     def byteswap(self, /, inplace: L[False] = False) -> Self: ...
@@ -3705,84 +3748,74 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def astype(
         self,
+        /,
         dtype: _DTypeLike[_ScalarT],
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        subok: builtins.bool = ...,
-        copy: builtins.bool | _CopyMode = ...,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: builtins.bool = True,
+        copy: builtins.bool | _CopyMode = True,
     ) -> _ScalarT: ...
     @overload
     def astype(
         self,
+        /,
         dtype: DTypeLike | None,
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        subok: builtins.bool = ...,
-        copy: builtins.bool | _CopyMode = ...,
-    ) -> Any: ...
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: builtins.bool = True,
+        copy: builtins.bool | _CopyMode = True,
+    ) -> Incomplete: ...
 
     # NOTE: `view` will perform a 0D->scalar cast,
     # thus the array `type` is irrelevant to the output type
     @overload
-    def view(self, type: type[NDArray[Any]] = ...) -> Self: ...
+    def view(self, type: type[ndarray] = ...) -> Self: ...
     @overload
-    def view(
-        self,
-        dtype: _DTypeLike[_ScalarT],
-        type: type[NDArray[Any]] = ...,
-    ) -> _ScalarT: ...
+    def view(self, /, dtype: _DTypeLike[_ScalarT], type: type[ndarray] = ...) -> _ScalarT: ...
     @overload
-    def view(
-        self,
-        dtype: DTypeLike,
-        type: type[NDArray[Any]] = ...,
-    ) -> Any: ...
+    def view(self, /, dtype: DTypeLike, type: type[ndarray] = ...) -> Incomplete: ...
 
     @overload
-    def getfield(
-        self,
-        dtype: _DTypeLike[_ScalarT],
-        offset: SupportsIndex = ...
-    ) -> _ScalarT: ...
+    def getfield(self, /, dtype: _DTypeLike[_ScalarT], offset: SupportsIndex = 0) -> _ScalarT: ...
     @overload
-    def getfield(
-        self,
-        dtype: DTypeLike,
-        offset: SupportsIndex = ...
-    ) -> Any: ...
+    def getfield(self, /, dtype: DTypeLike, offset: SupportsIndex = 0) -> Incomplete: ...
 
     @overload
     def take(
         self,
         indices: _IntLike_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> Self: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> NDArray[Self]: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         *,
         out: _ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
+        /,
         axis: SupportsIndex | None,
         out: _ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
 
     def repeat(self, repeats: _ArrayLikeInt_co, /, axis: SupportsIndex | None = None) -> ndarray[tuple[int], dtype[Self]]: ...

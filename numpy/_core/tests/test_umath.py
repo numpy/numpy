@@ -4893,6 +4893,15 @@ def test_bad_legacy_ufunc_silent_errors():
         ncu_tests.always_error.at(arr, [0, 1, 2], arr)
 
 
+def test_bad_legacy_unary_ufunc_silent_errors():
+    # Unary has a special scalar path right now, so test it explicitly.
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_unary(np.arange(3).astype(np.float64))
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_unary(1.5)
+
+
 @pytest.mark.parametrize('x1', [np.arange(3.0), [0.0, 1.0, 2.0]])
 def test_bad_legacy_gufunc_silent_errors(x1):
     # Verify that an exception raised in a gufunc loop propagates correctly.

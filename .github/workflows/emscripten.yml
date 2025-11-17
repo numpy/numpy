@@ -10,6 +10,9 @@ on:
       - '**.md'
       - '**.rst'
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 env:
   FORCE_COLOR: 3
 
@@ -20,8 +23,6 @@ concurrency:
 
 jobs:
   build-wasm-emscripten:
-    permissions:
-      contents: read  # to fetch code (actions/checkout)
     name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
@@ -34,7 +35,7 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@9c00cb4f6b517705a3794b22395aedc36257242c  # v3.2.1
+      - uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc  # v3.3.0
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp312-*
