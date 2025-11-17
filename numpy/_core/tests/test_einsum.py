@@ -1121,7 +1121,7 @@ class TestEinsum:
 
     def test_singleton_broadcasting(self):
         eq = "ijp,ipq,ikq->ijk"
-        shapes = (3, 1, 1), (3, 1, 3), (1, 3, 3)
+        shapes = ((3, 1, 1), (3, 1, 3), (1, 3, 3))
         arrays = [np.random.rand(*shape) for shape in shapes]
         self.optimize_compare(eq, operands=arrays)
 

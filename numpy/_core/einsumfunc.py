@@ -992,7 +992,7 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
     singletons = set()
 
     # parse left term to unique indices with size > 1
-    left = dict()
+    left = {}
     for ix, d in zip(a_term, shape_a):
         if d == 1:
             # everything (including broadcasting) works nicely if simply ignore
@@ -1001,14 +1001,14 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
             singletons.add(ix)
             continue
         if sizes.setdefault(ix, d) != d:
-            # set or check size
+            # set and check size
             raise ValueError(
                 f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
             )
         left[ix] = True
 
     # parse right term to unique indices with size > 1
-    right = dict()
+    right = {}
     for ix, d in zip(b_term, shape_b):
         # broadcast indices (size 1 on one input and size != 1
         # on the other) should not be treated as singletons
@@ -1019,7 +1019,7 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
         singletons.discard(ix)
 
         if sizes.setdefault(ix, d) != d:
-            # set or check size
+            # set and check size
             raise ValueError(
                 f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
             )
