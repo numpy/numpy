@@ -462,7 +462,7 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
 
 class TestFixDeprecation(_DeprecationTestCase):
     # Deprecated in Numpy 2.5, 2025-10-30
-    message = "The function numpy.fix is deprecated"
+    message = "Calling numpy.fix is deprecated"
 
     def test_assert_warns_deprecated(self):
         self.assert_deprecated(lambda: np.fix(1))
