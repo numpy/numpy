@@ -369,7 +369,7 @@ jobs:
 
 
   Linux_Python_311_32bit_full:
-    name: i686, cp311, full, with asserts
+    name: i686, cp311, full
     needs: [smoke_test]
     runs-on: ubuntu-latest
     container:
