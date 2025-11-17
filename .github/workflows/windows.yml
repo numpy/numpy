@@ -157,6 +157,7 @@ jobs:
       - name: Dependencies
         run: |
           python -m pip install -r requirements/test_requirements.txt
+          python -m pip install -r requirements/build_requirements.txt
 
       - name: Build and install
         run: |
