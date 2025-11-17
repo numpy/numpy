@@ -547,9 +547,10 @@ def tune_xgboost(X: np.ndarray, y: np.ndarray) -> MultiOutputRegressor:
     if y_2d.ndim == 1:
         y_2d = y_2d.reshape(-1, 1)
 
-    def objective(params: Sequence[float]) -> float:
-        n_estimators, learning_rate, max_depth = params
-        base_model = XGBRegressor(
+    def build_base_model(
+        n_estimators: float, learning_rate: float, max_depth: float
+    ) -> XGBRegressor:
+        return XGBRegressor(
             n_estimators=int(n_estimators),
             learning_rate=float(learning_rate),
             max_depth=int(max_depth),
@@ -559,7 +560,12 @@ def tune_xgboost(X: np.ndarray, y: np.ndarray) -> MultiOutputRegressor:
             random_state=SEED,
             n_jobs=1,
         )
-        model = MultiOutputRegressor(base_model)
+
+    def objective(params: Sequence[float]) -> float:
+        n_estimators, learning_rate, max_depth = params
+        model = MultiOutputRegressor(
+            build_base_model(n_estimators, learning_rate, max_depth)
+        )
         scores: List[float] = []
         for train_idx, val_idx in TimeSeriesSplit(n_splits=3).split(X_flat):
             model.fit(X_flat[train_idx], y_2d[train_idx])
@@ -573,16 +579,7 @@ def tune_xgboost(X: np.ndarray, y: np.ndarray) -> MultiOutputRegressor:
         n_calls=20,
         random_state=SEED,
     )
-    base_model = XGBRegressor(
-        n_estimators=int(result.x[0]),
-        learning_rate=float(result.x[1]),
-        max_depth=int(result.x[2]),
-        subsample=0.8,
-        colsample_bytree=0.8,
-        objective="reg:squarederror",
-        random_state=SEED,
-        n_jobs=1,
-    )
+    base_model = build_base_model(*result.x)
     model = MultiOutputRegressor(base_model)
     model.fit(X_flat, y_2d)
     return model
