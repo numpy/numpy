@@ -391,6 +391,7 @@ else:
         seterrcall,
         shape,
         shares_memory,
+        shifted,
         short,
         sign,
         signbit,

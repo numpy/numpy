@@ -3783,6 +3783,108 @@ class TestRoll:
         assert_equal(np.roll(x, 2**100), x)
 
 
+class TestShifted:
+    @pytest.mark.parametrize(
+        ["array", "shift", "axis", "fill_value", "output"],
+        [
+            [
+                np.arange(1, 6),
+                0,
+                None,
+                0,
+                np.array([1, 2, 3, 4, 5]),
+            ],
+            [
+                np.arange(1, 6),
+                2,
+                None,
+                0,
+                np.array([0, 0, 1, 2, 3]),
+            ],
+            [
+                np.arange(1, 6),
+                -2,
+                None,
+                0,
+                np.array([3, 4, 5, 0, 0]),
+            ],
+            [
+                np.arange(1, 10).reshape((3, 3)),
+                0,
+                0,
+                0,
+                np.array(
+                    [
+                        [1, 2, 3],
+                        [4, 5, 6],
+                        [7, 8, 9],
+                    ]
+                ),
+            ],
+            [
+                np.arange(1, 10).reshape((3, 3)),
+                1,
+                0,
+                0,
+                np.array(
+                    [
+                        [0, 0, 0],
+                        [1, 2, 3],
+                        [4, 5, 6],
+                    ]
+                ),
+            ],
+            [
+                np.arange(1, 10).reshape((3, 3)),
+                -2,
+                1,
+                0,
+                np.array(
+                    [
+                        [3, 0, 0],
+                        [6, 0, 0],
+                        [9, 0, 0],
+                    ]
+                ),
+            ],
+            [
+                np.arange(1, 10).reshape((3, 3)),
+                (1, -2),
+                (0, 1),
+                0,
+                np.array(
+                    [
+                        [0, 0, 0],
+                        [3, 0, 0],
+                        [6, 0, 0],
+                    ]
+                ),
+            ],
+            [
+                np.arange(1, 10).reshape((3, 3)),
+                (1, -2),
+                (0, 1),
+                9,
+                np.array(
+                    [
+                        [9, 9, 9],
+                        [3, 9, 9],
+                        [6, 9, 9],
+                    ]
+                ),
+            ],
+        ],
+    )
+    def test_shifted(self, array, shift, axis, fill_value, output):
+        output = np.shifted(
+            array,
+            shift=shift,
+            axis=axis,
+            fill_value=fill_value,
+        )
+        assert_equal(output, output)
+
+
 class TestRollaxis:
 
     # expected shape indexed by (axis, start) for array of
