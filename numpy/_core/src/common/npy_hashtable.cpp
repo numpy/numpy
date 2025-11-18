@@ -240,3 +240,20 @@ PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
     PyObject *res = find_item(tb, key)[0];
     return res;
 }
+
+NPY_NO_EXPORT PyObject *
+PyArrayIdentityHash_GetItemWithLock(PyArrayIdentityHash *tb, PyObject *const *key)
+{
+    PyObject *res;
+#ifdef Py_GIL_DISABLED
+    std::shared_mutex *mutex = (std::shared_mutex *)tb->mutex;
+    NPY_BEGIN_ALLOW_THREADS
+    mutex->lock_shared();
+    NPY_END_ALLOW_THREADS
+#endif
+    res = find_item(tb, key)[0];
+#ifdef Py_GIL_DISABLED
+    mutex->unlock_shared();
+#endif
+    return res;
+}

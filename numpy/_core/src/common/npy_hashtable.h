@@ -28,6 +28,9 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *value, int replace);
 
 NPY_NO_EXPORT PyObject *
+PyArrayIdentityHash_GetItemWithLock(PyArrayIdentityHash *tb, PyObject *const *key);
+
+NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key);
 
 NPY_NO_EXPORT PyArrayIdentityHash *

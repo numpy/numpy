@@ -4337,7 +4337,7 @@ try_trivial_scalar_call(
     // Try getting info from the (private) cache.  Fall back if not found,
     // so that the the dtype gets registered and things will work next time.
     PyArray_DTypeMeta *op_dtypes[2] = {NPY_DTYPE(dt), NULL};
-    PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
+    PyObject *info = PyArrayIdentityHash_GetItemWithLock(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
         (PyObject **)op_dtypes);
     if (info == NULL) {
