@@ -960,7 +960,8 @@ class MaskedIterator(Generic[_ShapeT_co, _DTypeT_co]):
     def __next__(self: MaskedIterator[Any, np.dtype[_ScalarT]]) -> _ScalarT: ...
 
 class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
-    __array_priority__: Any
+    __array_priority__: Final[Literal[15]] = 15
+
     @overload
     def __new__(
         cls,
@@ -1615,10 +1616,12 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     #
     @property  # type: ignore[misc]
     def imag(self: _HasDTypeWithRealAndImag[object, _ScalarT], /) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...  # type: ignore[override]
-    get_imag: Any
+    def get_imag(self: _HasDTypeWithRealAndImag[object, _ScalarT], /) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+
+    #
     @property  # type: ignore[misc]
     def real(self: _HasDTypeWithRealAndImag[_ScalarT, object], /) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...  # type: ignore[override]
-    get_real: Any
+    def get_real(self: _HasDTypeWithRealAndImag[_ScalarT, object], /) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
 
     # keep in sync with `np.ma.count`
     @overload
@@ -1629,9 +1632,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def count(self, axis: _ShapeLike | None = None, *, keepdims: Literal[True]) -> NDArray[int_]: ...
     @overload
     def count(self, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
-
-    # keep roughly in sync with `ma.core.ravel`
-    def ravel(self, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
 
     # Keep in sync with `ndarray.reshape`
     # NOTE: reshape also accepts negative integers, so we can't use integer literals
@@ -2317,34 +2317,80 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
 
-    copy: Any
-    diagonal: Any
-    flatten: Any
+    # keep in sync with `ndarray.diagonal`
+    @override
+    def diagonal(
+        self,
+        /,
+        offset: SupportsIndex = 0,
+        axis1: SupportsIndex = 0,
+        axis2: SupportsIndex = 1,
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     # keep in sync with `ndarray.repeat`
+    @override
     @overload
     def repeat(
         self,
+        /,
         repeats: _ArrayLikeInt_co,
         axis: None = None,
     ) -> MaskedArray[tuple[int], _DTypeT_co]: ...
     @overload
     def repeat(
         self,
+        /,
         repeats: _ArrayLikeInt_co,
         axis: SupportsIndex,
     ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
-    squeeze: Any
+    # keep in sync with `ndarray.flatten` and `ndarray.ravel`
+    @override
+    def flatten(self, /, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
+    @override
+    def ravel(self, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
+
+    # keep in sync with `ndarray.squeeze`
+    @override
+    def squeeze(
+        self,
+        /,
+        axis: SupportsIndex | tuple[SupportsIndex, ...] | None = None,
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     #
-    def toflex(self) -> Incomplete: ...
-    def torecords(self) -> Incomplete: ...
-    def tolist(self, fill_value: Incomplete | None = None) -> Incomplete: ...
+    def toflex(self) -> MaskedArray[_ShapeT_co, np.dtype[np.void]]: ...
+    def torecords(self) -> MaskedArray[_ShapeT_co, np.dtype[np.void]]: ...
+
+    #
+    @override
     def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
-    def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
+
+    # keep in sync with `ndarray.tolist`
+    @override
+    @overload
+    def tolist(self: MaskedArray[tuple[Never], dtype[generic[_T]]], /, fill_value: _ScalarLike_co | None = None) -> Any: ...
+    @overload
+    def tolist(self: MaskedArray[tuple[()], dtype[generic[_T]]], /, fill_value: _ScalarLike_co | None = None) -> _T: ...
+    @overload
+    def tolist(self: MaskedArray[tuple[int], dtype[generic[_T]]], /, fill_value: _ScalarLike_co | None = None) -> list[_T]: ...
+    @overload
+    def tolist(
+        self: MaskedArray[tuple[int, int], dtype[generic[_T]]], /, fill_value: _ScalarLike_co | None = None
+    ) -> list[list[_T]]: ...
+    @overload
+    def tolist(
+        self: MaskedArray[tuple[int, int, int], dtype[generic[_T]]], /, fill_value: _ScalarLike_co | None = None
+    ) -> list[list[list[_T]]]: ...
+    @overload
+    def tolist(self, /, fill_value: _ScalarLike_co | None = None) -> Any: ...
+
+    # NOTE: will raise `NotImplementedError`
+    @override
+    def tofile(self, /, fid: Never, sep: str = "", format: str = "%s") -> NoReturn: ...  # type: ignore[override]
 
     #
+    @override
     def __deepcopy__(self, memo: dict[int, Any] | None = None) -> Self: ...
 
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
