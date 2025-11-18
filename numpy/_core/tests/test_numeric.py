@@ -1660,8 +1660,10 @@ class TestNonzero:
 
         # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
         #              dtype=[('a', 'i4'), ('b', 'i2')])
-        x = np.array([(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
-                     dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')])
+        x = np.array(
+            [(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+            dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')]
+        )
         assert_equal(np.count_nonzero(x['a']), 3)
         assert_equal(np.count_nonzero(x['b']), 4)
         assert_equal(np.count_nonzero(x['c']), 3)
@@ -1995,7 +1997,9 @@ class TestIndex:
         g1 = randint(0, 5, size=15)
         g2 = randint(0, 8, size=15)
         V[g1, g2] = -V[g1, g2]
-        assert_((np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all())
+        assert_(
+            (np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all()
+        )
 
     def test_boolean_edgecase(self):
         a = np.array([], dtype='int32')
@@ -2261,7 +2265,10 @@ class TestArrayComparisons:
         res = np.array_equiv(np.array([1, 2]), np.array([[1], [2]]))
         assert_(not res)
         assert_(type(res) is bool)
-        res = np.array_equiv(np.array([1, 2]), np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        res = np.array_equiv(
+            np.array([1, 2]),
+            np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+        )
         assert_(not res)
         assert_(type(res) is bool)
 
@@ -3116,7 +3123,9 @@ class TestIsclose:
         if np.isscalar(x) and np.isscalar(y):
             assert_(np.isclose(x, y) == np.allclose(x, y), msg=msg2 % (x, y))
         else:
-            assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
+            assert_array_equal(
+                np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y)
+            )
 
     def test_ip_all_isclose(self):
         self._setup()
@@ -3210,7 +3219,8 @@ class TestIsclose:
 
         for i in b:
             for j in b:
-                # Making sure that i and j are not both numbers, because that won't create a warning
+                # Making sure that i and j are not both numbers,
+                # because that won't create a warning
                 if (i == 1) and (j == 1):
                     continue
 
@@ -3220,7 +3230,8 @@ class TestIsclose:
                     c = np.isclose(a, a, atol=i, rtol=j)
                     assert len(w) == 1
                     assert issubclass(w[-1].category, RuntimeWarning)
-                    assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
+                    expected = f"One of rtol or atol is not valid, atol: {i}, rtol: {j}"
+                    assert expected in str(w[-1].message)
 
 
 class TestStdVar:
@@ -4244,7 +4255,8 @@ class TestTensordot:
     def test_zero_dimensional(self):
         # gh-12130
         arr_0d = np.array(1)
-        ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
+        # contracting no axes is well defined
+        ret = np.tensordot(arr_0d, arr_0d, ([], []))
         assert_array_equal(ret, arr_0d)
 
 
