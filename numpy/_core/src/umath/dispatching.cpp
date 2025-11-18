@@ -982,13 +982,9 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         npy_bool legacy_promotion_is_possible)
 {
     std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock_shared();
-    NPY_END_ALLOW_THREADS
-    PyObject *info = PyArrayIdentityHash_GetItem(
+    PyObject *info = PyArrayIdentityHash_GetItemWithLock(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
-    mutex->unlock_shared();
 
     if (info != NULL && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {

@@ -27,8 +27,10 @@ NPY_NO_EXPORT int
 PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *value, int replace);
 
+#ifdef Py_GIL_DISABLED
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItemWithLock(PyArrayIdentityHash *tb, PyObject *const *key);
+#endif // Py_GIL_DISABLED
 
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key);
