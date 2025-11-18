@@ -259,7 +259,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 /*
  * Return hash on success, -1 on failure
  */
-static int _PyArray_DescrHashImp(PyArray_Descr *descr)
+static npy_hash_t _PyArray_DescrHashImp(PyArray_Descr *descr)
 {
     PyObject *l, *tl;
     int st;
