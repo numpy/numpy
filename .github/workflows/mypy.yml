@@ -18,14 +18,17 @@ on:
       - main
       - maintenance/**
     paths-ignore:
-      - '.circlecl/'
-      - '.devcontainer/'
-      - 'benchmarks/'
-      - 'branding/'
-      - 'docs/'
-      - 'meson_cpu/'
-      - 'tools/'
-      - 'vendored-meson/'
+      - '**.md'
+      - '**.rst'
+      - '.circlecl/**'
+      - '.devcontainer/**'
+      - '.spin/**'
+      - 'benchmarks/**'
+      - 'branding/**'
+      - 'doc/**'
+      - 'meson_cpu/**'
+      - 'tools/**'
+      - 'vendored-meson/**'
   workflow_dispatch:
 
 defaults:
