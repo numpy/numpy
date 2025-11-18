@@ -547,7 +547,8 @@ def gradient(
     *varargs: _ArrayLikeNumber_co,
     axis: _ShapeLike | None = None,
     edge_order: L[1, 2] = 1,
-) -> _Array1D[_InexactTimeT] | tuple[NDArray[_InexactTimeT], ...]: ...
+    # `| Any` instead of ` | tuple` is returned to avoid several myyp_primer errors
+) -> _Array1D[_InexactTimeT] | Any: ...
 @overload  # 1d, known inexact scalar-type
 def gradient(
     f: _Array1D[_InexactTimeT],
