@@ -6678,7 +6678,7 @@ ufunc_getattro(PyObject *obj, PyObject *name)
 {
     // __signature__ special-casing to prevent class attribute access
     if (PyUnicode_Check(name) &&
-        PyUnicode_CompareWithASCIIString(name, "__signature__") == 0) {
+        PyUnicode_Compare(name, npy_interned_str.__signature__) == 0) {
         return ufunc_get_inspect_signature((PyUFuncObject *)obj, NULL);
     }
     
