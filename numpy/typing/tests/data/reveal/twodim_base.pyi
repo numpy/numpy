@@ -1,145 +1,225 @@
-from typing import Any, TypeVar, assert_type
+from typing import Any, TypeAlias, TypeVar, assert_type, type_check_only
 
 import numpy as np
 import numpy.typing as npt
 
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 
-def func1(ar: npt.NDArray[_ScalarT], a: int) -> npt.NDArray[_ScalarT]: ...
+_1D: TypeAlias = tuple[int]
+_2D: TypeAlias = tuple[int, int]
+_ND: TypeAlias = tuple[Any, ...]
 
+_Indices2D: TypeAlias = tuple[
+    np.ndarray[_1D, np.dtype[np.intp]],
+    np.ndarray[_1D, np.dtype[np.intp]],
+]
+
+###
+
+_nd_bool: np.ndarray[_ND, np.dtype[np.bool]]
+_1d_bool: np.ndarray[_1D, np.dtype[np.bool]]
+_2d_bool: np.ndarray[_2D, np.dtype[np.bool]]
+_nd_u64: np.ndarray[_ND, np.dtype[np.uint64]]
+_nd_i64: np.ndarray[_ND, np.dtype[np.int64]]
+_nd_f64: np.ndarray[_ND, np.dtype[np.float64]]
+_nd_c128: np.ndarray[_ND, np.dtype[np.complex128]]
+_nd_obj: np.ndarray[_ND, np.dtype[np.object_]]
+
+_to_nd_bool: list[bool] | list[list[bool]]
+_to_1d_bool: list[bool]
+_to_2d_bool: list[list[bool]]
+
+_to_1d_f64: list[float]
+_to_1d_c128: list[complex]
+
+@type_check_only
+def func1(ar: npt.NDArray[_ScalarT], a: int) -> npt.NDArray[_ScalarT]: ...
+@type_check_only
 def func2(ar: npt.NDArray[np.number], a: str) -> npt.NDArray[np.float64]: ...
 
-AR_b: npt.NDArray[np.bool]
-AR_u: npt.NDArray[np.uint64]
-AR_i: npt.NDArray[np.int64]
-AR_f: npt.NDArray[np.float64]
-AR_c: npt.NDArray[np.complex128]
-AR_O: npt.NDArray[np.object_]
+@type_check_only
+class _Cube:
+    shape = 3, 4
+    ndim = 2
 
-AR_LIKE_b: list[bool]
-AR_LIKE_c: list[complex]
+###
 
-assert_type(np.fliplr(AR_b), npt.NDArray[np.bool])
-assert_type(np.fliplr(AR_LIKE_b), npt.NDArray[Any])
+# fliplr
+assert_type(np.fliplr(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
+assert_type(np.fliplr(_1d_bool), np.ndarray[_1D, np.dtype[np.bool]])
+assert_type(np.fliplr(_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.fliplr(_to_nd_bool), np.ndarray)
+assert_type(np.fliplr(_to_1d_bool), np.ndarray)
+assert_type(np.fliplr(_to_2d_bool), np.ndarray)
 
-assert_type(np.flipud(AR_b), npt.NDArray[np.bool])
-assert_type(np.flipud(AR_LIKE_b), npt.NDArray[Any])
+# flipud
+assert_type(np.flipud(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
+assert_type(np.flipud(_1d_bool), np.ndarray[_1D, np.dtype[np.bool]])
+assert_type(np.flipud(_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.flipud(_to_nd_bool), np.ndarray)
+assert_type(np.flipud(_to_1d_bool), np.ndarray)
+assert_type(np.flipud(_to_2d_bool), np.ndarray)
 
-assert_type(np.eye(10), npt.NDArray[np.float64])
-assert_type(np.eye(10, M=20, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.eye(10, k=2, dtype=int), npt.NDArray[Any])
+# eye
+assert_type(np.eye(10), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.eye(10, M=20, dtype=np.int64), np.ndarray[_2D, np.dtype[np.int64]])
+assert_type(np.eye(10, k=2, dtype=int), np.ndarray[_2D])
 
-assert_type(np.diag(AR_b), npt.NDArray[np.bool])
-assert_type(np.diag(AR_LIKE_b, k=0), npt.NDArray[Any])
+# diag
+assert_type(np.diag(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
+assert_type(np.diag(_1d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.diag(_2d_bool), np.ndarray[_1D, np.dtype[np.bool]])
+assert_type(np.diag(_to_nd_bool, k=0), np.ndarray)
+assert_type(np.diag(_to_1d_bool, k=0), np.ndarray[_2D])
+assert_type(np.diag(_to_2d_bool, k=0), np.ndarray[_1D])
 
-assert_type(np.diagflat(AR_b), npt.NDArray[np.bool])
-assert_type(np.diagflat(AR_LIKE_b, k=0), npt.NDArray[Any])
+# diagflat
+assert_type(np.diagflat(_nd_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.diagflat(_1d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.diagflat(_2d_bool), np.ndarray[_2D, np.dtype[np.bool]])
+assert_type(np.diagflat(_to_nd_bool, k=0), np.ndarray[_2D])
+assert_type(np.diagflat(_to_1d_bool, k=0), np.ndarray[_2D])
+assert_type(np.diagflat(_to_2d_bool, k=0), np.ndarray[_2D])
 
-assert_type(np.tri(10), npt.NDArray[np.float64])
-assert_type(np.tri(10, M=20, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.tri(10, k=2, dtype=int), npt.NDArray[Any])
+# tri
+assert_type(np.tri(10), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.tri(10, M=20, dtype=np.int64), np.ndarray[_2D, np.dtype[np.int64]])
+assert_type(np.tri(10, k=2, dtype=int), np.ndarray[_2D])
 
-assert_type(np.tril(AR_b), npt.NDArray[np.bool])
-assert_type(np.tril(AR_LIKE_b, k=0), npt.NDArray[Any])
+# tril
+assert_type(np.tril(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
+assert_type(np.tril(_to_nd_bool, k=0), np.ndarray)
+assert_type(np.tril(_to_1d_bool, k=0), np.ndarray)
+assert_type(np.tril(_to_2d_bool, k=0), np.ndarray)
 
-assert_type(np.triu(AR_b), npt.NDArray[np.bool])
-assert_type(np.triu(AR_LIKE_b, k=0), npt.NDArray[Any])
+# triu
+assert_type(np.triu(_nd_bool), np.ndarray[_ND, np.dtype[np.bool]])
+assert_type(np.triu(_to_nd_bool, k=0), np.ndarray)
+assert_type(np.triu(_to_1d_bool, k=0), np.ndarray)
+assert_type(np.triu(_to_2d_bool, k=0), np.ndarray)
 
-assert_type(np.vander(AR_b), npt.NDArray[np.signedinteger])
-assert_type(np.vander(AR_u), npt.NDArray[np.signedinteger])
-assert_type(np.vander(AR_i, N=2), npt.NDArray[np.signedinteger])
-assert_type(np.vander(AR_f, increasing=True), npt.NDArray[np.floating])
-assert_type(np.vander(AR_c), npt.NDArray[np.complexfloating])
-assert_type(np.vander(AR_O), npt.NDArray[np.object_])
+# vander
+assert_type(np.vander(_nd_bool), np.ndarray[_2D, np.dtype[np.int_]])
+assert_type(np.vander(_nd_u64), np.ndarray[_2D, np.dtype[np.uint64]])
+assert_type(np.vander(_nd_i64, N=2), np.ndarray[_2D, np.dtype[np.int64]])
+assert_type(np.vander(_nd_f64, increasing=True), np.ndarray[_2D, np.dtype[np.float64]])
+assert_type(np.vander(_nd_c128), np.ndarray[_2D, np.dtype[np.complex128]])
+assert_type(np.vander(_nd_obj), np.ndarray[_2D, np.dtype[np.object_]])
 
+# histogram2d
 assert_type(
-    np.histogram2d(AR_LIKE_c, AR_LIKE_c),
+    np.histogram2d(_to_1d_f64, _to_1d_f64),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.complex128 | np.float64],
-        npt.NDArray[np.complex128 | np.float64],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_i, AR_b),
+    np.histogram2d(_to_1d_c128, _to_1d_c128),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.complex128 | Any]],
+        np.ndarray[_1D, np.dtype[np.complex128 | Any]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_f, AR_i),
+    np.histogram2d(_nd_i64, _nd_bool),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_i, AR_f),
+    np.histogram2d(_nd_f64, _nd_i64),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
-        npt.NDArray[np.float64],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_f, AR_c, weights=AR_LIKE_b),
+    np.histogram2d(_nd_i64, _nd_f64),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.complex128],
-        npt.NDArray[np.complex128],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.float64]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_f, AR_c, bins=8),
+    np.histogram2d(_nd_f64, _nd_c128, weights=_to_1d_bool),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.complex128],
-        npt.NDArray[np.complex128],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.complex128]],
+        np.ndarray[_1D, np.dtype[np.complex128]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_c, AR_f, bins=(8, 5)),
+    np.histogram2d(_nd_f64, _nd_c128, bins=8),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.complex128],
-        npt.NDArray[np.complex128],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.complex128]],
+        np.ndarray[_1D, np.dtype[np.complex128]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_c, AR_i, bins=AR_u),
+    np.histogram2d(_nd_c128, _nd_f64, bins=(8, 5)),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.uint64],
-        npt.NDArray[np.uint64],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.complex128]],
+        np.ndarray[_1D, np.dtype[np.complex128]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_c, AR_c, bins=(AR_u, AR_u)),
+    np.histogram2d(_nd_c128, _nd_i64, bins=_nd_u64),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.uint64],
-        npt.NDArray[np.uint64],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.uint64]],
+        np.ndarray[_1D, np.dtype[np.uint64]],
     ],
 )
 assert_type(
-    np.histogram2d(AR_c, AR_c, bins=(AR_b, 8)),
+    np.histogram2d(_nd_c128, _nd_c128, bins=(_nd_u64, _nd_u64)),
     tuple[
-        npt.NDArray[np.float64],
-        npt.NDArray[np.bool | np.complex128],
-        npt.NDArray[np.bool | np.complex128],
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.uint64]],
+        np.ndarray[_1D, np.dtype[np.uint64]],
+    ],
+)
+assert_type(
+    np.histogram2d(_nd_c128, _nd_c128, bins=(_nd_bool, 8)),
+    tuple[
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.complex128 | np.bool]],
+        np.ndarray[_1D, np.dtype[np.complex128 | np.bool]],
+    ],
+)
+assert_type(
+    np.histogram2d(_nd_c128, _nd_c128, bins=(_to_1d_f64, 8)),
+    tuple[
+        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_1D, np.dtype[np.complex128 | Any]],
+        np.ndarray[_1D, np.dtype[np.complex128 | Any]],
     ],
 )
 
-assert_type(np.mask_indices(10, func1), tuple[npt.NDArray[np.intp], npt.NDArray[np.intp]])
-assert_type(np.mask_indices(8, func2, "0"), tuple[npt.NDArray[np.intp], npt.NDArray[np.intp]])
+# mask_indices
+assert_type(np.mask_indices(10, func1), _Indices2D)
+assert_type(np.mask_indices(8, func2, "0"), _Indices2D)
 
-assert_type(np.tril_indices(10), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
+# tril_indices
+assert_type(np.tril_indices(3), _Indices2D)
+assert_type(np.tril_indices(3, 1), _Indices2D)
+assert_type(np.tril_indices(3, 1, 2), _Indices2D)
+# tril_indices
+assert_type(np.triu_indices(3), _Indices2D)
+assert_type(np.triu_indices(3, 1), _Indices2D)
+assert_type(np.triu_indices(3, 1, 2), _Indices2D)
 
-assert_type(np.tril_indices_from(AR_b), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
-
-assert_type(np.triu_indices(10), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
-
-assert_type(np.triu_indices_from(AR_b), tuple[npt.NDArray[np.int_], npt.NDArray[np.int_]])
+# tril_indices_from
+assert_type(np.tril_indices_from(_2d_bool), _Indices2D)
+assert_type(np.tril_indices_from(_Cube()), _Indices2D)
+# triu_indices_from
+assert_type(np.triu_indices_from(_2d_bool), _Indices2D)
+assert_type(np.triu_indices_from(_Cube()), _Indices2D)
