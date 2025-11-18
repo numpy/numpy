@@ -399,6 +399,7 @@ assert_type(np.insert(AR_LIKE_f8, [0, 4, 9], [0.5, 9.2, 7], axis=0), np.ndarray)
 assert_type(np.append(f8, f8), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.append(AR_f8, AR_f8), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.append(AR_LIKE_f8, AR_LIKE_c16, axis=0), np.ndarray)
+assert_type(np.append(AR_f8, AR_LIKE_f8, axis=0), np.ndarray)
 
 # digitize
 assert_type(np.digitize(4.5, [1]), np.intp)
