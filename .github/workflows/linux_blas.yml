@@ -107,7 +107,7 @@ jobs:
     - name: Ensure scipy-openblas
       run: |
         set -ex
-        spin python tools/check_openblas_version.py 0.3.26
+        spin python tools/check_openblas_version.py -- --min-version 0.3.30
 
     - name: Test
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
