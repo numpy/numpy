@@ -547,7 +547,7 @@ def gradient(
     *varargs: _ArrayLikeNumber_co,
     axis: _ShapeLike | None = None,
     edge_order: L[1, 2] = 1,
-    # `| Any` instead of ` | tuple` is returned to avoid several myyp_primer errors
+    # `| Any` instead of ` | tuple` is returned to avoid several mypy_primer errors
 ) -> _Array1D[_InexactTimeT] | Any: ...
 @overload  # 1d, known inexact scalar-type
 def gradient(
@@ -721,22 +721,22 @@ def diff(
     prepend: ArrayLike | _NoValueType = ...,
     append: ArrayLike | _NoValueType = ...,
 ) -> _Array2D[np.float64]: ...
-@overload  # 1d float  (the `list` avoids overlap with the `int` overloads)
+@overload  # 1d complex  (the `list` avoids overlap with the `int` overloads)
 def diff(
     a: list[complex],
     n: int = 1,
     axis: SupportsIndex = -1,
     prepend: ArrayLike | _NoValueType = ...,
     append: ArrayLike | _NoValueType = ...,
-) -> _Array1D[np.float64]: ...
-@overload  # 2d float
+) -> _Array1D[np.complex128]: ...
+@overload  # 2d complex
 def diff(
     a: _Seq1D[list[complex]],
     n: int = 1,
     axis: SupportsIndex = -1,
     prepend: ArrayLike | _NoValueType = ...,
     append: ArrayLike | _NoValueType = ...,
-) -> _Array2D[np.float64]: ...
+) -> _Array2D[np.complex128]: ...
 @overload  # unknown shape, unknown scalar-type
 def diff(
     a: ArrayLike,
@@ -2242,7 +2242,7 @@ def meshgrid(
 ) -> tuple[NDArray[Any], ...]: ...
 
 #
-def place(arr: np.ndarray, mask: ArrayLike, vals: ConvertibleToInt | Sequence[ConvertibleToInt]) -> None: ...
+def place(arr: np.ndarray, mask: ConvertibleToInt | Sequence[ConvertibleToInt], vals: ArrayLike) -> None: ...
 
 # keep in sync with `insert`
 @overload  # known scalar-type, axis=None (default)

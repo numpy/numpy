@@ -162,6 +162,9 @@ assert_type(np.diff(AR_f8), npt.NDArray[np.float64])
 assert_type(np.diff(AR_f8_1d, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.diff(AR_f8_2d, axis=0), np.ndarray[tuple[int, int], np.dtype[np.float64]])
 assert_type(np.diff(AR_LIKE_f8, prepend=1.5), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.diff(AR_c16), npt.NDArray[np.complex128])
+assert_type(np.diff(AR_c16_1d), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(np.diff(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.complex128]])
 
 # interp
 assert_type(np.interp(1, [1], AR_f8), np.float64)
