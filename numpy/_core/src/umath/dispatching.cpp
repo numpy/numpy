@@ -1364,12 +1364,21 @@ ldexp_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    /*
-     * The output should always be a double to ensure no overflow.
-     */
+    /* Promote integers (otherwise we do not match) to floating, i.e. double. */
     new_op_dtypes[0] = PyArray_CommonDType(op_dtypes[0], &PyArray_FloatAbstractDType);
+    if (new_op_dtypes[0] == NULL) {
+        return -1;
+    }
     new_op_dtypes[0] = ensure_concrete_dtype(new_op_dtypes[0]);
+    if (new_op_dtypes[0] == NULL) {
+        return -1;
+    }
+    /* Promote to at least int as we have int and int64 loops. */
     new_op_dtypes[1] = PyArray_CommonDType(op_dtypes[1], &PyArray_IntDType);
+    if (new_op_dtypes[1] == NULL) {
+        Py_CLEAR(new_op_dtypes[0]);
+        return -1;
+    }
     if (new_op_dtypes[2] == NULL) {
         new_op_dtypes[2] = new_op_dtypes[0];
     }
@@ -1387,8 +1396,9 @@ init_ldexp(PyObject *ldexp)
         return -1;
     }
 
+    /* Promote integer inputs to floats (mainly for first argument). */
     PyObject *dtype_tuple = PyTuple_Pack(3,
-        &PyArray_PyLongDType, &PyArray_IntAbstractDType, Py_None, NULL);
+        &PyArray_IntAbstractDType, &PyArray_IntAbstractDType, Py_None);
     if (dtype_tuple == NULL) {
         return -1;
     }
