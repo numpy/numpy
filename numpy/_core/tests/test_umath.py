@@ -2363,6 +2363,8 @@ class TestLdexp:
             # there is no need to catch warnings here.
             warnings.filterwarnings('ignore', message='overflow encountered in ldexp',
                                     category=RuntimeWarning)
+            warnings.filterwarnings('ignore', message='overflow encountered in cast',
+                                    category=RuntimeWarning)
 
             res = ncu.ldexp(1, np.int32(16))
             try:
