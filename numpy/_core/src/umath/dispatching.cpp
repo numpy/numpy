@@ -1093,6 +1093,13 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
+    /*
+     * We hold the GIL here, so on the GIL-enabled build the GIL prevents
+     * races to fill the promotion cache.
+     *
+     * On the free-threaded build we need to set up our own locking to prevent
+     * races to fill the promotion cache.
+     */
 #ifdef Py_GIL_DISABLED
     PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);

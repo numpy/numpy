@@ -18,7 +18,7 @@ typedef struct {
     npy_intp size;  /* current size */
     npy_intp nelem;  /* number of elements */
 #ifdef Py_GIL_DISABLED
-    void *mutex;
+    void *mutex; /* std::shared_mutex, prevents races to fill the cache */
 #endif
 } PyArrayIdentityHash;
 
