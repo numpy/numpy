@@ -1385,6 +1385,7 @@ ldexp_promoter(PyObject *ufunc,
     else {
         new_op_dtypes[2] = op_dtypes[2];
     }
+    Py_XINCREF(new_op_dtypes[2]);
     return 0;
 }
 
