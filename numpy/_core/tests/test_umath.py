@@ -2357,11 +2357,26 @@ class TestLdexp:
             assert_equal(ncu.ldexp(2., imin), 0)
 
     def test_ldexp_integer_scalar(self):
-        assert_almost_equal(ncu.ldexp(1, np.int32(16)), 65536)
-        assert_almost_equal(ncu.ldexp(1, np.int64(16)), 65536)
-        # Any integer should also go straight to the default float
-        # (at the time of writing this was not common for many ufuncs)
-        assert_almost_equal(ncu.ldexp(np.int8(1), np.int8(16)), 65536)
+        with warnings.catch_warnings():
+            # TODO: At the time of writing, this still raises a warning
+            # on certain platforms (see gh-29597). Once that is fixed,
+            # there is no need to catch warnings here.
+            warnings.filterwarnings('ignore', message='overflow encountered in ldexp',
+                                    category=RuntimeWarning)
+
+            res = ncu.ldexp(1, np.int32(16))
+            assert_almost_equal(res, 65536)
+            assert res.dtype == np.float64
+
+            res = ncu.ldexp(1, np.int64(16))
+            assert_almost_equal(res, 65536)
+            assert res.dtype == np.float64
+
+            # Any integer should also go straight to the default float
+            # (at the time of writing this was not common for many ufuncs)
+            res = ncu.ldexp(np.int8(1), np.int8(16))
+            assert_almost_equal(res, 65536)
+            assert res.dtype == np.float64
 
 
 class TestMaximum(_FilterInvalids):
