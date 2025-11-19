@@ -5,6 +5,7 @@ import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
+import inspect
 from abc import abstractmethod
 from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
@@ -5731,6 +5732,8 @@ class str_(character[str], str):  # type: ignore[misc]
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
 class ufunc:
+    __signature__: Final[inspect.Signature]
+
     @property
     def __name__(self) -> LiteralString: ...
     @property
