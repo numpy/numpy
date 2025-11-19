@@ -18,14 +18,17 @@ on:
       - main
       - maintenance/**
     paths-ignore:
-      - '.circlecl/'
-      - '.devcontainer/'
-      - 'benchmarks/'
-      - 'branding/'
-      - 'docs/'
-      - 'meson_cpu/'
-      - 'tools/'
-      - 'vendored-meson/'
+      - '**.md'
+      - '**.rst'
+      - '.circlecl/**'
+      - '.devcontainer/**'
+      - '.spin/**'
+      - 'benchmarks/**'
+      - 'branding/**'
+      - 'doc/**'
+      - 'meson_cpu/**'
+      - 'tools/**'
+      - 'vendored-meson/**'
   workflow_dispatch:
 
 defaults:
@@ -53,7 +56,7 @@ jobs:
           - [ubuntu-latest, '3.12']
           - [windows-latest, '3.11']
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       with:
         submodules: recursive
         fetch-tags: true
