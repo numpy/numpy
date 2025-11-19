@@ -29,11 +29,12 @@ def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
     # computing ufuncs simultaneously in multiple threads leads
     # to a data race that causes crashes or spurious exceptions
-    def func():
-        arr = np.random.random((25,))
-        np.isnan(arr)
+    for ufunc in [np.isnan, np.sin]:
+        for op in [np.random.random((25,)), np.int32(25)]:
+            def func():
+                ufunc(op)
 
-    run_threaded(func, 500)
+            run_threaded(func, 500)
 
     # see gh-26690
     NUM_THREADS = 50
