@@ -510,7 +510,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
 {
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_with_array(varr, &elsize, &cmp);
+    get_sort_data_from_array(varr, &elsize, &cmp);
 
     return npy_quicksort_impl(start, num, varr, elsize, cmp);
 }
@@ -623,7 +623,7 @@ npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
 {
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_with_array(varr, &elsize, &cmp);
+    get_sort_data_from_array(varr, &elsize, &cmp);
 
     return npy_aquicksort_impl(vv, tosort, num, varr, elsize, cmp);
 }

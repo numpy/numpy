@@ -386,7 +386,7 @@ npy_mergesort(void *start, npy_intp num, void *varr)
     void *arr = varr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_with_array(arr, &elsize, &cmp);
+    get_sort_data_from_array(arr, &elsize, &cmp);
 
     return npy_mergesort_impl(start, num, varr, elsize, cmp);
 }
@@ -472,7 +472,7 @@ npy_amergesort(void *v, npy_intp *tosort, npy_intp num, void *varr)
     void *arr = varr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_with_array(arr, &elsize, &cmp);
+    get_sort_data_from_array(arr, &elsize, &cmp);
 
     return npy_amergesort_impl(v, tosort, num, varr, elsize, cmp);
 }

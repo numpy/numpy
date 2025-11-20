@@ -47,7 +47,7 @@ extern "C" {
  */
 
 static inline void
-fill_sort_data_with_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
+get_sort_data_from_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     *elsize = PyArray_ITEMSIZE(arr);
