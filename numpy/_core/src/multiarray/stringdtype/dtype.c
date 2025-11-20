@@ -460,17 +460,6 @@ compare(void *a, void *b, void *arr)
     return ret;
 }
 
-int
-_sort_compare(const void *a, const void *b, void *context)
-{
-    PyArrayMethod_Context *sort_context = (PyArrayMethod_Context *)context;
-    PyArray_StringDTypeObject *sdescr =
-        (PyArray_StringDTypeObject *)sort_context->descriptors[0];
-
-    int ret = _compare((void *)a, (void *)b, sdescr, sdescr);
-    return ret;
-}
-
 // We assume the allocator mutex is already held.
 int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
@@ -527,7 +516,18 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
         }
     }
     return NpyString_cmp(&s_a, &s_b);
-    }
+}
+
+int
+_sort_compare(const void *a, const void *b, void *context)
+{
+    PyArrayMethod_Context *sort_context = (PyArrayMethod_Context *)context;
+    PyArray_StringDTypeObject *sdescr =
+        (PyArray_StringDTypeObject *)sort_context->descriptors[0];
+
+    int ret = _compare((void *)a, (void *)b, sdescr, sdescr);
+    return ret;
+}
 
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.

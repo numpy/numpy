@@ -381,7 +381,8 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
 }
 
 NPY_NO_EXPORT int
-npy_mergesort(void *start, npy_intp num, void *varr) {
+npy_mergesort(void *start, npy_intp num, void *varr)
+{
     void *arr = varr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
