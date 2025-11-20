@@ -30,7 +30,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         submodules: recursive
         fetch-tags: true
@@ -86,7 +86,7 @@ jobs:
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
