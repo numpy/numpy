@@ -4966,7 +4966,18 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    /* Set __signature__ to None on the type (the instance has a property) */
+    s = npy_import("numpy._globals", "_signature_descriptor");
+    if (s == NULL) {
+        return -1;
+    }
+    PyUFunc_Type.tp_dict = Py_BuildValue(
+        "{ON}", npy_interned_str.__signature__, s);
+    if (PyUFunc_Type.tp_dict == NULL) {
+        return -1;
+    }
     if (PyType_Ready(&PyUFunc_Type) < 0) {
+        Py_CLEAR(PyUFunc_Type.tp_dict);
         return -1;
     }
 

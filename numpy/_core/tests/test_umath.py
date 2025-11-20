@@ -4048,6 +4048,7 @@ class TestSpecialMethods:
         assert_array_equal(res, a + a)
 
     @pytest.mark.thread_unsafe(reason="modifies global module")
+    @pytest.mark.skipif(IS_PYPY, reason="__signature__ descriptor dance fails")
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"

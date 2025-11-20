@@ -6649,57 +6649,6 @@ ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-ufunc_get_inspect_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
-{
-    PyObject *signature;
-
-    // If there is a __signature__ in the instance __dict__, use it.
-    int result = PyDict_GetItemRef(ufunc->dict, npy_interned_str.__signature__,
-                                   &signature);
-    if (result == -1) {
-        return NULL;
-    }
-    else if (result == 1) {
-        return signature;
-    }
-
-    if (npy_cache_import_runtime(
-            "numpy._core._internal", "_ufunc_inspect_signature_builder",
-            &npy_runtime_imports._ufunc_inspect_signature_builder) == -1) {
-        return NULL;
-    }
-
-    signature = PyObject_CallFunctionObjArgs(
-            npy_runtime_imports._ufunc_inspect_signature_builder,
-            (PyObject *)ufunc, NULL);
-    if (signature == NULL) {
-        return NULL;
-    }
-
-    // Cache the result in the instance dict for next time
-    if (PyDict_SetItem(ufunc->dict, npy_interned_str.__signature__,
-                       signature) < 0) {
-        Py_DECREF(signature);
-        return NULL;
-    }
-
-    return signature;
-}
-
-static PyObject *
-ufunc_getattro(PyObject *obj, PyObject *name)
-{
-    // __signature__ special-casing to prevent class attribute access
-    if (PyUnicode_Check(name) &&
-        PyUnicode_Compare(name, npy_interned_str.__signature__) == 0) {
-        return ufunc_get_inspect_signature((PyUFuncObject *)obj, NULL);
-    }
-    
-    // For all other attributes, use default behavior
-    return PyObject_GenericGetAttr(obj, name);
-}
-
-static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(ufunc->nin);
@@ -6809,6 +6758,7 @@ static PyGetSetDef ufunc_getset[] = {
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    // __signature__ stored in `__dict__`, see `_globals._SignatureDescriptor`
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
@@ -6843,7 +6793,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
-    .tp_getattro = ufunc_getattro,
+    .tp_getattro = PyObject_GenericGetAttr,
     .tp_setattro = PyObject_GenericSetAttr,
     // TODO when Python 3.12 is the minimum supported version,
     // use Py_TPFLAGS_MANAGED_DICT
