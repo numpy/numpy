@@ -6755,6 +6755,7 @@ static PyGetSetDef ufunc_getset[] = {
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    // __signature__ stored in `__dict__`, see `_globals._SignatureDescriptor`
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
