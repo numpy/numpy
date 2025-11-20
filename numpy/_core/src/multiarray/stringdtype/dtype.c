@@ -706,7 +706,6 @@ stringdtype_wrap_sort_loop(
  */
 static NPY_CASTING
 stringdtype_sort_resolve_descriptors(
-        PyArrayMethod_Context *context,
         PyArrayMethodObject *method,
         PyArray_DTypeMeta *const *dtypes,
         PyArray_Descr *const *input_descrs,
@@ -714,18 +713,19 @@ stringdtype_sort_resolve_descriptors(
         npy_intp *view_offset)
 {
     output_descrs[0] = NPY_DT_CALL_ensure_canonical(input_descrs[0]);
-    if (output_descrs[0] == NULL) {
+    if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
         return -1;
     }
     output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
-    if (output_descrs[1] == NULL) {
-        Py_DECREF(output_descrs[0]);
+    if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
+        Py_XDECREF(output_descrs[0]);
         return -1;
     }
-    
+
+    // sorting cannot be a view
     *view_offset = 0;
-    
-    return NPY_NO_CASTING;
+
+    return method->casting;
 }
 
 int
