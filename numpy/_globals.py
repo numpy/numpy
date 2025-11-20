@@ -96,7 +96,7 @@ class _CopyMode(enum.Enum):
         raise ValueError(f"{self} is neither True nor False.")
 
 
-class _SignatureDescriptorClass:
+class _SignatureDescriptor:
     # A descriptor to store on the ufunc __dict__ that avoids definig a
     # signature for the ufunc class/type but allows the instance to have one.
     # This is needed because inspect.signature() chokes on normal properties
@@ -118,4 +118,4 @@ class _SignatureDescriptorClass:
         return obj.__signature__
 
 
-_SignatureDescriptor = _SignatureDescriptorClass()
+_signature_descriptor = _SignatureDescriptor()

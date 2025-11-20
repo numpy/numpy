@@ -4967,7 +4967,7 @@ _multiarray_umath_exec(PyObject *m) {
     }
 
     /* Set __signature__ to None on the type (the instance has a property) */
-    s = npy_import("numpy._globals", "_SignatureDescriptor");
+    s = npy_import("numpy._globals", "_signature_descriptor");
     if (s == NULL) {
         return -1;
     }
