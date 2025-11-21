@@ -10,7 +10,6 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
 #include "arraywrap.h"
 #include "ctors.h"
 #include "shape.h"
@@ -93,7 +92,11 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                     "Use the np.resize function or refcheck=False");
             return -1;
 #else
+#if PY_VERSION_HEX >= 0x030E00B0
             if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
+#else
+            if (Py_REFCNT(self) > 2) {
+#endif
                 PyErr_SetString(
                         PyExc_ValueError,
                         "cannot resize an array that "
