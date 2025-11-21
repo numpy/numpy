@@ -14,11 +14,7 @@
 
 #include "npy_hashtable.h"
 
-#include <mutex>
-#include <shared_mutex>
-
 #include "templ_common.h"
-#include <new>
 
 
 
@@ -113,12 +109,7 @@ PyArrayIdentityHash_New(int key_len)
     }
 
 #ifdef Py_GIL_DISABLED
-    res->mutex = new(std::nothrow) std::shared_mutex();
-    if (res->mutex == nullptr) {
-        PyErr_NoMemory();
-        PyMem_Free(res);
-        return NULL;
-    }
+    res->mutex = (PyRWMutex){0};
 #endif
     return res;
 }
@@ -128,9 +119,6 @@ NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
-#ifdef Py_GIL_DISABLED
-    delete (std::shared_mutex *)tb->mutex;
-#endif
     PyMem_Free(tb);
 }
 
@@ -240,20 +228,3 @@ PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
     PyObject *res = find_item(tb, key)[0];
     return res;
 }
-
-#ifdef Py_GIL_DISABLED
-
-NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItemWithLock(PyArrayIdentityHash *tb, PyObject *const *key)
-{
-    PyObject *res;
-    std::shared_mutex *mutex = (std::shared_mutex *)tb->mutex;
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock_shared();
-    NPY_END_ALLOW_THREADS
-    res = find_item(tb, key)[0];
-    mutex->unlock_shared();
-    return res;
-}
-
-#endif // Py_GIL_DISABLED
