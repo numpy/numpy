@@ -122,6 +122,8 @@ def test_printoptions_thread_safety():
 
     task1.start()
     task2.start()
+    task1.join()
+    task2.join()
 
 
 def test_parallel_reduction():
