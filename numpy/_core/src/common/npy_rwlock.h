@@ -5,9 +5,12 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef Py_GIL_DISABLED
 
 /*
     A read-write mutex implemented using PyMutex.
@@ -30,8 +33,8 @@ typedef struct PyRWMutex {
     PyMutex reader_lock;
     PyMutex writer_lock;
     uint32_t reader_count;
+    uint32_t level;
     unsigned long writer_id;
-    unsigned long level;
 } PyRWMutex;
 
 // Write lock the RWMutex
@@ -42,6 +45,8 @@ NPY_NO_EXPORT void PyRWMutex_Unlock(PyRWMutex *rwmutex);
 NPY_NO_EXPORT void PyRWMutex_RLock(PyRWMutex *rwmutex);
 // Read unlock the RWMutex
 NPY_NO_EXPORT void PyRWMutex_RUnlock(PyRWMutex *rwmutex);
+
+#endif /* Py_GIL_DISABLED */
 
 #ifdef __cplusplus
 }
