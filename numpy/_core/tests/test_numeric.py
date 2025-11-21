@@ -3693,12 +3693,12 @@ class TestConvolve:
         """
         d = np.array([])
         k = np.array([1, 2])
-        with pytest.raises(ValueError, match="a cannot be empty"):
+        with pytest.raises(ValueError, match="d cannot be empty"):
             np.convolve(d, k)
 
         d = np.array([1, 2])
         k = np.array([])
-        with pytest.raises(ValueError, match="v cannot be empty"):
+        with pytest.raises(ValueError, match="k cannot be empty"):
             np.convolve(d, k)
 
 class TestArgwhere:
