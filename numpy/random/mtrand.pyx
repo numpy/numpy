@@ -2430,7 +2430,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&random_pareto, &self._bitgen, size, self.lock, 1,
+        return cont(&legacy_pareto, &self._aug_state, size, self.lock, 1,
                     a, 'a', CONS_POSITIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
