@@ -897,7 +897,7 @@ def convolve(a, v, mode='full'):
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    if (len(v) > len(a)):
+    if len(v) > len(a):
         a, v = v, a
     return multiarray.correlate(a, v[::-1], mode)
 
