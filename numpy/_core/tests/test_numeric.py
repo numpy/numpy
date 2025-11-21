@@ -3686,6 +3686,20 @@ class TestConvolve:
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
 
+    def test_convolve_empty_input_error_message(self):
+        """
+        Test that convolve raises the correct error message when inputs are empty.
+        Regression test for gh-issue-number (variable swapping bug).
+        """
+        d = np.array([])
+        k = np.array([1, 2])
+        with pytest.raises(ValueError, match="a cannot be empty"):
+            np.convolve(d, k)
+
+        d = np.array([1, 2])
+        k = np.array([])
+        with pytest.raises(ValueError, match="v cannot be empty"):
+            np.convolve(d, k)
 
 class TestArgwhere:
 
