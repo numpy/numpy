@@ -14,17 +14,15 @@ PyRWMutex_Lock(PyRWMutex *rwmutex)
         return;
     }
     PyMutex_Lock(&rwmutex->writer_lock);
+    assert(rwmutex->writer_id == 0);
     atomic_store_explicit((_Atomic unsigned long *)&rwmutex->writer_id, thread_id, memory_order_release);
 }
 
 NPY_NO_EXPORT void
 PyRWMutex_Unlock(PyRWMutex *rwmutex)
 {
-    unsigned long thread_id = PyThread_get_thread_ident();
-    if (rwmutex->writer_id != thread_id) {
-        Py_FatalError("Attempt to unlock a RWMutex not owned by the thread");
-    }
     if (rwmutex->level > 0) {
+        assert(rwmutex->writer_id == PyThread_get_thread_ident());
         rwmutex->level--;
         return;
     }
@@ -58,6 +56,7 @@ NPY_NO_EXPORT void
 PyRWMutex_RUnlock(PyRWMutex *rwmutex)
 {
     if (rwmutex->level > 0) {
+        assert(rwmutex->writer_id == PyThread_get_thread_ident());
         rwmutex->level--;
         return;
     }

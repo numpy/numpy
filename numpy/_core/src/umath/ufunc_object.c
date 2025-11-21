@@ -4346,7 +4346,7 @@ try_trivial_scalar_call(
     PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
         (PyObject **)op_dtypes);
-    PyRWMutex_Unlock(mutex);
+    PyRWMutex_RUnlock(mutex);
 #else
     PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,

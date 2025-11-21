@@ -986,7 +986,7 @@ promote_and_get_info_and_ufuncimpl_with_locking(
     PyObject *info = PyArrayIdentityHash_GetItem(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
-    PyRWMutex_Unlock(mutex);
+    PyRWMutex_RUnlock(mutex);
 
     if (info != NULL && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {

@@ -9,6 +9,23 @@
 extern "C" {
 #endif
 
+/*
+    A read-write mutex implemented using PyMutex.
+    It allows multiple readers or one writer at a time.
+    If the current thread holds the write lock, it can acquire
+    recursive read or write locks.
+
+    As this is implemented using PyMutex, it automatically
+    releases the GIL or thread state when locking blocks.
+
+    Structure members:
+    - reader_lock: Mutex to protect reader_count.
+    - writer_lock: Mutex to protect write access.
+    - reader_count: Number of active readers.
+    - writer_id: Thread ID of the writer holding the lock (0 if no writer).
+    - level: Recursion level for the current thread holding the write lock.
+*/
+
 typedef struct PyRWMutex {
     PyMutex reader_lock;
     PyMutex writer_lock;
@@ -17,9 +34,13 @@ typedef struct PyRWMutex {
     unsigned long level;
 } PyRWMutex;
 
+// Write lock the RWMutex
 NPY_NO_EXPORT void PyRWMutex_Lock(PyRWMutex *rwmutex);
+// Write unlock the RWMutex
 NPY_NO_EXPORT void PyRWMutex_Unlock(PyRWMutex *rwmutex);
+// Read lock the RWMutex
 NPY_NO_EXPORT void PyRWMutex_RLock(PyRWMutex *rwmutex);
+// Read unlock the RWMutex
 NPY_NO_EXPORT void PyRWMutex_RUnlock(PyRWMutex *rwmutex);
 
 #ifdef __cplusplus
