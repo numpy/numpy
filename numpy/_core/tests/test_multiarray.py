@@ -6287,6 +6287,13 @@ class TestResize:
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
 
+    def test_check_reference_2(self):
+        # see gh-30265
+        x = np.zeros((2, 2))
+        y = x
+        with pytest.raises(ValueError):
+            x.resize((5, 5))
+
     @_no_tracing
     def test_int_shape(self):
         x = np.eye(3)
