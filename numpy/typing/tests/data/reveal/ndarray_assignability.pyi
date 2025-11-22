@@ -1,4 +1,4 @@
-from typing import Protocol, TypeAlias, TypeVar, assert_type
+from typing import Any, Protocol, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy._typing import _64Bit
@@ -33,6 +33,7 @@ _LongDouble_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.longdouble]]
 _Complex64_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complex64]]
 _Complex128_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complex128]]
 _CLongDouble_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.clongdouble]]
+_Void_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[np.void]]
 
 b1_1d: _Bool_1d
 u1_1d: _UInt8_1d
@@ -44,6 +45,7 @@ g_1d: _LongDouble_1d
 c8_1d: _Complex64_1d
 c16_1d: _Complex128_1d
 G_1d: _CLongDouble_1d
+V_1d: _Void_1d
 
 assert_type(do_abs(b1_1d), _Bool_1d)
 assert_type(do_abs(u1_1d), _UInt8_1d)
@@ -75,3 +77,6 @@ assert_type(do_pos(i2_1d), _Int16_1d)
 assert_type(do_pos(q_1d), _LongLong_1d)
 assert_type(do_pos(f4_1d), _Float32_1d)
 assert_type(do_pos(c16_1d), _Complex128_1d)
+
+# this shape is effectively equivalent to `tuple[int, *tuple[Any, ...]]`, i.e. ndim >= 1
+assert_type(V_1d["field"], np.ndarray[tuple[int] | tuple[Any, ...]])
