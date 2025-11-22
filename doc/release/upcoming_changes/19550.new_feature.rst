@@ -1,0 +1,14 @@
+Use f-strings to choose printing options for numeric dtypes
+-----------------------------------------------------------
+
+You can now use f-strings to format the precision, sign and the use of
+exponential notation for numeric arrays with a syntax inspired by
+:ref:py:`Python Format Specification Mini-Language <formatspec>`.
+
+    >>> a = np.array([1.001, -0.101, np.pi, -np.e])
+    >>> print(f"{a:.2f}")
+    [ 1.   -0.1   3.14 -2.72]
+    >>> print(f"{a:+.2e}")
+    [+1.00e+00 -1.01e-01 +3.14e+00 -2.72e+00]
+
+See `numpy.array2string` for reference.
