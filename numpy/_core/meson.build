@@ -758,8 +758,9 @@ py.extension_module('_multiarray_tests',
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
-    'src/common/npy_hashtable.cpp',
+    'src/common/npy_hashtable.c',
     'src/common/npy_import.c',
+    'src/common/npy_rwlock.c',
     src_file.process('src/common/templ_common.h.src')
   ],
   c_args: c_args_common,
@@ -927,7 +928,7 @@ foreach gen_mtargets : [
     'loops_arithm_fp.dispatch.h',
     src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
     [
-      X86_V3, X86_V2, 
+      X86_V3, X86_V2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
@@ -960,7 +961,7 @@ foreach gen_mtargets : [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
     [
-      X86_V4, X86_V3, 
+      X86_V4, X86_V3,
     ]
   ],
   [
@@ -1113,8 +1114,9 @@ src_multiarray_umath_common = [
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
-  'src/common/npy_hashtable.cpp',
+  'src/common/npy_hashtable.c',
   'src/common/npy_import.c',
+  'src/common/npy_rwlock.c',
   'src/common/npy_longdouble.c',
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
