@@ -74,7 +74,6 @@ PyRWMutex_RUnlock(PyRWMutex *rwmutex)
     rwmutex->reader_count--;
     if (rwmutex->reader_count == 0) {
         // Last reader releases the writer lock
-        assert(rwmutex->writer_id == 0);
         PyMutex_Unlock(&rwmutex->writer_lock);
     }
     PyMutex_Unlock(&rwmutex->reader_lock);
