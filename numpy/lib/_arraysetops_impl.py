@@ -378,7 +378,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             return (conv.wrap(hash_unique),)
 
     # If we don't use the hash map, we use the slower sorting method.
-    if optional_indices:
+    if optional_indices or (equal_nan and ar.dtype.kind == "c"):
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
     else:
@@ -395,8 +395,14 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         if aux_firstnan > 0:
             mask[1:aux_firstnan] = (
                 aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
-        mask[aux_firstnan] = True
-        mask[aux_firstnan + 1:] = False
+        if aux.dtype.kind == "c":
+            # gh-30113
+            ar_firstnan = np.argmin(perm[aux_firstnan:]) + aux_firstnan
+            mask[aux_firstnan:] = False
+            mask[ar_firstnan] = True
+        else:
+            mask[aux_firstnan] = True
+            mask[aux_firstnan + 1:] = False
     else:
         mask[1:] = aux[1:] != aux[:-1]
 
