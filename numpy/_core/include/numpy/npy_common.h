@@ -387,6 +387,39 @@ typedef struct
     long double _Val[2];
 } npy_clongdouble;
 
+//
+// In C++ code, use this at the beginning of a scope, e.g.
+//
+//     {
+//         EnsureGIL ensure_gil{};
+//         [code that uses the Python C API here]
+//     }
+//
+// instead of
+//
+//     NPY_ALLOW_C_API_DEF
+//     NPY_ALLOW_C_API
+//     [code that uses the Python C API here]
+//     NPY_DISABLE_C_API
+//
+// This ensures that PyGILState_Release(__save__) is called,  even if the
+// wrapped code throws an exception or executes a return or a goto.
+//
+class EnsureGIL
+{
+    PyGILState_STATE __save__;
+
+public:
+
+    EnsureGIL() {
+        __save__ = PyGILState_Ensure();
+    }
+
+    ~EnsureGIL() {
+        PyGILState_Release(__save__);
+    }
+};
+
 #else
 
 #include <complex.h>

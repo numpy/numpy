@@ -1933,8 +1933,7 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
 
         for (size_t i=0; i<s.size; i++) {
             if (((unsigned char *)s.buf)[i] > 127) {
-                NPY_ALLOW_C_API_DEF;
-                NPY_ALLOW_C_API;
+                EnsureGIL ensure_gil{};
                 PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
 
                 if (str == NULL) {
@@ -1962,7 +1961,6 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
                 PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
                 Py_DECREF(exc);
                 Py_DECREF(str);
-                NPY_DISABLE_C_API;
                 goto fail;
             }
         }
