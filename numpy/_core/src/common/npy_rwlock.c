@@ -11,9 +11,8 @@
 NPY_NO_EXPORT void
 NPyRWMutex_Lock(NPyRWMutex *rwmutex)
 {
-    unsigned long thread_id = PyThread_get_thread_ident();
     unsigned long writer_id = npy_atomic_load_ulong(&rwmutex->writer_id);
-    if (writer_id == thread_id) {
+    if (writer_id != 0 && writer_id == PyThread_get_thread_ident()) {
         // If the current thread already holds the write lock, allow recursive write lock
         rwmutex->level++;
         assert(PyMutex_IsLocked(&rwmutex->writer_lock));
@@ -21,7 +20,7 @@ NPyRWMutex_Lock(NPyRWMutex *rwmutex)
     }
     PyMutex_Lock(&rwmutex->writer_lock);
     assert(rwmutex->writer_id == 0);
-    npy_atomic_store_ulong(&rwmutex->writer_id, thread_id);
+    npy_atomic_store_ulong(&rwmutex->writer_id, PyThread_get_thread_ident());
 }
 
 NPY_NO_EXPORT void
@@ -40,10 +39,9 @@ NPyRWMutex_Unlock(NPyRWMutex *rwmutex)
 NPY_NO_EXPORT void
 NPyRWMutex_RLock(NPyRWMutex *rwmutex)
 {
-    unsigned long thread_id = PyThread_get_thread_ident();
     unsigned long writer_id = npy_atomic_load_ulong(&rwmutex->writer_id);
     // If current thread holds the write lock, allow recursive read lock
-    if (writer_id == thread_id) {
+    if (writer_id != 0 && writer_id == PyThread_get_thread_ident()) {
         rwmutex->level++;
         assert(PyMutex_IsLocked(&rwmutex->writer_lock));
         return;
