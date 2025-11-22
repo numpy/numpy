@@ -109,7 +109,7 @@ PyArrayIdentityHash_New(int key_len)
     }
 
 #ifdef Py_GIL_DISABLED
-    res->mutex = (PyRWMutex){0};
+    res->mutex = (NPyRWMutex){0};
 #endif
     return res;
 }

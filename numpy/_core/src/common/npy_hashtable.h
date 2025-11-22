@@ -20,7 +20,7 @@ typedef struct {
     npy_intp size;  /* current size */
     npy_intp nelem;  /* number of elements */
 #ifdef Py_GIL_DISABLED
-    PyRWMutex mutex; /* PyRWMutex prevents races to fill the cache */
+    NPyRWMutex mutex; /* NPyRWMutex prevents races to fill the cache */
 #endif
 } PyArrayIdentityHash;
 

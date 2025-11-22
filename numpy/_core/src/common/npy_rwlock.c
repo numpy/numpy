@@ -9,7 +9,7 @@
 #endif
 
 NPY_NO_EXPORT void
-PyRWMutex_Lock(PyRWMutex *rwmutex)
+NPyRWMutex_Lock(NPyRWMutex *rwmutex)
 {
     unsigned long thread_id = PyThread_get_thread_ident();
     unsigned long writer_id = npy_atomic_load_ulong(&rwmutex->writer_id);
@@ -25,7 +25,7 @@ PyRWMutex_Lock(PyRWMutex *rwmutex)
 }
 
 NPY_NO_EXPORT void
-PyRWMutex_Unlock(PyRWMutex *rwmutex)
+NPyRWMutex_Unlock(NPyRWMutex *rwmutex)
 {
     assert(PyMutex_IsLocked(&rwmutex->writer_lock));
     assert(rwmutex->writer_id == PyThread_get_thread_ident());
@@ -38,7 +38,7 @@ PyRWMutex_Unlock(PyRWMutex *rwmutex)
 }
 
 NPY_NO_EXPORT void
-PyRWMutex_RLock(PyRWMutex *rwmutex)
+NPyRWMutex_RLock(NPyRWMutex *rwmutex)
 {
     unsigned long thread_id = PyThread_get_thread_ident();
     unsigned long writer_id = npy_atomic_load_ulong(&rwmutex->writer_id);
@@ -61,7 +61,7 @@ PyRWMutex_RLock(PyRWMutex *rwmutex)
 }
 
 NPY_NO_EXPORT void
-PyRWMutex_RUnlock(PyRWMutex *rwmutex)
+NPyRWMutex_RUnlock(NPyRWMutex *rwmutex)
 {
     assert(PyMutex_IsLocked(&rwmutex->writer_lock));
     if (rwmutex->level > 0) {
