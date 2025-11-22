@@ -24,6 +24,7 @@ typedef struct npy_interned_str_struct {
     PyObject *array_wrap;
     PyObject *array_finalize;
     PyObject *array_ufunc;
+    PyObject *numpy_dtype;
     PyObject *implementation;
     PyObject *axis1;
     PyObject *axis2;
