@@ -51,7 +51,7 @@ objects implementing the :class:`memoryview` or :ref:`array
 
       >>> # The element of x in the *second* row, *third* column, namely, 6.
       >>> x[1, 2]
-         6
+      np.int32(6)
 
       For example :ref:`slicing <arrays.indexing>` can produce views of
       the array:
