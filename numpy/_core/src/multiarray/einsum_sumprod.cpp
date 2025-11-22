@@ -25,6 +25,8 @@
 #include <numpy/ndarraytypes.h> /* for NPY_NTYPES_LEGACY */
 #include <numpy/npy_common.h>
 
+#include "simd_accum_traits.h"
+
 // ARM/Neon don't have instructions for aligned memory access
 #ifdef NPY_HAVE_NEON
 #    define EINSUM_IS_ALIGNED(x) 0
@@ -32,14 +34,14 @@
 #    define EINSUM_IS_ALIGNED(x) npy_is_aligned(x, NPY_SIMD_WIDTH)
 #endif  // NPY_HAVE_NEON
 
-/* Converts a value from storage type T to the Temptype.
+/* Converts a value from storage type T to the AccumType.
  * Centralizes norminal use and the specalized use case of npy_half_to_float
  */
-template <typename T, typename Temptype>
-static inline constexpr Temptype
+template <typename T, typename AccumType>
+static inline constexpr AccumType
 from(T v)
 {
-    return (Temptype)v;
+    return (AccumType)v;
 }
 
 template <>
@@ -49,14 +51,14 @@ from<npy_half, npy_float>(npy_half v)
     return npy_half_to_float(v);
 }
 
-/* Converts a value from storage type Temptype to the Type.
+/* Converts a value from storage type AccumType to the Type.
  * Centralizes norminal use and the specalized use case of npy_float_to_half
  */
-template <typename T, typename Temptype>
-static inline constexpr Temptype
+template <typename T, typename AccumType>
+static inline constexpr AccumType
 to(T v)
 {
-    return (Temptype)v;
+    return (AccumType)v;
 }
 
 template <>
@@ -65,108 +67,6 @@ to<npy_float, npy_half>(npy_float v)
 {
     return npy_float_to_half(v);
 }
-
-#if NPY_SIMD_F32
-struct NpySIMDF32 {
-    using T = npy_float;
-    using Temptype = npy_float;
-    using SimdReg = npyv_f32;
-    static inline int npyv_nlanes() { return npyv_nlanes_f32; }
-    static inline SimdReg npyv_zero() { return npyv_zero_f32(); }
-    static inline SimdReg loada(const T *p) { return npyv_loada_f32(p); }
-    static inline SimdReg load(const T *p) { return npyv_load_f32(p); }
-    static inline void storea(T *p, SimdReg x) { npyv_storea_f32(p, x); }
-    static inline void store(T *p, SimdReg x) { npyv_store_f32(p, x); }
-    static inline SimdReg load_tillz(const T *p, npy_intp n)
-    {
-        return npyv_load_tillz_f32(p, n);
-    }
-    static inline SimdReg npyv_add(SimdReg a, SimdReg b) { return npyv_add_f32(a, b); }
-    static inline T npyv_sum(SimdReg v) { return npyv_sum_f32(v); }
-    static inline SimdReg load_any(const T *p, int is_aligned)
-    {
-        return is_aligned ? loada(p) : load(p);
-    }
-    static inline void cleanup() { npyv_cleanup(); }
-    static inline SimdReg npyv_setall(Temptype scalar)
-    {
-        return npyv_setall_f32(scalar);
-    }
-    static inline SimdReg npyv_muladd(SimdReg v_scalar, SimdReg a, SimdReg b)
-    {
-        return npyv_muladd_f32(v_scalar, a, b);
-    }
-    static inline void npyv_st(T *p, SimdReg x, int is_aligned)
-    {
-        is_aligned ? storea(p, x) : store(p, x);
-    }
-    static inline void npyv_store_till(T *data_out, npy_intp count, SimdReg z)
-    {
-        npyv_store_till_f32(data_out, count, z);
-    }
-};
-#endif  // NPY_SIMD_F32
-#if NPY_SIMD_F64
-struct NpySIMDF64 {
-    using T = npy_double;
-    using Temptype = npy_double;
-    using SimdReg = npyv_f64;
-    static inline int npyv_nlanes() { return npyv_nlanes_f64; }
-    static inline SimdReg npyv_zero() { return npyv_zero_f64(); }
-    static inline SimdReg loada(const T *p) { return npyv_loada_f64(p); }
-    static inline SimdReg load(const T *p) { return npyv_load_f64(p); }
-    static inline void storea(T *p, SimdReg x) { npyv_storea_f64(p, x); }
-    static inline void store(T *p, SimdReg x) { npyv_store_f64(p, x); }
-    static inline SimdReg load_tillz(const T *p, npy_intp n)
-    {
-        return npyv_load_tillz_f64(p, n);
-    }
-    static inline SimdReg npyv_add(SimdReg a, SimdReg b) { return npyv_add_f64(a, b); }
-    static inline T npyv_sum(SimdReg v) { return npyv_sum_f64(v); }
-    static inline SimdReg load_any(const T *p, int is_aligned)
-    {
-        return is_aligned ? loada(p) : load(p);
-    }
-    static inline void cleanup() { npyv_cleanup(); }
-    static inline SimdReg npyv_setall(Temptype scalar)
-    {
-        return npyv_setall_f64(scalar);
-    }
-    static inline SimdReg npyv_muladd(SimdReg v_scalar, SimdReg a, SimdReg b)
-    {
-        return npyv_muladd_f64(v_scalar, a, b);
-    }
-    static inline void npyv_st(T *p, SimdReg x, int is_aligned)
-    {
-        is_aligned ? storea(p, x) : store(p, x);
-    }
-    static inline void npyv_store_till(T *data_out, npy_intp count, SimdReg z)
-    {
-        npyv_store_till_f64(data_out, count, z);
-    }
-};
-#endif  // NPY_SIMD_F64
-
-/* Helper traits mapping a (T, Temptype) pair to the SIMD wrapper */
-template <typename T, typename TempType>
-struct SumSIMD {};
-
-#if NPY_SIMD_F32
-/* Wrapper around the npyv float32 SIMD, provides a uniform interface between SIMDF32
- * and SIMDF64 */
-template <>
-struct SumSIMD<npy_float, npy_float> {
-    using SimdType = NpySIMDF32;
-};
-#endif  // NPY_SIMD_F32
-#if NPY_SIMD_F64
-/* Wrapper around the npyv float64 SIMD, provides a uniform interface between SIMDF32
- * and SIMDF64 */
-template <>
-struct SumSIMD<npy_double, npy_double> {
-    using SimdType = NpySIMDF64;
-};
-#endif  // NPY_SIMD_F64
 
 template <typename SimdType>
 static inline NPY_GCC_OPT_3 typename SimdType::T
@@ -201,76 +101,77 @@ floating_point_sum_of_arr(const typename SimdType::T *data, npy_intp count)
     return accum;
 }
 
-template <typename T, typename Temptype>
-static inline NPY_GCC_OPT_3 Temptype
-scaller_sum_of_arr(const T *data, npy_intp count)
+template <typename T, typename AccumType>
+static inline NPY_GCC_OPT_3 AccumType
+elementwise_sum_of_arr(const T *data, npy_intp count)
 {
-    Temptype accum = 0;
+    AccumType accum = 0;
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     for (; count > 4; count -= 4, data += 4) {
-        const Temptype a01 = from<T, Temptype>(*data) + from<T, Temptype>(data[1]);
-        const Temptype a23 = from<T, Temptype>(data[2]) + from<T, Temptype>(data[3]);
+        const AccumType a01 = from<T, AccumType>(*data) + from<T, AccumType>(data[1]);
+        const AccumType a23 = from<T, AccumType>(data[2]) + from<T, AccumType>(data[3]);
         accum += a01 + a23;
     }
 #endif  // NPY_DISABLE_OPTIMIZATION
 
     for (; count > 0; --count, ++data) {
-        accum += from<T, Temptype>(*data);
+        accum += from<T, AccumType>(*data);
     }
     return accum;
 }
 
+template <typename T, typename AccumType>
+struct SumOfArr {
+    static inline NPY_GCC_OPT_3 AccumType eval(T *data, npy_intp count) noexcept
+    {
+        return elementwise_sum_of_arr<T, AccumType>(data, count);
+    }
+};
+
 /* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_float>::value,
-                                  int>::type = 0>
-static inline NPY_GCC_OPT_3 Temptype
-sum_of_arr(T *data, npy_intp count)
-{
+template <>
+struct SumOfArr<npy_float, npy_float> {
+    static inline NPY_GCC_OPT_3 npy_float eval(npy_float *data, npy_intp count) noexcept
+    {
 #if NPY_SIMD_F32
-    return floating_point_sum_of_arr<typename SumSIMD<T, Temptype>::SimdType>(data,
-                                                                              count);
-#else   // !NPY_SIMD_F32
-    return scaller_sum_of_arr<T, Temptype>(data, count);
-#endif  // NPY_SIMD_F32
-}
+        using SimdType = typename SumSIMD<npy_float, npy_float>::SimdType;
+        return floating_point_sum_of_arr<SimdType>(data, count);
+#else
+        return elementwise_sum_of_arr<npy_float, npy_float>(data, count);
+#endif
+    }
+};
 
 /* Template where (npy_double, npy_double) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_double>::value,
-                                  int>::type = 0>
-static inline NPY_GCC_OPT_3 Temptype
-sum_of_arr(T *data, npy_intp count)
-{
+template <>
+struct SumOfArr<npy_double, npy_double> {
+    static inline NPY_GCC_OPT_3 npy_double eval(npy_double *data,
+                                                npy_intp count) noexcept
+    {
 #if NPY_SIMD_F64
-    return floating_point_sum_of_arr<typename SumSIMD<T, Temptype>::SimdType>(data,
-                                                                              count);
-#else   // ! NPY_SIMD_F64
-    return scaller_sum_of_arr<T, Temptype>(data, count);
-#endif  //  NPY_SIMD_F64
-}
+        using SimdType = typename SumSIMD<npy_double, npy_double>::SimdType;
+        return floating_point_sum_of_arr<SimdType>(data, count);
+#else
+        return elementwise_sum_of_arr<npy_double, npy_double>(data, count);
+#endif
+    }
+};
 
-template <typename T, typename Temptype,
-          typename std::enable_if<!(std::is_same<T, Temptype>::value &&
-                                    (std::is_same<T, npy_float>::value ||
-                                     std::is_same<T, npy_double>::value)),
-                                  int>::type = 0>
-static inline NPY_GCC_OPT_3 Temptype
-sum_of_arr(T *data, npy_intp count)
+template <typename T, typename AccumType>
+static inline NPY_GCC_OPT_3 AccumType
+sum_of_arr(T *data, npy_intp count) noexcept
 {
-    return scaller_sum_of_arr<T, Temptype>(data, count);
+    return SumOfArr<T, AccumType>::eval(data, count);
 }
 
 template <typename SimdType>
 static inline NPY_GCC_OPT_3 void
 floating_point_sum_of_products_muladd(const typename SimdType::T *data,
                                       typename SimdType::T *data_out,
-                                      typename SimdType::Temptype scalar,
+                                      typename SimdType::AccumType scalar,
                                       npy_intp count)
 {
     using SimdReg = typename SimdType::SimdReg;
@@ -310,88 +211,89 @@ floating_point_sum_of_products_muladd(const typename SimdType::T *data,
     SimdType::cleanup();
 }
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static inline NPY_GCC_OPT_3 void
-scaller_sum_of_products_muladd(const T *data, T *data_out, Temptype scalar,
+elementwise_sum_of_products_muladd(const T *data, T *data_out, AccumType scalar,
                                npy_intp count)
 {
 #ifndef NPY_DISABLE_OPTIMIZATION
     for (; count >= 4; count -= 4, data += 4, data_out += 4) {
-        const Temptype b0 = from<T, Temptype>(data[0]);
-        const Temptype c0 = from<T, Temptype>(data_out[0]);
-        const Temptype b1 = from<T, Temptype>(data[1]);
-        const Temptype c1 = from<T, Temptype>(data_out[1]);
-        const Temptype b2 = from<T, Temptype>(data[2]);
-        const Temptype c2 = from<T, Temptype>(data_out[2]);
-        const Temptype b3 = from<T, Temptype>(data[3]);
-        const Temptype c3 = from<T, Temptype>(data_out[3]);
+        const AccumType b0 = from<T, AccumType>(data[0]);
+        const AccumType c0 = from<T, AccumType>(data_out[0]);
+        const AccumType b1 = from<T, AccumType>(data[1]);
+        const AccumType c1 = from<T, AccumType>(data_out[1]);
+        const AccumType b2 = from<T, AccumType>(data[2]);
+        const AccumType c2 = from<T, AccumType>(data_out[2]);
+        const AccumType b3 = from<T, AccumType>(data[3]);
+        const AccumType c3 = from<T, AccumType>(data_out[3]);
 
-        const Temptype abc0 = scalar * b0 + c0;
-        const Temptype abc1 = scalar * b1 + c1;
-        const Temptype abc2 = scalar * b2 + c2;
-        const Temptype abc3 = scalar * b3 + c3;
+        const AccumType abc0 = scalar * b0 + c0;
+        const AccumType abc1 = scalar * b1 + c1;
+        const AccumType abc2 = scalar * b2 + c2;
+        const AccumType abc3 = scalar * b3 + c3;
 
-        data_out[0] = to<Temptype, T>(abc0);
-        data_out[1] = to<Temptype, T>(abc1);
-        data_out[2] = to<Temptype, T>(abc2);
-        data_out[3] = to<Temptype, T>(abc3);
+        data_out[0] = to<AccumType, T>(abc0);
+        data_out[1] = to<AccumType, T>(abc1);
+        data_out[2] = to<AccumType, T>(abc2);
+        data_out[3] = to<AccumType, T>(abc3);
     }
 #endif  // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data, ++data_out) {
-        const Temptype b = from<T, Temptype>(*data);
-        const Temptype c = from<T, Temptype>(*data_out);
-        *data_out = to<Temptype, T>(scalar * b + c);
+        const AccumType b = from<T, AccumType>(*data);
+        const AccumType c = from<T, AccumType>(*data_out);
+        *data_out = to<AccumType, T>(scalar * b + c);
     }
 }
 
-/* calculate the multiply and add operation such as dataout = data*scalar+dataout*/
+template <typename T, typename AccumType>
+struct SumOfProductsMuladd {
+    static inline NPY_GCC_OPT_3 void eval(T *data, T *data_out, AccumType scalar,
+                                          npy_intp count) noexcept
+    {
+        elementwise_sum_of_products_muladd<T, AccumType>(data, data_out, scalar, count);
+    }
+};
+
 /* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_float>::value,
-                                  int>::type = 0>
-static inline NPY_GCC_OPT_3 void
-sum_of_products_muladd(T *data, T *data_out, Temptype scalar, npy_intp count)
-{
+template <>
+struct SumOfProductsMuladd<npy_float, npy_float> {
+    static inline NPY_GCC_OPT_3 void eval(npy_float *data, npy_float *data_out,
+                                          npy_float scalar, npy_intp count) noexcept
+    {
 #if NPY_SIMD_F32
-    floating_point_sum_of_products_muladd<typename SumSIMD<T, Temptype>::SimdType>(
-            data, data_out, scalar, count);
-
-#else   // !NPY_SIMD_F32
-    scaller_sum_of_products_muladd<T, Temptype>(data, data_out, scalar, count);
+        using SimdType = typename SumSIMD<npy_float, npy_float>::SimdType;
+        floating_point_sum_of_products_muladd<SimdType>(data, data_out, scalar, count);
+#else   //! NPY_SIMD_F32
+        elementwise_sum_of_products_muladd<npy_float, npy_float>(data, data_out, scalar,
+                                                             count);
 #endif  // NPY_SIMD_F32
-}
+    }
+};
 
-/* calculate the multiply and add operation such as dataout = data*scalar+dataout*/
 /* Template where (npy_double, npy_double) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_double>::value,
-                                  int>::type = 0>
-static inline NPY_GCC_OPT_3 void
-sum_of_products_muladd(T *data, T *data_out, Temptype scalar, npy_intp count)
-{
+template <>
+struct SumOfProductsMuladd<npy_double, npy_double> {
+    static inline NPY_GCC_OPT_3 void eval(npy_double *data, npy_double *data_out,
+                                          npy_double scalar, npy_intp count) noexcept
+    {
 #if NPY_SIMD_F64
-    floating_point_sum_of_products_muladd<typename SumSIMD<T, Temptype>::SimdType>(
-            data, data_out, scalar, count);
+        using SimdType = typename SumSIMD<npy_double, npy_double>::SimdType;
+        floating_point_sum_of_products_muladd<SimdType>(data, data_out, scalar, count);
+#else   //! NPY_SIMD_F64
+        elementwise_sum_of_products_muladd<npy_double, npy_double>(data, data_out, scalar,
+                                                               count);
+#endif  // NPY_SIMD_F64
+    }
+};
 
-#else   // !NPY_SIMD_F64
-    scaller_sum_of_products_muladd<T, Temptype>(data, data_out, scalar, count);
-#endif  //  NPY_SIMD_F64
-}
-
-template <typename T, typename Temptype,
-          typename std::enable_if<!(std::is_same<T, Temptype>::value &&
-                                    (std::is_same<T, npy_float>::value ||
-                                     std::is_same<T, npy_double>::value)),
-                                  int>::type = 0>
+/* calculate the multiply and add operation such as dataout = data*scalar+dataout*/
+template <typename T, typename AccumType>
 static inline NPY_GCC_OPT_3 void
-sum_of_products_muladd(T *data, T *data_out, Temptype scalar, npy_intp count)
-
+sum_of_products_muladd(T *data, T *data_out, AccumType scalar, npy_intp count) noexcept
 {
-    scaller_sum_of_products_muladd<T, Temptype>(data, data_out, scalar, count);
+    SumOfProductsMuladd<T, AccumType>::eval(data, data_out, scalar, count);
 }
 
 template <typename SimdType>
@@ -436,80 +338,92 @@ floating_point_sum_of_arr_products_contig_contig_outstride0_two(
     return accum;
 }
 
-template <typename T, typename Temptype>
-static NPY_GCC_OPT_3 Temptype
-scaller_sum_of_arr_products_contig_contig_outstride0_two(const T *data0, const T *data1,
+template <typename T, typename AccumType>
+static NPY_GCC_OPT_3 AccumType
+elementwise_sum_of_arr_products_contig_contig_outstride0_two(const T *data0, const T *data1,
                                                          npy_intp count)
 {
-    Temptype accum = 0;
+    AccumType accum = 0;
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     for (; count >= 4; count -= 4, data0 += 4, data1 += 4) {
-        const Temptype ab0 = from<T, Temptype>(data0[0]) * from<T, Temptype>(data1[0]);
-        const Temptype ab1 = from<T, Temptype>(data0[1]) * from<T, Temptype>(data1[1]);
-        const Temptype ab2 = from<T, Temptype>(data0[2]) * from<T, Temptype>(data1[2]);
-        const Temptype ab3 = from<T, Temptype>(data0[3]) * from<T, Temptype>(data1[3]);
+        const AccumType ab0 =
+                from<T, AccumType>(data0[0]) * from<T, AccumType>(data1[0]);
+        const AccumType ab1 =
+                from<T, AccumType>(data0[1]) * from<T, AccumType>(data1[1]);
+        const AccumType ab2 =
+                from<T, AccumType>(data0[2]) * from<T, AccumType>(data1[2]);
+        const AccumType ab3 =
+                from<T, AccumType>(data0[3]) * from<T, AccumType>(data1[3]);
 
         accum += ab0 + ab1 + ab2 + ab3;
     }
 #endif  // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data0, ++data1) {
-        const Temptype a = from<T, Temptype>(*data0);
-        const Temptype b = from<T, Temptype>(*data1);
+        const AccumType a = from<T, AccumType>(*data0);
+        const AccumType b = from<T, AccumType>(*data1);
         accum += a * b;
     }
     return accum;
 }
 
+template <typename T, typename AccumType>
+struct SumOfArrProductsContig {
+    static inline NPY_GCC_OPT_3 AccumType eval(T *data0, T *data1,
+                                               npy_intp count) noexcept
+    {
+        return elementwise_sum_of_arr_products_contig_contig_outstride0_two<T, AccumType>(
+                data0, data1, count);
+    }
+};
+
 /* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_float>::value,
-                                  int>::type = 0>
-static NPY_GCC_OPT_3 Temptype
-sum_of_arr_products_contig_contig_outstride0_two(T *data0, T *data1, npy_intp count)
-{
+template <>
+struct SumOfArrProductsContig<npy_float, npy_float> {
+    static inline NPY_GCC_OPT_3 npy_float eval(npy_float *data0, npy_float *data1,
+                                               npy_intp count) noexcept
+    {
 #if NPY_SIMD_F32
-    return floating_point_sum_of_arr_products_contig_contig_outstride0_two<
-            typename SumSIMD<T, Temptype>::SimdType>(data0, data1, count);
-#else   // !NPY_SIMD_F32
-    return scaller_sum_of_arr_products_contig_contig_outstride0_two<T, Temptype>(
-            data0, data1, count);
+        using SimdType = typename SumSIMD<npy_float, npy_float>::SimdType;
+        return floating_point_sum_of_arr_products_contig_contig_outstride0_two<
+                SimdType>(data0, data1, count);
+#else   //! NPY_SIMD_F32
+        return elementwise_sum_of_arr_products_contig_contig_outstride0_two<npy_float,
+                                                                        npy_float>(
+                data0, data1, count);
 #endif  // NPY_SIMD_F32
-}
+    }
+};
 
 /* Template where (npy_double, npy_double) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_double>::value,
-                                  int>::type = 0>
-static NPY_GCC_OPT_3 Temptype
-sum_of_arr_products_contig_contig_outstride0_two(T *data0, T *data1, npy_intp count)
-{
+template <>
+struct SumOfArrProductsContig<npy_double, npy_double> {
+    static inline NPY_GCC_OPT_3 npy_double eval(npy_double *data0, npy_double *data1,
+                                                npy_intp count) noexcept
+    {
 #if NPY_SIMD_F64
-    return floating_point_sum_of_arr_products_contig_contig_outstride0_two<
-            typename SumSIMD<T, Temptype>::SimdType>(data0, data1, count);
-#else   // !NPY_SIMD_F64
-    return scaller_sum_of_arr_products_contig_contig_outstride0_two<T, Temptype>(
-            data0, data1, count);
+        using SimdType = typename SumSIMD<npy_double, npy_double>::SimdType;
+        return floating_point_sum_of_arr_products_contig_contig_outstride0_two<
+                SimdType>(data0, data1, count);
+#else   //! NPY_SIMD_F64
+        return elementwise_sum_of_arr_products_contig_contig_outstride0_two<npy_double,
+                                                                        npy_double>(
+                data0, data1, count);
 #endif  // NPY_SIMD_F64
-}
+    }
+};
 
-template <typename T, typename Temptype,
-          typename std::enable_if<!(std::is_same<T, Temptype>::value &&
-                                    (std::is_same<T, npy_float>::value ||
-                                     std::is_same<T, npy_double>::value)),
-                                  int>::type = 0>
-static NPY_GCC_OPT_3 Temptype
-sum_of_arr_products_contig_contig_outstride0_two(T *data0, T *data1, npy_intp count)
+template <typename T, typename AccumType>
+static inline NPY_GCC_OPT_3 AccumType
+sum_of_arr_products_contig_contig_outstride0_two(T *data0, T *data1,
+                                                 npy_intp count) noexcept
 {
-    return scaller_sum_of_arr_products_contig_contig_outstride0_two<T, Temptype>(
-            data0, data1, count);
+    return SumOfArrProductsContig<T, AccumType>::eval(data0, data1, count);
 }
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static NPY_GCC_OPT_3 void
 sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
                                              npy_intp const *NPY_UNUSED(strides),
@@ -520,69 +434,69 @@ sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
 
     NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_contig_outstride0_two (%d)\n",
                           (int)count);
-    Temptype accum = sum_of_arr_products_contig_contig_outstride0_two<T, Temptype>(
+    AccumType accum = sum_of_arr_products_contig_contig_outstride0_two<T, AccumType>(
             data0, data1, count);
-    *(T *)dataptr[2] = to<Temptype, T>(from<T, Temptype>(*(T *)dataptr[2]) + accum);
+    *(T *)dataptr[2] = to<AccumType, T>(from<T, AccumType>(*(T *)dataptr[2]) + accum);
 }
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static inline NPY_GCC_OPT_3 void
 sum_of_products_stride0_contig_outstride0_two(int nop, char **dataptr,
                                               npy_intp const *NPY_UNUSED(strides),
                                               npy_intp count)
 {
     T *data1 = (T *)dataptr[1];
-    Temptype value0 = from<T, Temptype>(*(T *)dataptr[0]);
-    Temptype accum = sum_of_arr<T, Temptype>(data1, count);
+    AccumType value0 = from<T, AccumType>(*(T *)dataptr[0]);
+    AccumType accum = sum_of_arr<T, AccumType>(data1, count);
     *(T *)dataptr[2] =
-            to<Temptype, T>(from<T, Temptype>(*(T *)dataptr[2]) + value0 * accum);
+            to<AccumType, T>(from<T, AccumType>(*(T *)dataptr[2]) + value0 * accum);
 }
 
 /* Some extra specializations for the two operand case */
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static inline void
 sum_of_products_stride0_contig_outcontig_two(int nop, char **dataptr,
                                              npy_intp const *NPY_UNUSED(strides),
                                              npy_intp count)
 {
-    Temptype value0 = from<T, Temptype>(*(T *)dataptr[0]);
+    AccumType value0 = from<T, AccumType>(*(T *)dataptr[0]);
     T *data1 = (T *)dataptr[1];
     T *data_out = (T *)dataptr[2];
 
     NPY_EINSUM_DBG_PRINT1("Generic_sum_of_products_stride0_contig_outcontig_two (%d)\n",
                           (int)count);
-    sum_of_products_muladd<T, Temptype>(data1, data_out, value0, count);
+    sum_of_products_muladd<T, AccumType>(data1, data_out, value0, count);
 }
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static inline void
 sum_of_products_contig_stride0_outstride0_two(int nop, char **dataptr,
                                               npy_intp const *NPY_UNUSED(strides),
                                               npy_intp count)
 {
     T *data0 = (T *)dataptr[0];
-    Temptype value1 = from<T, Temptype>(*(T *)dataptr[1]);
-    Temptype accum = sum_of_arr<T, Temptype>(data0, count);
+    AccumType value1 = from<T, AccumType>(*(T *)dataptr[1]);
+    AccumType accum = sum_of_arr<T, AccumType>(data0, count);
     *(T *)dataptr[2] =
-            to<Temptype, T>(from<T, Temptype>(*(T *)dataptr[2]) + value1 * accum);
+            to<AccumType, T>(from<T, AccumType>(*(T *)dataptr[2]) + value1 * accum);
 }
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static inline void
 sum_of_products_contig_stride0_outcontig_two(int nop, char **dataptr,
                                              npy_intp const *NPY_UNUSED(strides),
                                              npy_intp count)
 {
-    Temptype value1 = from<T, Temptype>(*(T *)dataptr[1]);
+    AccumType value1 = from<T, AccumType>(*(T *)dataptr[1]);
     T *data0 = (T *)dataptr[0];
     T *data_out = (T *)dataptr[2];
 
     NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_stride0_outcontig_two (%d)\n",
                           (int)count);
-    sum_of_products_muladd<T, Temptype>(data0, data_out, value1, count);
+    sum_of_products_muladd<T, AccumType>(data0, data_out, value1, count);
 }
 
-template <typename T, typename Temptype, bool Is_Complex>
+template <typename T, typename AccumType, bool Is_Complex>
 static inline NPY_GCC_OPT_3 void
 sum_of_products_contig_outstride0_one(int nop, char **dataptr, npy_intp const *strides,
                                       npy_intp count)
@@ -590,20 +504,20 @@ sum_of_products_contig_outstride0_one(int nop, char **dataptr, npy_intp const *s
     NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_outstride0_one (%d)\n", (int)count);
     if constexpr (!Is_Complex) {
         T *data = (T *)dataptr[0];
-        Temptype accum = sum_of_arr<T, Temptype>(data, count);
+        AccumType accum = sum_of_arr<T, AccumType>(data, count);
 
         *((T *)dataptr[1]) =
-                to<Temptype, T>(accum + from<T, Temptype>(*((T *)dataptr[1])));
+                to<AccumType, T>(accum + from<T, AccumType>(*((T *)dataptr[1])));
     }
     else {  // complex
-        Temptype accum_re = 0, accum_im = 0;
-        Temptype *data0 = (Temptype *)dataptr[0];
+        AccumType accum_re = 0, accum_im = 0;
+        AccumType *data0 = (AccumType *)dataptr[0];
 #ifndef NPY_DISABLE_OPTIMIZATION
         for (; count > 4; count -= 4, data0 += 4 * 2) {
-            const Temptype re01 = data0[0] + data0[2];
-            const Temptype re23 = data0[4] + data0[6];
-            const Temptype im13 = data0[1] + data0[3];
-            const Temptype im57 = data0[5] + data0[7];
+            const AccumType re01 = data0[0] + data0[2];
+            const AccumType re23 = data0[4] + data0[6];
+            const AccumType im13 = data0[1] + data0[3];
+            const AccumType im57 = data0[5] + data0[7];
             accum_re += re01 + re23;
             accum_im += im13 + im57;
         }
@@ -612,8 +526,8 @@ sum_of_products_contig_outstride0_one(int nop, char **dataptr, npy_intp const *s
             accum_re += data0[0];
             accum_im += data0[1];
         }
-        ((Temptype *)dataptr[1])[0] += accum_re;
-        ((Temptype *)dataptr[1])[1] += accum_im;
+        ((AccumType *)dataptr[1])[0] += accum_re;
+        ((AccumType *)dataptr[1])[1] += accum_im;
     }
 }
 
@@ -654,13 +568,13 @@ object_sum_of_products(int nop, char **dataptr, npy_intp const *strides, npy_int
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_outstride0_one(int nop, char **dataptr, npy_intp const *strides,
                                npy_intp count)
 {
     if constexpr (!Is_Complex) {
-        Temptype accum = 0;
+        AccumType accum = 0;
 
         char *data0 = dataptr[0];
         npy_intp stride0 = strides[0];
@@ -668,36 +582,36 @@ sum_of_products_outstride0_one(int nop, char **dataptr, npy_intp const *strides,
         NPY_EINSUM_DBG_PRINT1("sum_of_products_outstride0_one(%d)\n", (int)count);
 
         while (count--) {
-            accum += from<T, Temptype>(*(T *)data0);
+            accum += from<T, AccumType>(*(T *)data0);
             data0 += stride0;
         }
 
         *((T *)dataptr[1]) =
-                to<Temptype, T>(accum + from<T, Temptype>(*((T *)dataptr[1])));
+                to<AccumType, T>(accum + from<T, AccumType>(*((T *)dataptr[1])));
     }
     else {  // complex
-        Temptype accum_re = 0, accum_im = 0;
+        AccumType accum_re = 0, accum_im = 0;
 
         char *data0 = dataptr[0];
         npy_intp stride0 = strides[0];
         while (count--) {
-            accum_re += ((Temptype *)data0)[0];
-            accum_im += ((Temptype *)data0)[1];
+            accum_re += ((AccumType *)data0)[0];
+            accum_im += ((AccumType *)data0)[1];
             data0 += stride0;
         }
 
-        ((Temptype *)dataptr[1])[0] += accum_re;
-        ((Temptype *)dataptr[1])[1] += accum_im;
+        ((AccumType *)dataptr[1])[0] += accum_re;
+        ((AccumType *)dataptr[1])[1] += accum_im;
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_outstride0_two(int nop, char **dataptr, npy_intp const *strides,
                                npy_intp count)
 {
     if constexpr (!Is_Complex) {
-        Temptype accum = 0;
+        AccumType accum = 0;
 
         char *data0 = dataptr[0];
         npy_intp stride0 = strides[0];
@@ -707,24 +621,24 @@ sum_of_products_outstride0_two(int nop, char **dataptr, npy_intp const *strides,
         NPY_EINSUM_DBG_PRINT1("sum_of_products_outstride0_two(%d)\n", (int)count);
 
         while (count--) {
-            accum += from<T, Temptype>(*(T *)data0) * from<T, Temptype>(*(T *)data1);
+            accum += from<T, AccumType>(*(T *)data0) * from<T, AccumType>(*(T *)data1);
             data0 += stride0;
             data1 += stride1;
         }
 
         *((T *)dataptr[2]) =
-                to<Temptype, T>(accum + from<T, Temptype>(*((T *)dataptr[2])));
+                to<AccumType, T>(accum + from<T, AccumType>(*((T *)dataptr[2])));
     }
     else {  // complex
-        Temptype accum_re = 0, accum_im = 0;
+        AccumType accum_re = 0, accum_im = 0;
 
         while (count--) {
-            Temptype re = ((Temptype *)dataptr[0])[0];
-            Temptype im = ((Temptype *)dataptr[0])[1];
+            AccumType re = ((AccumType *)dataptr[0])[0];
+            AccumType im = ((AccumType *)dataptr[0])[1];
 
-            Temptype tmp =
-                    re * ((Temptype *)dataptr[1])[0] - im * ((Temptype *)dataptr[1])[1];
-            im = re * ((Temptype *)dataptr[1])[1] + im * ((Temptype *)dataptr[1])[0];
+            AccumType tmp = re * ((AccumType *)dataptr[1])[0] -
+                            im * ((AccumType *)dataptr[1])[1];
+            im = re * ((AccumType *)dataptr[1])[1] + im * ((AccumType *)dataptr[1])[0];
             re = tmp;
 
             accum_re += re;
@@ -734,18 +648,18 @@ sum_of_products_outstride0_two(int nop, char **dataptr, npy_intp const *strides,
             dataptr[1] += strides[1];
         }
 
-        ((Temptype *)dataptr[2])[0] += accum_re;
-        ((Temptype *)dataptr[2])[1] += accum_im;
+        ((AccumType *)dataptr[2])[0] += accum_re;
+        ((AccumType *)dataptr[2])[1] += accum_im;
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_outstride0_three(int nop, char **dataptr, npy_intp const *strides,
                                  npy_intp count)
 {
     if constexpr (!Is_Complex) {
-        Temptype accum = 0;
+        AccumType accum = 0;
 
         char *data0 = dataptr[0];
         npy_intp stride0 = strides[0];
@@ -757,30 +671,30 @@ sum_of_products_outstride0_three(int nop, char **dataptr, npy_intp const *stride
         NPY_EINSUM_DBG_PRINT1("sum_of_products_outstride0_three(%d)\n", (int)count);
 
         while (count--) {
-            accum += from<T, Temptype>(*(T *)data0) * from<T, Temptype>(*(T *)data1) *
-                     from<T, Temptype>(*(T *)data2);
+            accum += from<T, AccumType>(*(T *)data0) * from<T, AccumType>(*(T *)data1) *
+                     from<T, AccumType>(*(T *)data2);
             data0 += stride0;
             data1 += stride1;
             data2 += stride2;
         }
 
         *((T *)dataptr[3]) =
-                to<Temptype, T>(accum + from<T, Temptype>(*((T *)dataptr[3])));
+                to<AccumType, T>(accum + from<T, AccumType>(*((T *)dataptr[3])));
     }
     else {  // complex
-        Temptype accum_re = 0, accum_im = 0;
+        AccumType accum_re = 0, accum_im = 0;
 
         while (count--) {
-            Temptype re = ((Temptype *)dataptr[0])[0];
-            Temptype im = ((Temptype *)dataptr[0])[1];
+            AccumType re = ((AccumType *)dataptr[0])[0];
+            AccumType im = ((AccumType *)dataptr[0])[1];
 
-            Temptype tmp =
-                    re * ((Temptype *)dataptr[1])[0] - im * ((Temptype *)dataptr[1])[1];
-            im = re * ((Temptype *)dataptr[1])[1] + im * ((Temptype *)dataptr[1])[0];
+            AccumType tmp = re * ((AccumType *)dataptr[1])[0] -
+                            im * ((AccumType *)dataptr[1])[1];
+            im = re * ((AccumType *)dataptr[1])[1] + im * ((AccumType *)dataptr[1])[0];
             re = tmp;
 
-            tmp = re * ((Temptype *)dataptr[2])[0] - im * ((Temptype *)dataptr[2])[1];
-            im = re * ((Temptype *)dataptr[2])[1] + im * ((Temptype *)dataptr[2])[0];
+            tmp = re * ((AccumType *)dataptr[2])[0] - im * ((AccumType *)dataptr[2])[1];
+            im = re * ((AccumType *)dataptr[2])[1] + im * ((AccumType *)dataptr[2])[0];
             re = tmp;
 
             accum_re += re;
@@ -791,24 +705,24 @@ sum_of_products_outstride0_three(int nop, char **dataptr, npy_intp const *stride
             dataptr[2] += strides[2];
         }
 
-        ((Temptype *)dataptr[3])[0] += accum_re;
-        ((Temptype *)dataptr[3])[1] += accum_im;
+        ((AccumType *)dataptr[3])[0] += accum_re;
+        ((AccumType *)dataptr[3])[1] += accum_im;
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_outstride0_any(int nop, char **dataptr, npy_intp const *strides,
                                npy_intp count)
 {
     if constexpr (!Is_Complex) {
-        Temptype accum = 0;
+        AccumType accum = 0;
 
         while (count--) {
-            Temptype temp = from<T, Temptype>(*(T *)dataptr[0]);
+            AccumType temp = from<T, AccumType>(*(T *)dataptr[0]);
             int i;
             for (i = 1; i < nop; ++i) {
-                temp *= from<T, Temptype>(*(T *)dataptr[i]);
+                temp *= from<T, AccumType>(*(T *)dataptr[i]);
             }
             accum += temp;
             for (i = 0; i < nop; ++i) {
@@ -817,20 +731,20 @@ sum_of_products_outstride0_any(int nop, char **dataptr, npy_intp const *strides,
         }
 
         *((T *)dataptr[nop]) =
-                to<Temptype, T>(accum + from<T, Temptype>(*((T *)dataptr[nop])));
+                to<AccumType, T>(accum + from<T, AccumType>(*((T *)dataptr[nop])));
     }
     else {  // complex
-        Temptype accum_re = 0, accum_im = 0;
+        AccumType accum_re = 0, accum_im = 0;
 
         while (count--) {
-            Temptype re = ((Temptype *)dataptr[0])[0];
-            Temptype im = ((Temptype *)dataptr[0])[1];
+            AccumType re = ((AccumType *)dataptr[0])[0];
+            AccumType im = ((AccumType *)dataptr[0])[1];
 
             for (int i = 1; i < nop; ++i) {
-                Temptype tmp = re * ((Temptype *)dataptr[i])[0] -
-                               im * ((Temptype *)dataptr[i])[1];
-                im = re * ((Temptype *)dataptr[i])[1] +
-                     im * ((Temptype *)dataptr[i])[0];
+                AccumType tmp = re * ((AccumType *)dataptr[i])[0] -
+                                im * ((AccumType *)dataptr[i])[1];
+                im = re * ((AccumType *)dataptr[i])[1] +
+                     im * ((AccumType *)dataptr[i])[0];
                 re = tmp;
             }
 
@@ -842,8 +756,8 @@ sum_of_products_outstride0_any(int nop, char **dataptr, npy_intp const *strides,
             }
         }
 
-        ((Temptype *)dataptr[nop])[0] += accum_re;
-        ((Temptype *)dataptr[nop])[1] += accum_im;
+        ((AccumType *)dataptr[nop])[0] += accum_re;
+        ((AccumType *)dataptr[nop])[1] += accum_im;
     }
 }
 
@@ -965,13 +879,13 @@ sum_of_products_outstride0_any<npy_bool, npy_bool, false, true>(int nop, char **
 }
 
 // forward declaration
-template <typename T, typename Temptype, bool Is_Complex, int Start, int End, int Step,
+template <typename T, typename AccumType, bool Is_Complex, int Start, int End, int Step,
           bool Done = (Start == End)>
 struct Sum_Of_Products_Contig_One_Stepper;
 
 // Recursive case
-template <typename T, typename Temptype, bool Is_Complex, int Start, int End, int Step>
-struct Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, Start, End, Step,
+template <typename T, typename AccumType, bool Is_Complex, int Start, int End, int Step>
+struct Sum_Of_Products_Contig_One_Stepper<T, AccumType, Is_Complex, Start, End, Step,
                                           false> {
     static inline void apply(const T *data0, T *data_out, npy_intp count)
     {
@@ -979,30 +893,30 @@ struct Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, Start, End, S
 
         if (count > I) {
             if constexpr (!Is_Complex) {
-                data_out[I] = to<Temptype, T>(from<T, Temptype>(data0[I]) +
-                                              from<T, Temptype>(data_out[I]));
+                data_out[I] = to<AccumType, T>(from<T, AccumType>(data0[I]) +
+                                               from<T, AccumType>(data_out[I]));
             }
             else {  // complex
-                ((Temptype *)data_out + 2 * I)[0] = ((Temptype *)data0 + 2 * I)[0] +
-                                                    ((Temptype *)data_out + 2 * I)[0];
-                ((Temptype *)data_out + 2 * I)[1] = ((Temptype *)data0 + 2 * I)[1] +
-                                                    ((Temptype *)data_out + 2 * I)[1];
+                ((AccumType *)data_out + 2 * I)[0] = ((AccumType *)data0 + 2 * I)[0] +
+                                                     ((AccumType *)data_out + 2 * I)[0];
+                ((AccumType *)data_out + 2 * I)[1] = ((AccumType *)data0 + 2 * I)[1] +
+                                                     ((AccumType *)data_out + 2 * I)[1];
             }
         }
-        Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, Start + Step, End,
+        Sum_Of_Products_Contig_One_Stepper<T, AccumType, Is_Complex, Start + Step, End,
                                            Step>::apply(data0, data_out, count);
     };
 };
 
 // Base case
-template <typename T, typename Temptype, bool Is_Complex, int Start, int End, int Step>
-struct Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, Start, End, Step,
+template <typename T, typename AccumType, bool Is_Complex, int Start, int End, int Step>
+struct Sum_Of_Products_Contig_One_Stepper<T, AccumType, Is_Complex, Start, End, Step,
                                           true> {
     static inline void apply(const T *, T *, npy_intp) {}
 };
 
 // sum_of_products_outstride0_one template
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_contig_one(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
                            npy_intp count)
@@ -1014,13 +928,13 @@ sum_of_products_contig_one(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
 
     /* This is placed before the main loop to make small counts faster */
     if (count < 8) {
-        Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, 6, -1, -1>::apply(
+        Sum_Of_Products_Contig_One_Stepper<T, AccumType, Is_Complex, 6, -1, -1>::apply(
                 data0, data_out, count);
         return;
     }
     /* Unroll the loop by 8 */
     while (count >= 8) {
-        Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, 0, 8, 1>::apply(
+        Sum_Of_Products_Contig_One_Stepper<T, AccumType, Is_Complex, 0, 8, 1>::apply(
                 data0, data_out, count);
         data0 += 8;
         data_out += 8;
@@ -1028,28 +942,28 @@ sum_of_products_contig_one(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
     }
 
     if (count > 0) {
-        Sum_Of_Products_Contig_One_Stepper<T, Temptype, Is_Complex, 6, -1, -1>::apply(
+        Sum_Of_Products_Contig_One_Stepper<T, AccumType, Is_Complex, 6, -1, -1>::apply(
                 data0, data_out, count);
     }
     return;
 }
 
-template <typename T, typename Temptype, int NOP>
+template <typename T, typename AccumType, int NOP>
 static inline void
 complex_sum_of_products_contig(char **dataptr, npy_intp count)
 {
     while (count--) {
-        Temptype re, im, tmp;
+        AccumType re, im, tmp;
         int i;
-        re = ((Temptype *)dataptr[0])[0];
-        im = ((Temptype *)dataptr[0])[1];
+        re = ((AccumType *)dataptr[0])[0];
+        im = ((AccumType *)dataptr[0])[1];
         for (i = 1; i < NOP; ++i) {
-            tmp = re * ((Temptype *)dataptr[i])[0] - im * ((Temptype *)dataptr[i])[1];
-            im = re * ((Temptype *)dataptr[i])[1] + im * ((Temptype *)dataptr[i])[0];
+            tmp = re * ((AccumType *)dataptr[i])[0] - im * ((AccumType *)dataptr[i])[1];
+            im = re * ((AccumType *)dataptr[i])[1] + im * ((AccumType *)dataptr[i])[0];
             re = tmp;
         }
-        ((Temptype *)dataptr[NOP])[0] = re + ((Temptype *)dataptr[NOP])[0];
-        ((Temptype *)dataptr[NOP])[1] = im + ((Temptype *)dataptr[NOP])[1];
+        ((AccumType *)dataptr[NOP])[0] = re + ((AccumType *)dataptr[NOP])[0];
+        ((AccumType *)dataptr[NOP])[1] = im + ((AccumType *)dataptr[NOP])[1];
 
         for (i = 0; i <= NOP; ++i) {
             dataptr[i] += sizeof(T);
@@ -1107,109 +1021,95 @@ floating_point_sum_of_products_contig_two(const typename SimdType::T *data0,
     SimdType::cleanup();
 }
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 static void
-scaller_sum_of_products_contig_two(const T *data0, const T *data1, npy_intp count,
+elementwise_sum_of_products_contig_two(const T *data0, const T *data1, npy_intp count,
                                    T *data_out)
 {
 #ifndef NPY_DISABLE_OPTIMIZATION
     for (; count >= 4; count -= 4, data0 += 4, data1 += 4, data_out += 4) {
-        const Temptype a0 = from<T, Temptype>(data0[0]);
-        const Temptype b0 = from<T, Temptype>(data1[0]);
-        const Temptype c0 = from<T, Temptype>(data_out[0]);
+        const AccumType a0 = from<T, AccumType>(data0[0]);
+        const AccumType b0 = from<T, AccumType>(data1[0]);
+        const AccumType c0 = from<T, AccumType>(data_out[0]);
 
-        const Temptype a1 = from<T, Temptype>(data0[1]);
-        const Temptype b1 = from<T, Temptype>(data1[1]);
-        const Temptype c1 = from<T, Temptype>(data_out[1]);
+        const AccumType a1 = from<T, AccumType>(data0[1]);
+        const AccumType b1 = from<T, AccumType>(data1[1]);
+        const AccumType c1 = from<T, AccumType>(data_out[1]);
 
-        const Temptype a2 = from<T, Temptype>(data0[2]);
-        const Temptype b2 = from<T, Temptype>(data1[2]);
-        const Temptype c2 = from<T, Temptype>(data_out[2]);
+        const AccumType a2 = from<T, AccumType>(data0[2]);
+        const AccumType b2 = from<T, AccumType>(data1[2]);
+        const AccumType c2 = from<T, AccumType>(data_out[2]);
 
-        const Temptype a3 = from<T, Temptype>(data0[3]);
-        const Temptype b3 = from<T, Temptype>(data1[3]);
-        const Temptype c3 = from<T, Temptype>(data_out[3]);
+        const AccumType a3 = from<T, AccumType>(data0[3]);
+        const AccumType b3 = from<T, AccumType>(data1[3]);
+        const AccumType c3 = from<T, AccumType>(data_out[3]);
 
-        const Temptype abc0 = a0 * b0 + c0;
-        const Temptype abc1 = a1 * b1 + c1;
-        const Temptype abc2 = a2 * b2 + c2;
-        const Temptype abc3 = a3 * b3 + c3;
+        const AccumType abc0 = a0 * b0 + c0;
+        const AccumType abc1 = a1 * b1 + c1;
+        const AccumType abc2 = a2 * b2 + c2;
+        const AccumType abc3 = a3 * b3 + c3;
 
-        data_out[0] = to<Temptype, T>(abc0);
-        data_out[1] = to<Temptype, T>(abc1);
-        data_out[2] = to<Temptype, T>(abc2);
-        data_out[3] = to<Temptype, T>(abc3);
+        data_out[0] = to<AccumType, T>(abc0);
+        data_out[1] = to<AccumType, T>(abc1);
+        data_out[2] = to<AccumType, T>(abc2);
+        data_out[3] = to<AccumType, T>(abc3);
     }
 #endif  // !NPY_DISABLE_OPTIMIZATION
     for (; count > 0; --count, ++data0, ++data1, ++data_out) {
-        const Temptype a = from<T, Temptype>(*data0);
-        const Temptype b = from<T, Temptype>(*data1);
-        const Temptype c = from<T, Temptype>(*data_out);
-        *data_out = to<Temptype, T>(a * b + c);
+        const AccumType a = from<T, AccumType>(*data0);
+        const AccumType b = from<T, AccumType>(*data1);
+        const AccumType c = from<T, AccumType>(*data_out);
+        *data_out = to<AccumType, T>(a * b + c);
     }
 }
+
+template <typename T, typename AccumType>
+struct SumOfProdContingTwo {
+    static inline NPY_GCC_OPT_3 void eval(T *data0, T *data1, npy_intp count,
+                                          T *data_out) noexcept
+    {
+        elementwise_sum_of_products_contig_two<T, AccumType>(data0, data1, count, data_out);
+    }
+};
 
 /* Template where (npy_float, npy_float) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_float>::value,
-                                  int>::type = 0>
-static void
-sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
-                           npy_intp count)
-{
-    if constexpr (!Is_Complex) {
-        T *data0 = (T *)dataptr[0];
-        T *data1 = (T *)dataptr[1];
-        T *data_out = (T *)dataptr[2];
-
-        NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_two (%d)\n", (int)count);
+template <>
+struct SumOfProdContingTwo<npy_float, npy_float> {
+    static inline NPY_GCC_OPT_3 void eval(npy_float *data0, npy_float *data1,
+                                          npy_intp count, npy_float *data_out) noexcept
+    {
 #if NPY_SIMD_F32
-        floating_point_sum_of_products_contig_two<
-                typename SumSIMD<T, Temptype>::SimdType>(data0, data1, data_out, count);
-#else   // !NPY_SIMD_F32
-        scaller_sum_of_products_contig_two<T, Temptype>(data0, data1, count, data_out);
+        using SimdType = typename SumSIMD<npy_float, npy_float>::SimdType;
+        floating_point_sum_of_products_contig_two<SimdType>(data0, data1, data_out,
+                                                            count);
+#else   //! NPY_SIMD_F32
+        elementwise_sum_of_products_contig_two<npy_float, npy_float>(data0, data1, count,
+                                                                 data_out);
 #endif  // NPY_SIMD_F32
     }
-    else {  // complex
-        complex_sum_of_products_contig<T, Temptype, 2>(dataptr, count);
-    }
-}
+};
 
 /* Template where (npy_double, npy_double) will allow the SIMD
  * capable version.*/
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical,
-          typename std::enable_if<std::is_same<T, Temptype>::value &&
-                                          std::is_same<T, npy_double>::value,
-                                  int>::type = 0>
-static void
-sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
-                           npy_intp count)
-{
-    if constexpr (!Is_Complex) {
-        T *data0 = (T *)dataptr[0];
-        T *data1 = (T *)dataptr[1];
-        T *data_out = (T *)dataptr[2];
-        NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_two (%d)\n", (int)count);
+template <>
+struct SumOfProdContingTwo<npy_double, npy_double> {
+    static inline NPY_GCC_OPT_3 void eval(npy_double *data0, npy_double *data1,
+                                          npy_intp count, npy_double *data_out) noexcept
+    {
 #if NPY_SIMD_F64
-        floating_point_sum_of_products_contig_two<
-                typename SumSIMD<T, Temptype>::SimdType>(data0, data1, data_out, count);
-#else   // ! NPY_SIMD_F64
-        scaller_sum_of_products_contig_two<T, Temptype>(data0, data1, count, data_out);
+        using SimdType = typename SumSIMD<npy_double, npy_double>::SimdType;
+        floating_point_sum_of_products_contig_two<SimdType>(data0, data1, data_out,
+                                                            count);
+#else   //! NPY_SIMD_F64
+        elementwise_sum_of_products_contig_two<npy_double, npy_double>(data0, data1, count,
+                                                                   data_out);
 #endif  // NPY_SIMD_F64
     }
-    else {  // complex
-        complex_sum_of_products_contig<T, Temptype, 2>(dataptr, count);
-    }
-}
+};
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical,
-          typename std::enable_if<!(std::is_same<T, Temptype>::value &&
-                                    (std::is_same<T, npy_float>::value ||
-                                     std::is_same<T, npy_double>::value)),
-                                  int>::type = 0>
-static void
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
+static inline NPY_GCC_OPT_3 void
 sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
                            npy_intp count)
 {
@@ -1220,45 +1120,45 @@ sum_of_products_contig_two(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
 
         NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_two (%d)\n", (int)count);
 
-        scaller_sum_of_products_contig_two<T, Temptype>(data0, data1, count, data_out);
+        SumOfProdContingTwo<T, AccumType>::eval(data0, data1, count, data_out);
     }
     else {  // complex
-        complex_sum_of_products_contig<T, Temptype, 2>(dataptr, count);
+        complex_sum_of_products_contig<T, AccumType, 2>(dataptr, count);
     }
 }
 
 // forward declaration
-template <typename T, typename Temptype, int Start, int End, int Step,
+template <typename T, typename AccumType, int Start, int End, int Step,
           bool Done = (Start == End)>
 struct Sum_Of_Products_Contig_Three_Stepper;
 
 // Recursive case
-template <typename T, typename Temptype, int Start, int End, int Step>
-struct Sum_Of_Products_Contig_Three_Stepper<T, Temptype, Start, End, Step, false> {
+template <typename T, typename AccumType, int Start, int End, int Step>
+struct Sum_Of_Products_Contig_Three_Stepper<T, AccumType, Start, End, Step, false> {
     static inline void apply(const T *data0, const T *data1, const T *data2,
                              T *data_out, npy_intp count)
     {
         constexpr int I = Start;
 
         if (count > I) {
-            data_out[I] = to<Temptype, T>(from<T, Temptype>(data0[I]) *
-                                                  from<T, Temptype>(data1[I]) *
-                                                  from<T, Temptype>(data2[I]) +
-                                          from<T, Temptype>(data_out[I]));
+            data_out[I] = to<AccumType, T>(from<T, AccumType>(data0[I]) *
+                                                   from<T, AccumType>(data1[I]) *
+                                                   from<T, AccumType>(data2[I]) +
+                                           from<T, AccumType>(data_out[I]));
         }
-        Sum_Of_Products_Contig_Three_Stepper<T, Temptype, Start + Step, End,
+        Sum_Of_Products_Contig_Three_Stepper<T, AccumType, Start + Step, End,
                                              Step>::apply(data0, data1, data2, data_out,
                                                           count);
     };
 };
 
 // Base case
-template <typename T, typename Temptype, int Start, int End, int Step>
-struct Sum_Of_Products_Contig_Three_Stepper<T, Temptype, Start, End, Step, true> {
+template <typename T, typename AccumType, int Start, int End, int Step>
+struct Sum_Of_Products_Contig_Three_Stepper<T, AccumType, Start, End, Step, true> {
     static inline void apply(const T *, const T *, const T *, T *, npy_intp) {}
 };
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_contig_three(int nop, char **dataptr,
                              npy_intp const *NPY_UNUSED(strides), npy_intp count)
@@ -1272,7 +1172,7 @@ sum_of_products_contig_three(int nop, char **dataptr,
         NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_three (%d)\n", (int)count);
         /* Unroll the loop by 8 */
         while (count >= 8) {
-            Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
+            Sum_Of_Products_Contig_Three_Stepper<T, AccumType, 0, 8, 1>::apply(
                     data0, data1, data2, data_out, count);
             data0 += 8;
             data1 += 8;
@@ -1281,17 +1181,17 @@ sum_of_products_contig_three(int nop, char **dataptr,
             count -= 8;
         }
         if (count > 0) {
-            Sum_Of_Products_Contig_Three_Stepper<T, Temptype, 0, 8, 1>::apply(
+            Sum_Of_Products_Contig_Three_Stepper<T, AccumType, 0, 8, 1>::apply(
                     data0, data1, data2, data_out, count);
         }
         return;
     }
     else {  // complex
-        complex_sum_of_products_contig<T, Temptype, 3>(dataptr, count);
+        complex_sum_of_products_contig<T, AccumType, 3>(dataptr, count);
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_contig_any(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
                            npy_intp count)
@@ -1299,13 +1199,13 @@ sum_of_products_contig_any(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
     NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_any (%d)\n", (int)count);
     if constexpr (!Is_Complex) {
         while (count--) {
-            Temptype temp = from<T, Temptype>(*(T *)dataptr[0]);
+            AccumType temp = from<T, AccumType>(*(T *)dataptr[0]);
             int i;
             for (i = 1; i < nop; ++i) {
-                temp *= from<T, Temptype>(*(T *)dataptr[i]);
+                temp *= from<T, AccumType>(*(T *)dataptr[i]);
             }
             *(T *)dataptr[nop] =
-                    to<Temptype, T>(temp + from<T, Temptype>(*(T *)dataptr[i]));
+                    to<AccumType, T>(temp + from<T, AccumType>(*(T *)dataptr[i]));
             for (i = 0; i <= nop; ++i) {
                 dataptr[i] += sizeof(T);
             }
@@ -1313,19 +1213,19 @@ sum_of_products_contig_any(int nop, char **dataptr, npy_intp const *NPY_UNUSED(s
     }
     else {  // complex
         while (count--) {
-            Temptype re, im, tmp;
+            AccumType re, im, tmp;
             int i;
-            re = ((Temptype *)dataptr[0])[0];
-            im = ((Temptype *)dataptr[0])[1];
+            re = ((AccumType *)dataptr[0])[0];
+            im = ((AccumType *)dataptr[0])[1];
             for (i = 1; i < nop; ++i) {
-                tmp = re * ((Temptype *)dataptr[i])[0] -
-                      im * ((Temptype *)dataptr[i])[1];
-                im = re * ((Temptype *)dataptr[i])[1] +
-                     im * ((Temptype *)dataptr[i])[0];
+                tmp = re * ((AccumType *)dataptr[i])[0] -
+                      im * ((AccumType *)dataptr[i])[1];
+                im = re * ((AccumType *)dataptr[i])[1] +
+                     im * ((AccumType *)dataptr[i])[0];
                 re = tmp;
             }
-            ((Temptype *)dataptr[nop])[0] = re + ((Temptype *)dataptr[nop])[0];
-            ((Temptype *)dataptr[nop])[1] = im + ((Temptype *)dataptr[nop])[1];
+            ((AccumType *)dataptr[nop])[0] = re + ((AccumType *)dataptr[nop])[0];
+            ((AccumType *)dataptr[nop])[1] = im + ((AccumType *)dataptr[nop])[1];
 
             for (i = 0; i <= nop; ++i) {
                 dataptr[i] += sizeof(T);
@@ -1658,7 +1558,7 @@ sum_of_products_contig_three<npy_bool, npy_bool, false, true>(int nop, char **da
     return;
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_one(int nop, char **dataptr, npy_intp const *strides, npy_intp count)
 {
@@ -1671,40 +1571,40 @@ sum_of_products_one(int nop, char **dataptr, npy_intp const *strides, npy_intp c
 
     if constexpr (!Is_Complex) {
         while (count--) {
-            *(T *)data_out = to<Temptype, T>(from<T, Temptype>(*(T *)data0) +
-                                             from<T, Temptype>(*(T *)data_out));
+            *(T *)data_out = to<AccumType, T>(from<T, AccumType>(*(T *)data0) +
+                                              from<T, AccumType>(*(T *)data_out));
             data0 += stride0;
             data_out += stride_out;
         }
     }
     else {  // complex
         while (count--) {
-            ((Temptype *)data_out)[0] =
-                    ((Temptype *)data0)[0] + ((Temptype *)data_out)[0];
-            ((Temptype *)data_out)[1] =
-                    ((Temptype *)data0)[1] + ((Temptype *)data_out)[1];
+            ((AccumType *)data_out)[0] =
+                    ((AccumType *)data0)[0] + ((AccumType *)data_out)[0];
+            ((AccumType *)data_out)[1] =
+                    ((AccumType *)data0)[1] + ((AccumType *)data_out)[1];
             data0 += stride0;
             data_out += stride_out;
         }
     }
 }
 
-template <typename T, typename Temptype, int NOP>
+template <typename T, typename AccumType, int NOP>
 static inline void
 complex_sum_of_products(char **dataptr, npy_intp count, npy_intp const *strides)
 {
     while (count--) {
-        Temptype re, im, tmp;
+        AccumType re, im, tmp;
         int i;
-        re = ((Temptype *)dataptr[0])[0];
-        im = ((Temptype *)dataptr[0])[1];
+        re = ((AccumType *)dataptr[0])[0];
+        im = ((AccumType *)dataptr[0])[1];
         for (i = 1; i < NOP; ++i) {
-            tmp = re * ((Temptype *)dataptr[i])[0] - im * ((Temptype *)dataptr[i])[1];
-            im = re * ((Temptype *)dataptr[i])[1] + im * ((Temptype *)dataptr[i])[0];
+            tmp = re * ((AccumType *)dataptr[i])[0] - im * ((AccumType *)dataptr[i])[1];
+            im = re * ((AccumType *)dataptr[i])[1] + im * ((AccumType *)dataptr[i])[0];
             re = tmp;
         }
-        ((Temptype *)dataptr[NOP])[0] = re + ((Temptype *)dataptr[NOP])[0];
-        ((Temptype *)dataptr[NOP])[1] = im + ((Temptype *)dataptr[NOP])[1];
+        ((AccumType *)dataptr[NOP])[0] = re + ((AccumType *)dataptr[NOP])[0];
+        ((AccumType *)dataptr[NOP])[1] = im + ((AccumType *)dataptr[NOP])[1];
 
         for (i = 0; i <= NOP; ++i) {
             dataptr[i] += strides[i];
@@ -1712,7 +1612,7 @@ complex_sum_of_products(char **dataptr, npy_intp count, npy_intp const *strides)
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_two(int nop, char **dataptr, npy_intp const *strides, npy_intp count)
 {
@@ -1728,20 +1628,20 @@ sum_of_products_two(int nop, char **dataptr, npy_intp const *strides, npy_intp c
         NPY_EINSUM_DBG_PRINT1("sum_of_products_two (%d)\n", (int)count);
 
         while (count--) {
-            *(T *)data_out = to<Temptype, T>(from<T, Temptype>(*(T *)data0) *
-                                                     from<T, Temptype>(*(T *)data1) +
-                                             from<T, Temptype>(*(T *)data_out));
+            *(T *)data_out = to<AccumType, T>(from<T, AccumType>(*(T *)data0) *
+                                                      from<T, AccumType>(*(T *)data1) +
+                                              from<T, AccumType>(*(T *)data_out));
             data0 += stride0;
             data1 += stride1;
             data_out += stride_out;
         }
     }
     else {  // complex
-        complex_sum_of_products<T, Temptype, 2>(dataptr, count, strides);
+        complex_sum_of_products<T, AccumType, 2>(dataptr, count, strides);
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_three(int nop, char **dataptr, npy_intp const *strides, npy_intp count)
 {
@@ -1759,10 +1659,10 @@ sum_of_products_three(int nop, char **dataptr, npy_intp const *strides, npy_intp
         NPY_EINSUM_DBG_PRINT1("sum_of_products_three (%d)\n", (int)count);
 
         while (count--) {
-            *(T *)data_out = to<Temptype, T>(from<T, Temptype>(*(T *)data0) *
-                                                     from<T, Temptype>(*(T *)data1) *
-                                                     from<T, Temptype>(*(T *)data2) +
-                                             from<T, Temptype>(*(T *)data_out));
+            *(T *)data_out = to<AccumType, T>(from<T, AccumType>(*(T *)data0) *
+                                                      from<T, AccumType>(*(T *)data1) *
+                                                      from<T, AccumType>(*(T *)data2) +
+                                              from<T, AccumType>(*(T *)data_out));
             data0 += stride0;
             data1 += stride1;
             data2 += stride2;
@@ -1770,23 +1670,23 @@ sum_of_products_three(int nop, char **dataptr, npy_intp const *strides, npy_intp
         }
     }
     else {  // complex
-        complex_sum_of_products<T, Temptype, 3>(dataptr, count, strides);
+        complex_sum_of_products<T, AccumType, 3>(dataptr, count, strides);
     }
 }
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 static void
 sum_of_products_any(int nop, char **dataptr, npy_intp const *strides, npy_intp count)
 {
     if constexpr (!Is_Complex) {
         while (count--) {
-            Temptype temp = from<T, Temptype>(*(T *)dataptr[0]);
+            AccumType temp = from<T, AccumType>(*(T *)dataptr[0]);
             int i;
             for (i = 1; i < nop; ++i) {
-                temp *= from<T, Temptype>(*(T *)dataptr[i]);
+                temp *= from<T, AccumType>(*(T *)dataptr[i]);
             }
             *(T *)dataptr[nop] =
-                    to<Temptype, T>(temp + from<T, Temptype>(*(T *)dataptr[i]));
+                    to<AccumType, T>(temp + from<T, AccumType>(*(T *)dataptr[i]));
             for (i = 0; i <= nop; ++i) {
                 dataptr[i] += strides[i];
             }
@@ -1794,19 +1694,19 @@ sum_of_products_any(int nop, char **dataptr, npy_intp const *strides, npy_intp c
     }
     else {
         while (count--) {
-            Temptype re, im, tmp;
+            AccumType re, im, tmp;
             int i;
-            re = ((Temptype *)dataptr[0])[0];
-            im = ((Temptype *)dataptr[0])[1];
+            re = ((AccumType *)dataptr[0])[0];
+            im = ((AccumType *)dataptr[0])[1];
             for (i = 1; i < nop; ++i) {
-                tmp = re * ((Temptype *)dataptr[i])[0] -
-                      im * ((Temptype *)dataptr[i])[1];
-                im = re * ((Temptype *)dataptr[i])[1] +
-                     im * ((Temptype *)dataptr[i])[0];
+                tmp = re * ((AccumType *)dataptr[i])[0] -
+                      im * ((AccumType *)dataptr[i])[1];
+                im = re * ((AccumType *)dataptr[i])[1] +
+                     im * ((AccumType *)dataptr[i])[0];
                 re = tmp;
             }
-            ((Temptype *)dataptr[nop])[0] = re + ((Temptype *)dataptr[nop])[0];
-            ((Temptype *)dataptr[nop])[1] = im + ((Temptype *)dataptr[nop])[1];
+            ((AccumType *)dataptr[nop])[0] = re + ((AccumType *)dataptr[nop])[0];
+            ((AccumType *)dataptr[nop])[1] = im + ((AccumType *)dataptr[nop])[1];
 
             for (i = 0; i <= nop; ++i) {
                 dataptr[i] += strides[i];
@@ -1980,15 +1880,15 @@ inline constexpr std::array<sum_of_products_fn, NPY_NTYPES_LEGACY>
             return t;
         }();
 
-template <typename T, typename Temptype>
+template <typename T, typename AccumType>
 constexpr std::array<sum_of_products_fn, 5>
 make_binary_specialization_table_row()
 {
-    return {&sum_of_products_stride0_contig_outstride0_two<T, Temptype>,
-            &sum_of_products_stride0_contig_outcontig_two<T, Temptype>,
-            &sum_of_products_contig_stride0_outstride0_two<T, Temptype>,
-            &sum_of_products_contig_stride0_outcontig_two<T, Temptype>,
-            &sum_of_products_contig_contig_outstride0_two<T, Temptype>};
+    return {&sum_of_products_stride0_contig_outstride0_two<T, AccumType>,
+            &sum_of_products_stride0_contig_outcontig_two<T, AccumType>,
+            &sum_of_products_contig_stride0_outstride0_two<T, AccumType>,
+            &sum_of_products_contig_stride0_outcontig_two<T, AccumType>,
+            &sum_of_products_contig_contig_outstride0_two<T, AccumType>};
 }
 
 inline constexpr std::array<std::array<sum_of_products_fn, 5>, NPY_NTYPES_LEGACY>
@@ -2016,14 +1916,14 @@ inline constexpr std::array<std::array<sum_of_products_fn, 5>, NPY_NTYPES_LEGACY
             return t;
         }();
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 constexpr std::array<sum_of_products_fn, 4>
 make_outstride0_specialized_table_row()
 {
-    return {&sum_of_products_outstride0_any<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_outstride0_one<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_outstride0_two<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_outstride0_three<T, Temptype, Is_Complex, Is_logical>};
+    return {&sum_of_products_outstride0_any<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_outstride0_one<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_outstride0_two<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_outstride0_three<T, AccumType, Is_Complex, Is_logical>};
 }
 
 inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY>
@@ -2075,14 +1975,14 @@ inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY
             return t;
         }();
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 constexpr std::array<sum_of_products_fn, 4>
 make_allcontig_specialized_table_row()
 {
-    return {&sum_of_products_contig_any<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_contig_one<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_contig_two<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_contig_three<T, Temptype, Is_Complex, Is_logical>};
+    return {&sum_of_products_contig_any<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_contig_one<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_contig_two<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_contig_three<T, AccumType, Is_Complex, Is_logical>};
 }
 
 inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY>
@@ -2134,14 +2034,14 @@ inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY
             return t;
         }();
 
-template <typename T, typename Temptype, bool Is_Complex, bool Is_logical>
+template <typename T, typename AccumType, bool Is_Complex, bool Is_logical>
 constexpr std::array<sum_of_products_fn, 4>
 make_unspecialized_table_row()
 {
-    return {&sum_of_products_any<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_one<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_two<T, Temptype, Is_Complex, Is_logical>,
-            &sum_of_products_three<T, Temptype, Is_Complex, Is_logical>};
+    return {&sum_of_products_any<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_one<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_two<T, AccumType, Is_Complex, Is_logical>,
+            &sum_of_products_three<T, AccumType, Is_Complex, Is_logical>};
 }
 
 inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY>
@@ -2211,11 +2111,11 @@ inline constexpr std::array<std::array<sum_of_products_fn, 4>, NPY_NTYPES_LEGACY
  *
  * Architecture is based on historical einsum_sumprod c.src
  * - T: The storage type
- * - Temptype: The computation type. Small helper function `to` and `from` are used
- *            to centralizes generic use of casting between T and Temptype and
+ * - AccumType: The computation type. Small helper function `to` and `from` are used
+ *            to centralizes generic use of casting between T and AccumType and
  *            handles special cases like npy_half to npy_float conversion.
  * - Is_Complex: Switches between real and complex arithmetic paths.
- * - Is_logical: Flag that whe combined with T/Temptype allow a single template
+ * - Is_logical: Flag that whe combined with T/AccumType allow a single template
  * definition to cover numeric, complex, boolean, and object types, with explicit
  * specializations where object/boolean behavior diverges. Used to avoid conflict whne
  * npy_bool and npy_uint8 resolve to the same type.
