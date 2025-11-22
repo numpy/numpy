@@ -700,7 +700,7 @@ stringdtype_wrap_sort_loop(
     return ret;
 }
 
-/* 
+/*
  * This is currently required even though the default implementation would work,
  * because the output, though enforced to be equal to the input, is parametric.
  */
@@ -746,47 +746,29 @@ stringdtype_wrap_argsort_loop(
 }
 
 int
-stringdtype_defaultsort_loop(
+stringdtype_sort_loop(
         PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *transferdata)
 {
+    npy_bool stable = (((PyArrayMethod_SortParameters *)context->parameters)
+                       ->flags == NPY_SORT_STABLE);
     return stringdtype_wrap_sort_loop(
             context, data, dimensions, strides, transferdata,
-            &npy_quicksort_impl);
+            stable ? &npy_mergesort_impl : &npy_quicksort_impl);
 }
 
 int
-stringdtype_stablesort_loop(
+stringdtype_argsort_loop(
         PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
         NpyAuxData *transferdata)
 {
-    return stringdtype_wrap_sort_loop(
-            context, data, dimensions, strides, transferdata,
-            &npy_mergesort_impl);
-}
-
-int
-stringdtype_defaultargsort_loop(
-        PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata)
-{
+    npy_bool stable = (((PyArrayMethod_SortParameters *)context->parameters)
+                       ->flags == NPY_SORT_STABLE);
     return stringdtype_wrap_argsort_loop(
             context, data, dimensions, strides, transferdata,
-            &npy_aquicksort_impl);
-}
-
-int
-stringdtype_stableargsort_loop(
-        PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata)
-{
-    return stringdtype_wrap_argsort_loop(
-            context, data, dimensions, strides, transferdata,
-            &npy_amergesort_impl);
+            stable ? &npy_amergesort_impl : &npy_aquicksort_impl);
 }
 
 int
@@ -801,11 +783,9 @@ stringdtype_get_sort_loop(
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    if (parameters->flags == NPY_SORT_STABLE) {
-        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_stablesort_loop;
-    }
-    else if (parameters->flags == NPY_SORT_DEFAULT) {
-        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_defaultsort_loop;
+    if ((parameters->flags == NPY_SORT_STABLE)
+        || parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_sort_loop;
     }
     else {
         PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
@@ -826,11 +806,9 @@ stringdtype_get_argsort_loop(
     PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
     *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    if (parameters->flags == NPY_SORT_STABLE) {
-        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_stableargsort_loop;
-    }
-    else if (parameters->flags == NPY_SORT_DEFAULT) {
-        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_defaultargsort_loop;
+    if (parameters->flags == NPY_SORT_STABLE
+        || parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_argsort_loop;
     }
     else {
         PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
