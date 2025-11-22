@@ -56,7 +56,7 @@ PyRWMutex_RLock(PyRWMutex *rwmutex)
         PyMutex_Lock(&rwmutex->writer_lock);
     }
     assert(PyMutex_IsLocked(&rwmutex->writer_lock));
-    assert(rwmutex->writer_id == 0 || rwmutex->writer_id == PyThread_get_thread_ident());
+    assert(rwmutex->writer_id == 0);
     PyMutex_Unlock(&rwmutex->reader_lock);
 }
 
