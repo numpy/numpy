@@ -28,6 +28,7 @@
 #include "dtype_traversal.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "npy_sort.h"
 
 #include <assert.h>
 
@@ -178,6 +179,133 @@ PyArray_ArrFuncs default_funcs = {
         .getitem = &legacy_getitem_using_DType,
         .setitem = &legacy_setitem_using_DType,
 };
+
+
+NPY_NO_EXPORT int
+default_sort_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+    }
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_mergesort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_quicksort_loop;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
+        return -1;
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+default_argsort_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+    }
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_amergesort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)npy_aquicksort_loop;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
+        return -1;
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+wrap_default_sort_methods(PyArray_DTypeMeta *cls)
+{
+    const char *tp_name = ((PyTypeObject *)cls)->tp_name;
+    
+    PyArray_DTypeMeta *sort_dtypes[2] = {cls, cls};
+    PyType_Slot sort_slots[2] = {
+        {NPY_METH_get_loop, &default_sort_get_loop},
+        {0, NULL},
+    };
+
+    char *sort_name = PyDataMem_NEW(strlen(tp_name) + 7);
+    if (sort_name == NULL) {
+        return -1;
+    }
+    sprintf(sort_name, "%s_sort", tp_name);
+
+    PyArrayMethod_Spec sort_spec = {
+        .name = (const char *)sort_name,
+        .nin = 1,
+        .nout = 1,
+        .dtypes = sort_dtypes,
+        .slots = sort_slots,
+    };
+
+    PyBoundArrayMethodObject *sort_method = PyArrayMethod_FromSpec_int(
+            &sort_spec, 1);
+    if (sort_method == NULL) {
+        PyDataMem_FREE(sort_name);
+        return -1;
+    }
+    NPY_DT_SLOTS(cls)->sort_meth = sort_method->method;
+    Py_INCREF(sort_method->method);
+    Py_DECREF(sort_method);
+
+    PyArray_DTypeMeta *argsort_dtypes[2] = {cls, &PyArray_IntpDType};
+    PyType_Slot argsort_slots[2] = {
+        {NPY_METH_get_loop, &default_argsort_get_loop},
+        {0, NULL},
+    };
+
+    char *argsort_name = PyDataMem_NEW(strlen(tp_name) + 9);
+    if (argsort_name == NULL) {
+        return -1;
+    }
+    sprintf(argsort_name, "%s_argsort", tp_name);
+
+    PyArrayMethod_Spec argsort_spec = {
+        .name = (const char *)argsort_name,
+        .nin = 1,
+        .nout = 1,
+        .dtypes = argsort_dtypes,
+        .slots = argsort_slots,
+    };
+    PyBoundArrayMethodObject *argsort_method = PyArrayMethod_FromSpec_int(
+            &argsort_spec, 1);
+    if (argsort_method == NULL) {
+        PyDataMem_FREE(argsort_name);
+        return -1;
+    }
+    NPY_DT_SLOTS(cls)->argsort_meth = argsort_method->method;
+    Py_INCREF(argsort_method->method);
+    Py_DECREF(argsort_method);
+
+    return 0;
+}
+
 
 /*
  * Internal version of PyArrayInitDTypeMeta_FromSpec.
@@ -347,6 +475,14 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->castingimpls = PyDict_New();
     if (NPY_DT_SLOTS(DType)->castingimpls == NULL) {
         return -1;
+    }
+
+    /* If sort_compare is set, we need to fill in the sorting array method slots */
+    if (NPY_DT_SLOTS(DType)->sort_compare != NULL) {
+        if (wrap_default_sort_methods(DType) < 0) {
+            Py_DECREF(DType);
+            return -1;
+        }
     }
 
     /*

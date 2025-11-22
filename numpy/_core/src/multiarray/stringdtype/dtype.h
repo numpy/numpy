@@ -19,6 +19,10 @@ new_stringdtype_instance(PyObject *na_object, int coerce);
 NPY_NO_EXPORT int
 init_string_dtype(void);
 
+NPY_NO_EXPORT int
+_compare_with_descending(void *a, void *b, PyArray_StringDTypeObject *descr_a,
+         PyArray_StringDTypeObject *descr_b, int descending);
+
 // Assumes that the caller has already acquired the allocator locks for both
 // descriptors
 NPY_NO_EXPORT int

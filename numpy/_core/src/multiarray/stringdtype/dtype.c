@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "npy_import.h"
 #include "multiarraymodule.h"
+#include "npy_sort.h"
 
 /*
  * Internal helper to create new instances
@@ -460,8 +461,29 @@ compare(void *a, void *b, void *arr)
 }
 
 int
+stringdtype_sort_compare(void *a, void *b, PyArrayMethod_Context *context)
+{
+    PyArray_Descr *descr = context->descriptors[0];
+    PyArrayMethod_SortParameters *sort_params =
+            (PyArrayMethod_SortParameters *)context->parameters;
+    int descending = sort_params->flags & NPY_SORT_DESCENDING;
+
+    PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descr;
+    int ret = _compare_with_descending(a, b, sdescr, sdescr, descending);
+    return ret;
+}
+
+// We assume the allocator mutex is already held.
+int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
          PyArray_StringDTypeObject *descr_b)
+{
+    return _compare_with_descending(a, b, descr_a, descr_b, 0);
+}
+
+int
+_compare_with_descending(void *a, void *b, PyArray_StringDTypeObject *descr_a,
+                         PyArray_StringDTypeObject *descr_b, int descending)
 {
     npy_string_allocator *allocator_a = descr_a->allocator;
     npy_string_allocator *allocator_b = descr_b->allocator;
@@ -490,6 +512,8 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     else if (NPY_UNLIKELY(a_is_null || b_is_null)) {
         if (has_null && !has_string_na) {
             if (has_nan_na) {
+                // We do not consider descending here, as NaN-like values
+                // are always sorted to the end.
                 if (a_is_null) {
                     return 1;
                 }
@@ -513,7 +537,11 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
             }
         }
     }
-    return NpyString_cmp(&s_a, &s_b);
+    int cmp = NpyString_cmp(&s_a, &s_b);
+    if (descending) {
+        cmp = -cmp;
+    }
+    return cmp;
 }
 
 // PyArray_ArgFunc
@@ -649,6 +677,175 @@ stringdtype_finalize_descr(PyArray_Descr *dtype)
     return (PyArray_Descr *)ret;
 }
 
+/*
+ * Wrap the sort loop to acquire/release the string allocator.
+ */
+int
+stringdtype_wrap_sort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata, PyArrayMethod_StridedLoop *sort_loop)
+{
+    PyArray_StringDTypeObject *descr =
+            (PyArray_StringDTypeObject *)context->descriptors[0];
+
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    int ret = sort_loop(
+        context, data, dimensions, strides, transferdata);
+    NpyString_release_allocator(allocator);
+    return ret;
+}
+
+int
+stringdtype_defaultsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    return stringdtype_wrap_sort_loop(
+            context, data, dimensions, strides, transferdata,
+            &npy_quicksort_loop);
+}
+
+int
+stringdtype_stablesort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    return stringdtype_wrap_sort_loop(
+            context, data, dimensions, strides, transferdata,
+            &npy_mergesort_loop);
+}
+
+int
+stringdtype_defaultargsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    return stringdtype_wrap_sort_loop(
+            context, data, dimensions, strides, transferdata,
+            &npy_aquicksort_loop);
+}
+
+int
+stringdtype_stableargsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    return stringdtype_wrap_sort_loop(
+            context, data, dimensions, strides, transferdata,
+            &npy_amergesort_loop);
+}
+
+int
+stringdtype_get_sort_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_stablesort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_defaultsort_loop;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
+        return -1;
+    }
+    return 0;
+}
+
+int
+stringdtype_get_argsort_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    *flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_stableargsort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)stringdtype_defaultargsort_loop;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
+        return -1;
+    }
+    return 0;
+}
+
+int
+init_stringdtype_sorts(void)
+{
+    PyArray_DTypeMeta *stringdtype = &PyArray_StringDType;
+
+    PyArray_DTypeMeta *sort_dtypes[2] = {stringdtype, stringdtype};
+    PyType_Slot sort_slots[2] = {
+            {NPY_METH_get_loop, &stringdtype_get_sort_loop},
+            {0, NULL}
+    };
+    PyArrayMethod_Spec sort_spec = {
+            .name = "stringdtype_sort",
+            .nin = 1,
+            .nout = 1,
+            .dtypes = sort_dtypes,
+            .slots = sort_slots,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+    };
+
+    PyBoundArrayMethodObject *sort_method = PyArrayMethod_FromSpec_int(
+            &sort_spec, 1);
+    if (sort_method == NULL) {
+        return -1;
+    }
+    Py_DECREF(NPY_DT_SLOTS(stringdtype)->sort_meth);
+    NPY_DT_SLOTS(stringdtype)->sort_meth = sort_method->method;
+    Py_INCREF(sort_method->method);
+    Py_DECREF(sort_method);
+
+    PyArray_DTypeMeta *argsort_dtypes[2] = {stringdtype, &PyArray_IntpDType};
+    PyType_Slot argsort_slots[2] = {
+            {NPY_METH_get_loop, &stringdtype_get_argsort_loop},
+            {0, NULL}
+    };
+    PyArrayMethod_Spec argsort_spec = {
+            .name = "stringdtype_argsort",
+            .nin = 1,
+            .nout = 1,
+            .dtypes = argsort_dtypes,
+            .slots = argsort_slots,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+    };
+
+    PyBoundArrayMethodObject *argsort_method = PyArrayMethod_FromSpec_int(
+            &argsort_spec, 1);
+    if (argsort_method == NULL) {
+        return -1;
+    }
+    Py_DECREF(NPY_DT_SLOTS(stringdtype)->argsort_meth);
+    NPY_DT_SLOTS(stringdtype)->argsort_meth = argsort_method->method;
+    Py_INCREF(argsort_method->method);
+    Py_DECREF(argsort_method);
+
+    return 0;
+}
+
 static PyType_Slot PyArray_StringDType_Slots[] = {
         {NPY_DT_common_instance, &common_instance},
         {NPY_DT_common_dtype, &common_dtype},
@@ -664,6 +861,7 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
         {NPY_DT_get_clear_loop, &stringdtype_get_clear_loop},
         {NPY_DT_finalize_descr, &stringdtype_finalize_descr},
         {_NPY_DT_is_known_scalar_type, &stringdtype_is_known_scalar_type},
+        {NPY_DT_sort_compare, &stringdtype_sort_compare},
         {0, NULL}};
 
 
@@ -875,6 +1073,10 @@ init_string_dtype(void)
     }
 
     PyMem_Free(PyArray_StringDType_casts);
+
+    if (init_stringdtype_sorts() < 0) {
+        return -1;
+    }
 
     return 0;
 }
