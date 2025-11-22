@@ -1226,8 +1226,8 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
     if (N <= 1 || PyArray_SIZE(op) == 0) {
         return 0;
     }
-    
-    if (method_flags != NULL) {
+
+    if (strided_loop != NULL) {
         needs_api = *method_flags & NPY_METH_REQUIRES_PYAPI;
     }
     else {
@@ -1441,7 +1441,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     rstride = PyArray_STRIDE(rop, axis);
     needidxbuffer = rstride != sizeof(npy_intp);
 
-    if (method_flags != NULL) {
+    if (strided_loop != NULL) {
         needs_api = *method_flags & NPY_METH_REQUIRES_PYAPI;
     }
     else {
@@ -3142,7 +3142,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyArrayMethod_Context context = {0};
     PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
-    NPY_ARRAYMETHOD_FLAGS *method_flags = NULL;
+    NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
     PyArray_SortFunc **sort_table = NULL;
     PyArray_SortFunc *sort = NULL;
@@ -3184,7 +3184,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
 
         if (sort_method->get_strided_loop(
-            &context, 1, 0, strides, &strided_loop, &auxdata, method_flags) < 0) {
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
             ret = -1;
             goto fail;
         }
@@ -3229,7 +3229,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     }
 
     ret = _new_sortlike(op, axis, sort, strided_loop,
-                        &context, auxdata, method_flags, NULL, NULL, 0);
+                        &context, auxdata, &method_flags, NULL, NULL, 0);
 
 fail:
     if (sort_method != NULL) {
@@ -3259,7 +3259,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     PyArrayMethod_Context context = {0};
     PyArray_Descr *loop_descrs[2];
     NpyAuxData *auxdata = NULL;
-    NPY_ARRAYMETHOD_FLAGS *method_flags = NULL;
+    NPY_ARRAYMETHOD_FLAGS method_flags = 0;
 
     PyArray_ArgSortFunc **argsort_table = NULL;
     PyArray_ArgSortFunc *argsort = NULL;
@@ -3295,7 +3295,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
 
         if (argsort_method->get_strided_loop(
-            &context, 1, 0, strides, &strided_loop, &auxdata, method_flags) < 0) {
+            &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
             ret = NULL;
             goto fail;
         }
@@ -3346,7 +3346,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
     }
 
     ret = _new_argsortlike(op2, axis, argsort, strided_loop,
-                           &context, auxdata, method_flags, NULL, NULL, 0);
+                           &context, auxdata, &method_flags, NULL, NULL, 0);
     Py_DECREF(op2);
 
 fail:
