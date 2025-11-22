@@ -78,7 +78,7 @@ __all__ = [
     'argwhere', 'copyto', 'concatenate', 'lexsort', 'astype',
     'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
-    'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
+    'correlate', '', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
@@ -740,7 +740,7 @@ def correlate(a, v, mode='valid'):
     a, v : array_like
         Input sequences.
     mode : {'valid', 'same', 'full'}, optional
-        Refer to the `convolve` docstring.  Note that the default
+        Refer to the `` docstring.  Note that the default
         is 'valid', unlike `convolve`, which uses 'full'.
 
     Returns
@@ -798,12 +798,12 @@ def correlate(a, v, mode='valid'):
     return multiarray.correlate2(a, v, mode)
 
 
-def _convolve_dispatcher(a, v, mode=None):
-    return (a, v)
+def _convolve_dispatcher(a, v, mode=None, out=None):
+    return (a, v, out)
 
 
 @array_function_dispatch(_convolve_dispatcher)
-def convolve(a, v, mode='full'):
+def convolve(a, v, mode='full', out=None):
     """
     Returns the discrete, linear convolution of two one-dimensional sequences.
 
@@ -837,6 +837,9 @@ def convolve(a, v, mode='full'):
           ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
           for points where the signals overlap completely.  Values outside
           the signal boundary have no effect.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the correct shape and dtype. If not provided, a new array is allocated.
 
     Returns
     -------
@@ -893,13 +896,39 @@ def convolve(a, v, mode='full'):
 
     """
     a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
-    if (len(v) > len(a)):
+    if len(v) > len(a):
         a, v = v, a
     if len(a) == 0:
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
-    return multiarray.correlate(a, v[::-1], mode)
+
+    # Determine size of output
+    if mode == 'full':
+        output_size = len(a) + len(v) - 1
+    elif mode == 'same':
+        output_size = max(len(a), len(v))
+    elif mode == 'valid':
+        output_size = max(len(a), len(v)) - min(len(a), len(v)) + 1
+    else:
+        raise ValueError("mode must be 'full', 'valid', or 'same'")
+
+    # Validate/allocate out array
+    if out is not None:
+        if out.shape != (output_size,):
+            raise ValueError(
+                f"Provided out parameter has incorrect shape. Expected: {(output_size,)}, "
+                f"got: {out.shape}"
+            )
+    else:
+        out = empty_like(array([0.0] * output_size, dtype=a.dtype))
+
+    # Convulate and store result 
+    result = multiarray.correlate(a, v[::-1], mode)
+    out[...] = result
+
+    return out
+
 
 
 def _outer_dispatcher(a, b, out=None):
