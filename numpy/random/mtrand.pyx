@@ -2367,6 +2367,11 @@ cdef class RandomState:
         Draw samples from a Pareto II (AKA Lomax) distribution with
         specified shape.
 
+        .. note::
+            New code should use the `~numpy.random.Generator.pareto`
+            method of a `~numpy.random.Generator` instance instead;
+            please see the :ref:`random-quick-start`.
+
         Parameters
         ----------
         a : float or array_like of floats
@@ -2384,9 +2389,11 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.pareto : Pareto I distribution
-        scipy.stats.lomax : Lomax (Pareto II) distribution
-        scipy.stats.genpareto : Generalized Pareto distribution
+        scipy.stats.lomax : probability density function, distribution or
+            cumulative density function, etc.
+        scipy.stats.genpareto : probability density function, distribution or
+            cumulative density function, etc.
+        random.Generator.pareto: which should be used for new code.
 
         Notes
         -----
@@ -2413,9 +2420,8 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> a = 3.
-        >>> rng = np.random.default_rng()
-        >>> s = rng.pareto(a, 10000)
+        >>> a, m = 3., 2.  # shape and mode
+        >>> s = (np.random.pareto(a, 1000) + 1) * m
 
         Display the histogram of the samples, along with the probability
         density function:
