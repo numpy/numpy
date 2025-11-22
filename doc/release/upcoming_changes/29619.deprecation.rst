@@ -1,0 +1,9 @@
+Deprecation of the ``generic`` unit in `numpy.timedelta64` and `numpy.datetime64`
+---------------------------------------------------------------------------------
+
+The ``generic`` unit in `numpy.timedelta64` and `numpy.datetime64` is now
+deprecated. This unit can lead to unexpected behavior in some cases
+(see #28287 for details).  
+
+As an alternative, please specify an explicit unit such as ``'s'`` (seconds)
+or ``'D'`` (days) when constructing `numpy.timedelta64` or `numpy.datetime64`.
