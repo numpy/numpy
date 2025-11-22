@@ -726,9 +726,6 @@ stringdtype_sort_resolve_descriptors(
         return -1;
     }
 
-    // sorting cannot be a view
-    *view_offset = 0;
-
     return method->casting;
 }
 
