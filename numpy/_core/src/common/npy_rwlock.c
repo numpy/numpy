@@ -64,12 +64,12 @@ NPY_NO_EXPORT void
 PyRWMutex_RUnlock(PyRWMutex *rwmutex)
 {
     assert(PyMutex_IsLocked(&rwmutex->writer_lock));
-    assert(rwmutex->writer_id == 0 || rwmutex->writer_id == PyThread_get_thread_ident());
     if (rwmutex->level > 0) {
         assert(rwmutex->writer_id == PyThread_get_thread_ident());
         rwmutex->level--;
         return;
     }
+    assert(rwmutex->writer_id == 0);
     PyMutex_Lock(&rwmutex->reader_lock);
     rwmutex->reader_count--;
     if (rwmutex->reader_count == 0) {
