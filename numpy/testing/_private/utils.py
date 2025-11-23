@@ -745,6 +745,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
+    def isfloat(x):
+        return x.dtype.char in 'efdgFDG'
+
     def istime(x):
         return x.dtype.char in "Mm"
 
@@ -842,7 +845,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             raise AssertionError(msg)
 
         flagged = np.bool(False)
-        if isnumber(x) and isnumber(y):
+        if isfloat(x) and isfloat(y):
             if equal_nan:
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
