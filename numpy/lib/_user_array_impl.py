@@ -53,6 +53,16 @@ class container:
     astype
 
     """
+    def __init_subclass__(cls) -> None:
+        import warnings
+
+        warnings.warn(
+            "The numpy.lib.user_array.container class is deprecated and will be "
+            "removed in a future version.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
