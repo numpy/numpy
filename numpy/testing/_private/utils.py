@@ -742,8 +742,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     # original array for output formatting
     ox, oy = x, y
 
-    def isnumber(x):
-        return x.dtype.char in '?bhilqpBHILQPefdgFDG'
+    # def isnumber(x):
+    #     return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
     def isfloat(x):
         return x.dtype.char in 'efdgFDG'
