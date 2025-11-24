@@ -684,7 +684,7 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
  * Wrap the sort loop to acquire/release the string allocator,
  * and pick the correct internal implementation.
  */
-int
+static int
 stringdtype_wrap_sort_loop(
         PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
@@ -729,7 +729,7 @@ stringdtype_sort_resolve_descriptors(
     return method->casting;
 }
 
-int
+static int
 stringdtype_wrap_argsort_loop(
         PyArrayMethod_Context *context,
         char *const *data, const npy_intp *dimensions, const npy_intp *strides,
@@ -749,7 +749,7 @@ stringdtype_wrap_argsort_loop(
     return ret;
 }
 
-int
+static int
 stringdtype_get_sort_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
@@ -772,7 +772,7 @@ stringdtype_get_sort_loop(
     return 0;
 }
 
-int
+static int
 stringdtype_get_argsort_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
@@ -959,7 +959,7 @@ PyArray_DTypeMeta PyArray_StringDType = {
         /* rest, filled in during DTypeMeta initialization */
 };
 
-int
+NPY_NO_EXPORT int
 init_stringdtype_sorts(void)
 {
     PyArray_DTypeMeta *stringdtype = &PyArray_StringDType;
