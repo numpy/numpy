@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from builtins import bool as py_bool
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
     Final,
@@ -53,7 +53,6 @@ from numpy._typing import (
     _SupportsArrayFunc,
     _SupportsDType,
 )
-from numpy.lib._array_utils_impl import normalize_axis_tuple as normalize_axis_tuple
 
 from ._asarray import require
 from ._ufunc_config import (
@@ -1087,6 +1086,12 @@ def roll(a: ArrayLike, shift: _ShapeLike, axis: _ShapeLike | None = None) -> NDA
 #
 def rollaxis(a: _ArrayT, axis: int, start: int = 0) -> _ArrayT: ...
 def moveaxis(a: _ArrayT, source: _ShapeLike, destination: _ShapeLike) -> _ArrayT: ...
+def normalize_axis_tuple(
+    axis: int | Iterable[int],
+    ndim: int,
+    argname: str | None = None,
+    allow_duplicate: py_bool | None = False,
+) -> tuple[int, ...]: ...
 
 #
 @overload  # 0d, dtype=int (default), sparse=False (default)
