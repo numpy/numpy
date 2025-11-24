@@ -468,6 +468,7 @@ from numpy.lib._function_base_impl import (  # type: ignore[deprecated]
     append,
     interp,
     quantile,
+    vectorize,
 )
 
 from numpy.lib._histograms_impl import (
@@ -6103,27 +6104,6 @@ class memmap(ndarray[_ShapeT_co, _DTypeT_co]):
         return_scalar: builtins.bool = False,
     ) -> Any: ...
     def flush(self) -> None: ...
-
-# TODO: Add a mypy plugin for managing functions whose output type is dependent
-# on the literal value of some sort of signature (e.g. `einsum` and `vectorize`)
-class vectorize:
-    pyfunc: Callable[..., Any]
-    cache: builtins.bool
-    signature: LiteralString | None
-    otypes: LiteralString | None
-    excluded: set[int | str]
-    __doc__: str | None
-    def __init__(
-        self,
-        /,
-        pyfunc: Callable[..., Any] | _NoValueType = ...,  # = _NoValue
-        otypes: str | Iterable[DTypeLike] | None = None,
-        doc: str | None = None,
-        excluded: Iterable[int | str] | None = None,
-        cache: builtins.bool = False,
-        signature: str | None = None,
-    ) -> None: ...
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class poly1d:
     @property

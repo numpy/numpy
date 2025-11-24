@@ -16,7 +16,7 @@ from typing import (
 from typing_extensions import TypeIs, TypeVar
 
 import numpy as np
-from numpy import _OrderKACF, vectorize
+from numpy import _OrderKACF
 from numpy._core.multiarray import bincount
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -189,6 +189,27 @@ class _SizedIterable(Protocol[_T_co]):
     def __len__(self) -> int: ...
 
 ###
+
+class vectorize:
+    __doc__: str | None
+    __module__: L["numpy"] = "numpy"
+    pyfunc: Callable[..., Incomplete]
+    cache: bool
+    signature: str | None
+    otypes: str | None
+    excluded: set[int | str]
+
+    def __init__(
+        self,
+        /,
+        pyfunc: Callable[..., Incomplete] | _NoValueType = ...,  # = _NoValue
+        otypes: str | Iterable[DTypeLike] | None = None,
+        doc: str | None = None,
+        excluded: Iterable[int | str] | None = None,
+        cache: bool = False,
+        signature: str | None = None,
+    ) -> None: ...
+    def __call__(self, /, *args: Incomplete, **kwargs: Incomplete) -> Incomplete: ...
 
 @overload
 def rot90(m: _ArrayT, k: int = 1, axes: tuple[int, int] = (0, 1)) -> _ArrayT: ...
