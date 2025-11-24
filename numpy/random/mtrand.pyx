@@ -2440,7 +2440,6 @@ cdef class RandomState:
                     a, 'a', CONS_POSITIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
-    
     def weibull(self, a, size=None):
         """
         weibull(a, size=None)
