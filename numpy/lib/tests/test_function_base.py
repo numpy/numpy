@@ -2327,6 +2327,9 @@ class TestFilterwindows:
         # check symmetry
         assert_equal(w, flipud(w))
 
+        # check positivity
+        assert (w >= 0).all()
+
         # check known value
         if scalar < 1:
             assert_array_equal(w, np.array([]))
@@ -2334,6 +2337,8 @@ class TestFilterwindows:
             assert_array_equal(w, np.ones(1))
         else:
             assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
+            assert_equal(w[0], 0)
+            assert_equal(w[-1], 0)
 
     def test_kaiser(self, dtype: str, M: int) -> None:
         scalar = np.array(M, dtype=dtype)[()]
