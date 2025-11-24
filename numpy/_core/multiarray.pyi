@@ -90,7 +90,6 @@ from numpy._typing._ufunc import (
     _PyFunc_Nin2_Nout1,
     _PyFunc_Nin3P_Nout1,
 )
-from numpy.lib._array_utils_impl import normalize_axis_index
 
 __all__ = [
     "_ARRAY_API",
@@ -537,6 +536,9 @@ def ravel_multi_index(
 def unravel_index(indices: _IntLike_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[intp, ...]: ...
 @overload
 def unravel_index(indices: _ArrayLikeInt_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
+
+#
+def normalize_axis_index(axis: int, ndim: int, msg_prefix: str | None = None) -> int: ...
 
 # NOTE: Allow any sequence of array-like objects
 @overload
