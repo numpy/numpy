@@ -15,6 +15,7 @@ __all__ = [
     "vstack",
 ]
 
+_T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT1 = TypeVar("_ScalarT1", bound=generic)
 _ScalarT2 = TypeVar("_ScalarT2", bound=generic)
@@ -63,6 +64,9 @@ def atleast_3d(a0: ArrayLike, /) -> NDArray[Any]: ...
 def atleast_3d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[Any]]: ...
 @overload
 def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
+
+# used by numpy.lib._shape_base_impl
+def _arrays_for_stack_dispatcher(arrays: Sequence[_T]) -> tuple[_T, ...]: ...
 
 # keep in sync with `numpy.ma.extras.vstack`
 @overload
