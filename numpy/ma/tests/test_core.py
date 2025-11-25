@@ -6,6 +6,7 @@
 __author__ = "Pierre GF Gerard-Marchant"
 
 import copy
+import datetime as dt
 import itertools
 import operator
 import pickle
@@ -2268,6 +2269,14 @@ class TestFillingValues:
         assert_equal(fval, default_fill_value(b"camelot!"))
         assert_raises(TypeError, _check_fill_value, 1e+20, int)
         assert_raises(TypeError, _check_fill_value, 'stuff', int)
+
+    def test_fill_value_datetime_structured(self):
+        # gh-29818
+        rec = np.array([(dt.date(2025, 4, 1),)], dtype=[('foo', '<M8[D]')])
+        ma = np.ma.masked_array(rec)
+        np.sort(ma)
+        res = np.ma.minimum_fill_value(ma)
+        assert isinstance(res['foo'], np.datetime64)
 
     def test_check_on_fields(self):
         # Tests _check_fill_value with records

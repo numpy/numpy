@@ -26,6 +26,7 @@ import operator
 import re
 import textwrap
 import warnings
+import datetime
 
 import numpy as np
 import numpy._core.numerictypes as ntypes
@@ -236,9 +237,14 @@ def _recursive_fill_value(dtype, f):
         # for integer casts, this allows the use of 99999 as a fill value
         # for int8.
         # TODO: This is probably a mess, but should best preserve behavior?
-        vals = tuple(
-                np.array(_recursive_fill_value(dtype[name], f))
-                for name in dtype.names)
+        vals = []
+        for name in dtype.names:
+            field_dtype = dtype[name]
+            val = _recursive_fill_value(field_dtype, f)
+            if np.issubdtype(field_dtype, np.datetime64):
+                if isinstance(val, (datetime.date, datetime.datetime)):
+                    val = np.datetime64(val)
+            vals.append(np.array(val))
         return np.array(vals, dtype=dtype)[()]  # decay to void scalar from 0d
     elif dtype.subdtype:
         subtype, shape = dtype.subdtype
