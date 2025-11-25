@@ -10,6 +10,8 @@ option('lapack-order', type: 'array', value: ['auto'],
        description: 'Order of LAPACK libraries to search for. E.g.: mkl,openblas,lapack')
 option('use-ilp64', type: 'boolean', value: false,
        description: 'Use ILP64 (64-bit integer) BLAS and LAPACK interfaces')
+option('allow-ilp64-on-musl', type: 'boolean', value: false,
+       description: 'Allow ILP64 builds on musl (unsafe when mixing with system OpenBLAS)')
 option('blas-symbol-suffix', type: 'string', value: 'auto',
         description: 'BLAS and LAPACK symbol suffix to use, if any')
 option('mkl-threading', type: 'string', value: 'auto',

@@ -67,6 +67,19 @@ else
   blas_interface = ['interface: lp64']
 endif
 
+is_glibc = cc.compiles('''
+  #include <features.h>
+  #ifndef __GLIBC__
+  #error "not glibc"
+  #endif
+  int main(void) { return 0; }
+''', name: 'glibc check', required: false)
+is_musl = host_machine.system() == 'linux' and not is_glibc
+if is_musl and use_ilp64 and not get_option('allow-ilp64-on-musl')
+  message('Disabling ILP64 on musl to avoid ABI mismatches with system OpenBLAS')
+  use_ilp64 = false
+  blas_interface = ['interface: lp64']
+endif
 
 blas_order = get_option('blas-order')
 if blas_order == ['auto']
