@@ -244,6 +244,8 @@ def _recursive_fill_value(dtype, f):
             if np.issubdtype(field_dtype, np.datetime64):
                 if isinstance(val, (datetime.date, datetime.datetime)):
                     val = np.datetime64(val)
+                elif isinstance(val, (int, np.integer)):
+                    val = np.array(val).astype(field_dtype)
             vals.append(np.array(val))
         return np.array(tuple(vals), dtype=dtype)[()]  # decay to void scalar from 0d
     elif dtype.subdtype:
