@@ -20,13 +20,13 @@ Released for unlimited redistribution.
 
 """
 import builtins
+import datetime
 import functools
 import inspect
 import operator
 import re
 import textwrap
 import warnings
-import datetime
 
 import numpy as np
 import numpy._core.numerictypes as ntypes
@@ -245,7 +245,7 @@ def _recursive_fill_value(dtype, f):
                 if isinstance(val, (datetime.date, datetime.datetime)):
                     val = np.datetime64(val)
             vals.append(np.array(val))
-        return np.array(vals, dtype=dtype)[()]  # decay to void scalar from 0d
+        return np.array(tuple(vals), dtype=dtype)[()]  # decay to void scalar from 0d
     elif dtype.subdtype:
         subtype, shape = dtype.subdtype
         subval = _recursive_fill_value(subtype, f)

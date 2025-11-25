@@ -4980,9 +4980,10 @@ class TestMaskedArrayFunctions:
         bools = [True, False]
         dtypes = [MaskType, float]
         msgformat = 'copy=%s, shrink=%s, dtype=%s'
-        for cpy, shr, dt in itertools.product(bools, bools, dtypes):
-            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
-            assert_(res is nomask, msgformat % (cpy, shr, dt))
+        # renamed 'dt' to 'dtype'
+        for cpy, shr, dtype in itertools.product(bools, bools, dtypes):
+            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dtype)
+            assert_(res is nomask, msgformat % (cpy, shr, dtype))
 
     def test_mask_or(self):
         # Initialize
@@ -5313,9 +5314,10 @@ class TestMaskedObjectArray:
 
     def test_getitem(self):
         arr = np.ma.array([None, None])
-        for dt in [float, object]:
-            a0 = np.eye(2).astype(dt)
-            a1 = np.eye(3).astype(dt)
+        # renamed 'dt' to 'dtype'
+        for dtype in [float, object]:
+            a0 = np.eye(2).astype(dtype)
+            a1 = np.eye(3).astype(dtype)
             arr[0] = a0
             arr[1] = a1
 
