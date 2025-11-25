@@ -1,0 +1,32 @@
+name: Alpine musl BLAS preload
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  alpine-musl-smoke:
+    # Only runs when manually dispatched to avoid adding default CI load
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Build Alpine image
+        run: |
+          set -eux
+          docker build -t numpy-alpine -f .github/alpine-musl-preload.Dockerfile .
+
+      - name: Test on Alpine (no LD_PRELOAD)
+        run: |
+          set -eux
+          docker run --rm -w /tmp numpy-alpine /bin/sh -c 'PYTHONNOUSERSITE=1 python -c "import numpy, sys; print(\"NumPy\", numpy.__version__); sys.exit(0 if numpy.test(verbose=0, extra_argv=[\"-q\",\"-k\",\"not test_to_ctypes\"]) else 1)"'
+
+      - name: Test on Alpine (with LD_PRELOAD)
+        run: |
+          set -eux
+          docker run --rm -e LD_PRELOAD=/usr/lib/libopenblas.so.3 -w /tmp numpy-alpine /bin/sh -c 'PYTHONNOUSERSITE=1 python -c "import numpy, sys; print(\"NumPy\", numpy.__version__, \"(LD_PRELOAD openblas)\"); sys.exit(0 if numpy.test(verbose=0, extra_argv=[\"-q\",\"-k\",\"not test_to_ctypes\"]) else 1)"'
