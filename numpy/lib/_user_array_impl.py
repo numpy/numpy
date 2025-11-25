@@ -54,6 +54,7 @@ class container:
 
     """
     def __init_subclass__(cls) -> None:
+        # Deprecated in NumPy 2.4, 2025-11-24
         import warnings
 
         warnings.warn(
