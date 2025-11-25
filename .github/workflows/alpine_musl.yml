@@ -8,25 +8,50 @@ permissions:
 
 jobs:
   alpine-musl-smoke:
-    # Only runs when manually dispatched to avoid adding default CI load
     runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/musllinux_1_2_x86_64
     steps:
       - uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Build Alpine image
+      - name: Install system deps
         run: |
           set -eux
-          docker build -t numpy-alpine -f .github/alpine-musl-preload.Dockerfile .
+          apk update --quiet
+          apk add --no-cache python3 py3-pip python3-dev build-base openblas-dev lapack-dev gfortran musl-dev git
+          ln -sf /usr/bin/python3 /usr/bin/python
+
+      - name: Set up venv and install
+        run: |
+          set -eux
+          python -m venv /tmp/venv
+          . /tmp/venv/bin/activate
+          pip install -U pip setuptools wheel
+          pip install -U cython meson-python pytest pytest-xdist
+          pip install -r requirements/test_requirements.txt
+          pip install .
 
       - name: Test on Alpine (no LD_PRELOAD)
         run: |
           set -eux
-          docker run --rm -w /tmp numpy-alpine /bin/sh -c 'PYTHONNOUSERSITE=1 python -c "import numpy, sys; print(\"NumPy\", numpy.__version__); sys.exit(0 if numpy.test(verbose=0, extra_argv=[\"-q\",\"-k\",\"not test_to_ctypes\"]) else 1)"'
+          cd /tmp
+          PYTHONNOUSERSITE=1 /tmp/venv/bin/python - <<'PY'
+          import numpy, sys
+          print("NumPy", numpy.__version__)
+          res = numpy.test(verbose=0, extra_argv=["-q", "-k", "not test_to_ctypes"])
+          sys.exit(0 if res else 1)
+          PY
 
       - name: Test on Alpine (with LD_PRELOAD)
         run: |
           set -eux
-          docker run --rm -e LD_PRELOAD=/usr/lib/libopenblas.so.3 -w /tmp numpy-alpine /bin/sh -c 'PYTHONNOUSERSITE=1 python -c "import numpy, sys; print(\"NumPy\", numpy.__version__, \"(LD_PRELOAD openblas)\"); sys.exit(0 if numpy.test(verbose=0, extra_argv=[\"-q\",\"-k\",\"not test_to_ctypes\"]) else 1)"'
+          cd /tmp
+          LD_PRELOAD=/usr/lib/libopenblas.so.3 PYTHONNOUSERSITE=1 /tmp/venv/bin/python - <<'PY'
+          import numpy, sys
+          print("NumPy", numpy.__version__, "(LD_PRELOAD openblas)")
+          res = numpy.test(verbose=0, extra_argv=["-q", "-k", "not test_to_ctypes"])
+          sys.exit(0 if res else 1)
+          PY
