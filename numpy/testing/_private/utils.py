@@ -90,14 +90,7 @@ IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
-BLAS_SUPPORTS_FPE = True
-if platform.system() == 'Darwin' or platform.machine() == 'arm64':
-    try:
-        blas = np.__config__.CONFIG['Build Dependencies']['blas']
-        if blas['name'] == 'accelerate':
-            BLAS_SUPPORTS_FPE = False
-    except KeyError:
-        pass
+BLAS_SUPPORTS_FPE = np._core._multiarray_umath._blas_supports_fpe(None)
 
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 

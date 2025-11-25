@@ -1,0 +1,9 @@
+DType sorting and argsorting supports the ArrayMethod API
+---------------------------------------------------------
+User-defined dtypes can now implement custom sorting and argsorting using
+the ArrayMethod API. This mechanism can be used in place of the `PyArray_ArrFuncs`
+slots which may be deprecated in the future.
+
+The sorting and argsorting methods are registered by passing the arraymethod
+specs that implement the operations to the new `PyUFunc_AddLoopsFromSpecs` function.
+See the ArrayMethod API documentation for details.

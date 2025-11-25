@@ -1,0 +1,4 @@
+* Type-checkers will no longer accept calls to `numpy.arange` with
+  ``start`` as a keyword argument. This was done for compatibility with
+  the Array API standard. At runtime it is still possible to use
+  `numpy.arange` with ``start`` as a keyword argument.

@@ -941,7 +941,7 @@ string_expandtabs_length_promoter(PyObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    Py_INCREF(op_dtypes[0]);
+    Py_XINCREF(op_dtypes[0]);
     new_op_dtypes[0] = op_dtypes[0];
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
     new_op_dtypes[2] = PyArray_DTypeFromTypeNum(NPY_DEFAULT_INT);

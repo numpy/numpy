@@ -1,9 +1,12 @@
 from unittest import TestCase
 
-from . import overrides
+from . import _private as _private, overrides
+from ._private import extbuild as extbuild
 from ._private.utils import (
+    BLAS_SUPPORTS_FPE,
     HAS_LAPACK64,
     HAS_REFCOUNT,
+    IS_64BIT,
     IS_EDITABLE,
     IS_INSTALLED,
     IS_MUSL,
@@ -51,8 +54,10 @@ from ._private.utils import (
 )
 
 __all__ = [
+    "BLAS_SUPPORTS_FPE",
     "HAS_LAPACK64",
     "HAS_REFCOUNT",
+    "IS_64BIT",
     "IS_EDITABLE",
     "IS_INSTALLED",
     "IS_MUSL",

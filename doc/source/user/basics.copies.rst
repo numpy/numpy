@@ -123,8 +123,8 @@ shape attribute of the array. For example::
     AttributeError: Incompatible shape for in-place modification. Use
     `.reshape()` to make a copy with the desired shape.
 
-Taking the example of another operation, :func:`.ravel` returns a contiguous
-flattened view of the array wherever possible. On the other hand,
+Taking the example of another operation, :func:`numpy.ravel` returns a
+contiguous flattened view of the array wherever possible. On the other hand,
 :meth:`.ndarray.flatten` always returns a flattened copy of the array.
 However, to guarantee a view in most cases, ``x.reshape(-1)`` may be preferable.
 

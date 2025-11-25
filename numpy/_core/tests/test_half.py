@@ -93,6 +93,21 @@ class TestHalf:
         arr = np.ones(3, dtype=np.float16).astype(string_dt)
         assert arr.dtype == expected_dt
 
+    @pytest.mark.parametrize("dtype", ["S", "U", object])
+    def test_to_half_cast_error(self, dtype):
+        arr = np.array(["3M"], dtype=dtype)
+        with pytest.raises(ValueError):
+            arr.astype(np.float16)
+
+        arr = np.array(["23490349034"], dtype=dtype)
+        with np.errstate(all="warn"):
+            with pytest.warns(RuntimeWarning):
+                arr.astype(np.float16)
+
+        with np.errstate(all="raise"):
+            with pytest.raises(FloatingPointError):
+                arr.astype(np.float16)
+
     @pytest.mark.parametrize("string_dt", ["S", "U"])
     def test_half_conversion_from_string(self, string_dt):
         string = np.array("3.1416", dtype=string_dt)

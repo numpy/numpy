@@ -12,6 +12,9 @@ from numpy.testing._private.utils import run_threaded
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
 
+pytestmark = pytest.mark.thread_unsafe(
+    reason="tests in this module are already explicitly multi-threaded"
+)
 
 def test_parallel_randomstate_creation():
     # if the coercion cache is enabled and not thread-safe, creating
@@ -26,11 +29,10 @@ def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
     # computing ufuncs simultaneously in multiple threads leads
     # to a data race that causes crashes or spurious exceptions
-    def func():
-        arr = np.random.random((25,))
-        np.isnan(arr)
-
-    run_threaded(func, 500)
+    for dtype in [np.float32, np.float64, np.int32]:
+        for op in [np.random.random((25,)).astype(dtype), dtype(25)]:
+            for ufunc in [np.isnan, np.sin]:
+                run_threaded(lambda: ufunc(op), 500)
 
     # see gh-26690
     NUM_THREADS = 50
@@ -120,6 +122,8 @@ def test_printoptions_thread_safety():
 
     task1.start()
     task2.start()
+    task1.join()
+    task2.join()
 
 
 def test_parallel_reduction():

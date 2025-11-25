@@ -7,19 +7,10 @@ from typing import (
     TypeAlias,
     overload,
 )
-from typing_extensions import TypeVar
+from typing_extensions import Buffer, TypeVar
 
 import numpy as np
-from numpy import (
-    _OrderKACF,
-    _SupportsBuffer,
-    bytes_,
-    dtype,
-    int_,
-    ndarray,
-    object_,
-    str_,
-)
+from numpy import _OrderKACF, bytes_, dtype, int_, ndarray, object_, str_
 from numpy._core.multiarray import compare_chararrays
 from numpy._typing import (
     NDArray,
@@ -106,12 +97,12 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def __new__(
         subtype,
         shape: _ShapeLike,
-        itemsize: SupportsIndex | SupportsInt = ...,
-        unicode: L[False] = ...,
-        buffer: _SupportsBuffer = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike = ...,
-        order: _OrderKACF = ...,
+        itemsize: SupportsIndex | SupportsInt = 1,
+        unicode: L[False] = False,
+        buffer: Buffer | np.ndarray | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF = "C",
     ) -> _CharArray[bytes_]: ...
     @overload
     def __new__(
@@ -119,30 +110,30 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt,
         unicode: L[True],
-        buffer: _SupportsBuffer = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike = ...,
-        order: _OrderKACF = ...,
+        buffer: Buffer | np.ndarray | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF = "C",
     ) -> _CharArray[str_]: ...
     @overload
     def __new__(
         subtype,
         shape: _ShapeLike,
-        itemsize: SupportsIndex | SupportsInt = ...,
+        itemsize: SupportsIndex | SupportsInt = 1,
         *,
         unicode: L[True],
-        buffer: _SupportsBuffer = ...,
-        offset: SupportsIndex = ...,
-        strides: _ShapeLike = ...,
-        order: _OrderKACF = ...,
+        buffer: Buffer | np.ndarray | None = None,
+        offset: SupportsIndex = 0,
+        strides: _ShapeLike | None = None,
+        order: _OrderKACF = "C",
     ) -> _CharArray[str_]: ...
 
     def __array_finalize__(self, obj: object) -> None: ...
-    def __mul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...
-    def __rmul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...
-    def __mod__(self, i: Any) -> chararray[_AnyShape, _CharDTypeT_co]: ...
+    def __mul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...  # type: ignore[override]
+    def __rmul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...  # type: ignore[override]
+    def __mod__(self, i: Any) -> chararray[_AnyShape, _CharDTypeT_co]: ...  # type: ignore[override]
 
-    @overload
+    @overload  # type: ignore[override]
     def __eq__(
         self: _CharArray[str_],
         other: U_co,
@@ -153,7 +144,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> NDArray[np.bool]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __ne__(
         self: _CharArray[str_],
         other: U_co,
@@ -164,7 +155,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> NDArray[np.bool]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __ge__(
         self: _CharArray[str_],
         other: U_co,
@@ -175,7 +166,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> NDArray[np.bool]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __le__(
         self: _CharArray[str_],
         other: U_co,
@@ -186,7 +177,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> NDArray[np.bool]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __gt__(
         self: _CharArray[str_],
         other: U_co,
@@ -197,7 +188,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> NDArray[np.bool]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __lt__(
         self: _CharArray[str_],
         other: U_co,
@@ -208,7 +199,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> NDArray[np.bool]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __add__(
         self: _CharArray[str_],
         other: U_co,
@@ -219,7 +210,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         other: S_co,
     ) -> _CharArray[bytes_]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def __radd__(
         self: _CharArray[str_],
         other: U_co,
@@ -355,7 +346,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         chars: S_co | None = None,
     ) -> _CharArray[bytes_]: ...
 
-    @overload
+    @overload  # type: ignore[override]
     def partition(
         self: _CharArray[str_],
         sep: U_co,
@@ -1036,7 +1027,7 @@ def startswith(
 @overload
 def startswith(
     a: T_co,
-    suffix: T_co,
+    prefix: T_co,
     start: i_co = 0,
     end: i_co | None = None,
 ) -> NDArray[np.bool]: ...

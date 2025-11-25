@@ -730,15 +730,6 @@ def dstack(tup):
     return _nx.concatenate(arrs, 2)
 
 
-def _replace_zero_by_x_arrays(sub_arys):
-    for i in range(len(sub_arys)):
-        if _nx.ndim(sub_arys[i]) == 0:
-            sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
-        elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
-            sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
-    return sub_arys
-
-
 def _array_split_dispatcher(ary, indices_or_sections, axis=None):
     return (ary, indices_or_sections)
 
@@ -1110,7 +1101,7 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    If ``a.shape = (r0,r1,...,rN)`` and ``b.shape = (s0,s1,...,sN)``,
     the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::

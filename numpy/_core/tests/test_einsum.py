@@ -79,6 +79,11 @@ class TestEinsum:
             b = np.ones((3, 4, 5))
             einsum_fn('aabcb,abc', a, b)
 
+        with pytest.raises(ValueError):
+            a = np.arange(3)
+            # einsum_path does not yet accept kwarg 'casting'
+            np.einsum('ij->j', [a, a], casting='same_value')
+
     def test_einsum_sorting_behavior(self):
         # Case 1: 26 dimensions (all lowercase indices)
         n1 = 26
@@ -1113,6 +1118,41 @@ class TestEinsum:
         for opt in [True, False]:
             tmp = np.einsum('...ft,mf->...mt', d, c, order='a', optimize=opt)
             assert_(tmp.flags.c_contiguous)
+
+    def test_singleton_broadcasting(self):
+        eq = "ijp,ipq,ikq->ijk"
+        shapes = ((3, 1, 1), (3, 1, 3), (1, 3, 3))
+        arrays = [np.random.rand(*shape) for shape in shapes]
+        self.optimize_compare(eq, operands=arrays)
+
+        eq = "jhcabhijaci,dfijejgh->fgje"
+        shapes = (
+            (1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1),
+            (3, 1, 3, 1, 1, 1, 1, 2),
+        )
+        arrays = [np.random.rand(*shape) for shape in shapes]
+        self.optimize_compare(eq, operands=arrays)
+
+        eq = "baegffahgc,hdggeff->dhg"
+        shapes = ((2, 1, 4, 1, 1, 1, 1, 2, 1, 1), (1, 1, 1, 1, 4, 1, 1))
+        arrays = [np.random.rand(*shape) for shape in shapes]
+        self.optimize_compare(eq, operands=arrays)
+
+        eq = "cehgbaifff,fhhdegih->cdghbi"
+        shapes = ((1, 1, 1, 1, 1, 1, 1, 1, 1, 1), (2, 1, 1, 2, 4, 1, 1, 1))
+        arrays = [np.random.rand(*shape) for shape in shapes]
+        self.optimize_compare(eq, operands=arrays)
+
+        eq = "gah,cdbcghefg->ef"
+        shapes = ((2, 3, 1), (1, 3, 1, 1, 1, 2, 1, 4, 1))
+        arrays = [np.random.rand(*shape) for shape in shapes]
+        self.optimize_compare(eq, operands=arrays)
+
+        eq = "cacc,bcb->"
+        shapes = ((1, 1, 1, 1), (1, 4, 1))
+        arrays = [np.random.rand(*shape) for shape in shapes]
+        self.optimize_compare(eq, operands=arrays)
+
 
 class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):

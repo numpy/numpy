@@ -21,6 +21,7 @@
 #include "array_method.h"
 #include "common.h"
 #include "numpy/npy_math.h"
+#include "npy_sort.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
@@ -107,7 +108,7 @@ sfloat_getitem(char *data, PyArrayObject *arr)
 
 
 static int
-sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
+sfloat_setitem(PyArray_Descr *descr_, PyObject *obj, char *data)
 {
     if (!PyFloat_CheckExact(obj)) {
         PyErr_SetString(PyExc_NotImplementedError,
@@ -115,7 +116,7 @@ sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
         return -1;
     }
 
-    PyArray_SFloatDescr *descr = (PyArray_SFloatDescr *)PyArray_DESCR(arr);
+    PyArray_SFloatDescr *descr = (PyArray_SFloatDescr *)descr_;
     double value = PyFloat_AsDouble(obj);
     value /= descr->scaling;
 
@@ -131,9 +132,10 @@ NPY_DType_Slots sfloat_slots = {
     .default_descr = &sfloat_default_descr,
     .common_dtype = &sfloat_common_dtype,
     .common_instance = &sfloat_common_instance,
+    .setitem = &sfloat_setitem,
     .f = {
         .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
-        .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
+        .setitem = NULL,
     }
 };
 
@@ -775,65 +777,276 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
 }
 
 
+NPY_NO_EXPORT int
+sfloat_stable_sort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    assert(data[0] == data[1]);
+    assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_STABLE);
+
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+
+    return timsort_double(in, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_default_sort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    assert(data[0] == data[1]);
+    assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_DEFAULT);
+
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+
+    return quicksort_double(in, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_sort_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+    }
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_sort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_sort_loop;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
+        return -1;
+    }
+    return 0;
+}
+
+
+static NPY_CASTING
+sfloat_sort_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
+{
+    assert(!(given_descrs[1] != given_descrs[0] && given_descrs[1] != NULL));
+    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[1] = loop_descrs[0];
+    Py_INCREF(loop_descrs[1]);
+
+    return NPY_NO_CASTING;
+}
+
+
+NPY_NO_EXPORT int
+sfloat_stable_argsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_STABLE);
+    assert(strides[0] == sizeof(npy_float64));
+    assert(strides[1] == sizeof(npy_intp));
+
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    npy_intp *out = (npy_intp *)data[1];
+
+    return atimsort_double(in, out, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_default_argsort_loop(
+        PyArrayMethod_Context *context,
+        char *const *data,
+        const npy_intp *dimensions,
+        const npy_intp *strides,
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+    assert(parameters->flags == NPY_SORT_DEFAULT);
+    assert(strides[0] == sizeof(npy_float64));
+    assert(strides[1] == sizeof(npy_intp));
+
+    npy_intp N = dimensions[0];
+    char *in = data[0];
+    npy_intp *out = (npy_intp *)data[1];
+
+    return aquicksort_double(in, out, N, NULL);
+}
+
+
+NPY_NO_EXPORT int
+sfloat_argsort_get_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int move_references,
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
+
+    if (PyDataType_FLAGCHK(context->descriptors[0], NPY_NEEDS_PYAPI)) {
+        *flags |= NPY_METH_REQUIRES_PYAPI;
+    }
+
+    if (parameters->flags == NPY_SORT_STABLE) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_stable_argsort_loop;
+    }
+    else if (parameters->flags == NPY_SORT_DEFAULT) {
+        *out_loop = (PyArrayMethod_StridedLoop *)sfloat_default_argsort_loop;
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "unsupported sort kind");
+        return -1;
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT NPY_CASTING
+sfloat_argsort_resolve_descriptors(
+        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArray_DTypeMeta *dtypes[2],
+        PyArray_Descr *given_descrs[2],
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
+{
+    assert(given_descrs[1] == NULL || given_descrs[1]->type_num == NPY_INTP);
+    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+
+    loop_descrs[0] = given_descrs[0];
+    Py_INCREF(loop_descrs[0]);
+    loop_descrs[1] = PyArray_DescrFromType(NPY_INTP);
+    if (loop_descrs[1] == NULL) {
+        return -1;
+    }
+    return NPY_NO_CASTING;
+}
+
+
 /*
  * Add new ufunc loops (this is somewhat clumsy as of writing it, but should
  * get less so with the introduction of public API).
  */
 static int
 sfloat_init_ufuncs(void) {
-    PyArray_DTypeMeta *dtypes[3] = {
+    PyArray_DTypeMeta *all_sfloat_dtypes[3] = {
             &PyArray_SFloatDType, &PyArray_SFloatDType, &PyArray_SFloatDType};
-    PyType_Slot slots[3] = {{0, NULL}};
-    PyArrayMethod_Spec spec = {
-        .nin = 2,
-        .nout =1,
-        .dtypes = dtypes,
-        .slots = slots,
+    PyType_Slot multiply_slots[3] = {
+        {NPY_METH_resolve_descriptors, &multiply_sfloats_resolve_descriptors},
+        {NPY_METH_strided_loop, &multiply_sfloats},
+        {0, NULL}
     };
-    spec.name = "sfloat_multiply";
-    spec.casting = NPY_NO_CASTING;
+    PyArrayMethod_Spec multiply_spec = {
+        .nin = 2,
+        .nout = 1,
+        .dtypes = all_sfloat_dtypes,
+        .slots = multiply_slots,
+        .name = "sfloat_multiply",
+        .casting = NPY_NO_CASTING,
+    };
 
-    slots[0].slot = NPY_METH_resolve_descriptors;
-    slots[0].pfunc = &multiply_sfloats_resolve_descriptors;
-    slots[1].slot = NPY_METH_strided_loop;
-    slots[1].pfunc = &multiply_sfloats;
-    PyBoundArrayMethodObject *bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
-    if (bmeth == NULL) {
-        return -1;
-    }
-    int res = sfloat_add_loop("multiply",
-            bmeth->dtypes, (PyObject *)bmeth->method);
-    Py_DECREF(bmeth);
-    if (res < 0) {
-        return -1;
-    }
+    PyType_Slot add_slots[3] = {
+        {NPY_METH_resolve_descriptors, &add_sfloats_resolve_descriptors},
+        {NPY_METH_strided_loop, &add_sfloats},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec add_spec = {
+        .nin = 2,
+        .nout = 1,
+        .dtypes = all_sfloat_dtypes,
+        .slots = add_slots,
+        .name = "sfloat_add",
+        .casting = NPY_SAME_KIND_CASTING,
+    };
 
-    spec.name = "sfloat_add";
-    spec.casting = NPY_SAME_KIND_CASTING;
+    PyArray_DTypeMeta *sort_dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
+    PyType_Slot sort_slots[3] = {
+        {NPY_METH_resolve_descriptors, &sfloat_sort_resolve_descriptors},
+        {NPY_METH_get_loop, &sfloat_sort_get_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec sort_spec = {
+        .nin = 1,
+        .nout = 1,
+        .dtypes = sort_dtypes,
+        .slots = sort_slots,
+    };
+    sort_spec.name = "sfloat_sort";
+    sort_spec.casting = NPY_NO_CASTING;
+    sort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    slots[0].slot = NPY_METH_resolve_descriptors;
-    slots[0].pfunc = &add_sfloats_resolve_descriptors;
-    slots[1].slot = NPY_METH_strided_loop;
-    slots[1].pfunc = &add_sfloats;
-    bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
-    if (bmeth == NULL) {
-        return -1;
-    }
-    res = sfloat_add_loop("add",
-            bmeth->dtypes, (PyObject *)bmeth->method);
-    Py_DECREF(bmeth);
-    if (res < 0) {
+    PyArray_DTypeMeta *argsort_dtypes[2] = {&PyArray_SFloatDType, &PyArray_IntpDType};
+    PyType_Slot argsort_slots[3] = {
+        {NPY_METH_resolve_descriptors, &sfloat_argsort_resolve_descriptors},
+        {NPY_METH_get_loop, &sfloat_argsort_get_loop},
+        {0, NULL}
+    };
+    PyArrayMethod_Spec argsort_spec = {
+        .nin = 1,
+        .nout = 1,
+        .dtypes = argsort_dtypes,
+        .slots = argsort_slots,
+    };
+    argsort_spec.name = "sfloat_argsort";
+    argsort_spec.casting = NPY_NO_CASTING;
+    argsort_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    /* here we chose weirdish names to test the lookup mechanism */
+    PyUFunc_LoopSlot loops[] = {
+        {"multiply", &multiply_spec},
+        {"_core._multiarray_umath.add", &add_spec},
+        {"numpy:sort", &sort_spec},
+        {"numpy._core.fromnumeric:argsort", &argsort_spec},
+        {NULL, NULL}
+    };
+    if (PyUFunc_AddLoopsFromSpecs(loops) < 0) {
         return -1;
     }
 
     /* N.B.: Wrapping isn't actually correct if scaling can be negative */
-    if (sfloat_add_wrapping_loop("hypot", dtypes) < 0) {
+    if (sfloat_add_wrapping_loop("hypot", all_sfloat_dtypes) < 0) {
         return -1;
     }
 
     /*
      * Add a promoter for both directions of multiply with double.
      */
+    int res = -1;
     PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
 
     PyArray_DTypeMeta *promoter_dtypes[3] = {

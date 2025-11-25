@@ -1,6 +1,7 @@
 """Implementation of __array_function__ overrides from NEP-18."""
 import collections
 import functools
+import inspect
 
 from numpy._core._multiarray_umath import (
     _ArrayFunctionDispatcher,
@@ -156,11 +157,15 @@ def array_function_dispatch(dispatcher=None, module=None, verify=True,
                         "argument and a keyword-only argument. "
                         f"{implementation} does not seem to comply.")
 
-        if docs_from_dispatcher:
-            add_docstring(implementation, dispatcher.__doc__)
+        if docs_from_dispatcher and dispatcher.__doc__ is not None:
+            doc = inspect.cleandoc(dispatcher.__doc__)
+            add_docstring(implementation, doc)
 
         public_api = _ArrayFunctionDispatcher(dispatcher, implementation)
-        public_api = functools.wraps(implementation)(public_api)
+        functools.update_wrapper(public_api, implementation)
+
+        if not verify and not getattr(implementation, "__text_signature__", None):
+            public_api.__signature__ = inspect.signature(dispatcher)
 
         if module is not None:
             public_api.__module__ = module

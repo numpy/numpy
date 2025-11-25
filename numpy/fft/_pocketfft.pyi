@@ -107,7 +107,7 @@ def irfftn(
 def fft2(
     a: ArrayLike,
     s: Sequence[int] | None = None,
-    axes: Sequence[int] | None = ...,  # = (-2, -1)
+    axes: Sequence[int] | None = (-2, -1),
     norm: _NormKind = None,
     out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
@@ -115,7 +115,7 @@ def fft2(
 def ifft2(
     a: ArrayLike,
     s: Sequence[int] | None = None,
-    axes: Sequence[int] | None = ...,  # = (-2, -1)
+    axes: Sequence[int] | None = (-2, -1),
     norm: _NormKind = None,
     out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
@@ -123,7 +123,7 @@ def ifft2(
 def rfft2(
     a: ArrayLike,
     s: Sequence[int] | None = None,
-    axes: Sequence[int] | None = ...,  # = (-2, -1)
+    axes: Sequence[int] | None = (-2, -1),
     norm: _NormKind = None,
     out: NDArray[complex128] | None = None,
 ) -> NDArray[complex128]: ...
@@ -131,7 +131,7 @@ def rfft2(
 def irfft2(
     a: ArrayLike,
     s: Sequence[int] | None = None,
-    axes: Sequence[int] | None = ...,  # = (-2, -1)
+    axes: Sequence[int] | None = (-2, -1),
     norm: _NormKind = None,
     out: NDArray[float64] | None = None,
 ) -> NDArray[float64]: ...

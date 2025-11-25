@@ -1,4 +1,5 @@
 from typing import Any, TypeVar, overload
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy import floating, object_
@@ -14,25 +15,17 @@ __all__ = ["fix", "isneginf", "isposinf"]
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 @overload
-def fix(  # type: ignore[misc]
-    x: _FloatLike_co,
-    out: None = None,
-) -> floating: ...
+@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+def fix(x: _FloatLike_co, out: None = None) -> floating: ...
 @overload
-def fix(
-    x: _ArrayLikeFloat_co,
-    out: None = None,
-) -> NDArray[floating]: ...
+@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+def fix(x: _ArrayLikeFloat_co, out: None = None) -> NDArray[floating]: ...
 @overload
-def fix(
-    x: _ArrayLikeObject_co,
-    out: None = None,
-) -> NDArray[object_]: ...
+@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+def fix(x: _ArrayLikeObject_co, out: None = None) -> NDArray[object_]: ...
 @overload
-def fix(
-    x: _ArrayLikeFloat_co | _ArrayLikeObject_co,
-    out: _ArrayT,
-) -> _ArrayT: ...
+@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+def fix(x: _ArrayLikeFloat_co | _ArrayLikeObject_co, out: _ArrayT) -> _ArrayT: ...
 
 @overload
 def isposinf(  # type: ignore[misc]

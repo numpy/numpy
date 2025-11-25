@@ -1,5 +1,4 @@
 from typing import (
-    ClassVar,
     Literal,
     Never,
     TypeAlias,
@@ -118,7 +117,7 @@ _EmptyDict: TypeAlias = dict[Never, Never]
 
 @final
 class __array_namespace_info__:
-    __module__: ClassVar[Literal["numpy"]]
+    __module__: Literal["numpy"] = "numpy"
 
     def capabilities(self) -> _Capabilities: ...
     def default_device(self) -> _Device: ...

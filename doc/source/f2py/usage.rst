@@ -327,3 +327,65 @@ resulting package to work, you need to create a file named ``__init__.py``
 (in the same directory as ``add.pyf``). Notice the extension module is
 defined entirely in terms of the ``add.pyf`` and ``add.f`` files. The
 conversion of the .pyf file to a .c file is handled by `numpy.distutils`.
+
+Building with Meson (Examples)
+==============================
+
+Using f2py with Meson
+~~~~~~~~~~~~~~~~~~~~~
+
+Meson is a modern build system recommended for building Python extension
+modules, especially starting with Python 3.12 and NumPy 2.x. Meson provides
+a robust and maintainable way to build Fortran extensions with f2py.
+
+To build a Fortran extension using f2py and Meson, you can use Meson's
+``custom_target`` to invoke f2py and generate the extension module. The
+following minimal example demonstrates how to do this:
+
+This example shows how to build the ``add`` extension from the ``add.f`` and ``add.pyf``
+files described in the :ref:`f2py-examples` (note that you do not always need
+a ``.pyf`` file: in many cases ``f2py`` can figure out the annotations by itself).
+
+Project layout:
+
+  f2py_examples/
+    meson.build
+    add.f
+    add.pyf (optional)
+    __init__.py  (can be empty)
+
+Example ``meson.build``:
+
+.. code-block:: meson
+
+   project('f2py_examples', 'fortran')
+
+   py = import('python').find_installation()
+
+   # List your Fortran source files
+   sources = files('add.pyf', 'add.f')
+
+   # Build the extension by invoking f2py via a custom target
+   add_mod = custom_target(
+     'add_extension',
+     input: sources,
+     output: ['add' + py.extension_suffix()],
+     command: [
+       py.full_path(), '-m', 'numpy.f2py',
+       '-c', 'add.pyf', 'add.f',
+       '-m', 'add'
+     ],
+     build_by_default: true
+   )
+
+   # Install into site-packages under the f2py_examples package
+   install_subdir('.', install_dir: join_paths(py.site_packages_dir(), 'f2py_examples'),
+                  strip_directory: false,
+                  exclude_files: ['meson.build'])
+
+   # Also install the built extension (place it beside __init__.py)
+   install_data(add_mod, install_dir: join_paths(py.site_packages_dir(), 'f2py_examples'))
+
+For more details and advanced usage, see the Meson build guide in the
+user documentation or refer to SciPy's Meson build files for real-world
+examples: https://github.com/scipy/scipy/tree/main/meson.build

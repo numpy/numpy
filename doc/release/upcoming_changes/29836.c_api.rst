@@ -1,0 +1,15 @@
+New ``NPY_DT_get_constant`` slot for DType constant retrieval
+-------------------------------------------------------------
+A new slot ``NPY_DT_get_constant`` has been added to the DType API, allowing
+dtype implementations to provide constant values such as machine limits and
+special values. The slot function has the signature::
+
+    int get_constant(PyArray_Descr *descr, int constant_id, void *ptr)
+
+It returns 1 on success, 0 if the constant is not available, or -1 on error.
+The function is always called with the GIL held and may write to unaligned memory.
+
+Integer constants (marked with the ``1 << 16`` bit) return ``npy_intp`` values,
+while floating-point constants return values of the dtype's native type.
+
+Implementing this can be used by user DTypes to provide `numpy.finfo` values.

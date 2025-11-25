@@ -1,3 +1,9 @@
+import contextvars
+from _typeshed import SupportsWrite
+from collections.abc import Callable
+from typing import Any, Final, Literal, TypeAlias, TypedDict, Unpack, type_check_only
+from typing_extensions import CapsuleType
+
 from numpy import (
     absolute,
     add,
@@ -195,3 +201,30 @@ __all__ = [
     "vecdot",
     "vecmat",
 ]
+
+###
+
+_ErrKind: TypeAlias = Literal["ignore", "warn", "raise", "call", "print", "log"]
+_ErrCall: TypeAlias = Callable[[str, int], Any] | SupportsWrite[str]
+
+@type_check_only
+class _ExtOjbDict(TypedDict, total=False):
+    divide: _ErrKind
+    over: _ErrKind
+    under: _ErrKind
+    invalid: _ErrKind
+    call: _ErrCall | None
+    bufsize: int
+
+# re-exports from `_core._multiarray_umath` that are used by `_core._ufunc_config`
+
+NAN: Final[float] = float("nan")
+PINF: Final[float] = float("+inf")
+NINF: Final[float] = float("-inf")
+PZERO: Final[float] = +0.0
+NZERO: Final[float] = -0.0
+_UFUNC_API: Final[CapsuleType] = ...
+_extobj_contextvar: Final[contextvars.ContextVar[CapsuleType]] = ...
+
+def _get_extobj_dict() -> _ExtOjbDict: ...
+def _make_extobj(*, all: _ErrKind = ..., **kwargs: Unpack[_ExtOjbDict]) -> CapsuleType: ...

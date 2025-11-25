@@ -132,12 +132,13 @@ def row_stack(
     casting: _CastingKind = "same_kind",
 ) -> NDArray[Any]: ...
 
-#
+# keep in sync with `numpy.ma.extras.column_stack`
 @overload
 def column_stack(tup: Sequence[_ArrayLike[_ScalarT]]) -> NDArray[_ScalarT]: ...
 @overload
 def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
+# keep in sync with `numpy.ma.extras.dstack`
 @overload
 def dstack(tup: Sequence[_ArrayLike[_ScalarT]]) -> NDArray[_ScalarT]: ...
 @overload
@@ -169,6 +170,7 @@ def split(
     axis: SupportsIndex = 0,
 ) -> list[NDArray[Any]]: ...
 
+# keep in sync with `numpy.ma.extras.hsplit`
 @overload
 def hsplit(
     ary: _ArrayLike[_ScalarT],

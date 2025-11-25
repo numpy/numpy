@@ -1,0 +1,6 @@
+Raise `TypeError` on attempt to convert array with `ndim > 0` to scalar
+-----------------------------------------------------------------------
+Conversion of an array with `ndim > 0` to a scalar was deprecated in
+NumPy 1.25.  Now, attempting to do so raises `TypeError`.
+Ensure you extract a single element from your array before performing
+this operation.

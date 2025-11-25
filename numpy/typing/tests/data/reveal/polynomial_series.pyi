@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import TypeAlias, assert_type
+from typing import Any, TypeAlias, assert_type
 
 import numpy as np
 import numpy.polynomial as npp
@@ -79,12 +79,12 @@ assert_type(npp.polynomial.polyval3d(AR_f8, AR_f8, AR_f8, AR_i8), npt.NDArray[np
 assert_type(npp.polynomial.polyval3d(AR_i8, AR_i8, AR_i8, AR_c16), npt.NDArray[np.complexfloating])
 assert_type(npp.polynomial.polyval3d(AR_O, AR_O, AR_O, AR_O), npt.NDArray[np.object_])
 
-assert_type(npp.polynomial.polyvalfromroots(AR_b, AR_b), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyvalfromroots(AR_u4, AR_b), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyvalfromroots(AR_i8, AR_i8), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyvalfromroots(AR_f8, AR_i8), npt.NDArray[np.floating])
-assert_type(npp.polynomial.polyvalfromroots(AR_i8, AR_c16), npt.NDArray[np.complexfloating])
-assert_type(npp.polynomial.polyvalfromroots(AR_O, AR_O), npt.NDArray[np.object_])
+assert_type(npp.polynomial.polyvalfromroots(AR_b, AR_b), npt.NDArray[np.float64 | Any])
+assert_type(npp.polynomial.polyvalfromroots(AR_u4, AR_b), npt.NDArray[np.float64 | Any])
+assert_type(npp.polynomial.polyvalfromroots(AR_i8, AR_i8), npt.NDArray[np.float64 | Any])
+assert_type(npp.polynomial.polyvalfromroots(AR_f8, AR_i8), npt.NDArray[np.float64 | Any])
+assert_type(npp.polynomial.polyvalfromroots(AR_i8, AR_c16), npt.NDArray[np.complex128 | Any])
+assert_type(npp.polynomial.polyvalfromroots(AR_O, AR_O), npt.NDArray[np.object_ | Any])
 
 assert_type(npp.polynomial.polyvander(AR_f8, 3), npt.NDArray[np.floating])
 assert_type(npp.polynomial.polyvander(AR_c16, 3), npt.NDArray[np.complexfloating])

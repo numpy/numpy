@@ -519,15 +519,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         if (buff == NULL) {
             return PyErr_NoMemory();
         }
-        /* copyswap needs an array object, but only actually cares about the
-         * dtype
-         */
-        PyArrayObject_fields dummy_arr;
-        if (base == NULL) {
-            dummy_arr.descr = descr;
-            base = (PyObject *)&dummy_arr;
+        memcpy(buff, data, itemsize);
+        if (swap) {
+            byte_swap_vector(buff, itemsize / 4, 4);
         }
-        copyswap(buff, data, swap, base);
 
         /* truncation occurs here */
         PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buff, itemsize / 4);

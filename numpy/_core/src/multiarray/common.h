@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 
+#include <Python.h>
+
 #include <structmember.h>
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
@@ -63,11 +65,22 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
+
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
+
+/**
+ * Unpack a field from a structured dtype by index.
+ */
+NPY_NO_EXPORT int
+_unpack_field_index(
+   _PyArray_LegacyDescr *descr,
+   npy_intp index,
+   PyArray_Descr **odescr,
+   npy_intp *offset);
 
 /*
  * check whether arrays with datatype dtype might have object fields. This will

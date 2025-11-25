@@ -1,0 +1,5 @@
+A new `PyUFunc_AddLoopsFromSpecs` convenience function has been added to the C API.
+-----------------------------------------------------------------------------------
+This function allows adding multiple ufunc loops from their specs in one call using
+a NULL-terminated array of `PyUFunc_LoopSlot` structs. It allows registering
+sorting and argsorting loops using the new ArrayMethod API.

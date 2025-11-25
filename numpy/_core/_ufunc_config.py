@@ -187,6 +187,8 @@ def setbufsize(size):
     8192
 
     """
+    if size < 0:
+        raise ValueError("buffer size must be non-negative")
     old = _get_extobj_dict()["bufsize"]
     extobj = _make_extobj(bufsize=size)
     _extobj_contextvar.set(extobj)

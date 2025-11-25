@@ -92,7 +92,7 @@ If a package either uses the NumPy C-API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
 of the package.
 
-By default, NumPy exposes a API that is backward compatible with the earliest
+By default, NumPy exposes an API that is backward compatible with the earliest
 NumPy version that supports the oldest Python version currently supported by
 NumPy. For example, NumPy 1.25.0 supports Python 3.9 and above; and the
 earliest NumPy version to support Python 3.9 was 1.19. Therefore we guarantee
@@ -128,14 +128,9 @@ compatible with a new major release of NumPy and may not be compatible with
 very old versions.
 
 For conda-forge packages, please see
-`here <https://conda-forge.org/docs/maintainer/knowledge_base.html#building-against-numpy>`__.
-
-as of now, it is usually as easy as including::
-
-    host:
-      - numpy
-    run:
-      - {{ pin_compatible('numpy') }}
+`here <https://conda-forge.org/docs/maintainer/knowledge_base.html#building-against-numpy>`__
+for instructions on how to declare a dependency on ``numpy`` when using the C
+API.
 
 
 Runtime dependency & version ranges

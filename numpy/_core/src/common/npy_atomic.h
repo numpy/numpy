@@ -79,6 +79,12 @@ npy_atomic_load_ptr(const void *obj) {
 #endif
 }
 
+static inline npy_hash_t
+npy_atomic_load_hash_t(const npy_hash_t *obj) {
+    assert(sizeof(npy_hash_t) == sizeof(void *));
+    return (npy_hash_t)npy_atomic_load_ptr((const void *)obj);
+}
+
 static inline void
 npy_atomic_store_uint8(npy_uint8 *obj, npy_uint8 value) {
 #ifdef STDC_ATOMICS
@@ -102,6 +108,12 @@ npy_atomic_store_ptr(void *obj, void *value)
 #elif defined(GCC_ATOMICS)
     __atomic_store_n((void **)obj, value, __ATOMIC_SEQ_CST);
 #endif
+}
+
+static inline void
+npy_atomic_store_hash_t(npy_hash_t *obj, npy_hash_t value) {
+    assert(sizeof(npy_hash_t) == sizeof(void *));
+    npy_atomic_store_ptr((void *)obj, (void *)value);
 }
 
 #undef MSC_ATOMICS

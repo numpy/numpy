@@ -466,7 +466,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
        A summary of the differences can be found in the
        :doc:`transition guide </reference/routines.polynomials>`.
 
-    Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
+    Fit a polynomial ``p[0] * x**deg + ... + p[deg]`` of degree `deg`
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
     the squared error in the order `deg`, `deg-1`, ... `0`.
 

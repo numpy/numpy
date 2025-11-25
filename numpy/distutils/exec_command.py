@@ -114,7 +114,7 @@ def get_pythonexe():
     return pythonexe
 
 def find_executable(exe, path=None, _cache={}):
-    """Return full path of a executable or None.
+    """Return full path of an executable or None.
 
     Symbolic links are not followed.
     """

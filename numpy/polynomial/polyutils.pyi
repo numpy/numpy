@@ -1,11 +1,21 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import (
+    Final,
+    Literal,
+    Protocol,
+    SupportsIndex,
+    TypeAlias,
+    TypeVar,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeObject_co,
     _FloatLike_co,
     _NumberLike_co,
 )
@@ -22,210 +32,112 @@ from ._polytypes import (
     _FloatArray,
     _FloatSeries,
     _FuncBinOp,
-    _FuncValND,
-    _FuncVanderND,
     _ObjectArray,
     _ObjectSeries,
     _SeriesLikeCoef_co,
     _SeriesLikeComplex_co,
     _SeriesLikeFloat_co,
     _SeriesLikeInt_co,
+    _SeriesLikeObject_co,
     _Tuple2,
 )
 
-__all__: Final[Sequence[str]] = [
-    "as_series",
-    "format_float",
-    "getdomain",
-    "mapdomain",
-    "mapparms",
-    "trimcoef",
-    "trimseq",
-]
+__all__ = ["as_series", "format_float", "getdomain", "mapdomain", "mapparms", "trimcoef", "trimseq"]
 
-_AnyLineF: TypeAlias = Callable[
-    [_CoefLike_co, _CoefLike_co],
-    _CoefArray,
-]
-_AnyMulF: TypeAlias = Callable[
-    [npt.ArrayLike, npt.ArrayLike],
-    _CoefArray,
-]
-_AnyVanderF: TypeAlias = Callable[
-    [npt.ArrayLike, SupportsIndex],
-    _CoefArray,
-]
+_T = TypeVar("_T")
+_SeqT = TypeVar("_SeqT", bound=_CoefArray | Sequence[_CoefLike_co])
+
+_AnyLineF: TypeAlias = Callable[[float, float], _CoefArray]
+_AnyMulF: TypeAlias = Callable[[np.ndarray | list[int], np.ndarray], _CoefArray]
+_AnyVanderF: TypeAlias = Callable[[np.ndarray, int], _CoefArray]
+
+@type_check_only
+class _ValFunc(Protocol[_T]):
+    def __call__(self, x: np.ndarray, c: _T, /, *, tensor: bool = True) -> _T: ...
+
+###
 
 @overload
-def as_series(
-    alist: npt.NDArray[np.integer] | _FloatArray,
-    trim: bool = True,
-) -> list[_FloatSeries]: ...
+def as_series(alist: npt.NDArray[np.integer] | _FloatArray, trim: bool = True) -> list[_FloatSeries]: ...
 @overload
-def as_series(
-    alist: _ComplexArray,
-    trim: bool = True,
-) -> list[_ComplexSeries]: ...
+def as_series(alist: _ComplexArray, trim: bool = True) -> list[_ComplexSeries]: ...
 @overload
-def as_series(
-    alist: _ObjectArray,
-    trim: bool = True,
-) -> list[_ObjectSeries]: ...
+def as_series(alist: _ObjectArray, trim: bool = True) -> list[_ObjectSeries]: ...
 @overload
-def as_series(  # type: ignore[overload-overlap]
-    alist: Iterable[_FloatArray | npt.NDArray[np.integer]],
-    trim: bool = True,
-) -> list[_FloatSeries]: ...
+def as_series(alist: Iterable[_FloatArray | npt.NDArray[np.integer]], trim: bool = True) -> list[_FloatSeries]: ...
 @overload
-def as_series(
-    alist: Iterable[_ComplexArray],
-    trim: bool = True,
-) -> list[_ComplexSeries]: ...
+def as_series(alist: Iterable[_ComplexArray], trim: bool = True) -> list[_ComplexSeries]: ...
 @overload
-def as_series(
-    alist: Iterable[_ObjectArray],
-    trim: bool = True,
-) -> list[_ObjectSeries]: ...
+def as_series(alist: Iterable[_ObjectArray], trim: bool = True) -> list[_ObjectSeries]: ...
 @overload
-def as_series(  # type: ignore[overload-overlap]
-    alist: Iterable[_SeriesLikeFloat_co | float],
-    trim: bool = True,
-) -> list[_FloatSeries]: ...
+def as_series(alist: Iterable[_SeriesLikeFloat_co | float], trim: bool = True) -> list[_FloatSeries]: ...
 @overload
-def as_series(
-    alist: Iterable[_SeriesLikeComplex_co | complex],
-    trim: bool = True,
-) -> list[_ComplexSeries]: ...
+def as_series(alist: Iterable[_SeriesLikeComplex_co | complex], trim: bool = True) -> list[_ComplexSeries]: ...
 @overload
-def as_series(
-    alist: Iterable[_SeriesLikeCoef_co | object],
-    trim: bool = True,
-) -> list[_ObjectSeries]: ...
+def as_series(alist: Iterable[_SeriesLikeCoef_co | object], trim: bool = True) -> list[_ObjectSeries]: ...
 
-_T_seq = TypeVar("_T_seq", bound=_CoefArray | Sequence[_CoefLike_co])
-def trimseq(seq: _T_seq) -> _T_seq: ...
+#
+def trimseq(seq: _SeqT) -> _SeqT: ...
 
+#
 @overload
-def trimcoef(  # type: ignore[overload-overlap]
-    c: npt.NDArray[np.integer] | _FloatArray,
-    tol: _FloatLike_co = 0,
-) -> _FloatSeries: ...
+def trimcoef(c: npt.NDArray[np.integer] | _FloatArray, tol: _FloatLike_co = 0) -> _FloatSeries: ...
 @overload
-def trimcoef(
-    c: _ComplexArray,
-    tol: _FloatLike_co = 0,
-) -> _ComplexSeries: ...
+def trimcoef(c: _ComplexArray, tol: _FloatLike_co = 0) -> _ComplexSeries: ...
 @overload
-def trimcoef(
-    c: _ObjectArray,
-    tol: _FloatLike_co = 0,
-) -> _ObjectSeries: ...
+def trimcoef(c: _ObjectArray, tol: _FloatLike_co = 0) -> _ObjectSeries: ...
 @overload
-def trimcoef(  # type: ignore[overload-overlap]
-    c: _SeriesLikeFloat_co | float,
-    tol: _FloatLike_co = 0,
-) -> _FloatSeries: ...
+def trimcoef(c: _SeriesLikeFloat_co | float, tol: _FloatLike_co = 0) -> _FloatSeries: ...
 @overload
-def trimcoef(
-    c: _SeriesLikeComplex_co | complex,
-    tol: _FloatLike_co = 0,
-) -> _ComplexSeries: ...
+def trimcoef(c: _SeriesLikeComplex_co | complex, tol: _FloatLike_co = 0) -> _ComplexSeries: ...
 @overload
-def trimcoef(
-    c: _SeriesLikeCoef_co | object,
-    tol: _FloatLike_co = 0,
-) -> _ObjectSeries: ...
+def trimcoef(c: _SeriesLikeCoef_co | object, tol: _FloatLike_co = 0) -> _ObjectSeries: ...
 
+#
 @overload
-def getdomain(  # type: ignore[overload-overlap]
-    x: _FloatArray | npt.NDArray[np.integer],
-) -> _Array2[np.float64]: ...
+def getdomain(x: _FloatArray | npt.NDArray[np.integer]) -> _Array2[np.float64]: ...
 @overload
-def getdomain(
-    x: _ComplexArray,
-) -> _Array2[np.complex128]: ...
+def getdomain(x: _ComplexArray) -> _Array2[np.complex128]: ...
 @overload
-def getdomain(
-    x: _ObjectArray,
-) -> _Array2[np.object_]: ...
+def getdomain(x: _ObjectArray) -> _Array2[np.object_]: ...
 @overload
-def getdomain(  # type: ignore[overload-overlap]
-    x: _SeriesLikeFloat_co | float,
-) -> _Array2[np.float64]: ...
+def getdomain(x: _SeriesLikeFloat_co | float) -> _Array2[np.float64]: ...
 @overload
-def getdomain(
-    x: _SeriesLikeComplex_co | complex,
-) -> _Array2[np.complex128]: ...
+def getdomain(x: _SeriesLikeComplex_co | complex) -> _Array2[np.complex128]: ...
 @overload
-def getdomain(
-    x: _SeriesLikeCoef_co | object,
-) -> _Array2[np.object_]: ...
+def getdomain(x: _SeriesLikeCoef_co | object) -> _Array2[np.object_]: ...
 
+#
 @overload
-def mapparms(  # type: ignore[overload-overlap]
-    old: npt.NDArray[np.floating | np.integer],
-    new: npt.NDArray[np.floating | np.integer],
-) -> _Tuple2[np.floating]: ...
+def mapparms(old: npt.NDArray[np.floating | np.integer], new: npt.NDArray[np.floating | np.integer]) -> _Tuple2[np.floating]: ...
 @overload
-def mapparms(
-    old: npt.NDArray[np.number],
-    new: npt.NDArray[np.number],
-) -> _Tuple2[np.complexfloating]: ...
+def mapparms(old: npt.NDArray[np.number], new: npt.NDArray[np.number]) -> _Tuple2[np.complexfloating]: ...
 @overload
-def mapparms(
-    old: npt.NDArray[np.object_ | np.number],
-    new: npt.NDArray[np.object_ | np.number],
-) -> _Tuple2[object]: ...
+def mapparms(old: npt.NDArray[np.object_ | np.number], new: npt.NDArray[np.object_ | np.number]) -> _Tuple2[object]: ...
 @overload
-def mapparms(  # type: ignore[overload-overlap]
-    old: Sequence[float],
-    new: Sequence[float],
-) -> _Tuple2[float]: ...
+def mapparms(old: Sequence[float], new: Sequence[float]) -> _Tuple2[float]: ...
 @overload
-def mapparms(
-    old: Sequence[complex],
-    new: Sequence[complex],
-) -> _Tuple2[complex]: ...
+def mapparms(old: Sequence[complex], new: Sequence[complex]) -> _Tuple2[complex]: ...
 @overload
-def mapparms(
-    old: _SeriesLikeFloat_co,
-    new: _SeriesLikeFloat_co,
-) -> _Tuple2[np.floating]: ...
+def mapparms(old: _SeriesLikeFloat_co, new: _SeriesLikeFloat_co) -> _Tuple2[np.floating]: ...
 @overload
-def mapparms(
-    old: _SeriesLikeComplex_co,
-    new: _SeriesLikeComplex_co,
-) -> _Tuple2[np.complexfloating]: ...
+def mapparms(old: _SeriesLikeComplex_co, new: _SeriesLikeComplex_co) -> _Tuple2[np.complexfloating]: ...
 @overload
-def mapparms(
-    old: _SeriesLikeCoef_co,
-    new: _SeriesLikeCoef_co,
-) -> _Tuple2[object]: ...
+def mapparms(old: _SeriesLikeCoef_co, new: _SeriesLikeCoef_co) -> _Tuple2[object]: ...
 
+#
 @overload
-def mapdomain(  # type: ignore[overload-overlap]
-    x: _FloatLike_co,
-    old: _SeriesLikeFloat_co,
-    new: _SeriesLikeFloat_co,
-) -> np.floating: ...
+def mapdomain(x: _FloatLike_co, old: _SeriesLikeFloat_co, new: _SeriesLikeFloat_co) -> np.floating: ...
+@overload
+def mapdomain(x: _NumberLike_co, old: _SeriesLikeComplex_co, new: _SeriesLikeComplex_co) -> np.complexfloating: ...
 @overload
 def mapdomain(
-    x: _NumberLike_co,
-    old: _SeriesLikeComplex_co,
-    new: _SeriesLikeComplex_co,
-) -> np.complexfloating: ...
-@overload
-def mapdomain(  # type: ignore[overload-overlap]
     x: npt.NDArray[np.floating | np.integer],
     old: npt.NDArray[np.floating | np.integer],
     new: npt.NDArray[np.floating | np.integer],
 ) -> _FloatSeries: ...
 @overload
-def mapdomain(
-    x: npt.NDArray[np.number],
-    old: npt.NDArray[np.number],
-    new: npt.NDArray[np.number],
-) -> _ComplexSeries: ...
+def mapdomain(x: npt.NDArray[np.number], old: npt.NDArray[np.number], new: npt.NDArray[np.number]) -> _ComplexSeries: ...
 @overload
 def mapdomain(
     x: npt.NDArray[np.object_ | np.number],
@@ -233,134 +145,115 @@ def mapdomain(
     new: npt.NDArray[np.object_ | np.number],
 ) -> _ObjectSeries: ...
 @overload
-def mapdomain(  # type: ignore[overload-overlap]
-    x: _SeriesLikeFloat_co,
-    old: _SeriesLikeFloat_co,
-    new: _SeriesLikeFloat_co,
-) -> _FloatSeries: ...
+def mapdomain(x: _SeriesLikeFloat_co, old: _SeriesLikeFloat_co, new: _SeriesLikeFloat_co) -> _FloatSeries: ...
 @overload
-def mapdomain(
-    x: _SeriesLikeComplex_co,
-    old: _SeriesLikeComplex_co,
-    new: _SeriesLikeComplex_co,
-) -> _ComplexSeries: ...
+def mapdomain(x: _SeriesLikeComplex_co, old: _SeriesLikeComplex_co, new: _SeriesLikeComplex_co) -> _ComplexSeries: ...
 @overload
-def mapdomain(
-    x: _SeriesLikeCoef_co,
-    old: _SeriesLikeCoef_co,
-    new: _SeriesLikeCoef_co,
-) -> _ObjectSeries: ...
+def mapdomain(x: _SeriesLikeCoef_co, old: _SeriesLikeCoef_co, new: _SeriesLikeCoef_co) -> _ObjectSeries: ...
 @overload
-def mapdomain(
-    x: _CoefLike_co,
-    old: _SeriesLikeCoef_co,
-    new: _SeriesLikeCoef_co,
-) -> object: ...
+def mapdomain(x: _CoefLike_co, old: _SeriesLikeCoef_co, new: _SeriesLikeCoef_co) -> object: ...
 
-def _nth_slice(
-    i: SupportsIndex,
-    ndim: SupportsIndex,
-) -> tuple[slice | None, ...]: ...
+#
+def _nth_slice(i: SupportsIndex, ndim: SupportsIndex) -> tuple[slice | None, ...]: ...
 
-_vander_nd: _FuncVanderND[Literal["_vander_nd"]]
-_vander_nd_flat: _FuncVanderND[Literal["_vander_nd_flat"]]
+# keep in sync with `vander_nd_flat`
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeFloat_co],
+    degrees: Sequence[SupportsIndex],
+) -> _FloatArray: ...
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ComplexArray: ...
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeObject_co | _ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ObjectArray: ...
+@overload
+def _vander_nd(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[npt.ArrayLike],
+    degrees: Sequence[SupportsIndex],
+) -> _CoefArray: ...
+
+# keep in sync with `vander_nd`
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeFloat_co],
+    degrees: Sequence[SupportsIndex],
+) -> _FloatArray: ...
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ComplexArray: ...
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[_ArrayLikeObject_co | _ArrayLikeComplex_co],
+    degrees: Sequence[SupportsIndex],
+) -> _ObjectArray: ...
+@overload
+def _vander_nd_flat(
+    vander_fs: Sequence[_AnyVanderF],
+    points: Sequence[npt.ArrayLike],
+    degrees: Sequence[SupportsIndex],
+) -> _CoefArray: ...
 
 # keep in sync with `._polytypes._FuncFromRoots`
 @overload
-def _fromroots(  # type: ignore[overload-overlap]
-    line_f: _AnyLineF,
-    mul_f: _AnyMulF,
-    roots: _SeriesLikeFloat_co,
-) -> _FloatSeries: ...
+def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeFloat_co) -> _FloatSeries: ...
 @overload
-def _fromroots(
-    line_f: _AnyLineF,
-    mul_f: _AnyMulF,
-    roots: _SeriesLikeComplex_co,
-) -> _ComplexSeries: ...
+def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeComplex_co) -> _ComplexSeries: ...
 @overload
-def _fromroots(
-    line_f: _AnyLineF,
-    mul_f: _AnyMulF,
-    roots: _SeriesLikeCoef_co,
-) -> _ObjectSeries: ...
+def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeObject_co) -> _ObjectSeries: ...
 @overload
-def _fromroots(
-    line_f: _AnyLineF,
-    mul_f: _AnyMulF,
-    roots: _SeriesLikeCoef_co,
-) -> _CoefSeries: ...
+def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeCoef_co) -> _CoefSeries: ...
 
-_valnd: _FuncValND[Literal["_valnd"]]
-_gridnd: _FuncValND[Literal["_gridnd"]]
+# keep in sync with `_gridnd`
+def _valnd(val_f: _ValFunc[_T], c: _T, *args: npt.ArrayLike) -> _T: ...
+
+# keep in sync with `_valnd`
+def _gridnd(val_f: _ValFunc[_T], c: _T, *args: npt.ArrayLike) -> _T: ...
 
 # keep in sync with `_polytypes._FuncBinOp`
 @overload
-def _div(  # type: ignore[overload-overlap]
-    mul_f: _AnyMulF,
-    c1: _SeriesLikeFloat_co,
-    c2: _SeriesLikeFloat_co,
-) -> _Tuple2[_FloatSeries]: ...
+def _div(mul_f: _AnyMulF, c1: _SeriesLikeFloat_co, c2: _SeriesLikeFloat_co) -> _Tuple2[_FloatSeries]: ...
 @overload
-def _div(
-    mul_f: _AnyMulF,
-    c1: _SeriesLikeComplex_co,
-    c2: _SeriesLikeComplex_co,
-) -> _Tuple2[_ComplexSeries]: ...
+def _div(mul_f: _AnyMulF, c1: _SeriesLikeComplex_co, c2: _SeriesLikeComplex_co) -> _Tuple2[_ComplexSeries]: ...
 @overload
-def _div(
-    mul_f: _AnyMulF,
-    c1: _SeriesLikeCoef_co,
-    c2: _SeriesLikeCoef_co,
-) -> _Tuple2[_ObjectSeries]: ...
+def _div(mul_f: _AnyMulF, c1: _SeriesLikeObject_co, c2: _SeriesLikeObject_co) -> _Tuple2[_ObjectSeries]: ...
 @overload
-def _div(
-    mul_f: _AnyMulF,
-    c1: _SeriesLikeCoef_co,
-    c2: _SeriesLikeCoef_co,
-) -> _Tuple2[_CoefSeries]: ...
+def _div(mul_f: _AnyMulF, c1: _SeriesLikeCoef_co, c2: _SeriesLikeCoef_co) -> _Tuple2[_CoefSeries]: ...
 
-_add: Final[_FuncBinOp]
-_sub: Final[_FuncBinOp]
+_add: Final[_FuncBinOp] = ...
+_sub: Final[_FuncBinOp] = ...
 
 # keep in sync with `_polytypes._FuncPow`
 @overload
-def _pow(  # type: ignore[overload-overlap]
-    mul_f: _AnyMulF,
-    c: _SeriesLikeFloat_co,
-    pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
-) -> _FloatSeries: ...
+def _pow(mul_f: _AnyMulF, c: _SeriesLikeFloat_co, pow: _AnyInt, maxpower: _AnyInt | None) -> _FloatSeries: ...
 @overload
-def _pow(
-    mul_f: _AnyMulF,
-    c: _SeriesLikeComplex_co,
-    pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
-) -> _ComplexSeries: ...
+def _pow(mul_f: _AnyMulF, c: _SeriesLikeComplex_co, pow: _AnyInt, maxpower: _AnyInt | None) -> _ComplexSeries: ...
 @overload
-def _pow(
-    mul_f: _AnyMulF,
-    c: _SeriesLikeCoef_co,
-    pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
-) -> _ObjectSeries: ...
+def _pow(mul_f: _AnyMulF, c: _SeriesLikeObject_co, pow: _AnyInt, maxpower: _AnyInt | None) -> _ObjectSeries: ...
 @overload
-def _pow(
-    mul_f: _AnyMulF,
-    c: _SeriesLikeCoef_co,
-    pow: _AnyInt,
-    maxpower: _AnyInt | None = ...,
-) -> _CoefSeries: ...
+def _pow(mul_f: _AnyMulF, c: _SeriesLikeCoef_co, pow: _AnyInt, maxpower: _AnyInt | None) -> _CoefSeries: ...
 
 # keep in sync with `_polytypes._FuncFit`
 @overload
-def _fit(  # type: ignore[overload-overlap]
+def _fit(
     vander_f: _AnyVanderF,
     x: _SeriesLikeFloat_co,
     y: _ArrayLikeFloat_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeFloat_co | None = ...,
     rcond: _FloatLike_co | None = None,
     full: Literal[False] = False,
     w: _SeriesLikeFloat_co | None = None,
@@ -371,7 +264,6 @@ def _fit(
     x: _SeriesLikeComplex_co,
     y: _ArrayLikeComplex_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeComplex_co | None = ...,
     rcond: _FloatLike_co | None = None,
     full: Literal[False] = False,
     w: _SeriesLikeComplex_co | None = None,
@@ -382,7 +274,6 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _ArrayLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeCoef_co | None = ...,
     rcond: _FloatLike_co | None = None,
     full: Literal[False] = False,
     w: _SeriesLikeCoef_co | None = None,
@@ -393,10 +284,8 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeCoef_co | None,
     rcond: _FloatLike_co | None,
     full: Literal[True],
-    /,
     w: _SeriesLikeCoef_co | None = None,
 ) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 @overload
@@ -405,12 +294,14 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: _SeriesLikeCoef_co | None = ...,
     rcond: _FloatLike_co | None = None,
     *,
     full: Literal[True],
     w: _SeriesLikeCoef_co | None = None,
 ) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 
+#
 def _as_int(x: SupportsIndex, desc: str) -> int: ...
+
+#
 def format_float(x: _FloatLike_co, parens: bool = False) -> str: ...

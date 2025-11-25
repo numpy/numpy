@@ -1,0 +1,5 @@
+Removed ``fix_imports`` parameter from ``numpy.save``
+-----------------------------------------------------
+
+The ``fix_imports`` parameter was deprecated in NumPy 2.1.0 and is now removed.
+This flag has been ignored since NumPy 1.17 and was only needed to support loading files in Python 2 that were written in Python 3.

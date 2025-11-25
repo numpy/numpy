@@ -1,0 +1,5 @@
+Removed ``numpy.ndindex.ndincr()``
+----------------------------------
+
+The ``ndindex.ndincr()`` method has been deprecated since NumPy 1.20 and is now removed;
+use ``next(ndindex)`` instead.
