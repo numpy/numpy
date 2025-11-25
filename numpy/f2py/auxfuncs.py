@@ -699,7 +699,7 @@ def getcallstatement(rout):
 
 def getcallprotoargument(rout, cb_map={}):
     r = getmultilineblock(rout, 'callprotoargument', comment=0)
-    if r:
+    if r and r.strip():
         return r
     if hascallstatement(rout):
         outmess(
