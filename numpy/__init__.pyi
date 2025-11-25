@@ -438,6 +438,7 @@ from numpy.lib._function_base_impl import (  # type: ignore[deprecated]
     trim_zeros,
     copy,
     iterable,
+    ismonotonic,
     percentile,
     diff,
     gradient,
@@ -683,7 +684,7 @@ __all__ = [  # noqa: RUF022
     "nanpercentile", "nanvar", "nanstd", "nanprod", "nancumsum", "nancumprod",
     "nanquantile",
     # lib._function_base_impl.__all__
-    "select", "piecewise", "trim_zeros", "copy", "iterable", "percentile", "diff",
+    "select", "piecewise", "trim_zeros", "copy", "iterable", "ismonotonic", "percentile", "diff",
     "gradient", "angle", "unwrap", "sort_complex", "flip", "rot90", "extract", "place",
     "vectorize", "asarray_chkfinite", "average", "bincount", "digitize", "cov",
     "corrcoef", "median", "sinc", "hamming", "hanning", "bartlett", "blackman",

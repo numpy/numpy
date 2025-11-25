@@ -1,0 +1,7 @@
+``numpy.ismonotonic`` helper
+----------------------------
+Added the `numpy.ismonotonic` routine, which reports whether the flattened
+input follows an increasing or decreasing trend and optionally enforces
+strictly monotonic behaviour.
+
+
