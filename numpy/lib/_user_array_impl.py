@@ -255,7 +255,7 @@ class container:
         if len(shape(a)) == 0:
             return a
         else:
-            return self.__class__(a)
+            return self.__class__(a, copy=False)
 
     def __array_wrap__(self, *args):
         return self.__class__(args[0])
