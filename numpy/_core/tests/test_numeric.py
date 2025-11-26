@@ -3686,6 +3686,12 @@ class TestConvolve:
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
 
+    def test_empty(self):
+        with assert_raises(ValueError, msg="a cannot be empty"):
+            np.convolve([], [1])
+        with assert_raises(ValueError, msg="b cannot be empty"):
+            np.convolve([1], [])
+
 
 class TestArgwhere:
 
