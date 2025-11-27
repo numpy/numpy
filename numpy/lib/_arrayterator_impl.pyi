@@ -2,7 +2,7 @@
 
 from collections.abc import Generator
 from types import EllipsisType
-from typing import Any, Final, TypeAlias, overload
+from typing import Any, Final, overload
 from typing_extensions import TypeVar
 
 import numpy as np
@@ -10,12 +10,11 @@ from numpy._typing import _AnyShape, _Shape
 
 __all__ = ["Arrayterator"]
 
+# Type parameter default syntax (PEP 696) requires Python 3.13+
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
 
-_AnyIndex: TypeAlias = EllipsisType | int | slice | tuple[EllipsisType | int | slice, ...]
+type _AnyIndex = EllipsisType | int | slice | tuple[EllipsisType | int | slice, ...]
 
 # NOTE: In reality `Arrayterator` does not actually inherit from `ndarray`,
 # but its ``__getattr__` method does wrap around the former and thus has
@@ -31,7 +30,7 @@ class Arrayterator(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @property  # type: ignore[misc]
     def shape(self) -> _ShapeT_co: ...
     @property
-    def flat(self: Arrayterator[Any, np.dtype[_ScalarT]]) -> Generator[_ScalarT]: ...  # type: ignore[override]
+    def flat[ScalarT: np.generic](self: Arrayterator[Any, np.dtype[ScalarT]]) -> Generator[ScalarT]: ...  # type: ignore[override]
 
     #
     def __init__(self, /, var: np.ndarray[_ShapeT_co, _DTypeT_co], buf_size: int | None = None) -> None: ...
@@ -42,4 +41,4 @@ class Arrayterator(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __array__(self, /, dtype: None = None, copy: bool | None = None) -> np.ndarray[_ShapeT_co, _DTypeT_co]: ...
     @overload
-    def __array__(self, /, dtype: _DTypeT, copy: bool | None = None) -> np.ndarray[_ShapeT_co, _DTypeT]: ...
+    def __array__[DTypeT: np.dtype](self, /, dtype: DTypeT, copy: bool | None = None) -> np.ndarray[_ShapeT_co, DTypeT]: ...
