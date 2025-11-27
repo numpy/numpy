@@ -11,8 +11,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
-
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 #include "array_coercion.h"
 #include "ctors.h"
@@ -343,17 +342,34 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
+        PyObject *attr;
+        _PyArray_LegacyDescr *conv = NULL;
+        int res = PyObject_GetOptionalAttr(type, npy_interned_str.dtype, &attr);
+        if (res < 0) {
+            return NULL;  // Should be a rather criticial error, so just fail.
+        }
+        if (res == 1) {
+            if (!PyArray_DescrCheck(attr)) {
+                if (PyObject_HasAttrString(attr, "__get__")) {
+                    /* If the object has a __get__, assume this is a class property. */
+                    Py_DECREF(attr);
+                    conv = NULL;
+                }
+                else {
+                    PyErr_Format(PyExc_ValueError,
+                        "`.dtype` attribute %R is not a valid dtype instance",
+                        attr);
+                    Py_DECREF(attr);
+                    return NULL;
+                }
+            }
+        }
+
         _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr  *)PyArray_DescrNewFromType(NPY_VOID);
         if (new == NULL) {
             return NULL;
         }
-        _PyArray_LegacyDescr *conv = (_PyArray_LegacyDescr *)(
-                _arraydescr_try_convert_from_dtype_attr(type));
-        if (conv == NULL) {
-            Py_DECREF(new);
-            return NULL;
-        }
-        if ((PyObject *)conv != Py_NotImplemented && PyDataType_ISLEGACY(conv)) {
+        if (conv != NULL && PyDataType_ISLEGACY(conv)) {
             new->fields = conv->fields;
             Py_XINCREF(new->fields);
             new->names = conv->names;
@@ -362,7 +378,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
             new->subarray = conv->subarray;
             conv->subarray = NULL;
         }
-        Py_DECREF(conv);
+        Py_XDECREF(conv);
         Py_XDECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);

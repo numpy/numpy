@@ -1582,19 +1582,19 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
-    def test_recursion(self):
+    def test_recursive(self):
+        # This used to recurse. It now doesn't, we enforce the
+        # dtype attribute to be a dtype (and will not recurse).
         class dt:
             pass
 
         dt.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt)
 
         dt_instance = dt()
         dt_instance.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
     def test_void_subtype(self):
@@ -1607,19 +1607,56 @@ class TestFromDTypeAttribute:
         np.dtype(dt)
         np.dtype(dt(1))
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
-    def test_void_subtype_recursion(self):
+    def test_void_subtype_recursive(self):
+        # Used to recurse, but dtype is now enforced to be a dtype instance
+        # so that we do not recurse.
         class vdt(np.void):
             pass
 
         vdt.dtype = vdt
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt)
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt(1))
+
+
+class TestFromDTypeProtocol:
+    def test_simple(self):
+        class A:
+            dtype = np.dtype("f8")
+
+        assert np.dtype(A()) == np.dtype(np.float64)
+
+    def test_not_a_dtype(self):
+        # This also prevents coercion as a trivial path, although
+        # a custom error may be nicer.
+        class ArrayLike:
+            __numpy_dtype__ = None
+            dtype = np.dtype("f8")
+
+        with pytest.raises(ValueError, match=".*__numpy_dtype__.*"):
+            np.dtype(ArrayLike())
+
+    def test_prevent_dtype_explicit(self):
+        class ArrayLike:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("my error!")
+
+        with pytest.raises(RuntimeError, match="my error!"):
+            np.dtype(ArrayLike())
+
+    def test_type_object(self):
+        class TypeWithProperty:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("not reached")
+
+        # Arbitrary types go to object currently, and the
+        # protocol doesn't prevent that.
+        assert np.dtype(TypeWithProperty) == object
 
 
 class TestDTypeClasses:

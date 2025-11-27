@@ -15,6 +15,7 @@
 #include "npy_config.h"
 #include "npy_ctypes.h"
 #include "npy_import.h"
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 
 #include "_datetime.h"
@@ -84,63 +85,54 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
 }
 
 /*
- * This function creates a dtype object when the object has a "dtype" attribute,
- * and it can be converted to a dtype object.
+ * This function creates a dtype object when the object has a "__numpy_dtype__"
+ * or "dtype" attribute which must be valid NumPy dtype instance.
  *
  * Returns `Py_NotImplemented` if this is not possible.
- * Currently the only failure mode for a NULL return is a RecursionError.
  */
 static PyArray_Descr *
 _try_convert_from_dtype_attr(PyObject *obj)
 {
+    int used_dtype_attr = 0;
     /* For arbitrary objects that have a "dtype" attribute */
-    PyObject *dtypedescr = PyObject_GetAttrString(obj, "dtype");
-    if (dtypedescr == NULL) {
-        /*
-         * This can be reached due to recursion limit being hit while fetching
-         * the attribute (tested for py3.7). This removes the custom message.
-         */
-        goto fail;
-    }
-
-    if (PyArray_DescrCheck(dtypedescr)) {
-        /* The dtype attribute is already a valid descriptor */
-        return (PyArray_Descr *)dtypedescr;
-    }
-
-    if (Py_EnterRecursiveCall(
-            " while trying to convert the given data type from its "
-            "`.dtype` attribute.") != 0) {
-        Py_DECREF(dtypedescr);
+    PyObject *attr;
+    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.numpy_dtype, &attr);
+    if (res < 0) {
         return NULL;
     }
-
-    PyArray_Descr *newdescr = _convert_from_any(dtypedescr, 0);
-    Py_DECREF(dtypedescr);
-    Py_LeaveRecursiveCall();
-    if (newdescr == NULL) {
-        goto fail;
+    else if (res == 0) {
+        /*
+         * When "__numpy_dtype__" does not exist, also check "dtype". This should
+         * be removed in the future.
+         * We do however support a weird `class myclass(np.void): dtype = ...`
+         * syntax.
+         */
+        used_dtype_attr = 1;
+        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.dtype, &attr);
+        if (res < 0) {
+            return NULL;
+        }
+        else if (res == 0) {
+            Py_INCREF(Py_NotImplemented);
+            return (PyArray_Descr *)Py_NotImplemented;
+        }
     }
-
-    Py_DECREF(newdescr);
-    PyErr_SetString(PyExc_ValueError, "dtype attribute is not a valid dtype instance");
-    return NULL;
-
-  fail:
-    /* Ignore all but recursion errors, to give ctypes a full try. */
-    if (!PyErr_ExceptionMatches(PyExc_RecursionError)) {
-        PyErr_Clear();
-        Py_INCREF(Py_NotImplemented);
-        return (PyArray_Descr *)Py_NotImplemented;
+    if (!PyArray_DescrCheck(attr)) {
+        if (PyType_Check(obj) && PyObject_HasAttrString(attr, "__get__")) {
+            /* If the object has a __get__, assume this is a class property. */
+            Py_DECREF(attr);
+            Py_INCREF(Py_NotImplemented);
+            return (PyArray_Descr *)Py_NotImplemented;
+        }
+        PyErr_Format(PyExc_ValueError,
+            "Could not convert %R to a NumPy dtype (via `.%S` value %R).", obj,
+            used_dtype_attr ? npy_interned_str.dtype : npy_interned_str.numpy_dtype,
+            attr);
+        Py_DECREF(attr);
+        return NULL;
     }
-    return NULL;
-}
-
-/* Expose to another file with a prefixed name */
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_try_convert_from_dtype_attr(PyObject *obj)
-{
-    return _try_convert_from_dtype_attr(obj);
+    /* The dtype attribute is already a valid descriptor */
+    return (PyArray_Descr *)attr;
 }
 
 /*
