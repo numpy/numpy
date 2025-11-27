@@ -1,13 +1,6 @@
-from typing import (
-    Any,
-    Literal as L,
-    Self,
-    SupportsIndex,
-    SupportsInt,
-    TypeAlias,
-    overload,
-)
-from typing_extensions import Buffer, TypeVar
+from collections.abc import Buffer
+from typing import Any, Literal as L, Self, SupportsIndex, SupportsInt, overload
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import _OrderKACF, bytes_, dtype, int_, ndarray, object_, str_
@@ -83,14 +76,13 @@ __all__ = [
 ]
 
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
-_CharacterT = TypeVar("_CharacterT", bound=np.character)
 _CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], default=dtype, covariant=True)
 
-_CharArray: TypeAlias = chararray[_AnyShape, dtype[_CharacterT]]
+type _CharArray[ScalarT: np.character] = chararray[_AnyShape, dtype[ScalarT]]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = _StringDTypeArray | NDArray[np.str_]
-_StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
+type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
+type _StringDTypeOrUnicodeArray = _StringDTypeArray | NDArray[np.str_]
+type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload

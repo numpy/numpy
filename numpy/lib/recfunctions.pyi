@@ -1,11 +1,11 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from typing import Any, Literal, TypeAlias, overload
-from typing_extensions import TypeVar
+from typing import Any, Literal, overload
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _AnyShape, _DTypeLike, _DTypeLikeVoid
+from numpy import _CastingKind
+from numpy._typing import _AnyShape, _DTypeLike, _DTypeLikeVoid, _Shape
 from numpy.ma.mrecords import MaskedRecords
 
 __all__ = [
@@ -32,26 +32,18 @@ __all__ = [
     "unstructured_to_structured",
 ]
 
-_T = TypeVar("_T")
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
-_ArrayT = TypeVar("_ArrayT", bound=npt.NDArray[Any])
-_VoidArrayT = TypeVar("_VoidArrayT", bound=npt.NDArray[np.void])
-_NonVoidDTypeT = TypeVar("_NonVoidDTypeT", bound=_NonVoidDType)
+type _OneOrMany[T] = T | Iterable[T]
+type _BuiltinSequence[T] = tuple[T, ...] | list[T]
 
-_OneOrMany: TypeAlias = _T | Iterable[_T]
-_BuiltinSequence: TypeAlias = tuple[_T, ...] | list[_T]
+type _NestedNames = tuple[str | _NestedNames, ...]
+type _NonVoid = np.bool | np.number | np.character | np.datetime64 | np.timedelta64 | np.object_
+type _NonVoidDType = np.dtype[_NonVoid] | np.dtypes.StringDType
 
-_NestedNames: TypeAlias = tuple[str | _NestedNames, ...]
-_NonVoid: TypeAlias = np.bool | np.number | np.character | np.datetime64 | np.timedelta64 | np.object_
-_NonVoidDType: TypeAlias = np.dtype[_NonVoid] | np.dtypes.StringDType
-
-_JoinType: TypeAlias = Literal["inner", "outer", "leftouter"]
+type _JoinType = Literal["inner", "outer", "leftouter"]
 
 ###
 
-def recursive_fill_fields(input: npt.NDArray[np.void], output: _VoidArrayT) -> _VoidArrayT: ...
+def recursive_fill_fields[VoidArrayT: npt.NDArray[np.void]](input: npt.NDArray[np.void], output: VoidArrayT) -> VoidArrayT: ...
 
 #
 def get_names(adtype: np.dtype[np.void]) -> _NestedNames: ...
@@ -59,7 +51,7 @@ def get_names_flat(adtype: np.dtype[np.void]) -> tuple[str, ...]: ...
 
 #
 @overload
-def flatten_descr(ndtype: _NonVoidDTypeT) -> tuple[tuple[Literal[""], _NonVoidDTypeT]]: ...
+def flatten_descr[NonVoidDTypeT: _NonVoidDType](ndtype: NonVoidDTypeT) -> tuple[tuple[Literal[""], NonVoidDTypeT]]: ...
 @overload
 def flatten_descr(ndtype: np.dtype[np.void]) -> tuple[tuple[str, np.dtype]]: ...
 
@@ -72,13 +64,13 @@ def get_fieldstructure(
 
 #
 @overload
-def merge_arrays(
-    seqarrays: Sequence[np.ndarray[_ShapeT, np.dtype]] | np.ndarray[_ShapeT, np.dtype],
+def merge_arrays[ShapeT: _Shape](
+    seqarrays: Sequence[np.ndarray[ShapeT, np.dtype]] | np.ndarray[ShapeT, np.dtype],
     fill_value: float = -1,
     flatten: bool = False,
     usemask: bool = False,
     asrecarray: bool = False,
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 @overload
 def merge_arrays(
     seqarrays: Sequence[npt.ArrayLike] | np.void,
@@ -90,64 +82,64 @@ def merge_arrays(
 
 #
 @overload
-def drop_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def drop_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     drop_names: str | Iterable[str],
     usemask: bool = True,
     asrecarray: Literal[False] = False,
-) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def drop_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def drop_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     drop_names: str | Iterable[str],
     usemask: bool,
     asrecarray: Literal[True],
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def drop_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def drop_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     drop_names: str | Iterable[str],
     usemask: bool = True,
     *,
     asrecarray: Literal[True],
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 
 #
 @overload
-def rename_fields(
-    base: MaskedRecords[_ShapeT, np.dtype[np.void]],
+def rename_fields[ShapeT: _Shape](
+    base: MaskedRecords[ShapeT, np.dtype[np.void]],
     namemapper: Mapping[str, str],
-) -> MaskedRecords[_ShapeT, np.dtype[np.void]]: ...
+) -> MaskedRecords[ShapeT, np.dtype[np.void]]: ...
 @overload
-def rename_fields(
-    base: np.ma.MaskedArray[_ShapeT, np.dtype[np.void]],
+def rename_fields[ShapeT: _Shape](
+    base: np.ma.MaskedArray[ShapeT, np.dtype[np.void]],
     namemapper: Mapping[str, str],
-) -> np.ma.MaskedArray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ma.MaskedArray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def rename_fields(
-    base: np.recarray[_ShapeT, np.dtype[np.void]],
+def rename_fields[ShapeT: _Shape](
+    base: np.recarray[ShapeT, np.dtype[np.void]],
     namemapper: Mapping[str, str],
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def rename_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def rename_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     namemapper: Mapping[str, str],
-) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
 
 #
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None,
     fill_value: int,
     usemask: Literal[False],
     asrecarray: Literal[False] = False,
-) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None = None,
@@ -155,20 +147,20 @@ def append_fields(
     *,
     usemask: Literal[False],
     asrecarray: Literal[False] = False,
-) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None,
     fill_value: int,
     usemask: Literal[False],
     asrecarray: Literal[True],
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None = None,
@@ -176,30 +168,30 @@ def append_fields(
     *,
     usemask: Literal[False],
     asrecarray: Literal[True],
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None = None,
     fill_value: int = -1,
     usemask: Literal[True] = True,
     asrecarray: Literal[False] = False,
-) -> np.ma.MaskedArray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ma.MaskedArray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None,
     fill_value: int,
     usemask: Literal[True],
     asrecarray: Literal[True],
-) -> MaskedRecords[_ShapeT, np.dtype[np.void]]: ...
+) -> MaskedRecords[ShapeT, np.dtype[np.void]]: ...
 @overload
-def append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None = None,
@@ -207,46 +199,46 @@ def append_fields(
     usemask: Literal[True] = True,
     *,
     asrecarray: Literal[True],
-) -> MaskedRecords[_ShapeT, np.dtype[np.void]]: ...
+) -> MaskedRecords[ShapeT, np.dtype[np.void]]: ...
 
 #
-def rec_drop_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def rec_drop_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     drop_names: str | Iterable[str],
-) -> np.recarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
 
 #
-def rec_append_fields(
-    base: np.ndarray[_ShapeT, np.dtype[np.void]],
+def rec_append_fields[ShapeT: _Shape](
+    base: np.ndarray[ShapeT, np.dtype[np.void]],
     names: _OneOrMany[str],
     data: _OneOrMany[npt.NDArray[Any]],
     dtypes: _BuiltinSequence[np.dtype] | None = None,
-) -> np.ma.MaskedArray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ma.MaskedArray[ShapeT, np.dtype[np.void]]: ...
 
 # TODO(jorenham): Stop passing `void` directly once structured dtypes are implemented,
 # e.g. using a `TypeVar` with constraints.
 # https://github.com/numpy/numtype/issues/92
 @overload
-def repack_fields(a: _DTypeT, align: bool = False, recurse: bool = False) -> _DTypeT: ...
+def repack_fields[DTypeT: np.dtype](a: DTypeT, align: bool = False, recurse: bool = False) -> DTypeT: ...
 @overload
-def repack_fields(a: _ScalarT, align: bool = False, recurse: bool = False) -> _ScalarT: ...
+def repack_fields[ScalarT: np.generic](a: ScalarT, align: bool = False, recurse: bool = False) -> ScalarT: ...
 @overload
-def repack_fields(a: _ArrayT, align: bool = False, recurse: bool = False) -> _ArrayT: ...
+def repack_fields[ArrayT: np.ndarray](a: ArrayT, align: bool = False, recurse: bool = False) -> ArrayT: ...
 
 # TODO(jorenham): Attempt shape-typing (return type has ndim == arr.ndim + 1)
 @overload
-def structured_to_unstructured(
+def structured_to_unstructured[ScalarT: np.generic](
     arr: npt.NDArray[np.void],
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     copy: bool = False,
-    casting: np._CastingKind = "unsafe",
-) -> npt.NDArray[_ScalarT]: ...
+    casting: _CastingKind = "unsafe",
+) -> npt.NDArray[ScalarT]: ...
 @overload
 def structured_to_unstructured(
     arr: npt.NDArray[np.void],
     dtype: npt.DTypeLike | None = None,
     copy: bool = False,
-    casting: np._CastingKind = "unsafe",
+    casting: _CastingKind = "unsafe",
 ) -> npt.NDArray[Any]: ...
 
 #
@@ -280,29 +272,29 @@ def unstructured_to_structured(
 ) -> npt.NDArray[np.void]: ...
 
 #
-def apply_along_fields(
-    func: Callable[[np.ndarray[_ShapeT, Any]], npt.NDArray[Any]],
-    arr: np.ndarray[_ShapeT, np.dtype[np.void]],
-) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+def apply_along_fields[ShapeT: _Shape](
+    func: Callable[[np.ndarray[ShapeT]], np.ndarray],
+    arr: np.ndarray[ShapeT, np.dtype[np.void]],
+) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
 
 #
 def assign_fields_by_name(dst: npt.NDArray[np.void], src: npt.NDArray[np.void], zero_unassigned: bool = True) -> None: ...
 
 #
-def require_fields(
-    array: np.ndarray[_ShapeT, np.dtype[np.void]],
+def require_fields[ShapeT: _Shape](
+    array: np.ndarray[ShapeT, np.dtype[np.void]],
     required_dtype: _DTypeLikeVoid,
-) -> np.ndarray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ndarray[ShapeT, np.dtype[np.void]]: ...
 
 # TODO(jorenham): Attempt shape-typing
 @overload
-def stack_arrays(
-    arrays: _ArrayT,
+def stack_arrays[ArrayT: np.ndarray](
+    arrays: ArrayT,
     defaults: Mapping[str, object] | None = None,
     usemask: bool = True,
     asrecarray: bool = False,
     autoconvert: bool = False,
-) -> _ArrayT: ...
+) -> ArrayT: ...
 @overload
 def stack_arrays(
     arrays: Sequence[npt.NDArray[Any]],
@@ -357,27 +349,27 @@ def stack_arrays(
 
 #
 @overload
-def find_duplicates(
-    a: np.ma.MaskedArray[_ShapeT, np.dtype[np.void]],
+def find_duplicates[ShapeT: _Shape](
+    a: np.ma.MaskedArray[ShapeT, np.dtype[np.void]],
     key: str | None = None,
     ignoremask: bool = True,
     return_index: Literal[False] = False,
-) -> np.ma.MaskedArray[_ShapeT, np.dtype[np.void]]: ...
+) -> np.ma.MaskedArray[ShapeT, np.dtype[np.void]]: ...
 @overload
-def find_duplicates(
-    a: np.ma.MaskedArray[_ShapeT, np.dtype[np.void]],
+def find_duplicates[ShapeT: _Shape](
+    a: np.ma.MaskedArray[ShapeT, np.dtype[np.void]],
     key: str | None,
     ignoremask: bool,
     return_index: Literal[True],
-) -> tuple[np.ma.MaskedArray[_ShapeT, np.dtype[np.void]], np.ndarray[_ShapeT, np.dtype[np.int_]]]: ...
+) -> tuple[np.ma.MaskedArray[ShapeT, np.dtype[np.void]], np.ndarray[ShapeT, np.dtype[np.int_]]]: ...
 @overload
-def find_duplicates(
-    a: np.ma.MaskedArray[_ShapeT, np.dtype[np.void]],
+def find_duplicates[ShapeT: _Shape](
+    a: np.ma.MaskedArray[ShapeT, np.dtype[np.void]],
     key: str | None = None,
     ignoremask: bool = True,
     *,
     return_index: Literal[True],
-) -> tuple[np.ma.MaskedArray[_ShapeT, np.dtype[np.void]], np.ndarray[_ShapeT, np.dtype[np.int_]]]: ...
+) -> tuple[np.ma.MaskedArray[ShapeT, np.dtype[np.void]], np.ndarray[ShapeT, np.dtype[np.int_]]]: ...
 
 #
 @overload

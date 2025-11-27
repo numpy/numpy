@@ -1,16 +1,7 @@
 import abc
 import decimal
 from collections.abc import Iterator, Sequence
-from typing import (
-    Any,
-    ClassVar,
-    Generic,
-    Literal,
-    Self,
-    SupportsIndex,
-    TypeAlias,
-    overload,
-)
+from typing import Any, ClassVar, Generic, Literal, Self, SupportsIndex, overload
 from typing_extensions import TypeIs, TypeVar
 
 import numpy as np
@@ -38,10 +29,12 @@ from ._polytypes import (
 __all__ = ["ABCPolyBase"]
 
 _NameT_co = TypeVar("_NameT_co", bound=str | None, default=str | None, covariant=True)
-_PolyT = TypeVar("_PolyT", bound=ABCPolyBase)
-_AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 
-class ABCPolyBase(Generic[_NameT_co], abc.ABC):
+type _AnyOther = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
+
+###
+
+class ABCPolyBase(Generic[_NameT_co], abc.ABC):  # noqa: UP046
     __hash__: ClassVar[None] = None  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
     __array_ufunc__: ClassVar[None] = None
     maxpower: ClassVar[Literal[100]] = 100
@@ -76,7 +69,7 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):
 
     #
     @overload
-    def __call__(self, /, arg: _PolyT) -> _PolyT: ...
+    def __call__[PolyT: ABCPolyBase](self, /, arg: PolyT) -> PolyT: ...
     @overload
     def __call__(self, /, arg: _FloatLike_co | decimal.Decimal) -> np.float64 | Any: ...
     @overload
@@ -134,22 +127,22 @@ class ABCPolyBase(Generic[_NameT_co], abc.ABC):
 
     #
     @overload
-    def convert(
+    def convert[PolyT: ABCPolyBase](
         self,
         /,
         domain: _SeriesLikeCoef_co | None,
-        kind: type[_PolyT],
+        kind: type[PolyT],
         window: _SeriesLikeCoef_co | None = None,
-    ) -> _PolyT: ...
+    ) -> PolyT: ...
     @overload
-    def convert(
+    def convert[PolyT: ABCPolyBase](
         self,
         /,
         domain: _SeriesLikeCoef_co | None = None,
         *,
-        kind: type[_PolyT],
+        kind: type[PolyT],
         window: _SeriesLikeCoef_co | None = None,
-    ) -> _PolyT: ...
+    ) -> PolyT: ...
     @overload
     def convert(
         self,
