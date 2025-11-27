@@ -2880,7 +2880,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     PyObject *endian_obj;
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
-    int int_dtypeflags = 0;
+    npy_int64 signed_dtypeflags = 0;
     npy_uint64 dtypeflags;
 
     if (!PyDataType_ISLEGACY(self)) {
@@ -2899,19 +2899,19 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOnnKO):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags, &metadata)) {
+                    &alignment, &signed_dtypeflags, &metadata)) {
             PyErr_Clear();
             return NULL;
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOnnK):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnk):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags)) {
+                    &alignment, &signed_dtypeflags)) {
             return NULL;
         }
         break;
@@ -3181,12 +3181,12 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
-    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+    if (signed_dtypeflags < 0 && signed_dtypeflags >= -128) {
         /* NumPy used to use a char. So normalize if signed. */
-        int_dtypeflags += 128;
+        signed_dtypeflags += 128;
     }
-    dtypeflags = int_dtypeflags;
-    if (dtypeflags != int_dtypeflags) {
+    dtypeflags = (npy_uint64)signed_dtypeflags;
+    if (dtypeflags != signed_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
                      "incorrect value for flags variable (overflow)");
         return NULL;
