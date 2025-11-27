@@ -1152,7 +1152,7 @@ TIMEDELTA_INPUT = [
     np.timedelta64(12358, "s"),
     np.timedelta64(23, "s"),
     np.timedelta64(74, "s"),
-    np.timedelta64("NaT"),
+    np.timedelta64("NaT", "s"),
     np.timedelta64(23, "s"),
     np.timedelta64(73, "s"),
     np.timedelta64(7, "s"),
@@ -1204,7 +1204,7 @@ def test_nat_casts():
     all_nats = itertools.product(*zip(s.upper(), s.lower()))
     all_nats = list(map(''.join, all_nats))
     NaT_dt = np.datetime64('NaT')
-    NaT_td = np.timedelta64('NaT')
+    NaT_td = np.timedelta64('NaT', 's')
     for na_object in [np._NoValue, None, np.nan, 'nat', '']:
         # numpy treats empty string and all case combinations of 'nat' as NaT
         dtype = StringDType(na_object=na_object)

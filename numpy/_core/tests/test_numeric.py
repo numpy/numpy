@@ -2851,7 +2851,7 @@ class TestClip:
 
     @pytest.mark.parametrize("arr, amin, amax", [
         (np.array([1] * 10, dtype='m8[s]'),
-         np.timedelta64('NaT'),
+         np.timedelta64('NaT', 's'),
          np.zeros(10, dtype=np.int32)),
     ])
     def test_NaT_propagation(self, arr, amin, amax):

@@ -797,7 +797,7 @@ class TestUnique:
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
         # test for ticket 2111 - timedelta
-        nat = np.timedelta64('nat')
+        nat = np.timedelta64('nat', 's')
         a = [np.timedelta64(1, 'D'), nat, np.timedelta64(1, 'h'), nat]
         ua = [np.timedelta64(1, 'h'), np.timedelta64(1, 'D'), nat]
         ua_idx = [2, 0, 1]

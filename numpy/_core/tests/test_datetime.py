@@ -202,10 +202,15 @@ class TestDateTime:
 
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
-        assert_(np.datetime64('NaT') !=
-                np.datetime64('2000') + np.timedelta64('NaT'))
-        assert_(np.datetime64('NaT') != np.datetime64('NaT', 'us'))
-        assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_(
+                np.datetime64("NaT") != np.datetime64("2000") + np.timedelta64("NaT")
+            )
+            assert_(np.datetime64("NaT") != np.datetime64("NaT", "us"))
+            assert_(np.datetime64('NaT', 'us') != np.datetime64('NaT'))
 
     @pytest.mark.parametrize("size", [
         3, 21, 217, 1000])
@@ -222,7 +227,7 @@ class TestDateTime:
         # NaT < NaT should be False internally for
         # sort stability
         expected = np.arange(size)
-        arr = np.tile(np.timedelta64('NaT'), size)
+        arr = np.tile(np.timedelta64('NaT', 's'), size)
         assert_equal(np.argsort(arr, kind='mergesort'), expected)
 
     @pytest.mark.parametrize("arr, expected", [
@@ -410,12 +415,15 @@ class TestDateTime:
             assert_equal(np.timedelta64(), np.timedelta64(0))
 
         # None gets constructed as NaT
-        assert_equal(np.timedelta64(None), np.timedelta64('NaT'))
+        assert_equal(np.timedelta64(None, 's'), np.timedelta64('NaT', 's'))
 
         # Some basic strings and repr
-        assert_equal(str(np.timedelta64('NaT')), 'NaT')
-        assert_equal(repr(np.timedelta64('NaT')),
-                     "np.timedelta64('NaT')")
+        assert_equal(str(np.timedelta64('NaT', 'ns')), 'NaT')
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_equal(repr(np.timedelta64("NaT")), "np.timedelta64('NaT')")
         assert_equal(str(np.timedelta64(3, 's')), '3 seconds')
         assert_equal(repr(np.timedelta64(-3, 's')),
                      "np.timedelta64(-3,'s')")
@@ -511,7 +519,11 @@ class TestDateTime:
 
     def test_timedelta_nat_format(self):
         # gh-17552
-        assert_equal('NaT', f'{np.timedelta64("nat")}')
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            assert_equal('NaT', f'{np.timedelta64("nat")}')
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
@@ -627,7 +639,7 @@ class TestDateTime:
         clnan = nan.astype('G')
         hnan = nan.astype(np.half)
 
-        nat = np.array([np.datetime64('NaT')] * 8 + [np.datetime64(0, 'D')])
+        nat = np.array([np.datetime64('NaT', 's')] * 8 + [np.datetime64(0, 'D')])
         assert_equal(nan.astype('M8[ns]'), nat)
         assert_equal(fnan.astype('M8[ns]'), nat)
         assert_equal(lnan.astype('M8[ns]'), nat)
@@ -636,7 +648,7 @@ class TestDateTime:
         assert_equal(clnan.astype('M8[ns]'), nat)
         assert_equal(hnan.astype('M8[ns]'), nat)
 
-        nat = np.array([np.timedelta64('NaT')] * 8 + [np.timedelta64(0, 's')])
+        nat = np.array([np.timedelta64('NaT', 'D')] * 8 + [np.timedelta64(0, 's')])
         assert_equal(nan.astype('timedelta64[ns]'), nat)
         assert_equal(fnan.astype('timedelta64[ns]'), nat)
         assert_equal(lnan.astype('timedelta64[ns]'), nat)
@@ -858,10 +870,18 @@ class TestDateTime:
 
     def test_timedelta_array_with_nats(self):
         # Regression test for gh-29497.
-        x = np.array([np.timedelta64('nat'),
-                      np.timedelta64('nat', 's'),
-                      np.timedelta64('nat', 'ms'),
-                      np.timedelta64(123, 'ms')])
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            x = np.array(
+                [
+                    np.timedelta64("nat"),
+                    np.timedelta64("nat", "s"),
+                    np.timedelta64("nat", "ms"),
+                    np.timedelta64(123, "ms"),
+                ]
+            )
         for td in x[:3]:
             assert np.isnat(td)
 
@@ -1343,7 +1363,7 @@ class TestDateTime:
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore', "invalid value encountered in multiply", RuntimeWarning)
-            nat = np.timedelta64('NaT')
+            nat = np.timedelta64('NaT', 's')
 
             def check(a, b, res):
                 assert_equal(a * b, res)
@@ -1398,7 +1418,7 @@ class TestDateTime:
         (np.timedelta64(10, 'us'),
          np.timedelta64(0, 'us')),
         # div with NaT
-        (np.timedelta64('NaT'),
+        (np.timedelta64('NaT', 'us'),
          np.timedelta64(50, 'us')),
         # special case for int64 min
         # in integer floor division
@@ -1497,7 +1517,7 @@ class TestDateTime:
         (np.timedelta64(10, 'us'),
          np.timedelta64(0, 'us')),
         # div with NaT
-        (np.timedelta64('NaT'),
+        (np.timedelta64('NaT', 'us'),
          np.timedelta64(50, 'us')),
         # special case for int64 min
         # in integer floor division
@@ -1567,7 +1587,7 @@ class TestDateTime:
                 "Using 'generic' unit for NumPy timedelta is deprecated",
                 DeprecationWarning,
             )
-            nat = np.timedelta64('NaT')
+            nat = np.timedelta64('NaT', 's')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
                 assert_equal(np.timedelta64(0) / tp(0), nat)
@@ -2148,7 +2168,7 @@ class TestDateTime:
     def test_timedelta_modulus_div_by_zero(self):
         with pytest.warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
-            assert_equal(actual, np.timedelta64('NaT'))
+            assert_equal(actual, np.timedelta64('NaT', 's'))
 
     @pytest.mark.parametrize("val1, val2", [
         # cases where one operand is not
@@ -2611,7 +2631,7 @@ class TestDateTime:
 
     def test_assert_equal(self):
         assert_raises(AssertionError, assert_equal,
-                np.datetime64('nat'), np.timedelta64('nat'))
+                np.datetime64('nat', 's'), np.timedelta64('nat', 's'))
 
     def test_corecursive_input(self):
         # construct a co-recursive list
@@ -2773,35 +2793,6 @@ class TestDateTime:
         td = np.timedelta64(wk, 'W')
         td2 = np.timedelta64(td, unit)
         _assert_equal_hash(td, td2)
-
-    @pytest.mark.parametrize('value', [
-        3, 10
-    ])
-    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int):
-        msg = "Using 'generic' unit for NumPy timedelta is deprecated"
-        with pytest.warns(FutureWarning, match=msg):
-            _ = np.timedelta64(value)
-
-    @pytest.mark.parametrize('value', [
-        np.timedelta64(3, "s"), np.timedelta64(10, "D")
-    ])
-    @pytest.mark.parametrize('generic_value', [
-        5, 2
-    ])
-    @pytest.mark.parametrize(
-        "op",
-        [
-            np.add,
-            np.subtract,
-            np.true_divide,
-        ],
-    )
-    def test_raise_warning_for_operation_with_generic_unit(
-        self, value: int, generic_value: int, op: callable
-    ):
-        msg = "Using 'generic' unit for NumPy timedelta is deprecated"
-        with pytest.warns(FutureWarning, match=msg):
-            _ = op(value, np.timedelta64(generic_value))
 
     @pytest.mark.parametrize(
         "inputs, divisor, expected",
