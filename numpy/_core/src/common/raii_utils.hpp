@@ -2,7 +2,7 @@
 #define NUMPY_CORE_SRC_COMMON_RAII_UTILS_HPP_
 
 //
-// Utiltities for RAII management of resources.
+// Utilities for RAII management of resources.
 //
 // Another (and arguably clearer) name for this resource management pattern
 // is "Scope-Bound Resource Management", but RAII is much more common, so we
