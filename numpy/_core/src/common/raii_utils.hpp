@@ -62,6 +62,11 @@ public:
     ~EnsureGIL() {
         PyGILState_Release(gil_state);
     }
+
+    EnsureGIL(const EnsureGIL&) = delete;
+    EnsureGIL(EnsureGIL&& other) = delete;
+    EnsureGIL& operator=(const EnsureGIL&) = delete;
+    EnsureGIL& operator=(EnsureGIL&&) = delete;
 };
 
 
@@ -108,6 +113,11 @@ public:
     ~SaveThreadState() {
         PyEval_RestoreThread(thread_state);
     }
+
+    SaveThreadState(const SaveThreadState&) = delete;
+    SaveThreadState(SaveThreadState&& other) = delete;
+    SaveThreadState& operator=(const SaveThreadState&) = delete;
+    SaveThreadState& operator=(SaveThreadState&&) = delete;
 };
 
 
@@ -140,6 +150,11 @@ public:
     ~NpyStringAcquireAllocator() {
         NpyString_release_allocator(_allocator);
     }
+
+    NpyStringAcquireAllocator(const NpyStringAcquireAllocator&) = delete;
+    NpyStringAcquireAllocator(NpyStringAcquireAllocator&& other) = delete;
+    NpyStringAcquireAllocator& operator=(const NpyStringAcquireAllocator&) = delete;
+    NpyStringAcquireAllocator& operator=(NpyStringAcquireAllocator&&) = delete;
 
     npy_string_allocator *allocator() {
         return _allocator;
