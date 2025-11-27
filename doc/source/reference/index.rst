@@ -61,6 +61,7 @@ Other topics
    thread_safety
    global_state
    security
+   testing
    distutils_status_migration
    distutils_guide
    swig
