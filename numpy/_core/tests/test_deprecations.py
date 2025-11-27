@@ -374,9 +374,9 @@ class TestDeprecatedGenericTimedelta(_DeprecationTestCase):
     message = "Using 'generic' unit for NumPy timedelta is deprecated"
 
     @pytest.mark.parametrize('value', [
-        3, 10
+        3, 10, "NaT"
     ])
-    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int):
+    def test_raise_warning_for_timedelta_with_generic_unit(self, value: int | str):
         self.assert_deprecated(lambda x: np.timedelta64(x), args=(value,))
 
     @pytest.mark.parametrize('value', [
