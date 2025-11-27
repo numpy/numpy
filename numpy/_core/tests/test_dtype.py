@@ -18,6 +18,7 @@ from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_64BIT,
     IS_PYPY,
     IS_PYSTON,
     IS_WASM,
@@ -1376,6 +1377,15 @@ class TestPickling:
             assert_equal(x, y)
             assert_equal(x[0], y[0])
 
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @pytest.mark.xfail(reason="dtype conversion doesn't allow this yet.")
+    def test_pickling_large(self):
+        # The actual itemsize is larger than a c-integer here.
+        dtype = np.dtype(f"({2**31},)i")
+        self.check_pickling(dtype)
+        dtype = np.dtype(f"({2**31},)i", metadata={"a": "b"})
+        self.check_pickling(dtype)
+
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
                                    bool])
     def test_builtin(self, t):
@@ -1440,7 +1450,7 @@ class TestPickling:
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
             assert roundtrip_dt == dt
-            assert hash(dt) == pre_pickle_hash
+            assert hash(roundtrip_dt) == pre_pickle_hash
 
 
 class TestPromotion:

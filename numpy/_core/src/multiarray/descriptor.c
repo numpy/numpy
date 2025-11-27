@@ -2874,7 +2874,7 @@ _descr_find_object(PyArray_Descr *self)
 static PyObject *
 arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 {
-    int elsize = -1, alignment = -1;
+    Py_ssize_t elsize = -1, alignment = -1;
     int version = 4;
     char endian;
     PyObject *endian_obj;
@@ -2899,7 +2899,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOiiiO):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnKO):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags, &metadata)) {
@@ -2908,7 +2908,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOiii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnK):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags)) {
@@ -2916,7 +2916,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnn):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
@@ -2924,7 +2924,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOnn):__setstate__",
                     &version,
                     &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
@@ -2933,7 +2933,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         break;
     case 5:
         version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(OOOnn):__setstate__",
                     &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;
