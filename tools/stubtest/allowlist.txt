@@ -59,7 +59,7 @@ numpy\.core\.shape_base.*
 numpy\.core\.umath.*
 numpy\.typing\.mypy_plugin
 
-# ufuncs
+# ufuncs, see https://github.com/python/mypy/issues/20223
 numpy\.(\w+\.)*abs
 numpy\.(\w+\.)*absolute
 numpy\.(\w+\.)*acos
@@ -177,7 +177,16 @@ numpy\.(\w+\.)*istitle
 numpy\.(\w+\.)*isupper
 numpy\.(\w+\.)*str_len
 numpy\._core\._methods\.umr_bitwise_count
-numpy\._core\._methods\.umr_bitwise_count
+numpy\._core\._umath_tests\.always_error
+numpy\._core\._umath_tests\.always_error_gufunc
+numpy\._core\._umath_tests\.always_error_unary
+numpy\._core\._umath_tests\.conv1d_full
+numpy\._core\._umath_tests\.cross1d
+numpy\._core\._umath_tests\.euclidean_pdist
+numpy\._core\._umath_tests\.indexed_negative
+numpy\._core\._umath_tests\.inner1d
+numpy\._core\._umath_tests\.inner1d_no_doc
+numpy\._core\._umath_tests\.matrix_multiply
 numpy\.linalg\._umath_linalg\.qr_complete
 numpy\.linalg\._umath_linalg\.qr_reduced
 numpy\.linalg\._umath_linalg\.solve
