@@ -6,7 +6,7 @@ import unittest
 import warnings
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, TypeVar, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -16,7 +16,6 @@ AR_i8: npt.NDArray[np.int64]
 
 bool_obj: bool
 suppress_obj: np.testing.suppress_warnings  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
-FT = TypeVar("FT", bound=Callable[..., Any])
 
 def func() -> int: ...
 
@@ -148,7 +147,7 @@ assert_type(np.testing.assert_raises_regex(RuntimeWarning, re.compile(b"test"), 
 
 class Test: ...
 
-def decorate(a: FT) -> FT:
+def decorate[FT: Callable[..., Any]](a: FT) -> FT:
     return a
 
 assert_type(np.testing.decorate_methods(Test, decorate), None)

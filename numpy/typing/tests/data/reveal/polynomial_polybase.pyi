@@ -1,30 +1,29 @@
 from collections.abc import Sequence
 from decimal import Decimal
-from typing import Any, Literal as L, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal as L, assert_type
 
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
 
-_Ar_x: TypeAlias = npt.NDArray[np.inexact | np.object_]
-_Ar_f: TypeAlias = npt.NDArray[np.floating]
-_Ar_c: TypeAlias = npt.NDArray[np.complexfloating]
-_Ar_O: TypeAlias = npt.NDArray[np.object_]
+type _Ar_x = npt.NDArray[np.inexact | np.object_]
+type _Ar_f = npt.NDArray[np.floating]
+type _Ar_c = npt.NDArray[np.complexfloating]
+type _Ar_O = npt.NDArray[np.object_]
 
-_Ar_x_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.inexact | np.object_]]
-_Ar_f_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating]]
-_Ar_c_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
-_Ar_O_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.object_]]
+type _Ar_x_n = np.ndarray[tuple[int], np.dtype[np.inexact | np.object_]]
+type _Ar_f_n = np.ndarray[tuple[int], np.dtype[np.floating]]
+type _Ar_c_n = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
+type _Ar_O_n = np.ndarray[tuple[int], np.dtype[np.object_]]
 
-_Ar_x_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.float64 | Any]]
-_Ar_f_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.floating]]
-_Ar_c_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
-_Ar_O_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
+type _Ar_x_2 = np.ndarray[tuple[L[2]], np.dtype[np.float64 | Any]]
+type _Ar_f_2 = np.ndarray[tuple[L[2]], np.dtype[np.floating]]
+type _Ar_c_2 = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
+type _Ar_O_2 = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
 
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_Ar_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
+type _Ar_1d[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
-_BasisName: TypeAlias = L["X"]
+type _BasisName = L["X"]
 
 SC_i: np.int_
 SC_i_co: int | np.int_

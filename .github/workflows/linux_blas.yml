@@ -274,7 +274,7 @@ jobs:
       run: |
         # do not use test_requirements.txt, it includes coverage which requires
         # sqlite3, which is not available on OpenSUSE python
-        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        pip install --break-system-packages pytest pytest-xdist hypothesis pytest-timeout
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 

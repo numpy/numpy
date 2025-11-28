@@ -1,14 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    Final,
-    Literal,
-    Protocol,
-    SupportsIndex,
-    TypeAlias,
-    TypeVar,
-    overload,
-    type_check_only,
-)
+from typing import Final, Literal, Protocol, SupportsIndex, overload, type_check_only
 
 import numpy as np
 import numpy.typing as npt
@@ -44,16 +35,13 @@ from ._polytypes import (
 
 __all__ = ["as_series", "format_float", "getdomain", "mapdomain", "mapparms", "trimcoef", "trimseq"]
 
-_T = TypeVar("_T")
-_SeqT = TypeVar("_SeqT", bound=_CoefArray | Sequence[_CoefLike_co])
-
-_AnyLineF: TypeAlias = Callable[[float, float], _CoefArray]
-_AnyMulF: TypeAlias = Callable[[np.ndarray | list[int], np.ndarray], _CoefArray]
-_AnyVanderF: TypeAlias = Callable[[np.ndarray, int], _CoefArray]
+type _AnyLineF = Callable[[float, float], _CoefArray]
+type _AnyMulF = Callable[[np.ndarray | list[int], np.ndarray], _CoefArray]
+type _AnyVanderF = Callable[[np.ndarray, int], _CoefArray]
 
 @type_check_only
-class _ValFunc(Protocol[_T]):
-    def __call__(self, x: np.ndarray, c: _T, /, *, tensor: bool = True) -> _T: ...
+class _ValFunc[T](Protocol):
+    def __call__(self, x: np.ndarray, c: T, /, *, tensor: bool = True) -> T: ...
 
 ###
 
@@ -77,7 +65,7 @@ def as_series(alist: Iterable[_SeriesLikeComplex_co | complex], trim: bool = Tru
 def as_series(alist: Iterable[_SeriesLikeCoef_co | object], trim: bool = True) -> list[_ObjectSeries]: ...
 
 #
-def trimseq(seq: _SeqT) -> _SeqT: ...
+def trimseq[SeqT: _CoefArray | Sequence[_CoefLike_co]](seq: SeqT) -> SeqT: ...
 
 #
 @overload
@@ -219,10 +207,10 @@ def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeObject_co) 
 def _fromroots(line_f: _AnyLineF, mul_f: _AnyMulF, roots: _SeriesLikeCoef_co) -> _CoefSeries: ...
 
 # keep in sync with `_gridnd`
-def _valnd(val_f: _ValFunc[_T], c: _T, *args: npt.ArrayLike) -> _T: ...
+def _valnd[T](val_f: _ValFunc[T], c: T, *args: npt.ArrayLike) -> T: ...
 
 # keep in sync with `_valnd`
-def _gridnd(val_f: _ValFunc[_T], c: _T, *args: npt.ArrayLike) -> _T: ...
+def _gridnd[T](val_f: _ValFunc[T], c: T, *args: npt.ArrayLike) -> T: ...
 
 # keep in sync with `_polytypes._FuncBinOp`
 @overload

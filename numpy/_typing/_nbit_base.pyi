@@ -8,7 +8,7 @@ from typing_extensions import deprecated
 # Deprecated in NumPy 2.3, 2025-05-01
 @deprecated(
     "`NBitBase` is deprecated and will be removed from numpy.typing in the "
-    "future. Use `@typing.overload` or a `TypeVar` with a scalar-type as upper "
+    "future. Use `@typing.overload` or a type parameter with a scalar-type as upper "
     "bound, instead. (deprecated in NumPy 2.3)",
 )
 @final

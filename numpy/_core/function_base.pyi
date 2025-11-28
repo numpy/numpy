@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing import Literal as L, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Literal as L, SupportsIndex, overload
 
 import numpy as np
 from numpy._typing import (
@@ -13,9 +13,9 @@ from numpy._typing._array_like import _DualArrayLike
 
 __all__ = ["geomspace", "linspace", "logspace"]
 
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+type _ToArrayFloat64 = _DualArrayLike[np.dtype[np.float64 | np.integer | np.bool], float]
 
-_ToArrayFloat64: TypeAlias = _DualArrayLike[np.dtype[np.float64 | np.integer | np.bool], float]
+###
 
 @overload
 def linspace(
@@ -54,29 +54,29 @@ def linspace(
     device: L["cpu"] | None = None,
 ) -> NDArray[np.complexfloating]: ...
 @overload
-def linspace(
+def linspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex,
     endpoint: bool,
     retstep: L[False],
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
     *,
     device: L["cpu"] | None = None,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
-def linspace(
+def linspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex = 50,
     endpoint: bool = True,
     retstep: L[False] = False,
     *,
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
     device: L["cpu"] | None = None,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -126,17 +126,17 @@ def linspace(
     device: L["cpu"] | None = None,
 ) -> tuple[NDArray[np.complexfloating], np.complexfloating]: ...
 @overload
-def linspace(
+def linspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex = 50,
     endpoint: bool = True,
     *,
     retstep: L[True],
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
     device: L["cpu"] | None = None,
-) -> tuple[NDArray[_ScalarT], _ScalarT]: ...
+) -> tuple[NDArray[ScalarT], ScalarT]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -181,26 +181,26 @@ def logspace(
     axis: SupportsIndex = 0,
 ) -> NDArray[np.complexfloating]: ...
 @overload
-def logspace(
+def logspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex,
     endpoint: bool,
     base: _ArrayLikeComplex_co,
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
-def logspace(
+def logspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex = 50,
     endpoint: bool = True,
     base: _ArrayLikeComplex_co = 10.0,
     *,
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
 def logspace(
     start: _ArrayLikeComplex_co,
@@ -240,24 +240,24 @@ def geomspace(
     axis: SupportsIndex = 0,
 ) -> NDArray[np.complexfloating]: ...
 @overload
-def geomspace(
+def geomspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex,
     endpoint: bool,
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
-def geomspace(
+def geomspace[ScalarT: np.generic](
     start: _ArrayLikeComplex_co,
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex = 50,
     endpoint: bool = True,
     *,
-    dtype: _DTypeLike[_ScalarT],
+    dtype: _DTypeLike[ScalarT],
     axis: SupportsIndex = 0,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
 def geomspace(
     start: _ArrayLikeComplex_co,

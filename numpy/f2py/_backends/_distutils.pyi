@@ -1,4 +1,5 @@
-from typing_extensions import deprecated, override
+from typing import override
+from typing_extensions import deprecated
 
 from ._backend import Backend
 

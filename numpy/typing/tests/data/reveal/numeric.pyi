@@ -10,7 +10,7 @@ from typing import Any, assert_type
 import numpy as np
 import numpy.typing as npt
 
-class SubClass(npt.NDArray[np.int64]): ...
+class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.int64]]): ...
 
 i8: np.int64
 

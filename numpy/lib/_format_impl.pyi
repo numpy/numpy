@@ -1,6 +1,6 @@
 import os
 from _typeshed import SupportsRead, SupportsWrite
-from typing import Any, BinaryIO, Final, TypeAlias, TypeGuard
+from typing import Any, BinaryIO, Final, TypeGuard
 
 import numpy as np
 import numpy.typing as npt
@@ -8,7 +8,7 @@ from numpy.lib._utils_impl import drop_metadata as drop_metadata
 
 __all__: list[str] = []
 
-_DTypeDescr: TypeAlias = list[tuple[str, str]] | list[tuple[str, str, tuple[int, ...]]]
+type _DTypeDescr = list[tuple[str, str]] | list[tuple[str, str, tuple[int, ...]]]
 
 ###
 

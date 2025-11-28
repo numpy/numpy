@@ -1,15 +1,13 @@
-from typing import Any, TypeAlias, TypeVar, assert_type, type_check_only
+from typing import Any, assert_type, type_check_only
 
 import numpy as np
 import numpy.typing as npt
 
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _ND = tuple[Any, ...]
 
-_1D: TypeAlias = tuple[int]
-_2D: TypeAlias = tuple[int, int]
-_ND: TypeAlias = tuple[Any, ...]
-
-_Indices2D: TypeAlias = tuple[
+type _Indices2D = tuple[
     np.ndarray[_1D, np.dtype[np.intp]],
     np.ndarray[_1D, np.dtype[np.intp]],
 ]
@@ -33,7 +31,7 @@ _to_1d_f64: list[float]
 _to_1d_c128: list[complex]
 
 @type_check_only
-def func1(ar: npt.NDArray[_ScalarT], a: int) -> npt.NDArray[_ScalarT]: ...
+def func1[ScalarT: np.generic](ar: npt.NDArray[ScalarT], a: int) -> npt.NDArray[ScalarT]: ...
 @type_check_only
 def func2(ar: npt.NDArray[np.number], a: str) -> npt.NDArray[np.float64]: ...
 
