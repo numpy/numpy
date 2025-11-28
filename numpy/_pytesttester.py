@@ -123,7 +123,6 @@ class PytestTester:
         True
 
         """
-
         import pytest
 
         module = sys.modules[self.module_name]

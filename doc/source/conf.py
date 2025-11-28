@@ -145,8 +145,6 @@ today_fmt = '%B %d, %Y'
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "autolink"
 
-nitpick_ignore = []
-
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
