@@ -125,3 +125,8 @@ assert_type(dtype_V["f0"], np.dtype)
 assert_type(dtype_V[0], np.dtype)
 assert_type(dtype_V[["f0", "f1"]], np.dtype[np.void])
 assert_type(dtype_V[["f0"]], np.dtype[np.void])
+
+class _D:
+    __numpy_dtype__: np.dtype[np.int8]
+
+assert_type(np.dtype(_D()), np.dtype[np.int8])
