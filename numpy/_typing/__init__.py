@@ -98,6 +98,7 @@ from ._dtype_like import (
     _DTypeLikeTD64 as _DTypeLikeTD64,
     _DTypeLikeUInt as _DTypeLikeUInt,
     _DTypeLikeVoid as _DTypeLikeVoid,
+    _HasDType as _HasDType,
     _SupportsDType as _SupportsDType,
     _VoidDTypeLike as _VoidDTypeLike,
 )
