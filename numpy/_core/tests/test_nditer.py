@@ -12,6 +12,7 @@ import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_64BIT,
     IS_PYPY,
     IS_WASM,
     assert_,
@@ -3404,6 +3405,7 @@ def test_arbitrary_number_of_ops_nested():
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @requires_memory(9 * np.iinfo(np.intc).max)
 @pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_arbitrary_number_of_ops_error():

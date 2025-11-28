@@ -2866,13 +2866,13 @@ _descr_find_object(PyArray_Descr *self)
 static PyObject *
 arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 {
-    int elsize = -1, alignment = -1;
+    Py_ssize_t elsize = -1, alignment = -1;
     int version = 4;
     char endian;
     PyObject *endian_obj;
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
-    int int_dtypeflags = 0;
+    npy_int64 signed_dtypeflags = 0;
     npy_uint64 dtypeflags;
 
     if (!PyDataType_ISLEGACY(self)) {
@@ -2891,24 +2891,24 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOiiiO):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags, &metadata)) {
+                    &alignment, &signed_dtypeflags, &metadata)) {
             PyErr_Clear();
             return NULL;
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOiii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnk):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags)) {
+                    &alignment, &signed_dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnn):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
@@ -2916,7 +2916,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOnn):__setstate__",
                     &version,
                     &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
@@ -2925,7 +2925,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         break;
     case 5:
         version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(OOOnn):__setstate__",
                     &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;
@@ -3173,12 +3173,12 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
-    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+    if (signed_dtypeflags < 0 && signed_dtypeflags >= -128) {
         /* NumPy used to use a char. So normalize if signed. */
-        int_dtypeflags += 128;
+        signed_dtypeflags += 128;
     }
-    dtypeflags = int_dtypeflags;
-    if (dtypeflags != int_dtypeflags) {
+    dtypeflags = (npy_uint64)signed_dtypeflags;
+    if (dtypeflags != signed_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
                      "incorrect value for flags variable (overflow)");
         return NULL;
