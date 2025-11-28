@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from numpy._typing import _Shape
 
-type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_Shape, np.dtype[_ScalarT]]
+type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_Shape, np.dtype[ScalarT]]
 
 # mypy: disable-error-code=no-untyped-call
 
