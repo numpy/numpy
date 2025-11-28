@@ -1,7 +1,7 @@
 """Private counterpart of ``numpy.typing``."""
 
 from ._array_like import (
-    ArrayLike,
+    ArrayLike as ArrayLike,
     NDArray as NDArray,
     _ArrayLike as _ArrayLike,
     _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
@@ -84,7 +84,7 @@ from ._char_codes import (
 
 #
 from ._dtype_like import (
-    DTypeLike,
+    DTypeLike as DTypeLike,
     _DTypeLike as _DTypeLike,
     _DTypeLikeBool as _DTypeLikeBool,
     _DTypeLikeBytes as _DTypeLikeBytes,

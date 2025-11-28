@@ -122,7 +122,13 @@ type _PyArray[_T] = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
 type _PyScalar = complex | bytes | str
 
-type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _0D = tuple[()]
+type _1D = tuple[int]
+type _2D = tuple[int, int]
+type _3D = tuple[int, int, int]
+type _4D = tuple[int, int, int, int]
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[_1D, np.dtype[ScalarT]]
 
 ###
 
@@ -185,7 +191,7 @@ def reshape[ScalarT: np.generic](
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
+) -> _Array1D[ScalarT]: ...
 @overload  # shape: ~ShapeT
 def reshape[ScalarT: np.generic, ShapeT: _Shape](
     a: _ArrayLike[ScalarT],
@@ -212,7 +218,7 @@ def reshape(
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[tuple[int], np.dtype]: ...
+) -> np.ndarray[_1D]: ...
 @overload  # shape: ~ShapeT
 def reshape[ShapeT: _Shape](
     a: ArrayLike,
@@ -221,7 +227,7 @@ def reshape[ShapeT: _Shape](
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[ShapeT, np.dtype]: ...
+) -> np.ndarray[ShapeT]: ...
 @overload  # shape: Sequence[index]
 def reshape(
     a: ArrayLike,
@@ -267,7 +273,7 @@ def repeat[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
     repeats: _ArrayLikeInt_co,
     axis: None = None,
-) -> np.ndarray[tuple[int], np.dtype[ScalarT]]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
 def repeat[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
@@ -279,7 +285,7 @@ def repeat(
     a: ArrayLike,
     repeats: _ArrayLikeInt_co,
     axis: None = None,
-) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+) -> _Array1D[Any]: ...
 @overload
 def repeat(
     a: ArrayLike,
@@ -465,19 +471,20 @@ def searchsorted(
     sorter: _ArrayLikeInt_co | None = None,  # 1D int array
 ) -> NDArray[intp]: ...
 
-# TODO: Fix overlapping overloads: https://github.com/numpy/numpy/issues/27032
+#
 @overload
 def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex | tuple[SupportsIndex]) -> _Array1D[ScalarT]: ...
 @overload
-def resize[ScalarT: np.generic, ShapeT: _Shape](
-    a: _ArrayLike[ScalarT], new_shape: ShapeT
-) -> np.ndarray[ShapeT, np.dtype[ScalarT]]: ...
+def resize[ScalarT: np.generic, AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](
+    a: _ArrayLike[ScalarT],
+    new_shape: AnyShapeT,
+) -> np.ndarray[AnyShapeT, np.dtype[ScalarT]]: ...
 @overload
 def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: _ShapeLike) -> NDArray[ScalarT]: ...
 @overload
-def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[tuple[int], np.dtype]: ...
+def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[_1D]: ...
 @overload
-def resize[ShapeT: _Shape](a: ArrayLike, new_shape: ShapeT) -> np.ndarray[ShapeT, np.dtype]: ...
+def resize[AnyShapeT: (_0D, _1D, _2D, _3D, _4D)](a: ArrayLike, new_shape: AnyShapeT) -> np.ndarray[AnyShapeT]: ...
 @overload
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> NDArray[Any]: ...
 
@@ -550,9 +557,9 @@ def ravel(a: float | _NestedSequence[float], order: _OrderKACF = "C") -> _Array1
 @overload
 def ravel(a: complex | _NestedSequence[complex], order: _OrderKACF = "C") -> _Array1D[np.complex128 | Any]: ...
 @overload
-def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dtype]: ...
+def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[_1D]: ...
 
-def nonzero(a: _ArrayLike[Any]) -> tuple[np.ndarray[tuple[int], np.dtype[intp]], ...]: ...
+def nonzero(a: _ArrayLike[Any]) -> tuple[_Array1D[np.intp], ...]: ...
 
 # this prevents `Any` from being returned with Pyright
 @overload
@@ -564,12 +571,12 @@ def shape(a: _PyScalar) -> tuple[()]: ...
 # `collections.abc.Sequence` can't be used hesre, since `bytes` and `str` are
 # subtypes of it, which would make the return types incompatible.
 @overload
-def shape(a: _PyArray[_PyScalar]) -> tuple[int]: ...
+def shape(a: _PyArray[_PyScalar]) -> _1D: ...
 @overload
-def shape(a: _PyArray[_PyArray[_PyScalar]]) -> tuple[int, int]: ...
+def shape(a: _PyArray[_PyArray[_PyScalar]]) -> _2D: ...
 # this overload will be skipped by typecheckers that don't support PEP 688
 @overload
-def shape(a: memoryview | bytearray) -> tuple[int]: ...
+def shape(a: memoryview | bytearray) -> _1D: ...
 @overload
 def shape(a: ArrayLike) -> _AnyShape: ...
 
