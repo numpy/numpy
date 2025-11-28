@@ -186,11 +186,8 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     * Returns a new NumPy array containing the unique values of the input array of numeric (integer or complex).
     * This function uses hashing to identify uniqueness efficiently.
     */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
-    NPY_DISABLE_C_API;
 
     PyThreadState *_save1 = PyEval_SaveThread();
 
@@ -223,7 +220,6 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -239,7 +235,6 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     if (res_obj == NULL) {
         return NULL;
     }
-    NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
@@ -263,11 +258,8 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     * Returns a new NumPy array containing the unique values of the input array of fixed size strings.
     * This function uses hashing to identify uniqueness efficiently.
     */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
-    NPY_DISABLE_C_API;
 
     PyThreadState *_save1 = PyEval_SaveThread();
 
@@ -303,7 +295,6 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -319,7 +310,6 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     if (res_obj == NULL) {
         return NULL;
     }
-    NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
@@ -342,11 +332,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     * Returns a new NumPy array containing the unique values of the input array.
     * This function uses hashing to identify uniqueness efficiently.
     */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
-    NPY_DISABLE_C_API;
 
     PyThreadState *_save1 = PyEval_SaveThread();
 
@@ -412,7 +399,6 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -429,7 +415,6 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     }
     PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
     Py_INCREF(res_descr);
-    NPY_DISABLE_C_API;
 
     PyThreadState *_save2 = PyEval_SaveThread();
     auto save2_dealloc = finally([&]() {
