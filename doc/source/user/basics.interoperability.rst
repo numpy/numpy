@@ -150,7 +150,7 @@ If a class implements the old signature ``__array__(self)``, for ``np.array(a)``
 a warning will be raised saying that ``dtype`` and ``copy`` arguments are missing.
 
 To see an example of a custom array implementation including the use of
-``__array__()``, see :ref:`basics.dispatch`.
+``__array__()``, see :ref:`special-attributes-and-methods`.
 
 The DLPack Protocol
 ~~~~~~~~~~~~~~~~~~~
