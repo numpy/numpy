@@ -3689,7 +3689,7 @@ class TestConvolve:
     def test_convolve_empty_input_error_message(self):
         """
         Test that convolve raises the correct error message when inputs are empty.
-        Regression test for gh-issue-number (variable swapping bug).
+        Regression test for gh-30272 (variable swapping bug).
         """
         with pytest.raises(ValueError, match="a cannot be empty"):
             np.convolve(np.array([]), np.array([1, 2]))
