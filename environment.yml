@@ -24,7 +24,6 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - typing_extensions>=4.5.0
   - mypy=1.18.2
   - orjson  # makes mypy faster
   # For building docs
