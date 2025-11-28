@@ -1,3 +1,6 @@
+# TODO: remove once distutils is gone
+numpy\.f2py\._backends\._distutils
+
 # intentional type-check-only deviations from runtime
 numpy\._typing.*
 numpy\.polynomial\._polytypes
@@ -58,6 +61,11 @@ numpy\.core\.records.*
 numpy\.core\.shape_base.*
 numpy\.core\.umath.*
 numpy\.typing\.mypy_plugin
+
+# false positive "... is not a Union" errors
+numpy\.typing\.ArrayLike
+numpy\.typing\.DTypeLike
+numpy\.typing\.NDArray
 
 # ufuncs, see https://github.com/python/mypy/issues/20223
 numpy\.(\w+\.)*abs

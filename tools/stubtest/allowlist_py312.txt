@@ -1,6 +1,0 @@
-# python >= 3.12
-
-# false positive "... is not a Union" errors
-numpy\.typing\.ArrayLike
-numpy\.typing\.DTypeLike
-
