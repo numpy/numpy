@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
 from functools import partial
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
 import numpy as np
 
 if TYPE_CHECKING:
@@ -17,7 +18,6 @@ ACF = frozenset({None, "A", "C", "F"})
 CF = frozenset({None, "C", "F"})
 
 order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
-    (KACF, partial(np.ndarray, 1)),
     (KACF, AR.tobytes),
     (KACF, partial(AR.astype, int)),
     (KACF, AR.copy),
@@ -25,7 +25,8 @@ order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
     (KACF, AR.flatten),
     (KACF, AR.ravel),
     (KACF, partial(np.array, 1)),
-    # NOTE: __call__ is needed due to mypy 1.11 bugs (#17620, #17631)
+    # NOTE: __call__ is needed due to mypy bugs (#17620, #17631)
+    (KACF, partial(np.ndarray.__call__, 1)),
     (CF, partial(np.zeros.__call__, 1)),
     (CF, partial(np.ones.__call__, 1)),
     (CF, partial(np.empty.__call__, 1)),

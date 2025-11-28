@@ -274,20 +274,25 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-import sys
 import os
+import sys
 import warnings
-import pytest
 from io import BytesIO
 
-import numpy as np
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
-    )
-from numpy.testing._private.utils import requires_memory
-from numpy.lib import format
+import pytest
 
+import numpy as np
+from numpy.lib import format
+from numpy.testing import (
+    IS_64BIT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_raises,
+    assert_raises_regex,
+)
+from numpy.testing._private.utils import requires_memory
 
 # Generate some basic arrays to test with.
 scalars = [
@@ -378,9 +383,6 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
     ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True),
      'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
@@ -396,7 +398,7 @@ record_arrays = [
 ]
 
 
-#BytesIO that reads a random number of bytes at a time
+# BytesIO that reads a random number of bytes at a time
 class BytesIOSRandomSize(BytesIO):
     def read(self, size=None):
         import random
@@ -423,7 +425,7 @@ def roundtrip_randsize(arr):
 def roundtrip_truncated(arr):
     f = BytesIO()
     format.write_array(f, arr)
-    #BytesIO is one byte short
+    # BytesIO is one byte short
     f2 = BytesIO(f.getvalue()[0:-1])
     arr2 = format.read_array(f2)
     return arr2
@@ -456,14 +458,14 @@ def test_file_truncated(tmp_path):
         if arr.dtype != object:
             with open(path, 'wb') as f:
                 format.write_array(f, arr)
-            #truncate the file by one byte
+            # truncate the file by one byte
             with open(path, 'rb+') as f:
                 f.seek(-1, os.SEEK_END)
                 f.truncate()
             with open(path, 'rb') as f:
                 with pytest.raises(
-                    ValueError, 
-                    match = (
+                    ValueError,
+                    match=(
                         r"EOF: reading array header, "
                         r"expected (\d+) bytes got (\d+)"
                     ) if arr.size == 0 else (
@@ -560,6 +562,8 @@ def test_python2_python3_interoperability():
     assert_array_equal(data, np.ones(2))
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
@@ -623,17 +627,18 @@ def test_pickle_disallow(tmpdir):
                   allow_pickle=False)
 
 @pytest.mark.parametrize('dt', [
-    np.dtype(np.dtype([('a', np.int8),
-                       ('b', np.int16),
-                       ('c', np.int32),
-                      ], align=True),
-             (3,)),
-    np.dtype([('x', np.dtype({'names': ['a', 'b'],
+    # Not testing a subarray only dtype, because it cannot be attached to an array
+    # (and would fail the test as of writing this.)
+    np.dtype([('a', np.int8),
+              ('b', np.int16),
+              ('c', np.int32),
+             ], align=True),
+    np.dtype([('x', np.dtype(({'names': ['a', 'b'],
                               'formats': ['i1', 'i1'],
                               'offsets': [0, 4],
                               'itemsize': 8,
                              },
-                    (3,)),
+                    (3,))),
                (4,),
              )]),
     np.dtype([('x',
@@ -952,6 +957,7 @@ def test_large_file_support(tmpdir):
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_archive(tmpdir):
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
@@ -1002,7 +1008,7 @@ def test_unicode_field_names(tmpdir):
 
     # notifies the user that 3.0 is selected
     with open(fname, 'wb') as f:
-        with assert_warns(UserWarning):
+        with pytest.warns(UserWarning):
             format.write_array(f, arr, version=None)
 
 def test_header_growth_axis():
@@ -1035,7 +1041,7 @@ def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
-    with assert_warns(UserWarning):
+    with pytest.warns(UserWarning):
         np.save(buf, arr)
     buf.seek(0)
 

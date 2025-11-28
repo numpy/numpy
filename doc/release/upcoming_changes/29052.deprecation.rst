@@ -1,0 +1,10 @@
+Positional ``out`` argument to `np.maximum`, `np.minimum` is deprecated
+-----------------------------------------------------------------------
+Passing the output array ``out`` positionally to `numpy.maximum` and
+`numpy.minimum` is deprecated. For example, ``np.maximum(a, b, c)`` will
+emit a deprecation warning, since ``c`` is treated as the output buffer
+rather than a third input.
+
+Always pass the output with the keyword form, e.g.
+``np.maximum(a, b, out=c)``. This makes intent clear and simplifies
+type annotations.

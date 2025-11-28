@@ -1,0 +1,10 @@
+Removal of four undocumented ``ndarray.ctypes`` methods
+-------------------------------------------------------
+Four undocumented methods of the ``ndarray.ctypes`` object have been removed:
+
+* ``_ctypes.get_data()`` (use ``_ctypes.data`` instead)
+* ``_ctypes.get_shape()`` (use ``_ctypes.shape`` instead)
+* ``_ctypes.get_strides()`` (use ``_ctypes.strides`` instead)
+* ``_ctypes.get_as_parameter()`` (use ``_ctypes._as_parameter_`` instead)
+
+These methods have been deprecated since NumPy 1.21.

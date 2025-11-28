@@ -8,10 +8,33 @@ or subclasses ndarray.
 
 """
 from numpy._core import (
-    array, asarray, absolute, add, subtract, multiply, divide,
-    remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
-    bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
-    greater_equal, shape, reshape, arange, sin, sqrt, transpose
+    absolute,
+    add,
+    arange,
+    array,
+    asarray,
+    bitwise_and,
+    bitwise_or,
+    bitwise_xor,
+    divide,
+    equal,
+    greater,
+    greater_equal,
+    invert,
+    left_shift,
+    less,
+    less_equal,
+    multiply,
+    not_equal,
+    power,
+    remainder,
+    reshape,
+    right_shift,
+    shape,
+    sin,
+    sqrt,
+    subtract,
+    transpose,
 )
 from numpy._core.overrides import set_module
 
@@ -30,6 +53,17 @@ class container:
     astype
 
     """
+    def __init_subclass__(cls) -> None:
+        # Deprecated in NumPy 2.4, 2025-11-24
+        import warnings
+
+        warnings.warn(
+            "The numpy.lib.user_array.container class is deprecated and will be "
+            "removed in a future version.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
@@ -86,16 +120,6 @@ class container:
 
     def __imul__(self, other):
         multiply(self.array, other, self.array)
-        return self
-
-    def __div__(self, other):
-        return self._rc(divide(self.array, asarray(other)))
-
-    def __rdiv__(self, other):
-        return self._rc(divide(asarray(other), self.array))
-
-    def __idiv__(self, other):
-        divide(self.array, other, self.array)
         return self
 
     def __mod__(self, other):

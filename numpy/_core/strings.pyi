@@ -1,14 +1,15 @@
-from typing import Any, overload, TypeAlias
+from typing import TypeAlias, overload
 
 import numpy as np
+from numpy._globals import _NoValueType
 from numpy._typing import (
     NDArray,
-    _ArrayLikeStr_co as U_co,
+    _AnyShape,
+    _ArrayLikeAnyString_co as UST_co,
     _ArrayLikeBytes_co as S_co,
     _ArrayLikeInt_co as i_co,
+    _ArrayLikeStr_co as U_co,
     _ArrayLikeString_co as T_co,
-    _ArrayLikeAnyString_co as UST_co,
-    _Shape,
     _SupportsArray,
 )
 
@@ -58,11 +59,12 @@ __all__ = [
     "translate",
     "upper",
     "zfill",
+    "slice",
 ]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | _StringDTypeArray
+_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_AnyShape, np.dtype[np.str_]] | _StringDTypeArray
 
 @overload
 def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
@@ -149,154 +151,154 @@ def str_len(x: UST_co) -> NDArray[np.int_]: ...
 def find(
     a: U_co,
     sub: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def find(
     a: S_co,
     sub: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def find(
     a: T_co,
     sub: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def rfind(
     a: U_co,
     sub: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def rfind(
     a: S_co,
     sub: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def rfind(
     a: T_co,
     sub: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def index(
     a: U_co,
     sub: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def index(
     a: S_co,
     sub: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def index(
     a: T_co,
     sub: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def rindex(
     a: U_co,
     sub: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def rindex(
     a: S_co,
     sub: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def rindex(
     a: T_co,
     sub: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def count(
     a: U_co,
     sub: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def count(
     a: S_co,
     sub: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 @overload
 def count(
     a: T_co,
     sub: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.int_]: ...
 
 @overload
 def startswith(
     a: U_co,
     prefix: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 @overload
 def startswith(
     a: S_co,
     prefix: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 @overload
 def startswith(
     a: T_co,
     prefix: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 
 @overload
 def endswith(
     a: U_co,
     suffix: U_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 @overload
 def endswith(
     a: S_co,
     suffix: S_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 @overload
 def endswith(
     a: T_co,
     suffix: T_co,
-    start: i_co = ...,
-    end: i_co | None = ...,
+    start: i_co = 0,
+    end: i_co | None = None,
 ) -> NDArray[np.bool]: ...
 
 def decode(
@@ -311,13 +313,13 @@ def encode(
 ) -> NDArray[np.bytes_]: ...
 
 @overload
-def expandtabs(a: U_co, tabsize: i_co = ...) -> NDArray[np.str_]: ...
+def expandtabs(a: U_co, tabsize: i_co = 8) -> NDArray[np.str_]: ...
 @overload
-def expandtabs(a: S_co, tabsize: i_co = ...) -> NDArray[np.bytes_]: ...
+def expandtabs(a: S_co, tabsize: i_co = 8) -> NDArray[np.bytes_]: ...
 @overload
-def expandtabs(a: _StringDTypeSupportsArray, tabsize: i_co = ...) -> _StringDTypeArray: ...
+def expandtabs(a: _StringDTypeSupportsArray, tabsize: i_co = 8) -> _StringDTypeArray: ...
 @overload
-def expandtabs(a: T_co, tabsize: i_co = ...) -> _StringDTypeOrUnicodeArray: ...
+def expandtabs(a: T_co, tabsize: i_co = 8) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def center(a: U_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.str_]: ...
@@ -432,28 +434,28 @@ def replace(
     a: U_co,
     old: U_co,
     new: U_co,
-    count: i_co = ...,
+    count: i_co = -1,
 ) -> NDArray[np.str_]: ...
 @overload
 def replace(
     a: S_co,
     old: S_co,
     new: S_co,
-    count: i_co = ...,
+    count: i_co = -1,
 ) -> NDArray[np.bytes_]: ...
 @overload
 def replace(
     a: _StringDTypeSupportsArray,
     old: _StringDTypeSupportsArray,
     new: _StringDTypeSupportsArray,
-    count: i_co = ...,
+    count: i_co = -1,
 ) -> _StringDTypeArray: ...
 @overload
 def replace(
     a: T_co,
     old: T_co,
     new: T_co,
-    count: i_co = ...,
+    count: i_co = -1,
 ) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
@@ -497,4 +499,38 @@ def translate(
     a: T_co,
     table: str,
     deletechars: str | None = None,
+) -> _StringDTypeOrUnicodeArray: ...
+
+#
+@overload
+def slice(
+    a: U_co,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
+) -> NDArray[np.str_]: ...
+@overload
+def slice(
+    a: S_co,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
+) -> NDArray[np.bytes_]: ...
+@overload
+def slice(
+    a: _StringDTypeSupportsArray,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
+) -> _StringDTypeArray: ...
+@overload
+def slice(
+    a: T_co,
+    start: i_co | None = None,
+    stop: i_co | _NoValueType | None = ...,  # = np._NoValue
+    step: i_co | None = None,
+    /,
 ) -> _StringDTypeOrUnicodeArray: ...

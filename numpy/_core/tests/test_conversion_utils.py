@@ -2,13 +2,11 @@
 Tests for numpy/_core/src/multiarray/conversion_utils.c
 """
 import re
-import sys
 
 import pytest
 
-import numpy as np
 import numpy._core._multiarray_tests as mt
-from numpy._core.multiarray import CLIP, WRAP, RAISE
+from numpy._core.multiarray import CLIP, RAISE, WRAP
 from numpy.testing import assert_raises
 
 
@@ -19,7 +17,7 @@ class StringConverterTestCase:
     warn = True
 
     def _check_value_error(self, val):
-        pattern = r'\(got {}\)'.format(re.escape(repr(val)))
+        pattern = fr'\(got {re.escape(repr(val))}\)'
         with pytest.raises(ValueError, match=pattern) as exc:
             self.conv(val)
 
@@ -174,9 +172,12 @@ class TestCastingConverter(StringConverterTestCase):
         self._check("no", "NPY_NO_CASTING")
         self._check("equiv", "NPY_EQUIV_CASTING")
         self._check("safe", "NPY_SAFE_CASTING")
-        self._check("same_kind", "NPY_SAME_KIND_CASTING")
         self._check("unsafe", "NPY_UNSAFE_CASTING")
+        self._check("same_kind", "NPY_SAME_KIND_CASTING")
 
+    def test_invalid(self):
+        # Currently, 'same_value' is supported only in ndarray.astype
+        self._check_value_error("same_value")
 
 class TestIntpConverter:
     """ Tests of PyArray_IntpConverter """

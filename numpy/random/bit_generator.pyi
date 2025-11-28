@@ -1,13 +1,29 @@
 import abc
+from _typeshed import Incomplete
 from collections.abc import Callable, Mapping, Sequence
 from threading import Lock
-from typing import Any, ClassVar, Literal, NamedTuple, TypeAlias, TypedDict, overload, type_check_only
-
-from _typeshed import Incomplete
-from typing_extensions import CapsuleType, Self
+from typing import (
+    Any,
+    ClassVar,
+    Literal,
+    NamedTuple,
+    Self,
+    TypeAlias,
+    TypedDict,
+    overload,
+    type_check_only,
+)
+from typing_extensions import CapsuleType
 
 import numpy as np
-from numpy._typing import NDArray, _ArrayLikeInt_co, _DTypeLike, _ShapeLike, _UInt32Codes, _UInt64Codes
+from numpy._typing import (
+    NDArray,
+    _ArrayLikeInt_co,
+    _DTypeLike,
+    _ShapeLike,
+    _UInt32Codes,
+    _UInt64Codes,
+)
 
 __all__ = ["BitGenerator", "SeedSequence"]
 

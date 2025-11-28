@@ -1,20 +1,17 @@
 import functools
-import sys
 import math
-import warnings
+import sys
+from itertools import product
 
 import numpy as np
-from .._utils import set_module
 import numpy._core.numeric as _nx
+import numpy.matrixlib as matrixlib
+from numpy._core import linspace, overrides
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
-
-import numpy.matrixlib as matrixlib
-from numpy._core.multiarray import ravel_multi_index, unravel_index
-from numpy._core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -165,7 +162,7 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step * 1.0))))
+                        math.ceil((stop - start) / step))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
@@ -331,7 +328,7 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
-    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
 
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
@@ -399,7 +396,7 @@ class AxisConcatenator:
                         continue
                     except Exception as e:
                         raise ValueError(
-                            "unknown special directive {!r}".format(item)
+                            f"unknown special directive {item!r}"
                         ) from e
                 try:
                     axis = int(item)
@@ -475,9 +472,9 @@ class RClass(AxisConcatenator):
     Optional character strings placed as the first element of the index
     expression can be used to change the output. The strings 'r' or 'c' result
     in matrix output. If the result is 1-D and 'r' is specified a 1 x N (row)
-    matrix is produced. If the result is 1-D and 'c' is specified, then a N x 1
-    (column) matrix is produced. If the result is 2-D then both provide the
-    same matrix result.
+    matrix is produced. If the result is 1-D and 'c' is specified, then
+    an N x 1 (column) matrix is produced.
+    If the result is 2-D then both provide the same matrix result.
 
     A string integer specifies which axis to stack multiple comma separated
     arrays along. A string of two comma-separated integers allows indication
@@ -690,29 +687,12 @@ class ndindex:
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        x = as_strided(_nx.zeros(1), shape=shape,
-                       strides=_nx.zeros_like(shape))
-        self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
-                              order='C')
+        if min(shape, default=0) < 0:
+            raise ValueError("negative dimensions are not allowed")
+        self._iter = product(*map(range, shape))
 
     def __iter__(self):
         return self
-
-    def ndincr(self):
-        """
-        Increment the multi-dimensional index by one.
-
-        This method is for backward compatibility only: do not use.
-
-        .. deprecated:: 1.20.0
-            This method has been advised against since numpy 1.8.0, but only
-            started emitting DeprecationWarning as of this version.
-        """
-        # NumPy 1.20.0, 2020-09-08
-        warnings.warn(
-            "`ndindex.ndincr()` is deprecated, use `next(ndindex)` instead",
-            DeprecationWarning, stacklevel=2)
-        next(self)
 
     def __next__(self):
         """
@@ -726,8 +706,7 @@ class ndindex:
             iteration.
 
         """
-        next(self._it)
-        return self._it.multi_index
+        return next(self._iter)
 
 
 # You can do all this with slice() plus a few special objects,

@@ -1252,9 +1252,10 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
     /* Use the default when datetime and timedelta are not involved */
-    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+    if ((!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) ||
+            (PyTypeNum_ISOBJECT(type_num1) || PyTypeNum_ISOBJECT(type_num2))) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands, type_tup,
+                                           out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -1455,7 +1456,7 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(ufunc->userloops, key);
+            obj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1742,7 +1743,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1813,7 +1814,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key);
+            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;

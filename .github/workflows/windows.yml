@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -14,40 +18,23 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  python64bit_openblas:
-    name: x86-64, LP64 OpenBLAS
-    runs-on: windows-2019
+  clangcl_python64bit_openblas32:
+    name: Clang-cl, x86-64, fast, openblas32
+    runs-on: windows-2022
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler-pyversion:
-          - ["MSVC", "3.11"]
-          - ["Clang-cl", "3.13t"]
-
     steps:
     - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
 
     - name: Setup Python
-      uses: astral-sh/setup-uv@22695119d769bdb6f7032ad67b9bca0ef8c4a174
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: ${{ matrix.compiler-pyversion[1] }}
-        enable-cache: false
-
-    - run:
-        uv pip install --python=${{ matrix.version }} pip
-
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      if: matrix.compiler-pyversion[1] == '3.13t'
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+        python-version: "3.14t"
 
     - name: Install build dependencies from PyPI
       run: |
@@ -58,23 +45,7 @@ jobs:
         choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
 
-
-    - name: Install Clang-cl
-      if: matrix.compiler-pyversion[0] == 'Clang-cl'
-      run: |
-        # llvm is preinstalled, but leave
-        # this here in case we need to pin the
-        # version at some point.
-        #choco install llvm -y
-
-    - name: Install NumPy (MSVC)
-      if: matrix.compiler-pyversion[0] == 'MSVC'
-      run: |
-        pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv
-
     - name: Install NumPy (Clang-cl)
-      if: matrix.compiler-pyversion[0] == 'Clang-cl'
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
         pip install -r requirements/ci_requirements.txt
@@ -95,33 +66,50 @@ jobs:
       run: |
         spin test -- --timeout=600 --durations=10
 
-  msvc_32bit_python_no_openblas:
-    name: MSVC, 32-bit Python, no BLAS
-    runs-on: windows-2019
+
+  #=======================================================================================
+  msvc_python32bit_no_openblas:
+    name: MSVC, ${{ matrix.architecture }}, fast, no BLAS
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            architecture: x86
+          - os: windows-11-arm
+            architecture: arm64
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
 
-      - name: Setup Python (32-bit)
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      - name: Setup Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: '3.11'
-          architecture: 'x86'
+          architecture: ${{ matrix.architecture }}
 
-      - name: Setup MSVC (32-bit)
+      - name: Setup MSVC
         uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
         with:
-          architecture: 'x86'
+          architecture: ${{ matrix.architecture }}
 
       - name: Build and install
         run: |
-          python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true"
+          python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true" 2>&1 | tee build.log
+
+      - name: Check warnings
+        uses: ./.github/check-warnings
+        with:
+          log-file: ./build.log
+          allowlist: ./.github/check-warnings/msvc-allowed-warnings.txt
+          warning-regex: "warning C|Command line warning"
 
       - name: Install test dependencies
         run: |
@@ -131,3 +119,59 @@ jobs:
         run: |
           cd tools
           python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10
+
+  #=======================================================================================
+  msvc_python64bit_openblas:
+    name: MSVC, x86_64, ${{ matrix.TEST_MODE }}, openblas${{ matrix.BLAS }}
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - BLAS: 64
+            TEST_MODE: full
+            pyver: '3.14'
+          - BLAS: 32
+            TEST_MODE: fast
+            pyver: '3.11'
+
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          submodules: recursive
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: ${{ matrix.pyver }}
+
+      - name: pkg-config
+        run: |
+          choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+
+      - name: Dependencies
+        run: |
+          python -m pip install -r requirements/test_requirements.txt
+
+      - name: Build and install
+        run: |
+          pip install -r requirements/ci_requirements.txt
+          spin config-openblas --with-scipy-openblas=${{ matrix.BLAS }}
+          $env:PKG_CONFIG_PATH="$pwd/.openblas"
+          python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
+
+      - name: Run test suite ${{ matrix.TEST_MODE }}
+        run: |
+          cd tools
+          # Get a gfortran onto the path for f2py tests
+          $env:PATH = "c:\\rtools45\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+          If ( "${{ matrix.TEST_MODE }}" -eq "full" ) {
+            python -m pytest --pyargs numpy -rsx -n2 --durations=10
+          } else {
+            python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10 -rsx
+          }

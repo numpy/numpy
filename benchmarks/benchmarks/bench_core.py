@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Core(Benchmark):
@@ -14,6 +14,7 @@ class Core(Benchmark):
         self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
         self.float64_dtype = np.dtype(np.float64)
+        self.arr = np.arange(10000).reshape(100, 100)
 
     def time_array_1(self):
         np.array(1)
@@ -47,6 +48,9 @@ class Core(Benchmark):
 
     def time_can_cast(self):
         np.can_cast(self.l10x10, self.float64_dtype)
+
+    def time_tobytes_noncontiguous(self):
+        self.arr.T.tobytes()
 
     def time_can_cast_same_kind(self):
         np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
@@ -151,7 +155,8 @@ class CountNonzero(Benchmark):
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, np.float32,
+         np.float64, str, object]
     ]
 
     def setup(self, numaxes, size, dtype):

@@ -18,23 +18,24 @@ The preferred alias for `defchararray` is `numpy.char`.
 import functools
 
 import numpy as np
-from .._utils import set_module
-from .numerictypes import bytes_, str_, character
-from .numeric import ndarray, array as narray, asarray as asnarray
-from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
+from numpy._core.multiarray import compare_chararrays
+from numpy._core.strings import (
+    _join as join,
+    _rsplit as rsplit,
+    _split as split,
+    _splitlines as splitlines,
+)
+from numpy._utils import set_module
 from numpy.strings import *
 from numpy.strings import (
     multiply as strings_multiply,
     partition as strings_partition,
     rpartition as strings_rpartition,
 )
-from numpy._core.strings import (
-    _split as split,
-    _rsplit as rsplit,
-    _splitlines as splitlines,
-    _join as join,
-)
+
+from .numeric import array as narray, asarray as asnarray, ndarray
+from .numerictypes import bytes_, character, str_
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
@@ -495,7 +496,6 @@ class chararray(ndarray):
     title
     tofile
     tolist
-    tostring
     translate
     transpose
     upper
@@ -718,7 +718,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind=None, order=None):
+    def argsort(self, axis=-1, kind=None, order=None, *, stable=None):
         """
         Return the indices that sort the array lexicographically.
 
@@ -736,7 +736,7 @@ class chararray(ndarray):
               dtype='|S5')
 
         """
-        return self.__array__().argsort(axis, kind, order)
+        return self.__array__().argsort(axis, kind, order, stable=stable)
     argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):

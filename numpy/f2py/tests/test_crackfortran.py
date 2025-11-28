@@ -1,13 +1,16 @@
-import importlib
-import time
-import pytest
-import numpy as np
-from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
-from . import util
-from numpy.f2py import crackfortran
-import textwrap
 import contextlib
+import importlib
 import io
+import textwrap
+import time
+
+import pytest
+
+import numpy as np
+from numpy.f2py import crackfortran
+from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
+
+from . import util
 
 
 class TestNoSpace(util.F2PyTest):
@@ -114,12 +117,16 @@ class TestExternal(util.F2PyTest):
 
 class TestCrackFortran(util.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
-    sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90")]
+    sources = [util.getpath("tests", "src", "crackfortran", "gh2848.f90"),
+               util.getpath("tests", "src", "crackfortran", "common_with_division.f")
+              ]
 
     def test_gh2848(self):
         r = self.module.gh2848(1, 2)
         assert r == (1, 2)
 
+    def test_common_with_division(self):
+        assert len(self.module.mortmp.ctmp) == 11
 
 class TestMarkinnerspaces:
     # gh-14118: markinnerspaces does not handle multiple quotations

@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 
-
 _byteorderconv = np._core.records._byteorderconv
 
 
@@ -42,7 +41,7 @@ def _checknames(descr, names=None):
 
     """
     ndescr = len(descr)
-    default_names = ['f%i' % i for i in range(ndescr)]
+    default_names = [f'f{i}' for i in range(ndescr)]
     if names is None:
         new_names = default_names
     else:
@@ -117,9 +116,9 @@ class MaskedRecords(ma.MaskedArray):
                 elif nm == nd:
                     mask = np.reshape(mask, self.shape)
                 else:
-                    msg = "Mask and data not compatible: data size is %i, "\
-                          "mask size is %i."
-                    raise ma.MAError(msg % (nd, nm))
+                    msg = (f"Mask and data not compatible: data size is {nd},"
+                           " mask size is {nm}.")
+                    raise ma.MAError(msg)
             if not keep_mask:
                 self.__setmask__(mask)
                 self._sharedmask = True
@@ -150,7 +149,6 @@ class MaskedRecords(ma.MaskedArray):
         self._update_from(obj)
         if _dict['_baseclass'] == np.ndarray:
             _dict['_baseclass'] = np.recarray
-        return
 
     @property
     def _data(self):
@@ -343,7 +341,7 @@ class MaskedRecords(ma.MaskedArray):
 
         """
         _names = self.dtype.names
-        fmt = "%%%is : %%s" % (max(len(n) for n in _names) + 4,)
+        fmt = f"%{max(len(n) for n in _names) + 4}s : %s"
         reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
         reprstr.insert(0, 'masked_records(')
         reprstr.extend([fmt % ('    fill_value', self.fill_value),
@@ -659,8 +657,7 @@ def openfile(fname):
 
 
 def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
-                 varnames=None, vartypes=None,
-                 *, delimitor=np._NoValue):  # backwards compatibility
+                 varnames=None, vartypes=None):
     """
     Creates a mrecarray from data stored in the file `filename`.
 
@@ -684,16 +681,6 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
 
 
     Ultra simple: the varnames are in the header, one line"""
-    if delimitor is not np._NoValue:
-        if delimiter is not None:
-            raise TypeError("fromtextfile() got multiple values for argument "
-                            "'delimiter'")
-        # NumPy 1.22.0, 2021-09-23
-        warnings.warn("The 'delimitor' keyword argument of "
-                      "numpy.ma.mrecords.fromtextfile() is deprecated "
-                      "since NumPy 1.22.0, use 'delimiter' instead.",
-                      DeprecationWarning, stacklevel=2)
-        delimiter = delimitor
 
     # Try to open the file.
     ftext = openfile(fname)
@@ -720,9 +707,9 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
     else:
         vartypes = [np.dtype(v) for v in vartypes]
         if len(vartypes) != nfields:
-            msg = "Attempting to %i dtypes for %i fields!"
+            msg = f"Attempting to {len(vartypes)} dtypes for {nfields} fields!"
             msg += " Reverting to default."
-            warnings.warn(msg % (len(vartypes), nfields), stacklevel=2)
+            warnings.warn(msg, stacklevel=2)
             vartypes = _guessvartypes(_variables[0])
 
     # Construct the descriptor.
@@ -749,7 +736,7 @@ def addfield(mrecord, newfield, newfieldname=None):
     _data = mrecord._data
     _mask = mrecord._mask
     if newfieldname is None or newfieldname in reserved_fields:
-        newfieldname = 'f%i' % len(_data.dtype)
+        newfieldname = f'f{len(_data.dtype)}'
     newfield = ma.array(newfield)
     # Get the new data.
     # Create a new empty recarray

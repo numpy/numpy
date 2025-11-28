@@ -18,7 +18,7 @@ and sometimes other mappings too.
 """
 
 import numpy._core.multiarray as ma
-from numpy._core.multiarray import typeinfo, dtype
+from numpy._core.multiarray import dtype, typeinfo
 
 ######################################
 # Building `sctypeDict` and `allTypes`
@@ -36,6 +36,7 @@ _abstract_type_names = {
 
 for _abstract_type_name in _abstract_type_names:
     allTypes[_abstract_type_name] = getattr(ma, _abstract_type_name)
+    del _abstract_type_name
 
 for k, v in typeinfo.items():
     if k.startswith("NPY_") and v not in c_names_dict:
@@ -44,6 +45,8 @@ for k, v in typeinfo.items():
         concrete_type = v.type
         allTypes[k] = concrete_type
         sctypeDict[k] = concrete_type
+        del concrete_type
+    del k, v
 
 _aliases = {
     "double": "float64",
@@ -60,6 +63,7 @@ _aliases = {
 for k, v in _aliases.items():
     sctypeDict[k] = allTypes[v]
     allTypes[k] = allTypes[v]
+    del k, v
 
 # extra aliases are added only to `sctypeDict`
 # to support dtype name access, such as`np.dtype("float")`
@@ -76,17 +80,20 @@ _extra_aliases = {
 
 for k, v in _extra_aliases.items():
     sctypeDict[k] = allTypes[v]
+    del k, v
 
 # include extended precision sized aliases
 for is_complex, full_name in [(False, "longdouble"), (True, "clongdouble")]:
-    longdouble_type: type = allTypes[full_name]
+    longdouble_type = allTypes[full_name]
 
-    bits: int = dtype(longdouble_type).itemsize * 8
-    base_name: str = "complex" if is_complex else "float"
-    extended_prec_name: str = f"{base_name}{bits}"
+    bits = dtype(longdouble_type).itemsize * 8
+    base_name = "complex" if is_complex else "float"
+    extended_prec_name = f"{base_name}{bits}"
     if extended_prec_name not in allTypes:
         sctypeDict[extended_prec_name] = longdouble_type
         allTypes[extended_prec_name] = longdouble_type
+
+    del is_complex, full_name, longdouble_type, bits, base_name, extended_prec_name
 
 
 ####################
@@ -110,10 +117,15 @@ for type_info in typeinfo.values():
     ]:
         if issubclass(concrete_type, abstract_type):
             sctypes[type_group].add(concrete_type)
+            del type_group, abstract_type
             break
+
+    del type_info, concrete_type
 
 # sort sctype groups by bitsize
 for sctype_key in sctypes.keys():
     sctype_list = list(sctypes[sctype_key])
     sctype_list.sort(key=lambda x: dtype(x).itemsize)
     sctypes[sctype_key] = sctype_list
+
+    del sctype_key, sctype_list

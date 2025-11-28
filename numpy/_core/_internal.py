@@ -10,9 +10,11 @@ import re
 import sys
 import warnings
 
-from ..exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types, StringDType
 from numpy import _NoValue
+from numpy.exceptions import DTypePromotionError
+
+from .multiarray import StringDType, array, dtype, promote_types
+
 try:
     import ctypes
 except ImportError:
@@ -183,8 +185,7 @@ def _commastring(astr):
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
                 raise ValueError(
-                    'inconsistent byte-order specification %s and %s' %
-                    (order1, order2))
+                    f'inconsistent byte-order specification {order1} and {order2}')
             order = order1
 
         if order in ('|', '=', _nbo):
@@ -363,46 +364,6 @@ class _ctypes:
         Enables `c_func(some_array.ctypes)`
         """
         return self.data_as(ctypes.c_void_p)
-
-    # Numpy 1.21.0, 2021-05-18
-
-    def get_data(self):
-        """Deprecated getter for the `_ctypes.data` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn('"get_data" is deprecated. Use "data" instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.data
-
-    def get_shape(self):
-        """Deprecated getter for the `_ctypes.shape` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn('"get_shape" is deprecated. Use "shape" instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.shape
-
-    def get_strides(self):
-        """Deprecated getter for the `_ctypes.strides` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn('"get_strides" is deprecated. Use "strides" instead',
-                      DeprecationWarning, stacklevel=2)
-        return self.strides
-
-    def get_as_parameter(self):
-        """Deprecated getter for the `_ctypes._as_parameter_` property.
-
-        .. deprecated:: 1.21
-        """
-        warnings.warn(
-            '"get_as_parameter" is deprecated. Use "_as_parameter_" instead',
-            DeprecationWarning, stacklevel=2,
-        )
-        return self._as_parameter_
 
 
 def _newnames(datatype, order):
@@ -739,11 +700,10 @@ def __dtype_from_pep3118(stream, is_subdtype):
         elif stream.next in _pep3118_unsupported_map:
             desc = _pep3118_unsupported_map[stream.next]
             raise NotImplementedError(
-                "Unrepresentable PEP 3118 data type {!r} ({})"
-                .format(stream.next, desc))
+                f"Unrepresentable PEP 3118 data type {stream.next!r} ({desc})")
         else:
             raise ValueError(
-                "Unknown PEP 3118 data type specifier %r" % stream.s
+                f"Unknown PEP 3118 data type specifier {stream.s!r}"
             )
 
         #
@@ -873,21 +833,21 @@ def _lcm(a, b):
 
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
-    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
-                            ['{}={!r}'.format(k, v)
+    args_string = ', '.join([f'{arg!r}' for arg in inputs] +
+                            [f'{k}={v!r}'
                              for k, v in kwargs.items()])
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
     return ('operand type(s) all returned NotImplemented from '
-            '__array_ufunc__({!r}, {!r}, {}): {}'
-            .format(ufunc, method, args_string, types_string))
+            f'__array_ufunc__({ufunc!r}, {method!r}, {args_string}): {types_string}'
+            )
 
 
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
-    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
-    return ("no implementation found for '{}' on types that implement "
-            '__array_function__: {}'.format(func_name, list(types)))
+    func_name = f'{public_api.__module__}.{public_api.__name__}'
+    return (f"no implementation found for '{func_name}' on types that implement "
+            f'__array_function__: {list(types)}')
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -895,6 +855,8 @@ def _ufunc_doc_signature_formatter(ufunc):
     Builds a signature string which resembles PEP 457
 
     This is used to construct the first line of the docstring
+
+    Keep in sync with `_ufunc_inspect_signature_builder`.
     """
 
     # input arguments are simple
@@ -911,7 +873,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i + 1) for i in range(ufunc.nout)),
+                f'out{i + 1}' for i in range(ufunc.nout)),
             default=repr((None,) * ufunc.nout)
         )
 
@@ -930,12 +892,55 @@ def _ufunc_doc_signature_formatter(ufunc):
         kwargs += "[, signature, axes, axis]"
 
     # join all the parts together
-    return '{name}({in_args}{out_args}, *{kwargs})'.format(
-        name=ufunc.__name__,
-        in_args=in_args,
-        out_args=out_args,
-        kwargs=kwargs
+    return f'{ufunc.__name__}({in_args}{out_args}, *{kwargs})'
+
+
+def _ufunc_inspect_signature_builder(ufunc):
+    """
+    Builds a ``__signature__`` string.
+
+    Should be kept in sync with `_ufunc_doc_signature_formatter`.
+    """
+
+    from inspect import Parameter, Signature
+
+    params = []
+
+    # positional-only input parameters
+    if ufunc.nin == 1:
+        params.append(Parameter("x", Parameter.POSITIONAL_ONLY))
+    else:
+        params.extend(
+            Parameter(f"x{i}", Parameter.POSITIONAL_ONLY)
+            for i in range(1, ufunc.nin + 1)
+        )
+
+    # for the sake of simplicity, we only consider a single output parameter
+    if ufunc.nout == 1:
+        out_default = None
+    else:
+        out_default = (None,) * ufunc.nout
+    params.append(
+        Parameter("out", Parameter.POSITIONAL_OR_KEYWORD, default=out_default),
     )
+
+    if ufunc.signature is None:
+        params.append(Parameter("where", Parameter.KEYWORD_ONLY, default=True))
+    else:
+        # NOTE: not all gufuncs support the `axis` parameters
+        params.append(Parameter("axes", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("axis", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("keepdims", Parameter.KEYWORD_ONLY, default=False))
+
+    params.extend((
+        Parameter("casting", Parameter.KEYWORD_ONLY, default='same_kind'),
+        Parameter("order", Parameter.KEYWORD_ONLY, default='K'),
+        Parameter("dtype", Parameter.KEYWORD_ONLY, default=None),
+        Parameter("subok", Parameter.KEYWORD_ONLY, default=True),
+        Parameter("signature", Parameter.KEYWORD_ONLY, default=None),
+    ))
+
+    return Signature(params)
 
 
 def npy_ctypes_check(cls):

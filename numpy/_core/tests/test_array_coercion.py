@@ -12,10 +12,7 @@ from pytest import param
 import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
-
-from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY, IS_64BIT
-)
+from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
 
 
 def arraylikes():
@@ -46,7 +43,7 @@ def arraylikes():
         def __len__(self):
             raise TypeError
 
-        def __getitem__(self):
+        def __getitem__(self, _, /):
             raise TypeError
 
     # Array-interface
@@ -269,11 +266,6 @@ class TestScalarDiscovery:
             # Ensure we have a full-precision number if available
             scalar = type(scalar)((scalar * 2)**0.5)
 
-        if type(scalar) is rational:
-            # Rational generally fails due to a missing cast. In the future
-            # object casts should automatically be defined based on `setitem`.
-            pytest.xfail("Rational to object cast is undefined currently.")
-
         # Use casting from object:
         arr = np.array(scalar, dtype=object).astype(scalar.dtype)
 
@@ -325,18 +317,18 @@ class TestScalarDiscovery:
                 cast = np.array(scalar).astype(dtype)
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array(scalar, dtype=dtype)
 
                 if (isinstance(scalar, rational) and
                         np.issubdtype(dtype, np.signedinteger)):
                     return
 
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     res[()] = scalar
 
                 return
@@ -636,7 +628,7 @@ class TestBadSequences:
                 obj[0][0] = 2  # replace with a different list.
                 raise ValueError("not actually a sequence!")
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 pass
 
         # Runs into a corner case in the new code, the `array(2)` is cached
@@ -720,6 +712,7 @@ class TestArrayLikes:
         assert arr[0] is ArrayLike
 
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    @pytest.mark.thread_unsafe(reason="large slow test in parallel")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")
@@ -758,7 +751,7 @@ class TestArrayLikes:
             def __len__(self):
                 raise error
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 # must have getitem to be a Sequence
                 return 1
 
@@ -848,7 +841,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self, dtype=None, copy=None):
+        def __array__(self, dtype=None, copy=None):  # noqa: PLR0206
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:
@@ -912,3 +905,24 @@ def test_empty_string():
     assert_array_equal(res, b"")
     assert res.shape == (2, 10)
     assert res.dtype == "S1"
+
+
+@pytest.mark.parametrize("dtype", ["S", "U", object])
+@pytest.mark.parametrize("res_dt,hug_val",
+    [("float16", "1e30"), ("float32", "1e200")])
+def test_string_to_float_coercion_errors(dtype, res_dt, hug_val):
+    # This test primarly tests setitem
+    val = np.array(["3M"], dtype=dtype)[0]  # use the scalar
+
+    with pytest.raises(ValueError):
+        np.array(val, dtype=res_dt)
+
+    val = np.array([hug_val], dtype=dtype)[0]  # use the scalar
+
+    with np.errstate(all="warn"):
+        with pytest.warns(RuntimeWarning):
+            np.array(val, dtype=res_dt)
+
+    with np.errstate(all="raise"):
+        with pytest.raises(FloatingPointError):
+            np.array(val, dtype=res_dt)

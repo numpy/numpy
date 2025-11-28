@@ -187,11 +187,14 @@ Generic types
         to an array of ``float64``, even though ``float32`` is a subdtype of
         ``np.floating``.
 
+.. _dtype-constructing-from-python-types:
 
 Built-in Python types
-    Several python types are equivalent to a corresponding
+    Several Python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
+    ===================      ===============
+    Python type              NumPy type
     ===================      ===============
     :class:`int`             :class:`int\_`
     :class:`bool`            :class:`bool\_`
@@ -251,12 +254,12 @@ One-character strings
 Array-protocol type strings (see :ref:`arrays.interface`)
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
-   where it is interpreted as the number of characters.  The item size
-   must correspond to an existing type, or an error will be raised.  The
-   supported kinds are
+   where it is interpreted as the number of characters, and except ``b1``
+   which represents boolean.  The item size must correspond to an existing
+   type, or an error will be raised.  The supported kinds are
 
-   ================   ========================
-   ``'?'``            boolean
+   =================  ========================
+   ``'?'``, ``'b1'``  boolean
    ``'b'``            (signed) byte
    ``'B'``            unsigned byte
    ``'i'``            (signed) integer
@@ -269,7 +272,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
    ``'U'``            Unicode string
    ``'V'``            raw data (:class:`void`)
-   ================   ========================
+   =================  ========================
 
    .. admonition:: Example
 
@@ -288,7 +291,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes.
     For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
     need zero-termination ``b`` or ``i1`` can be used.
 

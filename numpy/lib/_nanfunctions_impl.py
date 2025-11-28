@@ -22,12 +22,12 @@ Functions
 """
 import functools
 import warnings
+
 import numpy as np
 import numpy._core.numeric as _nx
+from numpy._core import overrides
 from numpy.lib import _function_base_impl as fnb
 from numpy.lib._function_base_impl import _weights_are_valid
-from numpy._core import overrides
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -232,17 +232,16 @@ def _divide_by_count(a, b, out=None):
                 return np.divide(a, b, out=a, casting='unsafe')
             else:
                 return np.divide(a, b, out=out, casting='unsafe')
+        elif out is None:
+            # Precaution against reduced object arrays
+            try:
+                return a.dtype.type(a / b)
+            except AttributeError:
+                return a / b
         else:
-            if out is None:
-                # Precaution against reduced object arrays
-                try:
-                    return a.dtype.type(a / b)
-                except AttributeError:
-                    return a / b
-            else:
-                # This is questionable, but currently a numpy scalar can
-                # be output to a zero dimensional array.
-                return np.divide(a, b, out=out, casting='unsafe')
+            # This is questionable, but currently a numpy scalar can
+            # be output to a zero dimensional array.
+            return np.divide(a, b, out=out, casting='unsafe')
 
 
 def _nanmin_dispatcher(a, axis=None, out=None, keepdims=None,
@@ -351,7 +350,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwargs['where'] = where
 
-    if type(a) is np.ndarray and a.dtype != np.object_:
+    if (type(a) is np.ndarray or type(a) is np.memmap) and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
@@ -480,7 +479,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwargs['where'] = where
 
-    if type(a) is np.ndarray and a.dtype != np.object_:
+    if (type(a) is np.ndarray or type(a) is np.memmap) and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
@@ -718,7 +717,6 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     inf
     >>> np.nansum([1, np.nan, -np.inf])
     -inf
-    >>> from numpy.testing import suppress_warnings
     >>> with np.errstate(invalid="ignore"):
     ...     np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
     np.float64(nan)
@@ -1221,7 +1219,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 def _nanpercentile_dispatcher(
         a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, weights=None, interpolation=None):
+        method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -1236,7 +1234,6 @@ def nanpercentile(
         keepdims=np._NoValue,
         *,
         weights=None,
-        interpolation=None,
 ):
     """
     Compute the qth percentile of the data along the specified axis,
@@ -1315,11 +1312,6 @@ def nanpercentile(
 
         .. versionadded:: 2.0.0
 
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
-
     Returns
     -------
     percentile : scalar or ndarray
@@ -1381,17 +1373,11 @@ def nanpercentile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = fnb._check_interpolation_as_method(
-            method, interpolation, "nanpercentile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
-    # undo any decay that the ufunc performed (see gh-13105)
-    q = np.asanyarray(q)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -1411,8 +1397,7 @@ def nanpercentile(
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, weights=None,
-                            interpolation=None):
+                            method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -1427,7 +1412,6 @@ def nanquantile(
         keepdims=np._NoValue,
         *,
         weights=None,
-        interpolation=None,
 ):
     """
     Compute the qth quantile of the data along the specified axis,
@@ -1504,11 +1488,6 @@ def nanquantile(
 
         .. versionadded:: 2.0.0
 
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
-
     Returns
     -------
     quantile : scalar or ndarray
@@ -1569,11 +1548,6 @@ def nanquantile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-
-    if interpolation is not None:
-        method = fnb._check_interpolation_as_method(
-            method, interpolation, "nanquantile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
@@ -1646,37 +1620,36 @@ def _nanquantile_ureduce_func(
         part = a.ravel()
         wgt = None if weights is None else weights.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
+    # Note that this code could try to fill in `out` right away
+    elif weights is None:
+        result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
+                                     overwrite_input, method, weights)
+        # apply_along_axis fills in collapsed axis with results.
+        # Move those axes to the beginning to match percentile's
+        # convention.
+        if q.ndim != 0:
+            from_ax = [axis + i for i in range(q.ndim)]
+            result = np.moveaxis(result, from_ax, list(range(q.ndim)))
     else:
-        # Note that this code could try to fill in `out` right away
-        if weights is None:
-            result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                         overwrite_input, method, weights)
-            # apply_along_axis fills in collapsed axis with results.
-            # Move those axes to the beginning to match percentile's
-            # convention.
-            if q.ndim != 0:
-                from_ax = [axis + i for i in range(q.ndim)]
-                result = np.moveaxis(result, from_ax, list(range(q.ndim)))
+        # We need to apply along axis over 2 arrays, a and weights.
+        # move operation axes to end for simplicity:
+        a = np.moveaxis(a, axis, -1)
+        if weights is not None:
+            weights = np.moveaxis(weights, axis, -1)
+        if out is not None:
+            result = out
         else:
-            # We need to apply along axis over 2 arrays, a and weights.
-            # move operation axes to end for simplicity:
-            a = np.moveaxis(a, axis, -1)
-            if weights is not None:
-                weights = np.moveaxis(weights, axis, -1)
-            if out is not None:
-                result = out
-            else:
-                # weights are limited to `inverted_cdf` so the result dtype
-                # is known to be identical to that of `a` here:
-                result = np.empty_like(a, shape=q.shape + a.shape[:-1])
+            # weights are limited to `inverted_cdf` so the result dtype
+            # is known to be identical to that of `a` here:
+            result = np.empty_like(a, shape=q.shape + a.shape[:-1])
 
-            for ii in np.ndindex(a.shape[:-1]):
-                result[(...,) + ii] = _nanquantile_1d(
-                        a[ii], q, weights=weights[ii],
-                        overwrite_input=overwrite_input, method=method,
-                )
-            # This path dealt with `out` already...
-            return result
+        for ii in np.ndindex(a.shape[:-1]):
+            result[(...,) + ii] = _nanquantile_1d(
+                    a[ii], q, weights=weights[ii],
+                    overwrite_input=overwrite_input, method=method,
+            )
+        # This path dealt with `out` already...
+        return result
 
     if out is not None:
         out[...] = result

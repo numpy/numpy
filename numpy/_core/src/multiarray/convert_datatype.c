@@ -260,6 +260,10 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
  * Supports the NPY_CAST_IS_VIEW check, and should be preferred to allow
  * extending cast-levels if necessary.
  * It is not valid for one of the arguments to be -1 to indicate an error.
+ * Pass through NPY_SAME_VALUE_CASTING_FLAG on casting1, unless both have the
+ * flag, in which case return max_casting | NPY_SAME_VALUE_CASTING_FLAG.
+ * Usually this will be exactly NPY_SAME_VALUE_CASTING, but the logic here
+ * should handle other 'casting with same_value' options
  *
  * @param casting1 First (left-hand) casting level to compare
  * @param casting2 Second (right-hand) casting level to compare
@@ -271,11 +275,14 @@ PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2)
     if (casting1 < 0 || casting2 < 0) {
         return -1;
     }
+    int both_same_casting = casting1 & casting2 & NPY_SAME_VALUE_CASTING_FLAG;
+    casting1 &= ~NPY_SAME_VALUE_CASTING_FLAG;
+    casting2 &= ~NPY_SAME_VALUE_CASTING_FLAG;
     /* larger casting values are less safe */
     if (casting1 > casting2) {
-        return casting1;
+        return casting1 | both_same_casting;
     }
-    return casting2;
+    return casting2 | both_same_casting;
 }
 
 
@@ -344,7 +351,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             PyObject *cobj;
 
             key = PyLong_FromLong(type_num);
-            cobj = PyDict_GetItem(obj, key);
+            cobj = PyDict_GetItem(obj, key); // noqa: borrowed-ref OK
             Py_DECREF(key);
             if (cobj && PyCapsule_CheckExact(cobj)) {
                 castfunc = PyCapsule_GetPointer(cobj, NULL);
@@ -746,13 +753,13 @@ can_cast_pyscalar_scalar_to(
     }
     else if (PyDataType_ISFLOAT(to)) {
         if (flags & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0));
         }
         return 1;
     }
     else if (PyDataType_ISINTEGER(to)) {
         if (!(flags & NPY_ARRAY_WAS_PYTHON_INT)) {
-            return casting == NPY_UNSAFE_CASTING;
+            return ((casting == NPY_UNSAFE_CASTING) || ((casting & NPY_SAME_VALUE_CASTING_FLAG) > 0));
         }
         return 1;
     }
@@ -828,7 +835,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
-    switch (casting) {
+    switch ((int)casting) {
         case NPY_NO_CASTING:
             return "'no'";
         case NPY_EQUIV_CASTING:
@@ -839,6 +846,16 @@ npy_casting_to_string(NPY_CASTING casting)
             return "'same_kind'";
         case NPY_UNSAFE_CASTING:
             return "'unsafe'";
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'no and same_value'";
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'equiv and same_value'";
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'safe and same_value'";
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'same_kind and same_value'";
+        case NPY_UNSAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG:
+            return "'same_value'";
         default:
             return "<unknown>";
     }
@@ -1597,13 +1614,12 @@ PyArray_ResultType(
         return NULL;
     }
 
-    PyArray_DTypeMeta **all_DTypes = (PyArray_DTypeMeta **)workspace;
+    PyArray_DTypeMeta **all_DTypes = (PyArray_DTypeMeta **)workspace; // borrowed references
     PyArray_Descr **all_descriptors = (PyArray_Descr **)(&all_DTypes[narrs+ndtypes]);
 
     /* Copy all dtypes into a single array defining non-value-based behaviour */
     for (npy_intp i=0; i < ndtypes; i++) {
         all_DTypes[i] = NPY_DTYPE(descrs[i]);
-        Py_INCREF(all_DTypes[i]);
         all_descriptors[i] = descrs[i];
     }
 
@@ -1628,14 +1644,10 @@ PyArray_ResultType(
             all_descriptors[i_all] = PyArray_DTYPE(arrs[i]);
             all_DTypes[i_all] = NPY_DTYPE(all_descriptors[i_all]);
         }
-        Py_INCREF(all_DTypes[i_all]);
     }
 
     PyArray_DTypeMeta *common_dtype = PyArray_PromoteDTypeSequence(
             narrs+ndtypes, all_DTypes);
-    for (npy_intp i=0; i < narrs+ndtypes; i++) {
-        Py_DECREF(all_DTypes[i]);
-    }
     if (common_dtype == NULL) {
         goto error;
     }
@@ -2121,9 +2133,9 @@ legacy_same_dtype_resolve_descriptors(
     if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
                 PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
         *view_offset = 0;
-        return NPY_NO_CASTING;
+        return NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
     }
-    return NPY_EQUIV_CASTING;
+    return NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG;
 }
 
 
@@ -2310,6 +2322,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     if (dtypes[0]->singleton->kind == dtypes[1]->singleton->kind
             && from_itemsize == to_itemsize) {
         spec.casting = NPY_EQUIV_CASTING;
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
 
         /* When there is no casting (equivalent C-types) use byteswap loops */
         slots[0].slot = NPY_METH_resolve_descriptors;
@@ -2324,13 +2337,17 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     }
     else if (_npy_can_cast_safely_table[from->type_num][to->type_num]) {
         spec.casting = NPY_SAFE_CASTING;
-    }
-    else if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
-             dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
-        spec.casting = NPY_SAME_KIND_CASTING;
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
     else {
-        spec.casting = NPY_UNSAFE_CASTING;
+        if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
+                dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
+            spec.casting = NPY_SAME_KIND_CASTING;
+        }
+        else {
+            spec.casting = NPY_UNSAFE_CASTING;
+        }
+        spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
 
     /* Create a bound method, unbind and store it */
@@ -2468,10 +2485,10 @@ cast_to_string_resolve_descriptors(
         return -1;
     }
 
-    if (self->casting == NPY_UNSAFE_CASTING) {
+    if ((self->casting == NPY_UNSAFE_CASTING) || ((self->casting & NPY_SAME_VALUE_CASTING_FLAG) > 0)){
         assert(dtypes[0]->type_num == NPY_UNICODE &&
                dtypes[1]->type_num == NPY_STRING);
-        return NPY_UNSAFE_CASTING;
+        return self->casting;
     }
 
     if (loop_descrs[1]->elsize >= size) {
@@ -2754,7 +2771,7 @@ nonstructured_to_structured_resolve_descriptors(
 
             Py_ssize_t pos = 0;
             PyObject *key, *tuple;
-            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) {
+            while (PyDict_Next(to_descr->fields, &pos, &key, &tuple)) { // noqa: borrowed-ref OK
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 npy_intp field_view_off = NPY_MIN_INTP;
                 NPY_CASTING field_casting = PyArray_GetCastInfo(
@@ -2903,7 +2920,7 @@ structured_to_nonstructured_resolve_descriptors(
             return -1;
         }
         PyObject *key = PyTuple_GetItem(PyDataType_NAMES(given_descrs[0]), 0);
-        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key);
+        PyObject *base_tup = PyDict_GetItem(PyDataType_FIELDS(given_descrs[0]), key); // noqa: borrowed-ref OK
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
         struct_view_offset = PyLong_AsSsize_t(PyTuple_GET_ITEM(base_tup, 1));
         if (error_converting(struct_view_offset)) {
@@ -3038,7 +3055,7 @@ can_cast_fields_safety(
     for (Py_ssize_t i = 0; i < field_count; i++) {
         npy_intp field_view_off = NPY_MIN_INTP;
         PyObject *from_key = PyTuple_GET_ITEM(PyDataType_NAMES(from), i);
-        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key);
+        PyObject *from_tup = PyDict_GetItemWithError(PyDataType_FIELDS(from), from_key); // noqa: borrowed-ref OK
         if (from_tup == NULL) {
             return give_bad_field_error(from_key);
         }
@@ -3046,7 +3063,7 @@ can_cast_fields_safety(
 
         /* Check whether the field names match */
         PyObject *to_key = PyTuple_GET_ITEM(PyDataType_NAMES(to), i);
-        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key);
+        PyObject *to_tup = PyDict_GetItem(PyDataType_FIELDS(to), to_key); // noqa: borrowed-ref OK
         if (to_tup == NULL) {
             return give_bad_field_error(from_key);
         }

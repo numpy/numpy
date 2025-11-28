@@ -34,7 +34,6 @@ SOFTWARE.
 """
 
 import abc
-import sys
 from itertools import cycle
 import re
 from secrets import randbits
@@ -227,8 +226,10 @@ class ISpawnableSeedSequence(ISeedSequence):
         """
 
 
-cdef class SeedlessSeedSequence():
-    """
+cdef class SeedlessSeedSequence:
+    # the first line is used to populate `__text_signature__`
+    """SeedlessSeedSequence()\n--
+
     A seed sequence for BitGenerators with no need for seed state.
 
     See Also
@@ -248,9 +249,9 @@ cdef class SeedlessSeedSequence():
 ISpawnableSeedSequence.register(SeedlessSeedSequence)
 
 
-cdef class SeedSequence():
-    """
-    SeedSequence(entropy=None, *, spawn_key=(), pool_size=4)
+cdef class SeedSequence:
+    # the first line is used to populate `__text_signature__`
+    """SeedSequence(entropy=None, *, spawn_key=(), pool_size=4, n_children_spawned=0)\n--
 
     SeedSequence mixes sources of entropy in a reproducible way to set the
     initial state for independent and very probably non-overlapping
@@ -305,7 +306,7 @@ cdef class SeedSequence():
         elif not isinstance(entropy, (int, np.integer, list, tuple, range,
                                       np.ndarray)):
             raise TypeError('SeedSequence expects int or sequence of ints for '
-                            'entropy not {}'.format(entropy))
+                            f'entropy not {entropy}')
         self.entropy = entropy
         self.spawn_key = tuple(spawn_key)
         self.pool_size = pool_size
@@ -490,9 +491,9 @@ cdef class SeedSequence():
 ISpawnableSeedSequence.register(SeedSequence)
 
 
-cdef class BitGenerator():
-    """
-    BitGenerator(seed=None)
+cdef class BitGenerator:
+    # the first line is used to populate `__text_signature__`
+    """BitGenerator(seed=None)\n--
 
     Base Class for generic BitGenerators, which provide a stream
     of random bits based on different algorithms. Must be overridden.

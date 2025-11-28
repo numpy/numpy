@@ -1,4 +1,4 @@
-from typing import Any, Final, TypedDict, type_check_only
+from typing import Final, TypedDict, type_check_only
 
 import numpy as np
 from numpy._typing import NDArray
@@ -56,6 +56,8 @@ class _ZUNGQR(TypedDict):
 ###
 
 _ilp64: Final[bool] = ...
+
+class LapackError(Exception): ...
 
 def dgelsd(
     m: int,

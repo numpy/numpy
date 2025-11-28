@@ -460,6 +460,15 @@ addUfuncs(PyObject *dictionary) {
     }
     PyDict_SetItemString(dictionary, "always_error", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndData(always_error_functions, always_error_data,
+            always_error_signatures, 1, 1, 1, PyUFunc_None, "always_error_unary",
+            "simply, broken, ufunc that sets an error (but releases the GIL).",
+            0);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "always_error_unary", f);
+    Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(always_error_functions,
             always_error_data, always_error_signatures, 1, 2, 1, PyUFunc_None,
             "always_error_gufunc",
@@ -682,9 +691,7 @@ fail:
 }
 
 // Testing the utilities of the CPU dispatcher
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "_umath_tests.dispatch.h"
-#endif
+#include "_umath_tests.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(extern const char *_umath_tests_dispatch_var)
 NPY_CPU_DISPATCH_DECLARE(const char *_umath_tests_dispatch_func, (void))
 NPY_CPU_DISPATCH_DECLARE(void _umath_tests_dispatch_attach, (PyObject *list))
@@ -946,7 +953,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

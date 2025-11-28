@@ -1,14 +1,16 @@
 import functools
-import warnings
+import inspect
 import operator
 import types
+import warnings
 
 import numpy as np
-from . import numeric as _nx
-from .numeric import result_type, nan, asanyarray, ndim
-from numpy._core.multiarray import add_docstring
-from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
+from numpy._core._multiarray_umath import _array_converter
+from numpy._core.multiarray import add_docstring
+
+from . import numeric as _nx
+from .numeric import asanyarray, nan, ndim, result_type
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -121,7 +123,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     num = operator.index(num)
     if num < 0:
         raise ValueError(
-            "Number of samples, %s, must be non-negative." % num
+            f"Number of samples, {num}, must be non-negative."
         )
     div = (num - 1) if endpoint else num
 
@@ -157,11 +159,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 y *= delta
             else:
                 y = y * delta
+        elif _mult_inplace:
+            y *= step
         else:
-            if _mult_inplace:
-                y *= step
-            else:
-                y = y * step
+            y = y * step
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
@@ -473,11 +474,13 @@ def _needs_add_docstring(obj):
 def _add_docstring(obj, doc, warn_on_python):
     if warn_on_python and not _needs_add_docstring(obj):
         warnings.warn(
-            "add_newdoc was used on a pure-python object {}. "
-            "Prefer to attach it directly to the source."
-            .format(obj),
+            f"add_newdoc was used on a pure-python object {obj}. "
+            "Prefer to attach it directly to the source.",
             UserWarning,
             stacklevel=3)
+
+    doc = inspect.cleandoc(doc)
+
     try:
         add_docstring(obj, doc)
     except Exception:
@@ -495,10 +498,10 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     ----------
     place : str
         The absolute name of the module to import from
-    obj : str or None
+    obj : str | None
         The name of the object to add documentation to, typically a class or
         function name.
-    doc : {str, Tuple[str, str], List[Tuple[str, str]]}
+    doc : str | tuple[str, str] | list[tuple[str, str]]
         If a string, the documentation to apply to `obj`
 
         If a tuple, then the first element is interpreted as an attribute
@@ -535,12 +538,10 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     if isinstance(doc, str):
         if "${ARRAY_FUNCTION_LIKE}" in doc:
             doc = overrides.get_array_function_like_doc(new, doc)
-        _add_docstring(new, doc.strip(), warn_on_python)
+        _add_docstring(new, doc, warn_on_python)
     elif isinstance(doc, tuple):
         attr, docstring = doc
-        _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
+        _add_docstring(getattr(new, attr), docstring, warn_on_python)
     elif isinstance(doc, list):
         for attr, docstring in doc:
-            _add_docstring(
-                getattr(new, attr), docstring.strip(), warn_on_python
-            )
+            _add_docstring(getattr(new, attr), docstring, warn_on_python)

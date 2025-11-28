@@ -24,6 +24,7 @@ typedef struct npy_interned_str_struct {
     PyObject *array_wrap;
     PyObject *array_finalize;
     PyObject *array_ufunc;
+    PyObject *numpy_dtype;
     PyObject *implementation;
     PyObject *axis1;
     PyObject *axis2;
@@ -43,6 +44,10 @@ typedef struct npy_interned_str_struct {
     PyObject *pyvals_name;
     PyObject *legacy;
     PyObject *__doc__;
+    PyObject *__signature__;
+    PyObject *copy;
+    PyObject *dl_device;
+    PyObject *max_version;
 } npy_interned_str_struct;
 
 /*
@@ -138,6 +143,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *GenericToVoidMethod;
     PyObject *ObjectToGenericMethod;
     PyObject *GenericToObjectMethod;
+
+    /*
+     * Used in from_dlpack
+     */
+    PyObject *dl_call_kwnames;
+    PyObject *dl_cpu_device_tuple;
+    PyObject *dl_max_version;
 } npy_static_pydata_struct;
 
 

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-# System imports
+import struct
 import sys
 import unittest
 
-import struct
-
-# Import NumPy
 import numpy as np
+
 major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
@@ -45,7 +43,7 @@ class FlatTestCase(unittest.TestCase):
         for i in range(24):
             pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2, 3, 4)
+        x = x.reshape((2, 3, 4))
         y = x.copy()
         process(y)
         self.assertEqual(np.all((x + 1) == y), True)
@@ -58,7 +56,7 @@ class FlatTestCase(unittest.TestCase):
         for i in range(24):
             pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2, 3, 4)
+        x = x.reshape((2, 3, 4))
         y = x.copy()
         process(y.T)
         self.assertEqual(np.all((x.T + 1) == y.T), True)
@@ -71,7 +69,7 @@ class FlatTestCase(unittest.TestCase):
         for i in range(24):
             pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2, 3, 4)
+        x = x.reshape((2, 3, 4))
         self.assertRaises(TypeError, process, x[:, :, 0])
 
 
@@ -178,18 +176,18 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(    scharTestCase))
-    suite.addTest(unittest.makeSuite(    ucharTestCase))
-    suite.addTest(unittest.makeSuite(    shortTestCase))
-    suite.addTest(unittest.makeSuite(   ushortTestCase))
-    suite.addTest(unittest.makeSuite(      intTestCase))
-    suite.addTest(unittest.makeSuite(     uintTestCase))
-    suite.addTest(unittest.makeSuite(     longTestCase))
-    suite.addTest(unittest.makeSuite(    ulongTestCase))
-    suite.addTest(unittest.makeSuite( longLongTestCase))
-    suite.addTest(unittest.makeSuite(ulongLongTestCase))
-    suite.addTest(unittest.makeSuite(    floatTestCase))
-    suite.addTest(unittest.makeSuite(   doubleTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    scharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ucharTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    shortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   ushortTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(      intTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     uintTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(     longTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    ulongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase( longLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ulongLongTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(    floatTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(   doubleTestCase))
 
     # Execute the test suite
     print("Testing 1D Functions of Module Flat")

@@ -120,7 +120,7 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
 add_newdoc('NDArray', repr(NDArray),
     """
-    A `np.ndarray[tuple[int, ...], np.dtype[+ScalarType]] <numpy.ndarray>`
+    A `np.ndarray[tuple[Any, ...], np.dtype[ScalarT]] <numpy.ndarray>`
     type alias :term:`generic <generic type>` w.r.t. its
     `dtype.type <numpy.dtype.type>`.
 
@@ -137,10 +137,10 @@ add_newdoc('NDArray', repr(NDArray),
         >>> import numpy.typing as npt
 
         >>> print(npt.NDArray)
-        numpy.ndarray[tuple[int, ...], numpy.dtype[+_ScalarType_co]]
+        numpy.ndarray[tuple[typing.Any, ...], numpy.dtype[~_ScalarT]]
 
         >>> print(npt.NDArray[np.float64])
-        numpy.ndarray[tuple[int, ...], numpy.dtype[numpy.float64]]
+        numpy.ndarray[tuple[typing.Any, ...], numpy.dtype[numpy.float64]]
 
         >>> NDArrayInt = npt.NDArray[np.int_]
         >>> a: NDArrayInt = np.arange(10)

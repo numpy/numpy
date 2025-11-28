@@ -85,7 +85,7 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
         /* Free old dimensions and strides */
         npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = nd;
-        ((PyArrayObject_fields *)self)->dimensions = _dimensions; 
+        ((PyArrayObject_fields *)self)->dimensions = _dimensions;
         ((PyArrayObject_fields *)self)->strides = _dimensions + nd;
 
         if (nd) {
@@ -95,7 +95,7 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
     }
     else {
         /* Free old dimensions and strides */
-        npy_free_cache_dim_array(self);        
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
@@ -116,6 +116,19 @@ array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static int
 array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
 {
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array strides");
+        return -1;
+    }
+
+    /* Deprecated NumPy 2.4, 2025-05-11 */
+    if (DEPRECATE("Setting the strides on a NumPy array has been deprecated in NumPy 2.4.\n"
+                  "As an alternative, you can create a new view using np.lib.stride_tricks.as_strided."
+                 ) < 0 ) {
+        return -1;
+    }
+
     PyArray_Dims newstrides = {NULL, -1};
     PyArrayObject *new;
     npy_intp numbytes = 0;
@@ -124,11 +137,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     npy_intp upper_offset = 0;
     Py_buffer view;
 
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array strides");
-        return -1;
-    }
     if (!PyArray_OptionalIntpConverter(obj, &newstrides) ||
         newstrides.len == -1) {
         PyErr_SetString(PyExc_TypeError, "invalid strides");
@@ -492,15 +500,23 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         if (temp == NULL) {
             return -1;
         }
+        /* create new dimensions cache and fill it */
+        npy_intp new_nd = PyArray_NDIM(temp);
+        npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
+        if (new_dims == NULL) {
+            Py_DECREF(temp);
+            PyErr_NoMemory();
+            return -1;
+        }
+        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
+        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
+        /* Update self with new cache */
         npy_free_cache_dim_array(self);
-        ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
-        ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
-        ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);
+        ((PyArrayObject_fields *)self)->nd = new_nd;
+        ((PyArrayObject_fields *)self)->dimensions = new_dims;
+        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
         newtype = PyArray_DESCR(temp);
-        Py_INCREF(PyArray_DESCR(temp));
-        /* Fool deallocator not to delete these*/
-        ((PyArrayObject_fields *)temp)->nd = 0;
-        ((PyArrayObject_fields *)temp)->dimensions = NULL;
+        Py_INCREF(newtype);
         Py_DECREF(temp);
     }
 
@@ -857,34 +873,6 @@ array_matrix_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyArray_MatrixTranspose(self);
 }
 
-static PyObject *
-array_ptp(PyArrayObject *self, void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError,
-                    "`ptp` was removed from the ndarray class in NumPy 2.0. "
-                    "Use np.ptp(arr, ...) instead.");
-    return NULL;
-}
-
-static PyObject *
-array_newbyteorder(PyArrayObject *self, PyObject *args)
-{
-    PyErr_SetString(PyExc_AttributeError,
-                    "`newbyteorder` was removed from the ndarray class "
-                    "in NumPy 2.0. "
-                    "Use `arr.view(arr.dtype.newbyteorder(order))` instead.");
-    return NULL;
-}
-
-static PyObject *
-array_itemset(PyArrayObject *self, PyObject *args)
-{
-    PyErr_SetString(PyExc_AttributeError,
-                    "`itemset` was removed from the ndarray class in "
-                    "NumPy 2.0. Use `arr[index] = value` instead.");
-    return NULL;
-}
-
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -948,18 +936,6 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"mT",
         (getter)array_matrix_transpose_get,
-        NULL,
-        NULL, NULL},
-    {"ptp",
-        (getter)array_ptp,
-        NULL,
-        NULL, NULL},
-    {"newbyteorder",
-        (getter)array_newbyteorder,
-        NULL,
-        NULL, NULL},
-    {"itemset",
-        (getter)array_itemset,
         NULL,
         NULL, NULL},
     {"device",

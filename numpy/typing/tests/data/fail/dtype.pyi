@@ -6,10 +6,10 @@ class Test1:
 class Test2:
     dtype = float
 
-np.dtype(Test1())  # E: No overload variant of "dtype" matches
-np.dtype(Test2())  # E: incompatible type
+np.dtype(Test1())  # type: ignore[call-overload]
+np.dtype(Test2())  # type: ignore[arg-type]
 
-np.dtype(  # E: No overload variant of "dtype" matches
+np.dtype(  # type: ignore[call-overload]
     {
         "field1": (float, 1),
         "field2": (int, 3),

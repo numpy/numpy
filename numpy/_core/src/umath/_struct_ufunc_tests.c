@@ -123,14 +123,14 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
     PyArray_Descr *dtype;
     PyArray_Descr *dtypes[3];
 
+    import_array();
+    import_umath();
+
     m = PyModule_Create(&moduledef);
 
     if (m == NULL) {
         return NULL;
     }
-
-    import_array();
-    import_umath();
 
     add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
                                           PyUFunc_None, "add_triplet",
@@ -157,7 +157,7 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
     PyDict_SetItemString(d, "add_triplet", add_triplet);
     Py_DECREF(add_triplet);
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

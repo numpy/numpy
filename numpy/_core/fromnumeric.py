@@ -2,18 +2,15 @@
 
 """
 import functools
+import math
 import types
-import warnings
 
 import numpy as np
-from .._utils import set_module
-from . import multiarray as mu
-from . import overrides
-from . import umath as um
-from . import numerictypes as nt
-from .multiarray import asarray, array, asanyarray, concatenate
+from numpy._utils import set_module
+
+from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _array_converter
-from . import _methods
+from .multiarray import asanyarray, asarray, concatenate
 
 _dt_ = nt.sctype2char
 
@@ -172,7 +169,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
         Ni, Nk = a.shape[:axis], a.shape[axis+1:]
         for ii in ndindex(Ni):
-            for kk in ndindex(Nj):
+            for kk in ndindex(Nk):
                 out[ii + s_[...,] + kk] = a[ii + s_[:,] + kk][indices]
 
     For this reason, it is equivalent to (but faster than) the following use
@@ -203,13 +200,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, /, shape=None, order=None, *, newshape=None,
-                        copy=None):
+def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
     return (a,)
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
+def reshape(a, /, shape, order='C', *, copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -235,10 +231,6 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
         'A' means to read / write the elements in Fortran-like index
         order if ``a`` is Fortran *contiguous* in memory, C-like order
         otherwise.
-    newshape : int or tuple of ints
-        .. deprecated:: 2.1
-            Replaced by ``shape`` argument. Retained for backward
-            compatibility.
     copy : bool, optional
         If ``True``, then the array data is copied. If ``None``, a copy will
         only be made if it's required by ``order``. For ``False`` it raises
@@ -302,23 +294,6 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
            [3, 4],
            [5, 6]])
     """
-    if newshape is None and shape is None:
-        raise TypeError(
-            "reshape() missing 1 required positional argument: 'shape'")
-    if newshape is not None:
-        if shape is not None:
-            raise TypeError(
-                "You cannot specify 'newshape' and 'shape' arguments "
-                "at the same time.")
-        # Deprecated in NumPy 2.1, 2024-04-18
-        warnings.warn(
-            "`newshape` keyword argument is deprecated, "
-            "use `shape=...` or pass shape positionally instead. "
-            "(deprecated in NumPy 2.1)",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        shape = newshape
     if copy is not None:
         return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
     return _wrapfunc(a, 'reshape', shape, order=order)
@@ -565,8 +540,7 @@ def put(a, ind, v, mode='raise'):
     try:
         put = a.put
     except AttributeError as e:
-        raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(a).__name__)) from e
+        raise TypeError(f"argument 1 must be numpy.ndarray, not {type(a)}") from e
 
     return put(ind, v, mode=mode)
 
@@ -780,8 +754,6 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
 
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
@@ -893,8 +865,6 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         sequence of k-th it will partition all of them into their sorted
         position at once.
 
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
@@ -1307,6 +1277,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indexes of the maximal elements of a N-dimensional array:
 
+    >>> a.flat[np.argmax(a)]
+    15
     >>> ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
     >>> ind
     (1, 2)
@@ -1405,6 +1377,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indices of the minimum elements of a N-dimensional array:
 
+    >>> a.flat[np.argmin(a)]
+    10
     >>> ind = np.unravel_index(np.argmin(a, axis=None), a.shape)
     >>> ind
     (0, 0)
@@ -1608,7 +1582,8 @@ def resize(a, new_shape):
         # First case must zero fill. The second would have repeats == 0.
         return np.zeros_like(a, shape=new_shape)
 
-    repeats = -(-new_size // a.size)  # ceil division
+    # ceiling division without negating new_size
+    repeats = (new_size + a.size - 1) // a.size
     a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)
@@ -2028,15 +2003,6 @@ def nonzero(a):
     To group the indices by element, rather than dimension, use `argwhere`,
     which returns a row for each non-zero element.
 
-    .. note::
-
-       When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-       as ``nonzero(atleast_1d(a))``.
-
-       .. deprecated:: 1.17.0
-
-          Use `atleast_1d` explicitly if this behavior is deliberate.
-
     Parameters
     ----------
     a : array_like
@@ -2450,18 +2416,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     """
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
-        warnings.warn(
-            "Calling np.sum(generator) is deprecated, and in the future will "
-            "give a different result. Use np.sum(np.fromiter(generator)) or "
+        raise TypeError(
+            "Calling np.sum(generator) is deprecated."
+            "Use np.sum(np.fromiter(generator)) or "
             "the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2
         )
-
-        res = _sum_(a)
-        if out is not None:
-            out[...] = res
-            return out
-        return res
 
     return _wrapreduction(
         a, np.add, 'sum', axis, dtype, out,
@@ -3572,9 +3531,12 @@ def size(a, axis=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
-        Axis along which the elements are counted.  By default, give
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which the elements are counted.  By default, give
         the total number of elements.
+
+        .. versionchanged:: 2.4
+           Extended to accept multiple axes.
 
     Returns
     -------
@@ -3593,10 +3555,12 @@ def size(a, axis=None):
     >>> a = np.array([[1,2,3],[4,5,6]])
     >>> np.size(a)
     6
-    >>> np.size(a,1)
+    >>> np.size(a,axis=1)
     3
-    >>> np.size(a,0)
+    >>> np.size(a,axis=0)
     2
+    >>> np.size(a,axis=(0,1))
+    6
 
     """
     if axis is None:
@@ -3605,10 +3569,10 @@ def size(a, axis=None):
         except AttributeError:
             return asarray(a).size
     else:
-        try:
-            return a.shape[axis]
-        except AttributeError:
-            return asarray(a).shape[axis]
+        _shape = shape(a)
+        from .numeric import normalize_axis_tuple
+        axis = normalize_axis_tuple(axis, len(_shape), allow_duplicate=False)
+        return math.prod(_shape[ax] for ax in axis)
 
 
 def _round_dispatcher(a, decimals=None, out=None):

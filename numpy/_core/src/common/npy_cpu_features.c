@@ -80,12 +80,23 @@ static struct {
                 {NPY_CPU_FEATURE_SSE41, "SSE41"},
                 {NPY_CPU_FEATURE_POPCNT, "POPCNT"},
                 {NPY_CPU_FEATURE_SSE42, "SSE42"},
+                {NPY_CPU_FEATURE_X86_V2, "X86_V2"},
                 {NPY_CPU_FEATURE_AVX, "AVX"},
                 {NPY_CPU_FEATURE_F16C, "F16C"},
                 {NPY_CPU_FEATURE_XOP, "XOP"},
                 {NPY_CPU_FEATURE_FMA4, "FMA4"},
                 {NPY_CPU_FEATURE_FMA3, "FMA3"},
                 {NPY_CPU_FEATURE_AVX2, "AVX2"},
+                {NPY_CPU_FEATURE_LAHF, "LAHF"},
+                {NPY_CPU_FEATURE_CX16, "CX16"},
+                {NPY_CPU_FEATURE_MOVBE, "MOVBE"},
+                {NPY_CPU_FEATURE_BMI, "BMI"},
+                {NPY_CPU_FEATURE_BMI2, "BMI2"},
+                {NPY_CPU_FEATURE_LZCNT, "LZCNT"},
+                {NPY_CPU_FEATURE_GFNI, "GFNI"},
+                {NPY_CPU_FEATURE_VPCLMULQDQ, "VPCLMULQDQ"},
+                {NPY_CPU_FEATURE_VAES, "VAES"},
+                {NPY_CPU_FEATURE_X86_V3, "X86_V3"},
                 {NPY_CPU_FEATURE_AVX512F, "AVX512F"},
                 {NPY_CPU_FEATURE_AVX512CD, "AVX512CD"},
                 {NPY_CPU_FEATURE_AVX512ER, "AVX512ER"},
@@ -102,9 +113,11 @@ static struct {
                 {NPY_CPU_FEATURE_AVX512VBMI2, "AVX512VBMI2"},
                 {NPY_CPU_FEATURE_AVX512BITALG, "AVX512BITALG"},
                 {NPY_CPU_FEATURE_AVX512FP16 , "AVX512FP16"},
+                {NPY_CPU_FEATURE_AVX512BF16 , "AVX512BF16"},
                 {NPY_CPU_FEATURE_AVX512_KNL, "AVX512_KNL"},
                 {NPY_CPU_FEATURE_AVX512_KNM, "AVX512_KNM"},
                 {NPY_CPU_FEATURE_AVX512_SKX, "AVX512_SKX"},
+                {NPY_CPU_FEATURE_X86_V4, "X86_V4"},
                 {NPY_CPU_FEATURE_AVX512_CLX, "AVX512_CLX"},
                 {NPY_CPU_FEATURE_AVX512_CNL, "AVX512_CNL"},
                 {NPY_CPU_FEATURE_AVX512_ICL, "AVX512_ICL"},
@@ -246,7 +259,7 @@ npy__cpu_validate_baseline(void)
 static int
 npy__cpu_check_env(int disable, const char *env) {
 
-    static const char *names[] = {
+    static const char *const names[] = {
         "enable", "disable",
         "NPY_ENABLE_CPU_FEATURES", "NPY_DISABLE_CPU_FEATURES",
         "During parsing environment variable: 'NPY_ENABLE_CPU_FEATURES':\n",
@@ -277,7 +290,7 @@ npy__cpu_check_env(int disable, const char *env) {
     char *notsupp_cur = &notsupp[0];
 
     //comma and space including (htab, vtab, CR, LF, FF)
-    const char *delim = ", \t\v\r\n\f";
+    const char delim[] = ", \t\v\r\n\f";
     char *feature = strtok(features, delim);
     while (feature) {
         if (npy__cpu_baseline_fid(feature) > 0){
@@ -398,12 +411,18 @@ npy__cpu_getxcr0(void)
 }
 
 static void
-npy__cpu_cpuid(int reg[4], int func_id)
+npy__cpu_cpuid_count(int reg[4], int func_id, int count)
 {
 #if defined(_MSC_VER)
-    __cpuidex(reg, func_id, 0);
+    __cpuidex(reg, func_id, count);
 #elif defined(__INTEL_COMPILER)
     __cpuid(reg, func_id);
+    // classic Intel compilers do not support count
+    if (count != 0) {
+        for (int i = 0; i < 4; i++) {
+            reg[i] = 0;
+        }
+    }
 #elif defined(__GNUC__) || defined(__clang__)
     #if defined(NPY_CPU_X86) && defined(__PIC__)
         // %ebx may be the PIC register
@@ -412,18 +431,24 @@ npy__cpu_cpuid(int reg[4], int func_id)
                 "xchg{l}\t{%%}ebx, %1\n\t"
                 : "=a" (reg[0]), "=r" (reg[1]), "=c" (reg[2]),
                   "=d" (reg[3])
-                : "a" (func_id), "c" (0)
+                : "a" (func_id), "c" (count)
         );
     #else
         __asm__("cpuid\n\t"
                 : "=a" (reg[0]), "=b" (reg[1]), "=c" (reg[2]),
                   "=d" (reg[3])
-                : "a" (func_id), "c" (0)
+                : "a" (func_id), "c" (count)
         );
     #endif
 #else
     reg[0] = 0;
 #endif
+}
+
+static void
+npy__cpu_cpuid(int reg[4], int func_id)
+{
+    return npy__cpu_cpuid_count(reg, func_id, 0);
 }
 
 static void
@@ -441,7 +466,13 @@ npy__cpu_init_features(void)
        #ifdef NPY_CPU_AMD64
            npy__cpu_have[NPY_CPU_FEATURE_SSE3] = 1;
        #endif
-       return;
+        // For unsupported compilers, we default to NPY_CPU_X86_V2 availability
+        // as this is the minimum baseline required to bypass initial capability checks.
+        // However, we deliberately don't set any additional CPU feature flags,
+        // allowing us to detect this fallback behavior later via the Python
+        // __cpu_features__ dictionary.
+        npy__cpu_have[NPY_CPU_FEATURE_X86_V2] = 1;
+        return;
     }
 
     npy__cpu_cpuid(reg, 1);
@@ -453,36 +484,42 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_SSE41]  = (reg[2] & (1 << 19)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_POPCNT] = (reg[2] & (1 << 23)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_SSE42]  = (reg[2] & (1 << 20)) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_CX16]   = (reg[2] & (1 << 13)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_F16C]   = (reg[2] & (1 << 29)) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_MOVBE]  = (reg[2] & (1 << 22)) != 0;
 
-    // check OSXSAVE
-    if ((reg[2] & (1 << 27)) == 0)
-        return;
-    // check AVX OS support
-    int xcr = npy__cpu_getxcr0();
-    if ((xcr & 6) != 6)
-        return;
-    npy__cpu_have[NPY_CPU_FEATURE_AVX]    = (reg[2] & (1 << 28)) != 0;
-    if (!npy__cpu_have[NPY_CPU_FEATURE_AVX])
-        return;
+    int osxsave = (reg[2] & (1 << 27)) != 0;
+    int xcr = 0;
+    if (osxsave) {
+        xcr = npy__cpu_getxcr0();
+    }
+    int avx_os = (xcr & 6) == 6;
+    npy__cpu_have[NPY_CPU_FEATURE_AVX]    = (reg[2] & (1 << 28)) != 0 && avx_os;
     npy__cpu_have[NPY_CPU_FEATURE_FMA3]   = (reg[2] & (1 << 12)) != 0;
 
     // second call to the cpuid to get extended AMD feature bits
     npy__cpu_cpuid(reg, 0x80000001);
-    npy__cpu_have[NPY_CPU_FEATURE_XOP]    = (reg[2] & (1 << 11)) != 0;
-    npy__cpu_have[NPY_CPU_FEATURE_FMA4]   = (reg[2] & (1 << 16)) != 0;
+#ifdef NPY_CPU_AMD64
+    // long mode only
+    npy__cpu_have[NPY_CPU_FEATURE_LAHF]  = (reg[2] & (1 << 0)) != 0;
+#else
+    // alawys available
+    npy__cpu_have[NPY_CPU_FEATURE_LAHF]  = 1;
+#endif
+    npy__cpu_have[NPY_CPU_FEATURE_LZCNT] = (reg[2] & (1 << 5))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_POPCNT] |= npy__cpu_have[NPY_CPU_FEATURE_LZCNT];
+    npy__cpu_have[NPY_CPU_FEATURE_XOP]   = (reg[2] & (1 << 11)) != 0 && npy__cpu_have[NPY_CPU_FEATURE_AVX];
+    npy__cpu_have[NPY_CPU_FEATURE_FMA4]  = (reg[2] & (1 << 16)) != 0 && npy__cpu_have[NPY_CPU_FEATURE_AVX];
 
     // third call to the cpuid to get extended AVX2 & AVX512 feature bits
     npy__cpu_cpuid(reg, 7);
-    npy__cpu_have[NPY_CPU_FEATURE_AVX2]   = (reg[1] & (1 << 5))  != 0;
-    npy__cpu_have[NPY_CPU_FEATURE_AVX2]   = npy__cpu_have[NPY_CPU_FEATURE_AVX2] &&
-                                            npy__cpu_have[NPY_CPU_FEATURE_FMA3];
-    if (!npy__cpu_have[NPY_CPU_FEATURE_AVX2])
-        return;
-    // detect AVX2 & FMA3
-    npy__cpu_have[NPY_CPU_FEATURE_FMA]    = npy__cpu_have[NPY_CPU_FEATURE_FMA3];
+    npy__cpu_have[NPY_CPU_FEATURE_AVX2]  = (reg[1] & (1 << 5))  != 0 && npy__cpu_have[NPY_CPU_FEATURE_AVX];
+    npy__cpu_have[NPY_CPU_FEATURE_BMI]   = (reg[1] & (1 << 3))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_BMI2]  = (reg[1] & (1 << 8))  != 0 && npy__cpu_have[NPY_CPU_FEATURE_BMI];
+    npy__cpu_have[NPY_CPU_FEATURE_GFNI]  = (reg[2] & (1 << 8))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_VAES]  = (reg[2] & (1 << 9))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_VPCLMULQDQ]  = (reg[2] & (1 << 10))  != 0;
 
-    // check AVX512 OS support
     int avx512_os = (xcr & 0xe6) == 0xe6;
 #if defined(__APPLE__) && defined(__x86_64__)
     /**
@@ -494,7 +531,7 @@ npy__cpu_init_features(void)
      *  - https://github.com/golang/go/issues/43089
      *  - https://github.com/numpy/numpy/issues/19319
      */
-    if (!avx512_os) {
+    if (!avx512_os && avx_os) {
         npy_uintp commpage64_addr = 0x00007fffffe00000ULL;
         npy_uint16 commpage64_ver = *((npy_uint16*)(commpage64_addr + 0x01E));
         // cpu_capabilities64 undefined in versions < 13
@@ -504,65 +541,110 @@ npy__cpu_init_features(void)
         }
     }
 #endif
-    if (!avx512_os) {
-        return;
-    }
-    npy__cpu_have[NPY_CPU_FEATURE_AVX512F]  = (reg[1] & (1 << 16)) != 0;
-    npy__cpu_have[NPY_CPU_FEATURE_AVX512CD] = (reg[1] & (1 << 28)) != 0;
-    if (npy__cpu_have[NPY_CPU_FEATURE_AVX512F] && npy__cpu_have[NPY_CPU_FEATURE_AVX512CD]) {
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512F] = (reg[1] & (1 << 16)) != 0 && avx512_os;
+    if (npy__cpu_have[NPY_CPU_FEATURE_AVX512F]) {
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512CD]        = (reg[1] & (1 << 28)) != 0;
         // Knights Landing
         npy__cpu_have[NPY_CPU_FEATURE_AVX512PF]        = (reg[1] & (1 << 26)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512ER]        = (reg[1] & (1 << 27)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_KNL]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512ER] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512PF];
         // Knights Mill
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VPOPCNTDQ] = (reg[2] & (1 << 14)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX5124VNNIW]    = (reg[3] & (1 << 2))  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX5124FMAPS]    = (reg[3] & (1 << 3))  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_KNM]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512_KNL] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX5124FMAPS] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX5124VNNIW] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512VPOPCNTDQ];
-
         // Skylake-X
         npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ]        = (reg[1] & (1 << 17)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512BW]        = (reg[1] & (1 << 30)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (1 << 31)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_SKX]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512BW] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512VL];
+        // cast and use of unsigned int literal silences UBSan warning:
+        // "runtime error: left shift of 1 by 31 places cannot be represented in type 'int'"
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (int)(1u << 31)) != 0;
         // Cascade Lake
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VNNI]      = (reg[2] & (1 << 11)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_CLX]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512_SKX] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512VNNI];
-
         // Cannon Lake
         npy__cpu_have[NPY_CPU_FEATURE_AVX512IFMA]      = (reg[1] & (1 << 21)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI]      = (reg[2] & (1 << 1))  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_CNL]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512_SKX] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512IFMA] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI];
         // Ice Lake
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI2]     = (reg[2] & (1 << 6))  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512BITALG]    = (reg[2] & (1 << 12)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_ICL]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512_CLX] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512_CNL] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI2] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512BITALG] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512VPOPCNTDQ];
         // Sapphire Rapids
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16]     = (reg[3] & (1 << 23))  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_SPR]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512_ICL] &&
-                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16];
-
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16]      = (reg[3] & (1 << 23)) != 0;
+        npy__cpu_cpuid_count(reg, 7, 1);
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512BF16]      = (reg[0] & (1 << 5)) != 0;
     }
+
+    // Groups
+    npy__cpu_have[NPY_CPU_FEATURE_X86_V2] = npy__cpu_have[NPY_CPU_FEATURE_SSE] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_SSE2] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_SSE3] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_SSSE3] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_SSE41] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_SSE42] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_POPCNT] &&
+                                        #ifdef NPY_CPU_AMD64
+                                            npy__cpu_have[NPY_CPU_FEATURE_CX16] &&
+                                        #endif
+                                            npy__cpu_have[NPY_CPU_FEATURE_LAHF];
+
+    npy__cpu_have[NPY_CPU_FEATURE_X86_V3] = npy__cpu_have[NPY_CPU_FEATURE_X86_V2] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX2] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_F16C] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_FMA3] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_BMI] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_BMI2] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_LZCNT] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_MOVBE];
+
+
+    npy__cpu_have[NPY_CPU_FEATURE_X86_V4] = npy__cpu_have[NPY_CPU_FEATURE_X86_V3] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX512F] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX512CD] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX512BW] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ] &&
+                                            npy__cpu_have[NPY_CPU_FEATURE_AVX512VL];
+
+
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512_ICL] = npy__cpu_have[NPY_CPU_FEATURE_X86_V4] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VNNI] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512IFMA] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI2] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512BITALG] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VPOPCNTDQ] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_GFNI] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_VAES] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_VPCLMULQDQ];
+
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512_SPR] = npy__cpu_have[NPY_CPU_FEATURE_AVX512_ICL] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512BF16];
+
+
+
+    // Legacy groups
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512_KNL] = npy__cpu_have[NPY_CPU_FEATURE_AVX512F] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512CD] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512ER] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512PF];
+
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512_KNM] = npy__cpu_have[NPY_CPU_FEATURE_AVX512_KNL] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX5124FMAPS] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX5124VNNIW] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VPOPCNTDQ];
+
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512_CLX] = npy__cpu_have[NPY_CPU_FEATURE_X86_V4] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VNNI];
+
+    npy__cpu_have[NPY_CPU_FEATURE_AVX512_CNL] = npy__cpu_have[NPY_CPU_FEATURE_X86_V4] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512IFMA] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512VBMI];
+
 }
 
 /***************** POWER ******************/
 
 #elif defined(NPY_CPU_PPC64) || defined(NPY_CPU_PPC64LE)
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     #ifdef __FreeBSD__
         #include <machine/cpu.h> // defines PPC_FEATURE_HAS_VSX
     #endif
@@ -585,7 +667,7 @@ static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
     if ((hwcap & PPC_FEATURE_HAS_VSX) == 0)
@@ -612,7 +694,7 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_VSX2] = (hwcap & PPC_FEATURE2_ARCH_2_07) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX3] = (hwcap & PPC_FEATURE2_ARCH_3_00) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX4] = (hwcap & PPC_FEATURE2_ARCH_3_1) != 0;
-// TODO: AIX, OpenBSD
+// TODO: AIX
 #else
     npy__cpu_have[NPY_CPU_FEATURE_VSX]  = 1;
     #if defined(NPY_CPU_PPC64LE) || defined(NPY_HAVE_VSX2)
@@ -698,7 +780,7 @@ npy__cpu_init_features_arm8(void)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMD]      = 1;
 }
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 /*
  * we aren't sure of what kind kernel or clib we deal with
  * so we play it safe
@@ -709,7 +791,7 @@ npy__cpu_init_features_arm8(void)
 #if defined(__linux__)
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
 #endif
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 __attribute__((weak)) int elf_aux_info(int, void *, int); // linker should handle it
 
 static unsigned long getauxval(unsigned long k)
@@ -772,34 +854,33 @@ npy__cpu_init_features_linux(void)
     #endif
     }
 #ifdef __arm__
+    npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
+    if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
+        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
+        npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
+    }
     // Detect Arm8 (aarch32 state)
     if ((hwcap2 & NPY__HWCAP2_AES)  || (hwcap2 & NPY__HWCAP2_SHA1)  ||
         (hwcap2 & NPY__HWCAP2_SHA2) || (hwcap2 & NPY__HWCAP2_PMULL) ||
         (hwcap2 & NPY__HWCAP2_CRC32))
     {
-        hwcap = hwcap2;
-#else
-    if (1)
-    {
-        if (!(hwcap & (NPY__HWCAP_FP | NPY__HWCAP_ASIMD))) {
-            // Is this could happen? maybe disabled by kernel
-            // BTW this will break the baseline of AARCH64
-            return 1;
-        }
-#endif
-        npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = (hwcap & NPY__HWCAP_FPHP)     != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = (hwcap & NPY__HWCAP_ASIMDFHM) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_SVE]        = (hwcap & NPY__HWCAP_SVE)      != 0;
-        npy__cpu_init_features_arm8();
-    } else {
-        npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
-        if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
-            npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
-            npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
-        }
+        npy__cpu_have[NPY_CPU_FEATURE_ASIMD] = npy__cpu_have[NPY_CPU_FEATURE_NEON];
     }
+#else
+    if (!(hwcap & (NPY__HWCAP_FP | NPY__HWCAP_ASIMD))) {
+        // Is this could happen? maybe disabled by kernel
+        // BTW this will break the baseline of AARCH64
+        return 1;
+    }
+    npy__cpu_init_features_arm8();
+#endif
+    npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = (hwcap & NPY__HWCAP_FPHP)     != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = (hwcap & NPY__HWCAP_ASIMDFHM) != 0;
+#ifndef __arm__
+    npy__cpu_have[NPY_CPU_FEATURE_SVE]        = (hwcap & NPY__HWCAP_SVE)      != 0;
+#endif
     return 1;
 }
 #endif
@@ -808,7 +889,7 @@ static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     if (npy__cpu_init_features_linux())
         return;
 #endif
@@ -847,22 +928,30 @@ npy__cpu_init_features(void)
 
 #elif defined(__riscv) && __riscv_xlen == 64
 
-#include <sys/auxv.h>
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+    #include <sys/auxv.h>
 
-#ifndef HWCAP_RVV
-    // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
-    #define COMPAT_HWCAP_ISA_V	(1 << ('V' - 'A'))
+    #ifndef HWCAP_RVV
+        // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
+        #define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
+    #endif
 #endif
 
 static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
+#else
+    unsigned long hwcap;
+    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+#endif
     if (hwcap & COMPAT_HWCAP_ISA_V) {
         npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
     }
+#endif
 }
 
 /*********** Unsupported ARCH ***********/

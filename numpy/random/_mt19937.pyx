@@ -43,8 +43,8 @@ cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
 
 cdef class MT19937(BitGenerator):
-    """
-    MT19937(seed=None)
+    # the first line is used to populate `__text_signature__`
+    """MT19937(seed=None)\n--
 
     Container for the Mersenne Twister pseudo-random number generator.
 
@@ -284,8 +284,7 @@ cdef class MT19937(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'PRNG'.format(self.__class__.__name__))
+            raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
         key = value['state']['key']
         for i in range(624):
             self.rng_state.key[i] = key[i]

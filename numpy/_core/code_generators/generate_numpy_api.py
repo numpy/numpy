@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-import os
 import argparse
+import os
 
 import genapi
-from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
-
 import numpy_api
+from genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
 
 # use annotated api when running under cpychecker
 h_template = r"""
@@ -159,6 +157,12 @@ _import_array(void)
   return 0;
 }
 
+#if (SWIG_VERSION < 0x040400)
+#define _RETURN_VALUE NULL
+#else
+#define _RETURN_VALUE 0
+#endif
+
 #define import_array() { \
   if (_import_array() < 0) { \
     PyErr_Print(); \
@@ -166,7 +170,7 @@ _import_array(void)
         PyExc_ImportError, \
         "numpy._core.multiarray failed to import" \
     ); \
-    return NULL; \
+    return _RETURN_VALUE; \
   } \
 }
 
@@ -192,7 +196,7 @@ _import_array(void)
 #endif
 
 #endif
-"""
+"""  # noqa: E501
 
 
 c_template = r"""
@@ -208,8 +212,8 @@ void *PyArray_API[] = {
 def generate_api(output_dir, force=False):
     basename = 'multiarray_api'
 
-    h_file = os.path.join(output_dir, '__%s.h' % basename)
-    c_file = os.path.join(output_dir, '__%s.c' % basename)
+    h_file = os.path.join(output_dir, f'__{basename}.h')
+    c_file = os.path.join(output_dir, f'__{basename}.c')
     targets = (h_file, c_file)
 
     sources = numpy_api.multiarray_api
@@ -267,10 +271,11 @@ def do_generate_api(targets, sources):
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())
         keys_index = set(multiarray_api_index.keys())
+        keys_index_dict = keys_index - keys_dict
+        keys_dict_index = keys_dict - keys_index
         raise AssertionError(
-            "Multiarray API size mismatch - "
-            "index has extra keys {}, dict has extra keys {}"
-            .format(keys_index - keys_dict, keys_dict - keys_index)
+            f"Multiarray API size mismatch - index has extra keys {keys_index_dict}, "
+            f"dict has extra keys {keys_dict_index}"
         )
 
     extension_list = []

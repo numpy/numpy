@@ -155,8 +155,6 @@ vstring_buffer(npy_string_arena *arena, _npy_static_string_u *string)
     return (char *)((size_t)arena->buffer + string->vstring.offset);
 }
 
-#define ARENA_EXPAND_FACTOR 1.25
-
 static char *
 arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
 {
@@ -168,24 +166,17 @@ arena_malloc(npy_string_arena *arena, npy_string_realloc_func r, size_t size)
     else {
         string_storage_size = size + sizeof(size_t);
     }
-    if ((arena->size - arena->cursor) <= string_storage_size) {
-        // realloc the buffer so there is enough room
-        // first guess is to double the size of the buffer
-        size_t newsize;
-        if (arena->size == 0) {
-            newsize = string_storage_size;
+    if ((arena->size - arena->cursor) < string_storage_size) {
+        size_t minsize = arena->cursor + string_storage_size;
+        if (minsize < arena->cursor) {
+            return NULL;  // overflow means out of memory
         }
-        else if (((ARENA_EXPAND_FACTOR * arena->size) - arena->cursor) >
-                 string_storage_size) {
-            newsize = ARENA_EXPAND_FACTOR * arena->size;
+        // Allocate 25% more than needed for this string.
+        size_t newsize = minsize + minsize / 4;
+        if (newsize < minsize) {
+            return NULL;  // overflow means out of memory
         }
-        else {
-            newsize = arena->size + string_storage_size;
-        }
-        if ((arena->cursor + size) >= newsize) {
-            // need extra room beyond the expansion factor, leave some padding
-            newsize = ARENA_EXPAND_FACTOR * (arena->cursor + size);
-        }
+
         // passing a NULL buffer to realloc is the same as malloc
         char *newbuf = r(arena->buffer, newsize);
         if (newbuf == NULL) {
@@ -404,7 +395,7 @@ NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
     }
 }
 
-static const char * const EMPTY_STRING = "";
+static const char EMPTY_STRING[] = "";
 
 /*NUMPY_API
  * Extract the packed contents of *packed_string* into *unpacked_string*.
@@ -478,7 +469,7 @@ heap_or_arena_allocate(npy_string_allocator *allocator,
         if (*flags == 0) {
             // string isn't previously allocated, so add to existing arena allocation
             char *ret = arena_malloc(arena, allocator->realloc, sizeof(char) * size);
-            if (size < NPY_MEDIUM_STRING_MAX_SIZE) {
+            if (size <= NPY_MEDIUM_STRING_MAX_SIZE) {
                 *flags = NPY_STRING_INITIALIZED;
             }
             else {

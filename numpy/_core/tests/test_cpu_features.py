@@ -1,16 +1,18 @@
 import os
-import re
-import sys
 import pathlib
 import platform
+import re
 import subprocess
+import sys
+
 import pytest
+
 from numpy._core._multiarray_umath import (
-    __cpu_features__,
     __cpu_baseline__,
     __cpu_dispatch__,
+    __cpu_features__,
 )
-import numpy as np
+
 
 def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -33,23 +35,23 @@ def assert_features_equal(actual, desired, fname):
 
     import textwrap
     error_report = textwrap.indent(
-"""
+f"""
 ###########################################
 ### Extra debugging information
 ###########################################
 -------------------------------------------
 --- NumPy Detections
 -------------------------------------------
-%s
+{detected}
 -------------------------------------------
 --- SYS / CPUINFO
 -------------------------------------------
-%s....
+{cpuinfo}....
 -------------------------------------------
 --- SYS / AUXV
 -------------------------------------------
-%s
-""" % (detected, cpuinfo, auxv), prefix='\r')
+{auxv}
+""", prefix='\r')
 
     raise AssertionError((
         "Failure Detection\n"
@@ -117,11 +119,12 @@ class AbstractTest:
 
 @pytest.mark.skipif(
     sys.platform == 'emscripten',
-    reason= (
+    reason=(
         "The subprocess module is not available on WASM platforms and"
         " therefore this test class cannot be properly executed."
     ),
 )
+@pytest.mark.thread_unsafe(reason="setup & tmp_path_factory threads-unsafe, modifies environment variables")
 class TestEnvPrivation:
     cwd = pathlib.Path(__file__).parent.resolve()
     env = os.environ.copy()
@@ -156,7 +159,6 @@ if __name__ == "__main__":
         file /= "_runtime_detect.py"
         file.write_text(self.SCRIPT)
         self.file = file
-        return
 
     def _run(self):
         return subprocess.run(
@@ -189,7 +191,6 @@ if __name__ == "__main__":
     def setup_method(self):
         """Ensure that the environment is reset"""
         self.env = os.environ.copy()
-        return
 
     def test_runtime_feature_selection(self):
         """
@@ -228,7 +229,6 @@ if __name__ == "__main__":
         # Ensure that both features are enabled, and they are exactly the ones
         # specified by `NPY_ENABLE_CPU_FEATURES`
         assert set(enabled_features) == set(non_baseline_features)
-        return
 
     @pytest.mark.parametrize("enabled, disabled",
     [
@@ -334,46 +334,47 @@ if __name__ == "__main__":
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
 machine = platform.machine()
-is_x86 = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
+is_x86 = re.match(r"^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
     not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
 )
 class Test_X86_Features(AbstractTest):
-    features = [
-        "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "POPCNT", "SSE42",
-        "AVX", "F16C", "XOP", "FMA4", "FMA3", "AVX2", "AVX512F", "AVX512CD",
-        "AVX512ER", "AVX512PF", "AVX5124FMAPS", "AVX5124VNNIW", "AVX512VPOPCNTDQ",
-        "AVX512VL", "AVX512BW", "AVX512DQ", "AVX512VNNI", "AVX512IFMA",
-        "AVX512VBMI", "AVX512VBMI2", "AVX512BITALG", "AVX512FP16",
-    ]
+    features = []
+
     features_groups = {
-        "AVX512_KNL": ["AVX512F", "AVX512CD", "AVX512ER", "AVX512PF"],
-        "AVX512_KNM": ["AVX512F", "AVX512CD", "AVX512ER", "AVX512PF", "AVX5124FMAPS",
-                      "AVX5124VNNIW", "AVX512VPOPCNTDQ"],
-        "AVX512_SKX": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL"],
-        "AVX512_CLX": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512VNNI"],
-        "AVX512_CNL": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512IFMA",
-                      "AVX512VBMI"],
-        "AVX512_ICL": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512IFMA",
-                      "AVX512VBMI", "AVX512VNNI", "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ"],
-        "AVX512_SPR": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ",
-                      "AVX512VL", "AVX512IFMA", "AVX512VBMI", "AVX512VNNI",
-                      "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
-                      "AVX512FP16"],
+        "X86_V2": [
+            "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "SSE42",
+            "POPCNT", "LAHF", "CX16"
+        ],
     }
+    features_groups["X86_V3"] = features_groups["X86_V2"] + [
+        "AVX", "AVX2", "FMA3", "BMI", "BMI2",
+        "LZCNT", "F16C", "MOVBE"
+    ]
+    features_groups["X86_V4"] = features_groups["X86_V3"] + [
+        "AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL"
+    ]
+    features_groups["AVX512_ICL"] = features_groups["X86_V4"] + [
+        "AVX512IFMA", "AVX512VBMI", "AVX512VNNI",
+        "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
+        "VAES", "VPCLMULQDQ", "GFNI"
+    ]
+    features_groups["AVX512_SPR"] = features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
+
     features_map = {
         "SSE3": "PNI", "SSE41": "SSE4_1", "SSE42": "SSE4_2", "FMA3": "FMA",
+        "BMI": "BMI1", "LZCNT": "ABM", "LAHF": "LAHF_LM",
         "AVX512VNNI": "AVX512_VNNI", "AVX512BITALG": "AVX512_BITALG",
         "AVX512VBMI2": "AVX512_VBMI2", "AVX5124FMAPS": "AVX512_4FMAPS",
         "AVX5124VNNIW": "AVX512_4VNNIW", "AVX512VPOPCNTDQ": "AVX512_VPOPCNTDQ",
-        "AVX512FP16": "AVX512_FP16",
+        "AVX512FP16": "AVX512_FP16", "AVX512BF16": "AVX512_BF16"
     }
 
     def load_flags(self):
         self.load_flags_cpuinfo("flags")
 
 
-is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
+is_power = re.match(r"^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
     features = ["VSX", "VSX2", "VSX3", "VSX4"]
@@ -383,7 +384,7 @@ class Test_POWER_Features(AbstractTest):
         self.load_flags_auxv()
 
 
-is_zarch = re.match("^(s390x)", machine, re.IGNORECASE)
+is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_zarch,
                     reason="Only for Linux and IBM Z")
 class Test_ZARCH_Features(AbstractTest):
@@ -393,7 +394,7 @@ class Test_ZARCH_Features(AbstractTest):
         self.load_flags_auxv()
 
 
-is_arm = re.match("^(arm|aarch64)", machine, re.IGNORECASE)
+is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_arm, reason="Only for Linux and ARM")
 class Test_ARM_Features(AbstractTest):
     features = [
@@ -407,9 +408,12 @@ class Test_ARM_Features(AbstractTest):
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
         arch = self.get_cpuinfo_item("CPU architecture")
-        # in case of mounting virtual filesystem of aarch64 kernel
-        is_rootfs_v8 = int('0' + next(iter(arch))) > 7 if arch else 0
-        if re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
+        # in case of mounting virtual filesystem of aarch64 kernel without linux32
+        is_rootfs_v8 = (
+            not re.match(r"^armv[0-9]+l$", machine) and
+            (int('0' + next(iter(arch))) > 7 if arch else 0)
+        )
+        if re.match(r"^(aarch64|AARCH64)", machine) or is_rootfs_v8:
             self.features_map = {
                 "NEON": "ASIMD", "HALF": "ASIMD", "VFPV4": "ASIMD"
             }
@@ -422,10 +426,25 @@ class Test_ARM_Features(AbstractTest):
             }
 
 
-is_loongarch = re.match("^(loongarch)", machine, re.IGNORECASE)
+is_loongarch = re.match(r"^(loongarch)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_loongarch, reason="Only for Linux and LoongArch")
 class Test_LOONGARCH_Features(AbstractTest):
     features = ["LSX"]
 
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
+
+
+is_riscv = re.match(r"^(riscv)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
+class Test_RISCV_Features(AbstractTest):
+    features = ["RVV"]
+
+    def load_flags(self):
+        self.load_flags_auxv()
+        if not self.features_flags:
+            # Let the test fail and dump if we cannot read HWCAP.
+            return
+        hwcap = int(next(iter(self.features_flags)), 16)
+        if hwcap & (1 << 21):  # HWCAP_RISCV_V
+            self.features_flags.add("RVV")

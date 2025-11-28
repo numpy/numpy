@@ -25,7 +25,6 @@ __expired_attributes__ = {
         "It's still available as `np.lib.add_docstring`.",
     "add_newdoc_ufunc":
         "It's an internal function and doesn't have a replacement.",
-    "compat": "There's no replacement, as Python 2 is no longer supported.",
     "safe_eval": "Use `ast.literal_eval` instead.",
     "float_": "Use `np.float64` instead.",
     "complex_": "Use `np.complex128` instead.",
@@ -62,7 +61,6 @@ __expired_attributes__ = {
         "or use `typing.deprecated`.",
     "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
         "directly, or use `typing.deprecated`.",
-    "disp": "Use your own printing function instead.",
     "find_common_type":
         "Use `numpy.promote_types` or `numpy.result_type` instead. "
         "To achieve semantics for the `scalar_types` argument, use "

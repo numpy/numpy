@@ -3,6 +3,7 @@ import sys
 import types
 import unittest
 import warnings
+from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import _GeneratorContextManager
 from pathlib import Path
@@ -13,17 +14,18 @@ from typing import (
     ClassVar,
     Final,
     Generic,
+    Literal as L,
     NoReturn,
+    ParamSpec,
+    Self,
     SupportsIndex,
     TypeAlias,
+    TypeVarTuple,
     overload,
     type_check_only,
 )
-from typing import Literal as L
+from typing_extensions import TypeVar, deprecated
 from unittest.case import SkipTest
-
-from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
-from typing_extensions import ParamSpec, Self, TypeVar, TypeVarTuple, Unpack
 
 import numpy as np
 from numpy._typing import (
@@ -42,9 +44,13 @@ __all__ = [  # noqa: RUF022
     "IS_PYPY",
     "IS_PYSTON",
     "IS_WASM",
+    "IS_INSTALLED",
+    "IS_64BIT",
     "HAS_LAPACK64",
     "HAS_REFCOUNT",
+    "BLAS_SUPPORTS_FPE",
     "NOGIL_BUILD",
+    "NUMPY_ROOT",
     "assert_",
     "assert_array_almost_equal_nulp",
     "assert_raises_regex",
@@ -91,7 +97,6 @@ _Tss = ParamSpec("_Tss")
 _ET = TypeVar("_ET", bound=BaseException, default=BaseException)
 _FT = TypeVar("_FT", bound=Callable[..., Any])
 _W_co = TypeVar("_W_co", bound=_WarnLog | None, default=_WarnLog | None, covariant=True)
-_T_or_bool = TypeVar("_T_or_bool", default=bool)
 
 _StrLike: TypeAlias = str | bytes
 _RegexLike: TypeAlias = _StrLike | Pattern[Any]
@@ -128,15 +133,16 @@ IS_MUSL: Final[bool] = ...
 IS_PYPY: Final[bool] = ...
 IS_PYSTON: Final[bool] = ...
 IS_WASM: Final[bool] = ...
+IS_64BIT: Final[bool] = ...
 HAS_REFCOUNT: Final[bool] = ...
 HAS_LAPACK64: Final[bool] = ...
+BLAS_SUPPORTS_FPE: Final[bool] = ...
 NOGIL_BUILD: Final[bool] = ...
 
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
 
-# NOTE: `warnings.catch_warnings` is incorrectly defined as invariant in typeshed
-class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]):  # type: ignore[type-var]  # pyright: ignore[reportInvalidTypeArguments]
+class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]):
     class_modules: ClassVar[tuple[types.ModuleType, ...]] = ()
     modules: Final[set[types.ModuleType]]
     @overload  # record: True
@@ -146,6 +152,7 @@ class clear_and_catch_warnings(warnings.catch_warnings[_W_co], Generic[_W_co]): 
     @overload  # record; bool
     def __init__(self, /, record: bool, modules: _ToModules = ()) -> None: ...
 
+@deprecated("Please use warnings.filterwarnings or pytest.mark.filterwarnings instead")
 class suppress_warnings:
     log: Final[_WarnLog]
     def __init__(self, /, forwarding_rule: L["always", "module", "once", "location"] = "always") -> None: ...
@@ -160,14 +167,14 @@ class suppress_warnings:
 # Contrary to runtime we can't do `os.name` checks while type checking,
 # only `sys.platform` checks
 if sys.platform == "win32" or sys.platform == "cygwin":
-    def memusage(processName: str = ..., instance: int = ...) -> int: ...
+    def memusage(processName: str = "python", instance: int = 0) -> int: ...
 elif sys.platform == "linux":
-    def memusage(_proc_pid_stat: StrOrBytesPath = ...) -> int | None: ...
+    def memusage(_proc_pid_stat: StrOrBytesPath | None = None) -> int | None: ...
 else:
     def memusage() -> NoReturn: ...
 
 if sys.platform == "linux":
-    def jiffies(_proc_pid_stat: StrOrBytesPath = ..., _load_time: list[float] = []) -> int: ...
+    def jiffies(_proc_pid_stat: StrOrBytesPath | None = None, _load_time: list[float] | None = None) -> int: ...
 else:
     def jiffies(_load_time: list[float] = []) -> int: ...
 
@@ -175,10 +182,10 @@ else:
 def build_err_msg(
     arrays: Iterable[object],
     err_msg: object,
-    header: str = ...,
-    verbose: bool = ...,
-    names: Sequence[str] = ...,
-    precision: SupportsIndex | None = ...,
+    header: str = "Items are not equal:",
+    verbose: bool = True,
+    names: Sequence[str] = ("ACTUAL", "DESIRED"),  # = ('ACTUAL', 'DESIRED')
+    precision: SupportsIndex | None = 8,
 ) -> str: ...
 
 #
@@ -357,8 +364,10 @@ def assert_array_max_ulp(
 
 #
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
 @overload
+@deprecated("Please use warnings.catch_warnings or pytest.warns instead")
 def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
 
 #
@@ -450,7 +459,7 @@ def temppath(
 ) -> _GeneratorContextManager[AnyStr]: ...
 
 #
-def check_support_sve(__cache: list[_T_or_bool] = []) -> _T_or_bool: ...  # noqa: PYI063
+def check_support_sve(__cache: list[bool] = ..., /) -> bool: ...  # stubdefaulter: ignore[missing-default]
 
 #
 def decorate_methods(
@@ -471,22 +480,22 @@ def run_threaded(
 ) -> None: ...
 @overload
 def run_threaded(
-    func: Callable[[Unpack[_Ts]], None],
+    func: Callable[[*_Ts], None],
     max_workers: int,
     pass_count: bool,
     pass_barrier: bool,
     outer_iterations: int,
-    prepare_args: tuple[Unpack[_Ts]],
+    prepare_args: tuple[*_Ts],
 ) -> None: ...
 @overload
 def run_threaded(
-    func: Callable[[Unpack[_Ts]], None],
+    func: Callable[[*_Ts], None],
     max_workers: int = 8,
     pass_count: bool = False,
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     *,
-    prepare_args: tuple[Unpack[_Ts]],
+    prepare_args: tuple[*_Ts],
 ) -> None: ...
 
 #

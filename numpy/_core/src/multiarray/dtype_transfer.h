@@ -25,6 +25,15 @@ typedef struct {
 } NPY_cast_info;
 
 
+static inline void
+NPY_context_init(PyArrayMethod_Context *context, PyArray_Descr *descr[2])
+{
+    context->descriptors = descr;
+    context->caller = NULL;
+    context->_reserved = NULL;
+    context->flags = 0;
+}
+
 /*
  * Create a new cast-info struct with cast_info->context.descriptors linked.
  * Compilers should inline this to ensure the whole struct is not actually
@@ -40,12 +49,8 @@ NPY_cast_info_init(NPY_cast_info *cast_info)
      * a scratch space to `NPY_cast_info` and link to that instead.
      */
     cast_info->auxdata = NULL;
-    cast_info->context.descriptors = cast_info->descriptors;
-
-    // TODO: Delete this again probably maybe create a new minimal init macro
-    cast_info->context.caller = NULL;
+    NPY_context_init(&(cast_info->context), cast_info->descriptors);
 }
-
 
 /*
  * Free's all references and data held inside the struct (not the struct).
@@ -100,6 +105,7 @@ NPY_cast_info_copy(NPY_cast_info *cast_info, NPY_cast_info *original)
     Py_XINCREF(cast_info->descriptors[1]);
     cast_info->context.caller = original->context.caller;
     Py_XINCREF(cast_info->context.caller);
+    cast_info->context.flags = original->context.flags;
     cast_info->context.method = original->context.method;
     Py_XINCREF(cast_info->context.method);
     if (original->auxdata == NULL) {

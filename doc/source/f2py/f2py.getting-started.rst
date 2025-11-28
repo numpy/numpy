@@ -308,4 +308,4 @@ the previous case::
   >>> print(fib3.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
-.. _`system dependencies panel`: http://scipy.github.io/devdocs/building/index.html#system-level-dependencies
+.. _`system dependencies panel`: https://scipy.github.io/devdocs/building/index.html#system-level-dependencies

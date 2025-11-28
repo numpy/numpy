@@ -1,12 +1,14 @@
-from math import nan, inf
-import pytest
-from numpy._core import array, arange, printoptions
-import numpy.polynomial as poly
-from numpy.testing import assert_equal, assert_
+from decimal import Decimal
 
 # For testing polynomial printing with object arrays
 from fractions import Fraction
-from decimal import Decimal
+from math import inf, nan
+
+import pytest
+
+import numpy.polynomial as poly
+from numpy._core import arange, array, printoptions
+from numpy.testing import assert_, assert_equal
 
 
 class TestStrUnicodeSuperSubscripts:
@@ -244,6 +246,7 @@ class TestLinebreaking:
                 assert_(len(line) < lw)
 
 
+@pytest.mark.thread_unsafe(reason="set_default_printstyle() is global state")
 def test_set_default_printoptions():
     p = poly.Polynomial([1, 2, 3])
     c = poly.Chebyshev([1, 2, 3])
@@ -257,6 +260,7 @@ def test_set_default_printoptions():
         poly.set_default_printstyle('invalid_input')
 
 
+@pytest.mark.thread_unsafe(reason="set_default_printstyle() is global state")
 def test_complex_coefficients():
     """Test both numpy and built-in complex."""
     coefs = [0 + 1j, 1 + 1j, -2 + 2j, 3 + 0j]
@@ -546,7 +550,7 @@ class TestPrintOptions:
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])
         assert str(p) == 'nan + inf x'
-        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'
+        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'  # noqa: RUF027
         with printoptions(nanstr='NAN', infstr='INF'):
             assert str(p) == 'NAN + INF x'
             assert p._repr_latex_() == \

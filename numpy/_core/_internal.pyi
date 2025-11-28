@@ -1,9 +1,8 @@
 import ctypes as ct
 import re
 from collections.abc import Callable, Iterable
-from typing import Any, Final, Generic, overload
-
-from typing_extensions import Self, TypeVar, deprecated
+from typing import Any, Final, Generic, Self, overload
+from typing_extensions import TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -47,16 +46,6 @@ class _ctypes(Generic[_PT_co]):
     def data_as(self, /, obj: type[_CastT]) -> _CastT: ...
     def shape_as(self, /, obj: type[_CT]) -> ct.Array[_CT]: ...
     def strides_as(self, /, obj: type[_CT]) -> ct.Array[_CT]: ...
-
-    #
-    @deprecated('"get_data" is deprecated. Use "data" instead')
-    def get_data(self, /) -> _PT_co: ...
-    @deprecated('"get_shape" is deprecated. Use "shape" instead')
-    def get_shape(self, /) -> ct.Array[c_intp]: ...
-    @deprecated('"get_strides" is deprecated. Use "strides" instead')
-    def get_strides(self, /) -> ct.Array[c_intp]: ...
-    @deprecated('"get_as_parameter" is deprecated. Use "_as_parameter_" instead')
-    def get_as_parameter(self, /) -> ct.c_void_p: ...
 
 class dummy_ctype(Generic[_T_co]):
     _cls: type[_T_co]

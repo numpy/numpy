@@ -1,24 +1,31 @@
-import sys
-import operator
-import pytest
 import ctypes
 import gc
-import types
-from typing import Any
+import inspect
+import operator
 import pickle
+import sys
+import types
+from itertools import permutations
+from typing import Any
+
+import hypothesis
+import pytest
+from hypothesis.extra import numpy as hynp
 
 import numpy as np
 import numpy.dtypes
-from numpy._core._rational_tests import rational
 from numpy._core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON, IS_WASM)
-from itertools import permutations
-import random
-
-import hypothesis
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_PYSTON,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 def assert_dtype_equal(a, b):
@@ -204,7 +211,7 @@ class TestBuiltin:
                       'formats': ['i4', 'f4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
-        # This is an safe cast (not equiv) due to the different names:
+        # This is a safe cast (not equiv) due to the different names:
         assert np.can_cast(x, y, casting="safe")
 
     @pytest.mark.parametrize(
@@ -742,7 +749,7 @@ class TestSubarray:
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
     def test_alignment(self):
-        #Check that subarrays are aligned
+        # Check that subarrays are aligned
         t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
@@ -1174,6 +1181,10 @@ class TestString:
         assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
         assert_equal(dt.name, 'record16')
 
+    def test_custom_dtype_str(self):
+        dt = np.dtypes.StringDType()
+        assert_equal(dt.str, "StringDType()")
+
 
 class TestDtypeAttributeDeletion:
 
@@ -1317,8 +1328,9 @@ class TestDTypeMakeCanonical:
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(
                 subtype_strategy=hypothesis.extra.numpy.array_dtypes(),
-                min_size=5, max_size=10, allow_subarrays=True))
-    def test_structured(self, dtype):
+                min_size=5, max_size=10, allow_subarrays=True),
+            random=hypothesis.strategies.randoms())
+    def test_structured(self, dtype, random):
         # Pick 4 of the fields at random.  This will leave empty space in the
         # dtype (since we do not canonicalize it here).
         field_subset = random.sample(dtype.names, k=4)
@@ -1399,10 +1411,10 @@ class TestPickling:
     @pytest.mark.parametrize('unit', ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's',
                                       'ms', 'us', 'ns', 'ps', 'fs', 'as'])
     def test_datetime(self, base, unit):
-        dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+        dt = np.dtype(f'{base}[{unit}]' if unit else base)
         self.check_pickling(dt)
         if unit:
-            dt = np.dtype('%s[7%s]' % (base, unit))
+            dt = np.dtype(f'{base}[7{unit}]')
             self.check_pickling(dt)
 
     def test_metadata(self):
@@ -1570,19 +1582,19 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
-    def test_recursion(self):
+    def test_recursive(self):
+        # This used to recurse. It now doesn't, we enforce the
+        # dtype attribute to be a dtype (and will not recurse).
         class dt:
             pass
 
         dt.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt)
 
         dt_instance = dt()
         dt_instance.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
     def test_void_subtype(self):
@@ -1595,19 +1607,56 @@ class TestFromDTypeAttribute:
         np.dtype(dt)
         np.dtype(dt(1))
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
-    def test_void_subtype_recursion(self):
+    def test_void_subtype_recursive(self):
+        # Used to recurse, but dtype is now enforced to be a dtype instance
+        # so that we do not recurse.
         class vdt(np.void):
             pass
 
         vdt.dtype = vdt
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt)
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt(1))
+
+
+class TestFromDTypeProtocol:
+    def test_simple(self):
+        class A:
+            dtype = np.dtype("f8")
+
+        assert np.dtype(A()) == np.dtype(np.float64)
+
+    def test_not_a_dtype(self):
+        # This also prevents coercion as a trivial path, although
+        # a custom error may be nicer.
+        class ArrayLike:
+            __numpy_dtype__ = None
+            dtype = np.dtype("f8")
+
+        with pytest.raises(ValueError, match=".*__numpy_dtype__.*"):
+            np.dtype(ArrayLike())
+
+    def test_prevent_dtype_explicit(self):
+        class ArrayLike:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("my error!")
+
+        with pytest.raises(RuntimeError, match="my error!"):
+            np.dtype(ArrayLike())
+
+    def test_type_object(self):
+        class TypeWithProperty:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("not reached")
+
+        # Arbitrary types go to object currently, and the
+        # protocol doesn't prevent that.
+        assert np.dtype(TypeWithProperty) == object
 
 
 class TestDTypeClasses:
@@ -1620,7 +1669,7 @@ class TestDTypeClasses:
         assert type(dtype) is not np.dtype
         if dtype.type.__name__ != "rational":
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
-            if dt_name == "uint" or dt_name == "int":
+            if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
                 # int and that is long...
                 dt_name += "c"
@@ -1677,9 +1726,8 @@ class TestDTypeClasses:
 
     @pytest.mark.parametrize("name",
             ["Half", "Float", "Double", "CFloat", "CDouble"])
-    def test_float_alias_names(self, name):
-        with pytest.raises(AttributeError):
-            getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
+    def test_float_alias_names_not_present(self, name):
+        assert not hasattr(numpy.dtypes, f"{name}DType")
 
     def test_scalar_helper_all_dtypes(self):
         for dtype in np.dtypes.__all__:
@@ -1907,6 +1955,7 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
+    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1922,10 +1971,12 @@ class TestUserDType:
         if HAS_REFCOUNT:
             # Create an array and test that memory gets cleaned up (gh-25949)
             o = object()
+            startcount = sys.getrefcount(o)
             a = np.array([o], dtype=dt)
             del a
-            assert sys.getrefcount(o) == 2
+            assert sys.getrefcount(o) == startcount
 
+    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
@@ -1982,3 +2033,65 @@ def test_creating_dtype_with_dtype_class_errors():
     # Regression test for #25031, calling `np.dtype` with itself segfaulted.
     with pytest.raises(TypeError, match="Cannot convert np.dtype into a"):
         np.array(np.ones(10), dtype=np.dtype)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestDTypeSignatures:
+    def test_signature_dtype(self):
+        sig = inspect.signature(np.dtype)
+
+        assert len(sig.parameters) == 4
+
+        assert "dtype" in sig.parameters
+        assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["dtype"].default is inspect.Parameter.empty
+
+        assert "align" in sig.parameters
+        assert sig.parameters["align"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["align"].default is False
+
+        assert "copy" in sig.parameters
+        assert sig.parameters["copy"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert sig.parameters["copy"].default is False
+
+        # the optional `metadata` parameter has no default, so `**kwargs` must be used
+        assert "kwargs" in sig.parameters
+        assert sig.parameters["kwargs"].kind is inspect.Parameter.VAR_KEYWORD
+        assert sig.parameters["kwargs"].default is inspect.Parameter.empty
+
+    def test_signature_dtype_newbyteorder(self):
+        sig = inspect.signature(np.dtype.newbyteorder)
+
+        assert len(sig.parameters) == 2
+
+        assert "self" in sig.parameters
+        assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["self"].default is inspect.Parameter.empty
+
+        assert "new_order" in sig.parameters
+        assert sig.parameters["new_order"].kind is inspect.Parameter.POSITIONAL_ONLY
+        assert sig.parameters["new_order"].default == "S"
+
+    @pytest.mark.parametrize("typename", np.dtypes.__all__)
+    def test_signature_dtypes_classes(self, typename: str):
+        dtype_type = getattr(np.dtypes, typename)
+        sig = inspect.signature(dtype_type)
+
+        match typename.lower().removesuffix("dtype"):
+            case "bytes" | "str":
+                params_expect = {"size"}
+            case "void":
+                params_expect = {"length"}
+            case "datetime64" | "timedelta64":
+                params_expect = {"unit"}
+            case "string":
+                # `na_object` cannot be used in the text signature because of its
+                # `np._NoValue` default, which isn't supported by `inspect.signature`,
+                # so `**kwargs` is used instead.
+                params_expect = {"coerce", "kwargs"}
+            case _:
+                params_expect = set()
+
+        params_actual = set(sig.parameters)
+        assert params_actual == params_expect

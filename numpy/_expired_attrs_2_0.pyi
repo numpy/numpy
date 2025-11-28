@@ -18,7 +18,6 @@ class _ExpiredAttributesType(TypedDict):
     add_newdoc: str
     add_docstring: str
     add_newdoc_ufunc: str
-    compat: str
     safe_eval: str
     float_: str
     complex_: str
@@ -48,7 +47,6 @@ class _ExpiredAttributesType(TypedDict):
     recfromtxt: str
     deprecate: str
     deprecate_with_doc: str
-    disp: str
     find_common_type: str
     round_: str
     get_array_wrap: str

@@ -1,16 +1,13 @@
-from typing import TypeVar
+from typing import TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _64Bit, _32Bit
+from numpy._typing import _32Bit, _64Bit
 
-from typing_extensions import assert_type
+T1 = TypeVar("T1", bound=npt.NBitBase)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+T2 = TypeVar("T2", bound=npt.NBitBase)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
-T1 = TypeVar("T1", bound=npt.NBitBase)
-T2 = TypeVar("T2", bound=npt.NBitBase)
-
-def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]:
-    return a + b
+def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]: ...
 
 i8: np.int64
 i4: np.int32

@@ -160,7 +160,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  * valid self (a generic scalar) and an other item.
  * May fill self_item and/or other_arr (but not both) with non-NULL values.
  *
- * Why this dance?  When the other object is a exactly Python scalar something
+ * Why this dance?  When the other object is exactly a Python scalar something
  * awkward happens historically in NumPy.
  * NumPy doesn't define a result, but the ufunc would cast to `astype(object)`
  * which is the same as `scalar.item()`.  And that operation converts e.g.
@@ -226,7 +226,7 @@ find_binary_operation_path(
      */
     int was_scalar;
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny_int(
-                other, NULL, NULL, 0, 0, 0, NULL, &was_scalar);
+                other, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL, &was_scalar);
     if (arr == NULL) {
         return -1;
     }
@@ -939,12 +939,23 @@ datetimetype_repr(PyObject *self)
         if (legacy_print_mode == -1) {
             return NULL;
         }
-        if (legacy_print_mode > 125) {
-            ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+
+        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        if((scal->obval == NPY_DATETIME_NAT) && (meta != NULL)){
+            if (legacy_print_mode > 125) {
+                ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
+            } else {
+                ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+            }
+        } else {
+            if (legacy_print_mode > 125) {
+                ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+            }
+            else {
+                ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+            }
         }
-        else {
-            ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
-        }
+
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -1306,6 +1317,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
 
 /**begin repeat1
  * #name = float, double, longdouble#
+ * #max_positional = 1.e6L, 1.e16L, 1.e16L#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #n = f, , l#
@@ -1329,6 +1341,13 @@ static PyObject *
     if (legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
+    long double max_positional;
+    if (legacy_print_mode <= 202) {
+        max_positional = 1.e16L;
+    }
+    else {
+        max_positional = @max_positional@;
+    }
 
     int use_positional;
     if (npy_isnan(val) || val == 0) {
@@ -1336,7 +1355,7 @@ static PyObject *
     }
     else {
         npy_@name@ absval = val < 0 ? -val : val;
-        use_positional = absval < 1.e16L && absval >= 1.e-4L;
+        use_positional = absval < max_positional && absval >= 1.e-4L;
     }
 
     if (use_positional) {
@@ -1481,11 +1500,18 @@ halftype_@kind@(PyObject *self)
     if (legacy_print_mode <= 113) {
         return legacy_float_format@kind@(floatval);
     }
+    long double max_positional;
+    if (legacy_print_mode <= 202) {
+        max_positional = 1.e16L;
+    }
+    else {
+        max_positional = 1.e3L;
+    }
 
     absval = floatval < 0 ? -floatval : floatval;
 
     PyObject *string;
-    if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
+    if (absval == 0 || (absval < max_positional && absval >= 1.e-4) ) {
         string = format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
     else {
@@ -1914,33 +1940,6 @@ gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
     return self;
 }
 
-static PyObject *
-gentype_newbyteorder(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`newbyteorder` was removed from scalar types in NumPy 2.0. "
-                    "Use `sc.view(sc.dtype.newbyteorder(order))` instead.");
-    return NULL;
-}
-
-static PyObject *
-gentype_itemset(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`itemset` was removed from scalar types in NumPy 2.0 "
-                    "because scalars are immutable.");
-    return NULL;
-}
-
-static PyObject *
-gentype_ptp(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`ptp` was removed from scalar types in NumPy 2.0. "
-                    "For a scalar, the range of values always equals 0.");
-    return NULL;
-}
-
 
 static PyGetSetDef gentype_getsets[] = {
     {"ndim",
@@ -1984,15 +1983,6 @@ static PyGetSetDef gentype_getsets[] = {
         (setter)0, NULL, NULL},
     {"T",
         (getter)gentype_transpose_get,
-        (setter)0, NULL, NULL},
-    {"newbyteorder",
-        (getter)gentype_newbyteorder,
-        (setter)0, NULL, NULL},
-    {"itemset",
-        (getter)gentype_itemset,
-        (setter)0, NULL, NULL},
-    {"ptp",
-        (getter)gentype_ptp,
         (setter)0, NULL, NULL},
     {"device",
         (getter)array_device,
@@ -2067,12 +2057,11 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 
 /*
  * These gentype_* functions do not take keyword arguments.
- * The proper flag is METH_VARARGS.
+ * The proper flag is METH_VARARGS or METH_NOARGS.
  */
 /**begin repeat
  *
- * #name = tolist, item, __deepcopy__, __copy__,
- *         swapaxes, conj, conjugate, nonzero,
+ * #name = tolist, item, swapaxes, conj, conjugate, nonzero,
  *         fill, transpose#
  */
 static PyObject *
@@ -2081,6 +2070,34 @@ gentype_@name@(PyObject *self, PyObject *args)
     return gentype_generic_method(self, args, NULL, "@name@");
 }
 /**end repeat**/
+
+static PyObject *
+gentype___copy__(PyObject *self)
+{
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
+        // path via array
+        return gentype_generic_method(self, NULL, NULL, "__copy__");
+    }
+    return Py_NewRef(self);
+}
+
+static PyObject *
+gentype___deepcopy__(PyObject *self, PyObject *args)
+{
+    // note: maybe the signature needs to be updated as __deepcopy__ can accept the keyword memo
+
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    // if the number of arguments is not 1, we let gentype_generic_method do the
+    // error handling
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (PyTuple_Size(args)!=1)) {
+        // path via array
+        return gentype_generic_method(self, args, NULL, "__deepcopy__");
+    }
+    return Py_NewRef(self);
+}
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2132,7 +2149,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, any, all, astype, resize,
- *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
+ *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
 static PyObject *
@@ -2295,7 +2312,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         buffer = view.buf;
         buflen = view.len;
         /*
-         * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+         * Both of the deprecated functions PyObject_AsWriteBuffer and
          * PyObject_AsReadBuffer that this code replaces release the buffer. It is
          * up to the object that supplies the buffer to guarantee that the buffer
          * sticks around after the release.
@@ -2590,9 +2607,6 @@ static PyMethodDef gentype_methods[] = {
     {"tofile",
         (PyCFunction)gentype_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"tostring",
-        (PyCFunction)gentype_tostring,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2626,7 +2640,7 @@ static PyMethodDef gentype_methods[] = {
     /* for the copy module */
     {"__copy__",
         (PyCFunction)gentype___copy__,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
         METH_VARARGS, NULL},
@@ -2826,6 +2840,16 @@ static PyMethodDef numbertype_methods[] = {
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
+
+/**begin repeat
+ * #name = boolean,datetime#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* for typing */
+    {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+/**end repeat**/
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -3885,7 +3909,6 @@ static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     PyArray_DatetimeMetaData *meta;
-    PyArray_Descr *dtype;
     npy_@lname@ val = PyArrayScalar_VAL(obj, @name@);
 
     if (val == NPY_DATETIME_NAT) {
@@ -3893,10 +3916,10 @@ static npy_hash_t
         return PyBaseObject_Type.tp_hash(obj);
     }
 
-    dtype = PyArray_DescrFromScalar(obj);
-    meta = get_datetime_metadata_from_dtype(dtype);
+    meta = &((PyDatetimeScalarObject *)obj)->obmeta;
 
-    return @lname@_hash(meta, val);
+    npy_hash_t res = @lname@_hash(meta, val);
+    return res;
 }
 /**end repeat**/
 
@@ -4533,6 +4556,7 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    PyDatetimeArrType_Type.tp_methods = datetimetype_methods;
 
     /**begin repeat
      * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
@@ -4546,6 +4570,7 @@ initialize_numeric_types(void)
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
     PyBoolArrType_Type.tp_repr = genbool_type_repr;
+    PyBoolArrType_Type.tp_methods = booleantype_methods;
 
 
     /**begin repeat

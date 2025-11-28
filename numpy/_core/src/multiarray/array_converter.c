@@ -83,7 +83,7 @@ array_converter_new(
         }
         else {
             item->array = (PyArrayObject *)PyArray_FromAny_int(
-                    item->object, NULL, NULL, 0, 0, 0, NULL,
+                    item->object, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL,
                     &item->scalar_input);
             if (item->array == NULL) {
                 goto fail;
@@ -97,7 +97,7 @@ array_converter_new(
         Py_INCREF(item->DType);
 
         /*
-         * Check whether we were passed a an int/float/complex Python scalar.
+         * Check whether we were passed an int/float/complex Python scalar.
          * If not, set `descr` and clear pyscalar/scalar flags as needed.
          */
         if (item->scalar_input && npy_mark_tmp_array_if_pyscalar(
