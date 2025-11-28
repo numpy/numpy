@@ -4142,20 +4142,23 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
-    @pytest.mark.parametrize(["err_msg", "weight"],
-                             [("Weights must be finite.", [1, np.inf, 1, 1]),
-                              ("Weights must be non-negative.", [1, -np.inf, 1, 1]),
-                              ("Weights must be finite.", [1, np.inf, 1, np.inf]),
-                              ("At least one weight must be non-zero.", np.zeros(4))])
+    @pytest.mark.parametrize("weights",
+            [[1, np.inf, 1, 1], [1, np.inf, 1, np.inf], [0, 0, 0, 0],
+             [np.finfo("float64").max] * 4])
     @pytest.mark.parametrize("dty", ["f8", "O"])
-    def test_inf_zeroes_err(self, err_msg, weight, dty):
-
+    def test_inf_zeroes_err(self, weights, dty):
         m = "inverted_cdf"
         q = 0.5
-        arr = [1, 2, 3, 4]
-        wgts = np.array(weight, dtype=dty)
-        with pytest.raises(ValueError, match=err_msg):
-            a = np.quantile(arr, q, weights=wgts, method=m)
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(ValueError,
+                match=r"Weights included NaN, inf or were all zero"):
+            # We (currently) don't bother to check ahead so 0/0 or
+            # overflow to `inf` while summing weights, or `inf / inf`
+            # will all warn before the error is raised.
+            with np.errstate(all="ignore"):
+                a = np.quantile(arr, q, weights=wgts, method=m, axis=1)
 
     @pytest.mark.parametrize("weight", [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
     @pytest.mark.parametrize(["err", "dty"], [(ValueError, "f8"), ((RuntimeWarning, ValueError), "O")])
