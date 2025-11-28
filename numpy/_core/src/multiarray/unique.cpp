@@ -22,6 +22,38 @@ extern "C" {
     #include "numpy/halffloat.h"
 }
 
+
+//
+// Create a 1-d array with the given length that has the same
+// dtype as the input `arr`.
+//
+static inline PyArrayObject *
+empty_array_like(PyArrayObject *arr, npy_intp length)
+{
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    Py_INCREF(descr);
+
+    // Create the output array.
+    PyArrayObject *res_obj =
+        reinterpret_cast<PyArrayObject *>(
+            PyArray_NewFromDescr(
+                &PyArray_Type,
+                descr,
+                1,                      // ndim
+                &length,                // shape
+                NULL,                   // strides
+                NULL,                   // data
+                NPY_ARRAY_WRITEABLE,    // flags
+                NULL                    // obj
+            )
+        );
+    if (res_obj == NULL) {
+        Py_DECREF(descr);
+        return NULL;
+    }
+    return res_obj;
+}
+
 // This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
 // Adapted from https://stackoverflow.com/a/25510879/2536294
 template <typename F>
@@ -186,9 +218,6 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     * Returns a new NumPy array containing the unique values of the input array of numeric (integer or complex).
     * This function uses hashing to identify uniqueness efficiently.
     */
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-
     PyThreadState *_save1 = PyEval_SaveThread();
 
     // number of elements in the input array
@@ -220,34 +249,25 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
 
+    PyArrayObject *res_obj = empty_array_like(self, length);
     if (res_obj == NULL) {
         return NULL;
     }
+
     PyThreadState *_save2 = PyEval_SaveThread();
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
     });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    char *odata = PyArray_BYTES(res_obj);
+    npy_intp ostride = PyArray_STRIDES(res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         copy_func(odata, *it);
     }
 
-    return res_obj;
+    return reinterpret_cast<PyObject *>(res_obj);
 }
 
 template <typename T>
@@ -295,34 +315,25 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
 
+    PyArrayObject *res_obj = empty_array_like(self, length);
     if (res_obj == NULL) {
         return NULL;
     }
+
     PyThreadState *_save2 = PyEval_SaveThread();
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
     });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    char *odata = PyArray_BYTES(res_obj);
+    npy_intp ostride = PyArray_STRIDES(res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         std::memcpy(odata, *it, itemsize);
     }
 
-    return res_obj;
+    return reinterpret_cast<PyObject *>(res_obj);
 }
 
 static PyObject*
@@ -399,21 +410,13 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
+
+    PyArrayObject *res_obj = empty_array_like(self, length);
     if (res_obj == NULL) {
         return NULL;
     }
-    PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
+
+    PyArray_Descr *res_descr = PyArray_DESCR(res_obj);
     Py_INCREF(res_descr);
 
     PyThreadState *_save2 = PyEval_SaveThread();
@@ -426,8 +429,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         NpyString_release_allocator(out_allocator);
     });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    char *odata = PyArray_BYTES(res_obj);
+    npy_intp ostride = PyArray_STRIDES(res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
@@ -443,7 +446,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         }
     }
 
-    return res_obj;
+    return reinterpret_cast<PyObject *>(res_obj);
 }
 
 
