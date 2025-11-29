@@ -451,17 +451,39 @@ and here is how it looks on x86_64/gcc:
 Runtime Dispatch
 ----------------
 
-Importing NumPy triggers a scan of the available CPU features from the set
-of dispatchable features. You can restrict this scan by setting the
-environment variable ``NPY_DISABLE_CPU_FEATURES`` to a comma-, tab-, or
-space-separated list of features to disable. 
+Importing NumPy triggers a scan of the available CPU features from the set of
+dispatchable features configured via ``cpu-dispatch`` during the build. The
+feature names follow :ref:`opt-supported-features`. You can override what gets
+used at runtime with the following environment variables (set before Python
+starts, and only one may be active at a time):
 
-For instance, on ``x86_64`` this will disable ``X86_V4``::
+``NPY_DISABLE_CPU_FEATURES``
+    Excludes specific dispatchable features even if the CPU reports supporting
+    them. The value is parsed as a comma-, tab-, or space-separated list. On
+    ``x86_64`` this will avoid using AVX-512 implementations::
 
-    NPY_DISABLE_CPU_FEATURES="X86_V4"
+        NPY_DISABLE_CPU_FEATURES="X86_V4,AVX512_ICL"
 
-This will raise an error if parsing fails or if the feature was not enabled through the ``cpu-dispatch`` build option.
-If the feature is supported by the build but not available on the current CPU, a warning will be emitted instead.
+    Attempting to disable baseline features will lead to ``ImportError``. When the
+    requested feature was not included in ``cpu-dispatch`` a warning is emitted
+    and the entry is ignored. Features that are unavailable on the current CPU
+    are simply skipped.
+
+``NPY_ENABLE_CPU_FEATURES``
+    Limits NumPy to the listed dispatchable features and disables the rest
+    except for baseline features. This is useful when you want to force
+    NumPy to behave like an older CPU generation for debugging or testing.
+    For example, to only enable ``X86_V3`` kernels even if ``X86_V4`` is
+    available::
+
+        NPY_ENABLE_CPU_FEATURES="X86_V3"
+
+    Enabling features that were not compiled in or are not supported by the CPU
+    results in an ``ImportError``.
+
+Trying to set both variables simultaneously raises an ``ImportError`` during
+import. If NumPy was built without dispatched features, the variables are
+ignored and an ``ImportWarning`` is going to be emitted.
 
 Tracking Dispatched Functions
 -----------------------------
@@ -504,4 +526,3 @@ For example::
       }
     }
   }
-
