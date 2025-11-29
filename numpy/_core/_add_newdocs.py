@@ -1482,9 +1482,11 @@ add_newdoc('numpy._core.multiarray', 'set_typeDict',
 
     """)
 
-# Signature can be updated for 2.5.0 release, see gh-30235 for details
 add_newdoc('numpy._core.multiarray', 'fromstring',
     """
+    fromstring(string, dtype=None, count=-1, *, sep, like=None)
+    --
+
     fromstring(string, dtype=float, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
