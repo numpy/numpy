@@ -1,6 +1,5 @@
 #ifndef NUMPY__CORE_SRC_COMMON_SIMD_SIMD_HPP_
 #define NUMPY__CORE_SRC_COMMON_SIMD_SIMD_HPP_
-
 /**
  * This header provides a thin wrapper over Google's Highway SIMD library.
  *
@@ -19,7 +18,9 @@
  */
 #ifndef NPY_DISABLE_OPTIMIZATION
 #include <hwy/highway.h>
-
+#include <npsr/npsr.h>
+#include <type_traits>
+#include <limits>
 /**
  * We avoid using Highway scalar operations for the following reasons:
  *
@@ -67,6 +68,17 @@ namespace hn = hwy::HWY_NAMESPACE;
 // internaly used by the template header
 template <typename TLane>
 using _Tag = hn::ScalableTag<TLane>;
+
+/// NumPy SIMD Routines namespace alias
+/// npsr is tag free by design so we only include it within main namespace (np::simd)
+namespace sr = npsr::HWY_NAMESPACE;
+/// Default precision configrations for NumPy SIMD Routines
+template <typename T>
+using Precise = std::conditional_t<
+    std::is_same_v<T, double> || std::is_same_v<T, long double>,
+    decltype(npsr::Precise{}),
+    decltype(npsr::Precise{npsr::kLowAccuracy})
+>;
 #endif
 #include "simd.inc.hpp"
 }  // namespace simd
