@@ -974,6 +974,7 @@ array_boolean_subscript(PyArrayObject *self,
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                                 NULL, NULL, 0, NULL);
     if (ret == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     /* not same as *dtype* if the DType class replaces dtypes */

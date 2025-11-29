@@ -1077,6 +1077,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
                     dims,
                     1,
                     descr) < 0) {
+                Py_DECREF(descr);
                 PyErr_SetString(PyExc_RuntimeError, "error converting 1D array");
                 return NULL;
             }
@@ -1090,6 +1091,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
                     dims,
                     2,
                     descr) < 0) {
+                Py_DECREF(descr);
                 PyErr_SetString(PyExc_RuntimeError, "error converting 2D array");
                 return NULL;
             }
@@ -1103,6 +1105,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
                     dims,
                     3,
                     descr) < 0) {
+                Py_DECREF(descr);
                 PyErr_SetString(PyExc_RuntimeError, "error converting 3D array");
                 return NULL;
             }

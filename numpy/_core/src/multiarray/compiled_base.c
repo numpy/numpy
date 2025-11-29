@@ -375,6 +375,7 @@ arr_place(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
                                     0, 0, NPY_ARRAY_CARRAY, NULL);
     if (values == NULL) {
+        Py_DECREF(dtype);
         goto fail;
     }
 

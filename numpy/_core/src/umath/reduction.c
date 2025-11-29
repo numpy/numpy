@@ -122,6 +122,7 @@ PyArray_CopyInitialReduceValues(
             &PyArray_Type, descr, idim_out, shape, strides,
             PyArray_DATA(operand), 0, NULL);
     if (op_view == NULL) {
+        Py_DECREF(descr);
         return -1;
     }
 

@@ -810,6 +810,7 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
                   0, 0, NPY_ARRAY_FORCECAST | PyArray_FORTRAN_IF(self), NULL);
     if (arr == NULL) {
+        Py_DECREF(typecode);
         return -1;
     }
     arrit = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);

@@ -389,6 +389,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                              NULL, NULL,
                              0, (PyObject *)self->ao);
     if (ret == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     if (count > 0) {
@@ -450,6 +451,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
                              NULL, NULL,
                              0, (PyObject *)self->ao);
     if (ret == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
     optr = PyArray_DATA(ret);

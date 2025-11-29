@@ -15,7 +15,6 @@
 #include "npy_config.h"
 
 
-
 #include "npy_static_data.h"
 #include "common.h"
 #include "dtype_transfer.h"
@@ -283,6 +282,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                                                     (PyObject *)self);
 
         if (obj == NULL) {
+            Py_DECREF(dtype);
             goto fail;
         }
 
@@ -313,6 +313,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
+            Py_DECREF(dtype);
             goto fail;
         }
     }
@@ -695,6 +696,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
                                     0, 0, NPY_ARRAY_CARRAY, NULL);
     if (values == NULL) {
+        Py_DECREF(dtype);
         goto fail;
     }
     nv = PyArray_SIZE(values); /* zero if null array */
