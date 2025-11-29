@@ -18,6 +18,11 @@ Its functionality can be split into three distinct parts:
   .. versionadded:: 1.22
 
 .. deprecated:: 2.3
+    The :mod:`numpy.typing.mypy_plugin` entry-point is deprecated in favor of
+    platform-agnostic static type inference. Remove
+    ``numpy.typing.mypy_plugin`` from the ``plugins`` section of your mypy
+    configuration; if that surfaces new errors, please open an issue with a
+    minimal reproducer.
 
 Examples
 --------
