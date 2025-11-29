@@ -507,6 +507,15 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" not in out
 
+def test_latex_doc(self):
+    fsource = textwrap.dedent("""subroutine foo end""")
+    fpath = self.tmpdir / "test_latex.f"
+    with open(fpath, "w") as f:
+        f.write(fsource)
+        
+    cmd = [sys.executable, "-m", "numpy.f2py", "-c", str(fpath), "-m", "test_latex", "--latex-doc"]
+    subprocess.check_call(cmd, cwd=self.tmpdir)
+
 
 def test_shortlatex(capfd, hello_world_f90, monkeypatch):
     """Ensures that truncated documentation is written out
