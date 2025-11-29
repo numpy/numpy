@@ -3087,6 +3087,12 @@ class TestInterp:
         assert_raises(ValueError, interp, 0, [0, 1], [1, 2], period=0)
         assert_raises(ValueError, interp, 0, [], [], period=360)
         assert_raises(ValueError, interp, 0, [0], [1, 2], period=360)
+        
+    def test_empty_triple_case(self):
+        # New expected behavior: np.interp([], [], []) returns []
+        res = np.interp([], [], [])
+        assert_equal(res, np.array([]))
+        assert res.shape == (0,)
 
     def test_basic(self):
         x = np.linspace(0, 1, 5)

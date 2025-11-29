@@ -574,7 +574,24 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_arg
                 NULL, NULL, NULL) < 0) {
         return NULL;
     }
+    /* Special case when x, xp and fp are all empty */
+    {
+        Py_ssize_t sx, sxp, sfp;
 
+        sx  = PySequence_Size(x);
+        if (sx < 0) { return NULL; }  /* error already set */
+
+        sxp = PySequence_Size(xp);
+        if (sxp < 0) { return NULL; }
+
+        sfp = PySequence_Size(fp);
+        if (sfp < 0) { return NULL; }
+
+        if (sx == 0 && sxp == 0 && sfp == 0) {
+            npy_intp dims[1] = {0};
+            return PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+        }
+    }
     afp = (PyArrayObject *)PyArray_ContiguousFromAny(fp, NPY_DOUBLE, 1, 1);
     if (afp == NULL) {
         return NULL;
