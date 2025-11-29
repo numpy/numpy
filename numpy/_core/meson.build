@@ -51,6 +51,7 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
+# 0x00000015 - 2.5.x
 C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the

@@ -1,3 +1,0 @@
-Deprecation of ``numpy.lib.user_array.container``
--------------------------------------------------
-The ``numpy.lib.user_array.container`` class is deprecated and will be removed in a future version.
