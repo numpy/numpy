@@ -2559,6 +2559,15 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 meta->base = NPY_FR_GENERIC;
                 meta->num = 1;
             }
+            /* If output is NaT, skip this warning. */
+            if(meta->base == NPY_FR_GENERIC) {
+                if (DEPRECATE(
+                            "Using 'generic' unit for NumPy timedelta is deprecated, "
+                            "and will raise an error in the future. Please use a "
+                            "specific units instead.") < 0) {
+                    return -1;
+                }
+            }
 
             return 0;
         }
@@ -2575,6 +2584,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (error_converting(*out)) {
             return -1;
         }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            if (DEPRECATE(
+                        "Using 'generic' unit for NumPy timedelta is deprecated, "
+                        "and will raise an error in the future. "
+                        "Please use a specific units instead.") < 0) {
+                return -1;
+            }
+        }
+
         return 0;
     }
     /* Timedelta scalar */
