@@ -927,7 +927,7 @@ foreach gen_mtargets : [
     'loops_arithm_fp.dispatch.h',
     src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
     [
-      X86_V3, X86_V2, 
+      X86_V3, X86_V2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
@@ -960,7 +960,7 @@ foreach gen_mtargets : [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
     [
-      X86_V4, X86_V3, 
+      X86_V4, X86_V3,
     ]
   ],
   [
@@ -1403,6 +1403,7 @@ python_sources = [
   '_type_aliases.pyi',
   '_ufunc_config.py',
   '_ufunc_config.pyi',
+  '_umath_tests.pyi',
   'arrayprint.py',
   'arrayprint.pyi',
   'cversions.py',
