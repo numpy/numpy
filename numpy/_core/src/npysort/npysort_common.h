@@ -47,6 +47,14 @@ extern "C" {
  */
 
 static inline void
+get_sort_data_from_context(PyArrayMethod_Context *context,
+                           npy_intp *elsize, PyArray_CompareFunc **cmp)
+{
+    *elsize = ((PyArray_Descr *)context->descriptors[0])->elsize;
+    *cmp = (PyArray_CompareFunc *)context->method->static_data;
+}
+
+static inline void
 get_sort_data_from_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
