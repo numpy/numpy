@@ -493,6 +493,7 @@ else:
         insert,
         interp,
         iterable,
+        ismonotonic,
         kaiser,
         median,
         meshgrid,
