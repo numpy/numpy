@@ -512,7 +512,7 @@ def test_latex_doc(self):
     fpath = self.tmpdir / "test_latex.f"
     with open(fpath, "w") as f:
         f.write(fsource)
-        
+
     cmd = [sys.executable, "-m", "numpy.f2py", "-c", str(fpath), "-m", "test_latex", "--latex-doc"]
     subprocess.check_call(cmd, cwd=self.tmpdir)
 
