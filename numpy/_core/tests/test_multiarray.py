@@ -9812,7 +9812,7 @@ class TestFormat:
     def test_general_format(self):
         a = np.array([np.pi])
         with pytest.raises(NotImplementedError):
-            '{:.4g}'.format(a)
+            f'{a:.4g}'
 
         # FIXME: When the format character is implemented, the following
         #        tests should succeed.
@@ -9820,19 +9820,19 @@ class TestFormat:
 
         # general format 'g' should behave the same as Python
         # ref: https://docs.python.org/3/library/string.html#format-specification-mini-language
-        assert_equal('{:.4g}'.format(a), '3.142')
-        assert_equal('{:.4g}'.format(10 * a), '31.42')
-        assert_equal('{:.4g}'.format(100 * a), '314.2')
-        assert_equal('{:.2g}'.format(1_000 * a), '3.1e+03')
-        assert_equal('{:.4g}'.format(1_000_000 * a), '3.142e+06')
-        assert_equal('{:.4e}'.format(1_000_000 * a), '3.1416e+06')
+        assert_equal(f'{a:.4g}', '3.142')
+        assert_equal(f'{10 * a:.4g}', '31.42')
+        assert_equal(f'{100 * a:.4g}', '314.2')
+        assert_equal(f'{1_000 * a:.2g}', '3.1e+03')
+        assert_equal(f'{1_000_000 * a:.4g}', '3.142e+06')
+        assert_equal(f'{1_000_000 * a:.4e}', '3.1416e+06')
 
         a = np.array([1.001])
         # Python trim trailing decimal points in general format
         # but we should not do that in order to be explicit when
         # using floats or integers as '1' should not be confused
         # with '1.', the later being a float.
-        assert_equal('{:.2g}'.format(a), '1.')
+        assert_equal(f'{a:.2g}', '1.')
 
     def test_1d_no_format(self):
         a = np.array([np.pi])

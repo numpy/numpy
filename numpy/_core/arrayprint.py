@@ -25,8 +25,8 @@ __docformat__ = 'restructuredtext'
 
 import functools
 import numbers
-import sys
 import re
+import sys
 
 try:
     from _thread import get_ident
