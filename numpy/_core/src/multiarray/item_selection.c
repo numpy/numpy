@@ -3179,6 +3179,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         }
         context.descriptors = loop_descrs;
         context.parameters = &sort_params;
+        context.method = sort_method;
 
         // Arrays are always contiguous for sorting
         npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
@@ -3290,6 +3291,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         }
         context.descriptors = loop_descrs;
         context.parameters = &sort_params;
+        context.method = argsort_method;
 
         // Arrays are always contiguous for sorting
         npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};

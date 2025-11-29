@@ -506,6 +506,18 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, void *varr)
  */
 
 NPY_NO_EXPORT int
+npy_quicksort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_context(context, &elsize, &cmp);
+
+    return npy_quicksort_impl(data[0], dimensions[0], context, elsize, cmp);
+}
+
+NPY_NO_EXPORT int
 npy_quicksort(void *start, npy_intp num, void *varr)
 {
     npy_intp elsize;
@@ -616,6 +628,19 @@ npy_quicksort_impl(void *start, npy_intp num, void *varr,
 
     free(vp);
     return 0;
+}
+
+NPY_NO_EXPORT int
+npy_aquicksort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_context(context, &elsize, &cmp);
+
+    return npy_aquicksort_impl(data[0], (npy_intp *)data[1],
+                               dimensions[0], context, elsize, cmp);
 }
 
 NPY_NO_EXPORT int

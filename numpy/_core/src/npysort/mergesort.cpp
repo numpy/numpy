@@ -381,6 +381,18 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
 }
 
 NPY_NO_EXPORT int
+npy_mergesort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_context(context, &elsize, &cmp);
+
+    return npy_mergesort_impl(data[0], dimensions[0], context, elsize, cmp);
+}
+
+NPY_NO_EXPORT int
 npy_mergesort(void *start, npy_intp num, void *varr)
 {
     void *arr = varr;
@@ -464,6 +476,19 @@ npy_amergesort0(npy_intp *pl, npy_intp *pr, char *v, npy_intp *pw,
             *pj = vi;
         }
     }
+}
+
+NPY_NO_EXPORT int
+npy_amergesort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata)
+{
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    get_sort_data_from_context(context, &elsize, &cmp);
+
+    return npy_amergesort_impl(data[0], (npy_intp *)data[1],
+                               dimensions[0], context, elsize, cmp);
 }
 
 NPY_NO_EXPORT int
