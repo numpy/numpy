@@ -24,9 +24,9 @@ from numpy._typing import (
     _ArrayLike,
     _DTypeLike,
     _FiniteNestedSequence,
+    _HasDType,
     _NestedSequence,
     _SupportsArray,
-    _SupportsDType,
 )
 
 __all__ = [  # noqa: RUF022
@@ -235,7 +235,7 @@ class IndexExpression(Generic[_BoolT_co]):
     def __getitem__(self: IndexExpression[L[False]], item: _T) -> _T: ...
 
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DTypeT]]) -> tuple[np.ndarray[_AnyShape, _DTypeT], ...]: ...
+def ix_(*args: _FiniteNestedSequence[_HasDType[_DTypeT]]) -> tuple[np.ndarray[_AnyShape, _DTypeT], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[np.str_], ...]: ...
 @overload
