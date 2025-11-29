@@ -53,7 +53,7 @@ _TupleT = TypeVar("_TupleT", bound=tuple[Any, ...])
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 _DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, default=Any, covariant=True)
 _BoolT_co = TypeVar("_BoolT_co", bound=bool, default=bool, covariant=True)
 
 _AxisT_co = TypeVar("_AxisT_co", bound=int, default=L[0], covariant=True)
