@@ -508,15 +508,15 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
         assert "Documentation is saved to file" not in out
 
 def test_latex_doc_gh30268(tmp_path):
-    
+
     if not util.has_fortran_compiler():
         pytest.skip("No Fortran compiler found")
-        
+
     fsource = textwrap.dedent("""
         subroutine foo
         end
     """)
-    
+
     fpath = tmp_path / "test_latex.f90"
     with open(fpath, "w") as f:
         f.write(fsource)
