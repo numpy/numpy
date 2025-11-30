@@ -692,12 +692,9 @@ stringdtype_wrap_sort_loop(
 {
     PyArray_StringDTypeObject *sdescr =
             (PyArray_StringDTypeObject *)context->descriptors[0];
-    PyArrayMethod_StridedLoop *sort_loop =
-        ((PyArrayMethod_SortParameters *)context->parameters)->flags
-        == NPY_SORT_STABLE ? &npy_mergesort_loop : &npy_quicksort_loop;
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
-    int ret = sort_loop(context, data, dimensions, strides, transferdata);
+    int ret = npy_default_sort_loop(context, data, dimensions, strides, transferdata);
     NpyString_release_allocator(allocator);
     return ret;
 }
@@ -735,12 +732,9 @@ stringdtype_wrap_argsort_loop(
 {
     PyArray_StringDTypeObject *sdescr =
             (PyArray_StringDTypeObject *)context->descriptors[0];
-    PyArrayMethod_StridedLoop *argsort_loop =
-        ((PyArrayMethod_SortParameters *)context->parameters)
-        ->flags == NPY_SORT_STABLE ? &npy_amergesort_loop : &npy_aquicksort_loop;
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
-    int ret = argsort_loop(context, data, dimensions, strides, transferdata);
+    int ret = npy_default_argsort_loop(context, data, dimensions, strides, transferdata);
     NpyString_release_allocator(allocator);
     return ret;
 }
