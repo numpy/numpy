@@ -58,10 +58,6 @@ empty_array_like(PyArrayObject *arr, npy_intp length)
                 NULL                    // obj
             )
         );
-    if (res_obj == NULL) {
-        Py_DECREF(descr);
-        return NULL;
-    }
     return res_obj;
 }
 
