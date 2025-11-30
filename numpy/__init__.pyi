@@ -3678,6 +3678,29 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def __array__(self, dtype: _DTypeT, /) -> ndarray[tuple[()], _DTypeT]: ...
 
+    #
+    @overload
+    def __getitem__(self, key: tuple[()], /) -> Self: ...
+    @overload
+    def __getitem__(
+        self, key: EllipsisType | tuple[EllipsisType], /
+    ) -> ndarray[tuple[()], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: None | tuple[None], /
+    ) -> ndarray[tuple[int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None], /
+    ) -> ndarray[tuple[int, int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None, None], /
+    ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
+    @overload  # Limited support for (None,) * N > 3
+    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
+
+    #
     @overload
     def __array_wrap__(
         self,
@@ -5708,10 +5731,33 @@ class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
     def __new__(cls, length_or_data: object, /, dtype: _DTypeLikeVoid) -> Self: ...
 
+    #
+    @overload
+    def __getitem__(self, key: tuple[()], /) -> Self: ...
+    @overload
+    def __getitem__(
+        self, key: EllipsisType | tuple[EllipsisType], /
+    ) -> ndarray[tuple[()], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: None | tuple[None], /
+    ) -> ndarray[tuple[int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None], /
+    ) -> ndarray[tuple[int, int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None, None], /
+    ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
+    @overload  # Limited support for (None,) * N > 3
+    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
     @overload
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
     @overload
     def __getitem__(self, key: list[str], /) -> void: ...
+
+    #
     def __setitem__(self, key: str | list[str] | SupportsIndex, value: ArrayLike, /) -> None: ...
 
     def setfield(self, val: ArrayLike, dtype: DTypeLike, offset: int = ...) -> None: ...
