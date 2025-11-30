@@ -3698,9 +3698,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self, key: tuple[None, None, None], /
     ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
     @overload  # Limited support for (None,) * N > 3
-    def __getitem__(
-        self, key: tuple[None, ...], /
-    ) -> ndarray[tuple[int, ...], dtype[Self]]: ...
+    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
 
     #
     @overload
