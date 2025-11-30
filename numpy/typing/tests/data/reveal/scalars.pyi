@@ -44,6 +44,16 @@ assert_type(c16.imag, np.float64)
 
 assert_type(np.str_("foo"), np.str_)
 
+# Indexing
+assert_type(b[None], np.ndarray[tuple[_1], np.dtype[np.bool]])
+assert_type(u8[None], np.ndarray[tuple[_1], np.dtype[np.uint64]])
+assert_type(i8[None], np.ndarray[tuple[_1], np.dtype[np.int64]])
+assert_type(f8[None], np.ndarray[tuple[_1], np.dtype[np.float64]])
+assert_type(c16[None], np.ndarray[tuple[_1], np.dtype[np.complex128]])
+assert_type(U[None], np.ndarray[tuple[_1], np.dtype[np.str_]])
+assert_type(S[None], np.ndarray[tuple[_1], np.dtype[np.bytes_]])
+assert_type(V[None], np.ndarray[tuple[_1], np.dtype[np.void]])
+
 assert_type(V[0], Any)
 assert_type(V["field1"], Any)
 assert_type(V[["field1", "field2"]], np.void)

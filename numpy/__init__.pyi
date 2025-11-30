@@ -3678,6 +3678,11 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def __array__(self, dtype: _DTypeT, /) -> ndarray[tuple[()], _DTypeT]: ...
 
+    #
+    @overload
+    def __getitem__(self, key: None, /) -> ndarray[tuple[L[1]], dtype[Self]]: ...
+
+    #
     @overload
     def __array_wrap__(
         self,
