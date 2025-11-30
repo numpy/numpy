@@ -220,9 +220,15 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                 many digits for all elements.
     exp_format : bool, optional
         Prints in scientific notation (1.1e+01).
-    trim : str, optional
+
+        .. versionadded:: 2.5
+
+    trim : one of 'k', '.', '0', '-', optional
         Controls post-processing trimming of trailing digits.
-        See Dragon4 arguments at ``format_float_scientific``.
+        See `numpy.format_float_scientific`.
+
+        .. versionadded:: 2.5
+
     legacy : string or `False`, optional
         If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
@@ -753,6 +759,17 @@ def array2string(a, max_line_width=None, precision=None,
           but if every element in the array can be uniquely
           represented with an equal number of fewer digits, use that
           many digits for all elements.
+    exp_format : bool, optional
+        Prints in scientific notation (1.1e+01).
+
+        .. versionadded:: 2.5
+
+    trim : one of 'k', '.', '0', '-', optional
+        Controls post-processing trimming of trailing digits.
+        See `numpy.format_float_scientific`.
+
+        .. versionadded:: 2.5
+
     legacy : string or `False`, optional
         If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
