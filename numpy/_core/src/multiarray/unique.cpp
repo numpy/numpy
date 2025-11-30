@@ -370,9 +370,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         std::invoke([&]() -> const set_type {
             PyArray_StringDTypeObject *descr =
                 reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
-            np::raii::ScopedINCREF incref_descr(reinterpret_cast<PyObject *>(descr));
-            np::raii::SaveThreadState save_thread_state{};
             np::raii::NpyStringAcquireAllocator alloc(descr);
+            np::raii::SaveThreadState save_thread_state{};
 
             set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
@@ -407,9 +406,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(res_obj));
 
     {
-        np::raii::ScopedINCREF incref_res_descr(reinterpret_cast<PyObject *>(res_descr));
-        np::raii::SaveThreadState save_thread_state{};
         np::raii::NpyStringAcquireAllocator alloc(res_descr);
+        np::raii::SaveThreadState save_thread_state{};
 
         char *odata = PyArray_BYTES(res_obj);
         npy_intp ostride = PyArray_STRIDES(res_obj)[0];

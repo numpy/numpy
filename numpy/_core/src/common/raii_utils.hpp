@@ -25,46 +25,6 @@ NpyString_release_allocator(npy_string_allocator *allocator);
 namespace np { namespace raii {
 
 //
-// RAII for holding a Python reference.
-// This is a wrapper for Py_INCREF/Py_DECREF.
-//
-// In C++ code, use this at the beginning of a scope, e.g.
-//
-//     {
-//         np::raii::ScopedINCREF(obj);
-//         [code that requires holding a reference to obj]
-//     }
-//
-// instead of
-//
-//     Py_INCREF(obj);
-//     [code that requires holding a reference to obj]
-//     Py_DECREF(obj);
-//
-// This ensures that Py_DECREF(obj) is called, even if the wrapped
-// code throws an exception or executes a return or a goto.
-//
-class ScopedINCREF
-{
-    PyObject* _obj;
-
-public:
-
-    ScopedINCREF(PyObject *obj) : _obj(obj) {
-        Py_INCREF(_obj);
-    }
-
-    ~ScopedINCREF() {
-        Py_DECREF(_obj);
-    }
-
-    ScopedINCREF(const ScopedINCREF&) = delete;
-    ScopedINCREF(ScopedINCREF&& other) = delete;
-    ScopedINCREF& operator=(const ScopedINCREF&) = delete;
-    ScopedINCREF& operator=(ScopedINCREF&&) = delete;
-};
-
-//
 // RAII for PyGILState_* API.
 //
 // In C++ code, use this at the beginning of a scope, e.g.
@@ -166,9 +126,11 @@ public:
 //
 // Instead of
 //
+//   Py_INCREF(descr);
 //   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 //   [code that uses allocator]
 //   NpyString_release_allocator(allocator);
+//   Py_DECREF(descr);
 //
 // use
 //
@@ -179,16 +141,19 @@ public:
 //
 class NpyStringAcquireAllocator
 {
+    PyArray_StringDTypeObject *_descr;
     npy_string_allocator *_allocator;
 
 public:
 
-    NpyStringAcquireAllocator(PyArray_StringDTypeObject *descr) {
-        _allocator = NpyString_acquire_allocator(descr);
+    NpyStringAcquireAllocator(PyArray_StringDTypeObject *descr) : _descr(descr) {
+        Py_INCREF(_descr);
+        _allocator = NpyString_acquire_allocator(_descr);
     }
 
     ~NpyStringAcquireAllocator() {
         NpyString_release_allocator(_allocator);
+        Py_DECREF(_descr);
     }
 
     NpyStringAcquireAllocator(const NpyStringAcquireAllocator&) = delete;
