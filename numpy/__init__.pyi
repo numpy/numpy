@@ -3678,6 +3678,31 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def __array__(self, dtype: _DTypeT, /) -> ndarray[tuple[()], _DTypeT]: ...
 
+    #
+    @overload
+    def __getitem__(self, key: tuple[()], /) -> Self: ...
+    @overload
+    def __getitem__(
+        self, key: EllipsisType | tuple[EllipsisType], /
+    ) -> ndarray[tuple[()], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: None | tuple[None], /
+    ) -> ndarray[tuple[int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None], /
+    ) -> ndarray[tuple[int, int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None, None], /
+    ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
+    @overload  # Limited support for (None,) * N > 3
+    def __getitem__(
+        self, key: tuple[None, ...], /
+    ) -> ndarray[tuple[int, ...], dtype[Self]]: ...
+
+    #
     @overload
     def __array_wrap__(
         self,
