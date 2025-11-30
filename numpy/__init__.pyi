@@ -5733,7 +5733,8 @@ class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
     def __new__(cls, length_or_data: object, /, dtype: _DTypeLikeVoid) -> Self: ...
 
-    @overload
+    #
+    @overload  # type: ignore[override]
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
     @overload
     def __getitem__(self, key: list[str], /) -> void: ...
