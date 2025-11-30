@@ -439,8 +439,8 @@ class _Test_CCompilerOpt:
             x86_gcc="-msse -msse2", x86_icc="-msse -msse2",
             x86_iccw="/arch:SSE2",
             x86_msvc="/arch:SSE2" if self.march() == "x86" else "",
-            ppc64_gcc= "-mcpu=power8",
-            ppc64_clang="-mcpu=power8",
+            ppc64_gcc= "-mcpu=power8 -mvsx",
+            ppc64_clang="-mcpu=power8 -mvsx",
             armhf_gcc="-mfpu=neon-fp16 -mfp16-format=ieee",
             aarch64="",
             s390x="-mzvector -march=arch12"
