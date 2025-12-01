@@ -70,7 +70,7 @@ Reviewer checklist
 
 For maintainers
 ---------------
-  
+
 - Make sure all automated CI tests pass before merging a PR, and that the
   :ref:`documentation builds <building-docs>` without any errors.
 - In case of merge conflicts, ask the PR submitter to :ref:`rebase on main
