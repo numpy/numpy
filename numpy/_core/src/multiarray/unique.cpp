@@ -224,7 +224,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
     // to manage resources.
     using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
     const set_type hashset =
-        std::invoke([&]() -> const set_type {
+        [&]() -> const set_type {
             np::raii::SaveThreadState save_thread_state{};
 
             // number of elements in the input array
@@ -236,7 +236,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
                 hashset.insert(reinterpret_cast<T *>(idata));
             }
             return hashset;
-        });
+        }();
 
     npy_intp length = hashset.size();
 
@@ -284,7 +284,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     // to manage resources.
     using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
     const set_type hashset =
-        std::invoke([&]() -> const set_type {
+        [&]() -> const set_type {
             np::raii::SaveThreadState save_thread_state{};
 
             // number of elements in the input array
@@ -296,7 +296,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
                 hashset.insert(reinterpret_cast<T *>(idata));
             }
             return hashset;
-        });
+        }();
 
     npy_intp length = hashset.size();
 
@@ -363,7 +363,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     using set_type = std::unordered_set<npy_static_string *,
                                         decltype(hash), decltype(equal)>;
     const set_type hashset =
-        std::invoke([&]() -> const set_type {
+        [&]() -> const set_type {
             PyArray_StringDTypeObject *descr =
                 reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
             np::raii::NpyStringAcquireAllocator alloc(descr);
@@ -389,7 +389,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
                 hashset.insert(&unpacked_strings[i]);
             }
             return hashset;
-        });
+        }();
 
     npy_intp length = hashset.size();
 
