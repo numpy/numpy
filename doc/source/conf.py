@@ -145,23 +145,7 @@ today_fmt = '%B %d, %Y'
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "autolink"
 
-# List of directories, relative to source directories, that shouldn't be searched
-# for source files.
-exclude_dirs = []
-
-exclude_patterns = []
-suppress_warnings = []
 nitpick_ignore = []
-
-if sys.version_info[:2] >= (3, 12):
-    suppress_warnings += [
-        'toc.excluded',  # Suppress warnings about excluded toctree entries
-    ]
-    nitpicky = True
-    nitpick_ignore += [
-        # The first ignore is not captured without nitpicky = True.
-        ('py:class', 'Extension'),
-    ]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False

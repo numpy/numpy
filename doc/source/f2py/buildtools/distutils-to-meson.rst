@@ -5,8 +5,7 @@
 ------------------------
 
 As per the timeline laid out in :ref:`distutils-status-migration`,
-``distutils`` has ceased to be the default build backend for ``f2py``. This page
-collects common workflows in both formats.
+``distutils`` has been removed. This page collects common workflows.
 
 .. note::
 
@@ -43,8 +42,6 @@ This will not win any awards, but can be a reasonable starting point.
 
 1.2.1 Basic Usage
 ^^^^^^^^^^^^^^^^^
-
-This is unchanged:
 
 .. code:: bash
 
