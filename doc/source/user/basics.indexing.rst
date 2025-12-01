@@ -162,8 +162,8 @@ concepts to remember include:
 
 - Assume *n* is the number of elements in the dimension being
   sliced. Then, if *i* is not given it defaults to 0 for *k > 0* and
-  *n - 1* for *k < 0* . If *j* is not given it defaults to *n* for *k > 0*
-  and *-n-1* for *k < 0* . If *k* is not given it defaults to 1. Note that
+  *n - 1* for *k < 0*. If *j* is not given it defaults to *n* for *k > 0*
+  and *-n-1* for *k < 0*. If *k* is not given it defaults to 1. Note that
   ``::`` is the same as ``:`` and means select all indices along this
   axis.
   From the above example::
@@ -215,7 +215,7 @@ concepts to remember include:
   and used in the ``x[obj]`` notation. Slice objects can be used in
   the construction in place of the ``[start:stop:step]``
   notation. For example, ``x[1:10:5, ::-1]`` can also be implemented
-  as ``obj = (slice(1, 10, 5), slice(None, None, -1)); x[obj]`` . This
+  as ``obj = (slice(1, 10, 5), slice(None, None, -1)); x[obj]``. This
   can be useful for constructing generic code that works on arrays
   of arbitrary dimensions. See :ref:`dealing-with-variable-indices`
   for more information.

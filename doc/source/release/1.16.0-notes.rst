@@ -489,7 +489,7 @@ changed now that ``matmul`` is a ufunc and can be overridden using
 
 The scaling of the covariance matrix in ``np.polyfit`` is different
 -------------------------------------------------------------------
-So far, ``np.polyfit`` used a non-standard factor in the scaling of the the
+So far, ``np.polyfit`` used a non-standard factor in the scaling of the
 covariance matrix. Namely, rather than using the standard ``chisq/(M-N)``, it
 scaled it with ``chisq/(M-N-2)`` where M is the number of data points and N is the
 number of parameters.  This scaling is inconsistent with other fitting programs
