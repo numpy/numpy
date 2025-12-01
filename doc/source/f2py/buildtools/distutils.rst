@@ -1,7 +1,7 @@
 .. _f2py-distutils:
 
 =============================
-Using via `numpy.distutils`
+Using via ``numpy.distutils``
 =============================
 
 .. legacy::

@@ -123,7 +123,6 @@ class PytestTester:
         True
 
         """
-        import warnings
 
         import pytest
 

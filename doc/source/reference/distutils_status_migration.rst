@@ -3,7 +3,7 @@
 Status of ``numpy.distutils`` and migration advice
 ==================================================
 
-`numpy.distutils` has been removed in NumPy ``1.25.0``. 
+``numpy.distutils`` was removed in NumPy ``2.5.0``. 
 
 Migration advice
 ----------------
@@ -18,7 +18,7 @@ using a well-designed, modern and reliable build system, we recommend:
 
 If you have modest needs (only simple Cython/C extensions; no need for Fortran,
 BLAS/LAPACK, nested ``setup.py`` files, or other features of
-``numpy.distutils``) and have been happy with ``numpy.distutils`` so far, you
+``numpy.distutils``) and have been happy with ``numpy.distutils``,  you
 can also consider switching to ``setuptools``. Note that most functionality of
 ``numpy.distutils`` is unlikely to be ported to ``setuptools``.
 
