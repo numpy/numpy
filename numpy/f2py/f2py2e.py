@@ -655,7 +655,8 @@ def run_compile():
     reg_f77_f90_flags = re.compile(r'--f(77|90)flags=')
     reg_distutils_flags = re.compile(r'--((f(77|90)exec|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if reg_f77_f90_flags.match(_m)]
-    sys.argv = [_m for _m in sys.argv if _m not in (fc_flags + reg_distutils_flags)]
+    distutils_flags = [_m for _m in sys.argv[1:] if reg_distutils_flags.match(_m)]
+    sys.argv = [_m for _m in sys.argv if _m not in (fc_flags + distutils_flags)]
 
     del_list = []
     for s in flib_flags:
