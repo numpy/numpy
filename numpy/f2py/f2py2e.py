@@ -36,7 +36,6 @@ numpy_version = __version__.version
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
-MESON_ONLY_VER = (sys.version_info >= (3, 12))
 
 __usage__ =\
 f"""Usage:
@@ -583,7 +582,7 @@ def preparse_sysargv():
     sys.argv = [sys.argv[0]] + remaining_argv
 
     backend_key = args.backend
-    if MESON_ONLY_VER and backend_key == 'distutils':
+    if backend_key == 'distutils':
         outmess("Cannot use distutils backend with Python>=3.12,"
                 " using meson backend instead.\n")
         backend_key = "meson"
@@ -656,36 +655,16 @@ def run_compile():
     reg_f77_f90_flags = re.compile(r'--f(77|90)flags=')
     reg_distutils_flags = re.compile(r'--((f(77|90)exec|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if reg_f77_f90_flags.match(_m)]
-    distutils_flags = [_m for _m in sys.argv[1:] if reg_distutils_flags.match(_m)]
-    if not (MESON_ONLY_VER or backend_key == 'meson'):
-        fc_flags.extend(distutils_flags)
     sys.argv = [_m for _m in sys.argv if _m not in (fc_flags + distutils_flags)]
 
     del_list = []
     for s in flib_flags:
         v = '--fcompiler='
         if s[:len(v)] == v:
-            if MESON_ONLY_VER or backend_key == 'meson':
-                outmess(
-                    "--fcompiler cannot be used with meson,"
-                    "set compiler with the FC environment variable\n"
-                    )
-            else:
-                from numpy.distutils import fcompiler
-                fcompiler.load_all_fcompiler_classes()
-                allowed_keys = list(fcompiler.fcompiler_class.keys())
-                nv = ov = s[len(v):].lower()
-                if ov not in allowed_keys:
-                    vmap = {}  # XXX
-                    try:
-                        nv = vmap[ov]
-                    except KeyError:
-                        if ov not in vmap.values():
-                            print(f'Unknown vendor: "{s[len(v):]}"')
-                    nv = ov
-                i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv  # noqa: B909
-                continue
+            outmess(
+                "--fcompiler cannot be used with meson,"
+                "set compiler with the FC environment variable\n"
+                )
     for s in del_list:
         i = flib_flags.index(s)
         del flib_flags[i]
@@ -775,11 +754,7 @@ def validate_modulename(pyf_files, modulename='untitled'):
 def main():
     if '--help-link' in sys.argv[1:]:
         sys.argv.remove('--help-link')
-        if MESON_ONLY_VER:
-            outmess("Use --dep for meson builds\n")
-        else:
-            from numpy.distutils.system_info import show_all
-            show_all()
+        outmess("Use --dep for meson builds\n")
         return
 
     if '-c' in sys.argv[1:]:

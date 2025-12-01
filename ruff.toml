@@ -1,6 +1,5 @@
 extend-exclude = [
     "numpy/__config__.py",
-    "numpy/distutils",
     "numpy/typing/_char_codes.py",
     "spin/cmds.py",
     # Submodules.

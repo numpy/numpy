@@ -217,8 +217,6 @@ from numpy import (
     matrixlib as matrixlib,
     version as version,
 )
-if sys.version_info < (3, 12):
-    from numpy import distutils as distutils
 
 from numpy._core.records import (
     record,

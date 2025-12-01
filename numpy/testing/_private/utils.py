@@ -6,6 +6,7 @@ import concurrent.futures
 import contextlib
 import gc
 import importlib.metadata
+import importlib.util
 import operator
 import os
 import pathlib
@@ -1441,12 +1442,13 @@ def rundocs(filename=None, raise_on_error=True):
     """
     import doctest
 
-    from numpy.distutils.misc_util import exec_mod_from_location
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
     name = os.path.splitext(os.path.basename(filename))[0]
-    m = exec_mod_from_location(name, filename)
+    spec = importlib.util.spec_from_file_location(name, filename)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
 
     tests = doctest.DocTestFinder().find(m)
     runner = doctest.DocTestRunner(verbose=False)

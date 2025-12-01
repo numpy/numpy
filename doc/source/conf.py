@@ -154,21 +154,13 @@ suppress_warnings = []
 nitpick_ignore = []
 
 if sys.version_info[:2] >= (3, 12):
-    exclude_patterns += [
-        "reference/distutils.rst",
-        "reference/distutils/misc_util.rst",
-    ]
     suppress_warnings += [
         'toc.excluded',  # Suppress warnings about excluded toctree entries
     ]
     nitpicky = True
     nitpick_ignore += [
-        ('ref', 'numpy-distutils-refguide'),
-        # The first ignore is not catpured without nitpicky = True.
-        # These three ignores are required once nitpicky = True is set.
-        ('py:mod', 'numpy.distutils'),
+        # The first ignore is not captured without nitpicky = True.
         ('py:class', 'Extension'),
-        ('py:class', 'numpy.distutils.misc_util.Configuration'),
     ]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.

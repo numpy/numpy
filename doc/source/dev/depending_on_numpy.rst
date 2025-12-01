@@ -142,8 +142,7 @@ recommend all packages depending on NumPy to follow the recommendations in NEP
 29.
 
 For *run-time dependencies*, specify version bounds using
-``install_requires`` in ``setup.py`` (assuming you use ``numpy.distutils`` or
-``setuptools`` to build).
+``install_requires`` in ``setup.py`` (assuming you use ``setuptools`` to build).
 
 Most libraries that rely on NumPy will not need to set an upper
 version bound: NumPy is careful to preserve backward-compatibility.

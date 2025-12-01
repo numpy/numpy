@@ -23,8 +23,6 @@ FILES = [
     ROOT / "random" / "__init__.pyi",
     ROOT / "testing" / "__init__.pyi",
 ]
-if sys.version_info < (3, 12):
-    FILES += [ROOT / "distutils" / "__init__.pyi"]
 
 
 @pytest.mark.thread_unsafe(
