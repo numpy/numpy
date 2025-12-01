@@ -2,6 +2,7 @@
 import os
 import sys
 import unittest
+
 from distutils.util import get_platform
 
 import numpy as np

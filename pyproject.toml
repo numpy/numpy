@@ -13,7 +13,7 @@ authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
     {name = "NumPy Developers", email="numpy-discussion@python.org"},
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 readme = "README.md"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
