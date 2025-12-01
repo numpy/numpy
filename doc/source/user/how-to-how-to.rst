@@ -82,7 +82,7 @@ Why write how-tos when there's Stack Overflow, Reddit, Gitter...?
 - We have authoritative answers.
 - How-tos make the site less forbidding to non-experts.
 - How-tos bring people into the site and help them discover other information
-  that's here .
+  that's here.
 - Creating how-tos helps us see NumPy usability through new eyes.
 
 ******************************************************************************

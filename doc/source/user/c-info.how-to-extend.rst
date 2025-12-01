@@ -20,7 +20,7 @@ Python, it is also designed to be general-purpose and satisfy a wide-
 variety of computational needs. As a result, if absolute speed is
 essential, there is no replacement for a well-crafted, compiled loop
 specific to your application and hardware. This is one of the reasons
-that numpy includes f2py so that an easy-to-use mechanisms for linking
+that numpy includes f2py so that an easy-to-use mechanism for linking
 (simple) C/C++ and (arbitrary) Fortran code directly into Python are
 available. You are encouraged to use and improve this mechanism. The
 purpose of this section is not to document this tool but to document
