@@ -608,7 +608,7 @@ breathe_default_project = "numpy"
 breathe_default_members = ("members", "undoc-members", "protected-members")
 
 # See https://github.com/breathe-doc/breathe/issues/696
-nitpick_ignore += [
+nitpick_ignore = [
     ('c:identifier', 'FILE'),
     ('c:identifier', 'size_t'),
     ('c:identifier', 'PyHeapTypeObject'),
