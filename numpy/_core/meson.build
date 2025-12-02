@@ -937,13 +937,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_arithmetic.dispatch.h',
-    src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
+    'src/umath/loops_arithmetic.dispatch.cpp',
     [
       X86_V4, X86_V3, X86_V2,
       NEON,
       VSX4, VSX2,
       VX,
       LSX,
+      RVV,
     ]
   ],
   [
