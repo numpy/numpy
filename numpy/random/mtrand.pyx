@@ -251,7 +251,7 @@ cdef class RandomState:
         """
         if not isinstance(self._bit_generator, _MT19937):
             raise TypeError('can only re-seed a MT19937 BitGenerator')
-        with cython.critical_section(self):
+        with self.lock:
             self._bit_generator._legacy_seeding(seed)
             self._reset_gauss()
 
@@ -385,7 +385,7 @@ cdef class RandomState:
         cdef double gauss = st.get('gauss', 0.0)
         cdef int has_gauss = st.get('has_gauss', 0)
 
-        with cython.critical_section(self):
+        with self.lock:
             self._aug_state.gauss = gauss
             self._aug_state.has_gauss = has_gauss
             self._bit_generator.state = st
