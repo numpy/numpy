@@ -368,7 +368,7 @@ jobs:
     - name: Check for unreachable code paths in Python modules
       run: |
         # Need the explicit `bash -c` here because `grep` returns exit code 1 for no matches
-        bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/,vendored-meson/ | grep 'unreachable'"
+        bash -c "! vulture . --min-confidence 100 --exclude doc/,vendored-meson/ | grep 'unreachable'"
     - name: Check usage of install_tag
       run: |
         rm -rf build-install

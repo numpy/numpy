@@ -82,8 +82,8 @@ Example:
 __all__ = ['process_str', 'process_file']
 
 import os
-import sys
 import re
+import sys
 
 # names for replacement that are already global.
 global_names = {}
@@ -106,10 +106,10 @@ def parse_structure(astr, level):
     at zero. Returns an empty list if no loops found.
 
     """
-    if level == 0 :
+    if level == 0:
         loopbeg = "/**begin repeat"
         loopend = "/**end repeat**/"
-    else :
+    else:
         loopbeg = "/**begin repeat%d" % level
         loopend = "/**end repeat%d**/" % level
 
@@ -124,9 +124,9 @@ def parse_structure(astr, level):
         start2 = astr.find("\n", start2)
         fini1 = astr.find(loopend, start2)
         fini2 = astr.find("\n", fini1)
-        line += astr.count("\n", ind, start2+1)
-        spanlist.append((start, start2+1, fini1, fini2+1, line))
-        line += astr.count("\n", start2+1, fini2)
+        line += astr.count("\n", ind, start2 + 1)
+        spanlist.append((start, start2 + 1, fini1, fini2 + 1, line))
+        line += astr.count("\n", start2 + 1, fini2)
         ind = fini2
     spanlist.sort()
     return spanlist
@@ -135,10 +135,13 @@ def parse_structure(astr, level):
 def paren_repl(obj):
     torep = obj.group(1)
     numrep = obj.group(2)
-    return ','.join([torep]*int(numrep))
+    return ','.join([torep] * int(numrep))
+
 
 parenrep = re.compile(r"\(([^)]*)\)\*(\d+)")
 plainrep = re.compile(r"([^*]+)\*(\d+)")
+
+
 def parse_values(astr):
     # replaces all occurrences of '(a,b,c)*4' in astr
     # with 'a,b,c,a,b,c,a,b,c,a,b,c'. Empty braces generate
@@ -155,7 +158,7 @@ stripast = re.compile(r"\n\s*\*?")
 named_re = re.compile(r"#\s*(\w*)\s*=([^#]*)#")
 exclude_vars_re = re.compile(r"(\w*)=(\w*)")
 exclude_re = re.compile(":exclude:")
-def parse_loop_header(loophead) :
+def parse_loop_header(loophead):
     """Find all named replacements in the header
 
     Returns a list of dictionaries, one for each loop iteration,
@@ -179,13 +182,12 @@ def parse_loop_header(loophead) :
         name = rep[0]
         vals = parse_values(rep[1])
         size = len(vals)
-        if nsub is None :
+        if nsub is None:
             nsub = size
-        elif nsub != size :
+        elif nsub != size:
             msg = "Mismatch in number of values, %d != %d\n%s = %s"
             raise ValueError(msg % (nsub, size, name, vals))
         names.append((name, vals))
-
 
     # Find any exclude variables
     excludes = []
@@ -200,30 +202,33 @@ def parse_loop_header(loophead) :
 
     # generate list of dictionaries, one for each template iteration
     dlist = []
-    if nsub is None :
+    if nsub is None:
         raise ValueError("No substitution variables found")
     for i in range(nsub):
         tmp = {name: vals[i] for name, vals in names}
         dlist.append(tmp)
     return dlist
 
+
 replace_re = re.compile(r"@(\w+)@")
-def parse_string(astr, env, level, line) :
+
+
+def parse_string(astr, env, level, line):
     lineno = "#line %d\n" % line
 
     # local function for string replacement, uses env
     def replace(match):
         name = match.group(1)
-        try :
+        try:
             val = env[name]
         except KeyError:
-            msg = 'line %d: no definition of key "%s"'%(line, name)
+            msg = f'line {line}: no definition of key "{name}"'
             raise ValueError(msg) from None
         return val
 
     code = [lineno]
     struct = parse_structure(astr, level)
-    if struct :
+    if struct:
         # recurse over inner loops
         oldend = 0
         newlevel = level + 1
@@ -234,18 +239,18 @@ def parse_string(astr, env, level, line) :
             oldend = sub[3]
             newline = line + sub[4]
             code.append(replace_re.sub(replace, pref))
-            try :
+            try:
                 envlist = parse_loop_header(head)
             except ValueError as e:
                 msg = "line %d: %s" % (newline, e)
                 raise ValueError(msg)
-            for newenv in envlist :
+            for newenv in envlist:
                 newenv.update(env)
                 newcode = parse_string(text, newenv, newlevel, newline)
                 code.extend(newcode)
         suff = astr[oldend:]
         code.append(replace_re.sub(replace, suff))
-    else :
+    else:
         # replace keys
         code.append(replace_re.sub(replace, astr))
     code.append('\n')
@@ -324,6 +329,7 @@ def main():
         raise ValueError("In %s loop at %s" % (file, e)) from None
 
     outfile.write(writestr)
+
 
 if __name__ == "__main__":
     main()
