@@ -1267,8 +1267,6 @@ def test_scalar_void_float_str():
     assert str(scalar) == "(1.0, 2.0)"
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
-@pytest.mark.skipif(sys.version_info < (3, 11),
-                    reason="asyncio.barrier was added in Python 3.11")
 def test_printoptions_asyncio_safe():
     asyncio = pytest.importorskip("asyncio")
 
