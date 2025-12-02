@@ -58,8 +58,8 @@ from .umath import absolute, isfinite, isinf, isnat
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
-                       sign=None, formatter=None, floatmode=None,
-                       exp_format=None, trim=None, legacy=None, override_repr=None):
+                       sign=None, formatter=None, floatmode=None, exp_format=None,
+                       legacy=None, override_repr=None):
     """
     Make a dictionary out of the non-None arguments, plus conversion of
     *legacy* and sanity checks.
@@ -121,9 +121,6 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if exp_format is not None and type(exp_format) is not bool:
         raise TypeError("exp_format must be a boolean")
 
-    if trim is not None and trim not in "k.0-":
-        raise ValueError("trim option must be one of 'k', '.', '0' or '-'")
-
     return options
 
 
@@ -131,7 +128,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None,
                      infstr=None, formatter=None, sign=None, floatmode=None,
-                     *, exp_format=None, trim=None, legacy=None, override_repr=None):
+                     *, exp_format=None, legacy=None, override_repr=None):
     """
     Set printing options.
 
@@ -220,12 +217,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                 many digits for all elements.
     exp_format : bool, optional
         Prints in scientific notation (1.1e+01).
-
-        .. versionadded:: 2.5
-
-    trim : one of 'k', '.', '0', '-', optional
-        Controls post-processing trimming of trailing digits.
-        See `numpy.format_float_scientific`.
 
         .. versionadded:: 2.5
 
@@ -325,17 +316,17 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     """
     _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
                       nanstr, infstr, formatter, sign, floatmode,
-                      exp_format=exp_format, trim=trim,
+                      exp_format=exp_format,
                       legacy=legacy, override_repr=override_repr)
 
 
 def _set_printoptions(precision=None, threshold=None, edgeitems=None,
                       linewidth=None, suppress=None, nanstr=None,
                       infstr=None, formatter=None, sign=None, floatmode=None,
-                      *, exp_format=None, trim=None, legacy=None, override_repr=None):
+                      *, exp_format=None, legacy=None, override_repr=None):
     new_opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                                  suppress, nanstr, infstr, sign, formatter,
-                                 floatmode, exp_format, trim, legacy)
+                                 floatmode, exp_format, legacy)
     # formatter and override_repr are always reset
     new_opt['formatter'] = formatter
     new_opt['override_repr'] = override_repr
@@ -487,7 +478,7 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, exp_format=None, trim=None, **kwargs):
+                    formatter, exp_format=None, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # this will avoid overwrite the default format args inside each data type
@@ -495,8 +486,6 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
     format_args = {}
     if exp_format is not None:
         format_args["exp_format"] = exp_format
-    if trim is not None:
-        format_args["trim"] = trim
 
     # wrapped in lambdas to avoid taking a code path
     # with the wrong type of data
@@ -653,7 +642,7 @@ def _array2string_dispatcher(
         suppress_small=None, separator=None, prefix=None,
         *, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
-        exp_format=None, trim=None, legacy=None):
+        exp_format=None, legacy=None):
     return (a,)
 
 
@@ -662,7 +651,7 @@ def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  *, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
-                 exp_format=None, trim=None, legacy=None):
+                 exp_format=None, legacy=None):
     """
     Return a string representation of an array.
 
@@ -764,12 +753,6 @@ def array2string(a, max_line_width=None, precision=None,
 
         .. versionadded:: 2.5
 
-    trim : one of 'k', '.', '0', '-', optional
-        Controls post-processing trimming of trailing digits.
-        See `numpy.format_float_scientific`.
-
-        .. versionadded:: 2.5
-
     legacy : string or `False`, optional
         If set to the string ``'1.13'`` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
@@ -820,7 +803,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
-                                   sign, formatter, floatmode, exp_format, trim, legacy)
+                                   sign, formatter, floatmode, exp_format, legacy)
     options = format_options.get().copy()
     options.update(overrides)
 
