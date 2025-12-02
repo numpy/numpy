@@ -58,7 +58,7 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -76,7 +76,7 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -123,7 +123,7 @@ jobs:
             args: "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none"
     name: "ARM64 SIMD - ${{ matrix.config.name }}"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -170,7 +170,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -185,7 +185,7 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -235,7 +235,7 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
