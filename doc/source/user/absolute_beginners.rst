@@ -18,8 +18,8 @@ and if you have comments or suggestions, please
 How to import NumPy
 -------------------
 
-After `installing NumPy <https://numpy.org/install/>`_, it may be imported
-into Python code like::
+After `installing NumPy <https://numpy.org/install/>`_, you can import it
+into Python code like the following example::
 
   import numpy as np
 
