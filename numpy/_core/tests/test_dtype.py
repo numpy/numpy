@@ -1836,7 +1836,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1860,7 +1865,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1892,7 +1902,15 @@ class TestFromCTypes:
                 ('g', ctypes.c_uint8)
                 ]
         expected = np.dtype({
-            "formats": [np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
+            "formats": [
+                np.uint8,
+                np.uint16,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint32,
+                np.uint8,
+            ],
             "offsets": [0, 2, 4, 6, 8, 12, 16],
             "names": ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             "itemsize": 18})
@@ -1965,7 +1983,9 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1986,7 +2006,9 @@ class TestUserDType:
             del a
             assert sys.getrefcount(o) == startcount
 
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
