@@ -1,6 +1,3 @@
-# TODO: remove once distutils is gone
-numpy\.f2py\._backends\._distutils
-
 # intentional type-check-only deviations from runtime
 numpy\._typing.*
 numpy\.polynomial\._polytypes
