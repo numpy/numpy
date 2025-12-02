@@ -2,7 +2,7 @@
 build-backend = "mesonpy"
 requires = [
     "meson-python>=0.18.0",
-    "Cython>=3.0.6",  # keep in sync with version check in meson.build
+    "Cython>=3.1.0",  # keep in sync with version check in meson.build
 ]
 
 [project]
