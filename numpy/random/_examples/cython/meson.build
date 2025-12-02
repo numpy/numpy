@@ -7,14 +7,11 @@ cc = meson.get_compiler('c')
 cy = meson.get_compiler('cython')
 
 # Keep synced with pyproject.toml
-if not cy.version().version_compare('>=3.0.6')
-  error('tests requires Cython >= 3.0.6')
+if not cy.version().version_compare('>=3.1.0')
+  error('tests requires Cython >= 3.1.0')
 endif
 
-base_cython_args = []
-if cy.version().version_compare('>=3.1.0')
-  base_cython_args += ['-Xfreethreading_compatible=True']
-endif
+base_cython_args = ['-Xfreethreading_compatible=True']
 
 _numpy_abs = run_command(py3, ['-c',
                'import os; os.chdir(".."); import numpy; print(os.path.abspath(numpy.get_include() + "../../.."))'],
