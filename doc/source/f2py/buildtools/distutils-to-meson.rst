@@ -56,17 +56,17 @@ This will not win any awards, but can be a reasonable starting point.
 
 .. code-block:: bash
 
-  python -m numpy.f2py -c fib.f90 -m fib --backend meson
+  python -m numpy.f2py -c fib.f90 -m fib
 
 This is the only option. There used to be a ``distutils`` backend but it was
-removed in NumPy2.5.
+removed in NumPy2.5.0.
 
 1.2.3 Pass a compiler name
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
-  FC="gfortran" python -m numpy.f2py -c fib.f90 -m fib
+  FC=gfortran python -m numpy.f2py -c fib.f90 -m fib
 
 Native files can also be used.
 

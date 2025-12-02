@@ -88,17 +88,6 @@ E.g.,::
 For more details, see the
 `setuptools documentation <https://setuptools.pypa.io/en/latest/setuptools.html>`__
 
-
-.. _numpy-setuptools-interaction:
-
-Versioning ``setuptools``
-------------------------------------------------------
-
-It is recommended to put an upper bound on your ``setuptools``
-build requirement in ``pyproject.toml`` to avoid future breakage - see
-:ref:`for-downstream-package-authors`.
-
-
 .. _CMake: https://cmake.org/
 .. _Meson: https://mesonbuild.com/
 .. _meson-python: https://meson-python.readthedocs.io

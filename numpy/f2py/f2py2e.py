@@ -116,10 +116,6 @@ Options:
   --include-paths <path1>:<path2>:...   Search include files from the given
                    directories.
 
-  --help-link [..] List system resources found by system_info.py. See also
-                   --link-<resource> switch below. [..] is optional list
-                   of resources names. E.g. try 'f2py --help-link lapack_opt'.
-
   --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
                    file. Default: .f2py_f2cmap in current directory.
 
@@ -753,11 +749,6 @@ def validate_modulename(pyf_files, modulename='untitled'):
     return modulename
 
 def main():
-    if '--help-link' in sys.argv[1:]:
-        sys.argv.remove('--help-link')
-        outmess("Use --dep for meson builds\n")
-        return
-
     if '-c' in sys.argv[1:]:
         run_compile()
     else:

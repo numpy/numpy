@@ -744,19 +744,12 @@ else:
         elif attr == "char":
             import numpy.char as char
             return char
-        elif attr == "array_api":
-            raise AttributeError("`numpy.array_api` is not available from "
-                                 "numpy 2.0 onwards", name=None)
         elif attr == "core":
             import numpy.core as core
             return core
         elif attr == "strings":
             import numpy.strings as strings
             return strings
-        elif attr == "distutils":
-            raise AttributeError("`numpy.distutils` is not available from "
-                                 "numpy 2.5 onwards", name=None)
-
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
             # the AttributeError
