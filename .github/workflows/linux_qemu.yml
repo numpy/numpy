@@ -232,8 +232,9 @@ jobs:
         docker run --platform=linux/${ARCH} --name the_container --interactive \
           -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
           apt update &&
-          apt install -y curl ca-certificates &&
-          curl -LsSf https://astral.sh/uv/install.sh | sh &&
+          apt install -y curl ca-certificates python3-pip &&
+          python3 -m pip install --user --upgrade pip &&
+          python3 -m pip install --user uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
           export PATH="/root/.local/bin:$PATH" &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
