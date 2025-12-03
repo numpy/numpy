@@ -2128,9 +2128,9 @@ static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
 {
     npy_bool inplace = NPY_FALSE;
-    static char *kwlist[] = {"inplace", NULL};
+    static const char *kwlist[] = {"inplace", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:byteswap", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:byteswap", (char **)kwlist,
                                      PyArray_BoolConverter, &inplace)) {
         return NULL;
     }
@@ -2191,9 +2191,9 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 @name@type_dunder_round(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"ndigits", NULL};
+    static const char *kwlist[] = {"ndigits", NULL};
     PyObject *ndigits = Py_None;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:__round__", kwlist, &ndigits)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:__round__", (char **)(kwlist), &ndigits)) {
         return NULL;
     }
 
@@ -3062,7 +3062,7 @@ static int
 voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
 {
     npy_intp n;
-    char *msg = "invalid index";
+    const char *msg = "invalid index";
     PyObject *args;
 
     if (!PyDataType_HASFIELDS(self->descr)) {
@@ -3352,7 +3352,7 @@ static int
     }
 
     /* export datetime scalars as bytes (although arrays are not exported) */
-    view->format = "B";
+    view->format = NULL;  // same as "B"
 
     return 0;
 }
@@ -3475,11 +3475,11 @@ static PyObject *
     /* TODO: include type name in error message, which is not @name@ */
     PyObject *obj = NULL;
 #if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
-    static char *kwnames[] = {"", "", NULL};  /* positional-only */
+    static const char *kwnames[] = {"", "", NULL};  /* positional-only */
     static const char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
     PyObject *real_obj = NULL;
     PyObject *imag_obj = NULL;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &real_obj, &imag_obj)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", (char **)kwnames, &real_obj, &imag_obj)) {
         return NULL;
     }
     if (!((imag_obj == NULL) ||
@@ -3499,8 +3499,8 @@ static PyObject *
         }
     }
 #else
-    static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwnames, &obj)) {
+    static const char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", (char **)kwnames, &obj)) {
         return NULL;
     }
 #endif
@@ -3589,8 +3589,8 @@ static PyObject *
 object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
 {
     PyObject *obj = Py_None;
-    static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", kwnames, &obj)) {
+    static const char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:object_", (char **)kwnames, &obj)) {
         return NULL;
     }
     PyArray_Descr *typecode = PyArray_DescrFromType(NPY_OBJECT);
@@ -3615,8 +3615,8 @@ static PyObject *
     PyObject *obj = NULL, *meta_obj = NULL;
     Py@Name@ScalarObject *ret;
 
-    static char *kwnames[] = {"", "", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &obj, &meta_obj)) {
+    static const char *kwnames[] = {"", "", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", (char **)kwnames, &obj, &meta_obj)) {
         return NULL;
     }
 
@@ -3674,8 +3674,8 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
-    static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", kwnames, &obj)) {
+    static const char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:bool_", (char **)kwnames, &obj)) {
         return NULL;
     }
     if (obj == NULL) {
@@ -3772,8 +3772,8 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     PyObject *obj, *arr;
     PyArray_Descr *descr = NULL;
 
-    static char *kwnames[] = {"", "dtype", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:void", kwnames,
+    static const char *kwnames[] = {"", "dtype", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:void", (char **)kwnames,
             &obj, &PyArray_DescrConverter2, &descr)) {
         return NULL;
     }
