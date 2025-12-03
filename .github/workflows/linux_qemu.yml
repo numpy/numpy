@@ -215,11 +215,6 @@ jobs:
       run: |
         docker run --platform=linux/${ARCH} --name the_container --interactive \
           -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
-          apt update &&
-          apt install -y curl ca-certificates python3-pip &&
-          python3 -m pip install --user --upgrade pip &&
-          python3 -m pip install --user uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
-          export PATH="/root/.local/bin:$PATH" &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
@@ -233,6 +228,8 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
+          python -m pip install --break-system-packages uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
+          export PATH="/root/.local/bin:$PATH" &&
           uv venv --python 3.12 .venv &&
           source .venv/bin/activate &&
           uv pip install -r /numpy/requirements/build_requirements.txt pytest pytest-xdist hypothesis
