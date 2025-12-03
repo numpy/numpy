@@ -10,6 +10,9 @@ on:
       - '**.md'
       - '**.rst'
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 env:
   FORCE_COLOR: 3
 
@@ -20,15 +23,13 @@ concurrency:
 
 jobs:
   build-wasm-emscripten:
-    permissions:
-      contents: read  # to fetch code (actions/checkout)
     name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout NumPy
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
           submodules: recursive
           fetch-tags: true

@@ -988,15 +988,11 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
     if len(b_term) != len(shape_b):
         raise ValueError(f"Term '{b_term}' does not match shape {shape_b}.")
 
-    bat_inds = []  # appears on A, B, O
-    con_inds = []  # appears on A, B, .
-    a_keep = []  # appears on A, ., O
-    b_keep = []  # appears on ., B, O
     sizes = {}
     singletons = set()
 
-    # parse left term
-    seen = set()
+    # parse left term to unique indices with size > 1
+    left = {}
     for ix, d in zip(a_term, shape_a):
         if d == 1:
             # everything (including broadcasting) works nicely if simply ignore
@@ -1004,47 +1000,50 @@ def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
             # and thus should be reintroduced later
             singletons.add(ix)
             continue
-
-        # set or check size
         if sizes.setdefault(ix, d) != d:
+            # set and check size
             raise ValueError(
                 f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
             )
+        left[ix] = True
 
-        if ix in seen:
+    # parse right term to unique indices with size > 1
+    right = {}
+    for ix, d in zip(b_term, shape_b):
+        # broadcast indices (size 1 on one input and size != 1
+        # on the other) should not be treated as singletons
+        if d == 1:
+            if ix not in left:
+                singletons.add(ix)
             continue
-        seen.add(ix)
+        singletons.discard(ix)
 
-        if ix in b_term:
+        if sizes.setdefault(ix, d) != d:
+            # set and check size
+            raise ValueError(
+                f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
+            )
+        right[ix] = True
+
+    # now we classify the unique size > 1 indices only
+    bat_inds = []  # appears on A, B, O
+    con_inds = []  # appears on A, B, .
+    a_keep = []  # appears on A, ., O
+    b_keep = []  # appears on ., B, O
+    # other indices (appearing on A or B only) will
+    # be summed or traced out prior to the matmul
+    for ix in left:
+        if right.pop(ix, False):
             if ix in out:
                 bat_inds.append(ix)
             else:
                 con_inds.append(ix)
         elif ix in out:
             a_keep.append(ix)
-
-    # parse right term
-    seen.clear()
-    for ix, d in zip(b_term, shape_b):
-        if d == 1:
-            singletons.add(ix)
-            continue
-        # broadcast indices don't appear as singletons in output
-        singletons.discard(ix)
-
-        # set or check size
-        if sizes.setdefault(ix, d) != d:
-            raise ValueError(
-                f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
-            )
-
-        if ix in seen:
-            continue
-        seen.add(ix)
-
-        if ix not in a_term:
-            if ix in out:
-                b_keep.append(ix)
+    # now only indices unique to right remain
+    for ix in right:
+        if ix in out:
+            b_keep.append(ix)
 
     if not con_inds:
         # contraction is pure multiplication, prepare inputs differently

@@ -4652,6 +4652,7 @@ class TestPickling:
             assert_equal(len(buffers), 0)
             assert_equal(non_contiguous_array, depickled_non_contiguous_array)
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_roundtrip(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             carray = np.array([[2, 9], [7, 0], [3, 8]])
@@ -6285,6 +6286,13 @@ class TestResize:
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
+
+    def test_check_reference_2(self):
+        # see gh-30265
+        x = np.zeros((2, 2))
+        y = x
+        with pytest.raises(ValueError):
+            x.resize((5, 5))
 
     @_no_tracing
     def test_int_shape(self):
@@ -9845,6 +9853,7 @@ class TestCTypes:
         x.flags.writeable = False
         return x
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     @pytest.mark.parametrize('arr', [
         np.array([1, 2, 3]),
         np.array([['one', 'two'], ['three', 'four']]),
@@ -9893,6 +9902,7 @@ class TestCTypes:
             break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_ctypes_as_parameter_holds_reference(self):
         arr = np.array([None]).copy()
 
@@ -10216,6 +10226,7 @@ class TestArrayFinalize:
         with pytest.raises(RuntimeError, match="boohoo!"):
             np.arange(10).view(BadAttributeArray)
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_lifetime_on_error(self):
         # gh-11237
         class RaisesInFinalize(np.ndarray):

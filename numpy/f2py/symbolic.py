@@ -1236,6 +1236,8 @@ def replace_parenthesis(s):
 
     i = mn_i
     j = s.find(right, i)
+    if j == -1:
+        raise ValueError(f'Mismatch of {left + right} parenthesis in {s!r}')
 
     while s.count(left, i + 1, j) != s.count(right, i + 1, j):
         j = s.find(right, j + 1)

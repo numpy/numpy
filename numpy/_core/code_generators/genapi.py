@@ -17,11 +17,11 @@ from os.path import join
 
 
 def get_processor():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import from numpy
     # (numpy is not yet built)
     conv_template_path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', 'distutils', 'conv_template.py'
+        '..', '..', '_build_utils', 'conv_template.py'
     )
     spec = importlib.util.spec_from_file_location(
         'conv_template', conv_template_path

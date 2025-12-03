@@ -1,8 +1,10 @@
-from typing import Any, TypeVar
+from typing import Any, Generic
+from typing_extensions import TypeVar
 
-from numpy import dtype
+import numpy as np
+from numpy._typing import _AnyShape
 
-from . import MaskedArray
+from .core import MaskedArray
 
 __all__ = [
     "MaskedRecords",
@@ -13,10 +15,10 @@ __all__ = [
     "addfield",
 ]
 
-_ShapeT_co = TypeVar("_ShapeT_co", covariant=True, bound=tuple[int, ...])
-_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], default=_AnyShape, covariant=True)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
-class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co]):
+class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         shape,

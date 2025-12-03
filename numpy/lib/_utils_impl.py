@@ -61,6 +61,11 @@ def show_runtime():
             "not_found": features_not_found
         }
     })
+    config_found.append({
+        "ignore_floating_point_errors_in_matmul":
+            not np._core._multiarray_umath._blas_supports_fpe(None),
+    })
+
     try:
         from threadpoolctl import threadpool_info
         config_found.extend(threadpool_info())

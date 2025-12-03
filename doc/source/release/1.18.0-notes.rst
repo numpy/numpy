@@ -350,7 +350,7 @@ and load will be addressed in a future release.
 
 ``numpy.distutils`` append behavior changed for LDFLAGS and similar
 -------------------------------------------------------------------
-`numpy.distutils` has always overridden rather than appended to ``LDFLAGS`` and
+``numpy.distutils`` has always overridden rather than appended to ``LDFLAGS`` and
 other similar such environment variables for compiling Fortran extensions. Now
 the default behavior has changed to appending - which is the expected behavior
 in most situations.  To preserve the old (overwriting) behavior, set the

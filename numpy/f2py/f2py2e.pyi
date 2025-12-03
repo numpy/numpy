@@ -28,7 +28,6 @@ class _PreparseResult(TypedDict):
 
 ###
 
-MESON_ONLY_VER: Final[bool]
 f2py_version: Final = version
 numpy_version: Final = version
 __usage__: Final[str]

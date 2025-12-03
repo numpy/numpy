@@ -36,10 +36,10 @@ Here, we describe aspects of N-d array computation that are within scope for Num
 
 - NumPy provides some **infrastructure for other packages in the scientific Python ecosystem**:
 
-  - numpy.distutils (build support for C++, Fortran, BLAS/LAPACK, and other
-    relevant libraries for scientific computing)
+  - numpy.distutils (removed in NumPy 2.5.0, was providing build support for C++, Fortran,
+    BLAS/LAPACK, and other relevant libraries for scientific computing)
   - f2py (generating bindings for Fortran code)
-  - testing utilities
+  - testing utilities (mostly deprecated, pytest does a good job)
 
 - **Speed**: we take performance concerns seriously and aim to execute
   operations on large arrays with similar performance as native C
