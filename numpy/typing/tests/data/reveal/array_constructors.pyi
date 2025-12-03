@@ -125,8 +125,9 @@ assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.arange(0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])  # type: ignore[assert-type]
+assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])  # type: ignore[assert-type]
 assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64[Any]]])
 assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])

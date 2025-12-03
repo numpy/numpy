@@ -270,7 +270,8 @@ assert_type(np.sinc(AR_LIKE_c16), np.ndarray[tuple[int], np.dtype[np.complex128]
 # median
 assert_type(np.median(AR_f8, keepdims=False), np.float64)
 assert_type(np.median(AR_c16, overwrite_input=True), np.complex128)
-assert_type(np.median(AR_m), np.timedelta64)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.median(AR_m), np.timedelta64)  # type: ignore[assert-type]
 assert_type(np.median(AR_O), Any)
 assert_type(np.median(AR_f8, keepdims=True), npt.NDArray[np.float64])
 assert_type(np.median(AR_f8, axis=0), npt.NDArray[np.float64])
@@ -332,7 +333,8 @@ assert_type(np.trapezoid(AR_f8), np.float64 | npt.NDArray[np.float64])
 assert_type(np.trapezoid(AR_f8, AR_f8), np.float64 | npt.NDArray[np.float64])
 assert_type(np.trapezoid(AR_c16), np.complex128 | npt.NDArray[np.complex128])
 assert_type(np.trapezoid(AR_c16, AR_c16), np.complex128 | npt.NDArray[np.complex128])
-assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
 assert_type(np.trapezoid(AR_O), npt.NDArray[np.object_] | Any)
 assert_type(np.trapezoid(AR_O, AR_LIKE_f8), npt.NDArray[np.object_] | Any)
 

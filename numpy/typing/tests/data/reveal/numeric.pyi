@@ -46,6 +46,8 @@ assert_type(np.argwhere(AR_i8), np.ndarray[tuple[int, int], np.dtype[np.intp]])
 assert_type(np.flatnonzero(i8), np.ndarray[tuple[int], np.dtype[np.intp]])
 assert_type(np.flatnonzero(AR_i8), np.ndarray[tuple[int], np.dtype[np.intp]])
 
+# NOTE: Mypy incorrectly infers `np.ndarray[Any, Any]` for timedelta64
+
 # correlate
 assert_type(np.correlate(AR_i8, AR_i8), np.ndarray[tuple[int], np.dtype[np.int64]])
 assert_type(np.correlate(AR_b, AR_b), np.ndarray[tuple[int], np.dtype[np.bool]])
@@ -55,7 +57,7 @@ assert_type(np.correlate(AR_f8, AR_f8), np.ndarray[tuple[int], np.dtype[np.float
 assert_type(np.correlate(AR_f8, AR_i8), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.correlate(AR_c16, AR_c16), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.correlate(AR_c16, AR_f8), np.ndarray[tuple[int], np.dtype[np.complex128 | Any]])
-assert_type(np.correlate(AR_m, AR_m), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.correlate(AR_m, AR_m), np.ndarray[tuple[int], np.dtype[np.timedelta64]])  # type: ignore[assert-type]
 assert_type(np.correlate(AR_i8, AR_m), np.ndarray[tuple[int], np.dtype[np.timedelta64 | Any]])
 assert_type(np.correlate(AR_O, AR_O), np.ndarray[tuple[int], np.dtype[np.object_]])
 assert_type(np.correlate(_to_1d_bool, _to_1d_bool), np.ndarray[tuple[int], np.dtype[np.bool]])
@@ -72,7 +74,7 @@ assert_type(np.convolve(AR_f8, AR_f8), np.ndarray[tuple[int], np.dtype[np.float6
 assert_type(np.convolve(AR_f8, AR_i8), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.convolve(AR_c16, AR_c16), np.ndarray[tuple[int], np.dtype[np.complex128]])
 assert_type(np.convolve(AR_c16, AR_f8), np.ndarray[tuple[int], np.dtype[np.complex128 | Any]])
-assert_type(np.convolve(AR_m, AR_m), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.convolve(AR_m, AR_m), np.ndarray[tuple[int], np.dtype[np.timedelta64]])  # type: ignore[assert-type]
 assert_type(np.convolve(AR_i8, AR_m), np.ndarray[tuple[int], np.dtype[np.timedelta64 | Any]])
 assert_type(np.convolve(AR_O, AR_O), np.ndarray[tuple[int], np.dtype[np.object_]])
 assert_type(np.convolve(_to_1d_bool, _to_1d_bool), np.ndarray[tuple[int], np.dtype[np.bool]])
@@ -89,7 +91,7 @@ assert_type(np.outer(AR_f8, AR_f8), np.ndarray[tuple[int, int], np.dtype[np.floa
 assert_type(np.outer(AR_f8, AR_i8), np.ndarray[tuple[int, int], np.dtype[np.float64 | Any]])
 assert_type(np.outer(AR_c16, AR_c16), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
 assert_type(np.outer(AR_c16, AR_f8), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
-assert_type(np.outer(AR_m, AR_m), np.ndarray[tuple[int, int], np.dtype[np.timedelta64]])
+assert_type(np.outer(AR_m, AR_m), np.ndarray[tuple[int, int], np.dtype[np.timedelta64]])  # type: ignore[assert-type]
 assert_type(np.outer(AR_i8, AR_m), np.ndarray[tuple[int, int], np.dtype[np.timedelta64 | Any]])
 assert_type(np.outer(AR_O, AR_O), np.ndarray[tuple[int, int], np.dtype[np.object_]])
 assert_type(np.outer(AR_i8, AR_i8, out=_sub_nd_i8), SubClass)

@@ -170,7 +170,8 @@ assert_type(np.busday_count("2011-01", "2011-02"), np.int_)
 assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.int_])
 assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.int_])
 
-assert_type(np.busday_offset(M, m), np.datetime64)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.busday_offset(M, m), np.datetime64)  # type: ignore[assert-type]
 assert_type(np.busday_offset(date_scalar, m), np.datetime64)
 assert_type(np.busday_offset(M, 5), np.datetime64)
 assert_type(np.busday_offset(AR_M, m), npt.NDArray[np.datetime64])

@@ -410,7 +410,8 @@ assert_type(M8_none + m8, np.datetime64[None])
 assert_type(M8_none + i, np.datetime64[None])
 assert_type(M8_none + i8, np.datetime64[None])
 assert_type(M8_none - M8, np.timedelta64[None])
-assert_type(M8_none - m8, np.datetime64[None])
+# NOTE: Mypy incorrectly infers `datetime64[Any]`, but pyright behaves correctly.
+assert_type(M8_none - m8, np.datetime64[None])  # type: ignore[assert-type]
 assert_type(M8_none - i, np.datetime64[None])
 assert_type(M8_none - i8, np.datetime64[None])
 
@@ -428,7 +429,8 @@ assert_type(m8 / f4, np.timedelta64)
 assert_type(m8 / m8, np.float64)
 assert_type(m8 // m8, np.int64)
 assert_type(m8 % m8, np.timedelta64)
-assert_type(divmod(m8, m8), tuple[np.int64, np.timedelta64])
+# NOTE: Mypy incorrectly infers `tuple[Any, ...]`, but pyright behaves correctly.
+assert_type(divmod(m8, m8), tuple[np.int64, np.timedelta64])  # type: ignore[assert-type]
 
 assert_type(m8_none + m8, np.timedelta64[None])
 assert_type(m8_none + i, np.timedelta64[None])
@@ -438,10 +440,12 @@ assert_type(m8_none - i8, np.timedelta64[None])
 
 assert_type(m8_int + i, np.timedelta64[int])
 assert_type(m8_int + m8_delta, np.timedelta64[int])
-assert_type(m8_int + m8, np.timedelta64[int | None])
+assert_type(m8_int + m8, np.timedelta64)
 assert_type(m8_int - i, np.timedelta64[int])
 assert_type(m8_int - m8_delta, np.timedelta64[int])
-assert_type(m8_int - m8, np.timedelta64[int | None])
+assert_type(m8_int - m8_int, np.timedelta64[int])
+assert_type(m8_int - m8_none, np.timedelta64[None])
+assert_type(m8_int - m8, np.timedelta64)
 
 assert_type(m8_delta + date, dt.date)
 assert_type(m8_delta + time, dt.datetime)
