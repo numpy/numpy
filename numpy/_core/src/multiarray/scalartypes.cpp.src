@@ -68,24 +68,24 @@ NPY_NO_EXPORT PyTypeObject PyTimeIntegerArrType_Type;
  * single inheritance)
  */
 
-#define DEF_PYARRTYPE(PyTypeName, tp_name_)    \
-    NPY_NO_EXPORT PyTypeObject PyTypeName = {  \
-        PyVarObject_HEAD_INIT(NULL, 0)         \
-        .tp_name = #tp_name_,                  \
-        .tp_basicsize = sizeof(PyObject),      \
-    };
+constexpr PyTypeObject make_pyarr_type(const char* tp_name_) {
+    // we initialize in-line because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    PyTypeObject t = { PyVarObject_HEAD_INIT(NULL, 0) };
+    t.tp_name = tp_name_;
+    t.tp_basicsize = sizeof(PyObject);
+    return t;
+}
 
-DEF_PYARRTYPE(PyNumberArrType_Type, numpy.number)
-DEF_PYARRTYPE(PyIntegerArrType_Type, numpy.integer)
-DEF_PYARRTYPE(PySignedIntegerArrType_Type, numpy.signedinteger)
-DEF_PYARRTYPE(PyUnsignedIntegerArrType_Type, numpy.unsignedinteger)
-DEF_PYARRTYPE(PyInexactArrType_Type, numpy.inexact)
-DEF_PYARRTYPE(PyFloatingArrType_Type, numpy.floating)
-DEF_PYARRTYPE(PyComplexFloatingArrType_Type, numpy.complexfloating)
-DEF_PYARRTYPE(PyFlexibleArrType_Type, numpy.flexible)
-DEF_PYARRTYPE(PyCharacterArrType_Type, numpy.character)
-
-#undef DEF_PYARRTYPE
+PyTypeObject PyNumberArrType_Type = make_pyarr_type("numpy.number");
+PyTypeObject PyIntegerArrType_Type = make_pyarr_type("numpy.integer");
+PyTypeObject PySignedIntegerArrType_Type = make_pyarr_type("numpy.signedinteger");
+PyTypeObject PyUnsignedIntegerArrType_Type = make_pyarr_type("numpy.unsignedinteger");
+PyTypeObject PyInexactArrType_Type = make_pyarr_type("numpy.inexact");
+PyTypeObject PyFloatingArrType_Type = make_pyarr_type("numpy.floating");
+PyTypeObject PyComplexFloatingArrType_Type = make_pyarr_type("numpy.complexfloating");
+PyTypeObject PyFlexibleArrType_Type = make_pyarr_type("numpy.flexible");
+PyTypeObject PyCharacterArrType_Type = make_pyarr_type("numpy.character");
 
 static PyObject *
 gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
