@@ -3,6 +3,10 @@
 
 #include "numpy/ndarraytypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
@@ -121,5 +125,9 @@ extern NPY_NO_EXPORT NPY_TLS int evil_global_disable_warn_O4O8_flag;
  */
 NPY_NO_EXPORT int
 _not_NoValue(PyObject *obj, PyObject **out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */

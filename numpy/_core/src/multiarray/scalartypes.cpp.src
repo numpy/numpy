@@ -47,11 +47,13 @@
  * used for allocating a single scalar, so use the default numpy
  * memory allocators instead of the (maybe) user overrides
  */
-NPY_NO_EXPORT void *
-npy_alloc_cache_zero(size_t nmemb, size_t size);
+extern "C" {
+    NPY_NO_EXPORT void *
+    npy_alloc_cache_zero(size_t nmemb, size_t size);
 
-NPY_NO_EXPORT void
-npy_free_cache(void * p, npy_uintp sz);
+    NPY_NO_EXPORT void
+    npy_free_cache(void * p, npy_uintp sz);
+}
 
 NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
@@ -131,7 +133,7 @@ gentype_free(PyObject *v)
 
 static PyObject *
 gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
-        char *str)
+        const char *str)
 {
     PyObject *arr, *meth, *ret;
 
@@ -751,18 +753,18 @@ stringtype_@form@(PyObject *self)
 {
     const npy_char *dptr, *ip;
     Py_ssize_t len;
-    PyObject *new;
+    PyObject *new_;
     PyObject *ret;
 
     ip = PyBytes_AS_STRING(self);
     len = PyBytes_GET_SIZE(self);
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new = PyBytes_FromStringAndSize(ip, len);
-    if (new == NULL) {
+    new_ = PyBytes_FromStringAndSize(ip, len);
+    if (new_ == NULL) {
         return NULL;
     }
-    ret = PyBytes_Type.tp_@form@(new);
-    Py_DECREF(new);
+    ret = PyBytes_Type.tp_@form@(new_);
+    Py_DECREF(new_);
 #ifdef IS_repr
     if (ret == NULL) {
         return NULL;
@@ -795,7 +797,7 @@ unicodetype_@form@(PyObject *self)
 {
     Py_UCS4 *dptr, *ip;
     Py_ssize_t len;
-    PyObject *new;
+    PyObject *new_;
     PyObject *ret;
 
     /* PyUnicode_READY is called by PyUnicode_GetLength */
@@ -805,13 +807,13 @@ unicodetype_@form@(PyObject *self)
         return NULL;
     }
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
-    if (new == NULL) {
+    new_ = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    if (new_ == NULL) {
         PyMem_Free(ip);
         return NULL;
     }
-    ret = PyUnicode_Type.tp_@form@(new);
-    Py_DECREF(new);
+    ret = PyUnicode_Type.tp_@form@(new_);
+    Py_DECREF(new_);
     PyMem_Free(ip);
 
 #ifdef IS_repr
@@ -1097,7 +1099,7 @@ datetimetype_str(PyObject *self)
     return PyUnicode_FromString(iso);
 }
 
-static char *_datetime_verbose_strings[NPY_DATETIME_NUMUNITS] = {
+static const char *_datetime_verbose_strings[NPY_DATETIME_NUMUNITS] = {
     "years",
     "months",
     "weeks",
@@ -1120,7 +1122,7 @@ timedeltatype_str(PyObject *self)
 {
     PyTimedeltaScalarObject *scal;
     PyObject *ret;
-    char *basestr = "invalid";
+    const char *basestr = "invalid";
 
     if (!PyArray_IsScalar(self, Timedelta)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -1932,7 +1934,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
         int elsize;
         typecode = PyArray_DescrFromScalar(self);
         elsize = typecode->elsize;
-        temp = npy_alloc_cache_zero(1, elsize);
+        temp = (char*)npy_alloc_cache_zero(1, elsize);
         ret = PyArray_Scalar(temp, typecode, NULL);
         npy_free_cache(temp, elsize);
     }
@@ -2141,13 +2143,13 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         /* get the data, copyswap it and pass it to a new Array scalar */
         char *data;
         PyArray_Descr *descr;
-        PyObject *new;
+        PyObject *new_;
         char *newmem;
 
         descr = PyArray_DescrFromScalar(self);
-        data = (void *)scalar_value(self, descr);
+        data = (char*)scalar_value(self, descr);
 
-        newmem = PyObject_Malloc(descr->elsize);
+        newmem = (char*)PyObject_Malloc(descr->elsize);
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
@@ -2155,10 +2157,10 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         else {
             PyDataType_GetArrFuncs(descr)->copyswap(newmem, data, 1, NULL);
         }
-        new = PyArray_Scalar(newmem, descr, NULL);
+        new_ = PyArray_Scalar(newmem, descr, NULL);
         PyObject_Free(newmem);
         Py_DECREF(descr);
-        return new;
+        return new_;
     }
 }
 
@@ -2332,7 +2334,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     }
 
     if (PyObject_GetBuffer(self, &view, PyBUF_SIMPLE) >= 0) {
-        buffer = view.buf;
+        buffer = static_cast<char*>(view.buf);
         buflen = view.len;
         /*
          * Both of the deprecated functions PyObject_AsWriteBuffer and
@@ -3298,7 +3300,7 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
         view->format = scalar->buffer_fmt;
     }
     else {
-        scalar->buffer_fmt = PyMem_Malloc(22);
+        scalar->buffer_fmt = (char*)PyMem_Malloc(22);
         if (scalar->buffer_fmt == NULL) {
             Py_SETREF(view->obj, NULL);
             return -1;
@@ -3474,7 +3476,7 @@ static PyObject *
     PyObject *obj = NULL;
 #if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
     static char *kwnames[] = {"", "", NULL};  /* positional-only */
-    static char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
+    static const char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
     PyObject *real_obj = NULL;
     PyObject *imag_obj = NULL;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &real_obj, &imag_obj)) {
@@ -3639,7 +3641,7 @@ static PyObject *
          * A unit of -1 signals that convert_pyobject_to_datetime
          * should populate.
          */
-        ret->obmeta.base = -1;
+        ret->obmeta.base = NPY_DATETIMEUNIT::NPY_FR_ERROR;
     }
 
     if (obj == NULL) {
@@ -3805,7 +3807,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         if (memu == 0) {
             memu = 1;
         }
-        destptr = npy_alloc_cache_zero(memu, 1);
+        destptr = (char*)npy_alloc_cache_zero(memu, 1);
         if (destptr == NULL) {
             return PyErr_NoMemory();
         }

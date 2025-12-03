@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Internal look-up tables, casting safety is defined in convert_datatype.h.
  * Most of these should be phased out eventually, but some are still used.
@@ -31,5 +35,9 @@ _typenum_fromtypeobj(PyObject *type, int user);
 
 NPY_NO_EXPORT void *
 scalar_value(PyObject *scalar, PyArray_Descr *descr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_ */

@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern NPY_NO_EXPORT const char *npy_no_copy_err_msg;
 
 
@@ -134,5 +138,9 @@ PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 NPY_NO_EXPORT PyObject *
 PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
                   PyArray_DTypeMeta *dtype, int is_f_order);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */
