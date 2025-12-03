@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.4.0.dev0"
+version = "2.4.0rc1"
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
