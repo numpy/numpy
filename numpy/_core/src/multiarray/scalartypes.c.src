@@ -66,18 +66,24 @@ NPY_NO_EXPORT PyTypeObject PyTimeIntegerArrType_Type;
  * single inheritance)
  */
 
-/**begin repeat
- * #name = number, integer, signedinteger, unsignedinteger, inexact,
- *         floating, complexfloating, flexible, character#
- * #NAME = Number, Integer, SignedInteger, UnsignedInteger, Inexact,
- *         Floating, ComplexFloating, Flexible, Character#
- */
-NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.@name@",
-    .tp_basicsize = sizeof(PyObject),
-};
-/**end repeat**/
+#define DEF_PYARRTYPE(PyTypeName, tp_name_)    \
+    NPY_NO_EXPORT PyTypeObject PyTypeName = {  \
+        PyVarObject_HEAD_INIT(NULL, 0)         \
+        .tp_name = #tp_name_,                  \
+        .tp_basicsize = sizeof(PyObject),      \
+    };
+
+DEF_PYARRTYPE(PyNumberArrType_Type, numpy.number)
+DEF_PYARRTYPE(PyIntegerArrType_Type, numpy.integer)
+DEF_PYARRTYPE(PySignedIntegerArrType_Type, numpy.signedinteger)
+DEF_PYARRTYPE(PyUnsignedIntegerArrType_Type, numpy.unsignedinteger)
+DEF_PYARRTYPE(PyInexactArrType_Type, numpy.inexact)
+DEF_PYARRTYPE(PyFloatingArrType_Type, numpy.floating)
+DEF_PYARRTYPE(PyComplexFloatingArrType_Type, numpy.complexfloating)
+DEF_PYARRTYPE(PyFlexibleArrType_Type, numpy.flexible)
+DEF_PYARRTYPE(PyCharacterArrType_Type, numpy.character)
+
+#undef DEF_PYARRTYPE
 
 static PyObject *
 gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
@@ -284,23 +290,9 @@ static PyObject *
 gentype_multiply(PyObject *m1, PyObject *m2);
 
 
-/**begin repeat
- *
- * #name = add, multiply, subtract, remainder, divmod,
- *         lshift, rshift, and, xor, or, floor_divide, true_divide#
- * #ufunc = add, multiply, subtract, remainder, divmod,
- *         left_shift, right_shift, bitwise_and, bitwise_xor, bitwise_or,
- *         floor_divide, true_divide#
- * #func = Add, Multiply, Subtract, Remainder, Divmod,
- *         Lshift, Rshift, And, Xor, Or, FloorDivide, TrueDivide#
- * #suff = _gen, _gen,,,,,,,,,,#
- */
-/* NOTE: We suffix the name for functions requiring special handling first. */
 static PyObject *
-gentype_@name@@suff@(PyObject *m1, PyObject *m2)
+gentype_binop1(PyObject *m1, PyObject *m2, binaryfunc func, PyObject *ufunc)
 {
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
-
     PyObject *self = NULL;
     PyObject *other = NULL;
     PyObject *self_op, *other_op;
@@ -319,10 +311,10 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
     if (self_op != NULL) {
         PyObject *res;
         if (self == m1) {
-            res = PyNumber_@func@(self_op, m2);
+            res = func(self_op, m2);
         }
         else {
-            res = PyNumber_@func@(m1, self_op);
+            res = func(m1, self_op);
         }
         Py_DECREF(self_op);
         return res;
@@ -331,10 +323,10 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         /* Call the corresponding ufunc (with the array) */
         PyObject *res;
         if (self == m1) {
-            res = PyArray_GenericBinaryFunction(m1, other_op, n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(m1, other_op, ufunc);
         }
         else {
-            res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.@ufunc@);
+            res = PyArray_GenericBinaryFunction(other_op, m2, ufunc);
         }
         Py_DECREF(other_op);
         return res;
@@ -345,7 +337,28 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
     }
 }
 
-/**end repeat**/
+#define DEF_BINOP(name, slot_name, func, ufunc, test_func)      \
+    static PyObject* name(PyObject *m1, PyObject *m2) {         \
+        BINOP_GIVE_UP_IF_NEEDED(m1, m2, slot_name, test_func);  \
+        return gentype_binop1(m1, m2, func, ufunc);             \
+    }
+
+/* NOTE: We suffix with _gen for functions requiring special handling first. */
+DEF_BINOP(gentype_add_gen,      nb_add,          PyNumber_Add,         n_ops.add,          gentype_add)
+DEF_BINOP(gentype_multiply_gen, nb_multiply,     PyNumber_Multiply,    n_ops.multiply,     gentype_multiply)
+
+DEF_BINOP(gentype_subtract,     nb_subtract,     PyNumber_Subtract,    n_ops.subtract,     gentype_subtract)
+DEF_BINOP(gentype_remainder,    nb_remainder,    PyNumber_Remainder,   n_ops.remainder,    gentype_remainder)
+DEF_BINOP(gentype_divmod,       nb_divmod,       PyNumber_Divmod,      n_ops.divmod,       gentype_divmod)
+DEF_BINOP(gentype_lshift,       nb_lshift,       PyNumber_Lshift,      n_ops.left_shift,   gentype_lshift)
+DEF_BINOP(gentype_rshift,       nb_rshift,       PyNumber_Rshift,      n_ops.right_shift,  gentype_rshift)
+DEF_BINOP(gentype_and,          nb_and,          PyNumber_And,         n_ops.bitwise_and,  gentype_and)
+DEF_BINOP(gentype_xor,          nb_xor,          PyNumber_Xor,         n_ops.bitwise_xor,  gentype_xor)
+DEF_BINOP(gentype_or,           nb_or,           PyNumber_Or,          n_ops.bitwise_or,   gentype_or)
+DEF_BINOP(gentype_floor_divide, nb_floor_divide, PyNumber_FloorDivide, n_ops.floor_divide, gentype_floor_divide)
+DEF_BINOP(gentype_true_divide,  nb_true_divide,  PyNumber_TrueDivide,  n_ops.true_divide,  gentype_true_divide)
+
+#undef DEF_BINOP
 
 /*
  * The following operators use the above, but require specialization.
