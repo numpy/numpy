@@ -406,14 +406,17 @@ assert_type(M8 - M8, np.timedelta64)
 assert_type(M8 - i, np.datetime64)
 assert_type(M8 - i8, np.datetime64)
 
-assert_type(M8_none + m8, np.datetime64[None])
 assert_type(M8_none + i, np.datetime64[None])
+assert_type(M8_none - i, np.datetime64[None])
+
 assert_type(M8_none + i8, np.datetime64[None])
-assert_type(M8_none - M8, np.timedelta64[None])
+assert_type(M8_none - i8, np.datetime64[None])
+
+# NOTE: Mypy incorrectly infers `timedelta64[Any]`, but pyright behaves correctly.
+assert_type(M8_none + m8, np.datetime64[None])  # type: ignore[assert-type]
+assert_type(M8_none - M8, np.timedelta64[None])  # type: ignore[assert-type]
 # NOTE: Mypy incorrectly infers `datetime64[Any]`, but pyright behaves correctly.
 assert_type(M8_none - m8, np.datetime64[None])  # type: ignore[assert-type]
-assert_type(M8_none - i, np.datetime64[None])
-assert_type(M8_none - i8, np.datetime64[None])
 
 assert_type(m8 + m8, np.timedelta64)
 assert_type(m8 + i, np.timedelta64)
