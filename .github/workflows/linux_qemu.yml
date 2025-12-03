@@ -219,6 +219,8 @@ jobs:
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
           ln -s /host/usr/lib/gcc-cross/${TOOLCHAIN_NAME} /usr/lib/gcc/${TOOLCHAIN_NAME} &&
+          mkdir -p /usr/libexec/gcc &&
+          rm -rf /usr/libexec/gcc/${TOOLCHAIN_NAME} && ln -s /host/usr/libexec/gcc/${TOOLCHAIN_NAME} /usr/libexec/gcc/${TOOLCHAIN_NAME} &&
           rm -f /usr/bin/gcc && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gcc-14 /usr/bin/gcc &&
           rm -f /usr/bin/g++ && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-g++-14 /usr/bin/g++ &&
           rm -f /usr/bin/gfortran && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gfortran-14 /usr/bin/gfortran &&
