@@ -473,34 +473,30 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
     }
 }
 
+#define DEF_BIT_COUNT(fname, npy_type, ScalarName, npy_popcount_func, ConvertFrom) \
+    static PyObject *                                                              \
+    fname(PyObject *self, PyObject *NPY_UNUSED(args))                              \
+    {                                                                              \
+        npy_type scalar = PyArrayScalar_VAL(self, ScalarName);                     \
+        uint8_t count = npy_popcount_func(scalar);                                 \
+        return ConvertFrom(count);                                                 \
+    }
 
-/**begin repeat
- * #TYPE    = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *            LONG, ULONG, LONGLONG, ULONGLONG#
- * #type    = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *            npy_long, npy_ulong, npy_longlong, npy_ulonglong#
- * #c       = hh, uhh, h, uh,, u, l, ul, ll, ull#
- * #Name    = Byte, UByte, Short, UShort, Int, UInt,
- *            Long, ULong, LongLong, ULongLong#
- * #convert = Long*8, LongLong*2#
- */
+DEF_BIT_COUNT(npy_byte_bit_count,      npy_byte,      Byte,      npy_popcounthh,  PyLong_FromLong)
+DEF_BIT_COUNT(npy_ubyte_bit_count,     npy_ubyte,     UByte,     npy_popcountuhh, PyLong_FromLong)
+DEF_BIT_COUNT(npy_short_bit_count,     npy_short,     Short,     npy_popcounth,   PyLong_FromLong)
+DEF_BIT_COUNT(npy_ushort_bit_count,    npy_ushort,    UShort,    npy_popcountuh,  PyLong_FromLong)
+DEF_BIT_COUNT(npy_int_bit_count,       npy_int,       Int,       npy_popcount,    PyLong_FromLong)
+DEF_BIT_COUNT(npy_uint_bit_count,      npy_uint,      UInt,      npy_popcountu,   PyLong_FromLong)
+DEF_BIT_COUNT(npy_long_bit_count,      npy_long,      Long,      npy_popcountl,   PyLong_FromLong)
+DEF_BIT_COUNT(npy_ulong_bit_count,     npy_ulong,     ULong,     npy_popcountul,  PyLong_FromLong)
+DEF_BIT_COUNT(npy_longlong_bit_count,  npy_longlong,  LongLong,  npy_popcountll,  PyLong_FromLongLong)
+DEF_BIT_COUNT(npy_ulonglong_bit_count, npy_ulonglong, ULongLong, npy_popcountull, PyLong_FromLongLong)
+
+#undef DEF_BIT_COUNT
+
 static PyObject *
-@type@_bit_count(PyObject *self, PyObject *NPY_UNUSED(args))
-{
-    @type@ scalar = PyArrayScalar_VAL(self, @Name@);
-    uint8_t count = npy_popcount@c@(scalar);
-    PyObject *result = PyLong_From@convert@(count);
-
-    return result;
-}
-/**end repeat**/
-
-/**begin repeat
- *
- * #name = positive, negative, absolute, invert, int, float#
- */
-static PyObject *
-gentype_@name@(PyObject *m1)
+gentype_unary_op1(PyObject *m1, unaryfunc func)
 {
     PyObject *arr, *ret;
 
@@ -508,11 +504,25 @@ gentype_@name@(PyObject *m1)
     if (arr == NULL) {
         return NULL;
     }
-    ret = Py_TYPE(arr)->tp_as_number->nb_@name@(arr);
+    ret = func(arr);
     Py_DECREF(arr);
     return ret;
 }
-/**end repeat**/
+
+#define DEF_UN_OP(fname, func)               \
+    static PyObject *                        \
+    fname(PyObject *m1) {                    \
+        return gentype_unary_op1(m1, func);  \
+    }
+
+DEF_UN_OP(gentype_positive, PyNumber_Positive)
+DEF_UN_OP(gentype_negative, PyNumber_Negative)
+DEF_UN_OP(gentype_absolute, PyNumber_Absolute)
+DEF_UN_OP(gentype_invert,   PyNumber_Invert)
+DEF_UN_OP(gentype_int,      PyNumber_Long)
+DEF_UN_OP(gentype_float,    PyNumber_Float)
+
+#undef DEF_UN_OP
 
 static int
 gentype_nonzero_number(PyObject *m1)
