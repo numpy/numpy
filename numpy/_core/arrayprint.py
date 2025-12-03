@@ -996,7 +996,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 *, exp_format=False, trim=".",
+                 *, exp_format=None, trim=".",
                  legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
@@ -1352,7 +1352,7 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small, sign=False,
-                 *, exp_format=False, trim=".",
+                 *, exp_format=None, trim=".",
                  legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
