@@ -2413,6 +2413,10 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     >>> np.sum([10], initial=5)
     15
+    >>> np.sum([1, 2, 3, 4], where=[True, False, True, False])
+    4
+    >>> np.sum([1, 2, 3], initial=10)
+    16
     """
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
