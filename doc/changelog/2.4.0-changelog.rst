@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 141 people contributed to this release.  People with a "+" by their
+A total of 142 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * !DWesl
@@ -66,6 +66,7 @@ names contributed a patch for the first time.
 * Johnnie Gray +
 * Jonathan Reimer +
 * Joren Hammudoglu
+* Kaiyuan Yang +
 * Kelvin Li +
 * Khelf Mohamed +
 * Koki Watanabe +
@@ -119,7 +120,7 @@ names contributed a patch for the first time.
 * Sayed Awad
 * Sebastian Berg
 * Sergey Fedorov +
-* Shirong_Wang +
+* Shirong Wang +
 * Shyok Mutsuddi +
 * Simola Nayak +
 * Stan Ulbrych
@@ -150,7 +151,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 660 pull requests were merged for this release.
+A total of 673 pull requests were merged for this release.
 
 * `#23513 <https://github.com/numpy/numpy/pull/23513>`__: ENH: speed up einsum with optimize using batched matmul
 * `#24501 <https://github.com/numpy/numpy/pull/24501>`__: DOC: add description of dtype b1 in arrays.dtypes.rst
@@ -812,3 +813,16 @@ A total of 660 pull requests were merged for this release.
 * `#30325 <https://github.com/numpy/numpy/pull/30325>`__: DOC, TYP: Expand the 2.3 ``numpy.typing`` deprecation docs
 * `#30326 <https://github.com/numpy/numpy/pull/30326>`__: TYP: ``ma.mrecords.MaskedRecords`` generic type parameter defaults
 * `#30327 <https://github.com/numpy/numpy/pull/30327>`__: TYP: ``_core._umath_tests`` module stubs
+* `#30347 <https://github.com/numpy/numpy/pull/30347>`__: REL: Prepare for the NumPy 2.4.0rc1 release
+* `#30377 <https://github.com/numpy/numpy/pull/30377>`__: MAINT: don't assert RecursionError in monster dtype test (#30375)
+* `#30378 <https://github.com/numpy/numpy/pull/30378>`__: CI: bump FreeBSD from 14.2 to 14.3
+* `#30398 <https://github.com/numpy/numpy/pull/30398>`__: MAINT: Use RAII objects in unique.cpp to ensure safe resource...
+* `#30399 <https://github.com/numpy/numpy/pull/30399>`__: BUG: raise BufferError when creating dlpack with wrong device...
+* `#30400 <https://github.com/numpy/numpy/pull/30400>`__: BUG: fix free-threaded races in RandomState
+* `#30401 <https://github.com/numpy/numpy/pull/30401>`__: BUG: fix reduction issue in weighted quantile (#30070)
+* `#30403 <https://github.com/numpy/numpy/pull/30403>`__: SIMD, BLD: Fix Highway target attribute build failure on ppc64...
+* `#30408 <https://github.com/numpy/numpy/pull/30408>`__: BUG: Add missing return status check of NpyIter_EnableExternalLoop()...
+* `#30419 <https://github.com/numpy/numpy/pull/30419>`__: DOC: Improve cross-links in thread safety documentation (#30373)
+* `#30420 <https://github.com/numpy/numpy/pull/30420>`__: BUG: fix double evaluation in PyArrayScalar_RETURN_BOOL_FROM_LONG...
+* `#30432 <https://github.com/numpy/numpy/pull/30432>`__: BUG: fix remaining data races in mtrand.pyx (#30426)
+* `#30459 <https://github.com/numpy/numpy/pull/30459>`__: TYP: restore ``generic.__hash__`` (#30456)
