@@ -811,7 +811,7 @@ def fromstring(
 ) -> NDArray[Any]: ...
 
 @overload
-def frompyfunc(  # type: ignore[overload-overlap]
+def frompyfunc(
     func: Callable[[Any], _ReturnType], /,
     nin: L[1],
     nout: L[1],
@@ -819,7 +819,7 @@ def frompyfunc(  # type: ignore[overload-overlap]
     identity: None = None,
 ) -> _PyFunc_Nin1_Nout1[_ReturnType, None]: ...
 @overload
-def frompyfunc(  # type: ignore[overload-overlap]
+def frompyfunc(
     func: Callable[[Any], _ReturnType], /,
     nin: L[1],
     nout: L[1],
@@ -827,7 +827,7 @@ def frompyfunc(  # type: ignore[overload-overlap]
     identity: _IDType,
 ) -> _PyFunc_Nin1_Nout1[_ReturnType, _IDType]: ...
 @overload
-def frompyfunc(  # type: ignore[overload-overlap]
+def frompyfunc(
     func: Callable[[Any, Any], _ReturnType], /,
     nin: L[2],
     nout: L[1],
@@ -835,7 +835,7 @@ def frompyfunc(  # type: ignore[overload-overlap]
     identity: None = None,
 ) -> _PyFunc_Nin2_Nout1[_ReturnType, None]: ...
 @overload
-def frompyfunc(  # type: ignore[overload-overlap]
+def frompyfunc(
     func: Callable[[Any, Any], _ReturnType], /,
     nin: L[2],
     nout: L[1],
@@ -843,7 +843,7 @@ def frompyfunc(  # type: ignore[overload-overlap]
     identity: _IDType,
 ) -> _PyFunc_Nin2_Nout1[_ReturnType, _IDType]: ...
 @overload
-def frompyfunc(  # type: ignore[overload-overlap]
+def frompyfunc(
     func: Callable[..., _ReturnType], /,
     nin: _Nin,
     nout: L[1],
@@ -851,7 +851,7 @@ def frompyfunc(  # type: ignore[overload-overlap]
     identity: None = None,
 ) -> _PyFunc_Nin3P_Nout1[_ReturnType, None, _Nin]: ...
 @overload
-def frompyfunc(  # type: ignore[overload-overlap]
+def frompyfunc(
     func: Callable[..., _ReturnType], /,
     nin: _Nin,
     nout: L[1],

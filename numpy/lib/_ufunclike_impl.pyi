@@ -28,7 +28,7 @@ def fix(x: _ArrayLikeObject_co, out: None = None) -> NDArray[object_]: ...
 def fix(x: _ArrayLikeFloat_co | _ArrayLikeObject_co, out: _ArrayT) -> _ArrayT: ...
 
 @overload
-def isposinf(  # type: ignore[misc]
+def isposinf(
     x: _FloatLike_co,
     out: None = None,
 ) -> np.bool: ...
@@ -44,7 +44,7 @@ def isposinf(
 ) -> _ArrayT: ...
 
 @overload
-def isneginf(  # type: ignore[misc]
+def isneginf(
     x: _FloatLike_co,
     out: None = None,
 ) -> np.bool: ...

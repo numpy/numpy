@@ -64,7 +64,7 @@ def mintypecode(typechars: Iterable[str | ArrayLike], typeset: str | Container[s
 
 #
 @overload
-def real(val: _HasReal[_T]) -> _T: ...  # type: ignore[overload-overlap]
+def real(val: _HasReal[_T]) -> _T: ...
 @overload
 def real(val: _ArrayLike[_RealT]) -> NDArray[_RealT]: ...
 @overload
@@ -72,7 +72,7 @@ def real(val: ArrayLike) -> NDArray[Any]: ...
 
 #
 @overload
-def imag(val: _HasImag[_T]) -> _T: ...  # type: ignore[overload-overlap]
+def imag(val: _HasImag[_T]) -> _T: ...
 @overload
 def imag(val: _ArrayLike[_RealT]) -> NDArray[_RealT]: ...
 @overload
@@ -142,7 +142,7 @@ def nan_to_num(
 
 # NOTE: The [overload-overlap] mypy error is a false positive
 @overload
-def real_if_close(a: _ArrayLike[np.complex64], tol: float = 100) -> NDArray[np.float32 | np.complex64]: ...  # type: ignore[overload-overlap]
+def real_if_close(a: _ArrayLike[np.complex64], tol: float = 100) -> NDArray[np.float32 | np.complex64]: ...
 @overload
 def real_if_close(a: _ArrayLike[np.complex128], tol: float = 100) -> NDArray[np.float64 | np.complex128]: ...
 @overload
@@ -202,41 +202,41 @@ def typename(char: L["O"]) -> L["object"]: ...
 @overload
 def common_type() -> type[np.float16]: ...
 @overload
-def common_type(a0: _HasDType[np.float16], /, *ai: _HasDType[np.float16]) -> type[np.float16]: ...  # type: ignore[overload-overlap]
+def common_type(a0: _HasDType[np.float16], /, *ai: _HasDType[np.float16]) -> type[np.float16]: ...
 @overload
-def common_type(a0: _HasDType[np.float32], /, *ai: _HasDType[_FloatMax32]) -> type[np.float32]: ...  # type: ignore[overload-overlap]
+def common_type(a0: _HasDType[np.float32], /, *ai: _HasDType[_FloatMax32]) -> type[np.float32]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[np.float64 | np.integer],
     /,
     *ai: _HasDType[_RealMax64],
 ) -> type[np.float64]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[np.longdouble],
     /,
     *ai: _HasDType[_Real],
 ) -> type[np.longdouble]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[np.complex64],
     /,
     *ai: _HasDType[_InexactMax32],
 ) -> type[np.complex64]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[np.complex128],
     /,
     *ai: _HasDType[_NumberMax64],
 ) -> type[np.complex128]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[np.clongdouble],
     /,
     *ai: _HasDType[np.number],
 ) -> type[np.clongdouble]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[_FloatMax32],
     array1: _HasDType[np.float32],
     /,
@@ -257,7 +257,7 @@ def common_type(
     *ai: _HasDType[_Real],
 ) -> type[np.longdouble]: ...
 @overload
-def common_type(  # type: ignore[overload-overlap]
+def common_type(
     a0: _HasDType[_InexactMax32],
     array1: _HasDType[np.complex64],
     /,

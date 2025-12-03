@@ -21,13 +21,13 @@ _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], default=_AnyShape, cov
 _DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
-_BoolArrayT = TypeVar("_BoolArrayT", bound=container[Any, np.dtype[np.bool]])
-_IntegralArrayT = TypeVar("_IntegralArrayT", bound=container[Any, np.dtype[np.bool | np.integer | np.object_]])
+_BoolArrayT = TypeVar("_BoolArrayT", bound=container[Any, np.dtype[np.bool]])  # type: ignore[deprecated]
+_IntegralArrayT = TypeVar("_IntegralArrayT", bound=container[Any, np.dtype[np.bool | np.integer | np.object_]])  # type: ignore[deprecated]
 _RealContainerT = TypeVar(
     "_RealContainerT",
-    bound=container[Any, np.dtype[np.bool | np.integer | np.floating | np.timedelta64 | np.object_]],
+    bound=container[Any, np.dtype[np.bool | np.integer | np.floating | np.timedelta64 | np.object_]],  # type: ignore[deprecated]
 )
-_NumericContainerT = TypeVar("_NumericContainerT", bound=container[Any, np.dtype[np.number | np.timedelta64 | np.object_]])
+_NumericContainerT = TypeVar("_NumericContainerT", bound=container[Any, np.dtype[np.number | np.timedelta64 | np.object_]])  # type: ignore[deprecated]
 
 _ArrayInt_co: TypeAlias = npt.NDArray[np.integer | np.bool]
 
@@ -112,7 +112,7 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with np.ndarray
     @overload
-    def __abs__(self: container[_ShapeT, np.dtype[np.complex64]], /) -> container[_ShapeT, np.dtype[np.float32]]: ...  # type: ignore[overload-overlap]
+    def __abs__(self: container[_ShapeT, np.dtype[np.complex64]], /) -> container[_ShapeT, np.dtype[np.float32]]: ...
     @overload
     def __abs__(self: container[_ShapeT, np.dtype[np.complex128]], /) -> container[_ShapeT, np.dtype[np.float64]]: ...
     @overload

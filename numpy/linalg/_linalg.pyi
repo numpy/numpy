@@ -302,9 +302,9 @@ def svd(
     hermitian: bool = False,
 ) -> NDArray[floating]: ...
 
-# the ignored `overload-overlap` mypy error below is a false-positive
+#
 @overload
-def svdvals(  # type: ignore[overload-overlap]
+def svdvals(
     x: _ArrayLike[np.float64 | np.complex128 | np.integer | np.bool] | _NestedSequence[complex], /
 ) -> NDArray[np.float64]: ...
 @overload
@@ -313,7 +313,7 @@ def svdvals(x: _ArrayLike[np.float32 | np.complex64], /) -> NDArray[np.float32]:
 def svdvals(x: _ArrayLikeNumber_co, /) -> NDArray[floating]: ...
 
 # TODO: Returns a scalar for 2D arrays and
-# a `(x.ndim - 2)`` dimensionl array otherwise
+# a `(x.ndim - 2)`` dimensional array otherwise
 def cond(x: _ArrayLikeComplex_co, p: float | L["fro", "nuc"] | None = None) -> Any: ...
 
 # TODO: Returns `int` for <2D arrays and `intp` otherwise
