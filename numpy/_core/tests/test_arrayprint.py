@@ -278,13 +278,12 @@ class TestArray2String:
             A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
             A[5:].fill(np.datetime64('NaT'))
             date_string = '1970-01-01T00:00:00'
-            none_string = 'NaT'
             assert_equal(
                 np.array2string(A),
                 textwrap.dedent(f"""\
                 [('{date_string}',) ('{date_string}',) ('{date_string}',)
-                 ('{date_string}',) ('{date_string}',) ('{none_string}',) ('{none_string}',)
-                 ('{none_string}',) ('{none_string}',) ('{none_string}',)]""")
+                 ('{date_string}',) ('{date_string}',) ('NaT',) ('NaT',)
+                 ('NaT',) ('NaT',) ('NaT',)]""")
             )
         finally:
             np.set_printoptions(legacy=False)
