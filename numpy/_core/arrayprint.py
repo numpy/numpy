@@ -1793,7 +1793,7 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
 
 _FORMAT_SPEC_REGEXP = re.compile(
     r"([ +-])?"        # sign options
-    r"(\.)?([0-9]+)?"  # field precision
+    r"(\.[0-9]+)?"     # field precision
     r"(.)?"            # field type
 )
 
@@ -1821,17 +1821,15 @@ def _parse_format_spec(fs):
     if match is None:
         raise ValueError("Invalid format specifier")
 
-    sign, period, precision, fmt_code = match.groups()
+    sign, precision, fmt_code = match.groups()
 
     options = {}
 
     if sign is not None:
         options["sign"] = sign
 
-    if period is not None:
-        if precision is None:
-            raise ValueError("Format specifier missing precision")
-        options["precision"] = int(precision)
+    if precision is not None:
+        options["precision"] = int(precision[1:])  # remove leading dot
 
     if fmt_code is not None:
         if fmt_code not in "feg":
