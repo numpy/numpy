@@ -46,7 +46,6 @@ from numpy import (
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
-from numpy._utils._inspect import formatargspec, getargspec
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -132,19 +131,6 @@ def doc_note(initialdoc, note):
     notedoc = f"\n\nNotes\n-----\n{inspect.cleandoc(note)}\n"
 
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
-
-
-# TODO: remove/deprecate once `ma.extras._fromnxfunction.getdoc` no longer uses it
-def get_object_signature(obj):
-    """
-    Get the signature from obj
-
-    """
-    try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
-        sig = ''
-    return sig
 
 
 ###############################################################################
@@ -6653,14 +6639,14 @@ class mvoid(MaskedArray):
 
     def tolist(self):
         """
-    Transforms the mvoid object into a tuple.
+        Transforms the mvoid object into a tuple.
 
-    Masked fields are replaced by None.
+        Masked fields are replaced by None.
 
-    Returns
-    -------
-    returned_tuple
-        Tuple of fields
+        Returns
+        -------
+        returned_tuple
+            Tuple of fields
         """
         _mask = self._mask
         if _mask is nomask:

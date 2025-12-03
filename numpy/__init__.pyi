@@ -5,6 +5,7 @@ import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
+import inspect
 from abc import abstractmethod
 from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
@@ -216,8 +217,6 @@ from numpy import (
     matrixlib as matrixlib,
     version as version,
 )
-if sys.version_info < (3, 12):
-    from numpy import distutils as distutils
 
 from numpy._core.records import (
     record,
@@ -467,6 +466,7 @@ from numpy.lib._function_base_impl import (  # type: ignore[deprecated]
     append,
     interp,
     quantile,
+    vectorize,
 )
 
 from numpy.lib._histograms_impl import (
@@ -2196,10 +2196,10 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...], /) -> Any: ...
     @overload
     def __getitem__(self, key: _ToIndices, /) -> ndarray[_AnyShape, _DTypeT_co]: ...
+    @overload  # can be of any shape
+    def __getitem__(self: NDArray[void], key: str, /) -> ndarray[_ShapeT_co | _AnyShape]: ...
     @overload
-    def __getitem__(self: NDArray[void], key: str, /) -> ndarray[_ShapeT_co, np.dtype]: ...
-    @overload
-    def __getitem__(self: NDArray[void], key: list[str], /) -> ndarray[_ShapeT_co, _dtype[void]]: ...
+    def __getitem__(self: NDArray[void], key: list[str], /) -> ndarray[_ShapeT_co | _AnyShape, dtype[void]]: ...
 
     @overload  # flexible | object_ | bool
     def __setitem__(
@@ -2250,15 +2250,22 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
 
     @property
     def ctypes(self) -> _ctypes[int]: ...
+
+    #
     @property
     def shape(self) -> _ShapeT_co: ...
     @shape.setter
+    @deprecated("In-place shape modification will be deprecated in NumPy 2.5.", category=PendingDeprecationWarning)
     def shape(self, value: _ShapeLike) -> None: ...
+
+    #
     @property
     def strides(self) -> _Shape: ...
     @strides.setter
     @deprecated("Setting the strides on a NumPy array has been deprecated in NumPy 2.4")
     def strides(self, value: _ShapeLike) -> None: ...
+
+    #
     def byteswap(self, inplace: builtins.bool = ...) -> Self: ...
     @property
     def flat(self) -> flatiter[Self]: ...
@@ -2273,6 +2280,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         *args: SupportsIndex,
     ) -> str: ...
 
+    # keep in sync with `ma.MaskedArray.tolist`
     @overload  # this first overload prevents mypy from over-eagerly selecting `tuple[()]` in case of `_AnyShape`
     def tolist(self: ndarray[tuple[Never], dtype[generic[_T]]], /) -> Any: ...
     @overload
@@ -2291,6 +2299,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def resize(self, /, *new_shape: SupportsIndex, refcheck: builtins.bool = True) -> None: ...
 
+    # keep in sync with `ma.MaskedArray.squeeze`
     def squeeze(
         self,
         /,
@@ -2418,7 +2427,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         order: str | Sequence[str] | None = None,
     ) -> NDArray[intp]: ...
 
-    #
+    # keep in sync with `ma.MaskedArray.diagonal`
     def diagonal(
         self,
         offset: SupportsIndex = 0,
@@ -2536,11 +2545,13 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 
+    # keep in sync with `ma.MaskedArray.repeat`
     @overload
     def repeat(self, repeats: _ArrayLikeInt_co, /, axis: None = None) -> ndarray[tuple[int], _DTypeT_co]: ...
     @overload
     def repeat(self, repeats: _ArrayLikeInt_co, /, axis: SupportsIndex) -> ndarray[_AnyShape, _DTypeT_co]: ...
 
+    # keep in sync with `ma.MaskedArray.flatten` and `ma.MaskedArray.ravel`
     def flatten(self, /, order: _OrderKACF = "C") -> ndarray[tuple[int], _DTypeT_co]: ...
     def ravel(self, /, order: _OrderKACF = "C") -> ndarray[tuple[int], _DTypeT_co]: ...
 
@@ -3665,6 +3676,29 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def __array__(self, dtype: _DTypeT, /) -> ndarray[tuple[()], _DTypeT]: ...
 
+    #
+    @overload
+    def __getitem__(self, key: tuple[()], /) -> Self: ...
+    @overload
+    def __getitem__(
+        self, key: EllipsisType | tuple[EllipsisType], /
+    ) -> ndarray[tuple[()], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: None | tuple[None], /
+    ) -> ndarray[tuple[int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None], /
+    ) -> ndarray[tuple[int, int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None, None], /
+    ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
+    @overload  # Limited support for (None,) * N > 3
+    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
+
+    #
     @overload
     def __array_wrap__(
         self,
@@ -3722,21 +3756,24 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     def trace(  # type: ignore[misc]
         self: Never,
         /,
-        offset: Never = ...,
-        axis1: Never = ...,
-        axis2: Never = ...,
-        dtype: Never = ...,
-        out: Never = ...,
+        offset: L[0] = 0,
+        axis1: L[0] = 0,
+        axis2: L[1] = 1,
+        dtype: None = None,
+        out: None = None,
     ) -> Never: ...
-    def diagonal(self: Never, /, offset: Never = ..., axis1: Never = ..., axis2: Never = ...) -> Never: ...  # type: ignore[misc]
+    def diagonal(self: Never, /, offset: L[0] = 0, axis1: L[0] = 0, axis2: L[1] = 1) -> Never: ...  # type: ignore[misc]
     def swapaxes(self: Never, axis1: Never, axis2: Never, /) -> Never: ...  # type: ignore[misc]
-    def sort(self: Never, /, axis: Never = ..., kind: Never = ..., order: Never = ...) -> Never: ...  # type: ignore[misc]
+    def sort(self: Never, /, axis: L[-1] = -1, kind: None = None, order: None = None, *, stable: None = None) -> Never: ...  # type: ignore[misc]
     def nonzero(self: Never, /) -> Never: ...  # type: ignore[misc]
-    def setfield(self: Never, /, val: Never, dtype: Never, offset: Never = ...) -> None: ...  # type: ignore[misc]
-    def searchsorted(self: Never, /, v: Never, side: Never = ..., sorter: Never = ...) -> Never: ...  # type: ignore[misc]
+    def setfield(self: Never, val: Never, /, dtype: Never, offset: L[0] = 0) -> None: ...  # type: ignore[misc]
+    def searchsorted(self: Never, v: Never, /, side: L["left"] = "left", sorter: None = None) -> Never: ...  # type: ignore[misc]
 
     # NOTE: this wont't raise, but won't do anything either
-    def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = False) -> None: ...
+    @overload
+    def resize(self, /, *, refcheck: builtins.bool = True) -> None: ...
+    @overload
+    def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: builtins.bool = True) -> None: ...
 
     #
     def byteswap(self, /, inplace: L[False] = False) -> Self: ...
@@ -3745,84 +3782,74 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @overload
     def astype(
         self,
+        /,
         dtype: _DTypeLike[_ScalarT],
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        subok: builtins.bool = ...,
-        copy: builtins.bool | _CopyMode = ...,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: builtins.bool = True,
+        copy: builtins.bool | _CopyMode = True,
     ) -> _ScalarT: ...
     @overload
     def astype(
         self,
+        /,
         dtype: DTypeLike | None,
-        order: _OrderKACF = ...,
-        casting: _CastingKind = ...,
-        subok: builtins.bool = ...,
-        copy: builtins.bool | _CopyMode = ...,
-    ) -> Any: ...
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "unsafe",
+        subok: builtins.bool = True,
+        copy: builtins.bool | _CopyMode = True,
+    ) -> Incomplete: ...
 
     # NOTE: `view` will perform a 0D->scalar cast,
     # thus the array `type` is irrelevant to the output type
     @overload
-    def view(self, type: type[NDArray[Any]] = ...) -> Self: ...
+    def view(self, type: type[ndarray] = ...) -> Self: ...
     @overload
-    def view(
-        self,
-        dtype: _DTypeLike[_ScalarT],
-        type: type[NDArray[Any]] = ...,
-    ) -> _ScalarT: ...
+    def view(self, /, dtype: _DTypeLike[_ScalarT], type: type[ndarray] = ...) -> _ScalarT: ...
     @overload
-    def view(
-        self,
-        dtype: DTypeLike,
-        type: type[NDArray[Any]] = ...,
-    ) -> Any: ...
+    def view(self, /, dtype: DTypeLike, type: type[ndarray] = ...) -> Incomplete: ...
 
     @overload
-    def getfield(
-        self,
-        dtype: _DTypeLike[_ScalarT],
-        offset: SupportsIndex = ...
-    ) -> _ScalarT: ...
+    def getfield(self, /, dtype: _DTypeLike[_ScalarT], offset: SupportsIndex = 0) -> _ScalarT: ...
     @overload
-    def getfield(
-        self,
-        dtype: DTypeLike,
-        offset: SupportsIndex = ...
-    ) -> Any: ...
+    def getfield(self, /, dtype: DTypeLike, offset: SupportsIndex = 0) -> Incomplete: ...
 
     @overload
     def take(
         self,
         indices: _IntLike_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> Self: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         out: None = None,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> NDArray[Self]: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        /,
+        axis: SupportsIndex | None = None,
         *,
         out: _ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
     @overload
     def take(
         self,
         indices: _ArrayLikeInt_co,
+        /,
         axis: SupportsIndex | None,
         out: _ArrayT,
-        mode: _ModeKind = ...,
+        mode: _ModeKind = "raise",
     ) -> _ArrayT: ...
 
     def repeat(self, repeats: _ArrayLikeInt_co, /, axis: SupportsIndex | None = None) -> ndarray[tuple[int], dtype[Self]]: ...
@@ -5702,10 +5729,33 @@ class void(flexible[bytes | tuple[Any, ...]]):  # type: ignore[misc]
     @overload
     def __new__(cls, length_or_data: object, /, dtype: _DTypeLikeVoid) -> Self: ...
 
+    #
+    @overload
+    def __getitem__(self, key: tuple[()], /) -> Self: ...
+    @overload
+    def __getitem__(
+        self, key: EllipsisType | tuple[EllipsisType], /
+    ) -> ndarray[tuple[()], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: None | tuple[None], /
+    ) -> ndarray[tuple[int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None], /
+    ) -> ndarray[tuple[int, int], dtype[Self]]: ...
+    @overload
+    def __getitem__(
+        self, key: tuple[None, None, None], /
+    ) -> ndarray[tuple[int, int, int], dtype[Self]]: ...
+    @overload  # Limited support for (None,) * N > 3
+    def __getitem__(self, key: tuple[None, ...], /) -> NDArray[Self]: ...
     @overload
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
     @overload
     def __getitem__(self, key: list[str], /) -> void: ...
+
+    #
     def __setitem__(self, key: str | list[str] | SupportsIndex, value: ArrayLike, /) -> None: ...
 
     def setfield(self, val: ArrayLike, dtype: DTypeLike, offset: int = ...) -> None: ...
@@ -5734,6 +5784,8 @@ class str_(character[str], str):  # type: ignore[misc]
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
 class ufunc:
+    __signature__: Final[inspect.Signature]
+
     @property
     def __name__(self) -> LiteralString: ...
     @property
@@ -6096,27 +6148,6 @@ class memmap(ndarray[_ShapeT_co, _DTypeT_co]):
         return_scalar: builtins.bool = False,
     ) -> Any: ...
     def flush(self) -> None: ...
-
-# TODO: Add a mypy plugin for managing functions whose output type is dependent
-# on the literal value of some sort of signature (e.g. `einsum` and `vectorize`)
-class vectorize:
-    pyfunc: Callable[..., Any]
-    cache: builtins.bool
-    signature: LiteralString | None
-    otypes: LiteralString | None
-    excluded: set[int | str]
-    __doc__: str | None
-    def __init__(
-        self,
-        /,
-        pyfunc: Callable[..., Any] | _NoValueType = ...,  # = _NoValue
-        otypes: str | Iterable[DTypeLike] | None = None,
-        doc: str | None = None,
-        excluded: Iterable[int | str] | None = None,
-        cache: builtins.bool = False,
-        signature: str | None = None,
-    ) -> None: ...
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class poly1d:
     @property

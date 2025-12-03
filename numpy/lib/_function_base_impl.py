@@ -4627,7 +4627,7 @@ def _inverted_cdf(n, quantiles):
 def _quantile_ureduce_func(
     a: np.ndarray,
     q: np.ndarray,
-    weights: np.ndarray,
+    weights: np.ndarray | None,
     axis: int | None = None,
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
@@ -4827,6 +4827,9 @@ def _quantile(
         # distribution function cdf
         cdf = weights.cumsum(axis=0, dtype=np.float64)
         cdf /= cdf[-1, ...]  # normalization to 1
+        if np.isnan(cdf[-1]).any():
+            # Above calculations should normally warn for the zero/inf case.
+            raise ValueError("Weights included NaN, inf or were all zero.")
         # Search index i such that
         #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
         # is then equivalent to

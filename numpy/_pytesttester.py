@@ -123,7 +123,6 @@ class PytestTester:
         True
 
         """
-        import warnings
 
         import pytest
 
@@ -135,14 +134,6 @@ class PytestTester:
 
         # offset verbosity. The "-q" cancels a "-v".
         pytest_args += ["-q"]
-
-        if sys.version_info < (3, 12):
-            with warnings.catch_warnings():
-                warnings.simplefilter("always")
-                # Filter out distutils cpu warnings (could be localized to
-                # distutils tests). ASV has problems with top level import,
-                # so fetch module for suppression here.
-                from numpy.distutils import cpuinfo  # noqa: F401
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.

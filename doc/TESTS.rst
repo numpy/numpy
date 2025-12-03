@@ -143,8 +143,6 @@ module called ``test_yyy.py``.  If you only need to test one aspect of
 More often, we need to group a number of tests together, so we create
 a test class::
 
-  import pytest
-
   # import xxx symbols
   from numpy.xxx.yyy import zzz
   import pytest

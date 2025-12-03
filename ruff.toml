@@ -1,6 +1,5 @@
 extend-exclude = [
     "numpy/__config__.py",
-    "numpy/distutils",
     "numpy/typing/_char_codes.py",
     "spin/cmds.py",
     # Submodules.
@@ -37,7 +36,8 @@ extend-select = [
     "W",    # pycodestyle/warning
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
-    "UP",   # pyupgrade
+    # TODO: re-enable after merging https://github.com/numpy/numpy/pull/30319
+    # "UP",   # pyupgrade
 ]
 ignore = [
     # flake8-bugbear
@@ -90,7 +90,6 @@ ignore = [
 "numpy/_core/tests/test_multiarray.py" = ["E501"]
 "numpy/_core/tests/test_nditer*py" = ["E501"]
 "numpy/_core/tests/test_umath.py" = ["E501"]
-"numpy/_core/tests/test_numeric.py" = ["E501"]
 "numpy/_core/tests/test_numerictypes.py" = ["E501"]
 "numpy/_core/tests/test_regression.py" = ["E501"]
 "numpy/_core/_add_newdocs.py" = ["E501"]

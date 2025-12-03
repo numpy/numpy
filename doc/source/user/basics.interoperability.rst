@@ -65,6 +65,18 @@ and outputs a NumPy ndarray (which is generally a view of the input object's dat
 buffer). The :ref:`dlpack:python-spec` page explains the ``__dlpack__`` protocol
 in detail.
 
+``dtype`` interoperability
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Similar to ``__array__()`` for array objects, defining ``__numpy_dtype__``
+allows a custom dtype object to be interoperable with NumPy.
+The ``__numpy_dtype__`` must return a NumPy dtype instance (note that
+``np.float64`` is not a dtype instance, ``np.dtype(np.float64)`` is).
+
+.. versionadded:: 2.4
+   Before NumPy 2.4 a ``.dtype`` attribute was treated similarly. As of NumPy 2.4
+   both is accepted and implementing ``__numpy_dtype__`` prevents ``.dtype``
+   from being checked.
+
 The array interface protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

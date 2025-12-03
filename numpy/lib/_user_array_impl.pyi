@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from types import EllipsisType
 from typing import Any, Generic, Self, SupportsIndex, TypeAlias, overload
-from typing_extensions import TypeVar, override
+from typing_extensions import TypeVar, deprecated, override
 
 import numpy as np
 import numpy.typing as npt
@@ -37,7 +37,9 @@ _ToIndex: TypeAlias = SupportsIndex | _ToIndexSlice
 _ToIndices: TypeAlias = _ToIndex | tuple[_ToIndex, ...]
 
 ###
+# pyright: reportDeprecated = false
 
+@deprecated("The numpy.lib.user_array.container class is deprecated and will be removed in a future version.")
 class container(Generic[_ShapeT_co, _DTypeT_co]):
     array: np.ndarray[_ShapeT_co, _DTypeT_co]
 

@@ -41,6 +41,20 @@ extern "C" {
 #define INTP_SWAP(a,b) {npy_intp tmp = (b); (b)=(a); (a) = tmp;}
 
 /*
+ ******************************************************************************
+ **                        SORTING WRAPPERS                                  **
+ ******************************************************************************
+ */
+
+static inline void
+get_sort_data_from_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
+{
+    PyArrayObject *arr = (PyArrayObject *)varr;
+    *elsize = PyArray_ITEMSIZE(arr);
+    *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+}
+
+/*
  *****************************************************************************
  **                        COMPARISON FUNCTIONS                             **
  *****************************************************************************

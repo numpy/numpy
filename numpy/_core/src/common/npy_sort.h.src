@@ -107,6 +107,29 @@ NPY_NO_EXPORT int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *ar
 NPY_NO_EXPORT int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
+
+/*
+ *****************************************************************************
+ **                      GENERIC SORT IMPLEMENTATIONS                       **
+ *****************************************************************************
+ */
+
+typedef int (PyArray_SortImpl)(void *start, npy_intp num, void *varr,
+                               npy_intp elsize, PyArray_CompareFunc *cmp);
+typedef int (PyArray_ArgSortImpl)(void *vv, npy_intp *tosort, npy_intp n,
+                                  void *varr, npy_intp elsize,
+                                  PyArray_CompareFunc *cmp);
+
+NPY_NO_EXPORT int npy_quicksort_impl(void *start, npy_intp num, void *varr,
+                                     npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_mergesort_impl(void *start, npy_intp num, void *varr,
+                                     npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_aquicksort_impl(void *vv, npy_intp *tosort, npy_intp num, void *varr,
+                                      npy_intp elsize, PyArray_CompareFunc *cmp);
+NPY_NO_EXPORT int npy_amergesort_impl(void *v, npy_intp *tosort, npy_intp num, void *varr,
+                                      npy_intp elsize, PyArray_CompareFunc *cmp);
+
+
 #ifdef __cplusplus
 }
 #endif

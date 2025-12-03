@@ -2083,7 +2083,7 @@ cdef class Generator:
         -----
         The probability density for the Pareto II distribution is
 
-        .. math:: p(x) = \\frac{a}{{x+1}^{a+1}} , x \ge 0
+        .. math:: p(x) = \\frac{a}{(x+1)^{a+1}} , x \ge 0
 
         where :math:`a > 0` is the shape.
 

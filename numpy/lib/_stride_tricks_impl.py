@@ -449,14 +449,14 @@ def _broadcast_shape(*args):
     """
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
-    b = np.broadcast(*args[:32])
-    # unfortunately, it cannot handle 32 or more arguments directly
-    for pos in range(32, len(args), 31):
+    b = np.broadcast(*args[:64])
+    # unfortunately, it cannot handle 64 or more arguments directly
+    for pos in range(64, len(args), 63):
         # ironically, np.broadcast does not properly handle np.broadcast
         # objects (it treats them as scalars)
         # use broadcasting to avoid allocating the full array
         b = broadcast_to(0, b.shape)
-        b = np.broadcast(b, *args[pos:(pos + 31)])
+        b = np.broadcast(b, *args[pos:(pos + 63)])
     return b.shape
 
 
@@ -567,7 +567,7 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    # nditer is not used here to avoid the limit of 32 arrays.
+    # nditer is not used here to avoid the limit of 64 arrays.
     # Otherwise, something like the following one-liner would suffice:
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
