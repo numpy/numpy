@@ -6,11 +6,14 @@ cc = meson.get_compiler('c')
 cy = meson.get_compiler('cython')
 
 # Keep synced with pyproject.toml
-if not cy.version().version_compare('>=3.1.0')
-  error('tests requires Cython >= 3.1.0')
+if not cy.version().version_compare('>=3.0.6')
+  error('tests requires Cython >= 3.0.6')
 endif
 
-cython_args = ['-Xfreethreading_compatible=True']
+cython_args = []
+if cy.version().version_compare('>=3.1.0')
+  cython_args += ['-Xfreethreading_compatible=True']
+endif
 
 npy_include_path = run_command(py, [
     '-c',

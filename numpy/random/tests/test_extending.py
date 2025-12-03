@@ -38,7 +38,7 @@ except ImportError:
 else:
     from numpy._utils import _pep440
     # Note: keep in sync with the one in pyproject.toml
-    required_version = '3.1.0'
+    required_version = '3.0.6'
     if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
