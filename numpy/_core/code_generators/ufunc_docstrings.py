@@ -3174,7 +3174,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
 add_newdoc('numpy._core.umath', 'negative',
     """
-    Element-wise numerical negation.
+    Numerical negation, element-wise.
 
     Parameters
     ----------
@@ -3198,7 +3198,7 @@ add_newdoc('numpy._core.umath', 'negative',
     >>> np.negative(x)
     array([[-1,  2],
            [-3,  4]])
-    
+
     >>> np.negative([1, -1, np.nan])
     array([-1.,  1.,  nan])
 
@@ -3246,9 +3246,9 @@ add_newdoc('numpy._core.umath', 'positive',
 
     >>> x = np.array([[1, -2], [3, -4]])
     >>> np.positive(x)
-    array([[ 1., -2],
-           [ 3., -4]])
-    
+    array([[ 1, -2],
+           [ 3, -4]])
+
     >>> np.positive([1, -1, np.nan])
     array([ 1., -1., nan])
 
