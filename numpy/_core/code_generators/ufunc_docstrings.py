@@ -3202,6 +3202,11 @@ add_newdoc('numpy._core.umath', 'negative',
     >>> np.negative([1, -1, np.nan])
     array([-1.,  1.,  nan])
 
+    >>> a = np.array([1, -2, 3, -4])
+    >>> np.negative.at(a, [0, 1])
+    >>> a
+    array([-1,  2,  3, -4])
+
     The unary ``-`` operator can be used as a shorthand for ``np.negative`` on
     ndarrays.
 
