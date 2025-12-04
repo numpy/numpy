@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import gc
 import inspect
@@ -993,10 +994,8 @@ class TestMonsterType:
             d = (d, (1,))
         # depending on OS and Python version, this might succeed
         # see gh-30370 and cpython issue #142253
-        try:
+        with contextlib.suppress(RecursionError):
             np.dtype(d)
-        except RecursionError:
-            pass
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
