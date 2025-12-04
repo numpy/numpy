@@ -991,8 +991,12 @@ class TestMonsterType:
         d = np.int32
         for i in range(100000):
             d = (d, (1,))
-        with pytest.raises(RecursionError):
+        # depending on OS and Python version, this might succeed
+        # see gh-30370 and cpython issue #142253
+        try:
             np.dtype(d)
+        except RecursionError:
+            pass
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
