@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import gc
 import inspect
@@ -991,7 +992,9 @@ class TestMonsterType:
         d = np.int32
         for i in range(100000):
             d = (d, (1,))
-        with pytest.raises(RecursionError):
+        # depending on OS and Python version, this might succeed
+        # see gh-30370 and cpython issue #142253
+        with contextlib.suppress(RecursionError):
             np.dtype(d)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
