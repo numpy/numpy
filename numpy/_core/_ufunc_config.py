@@ -68,6 +68,11 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     - Invalid operation: result is not an expressible number, typically
       indicates that a NaN was produced.
 
+    **Thread safety:** Error handling settings are maintained on a per-thread
+    basis. Each thread can have its own independent error handling configuration.
+    See :ref:`thread_safety` for more information about using NumPy in
+    multithreaded contexts.
+
     .. [1] https://en.wikipedia.org/wiki/IEEE_754
 
     Examples
@@ -127,6 +132,10 @@ def geterr():
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Thread safety:** Error handling settings are maintained on a per-thread
+    basis. This function returns the settings for the current thread only.
+    See :ref:`thread_safety` for more information.
+
     Examples
     --------
     >>> import numpy as np
@@ -172,6 +181,12 @@ def setbufsize(size):
     bufsize : int
         Previous size of ufunc buffer in bytes.
 
+    Notes
+    -----
+    **Thread safety:** Buffer size settings are maintained on a per-thread
+    basis. Each thread can have its own independent buffer size.
+    See :ref:`thread_safety` for more information.
+
     Examples
     --------
     When exiting a `numpy.errstate` context manager the bufsize is restored:
@@ -204,6 +219,12 @@ def getbufsize():
     -------
     getbufsize : int
         Size of ufunc buffer in bytes.
+
+    Notes
+    -----
+    **Thread safety:** Buffer size settings are maintained on a per-thread
+    basis. This function returns the buffer size for the current thread only.
+    See :ref:`thread_safety` for more information.
 
     Examples
     --------
@@ -255,6 +276,12 @@ def seterrcall(func):
     See Also
     --------
     seterr, geterr, geterrcall
+
+    Notes
+    -----
+    **Thread safety:** The error callback is maintained on a per-thread basis.
+    Each thread can have its own independent callback function.
+    See :ref:`thread_safety` for more information.
 
     Examples
     --------
@@ -331,6 +358,10 @@ def geterrcall():
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Thread safety:** The error callback is maintained on a per-thread basis.
+    This function returns the callback for the current thread only.
+    See :ref:`thread_safety` for more information.
+
     Examples
     --------
     >>> import numpy as np
@@ -398,6 +429,12 @@ class errstate:
     -----
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
+
+    **Multithreading:** As of version 2.0, `errstate` works correctly with
+    threading and asyncio. Error handling settings are maintained on a per-thread
+    basis, so using `errstate` in one thread does not affect other threads.
+    See :ref:`thread_safety` for more information about using NumPy in
+    multithreaded contexts.
 
     Examples
     --------
