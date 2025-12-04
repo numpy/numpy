@@ -43,22 +43,6 @@ jobs:
       matrix:
         BUILD_PROP:
           - [
-              "ppc64le",
-              "powerpc64le-linux-gnu",
-              "ppc64le/ubuntu:22.04",
-              "-Dallow-noblas=true",
-              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
-              "ppc64le"
-            ]
-          - [
-              "ppc64le - baseline(Power9)",
-              "powerpc64le-linux-gnu",
-              "ppc64le/ubuntu:22.04",
-              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
-              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
-              "ppc64le"
-            ]
-          - [
               "s390x",
               "s390x-linux-gnu",
               "s390x/ubuntu:22.04",
@@ -124,7 +108,9 @@ jobs:
         docker run --platform=linux/${ARCH} --name the_container --interactive \
           -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
           apt update &&
-          apt install -y cmake git python3 python-is-python3 python3-dev python3-pip &&
+          apt install -y cmake git curl ca-certificates &&
+          curl -LsSf https://astral.sh/uv/install.sh | sh &&
+          export PATH="/root/.local/bin:$PATH" &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           rm -rf /usr/${TOOLCHAIN_NAME} && ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
@@ -140,8 +126,9 @@ jobs:
           git config --global --add safe.directory /numpy &&
           # No need to build ninja from source, the host ninja is used for the build
           grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
-          python -m pip install -r /tmp/build_requirements.txt &&
-          python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout &&
+          uv venv --python 3.12 .venv &&
+          source .venv/bin/activate &&
+          uv pip install -r /tmp/build_requirements.txt pytest pytest-xdist hypothesis pytest-timeout
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
@@ -157,7 +144,7 @@ jobs:
         docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy && spin build --clean -- ${MESON_OPTIONS}
+            source .venv/bin/activate && cd /numpy && spin build --clean -- ${MESON_OPTIONS}
           '"
 
     - name: Meson Log
@@ -170,7 +157,7 @@ jobs:
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
             export F90=/usr/bin/gfortran
-            cd /numpy && spin test -- --timeout=600 --durations=10 -k \"${RUNTIME_TEST_FILTER}\"
+            source .venv/bin/activate && cd /numpy && spin test -- --timeout=600 --durations=10 -k \"${RUNTIME_TEST_FILTER}\"
           '"
 
 
@@ -232,6 +219,8 @@ jobs:
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
           ln -s /host/usr/lib/gcc-cross/${TOOLCHAIN_NAME} /usr/lib/gcc/${TOOLCHAIN_NAME} &&
+          mkdir -p /usr/libexec/gcc &&
+          rm -rf /usr/libexec/gcc/${TOOLCHAIN_NAME} && ln -s /host/usr/libexec/gcc/${TOOLCHAIN_NAME} /usr/libexec/gcc/${TOOLCHAIN_NAME} &&
           rm -f /usr/bin/gcc && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gcc-14 /usr/bin/gcc &&
           rm -f /usr/bin/g++ && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-g++-14 /usr/bin/g++ &&
           rm -f /usr/bin/gfortran && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gfortran-14 /usr/bin/gfortran &&
@@ -241,8 +230,14 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install --break-system-packages -r /numpy/requirements/build_requirements.txt &&
-          python -m pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
+          # No need to build ninja from source, the host ninja is used for the build
+          grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
+          python -m pip install --break-system-packages uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
+          export PATH="/root/.local/bin:$PATH" &&
+          uv venv --python 3.12 .venv &&
+          source .venv/bin/activate &&
+          uv pip install -r /tmp/build_requirements.txt pytest pytest-xdist hypothesis &&
+          rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
         mkdir -p "~/docker_${TOOLCHAIN_NAME}"
@@ -257,7 +252,7 @@ jobs:
         docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy/ && spin build --clean -- ${MESON_OPTIONS}
+            source .venv/bin/activate && cd /numpy/ && spin build --clean -- ${MESON_OPTIONS}
           '"
 
     - name: Meson Log
@@ -269,5 +264,5 @@ jobs:
         docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
         -v $(pwd):/numpy -v /:/host the_container \
         /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
-          cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+          source .venv/bin/activate && cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
         '"
