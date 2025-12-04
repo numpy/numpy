@@ -3345,6 +3345,10 @@ static PySequenceMethods make_voidtype_as_sequence() {
 static PySequenceMethods voidtype_as_sequence = make_voidtype_as_sequence();
 
 
+//=================
+// buffer protocol
+//=================
+
 /*
  * This function implements simple buffer export for user defined subclasses
  * of `np.generic`. All other scalar types override the buffer export.
@@ -3390,37 +3394,65 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
     return 0;
 }
 
+template <typename PT>
+constexpr static const char* get_struct_fmt_for_npy_type() {
+    // cannot use npy_<type> because they might be 
+    // the same underlying type but with different name 
+    // and should be treated differently
+    // e.g.
+    // static_assert(std::is_same_v<npy_ubyte, npy_bool>);
+    // static_assert(std::is_same_v<npy_ushort, npy_half>);
+    // static_assert(std::is_same_v<npy_double, npy_longdouble>);
 
-static PyBufferProcs gentype_arrtype_as_buffer = {
-    // we initialize in-list because in MSVC:
-    // error C7555: use of designated initializers requires at least '/std:c++20'
-    /* bf_getbuffer = */ (getbufferproc)gentype_arrtype_getbuffer,
-};
+    if constexpr (std::is_same_v<PT, PyBoolScalarObject>) {
+        return "?";
+    } else if constexpr (std::is_same_v<PT, PyByteScalarObject>) {
+        return "b";
+    } else if constexpr (std::is_same_v<PT, PyShortScalarObject>) {
+        return "h";
+    } else if constexpr (std::is_same_v<PT, PyIntScalarObject>) {
+        return "i";
+    } else if constexpr (std::is_same_v<PT, PyLongScalarObject>) {
+        return "l";
+    } else if constexpr (std::is_same_v<PT, PyLongLongScalarObject>) {
+        return "q";
+    } else if constexpr (std::is_same_v<PT, PyUByteScalarObject>) {
+        return "B";
+    } else if constexpr (std::is_same_v<PT, PyUShortScalarObject>) {
+        return "H";
+    } else if constexpr (std::is_same_v<PT, PyUIntScalarObject>) {
+        return "I";
+    } else if constexpr (std::is_same_v<PT, PyULongScalarObject>) {
+        return "L";
+    } else if constexpr (std::is_same_v<PT, PyULongLongScalarObject>) {
+        return "Q";
+    } else if constexpr (std::is_same_v<PT, PyHalfScalarObject>) {
+        return "e";
+    } else if constexpr (std::is_same_v<PT, PyFloatScalarObject>) {
+        return "f";
+    } else if constexpr (std::is_same_v<PT, PyDoubleScalarObject>) {
+        return "d";
+    } else if constexpr (std::is_same_v<PT, PyLongDoubleScalarObject>) {
+        return "g";
+    } else if constexpr (std::is_same_v<PT, PyCFloatScalarObject>) {
+        return "Zf";
+    } else if constexpr (std::is_same_v<PT, PyCDoubleScalarObject>) {
+        return "Zd";
+    } else if constexpr (std::is_same_v<PT, PyCLongDoubleScalarObject>) {
+        return "Zg";
+    }
+}
 
-
-/**begin repeat
- * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
- *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
- *         clongdouble#
- * #Name = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
- *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
- *         CLongDouble#
- * #NAME = BOOL, BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
- *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
- *         CLONGDOUBLE#
- * #fmt = ?, b, h, i, l, q, B, H, I, L, Q, e, f, d, g, Zf, Zd, Zg#
- */
-
+template <typename T, typename PT>
 static int
-@name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
+dunder_buffer_impl1(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
-    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
 
-    static char fmt[3] = "@fmt@";
+    auto *scalar = (PT *)self;
 
     view->ndim = 0;
     view->len = sizeof(scalar->obval);
@@ -3439,19 +3471,10 @@ static int
         return 0;
     }
 
-    view->format = fmt;
+    view->format = (char*)get_struct_fmt_for_npy_type<PT>();
 
     return 0;
 }
-
-static PyBufferProcs @name@_arrtype_as_buffer = {
-    // we initialize in-list because in MSVC:
-    // error C7555: use of designated initializers requires at least '/std:c++20'
-    /* bf_getbuffer = */ @name@_getbuffer,
-    /* No need to release the buffer */
-};
-
-/**end repeat**/
 
 static int
 unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
@@ -3511,27 +3534,15 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
     return 0;
 }
 
-static PyBufferProcs unicode_arrtype_as_buffer = {
-    // we initialize in-list because in MSVC:
-    // error C7555: use of designated initializers requires at least '/std:c++20'
-    /* bf_getbuffer = */ unicode_getbuffer,
-    /* No need to release the buffer */
-};
-
-
-/**begin repeat
- * #name = datetime, timedelta#
- * #Name = Datetime, Timedelta#
- */
-
+template <typename T, typename PT>
 static int
-@name@_getbuffer(PyObject *self, Py_buffer *view, int flags)
+dunder_buffer_impl2(PyObject *self, Py_buffer *view, int flags)
 {
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
         PyErr_SetString(PyExc_BufferError, "scalar buffer is readonly");
         return -1;
     }
-    Py@Name@ScalarObject *scalar = (Py@Name@ScalarObject *)self;
+    auto *scalar = (PT *)self;
 
     view->ndim = 1;
     view->len = 8;
@@ -3558,21 +3569,45 @@ static int
     return 0;
 }
 
-static PyBufferProcs @name@_arrtype_as_buffer = {
+constexpr static auto make_pybufferprocs(getbufferproc getbufferproc_) {
     // we initialize in-list because in MSVC:
     // error C7555: use of designated initializers requires at least '/std:c++20'
-    /* bf_getbuffer = */ @name@_getbuffer,
-    /* No need to release the buffer */
-};
+    return PyBufferProcs {
+        /* .bf_getbuffer = */ getbufferproc_,
+        /* No need to release the buffer */
+    };
+}
 
-/**end repeat**/
+static auto unicode_arrtype_as_buffer = make_pybufferprocs(unicode_getbuffer);
+static auto gentype_arrtype_as_buffer = make_pybufferprocs(gentype_arrtype_getbuffer);
 
-static PyBufferProcs void_arrtype_as_buffer = {
-    // we initialize in-list because in MSVC:
-    // error C7555: use of designated initializers requires at least '/std:c++20'
-    /* bf_getbuffer = */ void_getbuffer,  /* defined in buffer.c */
-    /* No need to release the buffer */
-};
+static auto bool_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_bool, PyBoolScalarObject>);
+static auto byte_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_byte, PyByteScalarObject>);
+static auto short_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_short, PyShortScalarObject>);
+static auto int_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_int, PyIntScalarObject>);
+static auto long_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_long, PyLongScalarObject>);
+static auto longlong_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_longlong, PyLongLongScalarObject>);
+static auto ubyte_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_ubyte, PyUByteScalarObject>);
+static auto ushort_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_ushort, PyUShortScalarObject>);
+static auto uint_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_uint, PyUIntScalarObject>);
+static auto ulong_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_ulong, PyULongScalarObject>);
+static auto ulonglong_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_ulonglong, PyULongLongScalarObject>);
+static auto half_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_half, PyHalfScalarObject>);
+static auto float_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_float, PyFloatScalarObject>);
+static auto double_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_double, PyDoubleScalarObject>);
+static auto longdouble_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_longdouble, PyLongDoubleScalarObject>);
+static auto cfloat_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_cfloat, PyCFloatScalarObject>);
+static auto cdouble_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_cdouble, PyCDoubleScalarObject>);
+static auto clongdouble_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl1<npy_clongdouble, PyCLongDoubleScalarObject>);
+
+static auto datetime_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl2<npy_datetime, PyDatetimeScalarObject>);
+static auto timedelta_arrtype_as_buffer = make_pybufferprocs(dunder_buffer_impl2<npy_timedelta, PyTimedeltaScalarObject>);
+
+static auto void_arrtype_as_buffer = make_pybufferprocs(void_getbuffer);  /* defined in buffer.c */
+
+//=====================
+// end buffer protocol
+//=====================
 
 
 #define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE
