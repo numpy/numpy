@@ -3174,7 +3174,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
 add_newdoc('numpy._core.umath', 'negative',
     """
-    Element-wise numerical negation.
+    Numerical negation, element-wise.
 
     Parameters
     ----------
@@ -3193,19 +3193,6 @@ add_newdoc('numpy._core.umath', 'negative',
     >>> import numpy as np
     >>> np.negative([1.,-1.])
     array([-1.,  1.])
-
-    >>> x = np.array([[1, -2], [3, -4]])
-    >>> np.negative(x)
-    array([[-1,  2],
-           [-3,  4]])
-    
-    >>> np.negative([1, -1, np.nan])
-    array([-1.,  1.,  nan])
-
-    >>> a = np.array([1, -2, 3, -4])
-    >>> np.negative.at(a, [0, 1])
-    >>> a
-    array([-1,  2,  3, -4])
 
     The unary ``-`` operator can be used as a shorthand for ``np.negative`` on
     ndarrays.
@@ -3243,14 +3230,6 @@ add_newdoc('numpy._core.umath', 'positive',
     >>> x1 = np.array(([1., -1.]))
     >>> np.positive(x1)
     array([ 1., -1.])
-
-    >>> x = np.array([[1, -2], [3, -4]])
-    >>> np.positive(x)
-    array([[ 1., -2],
-           [ 3., -4]])
-    
-    >>> np.positive([1, -1, np.nan])
-    array([ 1., -1., nan])
 
     The unary ``+`` operator can be used as a shorthand for ``np.positive`` on
     ndarrays.
