@@ -40,6 +40,7 @@
 #include "array_api_standard.h"
 
 #include <stdlib.h>
+#include <type_traits>
 
 #include "binop_override.h"
 
@@ -2488,41 +2489,53 @@ numbertype_class_getitem(PyObject *cls, PyObject *args)
  * to Python complex
  */
 
-/**begin repeat
- * #name = cfloat, clongdouble#
- * #Name = CFloat, CLongDouble#
- * #NAME = CFLOAT, CLONGDOUBLE#
- * #n = f, l#
- */
+template <typename T, typename PT>
 static PyObject *
-@name@_complex(PyObject *self, PyObject *NPY_UNUSED(args),
-               PyObject *NPY_UNUSED(kwds))
+dunder_complex_impl(PyObject *self, PyObject *args)
 {
-    return PyComplex_FromDoubles(npy_creal@n@(PyArrayScalar_VAL(self, @Name@)),
-                                 npy_cimag@n@(PyArrayScalar_VAL(self, @Name@)));
+    T obval = ((PT*)self)->obval;
+    if constexpr (std::is_same_v<T, npy_cfloat>) {
+        return PyComplex_FromDoubles(npy_crealf(obval), npy_cimagf(obval));
+    } else if constexpr (std::is_same_v<T, npy_clongdouble>){
+        return PyComplex_FromDoubles(npy_creall(obval), npy_cimagl(obval));
+    }
 }
-/**end repeat**/
 
-/**begin repeat
- *  #name = half, float, double, longdouble#
- *  #Name = Half, Float, Double, LongDouble#
- *  #is_half = 1,0,0,0#
- *  #c    = f, f, , l#
- *  #convert = PyLong_FromDouble, PyLong_FromDouble, PyLong_FromDouble,
- *             npy_longdouble_to_PyLong#
- *  #
- */
+
+// probably should be in it's arrayscalars.cpp file
+template <typename T>
+constexpr static auto get_npy_floor_func() {
+    if constexpr (std::is_same_v<T, npy_half> || std::is_same_v<T, npy_float>) {
+        return npy_floorf;
+    } else if constexpr (std::is_same_v<T, npy_double>) {
+        return static_cast<double(*)(double)>(npy_floor);
+    } else if constexpr (std::is_same_v<T, npy_longdouble>) {
+        return npy_floorl;
+    }
+}
+
+
 /* Heavily copied from the builtin float.as_integer_ratio */
+template <typename T, typename PT>
 static PyObject *
-@name@_as_integer_ratio(PyObject *self, PyObject *NPY_UNUSED(args))
+as_integer_ratio_impl(PyObject *self, PyObject *args)
 {
-#if @is_half@
-    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
-    npy_double frac;
-#else
-    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
-    npy_@name@ frac;
-#endif
+    auto val = [&self]() {
+        auto obval = ((PT*)self)->obval;
+        if constexpr (std::is_same_v<T, npy_half>) {
+            return npy_half_to_double(obval);
+        } else {
+            return obval;
+        }
+    }();
+
+    auto frac = []() {
+        if constexpr (std::is_same_v<T, npy_half>) {
+            return npy_double{};
+        } else {
+            return T{};
+        }
+    }();
     int exponent;
 
     PyObject *py_exponent = NULL;
@@ -2542,16 +2555,31 @@ static PyObject *
         return NULL;
     }
 
-    frac = npy_frexp@c@(val, &exponent); /* val == frac * 2**exponent exactly */
+    /* val == frac * 2**exponent exactly */
+    if constexpr (std::is_same_v<T, npy_half> || std::is_same_v<T, npy_float>) {
+        frac = npy_frexpf(val, &exponent);
+    } else if constexpr (std::is_same_v<T, npy_double>) {
+        frac = npy_frexp(val, &exponent);
+    } else if constexpr (std::is_same_v<T, npy_longdouble>) {
+        frac = npy_frexpl(val, &exponent);
+    }
+
+    constexpr auto floor_func = get_npy_floor_func<T>();
 
     /* This relies on the floating point type being base 2 to converge */
-    while (frac != npy_floor@c@(frac)) {
+    while (frac != floor_func(frac)) {
         frac *= 2.0;
         exponent--;
     }
 
     /* self == frac * 2**exponent exactly and frac is integral. */
-    numerator = @convert@(frac);
+    if constexpr (std::is_same_v<T, npy_half> 
+                    || std::is_same_v<T, npy_float> 
+                    || std::is_same_v<T, npy_double>) {
+        numerator = PyLong_FromDouble(frac);
+    } else if (std::is_same_v<T, npy_longdouble>){
+        numerator = npy_longdouble_to_PyLong(frac);
+    }
     if (numerator == NULL)
         goto error;
     denominator = PyLong_FromLong(1);
@@ -2585,22 +2613,20 @@ error:
     Py_XDECREF(numerator);
     return result_pair;
 }
-/**end repeat**/
 
-/**begin repeat
- *  #name = half, float, double, longdouble#
- *  #Name = Half, Float, Double, LongDouble#
- *  #is_half = 1,0,0,0#
- *  #c    = f, f, , l#
- */
+
+template <typename T, typename PT>
 static PyObject *
-@name@_is_integer(PyObject *self, PyObject *NPY_UNUSED(args))
+is_integer_impl(PyObject *self, PyObject *NPY_UNUSED(args))
 {
-#if @is_half@
-    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
-#else
-    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
-#endif
+    auto val = [&self]() {
+        auto obval = ((PT*)self)->obval;
+        if constexpr (std::is_same_v<T, npy_half>) {
+            return npy_half_to_double(obval);
+        } else {
+            return obval;
+        }
+    }();
     PyObject *ret;
 
     if (npy_isnan(val)) {
@@ -2610,16 +2636,21 @@ static PyObject *
         Py_RETURN_FALSE;
     }
 
-    ret = (npy_floor@c@(val) == val) ? Py_True : Py_False;
+    constexpr auto floor_func = get_npy_floor_func<T>();
+    ret = (floor_func(val) == val) ? Py_True : Py_False;
     Py_INCREF(ret);
     return ret;
 }
-/**end repeat**/
+
 
 static PyObject *
 integer_is_integer(PyObject *self, PyObject *NPY_UNUSED(args)) {
     Py_RETURN_TRUE;
 }
+
+//====================
+// method definitions
+//====================
 
 /*
  * need to fill in doc-strings for these methods on import -- copy from
@@ -2872,30 +2903,39 @@ static PyMethodDef numbertype_methods[] = {
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
 
-/**begin repeat
- * #name = boolean,datetime#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef booleantype_methods[] = {
     /* for typing */
     {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
-/**end repeat**/
 
-/**begin repeat
- * #name = cfloat,clongdouble#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef datetimetype_methods[] = {
+    /* for typing */
+    {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef cfloattype_methods[] = {
     {"__complex__",
-        (PyCFunction)@name@_complex,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        dunder_complex_impl<npy_cfloat, PyCFloatScalarObject>,
+        METH_NOARGS, NULL},
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
-/**end repeat**/
+
+static PyMethodDef clongdoubletype_methods[] = {
+    {"__complex__",
+        dunder_complex_impl<npy_clongdouble, PyCLongDoubleScalarObject>,
+        METH_NOARGS, NULL},
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}
+};
 
 static PyMethodDef floatingtype_methods[] = {
     /* Hook for the round() builtin */
@@ -2916,15 +2956,12 @@ static PyMethodDef integertype_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 
-/**begin repeat
- * #name = half,float,double,longdouble#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef halftype_methods[] = {
     {"as_integer_ratio",
-        (PyCFunction)@name@_as_integer_ratio,
+        as_integer_ratio_impl<npy_half, PyHalfScalarObject>,
         METH_NOARGS, NULL},
     {"is_integer",
-        (PyCFunction)@name@_is_integer,
+        is_integer_impl<npy_half, PyHalfScalarObject>,
         METH_NOARGS, NULL},
     /* for typing */
     {"__class_getitem__",
@@ -2932,35 +2969,178 @@ static PyMethodDef @name@type_methods[] = {
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
-/**end repeat**/
 
-/**begin repeat
- * #name = timedelta, cdouble#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef floattype_methods[] = {
+    {"as_integer_ratio",
+        as_integer_ratio_impl<npy_float, PyFloatScalarObject>,
+        METH_NOARGS, NULL},
+    {"is_integer",
+        is_integer_impl<npy_float, PyFloatScalarObject>,
+        METH_NOARGS, NULL},
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
-/**end repeat**/
 
-/**begin repeat
- * #name = byte, ubyte, short, ushort, int, uint,
- *         long, ulong, longlong, ulonglong#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef doubletype_methods[] = {
+    {"as_integer_ratio",
+        as_integer_ratio_impl<npy_double, PyDoubleScalarObject>,
+        METH_NOARGS, NULL},
+    {"is_integer",
+        is_integer_impl<npy_double, PyDoubleScalarObject>,
+        METH_NOARGS, NULL},
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyMethodDef longdoubletype_methods[] = {
+    {"as_integer_ratio",
+        as_integer_ratio_impl<npy_longdouble, PyLongDoubleScalarObject>,
+        METH_NOARGS, NULL},
+    {"is_integer",
+        is_integer_impl<npy_longdouble, PyLongDoubleScalarObject>,
+        METH_NOARGS, NULL},
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyMethodDef timedeltatype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyMethodDef cdoubletype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyMethodDef bytetype_methods[] = {
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
     {"bit_count",
-        (PyCFunction)npy_@name@_bit_count,
+        (PyCFunction)npy_byte_bit_count,
         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
-/**end repeat**/
+
+static PyMethodDef ubytetype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_ubyte_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef shorttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_short_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef ushorttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_ushort_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef inttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_int_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef uinttype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_uint_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef longtype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_long_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef ulongtype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_ulong_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef longlongtype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_longlong_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+static PyMethodDef ulonglongtype_methods[] = {
+    /* for typing */
+    {"__class_getitem__",
+        (PyCFunction)numbertype_class_getitem,
+        METH_CLASS | METH_O, NULL},
+    {"bit_count",
+        (PyCFunction)npy_ulonglong_bit_count,
+        METH_NOARGS, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+//========================
+// end method definitions
+//========================
 
 
 /************* As_mapping functions for void array scalar ************/
