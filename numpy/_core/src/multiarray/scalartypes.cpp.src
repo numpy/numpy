@@ -68,7 +68,7 @@ NPY_NO_EXPORT PyTypeObject PyTimeIntegerArrType_Type;
  * single inheritance)
  */
 
-constexpr PyTypeObject make_pyarr_type(const char* tp_name_) {
+constexpr static PyTypeObject make_pyarr_type(const char* tp_name_) {
     // we initialize in-line because in MSVC:
     // error C7555: use of designated initializers requires at least '/std:c++20'
     PyTypeObject t = { PyVarObject_HEAD_INIT(NULL, 0) };
@@ -1589,29 +1589,35 @@ clongdoubletype_long(PyObject *self)
     return npy_longdouble_to_PyLong(val);
 }
 
-static PyNumberMethods gentype_as_number = {
-    .nb_add = (binaryfunc)gentype_add,
-    .nb_subtract = (binaryfunc)gentype_subtract,
-    .nb_multiply = (binaryfunc)gentype_multiply,
-    .nb_remainder = (binaryfunc)gentype_remainder,
-    .nb_divmod = (binaryfunc)gentype_divmod,
-    .nb_power = (ternaryfunc)gentype_power,
-    .nb_negative = (unaryfunc)gentype_negative,
-    .nb_positive = (unaryfunc)gentype_positive,
-    .nb_absolute = (unaryfunc)gentype_absolute,
-    .nb_bool = (inquiry)gentype_nonzero_number,
-    .nb_invert = (unaryfunc)gentype_invert,
-    .nb_lshift = (binaryfunc)gentype_lshift,
-    .nb_rshift = (binaryfunc)gentype_rshift,
-    .nb_and = (binaryfunc)gentype_and,
-    .nb_xor = (binaryfunc)gentype_xor,
-    .nb_or = (binaryfunc)gentype_or,
-    .nb_int = (unaryfunc)gentype_int,
-    .nb_float = (unaryfunc)gentype_float,
-    .nb_floor_divide = (binaryfunc)gentype_floor_divide,
-    .nb_true_divide = (binaryfunc)gentype_true_divide,
-};
+constexpr static PyNumberMethods make_gentype_as_number() {
+    // we initialize in-line because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    PyNumberMethods t = {};
+    t.nb_add = (binaryfunc)gentype_add;
+    t.nb_subtract = (binaryfunc)gentype_subtract;
+    t.nb_multiply = (binaryfunc)gentype_multiply;
+    t.nb_remainder = (binaryfunc)gentype_remainder;
+    t.nb_divmod = (binaryfunc)gentype_divmod;
+    t.nb_power = (ternaryfunc)gentype_power;
+    t.nb_negative = (unaryfunc)gentype_negative;
+    t.nb_positive = (unaryfunc)gentype_positive;
+    t.nb_absolute = (unaryfunc)gentype_absolute;
+    t.nb_bool = (inquiry)gentype_nonzero_number;
+    t.nb_invert = (unaryfunc)gentype_invert;
+    t.nb_lshift = (binaryfunc)gentype_lshift;
+    t.nb_rshift = (binaryfunc)gentype_rshift;
+    t.nb_and = (binaryfunc)gentype_and;
+    t.nb_xor = (binaryfunc)gentype_xor;
+    t.nb_or = (binaryfunc)gentype_or;
+    t.nb_int = (unaryfunc)gentype_int;
+    t.nb_float = (unaryfunc)gentype_float;
+    t.nb_floor_divide = (binaryfunc)gentype_floor_divide;
+    t.nb_true_divide = (binaryfunc)gentype_true_divide;
+    
+    return t;
+}
 
+PyNumberMethods gentype_as_number = make_gentype_as_number();
 
 static PyObject *
 gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
@@ -3137,17 +3143,26 @@ fail:
 }
 
 static PyMappingMethods voidtype_as_mapping = {
-    .mp_length = (lenfunc)voidtype_length,
-    .mp_subscript = (binaryfunc)voidtype_subscript,
-    .mp_ass_subscript = (objobjargproc)voidtype_ass_subscript,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* mp_length  = */ (lenfunc)voidtype_length,
+    /* mp_subscript  = */ (binaryfunc)voidtype_subscript,
+    /* mp_ass_subscript  = */ (objobjargproc)voidtype_ass_subscript,
 };
 
+static PySequenceMethods make_voidtype_as_sequence() {
+    // we initialize in-line because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    // cannot use constexpr because of the castings
+    // > cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression
+    PySequenceMethods t = {};
+    t.sq_length = (lenfunc)voidtype_length;
+    t.sq_item = (ssizeargfunc)voidtype_item;
+    t.sq_ass_item = (ssizeobjargproc)voidtype_ass_item;
+    return t;
+}
 
-static PySequenceMethods voidtype_as_sequence = {
-    .sq_length = (lenfunc)voidtype_length,
-    .sq_item = (ssizeargfunc)voidtype_item,
-    .sq_ass_item = (ssizeobjargproc)voidtype_ass_item,
-};
+static PySequenceMethods voidtype_as_sequence = make_voidtype_as_sequence();
 
 
 /*
@@ -3197,7 +3212,9 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
 
 
 static PyBufferProcs gentype_arrtype_as_buffer = {
-    .bf_getbuffer = (getbufferproc)gentype_arrtype_getbuffer,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* bf_getbuffer = */ (getbufferproc)gentype_arrtype_getbuffer,
 };
 
 
@@ -3248,7 +3265,9 @@ static int
 }
 
 static PyBufferProcs @name@_arrtype_as_buffer = {
-    .bf_getbuffer = @name@_getbuffer,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* bf_getbuffer = */ @name@_getbuffer,
     /* No need to release the buffer */
 };
 
@@ -3313,7 +3332,9 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
 }
 
 static PyBufferProcs unicode_arrtype_as_buffer = {
-    .bf_getbuffer = unicode_getbuffer,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* bf_getbuffer = */ unicode_getbuffer,
     /* No need to release the buffer */
 };
 
@@ -3358,15 +3379,19 @@ static int
 }
 
 static PyBufferProcs @name@_arrtype_as_buffer = {
-        .bf_getbuffer = @name@_getbuffer,
-        /* No need to release the buffer */
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* bf_getbuffer = */ @name@_getbuffer,
+    /* No need to release the buffer */
 };
 
 /**end repeat**/
 
 static PyBufferProcs void_arrtype_as_buffer = {
-        .bf_getbuffer = void_getbuffer,  /* defined in buffer.c */
-        /* No need to release the buffer */
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* bf_getbuffer = */ void_getbuffer,  /* defined in buffer.c */
+    /* No need to release the buffer */
 };
 
 
@@ -3374,9 +3399,11 @@ static PyBufferProcs void_arrtype_as_buffer = {
 #define LEAFFLAGS  Py_TPFLAGS_DEFAULT
 
 NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.generic",
-    .tp_basicsize = sizeof(PyObject),
+    /* .tp_name = */ "numpy.generic",
+    /* .tp_basicsize = */ sizeof(PyObject),
 };
 
 
@@ -3759,12 +3786,18 @@ static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
-NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
-    .nb_bool = (inquiry)bool_arrtype_nonzero,
-    .nb_and = (binaryfunc)bool_arrtype_and,
-    .nb_xor = (binaryfunc)bool_arrtype_xor,
-    .nb_or = (binaryfunc)bool_arrtype_or,
-};
+constexpr static PyNumberMethods make_bool_arrtype_as_number() {
+    // we initialize in-line because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    PyNumberMethods t = {};
+    t.nb_bool = (inquiry)bool_arrtype_nonzero;
+    t.nb_and = (binaryfunc)bool_arrtype_and;
+    t.nb_xor = (binaryfunc)bool_arrtype_xor;
+    t.nb_or = (binaryfunc)bool_arrtype_or;
+    return t;
+}
+
+NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = make_bool_arrtype_as_number();
 
 static PyObject *
 void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -4111,19 +4144,29 @@ object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
     return PySequence_InPlaceRepeat(self->obval, count);
 }
 
-static PySequenceMethods object_arrtype_as_sequence = {
-    .sq_length = (lenfunc)object_arrtype_length,
-    .sq_concat = (binaryfunc)object_arrtype_concat,
-    .sq_repeat = (ssizeargfunc)object_arrtype_repeat,
-    .sq_contains = (objobjproc)object_arrtype_contains,
-    .sq_inplace_concat = (binaryfunc)object_arrtype_inplace_concat,
-    .sq_inplace_repeat = (ssizeargfunc)object_arrtype_inplace_repeat,
+static PySequenceMethods make_object_arrtype_as_sequence() {
+    // we initialize in-line because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    // cannot use constexpr because of the castings
+    // > cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression
+    PySequenceMethods t = {};
+    t.sq_length = (lenfunc)object_arrtype_length;
+    t.sq_concat = (binaryfunc)object_arrtype_concat;
+    t.sq_repeat = (ssizeargfunc)object_arrtype_repeat;
+    t.sq_contains = (objobjproc)object_arrtype_contains;
+    t.sq_inplace_concat = (binaryfunc)object_arrtype_inplace_concat;
+    t.sq_inplace_repeat = (ssizeargfunc)object_arrtype_inplace_repeat;
+    return t;
 };
 
+static PySequenceMethods object_arrtype_as_sequence = make_object_arrtype_as_sequence();
+
 static PyMappingMethods object_arrtype_as_mapping = {
-    .mp_length = (lenfunc)object_arrtype_length,
-    .mp_subscript = (binaryfunc)object_arrtype_subscript,
-    .mp_ass_subscript = (objobjargproc)object_arrtype_ass_subscript,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* .mp_length = */ (lenfunc)object_arrtype_length,
+    /* .mp_subscript = */ (binaryfunc)object_arrtype_subscript,
+    /* .mp_ass_subscript = */ (objobjargproc)object_arrtype_ass_subscript,
 };
 
 static int
@@ -4153,8 +4196,10 @@ object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
 }
 
 static PyBufferProcs object_arrtype_as_buffer = {
-    .bf_getbuffer = (getbufferproc)object_arrtype_getbuffer,
-    .bf_releasebuffer = (releasebufferproc)object_arrtype_releasebuffer,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* .bf_getbuffer = */ (getbufferproc)object_arrtype_getbuffer,
+    /* .bf_releasebuffer = */ (releasebufferproc)object_arrtype_releasebuffer,
 };
 
 static PyObject *
@@ -4163,19 +4208,26 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
     return PyObject_Call(obj->obval, args, kwds);
 }
 
-NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy." NPY_OBJECT_name,
-    .tp_basicsize = sizeof(PyObjectScalarObject),
-    .tp_dealloc = (destructor)object_arrtype_dealloc,
-    .tp_as_sequence = &object_arrtype_as_sequence,
-    .tp_as_mapping = &object_arrtype_as_mapping,
-    .tp_call = (ternaryfunc)object_arrtype_call,
-    .tp_getattro = (getattrofunc)object_arrtype_getattro,
-    .tp_setattro = (setattrofunc)object_arrtype_setattro,
-    .tp_as_buffer = &object_arrtype_as_buffer,
-    .tp_alloc = object_arrtype_alloc,
+static PyTypeObject make_PyObjectArrType_Type() {
+    // we initialize in-line because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    // cannot use constexpr because of the castings
+    // > cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression
+    PyTypeObject t = { PyVarObject_HEAD_INIT(NULL, 0) };
+    t.tp_name = "numpy." NPY_OBJECT_name;
+    t.tp_basicsize = sizeof(PyObjectScalarObject);
+    t.tp_dealloc = (destructor)object_arrtype_dealloc;
+    t.tp_as_sequence = &object_arrtype_as_sequence;
+    t.tp_as_mapping = &object_arrtype_as_mapping;
+    t.tp_call = (ternaryfunc)object_arrtype_call;
+    t.tp_getattro = (getattrofunc)object_arrtype_getattro;
+    t.tp_setattro = (setattrofunc)object_arrtype_setattro;
+    t.tp_as_buffer = &object_arrtype_as_buffer;
+    t.tp_alloc = object_arrtype_alloc;
+    return t;
 };
+
+NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = make_PyObjectArrType_Type();
 
 static PyObject *
 gen_arrtype_subscript(PyObject *self, PyObject *key)
@@ -4219,16 +4271,21 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
  */
 
 NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy." NPY_@NAME@_name,
-    .tp_basicsize = sizeof(Py@Name@ScalarObject),
+    /* .tp_name = */ "numpy." NPY_@NAME@_name,
+    /* .tp_basicsize = */ sizeof(Py@Name@ScalarObject),
 };
 
 /**end repeat**/
 
 
 static PyMappingMethods gentype_as_mapping = {
-    .mp_subscript = (binaryfunc)gen_arrtype_subscript,
+    // we initialize in-list because in MSVC:
+    // error C7555: use of designated initializers requires at least '/std:c++20'
+    /* .mp_length = */ NULL,
+    /* .mp_subscript = */ (binaryfunc)gen_arrtype_subscript,
 };
 
 
