@@ -16,16 +16,28 @@ _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 @overload
 @deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
-def fix(x: _FloatLike_co, out: None = None) -> floating: ...
+def fix(  # type: ignore[misc]
+    x: _FloatLike_co,
+    out: None = None,
+) -> floating: ...
 @overload
 @deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
-def fix(x: _ArrayLikeFloat_co, out: None = None) -> NDArray[floating]: ...
+def fix(
+    x: _ArrayLikeFloat_co,
+    out: None = None,
+) -> NDArray[floating]: ...
 @overload
 @deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
-def fix(x: _ArrayLikeObject_co, out: None = None) -> NDArray[object_]: ...
+def fix(
+    x: _ArrayLikeObject_co,
+    out: None = None,
+) -> NDArray[object_]: ...
 @overload
 @deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
-def fix(x: _ArrayLikeFloat_co | _ArrayLikeObject_co, out: _ArrayT) -> _ArrayT: ...
+def fix(
+    x: _ArrayLikeFloat_co | _ArrayLikeObject_co,
+    out: _ArrayT,
+) -> _ArrayT: ...
 
 @overload
 def isposinf(
