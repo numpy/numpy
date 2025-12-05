@@ -4341,9 +4341,12 @@ try_trivial_scalar_call(
     // Other threads may be in the process of filling the dispatch cache,
     // so we need to acquire the free-threading-specific dispatch cache mutex
     // before reading the cache
-    PyObject *info = PyArrayIdentityHash_GetItemWithLock(  // borrowed reference.
+    NPyRWMutex *mutex = &((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex;
+    NPyRWMutex_RLock(mutex);
+    PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
         (PyObject **)op_dtypes);
+    NPyRWMutex_RUnlock(mutex);
 #else
     PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
