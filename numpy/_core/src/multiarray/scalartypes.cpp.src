@@ -630,6 +630,11 @@ genint_type_repr(PyObject *self)
     return repr;
 }
 
+
+//===================
+// str and repr impl
+//===================
+
 static PyObject *
 genbool_type_str(PyObject *self)
 {
@@ -711,65 +716,82 @@ gentype_format(PyObject *self, PyObject *args)
 #define NPY_LONGDOUBLE_FMT NPY_DOUBLE_FMT
 #endif
 
-/**begin repeat
- * #name = half, float, double, longdouble#
- * #Name = Half, Float, Double, LongDouble#
- * #NAME = HALF, FLOAT, DOUBLE, LONGDOUBLE#
- * #type = npy_half, npy_float, npy_double, npy_longdouble#
- * #suff = h, f, d, l#
- */
-
-NPY_NO_EXPORT PyObject *
-format_@name@(@type@ val, npy_bool scientific,
+template <typename T>
+NPY_NO_EXPORT PyObject* internal_format_npy_scalar(T val, npy_bool scientific,
               int precision, int sign, TrimMode trim,
-              int pad_left, int pad_right, int exp_digits)
-{
+              int pad_left, int pad_right, int exp_digits) {
+    auto digitmode = DigitMode_Unique;
+    auto min_digits = -1;
+    // dragon4.h doesn't expose the Dragon4_Options nor the Dragon4_*_opt funcs 
+    // to avoid this argument mess
+    // we should have a Dragon4_opt implementation with templates
     if (scientific) {
-        return Dragon4_Scientific_@Name@(&val,
-                        DigitMode_Unique, precision, -1,
-                        sign, trim, pad_left, exp_digits);
-    }
-    else {
-        return Dragon4_Positional_@Name@(&val,
-                        DigitMode_Unique, CutoffMode_TotalLength, precision,
-                        -1, sign, trim, pad_left, pad_right);
+        if constexpr (std::is_same_v<T, npy_half>) {
+            return Dragon4_Scientific_Half(&val, digitmode, precision, 
+                min_digits, sign, trim, pad_left, exp_digits);
+        } else if constexpr (std::is_same_v<T, npy_float>) {
+            return Dragon4_Scientific_Float(&val, digitmode, precision, 
+                min_digits, sign, trim, pad_left, exp_digits);
+        } else if constexpr (std::is_same_v<T, npy_double>) {
+            return Dragon4_Scientific_Double(&val, digitmode, precision, 
+                min_digits, sign, trim, pad_left, exp_digits);
+        } else if constexpr (std::is_same_v<T, npy_longdouble>) {
+            return Dragon4_Scientific_LongDouble(&val, digitmode, precision, 
+                min_digits, sign, trim, pad_left, exp_digits);
+        }
+    } else {
+        auto cutoffmode = CutoffMode_TotalLength;
+        if constexpr (std::is_same_v<T, npy_half>) {
+            return Dragon4_Positional_Half(&val, digitmode, cutoffmode, 
+                precision, min_digits, sign, trim, pad_left, pad_right);
+        } else if constexpr (std::is_same_v<T, npy_float>) {
+            return Dragon4_Positional_Float(&val, digitmode, cutoffmode, 
+                precision, min_digits, sign, trim, pad_left, pad_right);
+        } else if constexpr (std::is_same_v<T, npy_double>) {
+            return Dragon4_Positional_Double(&val, digitmode, cutoffmode, 
+                precision, min_digits, sign, trim, pad_left, pad_right);
+        } else if constexpr (std::is_same_v<T, npy_longdouble>) {
+            return Dragon4_Positional_LongDouble(&val, digitmode, cutoffmode, 
+                precision, min_digits, sign, trim, pad_left, pad_right);
+        }
     }
 }
-
-
-/**end repeat**/
 
 /*
  * Over-ride repr and str of array-scalar byte strings to remove NULL bytes and
  * then call the corresponding functions of PyBytes_Type to generate the string
  */
 
-/**begin repeat
- * #form = repr, str#
- */
-#define IS_@form@
-
-static PyObject *
-stringtype_@form@(PyObject *self)
-{
+static PyObject* remove_null_bytes_in_npy_char(PyObject *self) {
     const npy_char *dptr, *ip;
     Py_ssize_t len;
     PyObject *new_;
-    PyObject *ret;
-
+    
     ip = PyBytes_AS_STRING(self);
     len = PyBytes_GET_SIZE(self);
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
     new_ = PyBytes_FromStringAndSize(ip, len);
+    return new_;
+}
+
+static PyObject* stringtype_str(PyObject *self) {
+    auto new_ = remove_null_bytes_in_npy_char(self);
     if (new_ == NULL) {
         return NULL;
     }
-    ret = PyBytes_Type.tp_@form@(new_);
+    PyObject *ret = PyBytes_Type.tp_str(new_);
     Py_DECREF(new_);
-#ifdef IS_repr
+    return ret;
+}
+
+static PyObject* stringtype_repr(PyObject *self) {
+    auto new_ = remove_null_bytes_in_npy_char(self);
+    PyObject *ret = PyBytes_Type.tp_repr(new_);
+    Py_DECREF(new_);
     if (ret == NULL) {
         return NULL;
     }
+
     int legacy_print_mode = get_legacy_print_mode();
     if (legacy_print_mode == -1) {
         return NULL;
@@ -777,29 +799,17 @@ stringtype_@form@(PyObject *self)
     if (legacy_print_mode > 125) {
         Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
     }
-#endif   /* IS_repr */
     return ret;
 }
-#undef IS_@form@
-/**end repeat**/
 
 /*
  * Over-ride repr and str of array-scalar strings to remove NULL code points and
  * then call the corresponding functions of PyUnicode_Type to generate the string
  */
 
-/**begin repeat
- * #form = repr, str#
- */
-#define IS_@form@
-
-static PyObject *
-unicodetype_@form@(PyObject *self)
-{
+static PyObject* remove_null_bytes_in_unicodestr(PyObject* self) {
     Py_UCS4 *dptr, *ip;
     Py_ssize_t len;
-    PyObject *new_;
-    PyObject *ret;
 
     /* PyUnicode_READY is called by PyUnicode_GetLength */
     len = PyUnicode_GetLength(self);
@@ -808,16 +818,27 @@ unicodetype_@form@(PyObject *self)
         return NULL;
     }
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new_ = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    PyObject* new_ = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    PyMem_Free(ip);
     if (new_ == NULL) {
-        PyMem_Free(ip);
         return NULL;
     }
-    ret = PyUnicode_Type.tp_@form@(new_);
-    Py_DECREF(new_);
-    PyMem_Free(ip);
+    return new_;
+}
 
-#ifdef IS_repr
+static PyObject* unicodetype_str(PyObject *self) {
+    auto new_ = remove_null_bytes_in_unicodestr(self);
+    PyObject* ret = PyUnicode_Type.tp_str(new_);
+    Py_DECREF(new_);
+
+    return ret;
+}
+
+static PyObject* unicodetype_repr(PyObject *self) {
+    auto new_ = remove_null_bytes_in_unicodestr(self);
+    PyObject* ret = PyUnicode_Type.tp_repr(new_);
+    Py_DECREF(new_);
+
     if (ret == NULL) {
         return NULL;
     }
@@ -828,13 +849,9 @@ unicodetype_@form@(PyObject *self)
     if (legacy_print_mode > 125) {
         Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
     }
-#endif  /* IS_repr */
 
     return ret;
 }
-
-#undef IS_@form@
-/**end repeat**/
 
 /*
  * Convert array of bytes to a string representation much like bytes.__repr__,
@@ -1175,6 +1192,48 @@ timedeltatype_str(PyObject *self)
  * scalars in numpy 1.13. One day we hope to remove it.
  */
 
+// probably should be in it's arrayscalars.cpp file
+template <typename T>
+constexpr static auto npy_creal_cppimpl(T z) {
+    if constexpr (std::is_same_v<T, npy_cfloat>) {
+        return npy_crealf(z);
+    } else if constexpr (std::is_same_v<T, npy_cdouble>) {
+        return npy_creal(z);
+    } else if constexpr (std::is_same_v<T, npy_clongdouble>) {
+        return npy_creall(z);
+    }
+}
+
+// probably should be in it's arrayscalars.cpp file
+template <typename T>
+constexpr static auto npy_cimag_cppimpl(T z) {
+    if constexpr (std::is_same_v<T, npy_cfloat>) {
+        return npy_cimagf(z);
+    } else if constexpr (std::is_same_v<T, npy_cdouble>) {
+        return npy_cimag(z);
+    } else if constexpr (std::is_same_v<T, npy_clongdouble>) {
+        return npy_cimagl(z);
+    }
+}
+
+// should be in numpyos.cpp when (if ever) migrated to cpp
+template <typename T>
+static char* NumPyOS_ascii_format_cppimpl(
+    char* buffer, 
+    size_t buf_size, 
+    const char* format, 
+    T val, 
+    int decimal
+) {
+    if constexpr (std::is_same_v<T, float>) {
+        return NumPyOS_ascii_formatf(buffer, buf_size, format, val, decimal);
+    } else if constexpr (std::is_same_v<T, double>) {
+        return NumPyOS_ascii_formatd(buffer, buf_size, format, val, decimal);
+    } else if constexpr (std::is_same_v<T, long double>) {
+        return NumPyOS_ascii_formatl(buffer, buf_size, format, val, decimal);
+    }
+}
+
 
 #define HALFPREC_REPR 5
 #define HALFPREC_STR 5
@@ -1190,40 +1249,65 @@ timedeltatype_str(PyObject *self)
 #define LONGDOUBLEPREC_STR 12
 #endif
 
-/**begin repeat
- * #kind = str, repr#
- * #KIND = STR, REPR#
- */
-
-/**begin repeat1
- * #name = cfloat, cdouble, clongdouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
- * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- * #t = f, , l#
- * #suff = f, d, l#
- */
-
-#define _FMT1 "%%.%i" NPY_@NAME@_FMT
-#define _FMT2 "%%+.%i" NPY_@NAME@_FMT
-
-static PyObject*
-legacy_@name@_format@kind@(@type@ val)
-{
+template <const char kind, typename T>
+static PyObject* legacy_complex_format_strreprimpl(T val) {
     /* XXX: Find a correct size here for format string */
     char format[64], buf[100], *res;
+
+    auto creal_val = npy_creal_cppimpl(val);
+    auto cimag_val = npy_cimag_cppimpl(val);
+
+    constexpr auto fmt1 = []() {
+        if constexpr (std::is_same_v<T, npy_cfloat>) {
+            return "%%.%i" NPY_FLOAT_FMT;
+        } else if constexpr (std::is_same_v<T, npy_cdouble>) {
+            return "%%.%i" NPY_DOUBLE_FMT;
+        } else if constexpr (std::is_same_v<T, npy_clongdouble>) {
+            return "%%.%i" NPY_LONGDOUBLE_FMT;
+        }
+    }();
+    constexpr auto fmt2 = []() {
+        if constexpr (std::is_same_v<T, npy_cfloat>) {
+            return "%%+.%i" NPY_FLOAT_FMT;
+        } else if constexpr (std::is_same_v<T, npy_cdouble>) {
+            return "%%+.%i" NPY_DOUBLE_FMT;
+        } else if constexpr (std::is_same_v<T, npy_clongdouble>) {
+            return "%%+.%i" NPY_LONGDOUBLE_FMT;
+        }
+    }();
+    constexpr auto prec = []() {
+        if constexpr (std::is_same_v<T, npy_cfloat>) {
+            if constexpr (kind == 'S') {
+                return FLOATPREC_STR;
+            } else if constexpr (kind == 'R') {
+                return FLOATPREC_REPR;
+            }
+        } else if constexpr (std::is_same_v<T, npy_cdouble>) {
+            if constexpr (kind == 'S') {
+                return DOUBLEPREC_STR;
+            } else if constexpr (kind == 'R') {
+                return DOUBLEPREC_REPR;
+            }
+        } else if constexpr (std::is_same_v<T, npy_clongdouble>) {
+            if constexpr (kind == 'S') {
+                return LONGDOUBLEPREC_STR;
+            } else if constexpr (kind == 'R') {
+                return LONGDOUBLEPREC_REPR;
+            }
+        }
+    }();
 
     /*
      * Ideally, we should handle this nan/inf stuff in NumpyOS_ascii_format*
      */
-    if (npy_creal@t@(val) == 0.0 && npy_signbit(npy_creal@t@(val)) == 0) {
-        PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
-        res = NumPyOS_ascii_format@suff@(buf, sizeof(buf) - 1, format, npy_cimag@t@(val), 0);
+    if (creal_val == 0.0 && npy_signbit(creal_val) == 0) {
+        PyOS_snprintf(format, sizeof(format), fmt1, prec);
+        res = NumPyOS_ascii_format_cppimpl(buf, sizeof(buf) - 1, format, cimag_val, 0);
         if (res == NULL) {
             PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
             return NULL;
         }
-        if (!npy_isfinite(npy_cimag@t@(val))) {
+        if (!npy_isfinite(cimag_val)) {
             strncat(buf, "*", sizeof(buf) - strlen(buf) - 1);
         }
         strncat(buf, "j", sizeof(buf) - strlen(buf) - 1);
@@ -1231,20 +1315,20 @@ legacy_@name@_format@kind@(@type@ val)
     else {
         char re[64], im[64];
 
-        if (npy_isfinite(npy_creal@t@(val))) {
-            PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
-            res = NumPyOS_ascii_format@suff@(re, sizeof(re), format,
-                                             npy_creal@t@(val), 0);
+        if (npy_isfinite(creal_val)) {
+            PyOS_snprintf(format, sizeof(format), fmt1, prec);
+            res = NumPyOS_ascii_format_cppimpl(re, sizeof(re), format,
+                                             creal_val, 0);
             if (res == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
                 return NULL;
             }
         }
         else {
-            if (npy_isnan(npy_creal@t@(val))) {
+            if (npy_isnan(creal_val)) {
                 strcpy(re, "nan");
             }
-            else if (npy_creal@t@(val) > 0){
+            else if (creal_val > 0){
                 strcpy(re, "inf");
             }
             else {
@@ -1253,26 +1337,26 @@ legacy_@name@_format@kind@(@type@ val)
         }
 
 
-        if (npy_isfinite(npy_cimag@t@(val))) {
-            PyOS_snprintf(format, sizeof(format), _FMT2, @NAME@PREC_@KIND@);
-            res = NumPyOS_ascii_format@suff@(im, sizeof(im), format,
-                                             npy_cimag@t@(val), 0);
+        if (npy_isfinite(cimag_val)) {
+            PyOS_snprintf(format, sizeof(format), fmt2, prec);
+            res = NumPyOS_ascii_format_cppimpl(im, sizeof(im), format,
+                                             cimag_val, 0);
             if (res == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
                 return NULL;
             }
         }
         else {
-            if (npy_isnan(npy_cimag@t@(val))) {
+            if (npy_isnan(cimag_val)) {
                 strcpy(im, "+nan");
             }
-            else if (npy_cimag@t@(val) > 0){
+            else if (cimag_val > 0){
                 strcpy(im, "+inf");
             }
             else {
                 strcpy(im, "-inf");
             }
-            if (!npy_isfinite(npy_cimag@t@(val))) {
+            if (!npy_isfinite(cimag_val)) {
                 strncat(im, "*", sizeof(im) - strlen(im) - 1);
             }
         }
@@ -1282,28 +1366,45 @@ legacy_@name@_format@kind@(@type@ val)
     return PyUnicode_FromString(buf);
 }
 
-#undef _FMT1
-#undef _FMT2
-
-/**end repeat1**/
-
-/**begin repeat1
- * #name = float, double, longdouble#
- * #Name = Float, Double, LongDouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
- * #suff = f, d, l#
- */
-
-#define _FMT1 "%%.%i" NPY_@NAME@_FMT
-
-static PyObject *
-legacy_@name@_format@kind@(npy_@name@ val){
+template <const char kind, typename T>
+static PyObject* legacy_format_strreprimpl(T val){
     /* XXX: Find a correct size here for format string */
     char format[64], buf[100], *res;
     size_t i, cnt;
 
-    PyOS_snprintf(format, sizeof(format), _FMT1, @NAME@PREC_@KIND@);
-    res = NumPyOS_ascii_format@suff@(buf, sizeof(buf), format, val, 0);
+    constexpr auto fmt1 = []() {
+        if constexpr (std::is_same_v<T, npy_float>) {
+            return "%%.%i" NPY_FLOAT_FMT;
+        } else if constexpr (std::is_same_v<T, npy_double>) {
+            return "%%.%i" NPY_DOUBLE_FMT;
+        } else if constexpr (std::is_same_v<T, npy_longdouble>) {
+            return "%%.%i" NPY_LONGDOUBLE_FMT;
+        }
+    }();
+    constexpr auto prec = []() {
+        if constexpr (std::is_same_v<T, npy_float>) {
+            if constexpr (kind == 'S') {
+                return FLOATPREC_STR;
+            } else if constexpr (kind == 'R') {
+                return FLOATPREC_REPR;
+            }
+        } else if constexpr (std::is_same_v<T, npy_double>) {
+            if constexpr (kind == 'S') {
+                return DOUBLEPREC_STR;
+            } else if constexpr (kind == 'R') {
+                return DOUBLEPREC_REPR;
+            }
+        } else if constexpr (std::is_same_v<T, npy_longdouble>) {
+            if constexpr (kind == 'S') {
+                return LONGDOUBLEPREC_STR;
+            } else if constexpr (kind == 'R') {
+                return LONGDOUBLEPREC_REPR;
+            }
+        }
+    }();
+
+    PyOS_snprintf(format, sizeof(format), fmt1, prec);
+    res = NumPyOS_ascii_format_cppimpl(buf, sizeof(buf), format, val, 0);
     if (res == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Error while formatting");
         return NULL;
@@ -1323,56 +1424,32 @@ legacy_@name@_format@kind@(npy_@name@ val){
     return PyUnicode_FromString(buf);
 }
 
-#undef _FMT1
-
-/**end repeat1**/
-
-/**end repeat**/
-
 
 /*
  *               *** END LEGACY PRINTING MODE CODE ***
  */
 
 
-/**begin repeat
- * #kind = str, repr#
- */
-
-#define IS_@kind@
-
-/**begin repeat1
- * #name = float, double, longdouble#
- * #max_positional = 1.e6L, 1.e16L, 1.e16L#
- * #Name = Float, Double, LongDouble#
- * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
- * #n = f, , l#
- * #repr_format = np.float32(%S), np.float64(%S), np.longdouble('%S')#
- * #crepr_imag_format = np.complex64(%Sj), np.complex128(%Sj),
- *                 np.clongdouble('%Sj')#
- * #crepr_format = np.complex64(%S%Sj), np.complex128(%S%Sj),
- *                 np.clongdouble('%S%Sj')#
- */
-
 /* helper function choose scientific of fractional output, based on a cutoff */
-static PyObject *
-@name@type_@kind@_either(npy_@name@ val, TrimMode trim_pos, TrimMode trim_sci,
-                         npy_bool sign)
-{
-
+template <const char kind, typename T>
+static PyObject* format_strreprimpl_either(T val, TrimMode trim_pos, 
+        TrimMode trim_sci, npy_bool sign) {
     int legacy_print_mode = get_legacy_print_mode();
     if (legacy_print_mode == -1) {
         return NULL;
     }
     if (legacy_print_mode <= 113) {
-        return legacy_@name@_format@kind@(val);
+        return legacy_format_strreprimpl<kind>(val);
     }
-    long double max_positional;
+    long double max_positional = []() {
+        if constexpr (std::is_same_v<T, npy_float>) {
+            return 1.e6L;
+        } else {
+            return 1.e16L;
+        }
+    }();
     if (legacy_print_mode <= 202) {
         max_positional = 1.e16L;
-    }
-    else {
-        max_positional = @max_positional@;
     }
 
     int use_positional;
@@ -1380,45 +1457,66 @@ static PyObject *
          use_positional = 1;
     }
     else {
-        npy_@name@ absval = val < 0 ? -val : val;
+        T absval = val < 0 ? -val : val;
         use_positional = absval < max_positional && absval >= 1.e-4L;
     }
 
     if (use_positional) {
-        return format_@name@(val, 0, -1, sign, trim_pos, -1, -1, -1);
+        return internal_format_npy_scalar(val, 0, -1, sign, trim_pos, -1, -1, -1);
     }
-    return format_@name@(val, 1, -1, sign, trim_sci, -1, -1, -1);
+    return internal_format_npy_scalar(val, 1, -1, sign, trim_sci, -1, -1, -1);
 }
 
+template<const char kind, typename PT>
 static PyObject *
-@name@type_@kind@(PyObject *self)
+realtype_strreprimpl(PyObject *self)
 {
     PyObject *string;
-    string = @name@type_@kind@_either(
-            PyArrayScalar_VAL(self, @Name@),
+    auto obval = ((PT*)self)->obval;
+    string = format_strreprimpl_either<kind>(obval,
             TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
 
-#ifdef IS_repr
-    if (string == NULL) {
-        return NULL;
+    if constexpr (kind=='R') {
+        if (string == NULL) {
+            return NULL;
+        }
+        int legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
+            constexpr auto repr_format = [](){
+                if constexpr (std::is_same_v<PT, PyFloatScalarObject>) {
+                    return "np.float32(%S)";
+                } else if constexpr (std::is_same_v<PT, PyDoubleScalarObject>) {
+                    return "np.float64(%S)";
+                } else if constexpr (std::is_same_v<PT, PyLongDoubleScalarObject>) {
+                    return "np.longdouble('%S')";
+                }
+            }();
+            Py_SETREF(string, PyUnicode_FromFormat(repr_format, string));
+        }
     }
-    int legacy_print_mode = get_legacy_print_mode();
-    if (legacy_print_mode == -1) {
-        return NULL;
-    }
-    if (legacy_print_mode > 125) {
-        Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
-    }
-#endif  /* IS_repr */
 
     return string;
 }
 
+template<typename PT>
+static PyObject* realtype_str(PyObject *self) {
+    return realtype_strreprimpl<'S', PT>(self);
+}
+
+template<typename PT>
+static PyObject* realtype_repr(PyObject *self) {
+    return realtype_strreprimpl<'R', PT>(self);
+}
+
+template<const char kind, typename PT>
 static PyObject *
-c@name@type_@kind@(PyObject *self)
+complextype_strreprimpl(PyObject *self)
 {
     PyObject *rstr, *istr;
-    npy_c@name@ val = PyArrayScalar_VAL(self, C@Name@);
+    auto val = ((PT*)self)->obval;
     TrimMode trim = TrimMode_DptZeros;
 
     int legacy_print_mode = get_legacy_print_mode();
@@ -1426,40 +1524,51 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
     if (legacy_print_mode <= 113) {
-        return legacy_c@name@_format@kind@(val);
+        return legacy_complex_format_strreprimpl<kind>(val);
     }
 
-    if (npy_creal@n@(val) == 0.0 && npy_signbit(npy_creal@n@(val)) == 0) {
-        istr = @name@type_@kind@_either(npy_cimag@n@(val), trim, trim, 0);
+    if (npy_creal_cppimpl(val) == 0.0 && npy_signbit(npy_creal_cppimpl(val)) == 0) {
+        istr = format_strreprimpl_either<kind>(npy_cimag_cppimpl(val), trim, trim, 0);
         if (istr == NULL) {
             return NULL;
         }
         PyObject *ret;
-#ifdef IS_str
-        ret = PyUnicode_FromFormat("%Sj", istr);
-#else  /* IS_repr */
-        int legacy_print_mode = get_legacy_print_mode();
-        if (legacy_print_mode == -1) {
-            return NULL;
-        }
-        if (legacy_print_mode <= 125) {
+        if constexpr (kind=='S') {
             ret = PyUnicode_FromFormat("%Sj", istr);
+        } else if constexpr (kind=='R') {
+            int legacy_print_mode = get_legacy_print_mode();
+            if (legacy_print_mode == -1) {
+                return NULL;
+            }
+            if (legacy_print_mode <= 125) {
+                ret = PyUnicode_FromFormat("%Sj", istr);
+            }
+            else {
+                constexpr auto repr_format = [](){
+                    if constexpr (std::is_same_v<PT, PyCFloatScalarObject>) {
+                        return "np.complex64(%Sj)";
+                    } else if constexpr (std::is_same_v<PT, PyCDoubleScalarObject>) {
+                        return "np.complex128(%Sj)";
+                    } else if constexpr (std::is_same_v<PT, PyCLongDoubleScalarObject>) {
+                        return "np.clongdouble('%Sj')";
+                    }
+                }();
+                ret = PyUnicode_FromFormat(repr_format, istr);
+            }
+        } else {
+            static_assert(!"unreachable");
         }
-        else {
-            ret = PyUnicode_FromFormat("@crepr_imag_format@", istr);
-        }
-#endif  /* IS_repr */
         Py_DECREF(istr);
         return ret;
     }
 
-    if (npy_isfinite(npy_creal@n@(val))) {
-        rstr = @name@type_@kind@_either(npy_creal@n@(val), trim, trim, 0);
+    if (npy_isfinite(npy_creal_cppimpl(val))) {
+        rstr = format_strreprimpl_either<kind>(npy_creal_cppimpl(val), trim, trim, 0);
     }
-    else if (npy_isnan(npy_creal@n@(val))) {
+    else if (npy_isnan(npy_creal_cppimpl(val))) {
         rstr = PyUnicode_FromString("nan");
     }
-    else if (npy_creal@n@(val) > 0){
+    else if (npy_creal_cppimpl(val) > 0){
         rstr = PyUnicode_FromString("inf");
     }
     else {
@@ -1469,13 +1578,13 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
-    if (npy_isfinite(npy_cimag@n@(val))) {
-        istr = @name@type_@kind@_either(npy_cimag@n@(val), trim, trim, 1);
+    if (npy_isfinite(npy_cimag_cppimpl(val))) {
+        istr = format_strreprimpl_either<kind>(npy_cimag_cppimpl(val), trim, trim, 1);
     }
-    else if (npy_isnan(npy_cimag@n@(val))) {
+    else if (npy_isnan(npy_cimag_cppimpl(val))) {
         istr = PyUnicode_FromString("+nan");
     }
-    else if (npy_cimag@n@(val) > 0){
+    else if (npy_cimag_cppimpl(val) > 0){
         istr = PyUnicode_FromString("+inf");
     }
     else {
@@ -1487,33 +1596,50 @@ c@name@type_@kind@(PyObject *self)
     }
 
     PyObject *string;
-#ifdef IS_str
-    string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
-#else  /* IS_repr */
-    legacy_print_mode = get_legacy_print_mode();
-    if (legacy_print_mode == -1) {
-        return NULL;
-    }
-    if (legacy_print_mode > 125) {
-        string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
-    }
-    else {
+    if constexpr (kind=='S') {
         string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    } else if constexpr (kind=='R') {
+        legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (legacy_print_mode > 125) {
+            constexpr auto repr_format = [](){
+                if constexpr (std::is_same_v<PT, PyCFloatScalarObject>) {
+                    return "np.complex64(%S%Sj)";
+                } else if constexpr (std::is_same_v<PT, PyCDoubleScalarObject>) {
+                    return "np.complex128(%S%Sj)";
+                } else if constexpr (std::is_same_v<PT, PyCLongDoubleScalarObject>) {
+                    return "np.clongdouble('%S%Sj')";
+                }
+            }();
+            string = PyUnicode_FromFormat(repr_format, rstr, istr);
+        }
+        else {
+            string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+        }
+    } else {
+        static_assert(!"unreachable");
     }
-#endif  /* IS_repr */
 
     Py_DECREF(rstr);
     Py_DECREF(istr);
     return string;
 }
 
-#undef PREC
+template<typename PT>
+static PyObject* complextype_str(PyObject *self) {
+    return complextype_strreprimpl<'S', PT>(self);
+}
 
-/**end repeat1**/
+template<typename PT>
+static PyObject* complextype_repr(PyObject *self) {
+    return complextype_strreprimpl<'R', PT>(self);
+}
 
-
+template <const char kind>
 static PyObject *
-halftype_@kind@(PyObject *self)
+halftype_strreprimpl(PyObject *self)
 {
     npy_half val = PyArrayScalar_VAL(self, Half);
     float floatval = npy_half_to_float(val);
@@ -1524,7 +1650,7 @@ halftype_@kind@(PyObject *self)
         return NULL;
     }
     if (legacy_print_mode <= 113) {
-        return legacy_float_format@kind@(floatval);
+        return legacy_format_strreprimpl<kind>(floatval);
     }
     long double max_positional;
     if (legacy_print_mode <= 202) {
@@ -1538,29 +1664,39 @@ halftype_@kind@(PyObject *self)
 
     PyObject *string;
     if (absval == 0 || (absval < max_positional && absval >= 1.e-4) ) {
-        string = format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
+        string = internal_format_npy_scalar(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
     else {
-        string = format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
+        string = internal_format_npy_scalar(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
     }
-#ifdef IS_str
-    return string;
-#else
-    legacy_print_mode = get_legacy_print_mode();
-    if (legacy_print_mode == -1) {
-        return NULL;
-    }
-    if (string == NULL || legacy_print_mode <= 125) {
+
+    if constexpr (kind=='S') {
         return string;
+    } else if constexpr (kind=='R') {
+        legacy_print_mode = get_legacy_print_mode();
+        if (legacy_print_mode == -1) {
+            return NULL;
+        }
+        if (string == NULL || legacy_print_mode <= 125) {
+            return string;
+        }
+        PyObject *res = PyUnicode_FromFormat("np.float16(%S)", string);
+        Py_DECREF(string);
+        return res;
     }
-    PyObject *res = PyUnicode_FromFormat("np.float16(%S)", string);
-    Py_DECREF(string);
-    return res;
-#endif
 }
 
-#undef IS_@kind@
-/**end repeat**/
+static PyObject* halftype_str(PyObject *self) {
+    return halftype_strreprimpl<'S'>(self);
+}
+static PyObject* halftype_repr(PyObject *self) {
+    return halftype_strreprimpl<'R'>(self);
+}
+
+//=======================
+// end str and repr impl
+//=======================
+
 
 static PyObject *
 longdoubletype_float(PyObject *self)
@@ -4217,13 +4353,13 @@ c@lname@_arrtype_hash(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
     hashreal = Npy_HashDouble(
-            obj, (double)npy_creal@n@(PyArrayScalar_VAL(obj, C@name@)));
+            obj, (double)npy_creal_cppimpl(PyArrayScalar_VAL(obj, C@name@)));
 
     if (hashreal == -1) {
         return -1;
     }
     hashimag = Npy_HashDouble(
-            obj, (double)npy_cimag@n@(PyArrayScalar_VAL(obj, C@name@)));
+            obj, (double)npy_cimag_cppimpl(PyArrayScalar_VAL(obj, C@name@)));
     if (hashimag == -1) {
         return -1;
     }
@@ -4836,34 +4972,58 @@ initialize_numeric_types(void)
     /* We won't be inheriting from Python Int type. */
     PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
 
-    /**begin repeat
-     * #name = repr, str#
-     */
+    PyHalfArrType_Type.tp_str = halftype_str;
+    PyHalfArrType_Type.tp_repr = halftype_repr;
 
-    PyHalfArrType_Type.tp_@name@ = halftype_@name@;
+    PyFloatArrType_Type.tp_str = realtype_str<PyFloatScalarObject>;
+    PyFloatArrType_Type.tp_repr = realtype_repr<PyFloatScalarObject>;
 
-    PyFloatArrType_Type.tp_@name@ = floattype_@name@;
-    PyCFloatArrType_Type.tp_@name@ = cfloattype_@name@;
+    PyCFloatArrType_Type.tp_str = complextype_str<PyCFloatScalarObject>;
+    PyCFloatArrType_Type.tp_repr = complextype_repr<PyCFloatScalarObject>;
 
-    PyDoubleArrType_Type.tp_@name@ = doubletype_@name@;
-    PyCDoubleArrType_Type.tp_@name@  = cdoubletype_@name@;
+    PyDoubleArrType_Type.tp_str = realtype_str<PyDoubleScalarObject>;
+    PyDoubleArrType_Type.tp_repr = realtype_repr<PyDoubleScalarObject>;
 
-    PyDatetimeArrType_Type.tp_@name@ = datetimetype_@name@;
-    PyTimedeltaArrType_Type.tp_@name@ = timedeltatype_@name@;
+    PyCDoubleArrType_Type.tp_str = complextype_str<PyCDoubleScalarObject>;
+    PyCDoubleArrType_Type.tp_repr = complextype_repr<PyCDoubleScalarObject>;
 
-    /**end repeat**/
+    PyDatetimeArrType_Type.tp_str = datetimetype_str;
+    PyDatetimeArrType_Type.tp_repr = datetimetype_repr;
+
+    PyTimedeltaArrType_Type.tp_str = timedeltatype_str;
+    PyTimedeltaArrType_Type.tp_repr = timedeltatype_repr;
 
     PyDatetimeArrType_Type.tp_methods = datetimetype_methods;
 
-    /**begin repeat
-     * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
-     *         ULong, LongLong, ULongLong#
-     */
+    PyByteArrType_Type.tp_str = genint_type_str;
+    PyByteArrType_Type.tp_repr = genint_type_repr;
 
-    Py@Type@ArrType_Type.tp_str = genint_type_str;
-    Py@Type@ArrType_Type.tp_repr = genint_type_repr;
+    PyUByteArrType_Type.tp_str = genint_type_str;
+    PyUByteArrType_Type.tp_repr = genint_type_repr;
 
-    /**end repeat**/
+    PyShortArrType_Type.tp_str = genint_type_str;
+    PyShortArrType_Type.tp_repr = genint_type_repr;
+
+    PyUShortArrType_Type.tp_str = genint_type_str;
+    PyUShortArrType_Type.tp_repr = genint_type_repr;
+
+    PyIntArrType_Type.tp_str = genint_type_str;
+    PyIntArrType_Type.tp_repr = genint_type_repr;
+
+    PyUIntArrType_Type.tp_str = genint_type_str;
+    PyUIntArrType_Type.tp_repr = genint_type_repr;
+
+    PyLongArrType_Type.tp_str = genint_type_str;
+    PyLongArrType_Type.tp_repr = genint_type_repr;
+
+    PyULongArrType_Type.tp_str = genint_type_str;
+    PyULongArrType_Type.tp_repr = genint_type_repr;
+
+    PyLongLongArrType_Type.tp_str = genint_type_str;
+    PyLongLongArrType_Type.tp_repr = genint_type_repr;
+
+    PyULongLongArrType_Type.tp_str = genint_type_str;
+    PyULongLongArrType_Type.tp_repr = genint_type_repr;
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
     PyBoolArrType_Type.tp_repr = genbool_type_repr;
@@ -4883,10 +5043,13 @@ initialize_numeric_types(void)
     @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_long;
 
     Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
-    Py@CHAR@LongDoubleArrType_Type.tp_repr = @char@longdoubletype_repr;
-    Py@CHAR@LongDoubleArrType_Type.tp_str = @char@longdoubletype_str;
-
     /**end repeat**/
+
+    PyLongDoubleArrType_Type.tp_repr = realtype_repr<PyLongDoubleScalarObject>;
+    PyLongDoubleArrType_Type.tp_str = realtype_str<PyLongDoubleScalarObject>;
+
+    PyCLongDoubleArrType_Type.tp_repr = complextype_repr<PyCLongDoubleScalarObject>;
+    PyCLongDoubleArrType_Type.tp_str = complextype_str<PyCLongDoubleScalarObject>;
 
     PyStringArrType_Type.tp_itemsize = sizeof(char);
     PyVoidArrType_Type.tp_dealloc = (destructor) void_dealloc;
