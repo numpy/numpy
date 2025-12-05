@@ -128,6 +128,21 @@ class TestCrackFortran(util.F2PyTest):
     def test_common_with_division(self):
         assert len(self.module.mortmp.ctmp) == 11
 
+    def test_gh27905_recursion_error(self, tmp_path):
+        f_path = tmp_path / "gh27905.f90"
+        f_path.write_text("""module mod1   CHARACTER(6),PUBLIC,PARAMETER :: mkdir='mkdir '
+    CHARACTER(7),PUBLIC,PARAMETER :: badvar2="badvar2"end module mod1
+
+module np_bug
+    contains
+
+    subroutine sub1
+        use mod1
+    end subroutine sub1
+end module np_bug
+""")
+        crackfortran.crackfortran([str(f_path)])    
+
 class TestMarkinnerspaces:
     # gh-14118: markinnerspaces does not handle multiple quotations
 
