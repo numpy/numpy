@@ -1730,26 +1730,26 @@ constexpr static PyNumberMethods make_gentype_as_number() {
     // we initialize in-line because in MSVC:
     // error C7555: use of designated initializers requires at least '/std:c++20'
     PyNumberMethods t = {};
-    t.nb_add = (binaryfunc)gentype_add;
-    t.nb_subtract = (binaryfunc)gentype_subtract;
-    t.nb_multiply = (binaryfunc)gentype_multiply;
-    t.nb_remainder = (binaryfunc)gentype_remainder;
-    t.nb_divmod = (binaryfunc)gentype_divmod;
-    t.nb_power = (ternaryfunc)gentype_power;
-    t.nb_negative = (unaryfunc)gentype_negative;
-    t.nb_positive = (unaryfunc)gentype_positive;
-    t.nb_absolute = (unaryfunc)gentype_absolute;
-    t.nb_bool = (inquiry)gentype_nonzero_number;
-    t.nb_invert = (unaryfunc)gentype_invert;
-    t.nb_lshift = (binaryfunc)gentype_lshift;
-    t.nb_rshift = (binaryfunc)gentype_rshift;
-    t.nb_and = (binaryfunc)gentype_and;
-    t.nb_xor = (binaryfunc)gentype_xor;
-    t.nb_or = (binaryfunc)gentype_or;
-    t.nb_int = (unaryfunc)gentype_int;
-    t.nb_float = (unaryfunc)gentype_float;
-    t.nb_floor_divide = (binaryfunc)gentype_floor_divide;
-    t.nb_true_divide = (binaryfunc)gentype_true_divide;
+    t.nb_add = gentype_add;
+    t.nb_subtract = gentype_subtract;
+    t.nb_multiply = gentype_multiply;
+    t.nb_remainder = gentype_remainder;
+    t.nb_divmod = gentype_divmod;
+    t.nb_power = gentype_power;
+    t.nb_negative = gentype_negative;
+    t.nb_positive = gentype_positive;
+    t.nb_absolute = gentype_absolute;
+    t.nb_bool = gentype_nonzero_number;
+    t.nb_invert = gentype_invert;
+    t.nb_lshift = gentype_lshift;
+    t.nb_rshift = gentype_rshift;
+    t.nb_and = gentype_and;
+    t.nb_xor = gentype_xor;
+    t.nb_or = gentype_or;
+    t.nb_int = gentype_int;
+    t.nb_float = gentype_float;
+    t.nb_floor_divide = gentype_floor_divide;
+    t.nb_true_divide = gentype_true_divide;
     
     return t;
 }
@@ -3282,32 +3282,34 @@ static PyMethodDef ulonglongtype_methods[] = {
 /************* As_mapping functions for void array scalar ************/
 
 static Py_ssize_t
-voidtype_length(PyVoidScalarObject *self)
+voidtype_length(PyObject *self)
 {
-    if (!PyDataType_HASFIELDS(self->descr)) {
+    auto pyobj = (PyVoidScalarObject*)self;
+    if (!PyDataType_HASFIELDS(pyobj->descr)) {
         return 0;
     }
     else {
         /* return the number of fields */
-        return (Py_ssize_t) PyTuple_GET_SIZE(self->descr->names);
+        return (Py_ssize_t) PyTuple_GET_SIZE(pyobj->descr->names);
     }
 }
 
 static PyObject *
-voidtype_subscript(PyVoidScalarObject *self, PyObject *ind);
+voidtype_subscript(PyObject *self, PyObject *ind);
 
 static PyObject *
-voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
+voidtype_item(PyObject *self, Py_ssize_t n)
 {
     npy_intp m;
     PyObject *flist=NULL;
+    auto pyobj = (PyVoidScalarObject*)self;
 
-    if (!(PyDataType_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(pyobj->descr))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return NULL;
     }
-    flist = self->descr->names;
+    flist = pyobj->descr->names;
     m = PyTuple_GET_SIZE(flist);
     if (n < 0) {
         n += m;
@@ -3322,13 +3324,14 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
 
 /* get field by name or number */
 static PyObject *
-voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
+voidtype_subscript(PyObject *self, PyObject *ind)
 {
     npy_intp n;
     PyObject *ret, *res;
+    auto pyobj = (PyVoidScalarObject*)self;
 
     /* structured voids will accept an integer index */
-    if (PyDataType_HASFIELDS(self->descr)) {
+    if (PyDataType_HASFIELDS(pyobj->descr)) {
         n = PyArray_PyIntAsIntp(ind);
         if (!error_converting(n)) {
             return voidtype_item(self, (Py_ssize_t)n);
@@ -3336,7 +3339,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
         PyErr_Clear();
     }
 
-    res = PyArray_FromScalar((PyObject*)self, NULL);
+    res = PyArray_FromScalar(self, NULL);
 
     /* ellipsis should return 0d array */
     if(ind == Py_Ellipsis){
@@ -3353,21 +3356,22 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
 }
 
 static int
-voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val);
+voidtype_ass_subscript(PyObject *self, PyObject *ind, PyObject *val);
 
 static int
-voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
+voidtype_ass_item(PyObject *self, Py_ssize_t n, PyObject *val)
 {
     npy_intp m;
     PyObject *flist=NULL;
+    auto pyobj = (PyVoidScalarObject*)self;
 
-    if (!(PyDataType_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(pyobj->descr))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return -1;
     }
 
-    flist = self->descr->names;
+    flist = pyobj->descr->names;
     m = PyTuple_GET_SIZE(flist);
     if (n < 0) {
         n += m;
@@ -3381,13 +3385,14 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
 }
 
 static int
-voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
+voidtype_ass_subscript(PyObject *self, PyObject *ind, PyObject *val)
 {
     npy_intp n;
     const char *msg = "invalid index";
     PyObject *args;
+    auto pyobj = (PyVoidScalarObject*)self;
 
-    if (!PyDataType_HASFIELDS(self->descr)) {
+    if (!PyDataType_HASFIELDS(pyobj->descr)) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return -1;
@@ -3415,7 +3420,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
         PyObject *arr, *arr_field, *meth, *emptytuple;
 
         /* 1. Convert to 0-d array and use getitem */
-        arr = PyArray_FromScalar((PyObject*)self, NULL);
+        arr = PyArray_FromScalar(self, NULL);
         if (arr == NULL) {
             return -1;
         }
@@ -3461,20 +3466,18 @@ fail:
 static PyMappingMethods voidtype_as_mapping = {
     // we initialize in-list because in MSVC:
     // error C7555: use of designated initializers requires at least '/std:c++20'
-    /* mp_length  = */ (lenfunc)voidtype_length,
-    /* mp_subscript  = */ (binaryfunc)voidtype_subscript,
-    /* mp_ass_subscript  = */ (objobjargproc)voidtype_ass_subscript,
+    /* mp_length  = */ voidtype_length,
+    /* mp_subscript  = */ voidtype_subscript,
+    /* mp_ass_subscript  = */ voidtype_ass_subscript,
 };
 
-static PySequenceMethods make_voidtype_as_sequence() {
+constexpr static PySequenceMethods make_voidtype_as_sequence() {
     // we initialize in-line because in MSVC:
     // error C7555: use of designated initializers requires at least '/std:c++20'
-    // cannot use constexpr because of the castings
-    // > cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression
     PySequenceMethods t = {};
-    t.sq_length = (lenfunc)voidtype_length;
-    t.sq_item = (ssizeargfunc)voidtype_item;
-    t.sq_ass_item = (ssizeobjargproc)voidtype_ass_item;
+    t.sq_length = voidtype_length;
+    t.sq_item = voidtype_item;
+    t.sq_ass_item = voidtype_ass_item;
     return t;
 }
 
@@ -4402,9 +4405,9 @@ void_arrtype_hash(PyObject *obj)
        PyErr_SetString(PyExc_TypeError, "unhashable type: 'writeable void-scalar'");
        return -1;
     }
-    len = voidtype_length(p);
+    len = voidtype_length(obj);
     for (n=0; n < len; n++) {
-        element = voidtype_item(p, n);
+        element = voidtype_item(obj, n);
         y = PyObject_Hash(element);
         Py_DECREF(element);
         if (y == -1)
@@ -4447,66 +4450,74 @@ object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val
 }
 
 static PyObject *
-object_arrtype_concat(PyObjectScalarObject *self, PyObject *other)
+object_arrtype_concat(PyObject *self, PyObject *other)
 {
-    return PySequence_Concat(self->obval, other);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PySequence_Concat(pyobj->obval, other);
 }
 
 static Py_ssize_t
-object_arrtype_length(PyObjectScalarObject *self)
+object_arrtype_length(PyObject *self)
 {
-    return PyObject_Length(self->obval);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PyObject_Length(pyobj->obval);
 }
 
 static PyObject *
-object_arrtype_repeat(PyObjectScalarObject *self, Py_ssize_t count)
+object_arrtype_repeat(PyObject *self, Py_ssize_t count)
 {
-    return PySequence_Repeat(self->obval, count);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PySequence_Repeat(pyobj->obval, count);
 }
 
 static PyObject *
-object_arrtype_subscript(PyObjectScalarObject *self, PyObject *key)
+object_arrtype_subscript(PyObject *self, PyObject *key)
 {
-    return PyObject_GetItem(self->obval, key);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PyObject_GetItem(pyobj->obval, key);
 }
 
 static int
-object_arrtype_ass_subscript(PyObjectScalarObject *self, PyObject *key,
+object_arrtype_ass_subscript(PyObject *self, PyObject *key,
                              PyObject *value)
 {
-    return PyObject_SetItem(self->obval, key, value);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PyObject_SetItem(pyobj->obval, key, value);
 }
 
 static int
-object_arrtype_contains(PyObjectScalarObject *self, PyObject *ob)
+object_arrtype_contains(PyObject *self, PyObject *ob)
 {
-    return PySequence_Contains(self->obval, ob);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PySequence_Contains(pyobj->obval, ob);
 }
 
 static PyObject *
-object_arrtype_inplace_concat(PyObjectScalarObject *self, PyObject *o)
+object_arrtype_inplace_concat(PyObject *self, PyObject *o)
 {
-    return PySequence_InPlaceConcat(self->obval, o);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PySequence_InPlaceConcat(pyobj->obval, o);
 }
 
 static PyObject *
-object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
+object_arrtype_inplace_repeat(PyObject *self, Py_ssize_t count)
 {
-    return PySequence_InPlaceRepeat(self->obval, count);
+    auto pyobj = (PyObjectScalarObject*)self;
+    return PySequence_InPlaceRepeat(pyobj->obval, count);
 }
 
-static PySequenceMethods make_object_arrtype_as_sequence() {
+constexpr static PySequenceMethods make_object_arrtype_as_sequence() {
     // we initialize in-line because in MSVC:
     // error C7555: use of designated initializers requires at least '/std:c++20'
     // cannot use constexpr because of the castings
     // > cast that performs the conversions of a reinterpret_cast is not allowed in a constant expression
     PySequenceMethods t = {};
-    t.sq_length = (lenfunc)object_arrtype_length;
-    t.sq_concat = (binaryfunc)object_arrtype_concat;
-    t.sq_repeat = (ssizeargfunc)object_arrtype_repeat;
-    t.sq_contains = (objobjproc)object_arrtype_contains;
-    t.sq_inplace_concat = (binaryfunc)object_arrtype_inplace_concat;
-    t.sq_inplace_repeat = (ssizeargfunc)object_arrtype_inplace_repeat;
+    t.sq_length = object_arrtype_length;
+    t.sq_concat = object_arrtype_concat;
+    t.sq_repeat = object_arrtype_repeat;
+    t.sq_contains = object_arrtype_contains;
+    t.sq_inplace_concat = object_arrtype_inplace_concat;
+    t.sq_inplace_repeat = object_arrtype_inplace_repeat;
     return t;
 };
 
