@@ -332,7 +332,7 @@ add_newdoc('numpy._core.umath', 'arcsin',
 
 add_newdoc('numpy._core.umath', 'arcsinh',
     """
-    Inverse hyperbolic sine element-wise.
+    Inverse hyperbolic sine, element-wise.
 
     Parameters
     ----------
@@ -534,7 +534,7 @@ add_newdoc('numpy._core.umath', '_arg',
 
 add_newdoc('numpy._core.umath', 'arctanh',
     """
-    Inverse hyperbolic tangent element-wise.
+    Inverse hyperbolic tangent, element-wise.
 
     Parameters
     ----------
@@ -4271,7 +4271,7 @@ add_newdoc('numpy._core.umath', 'tan',
 
 add_newdoc('numpy._core.umath', 'tanh',
     """
-    Compute hyperbolic tangent element-wise.
+    Hyperbolic tangent, element-wise.
 
     Equivalent to ``np.sinh(x)/np.cosh(x)`` or ``-1j * np.tan(1j*x)``.
 
