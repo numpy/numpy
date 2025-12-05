@@ -1,0 +1,2 @@
+- see https://github.com/scipy/scipy/pull/24066 for how these packages can be used in a Pixi workspace
+- combining directories blocked on https://github.com/prefix-dev/pixi/issues/2813
