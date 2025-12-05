@@ -17,7 +17,7 @@ from numpy.__config__ import show as show_config
 from numpy._pytesttester import PytestTester
 from numpy._core._internal import _ctypes
 
-from numpy._typing import (
+from numpy._typing import (  # type: ignore[deprecated]
     # Arrays
     ArrayLike,
     NDArray,
@@ -533,7 +533,7 @@ from numpy.lib._polynomial_impl import (
     polyfit,
 )
 
-from numpy.lib._shape_base_impl import (
+from numpy.lib._shape_base_impl import (  # type: ignore[deprecated]
     column_stack,
     row_stack,
     dstack,
