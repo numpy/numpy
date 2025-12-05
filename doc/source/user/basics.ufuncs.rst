@@ -75,6 +75,7 @@ But :func:`numpy.divmod` returns two outputs (quotient and remainder),
 so calling its methods raises an error::
 
    >>> np.divmod.reduce([1, 2, 3])
+   Traceback (most recent call last):
        ...
    ValueError: reduce only supported for functions returning a single value
 
