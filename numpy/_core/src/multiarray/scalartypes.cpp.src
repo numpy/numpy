@@ -2564,7 +2564,7 @@ as_integer_ratio_impl(PyObject *self, PyObject *args)
         frac = npy_frexpl(val, &exponent);
     }
 
-    constexpr auto floor_func = get_npy_floor_func<T>();
+    auto floor_func = get_npy_floor_func<T>();
 
     /* This relies on the floating point type being base 2 to converge */
     while (frac != floor_func(frac)) {
@@ -2636,7 +2636,7 @@ is_integer_impl(PyObject *self, PyObject *NPY_UNUSED(args))
         Py_RETURN_FALSE;
     }
 
-    constexpr auto floor_func = get_npy_floor_func<T>();
+    auto floor_func = get_npy_floor_func<T>();
     ret = (floor_func(val) == val) ? Py_True : Py_False;
     Py_INCREF(ret);
     return ret;
