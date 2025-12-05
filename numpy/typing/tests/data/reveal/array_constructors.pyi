@@ -117,17 +117,17 @@ assert_type(np.frombuffer(A, dtype="c16"), npt.NDArray[Any])
 _x_bool: bool
 _x_int: int
 _x_float: float
-_x_timedelta: np.timedelta64
-_x_datetime: np.datetime64
+_x_timedelta: np.timedelta64[int]
+_x_datetime: np.datetime64[int]
 
 assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.arange(0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64[Any]]])
+assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64]])
 assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[np.int_]])

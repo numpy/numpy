@@ -51,7 +51,8 @@ assert_type(np.linalg.outer(AR_f8, AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.outer(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.linalg.outer(AR_b, AR_b), npt.NDArray[np.bool])
 assert_type(np.linalg.outer(AR_O, AR_O), npt.NDArray[np.object_])
-assert_type(np.linalg.outer(AR_i8, AR_m), npt.NDArray[np.timedelta64])
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.linalg.outer(AR_i8, AR_m), npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
 
 assert_type(np.linalg.qr(AR_i8), QRResult)
 assert_type(np.linalg.qr(AR_f8), QRResult)
