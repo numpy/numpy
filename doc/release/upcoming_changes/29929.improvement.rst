@@ -1,0 +1,9 @@
+For ``f2py``, the behaviour of ``intent(inplace)`` has improved.
+Previously, if an input array did not have the right dtype or order,
+the input array was modified in-place, changing its dtype and
+replacing its data by a corrected copy.  Now, instead, the corrected
+copy is kept a separate array, which, after being passed and
+presumably modified by the fortran routine, is copied back to the
+input routine. This means one no longer has the risk that pre-existing
+views or slices of the input array start pointing to unallocated
+memory.
