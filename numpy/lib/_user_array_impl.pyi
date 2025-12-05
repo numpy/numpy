@@ -21,10 +21,10 @@ _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=T
 
 type _ArrayInt_co = npt.NDArray[np.integer | np.bool]
 
-type _BoolContainer = container[Any, np.dtype[np.bool]]
-type _IntegralContainer = container[Any, np.dtype[np.bool | np.integer | np.object_]]
-type _RealContainer = container[Any, np.dtype[np.bool | np.integer | np.floating | np.timedelta64 | np.object_]]
-type _NumericContainer = container[Any, np.dtype[np.number | np.timedelta64 | np.object_]]
+type _BoolContainer = container[Any, np.dtype[np.bool]]  # type: ignore[deprecated]
+type _IntegralContainer = container[Any, np.dtype[np.bool | np.integer | np.object_]]  # type: ignore[deprecated]
+type _RealContainer = container[Any, np.dtype[np.bool | np.integer | np.floating | np.timedelta64 | np.object_]]  # type: ignore[deprecated]
+type _NumericContainer = container[Any, np.dtype[np.number | np.timedelta64 | np.object_]]  # type: ignore[deprecated]
 
 type _ToIndexSlice = slice | EllipsisType | _ArrayInt_co | None
 type _ToIndexSlices = _ToIndexSlice | tuple[_ToIndexSlice, ...]
