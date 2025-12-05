@@ -145,7 +145,7 @@ module np_bug
 end module np_bug
 """)
         crackfortran.crackfortran([str(f_path)])
-         
+
 class TestMarkinnerspaces:
     # gh-14118: markinnerspaces does not handle multiple quotations
 
