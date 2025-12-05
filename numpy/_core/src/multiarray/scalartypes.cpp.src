@@ -4838,34 +4838,75 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_as_buffer = &gentype_arrtype_as_buffer;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
+
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
      * also fill array_type_as_number struct with reasonable defaults
      */
 
-    /**begin repeat
-     * #name = byte, short, int, long, longlong, ubyte, ushort,
-     *         uint, ulong, ulonglong#
-     * #NAME = Byte, Short, Int, Long, LongLong, UByte, UShort,
-     *         UInt, ULong, ULongLong#
-     */
-    @name@_arrtype_as_number = gentype_as_number;
-    Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
-    Py@NAME@ArrType_Type.tp_as_number->nb_index = (unaryfunc)@name@_index;
+    // TODO: handle all these copies with a template
 
-    /**end repeat**/
+    byte_arrtype_as_number = gentype_as_number;
+    PyByteArrType_Type.tp_as_number = &byte_arrtype_as_number;
+    PyByteArrType_Type.tp_as_number->nb_index = byte_index;
 
-    /**begin repeat
-     *  #name = half, float, double, longdouble,
-     *          cfloat, cdouble, clongdouble#
-     *  #NAME = Half, Float, Double, LongDouble,
-     *          CFloat, CDouble, CLongDouble#
-     */
-    @name@_arrtype_as_number = gentype_as_number;
-    Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
+    short_arrtype_as_number = gentype_as_number;
+    PyShortArrType_Type.tp_as_number = &short_arrtype_as_number;
+    PyShortArrType_Type.tp_as_number->nb_index = short_index;
 
-    /**end repeat**/
+    int_arrtype_as_number = gentype_as_number;
+    PyIntArrType_Type.tp_as_number = &int_arrtype_as_number;
+    PyIntArrType_Type.tp_as_number->nb_index = int_index;
+
+    long_arrtype_as_number = gentype_as_number;
+    PyLongArrType_Type.tp_as_number = &long_arrtype_as_number;
+    PyLongArrType_Type.tp_as_number->nb_index = long_index;
+
+    longlong_arrtype_as_number = gentype_as_number;
+    PyLongLongArrType_Type.tp_as_number = &longlong_arrtype_as_number;
+    PyLongLongArrType_Type.tp_as_number->nb_index = longlong_index;
+
+    ubyte_arrtype_as_number = gentype_as_number;
+    PyUByteArrType_Type.tp_as_number = &ubyte_arrtype_as_number;
+    PyUByteArrType_Type.tp_as_number->nb_index = ubyte_index;
+
+    ushort_arrtype_as_number = gentype_as_number;
+    PyUShortArrType_Type.tp_as_number = &ushort_arrtype_as_number;
+    PyUShortArrType_Type.tp_as_number->nb_index = ushort_index;
+
+    uint_arrtype_as_number = gentype_as_number;
+    PyUIntArrType_Type.tp_as_number = &uint_arrtype_as_number;
+    PyUIntArrType_Type.tp_as_number->nb_index = uint_index;
+
+    ulong_arrtype_as_number = gentype_as_number;
+    PyULongArrType_Type.tp_as_number = &ulong_arrtype_as_number;
+    PyULongArrType_Type.tp_as_number->nb_index = ulong_index;
+
+    ulonglong_arrtype_as_number = gentype_as_number;
+    PyULongLongArrType_Type.tp_as_number = &ulonglong_arrtype_as_number;
+    PyULongLongArrType_Type.tp_as_number->nb_index = ulonglong_index;
+
+    half_arrtype_as_number = gentype_as_number;
+    PyHalfArrType_Type.tp_as_number = &half_arrtype_as_number;
+
+    float_arrtype_as_number = gentype_as_number;
+    PyFloatArrType_Type.tp_as_number = &float_arrtype_as_number;
+
+    double_arrtype_as_number = gentype_as_number;
+    PyDoubleArrType_Type.tp_as_number = &double_arrtype_as_number;
+
+    longdouble_arrtype_as_number = gentype_as_number;
+    PyLongDoubleArrType_Type.tp_as_number = &longdouble_arrtype_as_number;
+
+    cfloat_arrtype_as_number = gentype_as_number;
+    PyCFloatArrType_Type.tp_as_number = &cfloat_arrtype_as_number;
+
+    cdouble_arrtype_as_number = gentype_as_number;
+    PyCDoubleArrType_Type.tp_as_number = &cdouble_arrtype_as_number;
+
+    clongdouble_arrtype_as_number = gentype_as_number;
+    PyCLongDoubleArrType_Type.tp_as_number = &clongdouble_arrtype_as_number;
 
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
@@ -4887,92 +4928,185 @@ initialize_numeric_types(void)
 
     PyNumberArrType_Type.tp_methods = numbertype_methods;
 
-    /**begin repeat
-     * #NAME= Number, Integer, SignedInteger, UnsignedInteger, Inexact,
-     *        Floating, ComplexFloating, Character#
-     */
+    PyNumberArrType_Type.tp_flags = BASEFLAGS;
+    PyIntegerArrType_Type.tp_flags = BASEFLAGS;
+    PySignedIntegerArrType_Type.tp_flags = BASEFLAGS;
+    PyUnsignedIntegerArrType_Type.tp_flags = BASEFLAGS;
+    PyInexactArrType_Type.tp_flags = BASEFLAGS;
+    PyFloatingArrType_Type.tp_flags = BASEFLAGS;
+    PyComplexFloatingArrType_Type.tp_flags = BASEFLAGS;
+    PyCharacterArrType_Type.tp_flags = BASEFLAGS;
 
-    Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
+    PyBoolArrType_Type.tp_flags = BASEFLAGS;
+    PyBoolArrType_Type.tp_new = bool_arrtype_new;
+    PyBoolArrType_Type.tp_richcompare = gentype_richcompare;
+    PyBoolArrType_Type.tp_as_buffer = &bool_arrtype_as_buffer;
 
-    /**end repeat**/
+    PyByteArrType_Type.tp_flags = BASEFLAGS;
+    PyByteArrType_Type.tp_new = byte_arrtype_new;
+    PyByteArrType_Type.tp_richcompare = gentype_richcompare;
+    PyByteArrType_Type.tp_as_buffer = &byte_arrtype_as_buffer;
 
-    /**begin repeat
-     * #name = bool, byte, short, int, long, longlong, ubyte, ushort, uint,
-     *         ulong, ulonglong, half, float, double, longdouble, cfloat,
-     *         cdouble, clongdouble, string, unicode, void, object, datetime,
-     *         timedelta#
-     * #NAME = Bool, Byte, Short, Int, Long, LongLong, UByte, UShort, UInt,
-     *         ULong, ULongLong, Half, Float, Double, LongDouble, CFloat,
-     *         CDouble, CLongDouble, String, Unicode, Void, Object, Datetime,
-     *         Timedelta#
-     */
+    PyShortArrType_Type.tp_flags = BASEFLAGS;
+    PyShortArrType_Type.tp_new = short_arrtype_new;
+    PyShortArrType_Type.tp_richcompare = gentype_richcompare;
+    PyShortArrType_Type.tp_as_buffer = &short_arrtype_as_buffer;
 
-    Py@NAME@ArrType_Type.tp_flags = BASEFLAGS;
-    Py@NAME@ArrType_Type.tp_new = @name@_arrtype_new;
-    Py@NAME@ArrType_Type.tp_richcompare = gentype_richcompare;
+    PyIntArrType_Type.tp_flags = BASEFLAGS;
+    PyIntArrType_Type.tp_new = int_arrtype_new;
+    PyIntArrType_Type.tp_richcompare = gentype_richcompare;
+    PyIntArrType_Type.tp_as_buffer = &int_arrtype_as_buffer;
 
-#define _IS_@NAME@  /* inherit string buffer */
-#if !defined(_IS_String)
-    Py@NAME@ArrType_Type.tp_as_buffer = &@name@_arrtype_as_buffer;
-#endif
-#undef _IS_@NAME@
+    PyLongArrType_Type.tp_flags = BASEFLAGS;
+    PyLongArrType_Type.tp_new = long_arrtype_new;
+    PyLongArrType_Type.tp_richcompare = gentype_richcompare;
+    PyLongArrType_Type.tp_as_buffer = &long_arrtype_as_buffer;
 
-    /**end repeat**/
+    PyLongLongArrType_Type.tp_flags = BASEFLAGS;
+    PyLongLongArrType_Type.tp_new = longlong_arrtype_new;
+    PyLongLongArrType_Type.tp_richcompare = gentype_richcompare;
+    PyLongLongArrType_Type.tp_as_buffer = &longlong_arrtype_as_buffer;
+
+    PyUByteArrType_Type.tp_flags = BASEFLAGS;
+    PyUByteArrType_Type.tp_new = ubyte_arrtype_new;
+    PyUByteArrType_Type.tp_richcompare = gentype_richcompare;
+    PyUByteArrType_Type.tp_as_buffer = &ubyte_arrtype_as_buffer;
+
+    PyUShortArrType_Type.tp_flags = BASEFLAGS;
+    PyUShortArrType_Type.tp_new = ushort_arrtype_new;
+    PyUShortArrType_Type.tp_richcompare = gentype_richcompare;
+    PyUShortArrType_Type.tp_as_buffer = &ushort_arrtype_as_buffer;
+
+    PyUIntArrType_Type.tp_flags = BASEFLAGS;
+    PyUIntArrType_Type.tp_new = uint_arrtype_new;
+    PyUIntArrType_Type.tp_richcompare = gentype_richcompare;
+    PyUIntArrType_Type.tp_as_buffer = &uint_arrtype_as_buffer;
+
+    PyULongArrType_Type.tp_flags = BASEFLAGS;
+    PyULongArrType_Type.tp_new = ulong_arrtype_new;
+    PyULongArrType_Type.tp_richcompare = gentype_richcompare;
+    PyULongArrType_Type.tp_as_buffer = &ulong_arrtype_as_buffer;
+
+    PyULongLongArrType_Type.tp_flags = BASEFLAGS;
+    PyULongLongArrType_Type.tp_new = ulonglong_arrtype_new;
+    PyULongLongArrType_Type.tp_richcompare = gentype_richcompare;
+    PyULongLongArrType_Type.tp_as_buffer = &ulonglong_arrtype_as_buffer;
+
+    PyHalfArrType_Type.tp_flags = BASEFLAGS;
+    PyHalfArrType_Type.tp_new = half_arrtype_new;
+    PyHalfArrType_Type.tp_richcompare = gentype_richcompare;
+    PyHalfArrType_Type.tp_as_buffer = &half_arrtype_as_buffer;
+
+    PyFloatArrType_Type.tp_flags = BASEFLAGS;
+    PyFloatArrType_Type.tp_new = float_arrtype_new;
+    PyFloatArrType_Type.tp_richcompare = gentype_richcompare;
+    PyFloatArrType_Type.tp_as_buffer = &float_arrtype_as_buffer;
+
+    PyDoubleArrType_Type.tp_flags = BASEFLAGS;
+    PyDoubleArrType_Type.tp_new = double_arrtype_new;
+    PyDoubleArrType_Type.tp_richcompare = gentype_richcompare;
+    PyDoubleArrType_Type.tp_as_buffer = &double_arrtype_as_buffer;
+
+    PyLongDoubleArrType_Type.tp_flags = BASEFLAGS;
+    PyLongDoubleArrType_Type.tp_new = longdouble_arrtype_new;
+    PyLongDoubleArrType_Type.tp_richcompare = gentype_richcompare;
+    PyLongDoubleArrType_Type.tp_as_buffer = &longdouble_arrtype_as_buffer;
+
+    PyCFloatArrType_Type.tp_flags = BASEFLAGS;
+    PyCFloatArrType_Type.tp_new = cfloat_arrtype_new;
+    PyCFloatArrType_Type.tp_richcompare = gentype_richcompare;
+    PyCFloatArrType_Type.tp_as_buffer = &cfloat_arrtype_as_buffer;
+
+    PyCDoubleArrType_Type.tp_flags = BASEFLAGS;
+    PyCDoubleArrType_Type.tp_new = cdouble_arrtype_new;
+    PyCDoubleArrType_Type.tp_richcompare = gentype_richcompare;
+    PyCDoubleArrType_Type.tp_as_buffer = &cdouble_arrtype_as_buffer;
+
+    PyCLongDoubleArrType_Type.tp_flags = BASEFLAGS;
+    PyCLongDoubleArrType_Type.tp_new = clongdouble_arrtype_new;
+    PyCLongDoubleArrType_Type.tp_richcompare = gentype_richcompare;
+    PyCLongDoubleArrType_Type.tp_as_buffer = &clongdouble_arrtype_as_buffer;
+
+    PyStringArrType_Type.tp_flags = BASEFLAGS;
+    PyStringArrType_Type.tp_new = string_arrtype_new;
+    PyStringArrType_Type.tp_richcompare = gentype_richcompare;
+    /* PyStringArrType_Type.tp_as_buffer = NULL; to inherit string buffer */
+
+    PyUnicodeArrType_Type.tp_flags = BASEFLAGS;
+    PyUnicodeArrType_Type.tp_new = unicode_arrtype_new;
+    PyUnicodeArrType_Type.tp_richcompare = gentype_richcompare;
+    PyUnicodeArrType_Type.tp_as_buffer = &unicode_arrtype_as_buffer;
+
+    PyVoidArrType_Type.tp_flags = BASEFLAGS;
+    PyVoidArrType_Type.tp_new = void_arrtype_new;
+    PyVoidArrType_Type.tp_richcompare = gentype_richcompare;
+    PyVoidArrType_Type.tp_as_buffer = &void_arrtype_as_buffer;
+
+    PyObjectArrType_Type.tp_flags = BASEFLAGS;
+    PyObjectArrType_Type.tp_new = object_arrtype_new;
+    PyObjectArrType_Type.tp_richcompare = gentype_richcompare;
+    PyObjectArrType_Type.tp_as_buffer = &object_arrtype_as_buffer;
+
+    PyDatetimeArrType_Type.tp_flags = BASEFLAGS;
+    PyDatetimeArrType_Type.tp_new = datetime_arrtype_new;
+    PyDatetimeArrType_Type.tp_richcompare = gentype_richcompare;
+    PyDatetimeArrType_Type.tp_as_buffer = &datetime_arrtype_as_buffer;
+
+    PyTimedeltaArrType_Type.tp_flags = BASEFLAGS;
+    PyTimedeltaArrType_Type.tp_new = timedelta_arrtype_new;
+    PyTimedeltaArrType_Type.tp_richcompare = gentype_richcompare;
+    PyTimedeltaArrType_Type.tp_as_buffer = &timedelta_arrtype_as_buffer;
 
     PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
 
-    /**begin repeat
-     * #name = bool, byte, short, ubyte, ushort, uint, ulong, ulonglong,
-     *         half, float, longdouble, cfloat, clongdouble, void, object,
-     *         datetime, timedelta#
-     * #NAME = Bool, Byte, Short, UByte, UShort, UInt, ULong, ULongLong,
-     *         Half, Float, LongDouble, CFloat, CLongDouble, Void, Object,
-     *         Datetime, Timedelta#
-     */
+    PyBoolArrType_Type.tp_hash = bool_arrtype_hash;
+    PyByteArrType_Type.tp_hash = byte_arrtype_hash;
+    PyShortArrType_Type.tp_hash = short_arrtype_hash;
+    PyUByteArrType_Type.tp_hash = ubyte_arrtype_hash;
+    PyUShortArrType_Type.tp_hash = ushort_arrtype_hash;
+    PyUIntArrType_Type.tp_hash = uint_arrtype_hash;
+    PyULongArrType_Type.tp_hash = ulong_arrtype_hash;
+    PyULongLongArrType_Type.tp_hash = ulonglong_arrtype_hash;
+    PyHalfArrType_Type.tp_hash = half_arrtype_hash;
+    PyFloatArrType_Type.tp_hash = float_arrtype_hash;
+    PyLongDoubleArrType_Type.tp_hash = longdouble_arrtype_hash;
+    PyCFloatArrType_Type.tp_hash = cfloat_arrtype_hash;
+    PyCLongDoubleArrType_Type.tp_hash = clongdouble_arrtype_hash;
+    PyVoidArrType_Type.tp_hash = void_arrtype_hash;
+    PyObjectArrType_Type.tp_hash = object_arrtype_hash;
+    PyDatetimeArrType_Type.tp_hash = datetime_arrtype_hash;
+    PyTimedeltaArrType_Type.tp_hash = timedelta_arrtype_hash;
 
-    Py@NAME@ArrType_Type.tp_hash = @name@_arrtype_hash;
-
-    /**end repeat**/
-
-    /**begin repeat
-     * #name = cfloat, clongdouble, floating, integer#
-     * #NAME = CFloat, CLongDouble, Floating, Integer#
-     */
-
-    Py@NAME@ArrType_Type.tp_methods = @name@type_methods;
-
-    /**end repeat**/
-
-    /**begin repeat
-     * #name = byte, short, int, long, longlong,
-     *         ubyte, ushort, uint, ulong, ulonglong#
-     * #Name = Byte, Short, Int, Long, LongLong,
-     *         UByte, UShort, UInt, ULong, ULongLong#
-     */
-
-    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
-
-    /**end repeat**/
-
-    /**begin repeat
-     * #name = half, float, double, longdouble#
-     * #Name = Half, Float, Double, LongDouble#
-     */
-
-    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
-
-    /**end repeat**/
-
-    /**begin repeat
-     * #name = byte, short, int, long, longlong, ubyte, ushort,
-     *         uint, ulong, ulonglong, timedelta, cdouble#
-     * #Name = Byte, Short, Int, Long, LongLong, UByte, UShort,
-     *         UInt, ULong, ULongLong, Timedelta, CDouble#
-     */
-
-    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
-
-    /**end repeat**/
+    PyCFloatArrType_Type.tp_methods = cfloattype_methods;
+    PyCLongDoubleArrType_Type.tp_methods = clongdoubletype_methods;
+    PyFloatingArrType_Type.tp_methods = floatingtype_methods;
+    PyIntegerArrType_Type.tp_methods = integertype_methods;
+    PyByteArrType_Type.tp_methods = bytetype_methods;
+    PyShortArrType_Type.tp_methods = shorttype_methods;
+    PyIntArrType_Type.tp_methods = inttype_methods;
+    PyLongArrType_Type.tp_methods = longtype_methods;
+    PyLongLongArrType_Type.tp_methods = longlongtype_methods;
+    PyUByteArrType_Type.tp_methods = ubytetype_methods;
+    PyUShortArrType_Type.tp_methods = ushorttype_methods;
+    PyUIntArrType_Type.tp_methods = uinttype_methods;
+    PyULongArrType_Type.tp_methods = ulongtype_methods;
+    PyULongLongArrType_Type.tp_methods = ulonglongtype_methods;
+    PyHalfArrType_Type.tp_methods = halftype_methods;
+    PyFloatArrType_Type.tp_methods = floattype_methods;
+    PyDoubleArrType_Type.tp_methods = doubletype_methods;
+    PyLongDoubleArrType_Type.tp_methods = longdoubletype_methods;
+    PyByteArrType_Type.tp_methods = bytetype_methods;
+    PyShortArrType_Type.tp_methods = shorttype_methods;
+    PyIntArrType_Type.tp_methods = inttype_methods;
+    PyLongArrType_Type.tp_methods = longtype_methods;
+    PyLongLongArrType_Type.tp_methods = longlongtype_methods;
+    PyUByteArrType_Type.tp_methods = ubytetype_methods;
+    PyUShortArrType_Type.tp_methods = ushorttype_methods;
+    PyUIntArrType_Type.tp_methods = uinttype_methods;
+    PyULongArrType_Type.tp_methods = ulongtype_methods;
+    PyULongLongArrType_Type.tp_methods = ulonglongtype_methods;
+    PyTimedeltaArrType_Type.tp_methods = timedeltatype_methods;
+    PyCDoubleArrType_Type.tp_methods = cdoubletype_methods;
 
     /* We won't be inheriting from Python Int type. */
     PyIntArrType_Type.tp_hash = int_arrtype_hash;
@@ -5041,20 +5175,18 @@ initialize_numeric_types(void)
     PyBoolArrType_Type.tp_methods = booleantype_methods;
 
 
-    /**begin repeat
-     * #char = ,c#
-     * #CHAR = ,C#
-     */
-
     /*
      * These need to be coded specially because longdouble/clongdouble getitem
      * does not return a normal Python type
      */
-    @char@longdoubletype_as_number.nb_float = @char@longdoubletype_float;
-    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_long;
 
-    Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
-    /**end repeat**/
+    longdoubletype_as_number.nb_float = longdoubletype_float;
+    longdoubletype_as_number.nb_int  = longdoubletype_long;
+    PyLongDoubleArrType_Type.tp_as_number = &longdoubletype_as_number;
+
+    clongdoubletype_as_number.nb_float = clongdoubletype_float;
+    clongdoubletype_as_number.nb_int  = clongdoubletype_long;
+    PyCLongDoubleArrType_Type.tp_as_number = &clongdoubletype_as_number;
 
     PyLongDoubleArrType_Type.tp_repr = realtype_repr<PyLongDoubleScalarObject>;
     PyLongDoubleArrType_Type.tp_str = realtype_str<PyLongDoubleScalarObject>;
