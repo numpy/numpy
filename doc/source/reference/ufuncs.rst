@@ -8,7 +8,9 @@
 Universal functions (:class:`ufunc`)
 ************************************
 
-.. seealso:: :ref:`ufuncs-basics`
+.. seealso:: 
+  * :ref:`ufuncs-basics`
+  * :ref:`Generalized ufuncs (gufunc) <c-api.generalized-ufuncs>`
 
 A universal function (or :term:`ufunc` for short) is a function that
 operates on :class:`ndarrays <numpy.ndarray>` in an element-by-element fashion,
@@ -18,6 +20,10 @@ is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function
 that takes a fixed number of specific inputs and produces a fixed number of
 specific outputs. For detailed information on universal functions, see
 :ref:`ufuncs-basics`.
+
+
+There are also :ref:`generalized ufuncs <c-api.generalized-ufuncs>` which
+are functions over vectors (or arrays) instead of only scalars.
 
 :class:`ufunc`
 ==============
