@@ -9,7 +9,8 @@ from functools import partial
 import hypothesis
 import hypothesis.strategies as st
 import pytest
-from hypothesis.extra.numpy import arrays
+from hypothesis.extra.array_api import make_strategies_namespace
+from hypothesis.extra.numpy import array_shapes, arrays
 
 import numpy as np
 import numpy.lib._function_base_impl as nfb
@@ -4323,6 +4324,22 @@ class TestQuantile:
         value = np.quantile(a, q)
         assert value == q * 50_000
         assert value.dtype == np.float16
+
+
+@hypothesis.given(
+    a=arrays(
+        # real_dtype online in array_api, not in numpy
+        dtype=make_strategies_namespace(np).real_dtypes(),
+        shape=array_shapes(max_dims=1, min_side=1),
+    ).filter(lambda a: np.all(np.isfinite(a))),
+    q=st.floats(min_value=0, max_value=1),
+)
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
+def test_quantile_properties(a, q):
+    """Check that quantile produces a value in [min(a), max(a)]."""
+    quantile = np.quantile(a, q)
+    assert np.min(a) <= quantile
+    assert quantile <= np.max(a)
 
 
 class TestLerp:

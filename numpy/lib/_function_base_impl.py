@@ -4794,6 +4794,11 @@ def _quantile(
                                method_props, gtype)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
             gamma = gamma.reshape(result_shape)
+            if arr.dtype.kind in ("i", "u"):
+                # as documented, if the inputs are integers, return float64
+                # cast before _lerp to avoid overflows
+                previous = np.astype(previous, np.float64)
+                next = np.astype(next, np.float64)
             result = _lerp(previous,
                         next,
                         gamma,
