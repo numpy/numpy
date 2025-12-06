@@ -34,7 +34,7 @@ def test_scalar_extraction():
 
 # 0.1 not exactly representable in base 2 floating point.
 repr_precision = len(repr(np.longdouble(0.1)))
-# +2 from macro block starting around line 842 in scalartypes.c.src.
+# +2 from macro block starting around line 842 in scalartypes.cpp.
 
 
 @pytest.mark.skipif(IS_MUSL,

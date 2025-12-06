@@ -1182,7 +1182,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/npy_static_data.c',
   'src/multiarray/number.c',
   'src/multiarray/refcount.c',
-  src_file.process('src/multiarray/scalartypes.cpp.src'),
+  'src/multiarray/scalartypes.cpp',
   'src/multiarray/sequence.c',
   'src/multiarray/scalarapi.c',
   'src/multiarray/shape.c',

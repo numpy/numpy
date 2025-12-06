@@ -502,7 +502,7 @@ else:
 
 def _get_c_source_file(obj):
     if issubclass(obj, numpy.generic):
-        return r"_core/src/multiarray/scalartypes.c.src"
+        return r"_core/src/multiarray/scalartypes.cpp"
     elif obj is numpy.ndarray:
         return r"_core/src/multiarray/arrayobject.c"
     else:

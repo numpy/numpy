@@ -16,8 +16,8 @@ __docformat__ = 'restructuredtext'
 # and by Travis Oliphant  2005-8-22 for numpy
 
 
-# Note: Both scalartypes.c.src and arrayprint.py implement strs for numpy
-# scalars but for different purposes. scalartypes.c.src has str/reprs for when
+# Note: Both scalartypes.cpp and arrayprint.py implement strs for numpy
+# scalars but for different purposes. scalartypes.cpp has str/reprs for when
 # the scalar is printed on its own, while arrayprint.py has strs for when
 # scalars are printed inside an ndarray. Only the latter strs are currently
 # user-customizable.
@@ -1485,7 +1485,7 @@ class StructuredVoidFormat:
 def _void_scalar_to_string(x, is_repr=True):
     """
     Implements the repr for structured-void scalars. It is called from the
-    scalartypes.c.src code, and is placed here because it uses the elementwise
+    scalartypes.cpp code, and is placed here because it uses the elementwise
     formatters defined above.
     """
     options = format_options.get().copy()
