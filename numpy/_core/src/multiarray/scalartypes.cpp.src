@@ -1429,7 +1429,6 @@ static PyObject* legacy_format_strreprimpl(T val){
  *               *** END LEGACY PRINTING MODE CODE ***
  */
 
-
 /* helper function choose scientific of fractional output, based on a cutoff */
 template <const char kind, typename T>
 static PyObject* format_strreprimpl_either(T val, TrimMode trim_pos, 
@@ -1750,11 +1749,15 @@ constexpr static PyNumberMethods make_gentype_as_number() {
     t.nb_float = gentype_float;
     t.nb_floor_divide = gentype_floor_divide;
     t.nb_true_divide = gentype_true_divide;
-    
+
     return t;
 }
 
-PyNumberMethods gentype_as_number = make_gentype_as_number();
+constexpr static PyNumberMethods make_gentype_as_number(unaryfunc nb_index_) {
+    auto t = make_gentype_as_number();
+    t.nb_index = nb_index_;
+    return t;
+}
 
 static PyObject *
 gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
@@ -4122,21 +4125,12 @@ bool_arrtype_nonzero(PyObject *a)
  * #type = PyLong_FromLong*6, PyLong_FromLongLong*1,
  *         PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong#
  */
-static PyNumberMethods @name@_arrtype_as_number;
 static PyObject *
 @name@_index(PyObject *self)
 {
-    return @type@(PyArrayScalar_VAL(self, @Name@));
+    auto obj = (Py@Name@ScalarObject*)self;
+    return @type@(obj->obval);
 }
-/**end repeat**/
-
-/**begin repeat
- *  #name = half, float, double, longdouble,
- *          cfloat, cdouble, clongdouble#
- *  #NAME = Half, Float, Double, LongDouble,
- *          CFloat, CDouble, CLongDouble#
- */
-static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
@@ -4151,7 +4145,25 @@ constexpr static PyNumberMethods make_bool_arrtype_as_number() {
     return t;
 }
 
-NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = make_bool_arrtype_as_number();
+static auto bool_arrtype_as_number = make_bool_arrtype_as_number();
+static auto pygenericarrtype_type_tp_as_number = make_gentype_as_number();
+static auto pybytearrtype_type_tp_as_number = make_gentype_as_number(byte_index);
+static auto pyshortarrtype_type_tp_as_number = make_gentype_as_number(short_index);
+static auto pyintarrtype_type_tp_as_number = make_gentype_as_number(int_index);
+static auto pylongarrtype_type_tp_as_number = make_gentype_as_number(long_index);
+static auto pylonglongarrtype_type_tp_as_number = make_gentype_as_number(longlong_index);
+static auto pyubytearrtype_type_tp_as_number = make_gentype_as_number(ubyte_index);
+static auto pyushortarrtype_type_tp_as_number = make_gentype_as_number(ushort_index);
+static auto pyuintarrtype_type_tp_as_number = make_gentype_as_number(uint_index);
+static auto pyulongarrtype_type_tp_as_number = make_gentype_as_number(ulong_index);
+static auto pyulonglongarrtype_type_tp_as_number = make_gentype_as_number(ulonglong_index);
+static auto pyhalfarrtype_type_tp_as_number = make_gentype_as_number();
+static auto pyfloatarrtype_type_tp_as_number = make_gentype_as_number();
+static auto pydoublearrtype_type_tp_as_number = make_gentype_as_number();
+static auto pylongdoublearrtype_type_tp_as_number = make_gentype_as_number();
+static auto pycfloatarrtype_type_tp_as_number = make_gentype_as_number();
+static auto pycdoublearrtype_type_tp_as_number = make_gentype_as_number();
+static auto pyclongdoublearrtype_type_tp_as_number = make_gentype_as_number();
 
 static PyObject *
 void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -4826,7 +4838,7 @@ initialize_numeric_types(void)
 {
     init_basetypes();
     PyGenericArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
-    PyGenericArrType_Type.tp_as_number = &gentype_as_number;
+    PyGenericArrType_Type.tp_as_number = &pygenericarrtype_type_tp_as_number;
     PyGenericArrType_Type.tp_as_mapping = &gentype_as_mapping;
     PyGenericArrType_Type.tp_flags = BASEFLAGS;
     PyGenericArrType_Type.tp_methods = gentype_methods;
@@ -4845,68 +4857,23 @@ initialize_numeric_types(void)
      * also fill array_type_as_number struct with reasonable defaults
      */
 
-    // TODO: handle all these copies with a template
-
-    byte_arrtype_as_number = gentype_as_number;
-    PyByteArrType_Type.tp_as_number = &byte_arrtype_as_number;
-    PyByteArrType_Type.tp_as_number->nb_index = byte_index;
-
-    short_arrtype_as_number = gentype_as_number;
-    PyShortArrType_Type.tp_as_number = &short_arrtype_as_number;
-    PyShortArrType_Type.tp_as_number->nb_index = short_index;
-
-    int_arrtype_as_number = gentype_as_number;
-    PyIntArrType_Type.tp_as_number = &int_arrtype_as_number;
-    PyIntArrType_Type.tp_as_number->nb_index = int_index;
-
-    long_arrtype_as_number = gentype_as_number;
-    PyLongArrType_Type.tp_as_number = &long_arrtype_as_number;
-    PyLongArrType_Type.tp_as_number->nb_index = long_index;
-
-    longlong_arrtype_as_number = gentype_as_number;
-    PyLongLongArrType_Type.tp_as_number = &longlong_arrtype_as_number;
-    PyLongLongArrType_Type.tp_as_number->nb_index = longlong_index;
-
-    ubyte_arrtype_as_number = gentype_as_number;
-    PyUByteArrType_Type.tp_as_number = &ubyte_arrtype_as_number;
-    PyUByteArrType_Type.tp_as_number->nb_index = ubyte_index;
-
-    ushort_arrtype_as_number = gentype_as_number;
-    PyUShortArrType_Type.tp_as_number = &ushort_arrtype_as_number;
-    PyUShortArrType_Type.tp_as_number->nb_index = ushort_index;
-
-    uint_arrtype_as_number = gentype_as_number;
-    PyUIntArrType_Type.tp_as_number = &uint_arrtype_as_number;
-    PyUIntArrType_Type.tp_as_number->nb_index = uint_index;
-
-    ulong_arrtype_as_number = gentype_as_number;
-    PyULongArrType_Type.tp_as_number = &ulong_arrtype_as_number;
-    PyULongArrType_Type.tp_as_number->nb_index = ulong_index;
-
-    ulonglong_arrtype_as_number = gentype_as_number;
-    PyULongLongArrType_Type.tp_as_number = &ulonglong_arrtype_as_number;
-    PyULongLongArrType_Type.tp_as_number->nb_index = ulonglong_index;
-
-    half_arrtype_as_number = gentype_as_number;
-    PyHalfArrType_Type.tp_as_number = &half_arrtype_as_number;
-
-    float_arrtype_as_number = gentype_as_number;
-    PyFloatArrType_Type.tp_as_number = &float_arrtype_as_number;
-
-    double_arrtype_as_number = gentype_as_number;
-    PyDoubleArrType_Type.tp_as_number = &double_arrtype_as_number;
-
-    longdouble_arrtype_as_number = gentype_as_number;
-    PyLongDoubleArrType_Type.tp_as_number = &longdouble_arrtype_as_number;
-
-    cfloat_arrtype_as_number = gentype_as_number;
-    PyCFloatArrType_Type.tp_as_number = &cfloat_arrtype_as_number;
-
-    cdouble_arrtype_as_number = gentype_as_number;
-    PyCDoubleArrType_Type.tp_as_number = &cdouble_arrtype_as_number;
-
-    clongdouble_arrtype_as_number = gentype_as_number;
-    PyCLongDoubleArrType_Type.tp_as_number = &clongdouble_arrtype_as_number;
+    PyByteArrType_Type.tp_as_number = &pybytearrtype_type_tp_as_number;
+    PyShortArrType_Type.tp_as_number = &pyshortarrtype_type_tp_as_number;
+    PyIntArrType_Type.tp_as_number = &pyintarrtype_type_tp_as_number;
+    PyLongArrType_Type.tp_as_number = &pylongarrtype_type_tp_as_number;
+    PyLongLongArrType_Type.tp_as_number = &pylonglongarrtype_type_tp_as_number;
+    PyUByteArrType_Type.tp_as_number = &pyubytearrtype_type_tp_as_number;
+    PyUShortArrType_Type.tp_as_number = &pyushortarrtype_type_tp_as_number;
+    PyUIntArrType_Type.tp_as_number = &pyuintarrtype_type_tp_as_number;
+    PyULongArrType_Type.tp_as_number = &pyulongarrtype_type_tp_as_number;
+    PyULongLongArrType_Type.tp_as_number = &pyulonglongarrtype_type_tp_as_number;
+    PyHalfArrType_Type.tp_as_number = &pyhalfarrtype_type_tp_as_number;
+    PyFloatArrType_Type.tp_as_number = &pyfloatarrtype_type_tp_as_number;
+    PyDoubleArrType_Type.tp_as_number = &pydoublearrtype_type_tp_as_number;
+    PyLongDoubleArrType_Type.tp_as_number = &pylongdoublearrtype_type_tp_as_number;
+    PyCFloatArrType_Type.tp_as_number = &pycfloatarrtype_type_tp_as_number;
+    PyCDoubleArrType_Type.tp_as_number = &pycdoublearrtype_type_tp_as_number;
+    PyCLongDoubleArrType_Type.tp_as_number = &pyclongdoublearrtype_type_tp_as_number;
 
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
