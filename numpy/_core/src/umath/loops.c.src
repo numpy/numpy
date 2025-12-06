@@ -688,7 +688,12 @@ TIMEDELTA_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 {
     UNARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
-        *((npy_timedelta *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : 0);
+        if (in1 == NPY_DATETIME_NAT) {
+            *((npy_double *)op1) = NPY_NAN;
+        }
+        else {
+            *((npy_double *)op1) = in1 > 0 ? 1.0 : (in1 < 0 ? -1.0 : 0.0);
+        }
     }
 }
 
