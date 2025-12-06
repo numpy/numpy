@@ -4352,21 +4352,27 @@ bool_arrtype_nonzero(PyObject *a)
     return a == PyArrayScalar_True;
 }
 
-/**begin repeat
- * #name = byte, short, int, long, ubyte, ushort, longlong, uint,
- *         ulong, ulonglong#
- * #Name = Byte, Short, Int, Long, UByte, UShort, LongLong, UInt,
- *         ULong, ULongLong#
- * #type = PyLong_FromLong*6, PyLong_FromLongLong*1,
- *         PyLong_FromUnsignedLong*2, PyLong_FromUnsignedLongLong#
- */
+template <typename PT>
 static PyObject *
-@name@_index(PyObject *self)
+dunder_index_impl(PyObject *self)
 {
-    auto obj = (Py@Name@ScalarObject*)self;
-    return @type@(obj->obval);
+    auto obval = ((PT*)self)->obval;
+    if constexpr (std::is_same_v<PT, PyByteScalarObject>
+            || std::is_same_v<PT, PyShortScalarObject>
+            || std::is_same_v<PT, PyIntScalarObject>
+            || std::is_same_v<PT, PyLongScalarObject>
+            || std::is_same_v<PT, PyUByteScalarObject>
+            || std::is_same_v<PT, PyUShortScalarObject>) {
+        return PyLong_FromLong(obval);
+    } else if constexpr (std::is_same_v<PT, PyLongLongScalarObject>) {
+        return PyLong_FromLongLong(obval);
+    } else if constexpr (std::is_same_v<PT, PyUIntScalarObject>
+            || std::is_same_v<PT, PyULongScalarObject>) {
+        return PyLong_FromUnsignedLong(obval);
+    } else if constexpr (std::is_same_v<PT, PyULongLongScalarObject>) {
+        return PyLong_FromUnsignedLongLong(obval);
+    }
 }
-/**end repeat**/
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 constexpr static PyNumberMethods make_bool_arrtype_as_number() {
@@ -4382,16 +4388,16 @@ constexpr static PyNumberMethods make_bool_arrtype_as_number() {
 
 static auto bool_arrtype_as_number = make_bool_arrtype_as_number();
 static auto pygenericarrtype_type_tp_as_number = make_gentype_as_number();
-static auto pybytearrtype_type_tp_as_number = make_gentype_as_number(byte_index);
-static auto pyshortarrtype_type_tp_as_number = make_gentype_as_number(short_index);
-static auto pyintarrtype_type_tp_as_number = make_gentype_as_number(int_index);
-static auto pylongarrtype_type_tp_as_number = make_gentype_as_number(long_index);
-static auto pylonglongarrtype_type_tp_as_number = make_gentype_as_number(longlong_index);
-static auto pyubytearrtype_type_tp_as_number = make_gentype_as_number(ubyte_index);
-static auto pyushortarrtype_type_tp_as_number = make_gentype_as_number(ushort_index);
-static auto pyuintarrtype_type_tp_as_number = make_gentype_as_number(uint_index);
-static auto pyulongarrtype_type_tp_as_number = make_gentype_as_number(ulong_index);
-static auto pyulonglongarrtype_type_tp_as_number = make_gentype_as_number(ulonglong_index);
+static auto pybytearrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyByteScalarObject>);
+static auto pyshortarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyShortScalarObject>);
+static auto pyintarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyIntScalarObject>);
+static auto pylongarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyLongScalarObject>);
+static auto pylonglongarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyLongLongScalarObject>);
+static auto pyubytearrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyUByteScalarObject>);
+static auto pyushortarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyUShortScalarObject>);
+static auto pyuintarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyUIntScalarObject>);
+static auto pyulongarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyULongScalarObject>);
+static auto pyulonglongarrtype_type_tp_as_number = make_gentype_as_number(dunder_index_impl<PyULongLongScalarObject>);
 static auto pyhalfarrtype_type_tp_as_number = make_gentype_as_number();
 static auto pyfloatarrtype_type_tp_as_number = make_gentype_as_number();
 static auto pydoublearrtype_type_tp_as_number = make_gentype_as_number();
@@ -4489,86 +4495,53 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 /****************  Define Hash functions ********************/
 
-/**begin repeat
- * #lname = bool, ubyte, ushort#
- * #name = Bool,UByte, UShort#
- */
+template <typename PT>
 static npy_hash_t
-@lname@_arrtype_hash(PyObject *obj)
+dunder_hash_impl1(PyObject *obj)
 {
-    return (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
-}
-/**end repeat**/
-
-/**begin repeat
- * #lname = byte, short, uint#
- * #name = Byte, Short, UInt#
- */
-static npy_hash_t
-@lname@_arrtype_hash(PyObject *obj)
-{
-    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
-    if (x == -1) {
-        x = -2;
-    }
-    return x;
-}
-/**end repeat**/
-
-static npy_hash_t
-ulong_arrtype_hash(PyObject *obj)
-{
-    PyObject * l = PyLong_FromUnsignedLong(PyArrayScalar_VAL(obj, ULong));
-    npy_hash_t x = PyObject_Hash(l);
-    Py_DECREF(l);
-    return x;
+    return (npy_hash_t)(((PT *)obj)->obval);
 }
 
+template <typename PT>
 static npy_hash_t
-int_arrtype_hash(PyObject *obj)
+dunder_hash_impl2(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, Int));
+    auto obval = ((PT *)obj)->obval;
+    npy_hash_t x = (npy_hash_t)(obval);
     if (x == -1) {
         x = -2;
     }
     return x;
 }
 
-static npy_hash_t
-long_arrtype_hash(PyObject *obj)
-{
-    PyObject * l = PyLong_FromLong(PyArrayScalar_VAL(obj, Long));
-    npy_hash_t x = PyObject_Hash(l);
-    Py_DECREF(l);
-    return x;
-}
-
-/**begin repeat
- * #char = ,u#
- * #Char = ,U#
- * #Word = ,Unsigned#
- */
+template <typename PT>
 static inline npy_hash_t
-@char@longlong_arrtype_hash(PyObject *obj)
+dunder_hash_impl3(PyObject *obj)
 {
-    PyObject * l = PyLong_From@Word@LongLong(
-                                 PyArrayScalar_VAL(obj, @Char@LongLong));
+    auto obval = ((PT *)obj)->obval;
+    PyObject* l;
+    if constexpr (std::is_same_v<PT, PyULongScalarObject>) {
+        l = PyLong_FromUnsignedLong(obval);
+    } else if constexpr (std::is_same_v<PT, PyLongScalarObject>) {
+        l = PyLong_FromLong(obval);
+    } else if constexpr (std::is_same_v<PT, PyLongLongScalarObject>) {
+        l = PyLong_FromLongLong(obval);
+    } else if constexpr (std::is_same_v<PT, PyULongLongScalarObject>) {
+        l = PyLong_FromUnsignedLongLong(obval);
+    } else {
+        static_assert(!"unreachable");
+    }
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
     return x;
 }
-/**end repeat**/
 
-
-/**begin repeat
- * #lname = datetime, timedelta#
- * #name = Datetime, Timedelta#
- */
+template <typename PT>
 static npy_hash_t
-@lname@_arrtype_hash(PyObject *obj)
+dunder_hash_time_impl(PyObject *obj)
 {
     PyArray_DatetimeMetaData *meta;
-    npy_@lname@ val = PyArrayScalar_VAL(obj, @name@);
+    auto val = ((PT *)obj)->obval;
 
     if (val == NPY_DATETIME_NAT) {
         /* Use identity, similar to NaN */
@@ -4577,39 +4550,34 @@ static npy_hash_t
 
     meta = &((PyDatetimeScalarObject *)obj)->obmeta;
 
-    npy_hash_t res = @lname@_hash(meta, val);
-    return res;
+    if constexpr (std::is_same_v<PT, PyDatetimeScalarObject>) {
+        return datetime_hash(meta, val);
+    } else if constexpr (std::is_same_v<PT, PyTimedeltaScalarObject>) {
+        return timedelta_hash(meta, val);
+    }
 }
-/**end repeat**/
 
 
-/* Wrong thing to do for longdouble, but....*/
-
-/**begin repeat
- * #lname = float, longdouble#
- * #name = Float, LongDouble#
- * #NAME = FLOAT, LONGDOUBLE#
- * #n = f, l#
- */
+template <typename PT>
 static npy_hash_t
-@lname@_arrtype_hash(PyObject *obj)
+dunder_hash_impl4(PyObject *obj)
 {
-    return Npy_HashDouble(obj, (double)PyArrayScalar_VAL(obj, @name@));
+    auto obval = ((PT*)obj)->obval;
+    return Npy_HashDouble(obj, (double)obval);
 }
 
-/* borrowed from complex_hash */
+template <typename PT>
 static npy_hash_t
-c@lname@_arrtype_hash(PyObject *obj)
+dunder_hash_complex_impl(PyObject *obj)
 {
     npy_hash_t hashreal, hashimag, combined;
-    hashreal = Npy_HashDouble(
-            obj, (double)npy_creal_cppimpl(PyArrayScalar_VAL(obj, C@name@)));
+    auto obval = ((PT*)obj)->obval;
+    hashreal = Npy_HashDouble(obj, (double)npy_creal_cppimpl(obval));
 
     if (hashreal == -1) {
         return -1;
     }
-    hashimag = Npy_HashDouble(
-            obj, (double)npy_cimag_cppimpl(PyArrayScalar_VAL(obj, C@name@)));
+    hashimag = Npy_HashDouble(obj, (double)npy_cimag_cppimpl(obval));
     if (hashimag == -1) {
         return -1;
     }
@@ -4619,7 +4587,6 @@ c@lname@_arrtype_hash(PyObject *obj)
     }
     return combined;
 }
-/**end repeat**/
 
 static npy_hash_t
 half_arrtype_hash(PyObject *obj)
@@ -4667,6 +4634,8 @@ void_arrtype_hash(PyObject *obj)
         x = -2;
     return x;
 }
+
+/**************** END Define Hash functions ********************/
 
 /*object arrtype getattro and setattro */
 static PyObject *
@@ -5261,23 +5230,28 @@ initialize_numeric_types(void)
 
     PyUnicodeArrType_Type.tp_dealloc = unicode_arrtype_dealloc;
 
-    PyBoolArrType_Type.tp_hash = bool_arrtype_hash;
-    PyByteArrType_Type.tp_hash = byte_arrtype_hash;
-    PyShortArrType_Type.tp_hash = short_arrtype_hash;
-    PyUByteArrType_Type.tp_hash = ubyte_arrtype_hash;
-    PyUShortArrType_Type.tp_hash = ushort_arrtype_hash;
-    PyUIntArrType_Type.tp_hash = uint_arrtype_hash;
-    PyULongArrType_Type.tp_hash = ulong_arrtype_hash;
-    PyULongLongArrType_Type.tp_hash = ulonglong_arrtype_hash;
+    PyBoolArrType_Type.tp_hash = dunder_hash_impl1<PyBoolScalarObject>;
+    PyUByteArrType_Type.tp_hash = dunder_hash_impl1<PyUByteScalarObject>;
+    PyUShortArrType_Type.tp_hash = dunder_hash_impl1<PyUShortScalarObject>;
+    PyByteArrType_Type.tp_hash = dunder_hash_impl2<PyByteScalarObject>;
+    PyShortArrType_Type.tp_hash = dunder_hash_impl2<PyShortScalarObject>;
+    PyUIntArrType_Type.tp_hash = dunder_hash_impl2<PyUIntScalarObject>;
+    /* We won't be inheriting from Python Int type. */
+    PyIntArrType_Type.tp_hash = dunder_hash_impl2<PyIntScalarObject>;
+    PyULongArrType_Type.tp_hash = dunder_hash_impl3<PyULongScalarObject>;
+    PyULongLongArrType_Type.tp_hash = dunder_hash_impl3<PyULongLongScalarObject>;
+    PyLongArrType_Type.tp_hash = dunder_hash_impl3<PyLongScalarObject>;
+    PyLongLongArrType_Type.tp_hash = dunder_hash_impl3<PyLongLongScalarObject>;
     PyHalfArrType_Type.tp_hash = half_arrtype_hash;
-    PyFloatArrType_Type.tp_hash = float_arrtype_hash;
-    PyLongDoubleArrType_Type.tp_hash = longdouble_arrtype_hash;
-    PyCFloatArrType_Type.tp_hash = cfloat_arrtype_hash;
-    PyCLongDoubleArrType_Type.tp_hash = clongdouble_arrtype_hash;
+    PyFloatArrType_Type.tp_hash = dunder_hash_impl4<PyFloatScalarObject>;
+    /* Wrong thing to do for longdouble, but....*/
+    PyLongDoubleArrType_Type.tp_hash = dunder_hash_impl4<PyLongDoubleScalarObject>;
+    PyCFloatArrType_Type.tp_hash = dunder_hash_complex_impl<PyCFloatScalarObject>;
+    PyCLongDoubleArrType_Type.tp_hash = dunder_hash_complex_impl<PyCLongDoubleScalarObject>;
     PyVoidArrType_Type.tp_hash = void_arrtype_hash;
     PyObjectArrType_Type.tp_hash = object_arrtype_hash;
-    PyDatetimeArrType_Type.tp_hash = datetime_arrtype_hash;
-    PyTimedeltaArrType_Type.tp_hash = timedelta_arrtype_hash;
+    PyDatetimeArrType_Type.tp_hash = dunder_hash_time_impl<PyDatetimeScalarObject>;
+    PyTimedeltaArrType_Type.tp_hash = dunder_hash_time_impl<PyTimedeltaScalarObject>;
 
     PyCFloatArrType_Type.tp_methods = cfloattype_methods;
     PyCLongDoubleArrType_Type.tp_methods = clongdoubletype_methods;
@@ -5309,15 +5283,6 @@ initialize_numeric_types(void)
     PyULongLongArrType_Type.tp_methods = ulonglongtype_methods;
     PyTimedeltaArrType_Type.tp_methods = timedeltatype_methods;
     PyCDoubleArrType_Type.tp_methods = cdoubletype_methods;
-
-    /* We won't be inheriting from Python Int type. */
-    PyIntArrType_Type.tp_hash = int_arrtype_hash;
-
-    /* We won't be inheriting from Python Int type. */
-    PyLongArrType_Type.tp_hash = long_arrtype_hash;
-
-    /* We won't be inheriting from Python Int type. */
-    PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
 
     PyHalfArrType_Type.tp_str = halftype_str;
     PyHalfArrType_Type.tp_repr = halftype_repr;
