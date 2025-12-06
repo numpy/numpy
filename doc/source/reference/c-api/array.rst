@@ -4272,6 +4272,8 @@ Memory management
 
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
 
+.. _array.ndarray.capi.threading:
+
 Threading support
 ~~~~~~~~~~~~~~~~~
 
