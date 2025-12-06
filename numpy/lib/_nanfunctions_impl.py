@@ -809,12 +809,12 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
                    initial=initial, where=where)
 
 
-def _nancumsum_dispatcher(a, axis=None, dtype=None, out=None):
+def _nancumsum_dispatcher(a, axis=None, dtype=None, out=None, *, reverse=False):
     return (a, out)
 
 
 @array_function_dispatch(_nancumsum_dispatcher)
-def nancumsum(a, axis=None, dtype=None, out=None):
+def nancumsum(a, axis=None, dtype=None, out=None, *, reverse=False):
     """
     Return the cumulative sum of array elements over a given axis treating Not a
     Numbers (NaNs) as zero.  The cumulative sum does not change when NaNs are
@@ -840,6 +840,9 @@ def nancumsum(a, axis=None, dtype=None, out=None):
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary. See :ref:`ufuncs-output-type` for
         more details.
+    reverse : bool, keyword-only, optional
+        If True, perform a right-to-left cumulative sum along `axis`.
+        Equivalent to ``flip(nancumsum(flip(a, axis=axis), axis=axis), axis=axis)``.
 
     Returns
     -------
@@ -874,16 +877,29 @@ def nancumsum(a, axis=None, dtype=None, out=None):
            [3.,  3.]])
 
     """
-    a, mask = _replace_nan(a, 0)
-    return np.cumsum(a, axis=axis, dtype=dtype, out=out)
+    if not reverse:
+        a, mask = _replace_nan(a, 0)
+        return np.cumsum(a, axis=axis, dtype=dtype, out=out)
+
+    # reverse=True path delegates to non-reverse after an axis flip
+    if axis is None:
+        a = np.ravel(a)
+        axis = 0
+    a_rev = np.flip(a, axis=axis)
+    if out is None:
+        res = nancumsum(a_rev, axis=axis, dtype=dtype)
+        return np.flip(res, axis=axis)
+    out_rev = np.flip(out, axis=axis)
+    nancumsum(a_rev, axis=axis, dtype=dtype, out=out_rev)
+    return out
 
 
-def _nancumprod_dispatcher(a, axis=None, dtype=None, out=None):
+def _nancumprod_dispatcher(a, axis=None, dtype=None, out=None, *, reverse=False):
     return (a, out)
 
 
 @array_function_dispatch(_nancumprod_dispatcher)
-def nancumprod(a, axis=None, dtype=None, out=None):
+def nancumprod(a, axis=None, dtype=None, out=None, *, reverse=False):
     """
     Return the cumulative product of array elements over a given axis treating Not a
     Numbers (NaNs) as one.  The cumulative product does not change when NaNs are
@@ -908,6 +924,9 @@ def nancumprod(a, axis=None, dtype=None, out=None):
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
         but the type of the resulting values will be cast if necessary.
+    reverse : bool, keyword-only, optional
+        If True, perform a right-to-left cumulative product along `axis`.
+        Equivalent to ``flip(nancumprod(flip(a, axis=axis), axis=axis), axis=axis)``.
 
     Returns
     -------
@@ -940,8 +959,20 @@ def nancumprod(a, axis=None, dtype=None, out=None):
            [3.,  3.]])
 
     """
-    a, mask = _replace_nan(a, 1)
-    return np.cumprod(a, axis=axis, dtype=dtype, out=out)
+    if not reverse:
+        a, mask = _replace_nan(a, 1)
+        return np.cumprod(a, axis=axis, dtype=dtype, out=out)
+
+    if axis is None:
+        a = np.ravel(a)
+        axis = 0
+    a_rev = np.flip(a, axis=axis)
+    if out is None:
+        res = nancumprod(a_rev, axis=axis, dtype=dtype)
+        return np.flip(res, axis=axis)
+    out_rev = np.flip(out, axis=axis)
+    nancumprod(a_rev, axis=axis, dtype=dtype, out=out_rev)
+    return out
 
 
 def _nanmean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
