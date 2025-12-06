@@ -36,8 +36,7 @@ extend-select = [
     "W",    # pycodestyle/warning
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
-    # TODO: re-enable after merging https://github.com/numpy/numpy/pull/30319
-    # "UP",   # pyupgrade
+    "UP",   # pyupgrade
 ]
 ignore = [
     # flake8-bugbear

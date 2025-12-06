@@ -1,4 +1,4 @@
-from typing import TypeAlias, overload
+from typing import overload
 
 import numpy as np
 from numpy._globals import _NoValueType
@@ -62,9 +62,9 @@ __all__ = [
     "slice",
 ]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
-_StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_AnyShape, np.dtype[np.str_]] | _StringDTypeArray
+type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
+type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
+type _StringDTypeOrUnicodeArray = NDArray[np.str_] | _StringDTypeArray
 
 @overload
 def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...

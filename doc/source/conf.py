@@ -145,8 +145,6 @@ today_fmt = '%B %d, %Y'
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "autolink"
 
-nitpick_ignore = []
-
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
@@ -610,7 +608,7 @@ breathe_default_project = "numpy"
 breathe_default_members = ("members", "undoc-members", "protected-members")
 
 # See https://github.com/breathe-doc/breathe/issues/696
-nitpick_ignore += [
+nitpick_ignore = [
     ('c:identifier', 'FILE'),
     ('c:identifier', 'size_t'),
     ('c:identifier', 'PyHeapTypeObject'),

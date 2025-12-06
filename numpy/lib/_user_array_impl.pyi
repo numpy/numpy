@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from types import EllipsisType
-from typing import Any, Generic, Self, SupportsIndex, TypeAlias, overload
-from typing_extensions import TypeVar, deprecated, override
+from typing import Any, Generic, Self, SupportsIndex, overload, override
+from typing_extensions import TypeVar, deprecated
 
 import numpy as np
 import numpy.typing as npt
@@ -11,30 +11,25 @@ from numpy._typing import (
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _DTypeLike,
+    _Shape,
 )
 
 ###
 
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], default=_AnyShape, covariant=True)
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
-_BoolArrayT = TypeVar("_BoolArrayT", bound=container[Any, np.dtype[np.bool]])  # type: ignore[deprecated]
-_IntegralArrayT = TypeVar("_IntegralArrayT", bound=container[Any, np.dtype[np.bool | np.integer | np.object_]])  # type: ignore[deprecated]
-_RealContainerT = TypeVar(
-    "_RealContainerT",
-    bound=container[Any, np.dtype[np.bool | np.integer | np.floating | np.timedelta64 | np.object_]],  # type: ignore[deprecated]
-)
-_NumericContainerT = TypeVar("_NumericContainerT", bound=container[Any, np.dtype[np.number | np.timedelta64 | np.object_]])  # type: ignore[deprecated]
+type _ArrayInt_co = npt.NDArray[np.integer | np.bool]
 
-_ArrayInt_co: TypeAlias = npt.NDArray[np.integer | np.bool]
+type _BoolContainer = container[Any, np.dtype[np.bool]]  # type: ignore[deprecated]
+type _IntegralContainer = container[Any, np.dtype[np.bool | np.integer | np.object_]]  # type: ignore[deprecated]
+type _RealContainer = container[Any, np.dtype[np.bool | np.integer | np.floating | np.timedelta64 | np.object_]]  # type: ignore[deprecated]
+type _NumericContainer = container[Any, np.dtype[np.number | np.timedelta64 | np.object_]]  # type: ignore[deprecated]
 
-_ToIndexSlice: TypeAlias = slice | EllipsisType | _ArrayInt_co | None
-_ToIndexSlices: TypeAlias = _ToIndexSlice | tuple[_ToIndexSlice, ...]
-_ToIndex: TypeAlias = SupportsIndex | _ToIndexSlice
-_ToIndices: TypeAlias = _ToIndex | tuple[_ToIndex, ...]
+type _ToIndexSlice = slice | EllipsisType | _ArrayInt_co | None
+type _ToIndexSlices = _ToIndexSlice | tuple[_ToIndexSlice, ...]
+type _ToIndex = SupportsIndex | _ToIndexSlice
+type _ToIndices = _ToIndex | tuple[_ToIndex, ...]
 
 ###
 # pyright: reportDeprecated = false
@@ -52,19 +47,19 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
         copy: bool = True,
     ) -> None: ...
     @overload
-    def __init__(
-        self: container[Any, np.dtype[_ScalarT]],
+    def __init__[ScalarT: np.generic](
+        self: container[Any, np.dtype[ScalarT]],
         /,
-        data: _ArrayLike[_ScalarT],
+        data: _ArrayLike[ScalarT],
         dtype: None = None,
         copy: bool = True,
     ) -> None: ...
     @overload
-    def __init__(
-        self: container[Any, np.dtype[_ScalarT]],
+    def __init__[ScalarT: np.generic](
+        self: container[Any, np.dtype[ScalarT]],
         /,
         data: npt.ArrayLike,
-        dtype: _DTypeLike[_ScalarT],
+        dtype: _DTypeLike[ScalarT],
         copy: bool = True,
     ) -> None: ...
     @overload
@@ -112,20 +107,28 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
 
     # keep in sync with np.ndarray
     @overload
-    def __abs__(self: container[_ShapeT, np.dtype[np.complex64]], /) -> container[_ShapeT, np.dtype[np.float32]]: ...
+    def __abs__[ShapeT: _Shape](
+        self: container[ShapeT, np.dtype[np.complex64]], /
+    ) -> container[ShapeT, np.dtype[np.float32]]: ...
     @overload
-    def __abs__(self: container[_ShapeT, np.dtype[np.complex128]], /) -> container[_ShapeT, np.dtype[np.float64]]: ...
+    def __abs__[ShapeT: _Shape](
+        self: container[ShapeT, np.dtype[np.complex128]], /
+    ) -> container[ShapeT, np.dtype[np.float64]]: ...
     @overload
-    def __abs__(self: container[_ShapeT, np.dtype[np.complex192]], /) -> container[_ShapeT, np.dtype[np.float96]]: ...
+    def __abs__[ShapeT: _Shape](
+        self: container[ShapeT, np.dtype[np.complex192]], /
+    ) -> container[ShapeT, np.dtype[np.float96]]: ...
     @overload
-    def __abs__(self: container[_ShapeT, np.dtype[np.complex256]], /) -> container[_ShapeT, np.dtype[np.float128]]: ...
+    def __abs__[ShapeT: _Shape](
+        self: container[ShapeT, np.dtype[np.complex256]], /
+    ) -> container[ShapeT, np.dtype[np.float128]]: ...
     @overload
-    def __abs__(self: _RealContainerT, /) -> _RealContainerT: ...
+    def __abs__[ContainerT: _RealContainer](self: ContainerT, /) -> ContainerT: ...
 
     #
-    def __neg__(self: _NumericContainerT, /) -> _NumericContainerT: ...  # noqa: PYI019
-    def __pos__(self: _NumericContainerT, /) -> _NumericContainerT: ...  # noqa: PYI019
-    def __invert__(self: _IntegralArrayT, /) -> _IntegralArrayT: ...  # noqa: PYI019
+    def __neg__[ContainerT: _NumericContainer](self: ContainerT, /) -> ContainerT: ...  # noqa: PYI019
+    def __pos__[ContainerT: _NumericContainer](self: ContainerT, /) -> ContainerT: ...  # noqa: PYI019
+    def __invert__[ContainerT: _IntegralContainer](self: ContainerT, /) -> ContainerT: ...  # noqa: PYI019
 
     # TODO(jorenham): complete these binary ops
 
@@ -170,40 +173,34 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     @overload
-    def __and__(
-        self: container[Any, np.dtype[np.bool]], other: _ArrayLikeBool_co, /
-    ) -> container[_AnyShape, np.dtype[np.bool]]: ...
+    def __and__(self: _BoolContainer, other: _ArrayLikeBool_co, /) -> container[_AnyShape, np.dtype[np.bool]]: ...
     @overload
     def __and__(self, other: _ArrayLikeInt_co, /) -> container[_AnyShape, np.dtype[np.bool | np.integer]]: ...
     __rand__ = __and__
     @overload
-    def __iand__(self: _BoolArrayT, other: _ArrayLikeBool_co, /) -> _BoolArrayT: ...
+    def __iand__[ContainerT: _BoolContainer](self: ContainerT, other: _ArrayLikeBool_co, /) -> ContainerT: ...
     @overload
     def __iand__(self, other: _ArrayLikeInt_co, /) -> Self: ...
 
     #
     @overload
-    def __xor__(
-        self: container[Any, np.dtype[np.bool]], other: _ArrayLikeBool_co, /
-    ) -> container[_AnyShape, np.dtype[np.bool]]: ...
+    def __xor__(self: _BoolContainer, other: _ArrayLikeBool_co, /) -> container[_AnyShape, np.dtype[np.bool]]: ...
     @overload
     def __xor__(self, other: _ArrayLikeInt_co, /) -> container[_AnyShape, np.dtype[np.bool | np.integer]]: ...
     __rxor__ = __xor__
     @overload
-    def __ixor__(self: _BoolArrayT, other: _ArrayLikeBool_co, /) -> _BoolArrayT: ...
+    def __ixor__[ContainerT: _BoolContainer](self: ContainerT, other: _ArrayLikeBool_co, /) -> ContainerT: ...
     @overload
     def __ixor__(self, other: _ArrayLikeInt_co, /) -> Self: ...
 
     #
     @overload
-    def __or__(
-        self: container[Any, np.dtype[np.bool]], other: _ArrayLikeBool_co, /
-    ) -> container[_AnyShape, np.dtype[np.bool]]: ...
+    def __or__(self: _BoolContainer, other: _ArrayLikeBool_co, /) -> container[_AnyShape, np.dtype[np.bool]]: ...
     @overload
     def __or__(self, other: _ArrayLikeInt_co, /) -> container[_AnyShape, np.dtype[np.bool | np.integer]]: ...
     __ror__ = __or__
     @overload
-    def __ior__(self: _BoolArrayT, other: _ArrayLikeBool_co, /) -> _BoolArrayT: ...
+    def __ior__[ContainerT: _BoolContainer](self: ContainerT, other: _ArrayLikeBool_co, /) -> ContainerT: ...
     @overload
     def __ior__(self, other: _ArrayLikeInt_co, /) -> Self: ...
 
@@ -211,16 +208,18 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __array__(self, /, t: None = None) -> np.ndarray[_ShapeT_co, _DTypeT_co]: ...
     @overload
-    def __array__(self, /, t: _DTypeT) -> np.ndarray[_ShapeT_co, _DTypeT]: ...
+    def __array__[DTypeT: np.dtype](self, /, t: DTypeT) -> np.ndarray[_ShapeT_co, DTypeT]: ...
 
     #
     @overload
     def __array_wrap__(self, arg0: npt.ArrayLike, /) -> container[_ShapeT_co, _DTypeT_co]: ...
     @overload
-    def __array_wrap__(self, a: np.ndarray[_ShapeT, _DTypeT], c: Any = ..., s: Any = ..., /) -> container[_ShapeT, _DTypeT]: ...
+    def __array_wrap__[ShapeT: _Shape, DTypeT: np.dtype](
+        self, a: np.ndarray[ShapeT, DTypeT], c: Any = ..., s: Any = ..., /
+    ) -> container[ShapeT, DTypeT]: ...
 
     #
     def copy(self, /) -> Self: ...
     def tobytes(self, /) -> bytes: ...
     def byteswap(self, /) -> Self: ...
-    def astype(self, /, typecode: _DTypeLike[_ScalarT]) -> container[_ShapeT_co, np.dtype[_ScalarT]]: ...
+    def astype[ScalarT: np.generic](self, /, typecode: _DTypeLike[ScalarT]) -> container[_ShapeT_co, np.dtype[ScalarT]]: ...

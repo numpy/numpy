@@ -1,8 +1,8 @@
 from collections.abc import Callable, MutableSequence
-from typing import Any, Literal, TypeAlias, TypeVar, overload
+from typing import Any, Literal, overload
 
 import numpy as np
-from numpy import dtype, float32, float64, int64
+from numpy import float32, float64, int64
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
@@ -23,7 +23,6 @@ from numpy._typing import (
     _IntPCodes,
     _ShapeLike,
     _SingleCodes,
-    _SupportsDType,
     _UInt8Codes,
     _UInt16Codes,
     _UInt32Codes,
@@ -32,24 +31,10 @@ from numpy._typing import (
 )
 from numpy.random import BitGenerator, RandomState, SeedSequence
 
-_IntegerT = TypeVar("_IntegerT", bound=np.integer)
+type _DTypeLikeFloat32 = _DTypeLike[np.float32] | _Float32Codes | _SingleCodes
+type _DTypeLikeFloat64 = type[float] | _DTypeLike[np.float64] | _Float64Codes | _DoubleCodes
 
-_DTypeLikeFloat32: TypeAlias = (
-    dtype[float32]
-    | _SupportsDType[dtype[float32]]
-    | type[float32]
-    | _Float32Codes
-    | _SingleCodes
-)
-
-_DTypeLikeFloat64: TypeAlias = (
-    dtype[float64]
-    | _SupportsDType[dtype[float64]]
-    | type[float]
-    | type[float64]
-    | _Float64Codes
-    | _DoubleCodes
-)
+###
 
 class Generator:
     def __init__(self, bit_generator: BitGenerator) -> None: ...
@@ -57,10 +42,7 @@ class Generator:
     def __str__(self) -> str: ...
     def __getstate__(self) -> None: ...
     def __setstate__(self, state: dict[str, Any] | None) -> None: ...
-    def __reduce__(self) -> tuple[
-        Callable[[BitGenerator], Generator],
-        tuple[BitGenerator],
-        None]: ...
+    def __reduce__(self) -> tuple[Callable[[BitGenerator], Generator], tuple[BitGenerator], None]: ...
     @property
     def bit_generator(self) -> BitGenerator: ...
     def spawn(self, n_children: int) -> list[Generator]: ...
@@ -238,15 +220,15 @@ class Generator:
         endpoint: bool = False,
     ) -> np.bool: ...
     @overload
-    def integers(
+    def integers[ScalarT: np.integer](
         self,
         low: int,
         high: int | None = None,
         size: None = None,
         *,
-        dtype: _DTypeLike[_IntegerT],
+        dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
-    ) -> _IntegerT: ...
+    ) -> ScalarT: ...
     @overload
     def integers(
         self,
@@ -267,15 +249,15 @@ class Generator:
         endpoint: bool = False,
     ) -> NDArray[np.bool]: ...
     @overload
-    def integers(
+    def integers[ScalarT: np.integer](
         self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
         *,
-        dtype: _DTypeLike[_IntegerT],
+        dtype: _DTypeLike[ScalarT],
         endpoint: bool = False,
-    ) -> NDArray[_IntegerT]: ...
+    ) -> NDArray[ScalarT]: ...
     @overload
     def integers(
         self,

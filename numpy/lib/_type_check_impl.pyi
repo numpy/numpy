@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Container, Iterable
-from typing import Any, Literal as L, Protocol, TypeAlias, overload, type_check_only
-from typing_extensions import TypeVar
+from typing import Any, Literal as L, Protocol, overload, type_check_only
 
 import numpy as np
 from numpy._typing import (
@@ -30,33 +29,28 @@ __all__ = [
     "typename",
 ]
 
-_T = TypeVar("_T")
-_T_co = TypeVar("_T_co", covariant=True)
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
-_RealT = TypeVar("_RealT", bound=np.floating | np.integer | np.bool)
-
-_FloatMax32: TypeAlias = np.float32 | np.float16
-_ComplexMax128: TypeAlias = np.complex128 | np.complex64
-_RealMax64: TypeAlias = np.float64 | np.float32 | np.float16 | np.integer
-_Real: TypeAlias = np.floating | np.integer
-_InexactMax32: TypeAlias = np.inexact[_32Bit] | np.float16
-_NumberMax64: TypeAlias = np.number[_64Bit] | np.number[_32Bit] | np.number[_16Bit] | np.integer
+type _FloatMax32 = np.float32 | np.float16
+type _ComplexMax128 = np.complex128 | np.complex64
+type _RealMax64 = np.float64 | np.float32 | np.float16 | np.integer
+type _Real = np.floating | np.integer
+type _ToReal = _Real | np.bool
+type _InexactMax32 = np.inexact[_32Bit] | np.float16
+type _NumberMax64 = np.number[_64Bit] | np.number[_32Bit] | np.number[_16Bit] | np.integer
 
 @type_check_only
-class _HasReal(Protocol[_T_co]):
+class _HasReal[T](Protocol):
     @property
-    def real(self, /) -> _T_co: ...
+    def real(self, /) -> T: ...
 
 @type_check_only
-class _HasImag(Protocol[_T_co]):
+class _HasImag[T](Protocol):
     @property
-    def imag(self, /) -> _T_co: ...
+    def imag(self, /) -> T: ...
 
 @type_check_only
-class _HasDType(Protocol[_ScalarT_co]):
+class _HasDType[ScalarT: np.generic](Protocol):
     @property
-    def dtype(self, /) -> np.dtype[_ScalarT_co]: ...
+    def dtype(self, /) -> np.dtype[ScalarT]: ...
 
 ###
 
@@ -64,17 +58,17 @@ def mintypecode(typechars: Iterable[str | ArrayLike], typeset: str | Container[s
 
 #
 @overload
-def real(val: _HasReal[_T]) -> _T: ...
+def real[T](val: _HasReal[T]) -> T: ...
 @overload
-def real(val: _ArrayLike[_RealT]) -> NDArray[_RealT]: ...
+def real[RealT: _ToReal](val: _ArrayLike[RealT]) -> NDArray[RealT]: ...
 @overload
 def real(val: ArrayLike) -> NDArray[Any]: ...
 
 #
 @overload
-def imag(val: _HasImag[_T]) -> _T: ...
+def imag[T](val: _HasImag[T]) -> T: ...
 @overload
-def imag(val: _ArrayLike[_RealT]) -> NDArray[_RealT]: ...
+def imag[RealT: _ToReal](val: _ArrayLike[RealT]) -> NDArray[RealT]: ...
 @overload
 def imag(val: ArrayLike) -> NDArray[Any]: ...
 
@@ -100,29 +94,29 @@ def isrealobj(x: _HasDType[Any] | ArrayLike) -> bool: ...
 
 #
 @overload
-def nan_to_num(
-    x: _ScalarT,
+def nan_to_num[ScalarT: np.generic](
+    x: ScalarT,
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> _ScalarT: ...
+) -> ScalarT: ...
 @overload
-def nan_to_num(
-    x: NDArray[_ScalarT] | _NestedSequence[_ArrayLike[_ScalarT]],
+def nan_to_num[ScalarT: np.generic](
+    x: NDArray[ScalarT] | _NestedSequence[_ArrayLike[ScalarT]],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> NDArray[_ScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
-def nan_to_num(
-    x: _SupportsArray[np.dtype[_ScalarT]],
+def nan_to_num[ScalarT: np.generic](
+    x: _SupportsArray[np.dtype[ScalarT]],
     copy: bool = True,
     nan: float = 0.0,
     posinf: float | None = None,
     neginf: float | None = None,
-) -> _ScalarT | NDArray[_ScalarT]: ...
+) -> ScalarT | NDArray[ScalarT]: ...
 @overload
 def nan_to_num(
     x: _NestedSequence[ArrayLike],
@@ -148,7 +142,7 @@ def real_if_close(a: _ArrayLike[np.complex128], tol: float = 100) -> NDArray[np.
 @overload
 def real_if_close(a: _ArrayLike[np.clongdouble], tol: float = 100) -> NDArray[np.longdouble | np.clongdouble]: ...
 @overload
-def real_if_close(a: _ArrayLike[_RealT], tol: float = 100) -> NDArray[_RealT]: ...
+def real_if_close[RealT: _ToReal](a: _ArrayLike[RealT], tol: float = 100) -> NDArray[RealT]: ...
 @overload
 def real_if_close(a: ArrayLike, tol: float = 100) -> NDArray[Any]: ...
 

@@ -2,16 +2,12 @@ import argparse
 import pprint
 from collections.abc import Hashable, Iterable, Mapping, MutableMapping, Sequence
 from types import ModuleType
-from typing import Any, Final, NotRequired, TypedDict, type_check_only
-from typing_extensions import TypeVar, override
+from typing import Any, Final, NotRequired, TypedDict, override, type_check_only
 
 from .__version__ import version
 from .auxfuncs import _Bool, outmess as outmess
 
 ###
-
-_KT = TypeVar("_KT", bound=Hashable)
-_VT = TypeVar("_VT")
 
 @type_check_only
 class _F2PyDict(TypedDict):
@@ -54,7 +50,7 @@ def main() -> None: ...
 def scaninputline(inputline: Iterable[str]) -> tuple[list[str], dict[str, _Bool]]: ...
 def callcrackfortran(files: list[str], options: dict[str, bool]) -> list[dict[str, Any]]: ...
 def buildmodules(lst: Iterable[Mapping[str, object]]) -> dict[str, dict[str, Any]]: ...
-def dict_append(d_out: MutableMapping[_KT, _VT], d_in: Mapping[_KT, _VT]) -> None: ...
+def dict_append[KT: Hashable, VT](d_out: MutableMapping[KT, VT], d_in: Mapping[KT, VT]) -> None: ...
 def filter_files(
     prefix: str,
     suffix: str,

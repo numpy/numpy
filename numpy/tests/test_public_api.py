@@ -142,6 +142,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "version",
 ]]
 
+
 PUBLIC_ALIASED_MODULES = [
     "numpy.char",
     "numpy.emath",
@@ -191,6 +192,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "testing.print_coercion_tables",
 ]]
 
+
 def is_unexpected(name):
     """Check if this needs to be considered."""
     return (
@@ -199,9 +201,6 @@ def is_unexpected(name):
         and name not in PUBLIC_ALIASED_MODULES
         and name not in PRIVATE_BUT_PRESENT_MODULES
     )
-
-
-SKIP_LIST = []
 
 
 def test_all_modules_are_expected():
@@ -214,7 +213,7 @@ def test_all_modules_are_expected():
     for _, modname, ispkg in pkgutil.walk_packages(path=np.__path__,
                                                    prefix=np.__name__ + '.',
                                                    onerror=None):
-        if is_unexpected(modname) and modname not in SKIP_LIST:
+        if is_unexpected(modname):
             # We have a name that is new.  If that's on purpose, add it to
             # PUBLIC_MODULES.  We don't expect to have to add anything to
             # PRIVATE_BUT_PRESENT_MODULES.  Use an underscore in the name!

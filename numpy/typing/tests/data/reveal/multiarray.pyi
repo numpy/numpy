@@ -1,12 +1,10 @@
 import datetime as dt
-from typing import Any, Literal, TypeVar, assert_type
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
-
-class SubClass(npt.NDArray[_ScalarT_co]): ...
+class SubClass[ScalarT: np.generic](np.ndarray[tuple[Any, ...], np.dtype[ScalarT]]): ...
 
 subclass: SubClass[np.float64]
 

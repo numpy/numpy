@@ -1,7 +1,7 @@
 import contextvars
 from _typeshed import SupportsWrite
 from collections.abc import Callable
-from typing import Any, Final, Literal, TypeAlias, TypedDict, Unpack, type_check_only
+from typing import Any, Final, Literal, TypedDict, Unpack, type_check_only
 from typing_extensions import CapsuleType
 
 from numpy import (
@@ -206,8 +206,8 @@ __all__ = [
 
 ###
 
-_ErrKind: TypeAlias = Literal["ignore", "warn", "raise", "call", "print", "log"]
-_ErrCall: TypeAlias = Callable[[str, int], Any] | SupportsWrite[str]
+type _ErrKind = Literal["ignore", "warn", "raise", "call", "print", "log"]
+type _ErrCall = Callable[[str, int], Any] | SupportsWrite[str]
 
 @type_check_only
 class _ExtOjbDict(TypedDict, total=False):
