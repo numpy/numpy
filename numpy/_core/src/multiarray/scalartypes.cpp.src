@@ -4049,91 +4049,131 @@ unicode_arrtype_dealloc(PyObject *v)
     PyUnicode_Type.tp_dealloc(v);
 }
 
-/**begin repeat
- * #name = byte, short, int, long, longlong, ubyte, ushort, uint, ulong,
- *         ulonglong, half, float, double, longdouble, cfloat, cdouble,
- *         clongdouble, string, unicode#
- * #Name = Byte, Short, Int, Long, LongLong, UByte, UShort, UInt, ULong,
- *         ULongLong, Half, Float, Double, LongDouble, CFloat, CDouble,
- *         CLongDouble, String, Unicode#
- * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG, UBYTE, USHORT, UINT, ULONG,
- *         ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT, CDOUBLE,
- *         CLONGDOUBLE, STRING, UNICODE#
- */
+//===============
+// __new__ impls
+//===============
 
-/* used as a pattern for testing token equality */
-#define _@TYPE@_IS_@TYPE@
+template <typename PT>
+constexpr static NPY_TYPES get_npy_type_from_scalar_object() {
+    if constexpr (std::is_same_v<PT, PyByteScalarObject>) {
+        return NPY_BYTE;
+    } else if constexpr (std::is_same_v<PT, PyShortScalarObject>) {
+        return NPY_SHORT;
+    } else if constexpr (std::is_same_v<PT, PyIntScalarObject>) {
+        return NPY_INT;
+    } else if constexpr (std::is_same_v<PT, PyLongScalarObject>) {
+        return NPY_LONG;
+    } else if constexpr (std::is_same_v<PT, PyLongLongScalarObject>) {
+        return NPY_LONGLONG;
+    } else if constexpr (std::is_same_v<PT, PyUByteScalarObject>) {
+        return NPY_UBYTE;
+    } else if constexpr (std::is_same_v<PT, PyUShortScalarObject>) {
+        return NPY_USHORT;
+    } else if constexpr (std::is_same_v<PT, PyUIntScalarObject>) {
+        return NPY_UINT;
+    } else if constexpr (std::is_same_v<PT, PyULongScalarObject>) {
+        return NPY_ULONG;
+    } else if constexpr (std::is_same_v<PT, PyULongLongScalarObject>) {
+        return NPY_ULONGLONG;
+    } else if constexpr (std::is_same_v<PT, PyHalfScalarObject>) {
+        return NPY_HALF;
+    } else if constexpr (std::is_same_v<PT, PyFloatScalarObject>) {
+        return NPY_FLOAT;
+    } else if constexpr (std::is_same_v<PT, PyDoubleScalarObject>) {
+        return NPY_DOUBLE;
+    } else if constexpr (std::is_same_v<PT, PyLongDoubleScalarObject>) {
+        return NPY_LONGDOUBLE;
+    } else if constexpr (std::is_same_v<PT, PyCFloatScalarObject>) {
+        return NPY_CFLOAT;
+    } else if constexpr (std::is_same_v<PT, PyCDoubleScalarObject>) {
+        return NPY_CDOUBLE;
+    } else if constexpr (std::is_same_v<PT, PyCLongDoubleScalarObject>) {
+        return NPY_CLONGDOUBLE;
+    } else if constexpr (std::is_same_v<PT, PyStringScalarObject>) {
+        return NPY_STRING;
+    } else if constexpr (std::is_same_v<PT, PyUnicodeScalarObject>) {
+        return NPY_UNICODE;
+    }
+}
 
+template <typename PT>
 static PyObject *
-@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+dunder_new_impl(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     /* allow base-class (if any) to do conversion */
-#if defined(_@TYPE@_IS_UNICODE)
-    PyObject *from_superclass = PyUnicode_Type.tp_new(type, args, kwds);
-#elif defined(_@TYPE@_IS_STRING)
-    PyObject *from_superclass = PyBytes_Type.tp_new(type, args, kwds);
-#elif defined(_@TYPE@_IS_DOUBLE)
-    PyObject *from_superclass = PyFloat_Type.tp_new(type, args, kwds);
-#endif
-#if defined(_@TYPE@_IS_UNICODE) || defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_DOUBLE)
-    if (from_superclass == NULL) {
-        /* don't clear the exception unless numpy can handle the arguments */
-        if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) {
-            return NULL;
+    if constexpr (std::is_same_v<PT, PyUnicodeScalarObject>
+            || std::is_same_v<PT, PyStringScalarObject>
+            || std::is_same_v<PT, PyDoubleScalarObject>) {
+        PyObject *from_superclass;
+        if constexpr (std::is_same_v<PT, PyUnicodeScalarObject>) {
+            from_superclass = PyUnicode_Type.tp_new(type, args, kwds);
+        } else if constexpr (std::is_same_v<PT, PyStringScalarObject>) {
+            from_superclass = PyBytes_Type.tp_new(type, args, kwds);
+        } else if constexpr (std::is_same_v<PT, PyDoubleScalarObject>) {
+            from_superclass = PyFloat_Type.tp_new(type, args, kwds);
         }
-        PyErr_Clear();
-    }
-    else {
-#if defined(_@TYPE@_IS_UNICODE)
-        PyArrayScalar_VAL(from_superclass, Unicode) = NULL;
-#endif
-        return from_superclass;
-    }
-#endif
 
-    /* TODO: include type name in error message, which is not @name@ */
+        if (from_superclass == NULL) {
+            /* don't clear the exception unless numpy can handle the arguments */
+            if (PyTuple_GET_SIZE(args) != 1 || (kwds && PyDict_Size(kwds) != 0)) {
+                return NULL;
+            }
+            PyErr_Clear();
+        } else {
+            if constexpr (std::is_same_v<PT, PyUnicodeScalarObject>) {
+                PyArrayScalar_VAL(from_superclass, Unicode) = NULL;
+            }
+            return from_superclass;
+        }
+    } 
+
+    /* TODO: include type name in error message, which is not "type name" */
     PyObject *obj = NULL;
-#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
-    static const char *kwnames[] = {"", "", NULL};  /* positional-only */
-    static const char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
-    PyObject *real_obj = NULL;
-    PyObject *imag_obj = NULL;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", (char **)kwnames, &real_obj, &imag_obj)) {
-        return NULL;
-    }
-    if (!((imag_obj == NULL) ||
-          ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
-           !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
-        PyErr_Format(PyExc_TypeError, parse_error, args);
-        return NULL;
-    }
-    if (imag_obj == NULL) {
-        obj = real_obj;
-        Py_XINCREF(obj);
-    }
-    else {
-        obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
-        if (obj == NULL) {
+    if constexpr (std::is_same_v<PT, PyCDoubleScalarObject>
+            || std::is_same_v<PT, PyCFloatScalarObject>) {
+        static const char *kwnames[] = {"", "", NULL};  /* positional-only */
+        static const char *parse_error = "Could not convert arguments into a complex scalar. '%R' given.";
+        PyObject *real_obj = NULL;
+        PyObject *imag_obj = NULL;
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", (char **)kwnames, &real_obj, &imag_obj)) {
+            return NULL;
+        }
+        if (!((imag_obj == NULL) ||
+            ((PyNumber_Check(real_obj) && PyNumber_Check(imag_obj)) &&
+            !(PyComplex_Check(real_obj) || PyComplex_Check(imag_obj))))) {
+            PyErr_Format(PyExc_TypeError, parse_error, args);
+            return NULL;
+        }
+        if (imag_obj == NULL) {
+            obj = real_obj;
+            Py_XINCREF(obj);
+        }
+        else {
+            obj = PyObject_CallObject((PyObject *)&PyComplex_Type, args);
+            if (obj == NULL) {
+                return NULL;
+            }
+        }
+    } else {
+        static const char *kwnames[] = {"", NULL};  /* positional-only */
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", (char **)kwnames, &obj)) {
             return NULL;
         }
     }
-#else
-    static const char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", (char **)kwnames, &obj)) {
-        return NULL;
-    }
-#endif
+
     // getting the typecode like this cannot fail
-    PyArray_Descr *typecode = PyArray_DescrFromType(NPY_@TYPE@);
+    PyArray_Descr *typecode = PyArray_DescrFromType(get_npy_type_from_scalar_object<PT>());
     if (obj == NULL) {
         PyObject *robj = PyArray_Scalar(NULL, typecode, NULL);
         Py_DECREF(typecode);
         if (robj == NULL) {
             return NULL;
         }
-#if !defined(_@TYPE@_IS_STRING) && !defined(_@TYPE@_IS_UNICODE)
-        memset(&PyArrayScalar_VAL(robj, @Name@), 0, sizeof(npy_@name@));
-#endif
+        if constexpr (!std::is_same_v<PT, PyUnicodeScalarObject>
+                && !std::is_same_v<PT, PyStringScalarObject>) {
+            auto obval = ((PT*)robj)->obval;
+            memset(&obval, 0, sizeof(decltype(obval)));
+        } 
         return robj;
     }
 
@@ -4141,9 +4181,10 @@ static PyObject *
     Py_INCREF(typecode);
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny(
             obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-#if defined(_@TYPE@_IS_CDOUBLE) || defined(_@TYPE@_IS_CFLOAT)
-    Py_DECREF(obj);
-#endif
+    if constexpr (std::is_same_v<PT, PyCDoubleScalarObject>
+                || std::is_same_v<PT, PyCFloatScalarObject>) {
+        Py_DECREF(obj);
+    }
     if (arr == NULL) {
         Py_DECREF(typecode);
         return NULL;
@@ -4189,20 +4230,20 @@ static PyObject *
     void *dest = scalar_value(new_obj, typecode);
     void *src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
-#if defined(_@TYPE@_IS_STRING) || defined(_@TYPE@_IS_UNICODE)
-    if (itemsize == 0) { /* unicode */
-        itemsize = PyUnicode_GetLength(robj) * PyUnicode_KIND(robj);
+    if constexpr (std::is_same_v<PT, PyUnicodeScalarObject>
+            || std::is_same_v<PT, PyStringScalarObject>) {
+        if (itemsize == 0) { /* unicode */
+            itemsize = PyUnicode_GetLength(robj) * PyUnicode_KIND(robj);
+        }
+        memcpy(dest, src, itemsize);
+    } else {
+        auto robval = ((PT*)robj)->obval;
+        *((decltype(robval) *)dest) = *((decltype(robval) *)src);
     }
-    memcpy(dest, src, itemsize);
-#else
-    *((npy_@name@ *)dest) = *((npy_@name@ *)src);
-#endif
+
     Py_DECREF(robj);
     return new_obj;
 }
-#undef _@TYPE@_IS_@TYPE@
-
-/**end repeat**/
 
 static PyObject *
 object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwds)
@@ -4221,18 +4262,12 @@ object_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *kwd
     return PyArray_Return(arr);
 }
 
-/**begin repeat
- * #name = datetime, timedelta#
- * #Name = Datetime, Timedelta#
- * #NAME = DATETIME, TIMEDELTA#
- * #is_datetime = 1, 0#
- */
-
+template <typename PT>
 static PyObject *
-@name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+dunder_new_time_impl(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj = NULL, *meta_obj = NULL;
-    Py@Name@ScalarObject *ret;
+    PT *ret;
 
     static const char *kwnames[] = {"", "", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", (char **)kwnames, &obj, &meta_obj)) {
@@ -4240,8 +4275,13 @@ static PyObject *
     }
 
     /* Allocate the return scalar */
-    ret = (Py@Name@ScalarObject *)Py@Name@ArrType_Type.tp_alloc(
-                                            &Py@Name@ArrType_Type, 0);
+    if constexpr (std::is_same_v<PT, PyDatetimeScalarObject>) {
+        ret = (PT *)PyDatetimeArrType_Type.tp_alloc(&PyDatetimeArrType_Type, 0);
+    } else if constexpr (std::is_same_v<PT, PyTimedeltaScalarObject>) {
+        ret = (PT *)PyTimedeltaArrType_Type.tp_alloc(&PyTimedeltaArrType_Type, 0);
+    } else {
+        static_assert(!"unreachable");
+    }
     if (ret == NULL) {
         return NULL;
     }
@@ -4249,8 +4289,7 @@ static PyObject *
     /* Incorporate the metadata if its provided */
     if (meta_obj != NULL) {
         /* Parse the provided metadata input */
-        if (convert_pyobject_to_datetime_metadata(meta_obj, &ret->obmeta)
-                                                                    < 0) {
+        if (convert_pyobject_to_datetime_metadata(meta_obj, &ret->obmeta) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -4263,6 +4302,14 @@ static PyObject *
         ret->obmeta.base = NPY_DATETIMEUNIT::NPY_FR_ERROR;
     }
 
+    constexpr auto convert_pyobject_to = []() {
+        if constexpr (std::is_same_v<PT, PyDatetimeScalarObject>) {
+            return convert_pyobject_to_datetime;
+        } else if constexpr (std::is_same_v<PT, PyTimedeltaScalarObject>) {
+            return convert_pyobject_to_timedelta;
+        }
+    }();
+
     if (obj == NULL) {
         if (ret->obmeta.base == -1) {
             ret->obmeta.base = NPY_DATETIME_DEFAULTUNIT;
@@ -4270,13 +4317,13 @@ static PyObject *
         }
 
         /* Make datetime default to NaT, timedelta default to zero */
-#if @is_datetime@
-        ret->obval = NPY_DATETIME_NAT;
-#else
-        ret->obval = 0;
-#endif
+        if constexpr (std::is_same_v<PT, PyDatetimeScalarObject>) {
+            ret->obval = NPY_DATETIME_NAT;
+        } else {
+            ret->obval = 0;
+        }
     }
-    else if (convert_pyobject_to_@name@(&ret->obmeta, obj,
+    else if (convert_pyobject_to(&ret->obmeta, obj,
                             NPY_SAME_KIND_CASTING, &ret->obval) < 0) {
         Py_DECREF(ret);
         return NULL;
@@ -4284,7 +4331,6 @@ static PyObject *
 
     return (PyObject *)ret;
 }
-/**end repeat**/
 
 /* bool->tp_new only returns Py_True or Py_False */
 static PyObject *
@@ -4491,6 +4537,10 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     arr = PyArray_FromAny(obj, descr, 0, 0, NPY_ARRAY_FORCECAST, NULL);
     return PyArray_Return((PyArrayObject *)arr);
 }
+
+//===================
+// end __new__ impls
+//===================
 
 
 /****************  Define Hash functions ********************/
@@ -5142,97 +5192,97 @@ initialize_numeric_types(void)
     PyBoolArrType_Type.tp_as_buffer = &bool_arrtype_as_buffer;
 
     PyByteArrType_Type.tp_flags = BASEFLAGS;
-    PyByteArrType_Type.tp_new = byte_arrtype_new;
+    PyByteArrType_Type.tp_new = dunder_new_impl<PyByteScalarObject>;
     PyByteArrType_Type.tp_richcompare = gentype_richcompare;
     PyByteArrType_Type.tp_as_buffer = &byte_arrtype_as_buffer;
 
     PyShortArrType_Type.tp_flags = BASEFLAGS;
-    PyShortArrType_Type.tp_new = short_arrtype_new;
+    PyShortArrType_Type.tp_new = dunder_new_impl<PyShortScalarObject>;
     PyShortArrType_Type.tp_richcompare = gentype_richcompare;
     PyShortArrType_Type.tp_as_buffer = &short_arrtype_as_buffer;
 
     PyIntArrType_Type.tp_flags = BASEFLAGS;
-    PyIntArrType_Type.tp_new = int_arrtype_new;
+    PyIntArrType_Type.tp_new = dunder_new_impl<PyIntScalarObject>;
     PyIntArrType_Type.tp_richcompare = gentype_richcompare;
     PyIntArrType_Type.tp_as_buffer = &int_arrtype_as_buffer;
 
     PyLongArrType_Type.tp_flags = BASEFLAGS;
-    PyLongArrType_Type.tp_new = long_arrtype_new;
+    PyLongArrType_Type.tp_new = dunder_new_impl<PyLongScalarObject>;
     PyLongArrType_Type.tp_richcompare = gentype_richcompare;
     PyLongArrType_Type.tp_as_buffer = &long_arrtype_as_buffer;
 
     PyLongLongArrType_Type.tp_flags = BASEFLAGS;
-    PyLongLongArrType_Type.tp_new = longlong_arrtype_new;
+    PyLongLongArrType_Type.tp_new = dunder_new_impl<PyLongLongScalarObject>;
     PyLongLongArrType_Type.tp_richcompare = gentype_richcompare;
     PyLongLongArrType_Type.tp_as_buffer = &longlong_arrtype_as_buffer;
 
     PyUByteArrType_Type.tp_flags = BASEFLAGS;
-    PyUByteArrType_Type.tp_new = ubyte_arrtype_new;
+    PyUByteArrType_Type.tp_new = dunder_new_impl<PyUByteScalarObject>;
     PyUByteArrType_Type.tp_richcompare = gentype_richcompare;
     PyUByteArrType_Type.tp_as_buffer = &ubyte_arrtype_as_buffer;
 
     PyUShortArrType_Type.tp_flags = BASEFLAGS;
-    PyUShortArrType_Type.tp_new = ushort_arrtype_new;
+    PyUShortArrType_Type.tp_new = dunder_new_impl<PyUShortScalarObject>;
     PyUShortArrType_Type.tp_richcompare = gentype_richcompare;
     PyUShortArrType_Type.tp_as_buffer = &ushort_arrtype_as_buffer;
 
     PyUIntArrType_Type.tp_flags = BASEFLAGS;
-    PyUIntArrType_Type.tp_new = uint_arrtype_new;
+    PyUIntArrType_Type.tp_new = dunder_new_impl<PyUIntScalarObject>;
     PyUIntArrType_Type.tp_richcompare = gentype_richcompare;
     PyUIntArrType_Type.tp_as_buffer = &uint_arrtype_as_buffer;
 
     PyULongArrType_Type.tp_flags = BASEFLAGS;
-    PyULongArrType_Type.tp_new = ulong_arrtype_new;
+    PyULongArrType_Type.tp_new = dunder_new_impl<PyULongScalarObject>;
     PyULongArrType_Type.tp_richcompare = gentype_richcompare;
     PyULongArrType_Type.tp_as_buffer = &ulong_arrtype_as_buffer;
 
     PyULongLongArrType_Type.tp_flags = BASEFLAGS;
-    PyULongLongArrType_Type.tp_new = ulonglong_arrtype_new;
+    PyULongLongArrType_Type.tp_new = dunder_new_impl<PyULongLongScalarObject>;
     PyULongLongArrType_Type.tp_richcompare = gentype_richcompare;
     PyULongLongArrType_Type.tp_as_buffer = &ulonglong_arrtype_as_buffer;
 
     PyHalfArrType_Type.tp_flags = BASEFLAGS;
-    PyHalfArrType_Type.tp_new = half_arrtype_new;
+    PyHalfArrType_Type.tp_new = dunder_new_impl<PyHalfScalarObject>;
     PyHalfArrType_Type.tp_richcompare = gentype_richcompare;
     PyHalfArrType_Type.tp_as_buffer = &half_arrtype_as_buffer;
 
     PyFloatArrType_Type.tp_flags = BASEFLAGS;
-    PyFloatArrType_Type.tp_new = float_arrtype_new;
+    PyFloatArrType_Type.tp_new = dunder_new_impl<PyFloatScalarObject>;
     PyFloatArrType_Type.tp_richcompare = gentype_richcompare;
     PyFloatArrType_Type.tp_as_buffer = &float_arrtype_as_buffer;
 
     PyDoubleArrType_Type.tp_flags = BASEFLAGS;
-    PyDoubleArrType_Type.tp_new = double_arrtype_new;
+    PyDoubleArrType_Type.tp_new = dunder_new_impl<PyDoubleScalarObject>;
     PyDoubleArrType_Type.tp_richcompare = gentype_richcompare;
     PyDoubleArrType_Type.tp_as_buffer = &double_arrtype_as_buffer;
 
     PyLongDoubleArrType_Type.tp_flags = BASEFLAGS;
-    PyLongDoubleArrType_Type.tp_new = longdouble_arrtype_new;
+    PyLongDoubleArrType_Type.tp_new = dunder_new_impl<PyLongDoubleScalarObject>;
     PyLongDoubleArrType_Type.tp_richcompare = gentype_richcompare;
     PyLongDoubleArrType_Type.tp_as_buffer = &longdouble_arrtype_as_buffer;
 
     PyCFloatArrType_Type.tp_flags = BASEFLAGS;
-    PyCFloatArrType_Type.tp_new = cfloat_arrtype_new;
+    PyCFloatArrType_Type.tp_new = dunder_new_impl<PyCFloatScalarObject>;
     PyCFloatArrType_Type.tp_richcompare = gentype_richcompare;
     PyCFloatArrType_Type.tp_as_buffer = &cfloat_arrtype_as_buffer;
 
     PyCDoubleArrType_Type.tp_flags = BASEFLAGS;
-    PyCDoubleArrType_Type.tp_new = cdouble_arrtype_new;
+    PyCDoubleArrType_Type.tp_new = dunder_new_impl<PyCDoubleScalarObject>;
     PyCDoubleArrType_Type.tp_richcompare = gentype_richcompare;
     PyCDoubleArrType_Type.tp_as_buffer = &cdouble_arrtype_as_buffer;
 
     PyCLongDoubleArrType_Type.tp_flags = BASEFLAGS;
-    PyCLongDoubleArrType_Type.tp_new = clongdouble_arrtype_new;
+    PyCLongDoubleArrType_Type.tp_new = dunder_new_impl<PyCLongDoubleScalarObject>;
     PyCLongDoubleArrType_Type.tp_richcompare = gentype_richcompare;
     PyCLongDoubleArrType_Type.tp_as_buffer = &clongdouble_arrtype_as_buffer;
 
     PyStringArrType_Type.tp_flags = BASEFLAGS;
-    PyStringArrType_Type.tp_new = string_arrtype_new;
+    PyStringArrType_Type.tp_new = dunder_new_impl<PyStringScalarObject>;
     PyStringArrType_Type.tp_richcompare = gentype_richcompare;
     /* PyStringArrType_Type.tp_as_buffer = NULL; to inherit string buffer */
 
     PyUnicodeArrType_Type.tp_flags = BASEFLAGS;
-    PyUnicodeArrType_Type.tp_new = unicode_arrtype_new;
+    PyUnicodeArrType_Type.tp_new = dunder_new_impl<PyUnicodeScalarObject>;
     PyUnicodeArrType_Type.tp_richcompare = gentype_richcompare;
     PyUnicodeArrType_Type.tp_as_buffer = &unicode_arrtype_as_buffer;
 
@@ -5247,12 +5297,12 @@ initialize_numeric_types(void)
     PyObjectArrType_Type.tp_as_buffer = &object_arrtype_as_buffer;
 
     PyDatetimeArrType_Type.tp_flags = BASEFLAGS;
-    PyDatetimeArrType_Type.tp_new = datetime_arrtype_new;
+    PyDatetimeArrType_Type.tp_new = dunder_new_time_impl<PyDatetimeScalarObject>;
     PyDatetimeArrType_Type.tp_richcompare = gentype_richcompare;
     PyDatetimeArrType_Type.tp_as_buffer = &datetime_arrtype_as_buffer;
 
     PyTimedeltaArrType_Type.tp_flags = BASEFLAGS;
-    PyTimedeltaArrType_Type.tp_new = timedelta_arrtype_new;
+    PyTimedeltaArrType_Type.tp_new = dunder_new_time_impl<PyTimedeltaScalarObject>;
     PyTimedeltaArrType_Type.tp_richcompare = gentype_richcompare;
     PyTimedeltaArrType_Type.tp_as_buffer = &timedelta_arrtype_as_buffer;
 
