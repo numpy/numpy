@@ -229,7 +229,7 @@ XML files, which are  converted by Breathe_ into RST, which is used by Sphinx.
 -----------------------------
 
 Although there is still no commenting style set to follow, the Javadoc
-is more preferable than the others due to the similarities with the current
+is preferable to the others due to the similarities with the
 existing non-indexed comment blocks.
 
 .. note::
