@@ -4890,29 +4890,29 @@ constexpr static PyTypeObject make_scalarobj_type(const char* tp_name_) {
     return t;
 }
 
-auto PyBoolArrType_Type = make_scalarobj_type<PyBoolScalarObject>("numpy." NPY_BOOL_name);
-auto PyByteArrType_Type = make_scalarobj_type<PyByteScalarObject>("numpy." NPY_BYTE_name);
-auto PyShortArrType_Type = make_scalarobj_type<PyShortScalarObject>("numpy." NPY_SHORT_name);
-auto PyIntArrType_Type = make_scalarobj_type<PyIntScalarObject>("numpy." NPY_INT_name);
-auto PyLongArrType_Type = make_scalarobj_type<PyLongScalarObject>("numpy." NPY_LONG_name);
-auto PyLongLongArrType_Type = make_scalarobj_type<PyLongLongScalarObject>("numpy." NPY_LONGLONG_name);
-auto PyUByteArrType_Type = make_scalarobj_type<PyUByteScalarObject>("numpy." NPY_UBYTE_name);
-auto PyUShortArrType_Type = make_scalarobj_type<PyUShortScalarObject>("numpy." NPY_USHORT_name);
-auto PyUIntArrType_Type = make_scalarobj_type<PyUIntScalarObject>("numpy." NPY_UINT_name);
-auto PyULongArrType_Type = make_scalarobj_type<PyULongScalarObject>("numpy." NPY_ULONG_name);
-auto PyULongLongArrType_Type = make_scalarobj_type<PyULongLongScalarObject>("numpy." NPY_ULONGLONG_name);
-auto PyHalfArrType_Type = make_scalarobj_type<PyHalfScalarObject>("numpy." NPY_HALF_name);
-auto PyFloatArrType_Type = make_scalarobj_type<PyFloatScalarObject>("numpy." NPY_FLOAT_name);
-auto PyDoubleArrType_Type = make_scalarobj_type<PyDoubleScalarObject>("numpy." NPY_DOUBLE_name);
-auto PyLongDoubleArrType_Type = make_scalarobj_type<PyLongDoubleScalarObject>("numpy." NPY_LONGDOUBLE_name);
-auto PyCFloatArrType_Type = make_scalarobj_type<PyCFloatScalarObject>("numpy." NPY_CFLOAT_name);
-auto PyCDoubleArrType_Type = make_scalarobj_type<PyCDoubleScalarObject>("numpy." NPY_CDOUBLE_name);
-auto PyCLongDoubleArrType_Type = make_scalarobj_type<PyCLongDoubleScalarObject>("numpy." NPY_CLONGDOUBLE_name);
-auto PyStringArrType_Type = make_scalarobj_type<PyStringScalarObject>("numpy." NPY_STRING_name);
-auto PyUnicodeArrType_Type = make_scalarobj_type<PyUnicodeScalarObject>("numpy." NPY_UNICODE_name);
-auto PyVoidArrType_Type = make_scalarobj_type<PyVoidScalarObject>("numpy." NPY_VOID_name);
-auto PyDatetimeArrType_Type = make_scalarobj_type<PyDatetimeScalarObject>("numpy." NPY_DATETIME_name);
-auto PyTimedeltaArrType_Type = make_scalarobj_type<PyTimedeltaScalarObject>("numpy." NPY_TIMEDELTA_name);
+PyTypeObject PyBoolArrType_Type = make_scalarobj_type<PyBoolScalarObject>("numpy." NPY_BOOL_name);
+PyTypeObject PyByteArrType_Type = make_scalarobj_type<PyByteScalarObject>("numpy." NPY_BYTE_name);
+PyTypeObject PyShortArrType_Type = make_scalarobj_type<PyShortScalarObject>("numpy." NPY_SHORT_name);
+PyTypeObject PyIntArrType_Type = make_scalarobj_type<PyIntScalarObject>("numpy." NPY_INT_name);
+PyTypeObject PyLongArrType_Type = make_scalarobj_type<PyLongScalarObject>("numpy." NPY_LONG_name);
+PyTypeObject PyLongLongArrType_Type = make_scalarobj_type<PyLongLongScalarObject>("numpy." NPY_LONGLONG_name);
+PyTypeObject PyUByteArrType_Type = make_scalarobj_type<PyUByteScalarObject>("numpy." NPY_UBYTE_name);
+PyTypeObject PyUShortArrType_Type = make_scalarobj_type<PyUShortScalarObject>("numpy." NPY_USHORT_name);
+PyTypeObject PyUIntArrType_Type = make_scalarobj_type<PyUIntScalarObject>("numpy." NPY_UINT_name);
+PyTypeObject PyULongArrType_Type = make_scalarobj_type<PyULongScalarObject>("numpy." NPY_ULONG_name);
+PyTypeObject PyULongLongArrType_Type = make_scalarobj_type<PyULongLongScalarObject>("numpy." NPY_ULONGLONG_name);
+PyTypeObject PyHalfArrType_Type = make_scalarobj_type<PyHalfScalarObject>("numpy." NPY_HALF_name);
+PyTypeObject PyFloatArrType_Type = make_scalarobj_type<PyFloatScalarObject>("numpy." NPY_FLOAT_name);
+PyTypeObject PyDoubleArrType_Type = make_scalarobj_type<PyDoubleScalarObject>("numpy." NPY_DOUBLE_name);
+PyTypeObject PyLongDoubleArrType_Type = make_scalarobj_type<PyLongDoubleScalarObject>("numpy." NPY_LONGDOUBLE_name);
+PyTypeObject PyCFloatArrType_Type = make_scalarobj_type<PyCFloatScalarObject>("numpy." NPY_CFLOAT_name);
+PyTypeObject PyCDoubleArrType_Type = make_scalarobj_type<PyCDoubleScalarObject>("numpy." NPY_CDOUBLE_name);
+PyTypeObject PyCLongDoubleArrType_Type = make_scalarobj_type<PyCLongDoubleScalarObject>("numpy." NPY_CLONGDOUBLE_name);
+PyTypeObject PyStringArrType_Type = make_scalarobj_type<PyStringScalarObject>("numpy." NPY_STRING_name);
+PyTypeObject PyUnicodeArrType_Type = make_scalarobj_type<PyUnicodeScalarObject>("numpy." NPY_UNICODE_name);
+PyTypeObject PyVoidArrType_Type = make_scalarobj_type<PyVoidScalarObject>("numpy." NPY_VOID_name);
+PyTypeObject PyDatetimeArrType_Type = make_scalarobj_type<PyDatetimeScalarObject>("numpy." NPY_DATETIME_name);
+PyTypeObject PyTimedeltaArrType_Type = make_scalarobj_type<PyTimedeltaScalarObject>("numpy." NPY_TIMEDELTA_name);
 
 
 static PyMappingMethods gentype_as_mapping = {
