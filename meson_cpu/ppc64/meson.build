@@ -3,17 +3,14 @@ mod_features = import('features')
 compiler_id = meson.get_compiler('c').get_id()
 
 VSX = mod_features.new(
-  'VSX', 1, args: '-mvsx',
+  'VSX', 1, args: ['-mvsx', '-DHWY_COMPILE_ONLY_STATIC', '-DHWY_DISABLE_ATTR'] + (compiler_id == 'clang' ? ['-maltivec'] : []),
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_vsx.c')[0],
   extra_tests: {
     'VSX_ASM': files(source_root + '/numpy/_core/src/_simd/checks/extra_vsx_asm.c')[0]
   }
 )
-if compiler_id == 'clang'
-  VSX.update(args: ['-mvsx', '-maltivec'])
-endif
 VSX2 = mod_features.new(
-  'VSX2', 2, implies: VSX, args: {'val': '-mcpu=power8', 'match': '.*vsx'},
+  'VSX2', 2, implies: VSX, args: '-mcpu=power8',
   detect: {'val': 'VSX2', 'match': 'VSX'},
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_vsx2.c')[0],
 )
@@ -23,7 +20,9 @@ if host_machine.endian() == 'little'
   VSX.update(implies: VSX2)
 endif
 VSX3 = mod_features.new(
-  'VSX3', 3, implies: VSX2, args: {'val': '-mcpu=power9', 'match': '.*(?:mcpu=|vsx).*'},
+  'VSX3', 3, implies: VSX2, args: [
+    {'val': '-mcpu=power9', 'match': '.*mcpu=.*'},
+  ],
   detect: {'val': 'VSX3', 'match': 'VSX.*'},
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_vsx3.c')[0],
   extra_tests: {
@@ -31,7 +30,9 @@ VSX3 = mod_features.new(
   }
 )
 VSX4 = mod_features.new(
-  'VSX4', 4, implies: VSX3, args: {'val': '-mcpu=power10', 'match': '.*(?:mcpu=|vsx).*'},
+  'VSX4', 4, implies: VSX3, args: [
+    {'val': '-mcpu=power10', 'match': '.*mcpu=.*'},
+  ],
   detect: {'val': 'VSX4', 'match': 'VSX.*'},
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_vsx4.c')[0],
   extra_tests: {
