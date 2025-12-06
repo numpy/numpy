@@ -2226,22 +2226,6 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
     }
 }
 
-/*
- * These gentype_* functions do not take keyword arguments.
- * The proper flag is METH_VARARGS or METH_NOARGS.
- */
-/**begin repeat
- *
- * #name = tolist, item, swapaxes, conj, conjugate, nonzero,
- *         fill, transpose#
- */
-static PyObject *
-gentype_@name@(PyObject *self, PyObject *args)
-{
-    return gentype_generic_method(self, args, NULL, "@name@");
-}
-/**end repeat**/
-
 static PyObject *
 gentype___copy__(PyObject *self)
 {
@@ -2310,32 +2294,284 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
     }
 }
 
+/*
+ * These gentype_* functions do not take keyword arguments.
+ * The proper flag is METH_VARARGS or METH_NOARGS.
+ */
+// TODO: a better pattern for these wrappers?
+static PyObject *
+gentype_tolist(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "tolist");
+}
+
+static PyObject *
+gentype_item(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "item");
+}
+
+static PyObject *
+gentype_swapaxes(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "swapaxes");
+}
+
+static PyObject *
+gentype_conj(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "conj");
+}
+
+static PyObject *
+gentype_conjugate(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "conjugate");
+}
+
+static PyObject *
+gentype_nonzero(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "nonzero");
+}
+
+static PyObject *
+gentype_fill(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "fill");
+}
+
+static PyObject *
+gentype_transpose(PyObject *self, PyObject *args)
+{
+    return gentype_generic_method(self, args, NULL, "transpose");
+}
+
 
 /*
  * These gentype_* functions take keyword arguments.
  * The proper flag is METH_VARARGS | METH_KEYWORDS.
  */
-/**begin repeat
- *
- * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
- *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
- *         reshape, choose, tobytes, copy, searchsorted, view,
- *         flatten, ravel, squeeze#
- */
+// TODO: a better pattern for these wrappers?
 static PyObject *
-gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
+gentype_take(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    return gentype_generic_method(self, args, kwds, "@name@");
+    return gentype_generic_method(self, args, kwds, "take");
 }
-/**end repeat**/
 
-
-/**begin repeat
- * #name = integer, floating#
- */
 static PyObject *
-@name@type_dunder_round(PyObject *self, PyObject *args, PyObject *kwds)
+gentype_getfield(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "getfield");
+}
+
+static PyObject *
+gentype_put(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "put");
+}
+
+static PyObject *
+gentype_repeat(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "repeat");
+}
+
+static PyObject *
+gentype_tofile(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "tofile");
+}
+
+static PyObject *
+gentype_mean(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "mean");
+}
+
+static PyObject *
+gentype_trace(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "trace");
+}
+
+static PyObject *
+gentype_diagonal(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "diagonal");
+}
+
+static PyObject *
+gentype_clip(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "clip");
+}
+
+static PyObject *
+gentype_std(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "std");
+}
+
+static PyObject *
+gentype_var(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "var");
+}
+
+static PyObject *
+gentype_sum(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "sum");
+}
+
+static PyObject *
+gentype_cumsum(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "cumsum");
+}
+
+static PyObject *
+gentype_prod(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "prod");
+}
+
+static PyObject *
+gentype_cumprod(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "cumprod");
+}
+
+static PyObject *
+gentype_compress(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "compress");
+}
+
+static PyObject *
+gentype_sort(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "sort");
+}
+
+static PyObject *
+gentype_argsort(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "argsort");
+}
+
+static PyObject *
+gentype_round(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "round");
+}
+
+static PyObject *
+gentype_argmax(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "argmax");
+}
+
+static PyObject *
+gentype_argmin(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "argmin");
+}
+
+static PyObject *
+gentype_max(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "max");
+}
+
+static PyObject *
+gentype_min(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "min");
+}
+
+static PyObject *
+gentype_any(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "any");
+}
+
+static PyObject *
+gentype_all(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "all");
+}
+
+static PyObject *
+gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "astype");
+}
+
+static PyObject *
+gentype_resize(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "resize");
+}
+
+static PyObject *
+gentype_reshape(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "reshape");
+}
+
+static PyObject *
+gentype_choose(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "choose");
+}
+
+static PyObject *
+gentype_tobytes(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "tobytes");
+}
+
+static PyObject *
+gentype_copy(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "copy");
+}
+
+static PyObject *
+gentype_searchsorted(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "searchsorted");
+}
+
+static PyObject *
+gentype_view(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "view");
+}
+
+static PyObject *
+gentype_flatten(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "flatten");
+}
+
+static PyObject *
+gentype_ravel(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "ravel");
+}
+
+static PyObject *
+gentype_squeeze(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    return gentype_generic_method(self, args, kwds, "squeeze");
+}
+
+
+static PyObject *
+dunder_round_impl(PyObject *self, PyObject *args, PyObject *kwds)
 {
     static const char *kwlist[] = {"ndigits", NULL};
     PyObject *ndigits = Py_None;
@@ -2369,7 +2605,6 @@ static PyObject *
 
     return obj;
 }
-/**end repeat**/
 
 static PyObject *
 voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
@@ -3079,7 +3314,7 @@ static PyMethodDef clongdoubletype_methods[] = {
 static PyMethodDef floatingtype_methods[] = {
     /* Hook for the round() builtin */
     {"__round__",
-        (PyCFunction)floatingtype_dunder_round,
+        (PyCFunction)dunder_round_impl,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
@@ -3087,7 +3322,7 @@ static PyMethodDef floatingtype_methods[] = {
 static PyMethodDef integertype_methods[] = {
     /* Hook for the round() builtin */
     {"__round__",
-        (PyCFunction)integertype_dunder_round,
+        (PyCFunction)dunder_round_impl,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"is_integer",
         (PyCFunction)integer_is_integer,
