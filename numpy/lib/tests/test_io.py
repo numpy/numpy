@@ -2855,3 +2855,19 @@ def test_savez_nopickle():
     with temppath(suffix='.npz') as tmp:
         with pytest.raises(ValueError, match="Object arrays cannot be saved when.*"):
             np.savez_compressed(tmp, obj_array, allow_pickle=False)
+
+
+@pytest.mark.parametrize("savez_func", [np.savez, np.savez_compressed])
+def test_savez_reproducible(savez_func):
+    # Verify that saving the same data twice results in the same file.
+    # See gh-9439
+    arr = np.array([3.14])
+    with BytesIO() as stream:
+        savez_func(stream, arr=arr)
+        blob1 = stream.getvalue()
+    # Note that time resolution in ZIP files is 1 second.
+    time.sleep(1.1)
+    with BytesIO() as stream:
+        savez_func(stream, arr=arr)
+        blob2 = stream.getvalue()
+    assert blob1 == blob2
