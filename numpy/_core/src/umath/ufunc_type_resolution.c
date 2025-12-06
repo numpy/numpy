@@ -445,6 +445,9 @@ PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
 {
     if (PyArray_DESCR(operands[0])->type_num == NPY_TIMEDELTA) {
         out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
         out_dtypes[1] = PyArray_DescrFromType(NPY_DOUBLE);
         return 0;
     }
@@ -609,6 +612,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             descr = PyArray_DESCR(operands[0]);
         }
         out_dtypes[0] = NPY_DT_CALL_ensure_canonical(descr);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
     }
 
     /* All types are the same - copy the first one to the rest */
@@ -675,6 +681,9 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
     }
 
     out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
@@ -694,6 +703,9 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
     }
 
     out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
+    if (out_dtypes[0] == NULL) {
+        return -1;
+    }
     out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
 
     return 0;
