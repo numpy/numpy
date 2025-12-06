@@ -1510,6 +1510,14 @@ static PyObject* realtype_repr(PyObject *self) {
     return realtype_strreprimpl<'R', PT>(self);
 }
 
+// to static assert unreachable code in constexpr if-else chains
+// issue: CWG2518
+// ref: https://en.cppreference.com/w/cpp/language/if.html#Constexpr_If
+template<typename>
+constexpr bool dependent_false_v = false;
+template<const char>
+constexpr bool dependent_false_v_char = false;
+
 template<const char kind, typename PT>
 static PyObject *
 complextype_strreprimpl(PyObject *self)
@@ -1555,7 +1563,7 @@ complextype_strreprimpl(PyObject *self)
                 ret = PyUnicode_FromFormat(repr_format, istr);
             }
         } else {
-            static_assert(!"unreachable");
+            static_assert(dependent_false_v_char<kind>, "unreachable");
         }
         Py_DECREF(istr);
         return ret;
@@ -1618,7 +1626,7 @@ complextype_strreprimpl(PyObject *self)
             string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
         }
     } else {
-        static_assert(!"unreachable");
+        static_assert(dependent_false_v_char<kind>, "unreachable");
     }
 
     Py_DECREF(rstr);
@@ -4280,7 +4288,7 @@ dunder_new_time_impl(PyTypeObject *type, PyObject *args, PyObject *kwds)
     } else if constexpr (std::is_same_v<PT, PyTimedeltaScalarObject>) {
         ret = (PT *)PyTimedeltaArrType_Type.tp_alloc(&PyTimedeltaArrType_Type, 0);
     } else {
-        static_assert(!"unreachable");
+        static_assert(dependent_false_v<PT>, "unreachable");
     }
     if (ret == NULL) {
         return NULL;
@@ -4579,7 +4587,7 @@ dunder_hash_impl3(PyObject *obj)
     } else if constexpr (std::is_same_v<PT, PyULongLongScalarObject>) {
         l = PyLong_FromUnsignedLongLong(obval);
     } else {
-        static_assert(!"unreachable");
+        static_assert(dependent_false_v<PT>, "unreachable");
     }
     npy_hash_t x = PyObject_Hash(l);
     Py_DECREF(l);
