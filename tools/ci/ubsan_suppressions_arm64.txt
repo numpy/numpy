@@ -17,7 +17,6 @@ shift-base:_core/src/umath/_rational_tests.c
 shift-base:_core/src/npymath/npy_math_internal.h
 
 # suggested fix for runtime error: null check before loop
-pointer-overflow:_core/src/common/simd/neon/memory.h
 pointer-overflow:_core/src/multiarray/datetime_busdaycal.c
 pointer-overflow:_core/src/multiarray/nditer_templ.c
 pointer-overflow:_core/src/multiarray/nditer_constr.c
