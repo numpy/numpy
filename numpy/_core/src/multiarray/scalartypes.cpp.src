@@ -4915,39 +4915,61 @@ initialize_casting_tables(void)
     memset(_npy_next_larger_type_table, -1,
                                         sizeof(_npy_next_larger_type_table));
 
-    /* Compile-time loop of scalar kinds */
+    /* scalar kinds */
+    _npy_scalar_kinds_table[NPY_BOOL] = NPY_BOOL_SCALAR;
+    _npy_next_larger_type_table[NPY_BOOL] = -1;
 
-    /**begin repeat
-     * #NAME = BOOL,
-     *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
-     *         LONG, ULONG, LONGLONG, ULONGLONG,
-     *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
-     *         CFLOAT, CDOUBLE, CLONGDOUBLE#
-     * #BIGGERTYPE = -1,
-     *         NPY_SHORT, NPY_USHORT, NPY_INT, NPY_UINT, NPY_LONG, NPY_ULONG,
-     *         NPY_LONGLONG, NPY_ULONGLONG, -1, -1,
-     *         NPY_FLOAT, NPY_DOUBLE, NPY_LONGDOUBLE, -1,
-     *         NPY_CDOUBLE, NPY_CLONGDOUBLE, -1#
-     * #SCKIND = BOOL,
-     *           (INTNEG, INTPOS)*5,
-     *           FLOAT*4,
-     *           COMPLEX*3#
-     */
+    _npy_scalar_kinds_table[NPY_BYTE] = NPY_INTNEG_SCALAR;
+    _npy_next_larger_type_table[NPY_BYTE] = NPY_SHORT;
 
-    _npy_scalar_kinds_table[NPY_@NAME@] = NPY_@SCKIND@_SCALAR;
-    _npy_next_larger_type_table[NPY_@NAME@] = @BIGGERTYPE@;
+    _npy_scalar_kinds_table[NPY_UBYTE] = NPY_INTPOS_SCALAR;
+    _npy_next_larger_type_table[NPY_UBYTE] = NPY_USHORT;
 
-    /**end repeat**/
+    _npy_scalar_kinds_table[NPY_SHORT] = NPY_INTNEG_SCALAR;
+    _npy_next_larger_type_table[NPY_SHORT] = NPY_INT;
 
-#undef _TO_NUM
-#undef _TO_BSIZE
+    _npy_scalar_kinds_table[NPY_USHORT] = NPY_INTPOS_SCALAR;
+    _npy_next_larger_type_table[NPY_USHORT] = NPY_UINT;
 
-/**end repeat1**/
+    _npy_scalar_kinds_table[NPY_INT] = NPY_INTNEG_SCALAR;
+    _npy_next_larger_type_table[NPY_INT] = NPY_LONG;
 
-#undef _FROM_NUM
-#undef _FROM_BSIZE
+    _npy_scalar_kinds_table[NPY_UINT] = NPY_INTPOS_SCALAR;
+    _npy_next_larger_type_table[NPY_UINT] = NPY_ULONG;
 
-/**end repeat**/
+    _npy_scalar_kinds_table[NPY_LONG] = NPY_INTNEG_SCALAR;
+    _npy_next_larger_type_table[NPY_LONG] = NPY_LONGLONG;
+
+    _npy_scalar_kinds_table[NPY_ULONG] = NPY_INTPOS_SCALAR;
+    _npy_next_larger_type_table[NPY_ULONG] = NPY_ULONGLONG;
+
+    _npy_scalar_kinds_table[NPY_LONGLONG] = NPY_INTNEG_SCALAR;
+    _npy_next_larger_type_table[NPY_LONGLONG] = -1;
+
+    _npy_scalar_kinds_table[NPY_ULONGLONG] = NPY_INTPOS_SCALAR;
+    _npy_next_larger_type_table[NPY_ULONGLONG] = -1;
+
+    _npy_scalar_kinds_table[NPY_HALF] = NPY_FLOAT_SCALAR;
+    _npy_next_larger_type_table[NPY_HALF] = NPY_FLOAT;
+
+    _npy_scalar_kinds_table[NPY_FLOAT] = NPY_FLOAT_SCALAR;
+    _npy_next_larger_type_table[NPY_FLOAT] = NPY_DOUBLE;
+
+    _npy_scalar_kinds_table[NPY_DOUBLE] = NPY_FLOAT_SCALAR;
+    _npy_next_larger_type_table[NPY_DOUBLE] = NPY_LONGDOUBLE;
+
+    _npy_scalar_kinds_table[NPY_LONGDOUBLE] = NPY_FLOAT_SCALAR;
+    _npy_next_larger_type_table[NPY_LONGDOUBLE] = -1;
+
+    _npy_scalar_kinds_table[NPY_CFLOAT] = NPY_COMPLEX_SCALAR;
+    _npy_next_larger_type_table[NPY_CFLOAT] = NPY_CDOUBLE;
+
+    _npy_scalar_kinds_table[NPY_CDOUBLE] = NPY_COMPLEX_SCALAR;
+    _npy_next_larger_type_table[NPY_CDOUBLE] = NPY_CLONGDOUBLE;
+
+    _npy_scalar_kinds_table[NPY_CLONGDOUBLE] = NPY_COMPLEX_SCALAR;
+    _npy_next_larger_type_table[NPY_CLONGDOUBLE] = -1;
+
 
     /*
      * Now that the _can_cast_safely table is finished, we can
