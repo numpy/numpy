@@ -458,7 +458,11 @@ class recarray(ndarray):
 
         newattr = attr not in self.__dict__
         try:
-            ret = object.__setattr__(self, attr, val)
+            if attr == 'dtype':
+                # gh-29244
+                ret = self._set_dtype(val)
+            else:
+                ret = object.__setattr__(self, attr, val)
         except Exception:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
