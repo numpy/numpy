@@ -1124,6 +1124,10 @@ class TestDateTime:
         s = np.sign(x)
         assert_equal(s, np.array([-1.0, 0.0, 1.0, np.nan]), strict=True)
 
+    def test_timedelta64_sign_nat_scalar(self):
+        nat = np.timedelta64('nat', 'm')
+        assert_equal(np.sign(nat), np.nan)
+
     def test_datetime_add(self):
         for dta, dtb, dtc, dtnat, tda, tdb, tdc in \
                     [
