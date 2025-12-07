@@ -360,7 +360,8 @@ class memmap(ndarray):
         OSError
             If the underlying :py:meth:`~mmap.mmap.madvise` call fails.
         NotImplementedError
-            If :py:meth:`~mmap.mmap.madvise` is not available on the current system or Python version.
+            If :py:meth:`~mmap.mmap.madvise` is not available on the current system or
+            Python version.
 
         Notes
         -----
