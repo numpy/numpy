@@ -8597,6 +8597,17 @@ def asarray(a, dtype=None, order=None):
     <class 'numpy.ma.MaskedArray'>
 
     """
+    # Handle __array__ protocol
+    if hasattr(a, '__array__'):
+        try:
+            # Try to get the array
+            arr = a.__array__()
+            # Check if we got something different
+            if arr is not a:
+                a = arr
+        except Exception:
+            # If __array__ fails, continue with original 'a'
+            pass
     order = order or 'C'
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True,
                         subok=False, order=order)
@@ -8649,6 +8660,17 @@ def asanyarray(a, dtype=None, order=None):
     <class 'numpy.ma.MaskedArray'>
 
     """
+    # Handle __array__ protocol
+    if hasattr(a, '__array__'):
+        try:
+            # Try to get the array
+            arr = a.__array__()
+            # Check if we got something different
+            if arr is not a:
+                a = arr
+        except Exception:
+            # If __array__ fails, continue with original 'a'
+            pass
     # workaround for #8666, to preserve identity. Ideally the bottom line
     # would handle this for us.
     if (

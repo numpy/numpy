@@ -376,6 +376,281 @@ class TestMaskedArray:
         assert_equal(xmm.fill_value, xm.fill_value)
         assert_equal(xmm._hardmask, xm._hardmask)
 
+    def test_asarray_with_array_protocol(self):
+        '''
+        Test np.ma.asarray() with objects that implement __array__ protocol
+        '''
+    
+    
+        # Create a masked array
+        ma_original = np.ma.array([1, 2, 3], mask=[False, True, False])
+    
+        # Test 1: Basic __array__ protocol implementation
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self, dtype=None):
+                return np.asarray(self._data, dtype=dtype)
+        
+        wrapper = ArrayWrapper(ma_original)
+        
+        # np.ma.asarray should work without recursion error
+        result = np.ma.asarray(wrapper)
+        assert isinstance(result, np.ma.MaskedArray)
+        assert_equal(result.data, [1, 2, 3])
+        assert_equal(result.mask, [False, True, False])
+        
+        # Test 2: __array__ returning a regular ndarray
+        class ArrayWrapper2:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper2 = ArrayWrapper2(np.array([1, 2, 3]))
+        result2 = np.ma.asarray(wrapper2)
+        assert isinstance(result2, np.ma.MaskedArray)
+        assert_equal(result2.data, [1, 2, 3])
+        assert_equal(result2.mask, [False, False, False])  # No mask
+        
+        # Test 3: __array__ returning masked array
+        class ArrayWrapper3:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper3 = ArrayWrapper3(ma_original)
+        result3 = np.ma.asarray(wrapper3)
+        assert isinstance(result3, np.ma.MaskedArray)
+        assert result3 is not wrapper3._data  # Should be a copy
+        assert_equal(result3.data, [1, 2, 3])
+        assert_equal(result3.mask, [False, True, False])
+
+    def test_asarray_array_protocol_recursion(self):
+        """Test that np.ma.asarray() doesn't cause recursion with __array__"""
+        import numpy as np
+        
+        ma_original = np.ma.array([1, 2, 3], mask=[False, True, False])
+        
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper = ArrayWrapper(ma_original)
+        
+        # This should not cause recursion error
+        result = np.ma.asarray(wrapper)
+        
+        # Accessing properties should not cause recursion
+        assert_no_recursion(lambda: result.data)
+        assert_no_recursion(lambda: result.mask)
+        assert_no_recursion(lambda: str(result))
+        assert_no_recursion(lambda: repr(result))
+        
+        # Helper function to test for recursion
+        def assert_no_recursion(func):
+            import sys
+            old_limit = sys.getrecursionlimit()
+            sys.setrecursionlimit(100)  # Set low to catch recursion early
+            try:
+                func()
+            except RecursionError:
+                pytest.fail("RecursionError occurred unexpectedly")
+            finally:
+                sys.setrecursionlimit(old_limit)
+
+    def test_asarray_array_protocol_preserves_fill_value(self):
+        """Test that __array__ protocol preserves fill_value"""
+        import numpy as np
+        
+        # Create masked array with custom fill_value
+        ma_original = np.ma.array([1, 2, 3], mask=[False, True, False], fill_value=999)
+        
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper = ArrayWrapper(ma_original)
+        result = np.ma.asarray(wrapper)
+        
+        # Fill value should be preserved
+        assert_equal(result.fill_value, 999)
+
+    def test_asarray_array_protocol_with_dtype(self):
+        """Test np.ma.asarray() with __array__ and dtype parameter"""
+        import numpy as np
+        
+        ma_original = np.ma.array([1, 2, 3], mask=[False, True, False])
+        
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self, dtype=None):
+                if dtype is not None:
+                    return self._data.astype(dtype)
+                return self._data
+        
+        wrapper = ArrayWrapper(ma_original)
+        
+        # Test with dtype conversion
+        result_float = np.ma.asarray(wrapper, dtype=np.float64)
+        assert result_float.dtype == np.float64
+        assert_equal(result_float.data, [1.0, 2.0, 3.0])
+        
+        result_int = np.ma.asarray(wrapper, dtype=np.int32)
+        assert result_int.dtype == np.int32
+
+    def test_asarray_array_protocol_fallback(self):
+        """Test that np.ma.asarray() falls back properly when __array__ fails"""
+        import numpy as np
+        
+        class BrokenArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                raise ValueError("Intentional error for testing")
+        
+        wrapper = BrokenArrayWrapper(np.array([1, 2, 3]))
+        
+        # Should handle the error gracefully
+        result = np.ma.asarray(wrapper)
+        # Should create a new masked array from the object
+        assert isinstance(result, np.ma.MaskedArray)
+        assert_equal(result.shape, ())  # Single object
+
+    def test_asarray_array_protocol_returns_self(self):
+        """Test when __array__ returns self (should avoid infinite recursion)"""
+        import numpy as np
+        
+        class SelfReturningArray:
+            def __array__(self):
+                return self  # This would cause issues!
+        
+        wrapper = SelfReturningArray()
+        
+        # This should handle gracefully without infinite recursion
+        result = np.ma.asarray(wrapper)
+        assert isinstance(result, np.ma.MaskedArray)
+        # The result should be a masked array containing the object
+        assert result[()] is wrapper
+
+    def test_asarray_array_protocol_versus_np_asarray(self):
+        """Test consistency between np.ma.asarray() and np.asarray()"""
+        import numpy as np
+        
+        ma_original = np.ma.array([1, 2, 3], mask=[False, True, False])
+        
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper = ArrayWrapper(ma_original)
+        
+        # Both should handle __array__ protocol
+        result_np = np.asarray(wrapper)
+        result_ma = np.ma.asarray(wrapper)
+        
+        # np.asarray returns the underlying data without mask
+        assert isinstance(result_np, np.ndarray)
+        assert not isinstance(result_np, np.ma.MaskedArray)
+        assert_equal(result_np, [1, 2, 3])
+        
+        # np.ma.asarray preserves the mask
+        assert isinstance(result_ma, np.ma.MaskedArray)
+        assert_equal(result_ma.data, [1, 2, 3])
+        assert_equal(result_ma.mask, [False, True, False])
+
+    def test_asarray_array_protocol_with_structured_array(self):
+        """Test __array__ protocol with structured arrays"""
+        import numpy as np
+        
+        dtype = [('x', int), ('y', float)]
+        data = np.array([(1, 2.0), (3, 4.0), (5, 6.0)], dtype=dtype)
+        mask = np.array([(False, True), (True, False), (False, False)], 
+                        dtype=[('x', bool), ('y', bool)])
+        
+        ma_original = np.ma.array(data, mask=mask)
+        
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper = ArrayWrapper(ma_original)
+        result = np.ma.asarray(wrapper)
+        
+        assert isinstance(result, np.ma.MaskedArray)
+        assert result.dtype == dtype
+        assert_equal(result['x'].mask, [False, True, False])
+        assert_equal(result['y'].mask, [True, False, False])
+
+    def test_asarray_array_protocol_order(self):
+        """Test __array__ protocol with order parameter"""
+        import numpy as np
+        
+        ma_original = np.ma.array([[1, 2], [3, 4]], mask=[[False, True], [True, False]])
+        
+        class ArrayWrapper:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self, dtype=None):
+                if dtype is not None:
+                    return self._data.astype(dtype)
+                return self._data
+        
+        wrapper = ArrayWrapper(ma_original)
+        
+        # Test with different orders
+        result_c = np.ma.asarray(wrapper, order='C')
+        result_f = np.ma.asarray(wrapper, order='F')
+        
+        assert result_c.flags['C_CONTIGUOUS']
+        assert result_f.flags['F_CONTIGUOUS']
+
+    def test_asarray_array_protocol_chain(self):
+        """Test chain of __array__ protocol calls"""
+        import numpy as np
+        
+        ma_original = np.ma.array([1, 2, 3], mask=[False, True, False])
+        
+        class Wrapper1:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return Wrapper2(self._data)
+        
+        class Wrapper2:
+            def __init__(self, data):
+                self._data = data
+            
+            def __array__(self):
+                return self._data
+        
+        wrapper = Wrapper1(ma_original)
+        result = np.ma.asarray(wrapper)
+        
+        assert isinstance(result, np.ma.MaskedArray)
+        assert_equal(result.mask, [False, True, False])
+
     def test_asarray_default_order(self):
         # See Issue #6646
         m = np.eye(3).T
