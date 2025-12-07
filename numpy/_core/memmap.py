@@ -344,13 +344,13 @@ class memmap(ndarray):
     def madvise(self, option):
         """
         Give advice about the memory region corresponding to this array.
-        See :py:func:`python.mmap.mmap.madvise`
+        See :py:meth:`mmap.mmap.madvise`
 
         Parameters
         ----------
         option : int
             One of the MADV_* constants available on the system, will be passed
-            to :py:func:`python.mmap.mmap.madvise`
+            to :py:meth:`mmap.mmap.madvise`
 
         Raises
         ------
@@ -358,14 +358,13 @@ class memmap(ndarray):
             If the memory map is not backed by any memory (e.g., already closed)
             or if `madvise` is called on a view of a memmap.
         OSError
-            If the underlying `mmap.madvise` call fails.
+            If the underlying :py:meth:`~mmap.mmap.madvise` call fails.
         NotImplementedError
-            If `mmap.madvise` is not available on the current system or Python version.
+            If :py:meth:`~mmap.mmap.madvise` is not available on the current system or Python version.
 
         Notes
         -----
-        This method is only available on systems that support the `madvise`
-        system call.
+        This method is only available on systems that support the madvise system call.
 
         """
         if self._mmap is None:
