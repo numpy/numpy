@@ -109,6 +109,8 @@ class memmap(ndarray):
         When you delete a memmap object, flush is called first to write
         changes to disk.
 
+    madvise
+        Send advice option to underlying :py:func:`python.mmap.mmap.madvise`
 
     See also
     --------
