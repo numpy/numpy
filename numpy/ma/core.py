@@ -8597,14 +8597,21 @@ def asarray(a, dtype=None, order=None):
     <class 'numpy.ma.MaskedArray'>
 
     """
-    # Handle __array__ protocol
+    # Handle __array__ protocol to avoid recursion with custom array classes
     if hasattr(a, '__array__'):
         try:
-            # Try to get the array
             arr = a.__array__()
-            # Check if we got something different
-            if arr is not a:
-                a = arr
+            # If we got a masked array directly, return it with proper handling
+            if isinstance(arr, MaskedArray):
+                # For masked arrays, we need to handle them specially
+                if dtype is None and order in {None, 'C'}:
+                    # Fast path: no conversion needed
+                    return arr
+                # Otherwise, create new masked array with possible dtype/order changes
+                return masked_array(arr, dtype=dtype, copy=False, keep_mask=True,
+                                    subok=False, order=order)
+            # For non-masked arrays, use the array result
+            a = arr
         except Exception:
             # If __array__ fails, continue with original 'a'
             pass
@@ -8660,14 +8667,24 @@ def asanyarray(a, dtype=None, order=None):
     <class 'numpy.ma.MaskedArray'>
 
     """
-    # Handle __array__ protocol
+       # Handle __array__ protocol to avoid recursion with custom array classes
     if hasattr(a, '__array__'):
         try:
-            # Try to get the array
             arr = a.__array__()
-            # Check if we got something different
-            if arr is not a:
-                a = arr
+            # If we got a masked array directly, handle it
+            if isinstance(arr, MaskedArray):
+                # Fast path: if no conversion needed and it's already a MaskedArray
+                if (dtype is None or dtype == arr.dtype) and (
+                    order in {None, 'A', 'K'} or 
+                    (order == 'C' and arr.flags.c_contiguous) or
+                    (order == 'F' and arr.flags.f_contiguous)
+                ):
+                    return arr
+                # Otherwise create new masked array
+                return masked_array(arr, dtype=dtype, copy=False, keep_mask=True,
+                                    subok=True, order=order)
+            # For non-masked arrays, use the array result
+            a = arr
         except Exception:
             # If __array__ fails, continue with original 'a'
             pass
