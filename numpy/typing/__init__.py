@@ -93,7 +93,7 @@ Please see : :ref:`Data type objects <arrays.dtypes>`
 Number precision
 ~~~~~~~~~~~~~~~~
 
-The precision of `numpy.number` subclasses is treated as a invariant generic
+The precision of `numpy.number` subclasses is treated as an invariant generic
 parameter (see :class:`~NBitBase`), simplifying the annotating of processes
 involving precision-based casting.
 

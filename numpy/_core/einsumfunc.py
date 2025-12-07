@@ -401,7 +401,7 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
             if result is not None:
                 known_contractions.append(result)
 
-        # If we do not have a inner contraction, rescan pairs
+        # If we do not have an inner contraction, rescan pairs
         # including outer products
         if len(known_contractions) == 0:
 
