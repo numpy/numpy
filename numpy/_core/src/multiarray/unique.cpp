@@ -220,27 +220,23 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
         return equal_func(lhs, rhs, equal_nan);
     };
 
-    // Create hashset within the scope of a lambda to allow RAII objects
-    // to manage resources.
     using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
-    const set_type hashset =
-        [&]() -> const set_type {
-            np::raii::SaveThreadState save_thread_state{};
 
-            // number of elements in the input array
-            npy_intp isize = PyArray_SIZE(self);
-            set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
-            char *idata = PyArray_BYTES(self);
-            npy_intp istride = PyArray_STRIDES(self)[0];
-            for (npy_intp i = 0; i < isize; i++, idata += istride) {
-                hashset.insert(reinterpret_cast<T *>(idata));
-            }
-            return hashset;
-        }();
+    // number of elements in the input array
+    npy_intp isize = PyArray_SIZE(self);
+    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-    npy_intp length = hashset.size();
+    {
+        np::raii::SaveThreadState save_thread_state{};
 
-    PyArrayObject *res_obj = empty_array_like(self, length);
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            hashset.insert(reinterpret_cast<T *>(idata));
+        }
+    }
+
+    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
     if (res_obj == NULL) {
         return NULL;
     }
@@ -280,27 +276,23 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
         return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
-    // Create hashset within the scope of a lambda to allow RAII objects
-    // to manage resources.
     using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
-    const set_type hashset =
-        [&]() -> const set_type {
-            np::raii::SaveThreadState save_thread_state{};
 
-            // number of elements in the input array
-            npy_intp isize = PyArray_SIZE(self);
-            set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
-            char *idata = PyArray_BYTES(self);
-            npy_intp istride = PyArray_STRIDES(self)[0];
-            for (npy_intp i = 0; i < isize; i++, idata += istride) {
-                hashset.insert(reinterpret_cast<T *>(idata));
-            }
-            return hashset;
-        }();
+    // number of elements in the input array
+    npy_intp isize = PyArray_SIZE(self);
+    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-    npy_intp length = hashset.size();
+    {
+        np::raii::SaveThreadState save_thread_state{};
 
-    PyArrayObject *res_obj = empty_array_like(self, length);
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            hashset.insert(reinterpret_cast<T *>(idata));
+        }
+    }
+
+    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
     if (res_obj == NULL) {
         return NULL;
     }
@@ -354,54 +346,47 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     };
 
     npy_intp isize = PyArray_SIZE(self);
-    // unpacked_strings must be allocated outside of the scope used to create
-    // hashset because of the lifetime problem.
+    // unpacked_strings must live as long as hashset because hashset points
+    // to values in this vector.
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
 
-    // Create hashset within the scope of a lambda to allow RAII objects
-    // to manage resources.
     using set_type = std::unordered_set<npy_static_string *,
                                         decltype(hash), decltype(equal)>;
-    const set_type hashset =
-        [&]() -> const set_type {
-            PyArray_StringDTypeObject *descr =
-                reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
-            np::raii::NpyStringAcquireAllocator alloc(descr);
-            np::raii::SaveThreadState save_thread_state{};
+    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-            set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+    {
+        PyArray_StringDTypeObject *descr =
+            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
+        np::raii::NpyStringAcquireAllocator alloc(descr);
+        np::raii::SaveThreadState save_thread_state{};
 
-            char *idata = PyArray_BYTES(self);
-            npy_intp istride = PyArray_STRIDES(self)[0];
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
 
-            for (npy_intp i = 0; i < isize; i++, idata += istride) {
-                npy_packed_static_string *packed_string =
-                    reinterpret_cast<npy_packed_static_string *>(idata);
-                int is_null = NpyString_load(alloc.allocator(), packed_string,
-                                             &unpacked_strings[i]);
-                if (is_null == -1) {
-                    // Unexpected error. Throw a C++ exception that will be caught
-                    // by the caller of unique_vstring() and converted into a Python
-                    // RuntimeError.
-                    throw std::runtime_error("Failed to load string from packed "
-                                             "static string.");
-                }
-                hashset.insert(&unpacked_strings[i]);
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            npy_packed_static_string *packed_string =
+                reinterpret_cast<npy_packed_static_string *>(idata);
+            int is_null = NpyString_load(alloc.allocator(), packed_string,
+                                         &unpacked_strings[i]);
+            if (is_null == -1) {
+                // Unexpected error. Throw a C++ exception that will be caught
+                // by the caller of unique_vstring() and converted into a Python
+                // RuntimeError.
+                throw std::runtime_error("Failed to load string from packed "
+                                         "static string.");
             }
-            return hashset;
-        }();
+            hashset.insert(&unpacked_strings[i]);
+        }
+    }
 
-    npy_intp length = hashset.size();
-
-    PyArrayObject *res_obj = empty_array_like(self, length);
+    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
     if (res_obj == NULL) {
         return NULL;
     }
 
-    PyArray_StringDTypeObject *res_descr =
-        reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(res_obj));
-
     {
+        PyArray_StringDTypeObject *res_descr =
+            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(res_obj));
         np::raii::NpyStringAcquireAllocator alloc(res_descr);
         np::raii::SaveThreadState save_thread_state{};
 
