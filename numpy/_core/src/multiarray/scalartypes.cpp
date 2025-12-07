@@ -3019,7 +3019,7 @@ as_integer_ratio_impl(PyObject *self, PyObject *args)
                     || std::is_same_v<T, npy_double>) {
         numerator = PyLong_FromDouble(frac);
     }
-    else if (std::is_same_v<T, npy_longdouble>) {
+    else if constexpr (std::is_same_v<T, npy_longdouble>) {
         numerator = npy_longdouble_to_PyLong(frac);
     }
     if (numerator == NULL)
