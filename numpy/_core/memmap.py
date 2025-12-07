@@ -342,17 +342,13 @@ class memmap(ndarray):
     def madvise(self, option):
         """
         Give advice about the memory region corresponding to this array.
+        See :py:func:`python.mmap.mmap.madvise`
 
         Parameters
         ----------
         option : int
-            One of the `madvise` options, e.g., `mmap.MADV_NORMAL`,
-            `mmap.MADV_RANDOM`, `mmap.MADV_SEQUENTIAL`, `mmap.MADV_WILLNEED`,
-            `mmap.MADV_DONTNEED`, `mmap.MADV_FREE`, `mmap.MADV_REMOVE`,
-            `mmap.MADV_DONTFORK`, `mmap.MADV_DOFORK`, `mmap.MADV_MERGEABLE`,
-            `mmap.MADV_UNMERGEABLE`, `mmap.MADV_HUGEPAGE`,
-            `mmap.MADV_NOHUGEPAGE`, `mmap.MADV_SOFT_OFFLINE`,
-            `mmap.MADV_COLD`, `mmap.MADV_PAGEOUT`, `mmap.MADV_POPULATE`.
+            One of the MADV_* constants available on the system, will be passed
+            to :py:func:`python.mmap.mmap.madvise`
 
         Raises
         ------
