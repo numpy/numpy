@@ -3174,7 +3174,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
 add_newdoc('numpy._core.umath', 'negative',
     """
-    Numerical negative, element-wise.
+    Numerical negation, element-wise.
 
     Parameters
     ----------
