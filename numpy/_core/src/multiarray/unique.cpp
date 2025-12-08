@@ -499,6 +499,7 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
                             NULL, NULL, NULL
                             ) < 0
     ) {
+        Py_XDECREF(arr);
         return NULL;
     }
 
