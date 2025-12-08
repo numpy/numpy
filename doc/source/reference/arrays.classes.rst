@@ -479,16 +479,16 @@ Example:
 
   >>> import numpy as np
 
-  >>> a = np.memmap('newfile.dat', dtype=float, mode='w+', shape=1000)
+  >>> a = np.memmap('newfile.dat', dtype=np.float64, mode='w+', shape=1000)
   >>> a[10] = 10.0
   >>> a[30] = 30.0
   >>> del a
 
-  >>> b = np.fromfile('newfile.dat', dtype=float)
+  >>> b = np.fromfile('newfile.dat', dtype=np.float64)
   >>> print(b[10], b[30])
   10.0 30.0
 
-  >>> a = np.memmap('newfile.dat', dtype=float)
+  >>> a = np.memmap('newfile.dat', dtype=np.float64)
   >>> print(a[10], a[30])
   10.0 30.0
 

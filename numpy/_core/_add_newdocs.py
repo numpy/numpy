@@ -418,11 +418,11 @@ add_newdoc('numpy._core', 'nditer',
     original data when the :meth:`~object.__exit__` function is called
     but not before:
 
-    >>> a = np.arange(6, dtype='i4')[::-2]
+    >>> a = np.arange(6, dtype=np.int32)[::-2]
     >>> with np.nditer(a, [],
     ...        [['writeonly', 'updateifcopy']],
     ...        casting='unsafe',
-    ...        op_dtypes=[np.dtype('f4')]) as i:
+    ...        op_dtypes=[np.dtype(np.float32)]) as i:
     ...    x = i.operands[0]
     ...    x[:] = [-1, -2, -3]
     ...    # a still unchanged here
@@ -939,7 +939,7 @@ add_newdoc('numpy._core.multiarray', 'array',
         ``NPY_MAXDIMS``).
         Setting ``ndmax`` stops recursion at the specified depth, preserving
         deeper nested structures as objects instead of promoting them to
-        higher-dimensional arrays. In this case, ``dtype=object`` is required.
+        higher-dimensional arrays. In this case, ``dtype=np.object_`` is required.
 
         .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
@@ -994,7 +994,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
     Type provided:
 
-    >>> np.array([1, 2, 3], dtype=complex)
+    >>> np.array([1, 2, 3], dtype=np.complex128)
     array([ 1.+0.j,  2.+0.j,  3.+0.j])
 
     Data-type consisting of more than one element:
@@ -1015,14 +1015,14 @@ add_newdoc('numpy._core.multiarray', 'array',
 
     Limiting the maximum dimensions with ``ndmax``:
 
-    >>> a = np.array([[1, 2], [3, 4]], dtype=object, ndmax=2)
+    >>> a = np.array([[1, 2], [3, 4]], dtype=np.object_, ndmax=2)
     >>> a
     array([[1, 2],
            [3, 4]], dtype=object)
     >>> a.shape
     (2, 2)
 
-    >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+    >>> b = np.array([[1, 2], [3, 4]], dtype=np.object_, ndmax=1)
     >>> b
     array([list([1, 2]), list([3, 4])], dtype=object)
     >>> b.shape
@@ -1389,7 +1389,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
     array([[ -9.74499359e+001,   6.69583040e-309],
            [  2.13182611e-314,   3.06959433e-309]])         #uninitialized
 
-    >>> np.empty([2, 2], dtype=int)
+    >>> np.empty([2, 2], dtype=np.int_)
     array([[-1073741821, -1067949133],
            [  496041986,    19249760]])                     #uninitialized
 
@@ -1455,7 +1455,7 @@ add_newdoc('numpy._core.multiarray', 'zeros',
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
-    >>> np.zeros((5,), dtype=int)
+    >>> np.zeros((5,), dtype=np.int_)
     array([0, 0, 0, 0, 0])
 
     >>> np.zeros((2, 1))
@@ -1487,7 +1487,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     fromstring(string, dtype=None, count=-1, *, sep, like=None)
     --
 
-    fromstring(string, dtype=float, count=-1, *, sep, like=None)
+    fromstring(string, dtype=np.float64, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1538,9 +1538,9 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     Examples
     --------
     >>> import numpy as np
-    >>> np.fromstring('1 2', dtype=int, sep=' ')
+    >>> np.fromstring('1 2', dtype=np.int_, sep=' ')
     array([1, 2])
-    >>> np.fromstring('1, 2', dtype=int, sep=',')
+    >>> np.fromstring('1, 2', dtype=np.int_, sep=',')
     array([1, 2])
 
     """)
@@ -1649,7 +1649,7 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     fromfile(file, dtype=None, count=-1, sep='', offset=0, *, like=None)
     --
 
-    fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
+    fromfile(file, dtype=np.float64, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
 
@@ -1737,7 +1737,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     frombuffer(buffer, dtype=None, count=-1, offset=0, *, like=None)
     --
 
-    frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
+    frombuffer(buffer, dtype=np.float64, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
 
@@ -1770,7 +1770,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     If the buffer has data that is not in machine byte-order, this should
     be specified as part of the data-type, e.g.::
 
-      >>> dt = np.dtype(int)
+      >>> dt = np.dtype(np.int_)
       >>> dt = dt.newbyteorder('>')
       >>> np.frombuffer(buf, dtype=dt) # doctest: +SKIP
 
@@ -1925,9 +1925,9 @@ add_newdoc('numpy._core.multiarray', 'arange',
     `start` is much larger than `step`. This can lead to unexpected
     behaviour. For example::
 
-      >>> np.arange(0, 5, 0.5, dtype=int)
+      >>> np.arange(0, 5, 0.5, dtype=np.int_)
       array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-      >>> np.arange(-3, 3, 0.5, dtype=int)
+      >>> np.arange(-3, 3, 0.5, dtype=np.int_)
       array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
     In such cases, the use of `numpy.linspace` should be preferred.
@@ -2030,16 +2030,16 @@ add_newdoc('numpy._core.multiarray', 'promote_types',
     Examples
     --------
     >>> import numpy as np
-    >>> np.promote_types('f4', 'f8')
+    >>> np.promote_types(np.float32, np.float64)
     dtype('float64')
 
-    >>> np.promote_types('i8', 'f4')
+    >>> np.promote_types(np.int64, np.float32)
     dtype('float64')
 
     >>> np.promote_types('>i8', '<c8')
     dtype('complex128')
 
-    >>> np.promote_types('i4', 'S8')
+    >>> np.promote_types(np.int32, 'S8')
     dtype('S11')
 
     An example of a non-associative case:
@@ -2376,7 +2376,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
     ndarray(shape, dtype=None, buffer=None, offset=0, strides=None, order=None)
     --
 
-    ndarray(shape, dtype=float, buffer=None, offset=0, strides=None, order=None)
+    ndarray(shape, dtype=np.float64, buffer=None, offset=0, strides=None, order=None)
 
     An array object represents a multidimensional, homogeneous array
     of fixed-size items.  An associated data-type object describes the
@@ -2485,7 +2485,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
     First mode, `buffer` is None:
 
     >>> import numpy as np
-    >>> np.ndarray(shape=(2,2), dtype=float, order='F')
+    >>> np.ndarray(shape=(2,2), dtype=np.float64, order='F')
     array([[0.0e+000, 0.0e+000], # random
            [     nan, 2.5e-323]])
 
@@ -2493,7 +2493,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
 
     >>> np.ndarray((2,), buffer=np.array([1,2,3]),
     ...            offset=np.int_().itemsize,
-    ...            dtype=int) # offset = 1*itemsize, i.e. skip first element
+    ...            dtype=np.int_) # offset = 1*itemsize, i.e. skip first element
     array([2, 3])
 
     """)
@@ -3573,15 +3573,15 @@ _array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, cop
     >>> x
     array([1. ,  2. ,  2.5])
 
-    >>> x.astype(int)
+    >>> x.astype(np.int_)
     array([1, 2, 2])
 
-    >>> x.astype(int, casting="same_value")
+    >>> x.astype(np.int_, casting="same_value")
     Traceback (most recent call last):
     ...
     ValueError: could not cast 'same_value' double to long
 
-    >>> x[:2].astype(int, casting="same_value")
+    >>> x[:2].astype(np.int_, casting="same_value")
     array([1, 2])
     """)
 
@@ -3751,12 +3751,12 @@ _array_method_doc('copy', "order='C'",
     >>> y.flags['C_CONTIGUOUS']
     True
 
-    For arrays containing Python objects (e.g. dtype=object),
+    For arrays containing Python objects (e.g. dtype=np.object_),
     the copy is a shallow one. The new array will contain the
     same object which may lead to surprises if that object can
     be modified (is mutable):
 
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=np.object_)
     >>> b = a.copy()
     >>> b[2][0] = 10
     >>> a
@@ -3766,7 +3766,7 @@ _array_method_doc('copy', "order='C'",
     use `copy.deepcopy`:
 
     >>> import copy
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=np.object_)
     >>> c = copy.deepcopy(a)
     >>> c[2][0] = 10
     >>> c
@@ -3868,7 +3868,7 @@ _array_method_doc('fill', "value",
     to a single array element.  The following is a rare example where this
     distinction is important:
 
-    >>> a = np.array([None, None], dtype=object)
+    >>> a = np.array([None, None], dtype=np.object_)
     >>> a[0] = np.array(3)
     >>> a
     array([array(3), None], dtype=object)
@@ -4020,7 +4020,7 @@ _array_method_doc('item', "*args",
 
     For an array with object dtype, elements are returned as-is.
 
-    >>> a = np.array([np.int64(1)], dtype=object)
+    >>> a = np.array([np.int64(1)], dtype=np.object_)
     >>> a.item() #return np.int64
     np.int64(1)
     """)
@@ -4780,7 +4780,7 @@ _array_method_doc('view', "*args, **kwargs",
     .. note::
         Passing None for ``dtype`` is different from omitting the parameter,
         since the former invokes ``dtype(None)`` which is an alias for
-        ``dtype('float64')``.
+        ``dtype(np.float64)``.
 
     Parameters
     ----------
@@ -5867,8 +5867,8 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
     This API requires passing dtypes, define them for convenience:
 
     >>> import numpy as np
-    >>> int32 = np.dtype("int32")
-    >>> float32 = np.dtype("float32")
+    >>> int32 = np.dtype(np.int32)
+    >>> float32 = np.dtype(np.float32)
 
     The typical ufunc call does not pass an output dtype.  `numpy.add` has two
     inputs and one output, so leave the output as ``None`` (not provided):
@@ -6095,11 +6095,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('alignment',
     --------
 
     >>> import numpy as np
-    >>> x = np.dtype('i4')
+    >>> x = np.dtype(np.int32)
     >>> x.alignment
     4
 
-    >>> x = np.dtype(float)
+    >>> x = np.dtype(np.float64)
     >>> x.alignment
     8
 
@@ -6124,11 +6124,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('byteorder',
     --------
 
     >>> import numpy as np
-    >>> dt = np.dtype('i2')
+    >>> dt = np.dtype(np.int16)
     >>> dt.byteorder
     '='
     >>> # endian is not relevant for 8 bit numbers
-    >>> np.dtype('i1').byteorder
+    >>> np.dtype(np.int8).byteorder
     '|'
     >>> # or ASCII strings
     >>> np.dtype('S2').byteorder
@@ -6274,13 +6274,13 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('isbuiltin',
     --------
 
     >>> import numpy as np
-    >>> dt = np.dtype('i2')
+    >>> dt = np.dtype(np.int16)
     >>> dt.isbuiltin
     1
-    >>> dt = np.dtype('f8')
+    >>> dt = np.dtype(np.float64)
     >>> dt.isbuiltin
     1
-    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt = np.dtype([('field1', np.float64)])
     >>> dt.isbuiltin
     0
 
@@ -6348,13 +6348,13 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     --------
 
     >>> import numpy as np
-    >>> dt = np.dtype('i4')
+    >>> dt = np.dtype(np.int32)
     >>> dt.kind
     'i'
-    >>> dt = np.dtype('f8')
+    >>> dt = np.dtype(np.float64)
     >>> dt.kind
     'f'
-    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt = np.dtype([('field1', np.float64)])
     >>> dt.kind
     'V'
 
@@ -6520,7 +6520,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('subdtype',
     >>> x.subdtype
     (dtype('float32'), (8,))
 
-    >>> x =  np.dtype('i2')
+    >>> x =  np.dtype(np.int16)
     >>> x.subdtype
     >>>
 
@@ -6542,7 +6542,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
     >>> x.base
     dtype('float32')
 
-    >>> x =  np.dtype('i2')
+    >>> x = np.dtype(np.int16)
     >>> x.base
     dtype('int16')
 
