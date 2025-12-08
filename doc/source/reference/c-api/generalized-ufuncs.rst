@@ -4,8 +4,7 @@
 Generalized universal function API
 ==================================
 
-.. seealso::
-  * :ref:`ufuncs`
+.. seealso:: :ref:`ufuncs`
 
 There is a general need for looping over not only functions on scalars
 but also over functions on vectors (or arrays).

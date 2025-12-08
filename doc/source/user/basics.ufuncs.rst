@@ -6,9 +6,7 @@
 Universal functions (:class:`.ufunc`) basics
 ********************************************
 
-.. seealso::
-  * :ref:`ufuncs`
-  * :ref:`Generalized ufuncs (gufunc) <c-api.generalized-ufuncs>`
+.. seealso:: :ref:`ufuncs`
 
 .. index: ufunc, universal function, arithmetic, operation
 
