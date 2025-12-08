@@ -9,7 +9,6 @@ from numpy._typing import (
     _ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
-    _DoubleCodes,
     _DTypeLike,
     _Float32Codes,
     _Float64Codes,
@@ -17,7 +16,6 @@ from numpy._typing import (
     _Int64Codes,
     _NestedSequence,
     _ShapeLike,
-    _SingleCodes,
 )
 
 from .bit_generator import BitGenerator, SeedSequence
@@ -27,8 +25,8 @@ type _ArrayF32 = NDArray[np.float32]
 type _ArrayF64 = NDArray[np.float64]
 
 type _DTypeLikeI64 = _DTypeLike[np.int64] | _Int64Codes
-type _DTypeLikeF32 = _DTypeLike[np.float32] | _Float32Codes | _SingleCodes
-type _DTypeLikeF64 = type[float] | _DTypeLike[np.float64] | _Float64Codes | _DoubleCodes
+type _DTypeLikeF32 = _DTypeLike[np.float32] | _Float32Codes
+type _DTypeLikeF64 = type[float] | _DTypeLike[np.float64] | _Float64Codes
 # we use `str` to avoid type-checker performance issues because of the many `Literal` variants
 type _DTypeLikeFloat = type[float] | _DTypeLike[np.float32 | np.float64] | str
 

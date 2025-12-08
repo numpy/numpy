@@ -12,21 +12,15 @@ type _UInt16Codes = Literal["uint16", "ushort", "H", "u2", "|u2", "=u2", "<u2", 
 type _UInt32Codes = Literal["uint32", "u4", "|u4", "=u4", "<u4", ">u4"]
 type _UInt64Codes = Literal["uint64", "u8", "|u8", "=u8", "<u8", ">u8"]
 
-_ByteCodes = _Int8Codes
-_ShortCodes = _Int16Codes
 type _IntCCodes = Literal["intc", "i", "|i", "=i", "<i", ">i"]
 type _LongCodes = Literal["long", "l", "|l", "=l", "<l", ">l"]
 type _LongLongCodes = Literal["longlong", "q", "|q", "=q", "<q", ">q"]
 type _IntPCodes = Literal["intp", "int", "int_", "n", "|n", "=n", "<n", ">n"]
-_IntCodes = _IntPCodes
 
-_UByteCodes = _UInt8Codes
-_UShortCodes = _UInt16Codes
 type _UIntCCodes = Literal["uintc", "I", "|I", "=I", "<I", ">I"]
 type _ULongCodes = Literal["ulong", "L", "|L", "=L", "<L", ">L"]
 type _ULongLongCodes = Literal["ulonglong", "Q", "|Q", "=Q", "<Q", ">Q"]
 type _UIntPCodes = Literal["uintp", "uint", "N", "|N", "=N", "<N", ">N"]
-_UIntCodes = _UIntPCodes
 
 type _Float16Codes = Literal["float16", "half", "e", "f2", "|f2", "=f2", "<f2", ">f2"]
 type _Float32Codes = Literal["float32", "single", "f", "f4", "|f4", "=f4", "<f4", ">f4"]
@@ -34,21 +28,15 @@ type _Float64Codes = Literal[
     "float64", "float", "double", "d", "f8", "|f8", "=f8", "<f8", ">f8"
 ]
 
-_HalfCodes = _Float16Codes
-_SingleCodes = _Float32Codes
-_DoubleCodes = _Float64Codes
-
 type _LongDoubleCodes = Literal["longdouble", "g", "|g", "=g", "<g", ">g"]
 
 type _Complex64Codes = Literal[
     "complex64", "csingle", "F", "c8", "|c8", "=c8", "<c8", ">c8"
 ]
-_CSingleCodes = _Complex64Codes
 
 type _Complex128Codes = Literal[
     "complex128", "complex", "cdouble", "D", "c16", "|c16", "=c16", "<c16", ">c16"
 ]
-_CDoubleCodes = _Complex128Codes
 
 type _CLongDoubleCodes = Literal["clongdouble", "G", "|G", "=G", "<G", ">G"]
 

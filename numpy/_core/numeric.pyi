@@ -36,13 +36,11 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeNumber_co,
     _ArrayLikeTD64_co,
-    _CDoubleCodes,
     _Complex128Codes,
-    _DoubleCodes,
     _DTypeLike,
     _DTypeLikeBool,
     _Float64Codes,
-    _IntCodes,
+    _IntPCodes,
     _NestedSequence,
     _NumberLike_co,
     _ScalarLike_co,
@@ -660,9 +658,9 @@ type _ArrayLike1DNumber_co = _SupportsArray[np.dtype[_Number_co]] | Sequence[com
 type _ArrayLike1DTD64_co = _ArrayLike1D[_TD64_co]
 type _ArrayLike1DObject_co = _ArrayLike1D[np.object_]
 
-type _DTypeLikeInt = type[int] | _IntCodes
-type _DTypeLikeFloat64 = type[float] | _Float64Codes | _DoubleCodes
-type _DTypeLikeComplex128 = type[complex] | _Complex128Codes | _CDoubleCodes
+type _DTypeLikeInt = type[int] | _IntPCodes
+type _DTypeLikeFloat64 = type[float] | _Float64Codes
+type _DTypeLikeComplex128 = type[complex] | _Complex128Codes
 
 ###
 
