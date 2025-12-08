@@ -58,8 +58,9 @@ All ufuncs have 5 methods. 4 reduce-like methods
 (:meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.accumulate`,
 :meth:`~numpy.ufunc.reduceat`, :meth:`~numpy.ufunc.outer`) and one
 for inplace operations (:meth:`~numpy.ufunc.at`).
-See :ref:`ufuncs.methods` for more. However, these methods only make sense on scalar
-ufuncs that take two input arguments and return one output argument.
+See :ref:`ufuncs.methods` for more. However, these methods only make sense on 
+ufuncs that take two input arguments and return one output argument (so-called
+"scalar" ufuncs since the inner loop operates on a single scalar value).
 Attempting to call these methods on other ufuncs will cause a
 :exc:`ValueError`.
 
