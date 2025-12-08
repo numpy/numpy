@@ -3,6 +3,7 @@ import builtins
 import ctypes as ct
 import datetime as dt
 import inspect
+import sys
 from abc import abstractmethod
 from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
@@ -87,24 +88,15 @@ from numpy._typing import (  # type: ignore[deprecated]
     _Float64Codes,
     _Complex64Codes,
     _Complex128Codes,
-    _ByteCodes,
-    _ShortCodes,
     _IntCCodes,
     _IntPCodes,
     _LongCodes,
     _LongLongCodes,
-    _UByteCodes,
-    _UShortCodes,
     _UIntCCodes,
     _UIntPCodes,
     _ULongCodes,
     _ULongLongCodes,
-    _HalfCodes,
-    _SingleCodes,
-    _DoubleCodes,
     _LongDoubleCodes,
-    _CSingleCodes,
-    _CDoubleCodes,
     _CLongDoubleCodes,
     _DT64Codes,
     _TD64Codes,
@@ -1105,7 +1097,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @overload
     def __new__(
         cls,
-        dtype: type[float64 | ct.c_double] | _Float64Codes | _DoubleCodes | None,
+        dtype: type[float64 | ct.c_double] | _Float64Codes | None,
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1151,7 +1143,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         copy: builtins.bool = False,
         *,
         metadata: dict[str, Any] = ...,
-    ) -> dtype[int_ | np.bool]: ...
+    ) -> dtype[int_ | Any]: ...
     @overload
     def __new__(
         cls,
@@ -1160,7 +1152,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         copy: builtins.bool = False,
         *,
         metadata: dict[str, Any] = ...,
-    ) -> dtype[float64 | int_ | np.bool]: ...
+    ) -> dtype[float64 | Any]: ...
     @overload
     def __new__(
         cls,
@@ -1169,7 +1161,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         copy: builtins.bool = False,
         *,
         metadata: dict[str, Any] = ...,
-    ) -> dtype[complex128 | float64 | int_ | np.bool]: ...
+    ) -> dtype[complex128 | Any]: ...
     @overload
     def __new__(
         cls,
@@ -1219,7 +1211,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @overload
     def __new__(
         cls,
-        dtype: _UInt8Codes | _UByteCodes | type[ct.c_uint8 | ct.c_ubyte],
+        dtype: _UInt8Codes | type[ct.c_uint8],
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1228,7 +1220,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @overload
     def __new__(
         cls,
-        dtype: _UInt16Codes | _UShortCodes | type[ct.c_uint16 | ct.c_ushort],
+        dtype: _UInt16Codes | type[ct.c_uint16 | ct.c_ushort],
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1269,13 +1261,13 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         copy: builtins.bool = False,
         *,
         metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[ulong]: ...
+    ) -> dtype[uint32 | uint64]: ...
 
     # `signedinteger` string-based representations and ctypes
     @overload
     def __new__(
         cls,
-        dtype: _Int8Codes | _ByteCodes | type[ct.c_int8 | ct.c_byte],
+        dtype: _Int8Codes | type[ct.c_int8],
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1284,7 +1276,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @overload
     def __new__(
         cls,
-        dtype: _Int16Codes | _ShortCodes | type[ct.c_int16 | ct.c_short],
+        dtype: _Int16Codes | type[ct.c_int16 | ct.c_short],
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1325,13 +1317,13 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         copy: builtins.bool = False,
         *,
         metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[long]: ...
+    ) -> dtype[int32 | int64]: ...
 
     # `floating` string-based representations and ctypes
     @overload
     def __new__(
         cls,
-        dtype: _Float16Codes | _HalfCodes,
+        dtype: _Float16Codes,
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1340,7 +1332,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @overload
     def __new__(
         cls,
-        dtype: _Float32Codes | _SingleCodes,
+        dtype: _Float32Codes | type[ct.c_float],
         align: builtins.bool = False,
         copy: builtins.bool = False,
         *,
@@ -1357,34 +1349,63 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         metadata: dict[builtins.str, Any] = ...,
     ) -> dtype[longdouble]: ...
 
-    # `complexfloating` string-based representations
-    @overload
-    def __new__(
-        cls,
-        dtype: _Complex64Codes | _CSingleCodes,
-        align: builtins.bool = False,
-        copy: builtins.bool = False,
-        *,
-        metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[complex64]: ...
-    @overload
-    def __new__(
-        cls,
-        dtype: _Complex128Codes | _CDoubleCodes,
-        align: builtins.bool = False,
-        copy: builtins.bool = False,
-        *,
-        metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[complex128]: ...
-    @overload
-    def __new__(
-        cls,
-        dtype: _CLongDoubleCodes,
-        align: builtins.bool = False,
-        copy: builtins.bool = False,
-        *,
-        metadata: dict[builtins.str, Any] = ...,
-    ) -> dtype[clongdouble]: ...
+    # `complexfloating` string-based representations and ctypes
+    if sys.version_info >= (3, 14) and sys.platform != "win32":
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex64Codes | type[ct.c_float_complex],
+            align: builtins.bool = False,
+            copy: builtins.bool = False,
+            *,
+            metadata: dict[builtins.str, Any] = ...,
+        ) -> dtype[complex64]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex128Codes | type[ct.c_double_complex],
+            align: builtins.bool = False,
+            copy: builtins.bool = False,
+            *,
+            metadata: dict[builtins.str, Any] = ...,
+        ) -> dtype[complex128]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _CLongDoubleCodes | type[ct.c_longdouble_complex],
+            align: builtins.bool = False,
+            copy: builtins.bool = False,
+            *,
+            metadata: dict[builtins.str, Any] = ...,
+        ) -> dtype[clongdouble]: ...
+    else:
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex64Codes,
+            align: builtins.bool = False,
+            copy: builtins.bool = False,
+            *,
+            metadata: dict[builtins.str, Any] = ...,
+        ) -> dtype[complex64]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex128Codes,
+            align: builtins.bool = False,
+            copy: builtins.bool = False,
+            *,
+            metadata: dict[builtins.str, Any] = ...,
+        ) -> dtype[complex128]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _CLongDoubleCodes,
+            align: builtins.bool = False,
+            copy: builtins.bool = False,
+            *,
+            metadata: dict[builtins.str, Any] = ...,
+        ) -> dtype[clongdouble]: ...
 
     # Miscellaneous string-based representations and ctypes
     @overload
