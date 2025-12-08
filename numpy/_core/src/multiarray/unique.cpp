@@ -502,21 +502,23 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
         return NULL;
     }
 
+    PyObject *result = NULL;
     try {
         auto type = PyArray_TYPE(arr);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
             Py_RETURN_NOTIMPLEMENTED;
         }
-
-        return unique_funcs[type](arr, equal_nan);
+        result = unique_funcs[type](arr, equal_nan);
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();
-        return NULL;
+        result = NULL;
     }
     catch (const std::exception &e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
-        return NULL;
+        result = NULL;
     }
+    Py_DECREF(arr);
+    return result;
 }
