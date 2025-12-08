@@ -29,8 +29,8 @@ locking if you need to mutation and multithreading.
 
 Note that operations that *do not* release the GIL will see no performance gains
 from use of the `threading` module, and instead might be better served with
-`multiprocessing`. In particular, operations on arrays with ``dtype=object`` do
-not release the GIL.
+`multiprocessing`. In particular, operations on arrays with ``dtype=np.object_``
+do not release the GIL.
 
 Free-threaded Python
 --------------------
@@ -47,5 +47,5 @@ Because free-threaded Python does not have a global interpreter lock to
 serialize access to Python objects, there are more opportunities for threads to
 mutate shared state and create thread safety issues. In addition to the
 limitations about locking of the ndarray object noted above, this also means
-that arrays with ``dtype=object`` are not protected by the GIL, creating data
+that arrays with ``dtype=np.object_`` are not protected by the GIL, creating data
 races for python objects that are not possible outside free-threaded python.

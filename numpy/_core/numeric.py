@@ -151,7 +151,7 @@ def zeros_like(
     array([[0, 0, 0],
            [0, 0, 0]])
 
-    >>> y = np.arange(3, dtype=float)
+    >>> y = np.arange(3, dtype=np.float64)
     >>> y
     array([0., 1., 2.])
     >>> np.zeros_like(y)
@@ -211,7 +211,7 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
     >>> np.ones(5)
     array([1., 1., 1., 1., 1.])
 
-    >>> np.ones((5,), dtype=int)
+    >>> np.ones((5,), dtype=np.int_)
     array([1, 1, 1, 1, 1])
 
     >>> np.ones((2, 1))
@@ -300,7 +300,7 @@ def ones_like(
     array([[1, 1, 1],
            [1, 1, 1]])
 
-    >>> y = np.arange(3, dtype=float)
+    >>> y = np.arange(3, dtype=np.float64)
     >>> y
     array([0., 1., 2.])
     >>> np.ones_like(y)
@@ -448,21 +448,21 @@ def full_like(
     Examples
     --------
     >>> import numpy as np
-    >>> x = np.arange(6, dtype=int)
+    >>> x = np.arange(6, dtype=np.int_)
     >>> np.full_like(x, 1)
     array([1, 1, 1, 1, 1, 1])
     >>> np.full_like(x, 0.1)
     array([0, 0, 0, 0, 0, 0])
-    >>> np.full_like(x, 0.1, dtype=np.double)
+    >>> np.full_like(x, 0.1, dtype=np.float64)
     array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
-    >>> np.full_like(x, np.nan, dtype=np.double)
+    >>> np.full_like(x, np.nan, dtype=np.float64)
     array([nan, nan, nan, nan, nan, nan])
 
-    >>> y = np.arange(6, dtype=np.double)
+    >>> y = np.arange(6, dtype=np.float64)
     >>> np.full_like(y, 0.1)
     array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
-    >>> y = np.zeros([2, 2, 3], dtype=int)
+    >>> y = np.zeros([2, 2, 3], dtype=np.int_)
     >>> np.full_like(y, [0, 0, 255])
     array([[[  0,   0, 255],
             [  0,   0, 255]],
@@ -982,7 +982,7 @@ def outer(a, b, out=None):
 
     An example using a "vector" of letters:
 
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> x = np.array(['a', 'b', 'c'], dtype=np.object_)
     >>> np.outer(x, [1, 2, 3])
     array([['a', 'aa', 'aaa'],
            ['b', 'bb', 'bbb'],
@@ -1107,7 +1107,7 @@ def tensordot(a, b, axes=2):
     An extended example taking advantage of the overloading of + and \\*:
 
     >>> a = np.array(range(1, 9)).reshape((2, 2, 2))
-    >>> A = np.array(('a', 'b', 'c', 'd'), dtype=object)
+    >>> A = np.array(('a', 'b', 'c', 'd'), dtype=np.object_)
     >>> A = A.reshape((2, 2))
     >>> a; A
     array([[[1, 2],
@@ -1922,20 +1922,20 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     Examples
     --------
     >>> import numpy as np
-    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
+    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=np.float64)
     array([[0., 0.],
            [1., 1.]])
 
-    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=np.float64)
     array([[0., 1.],
            [0., 1.]])
 
-    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
+    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=np.int_)
     array([[ True, False, False],
            [False,  True, False],
            [False, False,  True]])
 
-    >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
+    >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=np.int_)
     array([[0, 1, 2],
            [1, 2, 3],
            [2, 3, 4]])

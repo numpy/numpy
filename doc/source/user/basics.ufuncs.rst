@@ -76,7 +76,7 @@ an integer (or Boolean) data-type and smaller than the size of the
 
    >>> x.dtype
    dtype('int64')
-   >>> np.multiply.reduce(x, dtype=float)
+   >>> np.multiply.reduce(x, dtype=np.float64)
    array([ 0., 28., 80.])
 
 Finally, the *out* keyword allows you to
@@ -84,10 +84,10 @@ provide an output array (or a tuple of output arrays for multi-output ufuncs).
 If *out* is given, the *dtype* argument is only used for the internal computations.
 Considering ``x`` from the previous example::
 
-   >>> y = np.zeros(3, dtype=int)
+   >>> y = np.zeros(3, dtype=np.int_)
    >>> y
    array([0, 0, 0])
-   >>> np.multiply.reduce(x, dtype=float, out=y)
+   >>> np.multiply.reduce(x, dtype=np.float64, out=y)
    array([ 0, 28, 80])
 
 Ufuncs also have a fifth method, :func:`numpy.ufunc.at`, that allows in place

@@ -1786,9 +1786,9 @@ the functions that must be implemented for each slot.
    - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
      identity otherwise as it preserves the sign for ``sum([-0.0])``.
    - We use no identity for object, but return the default of ``0`` and
-     ``1`` for the empty ``sum([], dtype=object)`` and
-     ``prod([], dtype=object)``.
-     This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+     ``1`` for the empty ``sum([], dtype=np.object_)`` and
+     ``prod([], dtype=np.object_)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=np.object_))`` to work.
    - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
      ``INT_MIN`` not a good *default* when there are no items.
 

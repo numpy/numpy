@@ -938,7 +938,7 @@ def outer(x1, x2, /):
 
     An example using a "vector" of letters:
 
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> x = np.array(['a', 'b', 'c'], dtype=np.object_)
     >>> np.linalg.outer(x, [1, 2, 3])
     array([['a', 'aa', 'aaa'],
            ['b', 'bb', 'bbb'],
@@ -1764,7 +1764,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     ((9, 9), (6,), (6, 6))
     >>> np.allclose(a, np.dot(U[:, :6] * S, Vh))
     True
-    >>> smat = np.zeros((9, 6), dtype=complex)
+    >>> smat = np.zeros((9, 6), dtype=np.complex128)
     >>> smat[:6, :6] = np.diag(S)
     >>> np.allclose(a, np.dot(U, np.dot(smat, Vh)))
     True

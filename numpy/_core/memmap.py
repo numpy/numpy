@@ -130,7 +130,7 @@ class memmap(ndarray):
     Examples
     --------
     >>> import numpy as np
-    >>> data = np.arange(12, dtype='float32')
+    >>> data = np.arange(12, dtype=np.float32)
     >>> data.resize((3,4))
 
     This example uses a temporary file so that doctest doesn't write
@@ -142,7 +142,7 @@ class memmap(ndarray):
 
     Create a memmap with dtype and shape that matches our data:
 
-    >>> fp = np.memmap(filename, dtype='float32', mode='w+', shape=(3,4))
+    >>> fp = np.memmap(filename, dtype=np.float32, mode='w+', shape=(3,4))
     >>> fp
     memmap([[0., 0., 0., 0.],
             [0., 0., 0., 0.],
@@ -165,7 +165,7 @@ class memmap(ndarray):
 
     Load the memmap and verify data was stored:
 
-    >>> newfp = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
+    >>> newfp = np.memmap(filename, dtype=np.float32, mode='r', shape=(3,4))
     >>> newfp
     memmap([[  0.,   1.,   2.,   3.],
             [  4.,   5.,   6.,   7.],
@@ -173,13 +173,13 @@ class memmap(ndarray):
 
     Read-only memmap:
 
-    >>> fpr = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
+    >>> fpr = np.memmap(filename, dtype=np.float32, mode='r', shape=(3,4))
     >>> fpr.flags.writeable
     False
 
     Copy-on-write memmap:
 
-    >>> fpc = np.memmap(filename, dtype='float32', mode='c', shape=(3,4))
+    >>> fpc = np.memmap(filename, dtype=np.float32, mode='c', shape=(3,4))
     >>> fpc.flags.writeable
     True
 
@@ -205,7 +205,7 @@ class memmap(ndarray):
 
     Offset into a memmap:
 
-    >>> fpo = np.memmap(filename, dtype='float32', mode='r', offset=16)
+    >>> fpo = np.memmap(filename, dtype=np.float32, mode='r', offset=16)
     >>> fpo
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)
 

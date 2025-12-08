@@ -224,7 +224,7 @@ to fixed-width unicode arrays::
 
   In [3]: data = [str(i) * 10 for i in range(100_000)]
 
-  In [4]: %timeit arr_object = np.array(data, dtype=object)
+  In [4]: %timeit arr_object = np.array(data, dtype=np.object_)
   3.15 ms ± 74.4 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
 
   In [5]: %timeit arr_stringdtype = np.array(data, dtype=StringDType())
@@ -242,7 +242,7 @@ for strings, the string loading performance of ``StringDType`` should improve.
 
 String operations have similar performance::
 
-  In [7]: %timeit np.array([s.capitalize() for s in data], dtype=object)
+  In [7]: %timeit np.array([s.capitalize() for s in data], dtype=np.object_)
   31.6 ms ± 728 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
   In [8]: %timeit np.char.capitalize(arr_stringdtype)

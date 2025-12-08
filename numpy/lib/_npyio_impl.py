@@ -1343,7 +1343,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     single escaped character:
 
     >>> s = StringIO('"Hello, my name is ""Monty""!"')
-    >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
+    >>> np.loadtxt(s, dtype=np.str_, delimiter=",", quotechar='"')
     array('Hello, my name is "Monty"!', dtype='<U26')
 
     Read subset of columns when all rows do not contain equal number of values:
