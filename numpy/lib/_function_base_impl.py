@@ -3857,13 +3857,21 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
         else:
-            keep = set(range(nd)) - set(axis)
+            keep = sorted(set(range(nd)) - set(axis))
             nkeep = len(keep)
-            # swap axis that should not be reduced to front
-            for i, s in enumerate(sorted(keep)):
-                a = a.swapaxes(i, s)
-            # merge reduced axis
-            a = a.reshape(a.shape[:nkeep] + (-1,))
+
+            def reshape_arr(a):
+                # move axis that should not be reduced to front
+                a = np.moveaxis(a, keep, range(nkeep))
+                # merge reduced axis
+                return a.reshape(a.shape[:nkeep] + (-1,))
+
+            a = reshape_arr(a)
+
+            weights = kwargs.get("weights")
+            if weights is not None:
+                kwargs["weights"] = reshape_arr(weights)
+
             kwargs['axis'] = -1
     elif keepdims and out is not None:
         index_out = (0, ) * nd

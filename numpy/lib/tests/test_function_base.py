@@ -4228,6 +4228,17 @@ class TestQuantile:
                 )
         assert_allclose(q, q_res)
 
+        # axis is a tuple of all axes
+        q = np.quantile(y, alpha, weights=w, method=method, axis=(0, 1, 2))
+        q_res = np.quantile(y, alpha, weights=w, method=method, axis=None)
+        assert_allclose(q, q_res)
+
+        q = np.quantile(y, alpha, weights=w, method=method, axis=(1, 2))
+        q_res = np.zeros(shape=(2,))
+        for i in range(2):
+            q_res[i] = np.quantile(y[i], alpha, weights=w[i], method=method)
+        assert_allclose(q, q_res)
+
     @pytest.mark.parametrize("method", methods_supporting_weights)
     def test_quantile_weights_min_max(self, method):
         # Test weighted quantile at 0 and 1 with leading and trailing zero
