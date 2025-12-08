@@ -145,12 +145,6 @@ class TestBincount(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.bincount(badlist))
 
 
-class TestGeneratorSum(_DeprecationTestCase):
-    # 2018-02-25, 1.15.0
-    def test_generator_sum(self):
-        self.assert_deprecated(np.sum, args=((i for i in range(5)),))
-
-
 class BuiltInRoundComplexDType(_DeprecationTestCase):
     # 2020-03-31 1.19.0
     deprecated_types = [np.csingle, np.cdouble, np.clongdouble]

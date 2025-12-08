@@ -982,13 +982,9 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         npy_bool legacy_promotion_is_possible)
 {
     std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock_shared();
-    NPY_END_ALLOW_THREADS
-    PyObject *info = PyArrayIdentityHash_GetItem(
+    PyObject *info = PyArrayIdentityHash_GetItemWithLock(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
-    mutex->unlock_shared();
 
     if (info != NULL && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
@@ -1097,6 +1093,13 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
+    /*
+     * We hold the GIL here, so on the GIL-enabled build the GIL prevents
+     * races to fill the promotion cache.
+     *
+     * On the free-threaded build we need to set up our own locking to prevent
+     * races to fill the promotion cache.
+     */
 #ifdef Py_GIL_DISABLED
     PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);

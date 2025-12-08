@@ -6,6 +6,7 @@
 __author__ = "Pierre GF Gerard-Marchant"
 
 import copy
+import inspect
 import itertools
 import operator
 import pickle
@@ -5963,3 +5964,45 @@ def test_uint_fill_value_and_filled():
     # And this ensures things like filled work:
     np.testing.assert_array_equal(
         a.filled(), np.array([999999, 1]).astype("uint16"), strict=True)
+
+
+@pytest.mark.parametrize(
+    ('fn', 'signature'),
+    [
+        (np.ma.nonzero, "(a)"),
+        (np.ma.anomalies, "(a, axis=None, dtype=None)"),
+        (np.ma.cumsum, "(a, axis=None, dtype=None, out=None)"),
+        (np.ma.compress, "(condition, a, axis=None, out=None)"),
+    ]
+)
+def test_frommethod_signature(fn, signature):
+    assert str(inspect.signature(fn)) == signature
+
+
+@pytest.mark.parametrize(
+    ('fn', 'signature'),
+    [
+        (
+            np.ma.empty,
+            (
+                "(shape, dtype=None, order='C', *, device=None, like=None, "
+                "fill_value=None, hardmask=False)"
+            ),
+        ),
+        (
+            np.ma.empty_like,
+            (
+                "(prototype, /, dtype=None, order='K', subok=True, shape=None, *, "
+                "device=None)"
+            ),
+        ),
+        (np.ma.squeeze, "(a, axis=None, *, fill_value=None, hardmask=False)"),
+        (
+            np.ma.identity,
+            "(n, dtype=None, *, like=None, fill_value=None, hardmask=False)",
+        ),
+    ]
+)
+def test_convert2ma_signature(fn, signature):
+    assert str(inspect.signature(fn)) == signature
+    assert fn.__module__ == 'numpy.ma.core'

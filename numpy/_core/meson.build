@@ -51,6 +51,7 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
+# 0x00000015 - 2.5.x
 C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the
@@ -927,7 +928,7 @@ foreach gen_mtargets : [
     'loops_arithm_fp.dispatch.h',
     src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
     [
-      X86_V3, X86_V2, 
+      X86_V3, X86_V2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
@@ -960,7 +961,7 @@ foreach gen_mtargets : [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
     [
-      X86_V4, X86_V3, 
+      X86_V4, X86_V3,
     ]
   ],
   [
@@ -1109,6 +1110,7 @@ endforeach
 # ------------------------------
 src_multiarray_umath_common = [
   'src/common/array_assign.c',
+  'src/common/blas_utils.c',
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
@@ -1123,7 +1125,6 @@ src_multiarray_umath_common = [
 ]
 if have_blas
   src_multiarray_umath_common += [
-    'src/common/blas_utils.c',
     'src/common/cblasfuncs.c',
     'src/common/python_xerbla.c',
   ]
@@ -1161,7 +1162,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/dragon4.c',
   'src/multiarray/dtype_transfer.c',
   'src/multiarray/dtype_traversal.c',
-  src_file.process('src/multiarray/einsum.c.src'),
+  'src/multiarray/einsum.cpp',
   src_file.process('src/multiarray/einsum_sumprod.c.src'),
   'src/multiarray/public_dtype_api.c',
   'src/multiarray/flagsobject.c',
@@ -1282,6 +1283,7 @@ unique_hash_so = static_library(
   include_directories: [
     'include',
     'src/common',
+    'src/npymath',
   ],
   dependencies: [
     py_dep,
@@ -1402,6 +1404,7 @@ python_sources = [
   '_type_aliases.pyi',
   '_ufunc_config.py',
   '_ufunc_config.pyi',
+  '_umath_tests.pyi',
   'arrayprint.py',
   'arrayprint.pyi',
   'cversions.py',

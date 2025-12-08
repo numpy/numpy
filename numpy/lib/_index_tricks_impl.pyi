@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsLenAndGetItem
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -14,15 +14,19 @@ from typing import (
 from typing_extensions import TypeVar
 
 import numpy as np
+from numpy import _CastingKind
 from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._typing import (
     ArrayLike,
+    DTypeLike,
     NDArray,
     _AnyShape,
+    _ArrayLike,
+    _DTypeLike,
     _FiniteNestedSequence,
+    _HasDType,
     _NestedSequence,
     _SupportsArray,
-    _SupportsDType,
 )
 
 __all__ = [  # noqa: RUF022
@@ -44,14 +48,8 @@ __all__ = [  # noqa: RUF022
 
 ###
 
-_T = TypeVar("_T")
-_TupleT = TypeVar("_TupleT", bound=tuple[Any, ...])
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, default=Any, covariant=True)
 _BoolT_co = TypeVar("_BoolT_co", bound=bool, default=bool, covariant=True)
-
 _AxisT_co = TypeVar("_AxisT_co", bound=int, default=L[0], covariant=True)
 _MatrixT_co = TypeVar("_MatrixT_co", bound=bool, default=L[False], covariant=True)
 _NDMinT_co = TypeVar("_NDMinT_co", bound=int, default=L[1], covariant=True)
@@ -59,9 +57,12 @@ _Trans1DT_co = TypeVar("_Trans1DT_co", bound=int, default=L[-1], covariant=True)
 
 ###
 
-class ndenumerate(Generic[_ScalarT_co]):
+class ndenumerate(Generic[_ScalarT_co]):  # noqa: UP046
     @overload
-    def __init__(self: ndenumerate[_ScalarT], arr: _FiniteNestedSequence[_SupportsArray[np.dtype[_ScalarT]]]) -> None: ...
+    def __init__[ScalarT: np.generic](
+        self: ndenumerate[ScalarT],
+        arr: _FiniteNestedSequence[_SupportsArray[np.dtype[ScalarT]]],
+    ) -> None: ...
     @overload
     def __init__(self: ndenumerate[np.str_], arr: str | _NestedSequence[str]) -> None: ...
     @overload
@@ -149,13 +150,62 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
     def __getitem__(self, key: Incomplete, /) -> Incomplete: ...
     def __len__(self, /) -> L[0]: ...
 
-    #
+    # Keep in sync with _core.multiarray.concatenate
     @staticmethod
     @overload
-    def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: _ArrayT) -> _ArrayT: ...
+    def concatenate[ScalarT: np.generic](
+        arrays: _ArrayLike[ScalarT],
+        /,
+        axis: SupportsIndex | None = 0,
+        out: None = None,
+        *,
+        dtype: None = None,
+        casting: _CastingKind | None = "same_kind",
+    ) -> NDArray[ScalarT]: ...
     @staticmethod
     @overload
-    def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: None = None) -> NDArray[Incomplete]: ...
+    def concatenate[ScalarT: np.generic](
+        arrays: SupportsLenAndGetItem[ArrayLike],
+        /,
+        axis: SupportsIndex | None = 0,
+        out: None = None,
+        *,
+        dtype: _DTypeLike[ScalarT],
+        casting: _CastingKind | None = "same_kind",
+    ) -> NDArray[ScalarT]: ...
+    @staticmethod
+    @overload
+    def concatenate(
+        arrays: SupportsLenAndGetItem[ArrayLike],
+        /,
+        axis: SupportsIndex | None = 0,
+        out: None = None,
+        *,
+        dtype: DTypeLike | None = None,
+        casting: _CastingKind | None = "same_kind",
+    ) -> NDArray[Incomplete]: ...
+    @staticmethod
+    @overload
+    def concatenate[OutT: np.ndarray](
+        arrays: SupportsLenAndGetItem[ArrayLike],
+        /,
+        axis: SupportsIndex | None = 0,
+        *,
+        out: OutT,
+        dtype: DTypeLike | None = None,
+        casting: _CastingKind | None = "same_kind",
+    ) -> OutT: ...
+    @staticmethod
+    @overload
+    def concatenate[OutT: np.ndarray](
+        arrays: SupportsLenAndGetItem[ArrayLike],
+        /,
+        axis: SupportsIndex | None,
+        out: OutT,
+        *,
+        dtype: DTypeLike | None = None,
+        casting: _CastingKind | None = "same_kind",
+    ) -> OutT: ...
 
 @final
 class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
@@ -175,14 +225,14 @@ class IndexExpression(Generic[_BoolT_co]):
     maketuple: _BoolT_co
     def __init__(self, maketuple: _BoolT_co) -> None: ...
     @overload
-    def __getitem__(self, item: _TupleT) -> _TupleT: ...
+    def __getitem__[TupleT: tuple[Any, ...]](self, item: TupleT) -> TupleT: ...
     @overload
-    def __getitem__(self: IndexExpression[L[True]], item: _T) -> tuple[_T]: ...
+    def __getitem__[T](self: IndexExpression[L[True]], item: T) -> tuple[T]: ...
     @overload
-    def __getitem__(self: IndexExpression[L[False]], item: _T) -> _T: ...
+    def __getitem__[T](self: IndexExpression[L[False]], item: T) -> T: ...
 
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DTypeT]]) -> tuple[np.ndarray[_AnyShape, _DTypeT], ...]: ...
+def ix_[DTypeT: np.dtype](*args: _FiniteNestedSequence[_HasDType[DTypeT]]) -> tuple[np.ndarray[_AnyShape, DTypeT], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[np.str_], ...]: ...
 @overload

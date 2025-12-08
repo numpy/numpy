@@ -784,7 +784,7 @@ cannot not be accessed directly.
     Allows setting of the itemsize, this is *only* relevant for string/bytes
     datatypes as it is the current pattern to define one with a new size.
 
-.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+.. c:function:: npy_intp PyDataType_ALIGNMENT(PyArray_Descr *descr)
 
     The alignment of the datatype.
 
@@ -2248,19 +2248,18 @@ Shape Manipulation
         PyArrayObject* self, PyArray_Dims* newshape, int refcheck, \
         NPY_ORDER fortran)
 
-    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, refcheck
-    ``=`` *refcheck*, order= fortran ). This function only works on
-    single-segment arrays. It changes the shape of *self* inplace and
-    will reallocate the memory for *self* if *newshape* has a
-    different total number of elements then the old shape. If
-    reallocation is necessary, then *self* must own its data, have
-    *self* - ``>base==NULL``, have *self* - ``>weakrefs==NULL``, and
-    (unless refcheck is 0) not be referenced by any other array.
-    The fortran argument can be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`,
-    or :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
-    it could be used to determine how the resize operation should view
-    the data when constructing a differently-dimensioned array.
-    Returns None on success and NULL on error.
+    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, *refcheck*).
+    This function only works on single-segment arrays. It changes the shape of
+    *self* inplace and will reallocate the memory for *self* if *newshape* has
+    a different total number of elements then the old shape. If reallocation is
+    necessary, then *self* must own its data, have *self* - ``>base==NULL``,
+    have *self* - ``>weakrefs==NULL``, and (unless refcheck is 0) not be
+    referenced by any other array.  The fortran argument can be
+    :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`, or
+    :c:data:`NPY_FORTRANORDER`.  It currently has no effect. Eventually it
+    could be used to determine how the resize operation should view the data
+    when constructing a differently-dimensioned array.  Returns None on success
+    and NULL on error.
 
 .. c:function:: PyObject* PyArray_Transpose( \
         PyArrayObject* self, PyArray_Dims* permute)

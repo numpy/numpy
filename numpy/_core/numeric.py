@@ -893,12 +893,12 @@ def convolve(a, v, mode='full'):
 
     """
     a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
-    if (len(v) > len(a)):
-        a, v = v, a
     if len(a) == 0:
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
+    if len(v) > len(a):
+        a, v = v, a
     return multiarray.correlate(a, v[::-1], mode)
 
 

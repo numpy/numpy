@@ -6,8 +6,6 @@ from typing import (
     Never,
     SupportsIndex,
     SupportsInt,
-    TypeAlias,
-    TypeVar,
     overload,
 )
 
@@ -79,10 +77,7 @@ __all__ = [
     "vecdot",
 ]
 
-_NumberT = TypeVar("_NumberT", bound=np.number)
-_NumericScalarT = TypeVar("_NumericScalarT", bound=np.number | np.timedelta64 | np.object_)
-
-_ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
+type _ModeKind = L["reduced", "complete", "r", "raw"]
 
 ###
 
@@ -102,7 +97,7 @@ class QRResult(NamedTuple):
 
 class SlogdetResult(NamedTuple):
     # TODO: `sign` and `logabsdet` are scalars for input 2D arrays and
-    # a `(x.ndim - 2)`` dimensionl arrays otherwise
+    # a `(x.ndim - 2)`` dimensional arrays otherwise
     sign: Any
     logabsdet: Any
 
@@ -188,7 +183,7 @@ def outer(x1: _ArrayLike[Never], x2: _ArrayLike[Never], /) -> NDArray[Any]: ...
 @overload
 def outer(x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...
 @overload
-def outer(x1: _ArrayLike[_NumberT], x2: _ArrayLike[_NumberT], /) -> NDArray[_NumberT]: ...
+def outer[ScalarT: np.number](x1: _ArrayLike[ScalarT], x2: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
 @overload
 def outer(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
 @overload
@@ -302,9 +297,9 @@ def svd(
     hermitian: bool = False,
 ) -> NDArray[floating]: ...
 
-# the ignored `overload-overlap` mypy error below is a false-positive
+#
 @overload
-def svdvals(  # type: ignore[overload-overlap]
+def svdvals(
     x: _ArrayLike[np.float64 | np.complex128 | np.integer | np.bool] | _NestedSequence[complex], /
 ) -> NDArray[np.float64]: ...
 @overload
@@ -313,7 +308,7 @@ def svdvals(x: _ArrayLike[np.float32 | np.complex64], /) -> NDArray[np.float32]:
 def svdvals(x: _ArrayLikeNumber_co, /) -> NDArray[floating]: ...
 
 # TODO: Returns a scalar for 2D arrays and
-# a `(x.ndim - 2)`` dimensionl array otherwise
+# a `(x.ndim - 2)`` dimensional array otherwise
 def cond(x: _ArrayLikeComplex_co, p: float | L["fro", "nuc"] | None = None) -> Any: ...
 
 # TODO: Returns `int` for <2D arrays and `intp` otherwise
@@ -351,11 +346,11 @@ def pinv(
 ) -> NDArray[complexfloating]: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
-# a 2-tuple of `(a.ndim - 2)`` dimensionl arrays otherwise
+# a 2-tuple of `(a.ndim - 2)`` dimensional arrays otherwise
 def slogdet(a: _ArrayLikeComplex_co) -> SlogdetResult: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
-# a 2-tuple of `(a.ndim - 2)`` dimensionl arrays otherwise
+# a 2-tuple of `(a.ndim - 2)`` dimensional arrays otherwise
 def det(a: _ArrayLikeComplex_co) -> Any: ...
 
 @overload
@@ -441,13 +436,13 @@ def vector_norm(
 
 # keep in sync with numpy._core.numeric.tensordot (ignoring `/, *`)
 @overload
-def tensordot(
-    a: _ArrayLike[_NumericScalarT],
-    b: _ArrayLike[_NumericScalarT],
+def tensordot[ScalarT: np.number | np.timedelta64 | np.object_](
+    a: _ArrayLike[ScalarT],
+    b: _ArrayLike[ScalarT],
     /,
     *,
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[_NumericScalarT]: ...
+) -> NDArray[ScalarT]: ...
 @overload
 def tensordot(
     a: _ArrayLikeBool_co,
@@ -537,7 +532,7 @@ def cross(
 ) -> NDArray[complexfloating]: ...
 
 @overload
-def matmul(x1: _ArrayLike[_NumberT], x2: _ArrayLike[_NumberT], /) -> NDArray[_NumberT]: ...
+def matmul[ScalarT: np.number](x1: _ArrayLike[ScalarT], x2: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
 @overload
 def matmul(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
 @overload

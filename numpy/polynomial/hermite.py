@@ -76,8 +76,6 @@ See also
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -655,7 +653,7 @@ def hermder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -772,7 +770,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -798,7 +796,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
 def hermval(x, c, tensor=True):
     """
-    Evaluate an Hermite series at points x.
+    Evaluate a Hermite series at points x.
 
     If `c` is of length ``n + 1``, this function returns the value:
 
@@ -1441,7 +1439,7 @@ def hermcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Hermite basis polynomial. This provides
+    symmetric when `c` is a Hermite basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1543,7 +1541,7 @@ def hermroots(c):
 
     # rotated companion matrix reduces error
     m = hermcompanion(c)[::-1, ::-1]
-    r = la.eigvals(m)
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1636,7 +1634,7 @@ def hermgauss(deg):
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0] * deg + [1], dtype=np.float64)
     m = hermcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = _normed_hermite_n(x, ideg)
@@ -1695,7 +1693,7 @@ def hermweight(x):
 #
 
 class Hermite(ABCPolyBase):
-    """An Hermite series class.
+    """A Hermite series class.
 
     The Hermite class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the

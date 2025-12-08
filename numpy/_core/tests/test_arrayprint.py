@@ -277,11 +277,12 @@ class TestArray2String:
             # for issue #5692
             A = np.zeros(shape=10, dtype=[("A", "M8[s]")])
             A[5:].fill(np.datetime64('NaT'))
+            date_string = '1970-01-01T00:00:00'
             assert_equal(
                 np.array2string(A),
-                textwrap.dedent("""\
-                [('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',)
-                 ('1970-01-01T00:00:00',) ('1970-01-01T00:00:00',) ('NaT',) ('NaT',)
+                textwrap.dedent(f"""\
+                [('{date_string}',) ('{date_string}',) ('{date_string}',)
+                 ('{date_string}',) ('{date_string}',) ('NaT',) ('NaT',)
                  ('NaT',) ('NaT',) ('NaT',)]""")
             )
         finally:
@@ -735,12 +736,7 @@ class TestPrintOptions:
         # str is unaffected
         assert_equal(str(x), "1")
 
-        # check `style` arg raises
-        pytest.warns(DeprecationWarning, np.array2string,
-                                         np.array(1.), style=repr)
-        # but not in legacy mode
-        np.array2string(np.array(1.), style=repr, legacy='1.13')
-        # gh-10934 style was broken in legacy mode, check it works
+        # check it works
         np.array2string(np.array(1.), legacy='1.13')
 
     def test_float_spacing(self):
@@ -1272,8 +1268,6 @@ def test_scalar_void_float_str():
     assert str(scalar) == "(1.0, 2.0)"
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
-@pytest.mark.skipif(sys.version_info < (3, 11),
-                    reason="asyncio.barrier was added in Python 3.11")
 def test_printoptions_asyncio_safe():
     asyncio = pytest.importorskip("asyncio")
 

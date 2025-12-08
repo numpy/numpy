@@ -18,6 +18,11 @@ Its functionality can be split into three distinct parts:
   .. versionadded:: 1.22
 
 .. deprecated:: 2.3
+    The :mod:`numpy.typing.mypy_plugin` entry-point is deprecated in favor of
+    platform-agnostic static type inference. Remove
+    ``numpy.typing.mypy_plugin`` from the ``plugins`` section of your mypy
+    configuration; if that surfaces new errors, please open an issue with a
+    minimal reproducer.
 
 Examples
 --------
@@ -34,7 +39,7 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 """
 
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Final, TypeAlias, cast
+from typing import TYPE_CHECKING, Final, cast
 
 import numpy as np
 
@@ -110,7 +115,7 @@ except ModuleNotFoundError as e:
 
 else:
 
-    _HookFunc: TypeAlias = Callable[[AnalyzeTypeContext], mypy.types.Type]
+    type _HookFunc = Callable[[AnalyzeTypeContext], mypy.types.Type]
 
     def _hook(ctx: AnalyzeTypeContext) -> mypy.types.Type:
         """Replace a type-alias with a concrete ``NBitBase`` subclass."""

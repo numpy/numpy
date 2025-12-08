@@ -3277,6 +3277,16 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
 
+quantile_methods = [
+    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
+    'midpoint']
+
+
+methods_supporting_weights = ["inverted_cdf"]
+
+
 class TestPercentile:
 
     def test_basic(self):
@@ -3870,15 +3880,38 @@ class TestPercentile:
         res = np.percentile(a, 30, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
 
+    @pytest.mark.parametrize("qtype", [np.float16, np.float32])
+    @pytest.mark.parametrize("method", quantile_methods)
+    def test_percentile_gh_29003(self, qtype, method):
+        # test that with float16 or float32 input we do not get overflow
+        zero = qtype(0)
+        one = qtype(1)
+        a = np.zeros(65521, qtype)
+        a[:20_000] = one
+        z = np.percentile(a, 50, method=method)
+        assert z == zero
+        assert z.dtype == a.dtype
+        z = np.percentile(a, 99, method=method)
+        assert z == one
+        assert z.dtype == a.dtype
 
-quantile_methods = [
-    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
-    'midpoint']
+    def test_percentile_gh_29003_Fraction(self):
+        zero = Fraction(0)
+        one = Fraction(1)
+        a = np.array([zero] * 65521)
+        a[:20_000] = one
+        z = np.percentile(a, 50)
+        assert z == zero
+        z = np.percentile(a, Fraction(50))
+        assert z == zero
+        assert np.array(z).dtype == a.dtype
 
-
-methods_supporting_weights = ["inverted_cdf"]
+        z = np.percentile(a, 99)
+        assert z == one
+        # test that with only Fraction input the return type is a Fraction
+        z = np.percentile(a, Fraction(99))
+        assert z == one
+        assert np.array(z).dtype == a.dtype
 
 
 class TestQuantile:
@@ -3925,7 +3958,7 @@ class TestQuantile:
 
         q = np.quantile(x, .5)
         assert_equal(q, 1.75)
-        assert_equal(type(q), np.float64)
+        assert isinstance(q, float)
 
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))
@@ -4254,6 +4287,53 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:8], q, method=m))
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
+
+    @pytest.mark.parametrize("weights",
+            [[1, np.inf, 1, 1], [1, np.inf, 1, np.inf], [0, 0, 0, 0],
+             [np.finfo("float64").max] * 4])
+    @pytest.mark.parametrize("dty", ["f8", "O"])
+    def test_inf_zeroes_err(self, weights, dty):
+        m = "inverted_cdf"
+        q = 0.5
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(ValueError,
+                match=r"Weights included NaN, inf or were all zero"):
+            # We (currently) don't bother to check ahead so 0/0 or
+            # overflow to `inf` while summing weights, or `inf / inf`
+            # will all warn before the error is raised.
+            with np.errstate(all="ignore"):
+                a = np.quantile(arr, q, weights=wgts, method=m, axis=1)
+
+    @pytest.mark.parametrize("weights",
+            [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
+    @pytest.mark.parametrize(["err", "dty"],
+            [(ValueError, "f8"), ((RuntimeWarning, ValueError), "O")])
+    def test_nan_err(self, err, dty, weights):
+        m = "inverted_cdf"
+        q = 0.5
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(err):
+            a = np.quantile(arr, q, weights=wgts, method=m)
+
+    def test_quantile_gh_29003_Fraction(self):
+        r = np.quantile([1, 2], q=Fraction(1))
+        assert r == Fraction(2)
+        assert isinstance(r, Fraction)
+
+        r = np.quantile([1, 2], q=Fraction(.5))
+        assert r == Fraction(3, 2)
+        assert isinstance(r, Fraction)
+
+    def test_float16_gh_29003(self):
+        a = np.arange(50_001, dtype=np.float16)
+        q = .999
+        value = np.quantile(a, q)
+        assert value == q * 50_000
+        assert value.dtype == np.float16
 
 
 class TestLerp:

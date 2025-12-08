@@ -37,14 +37,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Install linter requirements
       run:
         python -m pip install -r requirements/linter_requirements.txt
@@ -53,6 +53,10 @@ jobs:
         BASE_REF: ${{ github.base_ref }}
       run:
         python tools/linter.py
+    - name: Check Python.h is first file included
+      run: |
+        python tools/check_python_h_first.py
+
 
   smoke_test:
     # To enable this job on a fork, comment out:
@@ -62,35 +66,16 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.11", "3.12", "3.13", "3.14", "3.14t"]
+        version: ["3.12", "3.13", "3.14", "3.14t"]
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: ${{ matrix.version }}
-    - uses: ./.github/meson_actions
-
-  pypy:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      with:
-        submodules: recursive
-        fetch-tags: true
-        persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-      with:
-        python-version: 'pypy3.11-v7.3.20'
-    - name: Setup using scipy-openblas
-      run: |
-        python -m pip install -r requirements/ci_requirements.txt
-        spin config-openblas --with-scipy-openblas=32
     - uses: ./.github/meson_actions
 
   debug:
@@ -98,7 +83,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -128,14 +113,14 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
         pip install -r requirements/build_requirements.txt
@@ -166,9 +151,9 @@ jobs:
     # running on aarch64 (ARM 64-bit) GitHub runners.
     needs: [smoke_test]
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -177,11 +162,9 @@ jobs:
     - name: Creates new container
       run: |
         docker run --name the_container --interactive \
-          -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/linux32 /bin/bash -c "
+          -v $(pwd):/numpy arm32v7/ubuntu:24.04 /bin/linux32 /bin/bash -c "
           apt update &&
-          apt install -y ninja-build cmake git python3 python-is-python3 python3-dev python3-pip python3-venv &&
-          python -m pip install -r /numpy/requirements/build_requirements.txt &&
-          python -m pip install -r /numpy/requirements/test_requirements.txt
+          apt install -y ninja-build cmake git python3 python-is-python3 python3-dev python3-pip python3-venv
         "
         docker commit the_container the_container
 
@@ -190,7 +173,12 @@ jobs:
         docker run --rm -e "TERM=xterm-256color" \
           -v $(pwd):/numpy the_container \
           /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy && spin build
+            cd /numpy &&
+            python -m venv venv &&
+            source venv/bin/activate &&
+            python -m pip install -r /numpy/requirements/build_requirements.txt &&
+            python -m pip install -r /numpy/requirements/test_requirements.txt &&
+            spin build
           '"
 
     - name: Meson Log
@@ -202,7 +190,7 @@ jobs:
         docker run --rm -e "TERM=xterm-256color" \
           -v $(pwd):/numpy the_container \
           /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy && spin test -m full -- --timeout=600 --durations=10
+            cd /numpy && source venv/bin/activate && spin test -m full -- --timeout=600 --durations=10
           '"
 
   benchmark:
@@ -210,14 +198,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Install build and benchmarking dependencies
       run: |
         sudo apt-get update
@@ -249,14 +237,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Install gfortran and setup OpenBLAS (sdist build)
       run: |
         set -xe
@@ -277,6 +265,11 @@ jobs:
       run: |
         cd tools
         pytest --pyargs numpy -m "not slow"
+    - name: Test SWIG binding
+      run: |
+        sudo apt update
+        sudo apt install make swig
+        make -C tools/swig/test test
 
   array_api_tests:
     needs: [smoke_test]
@@ -284,13 +277,13 @@ jobs:
     if: github.event_name != 'push'
     steps:
     - name: Checkout NumPy
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Checkout array-api-tests
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         repository: data-apis/array-api-tests
         ref: '3c273cd34d51c64ed893737306d36adab23a94a1'  # v2025.05.23
@@ -298,9 +291,9 @@ jobs:
         path: 'array-api-tests'
         persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Install build and test dependencies from PyPI
       run: |
         python -m pip install -r requirements/build_requirements.txt
@@ -322,14 +315,22 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        repository: numpy/numpy-release
+        path: numpy-release
+        persist-credentials: false
+    - name: Check scipy-openblas version in release pipelines
+      run: |
+        python tools/check_openblas_version.py --req-files numpy-release/requirements/openblas_requirements.txt
     - name: Install build and test dependencies from PyPI
       run: |
         pip install -r requirements/build_requirements.txt
@@ -348,9 +349,53 @@ jobs:
     - name: Check for unreachable code paths in Python modules
       run: |
         # Need the explicit `bash -c` here because `grep` returns exit code 1 for no matches
-        bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/,vendored-meson/ | grep 'unreachable'"
+        bash -c "! vulture . --min-confidence 100 --exclude doc/,vendored-meson/ | grep 'unreachable'"
     - name: Check usage of install_tag
       run: |
         rm -rf build-install
         ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
+
+
+  Linux_Python_312_32bit_full:
+    name: i686, cp312, full
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    container:
+       # There are few options for i686 images at https://quay.io/organization/pypa,
+       # use the glibc2.28 one
+      image: quay.io/pypa/manylinux_2_28_i686
+
+    steps:
+    - name: Checkout and initialize submodules
+      # actions/checkout doesn't work in a container image
+      run: |
+        git config --global --add safe.directory $PWD
+        if [ $GITHUB_EVENT_NAME != pull_request ]; then
+            git clone --recursive --branch=$GITHUB_REF_NAME https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git reset --hard $GITHUB_SHA
+        else
+            git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git fetch origin $GITHUB_REF:my_ref_name
+            git checkout $GITHUB_BASE_REF
+            git -c user.email="you@example.com" merge --no-commit my_ref_name
+        fi
+        git submodule update --init --recursive
+
+    - name: build
+      run: |
+        python3.12 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements/ci32_requirements.txt
+        pip install -r requirements/test_requirements.txt
+
+        spin config-openblas --with-scipy-openblas=32
+        export PKG_CONFIG_PATH=$(pwd)/.openblas
+        python -m pip install . -v -Csetup-args="-Dallow-noblas=false"
+
+    - name: test
+      run: |
+        source venv/bin/activate
+        cd tools
+        python -m pytest --pyargs numpy

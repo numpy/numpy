@@ -4,6 +4,7 @@ import ctypes
 import functools
 import gc
 import importlib
+import inspect
 import io
 import itertools
 import mmap
@@ -589,6 +590,32 @@ class TestArrayConstruction:
             func(object=3)
         else:
             func(a=3)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.parametrize("func",
+            [np.array,
+             np.asarray,
+             np.asanyarray,
+             np.ascontiguousarray,
+             np.asfortranarray])
+    def test_array_signature(self, func):
+        sig = inspect.signature(func)
+
+        assert len(sig.parameters) >= 3
+
+        arg0 = "object" if func is np.array else "a"
+        assert arg0 in sig.parameters
+        assert sig.parameters[arg0].default is inspect.Parameter.empty
+        assert sig.parameters[arg0].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+        assert "dtype" in sig.parameters
+        assert sig.parameters["dtype"].default is None
+        assert sig.parameters["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+        assert "like" in sig.parameters
+        assert sig.parameters["like"].default is None
+        assert sig.parameters["like"].kind is inspect.Parameter.KEYWORD_ONLY
 
 
 class TestAssignment:
@@ -3808,6 +3835,18 @@ class TestMethods:
         assert_(isinstance(a.ravel('A'), ArraySubclass))
         assert_(isinstance(a.ravel('K'), ArraySubclass))
 
+    @pytest.mark.parametrize("shape", [(3, 224, 224), (8, 512, 512)])
+    def test_tobytes_no_copy_fastpath(self, shape):
+        # Test correctness of non-contiguous paths for `tobytes`
+        rng = np.random.default_rng(0)
+        arr = rng.standard_normal(shape, dtype=np.float32)
+        noncontig = arr.transpose(1, 2, 0)
+
+        # correctness
+        expected = np.ascontiguousarray(noncontig).tobytes()
+        got = noncontig.tobytes()
+        assert got == expected
+
     def test_swapaxes(self):
         a = np.arange(1 * 2 * 3 * 4).reshape(1, 2, 3, 4).copy()
         idx = np.indices(a.shape)
@@ -4613,6 +4652,7 @@ class TestPickling:
             assert_equal(len(buffers), 0)
             assert_equal(non_contiguous_array, depickled_non_contiguous_array)
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_roundtrip(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             carray = np.array([[2, 9], [7, 0], [3, 8]])
@@ -6247,6 +6287,13 @@ class TestResize:
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
 
+    def test_check_reference_2(self):
+        # see gh-30265
+        x = np.zeros((2, 2))
+        y = x
+        with pytest.raises(ValueError):
+            x.resize((5, 5))
+
     @_no_tracing
     def test_int_shape(self):
         x = np.eye(3)
@@ -6311,6 +6358,20 @@ class TestResize:
         assert_equal(a.shape, (15,))
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    @pytest.mark.parametrize("dtype", ["O", "O,O"])
+    def test_obj_obj_shrinking(self, dtype):
+        # check that memory is freed when shrinking an array.
+        test_obj = object()
+        expected = sys.getrefcount(test_obj)
+        a = np.array([test_obj, test_obj, test_obj], dtype=dtype)
+        assert a.size == 3
+        a.resize((2, 1))  # two elements, not three!
+        assert a.size == 2
+        del a
+        # if all is well, then we reclaimed all references
+        assert sys.getrefcount(test_obj) == expected
 
     def test_empty_view(self):
         # check that sizes containing a zero don't trigger a reallocate for
@@ -9792,6 +9853,7 @@ class TestCTypes:
         x.flags.writeable = False
         return x
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     @pytest.mark.parametrize('arr', [
         np.array([1, 2, 3]),
         np.array([['one', 'two'], ['three', 'four']]),
@@ -9840,6 +9902,7 @@ class TestCTypes:
             break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_ctypes_as_parameter_holds_reference(self):
         arr = np.array([None]).copy()
 
@@ -10163,6 +10226,7 @@ class TestArrayFinalize:
         with pytest.raises(RuntimeError, match="boohoo!"):
             np.arange(10).view(BadAttributeArray)
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_lifetime_on_error(self):
         # gh-11237
         class RaisesInFinalize(np.ndarray):
@@ -10504,7 +10568,6 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', -1)
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
-
 
 class TestViewDtype:
     """
@@ -10858,3 +10921,89 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
     a = np.array([1], dtype=dtype)
     b = a.__array__(None)
     assert_array_equal(a, b, strict=True)
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestTextSignatures:
+    @pytest.mark.parametrize(
+        "methodname",
+        [
+            "__array__", "__array_finalize__", "__array_function__", "__array_ufunc__",
+            "__array_wrap__", "__complex__", "__copy__", "__deepcopy__",
+            "__reduce__", "__reduce_ex__", "__setstate__",
+            "all", "any", "argmax", "argmin", "argsort", "argpartition", "astype",
+            "byteswap", "choose", "clip", "compress", "conj", "conjugate", "copy",
+            "cumprod", "cumsum", "diagonal", "dot", "dump", "dumps", "fill", "flatten",
+            "getfield", "item", "max", "mean", "min", "nonzero", "prod", "put", "ravel",
+            "repeat", "reshape", "resize", "round", "searchsorted", "setfield",
+            "setflags", "sort", "partition", "squeeze", "std", "sum", "swapaxes",
+            "take", "tofile", "tolist", "tobytes", "trace", "transpose", "var", "view",
+            "__array_namespace__", "__dlpack__", "__dlpack_device__", "to_device",
+    ],
+    )
+    def test_array_method_signatures(self, methodname: str):
+        method = getattr(np.ndarray, methodname)
+        assert callable(method)
+
+        try:
+            sig = inspect.signature(method)
+        except ValueError as e:
+            pytest.fail(f"Could not get signature for np.ndarray.{methodname}: {e}")
+
+        assert "self" in sig.parameters
+        assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+
+    @pytest.mark.parametrize("func", [np.empty_like, np.concatenate])
+    def test_c_func_dispatcher_text_signature(self, func):
+        text_sig = func.__wrapped__.__text_signature__
+        assert text_sig.startswith("(") and text_sig.endswith(")")
+
+        sig = inspect.signature(func)
+        assert sig == inspect.signature(func.__wrapped__)
+        assert not hasattr(func, "__signature__")
+
+        with pytest.raises(ValueError):
+            inspect.signature(func, follow_wrapped=False)
+
+    @pytest.mark.parametrize(
+        "func",
+        [
+            np.inner, np.where, np.lexsort, np.can_cast, np.min_scalar_type,
+            np.result_type, np.dot, np.vdot, np.bincount, np.ravel_multi_index,
+            np.unravel_index, np.copyto, np.putmask, np.packbits, np.unpackbits,
+            np.shares_memory, np.may_share_memory, np.is_busday, np.busday_offset,
+            np.busday_count, np.datetime_as_string,
+        ],
+    )
+    def test_c_func_dispatcher_signature(self, func):
+        sig = inspect.signature(func)
+
+        assert hasattr(func, "__signature__")
+        assert sig == func.__signature__
+        assert sig.parameters
+
+    @pytest.mark.parametrize(("func", "parameter_names"), [
+        (np.arange, ("start_or_stop", "stop", "step", "dtype", "device", "like")),
+        (np.busdaycalendar, ("weekmask", "holidays")),
+        (np.char.compare_chararrays, ("a1", "a2", "cmp", "rstrip")),
+        (np.datetime_data, ("dtype",)),
+        (np.from_dlpack, ("x", "device", "copy")),
+        (np.frombuffer, ("buffer", "dtype", "count", "offset", "like")),
+        (np.fromfile, ("file", "dtype", "count", "sep", "offset", "like")),
+        (np.fromiter, ("iter", "dtype", "count", "like")),
+        (np.frompyfunc, ("func", "nin", "nout", "kwargs")),
+        (np.fromstring, ("string", "dtype", "count", "sep", "like")),
+        (np.nested_iters, (
+            "op", "axes", "flags", "op_flags", "op_dtypes", "order", "casting",
+            "buffersize",
+        )),
+        (np.promote_types, ("type1", "type2")),
+    ])
+    def test_add_newdoc_function_signature(self, func, parameter_names):
+        assert not hasattr(func, "__signature__")
+        assert getattr(func, "__text_signature__", None)
+
+        sig = inspect.signature(func)
+        assert sig.parameters
+        assert tuple(sig.parameters) == parameter_names

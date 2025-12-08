@@ -3,20 +3,9 @@ from collections.abc import Callable
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
-from typing import (
-    Any,
-    Final,
-    Literal,
-    SupportsIndex,
-    TypeAlias,
-    TypedDict,
-    overload,
-    type_check_only,
-)
-from typing_extensions import deprecated
+from typing import Any, Final, Literal, SupportsIndex, TypedDict, type_check_only
 
 import numpy as np
-from numpy._globals import _NoValueType
 from numpy._typing import NDArray, _CharLike_co, _FloatLike_co
 
 __all__ = [
@@ -32,12 +21,12 @@ __all__ = [
 
 ###
 
-_FloatMode: TypeAlias = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
-_LegacyNoStyle: TypeAlias = Literal["1.21", "1.25", "2.1", False]
-_Legacy: TypeAlias = Literal["1.13", _LegacyNoStyle]
-_Sign: TypeAlias = Literal["-", "+", " "]
-_Trim: TypeAlias = Literal["k", ".", "0", "-"]
-_ReprFunc: TypeAlias = Callable[[NDArray[Any]], str]
+type _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
+type _LegacyNoStyle = Literal["1.21", "1.25", "2.1", False]
+type _Legacy = Literal["1.13", _LegacyNoStyle]
+type _Sign = Literal["-", "+", " "]
+type _Trim = Literal["k", ".", "0", "-"]
+type _ReprFunc = Callable[[NDArray[Any]], str]
 
 @type_check_only
 class _FormatDict(TypedDict, total=False):
@@ -94,7 +83,6 @@ def set_printoptions(
 def get_printoptions() -> _FormatOptions: ...
 
 # public numpy export
-@overload  # no style
 def array2string(
     a: NDArray[Any],
     max_line_width: int | None = None,
@@ -102,89 +90,14 @@ def array2string(
     suppress_small: bool | None = None,
     separator: str = " ",
     prefix: str = "",
-    style: _NoValueType = ...,
+    *,
     formatter: _FormatDict | None = None,
     threshold: int | None = None,
     edgeitems: int | None = None,
     sign: _Sign | None = None,
     floatmode: _FloatMode | None = None,
     suffix: str = "",
-    *,
     legacy: _Legacy | None = None,
-) -> str: ...
-@overload  # style=<given> (positional), legacy="1.13"
-def array2string(
-    a: NDArray[Any],
-    max_line_width: int | None,
-    precision: SupportsIndex | None,
-    suppress_small: bool | None,
-    separator: str,
-    prefix: str,
-    style: _ReprFunc,
-    formatter: _FormatDict | None = None,
-    threshold: int | None = None,
-    edgeitems: int | None = None,
-    sign: _Sign | None = None,
-    floatmode: _FloatMode | None = None,
-    suffix: str = "",
-    *,
-    legacy: Literal["1.13"],
-) -> str: ...
-@overload  # style=<given> (keyword), legacy="1.13"
-def array2string(
-    a: NDArray[Any],
-    max_line_width: int | None = None,
-    precision: SupportsIndex | None = None,
-    suppress_small: bool | None = None,
-    separator: str = " ",
-    prefix: str = "",
-    *,
-    style: _ReprFunc,
-    formatter: _FormatDict | None = None,
-    threshold: int | None = None,
-    edgeitems: int | None = None,
-    sign: _Sign | None = None,
-    floatmode: _FloatMode | None = None,
-    suffix: str = "",
-    legacy: Literal["1.13"],
-) -> str: ...
-@overload  # style=<given> (positional), legacy!="1.13"
-@deprecated("'style' argument is deprecated and no longer functional except in 1.13 'legacy' mode")
-def array2string(
-    a: NDArray[Any],
-    max_line_width: int | None,
-    precision: SupportsIndex | None,
-    suppress_small: bool | None,
-    separator: str,
-    prefix: str,
-    style: _ReprFunc,
-    formatter: _FormatDict | None = None,
-    threshold: int | None = None,
-    edgeitems: int | None = None,
-    sign: _Sign | None = None,
-    floatmode: _FloatMode | None = None,
-    suffix: str = "",
-    *,
-    legacy: _LegacyNoStyle | None = None,
-) -> str: ...
-@overload  # style=<given> (keyword), legacy="1.13"
-@deprecated("'style' argument is deprecated and no longer functional except in 1.13 'legacy' mode")
-def array2string(
-    a: NDArray[Any],
-    max_line_width: int | None = None,
-    precision: SupportsIndex | None = None,
-    suppress_small: bool | None = None,
-    separator: str = " ",
-    prefix: str = "",
-    *,
-    style: _ReprFunc,
-    formatter: _FormatDict | None = None,
-    threshold: int | None = None,
-    edgeitems: int | None = None,
-    sign: _Sign | None = None,
-    floatmode: _FloatMode | None = None,
-    suffix: str = "",
-    legacy: _LegacyNoStyle | None = None,
 ) -> str: ...
 
 def format_float_scientific(

@@ -365,7 +365,7 @@ PyArrayDescr_Type and PyArray_Descr
        places an item of this type: ``offsetof(struct {char c; type v;},
        v)``
 
-       See `PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
+       See :c:func:`PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
        compatible way.
 
    .. c:member:: PyObject *metadata

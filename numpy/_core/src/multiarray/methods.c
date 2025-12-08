@@ -1175,8 +1175,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     Py_ssize_t size = PyTuple_Size(args);
     int refcheck = 1;
     PyArray_Dims newshape;
-    PyObject *ret, *obj;
-
+    PyObject *obj;
 
     if (!NpyArg_ParseKeywords(kwds, "|i", kwlist,  &refcheck)) {
         return NULL;
@@ -1199,12 +1198,11 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    ret = PyArray_Resize(self, &newshape, refcheck, NPY_ANYORDER);
+    int ret = PyArray_Resize_int(self, &newshape, refcheck);
     npy_free_cache_dim_obj(newshape);
-    if (ret == NULL) {
+    if (ret < 0) {
         return NULL;
     }
-    Py_DECREF(ret);
     Py_RETURN_NONE;
 }
 
@@ -2899,7 +2897,8 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for the sys module */
     {"__sizeof__",
         (PyCFunction) array_sizeof,
-        METH_NOARGS, NULL},
+        METH_NOARGS,
+        "__sizeof__($self, /)\n--\n\nSize in memory."},
 
     /* for the copy module */
     {"__copy__",
@@ -2928,11 +2927,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     {"__complex__",
         (PyCFunction) array_complex,
-        METH_VARARGS, NULL},
+        METH_VARARGS,
+        "__complex__($self, /)\n--\n\ncomplex(self)"},
 
     {"__format__",
         (PyCFunction) array_format,
-        METH_VARARGS, NULL},
+        METH_VARARGS,
+        "__format__($self, spec, /)\n--\n\nformat(self[, spec])"},
 
     {"__class_getitem__",
         (PyCFunction)array_class_getitem,

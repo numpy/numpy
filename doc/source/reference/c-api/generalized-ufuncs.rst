@@ -239,13 +239,14 @@ In this case, the ufunc author might define the function like this:
 
     .. code-block:: c
 
-        int minmax_process_core_dims(PyUFuncObject ufunc,
+        int minmax_process_core_dims(PyUFuncObject *ufunc,
                                      npy_intp *core_dim_sizes)
         {
             npy_intp n = core_dim_sizes[0];
             if (n == 0) {
-                PyExc_SetString("minmax requires the core dimension "
-                                "to be at least 1.");
+                PyErr_SetString(PyExc_ValueError,
+                                "minmax requires the core dimension to "
+                                "be at least 1.");
                 return -1;
             }
             return 0;
@@ -267,7 +268,7 @@ dimension size will result in an exception being raised.  With the
 can set the output size to whatever is appropriate for the ufunc.
 
 In the array passed to the "hook" function, core dimensions that
-were not determined by the input are indicating by having the value -1
+were not determined by the input are indicated by having the value -1
 in the ``core_dim_sizes`` array.  The function can replace the -1 with
 whatever value is appropriate for the ufunc, based on the core dimensions
 that occurred in the input arrays.

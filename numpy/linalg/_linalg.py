@@ -995,9 +995,6 @@ def qr(a, mode='reduced'):
 
     Returns
     -------
-    When mode is 'reduced' or 'complete', the result will be a namedtuple with
-    the attributes `Q` and `R`.
-
     Q : ndarray of float or complex, optional
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
@@ -1026,6 +1023,9 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
+    When mode is 'reduced' or 'complete', the result will be a namedtuple with
+    the attributes ``Q`` and ``R``.
+
     This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
     ``dorgqr``, and ``zungqr``.
 
@@ -1696,9 +1696,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Returns
     -------
-    When `compute_uv` is True, the result is a namedtuple with the following
-    attribute names:
-
     U : { (..., M, M), (..., M, K) } array
         Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
         size as those of the input `a`. The size of the last two dimensions
@@ -1726,6 +1723,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Notes
     -----
+    When `compute_uv` is True, the result is a namedtuple with the following
+    attribute names: `U`, `S`, and `Vh`.
+
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
@@ -2016,18 +2016,14 @@ def cond(x, p=None):
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
-    r = asarray(r)
     nan_mask = isnan(r)
     if nan_mask.any():
         nan_mask &= ~isnan(x).any(axis=(-2, -1))
         if r.ndim > 0:
             r[nan_mask] = inf
         elif nan_mask:
-            r[()] = inf
-
-    # Convention is to return scalars instead of 0d arrays
-    if r.ndim == 0:
-        r = r[()]
+            # Convention is to return scalars instead of 0d arrays.
+            r = r.dtype.type(inf)
 
     return r
 
@@ -2942,7 +2938,7 @@ def multi_dot(arrays, *, out=None):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Assume we have three matrices
-    :math:`A_{10 \times 100}, B_{100 \times 5}, C_{5 \times 50}`.
+    :math:`A_{10 \\times 100}, B_{100 \\times 5}, C_{5 \\times 50}`.
 
     The costs for the two different parenthesizations are as follows::
 

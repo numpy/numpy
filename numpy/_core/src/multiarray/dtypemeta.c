@@ -1154,12 +1154,7 @@ dtypemeta_wrap_legacy_descriptor(
             .tp_flags = Py_TPFLAGS_DEFAULT,
             .tp_base = NULL,  /* set below */
             .tp_new = (newfunc)legacy_dtype_default_new,
-            .tp_doc = (
-                "DType class corresponding to the scalar type and dtype of "
-                "the same name.\n\n"
-                "Please see `numpy.dtype` for the typical way to create\n"
-                "dtype instances and :ref:`arrays.dtypes` for additional\n"
-                "information."),
+            .tp_doc = NULL,  /* set in python */
         },},
         .flags = NPY_DT_LEGACY,
         /* Further fields are not common between DTypes */
