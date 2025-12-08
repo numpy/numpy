@@ -53,7 +53,7 @@ license-files = [
     'LICENSE.txt',                                       # BSD-3-Clause
     'numpy/_core/include/numpy/libdivide/LICENSE.txt',   # Zlib
     'numpy/_core/src/common/pythoncapi-compat/COPYING',  # 0BSD
-    'numpy/_core/src/highway/LICENSE-BSD3',              # BSD-3-Clause
+    'numpy/_core/src/highway/LICENSE',                   # Dual-licensed: Apache 2.0 or BSD 3-Clause
     'numpy/_core/src/multiarray/dragon4_LICENSE.txt',    # MIT
     'numpy/_core/src/npysort/x86-simd-sort/LICENSE.md',  # BSD-3-Clause
     'numpy/_core/src/umath/svml/LICENSE',                # BSD-3-Clause

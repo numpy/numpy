@@ -3,15 +3,13 @@ mod_features = import('features')
 compiler_id = meson.get_compiler('c').get_id()
 
 VSX = mod_features.new(
-  'VSX', 1, args: '-mvsx',
+  'VSX', 1, args: ['-mvsx', '-DHWY_COMPILE_ONLY_STATIC', '-DHWY_DISABLE_ATTR'] +
+                  (compiler_id == 'clang' ? ['-maltivec'] : []),
   test_code: files(source_root + '/numpy/_core/src/_simd/checks/cpu_vsx.c')[0],
   extra_tests: {
     'VSX_ASM': files(source_root + '/numpy/_core/src/_simd/checks/extra_vsx_asm.c')[0]
   }
 )
-if compiler_id == 'clang'
-  VSX.update(args: ['-mvsx', '-maltivec'])
-endif
 VSX2 = mod_features.new(
   'VSX2', 2, implies: VSX, args: {'val': '-mcpu=power8', 'match': '.*vsx'},
   detect: {'val': 'VSX2', 'match': 'VSX'},
