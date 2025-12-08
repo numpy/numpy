@@ -719,7 +719,14 @@ cdef class RandomState:
             single value is returned.
         dtype : dtype, optional
             Desired dtype of the result. Byteorder must be native.
-            The default value is intp.
+            The default value is long.
+
+            .. warning::
+              This function defaults to the C-long dtype, which is 32bit on windows
+              and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
+              Since NumPy 2.0, NumPy's default integer is 32bit on 32bit platforms
+              and 64bit on 64bit platforms.  Which corresponds to `np.intp`.
+              (`dtype=int` is not the same as in most NumPy functions.)
 
         Returns
         -------
