@@ -84,7 +84,7 @@ type _TD64Codes_int = Literal[
     "timedelta64[fs]", "m8[fs]", "|m8[fs]", "=m8[fs]", "<m8[fs]", ">m8[fs]",
     "timedelta64[as]", "m8[as]", "|m8[as]", "=m8[as]", "<m8[as]", ">m8[as]",
 ]  # fmt: skip
-_TD64Codes_timedelta = Literal[
+type _TD64Codes_timedelta = Literal[
     "timedelta64[W]", "m8[W]", "|m8[W]", "=m8[W]", "<m8[W]", ">m8[W]",
     "timedelta64[D]", "m8[D]", "|m8[D]", "=m8[D]", "<m8[D]", ">m8[D]",
     "timedelta64[h]", "m8[h]", "|m8[h]", "=m8[h]", "<m8[h]", ">m8[h]",
