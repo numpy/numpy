@@ -146,7 +146,7 @@ assert_type(np.linalg.svd(float_list_2d, compute_uv=False), npt.NDArray[np.float
 assert_type(np.linalg.svd(complex_list_2d), SVDResult[np.float64, np.complex128])
 assert_type(np.linalg.svd(complex_list_2d, compute_uv=False), npt.NDArray[np.float64])
 # Mypy bug: `Expression is of type "SVDResult[Any, Any]", not "SVDResult[Any, Any]"`
-assert_type(np.linalg.svd(AR_any), SVDResult[Any])  # type: ignore[assert-type]
+assert_type(np.linalg.svd(AR_any), SVDResult[Any, Any])  # type: ignore[assert-type]
 # Mypy bug: `Expression is of type "ndarray[Any, Any]", not "ndarray[tuple[Any, ...], dtype[Any]]"`
 assert_type(np.linalg.svd(AR_any, compute_uv=False), npt.NDArray[Any])  # type: ignore[assert-type]
 
