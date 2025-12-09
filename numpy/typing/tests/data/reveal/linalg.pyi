@@ -13,6 +13,8 @@ from numpy.linalg._linalg import (
 int_list_2d: list[list[int]]
 float_list_2d: list[list[float]]
 complex_list_2d: list[list[complex]]
+
+AR_any: np.ndarray
 AR_i8: npt.NDArray[np.int64]
 AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
@@ -73,9 +75,14 @@ assert_type(np.linalg.eig(AR_i8), EigResult)
 assert_type(np.linalg.eig(AR_f8), EigResult)
 assert_type(np.linalg.eig(AR_c16), EigResult)
 
-assert_type(np.linalg.eigh(AR_i8), EighResult)
-assert_type(np.linalg.eigh(AR_f8), EighResult)
-assert_type(np.linalg.eigh(AR_c16), EighResult)
+assert_type(np.linalg.eigh(AR_i8), EighResult[np.float64, np.float64])
+assert_type(np.linalg.eigh(AR_f4), EighResult[np.float32, np.float32])
+assert_type(np.linalg.eigh(AR_f8), EighResult[np.float64, np.float64])
+assert_type(np.linalg.eigh(AR_c8), EighResult[np.float32, np.complex64])
+assert_type(np.linalg.eigh(AR_c16), EighResult[np.float64, np.complex128])
+# mypy is being silly again here:
+# > Expression is of type "EighResult[Any, Any]", not "EighResult[Any, Any]"
+assert_type(np.linalg.eigh(AR_any), EighResult[Any, Any])  # type: ignore[assert-type]
 
 assert_type(np.linalg.svd(AR_i8), SVDResult)
 assert_type(np.linalg.svd(AR_f8), SVDResult)
