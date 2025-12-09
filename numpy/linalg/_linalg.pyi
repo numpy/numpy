@@ -83,8 +83,13 @@ type _inexact64 = np.float32 | np.complex64
 # anything that safe-casts (from floating) into float64/complex128
 type _ToArrayF64 = _ArrayLike[np.float64 | np.integer | np.bool] | _NestedSequence[float]
 type _ToArrayC128 = _ArrayLike[np.complex128 | np.float64 | np.integer | np.bool] | _NestedSequence[complex]
-# the invariant `list` type avoids overlap with `_IntoArrayF64`
+# the invariant `list` type avoids overlap with bool, int, etc
+type _AsArrayInt = _ArrayLike[np.int_] | list[int] | _NestedSequence[list[int]]
+type _AsArrayF64 = _ArrayLike[np.float64] | list[float] | _NestedSequence[list[float]]
 type _AsArrayC128 = _ArrayLike[np.complex128] | list[complex] | _NestedSequence[list[complex]]
+
+type _PosInt = L[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+type _NegInt = L[-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16]
 
 ###
 
@@ -156,6 +161,7 @@ def solve(
 ) -> NDArray[complexfloating]: ...
 
 # keep in sync with the other inverse functions and cholesky
+# TODO: transparent shape types
 @overload  # inexact32 array-likes
 def tensorinv[ScalarT: _inexact64](a: _ArrayLike[ScalarT], ind: int = 2) -> NDArray[ScalarT]: ...
 @overload  # +float64 array-likes
@@ -176,6 +182,7 @@ def inv(a: _AsArrayC128) -> NDArray[np.complex128]: ...
 def inv(a: _ArrayLikeComplex_co) -> np.ndarray: ...
 
 # keep in sync with the other inverse functions and cholesky
+# TODO: transparent shape types
 @overload  # inexact32 array-likes
 def pinv[ScalarT: _inexact64](
     a: _ArrayLike[ScalarT],
@@ -210,6 +217,7 @@ def pinv(
 ) -> NDArray[Any]: ...
 
 # keep in sync with the inverse functions
+# TODO: transparent shape types
 @overload  # inexact32 array-likes
 def cholesky[ScalarT: _inexact64](a: _ArrayLike[ScalarT], /, *, upper: bool = False) -> NDArray[ScalarT]: ...
 @overload  # +float64 array-likes
@@ -219,12 +227,23 @@ def cholesky(a: _AsArrayC128, /, *, upper: bool = False) -> NDArray[np.complex12
 @overload  # fallback
 def cholesky(a: _ArrayLikeComplex_co, /, *, upper: bool = False) -> np.ndarray: ...
 
-# TODO: The supported input and output dtypes are dependent on the value of `n`.
-# For example: `n < 0` always casts integer types to float64
-def matrix_power(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    n: SupportsIndex,
-) -> NDArray[Any]: ...
+# NOTE: Technically this also accepts boolean array-likes, but that case is not very useful, so we skip it.
+#       If you have a use case for it, please open an issue.
+# TODO: transparent shape types
+@overload  # +int, n ≥ 0
+def matrix_power(a: _NestedSequence[int], n: _PosInt) -> NDArray[np.int_]: ...
+@overload  # +integer | ~object, n ≥ 0
+def matrix_power[ScalarT: np.integer | np.object_](a: _ArrayLike[ScalarT], n: _PosInt) -> NDArray[ScalarT]: ...
+@overload  # +float64, n < 0
+def matrix_power(a: _ToArrayF64, n: _NegInt) -> NDArray[np.float64]: ...
+@overload  # ~float64
+def matrix_power(a: _AsArrayF64, n: SupportsIndex) -> NDArray[np.float64]: ...
+@overload  # ~complex128
+def matrix_power(a: _AsArrayC128, n: SupportsIndex) -> NDArray[np.complex128]: ...
+@overload  # ~inexact32
+def matrix_power[ScalarT: _inexact64](a: _ArrayLike[ScalarT], n: SupportsIndex) -> NDArray[ScalarT]: ...
+@overload  # fallback
+def matrix_power(a: _ArrayLikeComplex_co | _ArrayLikeObject_co, n: SupportsIndex) -> np.ndarray: ...
 
 # TODO: narrow return types
 @overload
