@@ -102,33 +102,29 @@ _InexactT_co = TypeVar("_InexactT_co", bound=np.inexact, default=Any, covariant=
 
 fortran_int = np.intc
 
-# NOTE: only generic when `typing.TYPE_CHECKING`
+# NOTE: These names tuples are only generic when `typing.TYPE_CHECKING`.
+
 class EigResult(NamedTuple, Generic[_InexactT_co]):
     eigenvalues: NDArray[_InexactT_co]
     eigenvectors: NDArray[_InexactT_co]
 
-# NOTE: only generic when `typing.TYPE_CHECKING`
 class EighResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
     eigenvalues: NDArray[_FloatingT_co]
     eigenvectors: NDArray[_InexactT_co]
 
-# NOTE: only generic when `typing.TYPE_CHECKING`
 class QRResult(NamedTuple, Generic[_InexactT_co]):
     Q: NDArray[_InexactT_co]
     R: NDArray[_InexactT_co]
 
-# TODO: generic
+class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
+    U: NDArray[_InexactT_co]
+    S: NDArray[_FloatingT_co]
+    Vh: NDArray[_InexactT_co]
+
+# TODO: Make generic
 class SlogdetResult(NamedTuple):
-    # TODO: `sign` and `logabsdet` are scalars for input 2D arrays and
-    # a `(x.ndim - 2)`` dimensional arrays otherwise
     sign: Any
     logabsdet: Any
-
-# TODO: generic
-class SVDResult(NamedTuple):
-    U: NDArray[Any]
-    S: NDArray[Any]
-    Vh: NDArray[Any]
 
 # TODO: narrow return types
 @overload
@@ -307,81 +303,66 @@ def eigh(a: _ArrayLikeComplex_co, UPLO: _SideKind = "L") -> EighResult: ...
 #
 @overload  # ~inexact32,  reduced|complete
 def qr[ScalarT: _inexact32](a: _ArrayLike[ScalarT], mode: L["reduced", "complete"] = "reduced") -> QRResult[ScalarT]: ...
-@overload  # +float64,    reduced|complete
-def qr(a: _ToArrayF64, mode: L["reduced", "complete"] = "reduced") -> QRResult[np.float64]: ...
-@overload  # ~complex128, reduced|complete
-def qr(a: _AsArrayC128, mode: L["reduced", "complete"] = "reduced") -> QRResult[np.complex128]: ...
-@overload  # fallback,    reduced|complete
-def qr(a: _ArrayLikeComplex_co, mode: L["reduced", "complete"] = "reduced") -> QRResult: ...
 @overload  # ~inexact32,  r
 def qr[ScalarT: _inexact32](a: _ArrayLike[ScalarT], mode: L["r"]) -> NDArray[ScalarT]: ...
-@overload  # +float64,    r
-def qr(a: _ToArrayF64, mode: L["r"]) -> NDArray[np.float64]: ...
-@overload  # ~complex128, r
-def qr(a: _AsArrayC128, mode: L["r"]) -> NDArray[np.complex128]: ...
-@overload  # fallback,    r
-def qr(a: _ArrayLikeComplex_co, mode: L["r"]) -> np.ndarray: ...
 @overload  # ~inexact32,  raw
 def qr[ScalarT: _inexact32](a: _ArrayLike[ScalarT], mode: L["raw"]) -> _tuple2[NDArray[ScalarT]]: ...
+@overload  # +float64,    reduced|complete
+def qr(a: _ToArrayF64, mode: L["reduced", "complete"] = "reduced") -> QRResult[np.float64]: ...
+@overload  # +float64,    r
+def qr(a: _ToArrayF64, mode: L["r"]) -> NDArray[np.float64]: ...
 @overload  # +float64,    raw
 def qr(a: _ToArrayF64, mode: L["raw"]) -> _tuple2[NDArray[np.float64]]: ...
+@overload  # ~complex128, reduced|complete
+def qr(a: _AsArrayC128, mode: L["reduced", "complete"] = "reduced") -> QRResult[np.complex128]: ...
+@overload  # ~complex128, r
+def qr(a: _AsArrayC128, mode: L["r"]) -> NDArray[np.complex128]: ...
 @overload  # ~complex128, raw
 def qr(a: _AsArrayC128, mode: L["raw"]) -> _tuple2[NDArray[np.complex128]]: ...
+@overload  # fallback,    reduced|complete
+def qr(a: _ArrayLikeComplex_co, mode: L["reduced", "complete"] = "reduced") -> QRResult: ...
+@overload  # fallback,    r
+def qr(a: _ArrayLikeComplex_co, mode: L["r"]) -> np.ndarray: ...
 @overload  # fallback,    raw
 def qr(a: _ArrayLikeComplex_co, mode: L["raw"]) -> _tuple2[np.ndarray]: ...
 
-# TODO: narrow return types
-@overload
+#
+@overload  # workaround for microsoft/pyright#10232, compute_uv=True (default)
+def svd(a: NDArray[Never], full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False) -> SVDResult: ...
+@overload  # workaround for microsoft/pyright#10232, compute_uv=False (positional)
+def svd(a: NDArray[Never], full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
+@overload  # workaround for microsoft/pyright#10232, compute_uv=False (keyword)
+def svd(a: NDArray[Never], full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
+@overload  # ~inexact32, compute_uv=True (default)
+def svd[ScalarT: _inexact32](
+    a: _ArrayLike[ScalarT], full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
+) -> SVDResult[np.float32, ScalarT]: ...
+@overload  # ~inexact32, compute_uv=False (positional)
+def svd(a: _ArrayLike[_inexact32], full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, compute_uv=False (keyword)
 def svd(
-    a: _ArrayLikeInt_co,
-    full_matrices: bool = True,
-    compute_uv: L[True] = True,
-    hermitian: bool = False,
+    a: _ArrayLike[_inexact32], full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False
+) -> NDArray[np.float32]: ...
+@overload  # +float64, compute_uv=True (default)
+def svd(
+    a: _ToArrayF64, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
+) -> SVDResult[np.float64, np.float64]: ...
+@overload  # ~complex128, compute_uv=True (default)
+def svd(
+    a: _AsArrayC128, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
+) -> SVDResult[np.float64, np.complex128]: ...
+@overload  # +float64 | ~complex128, compute_uv=False (positional)
+def svd(a: _ToArrayC128, full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float64]: ...
+@overload  # +float64 | ~complex128, compute_uv=False (keyword)
+def svd(a: _ToArrayC128, full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> NDArray[np.float64]: ...
+@overload  # fallback, compute_uv=True (default)
+def svd(
+    a: _ArrayLikeComplex_co, full_matrices: bool = True, compute_uv: L[True] = True, hermitian: bool = False
 ) -> SVDResult: ...
-@overload
-def svd(
-    a: _ArrayLikeFloat_co,
-    full_matrices: bool = True,
-    compute_uv: L[True] = True,
-    hermitian: bool = False,
-) -> SVDResult: ...
-@overload
-def svd(
-    a: _ArrayLikeComplex_co,
-    full_matrices: bool = True,
-    compute_uv: L[True] = True,
-    hermitian: bool = False,
-) -> SVDResult: ...
-@overload
-def svd(
-    a: _ArrayLikeInt_co,
-    full_matrices: bool = True,
-    *,
-    compute_uv: L[False],
-    hermitian: bool = False,
-) -> NDArray[np.float64]: ...
-@overload
-def svd(
-    a: _ArrayLikeInt_co,
-    full_matrices: bool,
-    compute_uv: L[False],
-    hermitian: bool = False,
-) -> NDArray[np.float64]: ...
-@overload
-def svd(
-    a: _ArrayLikeComplex_co,
-    full_matrices: bool = True,
-    *,
-    compute_uv: L[False],
-    hermitian: bool = False,
-) -> NDArray[floating]: ...
-@overload
-def svd(
-    a: _ArrayLikeComplex_co,
-    full_matrices: bool,
-    compute_uv: L[False],
-    hermitian: bool = False,
-) -> NDArray[floating]: ...
+@overload  # fallback, compute_uv=False (positional)
+def svd(a: _ArrayLikeComplex_co, full_matrices: bool, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
+@overload  # fallback, compute_uv=False (keyword)
+def svd(a: _ArrayLikeComplex_co, full_matrices: bool = True, *, compute_uv: L[False], hermitian: bool = False) -> np.ndarray: ...
 
 # NOTE: for real input the output dtype (floating/complexfloating) depends on the specific values
 @overload  # abstract `inexact` and `floating` (excluding concrete types)
