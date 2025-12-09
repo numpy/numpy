@@ -96,13 +96,15 @@ type _NegInt = L[-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -1
 type _tuple2[T] = tuple[T, T]
 
 _FloatingT_co = TypeVar("_FloatingT_co", bound=np.floating, default=Any, covariant=True)
+_FloatingOrArrayT_co = TypeVar("_FloatingOrArrayT_co", bound=np.floating | NDArray[np.floating], default=Any, covariant=True)
 _InexactT_co = TypeVar("_InexactT_co", bound=np.inexact, default=Any, covariant=True)
+_InexactOrArrayT_co = TypeVar("_InexactOrArrayT_co", bound=np.inexact | NDArray[np.inexact], default=Any, covariant=True)
 
 ###
 
 fortran_int = np.intc
 
-# NOTE: These names tuples are only generic when `typing.TYPE_CHECKING`.
+# NOTE: These named tuple types are only generic when `typing.TYPE_CHECKING`
 
 class EigResult(NamedTuple, Generic[_InexactT_co]):
     eigenvalues: NDArray[_InexactT_co]
@@ -121,10 +123,9 @@ class SVDResult(NamedTuple, Generic[_FloatingT_co, _InexactT_co]):
     S: NDArray[_FloatingT_co]
     Vh: NDArray[_InexactT_co]
 
-# TODO: Make generic
-class SlogdetResult(NamedTuple):
-    sign: Any
-    logabsdet: Any
+class SlogdetResult(NamedTuple, Generic[_FloatingOrArrayT_co, _InexactOrArrayT_co]):
+    sign: _FloatingOrArrayT_co
+    logabsdet: _InexactOrArrayT_co
 
 # TODO: narrow return types
 @overload
@@ -398,10 +399,6 @@ def svdvals(x: _ToArrayC128, /) -> NDArray[np.float64]: ...
 @overload  # fallback
 def svdvals(a: _ArrayLikeComplex_co, /) -> NDArray[np.floating]: ...
 
-# TODO: Returns a scalar for 2D arrays and
-# a `(x.ndim - 2)`` dimensional array otherwise
-def cond(x: _ArrayLikeComplex_co, p: float | L["fro", "nuc"] | None = None) -> Any: ...
-
 # TODO: Returns `int` for <2D arrays and `intp` otherwise
 def matrix_rank(
     A: _ArrayLikeComplex_co,
@@ -410,6 +407,10 @@ def matrix_rank(
     *,
     rtol: _ArrayLikeFloat_co | None = None,
 ) -> Any: ...
+
+# TODO: Returns a scalar for 2D arrays and
+# a `(x.ndim - 2)`` dimensional array otherwise
+def cond(x: _ArrayLikeComplex_co, p: float | L["fro", "nuc"] | None = None) -> Any: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
 # a 2-tuple of `(a.ndim - 2)`` dimensional arrays otherwise
