@@ -2976,7 +2976,7 @@ class TestMinMax:
         d = np.zeros(23 * 8, dtype=np.int8)[4:-4].view(np.float64)
         assert_equal(d.max(), d[0])
         assert_equal(d.min(), d[0])
-    
+
     def test_negative_positive_edge_cases(self):
         # Empty array: shape and dtype should be preserved
         arr = np.array([], dtype=float)
