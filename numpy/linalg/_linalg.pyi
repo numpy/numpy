@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import (
     Any,
     Generic,
@@ -77,8 +77,10 @@ __all__ = [
     "vecdot",
 ]
 
-type _ModeKind = L["reduced", "complete", "r", "raw"]
-type _SideKind = L["L", "U", "l", "u"]
+type _AtMost1D = tuple[()] | tuple[int]
+type _AtLeast4D = tuple[int, int, int, int, *tuple[int, ...]]
+
+type _tuple2[T] = tuple[T, T]
 
 type _inexact32 = np.float32 | np.complex64
 
@@ -86,14 +88,12 @@ type _inexact32 = np.float32 | np.complex64
 type _ToArrayF64 = _ArrayLike[np.float64 | np.integer | np.bool] | _NestedSequence[float]
 type _ToArrayC128 = _ArrayLike[np.complex128 | np.float64 | np.integer | np.bool] | _NestedSequence[complex]
 # the invariant `list` type avoids overlap with bool, int, etc
-type _AsArrayInt = _ArrayLike[np.int_] | list[int] | _NestedSequence[list[int]]
 type _AsArrayF64 = _ArrayLike[np.float64] | list[float] | _NestedSequence[list[float]]
 type _AsArrayC128 = _ArrayLike[np.complex128] | list[complex] | _NestedSequence[list[complex]]
 
+type _SideKind = L["L", "U", "l", "u"]
 type _PosInt = L[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 type _NegInt = L[-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16]
-
-type _tuple2[T] = tuple[T, T]
 
 _FloatingT_co = TypeVar("_FloatingT_co", bound=np.floating, default=Any, covariant=True)
 _FloatingOrArrayT_co = TypeVar("_FloatingOrArrayT_co", bound=np.floating | NDArray[np.floating], default=Any, covariant=True)
@@ -399,7 +399,48 @@ def svdvals(x: _ToArrayC128, /) -> NDArray[np.float64]: ...
 @overload  # fallback
 def svdvals(a: _ArrayLikeComplex_co, /) -> NDArray[np.floating]: ...
 
-# TODO: Returns `int` for <2D arrays and `intp` otherwise
+#
+@overload  # workaround for microsoft/pyright#10232
+def matrix_rank(
+    A: np.ndarray[tuple[Never, ...], np.dtype[np.number]],
+    tol: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | None = None,
+) -> Any: ...
+@overload  # <2d
+def matrix_rank(
+    A: complex | np.number | Sequence[complex | np.number] | np.ndarray[_AtMost1D, np.dtype[np.number]],
+    tol: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | None = None,
+) -> L[0, 1]: ...
+@overload  # =2d
+def matrix_rank(
+    A: Sequence[Sequence[complex | np.number]] | np.ndarray[tuple[int, int], np.dtype[np.number]],
+    tol: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | None = None,
+) -> np.int_: ...
+@overload  # =3d
+def matrix_rank(
+    A: Sequence[Sequence[Sequence[complex | np.number]]] | np.ndarray[tuple[int, int, int], np.dtype[np.number]],
+    tol: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.int_]]: ...
+@overload  # ≥4d
+def matrix_rank(
+    A: Sequence[Sequence[Sequence[_NestedSequence[complex | np.number]]]] | np.ndarray[_AtLeast4D, np.dtype[np.number]],
+    tol: _ArrayLikeFloat_co | None = None,
+    hermitian: bool = False,
+    *,
+    rtol: _ArrayLikeFloat_co | None = None,
+) -> NDArray[np.int_]: ...
+@overload  # ?d
 def matrix_rank(
     A: _ArrayLikeComplex_co,
     tol: _ArrayLikeFloat_co | None = None,

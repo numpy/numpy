@@ -1,4 +1,4 @@
-from typing import Any, assert_type
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -11,21 +11,33 @@ from numpy.linalg._linalg import (
 )
 
 int_list_2d: list[list[int]]
+float_list_1d: list[float]
 float_list_2d: list[list[float]]
+float_list_3d: list[list[list[float]]]
+float_list_4d: list[list[list[list[float]]]]
 complex_list_2d: list[list[complex]]
 
 AR_any: np.ndarray
-AR_i8: npt.NDArray[np.int64]
 AR_f_: npt.NDArray[np.floating]
+AR_c_: npt.NDArray[np.complexfloating]
+AR_i8: npt.NDArray[np.int64]
 AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
-AR_c_: npt.NDArray[np.complexfloating]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
 AR_m: npt.NDArray[np.timedelta64]
 AR_S: npt.NDArray[np.str_]
 AR_b: npt.NDArray[np.bool]
+
+SC_f8: np.float64
+AR_f8_0d: np.ndarray[tuple[()], np.dtype[np.float64]]
+AR_f8_1d: np.ndarray[tuple[int], np.dtype[np.float64]]
+AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
+AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
+AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
+
+###
 
 assert_type(np.linalg.tensorsolve(AR_i8, AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.tensorsolve(AR_i8, AR_f8), npt.NDArray[np.floating])
@@ -147,6 +159,15 @@ assert_type(np.linalg.cond(AR_c16), Any)
 assert_type(np.linalg.matrix_rank(AR_i8), Any)
 assert_type(np.linalg.matrix_rank(AR_f8), Any)
 assert_type(np.linalg.matrix_rank(AR_c16), Any)
+assert_type(np.linalg.matrix_rank(SC_f8), Literal[0, 1])
+assert_type(np.linalg.matrix_rank(AR_f8_1d), Literal[0, 1])
+assert_type(np.linalg.matrix_rank(float_list_1d), Literal[0, 1])
+assert_type(np.linalg.matrix_rank(AR_f8_2d), np.int_)
+assert_type(np.linalg.matrix_rank(float_list_2d), np.int_)
+assert_type(np.linalg.matrix_rank(AR_f8_3d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.linalg.matrix_rank(float_list_3d), np.ndarray[tuple[int], np.dtype[np.int_]])
+assert_type(np.linalg.matrix_rank(AR_f8_4d), npt.NDArray[np.int_])
+assert_type(np.linalg.matrix_rank(float_list_4d), npt.NDArray[np.int_])
 
 assert_type(np.linalg.pinv(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.pinv(AR_f8), npt.NDArray[np.float64])
