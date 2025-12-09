@@ -77,14 +77,48 @@ def _build_float16_extension(tmpdir_factory):
 #
 # Helpers
 #
+
+# +0
 FLOAT16_PZERO = np.uint16(0x0000)
+
+# -0
 FLOAT16_NZERO = np.uint16(0x8000)
+
+# 1.0
 FLOAT16_ONE = np.uint16(0x3C00)
+
+# -1.0
 FLOAT16_NEGONE = np.uint16(0xBC00)
+
+# +inf
+# 0 11111 0000000000
 FLOAT16_PINF = np.uint16(0x7C00)
+
+# -inf
+# 1 11111 0000000000
 FLOAT16_NINF = np.uint16(0xFC00)
+
+# not a number
 FLOAT16_NAN = np.uint16(0x7E00)
+
+# largest finite float16
 FLOAT16_MAX = np.uint16(0x7BFF)
+
+# Smallest Positive Subnormal
+# sign bit = 0; exponent bits = 0; fraction bits = 1
+# 0 00000 0000000001
+# i.e smallest number above 0
+FLOAT16_SMALLSUB = np.uint16(0x0001)
+
+# Smallest Positive Subnormal
+# sign bit = 0; exponent bits = 0; fraction bits = 11111111111
+# 0 00000 1111111111
+# i.e biggest number before next subnormal
+FLOAT16_LARGESUB = np.uint16(0x03FF)
+
+# Smallest positive normal number
+# 0 00001 0000000000
+FLOAT16_SMALLNORM = np.uint16(0x0400)
 
 def f16_from_bits(bits: np.uint16) -> np.float16:
     return np.array(bits, dtype=np.uint16).view(np.float16)
@@ -92,15 +126,12 @@ def f16_from_bits(bits: np.uint16) -> np.float16:
 def bits_from_f16(x: np.float16) -> np.uint16:
     return np.array(x, dtype=np.float16).view(np.uint16)
 
-# Interpret half bits as float16, cast to float32.
 def numpy_float16_from_bits(bits: np.uint16) -> np.float32:
     return f16_from_bits(bits).astype(np.float32)
 
-# float32 -> float16 (NumPy) -> half bits
 def numpy_float16_to_bits_from_f32(x: np.float32) -> np.uint16:
     return x.astype(np.float16).view(np.uint16)
 
-# float64 -> float16 (NumPy) -> half bits.
 def numpy_float16_to_bits_from_f64(x: np.float64) -> np.uint16:
     return x.astype(np.float16).view(np.uint16)
 
@@ -141,9 +172,9 @@ def assert_isnan(x):
     FLOAT16_NINF,
     FLOAT16_NAN,
     FLOAT16_MAX,
-    np.uint16(0x0001),
-    np.uint16(0x03FF),
-    np.uint16(0x0400),
+    FLOAT16_SMALLSUB,
+    FLOAT16_LARGESUB,
+    FLOAT16_SMALLNORM,
 ])
 def test_float16_to_float(bits):
     got = h.float16_to_float(bits)
@@ -164,9 +195,9 @@ def test_float16_to_float(bits):
     FLOAT16_NINF,
     FLOAT16_NAN,
     FLOAT16_MAX,
-    np.uint16(0x0001),
-    np.uint16(0x03FF),
-    np.uint16(0x0400),
+    FLOAT16_SMALLSUB,
+    FLOAT16_LARGESUB,
+    FLOAT16_SMALLNORM,
 ])
 def test_float16_to_double(bits):
     got = h.float16_to_double(bits)
@@ -197,8 +228,8 @@ def test_double_to_float16(doubles):
     expected = numpy_float16_to_bits_from_f64(doubles)
 
     if np.isnan(doubles):
-        assert (got & np.uint16(0x7C00)) == np.uint16(0x7C00)
-        assert (got & np.uint16(0x03FF)) != np.uint16(0)
+        assert (got & FLOAT16_PINF) == FLOAT16_PINF
+        assert (got & FLOAT16_LARGESUB) != FLOAT16_PZERO
     else:
         assert got == expected
 
@@ -224,8 +255,8 @@ def test_float_to_float16(floats):
     expected = numpy_float16_to_bits_from_f32(floats)
 
     if np.isnan(floats):
-        assert (got & np.uint16(0x7C00)) == np.uint16(0x7C00)
-        assert (got & np.uint16(0x03FF)) != np.uint16(0)
+        assert (got & FLOAT16_PINF) == FLOAT16_PINF
+        assert (got & FLOAT16_LARGESUB) != FLOAT16_PZERO
     else:
         assert got == expected
 
@@ -330,7 +361,7 @@ def test_float16_eq_nonan_zeros(a_bits, b_bits):
     (FLOAT16_NEGONE, False, False, False, True, True),
     (FLOAT16_PINF, False, False, True, False, False),
     (FLOAT16_NINF, False, False, True, False, True),
-    (np.uint16(0x7C01), False, True, False, False, False),
+    (FLOAT16_NAN, False, True, False, False, False),
 ])
 def test_predicates(bits, iszero, isnan, isinf, isfinite, signbit):
     assert bool(h.float16_iszero(int(bits))) == iszero
@@ -375,9 +406,9 @@ def test_float16_copysign(x_bits, y_bits):
     FLOAT16_ONE,
     FLOAT16_NEGONE,
     FLOAT16_MAX,
-    np.uint16(0x0001),
-    np.uint16(0x03FF),
-    np.uint16(0x0400),
+    FLOAT16_SMALLSUB,
+    FLOAT16_LARGESUB,
+    FLOAT16_SMALLNORM,
 ])
 def test_float16_spacing(bits):
     got_bits = np.uint16(h.float16_spacing(int(bits)))
@@ -427,13 +458,16 @@ def test_float16_nextafter_basic(x_bits, y_bits):
 def test_float16_nextafter_nan(x_bits, y_bits):
     got_bits = np.uint16(h.float16_nextafter(int(x_bits), int(y_bits)))
 
-#Tests npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus)
+# Tests npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus)
 @pytest.mark.parametrize("a_bits, b_bits", [
     (FLOAT16_PZERO, FLOAT16_ONE),
     (FLOAT16_ONE, FLOAT16_ONE),
     (FLOAT16_ONE, FLOAT16_NEGONE),
     (FLOAT16_NEGONE, FLOAT16_ONE),
     (FLOAT16_NEGONE, FLOAT16_NEGONE),
+    # Below tests is for a quotient is not the same as the original number
+    # +- 3.5 / 2.0 = 1.75
+    #    divmod(3.5, 2.0) -> (1.0, 1.5)
     (bits_from_f16(np.float16(3.5)), bits_from_f16(np.float16(2.0))),
     (bits_from_f16(np.float16(-3.5)), bits_from_f16(np.float16(2.0))),
 ])

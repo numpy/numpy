@@ -344,6 +344,15 @@ When you are building with `Meson <https://mesonbuild.com>`__, use::
 Half-precision functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+   It is recommended to include ``<numpy/float16.h>`` instead of
+   ``<numpy/halffloat.h>``. The ``float16.h`` header provides the same
+   half-precision helpers in a header only implementation and does not
+   require linking against ``npymath``.
+
+   See :ref:`float16` for details.
+
 The header file ``<numpy/halffloat.h>`` provides functions to work with
 IEEE 754-2008 16-bit floating point values. While this format is
 not typically used for numerical computations, it is useful for

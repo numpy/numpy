@@ -14,7 +14,4 @@ py.extension_module(
   '_float16_tests.c',
   install: false,
   include_directories: [npy_include_path],
-    c_args: [
-      '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
-    ],
 )
