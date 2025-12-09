@@ -61,7 +61,6 @@ float16tests_float_to_float16(PyObject *NPY_UNUSED(self), PyObject *args)
 /*
  * Comparisons
  */
-// static inline int npy_float16_eq(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_eq(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -74,7 +73,6 @@ float16tests_float16_eq(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-// static inline int npy_float16_ne(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_ne(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -87,7 +85,6 @@ float16tests_float16_ne(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-// static inline int npy_float16_le(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_le(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -100,7 +97,6 @@ float16tests_float16_le(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-// static inline int npy_float16_lt(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_lt(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -113,7 +109,6 @@ float16tests_float16_lt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-// static inline int npy_float16_ge(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_ge(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -126,7 +121,6 @@ float16tests_float16_ge(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-// static inline int npy_float16_gt(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_gt(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -142,8 +136,6 @@ float16tests_float16_gt(PyObject *NPY_UNUSED(self), PyObject *args)
 /*
  * No Nan Comparisons variants
  */
-
-//static inline int npy_float16_eq_nonan(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_eq_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -156,7 +148,6 @@ float16tests_float16_eq_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-//static inline int npy_float16_lt_nonan(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_lt_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -169,7 +160,6 @@ float16tests_float16_lt_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-//static inline int npy_float16_le_nonan(npy_half h1, npy_half h2);
 static PyObject *
 float16tests_float16_le_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -181,10 +171,10 @@ float16tests_float16_le_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
                                  (npy_uint16)h2);
     return PyBool_FromLong(ret != 0);
 }
+
 /*
  * Miscellaneous Functions
  */
-
 static PyObject *
 float16tests_float16_iszero(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -240,7 +230,6 @@ float16tests_float16_signbit(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyBool_FromLong(ret != 0);
 }
 
-// static inline npy_half npy_float16_copysign(npy_half x, npy_half y);
 static PyObject *
 float16tests_float16_copysign(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -256,7 +245,6 @@ float16tests_float16_copysign(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyLong_FromUnsignedLong((npy_uint16)r);
 }
 
-// static inline npy_half npy_float16_spacing(npy_half h);
 static PyObject *
 float16tests_float16_spacing(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -270,7 +258,6 @@ float16tests_float16_spacing(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyLong_FromUnsignedLong((npy_uint16)r);
 }
 
-// static inline npy_half npy_float16_nextafter(npy_half x, npy_half y);
 static PyObject *
 float16tests_float16_nextafter(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -286,6 +273,24 @@ float16tests_float16_nextafter(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyLong_FromUnsignedLong((npy_uint16)r);
 }
 
+static PyObject *
+float16tests_float16_divmod(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    unsigned int h1bits, h2bits;
+    if (!PyArg_ParseTuple(args, "II", &h1bits, &h2bits)) {
+        return NULL;
+    }
+
+    npy_half h1 = (npy_uint16)h1bits;
+    npy_half h2 = (npy_uint16)h2bits;
+
+    npy_half mod;
+    npy_half quo = npy_float16_divmod(h1, h2, &mod);
+
+    return Py_BuildValue("II",
+                         (npy_uint16)quo,
+                         (npy_uint16)mod);
+}
 
 static PyMethodDef float16_tests_methods[] = {
     // Conversions
@@ -324,6 +329,8 @@ static PyMethodDef float16_tests_methods[] = {
      "Return spacing of the half value (as half bits)."},
     {"float16_nextafter", float16tests_float16_nextafter, METH_VARARGS,
      "Return next representable half from x toward y (as half bits)."},
+    {"float16_divmod", float16tests_float16_divmod, METH_VARARGS,
+     "Return (quotient, remainder) for float16 divmod, both as half bits."},
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
 
@@ -351,7 +358,7 @@ static struct PyModuleDef float16tests_moduledef = {
     PyModuleDef_HEAD_INIT,
     .m_name = "_float16_tests",
     .m_doc = "Internal float16 helper functions for testing.",
-    .m_size = 0,  /* multi-phase */
+    .m_size = 0,
     .m_methods = float16_tests_methods,
     .m_slots = float16tests_slots,
 };

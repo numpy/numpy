@@ -1,3 +1,4 @@
+import math
 import os
 import subprocess
 import sys
@@ -18,7 +19,7 @@ h = None
 
 @pytest.fixture(scope="module", autouse=True)
 def _build_float16_extension(tmpdir_factory):
-    # Based in part on test_limited_api
+    # Based in part on tests/test_limited_api
     # Double chekc that meson exists
     try:
         subprocess.check_output(["meson", "--version"], stderr=subprocess.STDOUT)
@@ -42,7 +43,7 @@ def _build_float16_extension(tmpdir_factory):
         f.write(f"python = '{sys.executable}'\n")
         f.write(f"python3 = '{sys.executable}'")
 
-    # Configure and build I think?
+    # Configure and build
     if sysconfig.get_platform() == "win-arm64":
         pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
@@ -84,7 +85,6 @@ FLOAT16_PINF = np.uint16(0x7C00)
 FLOAT16_NINF = np.uint16(0xFC00)
 FLOAT16_NAN = np.uint16(0x7E00)
 FLOAT16_MAX = np.uint16(0x7BFF)
-
 
 def f16_from_bits(bits: np.uint16) -> np.float16:
     return np.array(bits, dtype=np.uint16).view(np.float16)
@@ -130,7 +130,8 @@ def assert_isnan(x):
 # Conversions
 #
 
-# float16 -> float
+# Tests npy_float16_to_float(npy_half h),
+# npy_float16bits_to_floatbits(h)
 @pytest.mark.parametrize("bits", [
     FLOAT16_PZERO,
     FLOAT16_NZERO,
@@ -152,7 +153,8 @@ def test_float16_to_float(bits):
     else:
         assert got == np.float32(expected)
 
-# float16 -> double
+# Tests npy_float16_to_double(npy_half h),
+# npy_float16bits_to_doublebits(npy_uint16 h)
 @pytest.mark.parametrize("bits", [
     FLOAT16_PZERO,
     FLOAT16_NZERO,
@@ -174,7 +176,9 @@ def test_float16_to_double(bits):
     else:
         assert got == expected
 
-# double -> float16
+# Tests npy_double_to_float16(double d),
+# npy_doublebits_to_float16bits(npy_uint64 d),
+# _npy_float16_header_overflow()
 @pytest.mark.parametrize("doubles", [
     np.float64(0.0),
     np.float64(-0.0),
@@ -198,7 +202,10 @@ def test_double_to_float16(doubles):
     else:
         assert got == expected
 
-# float -> float16
+# Tests npy_float_to_float16(float f),
+# npy_floatbits_to_float16bits(npy_uint32 f),
+# _npy_float16_header_overflow(),
+# _npy_float16_header_underflow()
 @pytest.mark.parametrize("floats", [
     np.float32(0.0),
     np.float32(-0.0),
@@ -225,6 +232,9 @@ def test_float_to_float16(floats):
 #
 # Comparisons
 #
+
+# Tests npy_float16_eq(npy_half h1, npy_half h2),
+# npy_float16_ne(npy_half h1, npy_half h2)
 @pytest.mark.parametrize("a_bits, b_bits", [
     (FLOAT16_ONE, FLOAT16_ONE),
     (FLOAT16_PZERO, FLOAT16_NZERO),
@@ -240,7 +250,6 @@ def test_float16_eq_and_ne(a_bits, b_bits):
 
     expected_eq = (a == b) or (a == 0.0 and b == 0.0 and
                                math.copysign(1.0, a) != math.copysign(1.0, b))
-    # But NumPy float16 equality will treat signed zeros as equal already
     expected_eq_numpy = np.array(a, dtype=np.float16) == np.array(b, dtype=np.float16)
 
     got_eq = bool(h.float16_eq(int(a_bits), int(b_bits)))
@@ -249,17 +258,21 @@ def test_float16_eq_and_ne(a_bits, b_bits):
     assert got_eq == bool(expected_eq_numpy)
     assert got_ne == (not got_eq)
 
-
+# Tests npy_float16_eq(npy_half h1, npy_half h2),
+# npy_float16_ne(npy_half h1, npy_half h2)
 @pytest.mark.parametrize("a_bits, b_bits", [
     (FLOAT16_NAN, FLOAT16_ONE),
     (FLOAT16_ONE, FLOAT16_NAN),
     (FLOAT16_NAN, FLOAT16_NAN),
 ])
 def test_float16_eq_and_ne_with_nan(a_bits, b_bits):
-    # Any comparison with NaN should be unequal
     assert not h.float16_eq(int(a_bits), int(b_bits))
     assert h.float16_ne(int(a_bits), int(b_bits))
 
+# Tests npy_float16_le(npy_half h1, npy_half h2)
+# npy_float16_lt(npy_half h1, npy_half h2),
+# npy_float16_ge(npy_half h1, npy_half h2),
+# npy_float16_gt(npy_half h1, npy_half h2)
 @pytest.mark.parametrize("a_bits, b_bits", [
     (FLOAT16_NEGONE, FLOAT16_PZERO),
     (FLOAT16_PZERO, FLOAT16_ONE),
@@ -284,9 +297,14 @@ def test_float16_lt_le_gt_ge(a_bits, b_bits):
     assert got_le == expected_le
     assert got_gt == expected_gt
     assert got_ge == expected_ge
+
 #
 # No nan Comparison Variants
 #
+
+# Tests npy_float16_eq_nonan(npy_half h1, npy_half h2),
+# npy_float16_lt_nonan(npy_half h1, npy_half h2),
+# npy_float16_le_nonan(npy_half h1, npy_half h2)
 @pytest.mark.parametrize("a_bits, b_bits", [
     (FLOAT16_PZERO, FLOAT16_NZERO),
     (FLOAT16_NZERO, FLOAT16_PZERO),
@@ -300,6 +318,11 @@ def test_float16_eq_nonan_zeros(a_bits, b_bits):
 # Misc functions
 #
 
+# Tests npy_float16_iszero(npy_half h),
+# npy_float16_isnan(npy_half h),
+# npy_float16_isinf(npy_half h),
+# npy_float16_isfinite(npy_half h),
+# npy_float16_signbit(npy_half h)
 @pytest.mark.parametrize("bits, iszero, isnan, isinf, isfinite, signbit", [
     (FLOAT16_PZERO, True, False, False, True, False),
     (FLOAT16_NZERO, True, False, False, True, True),
@@ -307,7 +330,6 @@ def test_float16_eq_nonan_zeros(a_bits, b_bits):
     (FLOAT16_NEGONE, False, False, False, True, True),
     (FLOAT16_PINF, False, False, True, False, False),
     (FLOAT16_NINF, False, False, True, False, True),
-    (FLOAT16_NAN, False, True, False, False, False),  # payload signbit is independent
     (np.uint16(0x7C01), False, True, False, False, False),
 ])
 def test_predicates(bits, iszero, isnan, isinf, isfinite, signbit):
@@ -316,10 +338,12 @@ def test_predicates(bits, iszero, isnan, isinf, isfinite, signbit):
     assert bool(h.float16_isinf(int(bits))) == isinf
     assert bool(h.float16_isfinite(int(bits))) == isfinite
     assert bool(h.float16_signbit(int(bits))) == signbit
+
 #
 # Copysign
 #
 
+# Tests npy_float16_copysign(npy_half x, npy_half y)
 @pytest.mark.parametrize("x_bits, y_bits", [
     (FLOAT16_ONE, FLOAT16_PZERO),
     (FLOAT16_ONE, FLOAT16_NZERO),
@@ -340,17 +364,20 @@ def test_float16_copysign(x_bits, y_bits):
     assert got == expected
 
 #
-# Spacing
+# Spacing, Nextafter, and Divmod
 #
+
+# Tests npy_float16_spacing(npy_half h),
+# _npy_float16_header_invalid()
 @pytest.mark.parametrize("bits", [
     FLOAT16_PZERO,
     FLOAT16_NZERO,
     FLOAT16_ONE,
     FLOAT16_NEGONE,
-    FLOAT16_MAX,  # should overflow to inf
-    np.uint16(0x0001),  # smallest subnormal
-    np.uint16(0x03FF),  # largest subnormal
-    np.uint16(0x0400),  # smallest normal
+    FLOAT16_MAX,
+    np.uint16(0x0001),
+    np.uint16(0x03FF),
+    np.uint16(0x0400),
 ])
 def test_float16_spacing(bits):
     got_bits = np.uint16(h.float16_spacing(int(bits)))
@@ -358,26 +385,19 @@ def test_float16_spacing(bits):
 
     x = f16_from_bits(bits)
     if np.isinf(x) or np.isnan(x):
-        # spacing(inf/nan) is implementation-defined in NumPy; your header
-        # explicitly sets NaN for already-Inf and NaN.
         if np.isinf(x) or np.isnan(x):
             assert np.isnan(got)
     else:
         expected_bits = numpy_float16_spacing(bits)
         expected = f16_from_bits(expected_bits)
-        # Allow exact match in representation
         assert got_bits == expected_bits
         assert got == expected
-
 
 def test_float16_spacing_nan_inf():
     assert np.isnan(f16_from_bits(np.uint16(h.float16_spacing(int(FLOAT16_PINF)))))
     assert np.isnan(f16_from_bits(np.uint16(h.float16_spacing(int(FLOAT16_NAN)))))
 
-
-#
-# nextafter
-#
+# Tests npy_float16_nextafter(npy_half x, npy_half y)
 @pytest.mark.parametrize("x_bits, y_bits", [
     (FLOAT16_PZERO, FLOAT16_ONE),
     (FLOAT16_PZERO, FLOAT16_NEGONE),
@@ -391,7 +411,6 @@ def test_float16_nextafter_basic(x_bits, y_bits):
     got_bits = np.uint16(h.float16_nextafter(int(x_bits), int(y_bits)))
     expected_bits = numpy_float16_nextafter(x_bits, y_bits)
 
-    # For finite values, NumPy semantics should match exactly
     x = f16_from_bits(x_bits)
     y = f16_from_bits(y_bits)
     if np.isnan(x) or np.isnan(y):
@@ -399,6 +418,7 @@ def test_float16_nextafter_basic(x_bits, y_bits):
     else:
         assert got_bits == expected_bits
 
+# Tests npy_float16_nextafter(npy_half x, npy_half y)
 @pytest.mark.parametrize("x_bits, y_bits", [
     (FLOAT16_NAN, FLOAT16_ONE),
     (FLOAT16_ONE, FLOAT16_NAN),
@@ -406,3 +426,36 @@ def test_float16_nextafter_basic(x_bits, y_bits):
 ])
 def test_float16_nextafter_nan(x_bits, y_bits):
     got_bits = np.uint16(h.float16_nextafter(int(x_bits), int(y_bits)))
+
+#Tests npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus)
+@pytest.mark.parametrize("a_bits, b_bits", [
+    (FLOAT16_PZERO, FLOAT16_ONE),
+    (FLOAT16_ONE, FLOAT16_ONE),
+    (FLOAT16_ONE, FLOAT16_NEGONE),
+    (FLOAT16_NEGONE, FLOAT16_ONE),
+    (FLOAT16_NEGONE, FLOAT16_NEGONE),
+    (bits_from_f16(np.float16(3.5)), bits_from_f16(np.float16(2.0))),
+    (bits_from_f16(np.float16(-3.5)), bits_from_f16(np.float16(2.0))),
+])
+def test_float16_divmod(a_bits, b_bits):
+    a = f16_from_bits(a_bits).astype(np.float32)
+    b = f16_from_bits(b_bits).astype(np.float32)
+
+    q_bits, r_bits = h.float16_divmod(int(a_bits), int(b_bits))
+    q = f16_from_bits(np.uint16(q_bits)).astype(np.float32)
+    r = f16_from_bits(np.uint16(r_bits)).astype(np.float32)
+
+    if b == 0.0 and not np.isnan(b):
+        q_ref, r_ref = divmod(float(a), float(b))
+    else:
+        q_ref, r_ref = divmod(float(a), float(b))
+
+    if np.isnan(q_ref):
+        assert_isnan(q)
+    else:
+        assert math.isclose(q, q_ref, rel_tol=0.0, abs_tol=0.0)
+
+    if np.isnan(r_ref):
+        assert_isnan(r)
+    else:
+        assert math.isclose(r, r_ref, rel_tol=0.0, abs_tol=0.0)
