@@ -37,6 +37,9 @@ AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
 AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
 
+AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
+AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
+
 ###
 
 assert_type(np.linalg.tensorsolve(AR_i8, AR_i8), npt.NDArray[np.float64])
@@ -54,6 +57,10 @@ assert_type(np.linalg.tensorinv(AR_c16), npt.NDArray[np.complex128])
 assert_type(np.linalg.inv(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.inv(AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.inv(AR_c16), npt.NDArray[np.complex128])
+
+assert_type(np.linalg.pinv(AR_i8), npt.NDArray[np.float64])
+assert_type(np.linalg.pinv(AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.pinv(AR_c16), npt.NDArray[np.complex128])
 
 assert_type(np.linalg.matrix_power(AR_i8, -1), npt.NDArray[np.float64])
 assert_type(np.linalg.matrix_power(AR_i8, 1), npt.NDArray[np.int64])
@@ -152,10 +159,6 @@ assert_type(np.linalg.svdvals(int_list_2d), npt.NDArray[np.float64])
 assert_type(np.linalg.svdvals(float_list_2d), npt.NDArray[np.float64])
 assert_type(np.linalg.svdvals(complex_list_2d), npt.NDArray[np.float64])
 
-assert_type(np.linalg.cond(AR_i8), Any)
-assert_type(np.linalg.cond(AR_f8), Any)
-assert_type(np.linalg.cond(AR_c16), Any)
-
 assert_type(np.linalg.matrix_rank(AR_i8), Any)
 assert_type(np.linalg.matrix_rank(AR_f8), Any)
 assert_type(np.linalg.matrix_rank(AR_c16), Any)
@@ -169,9 +172,13 @@ assert_type(np.linalg.matrix_rank(float_list_3d), np.ndarray[tuple[int], np.dtyp
 assert_type(np.linalg.matrix_rank(AR_f8_4d), npt.NDArray[np.int_])
 assert_type(np.linalg.matrix_rank(float_list_4d), npt.NDArray[np.int_])
 
-assert_type(np.linalg.pinv(AR_i8), npt.NDArray[np.float64])
-assert_type(np.linalg.pinv(AR_f8), npt.NDArray[np.float64])
-assert_type(np.linalg.pinv(AR_c16), npt.NDArray[np.complex128])
+assert_type(np.linalg.cond(AR_i8), Any)
+assert_type(np.linalg.cond(AR_f8), Any)
+assert_type(np.linalg.cond(AR_c16), Any)
+assert_type(np.linalg.cond(AR_f4_2d), np.float32)
+assert_type(np.linalg.cond(AR_f8_2d), np.float64)
+assert_type(np.linalg.cond(AR_f4_3d), npt.NDArray[np.float32])
+assert_type(np.linalg.cond(AR_f8_3d), npt.NDArray[np.float64])
 
 assert_type(np.linalg.slogdet(AR_i8), SlogdetResult)
 assert_type(np.linalg.slogdet(AR_f8), SlogdetResult)

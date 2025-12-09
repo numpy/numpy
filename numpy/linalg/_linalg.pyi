@@ -78,19 +78,26 @@ __all__ = [
 ]
 
 type _AtMost1D = tuple[()] | tuple[int]
+type _AtLeast3D = tuple[int, int, int, *tuple[int, ...]]
 type _AtLeast4D = tuple[int, int, int, int, *tuple[int, ...]]
+type _JustAnyShape = tuple[Never, ...]  # workaround for microsoft/pyright#10232
 
 type _tuple2[T] = tuple[T, T]
 
 type _inexact32 = np.float32 | np.complex64
+type _to_inexact64 = np.complex128 | np.float64 | np.integer | np.bool
 
 # anything that safe-casts (from floating) into float64/complex128
 type _ToArrayF64 = _ArrayLike[np.float64 | np.integer | np.bool] | _NestedSequence[float]
-type _ToArrayC128 = _ArrayLike[np.complex128 | np.float64 | np.integer | np.bool] | _NestedSequence[complex]
+type _ToArrayC128 = _ArrayLike[_to_inexact64] | _NestedSequence[complex]
 # the invariant `list` type avoids overlap with bool, int, etc
 type _AsArrayF64 = _ArrayLike[np.float64] | list[float] | _NestedSequence[list[float]]
 type _AsArrayC128 = _ArrayLike[np.complex128] | list[complex] | _NestedSequence[list[complex]]
 
+type _ToArrayC128_2d = np.ndarray[tuple[int, int], np.dtype[_to_inexact64]] | Sequence[Sequence[complex]]
+type _ToArrayC128_3nd = np.ndarray[_AtLeast3D, np.dtype[_to_inexact64]] | Sequence[Sequence[_NestedSequence[complex]]]
+
+type _OrderKind = L[1, -1, 2, -2, "fro", "nuc"] | float  # only accepts `-inf` and `inf` as `float`
 type _SideKind = L["L", "U", "l", "u"]
 type _PosInt = L[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 type _NegInt = L[-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16]
@@ -410,7 +417,7 @@ def matrix_rank(
 ) -> Any: ...
 @overload  # <2d
 def matrix_rank(
-    A: complex | np.number | Sequence[complex | np.number] | np.ndarray[_AtMost1D, np.dtype[np.number]],
+    A: complex | Sequence[complex] | np.ndarray[_AtMost1D, np.dtype[np.number]],
     tol: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
@@ -418,7 +425,7 @@ def matrix_rank(
 ) -> L[0, 1]: ...
 @overload  # =2d
 def matrix_rank(
-    A: Sequence[Sequence[complex | np.number]] | np.ndarray[tuple[int, int], np.dtype[np.number]],
+    A: Sequence[Sequence[complex]] | np.ndarray[tuple[int, int], np.dtype[np.number]],
     tol: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
@@ -426,7 +433,7 @@ def matrix_rank(
 ) -> np.int_: ...
 @overload  # =3d
 def matrix_rank(
-    A: Sequence[Sequence[Sequence[complex | np.number]]] | np.ndarray[tuple[int, int, int], np.dtype[np.number]],
+    A: Sequence[Sequence[Sequence[complex]]] | np.ndarray[tuple[int, int, int], np.dtype[np.number]],
     tol: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
@@ -434,7 +441,7 @@ def matrix_rank(
 ) -> np.ndarray[tuple[int], np.dtype[np.int_]]: ...
 @overload  # ≥4d
 def matrix_rank(
-    A: Sequence[Sequence[Sequence[_NestedSequence[complex | np.number]]]] | np.ndarray[_AtLeast4D, np.dtype[np.number]],
+    A: Sequence[Sequence[Sequence[_NestedSequence[complex]]]] | np.ndarray[_AtLeast4D, np.dtype[np.number]],
     tol: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
@@ -449,9 +456,23 @@ def matrix_rank(
     rtol: _ArrayLikeFloat_co | None = None,
 ) -> Any: ...
 
-# TODO: Returns a scalar for 2D arrays and
-# a `(x.ndim - 2)`` dimensional array otherwise
-def cond(x: _ArrayLikeComplex_co, p: float | L["fro", "nuc"] | None = None) -> Any: ...
+#
+@overload  # workaround for microsoft/pyright#10232
+def cond(x: np.ndarray[_JustAnyShape, np.dtype[np.number]], p: _OrderKind | None = None) -> Any: ...
+@overload  # 2d ~inexact32
+def cond(x: np.ndarray[tuple[int, int], np.dtype[_inexact32]], p: _OrderKind | None = None) -> np.float32: ...
+@overload  # 2d +inexact64
+def cond(x: _ToArrayC128_2d, p: _OrderKind | None = None) -> np.float64: ...
+@overload  # 2d ~number
+def cond(x: np.ndarray[tuple[int, int], np.dtype[np.number]], p: _OrderKind | None = None) -> np.floating: ...
+@overload  # >2d ~inexact32
+def cond(x: np.ndarray[_AtLeast3D, np.dtype[_inexact32]], p: _OrderKind | None = None) -> NDArray[np.float32]: ...
+@overload  # >2d +inexact64
+def cond(x: _ToArrayC128_3nd, p: _OrderKind | None = None) -> NDArray[np.float64]: ...
+@overload  # >2d ~number
+def cond(x: np.ndarray[_AtLeast3D, np.dtype[np.number]], p: _OrderKind | None = None) -> NDArray[np.floating]: ...
+@overload  # fallback
+def cond(x: _ArrayLikeComplex_co, p: _OrderKind | None = None) -> Any: ...
 
 # TODO: Returns a 2-tuple of scalars for 2D arrays and
 # a 2-tuple of `(a.ndim - 2)`` dimensional arrays otherwise
