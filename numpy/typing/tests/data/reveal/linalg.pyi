@@ -16,8 +16,10 @@ complex_list_2d: list[list[complex]]
 
 AR_any: np.ndarray
 AR_i8: npt.NDArray[np.int64]
+AR_f_: npt.NDArray[np.floating]
 AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
+AR_c_: npt.NDArray[np.complexfloating]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
@@ -71,9 +73,16 @@ assert_type(np.linalg.eigvalsh(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.eigvalsh(AR_c16), npt.NDArray[np.float64])
 
-assert_type(np.linalg.eig(AR_i8), EigResult)
-assert_type(np.linalg.eig(AR_f8), EigResult)
-assert_type(np.linalg.eig(AR_c16), EigResult)
+assert_type(np.linalg.eig(AR_i8), EigResult[np.float64] | EigResult[np.complex128])
+assert_type(np.linalg.eig(AR_f4), EigResult[np.float32] | EigResult[np.complex64])
+assert_type(np.linalg.eig(AR_f8), EigResult[np.float64] | EigResult[np.complex128])
+assert_type(np.linalg.eig(AR_c8), EigResult[np.complex64])
+assert_type(np.linalg.eig(AR_c16), EigResult[np.complex128])
+# mypy is being silly again here:
+# > Expression is of type "EigResult[Any]", not "EigResult[Any]"
+assert_type(np.linalg.eig(AR_f_), EigResult)  # type: ignore[assert-type]
+assert_type(np.linalg.eig(AR_c_), EigResult)  # type: ignore[assert-type]
+assert_type(np.linalg.eig(AR_any), EigResult)  # type: ignore[assert-type]
 
 assert_type(np.linalg.eigh(AR_i8), EighResult[np.float64, np.float64])
 assert_type(np.linalg.eigh(AR_f4), EighResult[np.float32, np.float32])
