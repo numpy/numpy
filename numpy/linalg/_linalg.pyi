@@ -85,17 +85,23 @@ type _JustAnyShape = tuple[Never, ...]  # workaround for microsoft/pyright#10232
 type _tuple2[T] = tuple[T, T]
 
 type _inexact32 = np.float32 | np.complex64
-type _to_inexact64 = np.complex128 | np.float64 | np.integer | np.bool
+type _to_float64 = np.float64 | np.integer | np.bool
+type _to_inexact64 = np.complex128 | _to_float64
+
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+type _Array3ND[ScalarT: np.generic] = np.ndarray[_AtLeast3D, np.dtype[ScalarT]]
 
 # anything that safe-casts (from floating) into float64/complex128
-type _ToArrayF64 = _ArrayLike[np.float64 | np.integer | np.bool] | _NestedSequence[float]
+type _ToArrayF64 = _ArrayLike[_to_float64] | _NestedSequence[float]
 type _ToArrayC128 = _ArrayLike[_to_inexact64] | _NestedSequence[complex]
 # the invariant `list` type avoids overlap with bool, int, etc
 type _AsArrayF64 = _ArrayLike[np.float64] | list[float] | _NestedSequence[list[float]]
 type _AsArrayC128 = _ArrayLike[np.complex128] | list[complex] | _NestedSequence[list[complex]]
 
-type _ToArrayC128_2d = np.ndarray[tuple[int, int], np.dtype[_to_inexact64]] | Sequence[Sequence[complex]]
-type _ToArrayC128_3nd = np.ndarray[_AtLeast3D, np.dtype[_to_inexact64]] | Sequence[Sequence[_NestedSequence[complex]]]
+type _ToArrayF64_2d = _Array2D[_to_float64] | Sequence[Sequence[float]]
+type _ToArrayF64_3nd = _Array3ND[_to_float64] | Sequence[Sequence[_NestedSequence[float]]]
+type _ToArrayC128_2d = _Array2D[_to_inexact64] | Sequence[Sequence[complex]]
+type _ToArrayC128_3nd = _Array3ND[_to_inexact64] | Sequence[Sequence[_NestedSequence[complex]]]
 
 type _OrderKind = L[1, -1, 2, -2, "fro", "nuc"] | float  # only accepts `-inf` and `inf` as `float`
 type _SideKind = L["L", "U", "l", "u"]
@@ -172,7 +178,6 @@ def solve(
 ) -> NDArray[complexfloating]: ...
 
 # keep in sync with the other inverse functions and cholesky
-# TODO: transparent shape types
 @overload  # inexact32
 def tensorinv[ScalarT: _inexact32](a: _ArrayLike[ScalarT], ind: int = 2) -> NDArray[ScalarT]: ...
 @overload  # +float64
@@ -193,7 +198,6 @@ def inv(a: _AsArrayC128) -> NDArray[np.complex128]: ...
 def inv(a: _ArrayLikeComplex_co) -> np.ndarray: ...
 
 # keep in sync with the other inverse functions and cholesky
-# TODO: transparent shape types
 @overload  # inexact32
 def pinv[ScalarT: _inexact32](
     a: _ArrayLike[ScalarT],
@@ -228,7 +232,6 @@ def pinv(
 ) -> NDArray[Any]: ...
 
 # keep in sync with the inverse functions
-# TODO: transparent shape types
 @overload  # inexact32
 def cholesky[ScalarT: _inexact32](a: _ArrayLike[ScalarT], /, *, upper: bool = False) -> NDArray[ScalarT]: ...
 @overload  # +float64
@@ -240,7 +243,6 @@ def cholesky(a: _ArrayLikeComplex_co, /, *, upper: bool = False) -> np.ndarray: 
 
 # NOTE: Technically this also accepts boolean array-likes, but that case is not very useful, so we skip it.
 #       If you have a use case for it, please open an issue.
-# TODO: transparent shape types
 @overload  # +int, n ≥ 0
 def matrix_power(a: _NestedSequence[int], n: _PosInt) -> NDArray[np.int_]: ...
 @overload  # +integer | ~object, n ≥ 0
@@ -425,7 +427,7 @@ def matrix_rank(
 ) -> L[0, 1]: ...
 @overload  # =2d
 def matrix_rank(
-    A: Sequence[Sequence[complex]] | np.ndarray[tuple[int, int], np.dtype[np.number]],
+    A: Sequence[Sequence[complex]] | _Array2D[np.number],
     tol: _ArrayLikeFloat_co | None = None,
     hermitian: bool = False,
     *,
@@ -460,11 +462,11 @@ def matrix_rank(
 @overload  # workaround for microsoft/pyright#10232
 def cond(x: np.ndarray[_JustAnyShape, np.dtype[np.number]], p: _OrderKind | None = None) -> Any: ...
 @overload  # 2d ~inexact32
-def cond(x: np.ndarray[tuple[int, int], np.dtype[_inexact32]], p: _OrderKind | None = None) -> np.float32: ...
+def cond(x: _Array2D[_inexact32], p: _OrderKind | None = None) -> np.float32: ...
 @overload  # 2d +inexact64
 def cond(x: _ToArrayC128_2d, p: _OrderKind | None = None) -> np.float64: ...
 @overload  # 2d ~number
-def cond(x: np.ndarray[tuple[int, int], np.dtype[np.number]], p: _OrderKind | None = None) -> np.floating: ...
+def cond(x: _Array2D[np.number], p: _OrderKind | None = None) -> np.floating: ...
 @overload  # >2d ~inexact32
 def cond(x: np.ndarray[_AtLeast3D, np.dtype[_inexact32]], p: _OrderKind | None = None) -> NDArray[np.float32]: ...
 @overload  # >2d +inexact64
@@ -474,12 +476,42 @@ def cond(x: np.ndarray[_AtLeast3D, np.dtype[np.number]], p: _OrderKind | None = 
 @overload  # fallback
 def cond(x: _ArrayLikeComplex_co, p: _OrderKind | None = None) -> Any: ...
 
-# TODO: Returns a 2-tuple of scalars for 2D arrays and
-# a 2-tuple of `(a.ndim - 2)`` dimensional arrays otherwise
+# keep in sync with `det`
+@overload  # workaround for microsoft/pyright#10232
+def slogdet(a: np.ndarray[_JustAnyShape, np.dtype[np.number]]) -> SlogdetResult: ...
+@overload  # 2d ~inexact32
+def slogdet[ScalarT: _inexact32](a: _Array2D[ScalarT]) -> SlogdetResult[np.float32, ScalarT]: ...
+@overload  # >2d ~inexact32
+def slogdet[ScalarT: _inexact32](a: _Array3ND[ScalarT]) -> SlogdetResult[NDArray[np.float32], NDArray[ScalarT]]: ...
+@overload  # 2d +float64
+def slogdet(a: _Array2D[_to_float64]) -> SlogdetResult[np.float64, np.float64]: ...
+@overload  # >2d +float64
+def slogdet(a: _Array3ND[_to_float64]) -> SlogdetResult[NDArray[np.float64], NDArray[np.float64]]: ...
+@overload  # 2d ~complex128
+def slogdet(a: _Array2D[np.complex128] | Sequence[list[complex]]) -> SlogdetResult[np.float64, np.complex128]: ...
+@overload  # >2d ~complex128
+def slogdet(
+    a: _Array3ND[np.complex128] | _NestedSequence[Sequence[list[complex]]]
+) -> SlogdetResult[NDArray[np.float64], NDArray[np.complex128]]: ...
+@overload  # fallback
 def slogdet(a: _ArrayLikeComplex_co) -> SlogdetResult: ...
 
-# TODO: Returns a 2-tuple of scalars for 2D arrays and
-# a 2-tuple of `(a.ndim - 2)`` dimensional arrays otherwise
+# keep in sync with `slogdet`
+@overload  # workaround for microsoft/pyright#10232
+def det(a: np.ndarray[_JustAnyShape, np.dtype[np.number]]) -> Any: ...
+@overload  # 2d ~inexact32
+def det[ScalarT: _inexact32](a: _Array2D[ScalarT]) -> ScalarT: ...
+@overload  # >2d ~inexact32
+def det[ScalarT: _inexact32](a: _Array3ND[ScalarT]) -> NDArray[ScalarT]: ...
+@overload  # 2d +float64
+def det(a: _Array2D[_to_float64]) -> np.float64: ...
+@overload  # >2d +float64
+def det(a: _Array3ND[_to_float64]) -> NDArray[np.float64]: ...
+@overload  # 2d ~complex128
+def det(a: _Array2D[np.complex128] | Sequence[list[complex]]) -> np.complex128: ...
+@overload  # >2d ~complex128
+def det(a: _Array3ND[np.complex128] | _NestedSequence[Sequence[list[complex]]]) -> NDArray[np.complex128]: ...
+@overload  # fallback
 def det(a: _ArrayLikeComplex_co) -> Any: ...
 
 # TODO: narrow return types

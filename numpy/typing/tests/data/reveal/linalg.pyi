@@ -16,6 +16,7 @@ float_list_2d: list[list[float]]
 float_list_3d: list[list[list[float]]]
 float_list_4d: list[list[list[list[float]]]]
 complex_list_2d: list[list[complex]]
+complex_list_3d: list[list[list[complex]]]
 
 AR_any: np.ndarray
 AR_f_: npt.NDArray[np.floating]
@@ -183,10 +184,22 @@ assert_type(np.linalg.cond(AR_f8_3d), npt.NDArray[np.float64])
 assert_type(np.linalg.slogdet(AR_i8), SlogdetResult)
 assert_type(np.linalg.slogdet(AR_f8), SlogdetResult)
 assert_type(np.linalg.slogdet(AR_c16), SlogdetResult)
+assert_type(np.linalg.slogdet(AR_f4_2d), SlogdetResult[np.float32, np.float32])
+assert_type(np.linalg.slogdet(AR_f8_2d), SlogdetResult[np.float64, np.float64])
+assert_type(np.linalg.slogdet(AR_f4_3d), SlogdetResult[npt.NDArray[np.float32], npt.NDArray[np.float32]])
+assert_type(np.linalg.slogdet(AR_f8_3d), SlogdetResult[npt.NDArray[np.float64], npt.NDArray[np.float64]])
+assert_type(np.linalg.slogdet(complex_list_2d), SlogdetResult[np.float64, np.complex128])
+assert_type(np.linalg.slogdet(complex_list_3d), SlogdetResult[npt.NDArray[np.float64], npt.NDArray[np.complex128]])
 
 assert_type(np.linalg.det(AR_i8), Any)
 assert_type(np.linalg.det(AR_f8), Any)
 assert_type(np.linalg.det(AR_c16), Any)
+assert_type(np.linalg.det(AR_f4_2d), np.float32)
+assert_type(np.linalg.det(AR_f8_2d), np.float64)
+assert_type(np.linalg.det(AR_f4_3d), npt.NDArray[np.float32])
+assert_type(np.linalg.det(AR_f8_3d), npt.NDArray[np.float64])
+assert_type(np.linalg.det(complex_list_2d), np.complex128)
+assert_type(np.linalg.det(complex_list_3d), npt.NDArray[np.complex128])
 
 assert_type(np.linalg.lstsq(AR_i8, AR_i8), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], np.int32, npt.NDArray[np.float64]])
 assert_type(np.linalg.lstsq(AR_i8, AR_f8), tuple[npt.NDArray[np.floating], npt.NDArray[np.floating], np.int32, npt.NDArray[np.floating]])
