@@ -2390,7 +2390,7 @@ PyArray_FromInterface(PyObject *origin)
         goto fail;
     }
     if (use_scalar_assign) {
-        /* 
+        /*
          * NOTE(seberg): I honestly doubt anyone is using this scalar path and we
          * could probably just deprecate (or just remove it in a 3.0 version).
          */
@@ -3732,21 +3732,20 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
     }
     if (((npy_intp) nread) < num) {
         /*
-         * Realloc memory for smaller number of elements, use original dtype
-         * which may have include a subarray (and is used for `nread`).
+         * Resize array to smaller number of elements. Note that original
+         * dtype may have included a subarray, so we may not be 1-d.
          */
-        const size_t nsize = PyArray_MAX(nread,1) * dtype->elsize;
-        char *tmp;
-
-        /* The handler is always valid */
-        if((tmp = PyDataMem_UserRENEW(PyArray_DATA(ret), nsize,
-                                     PyArray_HANDLER(ret))) == NULL) {
+        npy_intp dims[NPY_MAXDIMS];
+        dims[0] = (npy_intp)nread;
+        for (int i = 1; i < PyArray_NDIM(ret); i++) {
+            dims[i] = PyArray_DIMS(ret)[i];
+        }
+        PyArray_Dims new_dims = {dims, PyArray_NDIM(ret)};
+        if (PyArray_Resize_int(ret, &new_dims, 0) < 0) {
             Py_DECREF(dtype);
             Py_DECREF(ret);
-            return PyErr_NoMemory();
+            return NULL;
         }
-        ((PyArrayObject_fields *)ret)->data = tmp;
-        PyArray_DIMS(ret)[0] = nread;
     }
     Py_DECREF(dtype);
     return (PyObject *)ret;
@@ -3998,6 +3997,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     PyObject *iter = NULL;
     PyArrayObject *ret = NULL;
     npy_intp i, elsize, elcount;
+    npy_intp dims[NPY_MAXDIMS];
 
     if (dtype == NULL) {
         return NULL;
@@ -4037,6 +4037,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     if (ret == NULL) {
         goto done;
     }
+    /* set up for possible resizing */
+    memcpy(dims, PyArray_DIMS(ret), PyArray_NDIM(ret)*sizeof(npy_intp));
+    PyArray_Dims new_dims = {dims, PyArray_NDIM(ret)};
 
     char *item = PyArray_BYTES(ret);
     for (i = 0; i < count || count == -1; i++, item += elsize) {
@@ -4044,14 +4047,12 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         if (value == NULL) {
             if (PyErr_Occurred()) {
                 /* Fetching next item failed perhaps due to exhausting iterator */
-                goto done;
+                goto fail;
             }
             break;
         }
 
         if (NPY_UNLIKELY(i >= elcount) && elsize != 0) {
-            char *new_data = NULL;
-            npy_intp nbytes;
             /*
               Grow PyArray_DATA(ret):
               this is similar for the strategy for PyListObject, but we use
@@ -4060,31 +4061,18 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                     be suitable to reuse here.
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
-            if (!npy_mul_sizes_with_overflow(&nbytes, elcount, elsize)) {
-                /* The handler is always valid */
-                new_data = PyDataMem_UserRENEW(
-                        PyArray_BYTES(ret), nbytes, PyArray_HANDLER(ret));
-            }
-            if (new_data == NULL) {
-                PyErr_SetString(PyExc_MemoryError,
-                        "cannot allocate array memory");
+            dims[0] = elcount;
+            if (PyArray_Resize_int(ret, &new_dims, 0) < 0) {
                 Py_DECREF(value);
-                goto done;
+                goto fail;
             }
-            ((PyArrayObject_fields *)ret)->data = new_data;
-            /* resize array for cleanup: */
-            PyArray_DIMS(ret)[0] = elcount;
             /* Reset `item` pointer to point into realloc'd chunk */
-            item = new_data + i * elsize;
-            if (PyDataType_FLAGCHK(dtype, NPY_NEEDS_INIT)) {
-                /* Initialize new chunk: */
-                memset(item, 0, nbytes - i * elsize);
-            }
+            item = ((char *)PyArray_DATA(ret)) + i * elsize;
         }
 
         if (PyArray_Pack(dtype, item, value) < 0) {
             Py_DECREF(value);
-            goto done;
+            goto fail;
         }
         Py_DECREF(value);
     }
@@ -4093,46 +4081,22 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         PyErr_Format(PyExc_ValueError,
                 "iterator too short: Expected %zd but iterator had only %zd "
                 "items.", (Py_ssize_t)count, (Py_ssize_t)i);
-        goto done;
+        goto fail;
     }
 
     /*
      * Realloc the data so that don't keep extra memory tied up and fix
      * the arrays first dimension (there could be more than one).
      */
-    if (i == 0 || elsize == 0) {
-        /* The size cannot be zero for realloc. */
+    dims[0] = i;
+    if (!PyArray_Resize_int(ret, &new_dims, 0)) {
+        goto done;
     }
-    else {
-        /* Resize array to actual final size (it may be too large) */
-        /* The handler is always valid */
-        char *new_data = PyDataMem_UserRENEW(
-                PyArray_DATA(ret), i * elsize, PyArray_HANDLER(ret));
 
-        if (new_data == NULL) {
-            PyErr_SetString(PyExc_MemoryError,
-                    "cannot allocate array memory");
-            goto done;
-        }
-        ((PyArrayObject_fields *)ret)->data = new_data;
+  fail:
+    Py_CLEAR(ret);
 
-        if (count < 0) {
-            /*
-             * If the count was smaller than zero, the strides may be all 0
-             * (even in the later dimensions for `count < 0`!
-             * Thus, fix all strides here again for C-contiguity.
-             */
-            int oflags;
-            _array_fill_strides(
-                    PyArray_STRIDES(ret), PyArray_DIMS(ret), PyArray_NDIM(ret),
-                    PyArray_ITEMSIZE(ret), NPY_ARRAY_C_CONTIGUOUS, &oflags);
-            PyArray_STRIDES(ret)[0] = elsize;
-            assert(oflags & NPY_ARRAY_C_CONTIGUOUS);
-        }
-    }
-    PyArray_DIMS(ret)[0] = i;
-
- done:
+  done:
     Py_XDECREF(iter);
     Py_XDECREF(dtype);
     if (PyErr_Occurred()) {

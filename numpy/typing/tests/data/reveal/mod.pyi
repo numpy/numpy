@@ -27,13 +27,16 @@ f: float
 AR_b: npt.NDArray[np.bool]
 AR_m: npt.NDArray[np.timedelta64]
 
+# NOTE: the __divmod__ calls are workarounds for https://github.com/microsoft/pyright/issues/9663
+
 # Time structures
 
 assert_type(m % m, np.timedelta64)
 assert_type(m % m_nat, np.timedelta64[None])
 assert_type(m % m_int0, np.timedelta64[None])
 assert_type(m % m_int, np.timedelta64[int | None])
-assert_type(m_nat % m, np.timedelta64[None])
+# NOTE: Mypy incorrectly infers `timedelta64[Any]`, but pyright behaves correctly.
+assert_type(m_nat % m, np.timedelta64[None])  # type: ignore[assert-type]
 assert_type(m_int % m_nat, np.timedelta64[None])
 assert_type(m_int % m_int0, np.timedelta64[None])
 assert_type(m_int % m_int, np.timedelta64[int | None])
@@ -46,20 +49,22 @@ assert_type(m_td % m_td, np.timedelta64[dt.timedelta | None])
 assert_type(AR_m % m, npt.NDArray[np.timedelta64])
 assert_type(m % AR_m, npt.NDArray[np.timedelta64])
 
-assert_type(divmod(m, m), tuple[np.int64, np.timedelta64])
-assert_type(divmod(m, m_nat), tuple[np.int64, np.timedelta64[None]])
-assert_type(divmod(m, m_int0), tuple[np.int64, np.timedelta64[None]])
-# workarounds for https://github.com/microsoft/pyright/issues/9663
+#
+# NOTE: Mypy incorrectly infers `tuple[Any, ...]`, but pyright behaves correctly.
+assert_type(m.__divmod__(m), tuple[np.int64, np.timedelta64])  # type: ignore[assert-type]
+assert_type(m.__divmod__(m_nat), tuple[np.int64, np.timedelta64[None]])
+assert_type(m.__divmod__(m_int0), tuple[np.int64, np.timedelta64[None]])
 assert_type(m.__divmod__(m_int), tuple[np.int64, np.timedelta64[int | None]])
-assert_type(divmod(m_nat, m), tuple[np.int64, np.timedelta64[None]])
-assert_type(divmod(m_int, m_nat), tuple[np.int64, np.timedelta64[None]])
-assert_type(divmod(m_int, m_int0), tuple[np.int64, np.timedelta64[None]])
-assert_type(divmod(m_int, m_int), tuple[np.int64, np.timedelta64[int | None]])
-assert_type(divmod(m_int, m_td), tuple[np.int64, np.timedelta64[int | None]])
-assert_type(divmod(m_td, m_nat), tuple[np.int64, np.timedelta64[None]])
-assert_type(divmod(m_td, m_int0), tuple[np.int64, np.timedelta64[None]])
-assert_type(divmod(m_td, m_int), tuple[np.int64, np.timedelta64[int | None]])
-assert_type(divmod(m_td, m_td), tuple[np.int64, np.timedelta64[dt.timedelta | None]])
+# NOTE: Mypy incorrectly infers `tuple[Any, ...]`, but pyright behaves correctly.
+assert_type(m_nat.__divmod__(m), tuple[np.int64, np.timedelta64[None]])  # type: ignore[assert-type]
+assert_type(m_int.__divmod__(m_nat), tuple[np.int64, np.timedelta64[None]])
+assert_type(m_int.__divmod__(m_int0), tuple[np.int64, np.timedelta64[None]])
+assert_type(m_int.__divmod__(m_int), tuple[np.int64, np.timedelta64[int | None]])
+assert_type(m_int.__divmod__(m_td), tuple[np.int64, np.timedelta64[int | None]])
+assert_type(m_td.__divmod__(m_nat), tuple[np.int64, np.timedelta64[None]])
+assert_type(m_td.__divmod__(m_int0), tuple[np.int64, np.timedelta64[None]])
+assert_type(m_td.__divmod__(m_int), tuple[np.int64, np.timedelta64[int | None]])
+assert_type(m_td.__divmod__(m_td), tuple[np.int64, np.timedelta64[dt.timedelta | None]])
 
 assert_type(divmod(AR_m, m), tuple[npt.NDArray[np.int64], npt.NDArray[np.timedelta64]])
 assert_type(divmod(m, AR_m), tuple[npt.NDArray[np.int64], npt.NDArray[np.timedelta64]])
@@ -77,7 +82,6 @@ assert_type(b_ % AR_b, npt.NDArray[np.int8])
 
 assert_type(divmod(b_, b), tuple[np.int8, np.int8])
 assert_type(divmod(b_, b_), tuple[np.int8, np.int8])
-# workarounds for https://github.com/microsoft/pyright/issues/9663
 assert_type(b_.__divmod__(i), tuple[np.int_, np.int_])
 assert_type(b_.__divmod__(f), tuple[np.float64, np.float64])
 assert_type(b_.__divmod__(i8), tuple[np.int64, np.int64])
@@ -118,7 +122,6 @@ assert_type(i8 % AR_b, npt.NDArray[np.int64])
 assert_type(divmod(i8, b), tuple[np.int64, np.int64])
 assert_type(divmod(i8, i4), tuple[np.signedinteger, np.signedinteger])
 assert_type(divmod(i8, i8), tuple[np.int64, np.int64])
-# workarounds for https://github.com/microsoft/pyright/issues/9663
 assert_type(i8.__divmod__(f), tuple[np.float64, np.float64])
 assert_type(i8.__divmod__(f8), tuple[np.float64, np.float64])
 assert_type(divmod(i8, f4), tuple[np.floating, np.floating])
@@ -142,7 +145,6 @@ assert_type(divmod(i8, i8), tuple[np.int64, np.int64])
 assert_type(divmod(f8, i8), tuple[np.float64, np.float64])
 assert_type(divmod(i4, i8), tuple[np.signedinteger, np.signedinteger])
 assert_type(divmod(i4, i4), tuple[np.int32, np.int32])
-# workarounds for https://github.com/microsoft/pyright/issues/9663
 assert_type(f4.__divmod__(i8), tuple[np.floating, np.floating])
 assert_type(f4.__divmod__(i4), tuple[np.floating, np.floating])
 assert_type(AR_b.__divmod__(i8), tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]])
@@ -172,7 +174,6 @@ assert_type(AR_b % f8, npt.NDArray[np.float64])
 assert_type(divmod(b, f8), tuple[np.float64, np.float64])
 assert_type(divmod(f8, f8), tuple[np.float64, np.float64])
 assert_type(divmod(f4, f4), tuple[np.float32, np.float32])
-# workarounds for https://github.com/microsoft/pyright/issues/9663
 assert_type(f8.__rdivmod__(f), tuple[np.float64, np.float64])
 assert_type(f8.__rdivmod__(f4), tuple[np.float64, np.float64])
 assert_type(AR_b.__divmod__(f8), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])

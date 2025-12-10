@@ -654,7 +654,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
-    >>> np.asarray_chkfinite(a, dtype=float)
+    >>> np.asarray_chkfinite(a, dtype=np.float64)
     array([1., 2.])
 
     Raises ValueError if array_like contains Nans or Infs.
@@ -3857,13 +3857,21 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
         else:
-            keep = set(range(nd)) - set(axis)
+            keep = sorted(set(range(nd)) - set(axis))
             nkeep = len(keep)
-            # swap axis that should not be reduced to front
-            for i, s in enumerate(sorted(keep)):
-                a = a.swapaxes(i, s)
-            # merge reduced axis
-            a = a.reshape(a.shape[:nkeep] + (-1,))
+
+            def reshape_arr(a):
+                # move axis that should not be reduced to front
+                a = np.moveaxis(a, keep, range(nkeep))
+                # merge reduced axis
+                return a.reshape(a.shape[:nkeep] + (-1,))
+
+            a = reshape_arr(a)
+
+            weights = kwargs.get("weights")
+            if weights is not None:
+                kwargs["weights"] = reshape_arr(weights)
+
             kwargs['axis'] = -1
     elif keepdims and out is not None:
         index_out = (0, ) * nd
@@ -4627,7 +4635,7 @@ def _inverted_cdf(n, quantiles):
 def _quantile_ureduce_func(
     a: np.ndarray,
     q: np.ndarray,
-    weights: np.ndarray,
+    weights: np.ndarray | None,
     axis: int | None = None,
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
@@ -4731,7 +4739,7 @@ def _quantile(
     if weights is None:
         # --- Computation of indexes
         # Index where to find the value in the sorted array.
-        # Virtual because it is a floating point value, not an valid index.
+        # Virtual because it is a floating point value, not a valid index.
         # The nearest neighbours are used for interpolation
         try:
             method_props = _QuantileMethods[method]
@@ -4827,6 +4835,9 @@ def _quantile(
         # distribution function cdf
         cdf = weights.cumsum(axis=0, dtype=np.float64)
         cdf /= cdf[-1, ...]  # normalization to 1
+        if np.isnan(cdf[-1]).any():
+            # Above calculations should normally warn for the zero/inf case.
+            raise ValueError("Weights included NaN, inf or were all zero.")
         # Search index i such that
         #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
         # is then equivalent to
@@ -5228,7 +5239,7 @@ def delete(arr, obj, axis=None):
     Often it is preferable to use a boolean mask. For example:
 
     >>> arr = np.arange(12) + 1
-    >>> mask = np.ones(len(arr), dtype=bool)
+    >>> mask = np.ones(len(arr), dtype=np.bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
 
@@ -5611,7 +5622,7 @@ def append(arr, values, axis=None):
     the array at index 0 has 2 dimension(s) and the array at index 1 has 1
     dimension(s)
 
-    >>> a = np.array([1, 2], dtype=int)
+    >>> a = np.array([1, 2], dtype=np.int_)
     >>> c = np.append(a, [])
     >>> c
     array([1., 2.])

@@ -52,7 +52,7 @@ tuple holding a single array) is also valid.
 If 'out' is None (the default), a uninitialized output array is created,
 which will be filled in the ufunc.  At the end, this array is returned
 unless it is zero-dimensional, in which case it is converted to a scalar;
-this conversion can be avoided by passing in ``out=...``. This can also be 
+this conversion can be avoided by passing in ``out=...``. This can also be
 spelled `out=Ellipsis` if you think that is clearer.
 
 Note that the output is filled only in the places that the broadcast
@@ -183,14 +183,17 @@ possess. None of the attributes can be set.
    pair: ufunc; attributes
 
 
-============  =================================================================
-**__doc__**   A docstring for each ufunc. The first part of the docstring is
-              dynamically generated from the number of outputs, the name, and
-              the number of inputs. The second part of the docstring is
-              provided at creation time and stored with the ufunc.
+=================  =================================================================
+**__doc__**        A docstring for each ufunc. The first part of the docstring is
+                   dynamically generated from the number of outputs, the name, and
+                   the number of inputs. The second part of the docstring is
+                   provided at creation time and stored with the ufunc.
 
-**__name__**  The name of the ufunc.
-============  =================================================================
+**__name__**       The name of the ufunc.
+
+**__signature__**  The call signature of the ufunc, as an :class:`inspect.Signature`
+                   object.
+=================  =================================================================
 
 .. autosummary::
    :toctree: generated/

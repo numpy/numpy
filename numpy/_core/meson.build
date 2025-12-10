@@ -51,6 +51,7 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
+# 0x00000015 - 2.5.x
 C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the
@@ -1116,6 +1117,7 @@ endforeach
 # ------------------------------
 src_multiarray_umath_common = [
   'src/common/array_assign.c',
+  'src/common/blas_utils.c',
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
@@ -1126,11 +1128,11 @@ src_multiarray_umath_common = [
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
   'src/common/npy_cpu_dispatch.c',
+  'src/common/npy_sort.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
   src_multiarray_umath_common += [
-    'src/common/blas_utils.c',
     'src/common/cblasfuncs.c',
     'src/common/python_xerbla.c',
   ]
@@ -1410,6 +1412,7 @@ python_sources = [
   '_type_aliases.pyi',
   '_ufunc_config.py',
   '_ufunc_config.pyi',
+  '_umath_tests.pyi',
   'arrayprint.py',
   'arrayprint.pyi',
   'cversions.py',

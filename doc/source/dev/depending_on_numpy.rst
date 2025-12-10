@@ -92,7 +92,7 @@ If a package either uses the NumPy C-API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
 of the package.
 
-By default, NumPy exposes a API that is backward compatible with the earliest
+By default, NumPy exposes an API that is backward compatible with the earliest
 NumPy version that supports the oldest Python version currently supported by
 NumPy. For example, NumPy 1.25.0 supports Python 3.9 and above; and the
 earliest NumPy version to support Python 3.9 was 1.19. Therefore we guarantee
@@ -141,9 +141,7 @@ for dropping support for old Python and NumPy versions: :ref:`NEP29`. We
 recommend all packages depending on NumPy to follow the recommendations in NEP
 29.
 
-For *run-time dependencies*, specify version bounds using
-``install_requires`` in ``setup.py`` (assuming you use ``numpy.distutils`` or
-``setuptools`` to build).
+For *run-time dependencies*, specify version bounds in `pyproject.toml`.
 
 Most libraries that rely on NumPy will not need to set an upper
 version bound: NumPy is careful to preserve backward-compatibility.

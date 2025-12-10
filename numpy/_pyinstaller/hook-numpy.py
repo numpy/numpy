@@ -32,5 +32,4 @@ excludedimports = [
     "f2py",
     "setuptools",
     "distutils",
-    "numpy.distutils",
 ]

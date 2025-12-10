@@ -793,7 +793,7 @@ cdef class Generator:
         than the optimized sampler even if each element of ``p`` is 1 / len(a).
 
         ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
-        to normalize using ``p = p / np.sum(p, dtype=float)``.
+        to normalize using ``p = p / np.sum(p, dtype=np.float64)``.
 
         When passing ``a`` as an integer type and ``size`` is not specified, the return
         type is a native Python ``int``.
@@ -2083,7 +2083,7 @@ cdef class Generator:
         -----
         The probability density for the Pareto II distribution is
 
-        .. math:: p(x) = \\frac{a}{{x+1}^{a+1}} , x \ge 0
+        .. math:: p(x) = \\frac{a}{(x+1)^{a+1}} , x \ge 0
 
         where :math:`a > 0` is the shape.
 

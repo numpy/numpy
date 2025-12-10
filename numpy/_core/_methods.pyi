@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Concatenate, TypeAlias
+from typing import Any, Concatenate
 
 import numpy as np
 
@@ -7,7 +7,7 @@ from . import _exceptions as _exceptions
 
 ###
 
-_Reduce2: TypeAlias = Callable[Concatenate[object, ...], Any]
+type _Reduce2 = Callable[Concatenate[object, ...], Any]
 
 ###
 

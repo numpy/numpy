@@ -1,17 +1,15 @@
-import sys
 from collections import deque
 from pathlib import Path
-from typing import Any, Generic, TypeVar, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
+from numpy._typing import _AnyShape
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
-class SubClass(npt.NDArray[_ScalarT_co]): ...
-
-class IntoSubClass(Generic[_ScalarT_co]):
-    def __array__(self) -> SubClass[_ScalarT_co]: ...
+class IntoSubClass[ScalarT: np.generic]:
+    def __array__(self) -> SubClass[ScalarT]: ...
 
 i8: np.int64
 
@@ -117,17 +115,17 @@ assert_type(np.frombuffer(A, dtype="c16"), npt.NDArray[Any])
 _x_bool: bool
 _x_int: int
 _x_float: float
-_x_timedelta: np.timedelta64
-_x_datetime: np.datetime64
+_x_timedelta: np.timedelta64[int]
+_x_datetime: np.datetime64[int]
 
 assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.arange(0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64[Any]]])
+assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64]])
 assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[np.int_]])
@@ -216,9 +214,23 @@ assert_type(np.indices([1, 2, 3], sparse=True), tuple[npt.NDArray[np.int_], ...]
 
 assert_type(np.fromfunction(func, (3, 5)), SubClass[np.float64])
 
-assert_type(np.identity(10), npt.NDArray[np.float64])
-assert_type(np.identity(10, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.identity(10, dtype=int), npt.NDArray[Any])
+assert_type(np.identity(3), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.identity(3, dtype=np.int8), np.ndarray[tuple[int, int], np.dtype[np.int8]])
+assert_type(np.identity(3, dtype=bool), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.identity(3, dtype="bool"), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.identity(3, dtype="b1"), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.identity(3, dtype="?"), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.identity(3, dtype=int), np.ndarray[tuple[int, int], np.dtype[np.int_ | Any]])
+assert_type(np.identity(3, dtype="int"), np.ndarray[tuple[int, int], np.dtype[np.int_ | Any]])
+assert_type(np.identity(3, dtype="n"), np.ndarray[tuple[int, int], np.dtype[np.int_ | Any]])
+assert_type(np.identity(3, dtype=float), np.ndarray[tuple[int, int], np.dtype[np.float64 | Any]])
+assert_type(np.identity(3, dtype="float"), np.ndarray[tuple[int, int], np.dtype[np.float64 | Any]])
+assert_type(np.identity(3, dtype="f8"), np.ndarray[tuple[int, int], np.dtype[np.float64 | Any]])
+assert_type(np.identity(3, dtype="d"), np.ndarray[tuple[int, int], np.dtype[np.float64 | Any]])
+assert_type(np.identity(3, dtype=complex), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
+assert_type(np.identity(3, dtype="complex"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
+assert_type(np.identity(3, dtype="c16"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
+assert_type(np.identity(3, dtype="D"), np.ndarray[tuple[int, int], np.dtype[np.complex128 | Any]])
 
 assert_type(np.atleast_1d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_1d(C), npt.NDArray[Any])
@@ -254,10 +266,9 @@ assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.block(C), npt.NDArray[Any])
 
-if sys.version_info >= (3, 12):
-    from collections.abc import Buffer
+from collections.abc import Buffer
 
-    def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
+def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
 
-    buffer: Buffer
-    assert_type(create_array(buffer), npt.NDArray[Any])
+buffer: Buffer
+assert_type(create_array(buffer), npt.NDArray[Any])

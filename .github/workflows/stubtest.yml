@@ -34,16 +34,16 @@ jobs:
       matrix:
         # TODO: consider including macos and windows
         os: [ubuntu]
-        py: ["3.11", "3.14"]
+        py: ["3.12", "3.14"]
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
+      - uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a # v7.1.5
         with:
           python-version: ${{ matrix.py }}
           activate-environment: true

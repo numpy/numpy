@@ -45,6 +45,7 @@ typedef struct npy_runtime_imports_struct {
     PyObject *_std;
     PyObject *_sum;
     PyObject *_ufunc_doc_signature_formatter;
+    PyObject *_ufunc_inspect_signature_builder;
     PyObject *_usefields;
     PyObject *_var;
     PyObject *_view_is_safe;

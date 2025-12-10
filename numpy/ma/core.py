@@ -46,7 +46,6 @@ from numpy import (
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
-from numpy._utils._inspect import formatargspec, getargspec
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -132,19 +131,6 @@ def doc_note(initialdoc, note):
     notedoc = f"\n\nNotes\n-----\n{inspect.cleandoc(note)}\n"
 
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
-
-
-# TODO: remove/deprecate once `ma.extras._fromnxfunction.getdoc` no longer uses it
-def get_object_signature(obj):
-    """
-    Get the signature from obj
-
-    """
-    try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
-        sig = ''
-    return sig
 
 
 ###############################################################################
@@ -2291,7 +2277,7 @@ def masked_object(x, value, copy=True, shrink=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> food = np.array(['green_eggs', 'ham'], dtype=object)
+    >>> food = np.array(['green_eggs', 'ham'], dtype=np.object_)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
     >>> eat
@@ -2300,7 +2286,7 @@ def masked_object(x, value, copy=True, shrink=True):
            fill_value='green_eggs',
                 dtype=object)
     >>> # plain ol` ham is boring
-    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
+    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=np.object_)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
     >>> eat
     masked_array(data=['cheese', 'ham', 'pineapple'],
@@ -2417,7 +2403,7 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=float)
+    >>> a = np.arange(5, dtype=np.float64)
     >>> a[2] = np.nan
     >>> a[3] = np.inf
     >>> a
@@ -6653,14 +6639,14 @@ class mvoid(MaskedArray):
 
     def tolist(self):
         """
-    Transforms the mvoid object into a tuple.
+        Transforms the mvoid object into a tuple.
 
-    Masked fields are replaced by None.
+        Masked fields are replaced by None.
 
-    Returns
-    -------
-    returned_tuple
-        Tuple of fields
+        Returns
+        -------
+        returned_tuple
+            Tuple of fields
         """
         _mask = self._mask
         if _mask is nomask:
@@ -8616,7 +8602,7 @@ def asarray(a, dtype=None, order=None):
                         subok=False, order=order)
 
 
-def asanyarray(a, dtype=None, order='A'):
+def asanyarray(a, dtype=None, order=None):
     """
     Convert the input to a masked array, conserving subclasses.
 
@@ -8629,14 +8615,13 @@ def asanyarray(a, dtype=None, order='A'):
         Input data, in any form that can be converted to an array.
     dtype : dtype, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F', 'A'}, optional
-        Specify the order of the array.  If order is 'C', then the array
-        will be in C-contiguous order (last-index varies the fastest).
-        If order is 'F', then the returned array will be in
-        Fortran-contiguous order (first-index varies the fastest).
-        If order is 'A' (default), then the returned array may be
-        in any order (either C-, Fortran-contiguous, or even discontiguous),
-        unless a copy is required, in which case it will be C-contiguous.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array ``a``.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if ``a`` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'K'.
 
     Returns
     -------
@@ -8670,7 +8655,7 @@ def asanyarray(a, dtype=None, order='A'):
         isinstance(a, MaskedArray)
         and (dtype is None or dtype == a.dtype)
         and (
-            order == 'A'
+            order in {None, 'A', 'K'}
             or order == 'C' and a.flags.carray
             or order == 'F' and a.flags.f_contiguous
         )
