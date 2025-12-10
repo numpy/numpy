@@ -38,9 +38,9 @@ jobs:
           - [macos, macos-14, macosx_arm64, accelerate]
           - [windows, windows-2022, win_amd64, ""]
           - [windows, windows-11-arm, win_arm64, ""]
-          - [ios, macos-15-intel, ios_x86_64_iphonesimulator, openblas]
+          - [ios, macos-15-intel, ios_x86_64_iphonesimulator, ""]
           - [ios, macos-14, ios_arm64_iphonesimulator, accelerate]
-          - [ios, macos-14, ios_arm64_iphoneos, openblas]
+          - [ios, macos-14, ios_arm64_iphoneos, ""]
         python: ["cp313"]
 
     env:
