@@ -440,6 +440,8 @@ endforeach
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
   # We can't programmatically check iOS; but we do know what format it uses.
+  # On iOS, long double is identical to the double type:
+  # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
   if host_machine.system() == 'ios'
     longdouble_format = 'IEEE_DOUBLE_LE'
   else
@@ -932,7 +934,7 @@ foreach gen_mtargets : [
     'loops_arithm_fp.dispatch.h',
     src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
     [
-      X86_V3, X86_V2, 
+      X86_V3, X86_V2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
@@ -965,7 +967,7 @@ foreach gen_mtargets : [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
     [
-      X86_V4, X86_V3, 
+      X86_V4, X86_V3,
     ]
   ],
   [
