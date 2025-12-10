@@ -2,7 +2,7 @@
 build-backend = "mesonpy"
 requires = [
     # TODO: replace with an upstream version once it has Android support.
-    "meson-python>=0.15.0 @ https://github.com/mhsmith/meson-python",
+    "meson-python @ git+https://github.com/mhsmith/meson-python@android",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
@@ -201,6 +201,9 @@ setup-args = ["-Duse-ilp64=true", "-Dallow-noblas=false"]
 build-dir = "build"
 
 [tool.cibuildwheel.android.environment]
+# Python 3.13 defaults to API level 21, which lacks some required math functions.
+ANDROID_API_LEVEL = "24"
+
 # TODO: add OpenBLAS
 INSTALL_OPENBLAS = "false"
 
@@ -237,6 +240,19 @@ repair-wheel-command = ""
 
 [[tool.cibuildwheel.overrides]]
 select = ["*-android*", "*-ios*", "*-pyodide*"]
+before-test = ""
+
+# Any packages which appear both here and in test_requirements.txt should be kept in
+# sync.
+test-requires = [
+    "hypothesis==6.152.1",
+    "pytest==9.1.0",
+    "tzdata",
+    "pytest-xdist",
+]
+
+# Mobile and WASM platforms can't run the cibw_test_command shell script, so they must
+# run Python directly.
 test-command = """
     python -m pytest --pyargs numpy \
         -m 'not slow' \
