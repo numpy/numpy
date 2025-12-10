@@ -1,7 +1,8 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.15.0",
+    # TODO: replace with an upstream version once it has Android support.
+    "meson-python>=0.15.0 @ https://github.com/mhsmith/meson-python",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
@@ -151,6 +152,18 @@ before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
 
+[tool.cibuildwheel.android.environment]
+# TODO: add OpenBLAS
+INSTALL_OPENBLAS = "false"
+
+[tool.cibuildwheel.android.config-settings]
+# TODO: add OpenBLAS
+setup-args = [
+    "-Dallow-noblas=true",
+    "-Dblas=none",
+    "-Dlapack=none",
+]
+
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
@@ -194,6 +207,10 @@ select = "*pyodide*"
 before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
 repair-wheel-command = ""
+
+# Mobile and WASM platforms can't run a shell script, so they must run Python directly.
+[[tool.cibuildwheel.overrides]]
+select = ["*-android*", "*-ios*", "*-pyodide*"]
 test-command = "python -m pytest --pyargs numpy -m 'not slow'"
 
 [tool.meson-python]
