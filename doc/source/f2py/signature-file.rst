@@ -392,14 +392,15 @@ The following attributes can be used by F2PY.
   * ``inplace``
       The corresponding argument is considered to be an input/output or *in situ* output
       argument. ``intent(inplace)`` arguments must be NumPy arrays of a proper
-      size. If the type of an array is not "proper" or the array is
+      size. If the size of an array is not "proper" or the array is
       non-contiguous then the routine will be passed a fixed copy of array,
       which has the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag set, so that the
       result will be copied back to the original array on exit.
 
       .. note::
 
-        ``intent(inplace)`` is recommended over ``inout``, but not over ``in,out``.
+         Since copies may be made, ``intent(inplace)`` can be slower than expected.
+         It is recommended over ``inout``, but not over ``in,out``.
 
   * ``out``
       The corresponding argument is considered to be a return variable. It is appended to the

@@ -1026,13 +1026,28 @@ ndarray_from_pyobj(const int type_num,
             return NULL;
         }
 
-        /* here we have always intent(in) or intent(inplace) */
+        /*
+         * Here, we have always intent(in) or intent(inplace)
+         * and require a copy for input.  We allow arbitrary casting for
+         * input, but for inplace we check that the types are equivalent.
+         */
 
         {
           int flags = NPY_ARRAY_FORCECAST | NPY_ARRAY_ENSURECOPY
               | ((intent & F2PY_INTENT_C) ? NPY_ARRAY_IN_ARRAY
                  : NPY_ARRAY_IN_FARRAY);
           if (intent & F2PY_INTENT_INPLACE) {
+              if (!(ARRAY_ISCOMPATIBLE(arr, type_num)) ||
+                  (PyArray_ISSIGNED(arr) && PyTypeNum_ISUNSIGNED(type_num)) ||
+                  (PyArray_ISUNSIGNED(arr) && PyTypeNum_ISSIGNED(type_num))
+                  ) {
+                  sprintf(mess, "failed to initialize intent(inplace) array"
+                          " -- input '%c' not compatible to '%c'",
+                          PyArray_DESCR(arr)->type, descr->type);
+                  PyErr_SetString(PyExc_ValueError, mess);
+                  Py_DECREF(descr);
+                  return NULL;
+              }
               flags |= NPY_ARRAY_WRITEBACKIFCOPY;
           }
           /* Steals reference to descr */
