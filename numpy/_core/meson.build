@@ -1121,6 +1121,7 @@ src_multiarray_umath_common = [
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
   'src/common/npy_cpu_dispatch.c',
+  'src/common/npy_sort.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
