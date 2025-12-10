@@ -116,7 +116,7 @@ two notable exceptions:
   :term:`proper-contiguous <contiguous>` and have a compatible ``dtype``,
   otherwise an exception is raised.
 * ``intent(inplace)`` array arguments must be arrays. If these have
-  incompatible order or type, a converted copy is passed in, which is
+  incompatible order or size, a converted copy is passed in, which is
   copied back into the original array on exit (see the ``intent(inplace)``
   :ref:`attribute <f2py-attributes>` for more information).
 

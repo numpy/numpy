@@ -697,7 +697,21 @@ class TestSharedMemory:
             assert obj.dtype.type is not self.type.type
             assert not obj.flags["FORTRAN"] and obj.flags["CONTIGUOUS"]
             shape = obj.shape
-            a = self.array(shape, intent.inplace, obj)
+            same_kind = obj.dtype.kind == self.type.dtype.kind
+            # We avoid pytest.raises here since if the error is not raised,
+            # we need to do the callback to avoid a runtime warning.
+            try:
+                a = self.array(shape, intent.inplace, obj)
+            except ValueError as exc:
+                assert not same_kind, "Array not created while having same kind"
+                assert "not compatible" in str(exc)
+                return
+
+            if not same_kind:
+                # Shouldn't happen!  Resolve write-back to get right error.
+                wrap.resolve_write_back_if_copy(a.arr)
+                assert same_kind, "Array created despite not having same kind"
+
             assert obj[1][2] == a.arr[1][2], repr((obj, a.arr))
             change_item = 54 if self.type.dtype != bool else False
             a.arr[1][2] = change_item
@@ -706,13 +720,8 @@ class TestSharedMemory:
             assert obj[1][2] != np.array(change_item, dtype=self.type.dtype)
             assert a.arr.flags["WRITEBACKIFCOPY"]
             assert a.arr.base is obj
-            # Propagate back to obj, ignoring warnings about loosing .imag.
-            if (np.issubdtype(a.arr.dtype, np.complexfloating)
-                    and not np.issubdtype(t.dtype, np.complexfloating)):
-                with pytest.warns(np.exceptions.ComplexWarning):
-                    code = wrap.resolve_write_back_if_copy(a.arr)
-            else:
-                code = wrap.resolve_write_back_if_copy(a.arr)
+            # Propagate back to obj.
+            code = wrap.resolve_write_back_if_copy(a.arr)
             assert code == 1, "no write-back resolution was done!"
             assert obj[1][2] == np.array(change_item, dtype=self.type.dtype)
             # Should not affect attributes.

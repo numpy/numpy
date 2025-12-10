@@ -6,4 +6,7 @@ copy is kept a separate array, which, after being passed and
 presumably modified by the fortran routine, is copied back to the
 input routine. This means one no longer has the risk that pre-existing
 views or slices of the input array start pointing to unallocated
-memory.
+memory. However, to avoid the writeback leading to very different results,
+it is allowed only if the array has equivalent type to that used in
+the fortran routine (i.e., ``dtype.kind`` is the same, thus allowing, e.g.,
+float input to a routine expecting double, but not integer input).

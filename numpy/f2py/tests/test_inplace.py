@@ -41,3 +41,9 @@ class TestInplace(util.F2PyTest):
         assert k is ref_k
         assert np.allclose(k, exp_k)
         assert np.allclose(a, exp_a)
+
+    @pytest.mark.parametrize("func", ["inplace", "inplace_out"])
+    def test_inplace_error(self, func):
+        ffunc = getattr(self.module, func)
+        with pytest.raises(ValueError, match="input.*not compatible"):
+            ffunc(np.array([1 + 1j]))
