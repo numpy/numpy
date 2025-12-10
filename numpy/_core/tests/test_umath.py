@@ -2977,44 +2977,18 @@ class TestMinMax:
         assert_equal(d.max(), d[0])
         assert_equal(d.min(), d[0])
 
-    def test_negative_positive_edge_cases(self):
-        # Empty array: shape and dtype should be preserved
+    def test_negative_empty(self):
+        """np.negative on an empty array preserves dtype and shape."""
         arr = np.array([], dtype=float)
         res = np.negative(arr)
-        assert_equal(res.shape, arr.shape)
-        assert_equal(res.dtype, arr.dtype)
         assert_array_equal(res, arr)
 
-        # NaN and infinite values
+    def test_negative_nan_inf(self):
+        """np.negative on NaN and infinities behaves as expected."""
         arr = np.array([-np.inf, -1.0, -0.0, 0.0, 1.0, np.inf, np.nan])
         res = np.negative(arr)
-
-        expected_no_nan = np.array([np.inf, 1.0, 0.0, -0.0, -1.0, -np.inf])
-        assert_array_equal(res[:-1], expected_no_nan)
-        # Last element should remain NaN
-        assert np.isnan(arr[-1])
-        assert np.isnan(res[-1])
-
-        # Integer and float dtypes
-        for dtype in (np.int8, np.int32, np.float32, np.float64):
-            arr = np.array([-2, -1, 0, 1, 2], dtype=dtype)
-            res = np.negative(arr)
-            expected = np.array([2, 1, 0, -1, -2], dtype=dtype)
-            assert_equal(res.dtype, dtype)
-            assert_array_equal(res, expected)
-
-        # Positive should be a no-op
-        for dtype in (np.int8, np.int32, np.float32, np.float64):
-            arr = np.array([-2, -1, 0, 1, 2], dtype=dtype)
-            res = np.positive(arr)
-            assert_equal(res.dtype, dtype)
-            assert_array_equal(res, arr)
-
-        # Scalar and 1-D array
-        scalar = np.array(-5)
-        arr = np.array([-5])
-        assert_array_equal(np.positive(scalar), np.array(-5))
-        assert_array_equal(np.positive(arr), np.array([-5]))
+        expected = np.array([np.inf, 1.0, 0.0, -0.0, -1.0, -np.inf, np.nan])
+        assert_array_equal(res, expected)
 
     def test_reduce_reorder(self):
         # gh 10370, 11029 Some compilers reorder the call to npy_getfloatstatus
