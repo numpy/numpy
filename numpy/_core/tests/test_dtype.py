@@ -21,13 +21,12 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def assert_dtype_equal(a, b):
@@ -978,16 +977,14 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -997,8 +994,7 @@ class TestMonsterType:
         with contextlib.suppress(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d

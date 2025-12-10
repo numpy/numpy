@@ -38,7 +38,6 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -55,7 +54,11 @@ from numpy.testing import (
     runstring,
     temppath,
 )
-from numpy.testing._private.utils import _no_tracing, requires_memory
+from numpy.testing._private.utils import (
+    _no_tracing,
+    requires_deep_recursion,
+    requires_memory,
+)
 
 
 def assert_arg_sorted(arr, arg):
@@ -9349,6 +9352,7 @@ class TestConversion:
         assert_equal(bool(np.array([True])), True)
         assert_equal(bool(np.array([[42]])), True)
 
+    @requires_deep_recursion
     def test_to_bool_scalar_not_convertible(self):
 
         class NotConvertible:
@@ -9357,11 +9361,6 @@ class TestConversion:
 
         assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
-        if IS_PYSTON:
-            pytest.skip("Pyston disables recursion checking")
-        if IS_WASM:
-            pytest.skip("Pyodide/WASM has limited stack size")
-
         self_containing = np.array([None])
         self_containing[0] = self_containing
 
