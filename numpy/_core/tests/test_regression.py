@@ -18,6 +18,7 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
+    IS_WASM,
     _assert_valid_refcount,
     assert_,
     assert_almost_equal,
