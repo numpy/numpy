@@ -1,3 +1,6 @@
+# Any packages which appear both here and in the pyproject.toml test-requires should be
+# kept in sync.
+
 Cython
 wheel==0.38.1
 setuptools==65.5.1 ; python_version < '3.12'
