@@ -27,7 +27,11 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
-from numpy.testing._private.utils import _no_tracing, requires_memory, requires_deep_recursion
+from numpy.testing._private.utils import (
+    _no_tracing,
+    requires_deep_recursion,
+    requires_memory,
+)
 
 
 class TestRegression:

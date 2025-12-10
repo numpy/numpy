@@ -2853,6 +2853,7 @@ def requires_deep_recursion(func):
             '--with-thread-sanitizer' in config_args
         )
         if address_sanitizer or thread_sanitizer:
-            pytest.skip("AddressSanitizer and ThreadSanitizer do not support deep recursion")
+            pytest.skip("AddressSanitizer and ThreadSanitizer do not support "
+                        "deep recursion")
         return func(*args, **kwargs)
     return wrapper

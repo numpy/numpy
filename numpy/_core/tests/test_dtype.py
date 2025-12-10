@@ -28,6 +28,7 @@ from numpy.testing import (
 )
 from numpy.testing._private.utils import requires_deep_recursion
 
+
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
     assert_equal(hash(a), hash(b),

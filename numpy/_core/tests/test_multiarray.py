@@ -54,7 +54,11 @@ from numpy.testing import (
     runstring,
     temppath,
 )
-from numpy.testing._private.utils import _no_tracing, requires_memory, requires_deep_recursion
+from numpy.testing._private.utils import (
+    _no_tracing,
+    requires_deep_recursion,
+    requires_memory,
+)
 
 
 def assert_arg_sorted(arr, arg):
