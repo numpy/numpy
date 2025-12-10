@@ -427,6 +427,11 @@ __ https://www.openexr.com/about.html
 
     This macro is defined to a NaN value, guaranteed to have its sign bit unset.
 
+.. c:macro:: NPY_MAX_HALF
+
+    This macro is defined to the largest finite half-precision value 
+    representable in IEEE 754 (``65504.0``).
+
 .. c:function:: float npy_half_to_float(npy_half h)
 
    Converts a half-precision float to a single-precision float.

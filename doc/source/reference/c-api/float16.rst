@@ -1,7 +1,7 @@
 .. _float16:
 
-Header only half-precision functions
-====================================
+Half-precision API
+==================
 
 The header file ``<numpy/float16.h>`` provides helper routines for working
 with IEEE 754-2008 16-bit floating-point values
@@ -62,42 +62,33 @@ __ https://www.openexr.com/about.html
 Constants
 ---------
 
-:c:macro:: NPY_HALF_ZERO
+:c:macro:`NPY_HALF_ZERO`
+  Bit pattern for positive zero.
 
-   Bit pattern for positive zero.
+:c:macro:`NPY_HALF_PZERO`
+  Alias for ``NPY_HALF_ZERO`` (positive zero).
 
-:c:macro:: NPY_HALF_PZERO
+:c:macro:`NPY_HALF_NZERO`
+  Bit pattern for negative zero.
 
-   Alias for ``NPY_HALF_ZERO`` (positive zero).
+:c:macro:`NPY_HALF_ONE`
+  Bit pattern for the value 1.0.
 
-:c:macro:: NPY_HALF_NZERO
+:c:macro:`NPY_HALF_NEGONE`
+  Bit pattern for the value -1.0.
 
-   Bit pattern for negative zero.
+:c:macro:`NPY_HALF_PINF`
+  Bit pattern for positive infinity.
 
-:c:macro:: NPY_HALF_ONE
+:c:macro:`NPY_HALF_NINF`
+  Bit pattern for negative infinity.
 
-   Bit pattern for the value 1.0.
+:c:macro:`NPY_HALF_NAN`
+  Bit pattern for a NaN value, guaranteed to have its sign bit unset.
 
-:c:macro:: NPY_HALF_NEGONE
-
-   Bit pattern for the value -1.0.
-
-:c:macro:: NPY_HALF_PINF
-
-   Bit pattern for positive infinity.
-
-:c:macro:: NPY_HALF_NINF
-
-   Bit pattern for negative infinity.
-
-:c:macro:: NPY_HALF_NAN
-
-   Bit pattern for a NaN value, guaranteed to have its sign bit unset.
-
-:c:macro:: NPY_MAX_HALF
-
-   Bit pattern for the largest finite half-precision value representable in
-   IEEE 754 (``65504.0``).
+:c:macro:`NPY_MAX_HALF`
+  Bit pattern for the largest finite half-precision value representable in
+  IEEE 754 (``65504.0``).
 
 Conversion functions
 --------------------
