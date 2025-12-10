@@ -13,6 +13,7 @@ import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
 from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def arraylikes():
@@ -726,6 +727,7 @@ class TestArrayLikes:
             with pytest.raises(MemoryError):
                 np.array([arr])
 
+    @requires_deep_recursion
     @pytest.mark.parametrize("attribute",
         ["__array_interface__", "__array__", "__array_struct__"])
     @pytest.mark.parametrize("error", [RecursionError, MemoryError])
@@ -743,6 +745,7 @@ class TestArrayLikes:
         with pytest.raises(error):
             np.array(BadInterface())
 
+    @requires_deep_recursion
     @pytest.mark.parametrize("error", [RecursionError, MemoryError])
     def test_bad_array_like_bad_length(self, error):
         # RecursionError and MemoryError are considered "critical" in
