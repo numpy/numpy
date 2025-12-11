@@ -2130,6 +2130,11 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+
+    # Handle empty matrices - rank is 0 for matrices with 0 rows or 0 columns
+    if A.size == 0:
+        return 0
+
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
