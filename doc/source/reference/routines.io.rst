@@ -59,8 +59,15 @@ Memory mapping files
    memmap
    lib.format.open_memmap
 
+.. _text_formatting_options:
+
 Text formatting options
 -----------------------
+
+Text formatting settings are maintained in a :py:mod:`context variable <python:contextvars>`,
+allowing different threads or async tasks to have independent configurations.
+For more information, see :ref:`thread_safety`.
+
 .. autosummary::
    :toctree: generated/
 

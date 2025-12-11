@@ -9,6 +9,9 @@ well-behaved (writable and aligned). Under normal circumstances, arrays
 created using the common constructors such as :meth:`numpy.empty` will satisfy
 these requirements.
 
+.. seealso::
+   :ref:`thread_safety` for general information about thread safety in NumPy.
+
 This example makes use of :mod:`concurrent.futures` to fill an array using
 multiple threads.  Threads are long-lived so that repeated calls do not
 require any additional overheads from thread creation.
