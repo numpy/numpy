@@ -13,7 +13,7 @@ import pytest
 
 import numpy as np
 from numpy.ma.testutils import assert_equal
-from numpy.testing import HAS_REFCOUNT, IS_PYPY, assert_array_equal
+from numpy.testing import HAS_REFCOUNT, assert_array_equal
 
 
 def test_scientific_notation():

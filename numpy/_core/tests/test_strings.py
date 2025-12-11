@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy._core._exceptions import _UFuncNoLoopError
-from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
+from numpy.testing import assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
