@@ -399,14 +399,7 @@ stringdtype_getitem(PyArray_StringDTypeObject *descr, char **dataptr)
         }
     }
     else {
-#ifndef PYPY_VERSION
         val_obj = PyUnicode_FromStringAndSize(sdata.buf, sdata.size);
-#else
-        // work around pypy issue #4046, can delete this when the fix is in
-        // a released version of pypy
-        val_obj = PyUnicode_FromStringAndSize(
-                sdata.buf == NULL ? "" : sdata.buf, sdata.size);
-#endif
         if (val_obj == NULL) {
             goto fail;
         }

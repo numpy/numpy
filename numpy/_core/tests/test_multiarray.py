@@ -4017,7 +4017,7 @@ class TestBinop:
     #   - defer if other has __array_ufunc__ and it is None
     #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
-    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy3.{9, 10}-v7.3.13, #24862")
+    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy, #24862")
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
         #   -> (numpy ufunc, has_in_place_version, preferred_dtype)
@@ -5928,7 +5928,6 @@ class TestIO:
                     np.fromfile, tmp_filename, dtype=x.dtype,
                     sep=",", offset=1)
 
-    @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
     def test_fromfile_bad_dup(self, tmp_path, param_filename, monkeypatch):
         def dup_str(fd):
             return 'abc'
@@ -9822,9 +9821,6 @@ class TestFormat:
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
         assert_raises(TypeError, '{:30}'.format, a)
-
-
-from numpy.testing import IS_PYPY
 
 
 class TestCTypes:
