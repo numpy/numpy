@@ -1,7 +1,3 @@
-import multiprocessing
-from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import shared_memory
-
 import pytest
 
 import numpy as np
@@ -14,6 +10,7 @@ pytestmark = pytest.mark.thread_unsafe(
 def bool_array_writer(shm_name, n):
     # writer routine for test_read_write_bool_array
     import time
+    from multiprocessing import shared_memory
     shm = shared_memory.SharedMemory(name=shm_name)
     arr = np.ndarray(n, dtype=np.bool_, buffer=shm.buf)
     for i in range(n):
@@ -22,6 +19,7 @@ def bool_array_writer(shm_name, n):
 
 def bool_array_reader(shm_name, n):
     # reader routine for test_read_write_bool_array
+    from multiprocessing import shared_memory
     shm = shared_memory.SharedMemory(name=shm_name)
     arr = np.ndarray(n, dtype=np.bool_, buffer=shm.buf)
     for i in range(n):
@@ -41,6 +39,8 @@ def test_read_write_bool_array():
     #
     # This test creates a multi-process race between a writer and a reader to
     # ensure that NumPy does not exhibit such failures.
+    from concurrent.futures import ProcessPoolExecutor
+    from multiprocessing import shared_memory
     n = 10000
     shm = shared_memory.SharedMemory(create=True, size=n)
     with ProcessPoolExecutor(max_workers=2) as executor:
