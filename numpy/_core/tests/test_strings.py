@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy._core._exceptions import _UFuncNoLoopError
-from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
+from numpy.testing import assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
@@ -18,8 +18,6 @@ COMPARISONS = [
 ]
 
 MAX = np.iinfo(np.int64).max
-
-IS_PYPY_LT_7_3_16 = IS_PYPY and sys.implementation.version < (7, 3, 16)
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -1123,10 +1121,7 @@ class TestMethodsWithUnicode:
         '\U0001D7F6',
         '\U00011066',
         '\U000104A0',
-        pytest.param('\U0001F107', marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISALNUM",
-            strict=True)),
+        '\U0001F107',
     ])
     def test_isalnum_unicode(self, in_, dt):
         in_ = np.array(in_, dtype=dt)
@@ -1140,10 +1135,7 @@ class TestMethodsWithUnicode:
         ('\U0001F40D', False),
         ('\U0001F46F', False),
         ('\u2177', True),
-        pytest.param('\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISLOWER",
-            strict=True)),
+        ('\U00010429', True),
         ('\U0001044E', True),
     ])
     def test_islower_unicode(self, in_, out, dt):
@@ -1158,10 +1150,7 @@ class TestMethodsWithUnicode:
         ('\U0001F40D', False),
         ('\U0001F46F', False),
         ('\u2177', False),
-        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISUPPER",
-            strict=True)),
+        ('\U00010429', False),
         ('\U0001044E', False),
     ])
     def test_isupper_unicode(self, in_, out, dt):
@@ -1171,15 +1160,9 @@ class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
-        pytest.param('\U00010401\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISISTITLE",
-            strict=True)),
+        ('\U00010401\U00010429', True),
         ('\U00010427\U0001044E', True),
-        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISISTITLE",
-            strict=True)),
+        ('\U00010429', False),
         ('\U0001044E', False),
         ('\U0001F40D', False),
         ('\U0001F46F', False),
