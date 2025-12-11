@@ -186,11 +186,15 @@ register_sort_compare(PyArray_DTypeMeta *dtype)
             {0, NULL}
     };
 
-    char method_name[strlen(dtype_name) + 6];
-    snprintf(method_name, sizeof(method_name), "%s_sort", dtype_name);
+    size_t sort_name_len = strlen(dtype_name) + 6;
+    char *sort_name = PyMem_Calloc(sort_name_len, sizeof(char));
+    if (sort_name == NULL) {
+        return -1;
+    }
+    snprintf(sort_name, sort_name_len, "%s_sort", dtype_name);
 
     PyArrayMethod_Spec sort_spec = {
-            .name = method_name,
+            .name = sort_name,
             .nin = 1,
             .nout = 1,
             .dtypes = sort_dtypes,
@@ -204,12 +208,16 @@ register_sort_compare(PyArray_DTypeMeta *dtype)
             {_NPY_METH_static_data, sort_compare},
             {0, NULL}
     };
-    
-    char argsort_method_name[strlen(dtype_name) + 8];
-    snprintf(argsort_method_name, sizeof(argsort_method_name), "%s_argsort", dtype_name);
+
+    size_t argsort_name_len = strlen(dtype_name) + 8;
+    char *argsort_name = PyMem_Calloc(argsort_name_len, sizeof(char));
+    if (argsort_name == NULL) {
+        return -1;
+    }
+    snprintf(argsort_name, argsort_name_len, "%s_argsort", dtype_name);
 
     PyArrayMethod_Spec argsort_spec = {
-            .name = argsort_method_name,
+            .name = argsort_name,
             .nin = 1,
             .nout = 1,
             .dtypes = argsort_dtypes,
