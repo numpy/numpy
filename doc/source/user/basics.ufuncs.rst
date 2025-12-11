@@ -19,7 +19,7 @@ that takes a fixed number of specific inputs and produces a fixed number of
 specific outputs.
 
 There are also :ref:`generalized ufuncs <c-api.generalized-ufuncs>` which
-are functions over vectors (or arrays) instead of only scalars.
+are functions over vectors (or arrays) instead of single-element scalars.
 For example, :func:`numpy.add` is a ufunc that operates element-by-element,
 while :func:`numpy.matmul` is a gufunc that operates on vectors/matrices::
 
