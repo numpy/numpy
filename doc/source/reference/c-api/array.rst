@@ -3711,6 +3711,20 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
        The number of decimal digits of precision. Corresponds to ``DIG`` from C
        standard macros (e.g., ``FLT_DIG``, ``DBL_DIG``).
 
+.. c:macro:: NPY_DT_sort_compare
+
+.. c:type:: int (PyArrayDTypeMeta_SortCompare)( \
+                void *a, void *b, PyArrayMethod_Context *context)
+
+    If defined, implements a comparison function for two array elements
+    for use in sorting and argsorting. This can be defined in place of the
+    custom sort functions using the ArrayMethod API (see :ref:`array-methods-sorting`)
+    to implement sorting for the DType.
+
+    The `context` argument provides access to the descriptor and
+    sorting parameters. Should return -1 if *a* < *b*, 0 if *a* == *b*, and
+    1 if *a* > *b*.
+
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3737,6 +3751,8 @@ DType API slots but for now we have exposed the legacy
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_compare
 
    Computes a comparison for `numpy.sort`, implements ``PyArray_CompareFunc``.
+   This may be deprecated in the future in favor of the
+   ``NPY_DT_sort_compare`` DType slot.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argmax
 

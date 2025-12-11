@@ -699,31 +699,6 @@ stringdtype_wrap_sort_loop(
     return ret;
 }
 
-/*
- * This is currently required even though the default implementation would work,
- * because the output, though enforced to be equal to the input, is parametric.
- */
-static NPY_CASTING
-stringdtype_sort_resolve_descriptors(
-        PyArrayMethodObject *method,
-        PyArray_DTypeMeta *const *dtypes,
-        PyArray_Descr *const *input_descrs,
-        PyArray_Descr **output_descrs,
-        npy_intp *view_offset)
-{
-    output_descrs[0] = NPY_DT_CALL_ensure_canonical(input_descrs[0]);
-    if (NPY_UNLIKELY(output_descrs[0] == NULL)) {
-        return -1;
-    }
-    output_descrs[1] = NPY_DT_CALL_ensure_canonical(input_descrs[1]);
-    if (NPY_UNLIKELY(output_descrs[1] == NULL)) {
-        Py_XDECREF(output_descrs[0]);
-        return -1;
-    }
-
-    return method->casting;
-}
-
 static int
 stringdtype_wrap_argsort_loop(
         PyArrayMethod_Context *context,
@@ -956,7 +931,7 @@ init_stringdtype_sorts(void)
 
     PyArray_DTypeMeta *sort_dtypes[2] = {stringdtype, stringdtype};
     PyType_Slot sort_slots[4] = {
-            {NPY_METH_resolve_descriptors, &stringdtype_sort_resolve_descriptors},
+            {NPY_METH_resolve_descriptors, &npy_default_sort_resolve_descriptors},
             {NPY_METH_get_loop, &stringdtype_get_sort_loop},
             {_NPY_METH_static_data, &_sort_compare},
             {0, NULL}
