@@ -15,6 +15,7 @@
 #include "abstractdtypes.h"
 #include "arraytypes.h"
 #include "common.h"
+#include "dispatching.h"
 #include "dtypemeta.h"
 #include "descriptor.h"
 #include "_datetime.h"
@@ -28,6 +29,7 @@
 #include "dtype_traversal.h"
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
+#include "npy_sort.h"
 
 #include <assert.h>
 
@@ -170,6 +172,59 @@ legacy_getitem_using_DType(void *data, void *arr)
     return getitem(PyArray_DESCR(arr), data);
 }
 
+static int
+register_sort_compare(PyArray_DTypeMeta *dtype)
+{
+    const char *dtype_name = ((PyTypeObject *)dtype)->tp_name;
+    PyArrayDTypeMeta_SortCompare *sort_compare = NPY_DT_SLOTS(dtype)->sort_compare;
+
+    PyArray_DTypeMeta *sort_dtypes[2] = {dtype, dtype};
+    PyType_Slot sort_slots[4] = {
+            {NPY_METH_resolve_descriptors, &npy_default_sort_resolve_descriptors},
+            {NPY_METH_get_loop, &npy_default_get_sort_loop},
+            {_NPY_METH_static_data, sort_compare},
+            {0, NULL}
+    };
+
+    char method_name[strlen(dtype_name) + 6];
+    snprintf(method_name, sizeof(method_name), "%s_sort", dtype_name);
+
+    PyArrayMethod_Spec sort_spec = {
+            .name = method_name,
+            .nin = 1,
+            .nout = 1,
+            .dtypes = sort_dtypes,
+            .slots = sort_slots,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+    };
+
+    PyArray_DTypeMeta *argsort_dtypes[2] = {dtype, &PyArray_IntpDType};
+    PyType_Slot argsort_slots[3] = {
+            {NPY_METH_get_loop, &npy_default_get_argsort_loop},
+            {_NPY_METH_static_data, sort_compare},
+            {0, NULL}
+    };
+    
+    char argsort_method_name[strlen(dtype_name) + 8];
+    snprintf(argsort_method_name, sizeof(argsort_method_name), "%s_argsort", dtype_name);
+
+    PyArrayMethod_Spec argsort_spec = {
+            .name = argsort_method_name,
+            .nin = 1,
+            .nout = 1,
+            .dtypes = argsort_dtypes,
+            .slots = argsort_slots,
+            .flags = NPY_METH_NO_FLOATINGPOINT_ERRORS,
+    };
+
+    PyUFunc_LoopSlot loops[] = {
+            {"sort", &sort_spec},
+            {"argsort", &argsort_spec},
+            {NULL, NULL}
+    };
+    return PyUFunc_AddLoopsFromSpecs(loops);
+}
+
 /*
  * The descr->f structure used user-DTypes.  Some functions may be filled
  * from the user in the future and more could get defaults for compatibility.
@@ -219,6 +274,7 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
     NPY_DT_SLOTS(DType)->finalize_descr = NULL;
     NPY_DT_SLOTS(DType)->get_constant = default_get_constant;
+    NPY_DT_SLOTS(DType)->sort_compare = NULL;
     NPY_DT_SLOTS(DType)->f = default_funcs;
 
     PyType_Slot *spec_slot = spec->slots;
@@ -341,6 +397,12 @@ dtypemeta_initialize_struct_from_spec(
     if (_PyArray_MapPyTypeToDType(DType, DType->scalar_type, 0) < 0) {
         Py_DECREF(DType);
         return -1;
+    }
+
+    if (NPY_DT_SLOTS(DType)->sort_compare != NULL) {
+        if (register_sort_compare(DType) < 0) {
+            return -1;
+        }
     }
 
     /* Ensure cast dict is defined (not sure we have to do it here) */
