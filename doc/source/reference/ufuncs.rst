@@ -21,7 +21,7 @@ specific outputs. For detailed information on universal functions, see
 
 
 There are also :ref:`generalized ufuncs <c-api.generalized-ufuncs>` which
-are functions over vectors (or arrays) instead of only scalars.
+are functions over vectors (or arrays) instead of only single-element scalars.
 
 :class:`ufunc`
 ==============
