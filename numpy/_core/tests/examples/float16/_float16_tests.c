@@ -3,7 +3,6 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
-#include "numpy/npy_common.h"
 #include "numpy/float16.h"
 
 /*
@@ -237,19 +236,6 @@ float16tests_float16_copysign(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 static PyObject *
-float16tests_float16_spacing(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    unsigned int hbits;
-    if (!PyArg_ParseTuple(args, "I", &hbits)) {
-        return NULL;
-    }
-
-    npy_half h = hbits;
-    npy_half r = npy_float16_spacing(h);
-    return PyLong_FromUnsignedLong(r);
-}
-
-static PyObject *
 float16tests_float16_nextafter(PyObject *NPY_UNUSED(self), PyObject *args)
 {
     unsigned int xbits, ybits;
@@ -314,8 +300,6 @@ static PyMethodDef float16_tests_methods[] = {
     // Miscellaneous Functions
     {"float16_copysign", float16tests_float16_copysign, METH_VARARGS,
      "Return half with magnitude of x and sign of y."},
-    {"float16_spacing", float16tests_float16_spacing, METH_VARARGS,
-     "Return spacing of the half value (as half bits)."},
     {"float16_nextafter", float16tests_float16_nextafter, METH_VARARGS,
      "Return next representable half from x toward y (as half bits)."},
     {"float16_divmod", float16tests_float16_divmod, METH_VARARGS,

@@ -145,14 +145,6 @@ def numpy_float16_nextafter(x_bits: np.uint16, y_bits: np.uint16) -> np.uint16:
     return bits_from_f16(res)
 
 
-def numpy_float16_spacing(x_bits: np.uint16) -> np.uint16:
-    x = f16_from_bits(x_bits)
-    # Overflow is expected at the maximum finite value.
-    with np.errstate(over="ignore", invalid="ignore"):
-        res = np.spacing(x).astype(np.float16)
-    return bits_from_f16(res)
-
-
 def assert_isnan(x):
     assert isinstance(x, (float, np.floating))
     assert np.isnan(x)
@@ -395,38 +387,9 @@ def test_float16_copysign(x_bits, y_bits):
     assert got == expected
 
 #
-# Spacing, Nextafter, and Divmod
+# Nextafter, and Divmod
 #
 
-# Tests npy_float16_spacing(npy_half h),
-# _npy_float16_header_invalid()
-@pytest.mark.parametrize("bits", [
-    FLOAT16_PZERO,
-    FLOAT16_NZERO,
-    FLOAT16_ONE,
-    FLOAT16_NEGONE,
-    FLOAT16_MAX,
-    FLOAT16_SMALLSUB,
-    FLOAT16_LARGESUB,
-    FLOAT16_SMALLNORM,
-])
-def test_float16_spacing(bits):
-    got_bits = np.uint16(h.float16_spacing(int(bits)))
-    got = f16_from_bits(got_bits)
-
-    x = f16_from_bits(bits)
-    if np.isinf(x) or np.isnan(x):
-        if np.isinf(x) or np.isnan(x):
-            assert np.isnan(got)
-    else:
-        expected_bits = numpy_float16_spacing(bits)
-        expected = f16_from_bits(expected_bits)
-        assert got_bits == expected_bits
-        assert got == expected
-
-def test_float16_spacing_nan_inf():
-    assert np.isnan(f16_from_bits(np.uint16(h.float16_spacing(int(FLOAT16_PINF)))))
-    assert np.isnan(f16_from_bits(np.uint16(h.float16_spacing(int(FLOAT16_NAN)))))
 
 # Tests npy_float16_nextafter(npy_half x, npy_half y)
 @pytest.mark.parametrize("x_bits, y_bits", [

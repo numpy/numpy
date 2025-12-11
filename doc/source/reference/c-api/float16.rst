@@ -205,14 +205,8 @@ Classification and sign inspection
    Return ``x`` with its sign bit taken from ``y``. Works for all values,
    including inf and NaNs.
 
-Spacing and next representable value
+Next representable value
 ------------------------------------
-
-.. c:function:: npy_half npy_float16_spacing(npy_half h)
-
-   Return the distance, in half-precision units, between ``h`` and the
-   next representable value. The behavior mirrors :c:func:`npy_spacing`
-   for ``double`` and ``float``.
 
 .. c:function:: npy_half npy_float16_nextafter(npy_half x, npy_half y)
 

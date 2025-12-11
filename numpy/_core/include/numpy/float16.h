@@ -5,6 +5,7 @@
 #include <math.h>
 #include <assert.h>
 #include <fenv.h>
+#include "numpy/npy_common.h"
 
  /*
   * Half-precision constants
@@ -46,9 +47,6 @@
 #define NPY_MAX_HALF    (0x7bffu)
 #endif
 
-#include "numpy/ndarraytypes.h"
-#include "numpy/npy_common.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /*__cplusplus*/
@@ -79,7 +77,6 @@ static inline int npy_float16_isinf(npy_half h);
 static inline int npy_float16_isfinite(npy_half h);
 static inline int npy_float16_signbit(npy_half h);
 static inline npy_half npy_float16_copysign(npy_half x, npy_half y);
-static inline npy_half npy_float16_spacing(npy_half h);
 static inline npy_half npy_float16_nextafter(npy_half x, npy_half y);
 static inline npy_half npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus);
 /* Bit-Level Conversions */
@@ -89,7 +86,6 @@ static inline npy_uint32 npy_float16bits_to_floatbits(npy_uint16 h);
 static inline npy_uint64 npy_float16bits_to_doublebits(npy_uint16 h);
 /* Internal Helper Functions */
 static inline npy_float _npy_divmodf(npy_float a, npy_float b, npy_float *modulus);
-static inline void _npy_float16_header_invalid(void);
 static inline void _npy_float16_header_overflow(void);
 static inline void _npy_float16_header_underflow(void);
 
@@ -97,15 +93,6 @@ static inline void _npy_float16_header_underflow(void);
  * Logic
  */
 /* Header-only FP status handlers for float16.h */
-static inline void _npy_float16_header_invalid(void)
-{
-#if defined(FE_INVALID)
-    feraiseexcept(FE_INVALID);
-#else
-    (void)0;
-#endif
-}
-
 static inline void _npy_float16_header_overflow(void)
 {
 #if defined(FE_OVERFLOW)
@@ -540,36 +527,6 @@ static inline int npy_float16_signbit(npy_half h)
 static inline npy_half npy_float16_copysign(npy_half x, npy_half y)
 {
     return (x&0x7fffu) | (y&0x8000u);
-}
-
-static inline npy_half npy_float16_spacing(npy_half h)
-{
-    npy_half ret;
-    npy_uint16 h_exp = h&0x7c00u;
-    npy_uint16 h_sig = h&0x03ffu;
-    if (h_exp == 0x7c00u) {
-        _npy_float16_header_invalid();
-        ret = NPY_HALF_NAN;
-    } else if (h == 0x7bffu) {
-        _npy_float16_header_overflow();
-        ret = NPY_HALF_PINF;
-    } else if ((h&0x8000u) && h_sig == 0) { /* Negative boundary case */
-        if (h_exp > 0x2c00u) { /* If result is normalized */
-            ret = h_exp - 0x2c00u;
-        } else if(h_exp > 0x0400u) { /* The result is a subnormal, but not the smallest */
-            ret = 1 << ((h_exp >> 10) - 2);
-        } else {
-            ret = 0x0001u; /* Smallest subnormal half */
-        }
-    } else if (h_exp > 0x2800u) { /* If result is still normalized */
-        ret = h_exp - 0x2800u;
-    } else if (h_exp > 0x0400u) { /* The result is a subnormal, but not the smallest */
-        ret = 1 << ((h_exp >> 10) - 1);
-    } else {
-        ret = 0x0001u;
-    }
-
-    return ret;
 }
 
 static inline npy_half npy_float16_nextafter(npy_half x, npy_half y)
