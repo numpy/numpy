@@ -2450,4 +2450,4 @@ def test_matrix_rank_all_empty_cases():
 
     for A in cases:
         rank = np.linalg.matrix_rank(A)
-        assert rank == 0, f"Rank of shape {A.shape} should be 0, got {rank}" 
+        assert rank == 0
