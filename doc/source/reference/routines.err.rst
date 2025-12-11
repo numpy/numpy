@@ -75,8 +75,6 @@ Examples
     saw stupid error!
     array([nan, nan, nan, nan, nan])
 
-::
-
 Setting and getting error handling
 ----------------------------------
 
