@@ -1121,7 +1121,7 @@ class TestMethodsWithUnicode:
         '\U0001D7F6',
         '\U00011066',
         '\U000104A0',
-        '\U0001F107',),
+        '\U0001F107',
     ])
     def test_isalnum_unicode(self, in_, dt):
         in_ = np.array(in_, dtype=dt)
@@ -1160,7 +1160,7 @@ class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
-        '\U00010401\U00010429', True),
+        ('\U00010401\U00010429', True),
         ('\U00010427\U0001044E', True),
         ('\U00010429', False),
         ('\U0001044E', False),
