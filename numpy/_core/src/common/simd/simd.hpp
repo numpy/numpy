@@ -1,6 +1,5 @@
 #ifndef NUMPY__CORE_SRC_COMMON_SIMD_SIMD_HPP_
 #define NUMPY__CORE_SRC_COMMON_SIMD_SIMD_HPP_
-
 /**
  * This header provides a thin wrapper over Google's Highway SIMD library.
  *
@@ -19,7 +18,9 @@
  */
 #ifndef NPY_DISABLE_OPTIMIZATION
 #include <hwy/highway.h>
-
+#include <npsr/npsr.h>
+#include <type_traits>
+#include <limits>
 /**
  * We avoid using Highway scalar operations for the following reasons:
  *
@@ -67,6 +68,37 @@ namespace hn = hwy::HWY_NAMESPACE;
 // internaly used by the template header
 template <typename TLane>
 using _Tag = hn::ScalableTag<TLane>;
+
+/// NumPy SIMD Routines namespace alias
+/// npsr is tag free by design so we only include it within main namespace (np::simd)
+namespace sr = npsr::HWY_NAMESPACE;
+
+/// Default precision configrations for NumPy SIMD Routines
+// TODO: Allow user to configure the default precision at build time.
+namespace detail {
+using PreciseHigh = decltype(npsr::Precise{});
+using PreciseLow = decltype(npsr::Precise{npsr::kLowAccuracy});
+struct PresiceDummy {};
+template <typename T>
+struct PreciseByType {};
+template <>
+struct PreciseByType<float> { using Type = PreciseLow; };
+template <>
+struct PreciseByType<double> {
+#if NPY_HWY_F64
+    using Type = PreciseHigh;
+#else
+    // If float64 SIMD isn’t available, use a dummy type.
+    // The scalar path will run, but `Type` must still be defined.
+    // The dummy is never passed; it only satisfies interfaces.
+    // This also avoids spurious FP exceptions during RAII.
+    using Type = PresiceDummy;
+#endif
+};
+} // namespace detail
+template <typename T>
+using Precise = typename detail::PreciseByType<T>::Type;
+
 #endif
 #include "simd.inc.hpp"
 }  // namespace simd
