@@ -1080,21 +1080,18 @@ class TestDateTime:
         assert_equal(np.zeros_like(b).dtype, b.dtype)
         assert_equal(np.empty_like(b).dtype, b.dtype)
 
-    def test_datetime_unary(self):
-        for tda, tdb, tdzero, tdone, tdmone in \
+    def test_timedelta64_unary(self):
+        for tda, tdb, tdzero in \
                 [
                  # One-dimensional arrays
                  (np.array([3], dtype='m8[D]'),
                   np.array([-3], dtype='m8[D]'),
-                  np.array([0], dtype='m8[D]'),
-                  np.array([1], dtype='m8[D]'),
-                  np.array([-1], dtype='m8[D]')),
+                  np.array([0], dtype='m8[D]')),
                  # NumPy scalars
                  (np.timedelta64(3, '[D]'),
                   np.timedelta64(-3, '[D]'),
-                  np.timedelta64(0, '[D]'),
-                  np.timedelta64(1, '[D]'),
-                  np.timedelta64(-1, '[D]'))]:
+                  np.timedelta64(0, '[D]')),
+                ]:
             # negative ufunc
             assert_equal(-tdb, tda)
             assert_equal((-tdb).dtype, tda.dtype)
@@ -1112,13 +1109,24 @@ class TestDateTime:
             assert_equal(np.absolute(tdb).dtype, tda.dtype)
 
             # sign ufunc
-            assert_equal(np.sign(tda), tdone)
-            assert_equal(np.sign(tdb), tdmone)
-            assert_equal(np.sign(tdzero), tdzero)
-            assert_equal(np.sign(tda).dtype, tda.dtype)
+            assert_equal(np.sign(tda), np.ones_like(tda, dtype=np.float64),
+                         strict=True)
+            assert_equal(np.sign(tdb), -np.ones_like(tdb, dtype=np.float64),
+                         strict=True)
+            assert_equal(np.sign(tdzero), np.zeros_like(tdzero, dtype=np.float64),
+                         strict=True)
 
-            # The ufuncs always produce native-endian results
-            assert_
+    def test_timedelta64_sign_nat(self):
+        x = np.array([np.timedelta64(-123, 's'),
+                      np.timedelta64(0, 's'),
+                      np.timedelta64(88, 's'),
+                      np.timedelta64('NaT', 's')])
+        s = np.sign(x)
+        assert_equal(s, np.array([-1.0, 0.0, 1.0, np.nan]), strict=True)
+
+    def test_timedelta64_sign_nat_scalar(self):
+        nat = np.timedelta64('nat', 'm')
+        assert_equal(np.sign(nat), np.nan)
 
     def test_datetime_add(self):
         for dta, dtb, dtc, dtnat, tda, tdb, tdc in \
