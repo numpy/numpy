@@ -321,7 +321,17 @@ class Array:
         assert self.arr_attr[5][-2:] == self.pyarr_attr[5][-2:], repr((
             self.arr_attr[5], self.pyarr_attr[5]
             ))  # descr
-        assert self.arr_attr[6] == self.pyarr_attr[6], repr((
+        arr_flags = self.arr_attr[6]
+        if intent.is_intent("inplace") and not (
+                obj.dtype == typ and obj.flags["F_CONTIGUOUS"]
+        ):
+            assert flags2names(8192) == ["WRITEBACKIFCOPY"]
+            assert (arr_flags & 8192), f"{flags2names(8192)} not set."
+            arr_flags -= 8192  # Not easy to set on pyarr.
+        else:
+            assert not (arr_flags & 8192)
+
+        assert arr_flags == self.pyarr_attr[6], repr((
             self.arr_attr[6],
             self.pyarr_attr[6],
             flags2names(0 * self.arr_attr[6] - self.pyarr_attr[6]),
@@ -651,14 +661,34 @@ class TestSharedMemory:
         assert not obj.flags["FORTRAN"] and obj.flags["CONTIGUOUS"]
         shape = obj.shape
         a = self.array(shape, intent.inplace, obj)
+        # Spot check that they contain the same information initially.
         assert obj[1][2] == a.arr[1][2], repr((obj, a.arr))
-        a.arr[1][2] = 54
-        assert obj[1][2] == a.arr[1][2] == np.array(54, dtype=self.type.dtype)
+        # If we change a.arr, that will not immediatetly be reflected in obj.
+        change_item = 54 if self.type.dtype != bool else False
+        a.arr[1][2] = change_item
+        assert a.arr[1][2] == np.array(change_item, dtype=self.type.dtype)
+        assert obj[1][2] != np.array(change_item, dtype=self.type.dtype)
+        # This is because our implementation uses writebackifcopy.
+        assert a.arr.flags["WRITEBACKIFCOPY"]
+        assert a.arr.base is obj
+        # It has a different organization from obj.
+        assert a.arr.flags["FORTRAN"] and not a.arr.flags["CONTIGUOUS"]
+        # If we resolve the write-back, obj will be propertly filled.
+        code = wrap.resolve_write_back_if_copy(a.arr)
+        assert code == 1, "no write-back resolution was done!"
+        assert obj[1][2] == np.array(change_item, dtype=self.type.dtype)
+        # Check that the original's attributes are not messed up.
+        assert not obj.flags["FORTRAN"] and obj.flags["CONTIGUOUS"]
+
+    def test_inplace_f_order(self):
+        # If the input array is suitable, it will just be used.
+        obj = np.array(self.num23seq, dtype=self.type.dtype, order="F")
+        assert obj.flags["FORTRAN"] and not obj.flags["CONTIGUOUS"]
+        a = self.array(obj.shape, intent.inplace, obj)
         assert a.arr is obj
-        assert obj.flags["FORTRAN"]  # obj attributes are changed inplace!
-        assert not obj.flags["CONTIGUOUS"]
 
     def test_inplace_from_casttype(self):
+        # Similar to above, but including casting.
         for t in self.type.cast_types():
             if t is self.type:
                 continue
@@ -667,12 +697,33 @@ class TestSharedMemory:
             assert obj.dtype.type is not self.type.type
             assert not obj.flags["FORTRAN"] and obj.flags["CONTIGUOUS"]
             shape = obj.shape
-            a = self.array(shape, intent.inplace, obj)
+            same_kind = obj.dtype.kind == self.type.dtype.kind
+            # We avoid pytest.raises here since if the error is not raised,
+            # we need to do the callback to avoid a runtime warning.
+            try:
+                a = self.array(shape, intent.inplace, obj)
+            except ValueError as exc:
+                assert not same_kind, "Array not created while having same kind"
+                assert "not compatible" in str(exc)
+                return
+
+            if not same_kind:
+                # Shouldn't happen!  Resolve write-back to get right error.
+                wrap.resolve_write_back_if_copy(a.arr)
+                assert same_kind, "Array created despite not having same kind"
+
             assert obj[1][2] == a.arr[1][2], repr((obj, a.arr))
-            a.arr[1][2] = 54
-            assert obj[1][2] == a.arr[1][2] == np.array(54,
-                                                        dtype=self.type.dtype)
-            assert a.arr is obj
-            assert obj.flags["FORTRAN"]  # obj attributes changed inplace!
-            assert not obj.flags["CONTIGUOUS"]
-            assert obj.dtype.type is self.type.type  # obj changed inplace!
+            change_item = 54 if self.type.dtype != bool else False
+            a.arr[1][2] = change_item
+            assert a.arr[1][2] == np.array(change_item, dtype=self.type.dtype)
+            # Not yet propagated.
+            assert obj[1][2] != np.array(change_item, dtype=self.type.dtype)
+            assert a.arr.flags["WRITEBACKIFCOPY"]
+            assert a.arr.base is obj
+            # Propagate back to obj.
+            code = wrap.resolve_write_back_if_copy(a.arr)
+            assert code == 1, "no write-back resolution was done!"
+            assert obj[1][2] == np.array(change_item, dtype=self.type.dtype)
+            # Should not affect attributes.
+            assert not obj.flags["FORTRAN"] and obj.flags["CONTIGUOUS"]
+            assert obj.dtype.type is not self.type.type
