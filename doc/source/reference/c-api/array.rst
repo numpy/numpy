@@ -3717,9 +3717,16 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
                 void *a, void *b, PyArrayMethod_Context *context)
 
     If defined, implements a comparison function for two array elements
-    for use in sorting and argsorting. This can be defined in place of the
-    custom sort functions using the ArrayMethod API (see :ref:`array-methods-sorting`)
-    to implement sorting for the DType.
+    for use in sorting and argsorting. This can be defined instead of the
+    custom sort array methods (see :ref:`array-methods-sorting`)
+    to implement sorting for the DType using the default numpy sorting
+    algorithms.
+
+    You may prefer to implement the custom sort array methods if a
+    specialized sorting implementation is desirable for your DType,
+    for example, if a performance cost in comparison can be amortized
+    over the array, or if a specialized algorithm is more efficient for
+    your data representation.
 
     The `context` argument provides access to the descriptor and
     sorting parameters. Should return -1 if *a* < *b*, 0 if *a* == *b*, and
