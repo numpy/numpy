@@ -3,6 +3,10 @@
 
 #include "array_method.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern NPY_NO_EXPORT _PyArray_LegacyDescr **userdescrs;
 
 NPY_NO_EXPORT void
@@ -26,5 +30,9 @@ legacy_userdtype_common_dtype_function(
 NPY_NO_EXPORT int
 PyArray_AddLegacyWrapping_CastingImpl(
         PyArray_DTypeMeta *from, PyArray_DTypeMeta *to, NPY_CASTING casting);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_USERTYPES_H_ */
