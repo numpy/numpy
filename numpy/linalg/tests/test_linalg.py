@@ -2459,3 +2459,4 @@ def test_empty_matrix_rank():
     result = matrix_rank(np.zeros((2, 3, 0, 4)))
     assert_equal(result.shape, (2, 3))
     assert_equal(result, np.zeros((2, 3), dtype=np.intp))
+
