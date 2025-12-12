@@ -607,7 +607,7 @@ class StringConverter:
             self.default = default or False
             dtype = np.dtype('bool')
         else:
-            # Is the input a np.dtype ?
+            # Is the input an np.dtype ?
             try:
                 self.func = None
                 dtype = np.dtype(dtype_or_func)

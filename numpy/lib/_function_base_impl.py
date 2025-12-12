@@ -81,7 +81,7 @@ __all__ = [
 # When the sample contains exactly the percentile wanted, the virtual_index is
 # an integer to the index of this element.
 # When the percentile wanted is in between two elements, the virtual_index
-# is made of a integer part (a.k.a 'i' or 'left') and a fractional part
+# is made of an integer part (a.k.a 'i' or 'left') and a fractional part
 # (a.k.a 'g' or 'gamma')
 #
 # Each method in _QuantileMethods has two properties
