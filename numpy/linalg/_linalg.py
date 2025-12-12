@@ -2131,10 +2131,6 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     if A.ndim < 2:
         return int(not all(A == 0))
 
-    # Handle empty matrices - rank is 0 for matrices with 0 rows or 0 columns
-    if A.size == 0:
-        return 0
-
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
@@ -2142,7 +2138,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
             rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
         else:
             rtol = asarray(rtol)[..., newaxis]
-        tol = S.max(axis=-1, keepdims=True) * rtol
+        tol = S.max(axis=-1, keepdims=True, initial = 0) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
 
