@@ -1,0 +1,39 @@
+name: Pixi packages tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build_packages:
+    name: Build Pixi packages
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, macos-15]
+        package_variant: [asan, default]
+    if: github.repository == 'numpy/numpy'
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - uses: prefix-dev/setup-pixi@ba3bb36eb2066252b2363392b7739741bb777659 # v0.8.1
+      with:
+        pixi-version: v0.60.0
+        run-install: false
+
+    - name: Build
+      run: pixi build --path="pixi-packages/${{ matrix.package_variant }}"
