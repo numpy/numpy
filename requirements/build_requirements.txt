@@ -3,3 +3,6 @@ Cython>=3.0.6
 ninja
 spin==0.15
 build
+
+# Zig toolchain (PyPI package provides a `zig` executable).
+ziglang>=0.15.1,<0.16

@@ -773,6 +773,45 @@ py.extension_module('_multiarray_tests',
   install_tag: 'tests'
 )
 
+# Zig ufunc kernels
+# -----------------
+zig = find_program('zig', required: true)
+
+zig_opt = 'ReleaseFast'
+btype = get_option('buildtype')
+if btype in ['debug', 'debugoptimized']
+  zig_opt = 'Debug'
+elif btype == 'release'
+  zig_opt = 'ReleaseFast'
+elif btype == 'minsize'
+  zig_opt = 'ReleaseSmall'
+endif
+
+obj_ext = 'o'
+if host_machine.system() == 'windows'
+  obj_ext = 'obj'
+endif
+
+zig_obj_args = [
+  zig,
+  'build-obj',
+  '-O' + zig_opt,
+  '-femit-bin=@OUTPUT@',
+]
+if host_machine.system() != 'windows'
+  zig_obj_args += ['-fPIC']
+endif
+zig_obj_args += ['@INPUT@']
+
+ufunc_kernels_obj = custom_target(
+  'ufunc_kernels_obj',
+  input: 'src/umath/ufunc_kernels.zig',
+  output: 'ufunc_kernels.' + obj_ext,
+  command: zig_obj_args,
+  build_by_default: true,
+)
+
+
 _umath_tests_mtargets = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
   'src/umath/_umath_tests.dispatch.c',
@@ -791,6 +830,7 @@ test_modules_src = [
   ['_umath_tests', [
       src_file.process('src/umath/_umath_tests.c.src'),
       'src/common/npy_cpu_features.c',
+      ufunc_kernels_obj,
     ],
     _umath_tests_mtargets.static_lib('_umath_tests_mtargets')
   ],
