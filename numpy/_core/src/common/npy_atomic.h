@@ -55,6 +55,31 @@ npy_atomic_load_uint8(const npy_uint8 *obj) {
 #endif
 }
 
+static inline npy_ulong
+npy_atomic_load_ulong(const npy_ulong *obj) {
+#ifdef STDC_ATOMICS
+    _NPY_USING_STD;
+#if SIZEOF_LONG == 8
+    return (npy_ulong)atomic_load((const _Atomic(uint64_t)*)obj);
+#else
+    return (npy_ulong)atomic_load((const _Atomic(uint32_t)*)obj);
+#endif
+#elif defined(MSC_ATOMICS)
+#if defined(_M_X64) || defined(_M_IX86)
+    return *(volatile npy_ulong *)obj;
+#else // defined(_M_ARM64)
+#if SIZEOF_LONG == 8
+    return (npy_ulong)__ldar64((unsigned __int64 volatile *)obj);
+#else
+    return (npy_ulong)__ldar32((unsigned __int32 volatile *)obj);
+#endif
+#endif
+#elif defined(GCC_ATOMICS)
+    return __atomic_load_n(obj, __ATOMIC_SEQ_CST);
+#endif
+}
+
+
 static inline void*
 npy_atomic_load_ptr(const void *obj) {
 #ifdef STDC_ATOMICS
@@ -114,6 +139,26 @@ static inline void
 npy_atomic_store_hash_t(npy_hash_t *obj, npy_hash_t value) {
     assert(sizeof(npy_hash_t) == sizeof(void *));
     npy_atomic_store_ptr((void *)obj, (void *)value);
+}
+
+static inline void
+npy_atomic_store_ulong(npy_ulong *obj, npy_ulong value) {
+#ifdef STDC_ATOMICS
+    _NPY_USING_STD;
+#if SIZEOF_LONG == 8
+    atomic_store((_Atomic(uint64_t)*)obj, (uint64_t)value);
+#else
+    atomic_store((_Atomic(uint32_t)*)obj, (uint32_t)value);
+#endif
+#elif defined(MSC_ATOMICS)
+#if SIZEOF_LONG == 8
+    _InterlockedExchange64((volatile __int64 *)obj, (__int64)value);
+#else
+    _InterlockedExchange((volatile long *)obj, (long)value);
+#endif
+#elif defined(GCC_ATOMICS)
+    __atomic_store_n(obj, value, __ATOMIC_SEQ_CST);
+#endif
 }
 
 #undef MSC_ATOMICS
