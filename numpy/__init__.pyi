@@ -1,5 +1,4 @@
 # ruff: noqa: I001
-import builtins
 import ctypes as ct
 import datetime as dt
 import inspect
@@ -1090,7 +1089,7 @@ class _DTypeMeta(type):
 
 @final
 class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
-    names: tuple[builtins.str, ...] | None
+    names: tuple[str, ...] | None
     def __hash__(self) -> int: ...
 
     # `None` results in the default dtype
@@ -1101,7 +1100,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...
+        metadata: dict[str, Any] = ...
     ) -> dtype[float64]: ...
 
     # Overload for `dtype` instances, scalar types, and instances that have a
@@ -1113,7 +1112,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[ScalarT]: ...
 
     # Builtin types
@@ -1215,7 +1214,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[uint8]: ...
     @overload
     def __new__(
@@ -1224,7 +1223,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[uint16]: ...
     @overload
     def __new__(
@@ -1233,7 +1232,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[uint32]: ...
     @overload
     def __new__(
@@ -1242,7 +1241,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[uint64]: ...
     @overload
     def __new__(
@@ -1251,7 +1250,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[uintp]: ...
     @overload
     def __new__(
@@ -1260,7 +1259,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[uint32 | uint64]: ...
 
     # `signedinteger` string-based representations and ctypes
@@ -1271,7 +1270,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[int8]: ...
     @overload
     def __new__(
@@ -1280,7 +1279,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[int16]: ...
     @overload
     def __new__(
@@ -1289,7 +1288,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[int32]: ...
     @overload
     def __new__(
@@ -1298,7 +1297,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[int64]: ...
     @overload
     def __new__(
@@ -1307,7 +1306,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[intp]: ...
     @overload
     def __new__(
@@ -1316,7 +1315,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[int32 | int64]: ...
 
     # `floating` string-based representations and ctypes
@@ -1327,7 +1326,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[float16]: ...
     @overload
     def __new__(
@@ -1336,7 +1335,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[float32]: ...
     # float64 codes are covered by overload 1
     @overload
@@ -1346,7 +1345,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[longdouble]: ...
 
     # `complexfloating` string-based representations and ctypes
@@ -1358,7 +1357,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             align: py_bool = False,
             copy: py_bool = False,
             *,
-            metadata: dict[builtins.str, Any] = ...,
+            metadata: dict[str, Any] = ...,
         ) -> dtype[complex64]: ...
         @overload
         def __new__(
@@ -1367,7 +1366,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             align: py_bool = False,
             copy: py_bool = False,
             *,
-            metadata: dict[builtins.str, Any] = ...,
+            metadata: dict[str, Any] = ...,
         ) -> dtype[complex128]: ...
         @overload
         def __new__(
@@ -1376,7 +1375,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             align: py_bool = False,
             copy: py_bool = False,
             *,
-            metadata: dict[builtins.str, Any] = ...,
+            metadata: dict[str, Any] = ...,
         ) -> dtype[clongdouble]: ...
     else:
         @overload
@@ -1386,7 +1385,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             align: py_bool = False,
             copy: py_bool = False,
             *,
-            metadata: dict[builtins.str, Any] = ...,
+            metadata: dict[str, Any] = ...,
         ) -> dtype[complex64]: ...
         @overload
         def __new__(
@@ -1395,7 +1394,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             align: py_bool = False,
             copy: py_bool = False,
             *,
-            metadata: dict[builtins.str, Any] = ...,
+            metadata: dict[str, Any] = ...,
         ) -> dtype[complex128]: ...
         @overload
         def __new__(
@@ -1404,7 +1403,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             align: py_bool = False,
             copy: py_bool = False,
             *,
-            metadata: dict[builtins.str, Any] = ...,
+            metadata: dict[str, Any] = ...,
         ) -> dtype[clongdouble]: ...
 
     # Miscellaneous string-based representations and ctypes
@@ -1415,7 +1414,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[timedelta64]: ...
     @overload
     def __new__(
@@ -1424,7 +1423,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[datetime64]: ...
 
     # `StringDType` requires special treatment because it has no scalar type
@@ -1435,7 +1434,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtypes.StringDType: ...
 
     # Combined char-codes and ctypes, analogous to the scalar-type hierarchy
@@ -1446,7 +1445,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[unsignedinteger]: ...
     @overload
     def __new__(
@@ -1455,7 +1454,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[signedinteger]: ...
     @overload
     def __new__(
@@ -1464,7 +1463,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[integer]: ...
     @overload
     def __new__(
@@ -1473,7 +1472,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[floating]: ...
     @overload
     def __new__(
@@ -1482,7 +1481,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[complexfloating]: ...
     @overload
     def __new__(
@@ -1491,12 +1490,12 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[inexact]: ...
     @overload
     def __new__(
         cls,
-        dtype: _CharacterCodes | type[bytes | builtins.str | ct.c_char],
+        dtype: _CharacterCodes | type[bytes | str | ct.c_char],
         align: py_bool = False,
         copy: py_bool = False,
         *,
@@ -1507,11 +1506,11 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @overload
     def __new__(
         cls,
-        dtype: builtins.str,
+        dtype: str,
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype: ...
 
     # Catch-all overload for object-likes
@@ -1527,15 +1526,15 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         align: py_bool = False,
         copy: py_bool = False,
         *,
-        metadata: dict[builtins.str, Any] = ...,
+        metadata: dict[str, Any] = ...,
     ) -> dtype[object_ | Any]: ...
 
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
 
     @overload
-    def __getitem__(self: dtype[void], key: list[builtins.str], /) -> dtype[void]: ...
+    def __getitem__(self: dtype[void], key: list[str], /) -> dtype[void]: ...
     @overload
-    def __getitem__(self: dtype[void], key: builtins.str | SupportsIndex, /) -> dtype: ...
+    def __getitem__(self: dtype[void], key: str | SupportsIndex, /) -> dtype: ...
 
     # NOTE: In the future 1-based multiplications will also yield `flexible` dtypes
     @overload
@@ -1591,7 +1590,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     @property
     def kind(self) -> _DTypeKind: ...
     @property
-    def metadata(self) -> MappingProxyType[builtins.str, Any] | None: ...
+    def metadata(self) -> MappingProxyType[str, Any] | None: ...
     @property
     def name(self) -> LiteralString: ...
     @property
@@ -1726,7 +1725,7 @@ class _ArrayOrScalarCommon:
     @property
     def __array_priority__(self) -> float: ...
     @property
-    def __array_struct__(self) -> CapsuleType: ...  # builtins.PyCapsule
+    def __array_struct__(self) -> CapsuleType: ...
     def __array_namespace__(self, /, *, api_version: _ArrayAPIVersion | None = None) -> ModuleType: ...
     def __setstate__(self, state: tuple[
         SupportsIndex,  # version
