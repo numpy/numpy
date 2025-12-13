@@ -237,7 +237,8 @@ assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), Any)
 assert_type(np.linalg.multi_dot([AR_O, AR_O]), Any)
 assert_type(np.linalg.multi_dot([AR_m, AR_m]), Any)
 
-assert_type(np.linalg.diagonal(AR_any), np.ndarray)
+# Mypy incorrectly inferts `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.linalg.diagonal(AR_any), np.ndarray)  # type: ignore[assert-type]
 assert_type(np.linalg.diagonal(AR_f4), npt.NDArray[np.float32])
 assert_type(np.linalg.diagonal(AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
 assert_type(np.linalg.diagonal(AR_f8_2d), np.ndarray[tuple[int], np.dtype[np.float64]])
