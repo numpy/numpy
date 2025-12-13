@@ -3,7 +3,7 @@ build-backend = "mesonpy"
 requires = [
     "meson-python>=0.18.0",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
-    "ziglang>=0.15.1,<0.16",  # keep in sync with requirements/build_requirements.txt
+    "ziglang>=0.15.1,<0.16",  # keep in sync with requirements/zig_requirements.txt
 ]
 
 [project]
