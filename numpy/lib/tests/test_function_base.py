@@ -31,6 +31,7 @@ from numpy import (
     i0,
     insert,
     interp,
+    ismonotonic,
     kaiser,
     ma,
     meshgrid,
@@ -251,6 +252,40 @@ class TestFlip:
                        [5, 4]]])
 
         assert_equal(np.flip(a, axis=(1, 2)), c)
+
+
+class TestIsMonotonic:
+
+    def test_default_direction(self):
+        assert ismonotonic([1, 2, 2, 3])
+        assert not ismonotonic([1, 3, 2])
+
+    def test_strict(self):
+        assert ismonotonic([1, 2, 3], strict=True)
+        assert not ismonotonic([1, 1, 2], strict=True)
+
+    def test_decreasing(self):
+        arr = np.array([5, 4, 4, 2])
+        assert ismonotonic(arr, direction="decreasing")
+        assert not ismonotonic(arr[::-1], direction="decreasing")
+
+    def test_multidimensional(self):
+        arr = np.array([[5, 4], [4, 2]])
+        assert ismonotonic(arr, direction="decreasing")
+
+    def test_small_inputs(self):
+        assert ismonotonic([])
+        assert ismonotonic(np.array(3))
+
+    def test_invalid_direction(self):
+        with pytest.raises(ValueError):
+            ismonotonic([1, 2], direction="ascending")
+        with pytest.raises(TypeError):
+            ismonotonic([1, 2], direction=0)
+
+    def test_nan(self):
+        arr = np.array([1.0, np.nan, 2.0])
+        assert not ismonotonic(arr)
 
 
 class TestAny:
