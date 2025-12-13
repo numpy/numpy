@@ -2522,9 +2522,9 @@ def get_parameters(vars, global_params={}):
             # Handle _dp for gh-6624
             # Also fixes gh-20460
             if real16pattern.search(v):
-                v = 8
+                v = '8'
             elif real8pattern.search(v):
-                v = 4
+                v = '4'
             try:
                 params[n] = param_eval(v, g_params, params, dimspec=dimspec)
             except Exception as msg:
@@ -3022,6 +3022,72 @@ def param_eval(v, g_params, params, dimspec=None):
 
     return p
 
+def balance_parentheses(s: str) -> str:
+    """
+    Attempts to balance parentheses in a string by adding opening or closing
+    parentheses to the ends of the string. This assumes that any imbalance
+    can be corrected by prepending or appending, which is often not true
+    for syntactically valid equations.
+
+    Args:
+        s: The input string.
+
+    Returns:
+        The string with added parentheses at the ends to achieve balance.
+        This function does NOT guarantee a syntactically correct expression.
+    """
+    balance = s.count('(') - s.count(')')
+    return '(' * (-balance) + s + ')' * balance if balance != 0 else s
+
+
+def replace_variables_in_equation(d: str, params: dict) -> str:
+    """
+    Isolates variables in an equation string, looks up their values in a dictionary,
+    and replaces them in the string.
+
+    Args:
+        equation_string: A string representing the mathematical equation.
+        variable_values: A dictionary where keys are variable names and values are their values.
+
+    Returns:
+        A new string with variables replaced by their values.
+        Raises a ValueError if a variable in the equation is not found in variable_values (which is the parameter dictionary).
+    """
+    variable_pattern = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+
+    def replace_match(match):
+        variable_name = match.group(0)
+        if (variable_name in params) and '{' not in str(params[variable_name]):
+            return str(params[variable_name])
+        #in the event its a data statement.
+        elif (variable_name in params) and '{' in str(params[variable_name]):
+            temp_dict = params[variable_name]
+            match2 = re.search(r'\(([-]?\d+)\)', d)
+            try:
+                number_str = match2.group(1)
+                local_ans = str(temp_dict[int(number_str)])
+            except AttributeError:
+                returned_set = re.findall('[a-zA-Z]+', d)
+                returned_set.reverse()
+                k = params[returned_set[0]]
+                for i in returned_set[1:]:
+                    temp_hold = params[i]
+                    k = temp_hold[k]
+                local_ans = str(k)
+            return local_ans
+        else:
+            # If a variable is found in the equation but not in the parameter,
+            # it indicates an undefined variable for the current context.
+            raise ValueError(f"Variable '{variable_name}' not found in parameter dictionary.")
+
+    # Use re.sub with a function to replace each matched variable
+    string_equation = variable_pattern.sub(replace_match, d)
+    balanced_dim = balance_parentheses(string_equation)
+    try:
+        int_dim = eval(balanced_dim)
+    except TypeError:
+        int_dim = int(balanced_dim.split('(')[0])
+    return int_dim
 
 def param_parse(d, params):
     """Recursively parse array dimensions.
@@ -3082,12 +3148,10 @@ def param_parse(d, params):
     """
     if "(" in d:
         # this dimension expression is an array
-        dname = d[:d.find("(")]
-        ddims = d[d.find("(") + 1:d.rfind(")")]
         # this dimension expression is also a parameter;
-        # parse it recursively
-        index = int(param_parse(ddims, params))
-        return str(params[dname][index])
+        # parse it using a helper function which also sorts out nested parentheses
+        ans = str(replace_variables_in_equation(d, params))
+        return ans
     elif d in params:
         return str(params[d])
     else:
