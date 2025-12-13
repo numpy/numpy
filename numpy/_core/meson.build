@@ -775,7 +775,7 @@ py.extension_module('_multiarray_tests',
 
 # Zig ufunc kernels
 # -----------------
-zig = find_program('zig', required: true)
+zig = find_program('python-zig', required: true)
 
 zig_opt = 'ReleaseFast'
 btype = get_option('buildtype')
