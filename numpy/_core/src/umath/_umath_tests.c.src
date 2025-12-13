@@ -84,73 +84,23 @@ always_error_loop(
 
 char *inner1d_signature = "(i),(i)->()";
 
-/**begin repeat
+NPY_NO_EXPORT void
+npy_zig_inner1d_intp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
 
-   #TYPE=INTP,DOUBLE#
-   #typ=npy_intp,npy_double#
-*/
-
-/*
- *  This implements the function
- *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
- */
-
-static void
-@TYPE@_inner1d(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_3
-    npy_intp di = dimensions[0];
-    npy_intp i;
-    npy_intp is1=steps[0], is2=steps[1];
-    BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
-        @typ@ sum = 0;
-        for (i = 0; i < di; i++) {
-            sum += (*(@typ@ *)ip1) * (*(@typ@ *)ip2);
-            ip1 += is1;
-            ip2 += is2;
-        }
-        *(@typ@ *)op = sum;
-    END_OUTER_LOOP
-}
-
-/**end repeat**/
+NPY_NO_EXPORT void
+npy_zig_inner1d_double(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
 
 char *innerwt_signature = "(i),(i),(i)->()";
 
-/**begin repeat
+NPY_NO_EXPORT void
+npy_zig_innerwt_intp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
 
-   #TYPE=INTP,DOUBLE#
-   #typ=npy_intp,npy_double#
-*/
-
+NPY_NO_EXPORT void
+npy_zig_innerwt_double(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
 
 /*
- *  This implements the function
- *        out[n] = sum_i { in1[n, i] * in2[n, i] * in3[n, i] }.
+ * innerwt loop is implemented in Zig (see `src/umath/ufunc_kernels.zig`).
  */
-
-static void
-@TYPE@_innerwt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_4
-    npy_intp di = dimensions[0];
-    npy_intp i;
-    npy_intp is1=steps[0], is2=steps[1], is3=steps[2];
-    BEGIN_OUTER_LOOP_4
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
-        @typ@ sum = 0;
-        for (i = 0; i < di; i++) {
-            sum += (*(@typ@ *)ip1) * (*(@typ@ *)ip2) * (*(@typ@ *)ip3);
-            ip1 += is1;
-            ip2 += is2;
-            ip3 += is3;
-        }
-        *(@typ@ *)op = sum;
-    END_OUTER_LOOP
-}
-
-/**end repeat**/
 
 char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
 /* for use with matrix_multiply code, but different signature */
@@ -321,35 +271,20 @@ static void
 
 char *cumsum_signature = "(i)->(i)";
 
+NPY_NO_EXPORT void
+npy_zig_cumsum_intp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
+
+NPY_NO_EXPORT void
+npy_zig_cumsum_double(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
+
 /*
  *  This implements the function
  *        out[n] = sum_i^n in[i]
  */
 
-/**begin repeat
-
-   #TYPE=INTP,DOUBLE#
-   #typ=npy_intp,npy_double#
-*/
-
-static void
-@TYPE@_cumsum(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    INIT_OUTER_LOOP_2
-    npy_intp di = dimensions[0];
-    npy_intp i;
-    npy_intp is=steps[0], os=steps[1];
-    BEGIN_OUTER_LOOP_2
-        char *ip=args[0], *op=args[1];
-        @typ@ cumsum = 0;
-        for (i = 0; i < di; i++, ip += is, op += os) {
-            cumsum += (*(@typ@ *)ip);
-            *(@typ@ *)op = cumsum;
-        }
-    END_OUTER_LOOP
-}
-
-/**end repeat**/
+/*
+ * cumsum loop is implemented in Zig (see `src/umath/ufunc_kernels.zig`).
+ */
 
 static int
 INT32_negative(PyArrayMethod_Context *NPY_UNUSED(context),
@@ -424,10 +359,10 @@ defdict = {
 static PyUFuncGenericFunction always_error_functions[] = { always_error_loop };
 static void *const always_error_data[] = { (void *)NULL };
 static const char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction inner1d_functions[] = { INTP_inner1d, DOUBLE_inner1d };
+static PyUFuncGenericFunction inner1d_functions[] = { npy_zig_inner1d_intp, npy_zig_inner1d_double };
 static void *const inner1d_data[] = { (void *)NULL, (void *)NULL };
 static const char inner1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction innerwt_functions[] = { INTP_innerwt, DOUBLE_innerwt };
+static PyUFuncGenericFunction innerwt_functions[] = { npy_zig_innerwt_intp, npy_zig_innerwt_double };
 static void *const innerwt_data[] = { (void *)NULL, (void *)NULL };
 static const char innerwt_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction matrix_multiply_functions[] = { INTP_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
@@ -442,7 +377,7 @@ static void *const eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
 static const char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
 
-static PyUFuncGenericFunction cumsum_functions[] = { INTP_cumsum, DOUBLE_cumsum };
+static PyUFuncGenericFunction cumsum_functions[] = { npy_zig_cumsum_intp, npy_zig_cumsum_double };
 static void *const cumsum_data[] = { (void *)NULL, (void *)NULL };
 static const char cumsum_signatures[] = { NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE };
 

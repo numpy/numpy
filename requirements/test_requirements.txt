@@ -4,6 +4,8 @@ pytest==7.4.0
 pytest-cov==4.1.0
 meson
 ninja; sys_platform != "emscripten"
+-r zig_requirements.txt
+
 pytest-xdist
 pytest-timeout
 # For testing types
