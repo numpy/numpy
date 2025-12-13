@@ -1349,3 +1349,16 @@ def test_einsum_chunking_precision():
 
     # At with GROWINNER 11 decimals succeed (larger will be less)
     assert_almost_equal(res, value, decimal=15)
+    
+def test_einsum_ellipsis_optimize_false_regression_30349():
+    x = np.array([[[1,2,3],[1,2,3],[1,2,3]],
+                  [[1,2,3],[1,2,3],[1,2,3]],
+                  [[1,2,3],[1,2,3],[1,2,3]]])
+
+    got = np.einsum("i...->i", x, optimize=False)
+    expected = np.array([18, 18, 18])
+    assert np.array_equal(got, expected)
+
+    # also ensure optimize=True matches
+    got_opt = np.einsum("i...->i", x, optimize=True)
+    assert np.array_equal(got_opt, expected)

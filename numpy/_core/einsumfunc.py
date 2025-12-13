@@ -1607,6 +1607,11 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     if optimize is False:
         if specified_out:
             kwargs['out'] = out
+        # FIX:GH#30349 normalize ellipsis parsing via python parser ---
+        if operands and isinstance(operands[0], str) and "..." in operands[0]:
+            input_sub, output_sub, parsed_ops = _parse_einsum_input(operands)
+            subscripts = input_sub + "->" + output_sub
+            return c_einsum(subscripts, *parsed_ops, **kwargs)
         return c_einsum(*operands, **kwargs)
 
     # Check the kwargs to avoid a more cryptic error later, without having to
