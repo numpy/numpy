@@ -94,9 +94,8 @@ which in turn will not affect ``y`` at all::
     array([[3, 4, 5],
            [6, 7, 8]])
 
-It must be noted here that during the assignment of ``x[[1, 2]]`` no view
-or copy is created as the assignment happens in-place.
-
+It must be noted here that the assignment ``x[[1, 2]] = y`` modifies ``x`` 
+in-place without creating a view or copy.
 
 Other operations
 ================
