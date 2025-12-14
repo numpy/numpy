@@ -71,7 +71,7 @@ def _build_float16_extension(tmpdir_factory):
     import _float16_tests
 
     global h
-    h = _float16_tests.float16
+    h = _float16_tests
 
 
 #
@@ -325,15 +325,13 @@ def test_float16_lt_le_gt_ge(a_bits, b_bits):
 # No nan Comparison Variants
 #
 
-# Tests npy_float16_eq_nonan(npy_half h1, npy_half h2),
-# npy_float16_lt_nonan(npy_half h1, npy_half h2),
-# npy_float16_le_nonan(npy_half h1, npy_half h2)
+# Tests _npy_float16_lt_nonan(npy_half h1, npy_half h2),
+# _npy_float16_le_nonan(npy_half h1, npy_half h2)
 @pytest.mark.parametrize("a_bits, b_bits", [
     (FLOAT16_PZERO, FLOAT16_NZERO),
     (FLOAT16_NZERO, FLOAT16_PZERO),
 ])
 def test_float16_eq_nonan_zeros(a_bits, b_bits):
-    assert h.float16_eq_nonan(int(a_bits), int(b_bits))
     assert not h.float16_lt_nonan(int(a_bits), int(b_bits))
     assert h.float16_le_nonan(int(a_bits), int(b_bits))
 
@@ -420,39 +418,3 @@ def test_float16_nextafter_basic(x_bits, y_bits):
 ])
 def test_float16_nextafter_nan(x_bits, y_bits):
     got_bits = np.uint16(h.float16_nextafter(int(x_bits), int(y_bits)))
-
-# Tests npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus)
-@pytest.mark.parametrize("a_bits, b_bits", [
-    (FLOAT16_PZERO, FLOAT16_ONE),
-    (FLOAT16_ONE, FLOAT16_ONE),
-    (FLOAT16_ONE, FLOAT16_NEGONE),
-    (FLOAT16_NEGONE, FLOAT16_ONE),
-    (FLOAT16_NEGONE, FLOAT16_NEGONE),
-    # Below tests is for a quotient is not the same as the original number
-    # +- 3.5 / 2.0 = 1.75
-    #    divmod(3.5, 2.0) -> (1.0, 1.5)
-    (bits_from_f16(np.float16(3.5)), bits_from_f16(np.float16(2.0))),
-    (bits_from_f16(np.float16(-3.5)), bits_from_f16(np.float16(2.0))),
-])
-def test_float16_divmod(a_bits, b_bits):
-    a = f16_from_bits(a_bits).astype(np.float32)
-    b = f16_from_bits(b_bits).astype(np.float32)
-
-    q_bits, r_bits = h.float16_divmod(int(a_bits), int(b_bits))
-    q = f16_from_bits(np.uint16(q_bits)).astype(np.float32)
-    r = f16_from_bits(np.uint16(r_bits)).astype(np.float32)
-
-    if b == 0.0 and not np.isnan(b):
-        q_ref, r_ref = divmod(float(a), float(b))
-    else:
-        q_ref, r_ref = divmod(float(a), float(b))
-
-    if np.isnan(q_ref):
-        assert_isnan(q)
-    else:
-        assert math.isclose(q, q_ref, rel_tol=0.0, abs_tol=0.0)
-
-    if np.isnan(r_ref):
-        assert_isnan(r)
-    else:
-        assert math.isclose(r, r_ref, rel_tol=0.0, abs_tol=0.0)

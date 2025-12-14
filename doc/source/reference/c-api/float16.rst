@@ -6,21 +6,21 @@ Half-precision API
 The header file ``<numpy/float16.h>`` provides helper routines for working
 with IEEE 754-2008 16-bit floating-point values
 
-Unlike ``<numpy/halffloat.h>``, this header is a header only implmentation
-and does not require linking against the ``npymath`` static library. All
-functionality is implemented directly in the header using ``<math.h>`` and
-``<fenv.h>``.
+Unlike ``<numpy/halffloat.h>``, this header is header-only, all
+functionality is implemented directly in the header. As a result, users do
+not need to link against NumPy libraries (such as the ``npymath`` static
+library) and do not need to "import" the NumPy C-API (e.g., calling
+``import_array()``) to use these routines.
 
-Like ``<numpy/halffloat.h>`` The underlying storage type for ``npy_half`` is
-``npy_uint16``. As a consequence, you cannot safely treat ``npy_half`` as
-an ordinary C floating type. For example, 1.0 looks like ``0x3c00`` to C,
-and if you do an equality comparison between the different signed zeros, you
-will get ``-0.0 != 0.0`` (``0x8000 != 0x0000``), which is not the expected
+The underlying storage type for ``npy_half`` is ``npy_uint16``. As a
+consequence, you cannot safely treat ``npy_half`` as an ordinary C
+floating type. For example, 1.0 looks like ``0x3c00`` to C, and if you do
+an equality comparison between the different signed zeros, you will get
+``-0.0 != 0.0`` (``0x8000 != 0x0000``), which is not the expected
 behavior for an IEEE 754 floating type.
 
 For these reasons, NumPy provides an API to work with npy_half values
 accessible by including ``<numpy/float16.h>``.
-
 
 Rather than manipulating the raw bits directly. For operations that are not
 provided directly(for example arithmetic operations), the recommended
@@ -62,31 +62,40 @@ __ https://www.openexr.com/about.html
 Constants
 ---------
 
-:c:macro:`NPY_HALF_ZERO`
+.. c:macro:: NPY_FLOAT16_ZERO
+
   Bit pattern for positive zero.
 
-:c:macro:`NPY_HALF_PZERO`
-  Alias for ``NPY_HALF_ZERO`` (positive zero).
+.. c:macro:: NPY_FLOAT16_PZERO
 
-:c:macro:`NPY_HALF_NZERO`
+  Alias for ``NPY_FLOAT16_ZERO`` (positive zero).
+
+.. c:macro:: NPY_FLOAT16_NZERO
+
   Bit pattern for negative zero.
 
-:c:macro:`NPY_HALF_ONE`
+.. c:macro:: NPY_FLOAT16_ONE
+
   Bit pattern for the value 1.0.
 
-:c:macro:`NPY_HALF_NEGONE`
+.. c:macro:: NPY_FLOAT16_NEGONE
+
   Bit pattern for the value -1.0.
 
-:c:macro:`NPY_HALF_PINF`
+.. c:macro:: NPY_FLOAT16_PINF
+
   Bit pattern for positive infinity.
 
-:c:macro:`NPY_HALF_NINF`
+.. c:macro:: NPY_FLOAT16_NINF
+
   Bit pattern for negative infinity.
 
-:c:macro:`NPY_HALF_NAN`
+.. c:macro:: NPY_FLOAT16_NAN
+
   Bit pattern for a NaN value, guaranteed to have its sign bit unset.
 
-:c:macro:`NPY_MAX_HALF`
+.. c:macro:: NPY_MAX_FLOAT16
+
   Bit pattern for the largest finite half-precision value representable in
   IEEE 754 (``65504.0``).
 
@@ -155,33 +164,13 @@ NaNs.
    Compare two half-precision values (``h1 > h2``), with NaNs propagating to
    a false result.
 
-NaN free comparison variants
-----------------------------
-
-The following helpers are optimized for the cases where it is known in advance
-that neither argument is a NaN. If a NaN is passed anyway, the result is
-undefined.
-
-.. c:function:: int npy_float16_eq_nonan(npy_half h1, npy_half h2)
-
-   Compare two non NaN half-precision values for equality
-   (``h1 == h2``). Treats positive and negative zero as equal.
-
-.. c:function:: int npy_float16_lt_nonan(npy_half h1, npy_half h2)
-
-   Compare two non NaN half-precision values (``h1 < h2``).
-
-.. c:function:: int npy_float16_le_nonan(npy_half h1, npy_half h2)
-
-   Compare two non NaN half-precision values (``h1 <= h2``).
-
 Classification and sign inspection
 ----------------------------------
 
 .. c:function:: int npy_float16_iszero(npy_half h)
 
    Test whether the value is either positive or negative zero. This
-   may be slightly faster than comparing with ``NPY_HALF_ZERO``.
+   may be slightly faster than comparing with ``NPY_FLOAT16_ZERO``.
 
 .. c:function:: int npy_float16_isnan(npy_half h)
 
@@ -212,13 +201,6 @@ Next representable value
 
    Return the next representable half-precision value after ``x`` in the
    direction of ``y``. The behavior mirrors :c:func:`npy_nextafter`.
-
-Divmod
-------
-.. c:function:: npy_half npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus)
-
-   Compute the result of dividing ``h1`` by ``h2``
-   consistent with Python’s :func:`divmod` for floating values.
 
 Bit-level conversion helpers
 ----------------------------
