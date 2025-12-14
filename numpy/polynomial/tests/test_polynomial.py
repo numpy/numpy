@@ -579,7 +579,7 @@ class TestMisc:
                                     deg=[1, 3, 6, 10])
         with pytest.warns(UserWarning, match=msg):
             p = poly.Polynomial.fit(x=[1, 7, 33, 77, -14],
-                                    y=[-9, 66, 23, 12, 1],
+                                    y=[-9, 66, 23, -12, 1],
                                     deg=[1, 6, 20])
 
         # Test exceptions
