@@ -2,7 +2,6 @@
 #define NUMPY_CORE_INCLUDE_NUMPY_FLOAT16_H_
 
 #include <Python.h>
-#include <math.h>
 #include <assert.h>
 #include <fenv.h>
 #include "numpy/npy_common.h"
@@ -11,41 +10,23 @@
   * Half-precision constants
   */
 
-#ifndef NPY_HALF_ZERO
-#define NPY_HALF_ZERO   (0x0000u)
-#endif
+#define NPY_FLOAT16_ZERO   (0x0000u)
 
-#ifndef NPY_HALF_PZERO
-#define NPY_HALF_PZERO  (0x0000u)
-#endif
+#define NPY_FLOAT16_PZERO  (0x0000u)
 
-#ifndef NPY_HALF_NZERO
-#define NPY_HALF_NZERO  (0x8000u)
-#endif
+#define NPY_FLOAT16_NZERO  (0x8000u)
 
-#ifndef NPY_HALF_ONE
-#define NPY_HALF_ONE    (0x3c00u)
-#endif
+#define NPY_FLOAT16_ONE    (0x3c00u)
 
-#ifndef NPY_HALF_NEGONE
-#define NPY_HALF_NEGONE (0xbc00u)
-#endif
+#define NPY_FLOAT16_NEGONE (0xbc00u)
 
-#ifndef NPY_HALF_PINF
-#define NPY_HALF_PINF   (0x7c00u)
-#endif
+#define NPY_FLOAT16_PINF   (0x7c00u)
 
-#ifndef NPY_HALF_NINF
-#define NPY_HALF_NINF   (0xfc00u)
-#endif
+#define NPY_FLOAT16_NINF   (0xfc00u)
 
-#ifndef NPY_HALF_NAN
-#define NPY_HALF_NAN    (0x7e00u)
-#endif
+#define NPY_FLOAT16_NAN    (0x7e00u)
 
-#ifndef NPY_MAX_HALF
-#define NPY_MAX_HALF    (0x7bffu)
-#endif
+#define NPY_MAX_FLOAT16    (0x7bffu)
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,9 +48,6 @@ static inline int npy_float16_lt(npy_half h1, npy_half h2);
 static inline int npy_float16_ge(npy_half h1, npy_half h2);
 static inline int npy_float16_gt(npy_half h1, npy_half h2);
 /* faster *_nonan variants for when you know h1 and h2 are not NaN */
-static inline int npy_float16_eq_nonan(npy_half h1, npy_half h2);
-static inline int npy_float16_lt_nonan(npy_half h1, npy_half h2);
-static inline int npy_float16_le_nonan(npy_half h1, npy_half h2);
 /* Miscellaneous functions */
 static inline int npy_float16_iszero(npy_half h);
 static inline int npy_float16_isnan(npy_half h);
@@ -78,17 +56,16 @@ static inline int npy_float16_isfinite(npy_half h);
 static inline int npy_float16_signbit(npy_half h);
 static inline npy_half npy_float16_copysign(npy_half x, npy_half y);
 static inline npy_half npy_float16_nextafter(npy_half x, npy_half y);
-static inline npy_half npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus);
 /* Bit-Level Conversions */
 static inline npy_uint16 npy_floatbits_to_float16bits(npy_uint32 f);
 static inline npy_uint16 npy_doublebits_to_float16bits(npy_uint64 d);
 static inline npy_uint32 npy_float16bits_to_floatbits(npy_uint16 h);
 static inline npy_uint64 npy_float16bits_to_doublebits(npy_uint16 h);
 /* Internal Helper Functions */
-static inline npy_float _npy_divmodf(npy_float a, npy_float b, npy_float *modulus);
 static inline void _npy_float16_header_overflow(void);
 static inline void _npy_float16_header_underflow(void);
-
+static inline int _npy_float16_lt_nonan(npy_half h1, npy_half h2);
+static inline int _npy_float16_le_nonan(npy_half h1, npy_half h2);
 /*
  * Logic
  */
@@ -438,12 +415,12 @@ static inline int npy_float16_ne(npy_half h1, npy_half h2)
 
 static inline int npy_float16_le(npy_half h1, npy_half h2)
 {
-    return (!npy_float16_isnan(h1) && !npy_float16_isnan(h2)) && npy_float16_le_nonan(h1, h2);
+    return (!npy_float16_isnan(h1) && !npy_float16_isnan(h2)) && _npy_float16_le_nonan(h1, h2);
 }
 
 static inline int npy_float16_lt(npy_half h1, npy_half h2)
 {
-    return (!npy_float16_isnan(h1) && !npy_float16_isnan(h2)) && npy_float16_lt_nonan(h1, h2);
+    return (!npy_float16_isnan(h1) && !npy_float16_isnan(h2)) && _npy_float16_lt_nonan(h1, h2);
 }
 
 static inline int npy_float16_ge(npy_half h1, npy_half h2)
@@ -456,13 +433,7 @@ static inline int npy_float16_gt(npy_half h1, npy_half h2)
     return npy_float16_lt(h2, h1);
 }
 
-/* faster *_nonan variants for when you know h1 and h2 are not NaN */
-static inline int npy_float16_eq_nonan(npy_half h1, npy_half h2)
-{
-    return (h1 == h2 || ((h1 | h2) & 0x7fff) == 0);
-}
-
-static inline int npy_float16_lt_nonan(npy_half h1, npy_half h2)
+static inline int _npy_float16_lt_nonan(npy_half h1, npy_half h2)
 {
     if (h1&0x8000u) {
         if (h2&0x8000u) {
@@ -480,7 +451,7 @@ static inline int npy_float16_lt_nonan(npy_half h1, npy_half h2)
     }
 }
 
-static inline int npy_float16_le_nonan(npy_half h1, npy_half h2)
+static inline int _npy_float16_le_nonan(npy_half h1, npy_half h2)
 {
     if (h1&0x8000u) {
         if (h2&0x8000u) {
@@ -533,9 +504,7 @@ static inline npy_half npy_float16_nextafter(npy_half x, npy_half y)
 {
      npy_half ret;
 
-    if (npy_float16_isnan(x) || npy_float16_isnan(y)) {
-        ret = NPY_HALF_NAN;
-    } else if (npy_float16_eq_nonan(x, y)) {
+    if (npy_float16_eq(x, y)) {
         ret = x;
     } else if (npy_float16_iszero(x)) {
         ret = (y&0x8000u) + 1; /* Smallest subnormal half */
@@ -557,60 +526,6 @@ static inline npy_half npy_float16_nextafter(npy_half x, npy_half y)
     }
     return ret;
 }
-
-static inline npy_half npy_float16_divmod(npy_half h1, npy_half h2, npy_half *modulus)
-{
-    float fh1 = npy_float16_to_float(h1);
-    float fh2 = npy_float16_to_float(h2);
-    float div, mod;
-
-    div = _npy_divmodf(fh1, fh2, &mod);
-    *modulus = npy_float_to_float16(mod);
-    return npy_float_to_float16(div);
-}
-
-/* Internal Helper Functions */
-static inline npy_float _npy_divmodf(npy_float a, npy_float b, npy_float *modulus)
-{
-    npy_float div, mod, floordiv;
-
-    mod = fmodf(a, b);
-    if (NPY_UNLIKELY(!b)) {
-        /* b == 0 (not NaN): return result of fmod. For IEEE is nan */
-        *modulus = mod;
-        return a / b;
-    }
-
-    /* a - mod should be very nearly an integer multiple of b */
-    div = (a - mod) / b;
-
-    /* adjust fmod result to conform to Python convention of remainder */
-    if (mod) {
-        if (isless(b, (npy_float)0) != isless(mod, (npy_float)0)) {
-            mod += b;
-            div -= 1.0f;
-        }
-    }
-    else {
-        /* if mod is zero ensure correct sign */
-        mod = copysignf(0, b);
-    }
-
-    /* snap quotient to nearest integral value */
-    if (div) {
-        floordiv = floorf(div);
-        if (isgreater(div - floordiv, 0.5f))
-            floordiv += 1.0f;
-    }
-    else {
-        /* if div is zero ensure correct sign */
-        floordiv = copysignf(0, a/b);
-    }
-
-    *modulus = mod;
-    return floordiv;
-}
-
 
 #ifdef __cplusplus
 }

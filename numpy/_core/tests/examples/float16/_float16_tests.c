@@ -129,16 +129,6 @@ float16tests_float16_gt(PyObject *NPY_UNUSED(self), PyObject *args)
 /*
  * No Nan Comparisons variants
  */
-static PyObject *
-float16tests_float16_eq_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    unsigned int h1, h2;
-    if (!PyArg_ParseTuple(args, "II", &h1, &h2)) {
-        return NULL;
-    }
-    int ret = npy_float16_eq_nonan(h1, h2);
-    return PyBool_FromLong(ret != 0);
-}
 
 static PyObject *
 float16tests_float16_lt_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
@@ -147,7 +137,7 @@ float16tests_float16_lt_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "II", &h1, &h2)) {
         return NULL;
     }
-    int ret = npy_float16_lt_nonan(h1, h2);
+    int ret = _npy_float16_lt_nonan(h1, h2);
     return PyBool_FromLong(ret != 0);
 }
 
@@ -158,7 +148,7 @@ float16tests_float16_le_nonan(PyObject *NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "II", &h1, &h2)) {
         return NULL;
     }
-    int ret = npy_float16_le_nonan(h1, h2);
+    int ret = _npy_float16_le_nonan(h1, h2);
     return PyBool_FromLong(ret != 0);
 }
 
@@ -250,23 +240,6 @@ float16tests_float16_nextafter(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyLong_FromUnsignedLong(r);
 }
 
-static PyObject *
-float16tests_float16_divmod(PyObject *NPY_UNUSED(self), PyObject *args)
-{
-    unsigned int h1bits, h2bits;
-    if (!PyArg_ParseTuple(args, "II", &h1bits, &h2bits)) {
-        return NULL;
-    }
-
-    npy_half h1 = h1bits;
-    npy_half h2 = h2bits;
-
-    npy_half mod;
-    npy_half quo = npy_float16_divmod(h1, h2, &mod);
-
-    return Py_BuildValue("II", quo, mod);
-}
-
 static PyMethodDef float16_tests_methods[] = {
     // Conversions
     {"float16_to_float", float16tests_float16_to_float, METH_VARARGS,
@@ -285,8 +258,6 @@ static PyMethodDef float16_tests_methods[] = {
     {"float16_ge", float16tests_float16_ge, METH_VARARGS, "h1 >= h2 (with NaN handling)."},
     {"float16_gt", float16tests_float16_gt, METH_VARARGS, "h1 > h2 (with NaN handling)."},
     // No Nan Comparsons
-    {"float16_eq_nonan", float16tests_float16_eq_nonan, METH_VARARGS,
-     "h1 == h2, assuming neither is NaN."},
     {"float16_lt_nonan", float16tests_float16_lt_nonan, METH_VARARGS,
      "h1 < h2, assuming neither is NaN."},
     {"float16_le_nonan", float16tests_float16_le_nonan, METH_VARARGS,
@@ -302,29 +273,7 @@ static PyMethodDef float16_tests_methods[] = {
      "Return half with magnitude of x and sign of y."},
     {"float16_nextafter", float16tests_float16_nextafter, METH_VARARGS,
      "Return next representable half from x toward y (as half bits)."},
-    {"float16_divmod", float16tests_float16_divmod, METH_VARARGS,
-     "Return (quotient, remainder) for float16 divmod, both as half bits."},
     {NULL, NULL, 0, NULL}  /* sentinel */
-};
-
-static int
-float16tests_exec(PyObject *m)
-{
-    Py_INCREF(m);
-    if (PyModule_AddObject(m, "float16", m) < 0) {
-        Py_DECREF(m);
-        return -1;
-    }
-
-    return 0;
-}
-
-static PyModuleDef_Slot float16tests_slots[] = {
-#ifdef Py_GIL_DISABLED
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#endif
-    {Py_mod_exec, float16tests_exec},
-    {0, NULL}
 };
 
 static struct PyModuleDef float16tests_moduledef = {
@@ -333,11 +282,22 @@ static struct PyModuleDef float16tests_moduledef = {
     .m_doc = "Internal float16 helper functions for testing.",
     .m_size = 0,
     .m_methods = float16_tests_methods,
-    .m_slots = float16tests_slots,
 };
 
 PyMODINIT_FUNC
 PyInit__float16_tests(void)
 {
-    return PyModuleDef_Init(&float16tests_moduledef);
+    PyObject *m = PyModule_Create(&float16tests_moduledef);
+    if (m == NULL) {
+        return NULL;
+    }
+
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED) < 0) {
+        Py_DECREF(m);
+        return NULL;
+    }
+#endif
+
+    return m;
 }

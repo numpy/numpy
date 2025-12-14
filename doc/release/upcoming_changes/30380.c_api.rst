@@ -1,0 +1,6 @@
+Header-only half-precision helpers in ``numpy/float16.h``
+---------------------------------------------------------
+A new public header, ``numpy/float16.h``, provides a header-only implementation of
+NumPy’s half-precision (float16) helper routines. Unlike ``numpy/halffloat.h``,
+using ``numpy/float16.h`` does not require linking against ``libnpymath``, which
+simplifies building downstream extension modules. See :ref:`float16` for details.
