@@ -571,6 +571,17 @@ class TestMisc:
         def f2(x):
             return x**4 + x**2 + 1
 
+        # Test warnings
+        msg = "The polynomial may contain degrees other than those in deg"
+        with pytest.warns(UserWarning, match=msg):
+            p = poly.Polynomial.fit(x=[2, 3, 8, 19],
+                                    y=[4, 5, -6, 77],
+                                    deg=[1, 3, 6, 10])
+        with pytest.warns(UserWarning, match=msg):
+            p = poly.Polynomial.fit(x=[1, 7, 33, 77, -14],
+                                    y=[-9, 66, 23, 12, 1],
+                                    deg=[1, 6, 20])
+
         # Test exceptions
         assert_raises(ValueError, poly.polyfit, [1], [1], -1)
         assert_raises(TypeError, poly.polyfit, [[1]], [1], 0)

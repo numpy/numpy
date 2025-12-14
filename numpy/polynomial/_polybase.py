@@ -13,7 +13,6 @@ import warnings
 from collections.abc import Callable
 
 import numpy as np
-from numpy.exceptions import RankWarning
 
 from . import polyutils as pu
 
@@ -1029,7 +1028,8 @@ class ABCPolyBase(abc.ABC):
 
         if domain[0] + domain[1] != 0 or window[0] + window[1] != 0:
             if hasattr(deg, "__iter__") and len(deg) - 1 != max(deg):
-                warnings.warn("The polynomial may be poorly fitted", RankWarning)
+                msg = "The polynomial may contain degrees other than those in deg"
+                warnings.warn(msg, UserWarning)
 
         if full:
             [coef, status] = res
