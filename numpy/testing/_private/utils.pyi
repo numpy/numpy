@@ -16,11 +16,8 @@ from typing import (
     Generic,
     Literal as L,
     NoReturn,
-    ParamSpec,
     Self,
     SupportsIndex,
-    TypeAlias,
-    TypeVarTuple,
     overload,
     type_check_only,
 )
@@ -91,25 +88,20 @@ __all__ = [  # noqa: RUF022
 
 ###
 
-_T = TypeVar("_T")
-_Ts = TypeVarTuple("_Ts")
-_Tss = ParamSpec("_Tss")
-_ET = TypeVar("_ET", bound=BaseException, default=BaseException)
-_FT = TypeVar("_FT", bound=Callable[..., Any])
 _W_co = TypeVar("_W_co", bound=_WarnLog | None, default=_WarnLog | None, covariant=True)
 
-_StrLike: TypeAlias = str | bytes
-_RegexLike: TypeAlias = _StrLike | Pattern[Any]
-_NumericArrayLike: TypeAlias = _ArrayLikeNumber_co | _ArrayLikeObject_co
+type _StrLike = str | bytes
+type _RegexLike = _StrLike | Pattern[Any]
+type _NumericArrayLike = _ArrayLikeNumber_co | _ArrayLikeObject_co
 
-_ExceptionSpec: TypeAlias = type[_ET] | tuple[type[_ET], ...]
-_WarningSpec: TypeAlias = type[Warning]
-_WarnLog: TypeAlias = list[warnings.WarningMessage]
-_ToModules: TypeAlias = Iterable[types.ModuleType]
+type _ExceptionSpec[ExceptionT: BaseException] = type[ExceptionT] | tuple[type[ExceptionT], ...]
+type _WarningSpec = type[Warning]
+type _WarnLog = list[warnings.WarningMessage]
+type _ToModules = Iterable[types.ModuleType]
 
 # Must return a bool or an ndarray/generic type that is supported by `np.logical_and.reduce`
-_ComparisonFunc: TypeAlias = Callable[
-    [NDArray[Any], NDArray[Any]],
+type _ComparisonFunc = Callable[
+    [np.ndarray, np.ndarray],
     bool | np.bool | np.number | NDArray[np.bool | np.number | np.object_],
 ]
 
@@ -158,7 +150,7 @@ class suppress_warnings:
     def __init__(self, /, forwarding_rule: L["always", "module", "once", "location"] = "always") -> None: ...
     def __enter__(self) -> Self: ...
     def __exit__(self, cls: type[BaseException] | None, exc: BaseException | None, tb: types.TracebackType | None, /) -> None: ...
-    def __call__(self, /, func: _FT) -> _FT: ...
+    def __call__[FuncT: Callable[..., Any]](self, /, func: FuncT) -> FuncT: ...
 
     #
     def filter(self, /, category: type[Warning] = ..., message: str = "", module: types.ModuleType | None = None) -> None: ...
@@ -289,36 +281,36 @@ def assert_string_equal(actual: str, desired: str) -> None: ...
 
 #
 @overload
-def assert_raises(
-    exception_class: _ExceptionSpec[_ET],
+def assert_raises[ExceptionT: BaseException](
+    exception_class: _ExceptionSpec[ExceptionT],
     /,
     *,
     msg: str | None = None,
-) -> unittest.case._AssertRaisesContext[_ET]: ...
+) -> unittest.case._AssertRaisesContext[ExceptionT]: ...
 @overload
-def assert_raises(
-    exception_class: _ExceptionSpec,
-    callable: Callable[_Tss, Any],
+def assert_raises[**Tss](
+    exception_class: _ExceptionSpec[BaseException],
+    callable: Callable[Tss, Any],
     /,
-    *args: _Tss.args,
-    **kwargs: _Tss.kwargs,
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
 ) -> None: ...
 
 #
 @overload
-def assert_raises_regex(
-    exception_class: _ExceptionSpec[_ET],
+def assert_raises_regex[ExceptionT: BaseException](
+    exception_class: _ExceptionSpec[ExceptionT],
     expected_regexp: _RegexLike,
     *,
     msg: str | None = None,
-) -> unittest.case._AssertRaisesContext[_ET]: ...
+) -> unittest.case._AssertRaisesContext[ExceptionT]: ...
 @overload
-def assert_raises_regex(
-    exception_class: _ExceptionSpec,
+def assert_raises_regex[**Tss](
+    exception_class: _ExceptionSpec[BaseException],
     expected_regexp: _RegexLike,
-    callable: Callable[_Tss, Any],
-    *args: _Tss.args,
-    **kwargs: _Tss.kwargs,
+    callable: Callable[Tss, Any],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
 ) -> None: ...
 
 #
@@ -368,19 +360,24 @@ def assert_array_max_ulp(
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
 @overload
 @deprecated("Please use warnings.catch_warnings or pytest.warns instead")
-def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
+def assert_warns[**Tss, ReturnT](
+    warning_class: _WarningSpec,
+    func: Callable[Tss, ReturnT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> ReturnT: ...
 
 #
 @overload
 def assert_no_warnings() -> _GeneratorContextManager[None]: ...
 @overload
-def assert_no_warnings(func: Callable[_Tss, _T], /, *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
+def assert_no_warnings[**Tss, ReturnT](func: Callable[Tss, ReturnT], /, *args: Tss.args, **kwargs: Tss.kwargs) -> ReturnT: ...
 
 #
 @overload
 def assert_no_gc_cycles() -> _GeneratorContextManager[None]: ...
 @overload
-def assert_no_gc_cycles(func: Callable[_Tss, Any], /, *args: _Tss.args, **kwargs: _Tss.kwargs) -> None: ...
+def assert_no_gc_cycles[**Tss](func: Callable[Tss, Any], /, *args: Tss.args, **kwargs: Tss.kwargs) -> None: ...
 
 ###
 
@@ -479,23 +476,23 @@ def run_threaded(
     prepare_args: None = None,
 ) -> None: ...
 @overload
-def run_threaded(
-    func: Callable[[*_Ts], None],
+def run_threaded[*Ts](
+    func: Callable[[*Ts], None],
     max_workers: int,
     pass_count: bool,
     pass_barrier: bool,
     outer_iterations: int,
-    prepare_args: tuple[*_Ts],
+    prepare_args: tuple[*Ts],
 ) -> None: ...
 @overload
-def run_threaded(
-    func: Callable[[*_Ts], None],
+def run_threaded[*Ts](
+    func: Callable[[*Ts], None],
     max_workers: int = 8,
     pass_count: bool = False,
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     *,
-    prepare_args: tuple[*_Ts],
+    prepare_args: tuple[*Ts],
 ) -> None: ...
 
 #

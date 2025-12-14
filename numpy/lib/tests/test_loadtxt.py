@@ -13,7 +13,7 @@ import pytest
 
 import numpy as np
 from numpy.ma.testutils import assert_equal
-from numpy.testing import HAS_REFCOUNT, IS_PYPY, assert_array_equal
+from numpy.testing import HAS_REFCOUNT, assert_array_equal
 
 
 def test_scientific_notation():
@@ -204,8 +204,6 @@ def test_maxrows_no_blank_lines(dtype):
     assert_equal(res, np.array([["1.5", "2.5"], ["3.0", "4.0"]], dtype=dtype))
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype", (np.dtype("f8"), np.dtype("i2")))
 def test_exception_message_bad_values(dtype):
     txt = StringIO("1,2\n3,XXX\n5,6")
@@ -393,8 +391,6 @@ def test_bool():
     assert_array_equal(res.view(np.uint8), [[1, 0], [1, 1]])
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 @pytest.mark.filterwarnings("error:.*integer via a float.*:DeprecationWarning")
 def test_integer_signs(dtype):
@@ -411,8 +407,6 @@ def test_integer_signs(dtype):
             np.loadtxt([f"{sign}2\n"], dtype=dtype)
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 @pytest.mark.filterwarnings("error:.*integer via a float.*:DeprecationWarning")
 def test_implicit_cast_float_to_int_fails(dtype):
@@ -483,8 +477,6 @@ def test_object_cleanup_on_read_error():
     assert sys.getrefcount(sentinel) == 2
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 def test_character_not_bytes_compatible():
     """Test exception when a character cannot be encoded as 'S'."""
     data = StringIO("–")  # == \u2013
@@ -502,8 +494,6 @@ def test_invalid_converter(conv):
         np.loadtxt(StringIO("1 2\n3 4"), converters=conv)
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 def test_converters_dict_raises_non_integer_key():
     with pytest.raises(TypeError, match="keys of the converters dict"):
         np.loadtxt(StringIO("1 2\n3 4"), converters={"a": int})
@@ -569,8 +559,6 @@ def test_quote_support_default():
     assert_array_equal(res, expected)
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 def test_quotechar_multichar_error():
     txt = StringIO("1,2\n3,4")
     msg = r".*must be a single unicode character or None"
@@ -730,8 +718,6 @@ def test_unicode_whitespace_stripping_complex(dtype):
     assert_array_equal(res, np.array([[1, 2 + 3j, 4 + 5j, 6 - 7j, 8j, 9j]] * 2))
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype", "FD")
 @pytest.mark.parametrize("field",
         ["1 +2j", "1+ 2j", "1+2 j", "1+-+3", "(1j", "(1", "(1+2j", "1+2j)"])
@@ -740,8 +726,6 @@ def test_bad_complex(dtype, field):
         np.loadtxt([field + "\n"], dtype=dtype, delimiter=",")
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype",
             np.typecodes["AllInteger"] + "efgdFDG" + "?")
 def test_nul_character_error(dtype):
@@ -753,8 +737,6 @@ def test_nul_character_error(dtype):
         np.loadtxt(["1\000"], dtype=dtype, delimiter=",", quotechar='"')
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype",
         np.typecodes["AllInteger"] + "efgdFDG" + "?")
 def test_no_thousands_support(dtype):
@@ -1022,8 +1004,6 @@ def test_str_dtype_unit_discovery_with_converter():
     assert_equal(a, expected)
 
 
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                    reason="PyPy bug in error formatting")
 def test_control_character_empty():
     with pytest.raises(TypeError, match="Text reading control character must"):
         np.loadtxt(StringIO("1 2 3"), delimiter="")

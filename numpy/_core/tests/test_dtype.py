@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import gc
 import inspect
@@ -20,13 +21,12 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def assert_dtype_equal(a, b):
@@ -977,25 +977,24 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
             d = (d, (1,))
-        with pytest.raises(RecursionError):
+        # depending on OS and Python version, this might succeed
+        # see gh-30370 and cpython issue #142253
+        with contextlib.suppress(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
@@ -1836,7 +1835,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1860,7 +1864,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1892,7 +1901,15 @@ class TestFromCTypes:
                 ('g', ctypes.c_uint8)
                 ]
         expected = np.dtype({
-            "formats": [np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
+            "formats": [
+                np.uint8,
+                np.uint16,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint32,
+                np.uint8,
+            ],
             "offsets": [0, 2, 4, 6, 8, 12, 16],
             "names": ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             "itemsize": 18})
@@ -1965,7 +1982,9 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1986,7 +2005,9 @@ class TestUserDType:
             del a
             assert sys.getrefcount(o) == startcount
 
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass

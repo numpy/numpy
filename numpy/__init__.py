@@ -52,9 +52,6 @@ polynomial
     Polynomial tools
 testing
     NumPy testing tools
-distutils
-    Enhancements to distutils with support for
-    Fortran compilers support and more (for Python <= 3.11)
 
 Utilities
 ---------
@@ -624,8 +621,8 @@ else:
     from .matrixlib import asmatrix, bmat, matrix
 
     # public submodules are imported lazily, therefore are accessible from
-    # __getattr__. Note that `distutils` (deprecated) and `array_api`
-    # (experimental label) are not added here, because `from numpy import *`
+    # __getattr__. Note that `array_api`
+    # (experimental label) is not added here, because `from numpy import *`
     # must not raise any warnings - that's too disruptive.
     __numpy_submodules__ = {
         "linalg", "fft", "dtypes", "random", "polynomial", "ma",
@@ -747,23 +744,12 @@ else:
         elif attr == "char":
             import numpy.char as char
             return char
-        elif attr == "array_api":
-            raise AttributeError("`numpy.array_api` is not available from "
-                                 "numpy 2.0 onwards", name=None)
         elif attr == "core":
             import numpy.core as core
             return core
         elif attr == "strings":
             import numpy.strings as strings
             return strings
-        elif attr == "distutils":
-            if 'distutils' in __numpy_submodules__:
-                import numpy.distutils as distutils
-                return distutils
-            else:
-                raise AttributeError("`numpy.distutils` is not available from "
-                                     "Python 3.12 onwards", name=None)
-
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
             # the AttributeError
@@ -797,7 +783,7 @@ else:
         )
         public_symbols -= {
             "matrixlib", "matlib", "tests", "conftest", "version",
-            "distutils", "array_api"
+            "array_api"
         }
         return list(public_symbols)
 

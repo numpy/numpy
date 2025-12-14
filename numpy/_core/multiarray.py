@@ -700,7 +700,7 @@ def min_scalar_type(a, /):
     >>> np.min_scalar_type(1e50)
     dtype('float64')
 
-    >>> np.min_scalar_type(np.arange(4,dtype='f8'))
+    >>> np.min_scalar_type(np.arange(4, dtype=np.float64))
     dtype('float64')
 
     """
@@ -732,10 +732,10 @@ def result_type(*arrays_and_dtypes):
     Examples
     --------
     >>> import numpy as np
-    >>> np.result_type(3, np.arange(7, dtype='i1'))
+    >>> np.result_type(3, np.arange(7, dtype=np.int8))
     dtype('int8')
 
-    >>> np.result_type('i4', 'c8')
+    >>> np.result_type(np.int32, np.complex64)
     dtype('complex128')
 
     >>> np.result_type(3.0, -2)
@@ -961,7 +961,7 @@ def bincount(x, /, weights=None, minlength=0):
     The input array needs to be of integer dtype, otherwise a
     TypeError is raised:
 
-    >>> np.bincount(np.arange(5, dtype=float))
+    >>> np.bincount(np.arange(5, dtype=np.float64))
     Traceback (most recent call last):
       ...
     TypeError: Cannot cast array data from dtype('float64') to dtype('int64')

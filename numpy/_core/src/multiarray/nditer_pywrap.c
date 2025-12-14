@@ -1423,7 +1423,10 @@ npyiter_enable_external_loop(
         return NULL;
     }
 
-    NpyIter_EnableExternalLoop(self->iter);
+    if (NpyIter_EnableExternalLoop(self->iter) != NPY_SUCCEED) {
+        return NULL;
+    }
+
     /* EnableExternalLoop invalidates cached values */
     if (npyiter_cache_values(self) < 0) {
         return NULL;

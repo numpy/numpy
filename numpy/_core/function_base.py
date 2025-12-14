@@ -38,7 +38,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     .. versionchanged:: 1.20.0
         Values are rounded towards ``-inf`` instead of ``0`` when an
         integer ``dtype`` is specified. The old behavior can
-        still be obtained with ``np.linspace(start, stop, num).astype(int)``
+        still be obtained with ``np.linspace(start, stop, num).astype(np.int_)``
 
     Parameters
     ----------
@@ -375,9 +375,9 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     Note that the above may not produce exact integers:
 
-    >>> np.geomspace(1, 256, num=9, dtype=int)
+    >>> np.geomspace(1, 256, num=9, dtype=np.int_)
     array([  1,   2,   4,   7,  16,  32,  63, 127, 256])
-    >>> np.around(np.geomspace(1, 256, num=9)).astype(int)
+    >>> np.around(np.geomspace(1, 256, num=9)).astype(np.int_)
     array([  1,   2,   4,   8,  16,  32,  64, 128, 256])
 
     Negative, decreasing, and complex inputs are allowed:

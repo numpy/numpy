@@ -16,7 +16,7 @@ from typing_extensions import CapsuleType
 import numpy as np
 import numpy.typing as npt
 
-class SubClass(npt.NDArray[np.object_]): ...
+class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.object_]]): ...
 
 f8: np.float64
 i8: np.int64
@@ -62,12 +62,12 @@ assert_type(AR_f8.any(out=B), SubClass)
 assert_type(f8.argmax(), np.intp)
 assert_type(AR_f8.argmax(), np.intp)
 assert_type(AR_f8.argmax(axis=0), Any)
-assert_type(AR_f8.argmax(out=AR_i8), npt.NDArray[np.intp])
+assert_type(AR_f8.argmax(out=AR_i8), npt.NDArray[np.int64])
 
 assert_type(f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(axis=0), Any)
-assert_type(AR_f8.argmin(out=AR_i8), npt.NDArray[np.intp])
+assert_type(AR_f8.argmin(out=AR_i8), npt.NDArray[np.int64])
 
 assert_type(f8.argsort(), npt.NDArray[np.intp])
 assert_type(AR_f8.argsort(), npt.NDArray[np.intp])

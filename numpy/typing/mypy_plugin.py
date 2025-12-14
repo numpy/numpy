@@ -39,7 +39,7 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 """
 
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Final, TypeAlias, cast
+from typing import TYPE_CHECKING, Final, cast
 
 import numpy as np
 
@@ -115,7 +115,7 @@ except ModuleNotFoundError as e:
 
 else:
 
-    _HookFunc: TypeAlias = Callable[[AnalyzeTypeContext], mypy.types.Type]
+    type _HookFunc = Callable[[AnalyzeTypeContext], mypy.types.Type]
 
     def _hook(ctx: AnalyzeTypeContext) -> mypy.types.Type:
         """Replace a type-alias with a concrete ``NBitBase`` subclass."""

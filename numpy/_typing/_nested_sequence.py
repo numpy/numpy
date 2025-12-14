@@ -1,17 +1,15 @@
 """A module containing the `_NestedSequence` protocol."""
 
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 __all__ = ["_NestedSequence"]
 
-_T_co = TypeVar("_T_co", covariant=True)
-
 
 @runtime_checkable
-class _NestedSequence(Protocol[_T_co]):
+class _NestedSequence[T](Protocol):
     """A protocol for representing nested sequences.
 
     Warning
@@ -54,7 +52,7 @@ class _NestedSequence(Protocol[_T_co]):
         """Implement ``len(self)``."""
         raise NotImplementedError
 
-    def __getitem__(self, index: int, /) -> "_T_co | _NestedSequence[_T_co]":
+    def __getitem__(self, index: int, /) -> "T | _NestedSequence[T]":
         """Implement ``self[x]``."""
         raise NotImplementedError
 
@@ -62,11 +60,11 @@ class _NestedSequence(Protocol[_T_co]):
         """Implement ``x in self``."""
         raise NotImplementedError
 
-    def __iter__(self, /) -> "Iterator[_T_co | _NestedSequence[_T_co]]":
+    def __iter__(self, /) -> "Iterator[T | _NestedSequence[T]]":
         """Implement ``iter(self)``."""
         raise NotImplementedError
 
-    def __reversed__(self, /) -> "Iterator[_T_co | _NestedSequence[_T_co]]":
+    def __reversed__(self, /) -> "Iterator[T | _NestedSequence[T]]":
         """Implement ``reversed(self)``."""
         raise NotImplementedError
 

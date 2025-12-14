@@ -1,11 +1,11 @@
-from typing import TypeAlias, assert_type
+from typing import assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_ArrayND: TypeAlias = npt.NDArray[np.int64]
-_Array2D: TypeAlias = np.ndarray[tuple[int, int], np.dtype[np.int8]]
-_Array3D: TypeAlias = np.ndarray[tuple[int, int, int], np.dtype[np.bool]]
+type _ArrayND = npt.NDArray[np.int64]
+type _Array2D = np.ndarray[tuple[int, int], np.dtype[np.int8]]
+type _Array3D = np.ndarray[tuple[int, int, int], np.dtype[np.bool]]
 
 _nd: _ArrayND
 _2d: _Array2D

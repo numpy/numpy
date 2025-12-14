@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
+#include <dtypemeta.h>
 
 #define NPY_ENOMEM 1
 #define NPY_ECOMP 2
@@ -107,6 +108,18 @@ NPY_NO_EXPORT int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *ar
 NPY_NO_EXPORT int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
+/*
+ *****************************************************************************
+ **                         NEW-STYLE GENERIC SORT                          **
+ *****************************************************************************
+ */
+
+NPY_NO_EXPORT int npy_default_sort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
+NPY_NO_EXPORT int npy_default_argsort_loop(PyArrayMethod_Context *context,
+        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
+        NpyAuxData *transferdata);
 
 /*
  *****************************************************************************

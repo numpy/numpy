@@ -251,8 +251,9 @@ cdef class RandomState:
         """
         if not isinstance(self._bit_generator, _MT19937):
             raise TypeError('can only re-seed a MT19937 BitGenerator')
-        self._bit_generator._legacy_seeding(seed)
-        self._reset_gauss()
+        with self.lock:
+            self._bit_generator._legacy_seeding(seed)
+            self._reset_gauss()
 
     def get_state(self, legacy=True):
         """
@@ -381,9 +382,13 @@ cdef class RandomState:
                     st['has_gauss'] = state[3]
                     st['gauss'] = state[4]
 
-        self._aug_state.gauss = st.get('gauss', 0.0)
-        self._aug_state.has_gauss = st.get('has_gauss', 0)
-        self._bit_generator.state = st
+        cdef double gauss = st.get('gauss', 0.0)
+        cdef int has_gauss = st.get('has_gauss', 0)
+
+        with self.lock:
+            self._aug_state.gauss = gauss
+            self._aug_state.has_gauss = has_gauss
+            self._bit_generator.state = st
 
     def random_sample(self, size=None):
         """
