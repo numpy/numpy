@@ -10,6 +10,7 @@ from numpy.linalg._linalg import (
     SVDResult,
 )
 
+bool_list_2d: list[list[bool]]
 int_list_2d: list[list[int]]
 float_list_1d: list[float]
 float_list_2d: list[list[float]]
@@ -17,6 +18,8 @@ float_list_3d: list[list[list[float]]]
 float_list_4d: list[list[list[list[float]]]]
 complex_list_2d: list[list[complex]]
 complex_list_3d: list[list[list[complex]]]
+bytes_list_2d: list[list[bytes]]
+str_list_2d: list[list[str]]
 
 AR_any: np.ndarray
 AR_f_: npt.NDArray[np.floating]
@@ -233,6 +236,31 @@ assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), Any)
 assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), Any)
 assert_type(np.linalg.multi_dot([AR_O, AR_O]), Any)
 assert_type(np.linalg.multi_dot([AR_m, AR_m]), Any)
+
+# Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.linalg.diagonal(AR_any), np.ndarray)  # type: ignore[assert-type]
+assert_type(np.linalg.diagonal(AR_f4), npt.NDArray[np.float32])
+assert_type(np.linalg.diagonal(AR_f4_2d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.linalg.diagonal(AR_f8_2d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.linalg.diagonal(bool_list_2d), npt.NDArray[np.bool])
+assert_type(np.linalg.diagonal(int_list_2d), npt.NDArray[np.int_])
+assert_type(np.linalg.diagonal(float_list_2d), npt.NDArray[np.float64])
+assert_type(np.linalg.diagonal(complex_list_2d), npt.NDArray[np.complex128])
+assert_type(np.linalg.diagonal(bytes_list_2d), npt.NDArray[np.bytes_])
+assert_type(np.linalg.diagonal(str_list_2d), npt.NDArray[np.str_])
+
+assert_type(np.linalg.trace(AR_any), Any)
+assert_type(np.linalg.trace(AR_f4), Any)
+assert_type(np.linalg.trace(AR_f4_2d), np.float32)
+assert_type(np.linalg.trace(AR_f8_2d), np.float64)
+assert_type(np.linalg.trace(AR_f4_3d), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.linalg.trace(AR_f8_3d), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.linalg.trace(AR_f8_4d), np.ndarray[tuple[int, *tuple[Any, ...]], np.dtype[np.float64]])
+assert_type(np.linalg.trace(bool_list_2d), np.bool)
+assert_type(np.linalg.trace(int_list_2d), np.int_)
+assert_type(np.linalg.trace(float_list_2d), np.float64)
+assert_type(np.linalg.trace(complex_list_2d), np.complex128)
+assert_type(np.linalg.trace(float_list_3d), npt.NDArray[np.float64])
 
 assert_type(np.linalg.cross(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
 assert_type(np.linalg.cross(AR_f8, AR_f8), npt.NDArray[np.floating])
