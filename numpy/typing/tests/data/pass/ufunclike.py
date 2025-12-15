@@ -12,6 +12,9 @@ class Object:
     def __floor__(self) -> Object:
         return self
 
+    def __trunc__(self) -> Object:
+        return self
+
     def __ge__(self, value: object) -> bool:
         return True
 
@@ -29,12 +32,12 @@ AR_LIKE_f = [1.0, 2.0, 3.0]
 AR_LIKE_O = [Object(), Object(), Object()]
 AR_U: np.ndarray[Any, np.dtype[np.str_]] = np.zeros(3, dtype="U5")
 
-np.fix(AR_LIKE_b)
-np.fix(AR_LIKE_u)
-np.fix(AR_LIKE_i)
-np.fix(AR_LIKE_f)
-np.fix(AR_LIKE_O)
-np.fix(AR_LIKE_f, out=AR_U)
+np.fix(AR_LIKE_b)  # type: ignore[deprecated]
+np.fix(AR_LIKE_u)  # type: ignore[deprecated]
+np.fix(AR_LIKE_i)  # type: ignore[deprecated]
+np.fix(AR_LIKE_f)  # type: ignore[deprecated]
+np.fix(AR_LIKE_O)  # type: ignore[deprecated]
+np.fix(AR_LIKE_f, out=AR_U)  # type: ignore[deprecated]
 
 np.isposinf(AR_LIKE_b)
 np.isposinf(AR_LIKE_u)

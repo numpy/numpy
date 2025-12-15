@@ -10,12 +10,18 @@ from .polynomial import Polynomial
 
 __all__ = [
     "set_default_printstyle",
-    "polynomial", "Polynomial",
-    "chebyshev", "Chebyshev",
-    "legendre", "Legendre",
-    "hermite", "Hermite",
-    "hermite_e", "HermiteE",
-    "laguerre", "Laguerre",
+    "polynomial",
+    "Polynomial",
+    "chebyshev",
+    "Chebyshev",
+    "legendre",
+    "Legendre",
+    "hermite",
+    "Hermite",
+    "hermite_e",
+    "HermiteE",
+    "laguerre",
+    "Laguerre",
 ]
 
 def set_default_printstyle(style: Literal["ascii", "unicode"]) -> None: ...

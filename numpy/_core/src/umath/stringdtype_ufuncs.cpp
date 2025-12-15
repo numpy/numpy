@@ -2264,10 +2264,14 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
 
         if (step == 1) {
             // step == 1 is the easy case, we can just use memcpy
-            npy_intp outsize = ((size_t)stop < num_codepoints
-                                        ? codepoint_offsets[stop]
-                                        : (unsigned char *)is.buf + is.size) -
-                               codepoint_offsets[start];
+            unsigned char *start_bounded = ((size_t)start < num_codepoints
+                                            ? codepoint_offsets[start]
+                                            : (unsigned char *)is.buf + is.size);
+            unsigned char *stop_bounded = ((size_t)stop < num_codepoints
+                                           ? codepoint_offsets[stop]
+                                           : (unsigned char *)is.buf + is.size);
+            npy_intp outsize = stop_bounded - start_bounded;
+            outsize = outsize < 0 ? 0 : outsize;
 
             if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
                 goto fail;
@@ -2276,7 +2280,7 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             /* explicitly discard const; initializing new buffer */
             char *buf = (char *)os.buf;
 
-            memcpy(buf, codepoint_offsets[start], outsize);
+            memcpy(buf, start_bounded, outsize);
         }
         else {
             // handle step != 1

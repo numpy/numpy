@@ -31,6 +31,18 @@ class DiffLinter:
         )
         return res.returncode, res.stdout
 
+    def run_cython_lint(self) -> tuple[int, str]:
+        print("Running cython-lint...")
+        command = ["cython-lint", "--no-pycodestyle", "numpy"]
+
+        res = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            cwd=self.repository_root,
+            encoding="utf-8",
+        )
+        return res.returncode, res.stdout
+
     def run_lint(self, fix: bool) -> None:
 
         # Ruff Linter
@@ -44,18 +56,28 @@ class DiffLinter:
         retcode, c_API_errors = self.run_check_c_api()
         c_API_errors and print(c_API_errors)
 
+        if retcode:
+            sys.exit(retcode)
+
+        # Cython Linter
+        retcode, cython_errors = self.run_cython_lint()
+        cython_errors and print(cython_errors)
+
         sys.exit(retcode)
 
     def run_check_c_api(self) -> tuple[int, str]:
-        # Running borrowed ref checker
+        """Run C-API borrowed-ref checker"""
         print("Running C API borrow-reference linter...")
-        borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci",
-                                           "check_c_api_usage.sh")
+        borrowed_ref_script = os.path.join(
+            self.repository_root, "tools", "ci", "check_c_api_usage.py"
+            )
         borrowed_res = subprocess.run(
-            ["bash", borrowed_ref_script],
+            [sys.executable, borrowed_ref_script],
+            cwd=self.repository_root,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            encoding="utf-8",
+            text=True,
+            check=False,
         )
 
         # Exit with non-zero if C API Check fails

@@ -764,7 +764,7 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
     #elif defined(__ARM_FP16_FORMAT_IEEE)
         return npy_halfbits_to_doublebits(h);
     #else
-        return (double)(ToDoubleBits(h));
+        return ToDoubleBits(h);
     #endif
 }
 #endif
@@ -825,12 +825,12 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
  * #type2max = 0,
  *          UCHAR_MAX, USHRT_MAX, UINT_MAX, ULONG_MAX, ULLONG_MAX,
  *          SCHAR_MAX,  SHRT_MAX,  INT_MAX,  LONG_MAX,  LLONG_MAX,
- *          65500, FLT_MAX, DBL_MAX, LDBL_MAX,
+ *          65500.0f, FLT_MAX, DBL_MAX, LDBL_MAX,
  *          FLT_MAX, DBL_MAX, LDBL_MAX#
  * #type2min = 0,
  *          0, 0, 0, 0, 0,
  *          SCHAR_MIN,  SHRT_MIN,  INT_MIN,  LONG_MIN,  LLONG_MIN,
- *          -65500, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
+ *          -65500.0f, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
  *          -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  * #is_bool2 = 1, 0*17#
  * #is_emu_half2 = 0*11, EMULATED_FP16, 0*6#
@@ -848,7 +848,10 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
 
 #if !(NPY_USE_UNALIGNED_ACCESS && !@aligned@)
 
-/* For emulated half types, don't use actual double/float types in conversion */
+/*
+ * For emulated half types, don't use actual double/float types in conversion
+ * except for *_check_same_value_*(), follow _ROUND_TRIP and _TO_RTYPE1.
+ */
 #if @is_emu_half1@ || @is_emu_half2@
 
 #  if @is_float1@
@@ -896,13 +899,12 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
 
 #elif @is_emu_half2@
 #  define _TO_RTYPE1(x) (@rtype1@)(x)
-
 #  if @is_float1@
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
-#    define _ROUND_TRIP(x) (@rtype1@)npy_halfbits_to_floatbits(_CONVERT_FN(x))
+#    define _ROUND_TRIP(x) npy_half_to_float(npy_float_to_half(x))
 #  elif @is_double1@
 #    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
-#    define _ROUND_TRIP(x) (@rtype1@)_npy_halfbits_to_doublebits(_CONVERT_FN(x))
+#    define _ROUND_TRIP(x) npy_half_to_double(npy_double_to_half(x))
 #  elif @is_emu_half1@
 #    define _CONVERT_FN(x) (x)
 #    define _ROUND_TRIP(x) (x)
@@ -956,7 +958,9 @@ npy_uint64 _npy_halfbits_to_doublebits(npy_uint16 h){
  * Check various modes of failure to accurately cast src_value to dst
  */
 static GCC_CAST_OPT_LEVEL int
-@prefix@_check_same_value_@name1@_to_@name2@(@rtype1@ src_value) {
+@prefix@_check_same_value_@name1@_to_@name2@(@rtype1@ *src_valueP) {
+
+    @rtype1@ src_value = *src_valueP;
 
     /* 1. NaN/Infs always work for float to float and otherwise never */
 #if (@is_float1@ || @is_emu_half1@ || @is_double1@ || @is_native_half1@)
@@ -1095,10 +1099,10 @@ static GCC_CAST_OPT_LEVEL int
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
 #   if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[0]) < 0) {
             return -1;
         }
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[1]) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[1]) < 0) {
             return -1;
         }
 #   endif //same_value
@@ -1108,7 +1112,7 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
 #      if @same_value@
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[0]) < 0) {
                 return -1;
             }
             if (src_value[1] != 0) {
@@ -1123,7 +1127,7 @@ static GCC_CAST_OPT_LEVEL int
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
 #      if @same_value@
-            if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value[0]) < 0) {
+            if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value[0]) < 0) {
                 return -1;
             }
             if (src_value[1] != 0) {
@@ -1138,14 +1142,14 @@ static GCC_CAST_OPT_LEVEL int
 #    if !@aligned@
     dst_value[0] = _CONVERT_FN(src_value);
 #   if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value) < 0) {
             return -1;
         }
 #   endif //same_value
 #    else //!aligned
     dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)src) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)src) < 0) {
             return -1;
         }
 #     endif //same_value
@@ -1155,7 +1159,7 @@ static GCC_CAST_OPT_LEVEL int
     dst_value = _CONVERT_FN(src_value);
 #   if !@is_bool2@
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*(@rtype1@ *)&src_value) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@((@rtype1@ *)&src_value) < 0) {
             return -1;
         }
 #     endif //same_value
@@ -1164,7 +1168,7 @@ static GCC_CAST_OPT_LEVEL int
     *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
 #   if !@is_bool2@
 #     if @same_value@
-        if (@prefix@_check_same_value_@name1@_to_@name2@(*((@rtype1@ *)src)) < 0) {
+        if (@prefix@_check_same_value_@name1@_to_@name2@(((@rtype1@ *)src)) < 0) {
             return -1;
         }
 #     endif //same_value

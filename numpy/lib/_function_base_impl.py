@@ -2,7 +2,6 @@ import builtins
 import collections.abc
 import functools
 import re
-import sys
 import warnings
 
 import numpy as np
@@ -42,6 +41,7 @@ from numpy._core.umath import (
     arctan2,
     cos,
     exp,
+    floor,
     frompyfunc,
     less_equal,
     minimum,
@@ -68,7 +68,7 @@ __all__ = [
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-    'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
+    'blackman', 'kaiser', 'trapezoid', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
     ]
@@ -654,7 +654,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
-    >>> np.asarray_chkfinite(a, dtype=float)
+    >>> np.asarray_chkfinite(a, dtype=np.float64)
     array([1., 2.])
 
     Raises ValueError if array_like contains Nans or Infs.
@@ -707,7 +707,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         is the default value, used wherever all conditions are false.
     funclist : list of callables, f(x,*args,**kw), or scalars
         Each function is evaluated over `x` wherever its corresponding
-        condition is True.  It should take a 1d array as input and give an 1d
+        condition is True.  It should take a 1d array as input and give a 1d
         array or a scalar value as output.  If, instead of a callable,
         a scalar is provided then a constant function (``lambda x: scalar``) is
         assumed.
@@ -1786,6 +1786,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     Examples
     --------
     >>> import numpy as np
+
     >>> phase = np.linspace(0, np.pi, num=5)
     >>> phase[3:] += np.pi
     >>> phase
@@ -1803,6 +1804,23 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
             180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
             540.])
+
+    This example plots the unwrapping of the wrapped input signal `w`.
+    First generate `w`, then apply `unwrap` to get `u`.
+
+    >>> t = np.linspace(0, 25, 801)
+    >>> w = np.mod(1.5 * np.sin(1.1 * t + 0.26) * (1 - t / 6 + (t / 23) ** 3), 2.0) - 1
+    >>> u = np.unwrap(w, period=2.0)
+
+    Plot `w` and `u`.
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(t, w, label='w (a signal wrapped to [-1, 1])')
+    >>> plt.plot(t, u, linewidth=2.5, alpha=0.5, label='unwrap(w, period=2)')
+    >>> plt.xlabel('t')
+    >>> plt.grid(alpha=0.6)
+    >>> plt.legend(framealpha=1, shadow=True)
+    >>> plt.show()
     """
     p = asarray(p)
     nd = p.ndim
@@ -1987,6 +2005,14 @@ def trim_zeros(filt, trim='fb', axis=None):
     trim = trim.lower()
     if trim not in {"fb", "bf", "f", "b"}:
         raise ValueError(f"unexpected character(s) in `trim`: {trim!r}")
+    if axis is None:
+        axis_tuple = tuple(range(filt_.ndim))
+    else:
+        axis_tuple = _nx.normalize_axis_tuple(axis, filt_.ndim, argname="axis")
+
+    if not axis_tuple:
+        # No trimming requested -> return input unmodified.
+        return filt
 
     start, stop = _arg_trim_zeros(filt_)
     stop += 1  # Adjust for slicing
@@ -2001,20 +2027,13 @@ def trim_zeros(filt, trim='fb', axis=None):
         if 'b' not in trim:
             stop = (None,) * filt_.ndim
 
-    if len(start) == 1:
-        # filt is 1D -> don't use multi-dimensional slicing to preserve
+    sl = tuple(slice(start[ax], stop[ax]) if ax in axis_tuple else slice(None)
+               for ax in range(filt_.ndim))
+    if len(sl) == 1:
+        # filt is 1D -> avoid multi-dimensional slicing to preserve
         # non-array input types
-        sl = slice(start[0], stop[0])
-    elif axis is None:
-        # trim all axes
-        sl = tuple(slice(*x) for x in zip(start, stop))
-    else:
-        # only trim single axis
-        axis = normalize_axis_index(axis, filt_.ndim)
-        sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
-
-    trimmed = filt[sl]
-    return trimmed
+        return filt[sl[0]]
+    return filt[sl]
 
 
 def _extract_dispatcher(condition, arr):
@@ -2117,62 +2136,6 @@ def place(arr, mask, vals):
 
     """
     return _place(arr, mask, vals)
-
-
-def disp(mesg, device=None, linefeed=True):
-    """
-    Display a message on a device.
-
-    .. deprecated:: 2.0
-        Use your own printing function instead.
-
-    Parameters
-    ----------
-    mesg : str
-        Message to display.
-    device : object
-        Device to write message. If None, defaults to ``sys.stdout`` which is
-        very similar to ``print``. `device` needs to have ``write()`` and
-        ``flush()`` methods.
-    linefeed : bool, optional
-        Option whether to print a line feed or not. Defaults to True.
-
-    Raises
-    ------
-    AttributeError
-        If `device` does not have a ``write()`` or ``flush()`` method.
-
-    Examples
-    --------
-    >>> import numpy as np
-
-    Besides ``sys.stdout``, a file-like object can also be used as it has
-    both required methods:
-
-    >>> from io import StringIO
-    >>> buf = StringIO()
-    >>> np.disp('"Display" in a file', device=buf)
-    >>> buf.getvalue()
-    '"Display" in a file\\n'
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`disp` is deprecated, "
-        "use your own printing function instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    if device is None:
-        device = sys.stdout
-    if linefeed:
-        device.write(f'{mesg}\n')
-    else:
-        device.write(f'{mesg}')
-    device.flush()
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
@@ -2715,7 +2678,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     Estimate a covariance matrix, given data and weights.
 
     Covariance indicates the level to which two variables vary together.
-    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ... x_N]^T`,
+    If we examine N-dimensional samples, :math:`X = [x_1, x_2, ..., x_N]^T`,
     then the covariance matrix element :math:`C_{ij}` is the covariance of
     :math:`x_i` and :math:`x_j`. The element :math:`C_{ii}` is the variance
     of :math:`x_i`.
@@ -2926,13 +2889,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
+def _corrcoef_dispatcher(x, y=None, rowvar=None, *,
                          dtype=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
+def corrcoef(x, y=None, rowvar=True, *,
              dtype=None):
     """
     Return Pearson product-moment correlation coefficients.
@@ -2959,14 +2922,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         variable, with observations in the columns. Otherwise, the relationship
         is transposed: each column represents a variable, while the rows
         contain observations.
-    bias : _NoValue, optional
-        Has no effect, do not use.
 
-        .. deprecated:: 1.10.0
-    ddof : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.10.0
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
@@ -2989,11 +2945,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     inequality abs(a) <= 1. The real and imaginary parts are clipped to the
     interval [-1,  1] in an attempt to improve on that situation but is not
     much help in the complex case.
-
-    This function accepts but discards arguments `bias` and `ddof`.  This is
-    for backwards compatibility with previous versions of this function.  These
-    arguments had no effect on the return values of the function and can be
-    safely ignored in this and previous versions of numpy.
 
     Examples
     --------
@@ -3061,10 +3012,6 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
              1.        ]])
 
     """
-    if bias is not np._NoValue or ddof is not np._NoValue:
-        # 2015-03-15, 1.10
-        warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=2)
     c = cov(x, y, rowvar, dtype=dtype)
     try:
         d = diag(c)
@@ -3910,13 +3857,21 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
         else:
-            keep = set(range(nd)) - set(axis)
+            keep = sorted(set(range(nd)) - set(axis))
             nkeep = len(keep)
-            # swap axis that should not be reduced to front
-            for i, s in enumerate(sorted(keep)):
-                a = a.swapaxes(i, s)
-            # merge reduced axis
-            a = a.reshape(a.shape[:nkeep] + (-1,))
+
+            def reshape_arr(a):
+                # move axis that should not be reduced to front
+                a = np.moveaxis(a, keep, range(nkeep))
+                # merge reduced axis
+                return a.reshape(a.shape[:nkeep] + (-1,))
+
+            a = reshape_arr(a)
+
+            weights = kwargs.get("weights")
+            if weights is not None:
+                kwargs["weights"] = reshape_arr(weights)
+
             kwargs['axis'] = -1
     elif keepdims and out is not None:
         index_out = (0, ) * nd
@@ -4090,8 +4045,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           method=None, keepdims=None, *, weights=None,
-                           interpolation=None):
+                           method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -4104,8 +4058,7 @@ def percentile(a,
                method="linear",
                keepdims=False,
                *,
-               weights=None,
-               interpolation=None):
+               weights=None):
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -4163,7 +4116,7 @@ def percentile(a,
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
 
-     weights : array_like, optional
+    weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
         `a` contributes to the percentile according to its associated weight.
         The weights array can either be 1-D (in which case its length must be
@@ -4174,11 +4127,6 @@ def percentile(a,
         See the notes for more details.
 
         .. versionadded:: 2.0.0
-
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -4275,17 +4223,11 @@ def percentile(a,
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "percentile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    # Use dtype of array if possible (e.g., if q is a python int or float)
-    # by making the divisor have the dtype of the data array.
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
+    q = np.true_divide(q, 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -4305,8 +4247,7 @@ def percentile(a,
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         method=None, keepdims=None, *, weights=None,
-                         interpolation=None):
+                         method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -4319,8 +4260,7 @@ def quantile(a,
              method="linear",
              keepdims=False,
              *,
-             weights=None,
-             interpolation=None):
+             weights=None):
     """
     Compute the q-th quantile of the data along the specified axis.
 
@@ -4389,11 +4329,6 @@ def quantile(a,
         See the notes for more details.
 
         .. versionadded:: 2.0.0
-
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -4536,19 +4471,11 @@ def quantile(a,
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = _check_interpolation_as_method(
-            method, interpolation, "quantile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    # Use dtype of array if possible (e.g., if q is a python int or float).
-    if isinstance(q, (int, float)) and a.dtype.kind == "f":
-        q = np.asanyarray(q, dtype=a.dtype)
-    else:
-        q = np.asanyarray(q)
+    q = np.asanyarray(q)
 
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -4599,23 +4526,6 @@ def _quantile_is_valid(q):
     return True
 
 
-def _check_interpolation_as_method(method, interpolation, fname):
-    # Deprecated NumPy 1.22, 2021-11-08
-    warnings.warn(
-        f"the `interpolation=` argument to {fname} was renamed to "
-        "`method=`, which has additional options.\n"
-        "Users of the modes 'nearest', 'lower', 'higher', or "
-        "'midpoint' are encouraged to review the method they used. "
-        "(Deprecated NumPy 1.22)",
-        DeprecationWarning, stacklevel=4)
-    if method != "linear":
-        # sanity check, we assume this basically never happens
-        raise TypeError(
-            "You shall not pass both `method` and `interpolation`!\n"
-            "(`interpolation` is Deprecated in favor of `method`)")
-    return interpolation
-
-
 def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     """
     Compute the floating point indexes of an array for the linear
@@ -4641,7 +4551,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method):
+def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4651,7 +4561,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
         sample.
     previous_indexes : array_like
         The floor values of virtual_indexes.
-    interpolation : dict
+    method : dict
         The interpolation method chosen, which may have a specific rule
         modifying gamma.
 
@@ -4662,7 +4572,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
+    return np.asanyarray(gamma, dtype=dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -4679,9 +4589,8 @@ def _lerp(a, b, t, out=None):
     out : array_like
         Output array.
     """
-    diff_b_a = subtract(b, a)
-    # asanyarray is a stop-gap until gh-13105
-    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
+    diff_b_a = b - a
+    lerp_interpolation = add(a, diff_b_a * t, out=... if out is None else out)
     subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
              casting='unsafe', dtype=type(lerp_interpolation.dtype))
     if lerp_interpolation.ndim == 0 and out is None:
@@ -4726,7 +4635,7 @@ def _inverted_cdf(n, quantiles):
 def _quantile_ureduce_func(
     a: np.ndarray,
     q: np.ndarray,
-    weights: np.ndarray,
+    weights: np.ndarray | None,
     axis: int | None = None,
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
@@ -4773,8 +4682,8 @@ def _get_indexes(arr, virtual_indexes, valid_values_count):
     (previous_indexes, next_indexes): Tuple
         A Tuple of virtual_indexes neighbouring indexes
     """
-    previous_indexes = np.asanyarray(np.floor(virtual_indexes))
-    next_indexes = np.asanyarray(previous_indexes + 1)
+    previous_indexes = floor(virtual_indexes, out=...)
+    next_indexes = add(previous_indexes, 1, out=...)
     indexes_above_bounds = virtual_indexes >= valid_values_count - 1
     # When indexes is above max index, take the max value of the array
     if indexes_above_bounds.any():
@@ -4809,7 +4718,7 @@ def _quantile(
     These methods are extended to this function using _ureduce
     See nanpercentile for parameter usage
     It computes the quantiles of the array for the given axis.
-    A linear interpolation is performed based on the `interpolation`.
+    A linear interpolation is performed based on the `method`.
 
     By default, the method is "linear" where alpha == beta == 1 which
     performs the 7th method of Hyndman&Fan.
@@ -4830,7 +4739,7 @@ def _quantile(
     if weights is None:
         # --- Computation of indexes
         # Index where to find the value in the sorted array.
-        # Virtual because it is a floating point value, not an valid index.
+        # Virtual because it is a floating point value, not a valid index.
         # The nearest neighbours are used for interpolation
         try:
             method_props = _QuantileMethods[method]
@@ -4881,7 +4790,16 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
+            if arr.dtype.kind in "iu":
+                gtype = None
+            elif arr.dtype.kind == "f":
+                # make sure the return value matches the input array type
+                gtype = arr.dtype
+            else:
+                gtype = virtual_indexes.dtype
+
+            gamma = _get_gamma(virtual_indexes, previous_indexes,
+                               method_props, gtype)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
             gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
@@ -4895,7 +4813,7 @@ def _quantile(
         weights = np.asanyarray(weights)
         if axis != 0:
             weights = np.moveaxis(weights, axis, destination=0)
-        index_array = np.argsort(arr, axis=0, kind="stable")
+        index_array = np.argsort(arr, axis=0)
 
         # arr = arr[index_array, ...]  # but this adds trailing dimensions of
         # 1.
@@ -4917,6 +4835,9 @@ def _quantile(
         # distribution function cdf
         cdf = weights.cumsum(axis=0, dtype=np.float64)
         cdf /= cdf[-1, ...]  # normalization to 1
+        if np.isnan(cdf[-1]).any():
+            # Above calculations should normally warn for the zero/inf case.
+            raise ValueError("Weights included NaN, inf or were all zero.")
         # Search index i such that
         #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
         # is then equivalent to
@@ -5119,24 +5040,6 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-@set_module('numpy')
-def trapz(y, x=None, dx=1.0, axis=-1):
-    """
-    `trapz` is deprecated in NumPy 2.0.
-
-    Please use `trapezoid` instead, or one of the numerical integration
-    functions in `scipy.integrate`.
-    """
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`trapz` is deprecated. Use `trapezoid` instead, or one of the "
-        "numerical integration functions in `scipy.integrate`.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return trapezoid(y, x=x, dx=dx, axis=axis)
-
-
 def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
     return xi
 
@@ -5336,7 +5239,7 @@ def delete(arr, obj, axis=None):
     Often it is preferable to use a boolean mask. For example:
 
     >>> arr = np.arange(12) + 1
-    >>> mask = np.ones(len(arr), dtype=bool)
+    >>> mask = np.ones(len(arr), dtype=np.bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
 
@@ -5719,7 +5622,7 @@ def append(arr, values, axis=None):
     the array at index 0 has 2 dimension(s) and the array at index 1 has 1
     dimension(s)
 
-    >>> a = np.array([1, 2], dtype=int)
+    >>> a = np.array([1, 2], dtype=np.int_)
     >>> c = np.append(a, [])
     >>> c
     array([1., 2.])

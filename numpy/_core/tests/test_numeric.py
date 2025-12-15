@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import math
 import platform
@@ -18,6 +19,7 @@ from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_almost_equal,
@@ -185,12 +187,6 @@ class TestNonarrayArgs:
 
         with pytest.raises(
             TypeError,
-            match="You cannot specify 'newshape' and 'shape' "
-                  "arguments at the same time."
-        ):
-            np.reshape(arr, shape=shape, newshape=shape)
-        with pytest.raises(
-            TypeError,
             match=r"reshape\(\) missing 1 required positional "
                   "argument: 'shape'"
         ):
@@ -201,9 +197,6 @@ class TestNonarrayArgs:
         assert_equal(np.reshape(arr, shape, "C"), expected)
         assert_equal(np.reshape(arr, shape=shape), expected)
         assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
-        with pytest.warns(DeprecationWarning):
-            actual = np.reshape(arr, newshape=shape)
-            assert_equal(actual, expected)
 
     def test_reshape_copy_arg(self):
         arr = np.arange(24).reshape(2, 3, 4)
@@ -1000,7 +993,7 @@ class TestFloatExceptions:
             if np.dtype(ftype).kind == 'f':
                 # Get some extreme values for the type
                 fi = np.finfo(ftype)
-                ft_tiny = fi._machar.tiny
+                ft_tiny = fi.tiny
                 ft_max = fi.max
                 ft_eps = fi.eps
                 underflow = 'underflow'
@@ -1009,7 +1002,7 @@ class TestFloatExceptions:
                 # 'c', complex, corresponding real dtype
                 rtype = type(ftype(0).real)
                 fi = np.finfo(rtype)
-                ft_tiny = ftype(fi._machar.tiny)
+                ft_tiny = ftype(fi.tiny)
                 ft_max = ftype(fi.max)
                 ft_eps = ftype(fi.eps)
                 # The complex types raise different exceptions
@@ -1033,8 +1026,11 @@ class TestFloatExceptions:
                                    lambda a, b: a + b, ft_max, ft_max * ft_eps)
             self.assert_raises_fpe(overflow,
                                    lambda a, b: a - b, -ft_max, ft_max * ft_eps)
-            self.assert_raises_fpe(overflow,
-                                   np.power, ftype(2), ftype(2**fi.nexp))
+            # On AIX, pow() with double does not raise the overflow exception,
+            # it returns inf. Long double is the same as double.
+            if sys.platform != 'aix' or typecode not in 'dDgG':
+                self.assert_raises_fpe(overflow,
+                                       np.power, ftype(2), ftype(2**fi.nexp))
             self.assert_raises_fpe(divbyzero,
                                    lambda a, b: a / b, ftype(1), ftype(0))
             self.assert_raises_fpe(
@@ -1664,8 +1660,10 @@ class TestNonzero:
 
         # x = np.array([(1, 2), (0, 0), (1, 1), (-1, 3), (0, 7)],
         #              dtype=[('a', 'i4'), ('b', 'i2')])
-        x = np.array([(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
-                     dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')])
+        x = np.array(
+            [(1, 2, -5, -3), (0, 0, 2, 7), (1, 1, 0, 1), (-1, 3, 1, 0), (0, 7, 0, 4)],
+            dtype=[('a', 'i4'), ('b', 'i2'), ('c', 'i1'), ('d', 'i8')]
+        )
         assert_equal(np.count_nonzero(x['a']), 3)
         assert_equal(np.count_nonzero(x['b']), 4)
         assert_equal(np.count_nonzero(x['c']), 3)
@@ -1999,7 +1997,9 @@ class TestIndex:
         g1 = randint(0, 5, size=15)
         g2 = randint(0, 8, size=15)
         V[g1, g2] = -V[g1, g2]
-        assert_((np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all())
+        assert_(
+            (np.array([a[0][V > 0], a[1][V > 0], a[2][V > 0]]) == a[:, V > 0]).all()
+        )
 
     def test_boolean_edgecase(self):
         a = np.array([], dtype='int32')
@@ -2265,7 +2265,10 @@ class TestArrayComparisons:
         res = np.array_equiv(np.array([1, 2]), np.array([[1], [2]]))
         assert_(not res)
         assert_(type(res) is bool)
-        res = np.array_equiv(np.array([1, 2]), np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        res = np.array_equiv(
+            np.array([1, 2]),
+            np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+        )
         assert_(not res)
         assert_(type(res) is bool)
 
@@ -3120,7 +3123,9 @@ class TestIsclose:
         if np.isscalar(x) and np.isscalar(y):
             assert_(np.isclose(x, y) == np.allclose(x, y), msg=msg2 % (x, y))
         else:
-            assert_array_equal(np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y))
+            assert_array_equal(
+                np.isclose(x, y).all(), np.allclose(x, y), msg % (x, y)
+            )
 
     def test_ip_all_isclose(self):
         self._setup()
@@ -3214,7 +3219,8 @@ class TestIsclose:
 
         for i in b:
             for j in b:
-                # Making sure that i and j are not both numbers, because that won't create a warning
+                # Making sure that i and j are not both numbers,
+                # because that won't create a warning
                 if (i == 1) and (j == 1):
                     continue
 
@@ -3224,7 +3230,8 @@ class TestIsclose:
                     c = np.isclose(a, a, atol=i, rtol=j)
                     assert len(w) == 1
                     assert issubclass(w[-1].category, RuntimeWarning)
-                    assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
+                    expected = f"One of rtol or atol is not valid, atol: {i}, rtol: {j}"
+                    assert expected in str(w[-1].message)
 
 
 class TestStdVar:
@@ -3376,6 +3383,35 @@ class TestCreationFuncs:
         assert_(sys.getrefcount(dim) == beg)
         np.full([dim] * 10, 0)
         assert_(sys.getrefcount(dim) == beg)
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.parametrize("func", [np.empty, np.zeros, np.ones, np.full])
+    def test_signatures(self, func):
+        sig = inspect.signature(func)
+        params = sig.parameters
+
+        assert len(params) in {5, 6}
+
+        assert 'shape' in params
+        assert params["shape"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["shape"].default is inspect.Parameter.empty
+
+        assert 'dtype' in params
+        assert params["dtype"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["dtype"].default is None
+
+        assert 'order' in params
+        assert params["order"].kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert params["order"].default == "C"
+
+        assert 'device' in params
+        assert params["device"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["device"].default is None
+
+        assert 'like' in params
+        assert params["like"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert params["like"].default is None
 
 
 class TestLikeFuncs:
@@ -3650,6 +3686,16 @@ class TestConvolve:
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
 
+    def test_convolve_empty_input_error_message(self):
+        """
+        Test that convolve raises the correct error message when inputs are empty.
+        Regression test for gh-30272 (variable swapping bug).
+        """
+        with pytest.raises(ValueError, match="a cannot be empty"):
+            np.convolve(np.array([]), np.array([1, 2]))
+
+        with pytest.raises(ValueError, match="v cannot be empty"):
+            np.convolve(np.array([1, 2]), np.array([]))
 
 class TestArgwhere:
 
@@ -4180,6 +4226,19 @@ class TestBroadcast:
                                              r"arg 2 with shape \(2,\)"):
             np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
 
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+    def test_signatures(self):
+        sig_new = inspect.signature(np.broadcast)
+        assert len(sig_new.parameters) == 1
+        assert "arrays" in sig_new.parameters
+        assert sig_new.parameters["arrays"].kind == inspect.Parameter.VAR_POSITIONAL
+
+        sig_reset = inspect.signature(np.broadcast.reset)
+        assert len(sig_reset.parameters) == 1
+        assert "self" in sig_reset.parameters
+        assert sig_reset.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
 
 class TestKeepdims:
 
@@ -4206,7 +4265,8 @@ class TestTensordot:
     def test_zero_dimensional(self):
         # gh-12130
         arr_0d = np.array(1)
-        ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
+        # contracting no axes is well defined
+        ret = np.tensordot(arr_0d, arr_0d, ([], []))
         assert_array_equal(ret, arr_0d)
 
 

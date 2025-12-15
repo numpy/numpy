@@ -957,6 +957,7 @@ def test_large_file_support(tmpdir):
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_archive(tmpdir):
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
@@ -1034,8 +1035,6 @@ def test_header_growth_axis():
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
     ]}),
     ])
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-        reason="PyPy bug in error formatting")
 def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)

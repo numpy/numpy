@@ -492,7 +492,7 @@ class TestAdd_newdoc:
         # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np._core.flatiter.index.__doc__[:len(tgt)], tgt)
-        assert_(len(np._core.ufunc.identity.__doc__) > 300)
+        assert_(len(np._core.ufunc.identity.__doc__) > 250)
         assert_(len(np.lib._index_tricks_impl.mgrid.__doc__) > 300)
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")

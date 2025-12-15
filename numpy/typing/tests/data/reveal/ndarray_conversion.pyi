@@ -37,7 +37,6 @@ any_sctype: np.ndarray[Any, Any]
 assert_type(any_dtype.tolist(), Any)
 assert_type(any_sctype.tolist(), Any)
 
-# itemset does not return a value
 # tobytes is pretty simple
 # tofile does not return a value
 # dump does not return a value
@@ -72,7 +71,7 @@ assert_type(i0_nd.copy("C"), npt.NDArray[np.int_])
 assert_type(i0_nd.view(), npt.NDArray[np.int_])
 assert_type(i0_nd.view(np.float64), npt.NDArray[np.float64])
 assert_type(i0_nd.view(float), npt.NDArray[Any])
-assert_type(i0_nd.view(np.float64, np.matrix), np.matrix[tuple[int, int], Any])
+assert_type(i0_nd.view(np.float64, np.matrix), np.matrix)
 
 # getfield
 assert_type(i0_nd.getfield("float"), npt.NDArray[Any])

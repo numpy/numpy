@@ -7,12 +7,6 @@
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
  * hardcoded.
- *
- * Note that distutils/pip will attempt a universal2 build when Python itself
- * is built as universal2, hence this hardcoding is needed even if we do not
- * support universal2 wheels anymore (see gh-22796).
- * This code block can be removed after we have dropped the setup.py based
- * build completely.
  */
 #ifdef __APPLE__
     #undef NPY_SIZEOF_LONG
@@ -85,6 +79,7 @@
 #define NPY_2_2_API_VERSION 0x00000013
 #define NPY_2_3_API_VERSION 0x00000014
 #define NPY_2_4_API_VERSION 0x00000015
+#define NPY_2_5_API_VERSION 0x00000016
 
 
 /*
@@ -107,10 +102,11 @@
  * default, or narrow it down if they wish to use newer API.  If you adjust
  * this, consider the Python version support (example for 1.25.x):
  *
- * NumPy 1.25.x supports Python:                     3.9  3.10  3.11  (3.12)
- * NumPy 1.19.x supports Python:      3.6  3.7  3.8  3.9
- * NumPy 1.17.x supports Python: 3.5  3.6  3.7  3.8
- * NumPy 1.15.x supports Python: ...  3.6  3.7
+ * NumPy 1.26.x supports Python: 3.9 3.10 3.11 3.12
+ * NumPy 1.25.x supports Python: 3.9 3.10 3.11
+ * NumPy 1.19.x supports Python: 3.6 3.7 3.8 3.9
+ * NumPy 1.17.x supports Python: 3.5 3.6 3.7 3.8
+ * NumPy 1.15.x supports Python: ... 3.6 3.7
  *
  * Users of the stable ABI may wish to target the last Python that is not
  * end of life.  This would be 3.8 at NumPy 1.25 release time.
@@ -124,8 +120,8 @@
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
 #else
-    /* Use the default (increase when dropping Python 3.11 support) */
-    #define NPY_FEATURE_VERSION NPY_1_23_API_VERSION
+    /* Use the default (increase when dropping Python 3.12 support) */
+    #define NPY_FEATURE_VERSION NPY_1_25_API_VERSION
 #endif
 
 /* Sanity check the (requested) feature version */
@@ -177,6 +173,8 @@
     #define NPY_FEATURE_VERSION_STRING "2.3"
 #elif NPY_FEATURE_VERSION == NPY_2_4_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.4"
+#elif NPY_FEATURE_VERSION == NPY_2_5_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "2.5"
 #else
     #error "Missing version string define for new NumPy version."
 #endif

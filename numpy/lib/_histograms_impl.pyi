@@ -1,11 +1,11 @@
 from collections.abc import Sequence
-from typing import Any, Literal as L, SupportsIndex, TypeAlias
+from typing import Any, Literal as L, SupportsIndex
 
 from numpy._typing import ArrayLike, NDArray
 
 __all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
 
-_BinKind: TypeAlias = L[
+type _BinKind = L[
     "stone",
     "auto",
     "doane",
@@ -27,14 +27,14 @@ def histogram(
     a: ArrayLike,
     bins: _BinKind | SupportsIndex | ArrayLike = 10,
     range: tuple[float, float] | None = None,
-    density: bool = None,
+    density: bool | None = None,
     weights: ArrayLike | None = None,
 ) -> tuple[NDArray[Any], NDArray[Any]]: ...
 
 def histogramdd(
     sample: ArrayLike,
     bins: SupportsIndex | ArrayLike = 10,
-    range: Sequence[tuple[float, float]] = None,
+    range: Sequence[tuple[float, float]] | None = None,
     density: bool | None = None,
     weights: ArrayLike | None = None,
 ) -> tuple[NDArray[Any], tuple[NDArray[Any], ...]]: ...

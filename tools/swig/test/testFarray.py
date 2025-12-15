@@ -2,6 +2,7 @@
 import os
 import sys
 import unittest
+
 from distutils.util import get_platform
 
 import numpy as np
@@ -149,7 +150,7 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(FarrayTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FarrayTestCase))
 
     # Execute the test suite
     print("Testing Classes of Module Farray")

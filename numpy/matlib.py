@@ -56,7 +56,7 @@ def empty(shape, dtype=None, order='C'):
     >>> np.matlib.empty((2, 2))    # filled with random data
     matrix([[  6.76425276e-320,   9.79033856e-307], # random
             [  7.39337286e-309,   3.22135945e-309]])
-    >>> np.matlib.empty((2, 2), dtype=int)
+    >>> np.matlib.empty((2, 2), dtype=np.int_)
     matrix([[ 6600475,        0], # random
             [ 6586976, 22740995]])
 
@@ -177,7 +177,7 @@ def identity(n, dtype=None):
     Examples
     --------
     >>> import numpy.matlib
-    >>> np.matlib.identity(3, dtype=int)
+    >>> np.matlib.identity(3, dtype=np.int_)
     matrix([[1, 0, 0],
             [0, 1, 0],
             [0, 0, 1]])
@@ -222,7 +222,7 @@ def eye(n, M=None, k=0, dtype=float, order='C'):
     Examples
     --------
     >>> import numpy.matlib
-    >>> np.matlib.eye(3, k=1, dtype=float)
+    >>> np.matlib.eye(3, k=1, dtype=np.float64)
     matrix([[0.,  1.,  0.],
             [0.,  0.,  1.],
             [0.,  0.,  0.]])

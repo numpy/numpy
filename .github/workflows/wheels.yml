@@ -9,6 +9,10 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
   workflow_dispatch:
 
 concurrency:
@@ -34,17 +38,17 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
-          - [macos-13, macosx_x86_64, openblas]
+          - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp311"]
+        python: ["cp312"]
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: true
           persist-credentials: false
@@ -72,7 +76,7 @@ jobs:
           echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
 
       - name: Setup macOS
-        if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
+        if: matrix.buildplat[0] == 'macos-15-intel' || matrix.buildplat[0] == 'macos-14'
         run: |
           # Needed due to https://github.com/actions/runner-images/issues/3371
           # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
@@ -84,10 +88,6 @@ jobs:
             # only target Sonoma onwards
             CIBW="MACOSX_DEPLOYMENT_TARGET=14.0 INSTALL_OPENBLAS=false RUNNER_OS=macOS"
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW" >> "$GITHUB_ENV"
-
-            # the macos-13 image that's used for building the x86_64 wheel can't test
-            # a wheel with deployment target >= 14 without further work
-            echo "CIBW_TEST_SKIP=*-macosx_x86_64" >> "$GITHUB_ENV"
           else
             # macosx_x86_64 with OpenBLAS
             # if INSTALL_OPENBLAS isn't specified then scipy-openblas is automatically installed
@@ -98,11 +98,11 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93  # v3.2.0
+        uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc  # v3.3.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl

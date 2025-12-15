@@ -1,4 +1,4 @@
 spin==0.15
 # Keep this in sync with ci32_requirements.txt
-scipy-openblas32==0.3.30.0.1
-scipy-openblas64==0.3.30.0.1
+scipy-openblas32==0.3.30.0.7
+scipy-openblas64==0.3.30.0.7

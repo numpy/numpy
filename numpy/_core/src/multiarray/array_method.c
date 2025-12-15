@@ -4,7 +4,7 @@
  * pointers to do fast operations on the given input functions.
  * It thus adds an abstraction layer around individual ufunc loops.
  *
- * Unlike methods, a ArrayMethod can have multiple inputs and outputs.
+ * Unlike methods, an ArrayMethod can have multiple inputs and outputs.
  * This has some serious implication for garbage collection, and as far
  * as I (@seberg) understands, it is not possible to always guarantee correct
  * cyclic garbage collection of dynamically created DTypes with methods.

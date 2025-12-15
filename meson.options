@@ -30,12 +30,11 @@ option('cpu-baseline', type: 'string', value: 'min',
         description: 'Minimal set of required CPU features')
 option('cpu-baseline-detect', type: 'feature', value: 'auto',
         description: 'Detect CPU baseline from the compiler flags')
-option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
+option('cpu-dispatch', type: 'string', value: 'max',
         description: 'Dispatched set of additional CPU features')
 option('test-simd', type: 'array',
         value: [
-          'BASELINE', 'SSE2', 'SSE42', 'XOP', 'FMA4',
-          'AVX2', 'FMA3', 'AVX2,FMA3', 'AVX512F', 'AVX512_SKX',
+          'BASELINE', 'X86_V2', 'X86_V3', 'X86_V4',
           'VSX', 'VSX2', 'VSX3', 'VSX4',
           'NEON', 'ASIMD',
           'VX', 'VXE', 'VXE2',

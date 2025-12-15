@@ -288,10 +288,10 @@ class TestMatrixReturn:
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
-            'partition', 'argpartition', 'newbyteorder', 'to_device',
+            'partition', 'argpartition', 'to_device',
             'take', 'tofile', 'tolist', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',
+            'prod', 'std', 'ctypes', 'bitwise_count',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:

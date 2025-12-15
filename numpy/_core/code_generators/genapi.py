@@ -17,11 +17,11 @@ from os.path import join
 
 
 def get_processor():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import from numpy
     # (numpy is not yet built)
     conv_template_path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', 'distutils', 'conv_template.py'
+        '..', '..', '_build_utils', 'conv_template.py'
     )
     spec = importlib.util.spec_from_file_location(
         'conv_template', conv_template_path
@@ -62,7 +62,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'descriptor.c'),
              join('multiarray', 'dlpack.c'),
              join('multiarray', 'dtypemeta.c'),
-             join('multiarray', 'einsum.c.src'),
+             join('multiarray', 'einsum.cpp'),
              join('multiarray', 'public_dtype_api.c'),
              join('multiarray', 'flagsobject.c'),
              join('multiarray', 'getset.c'),

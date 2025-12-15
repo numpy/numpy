@@ -1,12 +1,10 @@
 import datetime as dt
-from typing import Any, Literal, TypeVar, assert_type
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
-
-class SubClass(npt.NDArray[_ScalarT_co]): ...
+class SubClass[ScalarT: np.generic](np.ndarray[tuple[Any, ...], np.dtype[ScalarT]]): ...
 
 subclass: SubClass[np.float64]
 
@@ -66,7 +64,7 @@ assert_type(np.inner(AR_f8, AR_i8), Any)
 assert_type(np.where([True, True, False]), tuple[npt.NDArray[np.intp], ...])
 assert_type(np.where([True, True, False], 1, 0), npt.NDArray[Any])
 
-assert_type(np.lexsort([0, 1, 2]), Any)
+assert_type(np.lexsort([0, 1, 2]), npt.NDArray[np.intp])
 
 assert_type(np.can_cast(np.dtype("i8"), int), bool)
 assert_type(np.can_cast(AR_f8, "f8"), bool)
@@ -94,16 +92,19 @@ assert_type(np.copyto(AR_f8, [1., 1.5, 1.6]), None)
 
 assert_type(np.putmask(AR_f8, [True, True, False], 1.5), None)
 
-assert_type(np.packbits(AR_i8), npt.NDArray[np.uint8])
-assert_type(np.packbits(AR_u1), npt.NDArray[np.uint8])
+assert_type(np.packbits(AR_i8),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_u1),  np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.packbits(AR_i8, axis=1), npt.NDArray[np.uint8])
+assert_type(np.packbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
-assert_type(np.unpackbits(AR_u1), npt.NDArray[np.uint8])
+assert_type(np.unpackbits(AR_u1), np.ndarray[tuple[int], np.dtype[np.uint8]])
+assert_type(np.unpackbits(AR_u1, axis=1), npt.NDArray[np.uint8])
 
 assert_type(np.shares_memory(1, 2), bool)
-assert_type(np.shares_memory(AR_f8, AR_f8, max_work=1), bool)
+assert_type(np.shares_memory(AR_f8, AR_f8, max_work=-1), bool)
 
 assert_type(np.may_share_memory(1, 2), bool)
-assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=1), bool)
+assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=0), bool)
 
 assert_type(np.promote_types(np.int32, np.int64), np.dtype)
 assert_type(np.promote_types("f4", float), np.dtype)
@@ -167,9 +168,10 @@ assert_type(np.busday_count("2011-01", "2011-02"), np.int_)
 assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.int_])
 assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.int_])
 
-assert_type(np.busday_offset(M, m), np.datetime64)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.busday_offset(M, m), np.datetime64)  # type: ignore[assert-type]
+assert_type(np.busday_offset(M, 5), np.datetime64)  # type: ignore[assert-type]
 assert_type(np.busday_offset(date_scalar, m), np.datetime64)
-assert_type(np.busday_offset(M, 5), np.datetime64)
 assert_type(np.busday_offset(AR_M, m), npt.NDArray[np.datetime64])
 assert_type(np.busday_offset(M, timedelta_seq), npt.NDArray[np.datetime64])
 assert_type(np.busday_offset("2011-01", "2011-02", roll="forward"), np.datetime64)
@@ -179,7 +181,8 @@ assert_type(np.is_busday("2012"), np.bool)
 assert_type(np.is_busday(date_scalar), np.bool)
 assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
 
-assert_type(np.datetime_as_string(M), np.str_)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.datetime_as_string(M), np.str_)  # type: ignore[assert-type]
 assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)

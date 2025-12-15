@@ -88,7 +88,7 @@ def test_array_array():
     o = type("o", (object,),
              {"__array_struct__": a.__array_struct__})
     # wasn't what I expected... is np.array(o) supposed to equal a ?
-    # instead we get a array([...], dtype=">V18")
+    # instead we get an array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test __array__

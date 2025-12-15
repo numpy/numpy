@@ -11,7 +11,7 @@ import pytest
 import numpy as np
 import numpy._core._struct_ufunc_tests as struct_ufunc
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import assert_raises, temppath
+from numpy.testing import assert_raises
 
 
 class _DeprecationTestCase:
@@ -145,12 +145,6 @@ class TestBincount(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.bincount(badlist))
 
 
-class TestGeneratorSum(_DeprecationTestCase):
-    # 2018-02-25, 1.15.0
-    def test_generator_sum(self):
-        self.assert_deprecated(np.sum, args=((i for i in range(5)),))
-
-
 class BuiltInRoundComplexDType(_DeprecationTestCase):
     # 2020-03-31 1.19.0
     deprecated_types = [np.csingle, np.cdouble, np.clongdouble]
@@ -197,60 +191,11 @@ class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
 
 
 class TestCtypesGetter(_DeprecationTestCase):
-    # Deprecated 2021-05-18, Numpy 1.21.0
-    warning_cls = DeprecationWarning
     ctypes = np.array([1]).ctypes
 
-    @pytest.mark.parametrize(
-        "name", ["get_data", "get_shape", "get_strides", "get_as_parameter"]
-    )
-    def test_deprecated(self, name: str) -> None:
-        func = getattr(self.ctypes, name)
-        self.assert_deprecated(func)
-
-    @pytest.mark.parametrize(
-        "name", ["data", "shape", "strides", "_as_parameter_"]
-    )
+    @pytest.mark.parametrize("name", ["data", "shape", "strides", "_as_parameter_"])
     def test_not_deprecated(self, name: str) -> None:
         self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
-
-
-class TestMachAr(_DeprecationTestCase):
-    # Deprecated 2022-11-22, NumPy 1.25
-    warning_cls = DeprecationWarning
-
-    def test_deprecated_module(self):
-        self.assert_deprecated(lambda: np._core.MachAr)
-
-
-class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
-    # Deprecated 2021-11-08, NumPy 1.22
-    @pytest.mark.parametrize("func",
-        [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
-    def test_deprecated(self, func):
-        self.assert_deprecated(
-            lambda: func([0., 1.], 0., interpolation="linear"))
-        self.assert_deprecated(
-            lambda: func([0., 1.], 0., interpolation="nearest"))
-
-    @pytest.mark.parametrize("func",
-            [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
-    def test_both_passed(self, func):
-        with pytest.warns(DeprecationWarning):
-            with pytest.raises(TypeError):
-                func([0., 1.], 0., interpolation="nearest", method="nearest")
-
-
-class TestScalarConversion(_DeprecationTestCase):
-    # 2023-01-02, 1.25.0
-    def test_float_conversion(self):
-        self.assert_deprecated(float, args=(np.array([3.14]),))
-
-    def test_behaviour(self):
-        b = np.array([[3.14]])
-        c = np.zeros(5)
-        with pytest.warns(DeprecationWarning):
-            c[0] = b
 
 
 class TestPyIntConversion(_DeprecationTestCase):
@@ -329,9 +274,8 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy import in1d, row_stack, trapz
+        from numpy import row_stack
         from numpy._core.numerictypes import maximum_sctype
-        from numpy.lib._function_base_impl import disp
         from numpy.lib._npyio_impl import recfromcsv, recfromtxt
         from numpy.lib._shape_base_impl import get_array_wrap
         from numpy.lib._utils_impl import safe_eval
@@ -344,13 +288,10 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: recfromcsv(data_gen()))
         self.assert_deprecated(lambda: recfromtxt(data_gen(), **kwargs))
 
-        self.assert_deprecated(lambda: disp("test"))
         self.assert_deprecated(get_array_wrap)
         self.assert_deprecated(lambda: maximum_sctype(int))
 
-        self.assert_deprecated(lambda: in1d([1], [1]))
         self.assert_deprecated(lambda: row_stack([[]]))
-        self.assert_deprecated(lambda: trapz([1], [1]))
         self.assert_deprecated(lambda: np.chararray)
 
 
@@ -415,31 +356,11 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
         self.assert_deprecated(np.dtype, args=(string,))
 
 
-class TestDeprecatedSaveFixImports(_DeprecationTestCase):
-    # Deprecated in Numpy 2.1, 2024-05
-    message = "The 'fix_imports' flag is deprecated and has no effect."
-
-    def test_deprecated(self):
-        with temppath(suffix='.npy') as path:
-            sample_args = (path, np.array(np.zeros((1024, 10))))
-            self.assert_not_deprecated(np.save, args=sample_args)
-            self.assert_deprecated(np.save, args=sample_args,
-                                kwargs={'fix_imports': True})
-            self.assert_deprecated(np.save, args=sample_args,
-                                kwargs={'fix_imports': False})
-            for allow_pickle in [True, False]:
-                self.assert_not_deprecated(np.save, args=sample_args,
-                                        kwargs={'allow_pickle': allow_pickle})
-                self.assert_deprecated(np.save, args=sample_args,
-                                    kwargs={'allow_pickle': allow_pickle,
-                                            'fix_imports': True})
-                self.assert_deprecated(np.save, args=sample_args,
-                                    kwargs={'allow_pickle': allow_pickle,
-                                            'fix_imports': False})
-
-
 class TestAddNewdocUFunc(_DeprecationTestCase):
     # Deprecated in Numpy 2.2, 2024-11
+    @pytest.mark.thread_unsafe(
+        reason="modifies and checks docstring which is global state"
+    )
     def test_deprecated(self):
         doc = struct_ufunc.add_triplet.__doc__
         # gh-26718
@@ -511,6 +432,9 @@ class TestFlatiterIndexingFloatIndex(_DeprecationTestCase):
         self.assert_deprecated(assign_to_index)
 
 
+@pytest.mark.thread_unsafe(
+    reason="warning control utilities are deprecated due to being thread-unsafe"
+)
 class TestWarningUtilityDeprecations(_DeprecationTestCase):
     # Deprecation in NumPy 2.4, 2025-08
     message = r"NumPy warning suppression and assertion utilities are deprecated."
