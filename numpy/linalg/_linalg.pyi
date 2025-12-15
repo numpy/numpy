@@ -153,42 +153,45 @@ class SlogdetResult(NamedTuple, Generic[_FloatingOrArrayT_co, _InexactOrArrayT_c
     sign: _FloatingOrArrayT_co
     logabsdet: _InexactOrArrayT_co
 
-# TODO: narrow return types
-@overload
-def tensorsolve(
-    a: _ArrayLikeInt_co,
-    b: _ArrayLikeInt_co,
-    axes: Iterable[int] | None = None,
-) -> NDArray[float64]: ...
-@overload
-def tensorsolve(
-    a: _ArrayLikeFloat_co,
-    b: _ArrayLikeFloat_co,
-    axes: Iterable[int] | None = None,
-) -> NDArray[floating]: ...
-@overload
-def tensorsolve(
-    a: _ArrayLikeComplex_co,
-    b: _ArrayLikeComplex_co,
-    axes: Iterable[int] | None = None,
-) -> NDArray[complexfloating]: ...
+# keep in sync with `solve`
+@overload  # ~float64, +float64
+def tensorsolve(a: _ToArrayF64, b: _ArrayLikeFloat_co, axes: Iterable[int] | None = None) -> NDArray[np.float64]: ...
+@overload  # +float64, ~float64
+def tensorsolve(a: _ArrayLikeFloat_co, b: _ToArrayF64, axes: Iterable[int] | None = None) -> NDArray[np.float64]: ...
+@overload  # ~float32, ~float32
+def tensorsolve(a: _ArrayLike[np.float32], b: _ArrayLike[np.float32], axes: Iterable[int] | None = None) -> NDArray[np.float32]: ...
+@overload  # +float, +float
+def tensorsolve(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, axes: Iterable[int] | None = None) -> NDArray[np.float64 | Any]: ...
+@overload  # ~complex128, +complex128
+def tensorsolve(a: _AsArrayC128, b: _ArrayLikeComplex_co, axes: Iterable[int] | None = None) -> NDArray[np.complex128]: ...
+@overload  # +complex128, ~complex128
+def tensorsolve(a: _ArrayLikeComplex_co, b: _AsArrayC128, axes: Iterable[int] | None = None) -> NDArray[np.complex128]: ...
+@overload  # ~complex64, +complex64
+def tensorsolve(a: _ArrayLike[np.complex64], b: _ArrayLike[np.complex64 | np.float32], axes: Iterable[int] | None = None) -> NDArray[np.complex64]: ...
+@overload  # +complex64, ~complex64
+def tensorsolve(a: _ArrayLike[np.complex64 | np.float32], b: _ArrayLike[np.complex64], axes: Iterable[int] | None = None) -> NDArray[np.complex64]: ...
+@overload  # +complex, +complex
+def tensorsolve(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, axes: Iterable[int] | None = None) -> NDArray[np.complex128 | Any]: ...
 
-# TODO: narrow return types
-@overload
-def solve(
-    a: _ArrayLikeInt_co,
-    b: _ArrayLikeInt_co,
-) -> NDArray[float64]: ...
-@overload
-def solve(
-    a: _ArrayLikeFloat_co,
-    b: _ArrayLikeFloat_co,
-) -> NDArray[floating]: ...
-@overload
-def solve(
-    a: _ArrayLikeComplex_co,
-    b: _ArrayLikeComplex_co,
-) -> NDArray[complexfloating]: ...
+# keep in sync with `tensorsolve`
+@overload  # ~float64, +float64
+def solve(a: _ToArrayF64, b: _ArrayLikeFloat_co) -> NDArray[np.float64]: ...
+@overload  # +float64, ~float64
+def solve(a: _ArrayLikeFloat_co, b: _ToArrayF64) -> NDArray[np.float64]: ...
+@overload  # ~float32, ~float32
+def solve(a: _ArrayLike[np.float32], b: _ArrayLike[np.float32]) -> NDArray[np.float32]: ...
+@overload  # +float, +float
+def solve(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[np.float64 | Any]: ...
+@overload  # ~complex128, +complex128
+def solve(a: _AsArrayC128, b: _ArrayLikeComplex_co) -> NDArray[np.complex128]: ...
+@overload  # +complex128, ~complex128
+def solve(a: _ArrayLikeComplex_co, b: _AsArrayC128) -> NDArray[np.complex128]: ...
+@overload  # ~complex64, +complex64
+def solve(a: _ArrayLike[np.complex64], b: _ArrayLike[np.complex64 | np.float32]) -> NDArray[np.complex64]: ...
+@overload  # +complex64, ~complex64
+def solve(a: _ArrayLike[np.complex64 | np.float32], b: _ArrayLike[np.complex64]) -> NDArray[np.complex64]: ...
+@overload  # +complex, +complex
+def solve(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complex128 | Any]: ...
 
 # keep in sync with the other inverse functions and cholesky
 @overload  # inexact32

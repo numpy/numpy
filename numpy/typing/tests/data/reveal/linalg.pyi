@@ -47,12 +47,18 @@ AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 ###
 
 assert_type(np.linalg.tensorsolve(AR_i8, AR_i8), npt.NDArray[np.float64])
-assert_type(np.linalg.tensorsolve(AR_i8, AR_f8), npt.NDArray[np.floating])
-assert_type(np.linalg.tensorsolve(AR_c16, AR_f8), npt.NDArray[np.complexfloating])
+assert_type(np.linalg.tensorsolve(AR_i8, AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.tensorsolve(AR_f4, AR_f4), npt.NDArray[np.float32])
+assert_type(np.linalg.tensorsolve(AR_c16, AR_f8), npt.NDArray[np.complex128])
+assert_type(np.linalg.tensorsolve(AR_c8, AR_f4), npt.NDArray[np.complex64])
+assert_type(np.linalg.tensorsolve(AR_f4, AR_c8), npt.NDArray[np.complex64])
 
 assert_type(np.linalg.solve(AR_i8, AR_i8), npt.NDArray[np.float64])
-assert_type(np.linalg.solve(AR_i8, AR_f8), npt.NDArray[np.floating])
-assert_type(np.linalg.solve(AR_c16, AR_f8), npt.NDArray[np.complexfloating])
+assert_type(np.linalg.solve(AR_i8, AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.solve(AR_f4, AR_f4), npt.NDArray[np.float32])
+assert_type(np.linalg.solve(AR_c16, AR_f8), npt.NDArray[np.complex128])
+assert_type(np.linalg.solve(AR_c8, AR_f4), npt.NDArray[np.complex64])
+assert_type(np.linalg.solve(AR_f4, AR_c8), npt.NDArray[np.complex64])
 
 assert_type(np.linalg.tensorinv(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.tensorinv(AR_f8), npt.NDArray[np.float64])
