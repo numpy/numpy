@@ -9,14 +9,14 @@ import pytest
 import numpy as np
 import numpy._core.include
 import numpy._core.lib.pkgconfig
-from numpy.testing import IS_EDITABLE, IS_INSTALLED, IS_WASM, NUMPY_ROOT
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, IS_INSTALLED, NUMPY_ROOT
 
 INCLUDE_DIR = NUMPY_ROOT / '_core' / 'include'
 PKG_CONFIG_DIR = NUMPY_ROOT / '_core' / 'lib' / 'pkgconfig'
 
 
 @pytest.mark.skipif(not IS_INSTALLED, reason="`numpy-config` not expected to be installed")
-@pytest.mark.skipif(IS_WASM, reason="wasm interpreter cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 class TestNumpyConfig:
     def check_numpyconfig(self, arg):
         p = subprocess.run(['numpy-config', arg], capture_output=True, text=True)

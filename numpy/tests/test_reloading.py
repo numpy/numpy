@@ -8,7 +8,7 @@ import pytest
 
 import numpy.exceptions as ex
 from numpy.testing import (
-    IS_WASM,
+    HAS_SUBPROCESSES,
     assert_,
     assert_equal,
     assert_raises,
@@ -46,7 +46,7 @@ def test_novalue():
                                           protocol=proto)) is np._NoValue)
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_full_reimport():
     """At the time of writing this, it is *not* truly supported, but
     apparently enough users rely on it, for it to be an annoying change

@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from numpy._core.multiarray import get_handler_name
-from numpy.testing import IS_EDITABLE, IS_WASM, assert_warns, extbuild
+from numpy.testing import HAS_SUBPROCESSES, IS_EDITABLE, assert_warns, extbuild
 
 
 @pytest.fixture
@@ -21,8 +21,8 @@ def get_module(tmp_path):
     """
     if sys.platform.startswith('cygwin'):
         pytest.skip('link fails on cygwin')
-    if IS_WASM:
-        pytest.skip("Can't build module inside Wasm")
+    if not HAS_SUBPROCESSES:
+        pytest.skip("Can't build module on platform without subprocesses")
     if IS_EDITABLE:
         pytest.skip("Can't build module for editable install")
 

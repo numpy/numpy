@@ -11,7 +11,7 @@ from os.path import join as pathjoin
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM, assert_equal
+from numpy.testing import HAS_SUBPROCESSES, assert_equal
 
 is_inplace = isfile(pathjoin(dirname(np.__file__), '..', 'setup.py'))
 
@@ -43,7 +43,7 @@ def test_f2py(f2py_cmd):
     assert_equal(stdout.strip(), np.__version__.encode('ascii'))
 
 
-@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 def test_pep338():
     stdout = subprocess.check_output([sys.executable, '-mnumpy.f2py', '-v'])
     assert_equal(stdout.strip(), np.__version__.encode('ascii'))
