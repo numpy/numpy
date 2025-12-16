@@ -80,12 +80,15 @@ type _AtLeast4D = tuple[int, int, int, int, *tuple[int, ...]]
 type _JustAnyShape = tuple[Never, ...]  # workaround for microsoft/pyright#10232
 
 type _tuple2[T] = tuple[T, T]
+type _Ax2 = SupportsIndex | _tuple2[SupportsIndex]
 
 type _inexact32 = np.float32 | np.complex64
+type _inexact80 = np.longdouble | np.clongdouble
 type _to_integer = np.integer | np.bool
 type _to_timedelta64 = np.timedelta64 | _to_integer
 type _to_float64 = np.float64 | _to_integer
 type _to_inexact64 = np.complex128 | _to_float64
+type _to_inexact64_unsafe = _to_inexact64 | np.datetime64 | np.timedelta64 | np.character
 type _to_complex = np.number | np.bool
 
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
@@ -561,29 +564,107 @@ def lstsq(
     rcond: float | None = None,
 ) -> _LstSqResult[_AnyShape, np.complex128 | Any, np.float64 | Any]: ...
 
-# TODO: narrow return types
-@overload
+# NOTE: This assumes that `axis` is only passed if `x` is >1d, and that `keepdims` is never passed positionally.
+@overload  # +inexact64 (unsafe casting), axis=None, keepdims=False
 def norm(
-    x: ArrayLike,
-    ord: float | L["fro", "nuc"] | None = None,
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
+    ord: _OrderKind | None = None,
     axis: None = None,
     keepdims: L[False] = False,
-) -> floating: ...
-@overload
+) -> np.float64: ...
+@overload  # +inexact64 (unsafe casting), axis=<given> (positional), keepdims=False
 def norm(
-    x: ArrayLike,
-    ord: float | L["fro", "nuc"] | None,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...] | None,
-    keepdims: bool = False,
-) -> Any: ...
-@overload
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
+    ord: _OrderKind | None,
+    axis: _Ax2,
+    keepdims: L[False] = False,
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), axis=<given> (keyword), keepdims=False
 def norm(
-    x: ArrayLike,
-    ord: float | L["fro", "nuc"] | None = None,
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
+    ord: _OrderKind | None = None,
     *,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...] | None,
-    keepdims: bool = False,
-) -> Any: ...
+    axis: _Ax2,
+    keepdims: L[False] = False,
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), shape known, keepdims=True
+def norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[_to_inexact64_unsafe]],
+    ord: _OrderKind | None = None,
+    axis: _Ax2 | None = None,
+    *,
+    keepdims: L[True],
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # +inexact64 (unsafe casting), shape unknown, keepdims=True
+def norm(
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
+    ord: _OrderKind | None = None,
+    axis: _Ax2 | None = None,
+    *,
+    keepdims: L[True],
+) -> NDArray[np.float64]: ...
+@overload  # ~float16, axis=None, keepdims=False
+def norm(
+    x: _ArrayLike[np.float16], ord: _OrderKind | None = None, axis: None = None, keepdims: L[False] = False
+) -> np.float16: ...
+@overload  # ~float16, axis=<given> (positional), keepdims=False
+def norm(
+    x: _ArrayLike[np.float16], ord: _OrderKind | None, axis: _Ax2, keepdims: L[False] = False
+) -> NDArray[np.float16]: ...
+@overload  # ~float16, axis=<given> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike[np.float16], ord: _OrderKind | None = None, *, axis: _Ax2, keepdims: L[False] = False
+) -> NDArray[np.float16]: ...
+@overload  # ~float16, shape known, keepdims=True
+def norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[np.float16]], ord: _OrderKind | None = None, axis: _Ax2 | None = None, *, keepdims: L[True]
+) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+@overload  # ~float16, shape unknown, keepdims=True
+def norm(
+    x: _ArrayLike[np.float16], ord: _OrderKind | None = None, axis: _Ax2 | None = None, *, keepdims: L[True]
+) -> NDArray[np.float16]: ...
+@overload  # ~inexact32, axis=None, keepdims=False
+def norm(
+    x: _ArrayLike[_inexact32], ord: _OrderKind | None = None, axis: None = None, keepdims: L[False] = False
+) -> np.float32: ...
+@overload  # ~inexact32, axis=<given> (positional), keepdims=False
+def norm(
+    x: _ArrayLike[_inexact32], ord: _OrderKind | None, axis: _Ax2, keepdims: L[False] = False
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, axis=<given> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike[_inexact32], ord: _OrderKind | None = None, *, axis: _Ax2, keepdims: L[False] = False
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, shape known, keepdims=True
+def norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[_inexact32]], ord: _OrderKind | None = None, axis: _Ax2 | None = None, *, keepdims: L[True]
+) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+@overload  # ~inexact32, shape unknown, keepdims=True
+def norm(
+    x: _ArrayLike[_inexact32], ord: _OrderKind | None = None, axis: _Ax2 | None = None, *, keepdims: L[True]
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact80, axis=None, keepdims=False
+def norm(
+    x: _ArrayLike[_inexact80], ord: _OrderKind | None = None, axis: None = None, keepdims: L[False] = False
+) -> np.longdouble: ...
+@overload  # ~inexact80, axis=<given> (positional), keepdims=False
+def norm(
+    x: _ArrayLike[_inexact80], ord: _OrderKind | None, axis: _Ax2, keepdims: L[False] = False
+) -> NDArray[np.longdouble]: ...
+@overload  # ~inexact80, axis=<given> (keyword), keepdims=False
+def norm(
+    x: _ArrayLike[_inexact80], ord: _OrderKind | None = None, *, axis: _Ax2, keepdims: L[False] = False
+) -> NDArray[np.longdouble]: ...
+@overload  # ~inexact80, shape known, keepdims=True
+def norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[_inexact80]], ord: _OrderKind | None = None, axis: _Ax2 | None = None, *, keepdims: L[True]
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble]]: ...
+@overload  # ~inexact80, shape unknown, keepdims=True
+def norm(
+    x: _ArrayLike[_inexact80], ord: _OrderKind | None = None, axis: _Ax2 | None = None, *, keepdims: L[True]
+) -> NDArray[np.longdouble]: ...
+@overload  # fallback
+def norm(x: ArrayLike, ord: _OrderKind | None = None, axis: _Ax2 | None = None, keepdims: bool = False) -> Any: ...
 
 # TODO: narrow return types
 @overload
@@ -591,7 +672,7 @@ def matrix_norm(
     x: ArrayLike,
     /,
     *,
-    ord: float | L["fro", "nuc"] | None = "fro",
+    ord: _OrderKind | None = "fro",
     keepdims: L[False] = False,
 ) -> floating: ...
 @overload
@@ -599,7 +680,7 @@ def matrix_norm(
     x: ArrayLike,
     /,
     *,
-    ord: float | L["fro", "nuc"] | None = "fro",
+    ord: _OrderKind | None = "fro",
     keepdims: bool = False,
 ) -> Any: ...
 
