@@ -4,7 +4,6 @@
 import functools
 import math
 import types
-import warnings
 
 import numpy as np
 from numpy._utils import set_module
@@ -201,13 +200,12 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     return _wrapfunc(a, 'take', indices, axis=axis, out=out, mode=mode)
 
 
-def _reshape_dispatcher(a, /, shape=None, order=None, *, newshape=None,
-                        copy=None):
+def _reshape_dispatcher(a, /, shape, order=None, *, copy=None):
     return (a,)
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
+def reshape(a, /, shape, order='C', *, copy=None):
     """
     Gives a new shape to an array without changing its data.
 
@@ -233,10 +231,6 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
         'A' means to read / write the elements in Fortran-like index
         order if ``a`` is Fortran *contiguous* in memory, C-like order
         otherwise.
-    newshape : int or tuple of ints
-        .. deprecated:: 2.1
-            Replaced by ``shape`` argument. Retained for backward
-            compatibility.
     copy : bool, optional
         If ``True``, then the array data is copied. If ``None``, a copy will
         only be made if it's required by ``order``. For ``False`` it raises
@@ -300,23 +294,6 @@ def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
            [3, 4],
            [5, 6]])
     """
-    if newshape is None and shape is None:
-        raise TypeError(
-            "reshape() missing 1 required positional argument: 'shape'")
-    if newshape is not None:
-        if shape is not None:
-            raise TypeError(
-                "You cannot specify 'newshape' and 'shape' arguments "
-                "at the same time.")
-        # Deprecated in NumPy 2.1, 2024-04-18
-        warnings.warn(
-            "`newshape` keyword argument is deprecated, "
-            "use `shape=...` or pass shape positionally instead. "
-            "(deprecated in NumPy 2.1)",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        shape = newshape
     if copy is not None:
         return _wrapfunc(a, 'reshape', shape, order=order, copy=copy)
     return _wrapfunc(a, 'reshape', shape, order=order)
@@ -777,8 +754,6 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
 
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
@@ -890,8 +865,6 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         sequence of k-th it will partition all of them into their sorted
         position at once.
 
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
@@ -1304,6 +1277,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indexes of the maximal elements of a N-dimensional array:
 
+    >>> a.flat[np.argmax(a)]
+    15
     >>> ind = np.unravel_index(np.argmax(a, axis=None), a.shape)
     >>> ind
     (1, 2)
@@ -1402,6 +1377,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Indices of the minimum elements of a N-dimensional array:
 
+    >>> a.flat[np.argmin(a)]
+    10
     >>> ind = np.unravel_index(np.argmin(a, axis=None), a.shape)
     >>> ind
     (0, 0)
@@ -2026,15 +2003,6 @@ def nonzero(a):
     To group the indices by element, rather than dimension, use `argwhere`,
     which returns a row for each non-zero element.
 
-    .. note::
-
-       When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-       as ``nonzero(atleast_1d(a))``.
-
-       .. deprecated:: 1.17.0
-
-          Use `atleast_1d` explicitly if this behavior is deliberate.
-
     Parameters
     ----------
     a : array_like
@@ -2058,7 +2026,7 @@ def nonzero(a):
     Notes
     -----
     While the nonzero values can be obtained with ``a[nonzero(a)]``, it is
-    recommended to use ``x[x.astype(bool)]`` or ``x[x != 0]`` instead, which
+    recommended to use ``x[x.astype(np.bool)]`` or ``x[x != 0]`` instead, which
     will correctly handle 0-d arrays.
 
     Examples
@@ -2417,7 +2385,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     more precise approach to summation.
     Especially when summing a large number of lower precision floating point
     numbers, such as ``float32``, numerical errors can become significant.
-    In such cases it can be advisable to use `dtype="float64"` to use a higher
+    In such cases it can be advisable to use `dtype=np.float64` to use a higher
     precision for the output.
 
     Examples
@@ -2448,18 +2416,11 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     """
     if isinstance(a, _gentype):
         # 2018-02-25, 1.15.0
-        warnings.warn(
-            "Calling np.sum(generator) is deprecated, and in the future will "
-            "give a different result. Use np.sum(np.fromiter(generator)) or "
+        raise TypeError(
+            "Calling np.sum(generator) is deprecated."
+            "Use np.sum(np.fromiter(generator)) or "
             "the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2
         )
-
-        res = _sum_(a)
-        if out is not None:
-            out[...] = res
-            return out
-        return res
 
     return _wrapreduction(
         a, np.add, 'sum', axis, dtype, out,
@@ -2760,7 +2721,7 @@ def cumulative_prod(x, /, *, axis=None, dtype=None, out=None,
     ...                        # total product 1*2*3 = 6
     array([1, 2, 6])
     >>> a = np.array([1, 2, 3, 4, 5, 6])
-    >>> np.cumulative_prod(a, dtype=float) # specify type of output
+    >>> np.cumulative_prod(a, dtype=np.float64)  # specify type of output
     array([   1.,    2.,    6.,   24.,  120.,  720.])
 
     The cumulative product for each column (i.e., over the rows) of ``b``:
@@ -2847,7 +2808,7 @@ def cumulative_sum(x, /, *, axis=None, dtype=None, out=None,
     array([1, 2, 3, 4, 5, 6])
     >>> np.cumulative_sum(a)
     array([ 1,  3,  6, 10, 15, 21])
-    >>> np.cumulative_sum(a, dtype=float)  # specifies type of output value(s)
+    >>> np.cumulative_sum(a, dtype=np.float64)  # specifies type of output value(s)
     array([  1.,   3.,   6.,  10.,  15.,  21.])
 
     >>> b = np.array([[1, 2, 3], [4, 5, 6]])
@@ -2931,7 +2892,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
            [4, 5, 6]])
     >>> np.cumsum(a)
     array([ 1,  3,  6, 10, 15, 21])
-    >>> np.cumsum(a, dtype=float)     # specifies type of output value(s)
+    >>> np.cumsum(a, dtype=np.float64)  # specifies type of output value(s)
     array([  1.,   3.,   6.,  10.,  15.,  21.])
 
     >>> np.cumsum(a,axis=0)      # sum over rows for each of the 3 columns
@@ -3135,7 +3096,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     array([1, 3])
     >>> np.max(a, where=[False, True], initial=-1, axis=0)
     array([-1,  3])
-    >>> b = np.arange(5, dtype=float)
+    >>> b = np.arange(5, dtype=np.float64)
     >>> b[2] = np.nan
     >>> np.max(b)
     np.float64(nan)
@@ -3274,7 +3235,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.min(a, where=[False, True], initial=10, axis=0)
     array([10,  1])
 
-    >>> b = np.arange(5, dtype=float)
+    >>> b = np.arange(5, dtype=np.float64)
     >>> b[2] = np.nan
     >>> np.min(b)
     np.float64(nan)
@@ -3495,7 +3456,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
     ...               # total product 1*2*3 = 6
     array([1, 2, 6])
     >>> a = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> np.cumprod(a, dtype=float) # specify type of output
+    >>> np.cumprod(a, dtype=np.float64)  # specify type of output
     array([   1.,    2.,    6.,   24.,  120.,  720.])
 
     The cumulative product for each column (i.e., over the rows) of `a`:

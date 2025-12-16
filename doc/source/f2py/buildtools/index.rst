@@ -11,7 +11,7 @@ with ``f2py``.
 
    The default build system for ``f2py`` has traditionally been through the
    enhanced ``numpy.distutils`` module. This module is based on ``distutils``
-   which was removed in ``Python 3.12.0`` in **October 2023**. Like the rest of
+   which was removed in ``NumPy2.5.0`` in **June 2026**. Like the rest of
    NumPy and SciPy, ``f2py`` uses ``meson`` now, see
    :ref:`distutils-status-migration` for some more details.
 
@@ -107,7 +107,6 @@ Build systems
 .. toctree::
    :maxdepth: 2
 
-   distutils
    meson
    cmake
    skbuild

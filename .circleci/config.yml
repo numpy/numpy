@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.11.10
+    - image: cimg/python:3.12.12
   working_directory: ~/repo
 
 
@@ -17,7 +17,8 @@ jobs:
   build:
     <<: *defaults
     steps:
-      - checkout
+      - checkout:
+          method: blobless
 
       - run:
           name: check skip
@@ -52,7 +53,7 @@ jobs:
       - run:
           name: build NumPy
           command: |
-            python3.11 -m venv venv
+            python3.12 -m venv venv
             . venv/bin/activate
             pip install --progress-bar=off -r requirements/test_requirements.txt \
                -r requirements/build_requirements.txt \
@@ -110,7 +111,8 @@ jobs:
   deploy:
     <<: *defaults
     steps:
-      - checkout
+      - checkout:
+          method: blobless
 
       - attach_workspace:
           at: ~/repo

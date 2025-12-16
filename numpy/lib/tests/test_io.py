@@ -125,8 +125,6 @@ class RoundtripTest:
 
             arr_reloaded = np.load(load_file, **load_kwds)
 
-            self.arr = arr
-            self.arr_reloaded = arr_reloaded
         finally:
             if not isinstance(target_file, BytesIO):
                 target_file.close()
@@ -134,6 +132,8 @@ class RoundtripTest:
                 if 'arr_reloaded' in locals():
                     if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
                         os.remove(target_file.name)
+
+        return arr, arr_reloaded
 
     def check_roundtrips(self, a):
         self.roundtrip(a)
@@ -195,26 +195,26 @@ class RoundtripTest:
 
 class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
-        RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
-        assert_equal(self.arr[0], self.arr_reloaded)
-        assert_equal(self.arr[0].dtype, self.arr_reloaded.dtype)
-        assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
+        arr, arr_reloaded = RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
+        assert_equal(arr[0], arr_reloaded)
+        assert_equal(arr[0].dtype, arr_reloaded.dtype)
+        assert_equal(arr[0].flags.fnc, arr_reloaded.flags.fnc)
 
 
 class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
-        RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+        arr, arr_reloaded = RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
-            for n, arr in enumerate(self.arr):
-                reloaded = self.arr_reloaded['arr_%d' % n]
-                assert_equal(arr, reloaded)
-                assert_equal(arr.dtype, reloaded.dtype)
-                assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+            for n, a in enumerate(arr):
+                reloaded = arr_reloaded['arr_%d' % n]
+                assert_equal(a, reloaded)
+                assert_equal(a.dtype, reloaded.dtype)
+                assert_equal(a.flags.fnc, reloaded.flags.fnc)
         finally:
             # delete tempfile, must be done here on windows
-            if self.arr_reloaded.fid:
-                self.arr_reloaded.fid.close()
-                os.remove(self.arr_reloaded.fid.name)
+            if arr_reloaded.fid:
+                arr_reloaded.fid.close()
+                os.remove(arr_reloaded.fid.name)
 
     def test_load_non_npy(self):
         """Test loading non-.npy files and name mapping in .npz."""
@@ -235,6 +235,7 @@ class TestSavezLoad(RoundtripTest):
     @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
@@ -630,6 +631,7 @@ class TestSaveTxt:
     @pytest.mark.skipif(sys.platform == 'win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
@@ -841,8 +843,6 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_comments_multi_chars(self):
         c = TextIO()
         c.write('/* comment\n1,2,3,5\n')
@@ -1059,8 +1059,6 @@ class TestLoadTxt(LoadTxtBase):
                 c, dtype=dt, converters=float.fromhex, encoding="latin1")
             assert_equal(res, tgt, err_msg=f"{dt}")
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_default_float_converter_no_default_hex_conversion(self):
         """
         Ensure that fromhex is only used for values with the correct prefix and
@@ -1071,8 +1069,6 @@ class TestLoadTxt(LoadTxtBase):
                 match=".*convert string 'a' to float64 at row 0, column 1"):
             np.loadtxt(c)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_default_float_converter_exception(self):
         """
         Ensure that the exception message raised during failed floating point
@@ -2572,7 +2568,7 @@ M   33  21.99
 
     @pytest.mark.parametrize("ndim", [0, 1, 2])
     def test_ndmin_keyword(self, ndim: int):
-        # lets have the same behaviour of ndmin as loadtxt
+        # let's have the same behaviour of ndmin as loadtxt
         # as they should be the same for non-missing values
         txt = "42"
 
@@ -2806,6 +2802,7 @@ def test_npzfile_dict():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="garbage collector is global state")
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.

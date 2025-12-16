@@ -247,3 +247,16 @@ f8.reshape(1)
 c16.reshape(1)
 U.reshape(1)
 S.reshape(1)
+
+# Indexing scalars with any of {None, ..., tuple[()], tuple[None], tuple[...],
+# tuple[None, ...]} should be valid
+b[None]
+i8[None]
+u8[None]
+f8[None]
+c16[None]
+c16[...]
+c16[()]
+c16[(None,)]
+c16[(...,)]
+c16[None, None]

@@ -87,7 +87,7 @@ class TestErrstate:
 
     @pytest.mark.skipif(IS_WASM, reason="wasm doesn't support asyncio")
     def test_asyncio_safe(self):
-        # asyncio may not always work, lets assume its fine if missing
+        # asyncio may not always work, let's assume its fine if missing
         # Pyodide/wasm doesn't support it.  If this test makes problems,
         # it should just be skipped liberally (or run differently).
         asyncio = pytest.importorskip("asyncio")

@@ -240,26 +240,26 @@ def isreal(x):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
+    >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=np.complex128)
     >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
 
     The function does not work on string arrays.
 
-    >>> a = np.array([2j, "a"], dtype="U")
+    >>> a = np.array([2j, "a"], dtype=np.str_)
     >>> np.isreal(a)  # Warns about non-elementwise comparison
     False
 
-    Returns True for all elements in input array of ``dtype=object`` even if
+    Returns True for all elements in input array of ``dtype=np.object_`` even if
     any of the elements is complex.
 
-    >>> a = np.array([1, "2", 3+4j], dtype=object)
+    >>> a = np.array([1, "2", 3+4j], dtype=np.object_)
     >>> np.isreal(a)
     array([ True,  True,  True])
 
     isreal should not be used with object arrays
 
-    >>> a = np.array([1+2j, 2+1j], dtype=object)
+    >>> a = np.array([1+2j, 2+1j], dtype=np.object_)
     >>> np.isreal(a)
     array([ True,  True])
 

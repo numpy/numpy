@@ -178,13 +178,7 @@ write in a ``setup.py`` file:
 
 Adding the NumPy include directory is, of course, only necessary if
 you are using NumPy arrays in the extension module (which is what we
-assume you are using Cython for). The distutils extensions in NumPy
-also include support for automatically producing the extension-module
-and linking it from a ``.pyx`` file. It works so that if the user does
-not have Cython installed, then it looks for a file with the same
-file-name but a ``.c`` extension which it then uses instead of trying
-to produce the ``.c`` file again.
-
+assume you are using Cython for). 
 If you just use Cython to compile a standard Python module, then you
 will get a C extension module that typically runs a bit faster than the
 equivalent Python module. Further speed increases can be gained by using

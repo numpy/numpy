@@ -26,12 +26,6 @@ def get_include():
     """
     Return the directory that contains the ``fortranobject.c`` and ``.h`` files.
 
-    .. note::
-
-        This function is not needed when building an extension with
-        `numpy.distutils` directly from ``.f`` and/or ``.pyf`` files
-        in one go.
-
     Python extension modules built with f2py-generated code need to use
     ``fortranobject.c`` as a source file, and include the ``fortranobject.h``
     header. This function can be used to obtain the directory containing

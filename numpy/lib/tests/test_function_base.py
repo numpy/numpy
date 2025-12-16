@@ -565,10 +565,6 @@ class TestSelect:
         m = np.isnan(d)
         assert_equal(select([m], [d]), [0, 0, 0, np.nan, 0, 0])
 
-    def test_deprecated_empty(self):
-        assert_raises(ValueError, select, [], [], 3j)
-        assert_raises(ValueError, select, [], [])
-
     def test_non_bool_deprecation(self):
         choices = self.choices
         conditions = self.conditions[:]
@@ -1384,6 +1380,36 @@ class TestTrimZeros:
     c = a.astype(complex)
     d = a.astype(object)
 
+    def construct_input_output(self, rng, shape, axis, trim):
+        """Construct an input/output test pair for trim_zeros"""
+        # Standardize axis to a tuple.
+        if axis is None:
+            axis = tuple(range(len(shape)))
+        elif isinstance(axis, int):
+            axis = (len(shape) + axis if axis < 0 else axis,)
+        else:
+            axis = tuple(len(shape) + ax if ax < 0 else ax for ax in axis)
+
+        # Populate a random interior slice with nonzero entries.
+        data = np.zeros(shape)
+        i_start = rng.integers(low=0, high=np.array(shape) - 1)
+        i_end = rng.integers(low=i_start + 1, high=shape)
+        inner_shape = tuple(i_end - i_start)
+        inner_data = 1 + rng.random(inner_shape)
+        data[tuple(slice(i, j) for i, j in zip(i_start, i_end))] = inner_data
+
+        # Construct the expected output of N-dimensional trim_zeros
+        # with the given axis and trim arguments.
+        if 'f' not in trim:
+            i_start = np.array([None for _ in shape])
+        if 'b' not in trim:
+            i_end = np.array([None for _ in shape])
+        idx = tuple(slice(i, j) if ax in axis else slice(None)
+                    for ax, (i, j) in enumerate(zip(i_start, i_end)))
+        expected = data[idx]
+
+        return data, expected
+
     def values(self):
         attr_names = ('a', 'b', 'c', 'd')
         return (getattr(self, name) for name in attr_names)
@@ -1468,6 +1494,29 @@ class TestTrimZeros:
         arr = self.a
         with pytest.raises(ValueError, match=r"unexpected character\(s\) in `trim`"):
             trim_zeros(arr, trim=trim)
+
+    @pytest.mark.parametrize("shape, axis", [
+        [(5,), None],
+        [(5,), ()],
+        [(5,), 0],
+        [(5, 6), None],
+        [(5, 6), ()],
+        [(5, 6), 0],
+        [(5, 6), (-1,)],
+        [(5, 6, 7), None],
+        [(5, 6, 7), ()],
+        [(5, 6, 7), 1],
+        [(5, 6, 7), (0, 2)],
+        [(5, 6, 7, 8), None],
+        [(5, 6, 7, 8), ()],
+        [(5, 6, 7, 8), -2],
+        [(5, 6, 7, 8), (0, 1, 3)],
+    ])
+    @pytest.mark.parametrize("trim", ['fb', 'f', 'b'])
+    def test_multiple_axes(self, shape, axis, trim):
+        rng = np.random.default_rng(4321)
+        data, expected = self.construct_input_output(rng, shape, axis, trim)
+        assert_array_equal(trim_zeros(data, axis=axis, trim=trim), expected)
 
 
 class TestExtins:
@@ -2056,6 +2105,9 @@ class TestLeaks:
             ('bound', A.iters),
             ('unbound', 0),
             ])
+    @pytest.mark.thread_unsafe(
+        reason="test result depends on the reference count of a global object"
+    )
     def test_frompyfunc_leaks(self, name, incr):
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
@@ -2475,28 +2527,6 @@ class TestCorrCoef:
         tgt2 = corrcoef(self.A, self.B)
         assert_almost_equal(tgt2, self.res2)
         assert_(np.all(np.abs(tgt2) <= 1.0))
-
-    def test_ddof(self):
-        # ddof raises DeprecationWarning
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            pytest.warns(DeprecationWarning, corrcoef, self.A, ddof=-1)
-            warnings.simplefilter('ignore', DeprecationWarning)
-            # ddof has no or negligible effect on the function
-            assert_almost_equal(corrcoef(self.A, ddof=-1), self.res1)
-            assert_almost_equal(corrcoef(self.A, self.B, ddof=-1), self.res2)
-            assert_almost_equal(corrcoef(self.A, ddof=3), self.res1)
-            assert_almost_equal(corrcoef(self.A, self.B, ddof=3), self.res2)
-
-    def test_bias(self):
-        # bias raises DeprecationWarning
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            pytest.warns(DeprecationWarning, corrcoef, self.A, self.B, 1, 0)
-            pytest.warns(DeprecationWarning, corrcoef, self.A, bias=0)
-            warnings.simplefilter('ignore', DeprecationWarning)
-            # bias has no or negligible effect on the function
-            assert_almost_equal(corrcoef(self.A, bias=1), self.res1)
 
     def test_complex(self):
         x = np.array([[1, 2, 3], [1j, 2j, 3j]])
@@ -3247,6 +3277,16 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
 
+quantile_methods = [
+    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
+    'midpoint']
+
+
+methods_supporting_weights = ["inverted_cdf"]
+
+
 class TestPercentile:
 
     def test_basic(self):
@@ -3840,15 +3880,38 @@ class TestPercentile:
         res = np.percentile(a, 30, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
 
+    @pytest.mark.parametrize("qtype", [np.float16, np.float32])
+    @pytest.mark.parametrize("method", quantile_methods)
+    def test_percentile_gh_29003(self, qtype, method):
+        # test that with float16 or float32 input we do not get overflow
+        zero = qtype(0)
+        one = qtype(1)
+        a = np.zeros(65521, qtype)
+        a[:20_000] = one
+        z = np.percentile(a, 50, method=method)
+        assert z == zero
+        assert z.dtype == a.dtype
+        z = np.percentile(a, 99, method=method)
+        assert z == one
+        assert z.dtype == a.dtype
 
-quantile_methods = [
-    'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-    'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-    'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
-    'midpoint']
+    def test_percentile_gh_29003_Fraction(self):
+        zero = Fraction(0)
+        one = Fraction(1)
+        a = np.array([zero] * 65521)
+        a[:20_000] = one
+        z = np.percentile(a, 50)
+        assert z == zero
+        z = np.percentile(a, Fraction(50))
+        assert z == zero
+        assert np.array(z).dtype == a.dtype
 
-
-methods_supporting_weights = ["inverted_cdf"]
+        z = np.percentile(a, 99)
+        assert z == one
+        # test that with only Fraction input the return type is a Fraction
+        z = np.percentile(a, Fraction(99))
+        assert z == one
+        assert np.array(z).dtype == a.dtype
 
 
 class TestQuantile:
@@ -3895,7 +3958,7 @@ class TestQuantile:
 
         q = np.quantile(x, .5)
         assert_equal(q, 1.75)
-        assert_equal(type(q), np.float64)
+        assert isinstance(q, float)
 
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))
@@ -4165,6 +4228,17 @@ class TestQuantile:
                 )
         assert_allclose(q, q_res)
 
+        # axis is a tuple of all axes
+        q = np.quantile(y, alpha, weights=w, method=method, axis=(0, 1, 2))
+        q_res = np.quantile(y, alpha, weights=w, method=method, axis=None)
+        assert_allclose(q, q_res)
+
+        q = np.quantile(y, alpha, weights=w, method=method, axis=(1, 2))
+        q_res = np.zeros(shape=(2,))
+        for i in range(2):
+            q_res[i] = np.quantile(y[i], alpha, weights=w[i], method=method)
+        assert_allclose(q, q_res)
+
     @pytest.mark.parametrize("method", methods_supporting_weights)
     def test_quantile_weights_min_max(self, method):
         # Test weighted quantile at 0 and 1 with leading and trailing zero
@@ -4213,6 +4287,53 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:8], q, method=m))
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
+
+    @pytest.mark.parametrize("weights",
+            [[1, np.inf, 1, 1], [1, np.inf, 1, np.inf], [0, 0, 0, 0],
+             [np.finfo("float64").max] * 4])
+    @pytest.mark.parametrize("dty", ["f8", "O"])
+    def test_inf_zeroes_err(self, weights, dty):
+        m = "inverted_cdf"
+        q = 0.5
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(ValueError,
+                match=r"Weights included NaN, inf or were all zero"):
+            # We (currently) don't bother to check ahead so 0/0 or
+            # overflow to `inf` while summing weights, or `inf / inf`
+            # will all warn before the error is raised.
+            with np.errstate(all="ignore"):
+                a = np.quantile(arr, q, weights=wgts, method=m, axis=1)
+
+    @pytest.mark.parametrize("weights",
+            [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
+    @pytest.mark.parametrize(["err", "dty"],
+            [(ValueError, "f8"), ((RuntimeWarning, ValueError), "O")])
+    def test_nan_err(self, err, dty, weights):
+        m = "inverted_cdf"
+        q = 0.5
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(err):
+            a = np.quantile(arr, q, weights=wgts, method=m)
+
+    def test_quantile_gh_29003_Fraction(self):
+        r = np.quantile([1, 2], q=Fraction(1))
+        assert r == Fraction(2)
+        assert isinstance(r, Fraction)
+
+        r = np.quantile([1, 2], q=Fraction(.5))
+        assert r == Fraction(3, 2)
+        assert isinstance(r, Fraction)
+
+    def test_float16_gh_29003(self):
+        a = np.arange(50_001, dtype=np.float16)
+        q = .999
+        value = np.quantile(a, q)
+        assert value == q * 50_000
+        assert value.dtype == np.float16
 
 
 class TestLerp:

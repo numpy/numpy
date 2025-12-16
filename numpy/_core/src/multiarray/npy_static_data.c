@@ -38,6 +38,7 @@ intern_strings(void)
     INTERN_STRING(array_ufunc, "__array_ufunc__");
     INTERN_STRING(array_wrap, "__array_wrap__");
     INTERN_STRING(array_finalize, "__array_finalize__");
+    INTERN_STRING(numpy_dtype, "__numpy_dtype__");
     INTERN_STRING(implementation, "_implementation");
     INTERN_STRING(axis1, "axis1");
     INTERN_STRING(axis2, "axis2");
@@ -64,6 +65,10 @@ intern_strings(void)
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     INTERN_STRING(legacy, "legacy");
     INTERN_STRING(__doc__, "__doc__");
+    INTERN_STRING(__signature__, "__signature__");
+    INTERN_STRING(copy, "copy");
+    INTERN_STRING(dl_device, "dl_device");
+    INTERN_STRING(max_version, "max_version");
     return 0;
 }
 
@@ -169,7 +174,8 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_static_pydata.kwnames_is_copy = Py_BuildValue("(s)", "copy");
+    npy_static_pydata.kwnames_is_copy =
+            Py_BuildValue("(O)", npy_interned_str.copy);
     if (npy_static_pydata.kwnames_is_copy == NULL) {
         return -1;
     }
@@ -185,7 +191,9 @@ initialize_static_globals(void)
     }
 
     npy_static_pydata.dl_call_kwnames =
-            Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
+            Py_BuildValue("(OOO)", npy_interned_str.dl_device,
+                                   npy_interned_str.copy,
+                                   npy_interned_str.max_version);
     if (npy_static_pydata.dl_call_kwnames == NULL) {
         return -1;
     }

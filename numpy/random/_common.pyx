@@ -240,7 +240,6 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
 cdef validate_output_shape(iter_shape, np.ndarray output):
     cdef np.npy_intp *dims
     cdef np.npy_intp ndim, i
-    cdef bint error
     dims = np.PyArray_DIMS(output)
     ndim = np.PyArray_NDIM(output)
     output_shape = tuple((dims[i] for i in range(ndim)))
@@ -296,7 +295,7 @@ cdef object double_fill(void *func, bitgen_t *state, object size, object lock, o
     cdef double out_val
     cdef double *out_array_data
     cdef np.ndarray out_array
-    cdef np.npy_intp i, n
+    cdef np.npy_intp n
 
     if size is None and out is None:
         with lock:
@@ -320,7 +319,7 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
     cdef float out_val
     cdef float *out_array_data
     cdef np.ndarray out_array
-    cdef np.npy_intp i, n
+    cdef np.npy_intp n
 
     if size is None and out is None:
         with lock:
@@ -427,7 +426,6 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
 
 
 cdef int check_constraint(double val, object name, constraint_type cons) except -1:
-    cdef bint is_nan
     if cons == CONS_NON_NEGATIVE:
         if not isnan(val) and signbit(val):
             raise ValueError(f"{name} < 0")
@@ -760,7 +758,6 @@ cdef object discrete_broadcast_di(void *func, void *state, object size, object l
                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                   np.ndarray b_arr, object b_name, constraint_type b_constraint):
     cdef np.ndarray randoms
-    cdef int64_t *randoms_data
     cdef np.broadcast it
     cdef random_uint_di f = (<random_uint_di>func)
     cdef np.npy_intp i, n
@@ -777,7 +774,6 @@ cdef object discrete_broadcast_di(void *func, void *state, object size, object l
         it = np.PyArray_MultiIterNew2(a_arr, b_arr)
         randoms = <np.ndarray>np.empty(it.shape, np.int64)
 
-    randoms_data = <int64_t *>np.PyArray_DATA(randoms)
     n = np.PyArray_SIZE(randoms)
 
     it = np.PyArray_MultiIterNew3(randoms, a_arr, b_arr)
@@ -1047,7 +1043,7 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
                    object a, object a_name, constraint_type a_constraint,
                    object out):
 
-    cdef np.ndarray a_arr, b_arr, c_arr
+    cdef np.ndarray a_arr
     cdef float _a
     cdef bint is_scalar = True
     cdef int requirements = np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_FORCECAST

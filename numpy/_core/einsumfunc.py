@@ -2,12 +2,14 @@
 Implementation of optimized einsum.
 
 """
+import functools
 import itertools
 import operator
 
-from numpy._core.multiarray import c_einsum
-from numpy._core.numeric import asanyarray, tensordot
+from numpy._core.multiarray import c_einsum, matmul
+from numpy._core.numeric import asanyarray, reshape
 from numpy._core.overrides import array_function_dispatch
+from numpy._core.umath import multiply
 
 __all__ = ['einsum', 'einsum_path']
 
@@ -440,116 +442,6 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     return path
 
 
-def _can_dot(inputs, result, idx_removed):
-    """
-    Checks if we can use BLAS (np.tensordot) call and its beneficial to do so.
-
-    Parameters
-    ----------
-    inputs : list of str
-        Specifies the subscripts for summation.
-    result : str
-        Resulting summation.
-    idx_removed : set
-        Indices that are removed in the summation
-
-
-    Returns
-    -------
-    type : bool
-        Returns true if BLAS should and can be used, else False
-
-    Notes
-    -----
-    If the operations is BLAS level 1 or 2 and is not already aligned
-    we default back to einsum as the memory movement to copy is more
-    costly than the operation itself.
-
-
-    Examples
-    --------
-
-    # Standard GEMM operation
-    >>> _can_dot(['ij', 'jk'], 'ik', set('j'))
-    True
-
-    # Can use the standard BLAS, but requires odd data movement
-    >>> _can_dot(['ijj', 'jk'], 'ik', set('j'))
-    False
-
-    # DDOT where the memory is not aligned
-    >>> _can_dot(['ijk', 'ikj'], '', set('ijk'))
-    False
-
-    """
-
-    # All `dot` calls remove indices
-    if len(idx_removed) == 0:
-        return False
-
-    # BLAS can only handle two operands
-    if len(inputs) != 2:
-        return False
-
-    input_left, input_right = inputs
-
-    for c in set(input_left + input_right):
-        # can't deal with repeated indices on same input or more than 2 total
-        nl, nr = input_left.count(c), input_right.count(c)
-        if (nl > 1) or (nr > 1) or (nl + nr > 2):
-            return False
-
-        # can't do implicit summation or dimension collapse e.g.
-        #     "ab,bc->c" (implicitly sum over 'a')
-        #     "ab,ca->ca" (take diagonal of 'a')
-        if nl + nr - 1 == int(c in result):
-            return False
-
-    # Build a few temporaries
-    set_left = set(input_left)
-    set_right = set(input_right)
-    keep_left = set_left - idx_removed
-    keep_right = set_right - idx_removed
-    rs = len(idx_removed)
-
-    # At this point we are a DOT, GEMV, or GEMM operation
-
-    # Handle inner products
-
-    # DDOT with aligned data
-    if input_left == input_right:
-        return True
-
-    # DDOT without aligned data (better to use einsum)
-    if set_left == set_right:
-        return False
-
-    # Handle the 4 possible (aligned) GEMV or GEMM cases
-
-    # GEMM or GEMV no transpose
-    if input_left[-rs:] == input_right[:rs]:
-        return True
-
-    # GEMM or GEMV transpose both
-    if input_left[:rs] == input_right[-rs:]:
-        return True
-
-    # GEMM or GEMV transpose right
-    if input_left[-rs:] == input_right[-rs:]:
-        return True
-
-    # GEMM or GEMV transpose left
-    if input_left[:rs] == input_right[:rs]:
-        return True
-
-    # Einsum is faster than GEMV if we have to copy data
-    if not keep_left or not keep_right:
-        return False
-
-    # We are a matrix-matrix product, but we need to copy data
-    return True
-
-
 def _parse_einsum_input(operands):
     """
     A reproduction of einsum c side einsum parsing in python.
@@ -887,13 +779,14 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     # Build a few useful list and sets
     input_list = input_subscripts.split(',')
+    num_inputs = len(input_list)
     input_sets = [set(x) for x in input_list]
     output_set = set(output_subscript)
     indices = set(input_subscripts.replace(',', ''))
+    num_indices = len(indices)
 
     # Get length of each unique dimension and ensure all dimensions are correct
     dimension_dict = {}
-    broadcast_indices = [[] for x in range(len(input_list))]
     for tnum, term in enumerate(input_list):
         sh = operands[tnum].shape
         if len(sh) != len(term):
@@ -902,10 +795,6 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
                              % (input_subscripts[tnum], tnum))
         for cnum, char in enumerate(term):
             dim = sh[cnum]
-
-            # Build out broadcast indices
-            if dim == 1:
-                broadcast_indices[tnum].append(char)
 
             if char in dimension_dict.keys():
                 # For broadcasting cases we always want the largest dim size
@@ -918,9 +807,6 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
             else:
                 dimension_dict[char] = dim
 
-    # Convert broadcast inds to sets
-    broadcast_indices = [set(x) for x in broadcast_indices]
-
     # Compute size of each input array plus the output array
     size_list = [_compute_size_by_dict(term, dimension_dict)
                  for term in input_list + [output_subscript]]
@@ -931,23 +817,16 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     else:
         memory_arg = memory_limit
 
-    # Compute naive cost
-    # This isn't quite right, need to look into exactly how einsum does this
-    inner_product = (sum(len(x) for x in input_sets) - len(indices)) > 0
-    naive_cost = _flop_count(
-        indices, inner_product, len(input_list), dimension_dict
-    )
-
     # Compute the path
     if explicit_einsum_path:
         path = path_type[1:]
     elif (
         (path_type is False)
-        or (len(input_list) in [1, 2])
+        or (num_inputs in [1, 2])
         or (indices == output_set)
     ):
         # Nothing to be optimized, leave it to einsum
-        path = [tuple(range(len(input_list)))]
+        path = [tuple(range(num_inputs))]
     elif path_type == "greedy":
         path = _greedy_path(
             input_sets, output_set, dimension_dict, memory_arg
@@ -969,26 +848,18 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         contract = _find_contraction(contract_inds, input_sets, output_set)
         out_inds, input_sets, idx_removed, idx_contract = contract
 
-        cost = _flop_count(
-            idx_contract, idx_removed, len(contract_inds), dimension_dict
-        )
-        cost_list.append(cost)
-        scale_list.append(len(idx_contract))
-        size_list.append(_compute_size_by_dict(out_inds, dimension_dict))
+        if not einsum_call_arg:
+            # these are only needed for printing info
+            cost = _flop_count(
+                idx_contract, idx_removed, len(contract_inds), dimension_dict
+            )
+            cost_list.append(cost)
+            scale_list.append(len(idx_contract))
+            size_list.append(_compute_size_by_dict(out_inds, dimension_dict))
 
-        bcast = set()
         tmp_inputs = []
         for x in contract_inds:
             tmp_inputs.append(input_list.pop(x))
-            bcast |= broadcast_indices.pop(x)
-
-        new_bcast_inds = bcast - idx_removed
-
-        # If we're broadcasting, nix blas
-        if not len(idx_removed & bcast):
-            do_blas = _can_dot(tmp_inputs, out_inds, idx_removed)
-        else:
-            do_blas = False
 
         # Last contraction
         if (cnum - len(path)) == -1:
@@ -998,15 +869,10 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
             idx_result = "".join([x[1] for x in sorted(sort_result)])
 
         input_list.append(idx_result)
-        broadcast_indices.append(new_bcast_inds)
         einsum_str = ",".join(tmp_inputs) + "->" + idx_result
 
-        contraction = (
-            contract_inds, idx_removed, einsum_str, input_list[:], do_blas
-        )
+        contraction = (contract_inds, einsum_str, input_list[:])
         contraction_list.append(contraction)
-
-    opt_cost = sum(cost_list) + 1
 
     if len(input_list) != 1:
         # Explicit "einsum_path" is usually trusted, but we detect this kind of
@@ -1022,11 +888,21 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     overall_contraction = input_subscripts + "->" + output_subscript
     header = ("scaling", "current", "remaining")
 
+    # Compute naive cost
+    # This isn't quite right, need to look into exactly how einsum does this
+    inner_product = (
+        sum(len(set(x)) for x in input_subscripts.split(',')) - num_indices
+    ) > 0
+    naive_cost = _flop_count(
+        indices, inner_product, num_inputs, dimension_dict
+    )
+
+    opt_cost = sum(cost_list) + 1
     speedup = naive_cost / opt_cost
     max_i = max(size_list)
 
     path_print = f"  Complete contraction:  {overall_contraction}\n"
-    path_print += f"         Naive scaling:  {len(indices)}\n"
+    path_print += f"         Naive scaling:  {num_indices}\n"
     path_print += "     Optimized scaling:  %d\n" % max(scale_list)
     path_print += f"      Naive FLOP count:  {naive_cost:.3e}\n"
     path_print += f"  Optimized FLOP count:  {opt_cost:.3e}\n"
@@ -1037,13 +913,324 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     path_print += "-" * 74
 
     for n, contraction in enumerate(contraction_list):
-        inds, idx_rm, einsum_str, remaining, blas = contraction
+        _, einsum_str, remaining = contraction
         remaining_str = ",".join(remaining) + "->" + output_subscript
         path_run = (scale_list[n], einsum_str, remaining_str)
         path_print += "\n%4d    %24s %40s" % path_run
 
     path = ['einsum_path'] + path
     return (path, path_print)
+
+
+def _parse_eq_to_pure_multiplication(a_term, shape_a, b_term, shape_b, out):
+    """If there are no contracted indices, then we can directly transpose and
+    insert singleton dimensions into ``a`` and ``b`` such that (broadcast)
+    elementwise multiplication performs the einsum.
+
+    No need to cache this as it is within the cached
+    ``_parse_eq_to_batch_matmul``.
+
+    """
+    desired_a = ""
+    desired_b = ""
+    new_shape_a = []
+    new_shape_b = []
+    for ix in out:
+        if ix in a_term:
+            desired_a += ix
+            new_shape_a.append(shape_a[a_term.index(ix)])
+        else:
+            new_shape_a.append(1)
+        if ix in b_term:
+            desired_b += ix
+            new_shape_b.append(shape_b[b_term.index(ix)])
+        else:
+            new_shape_b.append(1)
+
+    if desired_a != a_term:
+        eq_a = f"{a_term}->{desired_a}"
+    else:
+        eq_a = None
+    if desired_b != b_term:
+        eq_b = f"{b_term}->{desired_b}"
+    else:
+        eq_b = None
+
+    return (
+        eq_a,
+        eq_b,
+        new_shape_a,
+        new_shape_b,
+        None,  # new_shape_ab, not needed since not fusing
+        None,  # perm_ab, not needed as we transpose a and b first
+        True,  # pure_multiplication=True
+    )
+
+
+@functools.lru_cache(2**12)
+def _parse_eq_to_batch_matmul(eq, shape_a, shape_b):
+    """Cached parsing of a two term einsum equation into the necessary
+    sequence of arguments for contracttion via batched matrix multiplication.
+    The steps we need to specify are:
+
+        1. Remove repeated and trivial indices from the left and right terms,
+           and transpose them, done as a single einsum.
+        2. Fuse the remaining indices so we have two 3D tensors.
+        3. Perform the batched matrix multiplication.
+        4. Unfuse the output to get the desired final index order.
+
+    """
+    lhs, out = eq.split("->")
+    a_term, b_term = lhs.split(",")
+
+    if len(a_term) != len(shape_a):
+        raise ValueError(f"Term '{a_term}' does not match shape {shape_a}.")
+    if len(b_term) != len(shape_b):
+        raise ValueError(f"Term '{b_term}' does not match shape {shape_b}.")
+
+    sizes = {}
+    singletons = set()
+
+    # parse left term to unique indices with size > 1
+    left = {}
+    for ix, d in zip(a_term, shape_a):
+        if d == 1:
+            # everything (including broadcasting) works nicely if simply ignore
+            # such dimensions, but we do need to track if they appear in output
+            # and thus should be reintroduced later
+            singletons.add(ix)
+            continue
+        if sizes.setdefault(ix, d) != d:
+            # set and check size
+            raise ValueError(
+                f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
+            )
+        left[ix] = True
+
+    # parse right term to unique indices with size > 1
+    right = {}
+    for ix, d in zip(b_term, shape_b):
+        # broadcast indices (size 1 on one input and size != 1
+        # on the other) should not be treated as singletons
+        if d == 1:
+            if ix not in left:
+                singletons.add(ix)
+            continue
+        singletons.discard(ix)
+
+        if sizes.setdefault(ix, d) != d:
+            # set and check size
+            raise ValueError(
+                f"Index {ix} has mismatched sizes {sizes[ix]} and {d}."
+            )
+        right[ix] = True
+
+    # now we classify the unique size > 1 indices only
+    bat_inds = []  # appears on A, B, O
+    con_inds = []  # appears on A, B, .
+    a_keep = []  # appears on A, ., O
+    b_keep = []  # appears on ., B, O
+    # other indices (appearing on A or B only) will
+    # be summed or traced out prior to the matmul
+    for ix in left:
+        if right.pop(ix, False):
+            if ix in out:
+                bat_inds.append(ix)
+            else:
+                con_inds.append(ix)
+        elif ix in out:
+            a_keep.append(ix)
+    # now only indices unique to right remain
+    for ix in right:
+        if ix in out:
+            b_keep.append(ix)
+
+    if not con_inds:
+        # contraction is pure multiplication, prepare inputs differently
+        return _parse_eq_to_pure_multiplication(
+            a_term, shape_a, b_term, shape_b, out
+        )
+
+    # only need the size one indices that appear in the output
+    singletons = [ix for ix in out if ix in singletons]
+
+    # take diagonal, remove any trivial axes and transpose left
+    desired_a = "".join((*bat_inds, *a_keep, *con_inds))
+    if a_term != desired_a:
+        eq_a = f"{a_term}->{desired_a}"
+    else:
+        eq_a = None
+
+    # take diagonal, remove any trivial axes and transpose right
+    desired_b = "".join((*bat_inds, *con_inds, *b_keep))
+    if b_term != desired_b:
+        eq_b = f"{b_term}->{desired_b}"
+    else:
+        eq_b = None
+
+    # then we want to reshape
+    if bat_inds:
+        lgroups = (bat_inds, a_keep, con_inds)
+        rgroups = (bat_inds, con_inds, b_keep)
+        ogroups = (bat_inds, a_keep, b_keep)
+    else:
+        # avoid size 1 batch dimension if no batch indices
+        lgroups = (a_keep, con_inds)
+        rgroups = (con_inds, b_keep)
+        ogroups = (a_keep, b_keep)
+
+    if any(len(group) != 1 for group in lgroups):
+        # need to fuse 'kept' and contracted indices
+        # (though could allow batch indices to be broadcast)
+        new_shape_a = tuple(
+            functools.reduce(operator.mul, (sizes[ix] for ix in ix_group), 1)
+            for ix_group in lgroups
+        )
+    else:
+        new_shape_a = None
+
+    if any(len(group) != 1 for group in rgroups):
+        # need to fuse 'kept' and contracted indices
+        # (though could allow batch indices to be broadcast)
+        new_shape_b = tuple(
+            functools.reduce(operator.mul, (sizes[ix] for ix in ix_group), 1)
+            for ix_group in rgroups
+        )
+    else:
+        new_shape_b = None
+
+    if any(len(group) != 1 for group in ogroups) or singletons:
+        new_shape_ab = (1,) * len(singletons) + tuple(
+            sizes[ix] for ix_group in ogroups for ix in ix_group
+        )
+    else:
+        new_shape_ab = None
+
+    # then we might need to permute the matmul produced output:
+    out_produced = "".join((*singletons, *bat_inds, *a_keep, *b_keep))
+    if out_produced != out:
+        perm_ab = tuple(out_produced.index(ix) for ix in out)
+    else:
+        perm_ab = None
+
+    return (
+        eq_a,
+        eq_b,
+        new_shape_a,
+        new_shape_b,
+        new_shape_ab,
+        perm_ab,
+        False,  # pure_multiplication=False
+    )
+
+
+@functools.lru_cache(maxsize=64)
+def _parse_output_order(order, a_is_fcontig, b_is_fcontig):
+    order = order.upper()
+    if order == "K":
+        return None
+    elif order in "CF":
+        return order
+    elif order == "A":
+        if a_is_fcontig and b_is_fcontig:
+            return "F"
+        else:
+            return "C"
+    else:
+        raise ValueError(
+            "ValueError: order must be one of "
+            f"'C', 'F', 'A', or 'K' (got '{order}')"
+        )
+
+
+def bmm_einsum(eq, a, b, out=None, **kwargs):
+    """Perform arbitrary pairwise einsums using only ``matmul``, or
+    ``multiply`` if no contracted indices are involved (plus maybe single term
+    ``einsum`` to prepare the terms individually). The logic for each is cached
+    based on the equation and array shape, and each step is only performed if
+    necessary.
+
+    Parameters
+    ----------
+    eq : str
+        The einsum equation.
+    a : array_like
+        The first array to contract.
+    b : array_like
+        The second array to contract.
+
+    Returns
+    -------
+    array_like
+
+    Notes
+    -----
+    A fuller description of this algorithm, and original source for this
+    implementation, can be found at https://github.com/jcmgray/einsum_bmm.
+    """
+    (
+        eq_a,
+        eq_b,
+        new_shape_a,
+        new_shape_b,
+        new_shape_ab,
+        perm_ab,
+        pure_multiplication,
+    ) = _parse_eq_to_batch_matmul(eq, a.shape, b.shape)
+
+    # n.b. one could special case various cases to call c_einsum directly here
+
+    # need to handle `order` a little manually, since we do transpose
+    # operations before and potentially after the ufunc calls
+    output_order = _parse_output_order(
+        kwargs.pop("order", "K"), a.flags.f_contiguous, b.flags.f_contiguous
+    )
+
+    # prepare left
+    if eq_a is not None:
+        # diagonals, sums, and tranpose
+        a = c_einsum(eq_a, a)
+    if new_shape_a is not None:
+        a = reshape(a, new_shape_a)
+
+    # prepare right
+    if eq_b is not None:
+        # diagonals, sums, and tranpose
+        b = c_einsum(eq_b, b)
+    if new_shape_b is not None:
+        b = reshape(b, new_shape_b)
+
+    if pure_multiplication:
+        # no contracted indices
+        if output_order is not None:
+            kwargs["order"] = output_order
+
+        # do the 'contraction' via multiplication!
+        return multiply(a, b, out=out, **kwargs)
+
+    # can only supply out here if no other reshaping / transposing
+    matmul_out_compatible = (new_shape_ab is None) and (perm_ab is None)
+    if matmul_out_compatible:
+        kwargs["out"] = out
+
+    # do the contraction!
+    ab = matmul(a, b, **kwargs)
+
+    # prepare the output
+    if new_shape_ab is not None:
+        ab = reshape(ab, new_shape_ab)
+    if perm_ab is not None:
+        ab = ab.transpose(perm_ab)
+
+    if (out is not None) and (not matmul_out_compatible):
+        # handle case where out is specified, but we also needed
+        # to reshape / transpose ``ab`` after the matmul
+        out[:] = ab
+        ab = out
+    elif output_order is not None:
+        ab = asanyarray(ab, order=output_order)
+
+    return ab
 
 
 def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
@@ -1434,58 +1621,23 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     operands, contraction_list = einsum_path(*operands, optimize=optimize,
                                              einsum_call=True)
 
-    # Handle order kwarg for output array, c_einsum allows mixed case
-    output_order = kwargs.pop('order', 'K')
-    if output_order.upper() == 'A':
-        if all(arr.flags.f_contiguous for arr in operands):
-            output_order = 'F'
-        else:
-            output_order = 'C'
-
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
-        inds, idx_rm, einsum_str, remaining, blas = contraction
+        inds, einsum_str, _ = contraction
         tmp_operands = [operands.pop(x) for x in inds]
 
         # Do we need to deal with the output?
         handle_out = specified_out and ((num + 1) == len(contraction_list))
 
-        # Call tensordot if still possible
-        if blas:
-            # Checks have already been handled
-            input_str, results_index = einsum_str.split('->')
-            input_left, input_right = input_str.split(',')
+        # If out was specified
+        if handle_out:
+            kwargs["out"] = out
 
-            tensor_result = input_left + input_right
-            for s in idx_rm:
-                tensor_result = tensor_result.replace(s, "")
-
-            # Find indices to contract over
-            left_pos, right_pos = [], []
-            for s in sorted(idx_rm):
-                left_pos.append(input_left.find(s))
-                right_pos.append(input_right.find(s))
-
-            # Contract!
-            new_view = tensordot(
-                *tmp_operands, axes=(tuple(left_pos), tuple(right_pos))
-            )
-
-            # Build a new view if needed
-            if (tensor_result != results_index) or handle_out:
-                if handle_out:
-                    kwargs["out"] = out
-                new_view = c_einsum(
-                    tensor_result + '->' + results_index, new_view, **kwargs
-                )
-
-        # Call einsum
+        if len(tmp_operands) == 2:
+            # Call (batched) matrix multiplication if possible
+            new_view = bmm_einsum(einsum_str, *tmp_operands, **kwargs)
         else:
-            # If out was specified
-            if handle_out:
-                kwargs["out"] = out
-
-            # Do the contraction
+            # Call einsum
             new_view = c_einsum(einsum_str, *tmp_operands, **kwargs)
 
         # Append new items and dereference what we can
@@ -1495,4 +1647,4 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     if specified_out:
         return out
     else:
-        return asanyarray(operands[0], order=output_order)
+        return operands[0]

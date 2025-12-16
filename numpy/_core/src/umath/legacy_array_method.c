@@ -439,11 +439,10 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             descrs[i] = bound_res->dtypes[i]->singleton;
         }
 
-        PyArrayMethod_Context context = {
-                (PyObject *)ufunc,
-                bound_res->method,
-                descrs,
-        };
+        PyArrayMethod_Context context;
+        NPY_context_init(&context, descrs);
+        context.caller = (PyObject *)ufunc;
+        context.method = bound_res->method;
 
         int ret = get_initial_from_ufunc(&context, 0, context.method->legacy_initial);
 

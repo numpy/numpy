@@ -752,6 +752,10 @@ array_toscalar(PyArrayObject *self, PyObject *args)
     return PyArray_MultiIndexGetItem(self, multi_index);
 }
 
+
+NPY_NO_EXPORT int
+PyArray_CastingConverterSameValue(PyObject *obj, NPY_CASTING *casting);
+
 static PyObject *
 array_astype(PyArrayObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -770,7 +774,7 @@ array_astype(PyArrayObject *self,
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DTypeOrDescrConverterRequired, &dt_info,
             "|order", &PyArray_OrderConverter, &order,
-            "|casting", &PyArray_CastingConverter, &casting,
+            "|casting", &PyArray_CastingConverterSameValue, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
             "|copy", &PyArray_AsTypeCopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
@@ -840,7 +844,12 @@ array_astype(PyArrayObject *self,
         ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
-    int success = PyArray_CopyInto(ret, self);
+    int success;
+    if (((int)casting & NPY_SAME_VALUE_CASTING_FLAG) > 0) {
+        success = PyArray_AssignArray(ret, self, NULL, casting);
+    } else {
+        success = PyArray_AssignArray(ret, self, NULL, NPY_UNSAFE_CASTING);
+    }
 
     Py_DECREF(dtype);
     ((PyArrayObject_fields *)ret)->nd = out_ndim;
@@ -934,6 +943,11 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    if (newtype == NULL) {
+        newtype = PyArray_DESCR(self);
+        Py_INCREF(newtype);  // newtype is owned.
+    }
+
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
         PyArrayObject *new;
@@ -951,6 +965,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 (PyObject *)self
         );
         if (new == NULL) {
+            Py_DECREF(newtype);
             return NULL;
         }
         self = new;
@@ -960,22 +975,21 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (copy == NPY_COPY_ALWAYS) {
-        if (newtype == NULL) {
-            newtype = PyArray_DESCR(self);
-        }
-        ret = PyArray_CastToType(self, newtype, 0);
+        ret = PyArray_CastToType(self, newtype, 0);  // steals newtype reference
         Py_DECREF(self);
         return ret;
     } else { // copy == NPY_COPY_IF_NEEDED || copy == NPY_COPY_NEVER
-        if (newtype == NULL || PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+        if (PyArray_EquivTypes(PyArray_DESCR(self), newtype)) {
+            Py_DECREF(newtype);
             return (PyObject *)self;
         }
         if (copy == NPY_COPY_IF_NEEDED) {
-            ret = PyArray_CastToType(self, newtype, 0);
+            ret = PyArray_CastToType(self, newtype, 0);  // steals newtype reference.
             Py_DECREF(self);
             return ret;
         } else { // copy == NPY_COPY_NEVER
             PyErr_SetString(PyExc_ValueError, npy_no_copy_err_msg);
+            Py_DECREF(newtype);
             Py_DECREF(self);
             return NULL;
         }
@@ -1161,8 +1175,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
     Py_ssize_t size = PyTuple_Size(args);
     int refcheck = 1;
     PyArray_Dims newshape;
-    PyObject *ret, *obj;
-
+    PyObject *obj;
 
     if (!NpyArg_ParseKeywords(kwds, "|i", kwlist,  &refcheck)) {
         return NULL;
@@ -1185,12 +1198,11 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    ret = PyArray_Resize(self, &newshape, refcheck, NPY_ANYORDER);
+    int ret = PyArray_Resize_int(self, &newshape, refcheck);
     npy_free_cache_dim_obj(newshape);
-    if (ret == NULL) {
+    if (ret < 0) {
         return NULL;
     }
-    Py_DECREF(ret);
     Py_RETURN_NONE;
 }
 
@@ -2885,7 +2897,8 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     /* for the sys module */
     {"__sizeof__",
         (PyCFunction) array_sizeof,
-        METH_NOARGS, NULL},
+        METH_NOARGS,
+        "__sizeof__($self, /)\n--\n\nSize in memory."},
 
     /* for the copy module */
     {"__copy__",
@@ -2914,11 +2927,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     {"__complex__",
         (PyCFunction) array_complex,
-        METH_VARARGS, NULL},
+        METH_VARARGS,
+        "__complex__($self, /)\n--\n\ncomplex(self)"},
 
     {"__format__",
         (PyCFunction) array_format,
-        METH_VARARGS, NULL},
+        METH_VARARGS,
+        "__format__($self, spec, /)\n--\n\nformat(self[, spec])"},
 
     {"__class_getitem__",
         (PyCFunction)array_class_getitem,

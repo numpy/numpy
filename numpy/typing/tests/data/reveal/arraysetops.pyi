@@ -23,7 +23,8 @@ assert_type(np.ediff1d(AR_O), npt.NDArray[np.object_])
 assert_type(np.ediff1d(AR_LIKE_f8, to_begin=[1, 1.5]), npt.NDArray[Any])
 
 assert_type(np.intersect1d(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.intersect1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.intersect1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])  # type: ignore[assert-type]
 assert_type(np.intersect1d(AR_f8, AR_i8), npt.NDArray[Any])
 assert_type(
     np.intersect1d(AR_f8, AR_f8, return_indices=True),
@@ -31,7 +32,8 @@ assert_type(
 )
 
 assert_type(np.setxor1d(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.setxor1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.setxor1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])  # type: ignore[assert-type]
 assert_type(np.setxor1d(AR_f8, AR_i8), npt.NDArray[Any])
 
 assert_type(np.isin(AR_i8, AR_i8), npt.NDArray[np.bool])
@@ -40,11 +42,13 @@ assert_type(np.isin(AR_f8, AR_i8), npt.NDArray[np.bool])
 assert_type(np.isin(AR_f8, AR_LIKE_f8, invert=True), npt.NDArray[np.bool])
 
 assert_type(np.union1d(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.union1d(AR_M, AR_M), npt.NDArray[np.datetime64])
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.union1d(AR_M, AR_M), npt.NDArray[np.datetime64])  # type: ignore[assert-type]
 assert_type(np.union1d(AR_f8, AR_i8), npt.NDArray[Any])
 
 assert_type(np.setdiff1d(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.setdiff1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])
+# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.setdiff1d(AR_M, AR_M, assume_unique=True), npt.NDArray[np.datetime64])  # type: ignore[assert-type]
 assert_type(np.setdiff1d(AR_f8, AR_i8), npt.NDArray[Any])
 
 assert_type(np.unique(AR_f8), npt.NDArray[np.float64])

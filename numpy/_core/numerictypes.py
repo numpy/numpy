@@ -220,7 +220,7 @@ def issctype(rep):
 
     Strings are also a scalar type:
 
-    >>> issctype(np.dtype('str'))
+    >>> issctype(np.dtype(np.str_))
     True
 
     """
@@ -598,7 +598,7 @@ def _scalar_type_key(typ):
 
 
 ScalarType = [int, float, complex, bool, bytes, str, memoryview]
-ScalarType += sorted(set(sctypeDict.values()), key=_scalar_type_key)
+ScalarType += sorted(dict.fromkeys(sctypeDict.values()), key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
 

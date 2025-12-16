@@ -1,15 +1,8 @@
 from collections.abc import Iterable
-from typing import Any, Final, TypeVar, overload
+from typing import Any, Final, overload
 
 import numpy as np
 from numpy import _CastingKind
-from numpy._utils import set_module as set_module
-
-###
-
-_T = TypeVar("_T")
-_TupleT = TypeVar("_TupleT", bound=tuple[()] | tuple[Any, Any, *tuple[Any, ...]])
-_ExceptionT = TypeVar("_ExceptionT", bound=Exception)
 
 ###
 
@@ -49,7 +42,7 @@ class _ArrayMemoryError(MemoryError):
     def _size_to_string(num_bytes: int) -> str: ...
 
 @overload
-def _unpack_tuple(tup: tuple[_T]) -> _T: ...
+def _unpack_tuple[T](tup: tuple[T]) -> T: ...
 @overload
-def _unpack_tuple(tup: _TupleT) -> _TupleT: ...
-def _display_as_base(cls: type[_ExceptionT]) -> type[_ExceptionT]: ...
+def _unpack_tuple[TupleT: tuple[()] | tuple[Any, Any, *tuple[Any, ...]]](tup: TupleT) -> TupleT: ...
+def _display_as_base[ExceptionT: Exception](cls: type[ExceptionT]) -> type[ExceptionT]: ...

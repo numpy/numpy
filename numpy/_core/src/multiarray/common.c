@@ -25,15 +25,6 @@
  * variable is misnamed, but it's part of the public API so I'm not sure we
  * can just change it. Maybe someone should try and see if anyone notices.
  */
-/*
- * In numpy 1.6 and earlier, this was NPY_UNSAFE_CASTING. In a future
- * release, it will become NPY_SAME_KIND_CASTING.  Right now, during the
- * transitional period, we continue to follow the NPY_UNSAFE_CASTING rules (to
- * avoid breaking people's code), but we also check for whether the cast would
- * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
- * warning (that people's code will be broken in a future release.)
- */
-
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_SAME_KIND_CASTING;
 
 
@@ -337,6 +328,30 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     return 0;
 }
 
+
+/**
+ * Unpack a field from a structured dtype. The field index must be valid.
+ *
+ * @param descr The dtype to unpack.
+ * @param index The index of the field to unpack.
+ * @param odescr will be set to the field's dtype
+ * @param offset will be set to the field's offset
+ *
+ * @return -1 on failure, 0 on success.
+ */
+ NPY_NO_EXPORT int
+ _unpack_field_index(
+    _PyArray_LegacyDescr *descr,
+    npy_intp index,
+    PyArray_Descr **odescr,
+    npy_intp *offset)
+ {
+    PyObject *key = PyTuple_GET_ITEM(descr->names, index);
+    PyObject *tup = PyDict_GetItem(descr->fields, key);  // noqa: borrowed-ref OK
+    return _unpack_field(tup, odescr, offset);
+ }
+
+
 /*
  * check whether arrays with datatype dtype might have object fields. This will
  * only happen for structured dtypes (which may have hidden objects even if the
@@ -456,24 +471,6 @@ check_is_convertible_to_scalar(PyArrayObject *v)
 {
     if (PyArray_NDIM(v) == 0) {
         return 0;
-    }
-
-    /* Remove this if-else block when the deprecation expires */
-    if (PyArray_SIZE(v) == 1) {
-        /* Numpy 1.25.0, 2023-01-02 */
-        if (DEPRECATE(
-                "Conversion of an array with ndim > 0 to a scalar "
-                "is deprecated, and will error in future. "
-                "Ensure you extract a single element from your array "
-                "before performing this operation. "
-                "(Deprecated NumPy 1.25.)") < 0) {
-            return -1;
-        }
-        return 0;
-    } else {
-        PyErr_SetString(PyExc_TypeError,
-            "only length-1 arrays can be converted to Python scalars");
-        return -1;
     }
 
     PyErr_SetString(PyExc_TypeError,

@@ -1,20 +1,20 @@
-from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, NoReturn, assert_type
 
 import numpy as np
-from numpy import dtype, generic
 from numpy._typing import NDArray, _AnyShape
 
-_ScalarT = TypeVar("_ScalarT", bound=generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
-MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
-_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
+type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]
+type _NoMaskType = np.bool[Literal[False]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
-class MaskedArraySubclass(MaskedArray[_ScalarT_co]): ...
+###
 
-class IntoMaskedArraySubClass(Generic[_ScalarT_co]):
-    def __array__(self) -> MaskedArraySubclass[_ScalarT_co]: ...
+class MaskedArraySubclass[ScalarT: np.generic](np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]): ...
 
-MaskedArraySubclassC: TypeAlias = MaskedArraySubclass[np.complex128]
+class IntoMaskedArraySubClass[ScalarT: np.generic]:
+    def __array__(self) -> MaskedArraySubclass[ScalarT]: ...
+
+type MaskedArraySubclassC = MaskedArraySubclass[np.complex128]
 
 AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
@@ -347,13 +347,13 @@ assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
 assert_type(MAR_2d_f4.ravel(), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
 assert_type(MAR_1d.ravel(order="A"), np.ma.MaskedArray[tuple[int], np.dtype[Any]])
 
-assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | np.bool)
+assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | _NoMaskType)
 # PyRight detects this one correctly, but mypy doesn't:
 # `Revealed type is "Union[numpy.ndarray[Any, Any], numpy.bool[Any]]"`
 assert_type(np.ma.getmask(MAR_1d), np.ndarray[tuple[int], np.dtype[np.bool]] | np.bool)  # type: ignore[assert-type]
-assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bool]] | np.bool)
-assert_type(np.ma.getmask([1, 2]), NDArray[np.bool] | np.bool)
-assert_type(np.ma.getmask(np.int64(1)), np.bool)
+assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bool]] | _NoMaskType)
+assert_type(np.ma.getmask([1, 2]), NDArray[np.bool] | _NoMaskType)
+assert_type(np.ma.getmask(np.int64(1)), _NoMaskType)
 
 assert_type(np.ma.is_mask(MAR_1d), bool)
 assert_type(np.ma.is_mask(AR_b), bool)
@@ -372,7 +372,7 @@ assert_type(MAR_c16.imag, MaskedArray[np.float64])
 assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
 assert_type(MAR_b.swapaxes(0, 1), MaskedArray[np.bool])
-assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
+assert_type(MAR_2d_f4.swapaxes(1, 0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 
 assert_type(MAR_2d_f4[AR_i8], MaskedArray[np.float32])
 assert_type(MAR_2d_f4[[1, 2, 3]], MaskedArray[np.float32])

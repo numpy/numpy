@@ -15,6 +15,7 @@
 #include "npy_config.h"
 #include "npy_ctypes.h"
 #include "npy_import.h"
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 
 #include "_datetime.h"
@@ -84,63 +85,54 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
 }
 
 /*
- * This function creates a dtype object when the object has a "dtype" attribute,
- * and it can be converted to a dtype object.
+ * This function creates a dtype object when the object has a "__numpy_dtype__"
+ * or "dtype" attribute which must be valid NumPy dtype instance.
  *
  * Returns `Py_NotImplemented` if this is not possible.
- * Currently the only failure mode for a NULL return is a RecursionError.
  */
 static PyArray_Descr *
 _try_convert_from_dtype_attr(PyObject *obj)
 {
+    int used_dtype_attr = 0;
     /* For arbitrary objects that have a "dtype" attribute */
-    PyObject *dtypedescr = PyObject_GetAttrString(obj, "dtype");
-    if (dtypedescr == NULL) {
-        /*
-         * This can be reached due to recursion limit being hit while fetching
-         * the attribute (tested for py3.7). This removes the custom message.
-         */
-        goto fail;
-    }
-
-    if (PyArray_DescrCheck(dtypedescr)) {
-        /* The dtype attribute is already a valid descriptor */
-        return (PyArray_Descr *)dtypedescr;
-    }
-
-    if (Py_EnterRecursiveCall(
-            " while trying to convert the given data type from its "
-            "`.dtype` attribute.") != 0) {
-        Py_DECREF(dtypedescr);
+    PyObject *attr;
+    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.numpy_dtype, &attr);
+    if (res < 0) {
         return NULL;
     }
-
-    PyArray_Descr *newdescr = _convert_from_any(dtypedescr, 0);
-    Py_DECREF(dtypedescr);
-    Py_LeaveRecursiveCall();
-    if (newdescr == NULL) {
-        goto fail;
+    else if (res == 0) {
+        /*
+         * When "__numpy_dtype__" does not exist, also check "dtype". This should
+         * be removed in the future.
+         * We do however support a weird `class myclass(np.void): dtype = ...`
+         * syntax.
+         */
+        used_dtype_attr = 1;
+        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.dtype, &attr);
+        if (res < 0) {
+            return NULL;
+        }
+        else if (res == 0) {
+            Py_INCREF(Py_NotImplemented);
+            return (PyArray_Descr *)Py_NotImplemented;
+        }
     }
-
-    Py_DECREF(newdescr);
-    PyErr_SetString(PyExc_ValueError, "dtype attribute is not a valid dtype instance");
-    return NULL;
-
-  fail:
-    /* Ignore all but recursion errors, to give ctypes a full try. */
-    if (!PyErr_ExceptionMatches(PyExc_RecursionError)) {
-        PyErr_Clear();
-        Py_INCREF(Py_NotImplemented);
-        return (PyArray_Descr *)Py_NotImplemented;
+    if (!PyArray_DescrCheck(attr)) {
+        if (PyType_Check(obj) && PyObject_HasAttrString(attr, "__get__")) {
+            /* If the object has a __get__, assume this is a class property. */
+            Py_DECREF(attr);
+            Py_INCREF(Py_NotImplemented);
+            return (PyArray_Descr *)Py_NotImplemented;
+        }
+        PyErr_Format(PyExc_ValueError,
+            "Could not convert %R to a NumPy dtype (via `.%S` value %R).", obj,
+            used_dtype_attr ? npy_interned_str.dtype : npy_interned_str.numpy_dtype,
+            attr);
+        Py_DECREF(attr);
+        return NULL;
     }
-    return NULL;
-}
-
-/* Expose to another file with a prefixed name */
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_try_convert_from_dtype_attr(PyObject *obj)
-{
-    return _try_convert_from_dtype_attr(obj);
+    /* The dtype attribute is already a valid descriptor */
+    return (PyArray_Descr *)attr;
 }
 
 /*
@@ -2874,13 +2866,13 @@ _descr_find_object(PyArray_Descr *self)
 static PyObject *
 arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 {
-    int elsize = -1, alignment = -1;
+    Py_ssize_t elsize = -1, alignment = -1;
     int version = 4;
     char endian;
     PyObject *endian_obj;
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
-    int int_dtypeflags = 0;
+    npy_int64 signed_dtypeflags = 0;
     npy_uint64 dtypeflags;
 
     if (!PyDataType_ISLEGACY(self)) {
@@ -2899,24 +2891,24 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOiiiO):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags, &metadata)) {
+                    &alignment, &signed_dtypeflags, &metadata)) {
             PyErr_Clear();
             return NULL;
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOiii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnnk):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &int_dtypeflags)) {
+                    &alignment, &signed_dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOOnn):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
@@ -2924,7 +2916,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(iOOOnn):__setstate__",
                     &version,
                     &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
@@ -2933,7 +2925,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         break;
     case 5:
         version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOii):__setstate__",
+        if (!PyArg_ParseTuple(args, "(OOOnn):__setstate__",
                     &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;
@@ -3181,12 +3173,12 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
      * flags as an int even though it actually was a char in the PyArray_Descr
      * structure
      */
-    if (int_dtypeflags < 0 && int_dtypeflags >= -128) {
+    if (signed_dtypeflags < 0 && signed_dtypeflags >= -128) {
         /* NumPy used to use a char. So normalize if signed. */
-        int_dtypeflags += 128;
+        signed_dtypeflags += 128;
     }
-    dtypeflags = int_dtypeflags;
-    if (dtypeflags != int_dtypeflags) {
+    dtypeflags = (npy_uint64)signed_dtypeflags;
+    if (dtypeflags != signed_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
                      "incorrect value for flags variable (overflow)");
         return NULL;

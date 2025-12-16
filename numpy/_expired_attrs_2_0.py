@@ -61,7 +61,6 @@ __expired_attributes__ = {
         "or use `typing.deprecated`.",
     "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
         "directly, or use `typing.deprecated`.",
-    "disp": "Use your own printing function instead.",
     "find_common_type":
         "Use `numpy.promote_types` or `numpy.result_type` instead. "
         "To achieve semantics for the `scalar_types` argument, use "

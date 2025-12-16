@@ -47,6 +47,7 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_3kcompat.h"
+#include "npy_import.h"
 #include "common.h"
 #include "npy_pycompat.h"
 
@@ -190,6 +191,75 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
         return -1;
     }
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+
+/*UFUNC_API
+ * Add multiple loops to ufuncs from ArrayMethod specs. This also
+ * handles the registration of sort and argsort methods for dtypes
+ * from ArrayMethod specs.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
+{
+    if (npy_cache_import_runtime(
+            "numpy", "sort", &npy_runtime_imports.sort) < 0) {
+        return -1;
+    }
+    if (npy_cache_import_runtime(
+            "numpy", "argsort", &npy_runtime_imports.argsort) < 0) {
+        return -1;
+    }
+
+    PyUFunc_LoopSlot *slot;
+    for (slot = slots; slot->name != NULL; slot++) {
+        PyObject *ufunc = npy_import_entry_point(slot->name);
+        if (ufunc == NULL) {
+            return -1;
+        }
+
+        if (ufunc == npy_runtime_imports.sort) {
+            Py_DECREF(ufunc);
+
+            PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
+            PyBoundArrayMethodObject *sort_meth = PyArrayMethod_FromSpec_int(slot->spec, 0);
+            if (sort_meth == NULL) {
+                return -1;
+            }
+
+            NPY_DT_SLOTS(dtype)->sort_meth = sort_meth->method;
+            Py_INCREF(sort_meth->method);
+            Py_DECREF(sort_meth);
+        }
+        else if (ufunc == npy_runtime_imports.argsort) {
+            Py_DECREF(ufunc);
+
+            PyArray_DTypeMeta *dtype = slot->spec->dtypes[0];
+            PyBoundArrayMethodObject *argsort_meth = PyArrayMethod_FromSpec_int(slot->spec, 0);
+            if (argsort_meth == NULL) {
+                return -1;
+            }
+
+            NPY_DT_SLOTS(dtype)->argsort_meth = argsort_meth->method;
+            Py_INCREF(argsort_meth->method);
+            Py_DECREF(argsort_meth);
+        }
+        else {
+            if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+                PyErr_Format(PyExc_TypeError, "%s was not a ufunc!", slot->name);
+                Py_DECREF(ufunc);
+                return -1;
+            }
+
+            int ret = PyUFunc_AddLoopFromSpec_int(ufunc, slot->spec, 0);
+            Py_DECREF(ufunc);
+            if (ret < 0) {
+                return -1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 
@@ -912,13 +982,9 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         npy_bool legacy_promotion_is_possible)
 {
     std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock_shared();
-    NPY_END_ALLOW_THREADS
-    PyObject *info = PyArrayIdentityHash_GetItem(
+    PyObject *info = PyArrayIdentityHash_GetItemWithLock(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
-    mutex->unlock_shared();
 
     if (info != NULL && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
@@ -1027,6 +1093,13 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
+    /*
+     * We hold the GIL here, so on the GIL-enabled build the GIL prevents
+     * races to fill the promotion cache.
+     *
+     * On the free-threaded build we need to set up our own locking to prevent
+     * races to fill the promotion cache.
+     */
 #ifdef Py_GIL_DISABLED
     PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
