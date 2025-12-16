@@ -1537,6 +1537,9 @@ def make_ufuncs(funcdict):
             args['identity_expr'] = 'NULL'
 
         mlist.append(fmt.format(**args))
+
+        if name in ('sin', 'cos'):
+            mlist.append("((PyUFuncObject *)f)->flags |= NPY_UFUNC_REQUIRE_CONTIGUOUS;")
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)

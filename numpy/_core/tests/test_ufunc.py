@@ -3309,3 +3309,17 @@ class TestLowlevelAPIAccess:
         t[28][414] = 1
         tc = np.cos(t)
         assert_equal(tc[0][0], tc[28][414])
+
+def test_ufunc_contiguous_flag_behavior():
+    #GH#30413
+    a = np.arange(100.0)[::2] 
+    assert not a.flags.c_contiguous
+    
+    res_sin = np.sin(a)
+    res_cos = np.cos(a)
+    
+    expected_sin = np.sin(np.ascontiguousarray(a))
+    expected_cos = np.cos(np.ascontiguousarray(a))
+    
+    assert_array_almost_equal(res_sin, expected_sin)
+    assert_array_almost_equal(res_cos, expected_cos)

@@ -1,5 +1,6 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_UFUNCOBJECT_H_
+#define NPY_UFUNC_REQUIRE_CONTIGUOUS 0x1000
 
 #include <numpy/npy_math.h>
 #include <numpy/npy_common.h>
@@ -137,6 +138,9 @@ typedef struct _tagPyUFuncObject {
         void *ptr;
         PyObject *obj;
         PyObject *userloops;
+
+        /* NumPy ufunc flags (e.g., NPY_UFUNC_REQUIRE_CONTIGUOUS) */
+        npy_uint32 flags;
 
         /* generalized ufunc parameters */
 

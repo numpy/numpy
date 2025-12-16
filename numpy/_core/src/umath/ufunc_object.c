@@ -1075,6 +1075,13 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
                  NPY_ITER_DELAY_BUFALLOC |
                  NPY_ITER_COPY_IF_OVERLAP;
 
+    if (ufunc->flags & NPY_UFUNC_REQUIRE_CONTIGUOUS) {
+        int i;
+        for (i =0; i < nop; i++) {
+            op_flags[i] |= NPY_ITER_CONTIG;
+        }
+    }
+
     /*
      * Allocate the iterator.  Because the types of the inputs
      * were already checked, we use the casting rule 'unsafe' which
