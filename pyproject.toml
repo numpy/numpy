@@ -1,7 +1,9 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.15.0",
+    # TODO: use an official meson-python version once
+    # https://github.com/mesonbuild/meson-python/pull/824 has been released.
+    "meson-python @ git+https://github.com/mhsmith/meson-python@android",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
@@ -151,6 +153,15 @@ before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
 
+[tool.cibuildwheel.android]
+config-settings = "setup-args=-Duse-ilp64=false setup-args=-Dallow-noblas=false build-dir=build"
+
+[tool.cibuildwheel.android.environment]
+# Python 3.13 defaults to API level 21, which lacks some required math functions.
+ANDROID_API_LEVEL = "24"
+PKG_CONFIG_PATH = "$(pwd)/.openblas/lib/pkgconfig"
+LD_LIBRARY_PATH = "$(pwd)/.openblas/lib"
+
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
@@ -191,10 +202,24 @@ repair-wheel-command = ""
 
 [[tool.cibuildwheel.overrides]]
 select = "*pyodide*"
-before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
 repair-wheel-command = ""
+
+# Mobile and WASM platforms can't run the cibw_test_command shell script, so they must
+# run Python directly.
+[[tool.cibuildwheel.overrides]]
+select = ["*-android*", "*-ios*", "*-pyodide*"]
+before-test = ""
 test-command = "python -m pytest --pyargs numpy -m 'not slow'"
+
+# Any packages which appear both here and in test_requirements.txt should be kept in
+# sync.
+test-requires = [
+    "hypothesis==6.104.1",
+    "pytest==7.4.0",
+    "pytz==2023.3.post1",
+    "pytest-xdist",
+]
 
 [tool.meson-python]
 meson = 'vendored-meson/meson/meson.py'

@@ -438,7 +438,14 @@ endforeach
 # as well as https://github.com/mesonbuild/meson/issues/11068
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
-  longdouble_format = meson.get_compiler('c').run(
+  # We can't run the auto-detection program when cross-compiling, so we need to specify
+  # what format each system uses.
+  if host_machine.system() == 'android'
+    # Android defines `long double` as 128-bit quad precision even on x86_64, where it's
+    # usually 80 bits padded to 128 (https://gitlab.com/x86-psABIs/x86-64-ABI).
+    longdouble_format = 'IEEE_QUAD_LE'
+  else
+    longdouble_format = meson.get_compiler('c').run(
 '''
 #include <stdio.h>
 #include <string.h>
@@ -518,6 +525,7 @@ int main(void) {
   }
 }
   ''').stdout()
+  endif
 endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
