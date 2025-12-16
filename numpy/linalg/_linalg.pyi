@@ -7,7 +7,6 @@ from typing import (
     Never,
     Protocol,
     SupportsIndex,
-    SupportsInt,
     overload,
     type_check_only,
 )
@@ -575,6 +574,7 @@ def lstsq(
 ) -> _LstSqResult[_AnyShape, np.complex128 | Any, np.float64 | Any]: ...
 
 # NOTE: This assumes that `axis` is only passed if `x` is >1d, and that `keepdims` is never passed positionally.
+# keep in sync with `vector_norm`
 @overload  # +inexact64 (unsafe casting), axis=None, keepdims=False
 def norm(
     x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
@@ -780,25 +780,93 @@ def matrix_norm(
 @overload  # fallback
 def matrix_norm(x: ArrayLike, /, *, ord: _OrderKind | None = None, keepdims: bool = False) -> Any: ...
 
-# TODO: narrow return types
-@overload
+# keep in sync with `norm`
+@overload  # +inexact64 (unsafe casting), axis=None, keepdims=False
 def vector_norm(
-    x: ArrayLike,
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
     /,
     *,
+    keepdims: L[False] = False,
     axis: None = None,
     ord: float | None = 2,
-    keepdims: L[False] = False,
-) -> floating: ...
-@overload
+) -> np.float64: ...
+@overload  # +inexact64 (unsafe casting), axis=<given>, keepdims=False
 def vector_norm(
-    x: ArrayLike,
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
     /,
     *,
-    axis: SupportsInt | SupportsIndex | tuple[int, ...],
+    axis: _Ax2,
+    keepdims: L[False] = False,
     ord: float | None = 2,
-    keepdims: bool = False,
-) -> Any: ...
+) -> NDArray[np.float64]: ...
+@overload  # +inexact64 (unsafe casting), shape known, keepdims=True
+def vector_norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[_to_inexact64_unsafe]],
+    /,
+    *,
+    axis: _Ax2 | None = None,
+    keepdims: L[True],
+    ord: float | None = 2,
+) -> np.ndarray[ShapeT, np.dtype[np.float64]]: ...
+@overload  # +inexact64 (unsafe casting), shape unknown, keepdims=True
+def vector_norm(
+    x: _ArrayLike[_to_inexact64_unsafe] | _NestedSequence[complex],
+    /,
+    *,
+    axis: _Ax2 | None = None,
+    keepdims: L[True],
+    ord: float | None = 2,
+) -> NDArray[np.float64]: ...
+@overload  # ~float16, axis=None, keepdims=False
+def vector_norm(
+    x: _ArrayLike[np.float16], /, *, axis: None = None, keepdims: L[False] = False, ord: float | None = 2
+) -> np.float16: ...
+@overload  # ~float16, axis=<given>  keepdims=False
+def vector_norm(
+    x: _ArrayLike[np.float16], /, *, axis: _Ax2, keepdims: L[False] = False, ord: float | None = 2
+) -> NDArray[np.float16]: ...
+@overload  # ~float16, shape known, keepdims=True
+def vector_norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[np.float16]], /, *, axis: _Ax2 | None = None, keepdims: L[True], ord: float | None = 2
+) -> np.ndarray[ShapeT, np.dtype[np.float16]]: ...
+@overload  # ~float16, shape unknown, keepdims=True
+def vector_norm(
+    x: _ArrayLike[np.float16], /, *, axis: _Ax2 | None = None, keepdims: L[True], ord: float | None = 2
+) -> NDArray[np.float16]: ...
+@overload  # ~inexact32, axis=None, keepdims=False
+def vector_norm(
+    x: _ArrayLike[_inexact32], /, *, axis: None = None, keepdims: L[False] = False, ord: float | None = 2
+) -> np.float32: ...
+@overload  # ~inexact32, axis=<given>  keepdims=False
+def vector_norm(
+    x: _ArrayLike[_inexact32], /, *, axis: _Ax2, keepdims: L[False] = False, ord: float | None = 2
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact32, shape known, keepdims=True
+def vector_norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[_inexact32]], /, *, axis: _Ax2 | None = None, keepdims: L[True], ord: float | None = 2
+) -> np.ndarray[ShapeT, np.dtype[np.float32]]: ...
+@overload  # ~inexact32, shape unknown, keepdims=True
+def vector_norm(
+    x: _ArrayLike[_inexact32], /, *, axis: _Ax2 | None = None, keepdims: L[True], ord: float | None = 2
+) -> NDArray[np.float32]: ...
+@overload  # ~inexact80, axis=None, keepdims=False
+def vector_norm(
+    x: _ArrayLike[_inexact80], /, *, axis: None = None, keepdims: L[False] = False, ord: float | None = 2
+) -> np.longdouble: ...
+@overload  # ~inexact80, axis=<given>, keepdims=False
+def vector_norm(
+    x: _ArrayLike[_inexact80], /, *, axis: _Ax2, keepdims: L[False] = False, ord: float | None = 2
+) -> NDArray[np.longdouble]: ...
+@overload  # ~inexact80, shape known, keepdims=True
+def vector_norm[ShapeT: _Shape](
+    x: _SupportsArray[ShapeT, np.dtype[_inexact80]], /, *, axis: _Ax2 | None = None, keepdims: L[True], ord: float | None = 2
+) -> np.ndarray[ShapeT, np.dtype[np.longdouble]]: ...
+@overload  # ~inexact80, shape unknown, keepdims=True
+def vector_norm(
+    x: _ArrayLike[_inexact80], /, *, axis: _Ax2 | None = None, keepdims: L[True], ord: float | None = 2
+) -> NDArray[np.longdouble]: ...
+@overload  # fallback
+def vector_norm(x: ArrayLike, /, *, axis: _Ax2 | None = None, keepdims: bool = False, ord: float | None = 2) -> Any: ...
 
 # keep in sync with numpy._core.numeric.tensordot (ignoring `/, *`)
 @overload
