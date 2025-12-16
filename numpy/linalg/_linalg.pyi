@@ -14,16 +14,7 @@ from typing import (
 from typing_extensions import TypeVar
 
 import numpy as np
-from numpy import (
-    complexfloating,
-    float64,
-    floating,
-    object_,
-    signedinteger,
-    timedelta64,
-    unsignedinteger,
-    vecdot,
-)
+from numpy import complexfloating, floating, signedinteger, unsignedinteger, vecdot
 from numpy._core.fromnumeric import matrix_transpose
 from numpy._globals import _NoValue, _NoValueType
 from numpy._typing import (
@@ -91,12 +82,16 @@ type _JustAnyShape = tuple[Never, ...]  # workaround for microsoft/pyright#10232
 type _tuple2[T] = tuple[T, T]
 
 type _inexact32 = np.float32 | np.complex64
-type _to_float64 = np.float64 | np.integer | np.bool
+type _to_integer = np.integer | np.bool
+type _to_timedelta64 = np.timedelta64 | _to_integer
+type _to_float64 = np.float64 | _to_integer
 type _to_inexact64 = np.complex128 | _to_float64
 type _to_complex = np.number | np.bool
 
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array3ND[ScalarT: np.generic] = np.ndarray[_AtLeast3D, np.dtype[ScalarT]]
+
+type _ToArray1D[ScalarT: np.generic] = _SupportsArray[tuple[int], np.dtype[ScalarT]]
 
 # anything that safe-casts (from floating) into float64/complex128
 type _ToArrayF64 = _ArrayLike[_to_float64] | _NestedSequence[float]
@@ -279,32 +274,6 @@ def matrix_power(a: _AsArrayC128, n: SupportsIndex) -> NDArray[np.complex128]: .
 def matrix_power[ScalarT: _inexact32](a: _ArrayLike[ScalarT], n: SupportsIndex) -> NDArray[ScalarT]: ...
 @overload  # fallback
 def matrix_power(a: _ArrayLikeComplex_co | _ArrayLikeObject_co, n: SupportsIndex) -> np.ndarray: ...
-
-# TODO: narrow return types
-@overload
-def outer(x1: _ArrayLike[Never], x2: _ArrayLike[Never], /) -> NDArray[Any]: ...
-@overload
-def outer(x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co, /) -> NDArray[np.bool]: ...
-@overload
-def outer[ScalarT: np.number](x1: _ArrayLike[ScalarT], x2: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-@overload
-def outer(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, /) -> NDArray[unsignedinteger]: ...
-@overload
-def outer(x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, /) -> NDArray[signedinteger]: ...
-@overload
-def outer(x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, /) -> NDArray[floating]: ...
-@overload
-def outer(x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, /) -> NDArray[complexfloating]: ...
-@overload
-def outer(x1: _ArrayLikeTD64_co, x2: _ArrayLikeTD64_co, /) -> NDArray[timedelta64]: ...
-@overload
-def outer(x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co, /) -> NDArray[object_]: ...
-@overload
-def outer(
-    x1: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    x2: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    /,
-) -> NDArray[Any]: ...
 
 # NOTE: for real input the output dtype (floating/complexfloating) depends on the specific values
 @overload  # abstract `inexact` and `floating` (excluding concrete types)
@@ -670,7 +639,7 @@ def tensordot(
     /,
     *,
     axes: int | tuple[_ShapeLike, _ShapeLike] = 2,
-) -> NDArray[np.bool_]: ...
+) -> NDArray[np.bool]: ...
 @overload
 def tensordot(
     a: _ArrayLikeInt_co,
@@ -802,6 +771,56 @@ def trace(
 ) -> NDArray[np.complex128]: ...
 @overload  # fallback
 def trace(x: _ArrayLikeComplex_co, /, *, offset: SupportsIndex = 0, dtype: DTypeLike | None = None) -> Any: ...
+
+#
+@overload  # workaround for microsoft/pyright#10232
+def outer(x1: _ToArray1D[Never], x2: _ToArray1D[Never], /) -> np.ndarray[tuple[int, int]]: ...
+@overload  # +bool, +bool
+def outer(
+    x1: _ToArray1D[np.bool] | Sequence[bool], x2: _ToArray1D[np.bool] | Sequence[bool], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.bool]]: ...
+@overload  # ~int64, +int64
+def outer(
+    x1: _ToArray1D[np.int64] | list[int], x2: _ToArray1D[_to_integer] | Sequence[int], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.int64]]: ...
+@overload  # +int64, ~int64
+def outer(
+    x1: _ToArray1D[_to_integer] | Sequence[int], x2: _ToArray1D[np.int64] | list[int], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.int64]]: ...
+@overload  # ~timedelta64, +timedelta64
+def outer(
+    x1: _ToArray1D[np.timedelta64] | Sequence[np.timedelta64], x2: _ToArray1D[_to_timedelta64] | Sequence[_to_timedelta64], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.timedelta64]]: ...
+@overload  # +timedelta64, ~timedelta64
+def outer(
+    x1: _ToArray1D[_to_timedelta64] | Sequence[_to_timedelta64], x2: _ToArray1D[np.timedelta64] | Sequence[np.timedelta64], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.timedelta64]]: ...
+@overload  # ~float64, +float64
+def outer(
+    x1: _ToArray1D[np.float64] | list[float], x2: _ToArray1D[_to_float64] | Sequence[float], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]: ...
+@overload  # +float64, ~float64
+def outer(
+    x1: _ToArray1D[_to_float64] | Sequence[float], x2: _ToArray1D[np.float64] | list[float], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.float64]]: ...
+@overload  # ~complex128, +complex128
+def outer(
+    x1: _ToArray1D[np.complex128] | list[complex], x2: _ToArray1D[_to_complex] | Sequence[complex], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.complex128]]: ...
+@overload  # +complex128, ~complex128
+def outer(
+    x1: _ToArray1D[_to_complex] | Sequence[complex], x2: _ToArray1D[np.complex128] | list[complex], /
+) -> np.ndarray[tuple[int, int], np.dtype[np.complex128]]: ...
+@overload  # ~ScalarT, ~ScalarT
+def outer[ScalarT: np.number | np.object_](
+    x1: _ToArray1D[ScalarT] | Sequence[ScalarT], x2: _ToArray1D[ScalarT] | Sequence[ScalarT], /
+) -> np.ndarray[tuple[int, int], np.dtype[ScalarT]]: ...
+@overload  # fallback
+def outer(
+    x1: _ToArray1D[_to_complex] | Sequence[complex | _to_complex],
+    x2: _ToArray1D[_to_complex] | Sequence[complex | _to_complex],
+    /,
+) -> np.ndarray[tuple[int, int]]: ...
 
 # TODO: narrow return types
 @overload

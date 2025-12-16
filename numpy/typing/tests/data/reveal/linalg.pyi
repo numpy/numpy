@@ -13,12 +13,15 @@ from numpy.linalg._linalg import (
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
+bool_list_1d: list[bool]
 bool_list_2d: list[list[bool]]
+int_list_1d: list[int]
 int_list_2d: list[list[int]]
 float_list_1d: list[float]
 float_list_2d: list[list[float]]
 float_list_3d: list[list[list[float]]]
 float_list_4d: list[list[list[list[float]]]]
+complex_list_1d: list[complex]
 complex_list_2d: list[list[complex]]
 complex_list_3d: list[list[list[complex]]]
 bytes_list_2d: list[list[bytes]]
@@ -85,14 +88,6 @@ assert_type(np.linalg.matrix_power(AR_O, 2), npt.NDArray[np.object_])
 assert_type(np.linalg.cholesky(AR_i8), npt.NDArray[np.float64])
 assert_type(np.linalg.cholesky(AR_f8), npt.NDArray[np.float64])
 assert_type(np.linalg.cholesky(AR_c16), npt.NDArray[np.complex128])
-
-assert_type(np.linalg.outer(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.linalg.outer(AR_f8, AR_f8), npt.NDArray[np.float64])
-assert_type(np.linalg.outer(AR_c16, AR_c16), npt.NDArray[np.complex128])
-assert_type(np.linalg.outer(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.linalg.outer(AR_O, AR_O), npt.NDArray[np.object_])
-# NOTE: Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
-assert_type(np.linalg.outer(AR_i8, AR_m), npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
 
 assert_type(np.linalg.qr(AR_i8), QRResult[np.float64])
 assert_type(np.linalg.qr(AR_i8, "r"), npt.NDArray[np.float64])
@@ -320,6 +315,17 @@ assert_type(np.linalg.trace(int_list_2d), np.int_)
 assert_type(np.linalg.trace(float_list_2d), np.float64)
 assert_type(np.linalg.trace(complex_list_2d), np.complex128)
 assert_type(np.linalg.trace(float_list_3d), npt.NDArray[np.float64])
+
+assert_type(np.linalg.outer(bool_list_1d, bool_list_1d), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.linalg.outer(int_list_1d, int_list_1d), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.linalg.outer(float_list_1d, float_list_1d), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.linalg.outer(complex_list_1d, complex_list_1d), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+assert_type(np.linalg.outer(AR_i8, AR_i8), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(np.linalg.outer(AR_f8, AR_f8), np.ndarray[tuple[int, int], np.dtype[np.float64]])
+assert_type(np.linalg.outer(AR_c16, AR_c16), np.ndarray[tuple[int, int], np.dtype[np.complex128]])
+assert_type(np.linalg.outer(AR_b, AR_b), np.ndarray[tuple[int, int], np.dtype[np.bool]])
+assert_type(np.linalg.outer(AR_O, AR_O), np.ndarray[tuple[int, int], np.dtype[np.object_]])
+assert_type(np.linalg.outer(AR_i8, AR_m), np.ndarray[tuple[int, int], np.dtype[np.timedelta64]])
 
 assert_type(np.linalg.cross(AR_i8, AR_i8), npt.NDArray[np.signedinteger])
 assert_type(np.linalg.cross(AR_f8, AR_f8), npt.NDArray[np.floating])
