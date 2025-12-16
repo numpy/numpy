@@ -37,7 +37,9 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     #    when wheel build is run outside github?
     # On 32-bit platforms, use scipy_openblas32
     # On win-arm64 use scipy_openblas32
-    if [[ $RUNNER_ARCH == "X86" || $RUNNER_ARCH == "ARM" ]] ; then
+    if echo "${CIBW_HOST_TRIPLET:-}" | grep -q android; then
+        OPENBLAS=android
+    elif [[ $RUNNER_ARCH == "X86" || $RUNNER_ARCH == "ARM" ]] ; then
         OPENBLAS=openblas32
     elif [[ $RUNNER_ARCH == "ARM64" && $RUNNER_OS == "Windows" ]] ; then
         OPENBLAS=openblas32
@@ -46,12 +48,34 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     PKG_CONFIG_PATH=$PROJECT_DIR/.openblas
     rm -rf $PKG_CONFIG_PATH
     mkdir -p $PKG_CONFIG_PATH
-    python -m pip install -r requirements/ci_requirements.txt
-    python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
-    # Copy the shared objects to a path under $PKG_CONFIG_PATH, the build
-    # will point $LD_LIBRARY_PATH there and then auditwheel/delocate-wheel will
-    # pull these into the wheel. Use python to avoid windows/posix problems
-    python <<EOF
+
+    if [[ $OPENBLAS == "android" ]]; then
+        openblas_version=0.2.20
+        pip install \
+            --target $PKG_CONFIG_PATH \
+            --extra-index-url https://chaquo.com/pypi-13.1/ \
+            chaquopy-openblas==$openblas_version
+        mv $PKG_CONFIG_PATH/chaquopy/* $PKG_CONFIG_PATH
+        rmdir $PKG_CONFIG_PATH/chaquopy
+
+        # There is a pkgconfig file, but it's not usable because it doesn't use the
+        # `prefix` variable, so overwrite it.
+        cat <<EOF > $PKG_CONFIG_PATH/lib/pkgconfig/openblas.pc
+prefix=/usr
+Name: openblas
+Description: OpenBLAS
+Version: ${openblas_version}
+Cflags: -I\${prefix}/include
+Libs: -L\${prefix}/lib -lopenblas
+EOF
+
+    else
+        python -m pip install -r requirements/ci_requirements.txt
+        python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
+        # Copy the shared objects to a path under $PKG_CONFIG_PATH, the build
+        # will point $LD_LIBRARY_PATH there and then auditwheel/delocate-wheel will
+        # pull these into the wheel. Use python to avoid windows/posix problems
+        python <<EOF
 import os, scipy_${OPENBLAS}, shutil
 srcdir = os.path.join(os.path.dirname(scipy_${OPENBLAS}.__file__), "lib")
 shutil.copytree(srcdir, os.path.join("$PKG_CONFIG_PATH", "lib"))
@@ -59,7 +83,8 @@ srcdir = os.path.join(os.path.dirname(scipy_${OPENBLAS}.__file__), ".dylibs")
 if os.path.exists(srcdir):  # macosx delocate
     shutil.copytree(srcdir, os.path.join("$PKG_CONFIG_PATH", ".dylibs"))
 EOF
-    # pkg-config scipy-openblas --print-provides
+        # pkg-config scipy-openblas --print-provides
+    fi
 fi
 if [[ $RUNNER_OS == "Windows" ]]; then
     # delvewheel is the equivalent of delocate/auditwheel for windows.
