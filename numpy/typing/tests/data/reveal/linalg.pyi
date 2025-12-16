@@ -57,6 +57,7 @@ AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 AR_f10_2d: np.ndarray[tuple[int, int], np.dtype[np.longdouble]]
+AR_f10_3d: np.ndarray[tuple[int, int, int], np.dtype[np.longdouble]]
 
 ###
 
@@ -299,10 +300,27 @@ assert_type(np.linalg.norm(AR_f10, axis=1), npt.NDArray[np.longdouble])
 assert_type(np.linalg.norm(AR_f10, keepdims=True), npt.NDArray[np.longdouble])
 assert_type(np.linalg.norm(AR_f10_2d, keepdims=True), _Array2D[np.longdouble])
 
-assert_type(np.linalg.matrix_norm(AR_i8), np.floating)
-assert_type(np.linalg.matrix_norm(AR_f8), np.floating)
-assert_type(np.linalg.matrix_norm(AR_c16), np.floating)
-assert_type(np.linalg.matrix_norm(AR_U), np.floating)
+assert_type(np.linalg.matrix_norm(AR_i8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_c16), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_U), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_S), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_f8_2d), np.float64)
+assert_type(np.linalg.matrix_norm(AR_f8_3d), npt.NDArray[np.float64])
+assert_type(np.linalg.matrix_norm(AR_f8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.linalg.matrix_norm(AR_f4), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matrix_norm(AR_c8), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matrix_norm(AR_f4_2d), np.float32)
+assert_type(np.linalg.matrix_norm(AR_f4_3d), npt.NDArray[np.float32])
+assert_type(np.linalg.matrix_norm(AR_f4_2d, keepdims=True), _Array2D[np.float32])
+assert_type(np.linalg.matrix_norm(AR_f10), npt.NDArray[np.longdouble] | Any)
+assert_type(np.linalg.matrix_norm(AR_c20), npt.NDArray[np.longdouble] | Any)
+assert_type(np.linalg.matrix_norm(AR_f10_2d), np.longdouble)
+assert_type(np.linalg.matrix_norm(AR_f10_3d), npt.NDArray[np.longdouble])
+assert_type(np.linalg.matrix_norm(AR_f10_2d, keepdims=True), _Array2D[np.longdouble])
+assert_type(np.linalg.matrix_norm(complex_list_2d), np.float64)
+assert_type(np.linalg.matrix_norm(complex_list_3d), npt.NDArray[np.float64])
+assert_type(np.linalg.matrix_norm(complex_list_2d, keepdims=True), npt.NDArray[np.float64])
 
 assert_type(np.linalg.vector_norm(AR_i8), np.floating)
 assert_type(np.linalg.vector_norm(AR_f8), np.floating)
