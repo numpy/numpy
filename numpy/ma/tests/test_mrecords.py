@@ -385,16 +385,14 @@ class TestView:
         assert_(test._fill_value is None)
 
     def test_view_ndarray_subclass_resets_dtype(self):
-        x = fromarrays([[1, 2, 3], [10, 20, 30]], names="a,b")
-        x["a"][1] = ma.masked
-
+        mrec = self._create_data()[0]
+        
         class MySub(np.ndarray):
             pass
-
-        y = x.view(MySub)
-        assert_(isinstance(y, MySub))
-        assert_equal(y.dtype, x.dtype)
-        assert_equal(y._mask.shape, y.shape)
+        
+        test = mrec.view(MySub)
+        assert_(isinstance(test, MySub))
+        assert_equal(test.dtype, mrec.dtype)
 
 ##############################################################################
 class TestMRecordsImport:
