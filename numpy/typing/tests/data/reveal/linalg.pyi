@@ -31,13 +31,18 @@ AR_any: np.ndarray
 AR_f_: npt.NDArray[np.floating]
 AR_c_: npt.NDArray[np.complexfloating]
 AR_i8: npt.NDArray[np.int64]
+AR_f2: npt.NDArray[np.float16]
 AR_f4: npt.NDArray[np.float32]
 AR_f8: npt.NDArray[np.float64]
+AR_f10: npt.NDArray[np.longdouble]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
+AR_c20: npt.NDArray[np.clongdouble]
 AR_O: npt.NDArray[np.object_]
+AR_M: npt.NDArray[np.datetime64]
 AR_m: npt.NDArray[np.timedelta64]
-AR_S: npt.NDArray[np.str_]
+AR_S: npt.NDArray[np.bytes_]
+AR_U: npt.NDArray[np.str_]
 AR_b: npt.NDArray[np.bool]
 
 SC_f8: np.float64
@@ -47,9 +52,12 @@ AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
 AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
 
+AR_f2_2d: np.ndarray[tuple[int, int], np.dtype[np.float16]]
 AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
+AR_f10_2d: np.ndarray[tuple[int, int], np.dtype[np.longdouble]]
+AR_f10_3d: np.ndarray[tuple[int, int, int], np.dtype[np.longdouble]]
 
 ###
 
@@ -262,21 +270,83 @@ assert_type(
     tuple[_Array2D[np.float32], _Array1D[np.float32], np.int32, _Array1D[np.float32]],
 )
 
-assert_type(np.linalg.norm(AR_i8), np.floating)
-assert_type(np.linalg.norm(AR_f8), np.floating)
-assert_type(np.linalg.norm(AR_c16), np.floating)
-assert_type(np.linalg.norm(AR_S), np.floating)
-assert_type(np.linalg.norm(AR_f8, axis=0), Any)
+assert_type(np.linalg.norm(AR_i8), np.float64)
+assert_type(np.linalg.norm(AR_f8), np.float64)
+assert_type(np.linalg.norm(AR_c16), np.float64)
+# Mypy incorrectly infers `Any` for datetime64 and timedelta64, but pyright behaves correctly.
+assert_type(np.linalg.norm(AR_M), np.float64)  # type: ignore[assert-type]
+assert_type(np.linalg.norm(AR_m), np.float64)  # type: ignore[assert-type]
+assert_type(np.linalg.norm(AR_U), np.float64)
+assert_type(np.linalg.norm(AR_S), np.float64)
+assert_type(np.linalg.norm(AR_f8, 0, 1), npt.NDArray[np.float64])
+assert_type(np.linalg.norm(AR_f8, axis=0), npt.NDArray[np.float64])
+assert_type(np.linalg.norm(AR_f8, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.linalg.norm(AR_f8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.linalg.norm(AR_f2), np.float16)
+assert_type(np.linalg.norm(AR_f2, 0, 1), npt.NDArray[np.float16])
+assert_type(np.linalg.norm(AR_f2, axis=1), npt.NDArray[np.float16])
+assert_type(np.linalg.norm(AR_f2, keepdims=True), npt.NDArray[np.float16])
+assert_type(np.linalg.norm(AR_f2_2d, keepdims=True), _Array2D[np.float16])
+assert_type(np.linalg.norm(AR_f4), np.float32)
+assert_type(np.linalg.norm(AR_c8), np.float32)
+assert_type(np.linalg.norm(AR_f4, 0, 1), npt.NDArray[np.float32])
+assert_type(np.linalg.norm(AR_f4, axis=1), npt.NDArray[np.float32])
+assert_type(np.linalg.norm(AR_f4, keepdims=True), npt.NDArray[np.float32])
+assert_type(np.linalg.norm(AR_f4_2d, keepdims=True), _Array2D[np.float32])
+assert_type(np.linalg.norm(AR_f10), np.longdouble)
+assert_type(np.linalg.norm(AR_c20), np.longdouble)
+assert_type(np.linalg.norm(AR_f10, 0, 1), npt.NDArray[np.longdouble])
+assert_type(np.linalg.norm(AR_f10, axis=1), npt.NDArray[np.longdouble])
+assert_type(np.linalg.norm(AR_f10, keepdims=True), npt.NDArray[np.longdouble])
+assert_type(np.linalg.norm(AR_f10_2d, keepdims=True), _Array2D[np.longdouble])
 
-assert_type(np.linalg.matrix_norm(AR_i8), np.floating)
-assert_type(np.linalg.matrix_norm(AR_f8), np.floating)
-assert_type(np.linalg.matrix_norm(AR_c16), np.floating)
-assert_type(np.linalg.matrix_norm(AR_S), np.floating)
+assert_type(np.linalg.matrix_norm(AR_i8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_c16), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_U), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_S), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matrix_norm(AR_f8_2d), np.float64)
+assert_type(np.linalg.matrix_norm(AR_f8_3d), npt.NDArray[np.float64])
+assert_type(np.linalg.matrix_norm(AR_f8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.linalg.matrix_norm(AR_f4), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matrix_norm(AR_c8), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matrix_norm(AR_f4_2d), np.float32)
+assert_type(np.linalg.matrix_norm(AR_f4_3d), npt.NDArray[np.float32])
+assert_type(np.linalg.matrix_norm(AR_f4_2d, keepdims=True), _Array2D[np.float32])
+assert_type(np.linalg.matrix_norm(AR_f10), npt.NDArray[np.longdouble] | Any)
+assert_type(np.linalg.matrix_norm(AR_c20), npt.NDArray[np.longdouble] | Any)
+assert_type(np.linalg.matrix_norm(AR_f10_2d), np.longdouble)
+assert_type(np.linalg.matrix_norm(AR_f10_3d), npt.NDArray[np.longdouble])
+assert_type(np.linalg.matrix_norm(AR_f10_2d, keepdims=True), _Array2D[np.longdouble])
+assert_type(np.linalg.matrix_norm(complex_list_2d), np.float64)
+assert_type(np.linalg.matrix_norm(complex_list_3d), npt.NDArray[np.float64])
+assert_type(np.linalg.matrix_norm(complex_list_2d, keepdims=True), npt.NDArray[np.float64])
 
-assert_type(np.linalg.vector_norm(AR_i8), np.floating)
-assert_type(np.linalg.vector_norm(AR_f8), np.floating)
-assert_type(np.linalg.vector_norm(AR_c16), np.floating)
-assert_type(np.linalg.vector_norm(AR_S), np.floating)
+assert_type(np.linalg.vector_norm(AR_i8), np.float64)
+assert_type(np.linalg.vector_norm(AR_f8), np.float64)
+assert_type(np.linalg.vector_norm(AR_c16), np.float64)
+# Mypy incorrectly infers `Any` for datetime64 and timedelta64, but pyright behaves correctly.
+assert_type(np.linalg.vector_norm(AR_M), np.float64)  # type: ignore[assert-type]
+assert_type(np.linalg.vector_norm(AR_m), np.float64)  # type: ignore[assert-type]
+assert_type(np.linalg.vector_norm(AR_U), np.float64)
+assert_type(np.linalg.vector_norm(AR_S), np.float64)
+assert_type(np.linalg.vector_norm(AR_f8, axis=0), npt.NDArray[np.float64])
+assert_type(np.linalg.vector_norm(AR_f8, keepdims=True), npt.NDArray[np.float64])
+assert_type(np.linalg.vector_norm(AR_f8_2d, keepdims=True), _Array2D[np.float64])
+assert_type(np.linalg.vector_norm(AR_f2), np.float16)
+assert_type(np.linalg.vector_norm(AR_f2, axis=1), npt.NDArray[np.float16])
+assert_type(np.linalg.vector_norm(AR_f2, keepdims=True), npt.NDArray[np.float16])
+assert_type(np.linalg.vector_norm(AR_f2_2d, keepdims=True), _Array2D[np.float16])
+assert_type(np.linalg.vector_norm(AR_f4), np.float32)
+assert_type(np.linalg.vector_norm(AR_c8), np.float32)
+assert_type(np.linalg.vector_norm(AR_f4, axis=1), npt.NDArray[np.float32])
+assert_type(np.linalg.vector_norm(AR_f4, keepdims=True), npt.NDArray[np.float32])
+assert_type(np.linalg.vector_norm(AR_f4_2d, keepdims=True), _Array2D[np.float32])
+assert_type(np.linalg.vector_norm(AR_f10), np.longdouble)
+assert_type(np.linalg.vector_norm(AR_c20), np.longdouble)
+assert_type(np.linalg.vector_norm(AR_f10, axis=1), npt.NDArray[np.longdouble])
+assert_type(np.linalg.vector_norm(AR_f10, keepdims=True), npt.NDArray[np.longdouble])
+assert_type(np.linalg.vector_norm(AR_f10_2d, keepdims=True), _Array2D[np.longdouble])
 
 assert_type(np.linalg.tensordot(AR_b, AR_b), npt.NDArray[np.bool])
 assert_type(np.linalg.tensordot(AR_i8, AR_i8), npt.NDArray[np.int64])
