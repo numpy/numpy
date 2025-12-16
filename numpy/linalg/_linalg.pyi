@@ -18,7 +18,6 @@ from numpy import (
     complexfloating,
     float64,
     floating,
-    int32,
     object_,
     signedinteger,
     timedelta64,
@@ -115,6 +114,13 @@ type _OrderKind = L[1, -1, 2, -2, "fro", "nuc"] | float  # only accepts `-inf` a
 type _SideKind = L["L", "U", "l", "u"]
 type _NonNegInt = L[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 type _NegInt = L[-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16]
+
+type _LstSqResult[ShapeT: tuple[int, ...], InexactT: np.inexact, FloatingT: np.floating] = tuple[
+    np.ndarray[ShapeT, np.dtype[InexactT]],  # least-squares solution
+    np.ndarray[tuple[int], np.dtype[FloatingT]],  # residuals
+    np.int32,  # rank
+    np.ndarray[tuple[int], np.dtype[FloatingT]],  # singular values
+]
 
 _FloatingT_co = TypeVar("_FloatingT_co", bound=np.floating, default=Any, covariant=True)
 _FloatingOrArrayT_co = TypeVar("_FloatingOrArrayT_co", bound=np.floating | NDArray[np.floating], default=Any, covariant=True)
@@ -527,34 +533,61 @@ def det(a: _Array3ND[np.complex128] | _NestedSequence[Sequence[list[complex]]]) 
 @overload  # fallback
 def det(a: _ArrayLikeComplex_co) -> Any: ...
 
-# TODO: narrow return types
-@overload
+#
+@overload  # +float64, ~float64, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[_to_float64]] | Sequence[Sequence[float]],
+    b: _SupportsArray[ShapeT, np.dtype[np.floating | np.integer]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.float64, np.float64]: ...
+@overload  # ~float64, +float64, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[np.floating | np.integer]] | Sequence[Sequence[float]],
+    b: _SupportsArray[ShapeT, np.dtype[_to_float64]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.float64, np.float64]: ...
+@overload  # +complex128, ~complex128, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[np.number]] | Sequence[Sequence[complex]],
+    b: _SupportsArray[ShapeT, np.dtype[np.complex128]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.complex128, np.float64]: ...
+@overload  # ~complex128, +complex128, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[np.complex128]] | Sequence[list[complex]],
+    b: _SupportsArray[ShapeT, np.dtype[np.number]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.complex128, np.float64]: ...
+@overload  # ~float32, ~float32, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[np.float32]],
+    b: _SupportsArray[ShapeT, np.dtype[np.float32]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.float32, np.float32]: ...
+@overload  # +complex64, ~complex64, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[np.complex64 | np.float32]],
+    b: _SupportsArray[ShapeT, np.dtype[np.complex64]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.complex64, np.float32]: ...
+@overload  # ~complex64, +complex64, known shape
+def lstsq[ShapeT: tuple[int] | tuple[int, int]](
+    a: _SupportsArray[tuple[int, int], np.dtype[np.complex64]],
+    b: _SupportsArray[ShapeT, np.dtype[np.complex64 | np.float32]],
+    rcond: float | None = None,
+) -> _LstSqResult[ShapeT, np.complex64, np.float32]: ...
+@overload  # +float64, +float64, unknown shape
 def lstsq(
-    a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, rcond: float | None = None
-) -> tuple[
-    NDArray[float64],
-    NDArray[float64],
-    int32,
-    NDArray[float64],
-]: ...
-@overload
+    a: _ArrayLikeFloat_co,
+    b: _ArrayLikeFloat_co,
+    rcond: float | None = None,
+) -> _LstSqResult[_AnyShape, np.float64 | Any, np.float64 | Any]: ...
+@overload  # +complex128, +complex128, unknown shape
 def lstsq(
-    a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, rcond: float | None = None
-) -> tuple[
-    NDArray[floating],
-    NDArray[floating],
-    int32,
-    NDArray[floating],
-]: ...
-@overload
-def lstsq(
-    a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, rcond: float | None = None
-) -> tuple[
-    NDArray[complexfloating],
-    NDArray[floating],
-    int32,
-    NDArray[floating],
-]: ...
+    a: _ArrayLikeComplex_co,
+    b: _ArrayLikeComplex_co,
+    rcond: float | None = None,
+) -> _LstSqResult[_AnyShape, np.complex128 | Any, np.float64 | Any]: ...
 
 # TODO: narrow return types
 @overload

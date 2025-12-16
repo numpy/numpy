@@ -10,6 +10,9 @@ from numpy.linalg._linalg import (
     SVDResult,
 )
 
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
 bool_list_2d: list[list[bool]]
 int_list_2d: list[list[int]]
 float_list_1d: list[float]
@@ -41,6 +44,7 @@ AR_f8_2d: np.ndarray[tuple[int, int], np.dtype[np.float64]]
 AR_f8_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float64]]
 AR_f8_4d: np.ndarray[tuple[int, int, int, int], np.dtype[np.float64]]
 
+AR_f4_1d: np.ndarray[tuple[int], np.dtype[np.float32]]
 AR_f4_2d: np.ndarray[tuple[int, int], np.dtype[np.float32]]
 AR_f4_3d: np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
 
@@ -204,9 +208,58 @@ assert_type(np.linalg.det(AR_f8_3d), npt.NDArray[np.float64])
 assert_type(np.linalg.det(complex_list_2d), np.complex128)
 assert_type(np.linalg.det(complex_list_3d), npt.NDArray[np.complex128])
 
-assert_type(np.linalg.lstsq(AR_i8, AR_i8), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], np.int32, npt.NDArray[np.float64]])
-assert_type(np.linalg.lstsq(AR_i8, AR_f8), tuple[npt.NDArray[np.floating], npt.NDArray[np.floating], np.int32, npt.NDArray[np.floating]])
-assert_type(np.linalg.lstsq(AR_f8, AR_c16), tuple[npt.NDArray[np.complexfloating], npt.NDArray[np.floating], np.int32, npt.NDArray[np.floating]])
+assert_type(
+    np.linalg.lstsq(AR_i8, AR_i8),
+    tuple[npt.NDArray[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f4, AR_f4),
+    tuple[npt.NDArray[np.float32], _Array1D[np.float32], np.int32, _Array1D[np.float32]],
+)
+assert_type(
+    np.linalg.lstsq(AR_i8, AR_f8),
+    tuple[npt.NDArray[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f4, AR_f8),
+    tuple[npt.NDArray[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f8, AR_i8),
+    tuple[npt.NDArray[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f8, AR_f4),
+    tuple[npt.NDArray[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_c8, AR_c8),
+    tuple[npt.NDArray[np.complex64], _Array1D[np.float32], np.int32, _Array1D[np.float32]],
+)
+assert_type(
+    np.linalg.lstsq(AR_c8, AR_c16),
+    tuple[npt.NDArray[np.complex128], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_c16, AR_c8),
+    tuple[npt.NDArray[np.complex128], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f8, AR_f8_1d),
+    tuple[_Array1D[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f4, AR_f4_1d),
+    tuple[_Array1D[np.float32], _Array1D[np.float32], np.int32, _Array1D[np.float32]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f8, AR_f8_2d),
+    tuple[_Array2D[np.float64], _Array1D[np.float64], np.int32, _Array1D[np.float64]],
+)
+assert_type(
+    np.linalg.lstsq(AR_f4, AR_f4_2d),
+    tuple[_Array2D[np.float32], _Array1D[np.float32], np.int32, _Array1D[np.float32]],
+)
 
 assert_type(np.linalg.norm(AR_i8), np.floating)
 assert_type(np.linalg.norm(AR_f8), np.floating)
