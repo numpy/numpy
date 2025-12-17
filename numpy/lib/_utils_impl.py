@@ -1,8 +1,6 @@
-import functools
 import os
 import platform
 import sys
-import textwrap
 import types
 import warnings
 
@@ -123,73 +121,6 @@ def get_include():
     return d
 
 
-class _Deprecate:
-    """
-    Decorator class to deprecate old functions.
-
-    Refer to `deprecate` for details.
-
-    See Also
-    --------
-    deprecate
-
-    """
-
-    def __init__(self, old_name=None, new_name=None, message=None):
-        self.old_name = old_name
-        self.new_name = new_name
-        self.message = message
-
-    def __call__(self, func, *args, **kwargs):
-        """
-        Decorator call.  Refer to ``decorate``.
-
-        """
-        old_name = self.old_name
-        new_name = self.new_name
-        message = self.message
-
-        if old_name is None:
-            old_name = func.__name__
-        if new_name is None:
-            depdoc = f"`{old_name}` is deprecated!"
-        else:
-            depdoc = f"`{old_name}` is deprecated, use `{new_name}` instead!"
-
-        if message is not None:
-            depdoc += "\n" + message
-
-        @functools.wraps(func)
-        def newfunc(*args, **kwds):
-            warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
-            return func(*args, **kwds)
-
-        newfunc.__name__ = old_name
-        doc = func.__doc__
-        if doc is None:
-            doc = depdoc
-        else:
-            lines = doc.expandtabs().split('\n')
-            indent = _get_indent(lines[1:])
-            if lines[0].lstrip():
-                # Indent the original first line to let inspect.cleandoc()
-                # dedent the docstring despite the deprecation notice.
-                doc = indent * ' ' + doc
-            else:
-                # Remove the same leading blank lines as cleandoc() would.
-                skip = len(lines[0]) + 1
-                for line in lines[1:]:
-                    if len(line) > indent:
-                        break
-                    skip += len(line) + 1
-                doc = doc[skip:]
-            depdoc = textwrap.indent(depdoc, ' ' * indent)
-            doc = f'{depdoc}\n\n{doc}'
-        newfunc.__doc__ = doc
-
-        return newfunc
-
-
 def _get_indent(lines):
     """
     Determines the leading whitespace that could be removed from all the lines.
@@ -202,112 +133,6 @@ def _get_indent(lines):
     if indent == sys.maxsize:
         indent = 0
     return indent
-
-
-def deprecate(*args, **kwargs):
-    """
-    Issues a DeprecationWarning, adds warning to `old_name`'s
-    docstring, rebinds ``old_name.__name__`` and returns the new
-    function object.
-
-    This function may also be used as a decorator.
-
-    .. deprecated:: 2.0
-        Use `~warnings.warn` with :exc:`DeprecationWarning` instead.
-
-    Parameters
-    ----------
-    func : function
-        The function to be deprecated.
-    old_name : str, optional
-        The name of the function to be deprecated. Default is None, in
-        which case the name of `func` is used.
-    new_name : str, optional
-        The new name for the function. Default is None, in which case the
-        deprecation message is that `old_name` is deprecated. If given, the
-        deprecation message is that `old_name` is deprecated and `new_name`
-        should be used instead.
-    message : str, optional
-        Additional explanation of the deprecation.  Displayed in the
-        docstring after the warning.
-
-    Returns
-    -------
-    old_func : function
-        The deprecated function.
-
-    Examples
-    --------
-    Note that ``olduint`` returns a value after printing Deprecation
-    Warning:
-
-    >>> olduint = np.lib.utils.deprecate(np.uint)
-    DeprecationWarning: `uint64` is deprecated! # may vary
-    >>> olduint(6)
-    6
-
-    """
-    # Deprecate may be run as a function or as a decorator
-    # If run as a function, we initialise the decorator class
-    # and execute its __call__ method.
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`deprecate` is deprecated, "
-        "use `warn` with `DeprecationWarning` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    if args:
-        fn = args[0]
-        args = args[1:]
-
-        return _Deprecate(*args, **kwargs)(fn)
-    else:
-        return _Deprecate(*args, **kwargs)
-
-
-def deprecate_with_doc(msg):
-    """
-    Deprecates a function and includes the deprecation in its docstring.
-
-    .. deprecated:: 2.0
-        Use `~warnings.warn` with :exc:`DeprecationWarning` instead.
-
-    This function is used as a decorator. It returns an object that can be
-    used to issue a DeprecationWarning, by passing the to-be decorated
-    function as argument, this adds warning to the to-be decorated function's
-    docstring and returns the new function object.
-
-    See Also
-    --------
-    deprecate : Decorate a function such that it issues a
-                :exc:`DeprecationWarning`
-
-    Parameters
-    ----------
-    msg : str
-        Additional explanation of the deprecation. Displayed in the
-        docstring after the warning.
-
-    Returns
-    -------
-    obj : object
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`deprecate` is deprecated, "
-        "use `warn` with `DeprecationWarning` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    return _Deprecate(message=msg)
 
 
 #-----------------------------------------------------------------------------
