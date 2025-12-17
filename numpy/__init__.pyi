@@ -3662,6 +3662,12 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
     @abstractmethod
     def __new__(cls, /, *args: Any, **kwargs: Any) -> Self: ...
 
+    # NOTE: Technically this doesn't exist at runtime, but it is unlikely to lead to
+    # type-unsafe situations (the abstract scalar types cannot be instantiated
+    # themselves) and is convenient to have, so we include it regardless. See
+    # https://github.com/numpy/numpy/issues/30445 for use-cases and discussion.
+    def __hash__(self, /) -> int: ...
+
     def __buffer__(self, flags: int, /) -> memoryview: ...
 
     @overload
@@ -5808,6 +5814,10 @@ class bytes_(character[bytes], bytes):  # type: ignore[misc]
     def __new__(cls, value: str, /, encoding: str, errors: str = "strict") -> Self: ...
 
     #
+    @override
+    def __hash__(self, /) -> int: ...
+
+    #
     def __bytes__(self, /) -> bytes: ...
 
 class str_(character[str], str):  # type: ignore[misc]
@@ -5815,6 +5825,10 @@ class str_(character[str], str):  # type: ignore[misc]
     def __new__(cls, value: object = "", /) -> Self: ...
     @overload
     def __new__(cls, value: bytes, /, encoding: str, errors: str = "strict") -> Self: ...
+
+    #
+    @override
+    def __hash__(self, /) -> int: ...
 
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
