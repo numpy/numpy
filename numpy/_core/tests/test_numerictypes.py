@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 import numpy._core.numerictypes as nt
-from numpy._core.numerictypes import issctype, maximum_sctype, sctype2char, sctypes
+from numpy._core.numerictypes import issctype, sctype2char, sctypes
 from numpy.testing import (
     IS_PYPY,
     assert_,
@@ -494,38 +494,6 @@ class TestSctypeDict:
         assert np._core.sctypeDict['ulong'] is np.ulong
         assert np.dtype(np.ulong) is np.dtype("ulong")
         assert np.dtype(np.ulong).itemsize == np.dtype(np.long).itemsize
-
-
-@pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
-class TestMaximumSctype:
-
-    # note that parametrizing with sctype['int'] and similar would skip types
-    # with the same size (gh-11923)
-
-    @pytest.mark.parametrize(
-        't', [np.byte, np.short, np.intc, np.long, np.longlong]
-    )
-    def test_int(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['int'][-1])
-
-    @pytest.mark.parametrize(
-        't', [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
-    )
-    def test_uint(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['uint'][-1])
-
-    @pytest.mark.parametrize('t', [np.half, np.single, np.double, np.longdouble])
-    def test_float(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['float'][-1])
-
-    @pytest.mark.parametrize('t', [np.csingle, np.cdouble, np.clongdouble])
-    def test_complex(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
-
-    @pytest.mark.parametrize('t', [np.bool, np.object_, np.str_, np.bytes_,
-                                   np.void])
-    def test_other(self, t):
-        assert_equal(maximum_sctype(t), t)
 
 
 class Test_sctype2char:
