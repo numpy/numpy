@@ -277,7 +277,6 @@ class TestLibImports(_DeprecationTestCase):
         from numpy import row_stack
         from numpy._core.numerictypes import maximum_sctype
         from numpy.lib._npyio_impl import recfromcsv, recfromtxt
-        from numpy.lib._shape_base_impl import get_array_wrap
         from numpy.lib._utils_impl import safe_eval
         from numpy.lib.tests.test_io import TextIO
 
@@ -288,7 +287,6 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: recfromcsv(data_gen()))
         self.assert_deprecated(lambda: recfromtxt(data_gen(), **kwargs))
 
-        self.assert_deprecated(get_array_wrap)
         self.assert_deprecated(lambda: maximum_sctype(int))
 
         self.assert_deprecated(lambda: row_stack([[]]))
