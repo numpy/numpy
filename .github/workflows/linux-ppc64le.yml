@@ -9,6 +9,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
   workflow_dispatch:
 
 permissions:
@@ -25,7 +26,7 @@ jobs:
     # For more details, see: https://github.com/numpy/numpy/issues/29125
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-24.04-ppc64le-p10
-  
+
     strategy:
       fail-fast: false
       matrix:
@@ -34,14 +35,14 @@ jobs:
             args: "-Dallow-noblas=false"
           - name: "clang"
             args: "-Dallow-noblas=false"
-    
+
     name: "${{ matrix.config.name }}"
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
-    
+
     - name: Install dependencies
       run: |
         sudo apt update

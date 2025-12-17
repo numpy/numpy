@@ -9,6 +9,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
 
 permissions:
    contents: read  # to fetch code (actions/checkout)
