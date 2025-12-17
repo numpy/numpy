@@ -396,7 +396,6 @@ from numpy import (  # type: ignore[deprecated]  # noqa: F401
     roots,
     rot90,
     round,
-    row_stack,
     s_,
     save,
     savetxt,

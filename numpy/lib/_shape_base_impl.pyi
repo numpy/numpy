@@ -1,10 +1,8 @@
 from collections.abc import Callable, Sequence
 from typing import Any, Concatenate, Protocol, SupportsIndex, overload, type_check_only
-from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (
-    _CastingKind,
     complexfloating,
     floating,
     integer,
@@ -15,7 +13,6 @@ from numpy import (
 )
 from numpy._typing import (
     ArrayLike,
-    DTypeLike,
     NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
@@ -29,7 +26,6 @@ from numpy._typing import (
 
 __all__ = [
     "column_stack",
-    "row_stack",
     "dstack",
     "array_split",
     "split",
@@ -104,15 +100,6 @@ def expand_dims[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike) -
 @overload
 def expand_dims(a: ArrayLike, axis: _ShapeLike) -> NDArray[Any]: ...
 
-# Deprecated in NumPy 2.0, 2023-08-18
-@deprecated("`row_stack` alias is deprecated. Use `np.vstack` directly.")
-def row_stack(
-    tup: Sequence[ArrayLike],
-    *,
-    dtype: DTypeLike | None = None,
-    casting: _CastingKind = "same_kind",
-) -> NDArray[Any]: ...
-
 # keep in sync with `numpy.ma.extras.column_stack`
 @overload
 def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
@@ -184,11 +171,6 @@ def dsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
 ) -> list[NDArray[Any]]: ...
-
-@overload
-def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...
-@overload
-def get_array_wrap(*args: object) -> _ArrayWrap | None: ...
 
 @overload
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...

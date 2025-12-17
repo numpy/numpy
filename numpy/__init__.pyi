@@ -509,9 +509,8 @@ from numpy.lib._polynomial_impl import (
     polyfit,
 )
 
-from numpy.lib._shape_base_impl import (  # type: ignore[deprecated]
+from numpy.lib._shape_base_impl import (
     column_stack,
-    row_stack,
     dstack,
     array_split,
     split,
@@ -670,7 +669,7 @@ __all__ = [  # noqa: RUF022
     # lib._shape_base_impl.__all__
     "column_stack", "dstack", "array_split", "split", "hsplit", "vsplit", "dsplit",
     "apply_over_axes", "expand_dims", "apply_along_axis", "kron", "tile",
-    "take_along_axis", "put_along_axis", "row_stack",
+    "take_along_axis", "put_along_axis",
     # lib._type_check_impl.__all__
     "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
     "real_if_close", "typename", "mintypecode", "common_type",
