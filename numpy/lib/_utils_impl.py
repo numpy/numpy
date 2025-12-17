@@ -2,7 +2,6 @@ import os
 import platform
 import sys
 import types
-import warnings
 
 import numpy as np
 from numpy._core import ndarray
@@ -403,73 +402,6 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
 
     elif hasattr(object, '__doc__'):
         print(inspect.getdoc(object), file=output)
-
-
-def safe_eval(source):
-    """
-    Protected string evaluation.
-
-    .. deprecated:: 2.0
-        Use `ast.literal_eval` instead.
-
-    Evaluate a string containing a Python literal expression without
-    allowing the execution of arbitrary non-literal code.
-
-    .. warning::
-
-        This function is identical to :py:meth:`ast.literal_eval` and
-        has the same security implications.  It may not always be safe
-        to evaluate large input strings.
-
-    Parameters
-    ----------
-    source : str
-        The string to evaluate.
-
-    Returns
-    -------
-    obj : object
-       The result of evaluating `source`.
-
-    Raises
-    ------
-    SyntaxError
-        If the code has invalid Python syntax, or if it contains
-        non-literal code.
-
-    Examples
-    --------
-    >>> np.safe_eval('1')
-    1
-    >>> np.safe_eval('[1, 2, 3]')
-    [1, 2, 3]
-    >>> np.safe_eval('{"foo": ("bar", 10.0)}')
-    {'foo': ('bar', 10.0)}
-
-    >>> np.safe_eval('import os')
-    Traceback (most recent call last):
-      ...
-    SyntaxError: invalid syntax
-
-    >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
-    Traceback (most recent call last):
-      ...
-    ValueError: malformed node or string: <_ast.Call object at 0x...>
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`safe_eval` is deprecated. Use `ast.literal_eval` instead. "
-        "Be aware of security implications, such as memory exhaustion "
-        "based attacks (deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    # Local import to speed up numpy's import time.
-    import ast
-    return ast.literal_eval(source)
 
 
 def _median_nancheck(data, result, axis):
