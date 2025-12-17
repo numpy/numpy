@@ -260,12 +260,6 @@ class TestRemovedGlobals:
             getattr(np, name)
 
 
-class TestDeprecatedFinfo(_DeprecationTestCase):
-    # Deprecated in NumPy 1.25, 2023-01-16
-    def test_deprecated_none(self):
-        self.assert_deprecated(np.finfo, args=(None,))
-
-
 class TestMathAlias(_DeprecationTestCase):
     def test_deprecated_np_lib_math(self):
         self.assert_deprecated(lambda: np.lib.math)
