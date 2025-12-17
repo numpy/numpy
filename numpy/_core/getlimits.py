@@ -5,7 +5,6 @@ __all__ = ['finfo', 'iinfo']
 
 import math
 import types
-import warnings
 from functools import cached_property
 
 from numpy._utils import set_module
@@ -184,13 +183,7 @@ class finfo:
             pass
 
         if dtype is None:
-            # Deprecated in NumPy 1.25, 2023-01-16
-            warnings.warn(
-                "finfo() dtype cannot be None. This behavior will "
-                "raise an error in the future. (Deprecated in NumPy 1.25)",
-                DeprecationWarning,
-                stacklevel=2
-            )
+            raise TypeError("dtype must not be None")
 
         try:
             dtype = numeric.dtype(dtype)
