@@ -4343,8 +4343,10 @@ class TestComplexFunctions:
     ])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""
-        if dtype is np.clongdouble and platform.machine() != 'x86_64':
-            # Failures on musllinux, aarch64, s390x, ppc64le (see gh-17554)
+        if dtype is np.clongdouble and (
+            platform.machine() != 'x86_64' or sys.platform == 'android'
+        ):
+            # Failures on musllinux, android, aarch64, s390x, ppc64le (see gh-17554)
             pytest.skip('Only works reliably for x86-64 and recent glibc')
 
         # Check against known-good functions
