@@ -20,7 +20,7 @@ Python, it is also designed to be general-purpose and satisfy a wide-
 variety of computational needs. As a result, if absolute speed is
 essential, there is no replacement for a well-crafted, compiled loop
 specific to your application and hardware. This is one of the reasons
-that numpy includes f2py so that an easy-to-use mechanisms for linking
+that numpy includes f2py so that an easy-to-use mechanism for linking
 (simple) C/C++ and (arbitrary) Fortran code directly into Python are
 available. You are encouraged to use and improve this mechanism. The
 purpose of this section is not to document this tool but to document
@@ -36,7 +36,7 @@ into Python as if it were a standard python file. It will contain
 objects and methods that have been defined and compiled in C code. The
 basic steps for doing this in Python are well-documented and you can
 find more information in the documentation for Python itself available
-online at `www.python.org <https://www.python.org>`_ .
+online at `www.python.org <https://www.python.org>`_.
 
 In addition to the Python C-API, there is a full and rich C-API for NumPy
 allowing sophisticated manipulations on a C-level. However, for most
