@@ -65,6 +65,7 @@ jobs:
             --known-dependency-selector numpy \
             --old-prepend-path numpy_base --new-prepend-path numpy_to_test \
             --num-shards 1 --shard-index ${{ matrix.shard-index }} \
+            --additional-flags="--python-version=3.12" \
             --debug \
             --output concise \
             | tee diff_${{ matrix.shard-index }}.txt
