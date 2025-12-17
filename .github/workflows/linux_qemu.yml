@@ -18,6 +18,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
   workflow_dispatch:
 
 defaults:

@@ -18,6 +18,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
 
 defaults:
   run:

@@ -8,6 +8,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
