@@ -9,6 +9,7 @@ function-based counterpart in `../from_numeric.py`.
 from __future__ import annotations
 
 import operator
+from collections.abc import Hashable
 from typing import Any, cast
 
 import numpy as np
@@ -192,3 +193,7 @@ A_float = np.array([[1, 5], [2, 4], [np.nan, np.nan]])
 A_void: npt.NDArray[np.void] = np.empty(3, [("yop", float), ("yap", float)])
 A_void["yop"] = A_float[:, 0]
 A_void["yap"] = A_float[:, 1]
+
+# regression test for https://github.com/numpy/numpy/issues/30445
+def f(x: np.generic) -> Hashable:
+    return x
