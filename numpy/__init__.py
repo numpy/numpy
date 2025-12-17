@@ -575,7 +575,6 @@ else:
         hsplit,
         kron,
         put_along_axis,
-        row_stack,
         split,
         take_along_axis,
         tile,

@@ -1,9 +1,8 @@
 import functools
-import warnings
 
 import numpy as np
 import numpy._core.numeric as _nx
-from numpy._core import atleast_3d, overrides, vstack
+from numpy._core import atleast_3d, overrides
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
@@ -15,13 +14,12 @@ from numpy._core.numeric import (
     zeros,
     zeros_like,
 )
-from numpy._core.overrides import set_module
 from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
 __all__ = [
-    'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
+    'column_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
     'apply_along_axis', 'kron', 'tile', 'take_along_axis',
     'put_along_axis'
@@ -600,22 +598,6 @@ def expand_dims(a, axis):
     shape = [1 if ax in axis else next(shape_it) for ax in range(out_ndim)]
 
     return a.reshape(shape)
-
-
-# NOTE: Remove once deprecation period passes
-@set_module("numpy")
-def row_stack(tup, *, dtype=None, casting="same_kind"):
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`row_stack` alias is deprecated. "
-        "Use `np.vstack` directly.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return vstack(tup, dtype=dtype, casting=casting)
-
-
-row_stack.__doc__ = vstack.__doc__
 
 
 def _column_stack_dispatcher(tup):

@@ -274,7 +274,6 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy import row_stack
         from numpy._core.numerictypes import maximum_sctype
         from numpy.lib._npyio_impl import recfromcsv, recfromtxt
         from numpy.lib._utils_impl import safe_eval
@@ -289,7 +288,6 @@ class TestLibImports(_DeprecationTestCase):
 
         self.assert_deprecated(lambda: maximum_sctype(int))
 
-        self.assert_deprecated(lambda: row_stack([[]]))
         self.assert_deprecated(lambda: np.chararray)
 
 
