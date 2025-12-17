@@ -1,0 +1,26 @@
+[workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+preview = ["pixi-build"]
+
+[package.build]
+source.path = "../.."
+
+[package.build.backend]
+name = "pixi-build-python"
+version = "*"
+
+[package.build.config]
+extra-input-globs = ["**/*.c.src"]
+compilers = ["c", "cxx"]
+env.ASAN_OPTIONS = "detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:use_sigaltstack=0"
+extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=debug"] 
+
+[package.host-dependencies]
+python.git = "https://github.com/python/cpython"
+python.subdirectory = "Tools/pixi-packages/asan"
+python.rev = "8bb5b6e8ce61da41b5affd5eb12d9cc46b5af448"
+
+meson-python = "*"
+cython = "*"
+uv = "*" # used to invoke the wheel build
