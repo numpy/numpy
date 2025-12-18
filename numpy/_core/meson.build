@@ -605,33 +605,6 @@ npymath_lib = static_library('npymath',
   gnu_symbol_visibility: 'hidden',
 )
 
-dir_separator = '/'
-if build_machine.system() == 'windows'
-  dir_separator = '\\'
-endif
-configure_file(
-  input: 'npymath.ini.in',
-  output: 'npymath.ini',
-  configuration: configuration_data({
-    'pkgname' : 'numpy._core',
-    'sep' : dir_separator,
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-configure_file(
-  input: 'mlib.ini.in',
-  output: 'mlib.ini',
-  configuration: configuration_data({
-    'posix_mathlib' : mlib_linkflag,
-    'msvc_mathlib' : 'm.lib',
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-
 if false
   # This doesn't quite work (yet), it assumes we'll install headers under
   # include/, and trying to add the correct path with `extra_cflags` runs into
