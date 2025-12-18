@@ -66,16 +66,15 @@ class _SupportsArrayWrap(Protocol):
     def __array_wrap__(self) -> _ArrayWrap: ...
 
 # Protocol for array-like objects that preserve their type through split operations.
-# Requires shape (with __getitem__ for axis access), ndim for dimensional checks
-# in hsplit/vsplit/dsplit, swapaxes for axis manipulation, and __getitem__ for
-# slicing. Examples: pandas DataFrame, xarray DataArray.
+# Requires shape for size, ndim for dimensional checks in hsplit/vsplit/dsplit,
+# swapaxes for axis manipulation, and __getitem__ for slicing.
 @type_check_only
 class _SupportsSplitOps(Protocol):
     @property
     def shape(self) -> tuple[int, ...]: ...
     @property
     def ndim(self) -> int: ...
-    def swapaxes(self, axis1: SupportsIndex, axis2: SupportsIndex, /) -> Self: ...
+    def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> Self: ...
 
 ###

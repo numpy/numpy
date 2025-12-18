@@ -1,4 +1,4 @@
-from typing import Any, Self, SupportsIndex, assert_type
+from typing import Any, Self, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -16,7 +16,7 @@ AR_LIKE_f8: list[float]
 class _SplitableArray:
     shape: tuple[int, ...]
     ndim: int
-    def swapaxes(self, axis1: SupportsIndex, axis2: SupportsIndex, /) -> Self: ...
+    def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> Self: ...
 
 splitable: _SplitableArray
