@@ -83,6 +83,9 @@ class TestFinfo:
         x = NonHashableWithDtype()
         assert np.finfo(x) == np.finfo(x.dtype)
 
+    def test_no_none_sense(self):
+        assert_raises(TypeError, finfo, None)
+
 
 class TestIinfo:
     def test_basic(self):
