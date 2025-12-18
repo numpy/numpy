@@ -36,7 +36,6 @@ EXCLUDE_LIST = {
         "int_asbuffer",
         "numarray",
         "oldnumeric",
-        "safe_eval",
         "test",
         "typeDict",
         # Builtins

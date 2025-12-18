@@ -58,9 +58,9 @@ __expired_attributes__ = {
     "recfromcsv": "Use `np.genfromtxt` with comma delimiter instead.",
     "recfromtxt": "Use `np.genfromtxt` instead.",
     "deprecate": "Emit `DeprecationWarning` with `warnings.warn` directly, "
-        "or use `typing.deprecated`.",
+        "or use `warnings.deprecated`.",
     "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
-        "directly, or use `typing.deprecated`.",
+        "directly, or use `warnings.deprecated`.",
     "find_common_type":
         "Use `numpy.promote_types` or `numpy.result_type` instead. "
         "To achieve semantics for the `scalar_types` argument, use "
