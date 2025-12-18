@@ -28,7 +28,6 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeTD64_co,
-    _ArrayLikeUInt_co,
     _DTypeLike,
     _NestedSequence,
     _Shape,
@@ -72,6 +71,7 @@ __all__ = [
 ]
 
 type _AtMost1D = tuple[()] | tuple[int]
+type _AtLeast1D = tuple[int, *tuple[int, ...]]
 type _AtLeast2D = tuple[int, int, *tuple[int, ...]]
 type _AtLeast3D = tuple[int, int, int, *tuple[int, ...]]
 type _AtLeast4D = tuple[int, int, int, int, *tuple[int, ...]]
@@ -88,6 +88,8 @@ type _to_float64 = np.float64 | _to_integer
 type _to_inexact64 = np.complex128 | _to_float64
 type _to_inexact64_unsafe = _to_inexact64 | np.datetime64 | np.timedelta64 | np.character
 type _to_complex = np.number | np.bool
+type _to_float64_co = np.float64 | np.float32 | np.float16 | _to_integer
+type _to_complex128_co = np.complex128 | np.complex64 | _to_float64_co
 
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
@@ -107,30 +109,45 @@ type _ArrayLike1D2D[ScalarT: np.generic] = (  # 1d or 2d
     _SupportsArray[tuple[int] | tuple[int, int], np.dtype[ScalarT]] | _Sequence1D2D[ScalarT]
 )
 type _ArrayLike3D[ScalarT: np.generic] = _SupportsArray[tuple[int, int, int], np.dtype[ScalarT]] | _Sequence3D[ScalarT]  # ==3d
+type _ArrayLike1ND[ScalarT: np.generic] = _SupportsArray[_AtLeast1D, np.dtype[ScalarT]] | _NestedSequence[ScalarT]  # >=1d
 type _ArrayLike2ND[ScalarT: np.generic] = _SupportsArray[_AtLeast2D, np.dtype[ScalarT]] | _Sequence2ND[ScalarT]  # >=2d
 type _ArrayLike3ND[ScalarT: np.generic] = _SupportsArray[_AtLeast3D, np.dtype[ScalarT]] | _Sequence3ND[ScalarT]  # >=3d
 type _ArrayLike4ND[ScalarT: np.generic] = _SupportsArray[_AtLeast4D, np.dtype[ScalarT]] | _Sequence4ND[ScalarT]  # >=3d
 
 # safe-castable array-likes
 type _ToArrayBool_1d = _ArrayLike1D[np.bool_] | Sequence[bool]
+type _ToArrayBool_1nd = _ArrayLike1ND[np.bool_] | _NestedSequence[bool]
+type _ToArrayBool_2nd = _ArrayLike2ND[np.bool_] | _Sequence2ND[bool]
 type _ToArrayInt_1d = _ArrayLike1D[_to_integer] | Sequence[int]
+type _ToArrayInt_1nd = _ArrayLike1ND[_to_integer] | _NestedSequence[int]
+type _ToArrayInt_2nd = _ArrayLike2ND[_to_integer] | _Sequence2ND[int]
 type _ToArrayF64 = _ArrayLike[_to_float64] | _NestedSequence[float]
-type _ToArrayF64_1d = _ArrayLike1D[_to_float64] | Sequence[float]
-type _ToArrayF64_2d = _ArrayLike2D[_to_float64] | _Sequence2D[float]
-type _ToArrayF64_3nd = _ArrayLike3ND[_to_float64] | _Sequence3ND[float]
+type _ToArrayF64_1d = _ArrayLike1D[_to_float64_co] | Sequence[float]
+type _ToArrayF64_1nd = _ArrayLike1ND[_to_float64_co] | _NestedSequence[float]
+type _ToArrayF64_2nd = _ArrayLike2ND[_to_float64_co] | _Sequence2ND[float]
 type _ToArrayC128 = _ArrayLike[_to_inexact64] | _NestedSequence[complex]
-type _ToArrayC128_3nd = _ArrayLike3ND[_to_inexact64] | _Sequence3ND[complex]
+type _ToArrayC128_1d = _ArrayLike1D[_to_complex128_co] | Sequence[complex]
+type _ToArrayC128_1nd = _ArrayLike1ND[_to_complex128_co] | _NestedSequence[complex]
+type _ToArrayC128_2nd = _ArrayLike2ND[_to_complex128_co] | _Sequence2ND[complex]
 type _ToArrayComplex_1d = _ArrayLike1D[_to_complex] | Sequence[complex]
 type _ToArrayComplex_2d = _ArrayLike2D[_to_complex] | _Sequence2D[complex]
 type _ToArrayComplex_3d = _ArrayLike3D[_to_complex] | _Sequence3D[complex]
+type _ToArrayComplex_1nd = _ArrayLike1ND[_to_complex] | _NestedSequence[complex]
+type _ToArrayComplex_2nd = _ArrayLike2ND[_to_complex] | _Sequence2ND[complex]
 # the invariant `list` type avoids overlap with bool, int, etc
 type _AsArrayI64 = _ArrayLike[np.int64] | list[int] | _NestedSequence[list[int]]
 type _AsArrayI64_1d = _ArrayLike1D[np.int64] | list[int]
+type _AsArrayI64_1nd = _ArrayLike1ND[np.int64] | list[int] | _NestedSequence[list[int]]
+type _AsArrayI64_2nd = _ArrayLike2ND[np.int64] | _NestedSequence[list[int]]
 type _AsArrayF64 = _ArrayLike[np.float64] | list[float] | _NestedSequence[list[float]]
 type _AsArrayF64_1d = _ArrayLike1D[np.float64] | list[float]
+type _AsArrayF64_1nd = _ArrayLike1ND[np.float64] | list[float] | _NestedSequence[list[float]]
+type _AsArrayF64_2nd = _ArrayLike2ND[np.float64] | _NestedSequence[list[float]]
 type _AsArrayC128 = _ArrayLike[np.complex128] | list[complex] | _NestedSequence[list[complex]]
 type _AsArrayC128_1d = _ArrayLike1D[np.complex128] | list[complex]
 type _AsArrayC128_2d = _ArrayLike2D[np.complex128] | Sequence[list[complex]]
+type _AsArrayC128_1nd = _ArrayLike1ND[np.complex128] | list[complex] | _NestedSequence[list[complex]]
+type _AsArrayC128_2nd = _ArrayLike2ND[np.complex128] | _NestedSequence[list[complex]]
 type _AsArrayC128_3nd = _ArrayLike3ND[np.complex128] | _Sequence2ND[list[complex]]
 
 type _OrderKind = L[1, -1, 2, -2, "fro", "nuc"] | float  # only accepts `-inf` and `inf` as `float`
@@ -497,7 +514,7 @@ def cond(x: _ArrayLike2D[_to_complex], p: _OrderKind | None = None) -> np.floati
 @overload  # >2d ~inexact32
 def cond(x: _ArrayLike3ND[_inexact32], p: _OrderKind | None = None) -> NDArray[np.float32]: ...
 @overload  # >2d +inexact64
-def cond(x: _ToArrayC128_3nd, p: _OrderKind | None = None) -> NDArray[np.float64]: ...
+def cond(x: _ArrayLike3ND[_to_inexact64] | _Sequence3ND[complex], p: _OrderKind | None = None) -> NDArray[np.float64]: ...
 @overload  # >2d ~number
 def cond(x: _ArrayLike3ND[_to_complex], p: _OrderKind | None = None) -> NDArray[np.floating]: ...
 @overload  # fallback
@@ -991,20 +1008,22 @@ def outer[ScalarT: np.number | np.object_](x1: _ArrayLike1D[ScalarT], x2: _Array
 @overload  # fallback
 def outer(x1: _ToArrayComplex_1d, x2: _ToArrayComplex_1d, /) -> _Array2D[Any]: ...
 
+# note that this doesn't include bool, int_, float64, and complex128, as those require special-casing overloads
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.uint64,
+    np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
+)  # fmt: skip
+
 #
 @overload  # ~T, ~T  (we use constraints instead of a `: np.number` bound to prevent joins/unions)
-def cross[
-    AnyScalarT: (  # int64, float64, and complex128 are handled separately
-        np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.uint64,
-        np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
-    ),
-](
-    x1: _ArrayLike1D2D[AnyScalarT],
-    x2: _ArrayLike1D2D[AnyScalarT],
+def cross(
+    x1: _ArrayLike1D2D[_AnyScalarT],
+    x2: _ArrayLike1D2D[_AnyScalarT],
     /,
     *,
     axis: SupportsIndex = -1,
-) -> NDArray[AnyScalarT]: ...  # fmt: skip
+) -> NDArray[_AnyScalarT]: ...  # fmt: skip
 @overload  # ~int64, +int64
 def cross(
     x1: _ArrayLike1D2D[np.int64] | _Sequence1D2D[int],
@@ -1078,14 +1097,105 @@ def cross[ScalarT: np.number](
     axis: SupportsIndex = -1,
 ) -> NDArray[ScalarT]: ...
 
-# TODO: narrow return types
-@overload
-def matmul[ScalarT: np.number](x1: _ArrayLike[ScalarT], x2: _ArrayLike[ScalarT], /) -> NDArray[ScalarT]: ...
-@overload
-def matmul(x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, /) -> NDArray[np.unsignedinteger]: ...
-@overload
-def matmul(x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, /) -> NDArray[np.signedinteger]: ...
-@overload
-def matmul(x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, /) -> NDArray[np.floating]: ...
-@overload
-def matmul(x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, /) -> NDArray[np.complexfloating]: ...
+# These overloads can be grouped into three parts:
+# - 16 overloads as workaround for microsoft/pyright#10232
+# -  9 overloads for the scalar cases (both args 1d)
+# - 18 overloads for the non-scalar cases (at least one arg >1d)
+@overload  # ?d ~T, 1d ~T
+def matmul(
+    x1: _SupportsArray[_JustAnyShape, np.dtype[_AnyScalarT]], x2: _ArrayLike1D[_AnyScalarT], /
+) -> NDArray[_AnyScalarT] | Any: ...
+@overload  # 1d ~T, ?d ~T
+def matmul(
+    x1: _ArrayLike1D[_AnyScalarT], x2: _SupportsArray[_JustAnyShape, np.dtype[_AnyScalarT]], /
+) -> NDArray[_AnyScalarT] | Any: ...
+@overload  # ?d bool, 1d bool
+def matmul(x1: _SupportsArray[_JustAnyShape, np.dtype[np.bool]], x2: _ToArrayBool_1d, /) -> NDArray[np.bool] | Any: ...
+@overload  # 1d bool, ?d bool
+def matmul(x1: _ToArrayBool_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[np.bool]], /) -> NDArray[np.bool] | Any: ...
+@overload  # ?d ~int, 1d +int
+def matmul(x1: _SupportsArray[_JustAnyShape, np.dtype[np.int64]], x2: _ToArrayInt_1d, /) -> NDArray[np.int64] | Any: ...
+@overload  # 1d +int, ?d ~int
+def matmul(x1: _ToArrayInt_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[np.int64]], /) -> NDArray[np.int64] | Any: ...
+@overload  # ?d +int, 1d ~int
+def matmul(x1: _SupportsArray[_JustAnyShape, np.dtype[_to_integer]], x2: _AsArrayI64_1d, /) -> NDArray[np.int64] | Any: ...
+@overload  # 1d ~int, ?d +int
+def matmul(x1: _AsArrayI64_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[_to_integer]], /) -> NDArray[np.int64] | Any: ...
+@overload  # ?d ~float64, 1d +float64
+def matmul(x1: _SupportsArray[_JustAnyShape, np.dtype[np.float64]], x2: _ToArrayF64_1d, /) -> NDArray[np.float64] | Any: ...
+@overload  # 1d +float64, ?d ~float64
+def matmul(x1: _ToArrayF64_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[np.float64]], /) -> NDArray[np.float64] | Any: ...
+@overload  # ?d +float64, 1d ~float64
+def matmul(x1: _SupportsArray[_JustAnyShape, np.dtype[_to_float64]], x2: _AsArrayF64_1d, /) -> NDArray[np.float64] | Any: ...
+@overload  # 1d ~float64, ?d +float64
+def matmul(x1: _AsArrayF64_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[_to_float64]], /) -> NDArray[np.float64] | Any: ...
+@overload  # ?d ~complex128, 1d +complex128
+def matmul(
+    x1: _SupportsArray[_JustAnyShape, np.dtype[np.complex128]], x2: _ToArrayC128_1d, /
+) -> NDArray[np.complex128] | Any: ...
+@overload  # 1d +complex128, ?d ~complex128
+def matmul(
+    x1: _ToArrayC128_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[np.complex128]], /
+) -> NDArray[np.complex128] | Any: ...
+@overload  # ?d +complex128, 1d ~complex128
+def matmul(
+    x1: _SupportsArray[_JustAnyShape, np.dtype[_to_complex128_co]], x2: _AsArrayC128_1d, /
+) -> NDArray[np.complex128] | Any: ...
+@overload  # 1d ~complex128, ?d +complex128
+def matmul(
+    x1: _AsArrayC128_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[_to_complex128_co]], /
+) -> NDArray[np.complex128] | Any: ...  # end workaround
+@overload  # 1d ~T, 1d ~T
+def matmul(x1: _ArrayLike1D[_AnyScalarT], x2: _ArrayLike1D[_AnyScalarT], /) -> _AnyScalarT: ...
+@overload  # 1d +bool, 1d +bool
+def matmul(x1: _ToArrayBool_1d, x2: _ToArrayBool_1d, /) -> np.bool: ...
+@overload  # 1d ~int, 1d +int
+def matmul(x1: _AsArrayI64_1d, x2: _ToArrayInt_1d, /) -> np.int64: ...
+@overload  # 1d +int, 1d ~int
+def matmul(x1: _ToArrayInt_1d, x2: _AsArrayI64_1d, /) -> np.int64: ...
+@overload  # 1d ~float64, 1d +float64
+def matmul(x1: _AsArrayF64_1d, x2: _ToArrayF64_1d, /) -> np.float64: ...
+@overload  # 1d +float64, 1d ~float64
+def matmul(x1: _ToArrayF64_1d, x2: _AsArrayF64_1d, /) -> np.float64: ...
+@overload  # 1d ~complex128, 1d +complex128
+def matmul(x1: _AsArrayC128_1d, x2: _ToArrayComplex_1d, /) -> np.complex128: ...
+@overload  # 1d +complex128, 1d ~complex128
+def matmul(x1: _ToArrayComplex_1d, x2: _AsArrayC128_1d, /) -> np.complex128: ...
+@overload  # 1d fallback, 1d fallback
+def matmul(x1: _ToArrayComplex_1d, x2: _ToArrayComplex_1d, /) -> Any: ...  # end 1d x 1d
+@overload  # >=1d ~T, >=2d ~T
+def matmul(x1: _ArrayLike1ND[_AnyScalarT], x2: _ArrayLike2ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...
+@overload  # >=2d ~T, >=1d ~T
+def matmul(x1: _ArrayLike2ND[_AnyScalarT], x2: _ArrayLike1ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...
+@overload  # >=1d +bool, >=2d +bool
+def matmul(x1: _ToArrayBool_1nd, x2: _ToArrayBool_2nd, /) -> NDArray[np.bool]: ...
+@overload  # >=2d +bool, >=1d +bool
+def matmul(x1: _ToArrayBool_2nd, x2: _ToArrayBool_1nd, /) -> NDArray[np.bool]: ...
+@overload  # >=1d ~int, >=2d +int
+def matmul(x1: _AsArrayI64_1nd, x2: _ToArrayInt_2nd, /) -> NDArray[np.int64]: ...
+@overload  # >=2d ~int, >=1d +int
+def matmul(x1: _AsArrayI64_2nd, x2: _ToArrayInt_1nd, /) -> NDArray[np.int64]: ...
+@overload  # >=1d +int, >=2d ~int
+def matmul(x1: _ToArrayInt_1nd, x2: _AsArrayI64_2nd, /) -> NDArray[np.int64]: ...
+@overload  # >=2d +int, >=1d ~int
+def matmul(x1: _ToArrayInt_2nd, x2: _AsArrayI64_1nd, /) -> NDArray[np.int64]: ...
+@overload  # >=1d ~float64, >=2d +float64
+def matmul(x1: _AsArrayF64_1nd, x2: _ToArrayF64_2nd, /) -> NDArray[np.float64]: ...
+@overload  # >=2d ~float64, >=1d +float64
+def matmul(x1: _AsArrayF64_2nd, x2: _ToArrayF64_1nd, /) -> NDArray[np.float64]: ...
+@overload  # >=1d +float64, >=2d ~float64
+def matmul(x1: _ToArrayF64_1nd, x2: _AsArrayF64_2nd, /) -> NDArray[np.float64]: ...
+@overload  # >=2d +float64, >=1d ~float64
+def matmul(x1: _ToArrayF64_2nd, x2: _AsArrayF64_1nd, /) -> NDArray[np.float64]: ...
+@overload  # >=1d ~complex128, >=2d +complex128
+def matmul(x1: _AsArrayC128_1nd, x2: _ToArrayC128_2nd, /) -> NDArray[np.complex128]: ...
+@overload  # >=2d ~complex128, >=1d +complex128
+def matmul(x1: _AsArrayC128_2nd, x2: _ToArrayC128_1nd, /) -> NDArray[np.complex128]: ...
+@overload  # >=1d +complex128, >=2d ~complex128
+def matmul(x1: _ToArrayC128_1nd, x2: _AsArrayC128_2nd, /) -> NDArray[np.complex128]: ...
+@overload  # >=2d +complex128, >=1d ~complex128
+def matmul(x1: _ToArrayC128_2nd, x2: _AsArrayC128_1nd, /) -> NDArray[np.complex128]: ...
+@overload  # >=1d fallback, >=2d fallback
+def matmul(x1: _ToArrayComplex_1nd, x2: _ToArrayComplex_2nd, /) -> NDArray[Any]: ...
+@overload  # >=2d fallback, >=1d fallback
+def matmul(x1: _ToArrayComplex_2nd, x2: _ToArrayComplex_1nd, /) -> NDArray[Any]: ...

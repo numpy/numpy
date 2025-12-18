@@ -46,6 +46,12 @@ AR_S: npt.NDArray[np.bytes_]
 AR_U: npt.NDArray[np.str_]
 AR_b: npt.NDArray[np.bool]
 
+AR_b_1d: np.ndarray[tuple[int], np.dtype[np.bool]]
+AR_b_2d: np.ndarray[tuple[int, int], np.dtype[np.bool]]
+
+AR_i8_1d: np.ndarray[tuple[int], np.dtype[np.int64]]
+AR_i8_2d: np.ndarray[tuple[int, int], np.dtype[np.int64]]
+
 SC_f8: np.float64
 AR_f8_0d: np.ndarray[tuple[()], np.dtype[np.float64]]
 AR_f8_1d: _Array1D[np.float64]
@@ -59,6 +65,9 @@ AR_f4_2d: _Array2D[np.float32]
 AR_f4_3d: _Array3D[np.float32]
 AR_f10_2d: _Array2D[np.longdouble]
 AR_f10_3d: _Array3D[np.longdouble]
+
+AR_c16_1d: np.ndarray[tuple[int], np.dtype[np.complex128]]
+AR_c16_2d: np.ndarray[tuple[int, int], np.dtype[np.complex128]]
 
 ###
 
@@ -412,6 +421,86 @@ assert_type(np.linalg.cross(AR_O, AR_f8), npt.NDArray[np.object_])
 assert_type(np.linalg.cross(AR_f8, AR_O), npt.NDArray[np.object_])
 assert_type(np.linalg.cross(AR_O, AR_O), npt.NDArray[np.object_])
 
-assert_type(np.linalg.matmul(AR_i8, AR_i8), npt.NDArray[np.int64])
-assert_type(np.linalg.matmul(AR_f8, AR_f8), npt.NDArray[np.float64])
-assert_type(np.linalg.matmul(AR_c16, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_b, AR_b), npt.NDArray[np.bool] | Any)
+assert_type(np.linalg.matmul(AR_i8, AR_b), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_b, AR_i8), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_i8, AR_i8), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_f4, AR_f4), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matmul(AR_f8, AR_i8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_i8, AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_f8, AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_c16, AR_i8), npt.NDArray[np.complex128] | Any)
+assert_type(np.linalg.matmul(AR_f8, AR_c16), npt.NDArray[np.complex128] | Any)
+assert_type(np.linalg.matmul(AR_c16, AR_c16), npt.NDArray[np.complex128] | Any)
+# same as the block above, but for the 1d x 1d case
+assert_type(np.linalg.matmul(AR_b_1d, AR_b_1d), np.bool)
+assert_type(np.linalg.matmul(AR_i8_1d, AR_b_1d), np.int64)
+assert_type(np.linalg.matmul(AR_b_1d, AR_i8_1d), np.int64)
+assert_type(np.linalg.matmul(AR_i8_1d, AR_i8_1d), np.int64)
+assert_type(np.linalg.matmul(AR_f4_1d, AR_f4_1d), np.float32)
+assert_type(np.linalg.matmul(AR_f8_1d, AR_i8_1d), np.float64)
+assert_type(np.linalg.matmul(AR_i8_1d, AR_f8_1d), np.float64)
+assert_type(np.linalg.matmul(AR_f8_1d, AR_f8_1d), np.float64)
+assert_type(np.linalg.matmul(AR_c16_1d, AR_i8_1d), np.complex128)
+assert_type(np.linalg.matmul(AR_f8_1d, AR_c16_1d), np.complex128)
+assert_type(np.linalg.matmul(AR_c16_1d, AR_c16_1d), np.complex128)
+# 1d x 2d
+assert_type(np.linalg.matmul(AR_b_1d, AR_b_2d), npt.NDArray[np.bool])
+assert_type(np.linalg.matmul(AR_i8_1d, AR_b_2d), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_b_1d, AR_i8_2d), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_i8_1d, AR_i8_2d), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_f4_1d, AR_f4_2d), npt.NDArray[np.float32])
+assert_type(np.linalg.matmul(AR_f8_1d, AR_i8_2d), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_i8_1d, AR_f8_2d), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_f8_1d, AR_f8_2d), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_c16_1d, AR_i8_2d), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_f8_1d, AR_c16_2d), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_c16_1d, AR_c16_2d), npt.NDArray[np.complex128])
+# 1d x ?d
+assert_type(np.linalg.matmul(AR_b_1d, AR_b), npt.NDArray[np.bool] | Any)
+assert_type(np.linalg.matmul(AR_i8_1d, AR_b), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_b_1d, AR_i8), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_i8_1d, AR_i8), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_f4_1d, AR_f4), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matmul(AR_f8_1d, AR_i8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_i8_1d, AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_f8_1d, AR_f8), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_c16_1d, AR_i8), npt.NDArray[np.complex128] | Any)
+assert_type(np.linalg.matmul(AR_f8_1d, AR_c16), npt.NDArray[np.complex128] | Any)
+assert_type(np.linalg.matmul(AR_c16_1d, AR_c16), npt.NDArray[np.complex128] | Any)
+# 2d x 1d
+assert_type(np.linalg.matmul(AR_b_2d, AR_b_1d), npt.NDArray[np.bool])
+assert_type(np.linalg.matmul(AR_i8_2d, AR_b_1d), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_b_2d, AR_i8_1d), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_i8_2d, AR_i8_1d), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_f4_2d, AR_f4_1d), npt.NDArray[np.float32])
+assert_type(np.linalg.matmul(AR_f8_2d, AR_i8_1d), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_i8_2d, AR_f8_1d), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_f8_2d, AR_f8_1d), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_c16_2d, AR_i8_1d), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_f8_2d, AR_c16_1d), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_c16_2d, AR_c16_1d), npt.NDArray[np.complex128])
+# 2d x ?d
+assert_type(np.linalg.matmul(AR_b_2d, AR_b), npt.NDArray[np.bool])
+assert_type(np.linalg.matmul(AR_i8_2d, AR_b), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_b_2d, AR_i8), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_i8_2d, AR_i8), npt.NDArray[np.int64])
+assert_type(np.linalg.matmul(AR_f4_2d, AR_f4), npt.NDArray[np.float32])
+assert_type(np.linalg.matmul(AR_f8_2d, AR_i8), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_i8_2d, AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_f8_2d, AR_f8), npt.NDArray[np.float64])
+assert_type(np.linalg.matmul(AR_c16_2d, AR_i8), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_f8_2d, AR_c16), npt.NDArray[np.complex128])
+assert_type(np.linalg.matmul(AR_c16_2d, AR_c16), npt.NDArray[np.complex128])
+# ?d x 1d
+assert_type(np.linalg.matmul(AR_b, AR_b_1d), npt.NDArray[np.bool] | Any)
+assert_type(np.linalg.matmul(AR_i8, AR_b_1d), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_b, AR_i8_1d), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_i8, AR_i8_1d), npt.NDArray[np.int64] | Any)
+assert_type(np.linalg.matmul(AR_f4, AR_f4_1d), npt.NDArray[np.float32] | Any)
+assert_type(np.linalg.matmul(AR_f8, AR_i8_1d), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_i8, AR_f8_1d), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_f8, AR_f8_1d), npt.NDArray[np.float64] | Any)
+assert_type(np.linalg.matmul(AR_c16, AR_i8_1d), npt.NDArray[np.complex128] | Any)
+assert_type(np.linalg.matmul(AR_f8, AR_c16_1d), npt.NDArray[np.complex128] | Any)
+assert_type(np.linalg.matmul(AR_c16, AR_c16_1d), npt.NDArray[np.complex128] | Any)
