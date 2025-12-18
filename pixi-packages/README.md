@@ -1,4 +1,4 @@
-# CPython Pixi packages
+# NumPy Pixi packages
 
 This directory contains definitions for [Pixi packages](https://pixi.sh/latest/reference/pixi_manifest/#the-package-section)
 which can be built from the NumPy source code.
