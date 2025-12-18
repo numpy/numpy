@@ -3215,6 +3215,11 @@ class TestInterp:
         assert_equal(np.interp(0.5, [0, 1], sc([+np.inf,      10])), sc(+np.inf))
         assert_equal(np.interp(0.5, [0, 1], sc([-np.inf, -np.inf])), sc(-np.inf))
         assert_equal(np.interp(0.5, [0, 1], sc([+np.inf, +np.inf])), sc(+np.inf))
+        
+    def test_interp_empty_inputs(self):
+        result = np.interp([], [], [])
+        assert result.shape == (0,)
+
 
     def test_complex_interp(self):
         # test complex interpolation
