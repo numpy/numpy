@@ -98,9 +98,14 @@ type _Sequence3D[T] = Sequence[_Sequence2D[T]]
 type _Sequence2ND[T] = _NestedSequence[Sequence[T]]
 type _Sequence3ND[T] = _NestedSequence[_Sequence2D[T]]
 type _Sequence4ND[T] = _NestedSequence[_Sequence3D[T]]
+type _Sequence0D1D[T] = T | Sequence[T]
+type _Sequence1D2D[T] = Sequence[T] | _Sequence2D[T]
 
 type _ArrayLike1D[ScalarT: np.generic] = _SupportsArray[tuple[int], np.dtype[ScalarT]] | Sequence[ScalarT]  # ==1d
 type _ArrayLike2D[ScalarT: np.generic] = _SupportsArray[tuple[int, int], np.dtype[ScalarT]] | _Sequence2D[ScalarT]  # ==2d
+type _ArrayLike1D2D[ScalarT: np.generic] = (  # 1d or 2d
+    _SupportsArray[tuple[int] | tuple[int, int], np.dtype[ScalarT]] | _Sequence1D2D[ScalarT]
+)
 type _ArrayLike3D[ScalarT: np.generic] = _SupportsArray[tuple[int, int, int], np.dtype[ScalarT]] | _Sequence3D[ScalarT]  # ==3d
 type _ArrayLike2ND[ScalarT: np.generic] = _SupportsArray[_AtLeast2D, np.dtype[ScalarT]] | _Sequence2ND[ScalarT]  # >=2d
 type _ArrayLike3ND[ScalarT: np.generic] = _SupportsArray[_AtLeast3D, np.dtype[ScalarT]] | _Sequence3ND[ScalarT]  # >=3d
@@ -119,6 +124,7 @@ type _ToArrayComplex_1d = _ArrayLike1D[_to_complex] | Sequence[complex]
 type _ToArrayComplex_2d = _ArrayLike2D[_to_complex] | _Sequence2D[complex]
 type _ToArrayComplex_3d = _ArrayLike3D[_to_complex] | _Sequence3D[complex]
 # the invariant `list` type avoids overlap with bool, int, etc
+type _AsArrayI64 = _ArrayLike[np.int64] | list[int] | _NestedSequence[list[int]]
 type _AsArrayI64_1d = _ArrayLike1D[np.int64] | list[int]
 type _AsArrayF64 = _ArrayLike[np.float64] | list[float] | _NestedSequence[list[float]]
 type _AsArrayF64_1d = _ArrayLike1D[np.float64] | list[float]
@@ -985,39 +991,92 @@ def outer[ScalarT: np.number | np.object_](x1: _ArrayLike1D[ScalarT], x2: _Array
 @overload  # fallback
 def outer(x1: _ToArrayComplex_1d, x2: _ToArrayComplex_1d, /) -> _Array2D[Any]: ...
 
-# TODO: narrow return types
-@overload
-def cross(
-    x1: _ArrayLikeUInt_co,
-    x2: _ArrayLikeUInt_co,
+#
+@overload  # ~T, ~T  (we use constraints instead of a `: np.number` bound to prevent joins/unions)
+def cross[
+    AnyScalarT: (  # int64, float64, and complex128 are handled separately
+        np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.uint64,
+        np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
+    ),
+](
+    x1: _ArrayLike1D2D[AnyScalarT],
+    x2: _ArrayLike1D2D[AnyScalarT],
     /,
     *,
-    axis: int = -1,
-) -> NDArray[np.unsignedinteger]: ...
-@overload
+    axis: SupportsIndex = -1,
+) -> NDArray[AnyScalarT]: ...  # fmt: skip
+@overload  # ~int64, +int64
 def cross(
-    x1: _ArrayLikeInt_co,
-    x2: _ArrayLikeInt_co,
+    x1: _ArrayLike1D2D[np.int64] | _Sequence1D2D[int],
+    x2: _ArrayLike1D2D[np.integer] | _Sequence1D2D[int],
     /,
     *,
-    axis: int = -1,
-) -> NDArray[np.signedinteger]: ...
-@overload
+    axis: SupportsIndex = -1,
+) -> NDArray[np.int64]: ...
+@overload  # +int64, ~int64
 def cross(
-    x1: _ArrayLikeFloat_co,
-    x2: _ArrayLikeFloat_co,
+    x1: _ArrayLike1D2D[np.integer],
+    x2: _ArrayLike1D2D[np.int64],
     /,
     *,
-    axis: int = -1,
-) -> NDArray[np.floating]: ...
-@overload
+    axis: SupportsIndex = -1,
+) -> NDArray[np.int64]: ...
+@overload  # ~float64, +float64
 def cross(
-    x1: _ArrayLikeComplex_co,
-    x2: _ArrayLikeComplex_co,
+    x1: _ArrayLike1D2D[np.float64] | _Sequence0D1D[list[float]],
+    x2: _ArrayLike1D2D[np.floating | np.integer] | _Sequence1D2D[float],
     /,
     *,
-    axis: int = -1,
-) -> NDArray[np.complexfloating]: ...
+    axis: SupportsIndex = -1,
+) -> NDArray[np.float64]: ...
+@overload  # +float64, ~float64
+def cross(
+    x1: _ArrayLike1D2D[np.floating | np.integer] | _Sequence1D2D[float],
+    x2: _ArrayLike1D2D[np.float64] | _Sequence0D1D[list[float]],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.float64]: ...
+@overload  # ~complex128, +complex128
+def cross(
+    x1: _ArrayLike1D2D[np.complex128] | _Sequence0D1D[list[complex]],
+    x2: _ArrayLike1D2D[np.number] | _Sequence1D2D[complex],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.complex128]: ...
+@overload  # +complex128, ~complex128
+def cross(
+    x1: _ArrayLike1D2D[np.number] | _Sequence1D2D[complex],
+    x2: _ArrayLike1D2D[np.complex128] | _Sequence0D1D[list[complex]],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.complex128]: ...
+@overload  # ~object_, +object_
+def cross(
+    x1: _SupportsArray[tuple[int] | tuple[int, int], np.dtype[np.object_]],
+    x2: _ArrayLike1D2D[np.number | np.object_] | _Sequence1D2D[complex],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.object_]: ...
+@overload  # +object_, ~object_
+def cross(
+    x1: _ArrayLike1D2D[np.number | np.object_] | _Sequence1D2D[complex],
+    x2: _SupportsArray[tuple[int] | tuple[int, int], np.dtype[np.object_]],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[np.object_]: ...
+@overload  # fallback
+def cross[ScalarT: np.number](
+    x1: _ArrayLike1D2D[ScalarT],
+    x2: _ArrayLike1D2D[ScalarT],
+    /,
+    *,
+    axis: SupportsIndex = -1,
+) -> NDArray[ScalarT]: ...
 
 # TODO: narrow return types
 @overload
