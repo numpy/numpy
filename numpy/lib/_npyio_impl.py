@@ -1365,9 +1365,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             max_rows=max_rows
         )
 
-    if isinstance(delimiter, bytes):
-        delimiter.decode("latin1")
-
     if dtype is None:
         dtype = np.float64
 
