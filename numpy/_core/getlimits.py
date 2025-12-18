@@ -175,15 +175,15 @@ class finfo:
     __class_getitem__ = classmethod(types.GenericAlias)
 
     def __new__(cls, dtype):
+        if dtype is None:
+            raise TypeError("dtype must not be None")
+
         try:
             obj = cls._finfo_cache.get(dtype)  # most common path
             if obj is not None:
                 return obj
         except TypeError:
             pass
-
-        if dtype is None:
-            raise TypeError("dtype must not be None")
 
         try:
             dtype = numeric.dtype(dtype)
