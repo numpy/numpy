@@ -1,5 +1,13 @@
 from collections.abc import Callable, Sequence
-from typing import Any, Concatenate, Protocol, SupportsIndex, overload, type_check_only
+from typing import (
+    Any,
+    Concatenate,
+    Protocol,
+    Self,
+    SupportsIndex,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 from numpy import (
@@ -57,6 +65,18 @@ class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...
 
+# Protocol for array-like objects that preserve their type through split operations.
+# Requires shape for size, ndim for dimensional checks in hsplit/vsplit/dsplit,
+# swapaxes for axis manipulation, and __getitem__ for slicing.
+@type_check_only
+class _SupportsSplitOps(Protocol):
+    @property
+    def shape(self) -> tuple[int, ...]: ...
+    @property
+    def ndim(self) -> int: ...
+    def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
+    def __getitem__(self, key: Any, /) -> Self: ...
+
 ###
 
 def take_along_axis[ScalarT: np.generic](
@@ -113,6 +133,12 @@ def dstack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[S
 def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 @overload
+def array_split[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
+    indices_or_sections: _ShapeLike,
+    axis: SupportsIndex = 0,
+) -> list[SplitableT]: ...
+@overload
 def array_split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
     indices_or_sections: _ShapeLike,
@@ -125,6 +151,12 @@ def array_split(
     axis: SupportsIndex = 0,
 ) -> list[NDArray[Any]]: ...
 
+@overload
+def split[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
+    indices_or_sections: _ShapeLike,
+    axis: SupportsIndex = 0,
+) -> list[SplitableT]: ...
 @overload
 def split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
@@ -140,6 +172,11 @@ def split(
 
 # keep in sync with `numpy.ma.extras.hsplit`
 @overload
+def hsplit[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
+    indices_or_sections: _ShapeLike,
+) -> list[SplitableT]: ...
+@overload
 def hsplit[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
     indices_or_sections: _ShapeLike,
@@ -151,6 +188,11 @@ def hsplit(
 ) -> list[NDArray[Any]]: ...
 
 @overload
+def vsplit[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
+    indices_or_sections: _ShapeLike,
+) -> list[SplitableT]: ...
+@overload
 def vsplit[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
     indices_or_sections: _ShapeLike,
@@ -161,6 +203,11 @@ def vsplit(
     indices_or_sections: _ShapeLike,
 ) -> list[NDArray[Any]]: ...
 
+@overload
+def dsplit[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
+    indices_or_sections: _ShapeLike,
+) -> list[SplitableT]: ...
 @overload
 def dsplit[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
