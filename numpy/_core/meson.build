@@ -1072,9 +1072,10 @@ foreach gen_mtargets : [
     [
       X86_V4, X86_V3,
       VSX4, VSX3, VSX2,
-      NEON_VFPV4,
+      NEON_VFPV4, SVE, 
       VXE2, VXE,
       LSX,
+      RVV
     ]
   ],
   [
