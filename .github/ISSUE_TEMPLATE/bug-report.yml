@@ -67,7 +67,7 @@ body:
     label: "How does this issue affect you or how did you find it:"
     description: |
       Please explain how this issue concretely affects you or others.
-      Especiall if it does not impact you how did you find it?
+      Especially if it does not impact you how did you find it?
       (If an issue has no concrete impact this is also helpful to know.)
     placeholder: |
       << description of how the issue affects you >>
