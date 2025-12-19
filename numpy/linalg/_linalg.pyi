@@ -897,12 +897,33 @@ def tensordot(
     a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, /, *, axes: int | tuple[_ShapeLike, _ShapeLike] = 2
 ) -> NDArray[np.complex128 | Any]: ...
 
-# TODO: Returns a scalar or array
-def multi_dot(
-    arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co],
-    *,
-    out: NDArray[Any] | None = None,
-) -> Any: ...
+#
+@overload
+def multi_dot[ArrayT: np.ndarray](
+    arrays: Iterable[_ArrayLikeComplex_co | _ArrayLikeObject_co | _ArrayLikeTD64_co], *, out: ArrayT,
+) -> ArrayT: ...
+@overload
+def multi_dot[
+    AnyScalarT: (
+        np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64, np.uint64,
+        np.float16, np.float32, np.float64, np.longdouble, np.complex64, np.complex128, np.clongdouble,
+        np.object_, np.timedelta64,
+    ),
+](arrays: Sequence[_ArrayLike[AnyScalarT]], *, out: None = None) -> NDArray[AnyScalarT]: ...
+@overload
+def multi_dot(arrays: Sequence[_ArrayLikeBool_co], *, out: None = None) -> NDArray[np.bool]: ...
+@overload
+def multi_dot(arrays: Sequence[_ArrayLikeInt_co], *, out: None = None) -> NDArray[np.int64 | Any]: ...
+@overload
+def multi_dot(arrays: Sequence[_ArrayLikeFloat_co], *, out: None = None) -> NDArray[np.float64 | Any]: ...
+@overload
+def multi_dot(arrays: Sequence[_ArrayLikeComplex_co], *, out: None = None) -> NDArray[np.complex128 | Any]: ...
+@overload
+def multi_dot(arrays: Sequence[_ArrayLikeTD64_co], *, out: None = None) -> NDArray[np.timedelta64 | Any]: ...
+@overload
+def multi_dot[ScalarT: np.number | np.object_ | np.timedelta64](
+    arrays: Sequence[_ArrayLike[ScalarT]], *, out: None = None
+) -> NDArray[ScalarT]: ...
 
 #
 @overload  # workaround for microsoft/pyright#10232
