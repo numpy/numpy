@@ -34,7 +34,7 @@ extern "C" {
 // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps
 //   memory usage reasonable (4 KiB for pointers).
 // See https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-const npy_intp HASH_TABLE_INITIAL_BUCKETS = 1024;
+const npy_intp HASH_TABLE_INITIAL_BUCKETS = 100000;
 
 static inline PyTupleObject *
 create_empty_tuple(npy_intp size)
