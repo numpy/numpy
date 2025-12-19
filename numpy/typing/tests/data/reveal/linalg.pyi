@@ -365,11 +365,14 @@ assert_type(np.linalg.tensordot(AR_c16, AR_c16), npt.NDArray[np.complex128])
 assert_type(np.linalg.tensordot(AR_m, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.linalg.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
 
-assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), Any)
-assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), Any)
-assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), Any)
-assert_type(np.linalg.multi_dot([AR_O, AR_O]), Any)
-assert_type(np.linalg.multi_dot([AR_m, AR_m]), Any)
+assert_type(np.linalg.multi_dot([AR_i8, AR_i8]), npt.NDArray[np.int64])
+assert_type(np.linalg.multi_dot([AR_f8, AR_f8]), npt.NDArray[np.float64])
+assert_type(np.linalg.multi_dot([AR_c16, AR_c16]), npt.NDArray[np.complex128])
+assert_type(np.linalg.multi_dot([AR_O, AR_O]), npt.NDArray[np.object_])
+# Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
+assert_type(np.linalg.multi_dot([AR_i8, AR_f8]), npt.NDArray[np.float64 | Any])  # type: ignore[assert-type]
+assert_type(np.linalg.multi_dot([AR_f8, AR_c16]), npt.NDArray[np.complex128 | Any])  # type: ignore[assert-type]
+assert_type(np.linalg.multi_dot([AR_m, AR_m]), npt.NDArray[np.timedelta64])  # type: ignore[assert-type]
 
 # Mypy incorrectly infers `ndarray[Any, Any]`, but pyright behaves correctly.
 assert_type(np.linalg.diagonal(AR_any), np.ndarray)  # type: ignore[assert-type]
