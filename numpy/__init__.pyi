@@ -2370,25 +2370,44 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         order: str | Sequence[str] | None = None,
     ) -> None: ...
 
-    #
-    @overload
+    # keep in sync with `ma.core.MaskedArray.argpartition`
+    # keep roughly in sync with `_core.fromnumeric.argpartition`
+    @overload  # axis: None
     def argpartition(
         self,
         kth: _ArrayLikeInt,
         /,
-        axis: SupportsIndex | None = -1,
+        axis: None,
         kind: _PartitionKind = "introselect",
         order: None = None,
-    ) -> NDArray[intp]: ...
-    @overload
+    ) -> ndarray[tuple[int], dtype[intp]]: ...
+    @overload  # axis: index (default)
+    def argpartition(
+        self,
+        kth: _ArrayLikeInt,
+        /,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: None = None,
+    ) -> ndarray[_ShapeT_co, dtype[intp]]: ...
+    @overload  # void, axis: None
     def argpartition(
         self: NDArray[void],
         kth: _ArrayLikeInt,
         /,
-        axis: SupportsIndex | None = -1,
+        axis: None,
         kind: _PartitionKind = "introselect",
         order: str | Sequence[str] | None = None,
-    ) -> NDArray[intp]: ...
+    ) -> ndarray[tuple[int], dtype[intp]]: ...
+    @overload  # void, axis: index (default)
+    def argpartition(
+        self: NDArray[void],
+        kth: _ArrayLikeInt,
+        /,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None,
+    ) -> ndarray[_ShapeT_co, dtype[intp]]: ...
 
     # keep in sync with `ma.MaskedArray.diagonal`
     def diagonal(
