@@ -3,15 +3,7 @@ from collections.abc import Callable
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
-from typing import (
-    Any,
-    Final,
-    Literal,
-    SupportsIndex,
-    TypeAlias,
-    TypedDict,
-    type_check_only,
-)
+from typing import Any, Final, Literal, SupportsIndex, TypedDict, type_check_only
 
 import numpy as np
 from numpy._typing import NDArray, _CharLike_co, _FloatLike_co
@@ -29,12 +21,12 @@ __all__ = [
 
 ###
 
-_FloatMode: TypeAlias = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
-_LegacyNoStyle: TypeAlias = Literal["1.21", "1.25", "2.1", False]
-_Legacy: TypeAlias = Literal["1.13", _LegacyNoStyle]
-_Sign: TypeAlias = Literal["-", "+", " "]
-_Trim: TypeAlias = Literal["k", ".", "0", "-"]
-_ReprFunc: TypeAlias = Callable[[NDArray[Any]], str]
+type _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
+type _LegacyNoStyle = Literal["1.21", "1.25", "2.1", False]
+type _Legacy = Literal["1.13", _LegacyNoStyle]
+type _Sign = Literal["-", "+", " "]
+type _Trim = Literal["k", ".", "0", "-"]
+type _ReprFunc = Callable[[NDArray[Any]], str]
 
 @type_check_only
 class _FormatDict(TypedDict, total=False):

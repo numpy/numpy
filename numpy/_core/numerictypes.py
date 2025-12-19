@@ -220,7 +220,7 @@ def issctype(rep):
 
     Strings are also a scalar type:
 
-    >>> issctype(np.dtype('str'))
+    >>> issctype(np.dtype(np.str_))
     True
 
     """

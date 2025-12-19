@@ -51,6 +51,7 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
+# 0x00000015 - 2.5.x
 C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the
@@ -1120,6 +1121,7 @@ src_multiarray_umath_common = [
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
   'src/common/npy_cpu_dispatch.c',
+  'src/common/npy_sort.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas

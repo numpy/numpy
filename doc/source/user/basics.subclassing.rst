@@ -346,7 +346,7 @@ Simple example - adding an extra attribute to ndarray
 
   class InfoArray(np.ndarray):
 
-      def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
+      def __new__(subtype, shape, dtype=np.float64, buffer=None, offset=0,
                   strides=None, order=None, info=None):
           # Create the ndarray instance of our type, given the usual
           # ndarray input arguments.  This will call the standard
@@ -779,5 +779,3 @@ your function's signature should accept ``**kwargs``. For example:
 This object is now compatible with ``np.sum`` again because any extraneous arguments
 (i.e. keywords that are not ``axis`` or ``dtype``) will be hidden away in the
 ``**unused_kwargs`` parameter.
-
-

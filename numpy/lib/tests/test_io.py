@@ -843,8 +843,6 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_comments_multi_chars(self):
         c = TextIO()
         c.write('/* comment\n1,2,3,5\n')
@@ -1061,8 +1059,6 @@ class TestLoadTxt(LoadTxtBase):
                 c, dtype=dt, converters=float.fromhex, encoding="latin1")
             assert_equal(res, tgt, err_msg=f"{dt}")
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_default_float_converter_no_default_hex_conversion(self):
         """
         Ensure that fromhex is only used for values with the correct prefix and
@@ -1073,8 +1069,6 @@ class TestLoadTxt(LoadTxtBase):
                 match=".*convert string 'a' to float64 at row 0, column 1"):
             np.loadtxt(c)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_default_float_converter_exception(self):
         """
         Ensure that the exception message raised during failed floating point

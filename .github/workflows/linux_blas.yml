@@ -69,14 +69,14 @@ jobs:
       USE_NIGHTLY_OPENBLAS: ${{ matrix.USE_NIGHTLY_OPENBLAS }}
     name: "Test Linux (${{ matrix.USE_NIGHTLY_OPENBLAS && 'nightly' || 'stable' }} OpenBLAS)"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -127,7 +127,7 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel openblas-devel -y
 
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -162,7 +162,7 @@ jobs:
       run: |
         dnf install git gcc-gfortran g++ python3-devel flexiblas-devel -y
 
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -192,14 +192,14 @@ jobs:
     runs-on: ubuntu-latest
     name: "OpenBLAS with CMake"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -220,14 +220,14 @@ jobs:
     runs-on: ubuntu-latest
     name: "Debian libblas/liblapack"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -256,7 +256,7 @@ jobs:
         # If it is needed in the future, use install name `pkgconf-pkg-config`
         zypper install -y git gcc-c++ python3-pip python3-devel blas cblas lapack
 
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -274,7 +274,7 @@ jobs:
       run: |
         # do not use test_requirements.txt, it includes coverage which requires
         # sqlite3, which is not available on OpenSUSE python
-        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        pip install --break-system-packages pytest pytest-xdist hypothesis pytest-timeout
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -283,14 +283,14 @@ jobs:
     runs-on: ubuntu-latest
     name: "MKL (LP64, ILP64, SDL)"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -347,14 +347,14 @@ jobs:
     runs-on: ubuntu-latest
     name: "BLIS"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
@@ -384,14 +384,14 @@ jobs:
     runs-on: ubuntu-latest
     name: "ATLAS"
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |

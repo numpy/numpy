@@ -302,7 +302,7 @@ def ifft(a, n=None, axis=-1, norm=None, out=None):
 
     >>> import matplotlib.pyplot as plt
     >>> t = np.arange(400)
-    >>> n = np.zeros((400,), dtype=complex)
+    >>> n = np.zeros((400,), dtype=np.complex128)
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, label='real')
@@ -1005,7 +1005,7 @@ def ifftn(a, s=None, axes=None, norm=None, out=None):
     Create and plot an image with band-limited frequency content:
 
     >>> import matplotlib.pyplot as plt
-    >>> n = np.zeros((200,200), dtype=complex)
+    >>> n = np.zeros((200,200), dtype=np.complex128)
     >>> n[60:80, 20:40] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20, 20)))
     >>> im = np.fft.ifftn(n).real
     >>> plt.imshow(im)

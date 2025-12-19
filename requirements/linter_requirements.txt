@@ -1,4 +1,4 @@
 # keep in sync with `environment.yml`
 cython-lint
-ruff==0.14.0
+ruff==0.14.7
 GitPython>=3.1.30

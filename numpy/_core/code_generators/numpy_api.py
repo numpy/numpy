@@ -19,7 +19,7 @@ import os
 
 
 def get_annotations():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import numpy
     # (numpy is not yet built)
     genapi_py = os.path.join(os.path.dirname(__file__), 'genapi.py')
     spec = importlib.util.spec_from_file_location('conv_template', genapi_py)

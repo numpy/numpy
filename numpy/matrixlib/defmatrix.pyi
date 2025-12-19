@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Mapping, Sequence
 from types import EllipsisType
-from typing import Any, ClassVar, Literal as L, Self, SupportsIndex, TypeAlias, overload
+from typing import Any, ClassVar, Literal as L, Self, SupportsIndex, overload
 from typing_extensions import TypeVar
 
 import numpy as np
@@ -17,17 +17,15 @@ from numpy._typing import (
 
 __all__ = ["asmatrix", "bmat", "matrix"]
 
-_T = TypeVar("_T")
-_ArrayT = TypeVar("_ArrayT", bound=np.ndarray)
-_BoolOrIntArrayT = TypeVar("_BoolOrIntArrayT", bound=NDArray[np.integer | np.bool])
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_2D, default=_2D, covariant=True)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
-_2D: TypeAlias = tuple[int, int]
-_Matrix: TypeAlias = matrix[_2D, np.dtype[_ScalarT]]
-_ToIndex1: TypeAlias = slice | EllipsisType | NDArray[np.integer | np.bool] | _NestedSequence[int] | None
-_ToIndex2: TypeAlias = tuple[_ToIndex1, _ToIndex1 | SupportsIndex] | tuple[_ToIndex1 | SupportsIndex, _ToIndex1]
+type _2D = tuple[int, int]
+type _Matrix[ScalarT: np.generic] = matrix[_2D, np.dtype[ScalarT]]
+type _ToIndex1 = slice | EllipsisType | NDArray[np.integer | np.bool] | _NestedSequence[int] | None
+type _ToIndex2 = tuple[_ToIndex1, _ToIndex1 | SupportsIndex] | tuple[_ToIndex1 | SupportsIndex, _ToIndex1]
+
+###
 
 class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: ClassVar[float] = 10.0  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -57,7 +55,7 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
 
     #
     def __pow__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def __rpow__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def __rpow__(self, other: ArrayLike, /) -> _Matrix[Incomplete]: ...  # type: ignore[override]
 
     # keep in sync with `prod` and `mean`
     @overload  # type: ignore[override]
@@ -65,9 +63,9 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def sum(self, axis: _ShapeLike, dtype: DTypeLike | None = None, out: None = None) -> _Matrix[Incomplete]: ...
     @overload
-    def sum(self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def sum[OutT: np.ndarray](self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: OutT) -> OutT: ...
     @overload
-    def sum(self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def sum[OutT: np.ndarray](self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `sum` and `mean`
     @overload  # type: ignore[override]
@@ -75,9 +73,9 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def prod(self, axis: _ShapeLike, dtype: DTypeLike | None = None, out: None = None) -> _Matrix[Incomplete]: ...
     @overload
-    def prod(self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def prod[OutT: np.ndarray](self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: OutT) -> OutT: ...
     @overload
-    def prod(self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def prod[OutT: np.ndarray](self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `sum` and `prod`
     @overload  # type: ignore[override]
@@ -85,9 +83,9 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def mean(self, axis: _ShapeLike, dtype: DTypeLike | None = None, out: None = None) -> _Matrix[Incomplete]: ...
     @overload
-    def mean(self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def mean[OutT: np.ndarray](self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: OutT) -> OutT: ...
     @overload
-    def mean(self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def mean[OutT: np.ndarray](self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `var`
     @overload  # type: ignore[override]
@@ -95,11 +93,11 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def std(self, axis: _ShapeLike, dtype: DTypeLike | None = None, out: None = None, ddof: float = 0) -> _Matrix[Incomplete]: ...
     @overload
-    def std(self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: _ArrayT, ddof: float = 0) -> _ArrayT: ...
+    def std[OutT: np.ndarray](self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: OutT, ddof: float = 0) -> OutT: ...
     @overload
-    def std(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT, ddof: float = 0
-    ) -> _ArrayT: ...
+    def std[OutT: np.ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: OutT, ddof: float = 0
+    ) -> OutT: ...
 
     # keep in sync with `std`
     @overload  # type: ignore[override]
@@ -107,11 +105,11 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def var(self, axis: _ShapeLike, dtype: DTypeLike | None = None, out: None = None, ddof: float = 0) -> _Matrix[Incomplete]: ...
     @overload
-    def var(self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: _ArrayT, ddof: float = 0) -> _ArrayT: ...
+    def var[OutT: np.ndarray](self, axis: _ShapeLike | None, dtype: DTypeLike | None, out: OutT, ddof: float = 0) -> OutT: ...
     @overload
-    def var(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT, ddof: float = 0
-    ) -> _ArrayT: ...
+    def var[OutT: np.ndarray](  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, axis: _ShapeLike | None = None, dtype: DTypeLike | None = None, *, out: OutT, ddof: float = 0
+    ) -> OutT: ...
 
     # keep in sync with `all`
     @overload  # type: ignore[override]
@@ -119,9 +117,9 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def any(self, axis: _ShapeLike, out: None = None) -> _Matrix[np.bool]: ...
     @overload
-    def any(self, axis: _ShapeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def any[OutT: np.ndarray](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def any(self, axis: _ShapeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def any[OutT: np.ndarray](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `any`
     @overload  # type: ignore[override]
@@ -129,70 +127,70 @@ class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def all(self, axis: _ShapeLike, out: None = None) -> _Matrix[np.bool]: ...
     @overload
-    def all(self, axis: _ShapeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def all[OutT: np.ndarray](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def all(self, axis: _ShapeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def all[OutT: np.ndarray](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `min` and `ptp`
     @overload  # type: ignore[override]
-    def max(self: NDArray[_ScalarT], axis: None = None, out: None = None) -> _ScalarT: ...
+    def max[ScalarT: np.generic](self: NDArray[ScalarT], axis: None = None, out: None = None) -> ScalarT: ...
     @overload
     def max(self, axis: _ShapeLike, out: None = None) -> matrix[_2D, _DTypeT_co]: ...
     @overload
-    def max(self, axis: _ShapeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def max[OutT: np.ndarray](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def max(self, axis: _ShapeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def max[OutT: np.ndarray](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `max` and `ptp`
     @overload  # type: ignore[override]
-    def min(self: NDArray[_ScalarT], axis: None = None, out: None = None) -> _ScalarT: ...
+    def min[ScalarT: np.generic](self: NDArray[ScalarT], axis: None = None, out: None = None) -> ScalarT: ...
     @overload
     def min(self, axis: _ShapeLike, out: None = None) -> matrix[_2D, _DTypeT_co]: ...
     @overload
-    def min(self, axis: _ShapeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def min[OutT: np.ndarray](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def min(self, axis: _ShapeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def min[OutT: np.ndarray](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `max` and `min`
     @overload
-    def ptp(self: NDArray[_ScalarT], axis: None = None, out: None = None) -> _ScalarT: ...
+    def ptp[ScalarT: np.generic](self: NDArray[ScalarT], axis: None = None, out: None = None) -> ScalarT: ...
     @overload
     def ptp(self, axis: _ShapeLike, out: None = None) -> matrix[_2D, _DTypeT_co]: ...
     @overload
-    def ptp(self, axis: _ShapeLike | None, out: _ArrayT) -> _ArrayT: ...
+    def ptp[OutT: np.ndarray](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def ptp(self, axis: _ShapeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def ptp[OutT: np.ndarray](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `argmin`
     @overload  # type: ignore[override]
-    def argmax(self: NDArray[_ScalarT], axis: None = None, out: None = None) -> np.intp: ...
+    def argmax[ScalarT: np.generic](self: NDArray[ScalarT], axis: None = None, out: None = None) -> np.intp: ...
     @overload
     def argmax(self, axis: _ShapeLike, out: None = None) -> _Matrix[np.intp]: ...
     @overload
-    def argmax(self, axis: _ShapeLike | None, out: _BoolOrIntArrayT) -> _BoolOrIntArrayT: ...
+    def argmax[OutT: NDArray[np.integer | np.bool]](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def argmax(self, axis: _ShapeLike | None = None, *, out: _BoolOrIntArrayT) -> _BoolOrIntArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def argmax[OutT: NDArray[np.integer | np.bool]](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # keep in sync with `argmax`
     @overload  # type: ignore[override]
-    def argmin(self: NDArray[_ScalarT], axis: None = None, out: None = None) -> np.intp: ...
+    def argmin[ScalarT: np.generic](self: NDArray[ScalarT], axis: None = None, out: None = None) -> np.intp: ...
     @overload
     def argmin(self, axis: _ShapeLike, out: None = None) -> _Matrix[np.intp]: ...
     @overload
-    def argmin(self, axis: _ShapeLike | None, out: _BoolOrIntArrayT) -> _BoolOrIntArrayT: ...
+    def argmin[OutT: NDArray[np.integer | np.bool]](self, axis: _ShapeLike | None, out: OutT) -> OutT: ...
     @overload
-    def argmin(self, axis: _ShapeLike | None = None, *, out: _BoolOrIntArrayT) -> _BoolOrIntArrayT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def argmin[OutT: NDArray[np.integer | np.bool]](self, axis: _ShapeLike | None = None, *, out: OutT) -> OutT: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # the second overload handles the (rare) case that the matrix is not 2-d
     @overload
-    def tolist(self: _Matrix[np.generic[_T]]) -> list[list[_T]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    def tolist[T](self: _Matrix[np.generic[T]]) -> list[list[T]]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
     @overload
     def tolist(self) -> Incomplete: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     # these three methods will at least return a `2-d` array of shape (1, n)
     def squeeze(self, /, axis: _ShapeLike | None = None) -> matrix[_2D, _DTypeT_co]: ...
-    def ravel(self, /, order: L["K", "A", "C", "F"] | None = "C") -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def flatten(self, /, order: L["K", "A", "C", "F"] | None = "C") -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def ravel(self, /, order: L["K", "A", "C", "F"] | None = "C") -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]
+    def flatten(self, /, order: L["K", "A", "C", "F"] | None = "C") -> matrix[_2D, _DTypeT_co]: ...  # type: ignore[override]
 
     # matrix.T is inherited from _ScalarOrArrayCommon
     def getT(self) -> Self: ...

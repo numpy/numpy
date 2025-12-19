@@ -1,8 +1,7 @@
 """Private counterpart of ``numpy.typing``."""
 
-import sys
-
 from ._array_like import (
+    ArrayLike as ArrayLike,
     NDArray as NDArray,
     _ArrayLike as _ArrayLike,
     _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
@@ -30,16 +29,12 @@ from ._array_like import (
 #
 from ._char_codes import (
     _BoolCodes as _BoolCodes,
-    _ByteCodes as _ByteCodes,
     _BytesCodes as _BytesCodes,
-    _CDoubleCodes as _CDoubleCodes,
     _CharacterCodes as _CharacterCodes,
     _CLongDoubleCodes as _CLongDoubleCodes,
     _Complex64Codes as _Complex64Codes,
     _Complex128Codes as _Complex128Codes,
     _ComplexFloatingCodes as _ComplexFloatingCodes,
-    _CSingleCodes as _CSingleCodes,
-    _DoubleCodes as _DoubleCodes,
     _DT64Codes as _DT64Codes,
     _FlexibleCodes as _FlexibleCodes,
     _Float16Codes as _Float16Codes,
@@ -47,14 +42,12 @@ from ._char_codes import (
     _Float64Codes as _Float64Codes,
     _FloatingCodes as _FloatingCodes,
     _GenericCodes as _GenericCodes,
-    _HalfCodes as _HalfCodes,
     _InexactCodes as _InexactCodes,
     _Int8Codes as _Int8Codes,
     _Int16Codes as _Int16Codes,
     _Int32Codes as _Int32Codes,
     _Int64Codes as _Int64Codes,
     _IntCCodes as _IntCCodes,
-    _IntCodes as _IntCodes,
     _IntegerCodes as _IntegerCodes,
     _IntPCodes as _IntPCodes,
     _LongCodes as _LongCodes,
@@ -62,29 +55,25 @@ from ._char_codes import (
     _LongLongCodes as _LongLongCodes,
     _NumberCodes as _NumberCodes,
     _ObjectCodes as _ObjectCodes,
-    _ShortCodes as _ShortCodes,
     _SignedIntegerCodes as _SignedIntegerCodes,
-    _SingleCodes as _SingleCodes,
     _StrCodes as _StrCodes,
     _StringCodes as _StringCodes,
     _TD64Codes as _TD64Codes,
-    _UByteCodes as _UByteCodes,
     _UInt8Codes as _UInt8Codes,
     _UInt16Codes as _UInt16Codes,
     _UInt32Codes as _UInt32Codes,
     _UInt64Codes as _UInt64Codes,
     _UIntCCodes as _UIntCCodes,
-    _UIntCodes as _UIntCodes,
     _UIntPCodes as _UIntPCodes,
     _ULongCodes as _ULongCodes,
     _ULongLongCodes as _ULongLongCodes,
     _UnsignedIntegerCodes as _UnsignedIntegerCodes,
-    _UShortCodes as _UShortCodes,
     _VoidCodes as _VoidCodes,
 )
 
 #
 from ._dtype_like import (
+    DTypeLike as DTypeLike,
     _DTypeLike as _DTypeLike,
     _DTypeLikeBool as _DTypeLikeBool,
     _DTypeLikeBytes as _DTypeLikeBytes,
@@ -157,17 +146,3 @@ from ._ufunc import (
     _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
     _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
 )
-
-# wrapping the public aliases in `TypeAliasType` helps with introspection readability
-if sys.version_info >= (3, 12):
-    from typing import TypeAliasType
-
-    from ._array_like import ArrayLike as _ArrayLikeAlias
-    from ._dtype_like import DTypeLike as _DTypeLikeAlias
-
-    ArrayLike = TypeAliasType("ArrayLike", _ArrayLikeAlias)
-    DTypeLike = TypeAliasType("DTypeLike", _DTypeLikeAlias)
-
-else:
-    from ._array_like import ArrayLike as ArrayLike
-    from ._dtype_like import DTypeLike as DTypeLike

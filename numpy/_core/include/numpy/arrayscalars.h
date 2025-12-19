@@ -173,9 +173,11 @@ typedef struct {
 #define PyArrayScalar_True ((PyObject *)(&(_PyArrayScalar_BoolValues[1])))
 #define PyArrayScalar_FromLong(i) \
         ((PyObject *)(&(_PyArrayScalar_BoolValues[((i)!=0)])))
-#define PyArrayScalar_RETURN_BOOL_FROM_LONG(i)                  \
-        return Py_INCREF(PyArrayScalar_FromLong(i)), \
-                PyArrayScalar_FromLong(i)
+#define PyArrayScalar_RETURN_BOOL_FROM_LONG(i) do {     \
+        PyObject *obj = PyArrayScalar_FromLong(i);      \
+        Py_INCREF(obj);                                 \
+        return obj;                                     \
+} while (0)
 #define PyArrayScalar_RETURN_FALSE              \
         return Py_INCREF(PyArrayScalar_False),  \
                 PyArrayScalar_False

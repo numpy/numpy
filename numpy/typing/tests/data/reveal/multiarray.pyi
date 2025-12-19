@@ -1,12 +1,10 @@
 import datetime as dt
-from typing import Any, Literal, TypeVar, assert_type
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
-
-class SubClass(npt.NDArray[_ScalarT_co]): ...
+class SubClass[ScalarT: np.generic](np.ndarray[tuple[Any, ...], np.dtype[ScalarT]]): ...
 
 subclass: SubClass[np.float64]
 
@@ -170,9 +168,10 @@ assert_type(np.busday_count("2011-01", "2011-02"), np.int_)
 assert_type(np.busday_count(["2011-01"], "2011-02"), npt.NDArray[np.int_])
 assert_type(np.busday_count(["2011-01"], date_scalar), npt.NDArray[np.int_])
 
-assert_type(np.busday_offset(M, m), np.datetime64)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.busday_offset(M, m), np.datetime64)  # type: ignore[assert-type]
+assert_type(np.busday_offset(M, 5), np.datetime64)  # type: ignore[assert-type]
 assert_type(np.busday_offset(date_scalar, m), np.datetime64)
-assert_type(np.busday_offset(M, 5), np.datetime64)
 assert_type(np.busday_offset(AR_M, m), npt.NDArray[np.datetime64])
 assert_type(np.busday_offset(M, timedelta_seq), npt.NDArray[np.datetime64])
 assert_type(np.busday_offset("2011-01", "2011-02", roll="forward"), np.datetime64)
@@ -182,7 +181,8 @@ assert_type(np.is_busday("2012"), np.bool)
 assert_type(np.is_busday(date_scalar), np.bool)
 assert_type(np.is_busday(["2012"]), npt.NDArray[np.bool])
 
-assert_type(np.datetime_as_string(M), np.str_)
+# NOTE: Mypy incorrectly infers `Any`, but pyright behaves correctly.
+assert_type(np.datetime_as_string(M), np.str_)  # type: ignore[assert-type]
 assert_type(np.datetime_as_string(AR_M), npt.NDArray[np.str_])
 
 assert_type(np.busdaycalendar(holidays=date_seq), np.busdaycalendar)

@@ -317,20 +317,6 @@ The generic steps to take are:
    machine. Otherwise you pick up a static library built for the wrong
    architecture.
 
-When you build with ``numpy.distutils`` (deprecated), then use this in your ``setup.py``:
-
-        .. hidden in a comment so as to be included in refguide but not rendered documentation
-                >>> import numpy.distutils.misc_util
-                >>> config = np.distutils.misc_util.Configuration(None, '', '.')
-                >>> with open('foo.c', 'w') as f: pass
-
-        >>> from numpy.distutils.misc_util import get_info
-        >>> info = get_info('npymath')
-        >>> _ = config.add_extension('foo', sources=['foo.c'], extra_info=info)
-
-In other words, the usage of ``info`` is exactly the same as when using
-``blas_info`` and co.
-
 When you are building with `Meson <https://mesonbuild.com>`__, use::
 
     # Note that this will get easier in the future, when Meson has

@@ -59,6 +59,11 @@ numpy\.core\.shape_base.*
 numpy\.core\.umath.*
 numpy\.typing\.mypy_plugin
 
+# false positive "... is not a Union" errors
+numpy\.typing\.ArrayLike
+numpy\.typing\.DTypeLike
+numpy\.typing\.NDArray
+
 # ufuncs, see https://github.com/python/mypy/issues/20223
 numpy\.(\w+\.)*abs
 numpy\.(\w+\.)*absolute

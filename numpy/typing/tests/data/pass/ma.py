@@ -1,12 +1,11 @@
 import datetime as dt
-from typing import Any, TypeAlias, TypeVar, cast
+from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _Shape
 
-_ScalarT = TypeVar("_ScalarT", bound=np.generic)
-MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, np.dtype[_ScalarT]]
+type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_Shape, np.dtype[ScalarT]]
 
 # mypy: disable-error-code=no-untyped-call
 

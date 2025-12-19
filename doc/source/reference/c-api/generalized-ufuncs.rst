@@ -4,6 +4,8 @@
 Generalized universal function API
 ==================================
 
+.. seealso:: :ref:`ufuncs`
+
 There is a general need for looping over not only functions on scalars
 but also over functions on vectors (or arrays).
 This concept is realized in NumPy by generalizing the universal functions

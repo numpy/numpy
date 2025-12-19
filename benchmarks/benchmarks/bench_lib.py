@@ -2,6 +2,8 @@
 
 import string
 
+from asv_runner.benchmarks.mark import SkipNotImplemented
+
 import numpy as np
 
 from .common import Benchmark
@@ -185,6 +187,51 @@ class Unique(Benchmark):
 
     def time_unique_all(self, array_size, percent_nans,
                         percent_unique_values, dtype):
+        np.unique(self.arr, return_index=True,
+                  return_inverse=True, return_counts=True)
+
+
+class UniqueIntegers(Benchmark):
+    """Benchmark for np.unique with integer dtypes."""
+
+    param_names = ["array_size", "num_unique_values", "dtype"]
+    params = [
+        # sizes of the 1D arrays
+        [200, 100000, 1000000],
+        # number of unique values in arrays
+        [25, 125, 5000, 50000, 250000],
+        # dtypes of the arrays
+        [np.uint8, np.int16, np.uint32, np.int64],
+    ]
+
+    def setup(self, array_size, num_unique_values, dtype):
+        unique_array = np.arange(num_unique_values, dtype=dtype)
+        base_array = np.resize(unique_array, array_size)
+        rng = np.random.default_rng(121263137472525314065)
+        rng.shuffle(base_array)
+        self.arr = base_array
+
+    def time_unique_values(self, array_size, num_unique_values, dtype):
+        if num_unique_values >= np.iinfo(dtype).max or num_unique_values > array_size:
+            raise SkipNotImplemented("skipped")
+        np.unique(self.arr, return_index=False,
+                  return_inverse=False, return_counts=False)
+
+    def time_unique_counts(self, array_size, num_unique_values, dtype):
+        if num_unique_values >= np.iinfo(dtype).max or num_unique_values > array_size:
+            raise SkipNotImplemented("skipped")
+        np.unique(self.arr, return_index=False,
+                  return_inverse=False, return_counts=True,)
+
+    def time_unique_inverse(self, array_size, num_unique_values, dtype):
+        if num_unique_values >= np.iinfo(dtype).max or num_unique_values > array_size:
+            raise SkipNotImplemented("skipped")
+        np.unique(self.arr, return_index=False,
+                  return_inverse=True, return_counts=False)
+
+    def time_unique_all(self, array_size, num_unique_values, dtype):
+        if num_unique_values >= np.iinfo(dtype).max or num_unique_values > array_size:
+            raise SkipNotImplemented("skipped")
         np.unique(self.arr, return_index=True,
                   return_inverse=True, return_counts=True)
 
