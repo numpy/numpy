@@ -59,6 +59,12 @@ StoreU(const Vec<TLane> &a, TLane *ptr)
     hn::StoreU(a, _Tag<TLane>(), ptr);
 }
 
+/// Equivalent to Highway: void StoreN(Vec<D> v, D d, T* p, size_t n).
+template <typename TLane>
+HWY_API void StoreN(TLane* ptr, const Vec<TLane>& v, size_t max_lanes_to_store) {
+    hn::StoreN(v, _Tag<TLane>(), ptr, max_lanes_to_store);
+}
+
 /// Returns the number of vector lanes based on the lane type.
 template <typename TLane>
 HWY_API HWY_LANES_CONSTEXPR size_t
@@ -91,6 +97,13 @@ Set(TLane val)
     return hn::Set(_Tag<TLane>(), val);
 }
 
+/// Equivalent to Highway: Vec<D> LoadNOr(V no, D d, const T* p, size_t n).
+template <typename TLane>
+HWY_API Vec<TLane> LoadNOr(const TLane* ptr,
+                           size_t max_lanes_to_load) {
+    return hn::LoadNOr(np::simd::Zero<TLane>(), _Tag<TLane>(), ptr, max_lanes_to_load);
+}
+
 /// Converts a mask to a vector based on the specified lane type.
 template <typename TLane, typename TMask>
 HWY_API Vec<TLane>
@@ -106,6 +119,13 @@ HWY_API Vec<TLaneTo>
 BitCast(const TVec &v)
 {
     return hn::BitCast(_Tag<TLaneTo>(), v);
+}
+
+// horizontal reduction
+template <typename TLane>
+HWY_API TLane ReduceSum(const Vec<TLane> &v)
+{
+    return hn::ReduceSum(_Tag<TLane>(), v);
 }
 
 // Import common Highway intrinsics
