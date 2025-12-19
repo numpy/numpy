@@ -76,17 +76,25 @@ namespace sr = npsr::HWY_NAMESPACE;
 /// Default precision configrations for NumPy SIMD Routines
 // TODO: Allow user to configure the default precision at build time.
 namespace detail {
-using PreciseHigh = decltype(npsr::Precise{});
-using PreciseLow = decltype(npsr::Precise{npsr::kLowAccuracy});
+// `npsr::Precise` is a meta-RAII class responsible for managing the floating-point environment at runtime
+// and holding compile-time configurations for intrinsic floating-point behavior.
+// Default configurations are set to the highest IEEE compliance intent.
+// For more information, see:
+// https://github.com/numpy/numpy-simd-routines/blob/1acd14571b9f58072d1f7f17886945000d78b56a/npsr/precise.h#L93
+// However, when float64 SIMD is not available or disabled, we define a dummy type to avoid
+// clearing floating-point exceptions within its destructor.
 struct PresiceDummy {};
+
 template <typename T>
 struct PreciseByType {};
 template <>
-struct PreciseByType<float> { using Type = PreciseLow; };
+struct PreciseByType<float> {
+    using Type = decltype(npsr::Precise{npsr::kLowAccuracy});
+};
 template <>
 struct PreciseByType<double> {
 #if NPY_HWY_F64
-    using Type = PreciseHigh;
+    using Type = decltype(npsr::Precise{});
 #else
     // If float64 SIMD isn’t available, use a dummy type.
     // The scalar path will run, but `Type` must still be defined.
@@ -96,9 +104,12 @@ struct PreciseByType<double> {
 #endif
 };
 } // namespace detail
+
+/// `npsr::Precise<...>` for the given type `T`.
+/// If `T` is `float`, it uses the low-accuracy configuration by default.
+/// If `T` is `double`, it uses the high-accuracy configuration by default(if float64 SIMD is available).
 template <typename T>
 using Precise = typename detail::PreciseByType<T>::Type;
-
 #endif
 #include "simd.inc.hpp"
 }  // namespace simd
