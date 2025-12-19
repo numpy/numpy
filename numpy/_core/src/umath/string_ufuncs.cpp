@@ -1125,9 +1125,9 @@ string_partition_promoter(PyObject *NPY_UNUSED(ufunc),
 static NPY_CASTING
 string_partition_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *const given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[6]),
+        PyArray_Descr *const given_descrs[6],
+        PyArray_Descr *loop_descrs[6],
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (!given_descrs[3] || !given_descrs[4] || !given_descrs[5]) {
