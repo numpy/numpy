@@ -54,6 +54,7 @@ from numpy._typing import (
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
+    _SupportsArray,
 )
 
 __all__ = [
@@ -351,14 +352,63 @@ def partition(
     order: str | Sequence[str] | None = None,
 ) -> NDArray[Any]: ...
 
-#
+# keep roughly in sync with `ndarray.argpartition`
+@overload  # axis: None
 def argpartition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
-    axis: SupportsIndex | None = -1,
+    axis: None,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.intp]]: ...
+@overload  # known shape, axis: index (default)
+def argpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload  # 1d array-like, axis: index (default)
+def argpartition(
+    a: Sequence[np.generic | complex],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.intp]]: ...
+@overload  # 2d array-like, axis: index (default)
+def argpartition(
+    a: Sequence[Sequence[np.generic | complex]],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.intp]]: ...
+@overload  # ?d array-like, axis: index (default)
+def argpartition(
+    a: ArrayLike,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> NDArray[np.intp]: ...
+@overload  # void, axis: None
+def argpartition(
+    a: _SupportsArray[np.dtype[np.void]],
+    kth: _ArrayLikeInt,
+    axis: None,
     kind: _PartitionKind = "introselect",
     order: str | Sequence[str] | None = None,
-) -> NDArray[intp]: ...
+) -> np.ndarray[tuple[int], np.dtype[intp]]: ...
+@overload  # void, axis: index (default)
+def argpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.void]],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 
 #
 @overload

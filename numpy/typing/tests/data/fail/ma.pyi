@@ -104,9 +104,9 @@ MAR_1d_f8.partition(order=lambda: "cabbage")  # type: ignore[arg-type, call-arg]
 MAR_1d_f8.partition(AR_b)  # type: ignore[arg-type]
 
 MAR_1d_f8.argpartition(["cabbage"])  # type: ignore[arg-type]
-MAR_1d_f8.argpartition(axis=(0, 1))  # type: ignore[arg-type, call-arg]
-MAR_1d_f8.argpartition(kind="cabbage")  # type: ignore[arg-type, call-arg]
-MAR_1d_f8.argpartition(order=lambda: "cabbage")  # type: ignore[arg-type, call-arg]
+MAR_1d_f8.argpartition(axis=(0, 1))  # type: ignore[call-overload]
+MAR_1d_f8.argpartition(kind="cabbage")  # type: ignore[call-overload]
+MAR_1d_f8.argpartition(order=lambda: "cabbage")  # type: ignore[call-overload]
 MAR_1d_f8.argpartition(AR_b)  # type: ignore[arg-type]
 
 np.ma.ndim(lambda: "lambda")  # type: ignore[arg-type]
