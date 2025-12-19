@@ -31,12 +31,12 @@ Matrix and vector products
    matrix_power
    tensordot
    matmul
+   outer
 
 Decompositions
 --------------
 
    cholesky
-   outer
    qr
    svd
    svdvals
