@@ -1026,7 +1026,9 @@ class ABCPolyBase(abc.ABC):
         xnew = pu.mapdomain(x, domain, window)
         res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
 
-        if domain[0] + domain[1] != 0 or window[0] + window[1] != 0:
+        off = (domain[1] * window[0] - domain[0] * window[1])
+
+        if off != 0:
             if hasattr(deg, "__iter__") and len(deg) - 1 != max(deg):
                 msg = "The polynomial may contain degrees other than those in deg"
                 warnings.warn(msg, UserWarning)
