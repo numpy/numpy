@@ -1647,6 +1647,54 @@ class TestSpecialFloats:
         callable(x[::stride], out=x[:M])
         assert_equal(x[:M], y)
 
+    @pytest.mark.parametrize("func", [np.sin, np.cos])
+    @pytest.mark.parametrize("dtype", ["f", "d"])
+    def test_trig_facts(self, dtype, func):
+        atol, max_ulp = (1e-6, 3) if dtype == "f" else (1e-15, 1)
+        test_data = {
+            np.sin: [
+                (0, 0),
+                (np.pi, 0),
+                (-np.pi, 0),
+                (2 * np.pi, 0),
+                (-2 * np.pi, 0),
+                (np.pi / 2, 1),
+                (-np.pi / 2, -1),
+                (3 * np.pi / 2, -1),
+                (-3 * np.pi / 2, 1),
+                (np.pi / 6, 0.5),
+                (5 * np.pi / 6, 0.5),
+                (-np.pi / 6, -0.5),
+                (-5 * np.pi / 6, -0.5),
+            ],
+            np.cos: [
+                (0, 1),
+                (np.pi, -1),
+                (-np.pi, -1),
+                (2 * np.pi, 1),
+                (-2 * np.pi, 1),
+                (np.pi / 2, 0),
+                (-np.pi / 2, 0),
+                (3 * np.pi / 2, 0),
+                (-3 * np.pi / 2, 0),
+                (np.pi / 3, 0.5),
+                (5 * np.pi / 3, 0.5),
+                (-np.pi / 3, 0.5),
+                (-5 * np.pi / 3, 0.5),
+            ],
+        }[func]
+        for s_x, s_expected in test_data:
+            x = np.array([s_x] * (128 + 1), dtype=dtype)
+            result = func(x)
+            # Check that all results are identical, to catch issues with
+            # vectorization
+            assert np.all(result == result[0])
+            expected = np.array([s_expected] * (128 + 1), dtype=dtype)
+            if s_expected == 0:
+                assert_allclose(result, expected, atol=atol, rtol=0)
+            else:
+                assert_array_max_ulp(result, expected, maxulp=max_ulp)
+
     @pytest.mark.parametrize('dt', ['e', 'f', 'd', 'g'])
     def test_sqrt_values(self, dt):
         with np.errstate(all='ignore'):
