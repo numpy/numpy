@@ -29,6 +29,7 @@ elif cc.get_id() == 'msvc'
     error('NumPy requires at least vc142 (default with Visual Studio 2019) ' + \
           'when building with MSVC')
   endif
+  add_project_arguments('/experimental:c11atomics', language: 'c')
 endif
 if not cy.version().version_compare('>=3.0.6')
   error('NumPy requires Cython >= 3.0.6')
