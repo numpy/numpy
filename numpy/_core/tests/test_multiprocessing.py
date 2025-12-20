@@ -1,7 +1,9 @@
+import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import IS_PYPY, IS_WASM
 
 pytestmark = pytest.mark.thread_unsafe(
     reason="tests in this module are explicitly multi-processed"
@@ -28,6 +30,8 @@ def bool_array_reader(shm_name, n):
 
 @pytest.mark.skipif(IS_WASM,
                     reason="WASM does not support _posixshmem")
+@pytest.mark.skipif(IS_PYPY and sys.platform == "win32",
+                    reason="_winapi does not support UnmapViewOfFile")
 def test_read_write_bool_array():
     # See: gh-30389
     #
