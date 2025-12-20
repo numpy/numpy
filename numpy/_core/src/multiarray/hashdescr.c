@@ -1,10 +1,10 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#include <stdatomic.h>
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 
 #include <numpy/arrayobject.h>
 

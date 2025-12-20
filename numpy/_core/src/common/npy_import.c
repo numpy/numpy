@@ -1,10 +1,9 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#include <stdatomic.h>
-
 #include "numpy/ndarraytypes.h"
 #include "npy_import.h"
+#include <stdatomic.h>
 
 
 NPY_VISIBILITY_HIDDEN npy_runtime_imports_struct npy_runtime_imports;
