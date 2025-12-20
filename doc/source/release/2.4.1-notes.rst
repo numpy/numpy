@@ -1,0 +1,25 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.4.1 Release Notes
+=========================
+
+The NumPy 2.4.1 release continues the work to improve free threaded Python
+support, user dtypes implementation, and annotations. There are many expired
+deprecations and bug fixes as well.
+
+This release supports Python versions 3.11-3.14
+
+
+Highlights
+==========
+
+*We'll choose highlights for this release near the end of the release cycle.*
+
+
+.. if release snippets have been incorporated already, uncomment the follow
+   line (leave the `.. include:: directive)
+
+.. **Content from release note snippets in doc/release/upcoming_changes:**
+
+.. include:: notes-towncrier.rst
