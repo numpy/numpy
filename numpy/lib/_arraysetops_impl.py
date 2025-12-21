@@ -377,16 +377,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             is not NotImplemented:
             hash_unique, hash_indices, hash_inverse, hash_counts = res
             if sorted:
-                order = np.argsort(hash_unique)
-                hash_unique = hash_unique[order]
-                if return_index:
-                    hash_indices = hash_indices[order]
-                if return_inverse:
-                    inverse_order = np.empty_like(order)
-                    inverse_order[order] = np.arange(order.size)
-                    hash_inverse = inverse_order[hash_inverse]
-                if return_counts:
-                    hash_counts = hash_counts[order]
+                if return_index or return_inverse or return_counts:
+                    order = np.argsort(hash_unique)
+                    hash_unique = hash_unique[order]
+                    if return_index:
+                        hash_indices = hash_indices[order]
+                    if return_inverse:
+                        inverse_order = np.empty_like(order)
+                        inverse_order[order] = np.arange(order.size)
+                        hash_inverse = inverse_order[hash_inverse]
+                    if return_counts:
+                        hash_counts = hash_counts[order]
+                else:
+                    hash_unique.sort()
 
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             ret = (conv.wrap(hash_unique),)
