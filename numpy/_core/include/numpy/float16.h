@@ -47,7 +47,6 @@ static inline int npy_float16_le(npy_half h1, npy_half h2);
 static inline int npy_float16_lt(npy_half h1, npy_half h2);
 static inline int npy_float16_ge(npy_half h1, npy_half h2);
 static inline int npy_float16_gt(npy_half h1, npy_half h2);
-/* faster *_nonan variants for when you know h1 and h2 are not NaN */
 /* Miscellaneous functions */
 static inline int npy_float16_iszero(npy_half h);
 static inline int npy_float16_isnan(npy_half h);
