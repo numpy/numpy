@@ -64,6 +64,7 @@ template <typename T>
 static inline NPY_GCC_OPT_3 T
 floating_point_sum_of_arr(const  T *data, npy_intp count)
 {
+#if NPY_HWY
     const int vstep = np::simd::Lanes<T>();
     auto v_accum = np::simd::Zero<T>();
     const npy_intp vstepx4 = vstep * 4;
@@ -86,6 +87,7 @@ floating_point_sum_of_arr(const  T *data, npy_intp count)
     }
     T accum = np::simd::ReduceSum<T>(v_accum);
     return accum;
+#endif
 }
 
 template <typename T, typename AccumType>
@@ -156,6 +158,7 @@ sum_of_arr(T *data, npy_intp count) noexcept
 static inline NPY_GCC_OPT_3 void
 floating_point_sum_of_products_muladd(const T *data, T *data_out, AccumType scalar, npy_intp count)
 {
+#if NPY_HWY
     const int vstep = np::simd::Lanes<T>();
     const auto v_scalar = np::simd::Set(scalar);
     const npy_intp vstepx4 = vstep * 4;
@@ -187,6 +190,7 @@ floating_point_sum_of_products_muladd(const T *data, T *data_out, AccumType scal
         auto c = np::simd::Add(np::simd::Mul(a, v_scalar), b);
         np::simd::StoreN(data_out,  c, count);
     }
+#endif
 }
 
  template <typename T, typename AccumType>
@@ -277,6 +281,7 @@ static NPY_GCC_OPT_3 T
 floating_point_sum_of_arr_products_contig_contig_outstride0_two(
         const T *data0, const T *data1, npy_intp count)
 {
+#if NPY_HWY
     const int vstep = np::simd::Lanes<T>();
     auto v_accum = np::simd::Zero<T>();
     const npy_intp vstepx4 = vstep * 4;
@@ -305,6 +310,7 @@ floating_point_sum_of_arr_products_contig_contig_outstride0_two(
 
     T accum = np::simd::ReduceSum<T>(v_accum);
     return accum;
+#endif
 }
 
  template <typename T, typename AccumType>
@@ -888,8 +894,6 @@ data2 += stride2;
  sum_of_products_contig_one(int nop, char **dataptr, npy_intp const *NPY_UNUSED(strides),
                             npy_intp count)
  {
-   //TODO: remove me
-    std::cout<<"[DEBUG]"<< __func__ <<std::endl;
      T *data0 = (T *)dataptr[0];
      T *data_out = (T *)dataptr[1];
      NPY_EINSUM_DBG_PRINT1("sum_of_products_contig_one (%d)\n", (int)count);
@@ -943,8 +947,7 @@ template <typename T>
 static inline NPY_GCC_OPT_3 void
 floating_point_sum_of_products_contig_two(const T *data0, const T *data1, T *data_out, npy_intp count)
 {
-    //TODO: remove me
-    std::cout<<"[DEBUG] floating_point_sum_of_products_contig_two";
+#if NPY_HWY
     const int vstep = np::simd::Lanes<T>();
     const npy_intp vstepx4 = vstep * 4;
 
@@ -981,6 +984,7 @@ floating_point_sum_of_products_contig_two(const T *data0, const T *data1, T *dat
         auto c = np::simd::LoadNOr(data_out, count);
         np::simd::StoreN(data_out,np::simd::Add(np::simd::Mul(a, b), c), count);
     }
+#endif
 }
 
 template <typename T, typename AccumType>
