@@ -27,7 +27,7 @@
 #endif
 #endif
 
-/* Do if ASAN or MSAN instrumentation is enabled.
+/* Do not enable the alloc cache if ASAN or MSAN instrumentation is enabled.
  * The cache makes ASAN use-after-free or MSAN
  * use-of-uninitialized-memory warnings less useful. */
 #if defined(__has_feature)
