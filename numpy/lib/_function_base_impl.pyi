@@ -536,19 +536,19 @@ def extract(condition: ArrayLike, arr: ArrayLike) -> _Array1D[Incomplete]: ...
 def select(
     condlist: _SizedIterable[_ArrayLikeBool_co],
     choicelist: Sequence[_ArrayT],
-    default: _ScalarLike_co = 0,
+    default: ArrayLike = 0,
 ) -> _ArrayT: ...
 @overload
 def select(
     condlist: _SizedIterable[_ArrayLikeBool_co],
     choicelist: Sequence[_ArrayLike[_ScalarT]] | NDArray[_ScalarT],
-    default: _ScalarLike_co = 0,
+    default: ArrayLike = 0,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def select(
     condlist: _SizedIterable[_ArrayLikeBool_co],
     choicelist: Sequence[ArrayLike],
-    default: _ScalarLike_co = 0,
+    default: ArrayLike = 0,
 ) -> np.ndarray: ...
 
 # keep roughly in sync with `ma.core.copy`
