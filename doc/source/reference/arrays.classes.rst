@@ -340,8 +340,7 @@ NumPy provides several hooks that classes can customize:
 
    **Example**
 
-   To get a feel for writing custom array containers, we'll begin with a simple
-   example that has rather narrow utility but illustrates the concepts involved.
+   Use ``__array__`` to create a diagonal array of fixed size and value:
 
    >>> import numpy as np
    >>> class DiagonalArray:
@@ -374,13 +373,7 @@ NumPy provides several hooks that classes can customize:
           [0., 0., 0., 1., 0.],
           [0., 0., 0., 0., 1.]])
 
-   The ``__array__`` method can optionally accept a `dtype` argument. If provided,
-   this argument specifies the desired data type for the resulting NumPy array.
-   Your implementation should attempt to convert the data to this `dtype`
-   if possible. If the conversion is not supported, it's generally best
-   to fall back to a default type or raise a `TypeError` or `ValueError`.
-
-   Here's an example demonstrating its use with `dtype` specification:
+   Using ``dtype`` should return an appropriate ndarray or raise an error:
 
    >>> np.asarray(arr, dtype=np.float32)
    array([[1., 0., 0., 0., 0.],
