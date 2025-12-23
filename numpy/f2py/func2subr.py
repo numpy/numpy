@@ -86,7 +86,7 @@ def useiso_c_binding(rout):
 
 def useiso_fortran_env(rout):
     useisof = False
-    for key, value in rout['vars'].items():
+    for value in rout['vars'].values():
         kind_value = value.get('kindselector', {}).get('kind')
         if kind_value in isof_kindmap:
             return True

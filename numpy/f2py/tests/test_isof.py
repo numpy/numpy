@@ -1,7 +1,8 @@
-from . import util
 import numpy as np
-import pytest
 from numpy.testing import assert_allclose
+
+from . import util
+
 
 class TestIOSF(util.F2PyTest):
     sources = [
@@ -36,7 +37,7 @@ class TestIOSF(util.F2PyTest):
         assert exp_out.dtype == out.dtype
 
     def test_f_add_int8_arr(self):
-        args = np.arange(6, dtype = np.int8)
+        args = np.arange(6, dtype=np.int8)
         out = self.module.foddity.f_add_int8_arr(args[:3], args[3:])
         exp_out = args[:3] + args[3:]
         assert_allclose(out, exp_out)
