@@ -130,7 +130,7 @@ We can check that ``arr`` and ``new_arr`` share the same data buffer:
 The ``__array__()`` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``__array__()`` method ensures that any NumPy-like object (an array, any
+The `__array__() <../reference/arrays.classes.html#numpy.class.\_\_array\_\_>`__ method ensures that any NumPy-like object (an array, any
 object exposing the array interface, an object whose ``__array__()`` method
 returns an array or any nested sequence) that implements it can be used as a
 NumPy array. If possible, this will mean using ``__array__()`` to create a NumPy
@@ -148,9 +148,6 @@ is needed.
 
 If a class implements the old signature ``__array__(self)``, for ``np.array(a)``
 a warning will be raised saying that ``dtype`` and ``copy`` arguments are missing.
-
-To see an example of a custom array implementation including the use of
-``__array__()``, see :ref:`basics.dispatch`.
 
 The DLPack Protocol
 ~~~~~~~~~~~~~~~~~~~
