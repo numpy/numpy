@@ -25,7 +25,7 @@ if cc.get_id() == 'gcc'
     error('NumPy requires GCC >= 9.3')
   endif
 elif cc.get_id() == 'msvc'
-  if not cc.version().version_compare('>=19.20')
+  if not cc.version().version_compare('>=19.35')
     error('NumPy requires at least vc142 (default with Visual Studio 2019) ' + \
           'when building with MSVC')
   endif
