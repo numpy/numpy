@@ -1,12 +1,13 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 
 #include <numpy/arrayobject.h>
 
-#include "npy_atomic.h"
 #include "npy_config.h"
 
 
@@ -303,14 +304,14 @@ PyArray_DescrHash(PyObject* odescr)
     }
     descr = (PyArray_Descr*)odescr;
 
-    hash = npy_atomic_load_hash_t(&descr->hash);
+    hash = atomic_load_explicit((_Atomic(npy_hash_t) *)&descr->hash, memory_order_relaxed);
 
     if (hash == -1) {
         hash = _PyArray_DescrHashImp(descr);
         if (hash == -1) {
             return -1;
         }
-        npy_atomic_store_hash_t(&descr->hash, hash);
+        atomic_store_explicit((_Atomic(npy_hash_t) *)&descr->hash, hash, memory_order_relaxed);
     }
 
     return hash;
