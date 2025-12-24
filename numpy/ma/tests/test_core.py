@@ -6,6 +6,7 @@
 __author__ = "Pierre GF Gerard-Marchant"
 
 import copy
+import datetime as dt
 import inspect
 import itertools
 import operator
@@ -2271,6 +2272,14 @@ class TestFillingValues:
         assert_equal(fval, default_fill_value(b"camelot!"))
         assert_raises(TypeError, _check_fill_value, 1e+20, int)
         assert_raises(TypeError, _check_fill_value, 'stuff', int)
+
+    def test_fill_value_datetime_structured(self):
+        # gh-29818
+        rec = np.array([(dt.date(2025, 4, 1),)], dtype=[('foo', '<M8[D]')])
+        ma = np.ma.masked_array(rec)
+        np.sort(ma)
+        res = np.ma.minimum_fill_value(ma)
+        assert isinstance(res['foo'], np.datetime64)
 
     def test_check_on_fields(self):
         # Tests _check_fill_value with records
@@ -4975,9 +4984,10 @@ class TestMaskedArrayFunctions:
         bools = [True, False]
         dtypes = [MaskType, float]
         msgformat = 'copy=%s, shrink=%s, dtype=%s'
-        for cpy, shr, dt in itertools.product(bools, bools, dtypes):
-            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
-            assert_(res is nomask, msgformat % (cpy, shr, dt))
+        # renamed 'dt' to 'dtype'
+        for cpy, shr, dtype in itertools.product(bools, bools, dtypes):
+            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dtype)
+            assert_(res is nomask, msgformat % (cpy, shr, dtype))
 
     def test_mask_or(self):
         # Initialize
@@ -5308,9 +5318,10 @@ class TestMaskedObjectArray:
 
     def test_getitem(self):
         arr = np.ma.array([None, None])
-        for dt in [float, object]:
-            a0 = np.eye(2).astype(dt)
-            a1 = np.eye(3).astype(dt)
+        # renamed 'dt' to 'dtype'
+        for dtype in [float, object]:
+            a0 = np.eye(2).astype(dtype)
+            a1 = np.eye(3).astype(dtype)
             arr[0] = a0
             arr[1] = a1
 
