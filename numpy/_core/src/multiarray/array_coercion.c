@@ -1209,7 +1209,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     }
     ret = max_dims;
 
-  finish:
+  finish:;
 
     NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
 
