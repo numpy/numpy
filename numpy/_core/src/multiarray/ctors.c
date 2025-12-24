@@ -495,9 +495,11 @@ PyArray_AssignFromCache_Recursive(
 {
     /* Consume first cache element by extracting information and freeing it */
     PyObject *obj = (*cache)->arr_or_sequence;
+    PyObject *orig_obj = (*cache)->converted_obj;
     Py_INCREF(obj);
     npy_bool sequence = (*cache)->sequence;
     int depth = (*cache)->depth;
+    int ret = 0;
     *cache = npy_unlink_coercion_cache(*cache);
 
     /* The element is either a sequence, or an array */
@@ -510,14 +512,17 @@ PyArray_AssignFromCache_Recursive(
     }
     else {
         assert(depth != ndim);
+        // this macro thakes *the argument* of PySequence_Fast, which is orig_obj;
+        // not the object returned by PySequence_Fast, which is obj
+        NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_obj)
         npy_intp length = PySequence_Length(obj);
         if (length != PyArray_DIMS(self)[0]) {
             PyErr_SetString(PyExc_RuntimeError,
-                    "Inconsistent object during array creation? "
-                    "Content of sequences changed (length inconsistent).");
-            goto fail;
+                            "Inconsistent object during array creation? "
+                            "Content of sequences changed (length inconsistent).");
+            ret = -1;
+            goto finish_section;
         }
-
         for (npy_intp i = 0; i < length; i++) {
             PyObject *value = PySequence_Fast_GET_ITEM(obj, i);
 
@@ -533,7 +538,8 @@ PyArray_AssignFromCache_Recursive(
                 char *item;
                 item = (PyArray_BYTES(self) + i * PyArray_STRIDES(self)[0]);
                 if (PyArray_Pack(PyArray_DESCR(self), item, value) < 0) {
-                    goto fail;
+                    ret = -1;
+                    goto finish_section;
                 }
                 /* If this was an array(-like) we still need to unlike int: */
                 if (*cache != NULL && (*cache)->converted_obj == value) {
@@ -544,18 +550,23 @@ PyArray_AssignFromCache_Recursive(
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
                 if (view == NULL) {
-                    goto fail;
+                    ret = -1;
+                    goto finish_section;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
                     Py_DECREF(view);
-                    goto fail;
+                    ret = -1;
+                    goto finish_section;
                 }
                 Py_DECREF(view);
             }
         }
+
+    finish_section:
+        NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     }
     Py_DECREF(obj);
-    return 0;
+    return ret;
 
   fail:
     Py_DECREF(obj);
