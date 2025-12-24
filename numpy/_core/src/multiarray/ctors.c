@@ -562,7 +562,8 @@ PyArray_AssignFromCache_Recursive(
             }
         }
 
-    finish_section:
+    finish_section:;
+
         NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     }
     Py_DECREF(obj);
