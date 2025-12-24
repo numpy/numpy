@@ -13,7 +13,7 @@ version = "*"
 [package.build.config]
 extra-input-globs = ["**/*.c.src"]
 compilers = ["c", "cxx"]
-env.TSAN_OPTIONS = "halt_on_error=0:allocator_may_return_null=1:suppressions=${SRC_DIR}/tools/ci/tsan_suppressions.txt"
+env.TSAN_OPTIONS = "halt_on_error=0:allocator_may_return_null=1:suppressions=../../tools/ci/tsan_suppressions.txt"
 extra-args = ["-Csetup-args=-Db_sanitize=thread", "-Csetup-args=-Dbuildtype=debug"]
 
 [package.host-dependencies]
