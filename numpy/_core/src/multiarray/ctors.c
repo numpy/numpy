@@ -495,8 +495,8 @@ PyArray_AssignFromCache_Recursive(
 {
     /* Consume first cache element by extracting information and freeing it */
     PyObject *obj = (*cache)->arr_or_sequence;
-    PyObject *orig_obj = (*cache)->converted_obj;
     Py_INCREF(obj);
+    PyObject *orig_obj = (*cache)->converted_obj;
     npy_bool sequence = (*cache)->sequence;
     int depth = (*cache)->depth;
     int ret = 0;
@@ -514,7 +514,7 @@ PyArray_AssignFromCache_Recursive(
         assert(depth != ndim);
         // this macro thakes *the argument* of PySequence_Fast, which is orig_obj;
         // not the object returned by PySequence_Fast, which is obj
-        NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_obj)
+        NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_obj);
         npy_intp length = PySequence_Length(obj);
         if (length != PyArray_DIMS(self)[0]) {
             PyErr_SetString(PyExc_RuntimeError,
