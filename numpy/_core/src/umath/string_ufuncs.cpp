@@ -177,9 +177,11 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
     }
 
     size_t width = out.buffer_width();
+    // we know this is positive
+    size_t reps_ = (size_t)reps;
 
     if (len1 == 1) {
-        size_t end_index = reps > width ? width : reps;
+        size_t end_index = reps_ > width ? width : reps_;
         out.buffer_memset(*buf1, end_index);
         out.buffer_fill_with_zeros_after_index(end_index);
         return 0;
