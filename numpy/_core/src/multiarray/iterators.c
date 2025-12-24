@@ -764,6 +764,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
 
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    PyArrayObject *arrval = NULL;
+    PyArrayIterObject *val_it = NULL;
     npy_intp dtype_size = dtype->elsize;
     NPY_cast_info cast_info = {.func = NULL};
 
@@ -830,12 +832,12 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     Py_INCREF(dtype);
-    PyArrayObject *arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
+    arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
                                               NPY_ARRAY_FORCECAST, NULL);
     if (arrval == NULL) {
         goto finish;
     }
-    PyArrayIterObject *val_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arrval);
+    val_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arrval);
     if (val_it == NULL) {
         goto finish;
     }
@@ -908,6 +910,8 @@ finish:
     for (int i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
+    Py_XDECREF(val_it);
+    Py_XDECREF(arrval);
     return ret;
 }
 
