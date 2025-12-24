@@ -319,9 +319,17 @@ def create_nditer(arrs):
     for i in range(1000):
         np.nditer(arrs)
 
-@pytest.mark.parametrize("kernel", (np_broadcast, create_array, create_nditer))
-def test_arg_locking(kernel):
-    # should complete without failing or generating an error about an array size
+
+@pytest.mark.parametrize(
+    "kernel, outcome",
+    (
+        (np_broadcast, "error"),
+        (create_array, "error"),
+        (create_nditer, "success")
+    )
+)
+def test_arg_locking(kernel, outcome):
+    # should complete without triggering races but may error
     # changing
 
     b = threading.Barrier(5)
@@ -345,9 +353,13 @@ def test_arg_locking(kernel):
                 arrs.extend([np.array([1, 2, 3]) for _ in range(1000)])
 
     arrs = [np.array([1, 2, 3]) for _ in range(1000)]
-
-    tasks = [threading.Thread(target=read_arrs) for _ in range(4)]
-    tasks.append(threading.Thread(target=mutate_list))
-
-    [t.start() for t in tasks]
-    [t.join() for t in tasks]
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
+            tasks = [tpe.submit(read_arrs) for _ in range(4)]
+            tasks.append(tpe.submit(mutate_list))
+            for t in tasks:
+                t.result()
+    except RuntimeError as e:
+        assert "Inconsistent object during array creation?" in str(e)
+        if outcome == "success":
+            raise
