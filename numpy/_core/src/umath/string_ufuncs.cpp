@@ -176,9 +176,12 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
         return 0;
     }
 
+    size_t width = out.buffer_width();
+
     if (len1 == 1) {
-        out.buffer_memset(*buf1, reps);
-        out.buffer_fill_with_zeros_after_index(reps);
+        size_t end_index = reps > width ? width : reps;
+        out.buffer_memset(*buf1, end_index);
+        out.buffer_fill_with_zeros_after_index(end_index);
         return 0;
     }
 
@@ -188,7 +191,6 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
     }
 
     size_t pad = 0;
-    size_t width = out.buffer_width();
     if (width < newlen) {
         reps = width / len1;
         pad = width % len1;
