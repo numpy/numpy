@@ -325,12 +325,11 @@ def create_nditer(arrs):
     (
         (np_broadcast, "error"),
         (create_array, "error"),
-        (create_nditer, "success")
-    )
+        (create_nditer, "success"),
+    ),
 )
 def test_arg_locking(kernel, outcome):
     # should complete without triggering races but may error
-    # changing
 
     b = threading.Barrier(5)
     done = 0
