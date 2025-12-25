@@ -56,8 +56,8 @@ typedef struct cache_bucket {
         }
     }
 } cache_bucket;
-static NPY_TLS cache_bucket datacache[NBUCKETS];
-static NPY_TLS cache_bucket dimcache[NBUCKETS_DIM];
+static thread_local cache_bucket datacache[NBUCKETS];
+static thread_local cache_bucket dimcache[NBUCKETS_DIM];
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
