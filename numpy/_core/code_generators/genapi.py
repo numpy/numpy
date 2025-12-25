@@ -37,7 +37,7 @@ process_c_file = get_processor()
 __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
-API_FILES = [join('multiarray', 'alloc.c'),
+API_FILES = [join('multiarray', 'alloc.cpp'),
              join('multiarray', 'abstractdtypes.c'),
              join('multiarray', 'arrayfunction_override.c'),
              join('multiarray', 'array_api_standard.c'),

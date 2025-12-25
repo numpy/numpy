@@ -1106,7 +1106,7 @@ endif
 
 src_multiarray = multiarray_gen_headers + [
   'src/multiarray/abstractdtypes.c',
-  'src/multiarray/alloc.c',
+  'src/multiarray/alloc.cpp',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',

@@ -27,6 +27,8 @@
 #endif
 #endif
 
+extern "C" {
+
 /* Do not enable the alloc cache if ASAN or MSAN instrumentation is enabled.
  * The cache makes ASAN use-after-free or MSAN
  * use-of-uninitialized-memory warnings less useful. */
@@ -44,9 +46,15 @@
 # define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
 # define NCACHE 7 /* number of cache entries per bucket */
 /* this structure fits neatly into a cacheline */
-typedef struct {
+typedef struct cache_bucket {
     npy_uintp available; /* number of cached pointers */
     void * ptrs[NCACHE];
+
+    ~cache_bucket() {
+        while (available > 0) {
+            free(ptrs[--available]);
+        }
+    }
 } cache_bucket;
 static NPY_TLS cache_bucket datacache[NBUCKETS];
 static NPY_TLS cache_bucket dimcache[NBUCKETS_DIM];
@@ -592,4 +600,6 @@ _Npy_MallocWithOverflowCheck(npy_intp size, npy_intp elsize)
         return NULL;
     }
     return PyMem_MALLOC(total_size);
+}
+
 }
