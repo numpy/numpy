@@ -1,5 +1,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+extern "C" {
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -27,7 +28,6 @@
 #endif
 #endif
 
-extern "C" {
 
 /* Do not enable the alloc cache if ASAN or MSAN instrumentation is enabled.
  * The cache makes ASAN use-after-free or MSAN

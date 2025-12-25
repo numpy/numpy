@@ -1,15 +1,15 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
 
 #define NPY_TRACE_DOMAIN 389047
 #define MEM_HANDLER_CAPSULE_NAME "mem_handler"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
