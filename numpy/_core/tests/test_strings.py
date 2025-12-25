@@ -194,6 +194,14 @@ def test_large_string_cast():
         a.astype("U")
 
 
+@pytest.mark.parametrize("dt", ["S1", "U1"])
+def test_in_place_mutiply_no_overflow(dt):
+    # see gh-30495
+    a = np.array("a", dtype=dt)
+    a *= 20
+    assert_array_equal(a, np.array("a", dtype=dt))
+
+
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
 class TestMethods:
 
