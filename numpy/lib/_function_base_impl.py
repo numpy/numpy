@@ -5183,8 +5183,8 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     if indexing == 'xy' and ndim > 1:
         # switch first and second axis
-        output[0].shape = (1, -1) + s0[2:]
-        output[1].shape = (-1, 1) + s0[2:]
+        output[0] = output[0].reshape((1, -1) + s0[2:])
+        output[1] = output[1].reshape((-1, 1) + s0[2:])
 
     if not sparse:
         # Return the full N-D matrix (not only the 1-D vector)
