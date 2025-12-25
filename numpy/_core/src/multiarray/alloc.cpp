@@ -41,6 +41,7 @@ extern "C" {
 #    define USE_ALLOC_CACHE 1
 #endif
 
+typedef void (*deallocator)(void *);
 
 # define NBUCKETS 1024 /* number of buckets for data*/
 # define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
@@ -49,15 +50,27 @@ extern "C" {
 typedef struct cache_bucket {
     npy_uintp available; /* number of cached pointers */
     void * ptrs[NCACHE];
-
-    ~cache_bucket() {
-        while (available > 0) {
-            free(ptrs[--available]);
-        }
-    }
 } cache_bucket;
+
 static thread_local cache_bucket datacache[NBUCKETS];
 static thread_local cache_bucket dimcache[NBUCKETS_DIM];
+
+typedef struct cache_destructor {
+    ~cache_destructor() {
+        for (npy_uint i = 0; i < NBUCKETS; ++i) {
+            while (datacache[i].available > 0) {
+                free(datacache[i].ptrs[--datacache[i].available]);
+            }
+        }
+        for (npy_uint i = 0; i < NBUCKETS_DIM; ++i) {
+            while (dimcache[i].available > 0) {
+                PyArray_free(dimcache[i].ptrs[--dimcache[i].available]);
+            }
+        }
+    }
+} cache_destructor;
+
+static thread_local cache_destructor tls_cache_destructor;
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
