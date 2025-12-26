@@ -115,12 +115,12 @@ _npy_free_workspace(void *buf, void *static_buf)
     }
 }
 
+/* Free a small workspace allocation (macro to fetch the _static name) */
+#define npy_free_workspace(NAME)  \
+_npy_free_workspace(NAME, NAME##_static)
+
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
-
-/* Free a small workspace allocation (macro to fetch the _static name) */
-#define npy_free_workspace(NAME)  \
-    _npy_free_workspace(NAME, NAME##_static)
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */

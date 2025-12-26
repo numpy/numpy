@@ -41,8 +41,6 @@ extern "C" {
 #    define USE_ALLOC_CACHE 1
 #endif
 
-typedef void (*deallocator)(void *);
-
 # define NBUCKETS 1024 /* number of buckets for data*/
 # define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
 # define NCACHE 7 /* number of cache entries per bucket */
