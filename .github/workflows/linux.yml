@@ -90,22 +90,20 @@ jobs:
         fetch-tags: true
         persist-credentials: false
     - name: Install debug Python
+      uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
+      with:
+        python-version: '3.14'
+        debug: true
+    - name: Build and install NumPy
       run: |
-        sudo apt-get update
-        sudo apt-get install python3-dbg ninja-build
-    - name: Build NumPy and install into venv
-      run: |
-        python3-dbg -m venv venv
-        source venv/bin/activate
+        python --version
         pip install -U pip
         pip install . -v -Csetup-args=-Dbuildtype=debug -Csetup-args=-Dallow-noblas=true
     - name: Install test dependencies
       run: |
-        source venv/bin/activate
         pip install -r requirements/test_requirements.txt
     - name: Run test suite
       run: |
-        source venv/bin/activate
         cd tools
         pytest --timeout=600 --durations=10 --pyargs numpy -m "not slow"
 
