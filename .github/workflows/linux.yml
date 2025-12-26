@@ -89,7 +89,8 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: deadsnakes/action@v3.2.0
+    - name: Install debug Python
+      uses: deadsnakes/action@v3.2.0
       with:
         python-version: '3.14'
         debug: true
