@@ -117,7 +117,7 @@ _npy_free_workspace(void *buf, void *static_buf)
 
 /* Free a small workspace allocation (macro to fetch the _static name) */
 #define npy_free_workspace(NAME)  \
-_npy_free_workspace(NAME, NAME##_static)
+    _npy_free_workspace(NAME, NAME##_static)
 
 #ifdef __cplusplus
 }  /* extern "C" */
