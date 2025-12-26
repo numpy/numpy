@@ -594,7 +594,7 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     if returned:
         if scl.shape != avg_as_array.shape:
-            scl = np.broadcast_to(scl, avg_as_array.shape).copy()
+            scl = np.broadcast_to(scl, avg_as_array.shape, subok=True).copy()
         return avg, scl
     else:
         return avg
