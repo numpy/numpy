@@ -90,7 +90,7 @@ jobs:
         fetch-tags: true
         persist-credentials: false
     - name: Install debug Python
-      uses: deadsnakes/action@v3.2.0
+      uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
       with:
         python-version: '3.14'
         debug: true
