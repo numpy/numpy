@@ -11,14 +11,19 @@
 extern "C" {
 #endif
 
+struct buckets {
+    struct buckets *prev; /* linked list of old buckets */
+    npy_intp size;        /* current size */
+    npy_intp nelem;       /* number of elements */
+    PyObject *array[];
+};
+
 typedef struct {
     int key_len;  /* number of identities used */
     /* Buckets stores: val1, key1[0], key1[1], ..., val2, key2[0], ... */
-    PyObject **buckets;
-    npy_intp size;  /* current size */
-    npy_intp nelem;  /* number of elements */
+    struct buckets *buckets;
 #ifdef Py_GIL_DISABLED
-    void *mutex; /* std::shared_mutex, prevents races to fill the cache */
+    PyMutex mutex;
 #endif
 } PyArrayIdentityHash;
 
@@ -27,10 +32,9 @@ NPY_NO_EXPORT int
 PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *value, int replace);
 
-#ifdef Py_GIL_DISABLED
-NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItemWithLock(PyArrayIdentityHash *tb, PyObject *const *key);
-#endif // Py_GIL_DISABLED
+NPY_NO_EXPORT int
+PyArrayIdentityHash_SetItemLockHeld(PyArrayIdentityHash *tb,
+        PyObject *const *key, PyObject *value, int replace);
 
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key);

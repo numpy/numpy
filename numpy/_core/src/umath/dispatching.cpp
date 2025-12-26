@@ -42,9 +42,6 @@
 #include <Python.h>
 #include <convert_datatype.h>
 
-#include <mutex>
-#include <shared_mutex>
-
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_3kcompat.h"
 #include "npy_import.h"
@@ -868,7 +865,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (PyArrayIdentityHash_SetItem(
+            if (PyArrayIdentityHash_SetItemLockHeld(
                         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
                         (PyObject **)op_dtypes, info, 0) < 0) {
                 return NULL;
@@ -891,7 +888,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         }
         else if (info != NULL) {
             /* Add result to the cache using the original types: */
-            if (PyArrayIdentityHash_SetItem(
+            if (PyArrayIdentityHash_SetItemLockHeld(
                         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
                         (PyObject **)op_dtypes, info, 0) < 0) {
                 return NULL;
@@ -959,7 +956,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /* Add this to the cache using the original types: */
-    if (cacheable && PyArrayIdentityHash_SetItem(
+    if (cacheable && PyArrayIdentityHash_SetItemLockHeld(
                 (PyArrayIdentityHash *)ufunc->_dispatch_cache,
                 (PyObject **)op_dtypes, info, 0) < 0) {
         return NULL;
@@ -981,8 +978,7 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         PyArray_DTypeMeta *op_dtypes[],
         npy_bool legacy_promotion_is_possible)
 {
-    std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
-    PyObject *info = PyArrayIdentityHash_GetItemWithLock(
+    PyObject *info = PyArrayIdentityHash_GetItem(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
 
@@ -994,12 +990,11 @@ promote_and_get_info_and_ufuncimpl_with_locking(
 
     // cache miss, need to acquire a write lock and recursively calculate the
     // correct dispatch resolution
-    NPY_BEGIN_ALLOW_THREADS
-    mutex->lock();
-    NPY_END_ALLOW_THREADS
+    PyArrayIdentityHash *cache = (PyArrayIdentityHash *)ufunc->_dispatch_cache;
+    PyMutex_Lock(&cache->mutex);
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    mutex->unlock();
+    PyMutex_Unlock(&cache->mutex);
 
     return info;
 }
