@@ -124,11 +124,16 @@ NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     struct buckets *b = tb->buckets;
+#ifdef Py_GIL_DISABLED
     while (b != NULL) {
         struct buckets *prev = b->prev;
         PyMem_Free(b);
         b = prev;
     }
+#else
+    assert(b->prev == NULL);
+    PyMem_Free(b);
+#endif
     PyMem_Free(tb);
 }
 
@@ -136,8 +141,8 @@ PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 static int
 _resize_if_necessary(PyArrayIdentityHash *tb)
 {
-    npy_intp new_size, prev_size = tb->buckets->size;
     struct buckets *old_buckets = tb->buckets;
+    npy_intp new_size, prev_size = old_buckets->size;
     assert(prev_size > 0);
 
     if ((old_buckets->nelem+ 1) * 2 > prev_size) {
@@ -164,27 +169,31 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     if (npy_mul_sizes_with_overflow(&alloc_size, new_size, tb->key_len + 1)) {
         return -1;
     }
-    struct buckets *new_buckets = (struct buckets *)PyMem_Calloc(
+    struct buckets *new_buckets = PyMem_Calloc(
         1, sizeof(struct buckets) + alloc_size * sizeof(PyObject *));
     if (new_buckets == NULL) {
         PyErr_NoMemory();
         return -1;
     }
-    new_buckets->prev = old_buckets;
-    new_buckets->size = new_size;
-    new_buckets->nelem = 0;
+
     for (npy_intp i = 0; i < prev_size; i++) {
         PyObject **item = &old_buckets->array[i * (tb->key_len + 1)];
         if (item[0] != NULL) {
             PyObject **tb_item = find_item(new_buckets, item + 1, tb->key_len);
             memcpy(tb_item+1, item+1, tb->key_len * sizeof(PyObject *));
-            tb_item[0] = item[0];
-        }
-    }
-
 #ifdef Py_GIL_DISABLED
-    atomic_store_explicit(
-        (_Atomic(void *) *)&tb->buckets, new_buckets, memory_order_release);
+            atomic_store_explicit(
+                (_Atomic(void *) *)&tb_item[0], item[0], memory_order_release);
+#else
+            tb_item[0] = item[0];
+#endif
+            }
+        }
+    new_buckets->size = new_size;
+    new_buckets->nelem = old_buckets->nelem;
+#ifdef Py_GIL_DISABLED
+    new_buckets->prev = old_buckets;
+    atomic_store_explicit((_Atomic(void *) *)&tb->buckets, new_buckets, memory_order_release);
 #else
     tb->buckets = new_buckets;
     PyMem_Free(old_buckets);
@@ -230,7 +239,7 @@ PyArrayIdentityHash_SetItemLockHeld(PyArrayIdentityHash *tb,
             return -1;
         }
         memcpy(tb_item+1, key, tb->key_len * sizeof(PyObject *));
-        tb->buckets->nelem++;
+        tb->buckets->nelem += 1;
 #ifdef Py_GIL_DISABLED
         atomic_store_explicit(
             (_Atomic(void *) *)&tb_item[0], value, memory_order_release);
