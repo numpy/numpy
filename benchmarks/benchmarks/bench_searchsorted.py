@@ -1,5 +1,7 @@
 import numpy as np
+
 from .common import Benchmark
+
 
 class SearchSortedInt64(Benchmark):
     # Benchmark for np.searchsorted with int64 arrays
