@@ -89,23 +89,32 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - name: Install debug Python
+    - name: Set up pyenv
       run: |
-        sudo apt-get update
-        sudo apt-get install python3-dbg ninja-build
-    - name: Build NumPy and install into venv
+        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        PYENV_ROOT="$HOME/.pyenv"
+        PYENV_BIN="$PYENV_ROOT/bin"
+        PYENV_SHIMS="$PYENV_ROOT/shims"
+        echo "$PYENV_BIN" >> $GITHUB_PATH
+        echo "$PYENV_SHIMS" >> $GITHUB_PATH
+        echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
+    - name: Check pyenv is working
+      run:
+        pyenv --version
+    - name: Install Python debug build
       run: |
-        python3-dbg -m venv venv
-        source venv/bin/activate
+        CONFIGURE_OPTS="--with-pydebug" pyenv install 3.14
+        pyenv global 3.14
+    - name: Build and install NumPy
+      run: |
+        python --version
         pip install -U pip
         pip install . -v -Csetup-args=-Dbuildtype=debug -Csetup-args=-Dallow-noblas=true
     - name: Install test dependencies
       run: |
-        source venv/bin/activate
         pip install -r requirements/test_requirements.txt
     - name: Run test suite
       run: |
-        source venv/bin/activate
         cd tools
         pytest --timeout=600 --durations=10 --pyargs numpy -m "not slow"
 
