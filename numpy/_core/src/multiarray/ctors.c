@@ -1571,7 +1571,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         copy = 1;
     }
 
-    Py_BEGIN_CRITICAL_SECTION(op);
+    // Py_BEGIN_CRITICAL_SECTION(op);
 
     ndim = PyArray_DiscoverDTypeAndShape(
             op, max_depth, dims, &cache, in_DType, in_descr, &dtype,
@@ -1741,7 +1741,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
 cleanup:;
 
     Py_XDECREF(dtype);
-    Py_END_CRITICAL_SECTION();
+    // Py_END_CRITICAL_SECTION();
     return (PyObject *)ret;
 }
 
