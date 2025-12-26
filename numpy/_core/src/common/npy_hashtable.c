@@ -61,23 +61,32 @@ identity_list_hash(PyObject *const *v, int len)
 
 
 static inline PyObject **
-find_item(struct buckets *buckets, PyObject *const *key, int key_len)
+find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 {
-    Py_hash_t hash = identity_list_hash(key, key_len);
+    Py_hash_t hash = identity_list_hash(key, tb->key_len);
     npy_uintp perturb = (npy_uintp)hash;
     npy_intp bucket;
+#ifdef Py_GIL_DISABLED
+    struct buckets *buckets = atomic_load_explicit(
+        (_Atomic(void *) *)&tb->buckets, memory_order_acquire);
+#else
+    struct buckets *buckets = tb->buckets;
+#endif
     npy_intp mask = buckets->size - 1 ;
     PyObject **item;
 
     bucket = (npy_intp)hash & mask;
     while (1) {
-        item = &(buckets->array[bucket * (key_len + 1)]);
-
-        if (atomic_load_explicit((_Atomic(void *) *)&item[0], memory_order_acquire) == NULL){
+        item = &(buckets->array[bucket * (tb->key_len + 1)]);
+#ifdef Py_GIL_DISABLED
+        if (atomic_load_explicit((_Atomic(void *) *)&item[0], memory_order_acquire) == NULL) {
+#else
+        if (item[0] == NULL) {
+#endif
             /* The item is not in the cache; return the empty bucket */
             return item;
         }
-        if (memcmp(item+1, key, key_len * sizeof(PyObject *)) == 0) {
+        if (memcmp(item+1, key, tb->key_len * sizeof(PyObject *)) == 0) {
             /* This is a match, so return the item/bucket */
             return item;
         }
@@ -114,7 +123,7 @@ PyArrayIdentityHash_New(int key_len)
     res->buckets->nelem = 0;
 
 #ifdef Py_GIL_DISABLED
-    res->mutex = (PyMutex){0};
+    res->mutex = (PyMutex){0};  /* Initialize PyMutex */
 #endif
     return res;
 }
@@ -141,11 +150,14 @@ PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 static int
 _resize_if_necessary(PyArrayIdentityHash *tb)
 {
+#ifdef Py_GIL_DISABLED
+    assert(PyMutex_IsLocked(&tb->mutex));
+#endif
     struct buckets *old_buckets = tb->buckets;
     npy_intp new_size, prev_size = old_buckets->size;
     assert(prev_size > 0);
 
-    if ((old_buckets->nelem+ 1) * 2 > prev_size) {
+    if ((old_buckets->nelem + 1) * 2 > prev_size) {
         /* Double in size */
         new_size = prev_size * 2;
     }
@@ -169,35 +181,34 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     if (npy_mul_sizes_with_overflow(&alloc_size, new_size, tb->key_len + 1)) {
         return -1;
     }
-    struct buckets *new_buckets = PyMem_Calloc(
+    struct buckets *new_buckets = (struct buckets *)PyMem_Calloc(
         1, sizeof(struct buckets) + alloc_size * sizeof(PyObject *));
     if (new_buckets == NULL) {
         PyErr_NoMemory();
         return -1;
     }
-
+    new_buckets->prev = old_buckets;
+    new_buckets->size = new_size;
+    new_buckets->nelem = 0;
+#ifdef Py_GIL_DISABLED
+    atomic_store_explicit((_Atomic(void *) *)&tb->buckets, new_buckets, memory_order_release);
+#else
+    tb->buckets = new_buckets;
+#endif
     for (npy_intp i = 0; i < prev_size; i++) {
         PyObject **item = &old_buckets->array[i * (tb->key_len + 1)];
         if (item[0] != NULL) {
-            PyObject **tb_item = find_item(new_buckets, item + 1, tb->key_len);
+            PyObject **tb_item = find_item(tb, item + 1);
             memcpy(tb_item+1, item+1, tb->key_len * sizeof(PyObject *));
+            new_buckets->nelem++;
 #ifdef Py_GIL_DISABLED
             atomic_store_explicit(
                 (_Atomic(void *) *)&tb_item[0], item[0], memory_order_release);
 #else
             tb_item[0] = item[0];
 #endif
-            }
         }
-    new_buckets->size = new_size;
-    new_buckets->nelem = old_buckets->nelem;
-#ifdef Py_GIL_DISABLED
-    new_buckets->prev = old_buckets;
-    atomic_store_explicit((_Atomic(void *) *)&tb->buckets, new_buckets, memory_order_release);
-#else
-    tb->buckets = new_buckets;
-    PyMem_Free(old_buckets);
-#endif
+    }
     return 0;
 }
 
@@ -227,11 +238,13 @@ PyArrayIdentityHash_SetItemLockHeld(PyArrayIdentityHash *tb,
 #ifdef Py_GIL_DISABLED
     assert(PyMutex_IsLocked(&tb->mutex));
 #endif
+
     if (value != NULL && _resize_if_necessary(tb) < 0) {
         /* Resize if necessary when adding a new value */
         return -1;
     }
-    PyObject **tb_item = find_item(tb->buckets, key, tb->key_len);
+
+    PyObject **tb_item = find_item(tb, key);
     if (value != NULL) {
         if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -273,11 +286,5 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
-#ifdef Py_GIL_DISABLED
-    struct buckets *buckets = atomic_load_explicit(
-        (_Atomic(void *) *)&tb->buckets, memory_order_acquire);
-#else
-    struct buckets *buckets = tb->buckets;
-#endif
-    return find_item(buckets, key, tb->key_len)[0];
+    return find_item(tb, key)[0];
 }
