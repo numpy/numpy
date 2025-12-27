@@ -9,6 +9,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 import abc
 import numbers
 import os
+import warnings
 from collections.abc import Callable
 
 import numpy as np
@@ -1024,6 +1025,14 @@ class ABCPolyBase(abc.ABC):
 
         xnew = pu.mapdomain(x, domain, window)
         res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
+
+        off = (domain[1] * window[0] - domain[0] * window[1])
+
+        if off != 0:
+            if hasattr(deg, "__iter__") and len(deg) - 1 != max(deg):
+                msg = "The polynomial may contain degrees other than those in deg"
+                warnings.warn(msg, UserWarning)
+
         if full:
             [coef, status] = res
             return (
