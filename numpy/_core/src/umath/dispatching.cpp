@@ -865,12 +865,13 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (PyArrayIdentityHash_SetItemLockHeld(
+            PyObject *result = NULL;
+            if (PyArrayIdentityHash_SetItemDefault(
                         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-                        (PyObject **)op_dtypes, info, 0) < 0) {
+                        (PyObject **)op_dtypes, info, &result) < 0) {
                 return NULL;
             }
-            return info;
+            return result;
         }
     }
 
@@ -888,12 +889,13 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         }
         else if (info != NULL) {
             /* Add result to the cache using the original types: */
-            if (PyArrayIdentityHash_SetItemLockHeld(
+            PyObject *result = NULL;
+            if (PyArrayIdentityHash_SetItemDefault(
                         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-                        (PyObject **)op_dtypes, info, 0) < 0) {
+                        (PyObject **)op_dtypes, info, &result) < 0) {
                 return NULL;
             }
-            return info;
+            return result;
         }
     }
 
@@ -955,13 +957,17 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         Py_XDECREF(new_op_dtypes[i]);
     }
 
-    /* Add this to the cache using the original types: */
-    if (cacheable && PyArrayIdentityHash_SetItemLockHeld(
-                (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-                (PyObject **)op_dtypes, info, 0) < 0) {
+    if (info == NULL) {
         return NULL;
     }
-    return info;
+    PyObject *result = NULL;
+    /* Add this to the cache using the original types: */
+    if (cacheable && PyArrayIdentityHash_SetItemDefault(
+                (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+                (PyObject **)op_dtypes, info, &result) < 0) {
+        return NULL;
+    }
+    return result;
 }
 
 #ifdef Py_GIL_DISABLED
@@ -988,14 +994,8 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         return info;
     }
 
-    // cache miss, need to acquire a write lock and recursively calculate the
-    // correct dispatch resolution
-    PyArrayIdentityHash *cache = (PyArrayIdentityHash *)ufunc->_dispatch_cache;
-    PyMutex_Lock(&cache->mutex);
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    PyMutex_Unlock(&cache->mutex);
-
     return info;
 }
 #endif

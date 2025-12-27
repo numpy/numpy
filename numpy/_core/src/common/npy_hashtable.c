@@ -236,50 +236,43 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
  *        caller should avoid the RuntimeError.
  */
 NPY_NO_EXPORT int
-PyArrayIdentityHash_SetItemLockHeld(PyArrayIdentityHash *tb,
-        PyObject *const *key, PyObject *value, int replace)
+PyArrayIdentityHash_SetItemDefaultLockHeld(PyArrayIdentityHash *tb,
+        PyObject *const *key, PyObject *default_value, PyObject **result)
 {
 #ifdef Py_GIL_DISABLED
     assert(PyMutex_IsLocked(&tb->mutex));
 #endif
-
-    if (value != NULL && _resize_if_necessary(tb) < 0) {
-        /* Resize if necessary when adding a new value */
+    assert(default_value != NULL);
+    if (_resize_if_necessary(tb) < 0) {
         return -1;
     }
 
     PyObject **tb_item = find_item(tb, key);
-    if (value != NULL) {
-        if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "Identity cache already includes an item with this key.");
-            return -1;
-        }
+    if (tb_item[0] == NULL) {
         memcpy(tb_item+1, key, tb->key_len * sizeof(PyObject *));
-        tb->buckets->nelem += 1;
+        tb->buckets->nelem++;
 #ifdef Py_GIL_DISABLED
         atomic_store_explicit(
-            (_Atomic(void *) *)&tb_item[0], value, memory_order_release);
+            (_Atomic(void *) *)&tb_item[0], default_value, memory_order_release);
 #else
-        tb_item[0] = value;
+        tb_item[0] = default_value;
 #endif
-    }
-    else {
-        /* Clear the bucket -- just the value should be enough though. */
-        memset(tb_item, 0, (tb->key_len + 1) * sizeof(PyObject *));
+        *result = default_value;
+    } else {
+        *result = tb_item[0];
     }
 
     return 0;
 }
 
 NPY_NO_EXPORT int
-PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
-        PyObject *const *key, PyObject *value, int replace)
+PyArrayIdentityHash_SetItemDefault(PyArrayIdentityHash *tb,
+        PyObject *const *key, PyObject *default_value, PyObject **result)
 {
 #ifdef Py_GIL_DISABLED
     PyMutex_Lock(&tb->mutex);
 #endif
-    int ret = PyArrayIdentityHash_SetItemLockHeld(tb, key, value, replace);
+    int ret = PyArrayIdentityHash_SetItemDefaultLockHeld(tb, key, default_value, result);
 #ifdef Py_GIL_DISABLED
     PyMutex_Unlock(&tb->mutex);
 #endif
@@ -290,5 +283,9 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
+#ifdef Py_GIL_DISABLED
+    return atomic_load_explicit((_Atomic(void *) *)find_item(tb, key), memory_order_acquire);
+#else
     return find_item(tb, key)[0];
+#endif
 }

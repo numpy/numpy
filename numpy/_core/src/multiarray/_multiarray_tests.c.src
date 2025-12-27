@@ -990,7 +990,8 @@ identityhash_tester(PyObject *NPY_UNUSED(mod),
             keys[j] = PyTuple_GET_ITEM(key, j);
         }
         if (i != length - 1) {
-            if (PyArrayIdentityHash_SetItem(tb, keys, value, replace) < 0) {
+            PyObject *result = NULL;
+            if (PyArrayIdentityHash_SetItemDefault(tb, keys, value, &result) < 0) {
                 goto finish;
             }
         }
