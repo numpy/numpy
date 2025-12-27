@@ -713,32 +713,6 @@ sfloat_get_ufunc(const char *ufunc_name)
 
 
 static int
-sfloat_add_loop(const char *ufunc_name,
-        PyArray_DTypeMeta *dtypes[3], PyObject *meth_or_promoter)
-{
-    PyObject *ufunc = sfloat_get_ufunc(ufunc_name);
-    if (ufunc == NULL) {
-        return -1;
-    }
-    PyObject *dtype_tup = PyArray_TupleFromItems(3, (PyObject **)dtypes, 1);
-    if (dtype_tup == NULL) {
-        Py_DECREF(ufunc);
-        return -1;
-    }
-    PyObject *info = PyTuple_Pack(2, dtype_tup, meth_or_promoter);
-    Py_DECREF(dtype_tup);
-    if (info == NULL) {
-        Py_DECREF(ufunc);
-        return -1;
-    }
-    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
-    Py_DECREF(ufunc);
-    Py_DECREF(info);
-    return res;
-}
-
-
-static int
 sfloat_add_wrapping_loop(const char *ufunc_name, PyArray_DTypeMeta *dtypes[3])
 {
     PyObject *ufunc = sfloat_get_ufunc(ufunc_name);
@@ -1040,27 +1014,19 @@ sfloat_init_ufuncs(void) {
     }
 
     /*
-     * Add a promoter for both directions of multiply with double.
+     * Add a dtype-based promoter for multiply, matching whenever one
+     * of the operands is a scaled float.
      */
     int res = -1;
-    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
-
-    PyArray_DTypeMeta *promoter_dtypes[3] = {
-            &PyArray_SFloatDType, double_DType, NULL};
-
     PyObject *promoter = PyCapsule_New(
             &promote_to_sfloat, "numpy._ufunc_promoter", NULL);
     if (promoter == NULL) {
         return -1;
     }
-    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
-    if (res < 0) {
-        Py_DECREF(promoter);
-        return -1;
-    }
-    promoter_dtypes[0] = double_DType;
-    promoter_dtypes[1] = &PyArray_SFloatDType;
-    res = sfloat_add_loop("multiply", promoter_dtypes, promoter);
+
+    PyObject *ufunc = sfloat_get_ufunc("multiply");
+    res = PyUFunc_AddDTypeBasedPromoter(
+        (PyUFuncObject *)ufunc, &PyArray_SFloatDType, promoter);
     Py_DECREF(promoter);
     if (res < 0) {
         return -1;

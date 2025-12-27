@@ -225,6 +225,8 @@ typedef struct _tagPyUFuncObject {
         void *_dispatch_cache;
         /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
+        /* A PyListObject of `(DType, Promoter)` */
+        PyObject *_dtype_promoters;
     #endif
     #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
         /*
