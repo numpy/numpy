@@ -3130,7 +3130,10 @@ def blackman(M):
     if M == 1:
         return ones(1, dtype=values.dtype)
     n = arange(1 - M, M, 2)
-    return 0.42 + 0.5 * cos(pi * n / (M - 1)) + 0.08 * cos(2.0 * pi * n / (M - 1))
+    res = 0.42 + 0.5 * cos(pi * n / (M - 1)) + 0.08 * cos(2.0 * pi * n / (M - 1))
+    res[0] = 0
+    res[-1] = 0
+    return res
 
 
 @set_module('numpy')
