@@ -74,15 +74,16 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     }
 
     /*
-    In this binary search, the candidates are in the range [base, base+length]
-    and on each iteration we pick a pivot at the mid-point of the range to
-    compare against the key being search. Depending on the comparison result,
-    we adjust the base index and halve the length of the interval..
+    In this binary search implementation, the candidate insertion indices for
+    the jth key are in the range [base_j, base_j+length] and on each iteration
+    we pick a pivot at the mid-point of the range to compare against the jth
+    key. Depending on the comparison result, we adjust the base_j and halve
+    the length of the interval.
 
     To batch multiple queries, we do one pivot pass for each different length
-    for all keys, storing intermediate values of base for every key. To avoid
-    consuming extra memory, we use the ret array to store intermediate values
-    of each base until they become the final result in the last step.
+    for all keys, storing intermediate values of base_j for every key_j. To
+    avoid consuming extra memory, we use the ret array to store intermediate
+    values of each base until they become the final result in the last step.
 
     There are two benefits of this approach:
 
@@ -94,9 +95,10 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     2. Independent calculations for out-of-order execution. In the single-key
     version, step i+1 depends on computation of step i. Meaning that step i+1
     must wait for step i to complete before proceeding. When batching multiple
-    keys, we compute each step for all keys before continuing on the next step.
-    All the computations at a given step are independent across different keys.
-    Meaning that the CPU can execute multiple keys out-of-order in parallel.
+    keys, we compute each step for all keys before continuing on the next
+    step. All the computations at a given step are independent across
+    different keys. Meaning that the CPU can execute multiple keys
+    out-of-order in parallel.
 
     Invariant:
     - cmp(arr[i], key_val) == true  for all i < base
@@ -116,29 +118,25 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
         3. In the first iteration, all elements are compared against the
         median. So we can store it in a variable and use it for all keys.
 
-    This initial block replaces the initialization loop:
-
-    for (npy_intp i = 0; i < key_len; ++i) {
-        *(npy_intp *)(ret + i * ret_str) = 0;
-    }
-
-    Note that when arr_len = 1, then half is 0 so the following block
-    initializes the array as with 0s.
+    This initial block replaces the initialization loop that is used for the
+    arr_len==0 case. Note that when arr_len = 1, then half is 0 so the
+    following block initializes the array as with 0s.
     */
-    npy_intp half = arr_len >> 1;
-    arr_len -= half; // length -> ceil(length / 2)
+    npy_intp interval_length = arr_len;
+    npy_intp half = interval_length >> 1;
+    interval_length -= half; // length -> ceil(length / 2)
 
-    // We write 0 to explicitly refer to base
-    const T mid_val = *(const T *)(arr + (0 + half) * arr_str);
+    npy_intp base = 0;
+    const T mid_val = *(const T *)(arr + (base + half) * arr_str);
 
     for (npy_intp i = 0; i < key_len; ++i) {
         const T key_val = *(const T *)(key + i * key_str);
         *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
     }
 
-    while (arr_len > 1) {
-        npy_intp half = arr_len >> 1;
-        arr_len -= half; // length -> ceil(length / 2)
+    while (interval_length > 1) {
+        npy_intp half = interval_length >> 1;
+        interval_length -= half; // length -> ceil(length / 2)
 
         for (npy_intp i = 0; i < key_len; ++i) {
             npy_intp &base = *(npy_intp *)(ret + i * ret_str);
@@ -149,7 +147,8 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     }
 
     /*
-    At this point arr_len == 1, so the candidates are in [base, base + 1].
+    At this point interval_length == 1, so the candidates are in interval
+    [base, base + 1].
 
     We have two options:
         If cmp(arr[base], key_val) == true, insertion index is base + 1
