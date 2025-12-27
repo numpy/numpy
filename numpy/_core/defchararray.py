@@ -1196,7 +1196,34 @@ class chararray(ndarray):
 
         """
         return isnumeric(self)
+     
 
+    
+    def isidentifier(a):
+    """
+    Returns true for each element if the string is a valid Python identifier,
+    false otherwise.
+
+    Calls `str.isidentifier` element-wise.
+
+    For 8-bit strings, this function is locale-dependent.
+
+    Parameters
+    ----------
+    a : array_like of str or unicode
+        Input array.
+
+    Returns
+    -------
+    out : ndarray
+        Output array of bools.
+
+    See Also
+    --------
+    str.isidentifier
+
+    """
+    return _vec_string(a, bool, 'isidentifier')
     def isdecimal(self):
         """
         For each element in `self`, return True if there are only
