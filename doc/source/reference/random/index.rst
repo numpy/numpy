@@ -168,9 +168,9 @@ Features
 
    Parallel Applications <parallel>
    Multithreaded Generation <multithreading>
-   new-or-different
+   New or Different <new-or-different>
    Comparing Performance <performance>
-   c-api
+   C API <c-api>
    Examples of using Numba, Cython, CFFI <extending>
 
 Original Source of the Generator and BitGenerators
