@@ -41,6 +41,10 @@
 
 #include "numpy/arrayscalars.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Half binary format */
 #define NPY_HALF_BINFMT_NAME IEEE_binary16
 
@@ -134,5 +138,9 @@ PyObject *
 Dragon4_Scientific(PyObject *obj, DigitMode digit_mode, int precision,
                    int min_digits, int sign, TrimMode trim, int pad_left,
                    int exp_digits);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DRAGON4_H_ */
