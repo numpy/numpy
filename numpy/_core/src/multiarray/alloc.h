@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
@@ -115,5 +118,9 @@ _npy_free_workspace(void *buf, void *static_buf)
 /* Free a small workspace allocation (macro to fetch the _static name) */
 #define npy_free_workspace(NAME)  \
     _npy_free_workspace(NAME, NAME##_static)
+
+#ifdef __cplusplus
+}  /* extern "C" */
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */
