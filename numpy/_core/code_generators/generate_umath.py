@@ -57,7 +57,8 @@ class TypeDescription:
         If astype['x'] is 'y', uses PyUFunc_x_x_As_y_y/PyUFunc_xx_x_As_yy_y
         instead of PyUFunc_x_x/PyUFunc_xx_x.
     cfunc_alias : str or none, optional
-        Appended to inner loop C function name, e.g., FLOAT_{cfunc_alias}. See make_arrays.
+        Appended to inner loop C function name, e.g., FLOAT_{cfunc_alias}.
+        See make_arrays.
         NOTE: it doesn't support 'astype'
     dispatch : str or None, optional
         Dispatch-able source name without its extension '.dispatch.c' that
@@ -1484,8 +1485,9 @@ def make_arrays(funcdict):
         """))
         for (ufunc_name, func_idx, cfunc_name, inout) in funcs:
             code2list.append(textwrap.dedent(f"""\
+                function_a = f "{ufunc_name}_functions[{func_idx}]"
                 NPY_CPU_DISPATCH_TRACE("{ufunc_name}", "{''.join(inout)}");
-                NPY_CPU_DISPATCH_CALL_XB({ufunc_name}_functions[{func_idx}] = {cfunc_name});
+                NPY_CPU_DISPATCH_CALL_XB({function_a} = {cfunc_name});
             """))
     return "\n".join(code1list), "\n".join(code2list)
 
