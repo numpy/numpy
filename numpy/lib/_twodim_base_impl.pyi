@@ -75,7 +75,7 @@ _ArrayLike1DNumber_co: TypeAlias = _SupportsArray[np.dtype[_Number_co]] | Sequen
 _MaskFunc: TypeAlias = Callable[[NDArray[np.int_], _T], NDArray[_Number_co | np.timedelta64 | np.datetime64 | np.object_]]
 
 _Indices2D: TypeAlias = tuple[_Array1D[np.intp], _Array1D[np.intp]]
-_Histogram2D: TypeAlias = tuple[_Array1D[np.float64], _Array1D[_ScalarT], _Array1D[_ScalarT]]
+_Histogram2D: TypeAlias = tuple[_Array2D[np.float64], _Array1D[_ScalarT], _Array1D[_ScalarT]]
 
 @type_check_only
 class _HasShapeAndNDim(Protocol):

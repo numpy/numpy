@@ -110,7 +110,7 @@ assert_type(np.vander(_nd_obj), np.ndarray[_2D, np.dtype[np.object_]])
 assert_type(
     np.histogram2d(_to_1d_f64, _to_1d_f64),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
     ],
@@ -118,7 +118,7 @@ assert_type(
 assert_type(
     np.histogram2d(_to_1d_c128, _to_1d_c128),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.complex128 | Any]],
         np.ndarray[_1D, np.dtype[np.complex128 | Any]],
     ],
@@ -126,7 +126,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_i64, _nd_bool),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
     ],
@@ -134,7 +134,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_f64, _nd_i64),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
     ],
@@ -142,7 +142,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_i64, _nd_f64),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.float64]],
     ],
@@ -150,7 +150,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_f64, _nd_c128, weights=_to_1d_bool),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.complex128]],
         np.ndarray[_1D, np.dtype[np.complex128]],
     ],
@@ -158,7 +158,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_f64, _nd_c128, bins=8),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.complex128]],
         np.ndarray[_1D, np.dtype[np.complex128]],
     ],
@@ -166,7 +166,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_c128, _nd_f64, bins=(8, 5)),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.complex128]],
         np.ndarray[_1D, np.dtype[np.complex128]],
     ],
@@ -174,7 +174,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_c128, _nd_i64, bins=_nd_u64),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.uint64]],
         np.ndarray[_1D, np.dtype[np.uint64]],
     ],
@@ -182,7 +182,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_c128, _nd_c128, bins=(_nd_u64, _nd_u64)),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.uint64]],
         np.ndarray[_1D, np.dtype[np.uint64]],
     ],
@@ -190,7 +190,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_c128, _nd_c128, bins=(_nd_bool, 8)),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.complex128 | np.bool]],
         np.ndarray[_1D, np.dtype[np.complex128 | np.bool]],
     ],
@@ -198,7 +198,7 @@ assert_type(
 assert_type(
     np.histogram2d(_nd_c128, _nd_c128, bins=(_to_1d_f64, 8)),
     tuple[
-        np.ndarray[_1D, np.dtype[np.float64]],
+        np.ndarray[_2D, np.dtype[np.float64]],
         np.ndarray[_1D, np.dtype[np.complex128 | Any]],
         np.ndarray[_1D, np.dtype[np.complex128 | Any]],
     ],
