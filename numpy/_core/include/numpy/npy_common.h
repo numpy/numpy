@@ -117,12 +117,24 @@
     #endif
 #endif
 
-#if defined(_MSC_VER)
-    #define NPY_NOINLINE static __declspec(noinline)
-#elif defined(__GNUC__) || defined(__clang__)
-    #define NPY_NOINLINE static __attribute__((noinline))
+#ifdef _MSC_VER
+    #ifdef __cplusplus
+        #define NPY_NOINLINE __declspec(noinline)
+    #else
+        #define NPY_NOINLINE static __declspec(noinline)
+    #endif
+#elif defined(__GNUC__)
+    #ifdef __cplusplus
+        #define NPY_NOINLINE __attribute__((noinline))
+    #else
+        #define NPY_NOINLINE static __attribute__((noinline))
+    #endif
 #else
-    #define NPY_NOINLINE static
+    #ifdef __cplusplus
+        #define NPY_NOINLINE inline
+    #else
+        #define NPY_NOINLINE static inline
+    #endif
 #endif
 
 #ifdef __cplusplus
