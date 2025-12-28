@@ -858,30 +858,31 @@ def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype: ...
 def fromstring(
     string: str | bytes,
     dtype: None = None,
-    count: SupportsIndex = ...,
+    count: SupportsIndex = -1,
     *,
     sep: str,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[float64]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[float64]: ...
 @overload
 def fromstring[ScalarT: np.generic](
     string: str | bytes,
     dtype: _DTypeLike[ScalarT],
-    count: SupportsIndex = ...,
+    count: SupportsIndex = -1,
     *,
     sep: str,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[ScalarT]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
 @overload
 def fromstring(
     string: str | bytes,
-    dtype: DTypeLike | None = ...,
-    count: SupportsIndex = ...,
+    dtype: DTypeLike | None = None,
+    count: SupportsIndex = -1,
     *,
     sep: str,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[Any]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Any]: ...
 
+#
 @overload
 def frompyfunc[ReturnT](
     func: Callable[[Any], ReturnT], /,
@@ -964,7 +965,7 @@ def fromfile(
     offset: SupportsIndex = ...,
     *,
     like: _SupportsArrayFunc | None = ...,
-) -> NDArray[float64]: ...
+) -> _Array1D[float64]: ...
 @overload
 def fromfile[ScalarT: np.generic](
     file: StrOrBytesPath | _SupportsFileMethods,
@@ -974,7 +975,7 @@ def fromfile[ScalarT: np.generic](
     offset: SupportsIndex = ...,
     *,
     like: _SupportsArrayFunc | None = ...,
-) -> NDArray[ScalarT]: ...
+) -> _Array1D[ScalarT]: ...
 @overload
 def fromfile(
     file: StrOrBytesPath | _SupportsFileMethods,
@@ -984,7 +985,7 @@ def fromfile(
     offset: SupportsIndex = ...,
     *,
     like: _SupportsArrayFunc | None = ...,
-) -> NDArray[Any]: ...
+) -> _Array1D[Any]: ...
 
 @overload
 def fromiter[ScalarT: np.generic](
@@ -1007,29 +1008,29 @@ def fromiter(
 def frombuffer(
     buffer: Buffer,
     dtype: None = None,
-    count: SupportsIndex = ...,
-    offset: SupportsIndex = ...,
+    count: SupportsIndex = -1,
+    offset: SupportsIndex = 0,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[float64]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[float64]: ...
 @overload
 def frombuffer[ScalarT: np.generic](
     buffer: Buffer,
     dtype: _DTypeLike[ScalarT],
-    count: SupportsIndex = ...,
-    offset: SupportsIndex = ...,
+    count: SupportsIndex = -1,
+    offset: SupportsIndex = 0,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[ScalarT]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
 @overload
 def frombuffer(
     buffer: Buffer,
-    dtype: DTypeLike | None = ...,
-    count: SupportsIndex = ...,
-    offset: SupportsIndex = ...,
+    dtype: DTypeLike | None = None,
+    count: SupportsIndex = -1,
+    offset: SupportsIndex = 0,
     *,
-    like: _SupportsArrayFunc | None = ...,
-) -> NDArray[Any]: ...
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Any]: ...
 
 # keep in sync with ma.core.arange
 # NOTE: The `float64 | Any` return types needed to avoid incompatible overlapping overloads
