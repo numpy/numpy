@@ -963,7 +963,9 @@ class ABCPolyBase(abc.ABC):
             Degree(s) of the fitting polynomials. If `deg` is a single integer
             all terms up to and including the `deg`'th term are included in the
             fit. For NumPy versions >= 1.11.0 a list of integers specifying the
-            degrees of the terms to include may be used instead.
+            degrees of the terms to include may be used instead. If `deg` has
+            omitted degrees, then the polynomial may contain degrees other than
+            those in `deg`(it depends on the `domain` and `window`).
         domain : {None, [beg, end], []}, optional
             Domain to use for the returned series. If ``None``,
             then a minimal domain that covers the points `x` is chosen.  If
@@ -1030,7 +1032,7 @@ class ABCPolyBase(abc.ABC):
 
         if off != 0:
             if hasattr(deg, "__iter__") and len(deg) - 1 != max(deg):
-                msg = "The polynomial may contain degrees other than those in deg"
+                msg = "Change the domain/window to get only the specified degrees"
                 warnings.warn(msg, UserWarning)
 
         if full:

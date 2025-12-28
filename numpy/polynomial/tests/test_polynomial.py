@@ -572,7 +572,7 @@ class TestMisc:
             return x**4 + x**2 + 1
 
         # Test warnings
-        msg = "The polynomial may contain degrees other than those in deg"
+        msg = "Change the domain/window to get only the specified degrees"
         with pytest.warns(UserWarning, match=msg):
             p = poly.Polynomial.fit(x=[2, 3, 8, 19],
                                     y=[4, 5, -6, 77],
