@@ -84,6 +84,8 @@ type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
 type _StringDTypeOrUnicodeArray = _StringDTypeArray | NDArray[np.str_]
 type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 
+###
+
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload
     def __new__(
@@ -120,388 +122,203 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         order: _OrderKACF = "C",
     ) -> _CharArray[str_]: ...
 
+    #
     def __array_finalize__(self, obj: object) -> None: ...
+
+    #
+    @overload  # type: ignore[override]
+    def __eq__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    @overload
+    def __eq__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...
+
+    #
+    @overload  # type: ignore[override]
+    def __ne__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    @overload
+    def __ne__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...
+
+    #
+    @overload  # type: ignore[override]
+    def __ge__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    @overload
+    def __ge__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __le__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    @overload
+    def __le__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __gt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    @overload
+    def __gt__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __lt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    @overload
+    def __lt__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __add__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...
+    @overload
+    def __add__(self: _CharArray[bytes_], other: S_co, /) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @overload  # type: ignore[override]
+    def __radd__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...
+    @overload
+    def __radd__(self: _CharArray[bytes_], other: S_co, /) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
     def __mul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...  # type: ignore[override]
     def __rmul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...  # type: ignore[override]
+
+    #
     def __mod__(self, i: Any) -> chararray[_AnyShape, _CharDTypeT_co]: ...  # type: ignore[override]
 
+    #
+    def decode(self: _CharArray[bytes_], encoding: str | None = None, errors: str | None = None) -> _CharArray[str_]: ...
+    def encode(self: _CharArray[str_], encoding: str | None = None, errors: str | None = None) -> _CharArray[bytes_]: ...
+
+    #
+    @overload
+    def center(self: _CharArray[str_], width: i_co, fillchar: U_co = " ") -> _CharArray[str_]: ...
+    @overload
+    def center(self: _CharArray[bytes_], width: i_co, fillchar: str | S_co = " ") -> _CharArray[bytes_]: ...
+
+    #
+    @overload
+    def count(self: _CharArray[str_], sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+    @overload
+    def count(self: _CharArray[bytes_], sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+
+    #
+    @overload
+    def endswith(self: _CharArray[str_], suffix: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
+    @overload
+    def endswith(self: _CharArray[bytes_], suffix: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
+
+    #
+    def expandtabs(self, tabsize: i_co = 8) -> Self: ...
+
+    #
+    @overload
+    def find(self: _CharArray[str_], sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+    @overload
+    def find(self: _CharArray[bytes_], sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+
+    #
+    @overload
+    def index(self: _CharArray[str_], sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+    @overload
+    def index(self: _CharArray[bytes_], sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+
+    #
+    @overload
+    def join(self: _CharArray[str_], seq: U_co) -> _CharArray[str_]: ...
+    @overload
+    def join(self: _CharArray[bytes_], seq: S_co) -> _CharArray[bytes_]: ...
+
+    #
+    @overload
+    def ljust(self: _CharArray[str_], width: i_co, fillchar: U_co = " ") -> _CharArray[str_]: ...
+    @overload
+    def ljust(self: _CharArray[bytes_], width: i_co, fillchar: str | S_co = " ") -> _CharArray[bytes_]: ...
+
+    #
+    @overload
+    def lstrip(self: _CharArray[str_], chars: U_co | None = None) -> _CharArray[str_]: ...
+    @overload
+    def lstrip(self: _CharArray[bytes_], chars: S_co | None = None) -> _CharArray[bytes_]: ...
+
+    #
     @overload  # type: ignore[override]
-    def __eq__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> NDArray[np.bool]: ...
+    def partition(self: _CharArray[str_], sep: U_co) -> _CharArray[str_]: ...
     @overload
-    def __eq__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> NDArray[np.bool]: ...
+    def partition(self: _CharArray[bytes_], sep: S_co) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    @overload  # type: ignore[override]
-    def __ne__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> NDArray[np.bool]: ...
+    #
     @overload
-    def __ne__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> NDArray[np.bool]: ...
+    def replace(self: _CharArray[str_], old: U_co, new: U_co, count: i_co | None = None) -> _CharArray[str_]: ...
+    @overload
+    def replace(self: _CharArray[bytes_], old: S_co, new: S_co, count: i_co | None = None) -> _CharArray[bytes_]: ...
 
-    @overload  # type: ignore[override]
-    def __ge__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> NDArray[np.bool]: ...
+    #
     @overload
-    def __ge__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> NDArray[np.bool]: ...
+    def rfind(self: _CharArray[str_], sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+    @overload
+    def rfind(self: _CharArray[bytes_], sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 
-    @overload  # type: ignore[override]
-    def __le__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> NDArray[np.bool]: ...
+    #
     @overload
-    def __le__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> NDArray[np.bool]: ...
+    def rindex(self: _CharArray[str_], sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
+    @overload
+    def rindex(self: _CharArray[bytes_], sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 
-    @overload  # type: ignore[override]
-    def __gt__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> NDArray[np.bool]: ...
+    #
     @overload
-    def __gt__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> NDArray[np.bool]: ...
+    def rjust(self: _CharArray[str_], width: i_co, fillchar: U_co = " ") -> _CharArray[str_]: ...
+    @overload
+    def rjust(self: _CharArray[bytes_], width: i_co, fillchar: str | S_co = " ") -> _CharArray[bytes_]: ...
 
-    @overload  # type: ignore[override]
-    def __lt__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> NDArray[np.bool]: ...
+    #
     @overload
-    def __lt__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> NDArray[np.bool]: ...
+    def rpartition(self: _CharArray[str_], sep: U_co) -> _CharArray[str_]: ...
+    @overload
+    def rpartition(self: _CharArray[bytes_], sep: S_co) -> _CharArray[bytes_]: ...
 
-    @overload  # type: ignore[override]
-    def __add__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> _CharArray[str_]: ...
+    #
     @overload
-    def __add__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> _CharArray[bytes_]: ...
+    def rsplit(self: _CharArray[str_], sep: U_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
+    @overload
+    def rsplit(self: _CharArray[bytes_], sep: S_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
 
-    @overload  # type: ignore[override]
-    def __radd__(
-        self: _CharArray[str_],
-        other: U_co,
-    ) -> _CharArray[str_]: ...
+    #
     @overload
-    def __radd__(
-        self: _CharArray[bytes_],
-        other: S_co,
-    ) -> _CharArray[bytes_]: ...
+    def rstrip(self: _CharArray[str_], chars: U_co | None = None) -> _CharArray[str_]: ...
+    @overload
+    def rstrip(self: _CharArray[bytes_], chars: S_co | None = None) -> _CharArray[bytes_]: ...
 
+    #
     @overload
-    def center(
-        self: _CharArray[str_],
-        width: i_co,
-        fillchar: U_co = " ",
-    ) -> _CharArray[str_]: ...
+    def split(self: _CharArray[str_], sep: U_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
     @overload
-    def center(
-        self: _CharArray[bytes_],
-        width: i_co,
-        fillchar: str | S_co = " ",
-    ) -> _CharArray[bytes_]: ...
+    def split(self: _CharArray[bytes_], sep: S_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
 
-    @overload
-    def count(
-        self: _CharArray[str_],
-        sub: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-    @overload
-    def count(
-        self: _CharArray[bytes_],
-        sub: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-
-    def decode(
-        self: _CharArray[bytes_],
-        encoding: str | None = None,
-        errors: str | None = None,
-    ) -> _CharArray[str_]: ...
-
-    def encode(
-        self: _CharArray[str_],
-        encoding: str | None = None,
-        errors: str | None = None,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def endswith(
-        self: _CharArray[str_],
-        suffix: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[np.bool]: ...
-    @overload
-    def endswith(
-        self: _CharArray[bytes_],
-        suffix: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[np.bool]: ...
-
-    def expandtabs(
-        self,
-        tabsize: i_co = 8,
-    ) -> Self: ...
-
-    @overload
-    def find(
-        self: _CharArray[str_],
-        sub: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-    @overload
-    def find(
-        self: _CharArray[bytes_],
-        sub: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-
-    @overload
-    def index(
-        self: _CharArray[str_],
-        sub: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-    @overload
-    def index(
-        self: _CharArray[bytes_],
-        sub: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-
-    @overload
-    def join(
-        self: _CharArray[str_],
-        seq: U_co,
-    ) -> _CharArray[str_]: ...
-    @overload
-    def join(
-        self: _CharArray[bytes_],
-        seq: S_co,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def ljust(
-        self: _CharArray[str_],
-        width: i_co,
-        fillchar: U_co = " ",
-    ) -> _CharArray[str_]: ...
-    @overload
-    def ljust(
-        self: _CharArray[bytes_],
-        width: i_co,
-        fillchar: str | S_co = " ",
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def lstrip(
-        self: _CharArray[str_],
-        chars: U_co | None = None,
-    ) -> _CharArray[str_]: ...
-    @overload
-    def lstrip(
-        self: _CharArray[bytes_],
-        chars: S_co | None = None,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload  # type: ignore[override]
-    def partition(
-        self: _CharArray[str_],
-        sep: U_co,
-    ) -> _CharArray[str_]: ...
-    @overload
-    def partition(
-        self: _CharArray[bytes_],
-        sep: S_co,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def replace(
-        self: _CharArray[str_],
-        old: U_co,
-        new: U_co,
-        count: i_co | None = None,
-    ) -> _CharArray[str_]: ...
-    @overload
-    def replace(
-        self: _CharArray[bytes_],
-        old: S_co,
-        new: S_co,
-        count: i_co | None = None,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def rfind(
-        self: _CharArray[str_],
-        sub: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-    @overload
-    def rfind(
-        self: _CharArray[bytes_],
-        sub: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-
-    @overload
-    def rindex(
-        self: _CharArray[str_],
-        sub: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-    @overload
-    def rindex(
-        self: _CharArray[bytes_],
-        sub: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[int_]: ...
-
-    @overload
-    def rjust(
-        self: _CharArray[str_],
-        width: i_co,
-        fillchar: U_co = " ",
-    ) -> _CharArray[str_]: ...
-    @overload
-    def rjust(
-        self: _CharArray[bytes_],
-        width: i_co,
-        fillchar: str | S_co = " ",
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def rpartition(
-        self: _CharArray[str_],
-        sep: U_co,
-    ) -> _CharArray[str_]: ...
-    @overload
-    def rpartition(
-        self: _CharArray[bytes_],
-        sep: S_co,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def rsplit(
-        self: _CharArray[str_],
-        sep: U_co | None = None,
-        maxsplit: i_co | None = None,
-    ) -> NDArray[object_]: ...
-    @overload
-    def rsplit(
-        self: _CharArray[bytes_],
-        sep: S_co | None = None,
-        maxsplit: i_co | None = None,
-    ) -> NDArray[object_]: ...
-
-    @overload
-    def rstrip(
-        self: _CharArray[str_],
-        chars: U_co | None = None,
-    ) -> _CharArray[str_]: ...
-    @overload
-    def rstrip(
-        self: _CharArray[bytes_],
-        chars: S_co | None = None,
-    ) -> _CharArray[bytes_]: ...
-
-    @overload
-    def split(
-        self: _CharArray[str_],
-        sep: U_co | None = None,
-        maxsplit: i_co | None = None,
-    ) -> NDArray[object_]: ...
-    @overload
-    def split(
-        self: _CharArray[bytes_],
-        sep: S_co | None = None,
-        maxsplit: i_co | None = None,
-    ) -> NDArray[object_]: ...
-
+    #
     def splitlines(self, keepends: b_co | None = None) -> NDArray[object_]: ...
 
+    #
     @overload
-    def startswith(
-        self: _CharArray[str_],
-        prefix: U_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[np.bool]: ...
+    def startswith(self: _CharArray[str_], prefix: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
     @overload
-    def startswith(
-        self: _CharArray[bytes_],
-        prefix: S_co,
-        start: i_co = 0,
-        end: i_co | None = None,
-    ) -> NDArray[np.bool]: ...
+    def startswith(self: _CharArray[bytes_], prefix: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 
+    #
     @overload
-    def strip(
-        self: _CharArray[str_],
-        chars: U_co | None = None,
-    ) -> _CharArray[str_]: ...
+    def strip(self: _CharArray[str_], chars: U_co | None = None) -> _CharArray[str_]: ...
     @overload
-    def strip(
-        self: _CharArray[bytes_],
-        chars: S_co | None = None,
-    ) -> _CharArray[bytes_]: ...
+    def strip(self: _CharArray[bytes_], chars: S_co | None = None) -> _CharArray[bytes_]: ...
 
+    #
     @overload
-    def translate(
-        self: _CharArray[str_],
-        table: U_co,
-        deletechars: U_co | None = None,
-    ) -> _CharArray[str_]: ...
+    def translate(self: _CharArray[str_], table: U_co, deletechars: U_co | None = None) -> _CharArray[str_]: ...
     @overload
-    def translate(
-        self: _CharArray[bytes_],
-        table: S_co,
-        deletechars: S_co | None = None,
-    ) -> _CharArray[bytes_]: ...
+    def translate(self: _CharArray[bytes_], table: S_co, deletechars: S_co | None = None) -> _CharArray[bytes_]: ...
 
+    #
     def zfill(self, width: i_co) -> Self: ...
     def capitalize(self) -> Self: ...
     def title(self) -> Self: ...
     def swapcase(self) -> Self: ...
     def lower(self) -> Self: ...
     def upper(self) -> Self: ...
+
+    #
     def isalnum(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
     def isalpha(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
     def isdigit(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
@@ -600,16 +417,8 @@ def center(a: _StringDTypeSupportsArray, width: i_co, fillchar: str | _StringDTy
 @overload
 def center(a: T_co, width: i_co, fillchar: T_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
-def decode(
-    a: S_co,
-    encoding: str | None = None,
-    errors: str | None = None,
-) -> NDArray[str_]: ...
-def encode(
-    a: U_co | T_co,
-    encoding: str | None = None,
-    errors: str | None = None,
-) -> NDArray[bytes_]: ...
+def decode(a: S_co, encoding: str | None = None, errors: str | None = None) -> NDArray[str_]: ...
+def encode(a: U_co | T_co, encoding: str | None = None, errors: str | None = None) -> NDArray[bytes_]: ...
 
 @overload
 def expandtabs(a: U_co, tabsize: i_co = 8) -> NDArray[str_]: ...
@@ -666,58 +475,24 @@ def partition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> _
 def partition(a: T_co, sep: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def replace(
-    a: U_co,
-    old: U_co,
-    new: U_co,
-    count: i_co | None = -1,
-) -> NDArray[str_]: ...
+def replace(a: U_co, old: U_co, new: U_co, count: i_co | None = -1) -> NDArray[str_]: ...
+@overload
+def replace(a: S_co, old: S_co, new: S_co, count: i_co | None = -1) -> NDArray[bytes_]: ...
 @overload
 def replace(
-    a: S_co,
-    old: S_co,
-    new: S_co,
-    count: i_co | None = -1,
-) -> NDArray[bytes_]: ...
-@overload
-def replace(
-    a: _StringDTypeSupportsArray,
-    old: _StringDTypeSupportsArray,
-    new: _StringDTypeSupportsArray,
-    count: i_co = -1,
+    a: _StringDTypeSupportsArray, old: _StringDTypeSupportsArray, new: _StringDTypeSupportsArray, count: i_co = -1
 ) -> _StringDTypeArray: ...
 @overload
-def replace(
-    a: T_co,
-    old: T_co,
-    new: T_co,
-    count: i_co = -1,
-) -> _StringDTypeOrUnicodeArray: ...
+def replace(a: T_co, old: T_co, new: T_co, count: i_co = -1) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def rjust(
-    a: U_co,
-    width: i_co,
-    fillchar: U_co = " ",
-) -> NDArray[str_]: ...
+def rjust(a: U_co, width: i_co, fillchar: U_co = " ") -> NDArray[str_]: ...
 @overload
-def rjust(
-    a: S_co,
-    width: i_co,
-    fillchar: str | S_co = " ",
-) -> NDArray[bytes_]: ...
+def rjust(a: S_co, width: i_co, fillchar: str | S_co = " ") -> NDArray[bytes_]: ...
 @overload
-def rjust(
-    a: _StringDTypeSupportsArray,
-    width: i_co,
-    fillchar: str | _StringDTypeSupportsArray = " ",
-) -> _StringDTypeArray: ...
+def rjust(a: _StringDTypeSupportsArray, width: i_co, fillchar: str | _StringDTypeSupportsArray = " ") -> _StringDTypeArray: ...
 @overload
-def rjust(
-    a: T_co,
-    width: i_co,
-    fillchar: T_co = " ",
-) -> _StringDTypeOrUnicodeArray: ...
+def rjust(a: T_co, width: i_co, fillchar: T_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def rpartition(a: U_co, sep: U_co) -> NDArray[str_]: ...
@@ -729,29 +504,15 @@ def rpartition(a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray) -> 
 def rpartition(a: T_co, sep: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def rsplit(
-    a: U_co,
-    sep: U_co | None = None,
-    maxsplit: i_co | None = None,
-) -> NDArray[object_]: ...
+def rsplit(a: U_co, sep: U_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
+@overload
+def rsplit(a: S_co, sep: S_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
 @overload
 def rsplit(
-    a: S_co,
-    sep: S_co | None = None,
-    maxsplit: i_co | None = None,
+    a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray | None = None, maxsplit: i_co | None = None
 ) -> NDArray[object_]: ...
 @overload
-def rsplit(
-    a: _StringDTypeSupportsArray,
-    sep: _StringDTypeSupportsArray | None = None,
-    maxsplit: i_co | None = None,
-) -> NDArray[object_]: ...
-@overload
-def rsplit(
-    a: T_co,
-    sep: T_co | None = None,
-    maxsplit: i_co | None = None,
-) -> NDArray[object_]: ...
+def rsplit(a: T_co, sep: T_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
 
 @overload
 def rstrip(a: U_co, chars: U_co | None = None) -> NDArray[str_]: ...
@@ -763,29 +524,15 @@ def rstrip(a: _StringDTypeSupportsArray, chars: _StringDTypeSupportsArray | None
 def rstrip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def split(
-    a: U_co,
-    sep: U_co | None = None,
-    maxsplit: i_co | None = None,
-) -> NDArray[object_]: ...
+def split(a: U_co, sep: U_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
+@overload
+def split(a: S_co, sep: S_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
 @overload
 def split(
-    a: S_co,
-    sep: S_co | None = None,
-    maxsplit: i_co | None = None,
+    a: _StringDTypeSupportsArray, sep: _StringDTypeSupportsArray | None = None, maxsplit: i_co | None = None
 ) -> NDArray[object_]: ...
 @overload
-def split(
-    a: _StringDTypeSupportsArray,
-    sep: _StringDTypeSupportsArray | None = None,
-    maxsplit: i_co | None = None,
-) -> NDArray[object_]: ...
-@overload
-def split(
-    a: T_co,
-    sep: T_co | None = None,
-    maxsplit: i_co | None = None,
-) -> NDArray[object_]: ...
+def split(a: T_co, sep: T_co | None = None, maxsplit: i_co | None = None) -> NDArray[object_]: ...
 
 def splitlines(a: UST_co, keepends: b_co | None = None) -> NDArray[np.object_]: ...
 
@@ -817,29 +564,13 @@ def title(a: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
 def title(a: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def translate(
-    a: U_co,
-    table: str,
-    deletechars: str | None = None,
-) -> NDArray[str_]: ...
+def translate(a: U_co, table: str, deletechars: str | None = None) -> NDArray[str_]: ...
 @overload
-def translate(
-    a: S_co,
-    table: str,
-    deletechars: str | None = None,
-) -> NDArray[bytes_]: ...
+def translate(a: S_co, table: str, deletechars: str | None = None) -> NDArray[bytes_]: ...
 @overload
-def translate(
-    a: _StringDTypeSupportsArray,
-    table: str,
-    deletechars: str | None = None,
-) -> _StringDTypeArray: ...
+def translate(a: _StringDTypeSupportsArray, table: str, deletechars: str | None = None) -> _StringDTypeArray: ...
 @overload
-def translate(
-    a: T_co,
-    table: str,
-    deletechars: str | None = None,
-) -> _StringDTypeOrUnicodeArray: ...
+def translate(a: T_co, table: str, deletechars: str | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def upper(a: U_co) -> NDArray[str_]: ...
@@ -861,92 +592,32 @@ def zfill(a: T_co, width: i_co) -> _StringDTypeOrUnicodeArray: ...
 
 # String information
 @overload
-def count(
-    a: U_co,
-    sub: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def count(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def count(
-    a: S_co,
-    sub: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def count(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def count(
-    a: T_co,
-    sub: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.int_]: ...
+def count(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
 
 @overload
-def endswith(
-    a: U_co,
-    suffix: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+def endswith(a: U_co, suffix: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 @overload
-def endswith(
-    a: S_co,
-    suffix: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+def endswith(a: S_co, suffix: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 @overload
-def endswith(
-    a: T_co,
-    suffix: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+def endswith(a: T_co, suffix: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 
 @overload
-def find(
-    a: U_co,
-    sub: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def find(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def find(
-    a: S_co,
-    sub: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def find(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def find(
-    a: T_co,
-    sub: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.int_]: ...
+def find(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
 
 @overload
-def index(
-    a: U_co,
-    sub: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def index(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def index(
-    a: S_co,
-    sub: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def index(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def index(
-    a: T_co,
-    sub: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.int_]: ...
+def index(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
 
 def isalpha(a: UST_co) -> NDArray[np.bool]: ...
 def isalnum(a: UST_co) -> NDArray[np.bool]: ...
@@ -959,70 +630,25 @@ def istitle(a: UST_co) -> NDArray[np.bool]: ...
 def isupper(a: UST_co) -> NDArray[np.bool]: ...
 
 @overload
-def rfind(
-    a: U_co,
-    sub: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def rfind(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def rfind(
-    a: S_co,
-    sub: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def rfind(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def rfind(
-    a: T_co,
-    sub: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.int_]: ...
+def rfind(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
 
 @overload
-def rindex(
-    a: U_co,
-    sub: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def rindex(a: U_co, sub: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def rindex(
-    a: S_co,
-    sub: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[int_]: ...
+def rindex(a: S_co, sub: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[int_]: ...
 @overload
-def rindex(
-    a: T_co,
-    sub: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.int_]: ...
+def rindex(a: T_co, sub: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.int_]: ...
 
 @overload
-def startswith(
-    a: U_co,
-    prefix: U_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+def startswith(a: U_co, prefix: U_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 @overload
-def startswith(
-    a: S_co,
-    prefix: S_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+def startswith(a: S_co, prefix: S_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 @overload
-def startswith(
-    a: T_co,
-    prefix: T_co,
-    start: i_co = 0,
-    end: i_co | None = None,
-) -> NDArray[np.bool]: ...
+def startswith(a: T_co, prefix: T_co, start: i_co = 0, end: i_co | None = None) -> NDArray[np.bool]: ...
 
 def str_len(A: UST_co) -> NDArray[int_]: ...
 
