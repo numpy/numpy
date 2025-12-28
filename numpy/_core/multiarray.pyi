@@ -212,6 +212,9 @@ type _ArangeScalar = np.integer | np.floating | np.datetime64 | np.timedelta64
 type _ToDates = dt.date | _NestedSequence[dt.date]
 type _ToDeltas = dt.timedelta | _NestedSequence[dt.timedelta]
 
+type _BitOrder = L["big", "little"]
+type _MaxWork = L[-1, 0]
+
 @type_check_only
 class _SupportsArray[ArrayT_co: np.ndarray](Protocol):
     def __array__(self, /) -> ArrayT_co: ...
@@ -699,15 +702,15 @@ def vdot(a: _ArrayLikeObject_co, b: object, /) -> Any: ...
 @overload
 def vdot(a: object, b: _ArrayLikeObject_co, /) -> Any: ...
 
-def bincount(x: ArrayLike, /, weights: ArrayLike | None = None, minlength: SupportsIndex = 0) -> NDArray[intp]: ...
+#
+def bincount(x: ArrayLike, /, weights: ArrayLike | None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
 
+#
 def copyto(dst: ndarray, src: ArrayLike, casting: _CastingKind = "same_kind", where: object = True) -> None: ...
 def putmask(a: ndarray, /, mask: _ArrayLikeBool_co, values: ArrayLike) -> None: ...
 
-type _BitOrder = L["big", "little"]
-
 @overload
-def packbits(a: _ArrayLikeInt_co, /, axis: None = None, bitorder: _BitOrder = "big") -> ndarray[tuple[int], dtype[uint8]]: ...
+def packbits(a: _ArrayLikeInt_co, /, axis: None = None, bitorder: _BitOrder = "big") -> _Array1D[uint8]: ...
 @overload
 def packbits(a: _ArrayLikeInt_co, /, axis: SupportsIndex, bitorder: _BitOrder = "big") -> NDArray[uint8]: ...
 
@@ -718,7 +721,7 @@ def unpackbits(
     axis: None = None,
     count: SupportsIndex | None = None,
     bitorder: _BitOrder = "big",
-) -> ndarray[tuple[int], dtype[uint8]]: ...
+) -> _Array1D[uint8]: ...
 @overload
 def unpackbits(
     a: _ArrayLike[uint8],
@@ -727,8 +730,6 @@ def unpackbits(
     count: SupportsIndex | None = None,
     bitorder: _BitOrder = "big",
 ) -> NDArray[uint8]: ...
-
-type _MaxWork = L[-1, 0]
 
 # any two python objects will be accepted, not just `ndarray`s
 def shares_memory(a: object, b: object, /, max_work: _MaxWork = -1) -> bool: ...
