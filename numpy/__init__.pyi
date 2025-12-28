@@ -289,7 +289,7 @@ from numpy._core.getlimits import (
     finfo,
     iinfo,
 )
-
+from numpy._core.memmap import memmap
 from numpy._core.multiarray import (
     array,
     empty_like,
@@ -922,13 +922,6 @@ type _NDIterFlagsOp = L[
     "writemasked",
 ]
 
-type _MemMapModeKind = L[
-    "readonly", "r",
-    "copyonwrite", "c",
-    "readwrite", "r+",
-    "write", "w+",
-]  # fmt: skip
-
 type _DT64Item = dt.date | int | None
 type _TD64Item = dt.timedelta | int | None
 
@@ -985,9 +978,6 @@ class _SupportsFileMethods(SupportsFlush, Protocol):
     def fileno(self) -> SupportsIndex: ...
     def tell(self) -> SupportsIndex: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
-
-@type_check_only
-class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protocol): ...
 
 @type_check_only
 class _SupportsDLPack[StreamT](Protocol):
@@ -6171,50 +6161,6 @@ class nditer:
     def shape(self) -> tuple[int, ...]: ...
     @property
     def value(self) -> tuple[NDArray[Any], ...]: ...
-
-class memmap(ndarray[_ShapeT_co, _DTypeT_co]):
-    __array_priority__: ClassVar[float] = 100.0  # pyright: ignore[reportIncompatibleMethodOverride]
-    filename: str | None
-    offset: int
-    mode: str
-    @overload
-    def __new__(
-        subtype,
-        filename: StrOrBytesPath | _SupportsFileMethodsRW,
-        dtype: type[uint8] = ...,
-        mode: _MemMapModeKind = "r+",
-        offset: int = 0,
-        shape: int | tuple[int, ...] | None = None,
-        order: _OrderKACF = "C",
-    ) -> memmap[Any, dtype[uint8]]: ...
-    @overload
-    def __new__[ScalarT: generic](
-        subtype,
-        filename: StrOrBytesPath | _SupportsFileMethodsRW,
-        dtype: _DTypeLike[ScalarT],
-        mode: _MemMapModeKind = "r+",
-        offset: int = 0,
-        shape: int | tuple[int, ...] | None = None,
-        order: _OrderKACF = "C",
-    ) -> memmap[Any, dtype[ScalarT]]: ...
-    @overload
-    def __new__(
-        subtype,
-        filename: StrOrBytesPath | _SupportsFileMethodsRW,
-        dtype: DTypeLike,
-        mode: _MemMapModeKind = "r+",
-        offset: int = 0,
-        shape: int | tuple[int, ...] | None = None,
-        order: _OrderKACF = "C",
-    ) -> memmap[Any, dtype]: ...
-    def __array_finalize__(self, obj: object) -> None: ...
-    def __array_wrap__(  # type: ignore[override]
-        self,
-        array: memmap[_ShapeT_co, _DTypeT_co],
-        context: tuple[ufunc, tuple[Any, ...], int] | None = None,
-        return_scalar: py_bool = False,
-    ) -> Any: ...
-    def flush(self) -> None: ...
 
 class poly1d:
     @property
