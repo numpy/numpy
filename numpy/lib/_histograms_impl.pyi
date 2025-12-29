@@ -8,6 +8,7 @@ from numpy._typing import (
     NDArray,
     _ArrayLike,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat64_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
@@ -237,11 +238,36 @@ def histogram(
     weights: _WeightsLike,
 ) -> _HistogramResult[Incomplete, Incomplete]: ...
 
-#
+# unlike `histogram`, `weights` must be safe-castable to f64
+@overload  # dtype +float64
 def histogramdd(
-    sample: ArrayLike,
+    sample: _ArrayLikeInt_co | _NestedSequence[float] | _ArrayLikeObject_co,
     bins: SupportsIndex | ArrayLike = 10,
     range: Sequence[_Range] | None = None,
     density: bool | None = None,
-    weights: ArrayLike | None = None,
-) -> tuple[NDArray[Any], tuple[NDArray[Any], ...]]: ...
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], tuple[_Array1D[np.float64], ...]]: ...
+@overload  # dtype ~complex
+def histogramdd(
+    sample: _NestedList[complex],
+    bins: SupportsIndex | ArrayLike = 10,
+    range: Sequence[_Range] | None = None,
+    density: bool | None = None,
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], tuple[_Array1D[np.complex128], ...]]: ...
+@overload  # dtype known
+def histogramdd[ScalarT: np.inexact](
+    sample: _ArrayLike[ScalarT],
+    bins: SupportsIndex | ArrayLike = 10,
+    range: Sequence[_Range] | None = None,
+    density: bool | None = None,
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], tuple[_Array1D[ScalarT], ...]]: ...
+@overload  # dtype unknown
+def histogramdd(
+    sample: _ArrayLikeComplex_co,
+    bins: SupportsIndex | ArrayLike = 10,
+    range: Sequence[_Range] | None = None,
+    density: bool | None = None,
+    weights: _ArrayLikeFloat64_co | None = None,
+) -> tuple[NDArray[np.float64], tuple[_Array1D[Any], ...]]: ...

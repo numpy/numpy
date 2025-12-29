@@ -58,11 +58,12 @@ assert_type(np.histogram(AR_f4, weights=list_i), tuple[_Array1D[np.intp], _Array
 assert_type(np.histogram(AR_f4, weights=list_f), tuple[_Array1D[Any], _Array1D[np.float32]])
 assert_type(np.histogram(AR_f4, weights=list_c), tuple[_Array1D[Any], _Array1D[np.float32]])
 
-assert_type(np.histogramdd(AR_i8, bins=[1]),
-            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
-assert_type(np.histogramdd(AR_i8, range=[(0, 3)]),
-            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
-assert_type(np.histogramdd(AR_i8, weights=AR_f8),
-            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
-assert_type(np.histogramdd(AR_f8, density=True),
-            tuple[npt.NDArray[Any], tuple[npt.NDArray[Any], ...]])
+assert_type(np.histogramdd(AR_i8, bins=[1]), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_i8, range=[(0, 3)]), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_i8, weights=AR_f8), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_f8, density=True), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_i4), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_i8), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float64], ...]])
+assert_type(np.histogramdd(AR_f4), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.float32], ...]])
+assert_type(np.histogramdd(AR_c8), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.complex64], ...]])
+assert_type(np.histogramdd(AR_c16), tuple[npt.NDArray[np.float64], tuple[_Array1D[np.complex128], ...]])
