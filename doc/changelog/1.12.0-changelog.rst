@@ -288,7 +288,7 @@ A total of 418 pull requests were merged for this release.
 * `#7397 <https://github.com/numpy/numpy/pull/7397>`__: BUG: incorrect type for objects whose __len__ fails
 * `#7398 <https://github.com/numpy/numpy/pull/7398>`__: DOC: fix typo
 * `#7404 <https://github.com/numpy/numpy/pull/7404>`__: Use PyMem_RawMalloc on Python 3.4 and newer
-* `#7406 <https://github.com/numpy/numpy/pull/7406>`__: ENH ufunc called on memmap return a ndarray
+* `#7406 <https://github.com/numpy/numpy/pull/7406>`__: ENH ufunc called on memmap return an ndarray
 * `#7407 <https://github.com/numpy/numpy/pull/7407>`__: BUG: Fix decref before incref for in-place accumulate
 * `#7410 <https://github.com/numpy/numpy/pull/7410>`__: DOC: add nanprod to the list of math routines
 * `#7414 <https://github.com/numpy/numpy/pull/7414>`__: Tweak corrcoef

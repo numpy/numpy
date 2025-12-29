@@ -27,7 +27,7 @@ New functions
 
 * ``numpy.from_dlpack`` has been added to allow easy exchange of data using the
   DLPack protocol.  It accepts Python objects that implement the ``__dlpack__``
-  and ``__dlpack_device__`` methods and returns a ndarray object which is
+  and ``__dlpack_device__`` methods and returns an ndarray object which is
   generally the view of the data of the input object.
 
   (`gh-21145 <https://github.com/numpy/numpy/pull/21145>`__)

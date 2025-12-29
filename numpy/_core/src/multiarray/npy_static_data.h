@@ -92,7 +92,7 @@ typedef struct npy_static_pydata_struct {
     PyObject *zero_obj;
 
     /*
-     * Reference to an np.array(0, dtype=np.long) instance
+     * Reference to a np.array(0, dtype=np.long) instance
      */
     PyObject *zero_pyint_like_arr;
 
