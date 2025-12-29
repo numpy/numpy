@@ -364,20 +364,20 @@ def test_arg_locking(kernel, outcome):
             print(data)
             arrs[data[0]] = data[1:]
 
-        for mutation_func in (replace_list_items, contract_and_expand_list):
-            b = threading.Barrier(5)
-            try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
-                    tasks = [tpe.submit(read_arrs, b) for _ in range(4)]
-                    tasks.append(tpe.submit(replace_list_items, b))
-                    for t in tasks:
-                        t.result()
-            except RuntimeError as e:
-                if outcome == "success":
-                    raise
-                assert "Inconsistent object during array creation?" in str(e)
-                msg = "replace_list_items should not raise errors"
-                assert mutation_func is contract_and_expand_list, msg
-            finally:
-                if len(tasks) < 5:
-                    b.abort()
+    for mutation_func in (replace_list_items, contract_and_expand_list):
+        b = threading.Barrier(5)
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
+                tasks = [tpe.submit(read_arrs, b) for _ in range(4)]
+                tasks.append(tpe.submit(replace_list_items, b))
+                for t in tasks:
+                    t.result()
+        except RuntimeError as e:
+            if outcome == "success":
+                raise
+            assert "Inconsistent object during array creation?" in str(e)
+            msg = "replace_list_items should not raise errors"
+            assert mutation_func is contract_and_expand_list, msg
+        finally:
+            if len(tasks) < 5:
+                b.abort()
