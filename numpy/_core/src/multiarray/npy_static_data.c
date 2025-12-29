@@ -38,6 +38,7 @@ intern_strings(void)
     INTERN_STRING(array_ufunc, "__array_ufunc__");
     INTERN_STRING(array_wrap, "__array_wrap__");
     INTERN_STRING(array_finalize, "__array_finalize__");
+    INTERN_STRING(numpy_dtype, "__numpy_dtype__");
     INTERN_STRING(implementation, "_implementation");
     INTERN_STRING(axis1, "axis1");
     INTERN_STRING(axis2, "axis2");

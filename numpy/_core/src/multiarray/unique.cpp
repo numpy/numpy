@@ -1,13 +1,13 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#define HASH_TABLE_INITIAL_BUCKETS 1024
 #include <Python.h>
 
 #include <algorithm>
 #include <complex>
 #include <cstring>
 #include <functional>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -15,6 +15,7 @@
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
 #include "gil_utils.h"
+#include "raii_utils.hpp"
 extern "C" {
     #include "fnv.h"
     #include "npy_argparse.h"
@@ -22,18 +23,42 @@ extern "C" {
     #include "numpy/halffloat.h"
 }
 
-// This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
-// Adapted from https://stackoverflow.com/a/25510879/2536294
-template <typename F>
-struct FinalAction {
-    FinalAction(F f) : clean_{f} {}
-    ~FinalAction() { clean_(); }
-  private:
-    F clean_;
-};
-template <typename F>
-FinalAction<F> finally(F f) {
-    return FinalAction<F>(f);
+// HASH_TABLE_INITIAL_BUCKETS is the reserve hashset capacity used in the
+// std::unordered_set instances in the various unique_* functions.
+// We use min(input_size, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket
+// count:
+// - Reserving for all elements (isize) may over-allocate when there are few
+//   unique values.
+// - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps
+//   memory usage reasonable (4 KiB for pointers).
+// See https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
+const npy_intp HASH_TABLE_INITIAL_BUCKETS = 1024;
+
+//
+// Create a 1-d array with the given length that has the same
+// dtype as the input `arr`.
+//
+static inline PyArrayObject *
+empty_array_like(PyArrayObject *arr, npy_intp length)
+{
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    Py_INCREF(descr);
+
+    // Create the output array.
+    PyArrayObject *res_obj =
+        reinterpret_cast<PyArrayObject *>(
+            PyArray_NewFromDescr(
+                &PyArray_Type,
+                descr,
+                1,                      // ndim
+                &length,                // shape
+                NULL,                   // strides
+                NULL,                   // data
+                NPY_ARRAY_WRITEABLE,    // flags
+                NULL                    // obj
+            )
+        );
+    return res_obj;
 }
 
 template <typename T>
@@ -183,19 +208,10 @@ static PyObject*
 unique_numeric(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
-    * Returns a new NumPy array containing the unique values of the input array of numeric (integer or complex).
-    * This function uses hashing to identify uniqueness efficiently.
-    */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    NPY_DISABLE_C_API;
-
-    PyThreadState *_save1 = PyEval_SaveThread();
-
-    // number of elements in the input array
-    npy_intp isize = PyArray_SIZE(self);
+     * Returns a new NumPy array containing the unique values of the input
+     * array of numeric (integer or complex).
+     * This function uses hashing to identify uniqueness efficiently.
+     */
 
     auto hash = [equal_nan](const T *value) -> size_t {
         return hash_func(value, equal_nan);
@@ -204,55 +220,38 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
         return equal_func(lhs, rhs, equal_nan);
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
-    // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
-    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
-    // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
-    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
-    );
+    using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
 
-    // Input array is one-dimensional, enabling efficient iteration using strides.
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert((T *)idata);
+    // number of elements in the input array
+    npy_intp isize = PyArray_SIZE(self);
+    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+
+    {
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            hashset.insert(reinterpret_cast<T *>(idata));
+        }
     }
 
-    npy_intp length = hashset.size();
-
-    PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
-
+    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
     if (res_obj == NULL) {
         return NULL;
     }
-    NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        copy_func(odata, *it);
+    {
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *odata = PyArray_BYTES(res_obj);
+        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
+        for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+            copy_func(odata, *it);
+        }
     }
 
-    return res_obj;
+    return reinterpret_cast<PyObject *>(res_obj);
 }
 
 template <typename T>
@@ -260,23 +259,16 @@ static PyObject*
 unique_string(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
-    * Returns a new NumPy array containing the unique values of the input array of fixed size strings.
-    * This function uses hashing to identify uniqueness efficiently.
-    */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
+     * Returns a new NumPy array containing the unique values of the input
+     * array of fixed size strings.
+     * This function uses hashing to identify uniqueness efficiently.
+     */
+
     PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    NPY_DISABLE_C_API;
-
-    PyThreadState *_save1 = PyEval_SaveThread();
-
-    // number of elements in the input array
-    npy_intp isize = PyArray_SIZE(self);
-
     // variables for the string
     npy_intp itemsize = descr->elsize;
     npy_intp num_chars = itemsize / sizeof(T);
+
     auto hash = [num_chars](const T *value) -> size_t {
         return npy_fnv1a(value, num_chars * sizeof(T));
     };
@@ -284,77 +276,48 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
         return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
-    // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
-    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
-    // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
-    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
-    );
+    using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
 
-    // Input array is one-dimensional, enabling efficient iteration using strides.
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert((T *)idata);
+    // number of elements in the input array
+    npy_intp isize = PyArray_SIZE(self);
+    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+
+    {
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            hashset.insert(reinterpret_cast<T *>(idata));
+        }
     }
 
-    npy_intp length = hashset.size();
-
-    PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
-
+    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
     if (res_obj == NULL) {
         return NULL;
     }
-    NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
 
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        std::memcpy(odata, *it, itemsize);
+    {
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *odata = PyArray_BYTES(res_obj);
+        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
+        for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+            std::memcpy(odata, *it, itemsize);
+        }
     }
 
-    return res_obj;
+    return reinterpret_cast<PyObject *>(res_obj);
 }
 
 static PyObject*
 unique_vstring(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
-    * Returns a new NumPy array containing the unique values of the input array.
-    * This function uses hashing to identify uniqueness efficiently.
-    */
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    NPY_DISABLE_C_API;
+     * Returns a new NumPy array containing the unique values of the input array.
+     * This function uses hashing to identify uniqueness efficiently.
+     */
 
-    PyThreadState *_save1 = PyEval_SaveThread();
-
-    // number of elements in the input array
-    npy_intp isize = PyArray_SIZE(self);
-
-    // variables for the vstring
-    npy_string_allocator *in_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
     auto hash = [equal_nan](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
             if (equal_nan) {
@@ -382,83 +345,70 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         return std::memcmp(lhs->buf, rhs->buf, lhs->size) == 0;
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations and collisions.
-    // We use min(isize, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket count:
-    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
-    // - Using a moderate upper bound HASH_TABLE_INITIAL_BUCKETS(1024) keeps memory usage reasonable (4 KiB for pointers).
-    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<npy_static_string *, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, (npy_intp)HASH_TABLE_INITIAL_BUCKETS), hash, equal
-    );
-
-    // Input array is one-dimensional, enabling efficient iteration using strides.
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-    // unpacked_strings need to be allocated outside of the loop because of the lifetime problem.
+    npy_intp isize = PyArray_SIZE(self);
+    // unpacked_strings must live as long as hashset because hashset points
+    // to values in this vector.
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
-        int is_null = NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
-        if (is_null == -1) {
-            npy_gil_error(PyExc_RuntimeError,
-                "Failed to load string from packed static string. ");
-            return NULL;
+
+    using set_type = std::unordered_set<npy_static_string *,
+                                        decltype(hash), decltype(equal)>;
+    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+
+    {
+        PyArray_StringDTypeObject *descr =
+            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
+        np::raii::NpyStringAcquireAllocator alloc(descr);
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
+
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            npy_packed_static_string *packed_string =
+                reinterpret_cast<npy_packed_static_string *>(idata);
+            int is_null = NpyString_load(alloc.allocator(), packed_string,
+                                         &unpacked_strings[i]);
+            if (is_null == -1) {
+                // Unexpected error. Throw a C++ exception that will be caught
+                // by the caller of unique_vstring() and converted into a Python
+                // RuntimeError.
+                throw std::runtime_error("Failed to load string from packed "
+                                         "static string.");
+            }
+            hashset.insert(&unpacked_strings[i]);
         }
-        hashset.insert(&unpacked_strings[i]);
     }
 
-    NpyString_release_allocator(in_allocator);
-
-    npy_intp length = hashset.size();
-
-    PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
+    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
     if (res_obj == NULL) {
         return NULL;
     }
-    PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
-    Py_INCREF(res_descr);
-    NPY_DISABLE_C_API;
 
-    PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
+    {
+        PyArray_StringDTypeObject *res_descr =
+            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(res_obj));
+        np::raii::NpyStringAcquireAllocator alloc(res_descr);
+        np::raii::SaveThreadState save_thread_state{};
 
-    npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
-    auto out_allocator_dealloc = finally([&]() {
-        NpyString_release_allocator(out_allocator);
-    });
-
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    // Output array is one-dimensional, enabling efficient iteration using strides.
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
-        int pack_status = 0;
-        if ((*it)->buf == NULL) {
-            pack_status = NpyString_pack_null(out_allocator, packed_string);
-        } else {
-            pack_status = NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
-        }
-        if (pack_status == -1) {
-            // string packing failed
-            return NULL;
+        char *odata = PyArray_BYTES(res_obj);
+        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
+        for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+            npy_packed_static_string *packed_string =
+                reinterpret_cast<npy_packed_static_string *>(odata);
+            int pack_status = 0;
+            if ((*it)->buf == NULL) {
+                pack_status = NpyString_pack_null(alloc.allocator(), packed_string);
+            } else {
+                pack_status = NpyString_pack(alloc.allocator(), packed_string,
+                                             (*it)->buf, (*it)->size);
+            }
+            if (pack_status == -1) {
+                // string packing failed
+                return NULL;
+            }
         }
     }
-
-    return res_obj;
+    return reinterpret_cast<PyObject *>(res_obj);
 }
 
 
@@ -549,24 +499,27 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
                             NULL, NULL, NULL
                             ) < 0
     ) {
+        Py_XDECREF(arr);
         return NULL;
     }
 
+    PyObject *result = NULL;
     try {
         auto type = PyArray_TYPE(arr);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
             Py_RETURN_NOTIMPLEMENTED;
         }
-
-        return unique_funcs[type](arr, equal_nan);
+        result = unique_funcs[type](arr, equal_nan);
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();
-        return NULL;
+        result = NULL;
     }
     catch (const std::exception &e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
-        return NULL;
+        result = NULL;
     }
+    Py_DECREF(arr);
+    return result;
 }

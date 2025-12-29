@@ -38,7 +38,6 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -55,7 +54,11 @@ from numpy.testing import (
     runstring,
     temppath,
 )
-from numpy.testing._private.utils import _no_tracing, requires_memory
+from numpy.testing._private.utils import (
+    _no_tracing,
+    requires_deep_recursion,
+    requires_memory,
+)
 
 
 def assert_arg_sorted(arr, arg):
@@ -4014,7 +4017,7 @@ class TestBinop:
     #   - defer if other has __array_ufunc__ and it is None
     #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
-    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy3.{9, 10}-v7.3.13, #24862")
+    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy, #24862")
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
         #   -> (numpy ufunc, has_in_place_version, preferred_dtype)
@@ -5925,7 +5928,6 @@ class TestIO:
                     np.fromfile, tmp_filename, dtype=x.dtype,
                     sep=",", offset=1)
 
-    @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
     def test_fromfile_bad_dup(self, tmp_path, param_filename, monkeypatch):
         def dup_str(fd):
             return 'abc'
@@ -9349,6 +9351,7 @@ class TestConversion:
         assert_equal(bool(np.array([True])), True)
         assert_equal(bool(np.array([[42]])), True)
 
+    @requires_deep_recursion
     def test_to_bool_scalar_not_convertible(self):
 
         class NotConvertible:
@@ -9357,11 +9360,6 @@ class TestConversion:
 
         assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
-        if IS_PYSTON:
-            pytest.skip("Pyston disables recursion checking")
-        if IS_WASM:
-            pytest.skip("Pyodide/WASM has limited stack size")
-
         self_containing = np.array([None])
         self_containing[0] = self_containing
 
@@ -9823,9 +9821,6 @@ class TestFormat:
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
         assert_raises(TypeError, '{:30}'.format, a)
-
-
-from numpy.testing import IS_PYPY
 
 
 class TestCTypes:
@@ -10993,6 +10988,7 @@ class TestTextSignatures:
         (np.fromfile, ("file", "dtype", "count", "sep", "offset", "like")),
         (np.fromiter, ("iter", "dtype", "count", "like")),
         (np.frompyfunc, ("func", "nin", "nout", "kwargs")),
+        (np.fromstring, ("string", "dtype", "count", "sep", "like")),
         (np.nested_iters, (
             "op", "axes", "flags", "op_flags", "op_dtypes", "order", "casting",
             "buffersize",

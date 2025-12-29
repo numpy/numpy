@@ -1,1 +1,0 @@
-* The accuracy of ``np.quantile`` and ``np.percentile`` for 16- and 32-bit floating point input data has been improved.

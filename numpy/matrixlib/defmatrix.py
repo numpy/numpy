@@ -315,11 +315,11 @@ class matrix(N.ndarray):
         >>> x.sum(axis=1)
         matrix([[3],
                 [7]])
-        >>> x.sum(axis=1, dtype='float')
+        >>> x.sum(axis=1, dtype=np.float64)
         matrix([[3.],
                 [7.]])
-        >>> out = np.zeros((2, 1), dtype='float')
-        >>> x.sum(axis=1, dtype='float', out=np.asmatrix(out))
+        >>> out = np.zeros((2, 1), dtype=np.float64)
+        >>> x.sum(axis=1, dtype=np.float64, out=np.asmatrix(out))
         matrix([[3.],
                 [7.]])
 

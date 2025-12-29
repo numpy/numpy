@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import gc
 import inspect
@@ -18,14 +19,14 @@ from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def assert_dtype_equal(a, b):
@@ -976,25 +977,24 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
             d = (d, (1,))
-        with pytest.raises(RecursionError):
+        # depending on OS and Python version, this might succeed
+        # see gh-30370 and cpython issue #142253
+        with contextlib.suppress(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
@@ -1376,6 +1376,15 @@ class TestPickling:
             assert_equal(x, y)
             assert_equal(x[0], y[0])
 
+    @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+    @pytest.mark.xfail(reason="dtype conversion doesn't allow this yet.")
+    def test_pickling_large(self):
+        # The actual itemsize is larger than a c-integer here.
+        dtype = np.dtype(f"({2**31},)i")
+        self.check_pickling(dtype)
+        dtype = np.dtype(f"({2**31},)i", metadata={"a": "b"})
+        self.check_pickling(dtype)
+
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
                                    bool])
     def test_builtin(self, t):
@@ -1440,7 +1449,7 @@ class TestPickling:
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
             assert roundtrip_dt == dt
-            assert hash(dt) == pre_pickle_hash
+            assert hash(roundtrip_dt) == pre_pickle_hash
 
 
 class TestPromotion:
@@ -1582,19 +1591,19 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
-    def test_recursion(self):
+    def test_recursive(self):
+        # This used to recurse. It now doesn't, we enforce the
+        # dtype attribute to be a dtype (and will not recurse).
         class dt:
             pass
 
         dt.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt)
 
         dt_instance = dt()
         dt_instance.dtype = dt
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
     def test_void_subtype(self):
@@ -1607,19 +1616,56 @@ class TestFromDTypeAttribute:
         np.dtype(dt)
         np.dtype(dt(1))
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
-    def test_void_subtype_recursion(self):
+    def test_void_subtype_recursive(self):
+        # Used to recurse, but dtype is now enforced to be a dtype instance
+        # so that we do not recurse.
         class vdt(np.void):
             pass
 
         vdt.dtype = vdt
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt)
 
-        with pytest.raises(RecursionError):
+        with pytest.raises(ValueError):
             np.dtype(vdt(1))
+
+
+class TestFromDTypeProtocol:
+    def test_simple(self):
+        class A:
+            dtype = np.dtype("f8")
+
+        assert np.dtype(A()) == np.dtype(np.float64)
+
+    def test_not_a_dtype(self):
+        # This also prevents coercion as a trivial path, although
+        # a custom error may be nicer.
+        class ArrayLike:
+            __numpy_dtype__ = None
+            dtype = np.dtype("f8")
+
+        with pytest.raises(ValueError, match=".*__numpy_dtype__.*"):
+            np.dtype(ArrayLike())
+
+    def test_prevent_dtype_explicit(self):
+        class ArrayLike:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("my error!")
+
+        with pytest.raises(RuntimeError, match="my error!"):
+            np.dtype(ArrayLike())
+
+    def test_type_object(self):
+        class TypeWithProperty:
+            @property
+            def __numpy_dtype__(self):
+                raise RuntimeError("not reached")
+
+        # Arbitrary types go to object currently, and the
+        # protocol doesn't prevent that.
+        assert np.dtype(TypeWithProperty) == object
 
 
 class TestDTypeClasses:
@@ -1789,7 +1835,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1813,7 +1864,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1845,7 +1901,15 @@ class TestFromCTypes:
                 ('g', ctypes.c_uint8)
                 ]
         expected = np.dtype({
-            "formats": [np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
+            "formats": [
+                np.uint8,
+                np.uint16,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint32,
+                np.uint8,
+            ],
             "offsets": [0, 2, 4, 6, 8, 12, 16],
             "names": ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             "itemsize": 18})
@@ -1918,7 +1982,9 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1939,7 +2005,9 @@ class TestUserDType:
             del a
             assert sys.getrefcount(o) == startcount
 
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass

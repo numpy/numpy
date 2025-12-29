@@ -1,13 +1,14 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <stdatomic.h>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_2_compat.h"
 #include "npy_argparse.h"
-#include "npy_atomic.h"
 #include "npy_import.h"
 
 #include "arrayfunction_override.h"
@@ -299,9 +300,9 @@ _npy_parse_arguments(const char *funcname,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
-    if (!npy_atomic_load_uint8(&cache->initialized)) {
+    if (!atomic_load_explicit((_Atomic(uint8_t) *)&cache->initialized, memory_order_acquire)) {
         LOCK_ARGPARSE_MUTEX;
-        if (!npy_atomic_load_uint8(&cache->initialized)) {
+        if (!atomic_load_explicit((_Atomic(uint8_t) *)&cache->initialized, memory_order_acquire)) {
             va_list va;
             va_start(va, kwnames);
             int res = initialize_keywords(funcname, cache, va);
@@ -310,7 +311,7 @@ _npy_parse_arguments(const char *funcname,
                 UNLOCK_ARGPARSE_MUTEX;
                 return -1;
             }
-            npy_atomic_store_uint8(&cache->initialized, 1);
+            atomic_store_explicit((_Atomic(uint8_t) *)&cache->initialized, 1, memory_order_release);
         }
         UNLOCK_ARGPARSE_MUTEX;
     }

@@ -1,4 +1,4 @@
-from typing import Any, Final, Literal as L, TypeVar, overload
+from typing import Any, Final, Literal as L, overload
 
 from numpy import complexfloating, floating, generic, integer
 from numpy._typing import (
@@ -12,8 +12,6 @@ from numpy._typing import (
 
 __all__ = ["fftfreq", "fftshift", "ifftshift", "rfftfreq"]
 
-_ScalarT = TypeVar("_ScalarT", bound=generic)
-
 ###
 
 integer_types: Final[tuple[type[int], type[integer]]] = ...
@@ -21,13 +19,13 @@ integer_types: Final[tuple[type[int], type[integer]]] = ...
 ###
 
 @overload
-def fftshift(x: _ArrayLike[_ScalarT], axes: _ShapeLike | None = None) -> NDArray[_ScalarT]: ...
+def fftshift[ScalarT: generic](x: _ArrayLike[ScalarT], axes: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
 @overload
 def fftshift(x: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
 
 #
 @overload
-def ifftshift(x: _ArrayLike[_ScalarT], axes: _ShapeLike | None = None) -> NDArray[_ScalarT]: ...
+def ifftshift[ScalarT: generic](x: _ArrayLike[ScalarT], axes: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
 @overload
 def ifftshift(x: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
 

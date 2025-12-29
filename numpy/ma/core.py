@@ -2277,7 +2277,7 @@ def masked_object(x, value, copy=True, shrink=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> food = np.array(['green_eggs', 'ham'], dtype=object)
+    >>> food = np.array(['green_eggs', 'ham'], dtype=np.object_)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
     >>> eat
@@ -2286,7 +2286,7 @@ def masked_object(x, value, copy=True, shrink=True):
            fill_value='green_eggs',
                 dtype=object)
     >>> # plain ol` ham is boring
-    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
+    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=np.object_)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
     >>> eat
     masked_array(data=['cheese', 'ham', 'pineapple'],
@@ -2403,7 +2403,7 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=float)
+    >>> a = np.arange(5, dtype=np.float64)
     >>> a[2] = np.nan
     >>> a[3] = np.inf
     >>> a

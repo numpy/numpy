@@ -1,11 +1,11 @@
 from collections.abc import Sequence
-from typing import Any, Literal as L, SupportsIndex, TypeAlias
+from typing import Any, Literal as L, SupportsIndex
 
 from numpy._typing import ArrayLike, NDArray
 
 __all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
 
-_BinKind: TypeAlias = L[
+type _BinKind = L[
     "stone",
     "auto",
     "doane",

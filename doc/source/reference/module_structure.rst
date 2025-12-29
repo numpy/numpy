@@ -44,7 +44,6 @@ Prefer not to use these namespaces for new code. There are better alternatives
 and/or this code is deprecated or isn't reliable.
 
 - :ref:`numpy.char <routines.char>` - legacy string functionality, only for fixed-width strings
-- :ref:`numpy.distutils <numpy-distutils-refguide>` (deprecated) - build system support
 - :ref:`numpy.f2py <python-module-numpy.f2py>` - Fortran binding generation (usually used from the command line only)
 - :ref:`numpy.ma <routines.ma>` - masked arrays (not very reliable, needs an overhaul)
 - :ref:`numpy.matlib <routines.matlib>` (pending deprecation) - functions supporting ``matrix`` instances
@@ -70,7 +69,6 @@ and/or this code is deprecated or isn't reliable.
    numpy.rec <routines.rec>
    numpy.version <routines.version>
    numpy.char <routines.char>
-   numpy.distutils <distutils>
    numpy.f2py <../f2py/index>
    numpy.ma <routines.ma>
    numpy.matlib <routines.matlib>

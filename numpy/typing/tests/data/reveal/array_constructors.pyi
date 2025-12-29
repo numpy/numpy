@@ -1,17 +1,17 @@
-import sys
 from collections import deque
 from pathlib import Path
-from typing import Any, Generic, TypeVar, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
+from numpy._typing import _AnyShape
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
-class SubClass(npt.NDArray[_ScalarT_co]): ...
+class SubClass[ScalarT: np.generic](np.ndarray[_AnyShape, np.dtype[ScalarT]]): ...
 
-class IntoSubClass(Generic[_ScalarT_co]):
-    def __array__(self) -> SubClass[_ScalarT_co]: ...
+class IntoSubClass[ScalarT: np.generic]:
+    def __array__(self) -> SubClass[ScalarT]: ...
 
 i8: np.int64
 
@@ -92,42 +92,42 @@ assert_type(np.asfortranarray([1, 1.0]), npt.NDArray[Any])
 assert_type(np.asfortranarray(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.asfortranarray(A, dtype="c16"), npt.NDArray[Any])
 
-assert_type(np.fromstring("1 1 1", sep=" "), npt.NDArray[np.float64])
-assert_type(np.fromstring(b"1 1 1", sep=" "), npt.NDArray[np.float64])
-assert_type(np.fromstring("1 1 1", dtype=np.int64, sep=" "), npt.NDArray[np.int64])
-assert_type(np.fromstring(b"1 1 1", dtype=np.int64, sep=" "), npt.NDArray[np.int64])
-assert_type(np.fromstring("1 1 1", dtype="c16", sep=" "), npt.NDArray[Any])
-assert_type(np.fromstring(b"1 1 1", dtype="c16", sep=" "), npt.NDArray[Any])
+assert_type(np.fromstring("1 1 1", sep=" "), _Array1D[np.float64])
+assert_type(np.fromstring(b"1 1 1", sep=" "), _Array1D[np.float64])
+assert_type(np.fromstring("1 1 1", dtype=np.int64, sep=" "), _Array1D[np.int64])
+assert_type(np.fromstring(b"1 1 1", dtype=np.int64, sep=" "), _Array1D[np.int64])
+assert_type(np.fromstring("1 1 1", dtype="c16", sep=" "), _Array1D[Any])
+assert_type(np.fromstring(b"1 1 1", dtype="c16", sep=" "), _Array1D[Any])
 
-assert_type(np.fromfile("test.txt", sep=" "), npt.NDArray[np.float64])
-assert_type(np.fromfile("test.txt", dtype=np.int64, sep=" "), npt.NDArray[np.int64])
-assert_type(np.fromfile("test.txt", dtype="c16", sep=" "), npt.NDArray[Any])
+assert_type(np.fromfile("test.txt", sep=" "), _Array1D[np.float64])
+assert_type(np.fromfile("test.txt", dtype=np.int64, sep=" "), _Array1D[np.int64])
+assert_type(np.fromfile("test.txt", dtype="c16", sep=" "), _Array1D[Any])
 with open("test.txt") as f:
-    assert_type(np.fromfile(f, sep=" "), npt.NDArray[np.float64])
-    assert_type(np.fromfile(b"test.txt", sep=" "), npt.NDArray[np.float64])
-    assert_type(np.fromfile(Path("test.txt"), sep=" "), npt.NDArray[np.float64])
+    assert_type(np.fromfile(f, sep=" "), _Array1D[np.float64])
+    assert_type(np.fromfile(b"test.txt", sep=" "), _Array1D[np.float64])
+    assert_type(np.fromfile(Path("test.txt"), sep=" "), _Array1D[np.float64])
 
 assert_type(np.fromiter("12345", np.float64), npt.NDArray[np.float64])
 assert_type(np.fromiter("12345", float), npt.NDArray[Any])
 
-assert_type(np.frombuffer(A), npt.NDArray[np.float64])
-assert_type(np.frombuffer(A, dtype=np.int64), npt.NDArray[np.int64])
-assert_type(np.frombuffer(A, dtype="c16"), npt.NDArray[Any])
+assert_type(np.frombuffer(A), _Array1D[np.float64])
+assert_type(np.frombuffer(A, dtype=np.int64), _Array1D[np.int64])
+assert_type(np.frombuffer(A, dtype="c16"), _Array1D[Any])
 
 _x_bool: bool
 _x_int: int
 _x_float: float
-_x_timedelta: np.timedelta64
-_x_datetime: np.datetime64
+_x_timedelta: np.timedelta64[int]
+_x_datetime: np.datetime64[int]
 
 assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.arange(0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64[Any]]])
-assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64[Any]]])
+assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64]])
 assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[np.int_]])
@@ -145,23 +145,23 @@ assert_type(np.require(B, requirements="W"), SubClass[np.float64])
 assert_type(np.require(B, requirements="A"), SubClass[np.float64])
 assert_type(np.require(C), npt.NDArray[Any])
 
-assert_type(np.linspace(0, 10), npt.NDArray[np.float64])
-assert_type(np.linspace(0, 10j), npt.NDArray[np.complexfloating])
-assert_type(np.linspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.linspace(0, 10), _Array1D[np.float64])
+assert_type(np.linspace(0, 10j), _Array1D[np.complex128 | Any])
+assert_type(np.linspace(0, 10, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.linspace(0, 10, dtype=int), npt.NDArray[Any])
-assert_type(np.linspace(0, 10, retstep=True), tuple[npt.NDArray[np.float64], np.float64])
-assert_type(np.linspace(0j, 10, retstep=True), tuple[npt.NDArray[np.complexfloating], np.complexfloating])
-assert_type(np.linspace(0, 10, retstep=True, dtype=np.int64), tuple[npt.NDArray[np.int64], np.int64])
+assert_type(np.linspace(0, 10, retstep=True), tuple[_Array1D[np.float64], np.float64])
+assert_type(np.linspace(0j, 10, retstep=True), tuple[_Array1D[np.complex128 | Any], np.complex128 | Any])
+assert_type(np.linspace(0, 10, retstep=True, dtype=np.int64), tuple[_Array1D[np.int64], np.int64])
 assert_type(np.linspace(0j, 10, retstep=True, dtype=int), tuple[npt.NDArray[Any], Any])
 
-assert_type(np.logspace(0, 10), npt.NDArray[np.float64])
-assert_type(np.logspace(0, 10j), npt.NDArray[np.complexfloating])
-assert_type(np.logspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.logspace(0, 10), _Array1D[np.float64])
+assert_type(np.logspace(0, 10j), _Array1D[np.complex128 | Any])
+assert_type(np.logspace(0, 10, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.logspace(0, 10, dtype=int), npt.NDArray[Any])
 
-assert_type(np.geomspace(0, 10), npt.NDArray[np.float64])
-assert_type(np.geomspace(0, 10j), npt.NDArray[np.complexfloating])
-assert_type(np.geomspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
+assert_type(np.geomspace(0, 10), _Array1D[np.float64])
+assert_type(np.geomspace(0, 10j), _Array1D[np.complex128 | Any])
+assert_type(np.geomspace(0, 10, dtype=np.int64), _Array1D[np.int64])
 assert_type(np.geomspace(0, 10, dtype=int), npt.NDArray[Any])
 
 assert_type(np.zeros_like(A), npt.NDArray[np.float64])
@@ -268,10 +268,9 @@ assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.block(C), npt.NDArray[Any])
 
-if sys.version_info >= (3, 12):
-    from collections.abc import Buffer
+from collections.abc import Buffer
 
-    def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
+def create_array(obj: npt.ArrayLike) -> npt.NDArray[Any]: ...
 
-    buffer: Buffer
-    assert_type(create_array(buffer), npt.NDArray[Any])
+buffer: Buffer
+assert_type(create_array(buffer), npt.NDArray[Any])

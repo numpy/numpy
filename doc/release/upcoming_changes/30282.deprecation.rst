@@ -1,5 +1,0 @@
-in-place modification of ``ndarray.shape`` is pending deprecation
------------------------------------------------------------------
-Setting the `ndarray.shape` attribute directly will be deprecated in a future release.
-Instead of modifying the shape in place, it is recommended to use the `numpy.reshape` function.
-Static type checkers might already report a warning for assignments to `ndarray.shape`.

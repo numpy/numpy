@@ -2026,7 +2026,7 @@ def nonzero(a):
     Notes
     -----
     While the nonzero values can be obtained with ``a[nonzero(a)]``, it is
-    recommended to use ``x[x.astype(bool)]`` or ``x[x != 0]`` instead, which
+    recommended to use ``x[x.astype(np.bool)]`` or ``x[x != 0]`` instead, which
     will correctly handle 0-d arrays.
 
     Examples
@@ -2385,7 +2385,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     more precise approach to summation.
     Especially when summing a large number of lower precision floating point
     numbers, such as ``float32``, numerical errors can become significant.
-    In such cases it can be advisable to use `dtype="float64"` to use a higher
+    In such cases it can be advisable to use `dtype=np.float64` to use a higher
     precision for the output.
 
     Examples
@@ -2721,7 +2721,7 @@ def cumulative_prod(x, /, *, axis=None, dtype=None, out=None,
     ...                        # total product 1*2*3 = 6
     array([1, 2, 6])
     >>> a = np.array([1, 2, 3, 4, 5, 6])
-    >>> np.cumulative_prod(a, dtype=float) # specify type of output
+    >>> np.cumulative_prod(a, dtype=np.float64)  # specify type of output
     array([   1.,    2.,    6.,   24.,  120.,  720.])
 
     The cumulative product for each column (i.e., over the rows) of ``b``:
@@ -2808,7 +2808,7 @@ def cumulative_sum(x, /, *, axis=None, dtype=None, out=None,
     array([1, 2, 3, 4, 5, 6])
     >>> np.cumulative_sum(a)
     array([ 1,  3,  6, 10, 15, 21])
-    >>> np.cumulative_sum(a, dtype=float)  # specifies type of output value(s)
+    >>> np.cumulative_sum(a, dtype=np.float64)  # specifies type of output value(s)
     array([  1.,   3.,   6.,  10.,  15.,  21.])
 
     >>> b = np.array([[1, 2, 3], [4, 5, 6]])
@@ -2892,7 +2892,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
            [4, 5, 6]])
     >>> np.cumsum(a)
     array([ 1,  3,  6, 10, 15, 21])
-    >>> np.cumsum(a, dtype=float)     # specifies type of output value(s)
+    >>> np.cumsum(a, dtype=np.float64)  # specifies type of output value(s)
     array([  1.,   3.,   6.,  10.,  15.,  21.])
 
     >>> np.cumsum(a,axis=0)      # sum over rows for each of the 3 columns
@@ -3096,7 +3096,7 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     array([1, 3])
     >>> np.max(a, where=[False, True], initial=-1, axis=0)
     array([-1,  3])
-    >>> b = np.arange(5, dtype=float)
+    >>> b = np.arange(5, dtype=np.float64)
     >>> b[2] = np.nan
     >>> np.max(b)
     np.float64(nan)
@@ -3235,7 +3235,7 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     >>> np.min(a, where=[False, True], initial=10, axis=0)
     array([10,  1])
 
-    >>> b = np.arange(5, dtype=float)
+    >>> b = np.arange(5, dtype=np.float64)
     >>> b[2] = np.nan
     >>> np.min(b)
     np.float64(nan)
@@ -3456,7 +3456,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
     ...               # total product 1*2*3 = 6
     array([1, 2, 6])
     >>> a = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> np.cumprod(a, dtype=float) # specify type of output
+    >>> np.cumprod(a, dtype=np.float64)  # specify type of output
     array([   1.,    2.,    6.,   24.,  120.,  720.])
 
     The cumulative product for each column (i.e., over the rows) of `a`:
