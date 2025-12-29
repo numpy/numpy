@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any, Literal as L, NamedTuple, SupportsIndex, TypeVar, overload
 
 import numpy as np
@@ -66,25 +67,25 @@ def ediff1d(
     ary: _ArrayLikeBool_co,
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> NDArray[np.int8]: ...
+) -> _Array1D[np.int8]: ...
 @overload
 def ediff1d[NumericT: _NumericScalar](
     ary: _ArrayLike[NumericT],
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> NDArray[NumericT]: ...
+) -> _Array1D[NumericT]: ...
 @overload
 def ediff1d(
     ary: _ArrayLike[np.datetime64[Any]],
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> NDArray[np.timedelta64]: ...
+) -> _Array1D[np.timedelta64]: ...
 @overload
 def ediff1d(
     ary: _ArrayLikeNumber_co,
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> np.ndarray: ...
+) -> _Array1D[Incomplete]: ...
 
 #
 @overload  # known scalar-type, FFF
