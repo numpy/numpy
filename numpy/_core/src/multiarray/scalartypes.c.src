@@ -1801,7 +1801,6 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
     if (inter != NULL) {
         PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
     }
-    Py_DECREF(arr);
     return inter;
 }
 

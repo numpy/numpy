@@ -381,3 +381,14 @@ class TestAsCtypesType:
             'formats': [np.uint32, np.uint32]
         })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)
+
+    def test_retrieve_same_value(self):
+        # gh-30354
+        a = np.int64(10)
+        b = np.int64(100)
+
+        s1 = np.ctypeslib.as_ctypes(a)
+        s2 = np.ctypeslib.as_ctypes(b)
+
+        assert s1.value == 10
+        assert s2.value == 100
