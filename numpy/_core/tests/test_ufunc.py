@@ -2261,7 +2261,6 @@ class TestUfunc:
         np.add.at(arr, index, values)
         assert arr[0] == len(values)
 
-
     def test_ufunc_at_scalar_value_fastpath(self):
         values = [np.ones(1), np.ones(()), np.float64(1.), 1.]
         for value in values:
