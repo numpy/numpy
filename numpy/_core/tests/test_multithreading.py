@@ -376,7 +376,8 @@ def test_arg_locking(kernel, outcome):
                 if outcome == "success":
                     raise
                 assert "Inconsistent object during array creation?" in str(e)
-                assert mutation_func is contract_and_expand_list, "replace_list_items should not raise errors"
+                msg = "replace_list_items should not raise errors"
+                assert mutation_func is contract_and_expand_list, msg
             finally:
                 if len(tasks) < 5:
                     b.abort()
