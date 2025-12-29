@@ -42,22 +42,23 @@ _AnyScalarT = TypeVar(
 
 type _NumericScalar = np.number | np.timedelta64 | np.object_
 type _IntArray = NDArray[np.intp]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
 ###
 
 class UniqueAllResult[ScalarT: np.generic](NamedTuple):
-    values: NDArray[ScalarT]
-    indices: _IntArray
+    values: _Array1D[ScalarT]
+    indices: _Array1D[np.intp]
     inverse_indices: _IntArray
-    counts: _IntArray
+    counts: _Array1D[np.intp]
 
 class UniqueCountsResult[ScalarT: np.generic](NamedTuple):
-    values: NDArray[ScalarT]
-    counts: _IntArray
+    values: _Array1D[ScalarT]
+    counts: _Array1D[np.intp]
 
 class UniqueInverseResult[ScalarT: np.generic](NamedTuple):
-    values: NDArray[ScalarT]
-    inverse_indices: _IntArray
+    values: _Array1D[ScalarT]
+    inverse_indices: NDArray[np.intp]
 
 #
 @overload
