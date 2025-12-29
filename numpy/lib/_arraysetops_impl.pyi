@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any, Literal as L, NamedTuple, SupportsIndex, TypeVar, overload
 
 import numpy as np
@@ -42,22 +43,25 @@ _AnyScalarT = TypeVar(
 
 type _NumericScalar = np.number | np.timedelta64 | np.object_
 type _IntArray = NDArray[np.intp]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+
+type _IntersectResult[ScalarT: np.generic] = tuple[_Array1D[ScalarT], _Array1D[np.intp], _Array1D[np.intp]]
 
 ###
 
 class UniqueAllResult[ScalarT: np.generic](NamedTuple):
-    values: NDArray[ScalarT]
-    indices: _IntArray
+    values: _Array1D[ScalarT]
+    indices: _Array1D[np.intp]
     inverse_indices: _IntArray
-    counts: _IntArray
+    counts: _Array1D[np.intp]
 
 class UniqueCountsResult[ScalarT: np.generic](NamedTuple):
-    values: NDArray[ScalarT]
-    counts: _IntArray
+    values: _Array1D[ScalarT]
+    counts: _Array1D[np.intp]
 
 class UniqueInverseResult[ScalarT: np.generic](NamedTuple):
-    values: NDArray[ScalarT]
-    inverse_indices: _IntArray
+    values: _Array1D[ScalarT]
+    inverse_indices: NDArray[np.intp]
 
 #
 @overload
@@ -65,25 +69,25 @@ def ediff1d(
     ary: _ArrayLikeBool_co,
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> NDArray[np.int8]: ...
+) -> _Array1D[np.int8]: ...
 @overload
 def ediff1d[NumericT: _NumericScalar](
     ary: _ArrayLike[NumericT],
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> NDArray[NumericT]: ...
+) -> _Array1D[NumericT]: ...
 @overload
 def ediff1d(
     ary: _ArrayLike[np.datetime64[Any]],
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> NDArray[np.timedelta64]: ...
+) -> _Array1D[np.timedelta64]: ...
 @overload
 def ediff1d(
     ary: _ArrayLikeNumber_co,
     to_end: ArrayLike | None = None,
     to_begin: ArrayLike | None = None,
-) -> np.ndarray: ...
+) -> _Array1D[Incomplete]: ...
 
 #
 @overload  # known scalar-type, FFF
@@ -371,9 +375,9 @@ def unique_inverse(x: ArrayLike) -> UniqueInverseResult[Any]: ...
 
 #
 @overload
-def unique_values[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> NDArray[ScalarT]: ...
+def unique_values[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[ScalarT]: ...
 @overload
-def unique_values(x: ArrayLike) -> np.ndarray: ...
+def unique_values(x: ArrayLike) -> _Array1D[Incomplete]: ...
 
 #
 @overload  # known scalar-type, return_indices=False (default)
@@ -382,14 +386,14 @@ def intersect1d(
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool = False,
     return_indices: L[False] = False,
-) -> NDArray[_AnyScalarT]: ...
+) -> _Array1D[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (positional)
 def intersect1d(
     ar1: _ArrayLike[_AnyScalarT],
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool,
     return_indices: L[True],
-) -> tuple[NDArray[_AnyScalarT], _IntArray, _IntArray]: ...
+) -> _IntersectResult[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (keyword)
 def intersect1d(
     ar1: _ArrayLike[_AnyScalarT],
@@ -397,21 +401,21 @@ def intersect1d(
     assume_unique: bool = False,
     *,
     return_indices: L[True],
-) -> tuple[NDArray[_AnyScalarT], _IntArray, _IntArray]: ...
+) -> _IntersectResult[_AnyScalarT]: ...
 @overload  # unknown scalar-type, return_indices=False (default)
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
     assume_unique: bool = False,
     return_indices: L[False] = False,
-) -> np.ndarray: ...
+) -> _Array1D[Incomplete]: ...
 @overload  # unknown scalar-type, return_indices=True (positional)
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
     assume_unique: bool,
     return_indices: L[True],
-) -> tuple[np.ndarray, _IntArray, _IntArray]: ...
+) -> _IntersectResult[Incomplete]: ...
 @overload  # unknown scalar-type, return_indices=True (keyword)
 def intersect1d(
     ar1: ArrayLike,
@@ -419,25 +423,25 @@ def intersect1d(
     assume_unique: bool = False,
     *,
     return_indices: L[True],
-) -> tuple[np.ndarray, _IntArray, _IntArray]: ...
+) -> _IntersectResult[Incomplete]: ...
 
 #
 @overload
-def setxor1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False) -> NDArray[_AnyScalarT]: ...
+def setxor1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False) -> _Array1D[_AnyScalarT]: ...
 @overload
-def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> np.ndarray: ...
+def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
 
 #
 @overload
-def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> NDArray[_AnyScalarT]: ...
+def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _Array1D[_AnyScalarT]: ...
 @overload
-def union1d(ar1: ArrayLike, ar2: ArrayLike) -> np.ndarray: ...
+def union1d(ar1: ArrayLike, ar2: ArrayLike) -> _Array1D[Incomplete]: ...
 
 #
 @overload
-def setdiff1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False) -> NDArray[_AnyScalarT]: ...
+def setdiff1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False) -> _Array1D[_AnyScalarT]: ...
 @overload
-def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> np.ndarray: ...
+def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _Array1D[Incomplete]: ...
 
 #
 def isin(
