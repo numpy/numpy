@@ -248,7 +248,7 @@ Conversion operations
 
 
 > to an ndarray
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
 
