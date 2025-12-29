@@ -104,7 +104,7 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     - cmp(arr[i], key_val) == true  for all i < base
     - cmp(arr[i], key_val) == false for all i >= base + length
 
-    The insertion index candidates are i in range [base, base+length] and
+    The insertion index candidates are in range [base, base+length] and
     on each iteration we shrink the range into either
         [base, ceil(length / 2)]
     or
@@ -147,8 +147,8 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     }
 
     /*
-    At this point interval_length == 1, so the candidates are in interval
-    [base, base + 1].
+    At this point interval_length == 1, so the candidates are in the 
+    interval [base, base + 1].
 
     We have two options:
         If cmp(arr[base], key_val) == true, insertion index is base + 1

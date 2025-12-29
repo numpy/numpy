@@ -10,7 +10,7 @@ class SearchSortedInt64(Benchmark):
         [100, 10_000, 1_000_000, 1_000_000_000],       # array sizes
         [1, 2, 100, 100_000],   # number of query elements
         ['ordered', 'random'],        # query order
-        [42, 18122022]
+        [42, 18122022],   # seed
     ]
     param_names = ['array_size', 'n_queries', 'query_order', 'seed']
 
