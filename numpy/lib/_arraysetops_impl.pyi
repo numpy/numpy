@@ -45,6 +45,8 @@ type _NumericScalar = np.number | np.timedelta64 | np.object_
 type _IntArray = NDArray[np.intp]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
+type _IntersectResult[ScalarT: np.generic] = tuple[_Array1D[ScalarT], _Array1D[np.intp], _Array1D[np.intp]]
+
 ###
 
 class UniqueAllResult[ScalarT: np.generic](NamedTuple):
@@ -384,14 +386,14 @@ def intersect1d(
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool = False,
     return_indices: L[False] = False,
-) -> NDArray[_AnyScalarT]: ...
+) -> _Array1D[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (positional)
 def intersect1d(
     ar1: _ArrayLike[_AnyScalarT],
     ar2: _ArrayLike[_AnyScalarT],
     assume_unique: bool,
     return_indices: L[True],
-) -> tuple[NDArray[_AnyScalarT], _IntArray, _IntArray]: ...
+) -> _IntersectResult[_AnyScalarT]: ...
 @overload  # known scalar-type, return_indices=True (keyword)
 def intersect1d(
     ar1: _ArrayLike[_AnyScalarT],
@@ -399,21 +401,21 @@ def intersect1d(
     assume_unique: bool = False,
     *,
     return_indices: L[True],
-) -> tuple[NDArray[_AnyScalarT], _IntArray, _IntArray]: ...
+) -> _IntersectResult[_AnyScalarT]: ...
 @overload  # unknown scalar-type, return_indices=False (default)
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
     assume_unique: bool = False,
     return_indices: L[False] = False,
-) -> np.ndarray: ...
+) -> _Array1D[Incomplete]: ...
 @overload  # unknown scalar-type, return_indices=True (positional)
 def intersect1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
     assume_unique: bool,
     return_indices: L[True],
-) -> tuple[np.ndarray, _IntArray, _IntArray]: ...
+) -> _IntersectResult[Incomplete]: ...
 @overload  # unknown scalar-type, return_indices=True (keyword)
 def intersect1d(
     ar1: ArrayLike,
@@ -421,7 +423,7 @@ def intersect1d(
     assume_unique: bool = False,
     *,
     return_indices: L[True],
-) -> tuple[np.ndarray, _IntArray, _IntArray]: ...
+) -> _IntersectResult[Incomplete]: ...
 
 #
 @overload
