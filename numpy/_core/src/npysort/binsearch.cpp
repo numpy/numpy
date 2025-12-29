@@ -65,7 +65,7 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
 
-    // Let's handle this corner case first: if length is 0 we return all 0s
+    // If the array length is 0 we return all 0s
     if (arr_len <= 0) {
         for (npy_intp i = 0; i < key_len; ++i) {
             *(npy_intp *)(ret + i * ret_str) = 0;
