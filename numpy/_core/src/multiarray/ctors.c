@@ -493,38 +493,52 @@ NPY_NO_EXPORT int
 PyArray_AssignFromCache_Recursive(
         PyArrayObject *self, const int ndim, coercion_cache_obj **cache)
 {
+    int ret = -1;
     /* Consume first cache element by extracting information and freeing it */
     PyObject *obj = (*cache)->arr_or_sequence;
     Py_INCREF(obj);
-    PyObject *orig_obj = (*cache)->converted_obj;
-    npy_bool sequence = (*cache)->sequence;
+    npy_bool is_sequence = (*cache)->sequence;
+    /*
+      If it is a sequence, this object is the argument to PySequence_Fast, e.g.
+      the iterable that the user wants to coerce into an array
+    */
+    PyObject *orig_seq = (*cache)->converted_obj;
+    /* Owned reference to an item in the sequence */
+    PyObject *item_pyvalue = NULL;
     int depth = (*cache)->depth;
-    int ret = 0;
     *cache = npy_unlink_coercion_cache(*cache);
 
-    /* The element is either a sequence, or an array */
-    if (!sequence) {
+    /* The element is either a sequence or an array */
+    if (!is_sequence) {
         /* Straight forward array assignment */
         assert(PyArray_Check(obj));
         if (PyArray_CopyInto(self, (PyArrayObject *)obj) < 0) {
-            goto fail;
+            goto finish;
         }
     }
     else {
         assert(depth != ndim);
-        // this macro thakes *the argument* of PySequence_Fast, which is orig_obj;
-        // not the object returned by PySequence_Fast, which is obj
-        NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_obj);
-        npy_intp length = PySequence_Length(obj);
-        if (length != PyArray_DIMS(self)[0]) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Inconsistent object during array creation? "
-                            "Content of sequences changed (length inconsistent).");
-            ret = -1;
-            goto finish_section;
-        }
-        for (npy_intp i = 0; i < length; i++) {
-            PyObject *value = PySequence_Fast_GET_ITEM(obj, i);
+        npy_intp orig_length = PyArray_DIMS(self)[0];
+        for (npy_intp i = 0; i < orig_length; i++) {
+            int critical_section_error = 0;
+            // this macro takes *the argument* of PySequence_Fast, which is orig_seq;
+            // not the object returned by PySequence_Fast, which is obj
+            NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
+            npy_intp length = PySequence_Length(obj);
+            if (length != orig_length) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Inconsistent object during array creation? "
+                                "Content of sequences changed (length inconsistent).");
+                critical_section_error = 1;
+            }
+            else {
+                Py_XSETREF(item_pyvalue, Py_NewRef(PySequence_Fast_GET_ITEM(obj, i)));
+            }
+            NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+
+            if (critical_section_error) {
+                goto finish;
+            }
 
             if (ndim == depth + 1) {
                 /*
@@ -537,12 +551,11 @@ PyArray_AssignFromCache_Recursive(
                  */
                 char *item;
                 item = (PyArray_BYTES(self) + i * PyArray_STRIDES(self)[0]);
-                if (PyArray_Pack(PyArray_DESCR(self), item, value) < 0) {
-                    ret = -1;
-                    goto finish_section;
+                if (PyArray_Pack(PyArray_DESCR(self), item, item_pyvalue) < 0) {
+                    goto finish;
                 }
                 /* If this was an array(-like) we still need to unlike int: */
-                if (*cache != NULL && (*cache)->converted_obj == value) {
+                if (*cache != NULL && (*cache)->converted_obj == item_pyvalue) {
                     *cache = npy_unlink_coercion_cache(*cache);
                 }
             }
@@ -550,28 +563,22 @@ PyArray_AssignFromCache_Recursive(
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
                 if (view == NULL) {
-                    ret = -1;
-                    goto finish_section;
+                    goto finish;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
                     Py_DECREF(view);
-                    ret = -1;
-                    goto finish_section;
+                    goto finish;
                 }
                 Py_DECREF(view);
             }
         }
-
-    finish_section:;
-
-        NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     }
+    ret = 0;
+
+  finish:;
+    Py_XDECREF(item_pyvalue);
     Py_DECREF(obj);
     return ret;
-
-  fail:
-    Py_DECREF(obj);
-    return -1;
 }
 
 

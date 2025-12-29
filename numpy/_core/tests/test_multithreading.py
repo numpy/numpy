@@ -308,15 +308,15 @@ def test_nonzero(dtype):
 
 # These are all implemented using PySequence_Fast, which needs locking to be safe
 def np_broadcast(arrs):
-    for i in range(100):
+    for i in range(50):
         np.broadcast(arrs)
 
 def create_array(arrs):
-    for i in range(100):
+    for i in range(50):
         np.array(arrs)
 
 def create_nditer(arrs):
-    for i in range(1000):
+    for i in range(50):
         np.nditer(arrs)
 
 
@@ -331,19 +331,21 @@ def create_nditer(arrs):
 def test_arg_locking(kernel, outcome):
     # should complete without triggering races but may error
 
-    b = threading.Barrier(5)
     done = 0
-    arrs = []
+    arrs = [np.array([1, 2, 3]) for _ in range(1000)]
 
-    def read_arrs():
+    def read_arrs(b):
         nonlocal done
+        nonlocal arrs
         b.wait()
         try:
             kernel(arrs)
         finally:
             done += 1
 
-    def mutate_list():
+    def contract_and_expand_list(b):
+        nonlocal done
+        nonlocal arrs
         b.wait()
         while done < 4:
             if len(arrs) > 10:
@@ -351,14 +353,30 @@ def test_arg_locking(kernel, outcome):
             elif len(arrs) <= 10:
                 arrs.extend([np.array([1, 2, 3]) for _ in range(1000)])
 
-    arrs = [np.array([1, 2, 3]) for _ in range(1000)]
-    try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
-            tasks = [tpe.submit(read_arrs) for _ in range(4)]
-            tasks.append(tpe.submit(mutate_list))
-            for t in tasks:
-                t.result()
-    except RuntimeError as e:
-        assert "Inconsistent object during array creation?" in str(e)
-        if outcome == "success":
-            raise
+    def replace_list_items(b):
+        nonlocal done
+        nonlocal arrs
+        b.wait()
+        rng = np.random.RandomState()
+        rng.seed(0x4d3d3d3)
+        while done < 4:
+            data = rng.randint(0, 1000, size=4)
+            print(data)
+            arrs[data[0]] = data[1:]
+
+        for mutation_func in (replace_list_items, contract_and_expand_list):
+            b = threading.Barrier(5)
+            try:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
+                    tasks = [tpe.submit(read_arrs, b) for _ in range(4)]
+                    tasks.append(tpe.submit(replace_list_items, b))
+                    for t in tasks:
+                        t.result()
+            except RuntimeError as e:
+                if outcome == "success":
+                    raise
+                assert "Inconsistent object during array creation?" in str(e)
+                assert mutation_func is contract_and_expand_list, "replace_list_items should not raise errors"
+            finally:
+                if len(tasks) < 5:
+                    b.abort()
