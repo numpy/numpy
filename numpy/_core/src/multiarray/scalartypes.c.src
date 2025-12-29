@@ -1788,6 +1788,18 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 
 
 static PyObject *
+gentype_dataptr_get(PyObject *self, int flags, void *NPY_UNUSED(ignored))
+{
+    int _flags = flags;
+    _flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_OWNDATA);
+    _flags |= NPY_ARRAY_NOTSWAPPED;
+
+    return Py_BuildValue(
+            "NO", PyLong_FromVoidPtr(scalar_value(self, NULL)),
+            ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) ? Py_False : Py_True);
+}
+
+static PyObject *
 gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *arr;
@@ -1798,12 +1810,27 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
         return NULL;
     }
     inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-    if (inter != NULL) {
-        PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
+    Py_DECREF(arr);
+    if (inter == NULL) {
+        Py_DECREF(inter);
+        return NULL;        
     }
+
+    // Overwrite the 'data' field to point to the scalar's data
+    PyObject *obj;
+    int ret;
+    /* dataptr */
+    int flags = PyArray_FLAGS(arr);
+    obj = gentype_dataptr_get(self, flags, NULL);
+    ret = PyDict_SetItemString(inter, "data", obj);
+    Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(inter);
+        return NULL;
+    }
+
     return inter;
 }
-
 
 
 static PyObject *
