@@ -2371,25 +2371,8 @@ cdef class RandomState:
         """
         pareto(a, size=None)
 
-        Draw samples from a Pareto II or Lomax distribution with
+        Draw samples from a Pareto II (AKA Lomax) distribution with
         specified shape.
-
-        The Lomax or Pareto II distribution is a shifted Pareto
-        distribution. The classical Pareto distribution can be
-        obtained from the Lomax distribution by adding 1 and
-        multiplying by the scale parameter ``m`` (see Notes).  The
-        smallest value of the Lomax distribution is zero while for the
-        classical Pareto distribution it is ``mu``, where the standard
-        Pareto distribution has location ``mu = 1``.  Lomax can also
-        be considered as a simplified version of the Generalized
-        Pareto distribution (available in SciPy), with the scale set
-        to one and the location set to zero.
-
-        The Pareto distribution must be greater than zero, and is
-        unbounded above.  It is also known as the "80-20 rule".  In
-        this distribution, 80 percent of the weights are in the lowest
-        20 percent of the range, while the other 20 percent fill the
-        remaining 80 percent of the range.
 
         .. note::
             New code should use the `~numpy.random.Generator.pareto`
@@ -2409,7 +2392,7 @@ cdef class RandomState:
         Returns
         -------
         out : ndarray or scalar
-            Drawn samples from the parameterized Pareto distribution.
+            Drawn samples from the Pareto II distribution.
 
         See Also
         --------
@@ -2421,22 +2404,14 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Pareto distribution is
+        The probability density for the Pareto II distribution is
 
-        .. math:: p(x) = \\frac{am^a}{x^{a+1}}
+        .. math:: p(x) = \\frac{a}{(x+1)^{a+1}} , x \ge 0
 
-        where :math:`a` is the shape and :math:`m` the scale.
+        where :math:`a > 0` is the shape.
 
-        The Pareto distribution, named after the Italian economist
-        Vilfredo Pareto, is a power law probability distribution
-        useful in many real world problems.  Outside the field of
-        economics it is generally referred to as the Bradford
-        distribution. Pareto developed the distribution to describe
-        the distribution of wealth in an economy.  It has also found
-        use in insurance, web page access statistics, oil field sizes,
-        and many other problems, including the download frequency for
-        projects in Sourceforge [1]_.  It is one of the so-called
-        "fat-tailed" distributions.
+        The Pareto II distribution is a shifted and scaled version of the
+        Pareto I distribution, which can be found in `scipy.stats.pareto`.
 
         References
         ----------
@@ -2459,9 +2434,12 @@ cdef class RandomState:
         density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 100, density=True)
-        >>> fit = a*m**a / bins**(a+1)
-        >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
+        >>> x = np.linspace(0, 3, 50)
+        >>> pdf = a / (x+1)**(a+1)
+        >>> plt.hist(s, bins=x, density=True, label='histogram')
+        >>> plt.plot(x, pdf, linewidth=2, color='r', label='pdf')
+        >>> plt.xlim(x.min(), x.max())
+        >>> plt.legend()
         >>> plt.show()
 
         """
@@ -2469,7 +2447,6 @@ cdef class RandomState:
                     a, 'a', CONS_POSITIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
-
     def weibull(self, a, size=None):
         """
         weibull(a, size=None)
