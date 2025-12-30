@@ -14,7 +14,7 @@ well as local installs. That said, there are reasons one may want to change the
 default behavior, for example to obtain smaller binaries, to install on very old
 hardware, to work around bugs, or for testing.
 
-To detect and uses all CPU features available on your local machine::
+To detect and use all CPU features available on your local machine::
 
     $ python -m pip install . -Csetup-args=-Dcpu-baseline="native" -Csetup-args=-Dcpu-dispatch="none"
 
