@@ -1812,7 +1812,6 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
     inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
     if (inter == NULL) {
         Py_DECREF(arr);
-        Py_DECREF(inter);
         return NULL;        
     }
 
