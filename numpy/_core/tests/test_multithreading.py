@@ -361,7 +361,6 @@ def test_arg_locking(kernel, outcome):
         rng.seed(0x4d3d3d3)
         while done < 4:
             data = rng.randint(0, 1000, size=4)
-            print(data)
             arrs[data[0]] = data[1:]
 
     for mutation_func in (replace_list_items, contract_and_expand_list):
