@@ -524,7 +524,7 @@ PyArray_AssignFromCache_Recursive(
             // this macro takes *the argument* of PySequence_Fast, which is orig_seq;
             // not the object returned by PySequence_Fast, which is obj
             NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
-            npy_intp length = PySequence_Length(obj);
+            npy_intp length = PySequence_Fast_GET_SIZE(obj);
             if (length != orig_length) {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Inconsistent object during array creation? "
