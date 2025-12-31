@@ -539,7 +539,7 @@ cdef class Generator:
             Byteorder must be native. The default value is np.float64.
         method : str, optional
             Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
-            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
+            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang [1]_.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -549,6 +549,12 @@ cdef class Generator:
         -------
         out : float or ndarray
             Drawn samples.
+
+        References
+        ----------
+        .. [1] Marsaglia, G. and Tsang, W. W. (2000). The Ziggurat method for
+               generating random variables. Journal of Statistical Software, 5, 1-7.
+               https://doi.org/10.18637/jss.v005.i08
 
         Examples
         --------
