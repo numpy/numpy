@@ -1086,7 +1086,8 @@ def convolve(
     a: _ArrayLike1DTD64_co, v: _ArrayLike1DTD64_co, mode: _CorrelateMode = "valid"
 ) -> _Array1D[np.timedelta64 | Any]: ...
 
-# keep roughly in sync with `convolve` and `correlate`, but for 2-D output and an additional `out` overload
+# keep roughly in sync with `convolve` and `correlate`, but for 2-D output and an additional `out` overload,
+# and also keep in sync with `ma.core.outer` (minus `out`)
 @overload
 def outer(
     a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT], out: None = None

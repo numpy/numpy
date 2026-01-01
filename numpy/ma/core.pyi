@@ -291,6 +291,16 @@ _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=T
 # the additional `Callable[...]` bound simplifies self-binding to the ufunc's callable signature
 _UFuncT_co = TypeVar("_UFuncT_co", bound=np.ufunc | Callable[..., object], default=np.ufunc, covariant=True)
 
+_AnyNumericScalarT = TypeVar(
+    "_AnyNumericScalarT",
+    np.int8, np.int16, np.int32, np.int64,
+    np.uint8, np.uint16, np.uint32, np.uint64,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.timedelta64,
+    np.object_,
+)  # fmt: skip
+
 type _RealNumber = np.floating | np.integer
 
 type _Ignored = object
@@ -3703,8 +3713,20 @@ def inner(a: ArrayLike, b: ArrayLike) -> Incomplete: ...
 
 innerproduct = inner
 
-#
-def outer(a, b): ...
+# keep in sync with `_core.numeric.outer`
+@overload
+def outer(a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT]) -> _Masked2D[_AnyNumericScalarT]: ...
+@overload
+def outer(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> _Masked2D[np.bool]: ...
+@overload
+def outer(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> _Masked2D[np.int_ | Any]: ...
+@overload
+def outer(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> _Masked2D[np.float64 | Any]: ...
+@overload
+def outer(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> _Masked2D[np.complex128 | Any]: ...
+@overload
+def outer(a: _ArrayLikeTD64_co, b: _ArrayLikeTD64_co) -> _Masked2D[np.timedelta64 | Any]: ...
+
 outerproduct = outer
 
 def correlate(a, v, mode="valid", propagate_mask=True): ...
