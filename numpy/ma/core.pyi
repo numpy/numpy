@@ -25,7 +25,7 @@ from typing import (
     override,
     type_check_only,
 )
-from typing_extensions import TypeIs, TypeVar
+from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import (
@@ -3418,9 +3418,73 @@ def take[ArrayT: np.ndarray](
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
 
+#
 def power(a, b, third=None): ...
-def argsort(a, axis=..., kind=None, order=None, endwith=True, fill_value=None, *, stable=None): ...
 
+#
+@overload  # axis: <default> (deprecated)
+@deprecated(
+    "In the future the default for argsort will be axis=-1, not the current None, to match its documentation and np.argsort. "
+    "Explicitly pass -1 or None to silence this warning.",
+    category=MaskedArrayFutureWarning,
+    stacklevel=2,
+)
+def argsort(
+    a: ArrayLike,
+    axis: _NoValueType = ...,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: bool | None = None,
+) -> _Array1D[np.intp]: ...
+@overload  # MaskedArray, axis: None
+def argsort(
+    a: MaskedArray,
+    axis: None,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: bool | None = None,
+) -> _Masked1D[np.intp]: ...
+@overload  # MaskedArray, axis: int-like
+def argsort(
+    a: MaskedArray,
+    axis: SupportsIndex,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: bool | None = None,
+) -> _MaskedArray[np.intp]: ...
+@overload  # array-like, axis: None
+def argsort(
+    a: ArrayLike,
+    axis: None,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: bool | None = None,
+) -> _Array1D[np.intp]: ...
+@overload  # array-like, axis: int-like
+def argsort(
+    a: ArrayLike,
+    axis: SupportsIndex,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: bool | None = None,
+) -> NDArray[np.intp]: ...
+
+#
 @overload
 def sort[ArrayT: np.ndarray](
     a: ArrayT,
@@ -3444,6 +3508,7 @@ def sort(
     stable: Literal[False] | None = None,
 ) -> NDArray[Any]: ...
 
+#
 @overload
 def compressed[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[ScalarT]: ...
 @overload
