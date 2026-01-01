@@ -184,6 +184,7 @@ def take[ArrayT: np.ndarray](
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
 
+# keep in sync with `ma.core.reshape`
 @overload  # shape: index
 def reshape[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
@@ -239,6 +240,7 @@ def reshape(
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
+# keep in sync with `ma.core.choose`
 @overload
 def choose(
     a: _IntLike_co,
@@ -294,7 +296,7 @@ def repeat(
     axis: SupportsIndex,
 ) -> NDArray[Any]: ...
 
-#
+# keep in sync with `ma.core.put`
 def put(
     a: NDArray[Any],
     ind: _ArrayLikeInt_co,
@@ -310,6 +312,7 @@ def swapaxes[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis1: SupportsIndex, 
 @overload
 def swapaxes(a: ArrayLike, axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[Any]: ...
 
+# keep in sync with `ma.core.transpose`
 @overload
 def transpose[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
@@ -521,7 +524,7 @@ def searchsorted(
     sorter: _ArrayLikeInt_co | None = None,  # 1D int array
 ) -> NDArray[intp]: ...
 
-#
+# keep in sync with `ma.core.resize`
 @overload
 def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex | tuple[SupportsIndex]) -> _Array1D[ScalarT]: ...
 @overload
