@@ -3880,8 +3880,11 @@ def append(
     axis: None = None,
 ) -> _Masked1D[Incomplete]: ...
 
-#
-def dot(a, b, strict=False, out=None): ...
+# keep in sync with `_core.multiarray.dot`
+@overload
+def dot(a: ArrayLike, b: ArrayLike, strict: bool = False, out: None = None) -> Incomplete: ...
+@overload
+def dot[OutT: np.ndarray](a: ArrayLike, b: ArrayLike, strict: bool = False, *, out: OutT) -> OutT: ...
 
 # internal wrapper functions for the functions below
 def _convert2ma(
