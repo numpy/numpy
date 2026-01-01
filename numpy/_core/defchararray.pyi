@@ -89,7 +89,7 @@ type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt = 1,
         unicode: L[False] = False,
@@ -100,7 +100,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     ) -> _CharArray[bytes_]: ...
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt,
         unicode: L[True],
@@ -111,7 +111,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     ) -> _CharArray[str_]: ...
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         itemsize: SupportsIndex | SupportsInt = 1,
         *,

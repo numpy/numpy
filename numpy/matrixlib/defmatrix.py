@@ -116,7 +116,7 @@ class matrix(N.ndarray):
     """
     __array_priority__ = 10.0
 
-    def __new__(subtype, data, dtype=None, copy=True):
+    def __new__(cls, data, dtype=None, copy=True):
         warnings.warn('the matrix subclass is not the recommended way to '
                       'represent matrices or deal with linear algebra (see '
                       'https://docs.scipy.org/doc/numpy/user/'
@@ -136,7 +136,7 @@ class matrix(N.ndarray):
                 intype = data.dtype
             else:
                 intype = N.dtype(dtype)
-            new = data.view(subtype)
+            new = data.view(cls)
             if intype != data.dtype:
                 return new.astype(intype)
             if copy:
@@ -166,9 +166,7 @@ class matrix(N.ndarray):
         if not (order or arr.flags.contiguous):
             arr = arr.copy()
 
-        ret = N.ndarray.__new__(subtype, shape, arr.dtype,
-                                buffer=arr,
-                                order=order)
+        ret = N.ndarray.__new__(cls, shape, arr.dtype, buffer=arr, order=order)
         return ret
 
     def __array_finalize__(self, obj):

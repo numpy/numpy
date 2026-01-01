@@ -383,7 +383,7 @@ class recarray(ndarray):
 
     """
 
-    def __new__(subtype, shape, dtype=None, buf=None, offset=0, strides=None,
+    def __new__(cls, shape, dtype=None, buf=None, offset=0, strides=None,
                 formats=None, names=None, titles=None,
                 byteorder=None, aligned=False, order='C'):
 
@@ -395,12 +395,10 @@ class recarray(ndarray):
             ).dtype
 
         if buf is None:
-            self = ndarray.__new__(
-                subtype, shape, (record, descr), order=order
-            )
+            self = ndarray.__new__(cls, shape, (record, descr), order=order)
         else:
             self = ndarray.__new__(
-                subtype, shape, (record, descr), buffer=buf,
+                cls, shape, (record, descr), buffer=buf,
                 offset=offset, strides=strides, order=order
             )
         return self
