@@ -20,6 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
+#include "descriptor.h" 
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -1788,43 +1789,120 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-gentype_dataptr_get(PyObject *self, int flags, void *NPY_UNUSED(ignored))
+gentype_dataptr_get(PyObject *self)
 {
-    int _flags = flags;
-    _flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_OWNDATA);
-    _flags |= NPY_ARRAY_NOTSWAPPED;
+    PyArrayObject *arr;
+    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
 
-    return Py_BuildValue(
-            "NO", PyLong_FromVoidPtr(scalar_value(self, NULL)),
-            ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) ? Py_False : Py_True);
+    if (arr == NULL) {
+        return NULL;
+    }
+
+    /* NOTE: sclar array is always readonly, but we need writable flags
+     * to use `ctypeslib.as_ctyps` via `__array_interface__`.
+     * So, we set the flag borrowing from the temporary array. 
+     */
+    PyObject* ptr = Py_BuildValue(
+        "NO", PyLong_FromVoidPtr(scalar_value(self, NULL)),
+        (PyArray_FLAGS(arr) & NPY_ARRAY_WRITEABLE) ? Py_False : Py_True
+    );
+
+    Py_DECREF(arr);
+    return ptr;
 }
+
+static PyObject *
+gentype_typestr_get(PyObject *self)
+{
+    return arraydescr_protocol_typestr_get(PyArray_DescrFromScalar(self), NULL);
+}
+
+
+static PyObject *
+gentype_protocol_descr_get(PyObject *self)
+{
+    PyObject *res;
+    PyObject *dobj;
+
+    res = arraydescr_protocol_descr_get(PyArray_DescrFromScalar(self), NULL);
+    if (res) {
+        return res;
+    }
+    PyErr_Clear();
+
+    /* get default */
+    dobj = PyTuple_New(2);
+    if (dobj == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
+    PyTuple_SET_ITEM(dobj, 1, gentype_typestr_get(self));
+    res = PyList_New(1);
+    if (res == NULL) {
+        Py_DECREF(dobj);
+        return NULL;
+    }
+    PyList_SET_ITEM(res, 0, dobj);
+    return res;
+}
+
 
 static PyObject *
 gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *arr;
     PyObject *inter;
-
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
-    }
-    inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-    if (inter == NULL) {
-        Py_DECREF(arr);
-        return NULL;        
-    }
-
-    // Overwrite the 'data' field to point to the scalar's data
     PyObject *obj;
     int ret;
-    /* dataptr */
-    int flags = PyArray_FLAGS(arr);
-    obj = gentype_dataptr_get(self, flags, NULL);
-    ret = PyDict_SetItemString(inter, "data", obj);
-    Py_DECREF(arr);
-    Py_DECREF(obj);
 
+    inter = PyDict_New();
+    if (inter == NULL) {
+        return NULL;
+    }
+
+    /* dataptr */
+    obj = gentype_dataptr_get(self);
+    ret = PyDict_SetItemString(inter, "data", obj);
+    Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(inter);
+        return NULL;
+    }
+
+    obj = gentype_shape_get(self, NULL);
+    ret = PyDict_SetItemString(inter, "strides", obj);
+    Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(inter);
+        return NULL;
+    }
+
+    obj = gentype_protocol_descr_get(self);
+    ret = PyDict_SetItemString(inter, "descr", obj);
+    Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(inter);
+        return NULL;
+    }
+
+    obj = gentype_typestr_get(self);
+    ret = PyDict_SetItemString(inter, "typestr", obj);
+    Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(inter);
+        return NULL;
+    }
+
+    obj = gentype_shape_get(self, NULL);
+    ret = PyDict_SetItemString(inter, "shape", obj);
+    Py_DECREF(obj);
+    if (ret < 0) {
+        Py_DECREF(inter);
+        return NULL;
+    }
+
+    obj = PyLong_FromLong(3);
+    ret = PyDict_SetItemString(inter, "version", obj);
+    Py_DECREF(obj);
     if (ret < 0) {
         Py_DECREF(inter);
         return NULL;
