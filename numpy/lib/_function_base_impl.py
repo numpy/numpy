@@ -1017,7 +1017,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         Spacing between f values. Default unitary spacing for all dimensions.
         Spacing can be specified using:
 
-        1. single scalar to specify a sample distance for all dimensions.
+        1. Single scalar to specify a sample distance for all dimensions.
         2. N scalars to specify a constant sample distance for each dimension.
            i.e. `dx`, `dy`, `dz`, ...
         3. N arrays to specify the coordinates of the values along each
@@ -1033,7 +1033,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
     axis : None or int or tuple of ints, optional
-        Gradient is calculated only along the given axis or axes
+        Gradient is calculated only along the given axis or axes.
         The default (axis = None) is to calculate the gradient for all the axes
         of the input array. axis may be negative, in which case it counts from
         the last to the first axis.
@@ -4715,8 +4715,8 @@ def _quantile(
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
-    These methods are extended to this function using _ureduce
-    See nanpercentile for parameter usage
+    These methods are extended to this function using _ureduce.
+    See nanpercentile for parameter usage.
     It computes the quantiles of the array for the given axis.
     A linear interpolation is performed based on the `method`.
 
