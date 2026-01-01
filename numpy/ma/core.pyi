@@ -3,7 +3,7 @@
 
 import datetime as dt
 import types
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsLenAndGetItem
 from collections.abc import Buffer, Callable, Sequence
 from typing import (
     Any,
@@ -3419,7 +3419,13 @@ def compressed[ScalarT: np.generic](x: _ArrayLike[ScalarT]) -> _Array1D[ScalarT]
 @overload
 def compressed(x: ArrayLike) -> _Array1D[Any]: ...
 
-def concatenate(arrays, axis=0): ...
+#
+@overload
+def concatenate[ScalarT: np.generic](arrays: _ArrayLike[ScalarT], axis: SupportsIndex | None = 0) -> _MaskedArray[ScalarT]: ...
+@overload
+def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | None = 0) -> _MaskedArray[Incomplete]: ...
+
+#
 def diag(v, k=0): ...
 def left_shift(a, n): ...
 def right_shift(a, n): ...
