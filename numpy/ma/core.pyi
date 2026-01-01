@@ -296,6 +296,7 @@ type _Ignored = object
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 type _MaskedArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _Masked1D[ScalarT: np.generic] = MaskedArray[tuple[int], np.dtype[ScalarT]]
+type _Masked2D[ScalarT: np.generic] = MaskedArray[tuple[int, int], np.dtype[ScalarT]]
 
 type _MaskedArrayUInt_co = _MaskedArray[np.unsignedinteger | np.bool]
 type _MaskedArrayInt_co = _MaskedArray[np.integer | np.bool]
@@ -308,6 +309,9 @@ type _MaskedArrayTD64_co = _MaskedArray[np.timedelta64 | np.integer | np.bool]
 
 type _ArrayInt_co = NDArray[np.integer | np.bool]
 type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+# Workaround for https://github.com/microsoft/pyright/issues/10232
+type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never] | tuple[Never, Never], np.dtype[ScalarT]]
 
 type _ConvertibleToInt = SupportsInt | SupportsIndex | _CharLike_co
 type _ConvertibleToFloat = SupportsFloat | SupportsIndex | _CharLike_co
@@ -3425,8 +3429,23 @@ def concatenate[ScalarT: np.generic](arrays: _ArrayLike[ScalarT], axis: Supports
 @overload
 def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | None = 0) -> _MaskedArray[Incomplete]: ...
 
+# keep in sync with `diag` and `lib._twodim_base_impl.diag`
+@overload
+def diag[ScalarT: np.generic](v: _ArrayNoD[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> _MaskedArray[ScalarT]: ...
+@overload
+def diag[ScalarT: np.generic](v: _Array2D[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> _Masked1D[ScalarT]: ...
+@overload
+def diag[ScalarT: np.generic](v: _Array1D[ScalarT] | Sequence[ScalarT], k: int = 0) -> _Masked2D[ScalarT]: ...
+@overload
+def diag(v: Sequence[Sequence[_ScalarLike_co]], k: int = 0) -> _Masked1D[Incomplete]: ...
+@overload
+def diag(v: Sequence[_ScalarLike_co], k: int = 0) -> _Masked2D[Incomplete]: ...
+@overload
+def diag[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> _MaskedArray[ScalarT]: ...
+@overload
+def diag(v: ArrayLike, k: int = 0) -> _MaskedArray[Incomplete]: ...
+
 #
-def diag(v, k=0): ...
 def left_shift(a, n): ...
 def right_shift(a, n): ...
 def put(a: NDArray[Any], indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
