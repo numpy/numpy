@@ -652,7 +652,7 @@ def gradient(
     edge_order: L[1, 2] = 1,
 ) -> Incomplete: ...
 
-#
+# keep in sync with `ma.core.diff`
 @overload  # n == 0; return input unchanged
 def diff[T](
     a: T,

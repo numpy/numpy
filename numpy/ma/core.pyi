@@ -3546,7 +3546,109 @@ def shape(obj: ArrayLike) -> _AnyShape: ...
 
 #
 def size(obj: ArrayLike, axis: SupportsIndex | None = None) -> int: ...
-def diff(a, /, n=1, axis=-1, prepend=..., append=...): ...
+
+# keep in sync with `lib._function_base_impl.diff`
+@overload  # known array-type
+def diff[MArrayT: _MaskedArray[np.inexact | np.timedelta64 | np.object_]](
+    a: MArrayT,
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> MArrayT: ...
+@overload  # known shape, datetime64
+def diff[ShapeT: _Shape](
+    a: MaskedArray[ShapeT, np.dtype[np.datetime64]],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> MaskedArray[ShapeT, np.dtype[np.timedelta64]]: ...
+@overload  # unknown shape, known scalar-type
+def diff[ScalarT: np.inexact | np.timedelta64 | np.object_](
+    a: _ArrayLike[ScalarT],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _MaskedArray[ScalarT]: ...
+@overload  # unknown shape, datetime64
+def diff(
+    a: _ArrayLike[np.datetime64],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _MaskedArray[np.timedelta64]: ...
+@overload  # 1d int
+def diff(
+    a: Sequence[int],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _Masked1D[np.int_]: ...
+@overload  # 2d int
+def diff(
+    a: Sequence[Sequence[int]],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _Masked2D[np.int_]: ...
+@overload  # 1d float  (the `list` avoids overlap with the `int` overloads)
+def diff(
+    a: list[float],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _Masked1D[np.float64]: ...
+@overload  # 2d float
+def diff(
+    a: Sequence[list[float]],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _Masked2D[np.float64]: ...
+@overload  # 1d complex  (the `list` avoids overlap with the `int` overloads)
+def diff(
+    a: list[complex],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _Masked1D[np.complex128]: ...
+@overload  # 2d complex
+def diff(
+    a: Sequence[list[complex]],
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _Masked2D[np.complex128]: ...
+@overload  # unknown shape, unknown scalar-type
+def diff(
+    a: ArrayLike,
+    /,
+    n: int = 1,
+    axis: SupportsIndex = -1,
+    prepend: ArrayLike | _NoValueType = ...,
+    append: ArrayLike | _NoValueType = ...,
+) -> _MaskedArray[Incomplete]: ...
+
+#
 def where(condition, x=..., y=...): ...
 def choose(indices, choices, out=None, mode="raise"): ...
 def round_(a, decimals=0, out=None): ...
