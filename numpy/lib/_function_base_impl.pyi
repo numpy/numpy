@@ -2272,7 +2272,7 @@ def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: None = None
 @overload  # unknown scalar-type, axis specified
 def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
 
-#
+# keep in sync with `ma.core.append`
 @overload  # known array type, axis specified
 def append[ArrayT: np.ndarray](arr: ArrayT, values: ArrayT, axis: SupportsIndex) -> ArrayT: ...
 @overload  # 1d, known scalar type, axis specified
