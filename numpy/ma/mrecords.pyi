@@ -6,6 +6,7 @@ from typing_extensions import TypeVar
 import numpy as np
 from numpy import _ByteOrder, _ToIndices
 from numpy._typing import (
+    ArrayLike,
     DTypeLike,
     _AnyShape,
     _ArrayLikeBool_co,
@@ -27,6 +28,7 @@ _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=Tr
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
 type _Ignored = object
+type _Names = str | Sequence[str]
 
 ###
 # mypy: disable-error-code=no-untyped-def
@@ -43,8 +45,8 @@ class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DT
         offset: SupportsIndex = 0,
         strides: _ShapeLike | None = None,
         formats: DTypeLike | None = None,
-        names: str | Sequence[str] | None = None,
-        titles: str | Sequence[str] | None = None,
+        names: _Names | None = None,
+        titles: _Names | None = None,
         byteorder: _ByteOrder | None = None,
         aligned: bool = False,
         mask: _ArrayLikeBool_co = ...,
@@ -103,18 +105,93 @@ class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DT
 
 mrecarray = MaskedRecords
 
+@overload  # known dtype, known shape
+def fromarrays[DTypeT: np.dtype, ShapeT: _Shape](
+    arraylist: Sequence[ArrayLike],
+    dtype: DTypeT | _HasDType[DTypeT],
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords[ShapeT, DTypeT]: ...
+@overload  # known dtype, unknown shape
+def fromarrays[DTypeT: np.dtype](
+    arraylist: Sequence[ArrayLike],
+    dtype: DTypeT | _HasDType[DTypeT],
+    shape: _ShapeLike | None = None,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords[_AnyShape, DTypeT]: ...
+@overload  # known scalar-type, known shape
+def fromarrays[ScalarT: np.generic, ShapeT: _Shape](
+    arraylist: Sequence[ArrayLike],
+    dtype: _DTypeLike[ScalarT],
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # known scalar-type, unknown shape
+def fromarrays[ScalarT: np.generic](
+    arraylist: Sequence[ArrayLike],
+    dtype: _DTypeLike[ScalarT],
+    shape: _ShapeLike | None = None,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords[_AnyShape, np.dtype[ScalarT]]: ...
+@overload  # unknown dtype, known shape (positional)
+def fromarrays[ShapeT: _Shape](
+    arraylist: Sequence[ArrayLike],
+    dtype: DTypeLike | None,
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords[ShapeT]: ...
+@overload  # unknown dtype, known shape (keyword)
+def fromarrays[ShapeT: _Shape](
+    arraylist: Sequence[ArrayLike],
+    dtype: DTypeLike | None = None,
+    *,
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords[ShapeT]: ...
+@overload  # unknown dtype, unknown shape
 def fromarrays(
-    arraylist,
-    dtype=None,
-    shape=None,
-    formats=None,
-    names=None,
-    titles=None,
-    aligned=False,
-    byteorder=None,
-    fill_value=None,
-): ...
+    arraylist: Sequence[ArrayLike],
+    dtype: DTypeLike | None = None,
+    shape: _ShapeLike | None = None,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+) -> MaskedRecords: ...
 
+#
 def fromrecords(
     reclist,
     dtype=None,
