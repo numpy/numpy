@@ -342,6 +342,8 @@ type _DomainCallable = Callable[..., NDArray[np.bool]]
 type _PyArray[T] = list[T] | tuple[T, ...]
 type _PyScalar = complex | bytes | str
 
+type _CorrelateMode = Literal["valid", "same", "full"]
+
 @type_check_only
 class _HasShape[ShapeT_co: _Shape](Protocol):
     @property
@@ -3729,11 +3731,96 @@ def outer(a: _ArrayLikeTD64_co, b: _ArrayLikeTD64_co) -> _Masked2D[np.timedelta6
 
 outerproduct = outer
 
-def correlate(a, v, mode="valid", propagate_mask=True): ...
-def convolve(a, v, mode="full", propagate_mask=True): ...
+# keep in sync with `convolve` and `_core.numeric.correlate`
+@overload
+def correlate(
+    a: _ArrayLike[_AnyNumericScalarT],
+    v: _ArrayLike[_AnyNumericScalarT],
+    mode: _CorrelateMode = "valid",
+    propagate_mask: bool = True,
+) -> _Array1D[_AnyNumericScalarT]: ...
+@overload
+def correlate(
+    a: _ArrayLikeBool_co,
+    v: _ArrayLikeBool_co,
+    mode: _CorrelateMode = "valid",
+    propagate_mask: bool = True,
+) -> _Array1D[np.bool]: ...
+@overload
+def correlate(
+    a: _ArrayLikeInt_co,
+    v: _ArrayLikeInt_co,
+    mode: _CorrelateMode = "valid",
+    propagate_mask: bool = True,
+) -> _Array1D[np.int_ | Any]: ...
+@overload
+def correlate(
+    a: _ArrayLikeFloat_co,
+    v: _ArrayLikeFloat_co,
+    mode: _CorrelateMode = "valid",
+    propagate_mask: bool = True,
+) -> _Array1D[np.float64 | Any]: ...
+@overload
+def correlate(
+    a: _ArrayLikeNumber_co,
+    v: _ArrayLikeNumber_co,
+    mode: _CorrelateMode = "valid",
+    propagate_mask: bool = True,
+) -> _Array1D[np.complex128 | Any]: ...
+@overload
+def correlate(
+    a: _ArrayLikeTD64_co,
+    v: _ArrayLikeTD64_co,
+    mode: _CorrelateMode = "valid",
+    propagate_mask: bool = True,
+) -> _Array1D[np.timedelta64 | Any]: ...
 
+# keep in sync with `correlate` and `_core.numeric.convolve`
+@overload
+def convolve(
+    a: _ArrayLike[_AnyNumericScalarT],
+    v: _ArrayLike[_AnyNumericScalarT],
+    mode: _CorrelateMode = "full",
+    propagate_mask: bool = True,
+) -> _Array1D[_AnyNumericScalarT]: ...
+@overload
+def convolve(
+    a: _ArrayLikeBool_co,
+    v: _ArrayLikeBool_co,
+    mode: _CorrelateMode = "full",
+    propagate_mask: bool = True,
+) -> _Array1D[np.bool]: ...
+@overload
+def convolve(
+    a: _ArrayLikeInt_co,
+    v: _ArrayLikeInt_co,
+    mode: _CorrelateMode = "full",
+    propagate_mask: bool = True,
+) -> _Array1D[np.int_ | Any]: ...
+@overload
+def convolve(
+    a: _ArrayLikeFloat_co,
+    v: _ArrayLikeFloat_co,
+    mode: _CorrelateMode = "full",
+    propagate_mask: bool = True,
+) -> _Array1D[np.float64 | Any]: ...
+@overload
+def convolve(
+    a: _ArrayLikeNumber_co,
+    v: _ArrayLikeNumber_co,
+    mode: _CorrelateMode = "full",
+    propagate_mask: bool = True,
+) -> _Array1D[np.complex128 | Any]: ...
+@overload
+def convolve(
+    a: _ArrayLikeTD64_co,
+    v: _ArrayLikeTD64_co,
+    mode: _CorrelateMode = "full",
+    propagate_mask: bool = True,
+) -> _Array1D[np.timedelta64 | Any]: ...
+
+#
 def allequal(a: ArrayLike, b: ArrayLike, fill_value: bool = True) -> bool: ...
-
 def allclose(a: ArrayLike, b: ArrayLike, masked_equal: bool = True, rtol: float = 1e-5, atol: float = 1e-8) -> bool: ...
 
 def fromflex(fxarray): ...
