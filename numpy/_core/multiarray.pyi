@@ -668,6 +668,7 @@ def concatenate[OutT: np.ndarray](
 
 def inner(a: ArrayLike, b: ArrayLike, /) -> Incomplete: ...
 
+# keep in sync with `ma.core.numeric`
 @overload
 def where(condition: ArrayLike, x: None = None, y: None = None, /) -> tuple[NDArray[intp], ...]: ...
 @overload
