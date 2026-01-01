@@ -1,10 +1,9 @@
-# mypy: disable-error-code=no-untyped-def
 # pyright: reportIncompatibleMethodOverride=false
 
 import datetime as dt
 import types
 from _typeshed import Incomplete, SupportsLenAndGetItem
-from collections.abc import Buffer, Callable, Sequence
+from collections.abc import Buffer, Callable, Iterator, Sequence
 from typing import (
     Any,
     Concatenate,
@@ -2594,20 +2593,27 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
-        data,
-        mask=...,
-        dtype=...,
-        fill_value=...,
-        hardmask=...,
-        copy=...,
-        subok=...,
-    ): ...
-    def __getitem__(self, indx): ...
-    def __setitem__(self, indx, value): ...
-    def __iter__(self): ...
-    def __len__(self): ...
-    def filled(self, fill_value=None): ...
-    def tolist(self): ...  # type: ignore[override]
+        /,
+        data: ArrayLike,
+        mask: _ArrayLikeBool_co = nomask,
+        dtype: DTypeLike | None = None,
+        fill_value: _FillValue = None,
+        hardmask: bool = False,
+        copy: bool = False,
+        subok: bool = True,
+    ) -> Self: ...
+    @override
+    def __getitem__(self, indx: _ToIndices, /) -> Incomplete: ...  # type: ignore[override]
+    @override
+    def __setitem__(self, indx: _ToIndices, value: ArrayLike, /) -> None: ...  # type: ignore[override]
+    @override
+    def __iter__[ScalarT: np.generic](self: mvoid[Any, np.dtype[ScalarT]], /) -> Iterator[MaskedConstant | ScalarT]: ...
+    @override
+    def __len__(self, /) -> int: ...
+    @override
+    def filled(self, /, fill_value: _ScalarLike_co | None = None) -> Self | np.void: ...  # type: ignore[override]
+    @override  # list or tuple
+    def tolist(self) -> Sequence[Incomplete]: ...  # type: ignore[override]
 
 def isMaskedArray(x: object) -> TypeIs[MaskedArray]: ...
 def isarray(x: object) -> TypeIs[MaskedArray]: ...  # alias to isMaskedArray
