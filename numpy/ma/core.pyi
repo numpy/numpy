@@ -13,6 +13,7 @@ from typing import (
     Literal,
     Never,
     NoReturn,
+    Protocol,
     Self,
     SupportsComplex,
     SupportsFloat,
@@ -22,6 +23,7 @@ from typing import (
     final,
     overload,
     override,
+    type_check_only,
 )
 from typing_extensions import TypeIs, TypeVar
 
@@ -326,6 +328,14 @@ type _MaskArray[ShapeT: _Shape] = np.ndarray[ShapeT, np.dtype[np.bool]]
 type _FillValue = complex | None  # int | float | complex | None
 type _FillValueCallable = Callable[[np.dtype | ArrayLike], _FillValue]
 type _DomainCallable = Callable[..., NDArray[np.bool]]
+
+type _PyArray[T] = list[T] | tuple[T, ...]
+type _PyScalar = complex | bytes | str
+
+@type_check_only
+class _HasShape[ShapeT_co: _Shape](Protocol):
+    @property
+    def shape(self, /) -> ShapeT_co: ...
 
 ###
 
@@ -3517,7 +3527,24 @@ def resize(x: ArrayLike, new_shape: _ShapeLike) -> _MaskedArray[Incomplete]: ...
 
 #
 def ndim(obj: ArrayLike) -> int: ...
-def shape(obj): ...
+
+# # keep in sync with `_core.fromnumeric.shape`
+@overload  # this prevents `Any` from being returned with Pyright
+def shape(obj: _HasShape[Never]) -> _AnyShape: ...
+@overload
+def shape[ShapeT: _Shape](obj: _HasShape[ShapeT]) -> ShapeT: ...
+@overload
+def shape(obj: _PyScalar) -> tuple[()]: ...
+@overload  # `collections.abc.Sequence` can't be used because `bytes` and `str` are assignable to it
+def shape(obj: _PyArray[_PyScalar]) -> tuple[int]: ...
+@overload
+def shape(obj: _PyArray[_PyArray[_PyScalar]]) -> tuple[int, int]: ...
+@overload  # requires PEP 688 support
+def shape(obj: memoryview | bytearray) -> tuple[int]: ...
+@overload
+def shape(obj: ArrayLike) -> _AnyShape: ...
+
+#
 def size(obj: ArrayLike, axis: SupportsIndex | None = None) -> int: ...
 def diff(a, /, n=1, axis=-1, prepend=..., append=...): ...
 def where(condition, x=..., y=...): ...
