@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, StrPath, SupportsReadline
 from collections.abc import Buffer, Sequence
 from typing import Any, Generic, Self, SupportsIndex, overload, override
 from typing_extensions import TypeVar
@@ -205,14 +205,15 @@ def fromrecords(
     mask=...,
 ): ...
 
+#
 def fromtextfile(
-    fname,
-    delimiter=None,
-    commentchar="#",
-    missingchar="",
-    varnames=None,
-    vartypes=None,
-): ...
+    fname: StrPath | SupportsReadline[str],
+    delimiter: str | None = None,
+    commentchar: str = "#",
+    missingchar: str = "",
+    varnames: Sequence[str] | None = None,
+    vartypes: Sequence[DTypeLike] | None = None,
+) -> np.recarray[tuple[int], np.dtype[np.void]]: ...
 
 #
 def addfield[ShapeT: _Shape](
