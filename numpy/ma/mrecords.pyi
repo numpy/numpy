@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, StrPath, SupportsReadline
 from collections.abc import Buffer, Sequence
-from typing import Any, Generic, Self, SupportsIndex, overload, override
+from typing import IO, Any, Generic, Self, SupportsIndex, overload, override
 from typing_extensions import TypeVar
 
 import numpy as np
@@ -204,6 +204,12 @@ def fromrecords(
     fill_value=None,
     mask=...,
 ): ...
+
+# undocumented
+@overload
+def openfile(fname: StrPath) -> IO[str]: ...
+@overload
+def openfile[FileT: SupportsReadline[str]](fname: FileT) -> FileT: ...
 
 #
 def fromtextfile(
