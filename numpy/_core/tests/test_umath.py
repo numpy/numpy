@@ -4482,8 +4482,8 @@ class TestSubclass:
     def test_subclass_op(self):
 
         class simple(np.ndarray):
-            def __new__(subtype, shape):
-                self = np.ndarray.__new__(subtype, shape, dtype=object)
+            def __new__(cls, shape):
+                self = np.ndarray.__new__(cls, shape, dtype=object)
                 self.fill(0)
                 return self
 

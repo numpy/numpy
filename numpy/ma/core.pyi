@@ -2563,7 +2563,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
 class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
-        self,  # pyright: ignore[reportSelfClsParameterName]
+        cls,
         data,
         mask=...,
         dtype=...,

@@ -39,7 +39,7 @@ class memmap(np.ndarray[_ShapeT_co, _DTypeT_co]):
 
     @overload
     def __new__[ScalarT: np.generic](
-        subtype,  # pyright: ignore[reportSelfClsParameterName]
+        cls,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: _DTypeT_co,
         mode: _ToMode = "r+",
@@ -49,7 +49,7 @@ class memmap(np.ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> Self: ...
     @overload
     def __new__(
-        subtype,  # pyright: ignore[reportSelfClsParameterName]
+        cls,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: type[np.uint8] = ...,
         mode: _ToMode = "r+",
@@ -59,7 +59,7 @@ class memmap(np.ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> memmap[_AnyShape, np.dtype[np.uint8]]: ...
     @overload
     def __new__[ScalarT: np.generic](
-        subtype,  # pyright: ignore[reportSelfClsParameterName]
+        cls,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: _DTypeLike[ScalarT],
         mode: _ToMode = "r+",
@@ -69,7 +69,7 @@ class memmap(np.ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> memmap[_AnyShape, np.dtype[ScalarT]]: ...
     @overload
     def __new__(
-        subtype,  # pyright: ignore[reportSelfClsParameterName]
+        cls,
         filename: StrOrBytesPath | _SupportsFileMethodsRW,
         dtype: DTypeLike,
         mode: _ToMode = "r+",
