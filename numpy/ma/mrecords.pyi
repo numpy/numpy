@@ -192,18 +192,98 @@ def fromarrays(
 ) -> MaskedRecords: ...
 
 #
+@overload  # known dtype, known shape
+def fromrecords[DTypeT: np.dtype, ShapeT: _Shape](
+    reclist: ArrayLike,
+    dtype: DTypeT,
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[ShapeT, DTypeT]: ...
+@overload  # known dtype, unknown shape
+def fromrecords[DTypeT: np.dtype](
+    reclist: ArrayLike,
+    dtype: DTypeT,
+    shape: _ShapeLike | None = None,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[_AnyShape, DTypeT]: ...
+@overload  # known scalar-type, known shape
+def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
+    reclist: ArrayLike,
+    dtype: _DTypeLike[ScalarT],
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[ShapeT, np.dtype[ScalarT]]: ...
+@overload  # known scalar-type, unknown shape
+def fromrecords[ScalarT: np.generic](
+    reclist: ArrayLike,
+    dtype: _DTypeLike[ScalarT],
+    shape: _ShapeLike | None = None,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[_AnyShape, np.dtype[ScalarT]]: ...
+@overload  # unknown dtype, known shape (positional)
+def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
+    reclist: ArrayLike,
+    dtype: DTypeLike | None,
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[ShapeT, np.dtype[Incomplete]]: ...
+@overload  # unknown dtype, known shape (keyword)
+def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
+    reclist: ArrayLike,
+    dtype: DTypeLike | None = None,
+    *,
+    shape: ShapeT,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[ShapeT, np.dtype[Incomplete]]: ...
+@overload  # unknown dtype, unknown shape
 def fromrecords(
-    reclist,
-    dtype=None,
-    shape=None,
-    formats=None,
-    names=None,
-    titles=None,
-    aligned=False,
-    byteorder=None,
-    fill_value=None,
-    mask=...,
-): ...
+    reclist: ArrayLike,
+    dtype: DTypeLike | None = None,
+    shape: _ShapeLike | None = None,
+    formats: DTypeLike | None = None,
+    names: _Names | None = None,
+    titles: _Names | None = None,
+    aligned: bool = False,
+    byteorder: _ByteOrder | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    mask: _ArrayLikeBool_co = ...,
+) -> MaskedRecords[_AnyShape, np.dtype[Incomplete]]: ...
 
 # undocumented
 @overload
