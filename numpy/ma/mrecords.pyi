@@ -214,4 +214,9 @@ def fromtextfile(
     vartypes=None,
 ): ...
 
-def addfield(mrecord, newfield, newfieldname=None): ...
+#
+def addfield[ShapeT: _Shape](
+    mrecord: MaskedRecords[ShapeT],
+    newfield: ArrayLike,
+    newfieldname: str | None = None,
+) -> np.recarray[ShapeT, np.dtype[np.void]]: ...
