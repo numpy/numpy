@@ -3499,7 +3499,7 @@ def sort[ArrayT: np.ndarray](
 @overload
 def sort(
     a: ArrayLike,
-    axis: SupportsIndex = -1,
+    axis: SupportsIndex | None = -1,
     kind: _SortKind | None = None,
     order: str | Sequence[str] | None = None,
     endwith: bool | None = True,
