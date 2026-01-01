@@ -666,6 +666,7 @@ def concatenate[OutT: np.ndarray](
     casting: _CastingKind | None = "same_kind",
 ) -> OutT: ...
 
+# keep in sync with `ma.core.inner`
 def inner(a: ArrayLike, b: ArrayLike, /) -> Incomplete: ...
 
 # keep in sync with `ma.core.numeric`

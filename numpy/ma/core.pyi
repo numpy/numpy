@@ -3698,9 +3698,12 @@ def round_[ArrayT: np.ndarray](a: ArrayLike, decimals: int = 0, *, out: ArrayT) 
 
 round = round_
 
-def inner(a, b): ...
+# keep in sync with `_core.multiarray.inner`
+def inner(a: ArrayLike, b: ArrayLike) -> Incomplete: ...
+
 innerproduct = inner
 
+#
 def outer(a, b): ...
 outerproduct = outer
 
