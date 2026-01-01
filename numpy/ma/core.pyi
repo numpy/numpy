@@ -3650,12 +3650,41 @@ def diff(
 
 # keep in sync with `_core.multiarray.where`
 @overload
-def where(condition: ArrayLike, x: _NoValueType = ..., y: _NoValueType = ..., /) -> tuple[_MaskedArray[np.intp], ...]: ...
+def where(condition: ArrayLike, x: _NoValueType = ..., y: _NoValueType = ...) -> tuple[_MaskedArray[np.intp], ...]: ...
 @overload
-def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike, /) -> _MaskedArray[Incomplete]: ...
+def where(condition: ArrayLike, x: ArrayLike, y: ArrayLike) -> _MaskedArray[Incomplete]: ...
+
+# keep in sync with `_core.fromnumeric.choose`
+@overload
+def choose(
+    indices: _IntLike_co,
+    choices: ArrayLike,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> Any: ...
+@overload
+def choose[ScalarT: np.generic](
+    indices: _ArrayLikeInt_co,
+    choices: _ArrayLike[ScalarT],
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _MaskedArray[ScalarT]: ...
+@overload
+def choose(
+    indices: _ArrayLikeInt_co,
+    choices: ArrayLike,
+    out: None = None,
+    mode: _ModeKind = "raise",
+) -> _MaskedArray[Incomplete]: ...
+@overload
+def choose[ArrayT: np.ndarray](
+    indices: _ArrayLikeInt_co,
+    choices: ArrayLike,
+    out: ArrayT,
+    mode: _ModeKind = "raise",
+) -> ArrayT: ...
 
 #
-def choose(indices, choices, out=None, mode="raise"): ...
 def round_(a, decimals=0, out=None): ...
 round = round_
 
