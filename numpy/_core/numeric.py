@@ -1175,7 +1175,6 @@ def tensordot(a, b, axes=2):
     if len(set(axes_b)) != len(axes_b):
         raise ValueError("duplicate axes are not allowed in tensordot")
 
-
     a, b = asarray(a), asarray(b)
     as_ = a.shape
     nda = a.ndim
