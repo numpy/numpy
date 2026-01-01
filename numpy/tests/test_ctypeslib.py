@@ -413,7 +413,13 @@ class TestAsCtypesType:
 
     @pytest.mark.parametrize(
         "numpy_scalar",
-        [(np.str_("aaa")), (np.datetime64("2026-01-01")), (np.timedelta64(100, "s"))],
+        [
+            (np.str_("aaa")),
+            (np.datetime64("2026-01-01")),
+            (np.timedelta64(100, "s")),
+            (np.complex64(1 + 2j)),
+            (np.complex128(1 + 2j)),
+        ],
     )
     def test_cannot_convert_to_ctypes(self, numpy_scalar: np.generic):
         with pytest.raises(
