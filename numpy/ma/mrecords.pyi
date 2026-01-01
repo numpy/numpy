@@ -245,7 +245,7 @@ def fromrecords[ScalarT: np.generic](
     mask: _ArrayLikeBool_co = ...,
 ) -> MaskedRecords[_AnyShape, np.dtype[ScalarT]]: ...
 @overload  # unknown dtype, known shape (positional)
-def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
+def fromrecords[ShapeT: _Shape](
     reclist: ArrayLike,
     dtype: DTypeLike | None,
     shape: ShapeT,
@@ -258,7 +258,7 @@ def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
     mask: _ArrayLikeBool_co = ...,
 ) -> MaskedRecords[ShapeT, np.dtype[Incomplete]]: ...
 @overload  # unknown dtype, known shape (keyword)
-def fromrecords[ScalarT: np.generic, ShapeT: _Shape](
+def fromrecords[ShapeT: _Shape](
     reclist: ArrayLike,
     dtype: DTypeLike | None = None,
     *,
@@ -299,7 +299,7 @@ def fromtextfile(
     missingchar: str = "",
     varnames: Sequence[str] | None = None,
     vartypes: Sequence[DTypeLike] | None = None,
-) -> np.recarray[tuple[int], np.dtype[np.void]]: ...
+) -> MaskedRecords[tuple[int], np.dtype[np.void]]: ...
 
 #
 def addfield[ShapeT: _Shape](
