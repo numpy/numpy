@@ -71,6 +71,7 @@ __all__ = [
 ]
 
 type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
 type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
@@ -413,10 +414,15 @@ def compress_nd[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: _ShapeLike | 
 @overload
 def compress_nd(x: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Incomplete]: ...
 
+#
+@overload
+def compress_rowcols[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: int | None = None) -> _Array2D[ScalarT]: ...
+@overload
+def compress_rowcols(x: ArrayLike, axis: int | None = None) -> _Array2D[Incomplete]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def compress_rowcols(x, axis=None): ...
 def compress_rows(a): ...
 def compress_cols(a): ...
 def mask_rows(a, axis=...): ...
