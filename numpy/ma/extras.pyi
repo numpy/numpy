@@ -11,6 +11,7 @@ from numpy._typing import (
     NDArray,
     _AnyShape,
     _ArrayLike,
+    _ArrayLikeBool_co,
     _ArrayLikeComplex_co,
     _ArrayLikeInt_co,
     _DTypeLike,
@@ -72,6 +73,7 @@ __all__ = [
 ]
 
 type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
+type _MArray1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
@@ -332,7 +334,7 @@ def median[ArrayT: NDArray[_ScalarNumeric]](
     *,
     keepdims: L[True],
 ) -> ArrayT: ...
-@overload  # known scalar-type, keepdims=True
+@overload  # known scalar-type, keepdims=True_ArrayLikeNumber_co
 def median[ScalarT: _ScalarNumeric](
     a: _ArrayLike[ScalarT],
     axis: _ShapeLike | None = None,
@@ -438,10 +440,35 @@ def mask_rowcols(a: ArrayLike, axis: SupportsIndex | None = None) -> _MArray[Inc
 def mask_rows(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
 def mask_cols(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
 
+# keep in sync with `lib._arraysetops_impl.ediff1d`
+@overload
+def ediff1d(
+    arr: _ArrayLikeBool_co,
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[np.int8]: ...
+@overload
+def ediff1d[NumericT: _ScalarNumeric](
+    arr: _ArrayLike[NumericT],
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[NumericT]: ...
+@overload
+def ediff1d(
+    arr: _ArrayLike[np.datetime64[Any]],
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[np.timedelta64]: ...
+@overload
+def ediff1d(
+    arr: _ArrayLikeComplex_co,
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[Incomplete]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def ediff1d(arr, to_end=None, to_begin=None): ...
 def unique(ar1, return_index=False, return_inverse=False): ...
 def intersect1d(ar1, ar2, assume_unique=False): ...
 def setxor1d(ar1, ar2, assume_unique=False): ...
@@ -454,7 +481,6 @@ def corrcoef(x, y=None, rowvar=True, allow_masked=True): ...
 
 class MAxisConcatenator(AxisConcatenator):
     __slots__ = ()
-
     @staticmethod
     def concatenate(arrays: Incomplete, axis: int = 0) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @classmethod
