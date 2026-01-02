@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Concatenate, SupportsIndex, overload
+from typing import Any, Concatenate, Literal as L, SupportsIndex, overload
 
 import numpy as np
 from numpy import _CastingKind
@@ -10,7 +10,10 @@ from numpy._typing import (
     NDArray,
     _AnyShape,
     _ArrayLike,
+    _ArrayLikeComplex_co,
+    _ArrayLikeInt_co,
     _DTypeLike,
+    _NestedSequence,
     _ShapeLike,
 )
 from numpy.lib._function_base_impl import average
@@ -68,6 +71,9 @@ __all__ = [
 ]
 
 type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
+
+type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
+type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
 
 ###
 
@@ -282,10 +288,128 @@ def apply_over_axes(
     axes: _ShapeLike,
 ) -> _MArray[Incomplete]: ...
 
+# keep in sync with `lib._function_base_impl.median`
+@overload  # known scalar-type, keepdims=False (default)
+def median[ScalarT: np.inexact | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> ScalarT: ...
+@overload  # float array-like, keepdims=False (default)
+def median(
+    a: _ArrayLikeInt_co | _NestedSequence[float] | float,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # complex array-like, keepdims=False (default)
+def median(
+    a: _ListSeqND[complex],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128: ...
+@overload  # complex scalar, keepdims=False (default)
+def median(
+    a: complex,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128 | Any: ...
+@overload  # known array-type, keepdims=True
+def median[ArrayT: NDArray[_ScalarNumeric]](
+    a: ArrayT,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> ArrayT: ...
+@overload  # known scalar-type, keepdims=True
+def median[ScalarT: _ScalarNumeric](
+    a: _ArrayLike[ScalarT],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _MArray[ScalarT]: ...
+@overload  # known scalar-type, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _ArrayLike[ScalarT],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> _MArray[ScalarT]: ...
+@overload  # float array-like, keepdims=True
+def median(
+    a: _NestedSequence[float],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _MArray[np.float64]: ...
+@overload  # float array-like, axis=<given>
+def median(
+    a: _NestedSequence[float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> _MArray[np.float64]: ...
+@overload  # complex array-like, keepdims=True
+def median(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _MArray[np.complex128]: ...
+@overload  # complex array-like, axis=<given>
+def median(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> _MArray[np.complex128]: ...
+@overload  # out=<given> (keyword)
+def median[ArrayT: np.ndarray](
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None = None,
+    *,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ArrayT: ...
+@overload  # out=<given> (positional)
+def median[ArrayT: np.ndarray](
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ArrayT: ...
+@overload  # fallback
+def median(
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> Incomplete: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def median(a, axis=None, out=None, overwrite_input=False, keepdims=False): ...
 def compress_nd(x, axis=None): ...
 def compress_rowcols(x, axis=None): ...
 def compress_rows(a): ...
