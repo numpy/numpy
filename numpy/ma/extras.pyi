@@ -7,6 +7,7 @@ from numpy import _CastingKind
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
+    NDArray,
     _AnyShape,
     _ArrayLike,
     _DTypeLike,
@@ -243,10 +244,11 @@ def diagflat[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> _MArray
 @overload
 def diagflat(v: ArrayLike, k: int = 0) -> _MArray[Incomplete]: ...
 
+def count_masked(arr: ArrayLike, axis: SupportsIndex | None = None) -> NDArray[np.intp]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def count_masked(arr, axis=None): ...
 def masked_all(shape, dtype=float): ...  # noqa: PYI014
 def masked_all_like(arr): ...
 
