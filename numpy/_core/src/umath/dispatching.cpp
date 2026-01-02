@@ -263,6 +263,30 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 }
 
 
+static int
+create_dtype_promoter_info(PyUFuncObject *ufunc,
+        PyObject *promoter, PyObject **out_info)
+{
+    int nargs = ufunc->nargs;
+    PyObject *dtype_tuple = PyTuple_New(nargs);
+    if (dtype_tuple == NULL) {
+        return -1;
+    }
+    for (Py_ssize_t j = 0; j < nargs; j++) {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(dtype_tuple, j, Py_None);
+    }
+
+    PyObject *curr_dtypes = dtype_tuple;
+    PyObject *curr_resolver_info = PyTuple_Pack(2, curr_dtypes, promoter);
+    Py_INCREF(curr_dtypes);
+    Py_INCREF(curr_resolver_info);
+
+    *out_info = curr_resolver_info;
+    return 0;
+}
+
+
 /**
  * Resolves the implementation to use, this uses typical multiple dispatching
  * methods of finding the best matching implementation or resolver.
@@ -302,9 +326,7 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         PyObject **out_info)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
-    Py_ssize_t size = PySequence_Length(ufunc->_loops);
-    PyObject *best_dtypes = NULL;
-    PyObject *best_resolver_info = NULL;
+    PyObject *matched_dtype_promoter = NULL;
 
 #if PROMOTION_DEBUG_TRACING
     printf("Promoting for '%s' promoters only: %d\n",
@@ -317,10 +339,60 @@ resolve_implementation_info(PyUFuncObject *ufunc,
     Py_DECREF(tmp);
 #endif
 
+    Py_ssize_t size = PySequence_Length(ufunc->_dtype_promoters);
+    for (Py_ssize_t i = 0; i < size; i++) {
+        // Test all dtype-based promoters.
+        PyObject *promoter_info = PySequence_Fast_GET_ITEM(
+                ufunc->_dtype_promoters, i);
+        PyArray_DTypeMeta *promoter_dtype = (
+                (PyArray_DTypeMeta *)PyTuple_GET_ITEM(promoter_info, 0));
+
+        npy_bool matches = NPY_FALSE;
+        for (Py_ssize_t j = 0; j < nargs; j++) {
+            PyArray_DTypeMeta *op_dtype = op_dtypes[j];
+            // DType promoters always match exactly.
+            if (op_dtype == promoter_dtype) {
+                matches = NPY_TRUE;
+                break;
+            }
+        }
+        if (!matches) {
+            continue;
+        }
+
+        /*
+         * Dtype-based promoter matches. If we only want promoters, use it.
+         * Otherwise, remember it as the matched promoter and continue searching
+         * for an ArrayMethod match.
+         */
+        PyObject *promoter = PyTuple_GET_ITEM(promoter_info, 1);
+        Py_INCREF(promoter);
+
+        if (only_promoters) {
+            if (create_dtype_promoter_info(ufunc, promoter, out_info) < 0) {
+                Py_DECREF(promoter);
+                return -1;
+            }
+            return 0;
+        }
+
+        matched_dtype_promoter = promoter;
+        break;
+    }
+
+    size = PySequence_Length(ufunc->_loops);
+    PyObject *best_dtypes = NULL;
+    PyObject *best_resolver_info = NULL;
+
     for (Py_ssize_t res_idx = 0; res_idx < size; res_idx++) {
         /* Test all resolvers  */
         PyObject *resolver_info = PySequence_Fast_GET_ITEM(
                 ufunc->_loops, res_idx);
+
+        if (matched_dtype_promoter != NULL && !PyObject_TypeCheck(
+                    PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
+            continue;
+        }
 
         if (only_promoters && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
@@ -545,7 +617,16 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         best_dtypes = curr_dtypes;
         best_resolver_info = resolver_info;
     }
-    if (best_dtypes == NULL) {
+    if (best_dtypes == NULL && matched_dtype_promoter != NULL) {
+        /* Dtype promoter matched, but no ArrayMethod */
+        if (create_dtype_promoter_info(ufunc,
+                    matched_dtype_promoter, out_info) < 0) {
+            Py_DECREF(matched_dtype_promoter);
+            return -1;
+        }
+        return 0;
+    }
+    else if (best_dtypes == NULL) {
         /* The non-legacy lookup failed */
         *out_info = NULL;
         return 0;
@@ -1433,4 +1514,62 @@ PyUFunc_AddPromoter(
         return -1;
     }
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+/*UFUNC_API
+ *      Add a dtype-based promoter to the ufunc, which always matches if the given
+ *      `dtype` is present in the operands.
+ *
+ *      Be careful when using this function, as this type of promoter takes
+ *      precedence over any other promoters, effectively making it impossible
+ *      to use other promoters for the same DType. This is mainly useful for
+ *      cases where a DType wants to implement all promotion logic itself.
+ *
+ * @param ufunc The universal function to add the loop to.
+ * @param dtype The DType that this promoter should match on.
+ * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
+ *        a pointer to a `PyArrayMethod_PromoterFunction`.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddDTypeBasedPromoter(
+    PyUFuncObject *ufunc, PyArray_DTypeMeta *dtype, PyObject *promoter)
+{
+    if (!PyCapsule_IsValid(promoter, "numpy._ufunc_promoter")) {
+        PyErr_SetString(PyExc_TypeError,
+                "Second argument to info must be a promoter");
+        return -1;
+    }
+
+    PyObject *DType = (PyObject *)dtype;
+    PyObject *info = PyTuple_Pack(2, DType, promoter);
+    if (info == NULL) {
+        return -1;
+    }
+
+    if (ufunc->_dtype_promoters == NULL) {
+        ufunc->_dtype_promoters = PyList_New(0);
+        if (ufunc->_dtype_promoters == NULL) {
+            return -1;
+        }
+    }
+
+    PyObject *promoters = ufunc->_dtype_promoters;
+    Py_ssize_t length = PyList_Size(promoters);
+    for (Py_ssize_t i = 0; i < length; i++) {
+        PyObject *item = PyList_GetItemRef(promoters, i);
+        PyObject *cur_DType = PyTuple_GetItem(item, 0);
+        Py_DECREF(item);
+        if (cur_DType != DType) {
+            continue;
+        }
+        PyErr_Format(PyExc_TypeError,
+                "A promoter has already been registered with '%s' for DType %R",
+                ufunc_get_name_cstr(ufunc), DType);
+        return -1;
+    }
+
+    if (PyList_Append(promoters, info) < 0) {
+        return -1;
+    }
+    return 0;
 }
