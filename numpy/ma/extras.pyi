@@ -268,10 +268,23 @@ def apply_along_axis[**Tss](
     **kwargs: Tss.kwargs,
 ) -> _MArray[Incomplete]: ...
 
+#
+@overload
+def apply_over_axes[ScalarT: np.generic](
+    func: Callable[[MaskedArray, int], _ArrayLike[ScalarT]],
+    a: np.ndarray,
+    axes: _ShapeLike,
+) -> _MArray[ScalarT]: ...
+@overload
+def apply_over_axes(
+    func: Callable[[MaskedArray, int], ArrayLike],
+    a: np.ndarray,
+    axes: _ShapeLike,
+) -> _MArray[Incomplete]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def apply_over_axes(func, a, axes): ...
 def median(a, axis=None, out=None, overwrite_input=False, keepdims=False): ...
 def compress_nd(x, axis=None): ...
 def compress_rowcols(x, axis=None): ...
