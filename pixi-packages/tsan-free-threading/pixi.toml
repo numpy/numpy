@@ -18,8 +18,8 @@ extra-args = ["-Csetup-args=-Db_sanitize=thread", "-Csetup-args=-Dbuildtype=debu
 
 [package.host-dependencies]
 python.git = "https://github.com/crusaderky/cpython"
-python.subdirectory = "Tools/pixi-packages/tsan"
-python.rev = "eb0149f0b830651bffe757126f9d699859aa0fda"
+python.subdirectory = "Tools/pixi-packages/tsan-free-threading"
+python.rev = "9a2a8963286077536f67b89a2123355aeb049a3d"
 
 meson-python = "*"
 cython = "*"
