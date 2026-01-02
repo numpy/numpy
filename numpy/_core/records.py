@@ -740,7 +740,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         return _array
     else:
         if shape is not None and retval.shape != shape:
-            retval.shape = shape
+            retval = retval.reshape(shape)
 
     res = retval.view(recarray)
 
