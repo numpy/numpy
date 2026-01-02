@@ -381,3 +381,48 @@ class TestAsCtypesType:
             'formats': [np.uint32, np.uint32]
         })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)
+
+    @pytest.mark.parametrize("numpy_scalar_type, value1, value2", [
+        (np.int8, 10, 100),
+        (np.int16, 10, 100),
+        (np.int32, 10, 100),
+        (np.int64, 10, 100),
+        (np.uint8, 10, 100),
+        (np.uint16, 10, 100),
+        (np.uint32, 10, 100),
+        (np.uint64, 10, 100),
+        (np.float32, 1.5, 2.5),
+        (np.float64, 1.5, 2.5),
+        (np.bool, True, False),
+    ])
+    def test_retrieve_same_scalar_value(
+        self,
+        numpy_scalar_type: np.generic,
+        value1: int | float | bool,
+        value2: int | float | bool,
+    ):
+        # gh-30354
+        a = numpy_scalar_type(value1)
+        b = numpy_scalar_type(value2)
+
+        s1 = np.ctypeslib.as_ctypes(a)
+        s2 = np.ctypeslib.as_ctypes(b)
+
+        assert s1.value == value1
+        assert s2.value == value2
+
+    @pytest.mark.parametrize(
+        "numpy_scalar",
+        [
+            (np.str_("aaa")),
+            (np.datetime64("2026-01-01")),
+            (np.timedelta64(100, "s")),
+            (np.complex64(1 + 2j)),
+            (np.complex128(1 + 2j)),
+        ],
+    )
+    def test_cannot_convert_to_ctypes(self, numpy_scalar: np.generic):
+        with pytest.raises(
+            NotImplementedError, match="Converting dtype.* to a ctypes type"
+        ):
+            np.ctypeslib.as_ctypes(numpy_scalar)
