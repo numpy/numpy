@@ -5,14 +5,12 @@ Test that we can run executable scripts that have been installed with numpy.
 import os
 import subprocess
 import sys
-from os.path import dirname, isfile, join as pathjoin
+from os.path import dirname
 
 import pytest
 
 import numpy as np
 from numpy.testing import IS_WASM, assert_equal
-
-is_inplace = isfile(pathjoin(dirname(np.__file__), '..', 'setup.py'))
 
 
 def find_f2py_commands():
@@ -33,7 +31,6 @@ def find_f2py_commands():
         return ['f2py', 'f2py' + major, 'f2py' + major + '.' + minor]
 
 
-@pytest.mark.skipif(is_inplace, reason="Cannot test f2py command inplace")
 @pytest.mark.xfail(reason="Test is unreliable")
 @pytest.mark.parametrize('f2py_cmd', find_f2py_commands())
 def test_f2py(f2py_cmd):

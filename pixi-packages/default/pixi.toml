@@ -1,0 +1,21 @@
+[workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+preview = ["pixi-build"]
+
+[package.build]
+source.path = "../.."
+
+[package.build.backend]
+name = "pixi-build-python"
+version = "*"
+
+[package.build.config]
+extra-input-globs = ["**/*.c.src"]
+compilers = ["c", "cxx"]
+
+[package.host-dependencies]
+python = "*"
+meson-python = "*"
+cython = "*"
+uv = "*" # used to invoke the wheel build

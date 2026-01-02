@@ -784,7 +784,7 @@ cannot not be accessed directly.
     Allows setting of the itemsize, this is *only* relevant for string/bytes
     datatypes as it is the current pattern to define one with a new size.
 
-.. c:function:: npy_intp PyDataType_ALIGNENT(PyArray_Descr *descr)
+.. c:function:: npy_intp PyDataType_ALIGNMENT(PyArray_Descr *descr)
 
     The alignment of the datatype.
 
@@ -1786,9 +1786,9 @@ the functions that must be implemented for each slot.
    - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
      identity otherwise as it preserves the sign for ``sum([-0.0])``.
    - We use no identity for object, but return the default of ``0`` and
-     ``1`` for the empty ``sum([], dtype=object)`` and
-     ``prod([], dtype=object)``.
-     This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+     ``1`` for the empty ``sum([], dtype=np.object_)`` and
+     ``prod([], dtype=np.object_)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=np.object_))`` to work.
    - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
      ``INT_MIN`` not a good *default* when there are no items.
 
@@ -1885,6 +1885,37 @@ with the rest of the ArrayMethod API.
    Add loop directly to a ufunc from a given ArrayMethod spec.
    the main ufunc registration function.  This adds a new implementation/loop
    to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
+
+.. c:type:: PyUFunc_LoopSlot
+
+   Structure used to add multiple loops to ufuncs from ArrayMethod specs.
+   This is used in `PyUFunc_AddLoopsFromSpecs`.
+
+    .. c:struct:: PyUFunc_LoopSlot
+
+        .. c:member:: const char *name
+
+            The name of the ufunc to add the loop to, in the form like that of
+            entry points, ``(module ':')? (object '.')* name``, with ``numpy``
+            the default module. Examples: ``sin``, ``strings.str_len``,
+            ``numpy.strings:str_len``.
+
+        .. c:member:: PyArrayMethod_Spec *spec
+
+            The ArrayMethod spec to use to create the loop.
+
+.. c:function:: int PyUFunc_AddLoopsFromSpecs( \
+                        PyUFunc_LoopSlot *slots)
+
+    .. versionadded:: 2.4
+
+    Add multiple loops to ufuncs from ArrayMethod specs. This also
+    handles the registration of methods for the ufunc-like functions
+    ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
+
+    The ``slots`` argument must be a  NULL-terminated array of
+    `PyUFunc_LoopSlot` (see above), which give the name of the
+    ufunc and spec needed to create the loop.
 
 .. c:function:: int PyUFunc_AddPromoter( \
                         PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
@@ -2035,6 +2066,36 @@ code:
         loop_descrs[2] = PyArray_DescrFromType(NPY_FLOAT64);
         Py_INCREF(loop_descrs[2]);
     }
+
+.. _array-methods-sorting:
+
+Sorting and Argsorting
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Sorting and argsorting methods for dtypes can be registered using the
+ArrayMethod API. This is done by adding an ArrayMethod spec with the name
+``"sort"`` or ``"argsort"`` respectively.  The spec must have ``nin=1``
+and ``nout=1`` for both sort and argsort. Sorting is inplace, hence we
+enforce that ``data[0] == data[1]``. Argsorting returns a new array of
+indices, so the output must be of ``NPY_INTP`` type.
+
+The ``context`` passed to the loop contains the ``parameters`` field which
+for these operations is a ``PyArrayMethod_SortParameters *`` struct. This
+struct contains a ``flags`` field which is a bitwise OR of ``NPY_SORTKIND``
+values indicating the kind of sort to perform (that is, whether it is a
+stable and/or descending sort). If the strided loop depends on the flags,
+a good way to deal with this is to define :c:macro:`NPY_METH_get_loop`,
+and not set any of the other loop slots.
+
+.. c:struct:: PyArrayMethod_SortParameters
+
+    .. c:member:: NPY_SORTKIND flags
+
+        The flags passed to the sort operation. This is a bitwise OR of
+        ``NPY_SORTKIND`` values indicating the kind of sort to perform.
+
+These specs can be registered using :c:func:`PyUFunc_AddLoopsFromSpecs`
+along with other ufunc loops.
 
 API for calling array methods
 -----------------------------
@@ -2187,19 +2248,18 @@ Shape Manipulation
         PyArrayObject* self, PyArray_Dims* newshape, int refcheck, \
         NPY_ORDER fortran)
 
-    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, refcheck
-    ``=`` *refcheck*, order= fortran ). This function only works on
-    single-segment arrays. It changes the shape of *self* inplace and
-    will reallocate the memory for *self* if *newshape* has a
-    different total number of elements then the old shape. If
-    reallocation is necessary, then *self* must own its data, have
-    *self* - ``>base==NULL``, have *self* - ``>weakrefs==NULL``, and
-    (unless refcheck is 0) not be referenced by any other array.
-    The fortran argument can be :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`,
-    or :c:data:`NPY_FORTRANORDER`. It currently has no effect. Eventually
-    it could be used to determine how the resize operation should view
-    the data when constructing a differently-dimensioned array.
-    Returns None on success and NULL on error.
+    Equivalent to :meth:`ndarray.resize<numpy.ndarray.resize>` (*self*, *newshape*, *refcheck*).
+    This function only works on single-segment arrays. It changes the shape of
+    *self* inplace and will reallocate the memory for *self* if *newshape* has
+    a different total number of elements then the old shape. If reallocation is
+    necessary, then *self* must own its data, have *self* - ``>base==NULL``,
+    have *self* - ``>weakrefs==NULL``, and (unless refcheck is 0) not be
+    referenced by any other array.  The fortran argument can be
+    :c:data:`NPY_ANYORDER`, :c:data:`NPY_CORDER`, or
+    :c:data:`NPY_FORTRANORDER`.  It currently has no effect. Eventually it
+    could be used to determine how the resize operation should view the data
+    when constructing a differently-dimensioned array.  Returns None on success
+    and NULL on error.
 
 .. c:function:: PyObject* PyArray_Transpose( \
         PyArrayObject* self, PyArray_Dims* permute)
@@ -3536,6 +3596,121 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
    force newly created arrays to have a newly created descriptor
    instance, no matter what input descriptor is provided by a user.
 
+.. c:macro:: NPY_DT_get_constant
+
+.. c:type:: int (PyArrayDTypeMeta_GetConstant)( \
+                PyArray_Descr *descr, int constant_id, void *out)
+
+   If defined, allows the DType to expose constant values such as machine
+   limits, special values (infinity, NaN), and floating-point characteristics.
+   The *descr* is the descriptor instance, *constant_id* is one of the
+   ``NPY_CONSTANT_*`` macros, and *out* is a pointer to uninitialized memory
+   where the constant value should be written. The memory pointed to by *out*
+   may be unaligned and is uninitialized.
+   Returns 1 on success, 0 if the constant is not available,
+   or -1 with an error set.
+
+   **Constant IDs**:
+
+    The following constant IDs are defined for retrieving dtype-specific values:
+
+    **Basic constants** (available for all numeric types):
+
+   .. c:macro:: NPY_CONSTANT_zero
+
+       The zero value for the dtype.
+
+   .. c:macro:: NPY_CONSTANT_one
+
+       The one value for the dtype.
+
+   .. c:macro:: NPY_CONSTANT_minimum_finite
+
+       The minimum finite value representable by the dtype. For floating-point types,
+       this is the most negative finite value (e.g., ``-FLT_MAX``).
+
+   .. c:macro:: NPY_CONSTANT_maximum_finite
+
+       The maximum finite value representable by the dtype.
+
+   **Floating-point special values**:
+
+   .. c:macro:: NPY_CONSTANT_inf
+
+       Positive infinity (only for floating-point types).
+
+   .. c:macro:: NPY_CONSTANT_ninf
+
+       Negative infinity (only for floating-point types).
+
+   .. c:macro:: NPY_CONSTANT_nan
+
+       Not-a-Number (only for floating-point types).
+
+   **Floating-point characteristics** (values of the dtype's native type):
+
+   .. c:macro:: NPY_CONSTANT_finfo_radix
+
+       The radix (base) of the floating-point representation. This is 2 for all
+       floating-point types.
+
+   .. c:macro:: NPY_CONSTANT_finfo_eps
+
+       Machine epsilon: the difference between 1.0 and the next representable value
+       greater than 1.0. Corresponds to C macros like ``FLT_EPSILON``, ``DBL_EPSILON``.
+
+       .. note::
+           For long double in IBM double-double format (PowerPC), this is defined as
+           ``0x1p-105L`` (2^-105) based on the ~106 bits of mantissa precision.
+
+   .. c:macro:: NPY_CONSTANT_finfo_epsneg
+
+       The difference between 1.0 and the next representable value less than 1.0.
+       Typically ``eps / radix`` for binary floating-point types.
+
+   .. c:macro:: NPY_CONSTANT_finfo_smallest_normal
+
+       The smallest positive normalized floating-point number. Corresponds to C
+       macros like ``FLT_MIN``, ``DBL_MIN``. This is the smallest value with a
+       leading 1 bit in the mantissa.
+
+   .. c:macro:: NPY_CONSTANT_finfo_smallest_subnormal
+
+       The smallest positive subnormal (denormalized) floating-point number.
+       Corresponds to C macros like ``FLT_TRUE_MIN``, ``DBL_TRUE_MIN``. This is
+       the smallest representable positive value, with leading 0 bits in the mantissa.
+
+   **Floating-point characteristics** (integer values, type ``npy_intp``):
+
+   These constants return integer metadata about the floating-point representation.
+   They are marked with the ``1 << 16`` bit to indicate they return ``npy_intp``
+   values rather than the dtype's native type.
+
+   .. c:macro:: NPY_CONSTANT_finfo_nmant
+
+       Number of mantissa bits (excluding the implicit leading bit). For example,
+       IEEE 754 binary64 (double) has 52 explicit mantissa bits, so this returns 52.
+       Corresponds to ``MANT_DIG - 1`` from C standard macros.
+
+   .. c:macro:: NPY_CONSTANT_finfo_min_exp
+
+       Minimum exponent value. This is the minimum negative integer such that the
+       radix raised to the power of one less than that integer is a normalized
+       floating-point number. Corresponds to ``MIN_EXP - 1`` from C standard macros
+       (e.g., ``FLT_MIN_EXP - 1``).
+
+   .. c:macro:: NPY_CONSTANT_finfo_max_exp
+
+       Maximum exponent value. This is the maximum positive integer such that the
+       radix raised to the power of one less than that integer is a representable
+       finite floating-point number. Corresponds to ``MAX_EXP`` from C standard
+       macros (e.g., ``FLT_MAX_EXP``).
+
+   .. c:macro:: NPY_CONSTANT_finfo_decimal_digits
+
+       The number of decimal digits of precision. Corresponds to ``DIG`` from C
+       standard macros (e.g., ``FLT_DIG``, ``DBL_DIG``).
+
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -4096,6 +4271,8 @@ Memory management
     :c:func:`PyArray_DiscardWritebackIfCopy`.
 
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
+
+.. _array.ndarray.capi.threading:
 
 Threading support
 ~~~~~~~~~~~~~~~~~

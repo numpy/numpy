@@ -4,8 +4,9 @@ import numpy as np
 
 assert_type(np.ScalarType[0], type[int])
 assert_type(np.ScalarType[3], type[bool])
-assert_type(np.ScalarType[8], type[np.csingle])
-assert_type(np.ScalarType[10], type[np.clongdouble])
+assert_type(np.ScalarType[8], type[np.complex64])
+assert_type(np.ScalarType[9], type[np.complex128])
+assert_type(np.ScalarType[-1], type[np.void])
 assert_type(np.bool_(object()), np.bool)
 
 assert_type(np.typecodes["Character"], Literal["c"])

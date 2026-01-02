@@ -694,6 +694,11 @@ class TestOperations:
         return np.array([['efg', '456'],
                          ['051', 'tuv']]).view(np.char.chararray)
 
+    def test_argsort(self):
+        arr = np.array(['abc'] * 4).view(np.char.chararray)
+        actual = arr.argsort(stable=True)
+        assert_array_equal(actual, [0, 1, 2, 3])
+
     def test_add(self):
         A, B = self.A(), self.B()
         AB = np.array([['abcefg', '123456'],

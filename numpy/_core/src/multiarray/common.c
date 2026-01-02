@@ -328,6 +328,30 @@ _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
     return 0;
 }
 
+
+/**
+ * Unpack a field from a structured dtype. The field index must be valid.
+ *
+ * @param descr The dtype to unpack.
+ * @param index The index of the field to unpack.
+ * @param odescr will be set to the field's dtype
+ * @param offset will be set to the field's offset
+ *
+ * @return -1 on failure, 0 on success.
+ */
+ NPY_NO_EXPORT int
+ _unpack_field_index(
+    _PyArray_LegacyDescr *descr,
+    npy_intp index,
+    PyArray_Descr **odescr,
+    npy_intp *offset)
+ {
+    PyObject *key = PyTuple_GET_ITEM(descr->names, index);
+    PyObject *tup = PyDict_GetItem(descr->fields, key);  // noqa: borrowed-ref OK
+    return _unpack_field(tup, odescr, offset);
+ }
+
+
 /*
  * check whether arrays with datatype dtype might have object fields. This will
  * only happen for structured dtypes (which may have hidden objects even if the
@@ -447,24 +471,6 @@ check_is_convertible_to_scalar(PyArrayObject *v)
 {
     if (PyArray_NDIM(v) == 0) {
         return 0;
-    }
-
-    /* Remove this if-else block when the deprecation expires */
-    if (PyArray_SIZE(v) == 1) {
-        /* Numpy 1.25.0, 2023-01-02 */
-        if (DEPRECATE(
-                "Conversion of an array with ndim > 0 to a scalar "
-                "is deprecated, and will error in future. "
-                "Ensure you extract a single element from your array "
-                "before performing this operation. "
-                "(Deprecated NumPy 1.25.)") < 0) {
-            return -1;
-        }
-        return 0;
-    } else {
-        PyErr_SetString(PyExc_TypeError,
-            "only length-1 arrays can be converted to Python scalars");
-        return -1;
     }
 
     PyErr_SetString(PyExc_TypeError,

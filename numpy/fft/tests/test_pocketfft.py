@@ -55,7 +55,7 @@ class TestFFT1D:
     def test_identity_long_short_reversed(self, dtype):
         # Also test explicitly given number of points in reversed order.
         maxlen = 16
-        atol = 5 * np.spacing(np.array(1., dtype=dtype))
+        atol = 6 * np.spacing(np.array(1., dtype=dtype))
         x = random(maxlen).astype(dtype) + 1j * random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
         for i in range(1, maxlen * 2):

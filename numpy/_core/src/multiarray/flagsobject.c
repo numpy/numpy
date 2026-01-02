@@ -185,7 +185,7 @@ static char *msg = "future versions will not create a writeable "
             PyArrayFlagsObject *self, void *NPY_UNUSED(ignored)) \
     { \
         if (self->flags & NPY_ARRAY_WARN_ON_WRITE) { \
-            if (PyErr_Warn(PyExc_FutureWarning, msg) < 0) {\
+            if (PyErr_WarnEx(PyExc_FutureWarning, msg, 1) < 0) {\
                 return NULL; \
             } \
         }\

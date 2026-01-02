@@ -107,8 +107,8 @@ array with a view. However, in some cases where the array becomes
 non-contiguous (perhaps after a :meth:`.ndarray.transpose` operation),
 the reshaping cannot be done by modifying strides and requires a copy.
 
-Taking the example of another operation, :func:`.ravel` returns a contiguous
-flattened view of the array wherever possible. On the other hand,
+Taking the example of another operation, :func:`numpy.ravel` returns a
+contiguous flattened view of the array wherever possible. On the other hand,
 :meth:`.ndarray.flatten` always returns a flattened copy of the array.
 However, to guarantee a view in most cases, ``x.reshape(-1)`` may be preferable.
 

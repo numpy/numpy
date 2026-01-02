@@ -1,79 +1,64 @@
-########### EXT COMPILER OPTIMIZATION ###########
-Platform      :
-  Architecture: x64
-  Compiler    : gcc
+Test features "X86_V2" : Supported 
+Test features "X86_V3" : Supported 
+Test features "X86_V4" : Supported 
+Test features "AVX512_ICL" : Supported 
+Test features "AVX512_SPR" : Supported 
+Configuring npy_cpu_dispatch_config.h using configuration
+Message: 
+CPU Optimization Options
+  baseline:
+    Requested : min
+    Enabled   : X86_V2
+  dispatch:
+    Requested : max
+    Enabled   : X86_V3 X86_V4 AVX512_ICL AVX512_SPR
 
-CPU baseline  :
-  Requested   : 'min'
-  Enabled     : SSE SSE2 SSE3
-  Flags       : -msse -msse2 -msse3
-  Extra checks: none
-
-CPU dispatch  :
-  Requested   : 'max -xop -fma4'
-  Enabled     : SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
-  Generated   :
-              :
-  SSE41       : SSE SSE2 SSE3 SSSE3
-  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1
-  Extra checks: none
-  Detect      : SSE SSE2 SSE3 SSSE3 SSE41
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_arithmetic.dispatch.c
-              : numpy/_core/src/umath/_umath_tests.dispatch.c
-              :
-  SSE42       : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT
-  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2
-  Extra checks: none
-  Detect      : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42
-              : build/src.linux-x86_64-3.9/numpy/_core/src/_simd/_simd.dispatch.c
-              :
-  AVX2        : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C
-  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mavx2
-  Extra checks: none
-  Detect      : AVX F16C AVX2
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_arithm_fp.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_arithmetic.dispatch.c
-              : numpy/_core/src/umath/_umath_tests.dispatch.c
-              :
-  (FMA3 AVX2) : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C
-  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mfma -mavx2
-  Extra checks: none
-  Detect      : AVX F16C FMA3 AVX2
-              : build/src.linux-x86_64-3.9/numpy/_core/src/_simd/_simd.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_exponent_log.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_trigonometric.dispatch.c
-              :
-  AVX512F     : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2
-  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mfma -mavx2 -mavx512f
-  Extra checks: AVX512F_REDUCE
-  Detect      : AVX512F
-              : build/src.linux-x86_64-3.9/numpy/_core/src/_simd/_simd.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_arithm_fp.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_arithmetic.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_exponent_log.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_trigonometric.dispatch.c
-              :
-  AVX512_SKX  : SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD
-  Flags       : -msse -msse2 -msse3 -mssse3 -msse4.1 -mpopcnt -msse4.2 -mavx -mf16c -mfma -mavx2 -mavx512f -mavx512cd -mavx512vl -mavx512bw -mavx512dq
-  Extra checks: AVX512BW_MASK AVX512DQ_MASK
-  Detect      : AVX512_SKX
-              : build/src.linux-x86_64-3.9/numpy/_core/src/_simd/_simd.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_arithmetic.dispatch.c
-              : build/src.linux-x86_64-3.9/numpy/_core/src/umath/loops_exponent_log.dispatch.c
-CCompilerOpt.cache_flush[804] : write cache to path -> /home/seiko/work/repos/numpy/build/temp.linux-x86_64-3.9/ccompiler_opt_cache_ext.py
-
-########### CLIB COMPILER OPTIMIZATION ###########
-Platform      :
-  Architecture: x64
-  Compiler    : gcc
-
-CPU baseline  :
-  Requested   : 'min'
-  Enabled     : SSE SSE2 SSE3
-  Flags       : -msse -msse2 -msse3
-  Extra checks: none
-
-CPU dispatch  :
-  Requested   : 'max -xop -fma4'
-  Enabled     : SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
-  Generated   : none
+Generating multi-targets for "_umath_tests.dispatch.h" 
+  Enabled targets: X86_V3, baseline
+Generating multi-targets for "argfunc.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "x86_simd_argsort.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3
+Generating multi-targets for "x86_simd_qsort.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3
+Generating multi-targets for "x86_simd_qsort_16bit.dispatch.h" 
+  Enabled targets: AVX512_SPR, AVX512_ICL
+Generating multi-targets for "highway_qsort.dispatch.h" 
+  Enabled targets: 
+Generating multi-targets for "highway_qsort_16bit.dispatch.h" 
+  Enabled targets: 
+Generating multi-targets for "loops_arithm_fp.dispatch.h" 
+  Enabled targets: X86_V3, baseline
+Generating multi-targets for "loops_arithmetic.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_comparison.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_exponent_log.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_hyperbolic.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_logical.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_minmax.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_modulo.dispatch.h" 
+  Enabled targets: baseline
+Generating multi-targets for "loops_trigonometric.dispatch.h" 
+  Enabled targets: X86_V4, X86_V3, baseline
+Generating multi-targets for "loops_umath_fp.dispatch.h" 
+  Enabled targets: X86_V4, baseline
+Generating multi-targets for "loops_unary.dispatch.h" 
+  Enabled targets: X86_V4, baseline
+Generating multi-targets for "loops_unary_fp.dispatch.h" 
+  Enabled targets: baseline
+Generating multi-targets for "loops_unary_fp_le.dispatch.h" 
+  Enabled targets: baseline
+Generating multi-targets for "loops_unary_complex.dispatch.h" 
+  Enabled targets: X86_V3, baseline
+Generating multi-targets for "loops_autovec.dispatch.h" 
+  Enabled targets: X86_V3, baseline
+Generating multi-targets for "loops_half.dispatch.h" 
+  Enabled targets: AVX512_SPR, X86_V4, baseline
+WARNING: Project targets '>=1.5.2' but uses feature deprecated since '1.3.0': Source file src/umath/svml/linux/avx512/svml_z0_acos_d_la.s in the 'objects' kwarg is not an object..
+Generating multi-targets for "_simd.dispatch.h" 
+  Enabled targets: X86_V3, X86_V4, baseline

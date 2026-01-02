@@ -5,18 +5,19 @@ from collections.abc import Callable
 from typing import Any, assert_type
 
 import numpy as np
+from numpy._core._ufunc_config import _ErrDict
 
 def func(a: str, b: int) -> None: ...
 
 class Write:
     def write(self, value: str) -> None: ...
 
-assert_type(np.seterr(all=None), np._core._ufunc_config._ErrDict)
-assert_type(np.seterr(divide="ignore"), np._core._ufunc_config._ErrDict)
-assert_type(np.seterr(over="warn"), np._core._ufunc_config._ErrDict)
-assert_type(np.seterr(under="call"), np._core._ufunc_config._ErrDict)
-assert_type(np.seterr(invalid="raise"), np._core._ufunc_config._ErrDict)
-assert_type(np.geterr(), np._core._ufunc_config._ErrDict)
+assert_type(np.seterr(all=None), _ErrDict)
+assert_type(np.seterr(divide="ignore"), _ErrDict)
+assert_type(np.seterr(over="warn"), _ErrDict)
+assert_type(np.seterr(under="call"), _ErrDict)
+assert_type(np.seterr(invalid="raise"), _ErrDict)
+assert_type(np.geterr(), _ErrDict)
 
 assert_type(np.setbufsize(4096), int)
 assert_type(np.getbufsize(), int)

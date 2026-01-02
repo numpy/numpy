@@ -4328,6 +4328,108 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
+_populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (PyTuple_Size(args) != 2) {
+        PyErr_SetString(PyExc_TypeError, "Expected 2 arguments");
+        return NULL;
+    }
+    PyObject *finfo = PyTuple_GetItem(args, 0);
+    if (finfo == NULL || finfo == Py_None) {
+        PyErr_SetString(PyExc_TypeError, "First argument cannot be None");
+        return NULL;
+    }
+    PyArray_Descr *descr = (PyArray_Descr *)PyTuple_GetItem(args, 1);
+    if (!PyArray_DescrCheck(descr)) {
+        PyErr_SetString(PyExc_TypeError, "Second argument must be a dtype");
+        return NULL;
+    }
+
+    static const struct {
+        char *name;
+        int id;
+        npy_bool is_int;
+    } finfo_constants[] = {
+        {"max", NPY_CONSTANT_maximum_finite, 0},
+        {"min", NPY_CONSTANT_minimum_finite, 0},
+        {"_radix", NPY_CONSTANT_finfo_radix, 0},
+        {"eps", NPY_CONSTANT_finfo_eps, 0},
+        {"smallest_normal", NPY_CONSTANT_finfo_smallest_normal, 0},
+        {"smallest_subnormal", NPY_CONSTANT_finfo_smallest_subnormal, 0},
+        {"nmant", NPY_CONSTANT_finfo_nmant, 1},
+        {"minexp", NPY_CONSTANT_finfo_min_exp, 1},
+        {"maxexp", NPY_CONSTANT_finfo_max_exp, 1},
+        {"precision", NPY_CONSTANT_finfo_decimal_digits, 1},
+    };
+    static const int n_finfo_constants = sizeof(finfo_constants) / sizeof(finfo_constants[0]);
+
+    int n_float_constants = 0;
+    for (int i = 0; i < n_finfo_constants; i++) {
+        if (!finfo_constants[i].is_int) {
+            n_float_constants++;
+        }
+    }
+
+    PyArrayObject *buffer_array = NULL;
+    char *buffer_data = NULL;
+    npy_intp dims[1] = {n_float_constants};
+
+    Py_INCREF(descr);
+    buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+            descr, 1, dims, NULL, NULL, 0, NULL);
+    if (buffer_array == NULL) {
+        return NULL;
+    }
+    buffer_data = PyArray_BYTES(buffer_array);
+    npy_intp elsize = PyArray_DESCR(buffer_array)->elsize;
+
+    for (int i = 0; i < n_finfo_constants; i++) 
+    {
+        PyObject *value_obj;
+        if (!finfo_constants[i].is_int) {
+            int res = NPY_DT_CALL_get_constant(descr,
+                    finfo_constants[i].id, buffer_data);
+            if (res < 0) {
+                goto fail;
+            }
+            if (res == 0) {
+                buffer_data += elsize;  // Move to next element
+                continue;
+            }
+            // Return as 0-d array item to preserve numpy scalar type
+            value_obj = PyArray_ToScalar(buffer_data, buffer_array);
+            buffer_data += elsize;  // Move to next element
+        }
+        else {
+            npy_intp int_value;
+            int res = NPY_DT_CALL_get_constant(descr, finfo_constants[i].id, &int_value);
+            if (res < 0) {
+                goto fail;
+            }
+            if (res == 0) {
+                continue;
+            }
+            value_obj = PyLong_FromSsize_t(int_value);
+        }
+        if (value_obj == NULL) {
+            goto fail;
+        }
+        int res = PyObject_SetAttrString(finfo, finfo_constants[i].name, value_obj);
+        Py_DECREF(value_obj);
+        if (res < 0) {
+            goto fail;
+        }
+    }
+
+    Py_DECREF(buffer_array);
+    Py_RETURN_NONE;
+  fail:
+    Py_XDECREF(buffer_array);
+    return NULL;
+}
+
+
+static PyObject *
 _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
@@ -4341,6 +4443,25 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
     }
     else {
         Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
+_blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
+    if (arg == Py_None) {
+        return PyBool_FromLong(npy_blas_supports_fpe());
+    }
+    else if (arg == Py_True) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(true));
+    }
+    else if (arg == Py_False) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(false));
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "BLAS FPE support must be None, True, or False");
+        return NULL;
     }
 }
 
@@ -4556,6 +4677,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,
+        METH_VARARGS, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4583,6 +4706,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
+    {"_blas_supports_fpe", (PyCFunction)_blas_supports_fpe,
+        METH_O, "BLAS FPE support pass None, True, or False and returns new value"},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
@@ -4799,10 +4924,6 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-#if NPY_BLAS_CHECK_FPE_SUPPORT
-    npy_blas_init();
-#endif
-
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
         "Numpy built with MINGW-W64 on Windows 64 bits is experimental, " \
@@ -4845,7 +4966,18 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    /* Set __signature__ to None on the type (the instance has a property) */
+    s = npy_import("numpy._globals", "_signature_descriptor");
+    if (s == NULL) {
+        return -1;
+    }
+    PyUFunc_Type.tp_dict = Py_BuildValue(
+        "{ON}", npy_interned_str.__signature__, s);
+    if (PyUFunc_Type.tp_dict == NULL) {
+        return -1;
+    }
     if (PyType_Ready(&PyUFunc_Type) < 0) {
+        Py_CLEAR(PyUFunc_Type.tp_dict);
         return -1;
     }
 

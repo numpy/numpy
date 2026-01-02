@@ -1,3 +1,4 @@
+from functools import cached_property
 from types import GenericAlias
 from typing import Final, Generic, Self, overload
 from typing_extensions import TypeVar
@@ -72,28 +73,25 @@ class iinfo(Generic[_IntegerT_co]):
     def __class_getitem__(cls, item: object, /) -> GenericAlias: ...
 
 class finfo(Generic[_FloatingT_co]):
-    dtype: np.dtype[_FloatingT_co]
-    eps: _FloatingT_co
-    epsneg: _FloatingT_co
-    resolution: _FloatingT_co
-    smallest_subnormal: _FloatingT_co
-    max: _FloatingT_co
-    min: _FloatingT_co
+    dtype: np.dtype[_FloatingT_co]  # readonly
+    eps: _FloatingT_co  # readonly
+    _radix: _FloatingT_co  # readonly
+    smallest_normal: _FloatingT_co  # readonly
+    smallest_subnormal: _FloatingT_co  # readonly
+    max: _FloatingT_co  # readonly
+    min: _FloatingT_co  # readonly
+
+    _fmt: str | None  # `__str__` cache
+    _repr: str | None  # `__repr__` cache
 
     bits: Final[int]
-    iexp: Final[int]
-    machep: Final[int]
     maxexp: Final[int]
     minexp: Final[int]
-    negep: Final[int]
-    nexp: Final[int]
     nmant: Final[int]
     precision: Final[int]
 
-    @property
-    def smallest_normal(self, /) -> _FloatingT_co: ...
-    @property
-    def tiny(self, /) -> _FloatingT_co: ...
+    @classmethod
+    def __class_getitem__(cls, item: object, /) -> GenericAlias: ...
 
     #
     @overload
@@ -110,5 +108,17 @@ class finfo(Generic[_FloatingT_co]):
     def __new__(cls, dtype: str) -> finfo: ...
 
     #
-    @classmethod
-    def __class_getitem__(cls, item: object, /) -> GenericAlias: ...
+    @cached_property
+    def epsneg(self, /) -> _FloatingT_co: ...
+    @cached_property
+    def resolution(self, /) -> _FloatingT_co: ...
+    @cached_property
+    def machep(self, /) -> int: ...
+    @cached_property
+    def negep(self, /) -> int: ...
+    @cached_property
+    def nexp(self, /) -> int: ...
+    @cached_property
+    def iexp(self, /) -> int: ...
+    @cached_property
+    def tiny(self, /) -> _FloatingT_co: ...

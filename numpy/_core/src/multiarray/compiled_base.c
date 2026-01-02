@@ -450,7 +450,7 @@ _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, 
 
 /** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
- * If an starting index guess is in-range, the array values around this
+ * If a starting index guess is in-range, the array values around this
  * index are first checked.  This allows for repeated calls for well-ordered
  * keys (a very common case) to use the previous index as a very good guess.
  *

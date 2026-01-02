@@ -490,12 +490,16 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
 #else /* fmod and remainder */
     for (; len > 0; --len, ++src1, ++dst1) {
         const npyv_lanetype_@sfx@ a = *src1;
-        *dst1 = a % scalar;
+        if (NPY_UNLIKELY(a == NPY_MIN_INT@len@ && scalar == -1)) {
+            *dst1 = 0;
+        } else {
+            *dst1 = a % scalar;
 #if @id@ == 1 /* remainder */
-        if (!((a > 0) == (scalar > 0) || *dst1 == 0)) {
-            *dst1 += scalar;
-        }
+            if (!((a > 0) == (scalar > 0) || *dst1 == 0)) {
+                *dst1 += scalar;
+            }
 #endif
+        }
     }
 #endif
     npyv_cleanup();

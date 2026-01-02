@@ -2126,11 +2126,11 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
             break;  /* Avoid a zero coresize. */
         }
 
-        double bufsize = size;
-        if (bufsize > maximum_size &&
+        double bufsize = (double)size;
+        if (size > maximum_size &&
                 (cost > 1 || !(itflags & NPY_ITFLAG_GROWINNER))) {
             /* If we need buffering, limit size in cost calculation. */
-            bufsize = maximum_size;
+            bufsize = (double)maximum_size;
         }
 
         NPY_IT_DBG_PRINT("    dim=%d, n_buffered=%d, cost=%g @bufsize=%g (prev scaled cost=%g)\n",

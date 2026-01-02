@@ -1,13 +1,4 @@
-from typing import (
-    Any,
-    Literal as L,
-    NoReturn,
-    SupportsIndex,
-    SupportsInt,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
+from typing import Any, Literal as L, NoReturn, SupportsIndex, SupportsInt, overload
 
 import numpy as np
 from numpy import (
@@ -33,16 +24,10 @@ from numpy._typing import (
     _ArrayLikeUInt_co,
 )
 
-_T = TypeVar("_T")
+type _2Tup[T] = tuple[T, T]
+type _5Tup[T] = tuple[T, NDArray[float64], NDArray[int32], NDArray[float64], NDArray[float64]]
 
-_2Tup: TypeAlias = tuple[_T, _T]
-_5Tup: TypeAlias = tuple[
-    _T,
-    NDArray[float64],
-    NDArray[int32],
-    NDArray[float64],
-    NDArray[float64],
-]
+###
 
 __all__ = [
     "poly",
@@ -138,7 +123,8 @@ def polyfit(
     rcond: float | None = None,
     full: L[False] = False,
     w: _ArrayLikeFloat_co | None = None,
-    cov: L[True, "unscaled"] = False,
+    *,
+    cov: L[True, "unscaled"],
 ) -> _2Tup[NDArray[float64]]: ...
 @overload
 def polyfit(
@@ -148,7 +134,8 @@ def polyfit(
     rcond: float | None = None,
     full: L[False] = False,
     w: _ArrayLikeFloat_co | None = None,
-    cov: L[True, "unscaled"] = False,
+    *,
+    cov: L[True, "unscaled"],
 ) -> _2Tup[NDArray[complex128]]: ...
 @overload
 def polyfit(
