@@ -130,8 +130,7 @@ class memmap(ndarray):
     Examples
     --------
     >>> import numpy as np
-    >>> data = np.arange(12, dtype=np.float32)
-    >>> data.resize((3,4))
+    >>> data = np.arange(12, dtype=np.float32).reshape((3, 4))
 
     This example uses a temporary file so that doctest doesn't write
     files to your directory. You would use a 'normal' filename.
