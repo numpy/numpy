@@ -710,12 +710,12 @@ def getdata(a, subok=True):
     Return the data of a masked array as an ndarray.
 
     Return the data of `a` (if any) as an ndarray if `a` is a ``MaskedArray``,
-    else return `a` as a ndarray or subclass (depending on `subok`) if not.
+    else return `a` as an ndarray or subclass (depending on `subok`) if not.
 
     Parameters
     ----------
     a : array_like
-        Input ``MaskedArray``, alternatively a ndarray or a subclass thereof.
+        Input ``MaskedArray``, alternatively an ndarray or a subclass thereof.
     subok : bool
         Whether to force the output to be a `pure` ndarray (False) or to
         return a subclass of ndarray if appropriate (True, default).
@@ -3152,7 +3152,7 @@ class MaskedArray(ndarray):
             # Get the domain mask
             domain = ufunc_domain.get(func)
             if domain is not None:
-                # Take the domain, and make sure it's a ndarray
+                # Take the domain, and make sure it's an ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
                     # The result may be masked for two (unary) domains.
                     # That can't really be right as some domains drop
@@ -3552,7 +3552,7 @@ class MaskedArray(ndarray):
                     mask = mask.astype(mdtype)
             # Mask is a sequence
             else:
-                # Make sure the new mask is a ndarray with the proper dtype
+                # Make sure the new mask is an ndarray with the proper dtype
                 try:
                     copy = None if not copy else True
                     mask = np.array(mask, copy=copy, dtype=mdtype)
@@ -3597,7 +3597,7 @@ class MaskedArray(ndarray):
     def recordmask(self):
         """
         Get or set the mask of the array if it has no named fields. For
-        structured arrays, returns a ndarray of booleans where entries are
+        structured arrays, returns an ndarray of booleans where entries are
         ``True`` if **all** the fields are masked, ``False`` otherwise:
 
         >>> x = np.ma.array([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
@@ -6553,7 +6553,7 @@ class mvoid(MaskedArray):
 
     @property
     def _data(self):
-        # Make sure that the _data part is a np.void
+        # Make sure that the _data part is an np.void
         return super()._data[()]
 
     def __getitem__(self, indx):
