@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from collections.abc import Sequence
-from typing import SupportsIndex, overload
+from collections.abc import Callable, Sequence
+from typing import Concatenate, SupportsIndex, overload
 
 import numpy as np
 from numpy import _CastingKind
@@ -259,10 +259,18 @@ def masked_all_like[ScalarT: np.generic](arr: _ArrayLike[ScalarT]) -> _MArray[Sc
 @overload
 def masked_all_like(arr: ArrayLike) -> _MArray[Incomplete]: ...
 
+#
+def apply_along_axis[**Tss](
+    func1d: Callable[Concatenate[MaskedArray, Tss], ArrayLike],
+    axis: SupportsIndex,
+    arr: ArrayLike,
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _MArray[Incomplete]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def apply_along_axis(func1d, axis, arr, *args, **kwargs): ...
 def apply_over_axes(func, a, axes): ...
 def median(a, axis=None, out=None, overwrite_input=False, keepdims=False): ...
 def compress_nd(x, axis=None): ...
