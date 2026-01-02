@@ -1,6 +1,5 @@
 extend-exclude = [
     "numpy/__config__.py",
-    "numpy/distutils",
     "numpy/typing/_char_codes.py",
     "spin/cmds.py",
     # Submodules.
@@ -81,16 +80,12 @@ ignore = [
 "bench_*.py" = ["B015", "B018"]
 "test*.py" = ["B015", "B018", "E201", "E714"]
 
-"numpy/_core/tests/test_arrayprint.py" = ["E501"]
-"numpy/_core/tests/test_cpu_dispatcher.py" = ["E501"]
 "numpy/_core/tests/test_cpu_features.py" = ["E501"]
-"numpy/_core/tests/test_dtype.py" = ["E501"]
 "numpy/_core/tests/test_defchararray.py" = ["E501"]
 "numpy/_core/tests/test_einsum.py" = ["E501"]
 "numpy/_core/tests/test_multiarray.py" = ["E501"]
 "numpy/_core/tests/test_nditer*py" = ["E501"]
 "numpy/_core/tests/test_umath.py" = ["E501"]
-"numpy/_core/tests/test_numeric.py" = ["E501"]
 "numpy/_core/tests/test_numerictypes.py" = ["E501"]
 "numpy/_core/tests/test_regression.py" = ["E501"]
 "numpy/_core/_add_newdocs.py" = ["E501"]

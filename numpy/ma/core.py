@@ -46,7 +46,6 @@ from numpy import (
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
-from numpy._utils._inspect import formatargspec, getargspec
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -132,19 +131,6 @@ def doc_note(initialdoc, note):
     notedoc = f"\n\nNotes\n-----\n{inspect.cleandoc(note)}\n"
 
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
-
-
-# TODO: remove/deprecate once `ma.extras._fromnxfunction.getdoc` no longer uses it
-def get_object_signature(obj):
-    """
-    Get the signature from obj
-
-    """
-    try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
-        sig = ''
-    return sig
 
 
 ###############################################################################
@@ -2291,7 +2277,7 @@ def masked_object(x, value, copy=True, shrink=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> food = np.array(['green_eggs', 'ham'], dtype=object)
+    >>> food = np.array(['green_eggs', 'ham'], dtype=np.object_)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
     >>> eat
@@ -2300,7 +2286,7 @@ def masked_object(x, value, copy=True, shrink=True):
            fill_value='green_eggs',
                 dtype=object)
     >>> # plain ol` ham is boring
-    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
+    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=np.object_)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
     >>> eat
     masked_array(data=['cheese', 'ham', 'pineapple'],
@@ -2417,7 +2403,7 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=float)
+    >>> a = np.arange(5, dtype=np.float64)
     >>> a[2] = np.nan
     >>> a[3] = np.inf
     >>> a
@@ -6544,11 +6530,11 @@ class mvoid(MaskedArray):
     Fake a 'void' object to use for masked array with structured dtypes.
     """
 
-    def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
+    def __new__(cls, data, mask=nomask, dtype=None, fill_value=None,
                 hardmask=False, copy=False, subok=True):
         copy = None if not copy else True
         _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
-        _data = _data.view(self)
+        _data = _data.view(cls)
         _data._hardmask = hardmask
         if mask is not nomask:
             if isinstance(mask, np.void):
@@ -6653,14 +6639,14 @@ class mvoid(MaskedArray):
 
     def tolist(self):
         """
-    Transforms the mvoid object into a tuple.
+        Transforms the mvoid object into a tuple.
 
-    Masked fields are replaced by None.
+        Masked fields are replaced by None.
 
-    Returns
-    -------
-    returned_tuple
-        Tuple of fields
+        Returns
+        -------
+        returned_tuple
+            Tuple of fields
         """
         _mask = self._mask
         if _mask is nomask:

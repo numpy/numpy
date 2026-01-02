@@ -141,17 +141,6 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "typing.mypy_plugin",
     "version",
 ]]
-if sys.version_info < (3, 12):
-    PUBLIC_MODULES += [
-        'numpy.' + s for s in [
-            "distutils",
-            "distutils.cpuinfo",
-            "distutils.exec_command",
-            "distutils.misc_util",
-            "distutils.log",
-            "distutils.system_info",
-        ]
-    ]
 
 
 PUBLIC_ALIASED_MODULES = [
@@ -202,66 +191,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "random.bit_generator",
     "testing.print_coercion_tables",
 ]]
-if sys.version_info < (3, 12):
-    PRIVATE_BUT_PRESENT_MODULES += [
-        'numpy.' + s for s in [
-            "distutils.armccompiler",
-            "distutils.fujitsuccompiler",
-            "distutils.ccompiler",
-            'distutils.ccompiler_opt',
-            "distutils.command",
-            "distutils.command.autodist",
-            "distutils.command.bdist_rpm",
-            "distutils.command.build",
-            "distutils.command.build_clib",
-            "distutils.command.build_ext",
-            "distutils.command.build_py",
-            "distutils.command.build_scripts",
-            "distutils.command.build_src",
-            "distutils.command.config",
-            "distutils.command.config_compiler",
-            "distutils.command.develop",
-            "distutils.command.egg_info",
-            "distutils.command.install",
-            "distutils.command.install_clib",
-            "distutils.command.install_data",
-            "distutils.command.install_headers",
-            "distutils.command.sdist",
-            "distutils.conv_template",
-            "distutils.core",
-            "distutils.extension",
-            "distutils.fcompiler",
-            "distutils.fcompiler.absoft",
-            "distutils.fcompiler.arm",
-            "distutils.fcompiler.compaq",
-            "distutils.fcompiler.environment",
-            "distutils.fcompiler.g95",
-            "distutils.fcompiler.gnu",
-            "distutils.fcompiler.hpux",
-            "distutils.fcompiler.ibm",
-            "distutils.fcompiler.intel",
-            "distutils.fcompiler.lahey",
-            "distutils.fcompiler.mips",
-            "distutils.fcompiler.nag",
-            "distutils.fcompiler.none",
-            "distutils.fcompiler.pathf95",
-            "distutils.fcompiler.pg",
-            "distutils.fcompiler.nv",
-            "distutils.fcompiler.sun",
-            "distutils.fcompiler.vast",
-            "distutils.fcompiler.fujitsu",
-            "distutils.from_template",
-            "distutils.intelccompiler",
-            "distutils.lib2def",
-            "distutils.line_endings",
-            "distutils.mingw32ccompiler",
-            "distutils.msvccompiler",
-            "distutils.npy_pkg_config",
-            "distutils.numpy_distribution",
-            "distutils.pathccompiler",
-            "distutils.unixccompiler",
-        ]
-    ]
 
 
 def is_unexpected(name):
@@ -274,12 +203,6 @@ def is_unexpected(name):
     )
 
 
-if sys.version_info >= (3, 12):
-    SKIP_LIST = []
-else:
-    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
-
-
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by
@@ -290,7 +213,7 @@ def test_all_modules_are_expected():
     for _, modname, ispkg in pkgutil.walk_packages(path=np.__path__,
                                                    prefix=np.__name__ + '.',
                                                    onerror=None):
-        if is_unexpected(modname) and modname not in SKIP_LIST:
+        if is_unexpected(modname):
             # We have a name that is new.  If that's on purpose, add it to
             # PUBLIC_MODULES.  We don't expect to have to add anything to
             # PRIVATE_BUT_PRESENT_MODULES.  Use an underscore in the name!
@@ -315,12 +238,6 @@ SKIP_LIST_2 = [
     'numpy.matlib.ctypeslib',
     'numpy.matlib.ma',
 ]
-if sys.version_info < (3, 12):
-    SKIP_LIST_2 += [
-        'numpy.distutils.log.sys',
-        'numpy.distutils.log.logging',
-        'numpy.distutils.log.warnings',
-    ]
 
 
 def test_all_modules_are_expected_2():

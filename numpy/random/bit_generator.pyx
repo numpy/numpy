@@ -38,7 +38,7 @@ from itertools import cycle
 import re
 from secrets import randbits
 
-from threading import Lock
+from threading import RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -522,7 +522,7 @@ cdef class BitGenerator:
     """
 
     def __init__(self, seed=None):
-        self.lock = Lock()
+        self.lock = RLock()
         self._bitgen.state = <void *>0
         if type(self) is BitGenerator:
             raise NotImplementedError('BitGenerator is a base class and cannot be instantized')

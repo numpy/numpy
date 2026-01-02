@@ -938,7 +938,7 @@ def outer(x1, x2, /):
 
     An example using a "vector" of letters:
 
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> x = np.array(['a', 'b', 'c'], dtype=np.object_)
     >>> np.linalg.outer(x, [1, 2, 3])
     array([['a', 'aa', 'aaa'],
            ['b', 'bb', 'bbb'],
@@ -1764,7 +1764,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     ((9, 9), (6,), (6, 6))
     >>> np.allclose(a, np.dot(U[:, :6] * S, Vh))
     True
-    >>> smat = np.zeros((9, 6), dtype=complex)
+    >>> smat = np.zeros((9, 6), dtype=np.complex128)
     >>> smat[:6, :6] = np.diag(S)
     >>> np.allclose(a, np.dot(U, np.dot(smat, Vh)))
     True
@@ -2130,6 +2130,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
@@ -2137,7 +2138,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
             rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
         else:
             rtol = asarray(rtol)[..., newaxis]
-        tol = S.max(axis=-1, keepdims=True) * rtol
+        tol = S.max(axis=-1, keepdims=True, initial=0) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
 
@@ -3305,14 +3306,6 @@ def cross(x1, x2, /, *, axis=-1):
     """
     x1 = asanyarray(x1)
     x2 = asanyarray(x2)
-
-    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
-        raise ValueError(
-            "Both input arrays must be (arrays of) 3-dimensional vectors, "
-            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
-            "dimensional instead."
-        )
-
     return _core_cross(x1, x2, axis=axis)
 
 

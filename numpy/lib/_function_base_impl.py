@@ -594,7 +594,7 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     if returned:
         if scl.shape != avg_as_array.shape:
-            scl = np.broadcast_to(scl, avg_as_array.shape).copy()
+            scl = np.broadcast_to(scl, avg_as_array.shape, subok=True).copy()
         return avg, scl
     else:
         return avg
@@ -654,7 +654,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
-    >>> np.asarray_chkfinite(a, dtype=float)
+    >>> np.asarray_chkfinite(a, dtype=np.float64)
     array([1., 2.])
 
     Raises ValueError if array_like contains Nans or Infs.
@@ -823,7 +823,7 @@ def select(condlist, choicelist, default=0):
     choicelist : list of ndarrays
         The list of arrays from which the output elements are taken. It has
         to be of the same length as `condlist`.
-    default : scalar, optional
+    default : array_like, optional
         The element inserted in `output` when all conditions evaluate to False.
 
     Returns
@@ -1017,7 +1017,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         Spacing between f values. Default unitary spacing for all dimensions.
         Spacing can be specified using:
 
-        1. single scalar to specify a sample distance for all dimensions.
+        1. Single scalar to specify a sample distance for all dimensions.
         2. N scalars to specify a constant sample distance for each dimension.
            i.e. `dx`, `dy`, `dz`, ...
         3. N arrays to specify the coordinates of the values along each
@@ -1033,7 +1033,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
     axis : None or int or tuple of ints, optional
-        Gradient is calculated only along the given axis or axes
+        Gradient is calculated only along the given axis or axes.
         The default (axis = None) is to calculate the gradient for all the axes
         of the input array. axis may be negative, in which case it counts from
         the last to the first axis.
@@ -3857,13 +3857,21 @@ def _ureduce(a, func, keepdims=False, **kwargs):
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
         else:
-            keep = set(range(nd)) - set(axis)
+            keep = sorted(set(range(nd)) - set(axis))
             nkeep = len(keep)
-            # swap axis that should not be reduced to front
-            for i, s in enumerate(sorted(keep)):
-                a = a.swapaxes(i, s)
-            # merge reduced axis
-            a = a.reshape(a.shape[:nkeep] + (-1,))
+
+            def reshape_arr(a):
+                # move axis that should not be reduced to front
+                a = np.moveaxis(a, keep, range(nkeep))
+                # merge reduced axis
+                return a.reshape(a.shape[:nkeep] + (-1,))
+
+            a = reshape_arr(a)
+
+            weights = kwargs.get("weights")
+            if weights is not None:
+                kwargs["weights"] = reshape_arr(weights)
+
             kwargs['axis'] = -1
     elif keepdims and out is not None:
         index_out = (0, ) * nd
@@ -4627,7 +4635,7 @@ def _inverted_cdf(n, quantiles):
 def _quantile_ureduce_func(
     a: np.ndarray,
     q: np.ndarray,
-    weights: np.ndarray,
+    weights: np.ndarray | None,
     axis: int | None = None,
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
@@ -4707,8 +4715,8 @@ def _quantile(
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
-    These methods are extended to this function using _ureduce
-    See nanpercentile for parameter usage
+    These methods are extended to this function using _ureduce.
+    See nanpercentile for parameter usage.
     It computes the quantiles of the array for the given axis.
     A linear interpolation is performed based on the `method`.
 
@@ -4827,6 +4835,9 @@ def _quantile(
         # distribution function cdf
         cdf = weights.cumsum(axis=0, dtype=np.float64)
         cdf /= cdf[-1, ...]  # normalization to 1
+        if np.isnan(cdf[-1]).any():
+            # Above calculations should normally warn for the zero/inf case.
+            raise ValueError("Weights included NaN, inf or were all zero.")
         # Search index i such that
         #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
         # is then equivalent to
@@ -5228,7 +5239,7 @@ def delete(arr, obj, axis=None):
     Often it is preferable to use a boolean mask. For example:
 
     >>> arr = np.arange(12) + 1
-    >>> mask = np.ones(len(arr), dtype=bool)
+    >>> mask = np.ones(len(arr), dtype=np.bool)
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
 
@@ -5611,7 +5622,7 @@ def append(arr, values, axis=None):
     the array at index 0 has 2 dimension(s) and the array at index 1 has 1
     dimension(s)
 
-    >>> a = np.array([1, 2], dtype=int)
+    >>> a = np.array([1, 2], dtype=np.int_)
     >>> c = np.append(a, [])
     >>> c
     array([1., 2.])

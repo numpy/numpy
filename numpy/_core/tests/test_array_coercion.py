@@ -12,7 +12,7 @@ from pytest import param
 import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
-from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
+from numpy.testing import IS_64BIT, assert_array_equal
 
 
 def arraylikes():
@@ -282,7 +282,6 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr3)
         assert_array_equal(arr, arr4)
 
-    @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("cast_to", scalar_instances())
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):

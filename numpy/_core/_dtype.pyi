@@ -1,13 +1,11 @@
-from typing import Final, Literal as L, TypeAlias, TypedDict, overload, type_check_only
-from typing_extensions import ReadOnly, TypeVar
+from typing import Final, Literal as L, TypedDict, overload, type_check_only
+from typing_extensions import ReadOnly
 
 import numpy as np
 
 ###
 
-_T = TypeVar("_T")
-
-_Name: TypeAlias = L["uint", "int", "complex", "float", "bool", "void", "object", "datetime", "timedelta", "bytes", "str"]
+type _Name = L["uint", "int", "complex", "float", "bool", "void", "object", "datetime", "timedelta", "bytes", "str"]
 
 @type_check_only
 class _KindToStemType(TypedDict):
@@ -50,7 +48,7 @@ def _name_get(dtype: np.dtype) -> str: ...
 
 #
 @overload
-def _unpack_field(dtype: np.dtype, offset: int, title: _T) -> tuple[np.dtype, int, _T]: ...
+def _unpack_field[T](dtype: np.dtype, offset: int, title: T) -> tuple[np.dtype, int, T]: ...
 @overload
 def _unpack_field(dtype: np.dtype, offset: int, title: None = None) -> tuple[np.dtype, int, None]: ...
 def _aligned_offset(offset: int, alignment: int) -> int: ...

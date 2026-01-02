@@ -9,6 +9,8 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 
 """
 
+import textwrap
+
 from numpy._core.function_base import add_newdoc
 from numpy._core.overrides import get_array_function_like_doc  # noqa: F401
 
@@ -416,11 +418,11 @@ add_newdoc('numpy._core', 'nditer',
     original data when the :meth:`~object.__exit__` function is called
     but not before:
 
-    >>> a = np.arange(6, dtype='i4')[::-2]
+    >>> a = np.arange(6, dtype=np.int32)[::-2]
     >>> with np.nditer(a, [],
     ...        [['writeonly', 'updateifcopy']],
     ...        casting='unsafe',
-    ...        op_dtypes=[np.dtype('f4')]) as i:
+    ...        op_dtypes=[np.dtype(np.float32)]) as i:
     ...    x = i.operands[0]
     ...    x[:] = [-1, -2, -3]
     ...    # a still unchanged here
@@ -937,7 +939,7 @@ add_newdoc('numpy._core.multiarray', 'array',
         ``NPY_MAXDIMS``).
         Setting ``ndmax`` stops recursion at the specified depth, preserving
         deeper nested structures as objects instead of promoting them to
-        higher-dimensional arrays. In this case, ``dtype=object`` is required.
+        higher-dimensional arrays. In this case, ``dtype=np.object_`` is required.
 
         .. versionadded:: 2.4.0
     ${ARRAY_FUNCTION_LIKE}
@@ -992,7 +994,7 @@ add_newdoc('numpy._core.multiarray', 'array',
 
     Type provided:
 
-    >>> np.array([1, 2, 3], dtype=complex)
+    >>> np.array([1, 2, 3], dtype=np.complex128)
     array([ 1.+0.j,  2.+0.j,  3.+0.j])
 
     Data-type consisting of more than one element:
@@ -1013,14 +1015,14 @@ add_newdoc('numpy._core.multiarray', 'array',
 
     Limiting the maximum dimensions with ``ndmax``:
 
-    >>> a = np.array([[1, 2], [3, 4]], dtype=object, ndmax=2)
+    >>> a = np.array([[1, 2], [3, 4]], dtype=np.object_, ndmax=2)
     >>> a
     array([[1, 2],
            [3, 4]], dtype=object)
     >>> a.shape
     (2, 2)
 
-    >>> b = np.array([[1, 2], [3, 4]], dtype=object, ndmax=1)
+    >>> b = np.array([[1, 2], [3, 4]], dtype=np.object_, ndmax=1)
     >>> b
     array([list([1, 2]), list([3, 4])], dtype=object)
     >>> b.shape
@@ -1387,7 +1389,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
     array([[ -9.74499359e+001,   6.69583040e-309],
            [  2.13182611e-314,   3.06959433e-309]])         #uninitialized
 
-    >>> np.empty([2, 2], dtype=int)
+    >>> np.empty([2, 2], dtype=np.int_)
     array([[-1073741821, -1067949133],
            [  496041986,    19249760]])                     #uninitialized
 
@@ -1453,7 +1455,7 @@ add_newdoc('numpy._core.multiarray', 'zeros',
     >>> np.zeros(5)
     array([ 0.,  0.,  0.,  0.,  0.])
 
-    >>> np.zeros((5,), dtype=int)
+    >>> np.zeros((5,), dtype=np.int_)
     array([0, 0, 0, 0, 0])
 
     >>> np.zeros((2, 1))
@@ -1485,7 +1487,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     fromstring(string, dtype=None, count=-1, *, sep, like=None)
     --
 
-    fromstring(string, dtype=float, count=-1, *, sep, like=None)
+    fromstring(string, dtype=np.float64, count=-1, *, sep, like=None)
 
     A new 1-D array initialized from text data in a string.
 
@@ -1536,9 +1538,9 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     Examples
     --------
     >>> import numpy as np
-    >>> np.fromstring('1 2', dtype=int, sep=' ')
+    >>> np.fromstring('1 2', dtype=np.int_, sep=' ')
     array([1, 2])
-    >>> np.fromstring('1, 2', dtype=int, sep=',')
+    >>> np.fromstring('1, 2', dtype=np.int_, sep=',')
     array([1, 2])
 
     """)
@@ -1647,7 +1649,7 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     fromfile(file, dtype=None, count=-1, sep='', offset=0, *, like=None)
     --
 
-    fromfile(file, dtype=float, count=-1, sep='', offset=0, *, like=None)
+    fromfile(file, dtype=np.float64, count=-1, sep='', offset=0, *, like=None)
 
     Construct an array from data in a text or binary file.
 
@@ -1735,7 +1737,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     frombuffer(buffer, dtype=None, count=-1, offset=0, *, like=None)
     --
 
-    frombuffer(buffer, dtype=float, count=-1, offset=0, *, like=None)
+    frombuffer(buffer, dtype=np.float64, count=-1, offset=0, *, like=None)
 
     Interpret a buffer as a 1-dimensional array.
 
@@ -1768,7 +1770,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     If the buffer has data that is not in machine byte-order, this should
     be specified as part of the data-type, e.g.::
 
-      >>> dt = np.dtype(int)
+      >>> dt = np.dtype(np.int_)
       >>> dt = dt.newbyteorder('>')
       >>> np.frombuffer(buf, dtype=dt) # doctest: +SKIP
 
@@ -1923,9 +1925,9 @@ add_newdoc('numpy._core.multiarray', 'arange',
     `start` is much larger than `step`. This can lead to unexpected
     behaviour. For example::
 
-      >>> np.arange(0, 5, 0.5, dtype=int)
+      >>> np.arange(0, 5, 0.5, dtype=np.int_)
       array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-      >>> np.arange(-3, 3, 0.5, dtype=int)
+      >>> np.arange(-3, 3, 0.5, dtype=np.int_)
       array([-3, -2, -1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
     In such cases, the use of `numpy.linspace` should be preferred.
@@ -2028,16 +2030,16 @@ add_newdoc('numpy._core.multiarray', 'promote_types',
     Examples
     --------
     >>> import numpy as np
-    >>> np.promote_types('f4', 'f8')
+    >>> np.promote_types(np.float32, np.float64)
     dtype('float64')
 
-    >>> np.promote_types('i8', 'f4')
+    >>> np.promote_types(np.int64, np.float32)
     dtype('float64')
 
     >>> np.promote_types('>i8', '<c8')
     dtype('complex128')
 
-    >>> np.promote_types('i4', 'S8')
+    >>> np.promote_types(np.int32, 'S8')
     dtype('S11')
 
     An example of a non-associative case:
@@ -2374,7 +2376,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
     ndarray(shape, dtype=None, buffer=None, offset=0, strides=None, order=None)
     --
 
-    ndarray(shape, dtype=float, buffer=None, offset=0, strides=None, order=None)
+    ndarray(shape, dtype=np.float64, buffer=None, offset=0, strides=None, order=None)
 
     An array object represents a multidimensional, homogeneous array
     of fixed-size items.  An associated data-type object describes the
@@ -2483,7 +2485,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
     First mode, `buffer` is None:
 
     >>> import numpy as np
-    >>> np.ndarray(shape=(2,2), dtype=float, order='F')
+    >>> np.ndarray(shape=(2,2), dtype=np.float64, order='F')
     array([[0.0e+000, 0.0e+000], # random
            [     nan, 2.5e-323]])
 
@@ -2491,7 +2493,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray',
 
     >>> np.ndarray((2,), buffer=np.array([1,2,3]),
     ...            offset=np.int_().itemsize,
-    ...            dtype=int) # offset = 1*itemsize, i.e. skip first element
+    ...            dtype=np.int_) # offset = 1*itemsize, i.e. skip first element
     array([2, 3])
 
     """)
@@ -3140,18 +3142,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_function__',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_namespace__',
-    """
-    __array_namespace__($self, /, *, api_version=None)
-    --
-
-    a.__array_namespace__(*, api_version=None)
-
-    For Array API compatibility.
-
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('__array_ufunc__',
     """
     __array_ufunc__($self, ufunc, method, /, *inputs, **kwargs)
@@ -3204,32 +3194,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     :pep:`585` : Type hinting generics in standard collections.
     numpy.typing.NDArray : An ndarray alias :term:`generic <generic type>`
                         w.r.t. its `dtype.type <numpy.dtype.type>`.
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__copy__',
-    """
-    __copy__($self, /)
-    --
-
-    a.__copy__()
-
-    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
-
-    Equivalent to ``a.copy(order='K')``.
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('__deepcopy__',
-    """
-    __deepcopy__($self, memo, /)
-    --
-
-    a.__deepcopy__(memo, /)
-
-    Used if :func:`copy.deepcopy` is called on an array.
 
     """))
 
@@ -3308,92 +3272,18 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__setstate__',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('all',
+add_newdoc('numpy._core.multiarray', 'ndarray', ('dot',
     """
-    all($self, /, axis=None, out=None, keepdims=False, *, where=True)
+    dot($self, other, /, out=None)
     --
 
-    a.all(axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
+    a.dot(other, /, out=None)
 
-    Returns True if all elements evaluate to True.
-
-    Refer to `numpy.all` for full documentation.
+    Refer to :func:`numpy.dot` for full documentation.
 
     See Also
     --------
-    numpy.all : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('any',
-    """
-    any($self, /, axis=None, out=None, keepdims=False, *, where=True)
-    --
-
-    a.any(axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
-
-    Returns True if any of the elements of `a` evaluate to True.
-
-    Refer to `numpy.any` for full documentation.
-
-    See Also
-    --------
-    numpy.any : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('argmax',
-    """
-    argmax($self, /, axis=None, out=None, *, keepdims=False)
-    --
-
-    a.argmax(axis=None, out=None, *, keepdims=False)
-
-    Return indices of the maximum values along the given axis.
-
-    Refer to `numpy.argmax` for full documentation.
-
-    See Also
-    --------
-    numpy.argmax : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('argmin',
-    """
-    argmin($self, /, axis=None, out=None, *, keepdims=False)
-    --
-
-    a.argmin(axis=None, out=None, *, keepdims=False)
-
-    Return indices of the minimum values along the given axis.
-
-    Refer to `numpy.argmin` for detailed documentation.
-
-    See Also
-    --------
-    numpy.argmin : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('argsort',
-    """
-    argsort($self, /, axis=-1, kind=None, order=None, *, stable=None)
-    --
-
-    a.argsort(axis=-1, kind=None, order=None, *, stable=None)
-
-    Returns the indices that would sort this array.
-
-    Refer to `numpy.argsort` for full documentation.
-
-    See Also
-    --------
-    numpy.argsort : equivalent function
+    numpy.dot : equivalent function
 
     """))
 
@@ -3416,11 +3306,209 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('argpartition',
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
+add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
     """
-    astype($self, /, dtype, order='K', casting='unsafe', subok=True, copy=True)
+    partition($self, kth, /, axis=-1, kind='introselect', order=None)
     --
 
+    a.partition(kth, axis=-1, kind='introselect', order=None)
+
+    Partially sorts the elements in the array in such a way that the value of
+    the element in k-th position is in the position it would be in a sorted
+    array. In the output array, all elements smaller than the k-th element
+    are located to the left of this element and all equal or greater are
+    located to its right. The ordering of the elements in the two partitions
+    on the either side of the k-th element in the output array is undefined.
+
+    Parameters
+    ----------
+    kth : int or sequence of ints
+        Element index to partition by. The kth element value will be in its
+        final sorted position and all smaller elements will be moved before it
+        and all equal or greater elements behind it.
+        The order of all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all elements
+        indexed by kth of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
+    axis : int, optional
+        Axis along which to sort. Default is -1, which means sort along the
+        last axis.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'.
+    order : str or list of str, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc. A single field can
+        be specified as a string, and not all fields need to be specified,
+        but unspecified fields will still be used, in the order in which
+        they come up in the dtype, to break ties.
+
+    See Also
+    --------
+    numpy.partition : Return a partitioned copy of an array.
+    argpartition : Indirect partition.
+    sort : Full sort.
+
+    Notes
+    -----
+    See ``np.partition`` for notes on the different algorithms.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array([3, 4, 2, 1])
+    >>> a.partition(3)
+    >>> a
+    array([2, 1, 3, 4]) # may vary
+
+    >>> a.partition((1, 3))
+    >>> a
+    array([1, 2, 3, 4])
+
+    """))
+
+
+##############################################################################
+#
+# methods from both `ndarray` and `generic`
+#
+##############################################################################
+
+_METHOD_DOC_TEMPLATE = """{name}({params})
+--
+
+{doc}"""
+
+def _array_method_doc(name: str, params: str, doc: str) -> None:
+    """
+    Interenal helper function for adding docstrings to a common method of
+    `numpy.ndarray` and `numpy.generic`.
+
+    The provided docstring will be added to the given `numpy.ndarray` method.
+    For the  `numpy.generic` method, a shorter docstring indicating that it is
+    identical to the `ndarray` method will be created.
+    Both methods will have a proper and identical `__text_signature__`.
+
+    Parameters
+    ----------
+    name : str
+        Name of the method.
+    params : str
+        Parameter signature for the method without parentheses, for example,
+        ``"a, /, dtype=None, *, copy=False"``.
+        Parameter defaults must be understood by `ast.literal_eval`, i.e. strings,
+        bytes, numbers, tuples, lists, dicts, sets, booleans, or None.
+    doc : str
+        The full docstring for the `ndarray` method.
+    """
+
+    # prepend the pos-only `$self` parameter to the method signature
+    if "/" not in params:
+        params = f"/, {params}" if params else "/"
+    params = f"$self, {params}"
+
+    # add docstring to `np.ndarray.{name}`
+    doc = textwrap.dedent(doc).strip()
+    doc_array = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=doc)
+    add_newdoc("numpy._core.multiarray", "ndarray", (name, doc_array))
+
+    # add docstring to `np.generic.{name}`
+    doc_scalar = f"Scalar method identical to `ndarray.{name}`."
+    doc_scalar = _METHOD_DOC_TEMPLATE.format(name=name, params=params, doc=doc_scalar)
+    add_newdoc("numpy._core.numerictypes", "generic", (name, doc_scalar))
+
+
+_array_method_doc('__array_namespace__', "*, api_version=None",
+    """
+    a.__array_namespace__(*, api_version=None)
+
+    For Array API compatibility.
+    """)
+
+_array_method_doc('__copy__', "",
+    """
+    a.__copy__()
+
+    Used if :func:`copy.copy` is called on an array. Returns a copy of the array.
+
+    Equivalent to ``a.copy(order='K')``.
+    """)
+
+_array_method_doc('__deepcopy__', "memo, /",
+    """
+    a.__deepcopy__(memo, /)
+
+    Used if :func:`copy.deepcopy` is called on an array.
+    """)
+
+_array_method_doc('all', "axis=None, out=None, keepdims=False, *, where=True",
+    """
+    a.all(axis=None, out=None, *, keepdims=<no value>, where=<no value>)
+
+    Returns True if all elements evaluate to True.
+
+    Refer to `numpy.all` for full documentation.
+
+    See Also
+    --------
+    numpy.all : equivalent function
+    """)
+
+_array_method_doc('any', "axis=None, out=None, keepdims=False, *, where=True",
+    """
+    a.any(axis=None, out=None, *, keepdims=<no value>, where=<no value>)
+
+    Returns True if any of the elements of `a` evaluate to True.
+
+    Refer to `numpy.any` for full documentation.
+
+    See Also
+    --------
+    numpy.any : equivalent function
+    """)
+
+_array_method_doc('argmax', "axis=None, out=None, *, keepdims=False",
+    """
+    a.argmax(axis=None, out=None, *, keepdims=False)
+
+    Return indices of the maximum values along the given axis.
+
+    Refer to `numpy.argmax` for full documentation.
+
+    See Also
+    --------
+    numpy.argmax : equivalent function
+    """)
+
+_array_method_doc('argmin', "axis=None, out=None, *, keepdims=False",
+    """
+    a.argmin(axis=None, out=None, *, keepdims=False)
+
+    Return indices of the minimum values along the given axis.
+
+    Refer to `numpy.argmin` for detailed documentation.
+
+    See Also
+    --------
+    numpy.argmin : equivalent function
+    """)
+
+_array_method_doc('argsort', "axis=-1, kind=None, order=None, *, stable=None",
+    """
+    a.argsort(axis=-1, kind=None, order=None, *, stable=None)
+
+    Returns the indices that would sort this array.
+
+    Refer to `numpy.argsort` for full documentation.
+
+    See Also
+    --------
+    numpy.argsort : equivalent function
+    """)
+
+_array_method_doc('astype', "dtype, order='K', casting='unsafe', subok=True, copy=True",
+    """
     a.astype(dtype, order='K', casting='unsafe', subok=True, copy=True)
 
     Copy of the array, cast to a specified type.
@@ -3485,24 +3573,20 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     >>> x
     array([1. ,  2. ,  2.5])
 
-    >>> x.astype(int)
+    >>> x.astype(np.int_)
     array([1, 2, 2])
 
-    >>> x.astype(int, casting="same_value")
+    >>> x.astype(np.int_, casting="same_value")
     Traceback (most recent call last):
     ...
     ValueError: could not cast 'same_value' double to long
 
-    >>> x[:2].astype(int, casting="same_value")
+    >>> x[:2].astype(np.int_, casting="same_value")
     array([1, 2])
-    """))
+    """)
 
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
+_array_method_doc('byteswap', "inplace=False",
     """
-    byteswap($self, /, inplace=False)
-    --
-
     a.byteswap(inplace=False)
 
     Swap the bytes of the array elements
@@ -3552,15 +3636,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
     >>> A.view(np.uint8)
     array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,
            0, 3], dtype=uint8)
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('choose',
+_array_method_doc('choose', "choices, out=None, mode='raise'",
     """
-    choose($self, /, choices, out=None, mode='raise')
-    --
-
     a.choose(choices, out=None, mode='raise')
 
     Use an index array to construct a new array from a set of choices.
@@ -3570,16 +3649,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('choose',
     See Also
     --------
     numpy.choose : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('clip',
+_array_method_doc('clip', "min=None, max=None, out=None, **kwargs",
     """
-    clip($self, /, min=None, max=None, out=None, **kwargs)
-    --
-
-    a.clip(min=np._NoValue, max=np._NoValue, out=None, **kwargs)
+    a.clip(min=<no value>, max=<no value>, out=None, **kwargs)
 
     Return an array whose values are limited to ``[min, max]``.
     One of max or min must be given.
@@ -3589,15 +3663,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('clip',
     See Also
     --------
     numpy.clip : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('compress',
+_array_method_doc('compress', "condition, axis=None, out=None",
     """
-    compress($self, /, condition, axis=None, out=None)
-    --
-
     a.compress(condition, axis=None, out=None)
 
     Return selected slices of this array along given axis.
@@ -3607,15 +3676,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('compress',
     See Also
     --------
     numpy.compress : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('conj',
+_array_method_doc('conj', "",
     """
-    conj($self, /)
-    --
-
     a.conj()
 
     Complex-conjugate all elements.
@@ -3625,15 +3689,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('conj',
     See Also
     --------
     numpy.conjugate : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('conjugate',
+_array_method_doc('conjugate', "",
     """
-    conjugate($self, /)
-    --
-
     a.conjugate()
 
     Return the complex conjugate, element-wise.
@@ -3643,15 +3702,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('conjugate',
     See Also
     --------
     numpy.conjugate : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
+_array_method_doc('copy', "order='C'",
     """
-    copy($self, /, order='C')
-    --
-
     a.copy(order='C')
 
     Return a copy of the array.
@@ -3697,12 +3751,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
     >>> y.flags['C_CONTIGUOUS']
     True
 
-    For arrays containing Python objects (e.g. dtype=object),
+    For arrays containing Python objects (e.g. dtype=np.object_),
     the copy is a shallow one. The new array will contain the
     same object which may lead to surprises if that object can
     be modified (is mutable):
 
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=np.object_)
     >>> b = a.copy()
     >>> b[2][0] = 10
     >>> a
@@ -3712,22 +3766,17 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('copy',
     use `copy.deepcopy`:
 
     >>> import copy
-    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=object)
+    >>> a = np.array([1, 'm', [2, 3, 4]], dtype=np.object_)
     >>> c = copy.deepcopy(a)
     >>> c[2][0] = 10
     >>> c
     array([1, 'm', list([10, 3, 4])], dtype=object)
     >>> a
     array([1, 'm', list([2, 3, 4])], dtype=object)
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('cumprod',
+_array_method_doc('cumprod', "axis=None, dtype=None, out=None",
     """
-    cumprod($self, /, axis=None, dtype=None, out=None)
-    --
-
     a.cumprod(axis=None, dtype=None, out=None)
 
     Return the cumulative product of the elements along the given axis.
@@ -3737,15 +3786,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('cumprod',
     See Also
     --------
     numpy.cumprod : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('cumsum',
+_array_method_doc('cumsum', "axis=None, dtype=None, out=None",
     """
-    cumsum($self, /, axis=None, dtype=None, out=None)
-    --
-
     a.cumsum(axis=None, dtype=None, out=None)
 
     Return the cumulative sum of the elements along the given axis.
@@ -3755,15 +3799,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('cumsum',
     See Also
     --------
     numpy.cumsum : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('diagonal',
+_array_method_doc('diagonal', "offset=0, axis1=0, axis2=1",
     """
-    diagonal($self, /, offset=0, axis1=0, axis2=1)
-    --
-
     a.diagonal(offset=0, axis1=0, axis2=1)
 
     Return specified diagonals. In NumPy 1.9 the returned array is a
@@ -3775,27 +3814,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('diagonal',
     See Also
     --------
     numpy.diagonal : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('dot',
+_array_method_doc('dump', "file",
     """
-    dot($self, other, /, out=None)
-    --
-
-    a.dot(other, /, out=None)
-
-    Refer to :func:`numpy.dot` for full documentation.
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('dump',
-    """
-    dump($self, /, file)
-    --
-
     a.dump(file)
 
     Dump a pickle of the array to the specified file.
@@ -3805,32 +3827,22 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dump',
     ----------
     file : str or Path
         A string naming the dump file.
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('dumps',
+_array_method_doc('dumps', "",
     """
-    dumps($self, /)
-    --
-
     a.dumps()
 
     Returns the pickle of the array as a string.
-    pickle.loads will convert the string back to an array.
+    ``pickle.loads`` will convert the string back to an array.
 
     Parameters
     ----------
     None
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
+_array_method_doc('fill', "value",
     """
-    fill($self, /, value)
-    --
-
     a.fill(value)
 
     Fill the array with a scalar value.
@@ -3856,7 +3868,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
     to a single array element.  The following is a rare example where this
     distinction is important:
 
-    >>> a = np.array([None, None], dtype=object)
+    >>> a = np.array([None, None], dtype=np.object_)
     >>> a[0] = np.array(3)
     >>> a
     array([array(3), None], dtype=object)
@@ -3869,15 +3881,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('fill',
     >>> a[...] = np.array(3)
     >>> a
     array([3, 3], dtype=object)
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('flatten',
+_array_method_doc('flatten', "order='C'",
     """
-    flatten($self, /, order='C')
-    --
-
     a.flatten(order='C')
 
     Return a copy of the array collapsed into one dimension.
@@ -3911,15 +3918,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('flatten',
     array([1, 2, 3, 4])
     >>> a.flatten('F')
     array([1, 3, 2, 4])
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('getfield',
+_array_method_doc('getfield', "dtype, offset=0",
     """
-    getfield($self, /, dtype, offset=0)
-    --
-
     a.getfield(dtype, offset=0)
 
     Returns a field of the given array as a certain type.
@@ -3957,15 +3959,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('getfield',
     >>> x.getfield(np.float64, offset=8)
     array([[1.,  0.],
            [0.,  4.]])
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
+_array_method_doc('item', "*args",
     """
-    item($self, /, *args)
-    --
-
     a.item(*args)
 
     Copy an element of an array to a standard Python scalar and return it.
@@ -4023,19 +4020,16 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('item',
 
     For an array with object dtype, elements are returned as-is.
 
-    >>> a = np.array([np.int64(1)], dtype=object)
+    >>> a = np.array([np.int64(1)], dtype=np.object_)
     >>> a.item() #return np.int64
     np.int64(1)
+    """)
 
-    """))
+_KWARGS_REDUCE = "keepdims=<no value>, initial=<no value>, where=<no value>"
 
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('max',
-    """
-    max($self, /, axis=None, out=None, **kwargs)
-    --
-
-    a.max(axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
+_array_method_doc('max', "axis=None, out=None, **kwargs",
+    f"""
+    a.max(axis=None, out=None, *, {_KWARGS_REDUCE})
 
     Return the maximum along a given axis.
 
@@ -4044,34 +4038,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('max',
     See Also
     --------
     numpy.amax : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('mean',
-    """
-    mean($self, /, axis=None, dtype=None, out=None, **kwargs)
-    --
-
-    a.mean(axis=None, dtype=None, out=None, keepdims=np._NoValue, *, where=np._NoValue)
-
-    Returns the average of the array elements along given axis.
-
-    Refer to `numpy.mean` for full documentation.
-
-    See Also
-    --------
-    numpy.mean : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('min',
-    """
-    min($self, /, axis=None, out=None, **kwargs)
-    --
-
-    a.min(axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
+_array_method_doc('min', "axis=None, out=None, **kwargs",
+    f"""
+    a.min(axis=None, out=None, *, {_KWARGS_REDUCE})
 
     Return the minimum along a given axis.
 
@@ -4080,15 +4051,49 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('min',
     See Also
     --------
     numpy.amin : equivalent function
+    """)
 
-    """))
+_array_method_doc('prod', "axis=None, dtype=None, out=None, **kwargs",
+    f"""
+    a.prod(axis=None, dtype=None, out=None, *, {_KWARGS_REDUCE})
 
+    Return the product of the array elements over the given axis
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('nonzero',
+    Refer to `numpy.prod` for full documentation.
+
+    See Also
+    --------
+    numpy.prod : equivalent function
+    """)
+
+_array_method_doc('sum', "axis=None, dtype=None, out=None, **kwargs",
+    f"""
+    a.sum(axis=None, dtype=None, out=None, *, {_KWARGS_REDUCE})
+
+    Return the sum of the array elements over the given axis.
+
+    Refer to `numpy.sum` for full documentation.
+
+    See Also
+    --------
+    numpy.sum : equivalent function
+    """)
+
+_array_method_doc('mean', "axis=None, dtype=None, out=None, **kwargs",
     """
-    nonzero($self, /)
-    --
+    a.mean(axis=None, dtype=None, out=None, *, keepdims=<no value>, where=<no value>)
 
+    Returns the average of the array elements along given axis.
+
+    Refer to `numpy.mean` for full documentation.
+
+    See Also
+    --------
+    numpy.mean : equivalent function
+    """)
+
+_array_method_doc('nonzero', "",
+    """
     a.nonzero()
 
     Return the indices of the elements that are non-zero.
@@ -4098,53 +4103,24 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nonzero',
     See Also
     --------
     numpy.nonzero : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('prod',
+_array_method_doc('put', "indices, values, /, mode='raise'",
     """
-    prod($self, /, axis=None, dtype=None, out=None, **kwargs)
-    --
-
-    a.prod(axis=None, dtype=None, out=None, keepdims=np._NoValue,
-        initial=np._NoValue, where=np._NoValue)
-
-    Return the product of the array elements over the given axis
-
-    Refer to `numpy.prod` for full documentation.
-
-    See Also
-    --------
-    numpy.prod : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('put',
-    """
-    put($self, indices, values, /, mode='raise')
-    --
-
     a.put(indices, values, mode='raise')
 
-    Set ``a.flat[n] = values[n]`` for all `n` in indices.
+    Set ``a.flat[n] = values[n]`` for all ``n`` in indices.
 
     Refer to `numpy.put` for full documentation.
 
     See Also
     --------
     numpy.put : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('ravel',
+_array_method_doc('ravel', "order='C'",
     """
-    ravel($self, /, order='C')
-    --
-
-    a.ravel([order])
+    a.ravel(order='C')
 
     Return a flattened array.
 
@@ -4153,17 +4129,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('ravel',
     See Also
     --------
     numpy.ravel : equivalent function
-
     ndarray.flat : a flat iterator on the array.
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('repeat',
+_array_method_doc('repeat', "repeats, /, axis=None",
     """
-    repeat($self, repeats, /, axis=None)
-    --
-
     a.repeat(repeats, axis=None)
 
     Repeat elements of an array.
@@ -4173,16 +4143,12 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('repeat',
     See Also
     --------
     numpy.repeat : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('reshape',
+_array_method_doc('reshape', "*shape, order='C', copy=None",
     """
-    reshape($self, /, *shape, order='C', copy=None)
-    --
-
     a.reshape(shape, /, *, order='C', copy=None)
+    a.reshape(*shape, order='C', copy=None)
 
     Returns an array containing the same data with a new shape.
 
@@ -4196,18 +4162,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('reshape',
     -----
     Unlike the free function `numpy.reshape`, this method on `ndarray` allows
     the elements of the shape parameter to be passed in as separate arguments.
-    For example, ``a.reshape(10, 11)`` is equivalent to
-    ``a.reshape((10, 11))``.
+    For example, ``a.reshape(4, 2)`` is equivalent to ``a.reshape((4, 2))``.
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('resize',
+_array_method_doc('resize', "*new_shape, refcheck=True",
     """
-    resize($self, /, *new_shape, refcheck=True)
-    --
-
-    a.resize(new_shape, refcheck=True)
+    a.resize(new_shape, /, *, refcheck=True)
+    a.resize(*new_shape, refcheck=True)
 
     Change shape and size of array in-place.
 
@@ -4295,15 +4256,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('resize',
     array([[0]])
     >>> c
     array([[0]])
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('round',
+_array_method_doc('round', "decimals=0, out=None",
     """
-    round($self, /, decimals=0, out=None)
-    --
-
     a.round(decimals=0, out=None)
 
     Return `a` with each element rounded to the given number of decimals.
@@ -4313,33 +4269,23 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('round',
     See Also
     --------
     numpy.around : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('searchsorted',
+_array_method_doc('searchsorted', "v, /, side='left', sorter=None",
     """
-    searchsorted($self, v, /, side='left', sorter=None)
-    --
-
     a.searchsorted(v, side='left', sorter=None)
 
-    Find indices where elements of v should be inserted in a to maintain order.
+    Find indices where elements of `v` should be inserted in `a` to maintain order.
 
-    For full documentation, see `numpy.searchsorted`
+    For full documentation, see `numpy.searchsorted`.
 
     See Also
     --------
     numpy.searchsorted : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('setfield',
+_array_method_doc('setfield', "val, /, dtype, offset=0",
     """
-    setfield($self, val, /, dtype, offset=0)
-    --
-
     a.setfield(val, dtype, offset=0)
 
     Put a value into a specified place in a field defined by a data-type.
@@ -4386,15 +4332,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('setfield',
     array([[1.,  0.,  0.],
            [0.,  1.,  0.],
            [0.,  0.,  1.]])
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('setflags',
+_array_method_doc('setflags', "*, write=None, align=None, uic=None",
     """
-    setflags($self, /, *, write=None, align=None, uic=None)
-    --
-
     a.setflags(write=None, align=None, uic=None)
 
     Set array flags WRITEABLE, ALIGNED, WRITEBACKIFCOPY,
@@ -4466,15 +4407,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('setflags',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: cannot set WRITEBACKIFCOPY flag to True
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
+_array_method_doc('sort', "axis=-1, kind=None, order=None, *, stable=None",
     """
-    sort($self, /, axis=-1, kind=None, order=None, *, stable=None)
-    --
-
     a.sort(axis=-1, kind=None, order=None, *, stable=None)
 
     Sort an array in-place. Refer to `numpy.sort` for full documentation.
@@ -4536,77 +4472,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('sort',
     >>> a
     array([(b'c', 1), (b'a', 2)],
           dtype=[('x', 'S1'), ('y', '<i8')])
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('partition',
+_array_method_doc('squeeze', "axis=None",
     """
-    partition($self, kth, /, axis=-1, kind='introselect', order=None)
-    --
-
-    a.partition(kth, axis=-1, kind='introselect', order=None)
-
-    Partially sorts the elements in the array in such a way that the value of
-    the element in k-th position is in the position it would be in a sorted
-    array. In the output array, all elements smaller than the k-th element
-    are located to the left of this element and all equal or greater are
-    located to its right. The ordering of the elements in the two partitions
-    on the either side of the k-th element in the output array is undefined.
-
-    Parameters
-    ----------
-    kth : int or sequence of ints
-        Element index to partition by. The kth element value will be in its
-        final sorted position and all smaller elements will be moved before it
-        and all equal or greater elements behind it.
-        The order of all elements in the partitions is undefined.
-        If provided with a sequence of kth it will partition all elements
-        indexed by kth of them into their sorted position at once.
-
-        .. deprecated:: 1.22.0
-            Passing booleans as index is deprecated.
-    axis : int, optional
-        Axis along which to sort. Default is -1, which means sort along the
-        last axis.
-    kind : {'introselect'}, optional
-        Selection algorithm. Default is 'introselect'.
-    order : str or list of str, optional
-        When `a` is an array with fields defined, this argument specifies
-        which fields to compare first, second, etc. A single field can
-        be specified as a string, and not all fields need to be specified,
-        but unspecified fields will still be used, in the order in which
-        they come up in the dtype, to break ties.
-
-    See Also
-    --------
-    numpy.partition : Return a partitioned copy of an array.
-    argpartition : Indirect partition.
-    sort : Full sort.
-
-    Notes
-    -----
-    See ``np.partition`` for notes on the different algorithms.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> a = np.array([3, 4, 2, 1])
-    >>> a.partition(3)
-    >>> a
-    array([2, 1, 3, 4]) # may vary
-
-    >>> a.partition((1, 3))
-    >>> a
-    array([1, 2, 3, 4])
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('squeeze',
-    """
-    squeeze($self, /, axis=None)
-    --
-
     a.squeeze(axis=None)
 
     Remove axes of length one from `a`.
@@ -4616,16 +4485,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('squeeze',
     See Also
     --------
     numpy.squeeze : equivalent function
+    """)
 
-    """))
+_KWARGS_STD = "*, keepdims=<no value>, where=<no value>, mean=<no value>"
 
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
-    """
-    std($self, /, axis=None, dtype=None, out=None, ddof=0, **kwargs)
-    --
-
-    a.std(axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *, where=np._NoValue, mean=np._NoValue)
+_array_method_doc('std', "axis=None, dtype=None, out=None, ddof=0, **kwargs",
+    f"""
+    a.std(axis=None, dtype=None, out=None, ddof=0, {_KWARGS_STD})
 
     Returns the standard deviation of the array elements along given axis.
 
@@ -4634,33 +4500,23 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('std',
     See Also
     --------
     numpy.std : equivalent function
+    """)
 
-    """))
+_array_method_doc('var', "axis=None, dtype=None, out=None, ddof=0, **kwargs",
+    f"""
+    a.var(axis=None, dtype=None, out=None, ddof=0, {_KWARGS_STD})
 
+    Returns the variance of the array elements, along given axis.
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('sum',
-    """
-    sum($self, /, axis=None, dtype=None, out=None, **kwargs)
-    --
-
-    a.sum(axis=None, dtype=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue)
-
-    Return the sum of the array elements over the given axis.
-
-    Refer to `numpy.sum` for full documentation.
+    Refer to `numpy.var` for full documentation.
 
     See Also
     --------
-    numpy.sum : equivalent function
+    numpy.var : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('swapaxes',
+_array_method_doc('swapaxes', "axis1, axis2, /",
     """
-    swapaxes($self, axis1, axis2, /)
-    --
-
     a.swapaxes(axis1, axis2, /)
 
     Return a view of the array with `axis1` and `axis2` interchanged.
@@ -4670,15 +4526,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('swapaxes',
     See Also
     --------
     numpy.swapaxes : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('take',
+_array_method_doc('take', "indices, /, axis=None, out=None, mode='raise'",
     """
-    take($self, indices, /, axis=None, out=None, mode='raise')
-    --
-
     a.take(indices, axis=None, out=None, mode='raise')
 
     Return an array formed from the elements of `a` at the given indices.
@@ -4688,15 +4539,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('take',
     See Also
     --------
     numpy.take : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('to_device',
+_array_method_doc('to_device', "device, /, *, stream=None",
     """
-    to_device($self, device, /, *, stream=None)
-    --
-
     a.to_device(device, /, *, stream=None)
 
     For Array API compatibility.  Since NumPy only supports CPU arrays, this
@@ -4713,16 +4559,11 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('to_device',
     -------
     out : Self
         Returns the same array.
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tofile',
+_array_method_doc('tofile', "fid, /, sep='', format='%s'",
     """
-    tofile($self, fid, /, sep='', format='%s')
-    --
-
-    a.tofile(fid, sep='', format='%s')
+    a.tofile(fid, /, sep='', format='%s')
 
     Write array to a file as text or binary (default).
 
@@ -4756,22 +4597,17 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tofile',
     file, bypassing the file object's ``write`` method. As a result, tofile
     cannot be used with files objects supporting compression (e.g., GzipFile)
     or file-like objects that do not support ``fileno()`` (e.g., BytesIO).
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tolist',
+_array_method_doc('tolist', "",
     """
-    tolist($self, /)
-    --
-
     a.tolist()
 
     Return the array as an ``a.ndim``-levels deep nested list of Python scalars.
 
     Return a copy of the array data as a (nested) Python list.
     Data items are converted to the nearest compatible builtin Python type, via
-    the `~numpy.ndarray.item` function.
+    the `~numpy.ndarray.item` method.
 
     If ``a.ndim`` is 0, then since the depth of the nested list is 0, it will
     not be a list at all, but a simple Python scalar.
@@ -4825,14 +4661,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tolist',
     TypeError: iteration over a 0-d array
     >>> a.tolist()
     1
-    """))
+    """)
 
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes',
+_array_method_doc('tobytes', "order='C'",
     """
-    tobytes($self, /, order='C')
-    --
-
     a.tobytes(order='C')
 
     Construct Python bytes containing the raw data bytes in the array.
@@ -4869,15 +4701,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes',
     True
     >>> x.tobytes('F')
     b'\\x00\\x00\\x02\\x00\\x01\\x00\\x03\\x00'
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
+_array_method_doc('trace', "offset=0, axis1=0, axis2=1, dtype=None, out=None",
     """
-    trace($self, /, offset=0, axis1=0, axis2=1, dtype=None, out=None)
-    --
-
     a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
 
     Return the sum along diagonals of the array.
@@ -4887,15 +4714,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
     See Also
     --------
     numpy.trace : equivalent function
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
+_array_method_doc('transpose', "*axes",
     """
-    transpose($self, /, *axes)
-    --
-
     a.transpose(*axes)
 
     Returns a view of the array with axes transposed.
@@ -4947,33 +4769,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('transpose',
     array([1, 2, 3, 4])
     >>> a.transpose()
     array([1, 2, 3, 4])
+    """)
 
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('var',
+_array_method_doc('view', "*args, **kwargs",
     """
-    var($self, /, axis=None, dtype=None, out=None, ddof=0, **kwargs)
-    --
-
-    a.var(axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *, where=np._NoValue, mean=np._NoValue)
-
-    Returns the variance of the array elements, along given axis.
-
-    Refer to `numpy.var` for full documentation.
-
-    See Also
-    --------
-    numpy.var : equivalent function
-
-    """))
-
-
-add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
-    """
-    view($self, /, *args, **kwargs)
-    --
-
     a.view([dtype][, type])
 
     New view of array with the same data.
@@ -4981,7 +4780,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
     .. note::
         Passing None for ``dtype`` is different from omitting the parameter,
         since the former invokes ``dtype(None)`` which is an alias for
-        ``dtype('float64')``.
+        ``dtype(np.float64)``.
 
     Parameters
     ----------
@@ -5089,8 +4888,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('view',
     <BLANKLINE>
            [[2312, 2826],
             [5396, 5910]]], dtype=int16)
-
-    """))
+    """)
 
 
 ##############################################################################
@@ -6069,8 +5867,8 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
     This API requires passing dtypes, define them for convenience:
 
     >>> import numpy as np
-    >>> int32 = np.dtype("int32")
-    >>> float32 = np.dtype("float32")
+    >>> int32 = np.dtype(np.int32)
+    >>> float32 = np.dtype(np.float32)
 
     The typical ufunc call does not pass an output dtype.  `numpy.add` has two
     inputs and one output, so leave the output as ``None`` (not provided):
@@ -6192,6 +5990,9 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
 
 add_newdoc('numpy._core.multiarray', 'dtype',
     """
+    dtype(dtype, align=False, copy=False, **kwargs)
+    --
+
     dtype(dtype, align=False, copy=False, [metadata])
 
     Create a data type object.
@@ -6294,11 +6095,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('alignment',
     --------
 
     >>> import numpy as np
-    >>> x = np.dtype('i4')
+    >>> x = np.dtype(np.int32)
     >>> x.alignment
     4
 
-    >>> x = np.dtype(float)
+    >>> x = np.dtype(np.float64)
     >>> x.alignment
     8
 
@@ -6323,11 +6124,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('byteorder',
     --------
 
     >>> import numpy as np
-    >>> dt = np.dtype('i2')
+    >>> dt = np.dtype(np.int16)
     >>> dt.byteorder
     '='
     >>> # endian is not relevant for 8 bit numbers
-    >>> np.dtype('i1').byteorder
+    >>> np.dtype(np.int8).byteorder
     '|'
     >>> # or ASCII strings
     >>> np.dtype('S2').byteorder
@@ -6473,13 +6274,13 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('isbuiltin',
     --------
 
     >>> import numpy as np
-    >>> dt = np.dtype('i2')
+    >>> dt = np.dtype(np.int16)
     >>> dt.isbuiltin
     1
-    >>> dt = np.dtype('f8')
+    >>> dt = np.dtype(np.float64)
     >>> dt.isbuiltin
     1
-    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt = np.dtype([('field1', np.float64)])
     >>> dt.isbuiltin
     0
 
@@ -6547,13 +6348,13 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     --------
 
     >>> import numpy as np
-    >>> dt = np.dtype('i4')
+    >>> dt = np.dtype(np.int32)
     >>> dt.kind
     'i'
-    >>> dt = np.dtype('f8')
+    >>> dt = np.dtype(np.float64)
     >>> dt.kind
     'f'
-    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt = np.dtype([('field1', np.float64)])
     >>> dt.kind
     'V'
 
@@ -6719,7 +6520,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('subdtype',
     >>> x.subdtype
     (dtype('float32'), (8,))
 
-    >>> x =  np.dtype('i2')
+    >>> x =  np.dtype(np.int16)
     >>> x.subdtype
     >>>
 
@@ -6741,7 +6542,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
     >>> x.base
     dtype('float32')
 
-    >>> x =  np.dtype('i2')
+    >>> x = np.dtype(np.int16)
     >>> x.base
     dtype('int16')
 
@@ -6758,6 +6559,9 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('type',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('newbyteorder',
     """
+    newbyteorder($self, new_order='S', /)
+    --
+
     newbyteorder(new_order='S', /)
 
     Return a new dtype with a different byte order.
@@ -7100,21 +6904,11 @@ add_newdoc('numpy._core.numerictypes', 'generic',
 
 # Attributes
 
-def refer_to_array_attribute(attr, method=True):
-    docstring = """
-    Scalar {} identical to the corresponding array attribute.
+add_newdoc('numpy._core.numerictypes', 'generic', ('T',
+    """Scalar attribute identical to `ndarray.T`."""))
 
-    Please see `ndarray.{}`.
-    """
-
-    return attr, docstring.format("method" if method else "attribute", attr)
-
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('T', method=False))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('base', method=False))
+add_newdoc('numpy._core.numerictypes', 'generic', ('base',
+    """Scalar attribute identical to `ndarray.base`."""))
 
 add_newdoc('numpy._core.numerictypes', 'generic', ('data',
     """Pointer to start of data."""))
@@ -7151,150 +6945,12 @@ add_newdoc('numpy._core.numerictypes', 'generic', ('strides',
 
 # Methods
 
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('all'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('any'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('argmax'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('argmin'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('argsort'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('astype'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('byteswap'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('choose'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('clip'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('compress'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('conjugate'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('copy'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('cumprod'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('cumsum'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('diagonal'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('dump'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('dumps'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('fill'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('flatten'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('getfield'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('item'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('max'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('mean'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('min'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('nonzero'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('prod'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('put'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('ravel'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('repeat'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('reshape'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('resize'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('round'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('searchsorted'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('setfield'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('setflags'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('sort'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('squeeze'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('std'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('sum'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('swapaxes'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('take'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('tofile'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('tolist'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('trace'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('transpose'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('var'))
-
-add_newdoc('numpy._core.numerictypes', 'generic',
-           refer_to_array_attribute('view'))
-
 add_newdoc('numpy._core.numerictypes', 'number', ('__class_getitem__',
     """
-    __class_getitem__(item, /)
+    __class_getitem__($cls, item, /)
+    --
+
+    number.__class_getitem__(item, /)
 
     Return a parametrized wrapper around the `~numpy.number` type.
 
@@ -7385,8 +7041,67 @@ add_newdoc('numpy._core.numerictypes', 'character',
 
     """)
 
+##############################################################################
+#
+# Documentation for `dtypes.*` classes
+#
+##############################################################################
+
+for _dtype_name, _signature, _sctype_name in (
+    ("BoolDType", "()", "bool"),
+    ("Int8DType", "()", "int8"),
+    ("UInt8DType", "()", "uint8"),
+    ("Int16DType", "()", "int16"),
+    ("UInt16DType", "()", "uint16"),
+    ("Int32DType", "()", "int32"),
+    ("IntDType", "()", "intc"),
+    ("UInt32DType", "()", "uint32"),
+    ("UIntDType", "()", "uintc"),
+    ("Int64DType", "()", "int64"),
+    ("UInt64DType", "()", "uint64"),
+    ("LongLongDType", "()", "longlong"),
+    ("ULongLongDType", "()", "ulonglong"),
+    ("Float16DType", "()", "float16"),
+    ("Float32DType", "()", "float32"),
+    ("Float64DType", "()", "float64"),
+    ("LongDoubleDType", "()", "longdouble"),
+    ("Complex64DType", "()", "complex64"),
+    ("Complex128DType", "()", "complex128"),
+    ("CLongDoubleDType", "()", "clongdouble"),
+    ("ObjectDType", "()", "object"),
+    ("BytesDType", "(size, /)", "bytes_"),
+    ("StrDType", "(size, /)", "str_"),
+    ("VoidDType", "(length, /)", "void"),
+    ("DateTime64DType", "(unit, /)", "datetime64"),
+    ("TimeDelta64DType", "(unit, /)", "timedelta64"),
+):
+    _extra_docs = ""
+    if _dtype_name in {"VoidDType", "DateTime64DType", "TimeDelta64DType"}:
+        _extra_docs = f"""
+        .. warning::
+            ``np.dtypes.{_dtype_name}`` cannot be instantiated directly.
+            Use ``np.dtype("{_sctype_name}[{{unit}}]")`` instead.
+        """
+
+    add_newdoc('numpy.dtypes', _dtype_name,
+        f"""
+        {_dtype_name}{_signature}
+        --
+
+        DType class corresponding to the `numpy.{_sctype_name}` scalar type.
+        {_extra_docs}
+        See `numpy.dtype` for the typical way to create dtype instances
+        and :ref:`arrays.dtypes` for additional information.
+        """)
+
+    del _dtype_name, _signature, _sctype_name, _extra_docs  # avoid namespace pollution
+
+
 add_newdoc('numpy._core.multiarray', 'StringDType',
     """
+    StringDType(*, coerce=True, **kwargs)
+    --
+
     StringDType(*, na_object=np._NoValue, coerce=True)
 
     Create a StringDType instance.

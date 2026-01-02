@@ -38,7 +38,6 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -55,7 +54,11 @@ from numpy.testing import (
     runstring,
     temppath,
 )
-from numpy.testing._private.utils import _no_tracing, requires_memory
+from numpy.testing._private.utils import (
+    _no_tracing,
+    requires_deep_recursion,
+    requires_memory,
+)
 
 
 def assert_arg_sorted(arr, arg):
@@ -3835,6 +3838,18 @@ class TestMethods:
         assert_(isinstance(a.ravel('A'), ArraySubclass))
         assert_(isinstance(a.ravel('K'), ArraySubclass))
 
+    @pytest.mark.parametrize("shape", [(3, 224, 224), (8, 512, 512)])
+    def test_tobytes_no_copy_fastpath(self, shape):
+        # Test correctness of non-contiguous paths for `tobytes`
+        rng = np.random.default_rng(0)
+        arr = rng.standard_normal(shape, dtype=np.float32)
+        noncontig = arr.transpose(1, 2, 0)
+
+        # correctness
+        expected = np.ascontiguousarray(noncontig).tobytes()
+        got = noncontig.tobytes()
+        assert got == expected
+
     def test_swapaxes(self):
         a = np.arange(1 * 2 * 3 * 4).reshape(1, 2, 3, 4).copy()
         idx = np.indices(a.shape)
@@ -4002,7 +4017,7 @@ class TestBinop:
     #   - defer if other has __array_ufunc__ and it is None
     #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
-    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy3.{9, 10}-v7.3.13, #24862")
+    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy, #24862")
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
         #   -> (numpy ufunc, has_in_place_version, preferred_dtype)
@@ -4640,6 +4655,7 @@ class TestPickling:
             assert_equal(len(buffers), 0)
             assert_equal(non_contiguous_array, depickled_non_contiguous_array)
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_roundtrip(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             carray = np.array([[2, 9], [7, 0], [3, 8]])
@@ -5912,7 +5928,6 @@ class TestIO:
                     np.fromfile, tmp_filename, dtype=x.dtype,
                     sep=",", offset=1)
 
-    @pytest.mark.skipif(IS_PYPY, reason="bug in PyPy's PyNumber_AsSsize_t")
     def test_fromfile_bad_dup(self, tmp_path, param_filename, monkeypatch):
         def dup_str(fd):
             return 'abc'
@@ -6273,6 +6288,13 @@ class TestResize:
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
+
+    def test_check_reference_2(self):
+        # see gh-30265
+        x = np.zeros((2, 2))
+        y = x
+        with pytest.raises(ValueError):
+            x.resize((5, 5))
 
     @_no_tracing
     def test_int_shape(self):
@@ -9329,6 +9351,7 @@ class TestConversion:
         assert_equal(bool(np.array([True])), True)
         assert_equal(bool(np.array([[42]])), True)
 
+    @requires_deep_recursion
     def test_to_bool_scalar_not_convertible(self):
 
         class NotConvertible:
@@ -9337,11 +9360,6 @@ class TestConversion:
 
         assert_raises(NotImplementedError, bool, np.array(NotConvertible()))
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
-        if IS_PYSTON:
-            pytest.skip("Pyston disables recursion checking")
-        if IS_WASM:
-            pytest.skip("Pyodide/WASM has limited stack size")
-
         self_containing = np.array([None])
         self_containing[0] = self_containing
 
@@ -9805,9 +9823,6 @@ class TestFormat:
         assert_raises(TypeError, '{:30}'.format, a)
 
 
-from numpy.testing import IS_PYPY
-
-
 class TestCTypes:
 
     def test_ctypes_is_available(self):
@@ -9833,6 +9848,7 @@ class TestCTypes:
         x.flags.writeable = False
         return x
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     @pytest.mark.parametrize('arr', [
         np.array([1, 2, 3]),
         np.array([['one', 'two'], ['three', 'four']]),
@@ -9881,6 +9897,7 @@ class TestCTypes:
             break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_ctypes_as_parameter_holds_reference(self):
         arr = np.array([None]).copy()
 
@@ -10204,6 +10221,7 @@ class TestArrayFinalize:
         with pytest.raises(RuntimeError, match="boohoo!"):
             np.arange(10).view(BadAttributeArray)
 
+    @pytest.mark.thread_unsafe(reason="calls gc.collect()")
     def test_lifetime_on_error(self):
         # gh-11237
         class RaisesInFinalize(np.ndarray):
@@ -10545,7 +10563,6 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', -1)
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
-
 
 class TestViewDtype:
     """

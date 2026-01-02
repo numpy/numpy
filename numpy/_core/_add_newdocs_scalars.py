@@ -358,7 +358,8 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         """))
 
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
-                 'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
+                 'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64',
+                 'longlong', 'ulonglong'):
     # Add negative examples for signed cases by checking typecode
     add_newdoc('numpy._core.numerictypes', int_name, ('bit_count',
         f"""

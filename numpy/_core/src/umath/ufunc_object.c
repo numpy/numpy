@@ -66,6 +66,7 @@
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
 #include "number.h"
+#include "scalartypes.h"  // for is_anyscalar_exact and scalar_value
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -3721,7 +3722,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (ret == NULL) {
         goto fail;
     }
-    
+
     Py_XDECREF(out);
 
     Py_DECREF(signature[0]);
@@ -4270,6 +4271,148 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     return NULL;
 }
 
+/*
+ * Check whether the input object is a known scalar and whether the ufunc has
+ * a suitable inner loop for it, which takes and returns the data type of the
+ * input (this function is not called if output or any other argument was given).
+ * If a loop was found, call it and store the result.
+ *
+ * Returns -2 if a short-cut is not possible, 0 on success and -1 on error.
+ */
+static int
+try_trivial_scalar_call(
+    PyUFuncObject *ufunc, PyObject *const obj, PyObject **result)
+{
+    assert(ufunc->nin == 1 && ufunc->nout == 1 && !ufunc->core_enabled);
+    npy_clongdouble cin, cout;  // aligned storage, using longest type.
+    char *in = (char *)&cin, *out = (char *)&cout;
+    char *data[] = {in, out};
+    int ret = -2;
+    PyArray_Descr *dt;
+    /*
+     * For supported input, get input pointer and descriptor. Otherwise, bail.
+     */
+    if (obj == Py_False || obj == Py_True) {
+        *(npy_bool *)in = (obj == Py_True);
+        dt = PyArray_DescrFromType(NPY_BOOL);
+    }
+    else if (PyFloat_CheckExact(obj)) {
+        *(double *)in = PyFloat_AS_DOUBLE(obj);
+        dt = PyArray_DescrFromType(NPY_FLOAT64);
+    }
+    else if (PyLong_CheckExact(obj)) {
+        int overflow;
+        npy_intp val = PyLong_AsLongAndOverflow(obj, &overflow);
+        if (overflow) {
+            return -2;  // bail, main code perhaps deals with this.
+        }
+        if (error_converting(val)) {
+            return -1;  // should never happen; pass on it if does.
+        }
+        *(npy_intp *)in = val;
+        dt = PyArray_DescrFromType(NPY_INTP);
+    }
+    else if (PyComplex_CheckExact(obj)) {
+        Py_complex oop = PyComplex_AsCComplex(obj);
+        if (error_converting(oop.real)) {
+            return -1;  // should never happen; pass on it if does.
+        }
+        *(double *)in = oop.real;
+        *(double *)(in+sizeof(double)) = oop.imag;
+        dt = PyArray_DescrFromType(NPY_COMPLEX128);
+    }
+    else if (is_anyscalar_exact(obj)) {
+        dt = PyArray_DescrFromScalar(obj);
+        if (!PyDataType_ISNUMBER(dt)) {
+            goto bail;
+        }
+        data[0] = scalar_value(obj, dt);
+    }
+    else {
+        return -2;
+    }
+    /*
+     * Check the ufunc supports our descriptor, bailing (return -2) if not.
+     */
+    // Try getting info from the (private) cache.  Fall back if not found,
+    // so that the the dtype gets registered and things will work next time.
+    PyArray_DTypeMeta *op_dtypes[2] = {NPY_DTYPE(dt), NULL};
+#ifdef Py_GIL_DISABLED
+    // Other threads may be in the process of filling the dispatch cache,
+    // so we need to acquire the free-threading-specific dispatch cache mutex
+    // before reading the cache
+    PyObject *info = PyArrayIdentityHash_GetItemWithLock(  // borrowed reference.
+        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+        (PyObject **)op_dtypes);
+#else
+    PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
+        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+        (PyObject **)op_dtypes);
+#endif
+    if (info == NULL) {
+        goto bail;
+    }
+    // Check actual dtype is correct (can be wrong with promotion).
+    PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
+    if ((PyTuple_GET_ITEM(all_dtypes, 0) != (PyObject *)NPY_DTYPE(dt)) ||
+        (PyTuple_GET_ITEM(all_dtypes, 1) != (PyObject *)NPY_DTYPE(dt))) {
+        goto bail;
+    }
+    // Get method, bailing if not an arraymethod (e.g., a promotor).
+    PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    if (!PyObject_TypeCheck(method, &PyArrayMethod_Type)) {
+        goto bail;
+    }
+    // Get loop, requiring that the output and input dtype are the same.
+    PyArrayMethod_Context context;
+    PyArray_Descr *descrs[2] = {dt, dt};
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = method;
+    npy_intp strides[2] = {0, 0};  // 0 ensures scalar math, not SIMD for half.
+    PyArrayMethod_StridedLoop *strided_loop;
+    NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (method->get_strided_loop(&context, 1, 0, strides,
+                                 &strided_loop, &auxdata, &flags) < 0) {
+        ret = -1;  // Should not happen, so raise error if it does anyway.
+        goto bail;
+    }
+    /*
+     * Call loop with single element, checking floating point errors.
+     */
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus();
+    }
+    npy_intp n = 1;
+    ret = strided_loop(&context, data, &n, strides, auxdata);
+    NPY_AUXDATA_FREE(auxdata);
+    if (ret == 0) {
+        if (PyErr_Occurred()) {
+            ret = -1;
+            goto bail;
+        }
+        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            // Check for any unmasked floating point errors (note: faster
+            // than _check_ufunc_fperr as one doesn't need mask up front).
+            int fpe_errors = npy_get_floatstatus();
+            if (fpe_errors) {
+                if (PyUFunc_GiveFloatingpointErrors(
+                        ufunc_get_name_cstr(ufunc), fpe_errors) < 0) {
+                    ret = -1;  // Real error, falling back would not help.
+                    goto bail;
+                }
+            }
+        }
+        *result = PyArray_Scalar(out, dt, NULL);
+        if (*result == NULL) {
+            ret = -1;  // Real error (should never happen).
+        }
+    }
+  bail:
+    Py_DECREF(dt);
+    return ret;
+}
 
 /*
  * Main ufunc call implementation.
@@ -4288,6 +4431,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
 
+    if (len_args == 1 && kwnames == NULL && !PyArray_Check(args[0])
+            && nin == 1 && nout == 1 && !ufunc->core_enabled) {
+        // Possibly scalar input, try the fast path, falling back on failure.
+        PyObject *result = NULL;
+        if (try_trivial_scalar_call(ufunc, args[0], &result) != -2) {
+            return result;
+        }
+    }
     /* All following variables are cleared in the `fail` error path */
     ufunc_full_args full_args = {NULL, NULL};
     PyArrayObject *wheremask = NULL;
@@ -4301,7 +4452,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         return NULL;
     }
     memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2));
-    
+
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
     PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
@@ -4366,17 +4517,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
         if ((PyObject *)ufunc == n_ops.maximum || (PyObject *)ufunc == n_ops.minimum) {
-            
+
             if (DEPRECATE(
                 "Passing more than 2 positional arguments to np.maximum and np.minimum "
-                "is deprecated. If you meant to use the third argument as an output, " 
+                "is deprecated. If you meant to use the third argument as an output, "
                 "use the `out` keyword argument instead. If you hoped to work with "
                 "more than 2 inputs, combine them into a single array and get the extrema "
                 "for the relevant axis.") < 0) {
                 return NULL;
             }
         }
-        
+
         if (all_none) {
             Py_SETREF(full_args.out, NULL);
         }
@@ -6433,8 +6584,8 @@ static struct PyMethodDef ufunc_methods[] = {
 };
 
 
-/******************************************************************************
- ***                           UFUNC GETSET                                 ***
+/*****************************************************************************
+ ***                           UFUNC GETSET                                ***
  *****************************************************************************/
 
 
@@ -6583,6 +6734,9 @@ static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
         (getter)ufunc_get_doc, (setter)ufunc_set_doc,
         NULL, NULL},
+    {"__name__",
+        (getter)ufunc_get_name,
+        NULL, NULL, NULL},
     {"nin",
         (getter)ufunc_get_nin,
         NULL, NULL, NULL},
@@ -6598,15 +6752,13 @@ static PyGetSetDef ufunc_getset[] = {
     {"types",
         (getter)ufunc_get_types,
         NULL, NULL, NULL},
-    {"__name__",
-        (getter)ufunc_get_name,
-        NULL, NULL, NULL},
     {"identity",
         (getter)ufunc_get_identity,
         NULL, NULL, NULL},
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    // __signature__ stored in `__dict__`, see `_globals._SignatureDescriptor`
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 

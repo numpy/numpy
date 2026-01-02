@@ -1173,6 +1173,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
     }
     else {
         v_stride = 0;
+        /* If the same value is repeated, iteration order does not matter */
+        order = NPY_KEEPORDER;
     }
 
     v_data = PyArray_DATA(v);

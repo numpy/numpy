@@ -1035,8 +1035,6 @@ def test_header_growth_axis():
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
     ]}),
     ])
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-        reason="PyPy bug in error formatting")
 def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)

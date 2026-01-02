@@ -222,12 +222,13 @@ cdef class RandomState:
                              "be instantized.")
         self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
         self._aug_state.bit_generator = &self._bitgen
-        self._reset_gauss()
         self.lock = bit_generator.lock
+        self._reset_gauss()
 
     cdef _reset_gauss(self):
-        self._aug_state.has_gauss = 0
-        self._aug_state.gauss = 0.0
+        with self.lock:
+            self._aug_state.has_gauss = 0
+            self._aug_state.gauss = 0.0
 
     def seed(self, seed=None):
         """
@@ -251,8 +252,9 @@ cdef class RandomState:
         """
         if not isinstance(self._bit_generator, _MT19937):
             raise TypeError('can only re-seed a MT19937 BitGenerator')
-        self._bit_generator._legacy_seeding(seed)
-        self._reset_gauss()
+        with self.lock:
+            self._bit_generator._legacy_seeding(seed)
+            self._reset_gauss()
 
     def get_state(self, legacy=True):
         """
@@ -300,8 +302,9 @@ cdef class RandomState:
                           'MT19937 BitGenerator. To silence this warning, '
                           'set `legacy` to False.', RuntimeWarning)
             legacy = False
-        st['has_gauss'] = self._aug_state.has_gauss
-        st['gauss'] = self._aug_state.gauss
+        with self.lock:
+            st['has_gauss'] = self._aug_state.has_gauss
+            st['gauss'] = self._aug_state.gauss
         if legacy and not isinstance(self._bit_generator, _MT19937):
             raise ValueError(
                 "legacy can only be True when the underlying bitgenerator is "
@@ -381,9 +384,13 @@ cdef class RandomState:
                     st['has_gauss'] = state[3]
                     st['gauss'] = state[4]
 
-        self._aug_state.gauss = st.get('gauss', 0.0)
-        self._aug_state.has_gauss = st.get('has_gauss', 0)
-        self._bit_generator.state = st
+        cdef double gauss = st.get('gauss', 0.0)
+        cdef int has_gauss = st.get('has_gauss', 0)
+
+        with self.lock:
+            self._aug_state.gauss = gauss
+            self._aug_state.has_gauss = has_gauss
+            self._bit_generator.state = st
 
     def random_sample(self, size=None):
         """
