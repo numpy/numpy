@@ -1,7 +1,8 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsLenAndGetItem
 from ast import In
 from collections.abc import Callable, Sequence
 from typing import Any, Concatenate, Final, Literal as L, SupportsIndex, TypeVar, overload
+from typing_extensions import override
 
 import numpy as np
 from numpy import _CastingKind
@@ -606,8 +607,17 @@ def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allo
 
 class MAxisConcatenator(AxisConcatenator):
     __slots__ = ()
+
+    # keep in sync with `ma.core.concatenate`
+    @override  # type: ignore[override]
+    @overload
     @staticmethod
-    def concatenate(arrays: Incomplete, axis: int = 0) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def concatenate[ScalarT: np.generic](arrays: _ArrayLike[ScalarT], axis: SupportsIndex | None = 0) -> _MArray[ScalarT]: ...
+    @overload
+    @staticmethod
+    def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | None = 0) -> _MArray[Incomplete]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
     @classmethod
     def makemat(cls, arr: Incomplete) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
