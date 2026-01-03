@@ -110,7 +110,7 @@ User experience
 
 Type annotations
 ````````````````
-Type annotations for NumPy functionality is complete, so users can use tools
+Type annotations for NumPy functionality are complete, so users can use tools
 like `mypy`_ to type check their code and IDEs can improve their support
 for NumPy. Improving those type annotations, for example to support annotating
 array shapes (see `gh-16544 <https://github.com/numpy/numpy/issues/16544>`__),
