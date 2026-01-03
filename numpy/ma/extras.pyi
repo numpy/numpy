@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from ast import In
 from collections.abc import Callable, Sequence
-from typing import Any, Concatenate, Literal as L, SupportsIndex, TypeVar, overload
+from typing import Any, Concatenate, Final, Literal as L, SupportsIndex, TypeVar, overload
 
 import numpy as np
 from numpy import _CastingKind
@@ -613,10 +613,9 @@ class MAxisConcatenator(AxisConcatenator):
 
 class mr_class(MAxisConcatenator):
     __slots__ = ()
-
     def __init__(self) -> None: ...
 
-mr_: mr_class
+mr_: Final[mr_class] = ...
 
 def ndenumerate(a, compressed=True): ...
 def flatnotmasked_edges(a): ...
