@@ -22,6 +22,7 @@ from numpy._typing import (
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
     _DTypeLike,
     _NestedSequence,
@@ -92,6 +93,10 @@ type _IntArray = NDArray[np.intp]
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
 type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
 type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
+
+# helper aliases for polyfit
+type _2Tup[T] = tuple[T, T]
+type _5Tup[T] = tuple[T, NDArray[np.float64], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]
 
 # Explicitly set all allowed values to prevent accidental castings to
 # abstract dtypes (their common super-type).
@@ -692,7 +697,68 @@ def vander(x: list[complex], n: int | None = None) -> _MArray2D[np.complex128]: 
 @overload  # fallback
 def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> _MArray2D[Any]: ...
 
-# TODO: everything below
-# mypy: disable-error-code=no-untyped-def
-
-def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False): ...
+# keep roughly in sync with `lib._polynomial_impl.polyfit`
+@overload  # float dtype, cov: False (default)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False
+) -> NDArray[np.float64]: ...
+@overload  # float dtype, cov: True | "unscaled" (keyword)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> _2Tup[NDArray[np.float64]]: ...
+@overload  # float dtype, full: True (keyword)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: int,
+    rcond: bool | None = None,
+    *,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = None,
+    cov: bool | L["unscaled"] = False,
+) -> _5Tup[NDArray[np.float64]]: ...
+@overload  # complex dtype, cov: False (default)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False
+) -> NDArray[Incomplete]: ...
+@overload  # complex dtype, cov: True | "unscaled" (keyword)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> _2Tup[NDArray[np.complex128 | Any]]: ...
+@overload  # complex dtype, full: True (keyword)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: int,
+    rcond: bool | None = None,
+    *,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = None,
+    cov: bool | L["unscaled"] = False,
+) -> _5Tup[NDArray[np.complex128 | Any]]: ...
