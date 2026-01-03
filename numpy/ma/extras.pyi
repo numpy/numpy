@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
+from ast import In
 from collections.abc import Callable, Sequence
-from typing import Any, Concatenate, Literal as L, SupportsIndex, overload
+from typing import Any, Concatenate, Literal as L, SupportsIndex, TypeVar, overload
 
 import numpy as np
 from numpy import _CastingKind
@@ -79,6 +80,23 @@ type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[Scalar
 type _IntArray = NDArray[np.intp]
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
 type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
+
+# Explicitly set all allowed values to prevent accidental castings to
+# abstract dtypes (their common super-type).
+# Only relevant if two or more arguments are parametrized, (e.g. `setdiff1d`)
+# which could result in, for example, `int64` and `float64`producing a
+# `number[_64Bit]` array
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool,
+    np.int8, np.int16, np.int32, np.int64, np.intp,
+    np.uint8, np.uint16, np.uint32, np.uint64, np.uintp,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.timedelta64, np.datetime64,
+    np.bytes_, np.str_, np.void, np.object_,
+    np.integer, np.floating, np.complexfloating, np.character,
+)  # fmt: skip
 
 ###
 
@@ -327,7 +345,7 @@ def median(
     keepdims: L[False] = False,
 ) -> np.complex128 | Any: ...
 @overload  # known array-type, keepdims=True
-def median[ArrayT: NDArray[_ScalarNumeric]](
+def median[ArrayT: _MArray[_ScalarNumeric]](
     a: ArrayT,
     axis: _ShapeLike | None = None,
     out: None = None,
@@ -335,7 +353,7 @@ def median[ArrayT: NDArray[_ScalarNumeric]](
     *,
     keepdims: L[True],
 ) -> ArrayT: ...
-@overload  # known scalar-type, keepdims=True_ArrayLikeNumber_co
+@overload  # known scalar-type, keepdims=True
 def median[ScalarT: _ScalarNumeric](
     a: _ArrayLike[ScalarT],
     axis: _ShapeLike | None = None,
@@ -473,68 +491,75 @@ def unique[ScalarT: np.generic](
     ar1: _ArrayLike[ScalarT],
     return_index: L[False] = False,
     return_inverse: L[False] = False,
-) -> NDArray[ScalarT]: ...
+) -> _MArray[ScalarT]: ...
 @overload  # unknown scalar-type, FF
 def unique(
     ar1: ArrayLike,
     return_index: L[False] = False,
     return_inverse: L[False] = False,
-) -> np.ndarray: ...
+) -> _MArray[Incomplete]: ...
 @overload  # known scalar-type, TF
 def unique[ScalarT: np.generic](
     ar1: _ArrayLike[ScalarT],
     return_index: L[True],
     return_inverse: L[False] = False,
-) -> tuple[NDArray[ScalarT], _IntArray]: ...
+) -> tuple[_MArray[ScalarT], _IntArray]: ...
 @overload  # unknown scalar-type, TFF
 def unique(
     ar1: ArrayLike,
     return_index: L[True],
     return_inverse: L[False] = False,
-) -> tuple[np.ndarray, _IntArray]: ...
+) -> tuple[_MArray[Incomplete], _IntArray]: ...
 @overload  # known scalar-type, FT (positional)
 def unique[ScalarT: np.generic](
     ar1: _ArrayLike[ScalarT],
     return_index: L[False],
     return_inverse: L[True],
-) -> tuple[NDArray[ScalarT], _IntArray]: ...
+) -> tuple[_MArray[ScalarT], _IntArray]: ...
 @overload  # known scalar-type, FT (keyword)
 def unique[ScalarT: np.generic](
     ar1: _ArrayLike[ScalarT],
     return_index: L[False] = False,
     *,
     return_inverse: L[True],
-) -> tuple[NDArray[ScalarT], _IntArray]: ...
+) -> tuple[_MArray[ScalarT], _IntArray]: ...
 @overload  # unknown scalar-type, FT (positional)
 def unique(
     ar1: ArrayLike,
     return_index: L[False],
     return_inverse: L[True],
-) -> tuple[np.ndarray, _IntArray]: ...
+) -> tuple[_MArray[Incomplete], _IntArray]: ...
 @overload  # unknown scalar-type, FT (keyword)
 def unique(
     ar1: ArrayLike,
     return_index: L[False] = False,
     *,
     return_inverse: L[True],
-) -> tuple[np.ndarray, _IntArray]: ...
+) -> tuple[_MArray[Incomplete], _IntArray]: ...
 @overload  # known scalar-type, TT
 def unique[ScalarT: np.generic](
     ar1: _ArrayLike[ScalarT],
     return_index: L[True],
     return_inverse: L[True],
-) -> tuple[NDArray[ScalarT], _IntArray, _IntArray]: ...
+) -> tuple[_MArray[ScalarT], _IntArray, _IntArray]: ...
 @overload  # unknown scalar-type, TT
 def unique(
     ar1: ArrayLike,
     return_index: L[True],
     return_inverse: L[True],
-) -> tuple[np.ndarray, _IntArray, _IntArray]: ...
+) -> tuple[_MArray[Incomplete], _IntArray, _IntArray]: ...
+
+# keep in sync with `lib._arraysetops_impl.intersect1d`
+@overload  # known scalar-type, return_indices=False (default)
+def intersect1d(
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _MArray1D[_AnyScalarT]: ...
+@overload  # unknown scalar-type, return_indices=False (default)
+def intersect1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _MArray1D[Incomplete]: ...
 
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def intersect1d(ar1, ar2, assume_unique=False): ...
 def setxor1d(ar1, ar2, assume_unique=False): ...
 def in1d(ar1, ar2, assume_unique=False, invert=False): ...
 def isin(element, test_elements, assume_unique=False, invert=False): ...
