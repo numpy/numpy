@@ -1,15 +1,33 @@
-from _typeshed import Incomplete
-from collections.abc import Sequence
-from typing import SupportsIndex, overload
+from _typeshed import Incomplete, SupportsLenAndGetItem
+from collections.abc import Callable, Iterator, Sequence
+from typing import (
+    Any,
+    Concatenate,
+    Final,
+    Literal as L,
+    SupportsIndex,
+    TypeVar,
+    overload,
+    override,
+)
 
 import numpy as np
 from numpy import _CastingKind
+from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
+    NDArray,
     _AnyShape,
     _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _DTypeLike,
+    _NestedSequence,
+    _NumberLike_co,
+    _Shape,
     _ShapeLike,
 )
 from numpy.lib._function_base_impl import average
@@ -67,6 +85,36 @@ __all__ = [
 ]
 
 type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
+type _MArray1D[ScalarT: np.generic] = MaskedArray[tuple[int], np.dtype[ScalarT]]
+type _MArray2D[ScalarT: np.generic] = MaskedArray[tuple[int, int], np.dtype[ScalarT]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+
+type _IntArray = NDArray[np.intp]
+type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
+type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
+type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
+
+# helper aliases for polyfit
+type _2Tup[T] = tuple[T, T]
+type _5Tup[T] = tuple[T, NDArray[np.float64], NDArray[np.int32], NDArray[np.float64], NDArray[np.float64]]
+
+# Explicitly set all allowed values to prevent accidental castings to
+# abstract dtypes (their common super-type).
+# Only relevant if two or more arguments are parametrized, (e.g. `setdiff1d`)
+# which could result in, for example, `int64` and `float64` producing a
+# `number[_64Bit]` array
+_AnyScalarT = TypeVar(
+    "_AnyScalarT",
+    np.bool,
+    np.int8, np.int16, np.int32, np.int64, np.intp,
+    np.uint8, np.uint16, np.uint32, np.uint64, np.uintp,
+    np.float16, np.float32, np.float64, np.longdouble,
+    np.complex64, np.complex128, np.clongdouble,
+    np.timedelta64, np.datetime64,
+    np.bytes_, np.str_, np.void, np.object_,
+    np.integer, np.floating, np.complexfloating, np.character,
+)  # fmt: skip
 
 ###
 
@@ -243,57 +291,475 @@ def diagflat[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> _MArray
 @overload
 def diagflat(v: ArrayLike, k: int = 0) -> _MArray[Incomplete]: ...
 
-# TODO: everything below
-# mypy: disable-error-code=no-untyped-def
+#
+def count_masked(arr: ArrayLike, axis: SupportsIndex | None = None) -> NDArray[np.intp]: ...
 
-def count_masked(arr, axis=None): ...
-def masked_all(shape, dtype=float): ...  # noqa: PYI014
-def masked_all_like(arr): ...
+#
+@overload
+def masked_all[ScalarT: np.generic](shape: _ShapeLike, dtype: _DTypeLike[ScalarT]) -> _MArray[ScalarT]: ...
+@overload
+def masked_all(shape: _ShapeLike, dtype: DTypeLike = float) -> _MArray[Incomplete]: ...
 
-def apply_along_axis(func1d, axis, arr, *args, **kwargs): ...
-def apply_over_axes(func, a, axes): ...
-def median(a, axis=None, out=None, overwrite_input=False, keepdims=False): ...
-def compress_nd(x, axis=None): ...
-def compress_rowcols(x, axis=None): ...
-def compress_rows(a): ...
-def compress_cols(a): ...
-def mask_rows(a, axis=...): ...
-def mask_cols(a, axis=...): ...
-def ediff1d(arr, to_end=None, to_begin=None): ...
-def unique(ar1, return_index=False, return_inverse=False): ...
-def intersect1d(ar1, ar2, assume_unique=False): ...
-def setxor1d(ar1, ar2, assume_unique=False): ...
-def in1d(ar1, ar2, assume_unique=False, invert=False): ...
-def isin(element, test_elements, assume_unique=False, invert=False): ...
-def union1d(ar1, ar2): ...
-def setdiff1d(ar1, ar2, assume_unique=False): ...
-def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None): ...
-def corrcoef(x, y=None, rowvar=True, allow_masked=True): ...
+#
+@overload
+def masked_all_like[ScalarT: np.generic](arr: _ArrayLike[ScalarT]) -> _MArray[ScalarT]: ...
+@overload
+def masked_all_like(arr: ArrayLike) -> _MArray[Incomplete]: ...
+
+#
+def apply_along_axis[**Tss](
+    func1d: Callable[Concatenate[MaskedArray, Tss], ArrayLike],
+    axis: SupportsIndex,
+    arr: ArrayLike,
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> _MArray[Incomplete]: ...
+
+#
+@overload
+def apply_over_axes[ScalarT: np.generic](
+    func: Callable[[MaskedArray, int], _ArrayLike[ScalarT]],
+    a: np.ndarray,
+    axes: _ShapeLike,
+) -> _MArray[ScalarT]: ...
+@overload
+def apply_over_axes(
+    func: Callable[[MaskedArray, int], ArrayLike],
+    a: np.ndarray,
+    axes: _ShapeLike,
+) -> _MArray[Incomplete]: ...
+
+# keep in sync with `lib._function_base_impl.median`
+@overload  # known scalar-type, keepdims=False (default)
+def median[ScalarT: np.inexact | np.timedelta64](
+    a: _ArrayLike[ScalarT],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> ScalarT: ...
+@overload  # float array-like, keepdims=False (default)
+def median(
+    a: _ArrayLikeInt_co | _NestedSequence[float] | float,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.float64: ...
+@overload  # complex array-like, keepdims=False (default)
+def median(
+    a: _ListSeqND[complex],
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128: ...
+@overload  # complex scalar, keepdims=False (default)
+def median(
+    a: complex,
+    axis: None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: L[False] = False,
+) -> np.complex128 | Any: ...
+@overload  # known array-type, keepdims=True
+def median[ArrayT: _MArray[_ScalarNumeric]](
+    a: ArrayT,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> ArrayT: ...
+@overload  # known scalar-type, keepdims=True
+def median[ScalarT: _ScalarNumeric](
+    a: _ArrayLike[ScalarT],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _MArray[ScalarT]: ...
+@overload  # known scalar-type, axis=<given>
+def median[ScalarT: _ScalarNumeric](
+    a: _ArrayLike[ScalarT],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> _MArray[ScalarT]: ...
+@overload  # float array-like, keepdims=True
+def median(
+    a: _NestedSequence[float],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _MArray[np.float64]: ...
+@overload  # float array-like, axis=<given>
+def median(
+    a: _NestedSequence[float],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> _MArray[np.float64]: ...
+@overload  # complex array-like, keepdims=True
+def median(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    *,
+    keepdims: L[True],
+) -> _MArray[np.complex128]: ...
+@overload  # complex array-like, axis=<given>
+def median(
+    a: _ListSeqND[complex],
+    axis: _ShapeLike,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> _MArray[np.complex128]: ...
+@overload  # out=<given> (keyword)
+def median[ArrayT: np.ndarray](
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None = None,
+    *,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ArrayT: ...
+@overload  # out=<given> (positional)
+def median[ArrayT: np.ndarray](
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None,
+    out: ArrayT,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> ArrayT: ...
+@overload  # fallback
+def median(
+    a: _ArrayLikeComplex_co | _ArrayLike[np.timedelta64 | np.object_],
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    overwrite_input: bool = False,
+    keepdims: bool = False,
+) -> Incomplete: ...
+
+#
+@overload
+def compress_nd[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: _ShapeLike | None = None) -> NDArray[ScalarT]: ...
+@overload
+def compress_nd(x: ArrayLike, axis: _ShapeLike | None = None) -> NDArray[Incomplete]: ...
+
+#
+@overload
+def compress_rowcols[ScalarT: np.generic](x: _ArrayLike[ScalarT], axis: int | None = None) -> _Array2D[ScalarT]: ...
+@overload
+def compress_rowcols(x: ArrayLike, axis: int | None = None) -> _Array2D[Incomplete]: ...
+
+#
+@overload
+def compress_rows[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array2D[ScalarT]: ...
+@overload
+def compress_rows(a: ArrayLike) -> _Array2D[Incomplete]: ...
+
+#
+@overload
+def compress_cols[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array2D[ScalarT]: ...
+@overload
+def compress_cols(a: ArrayLike) -> _Array2D[Incomplete]: ...
+
+#
+def mask_rowcols(a: ArrayLike, axis: SupportsIndex | None = None) -> _MArray[Incomplete]: ...
+def mask_rows(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
+def mask_cols(a: ArrayLike, axis: _NoValueType = ...) -> _MArray[Incomplete]: ...
+
+# keep in sync with `lib._arraysetops_impl.ediff1d`
+@overload
+def ediff1d(
+    arr: _ArrayLikeBool_co,
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[np.int8]: ...
+@overload
+def ediff1d[NumericT: _ScalarNumeric](
+    arr: _ArrayLike[NumericT],
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[NumericT]: ...
+@overload
+def ediff1d(
+    arr: _ArrayLike[np.datetime64[Any]],
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[np.timedelta64]: ...
+@overload
+def ediff1d(
+    arr: _ArrayLikeComplex_co,
+    to_end: ArrayLike | None = None,
+    to_begin: ArrayLike | None = None,
+) -> _MArray1D[Incomplete]: ...
+
+# keep in sync with `lib._arraysetops_impl.unique`, minus `return_counts`
+@overload  # known scalar-type, FF
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+) -> _MArray[ScalarT]: ...
+@overload  # unknown scalar-type, FF
+def unique(
+    ar1: ArrayLike,
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+) -> _MArray[Incomplete]: ...
+@overload  # known scalar-type, TF
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+) -> tuple[_MArray[ScalarT], _IntArray]: ...
+@overload  # unknown scalar-type, TFF
+def unique(
+    ar1: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False] = False,
+) -> tuple[_MArray[Incomplete], _IntArray]: ...
+@overload  # known scalar-type, FT (positional)
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[True],
+) -> tuple[_MArray[ScalarT], _IntArray]: ...
+@overload  # known scalar-type, FT (keyword)
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+) -> tuple[_MArray[ScalarT], _IntArray]: ...
+@overload  # unknown scalar-type, FT (positional)
+def unique(
+    ar1: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[True],
+) -> tuple[_MArray[Incomplete], _IntArray]: ...
+@overload  # unknown scalar-type, FT (keyword)
+def unique(
+    ar1: ArrayLike,
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+) -> tuple[_MArray[Incomplete], _IntArray]: ...
+@overload  # known scalar-type, TT
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[True],
+) -> tuple[_MArray[ScalarT], _IntArray, _IntArray]: ...
+@overload  # unknown scalar-type, TT
+def unique(
+    ar1: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[True],
+) -> tuple[_MArray[Incomplete], _IntArray, _IntArray]: ...
+
+# keep in sync with `lib._arraysetops_impl.intersect1d`
+@overload  # known scalar-type, return_indices=False (default)
+def intersect1d(
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _MArray1D[_AnyScalarT]: ...
+@overload  # unknown scalar-type, return_indices=False (default)
+def intersect1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _MArray1D[Incomplete]: ...
+
+# keep in sync with `lib._arraysetops_impl.setxor1d`
+@overload
+def setxor1d(
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _MArray1D[_AnyScalarT]: ...
+@overload
+def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _MArray1D[Incomplete]: ...
+
+# keep in sync with `lib._arraysetops_impl.union1d`
+@overload
+def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _MArray1D[_AnyScalarT]: ...
+@overload
+def union1d(ar1: ArrayLike, ar2: ArrayLike) -> _MArray1D[Incomplete]: ...
+
+# keep in sync with `lib._arraysetops_impl.setdiff1d`
+@overload
+def setdiff1d(
+    ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
+) -> _MArray1D[_AnyScalarT]: ...
+@overload
+def setdiff1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _MArray1D[Incomplete]: ...
+
+#
+def in1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False, invert: bool = False) -> _MArray1D[np.bool]: ...
+
+# keep in sync with `lib._arraysetops_impl.isin`
+def isin(
+    element: ArrayLike, test_elements: ArrayLike, assume_unique: bool = False, invert: bool = False
+) -> _MArray[np.bool]: ...
+
+# keep in sync with `corrcoef`
+def cov(
+    x: ArrayLike,
+    y: ArrayLike | None = None,
+    rowvar: bool = True,
+    bias: bool = False,
+    allow_masked: bool = True,
+    ddof: int | None = None
+) -> _MArray[Incomplete]: ...
+
+# keep in sync with `cov`
+def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allow_masked: bool = True) -> _MArray[Incomplete]: ...
 
 class MAxisConcatenator(AxisConcatenator):
     __slots__ = ()
 
+    # keep in sync with `ma.core.concatenate`
+    @override  # type: ignore[override]
+    @overload
     @staticmethod
-    def concatenate(arrays: Incomplete, axis: int = 0) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def concatenate[ScalarT: np.generic](arrays: _ArrayLike[ScalarT], axis: SupportsIndex | None = 0) -> _MArray[ScalarT]: ...
+    @overload
+    @staticmethod
+    def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | None = 0) -> _MArray[Incomplete]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    #
+    @override
     @classmethod
-    def makemat(cls, arr: Incomplete) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
+    def makemat(cls, /, arr: ArrayLike) -> _MArray[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class mr_class(MAxisConcatenator):
     __slots__ = ()
-
     def __init__(self) -> None: ...
 
-mr_: mr_class
-
-def ndenumerate(a, compressed=True): ...
-def flatnotmasked_edges(a): ...
-def notmasked_edges(a, axis=None): ...
-def flatnotmasked_contiguous(a): ...
-def notmasked_contiguous(a, axis=None): ...
-def clump_unmasked(a): ...
-def clump_masked(a): ...
-def vander(x, n=None): ...
-def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False): ...
+mr_: Final[mr_class] = ...
 
 #
-def mask_rowcols(a: Incomplete, axis: Incomplete | None = None) -> MaskedArray[Incomplete, np.dtype[Incomplete]]: ...
+@overload
+def ndenumerate[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT, np.dtype[ScalarT]],
+    compressed: bool = True,
+) -> Iterator[tuple[ShapeT, ScalarT]]: ...
+@overload
+def ndenumerate[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    compressed: bool = True,
+) -> Iterator[tuple[_AnyShape, ScalarT]]: ...
+@overload
+def ndenumerate(
+    a: ArrayLike,
+    compressed: bool = True,
+) -> Iterator[tuple[_AnyShape, Incomplete]]: ...
+
+#
+@overload
+def flatnotmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _Array1D[ScalarT] | None: ...
+@overload
+def flatnotmasked_edges(a: ArrayLike) -> _Array1D[Incomplete] | None: ...
+
+#
+@overload
+def notmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: None = None) -> _Array1D[ScalarT] | None: ...
+@overload
+def notmasked_edges(a: ArrayLike, axis: None = None) -> _Array1D[Incomplete] | None: ...
+@overload
+def notmasked_edges(a: ArrayLike, axis: SupportsIndex) -> Incomplete: ...
+
+#
+def flatnotmasked_contiguous(a: ArrayLike) -> list[slice[int, int, None]]: ...
+
+#
+@overload
+def notmasked_contiguous(a: ArrayLike, axis: None = None) -> list[slice[int, int, None]]: ...
+@overload
+def notmasked_contiguous(a: ArrayLike, axis: SupportsIndex) -> list[Incomplete]: ...
+
+#
+def _ezclump(mask: np.ndarray) -> list[slice[int, int, None]]: ...  # undocumented
+def clump_unmasked(a: np.ndarray) -> list[slice[int, int, None]]: ...
+def clump_masked(a: np.ndarray) -> list[slice[int, int, None]]: ...
+
+# keep in sync with `lib._twodim_base_impl.vander`
+@overload
+def vander[ScalarT: np.number | np.object_](x: _ArrayLike[ScalarT], n: int | None = None) -> _Array2D[ScalarT]: ...
+@overload
+def vander(x: _ArrayLike[np.bool] | list[int], n: int | None = None) -> _Array2D[np.int_]: ...
+@overload
+def vander(x: list[float], n: int | None = None) -> _Array2D[np.float64]: ...
+@overload
+def vander(x: list[complex], n: int | None = None) -> _Array2D[np.complex128]: ...
+@overload  # fallback
+def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> _Array2D[Any]: ...
+
+# keep roughly in sync with `lib._polynomial_impl.polyfit`
+@overload  # float dtype, cov: False (default)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False
+) -> NDArray[np.float64]: ...
+@overload  # float dtype, cov: True | "unscaled" (keyword)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> _2Tup[NDArray[np.float64]]: ...
+@overload  # float dtype, full: True (keyword)
+def polyfit(
+    x: _ArrayLikeFloat_co,
+    y: _ArrayLikeFloat_co,
+    deg: int,
+    rcond: bool | None = None,
+    *,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = None,
+    cov: bool | L["unscaled"] = False,
+) -> _5Tup[NDArray[np.float64]]: ...
+@overload  # complex dtype, cov: False (default)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    cov: L[False] = False
+) -> NDArray[Incomplete]: ...
+@overload  # complex dtype, cov: True | "unscaled" (keyword)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: int,
+    rcond: bool | None = None,
+    full: L[False] = False,
+    w: _ArrayLikeFloat_co | None = None,
+    *,
+    cov: L[True, "unscaled"],
+) -> _2Tup[NDArray[np.complex128 | Any]]: ...
+@overload  # complex dtype, full: True (keyword)
+def polyfit(
+    x: _ArrayLikeComplex_co,
+    y: _ArrayLikeComplex_co,
+    deg: int,
+    rcond: bool | None = None,
+    *,
+    full: L[True],
+    w: _ArrayLikeFloat_co | None = None,
+    cov: bool | L["unscaled"] = False,
+) -> _5Tup[NDArray[np.complex128 | Any]]: ...
