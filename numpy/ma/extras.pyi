@@ -618,8 +618,9 @@ class MAxisConcatenator(AxisConcatenator):
     def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | None = 0) -> _MArray[Incomplete]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
+    @override
     @classmethod
-    def makemat(cls, arr: Incomplete) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
+    def makemat(cls, /, arr: ArrayLike) -> _MArray[Incomplete]: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class mr_class(MAxisConcatenator):
     __slots__ = ()
