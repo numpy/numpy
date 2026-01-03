@@ -2869,28 +2869,36 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     Py_ssize_t elsize = -1, alignment = -1;
     int version = 4;
     char endian;
-    PyObject *endian_obj;
-    PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
+    PyObject *endian_obj = NULL;
+    PyObject *subarray = Py_None;
+    PyObject *fields = Py_None;
+    PyObject *names = Py_None;
+    PyObject *metadata = NULL;
     int incref_names = 1;
     npy_int64 signed_dtypeflags = 0;
     npy_uint64 dtypeflags;
-if (PyTuple_GET_SIZE(args) != 1 ||
-        !PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
-    PyErr_BadInternalCall();
-    return NULL;
-}
 
-PyObject *state = PyTuple_GET_ITEM(args, 0);
-Py_ssize_t n = PyTuple_GET_SIZE(state);
-
-/* Valid pickle state sizes are 5–9 */
-if (n < 5 || n > 9) {
-    PyErr_SetString(PyExc_ValueError,
-            "invalid numpy.dtype pickle state");
-    return NULL;
-}
-    switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
-    case 9:
+    if (!PyDataType_ISLEGACY(self)) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "Cannot unpickle new style DType without custom methods.");
+            return NULL;
+        }
+    if (PyTuple_GET_SIZE(args) != 1 ||
+            !PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+    PyObject *state = PyTuple_GET_ITEM(args, 0);
+    Py_ssize_t n = PyTuple_GET_SIZE(state);
+    
+    /* Valid pickle state sizes are 5–9 */
+    if (n < 5 || n > 9) {
+        PyErr_SetString(PyExc_ValueError,
+                "invalid numpy.dtype pickle state");
+        return NULL;
+    }
+    switch (n) {
+        case 9:
         if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
                     &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
