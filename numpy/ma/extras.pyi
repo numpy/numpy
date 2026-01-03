@@ -76,6 +76,7 @@ type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _MArray1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
+type _IntArray = NDArray[np.intp]
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
 type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
 
@@ -466,10 +467,73 @@ def ediff1d(
     to_begin: ArrayLike | None = None,
 ) -> _MArray1D[Incomplete]: ...
 
+# keep in sync with `lib._arraysetops_impl.unique`, minus `return_counts`
+@overload  # known scalar-type, FF
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+) -> NDArray[ScalarT]: ...
+@overload  # unknown scalar-type, FF
+def unique(
+    ar1: ArrayLike,
+    return_index: L[False] = False,
+    return_inverse: L[False] = False,
+) -> np.ndarray: ...
+@overload  # known scalar-type, TF
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[False] = False,
+) -> tuple[NDArray[ScalarT], _IntArray]: ...
+@overload  # unknown scalar-type, TFF
+def unique(
+    ar1: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[False] = False,
+) -> tuple[np.ndarray, _IntArray]: ...
+@overload  # known scalar-type, FT (positional)
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[False],
+    return_inverse: L[True],
+) -> tuple[NDArray[ScalarT], _IntArray]: ...
+@overload  # known scalar-type, FT (keyword)
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+) -> tuple[NDArray[ScalarT], _IntArray]: ...
+@overload  # unknown scalar-type, FT (positional)
+def unique(
+    ar1: ArrayLike,
+    return_index: L[False],
+    return_inverse: L[True],
+) -> tuple[np.ndarray, _IntArray]: ...
+@overload  # unknown scalar-type, FT (keyword)
+def unique(
+    ar1: ArrayLike,
+    return_index: L[False] = False,
+    *,
+    return_inverse: L[True],
+) -> tuple[np.ndarray, _IntArray]: ...
+@overload  # known scalar-type, TT
+def unique[ScalarT: np.generic](
+    ar1: _ArrayLike[ScalarT],
+    return_index: L[True],
+    return_inverse: L[True],
+) -> tuple[NDArray[ScalarT], _IntArray, _IntArray]: ...
+@overload  # unknown scalar-type, TT
+def unique(
+    ar1: ArrayLike,
+    return_index: L[True],
+    return_inverse: L[True],
+) -> tuple[np.ndarray, _IntArray, _IntArray]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def unique(ar1, return_index=False, return_inverse=False): ...
 def intersect1d(ar1, ar2, assume_unique=False): ...
 def setxor1d(ar1, ar2, assume_unique=False): ...
 def in1d(ar1, ar2, assume_unique=False, invert=False): ...
