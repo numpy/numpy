@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, SupportsLenAndGetItem
 from ast import In
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from typing import Any, Concatenate, Final, Literal as L, SupportsIndex, TypeVar, overload
 from typing_extensions import override
 
@@ -602,8 +602,6 @@ def cov(
 # keep in sync with `cov`
 def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allow_masked: bool = True) -> _MArray[Incomplete]: ...
 
-# TODO: everything below
-# mypy: disable-error-code=no-untyped-def
 
 class MAxisConcatenator(AxisConcatenator):
     __slots__ = ()
@@ -628,7 +626,12 @@ class mr_class(MAxisConcatenator):
 
 mr_: Final[mr_class] = ...
 
-def ndenumerate(a, compressed=True): ...
+#
+def ndenumerate(a: ArrayLike, compressed: bool = True) -> Iterator[tuple[_AnyShape, Incomplete]]: ...
+
+# TODO: everything below
+# mypy: disable-error-code=no-untyped-def
+
 def flatnotmasked_edges(a): ...
 def notmasked_edges(a, axis=None): ...
 def flatnotmasked_contiguous(a): ...
