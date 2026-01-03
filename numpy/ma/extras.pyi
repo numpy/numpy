@@ -588,7 +588,7 @@ def isin(
     element: ArrayLike, test_elements: ArrayLike, assume_unique: bool = False, invert: bool = False
 ) -> _MArray[np.bool]: ...
 
-#
+# keep in sync with `corrcoef`
 def cov(
     x: ArrayLike,
     y: ArrayLike | None = None,
@@ -598,10 +598,11 @@ def cov(
     ddof: int | None = None
 ) -> _MArray[Incomplete]: ...
 
+# keep in sync with `cov`
+def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allow_masked: bool = True) -> _MArray[Incomplete]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
-
-def corrcoef(x, y=None, rowvar=True, allow_masked=True): ...
 
 class MAxisConcatenator(AxisConcatenator):
     __slots__ = ()
