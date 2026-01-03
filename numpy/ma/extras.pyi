@@ -25,6 +25,7 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _DTypeLike,
     _NestedSequence,
+    _NumberLike_co,
     _Shape,
     _ShapeLike,
 )
@@ -84,6 +85,7 @@ __all__ = [
 
 type _MArray[ScalarT: np.generic] = MaskedArray[_AnyShape, np.dtype[ScalarT]]
 type _MArray1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _MArray2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
 
 type _IntArray = NDArray[np.intp]
@@ -674,11 +676,23 @@ def notmasked_contiguous(a: ArrayLike, axis: None = None) -> list[slice[int, int
 def notmasked_contiguous(a: ArrayLike, axis: SupportsIndex) -> list[Incomplete]: ...
 
 #
+def _ezclump(mask: np.ndarray) -> list[slice[int, int, None]]: ...  # undocumented
 def clump_unmasked(a: np.ndarray) -> list[slice[int, int, None]]: ...
+def clump_masked(a: np.ndarray) -> list[slice[int, int, None]]: ...
+
+# keep in sync with `lib._twodim_base_impl.vander`
+@overload
+def vander[ScalarT: np.number | np.object_](x: _ArrayLike[ScalarT], n: int | None = None) -> _MArray2D[ScalarT]: ...
+@overload
+def vander(x: _ArrayLike[np.bool] | list[int], n: int | None = None) -> _MArray2D[np.int_]: ...
+@overload
+def vander(x: list[float], n: int | None = None) -> _MArray2D[np.float64]: ...
+@overload
+def vander(x: list[complex], n: int | None = None) -> _MArray2D[np.complex128]: ...
+@overload  # fallback
+def vander(x: Sequence[_NumberLike_co], n: int | None = None) -> _MArray2D[Any]: ...
 
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def clump_masked(a): ...
-def vander(x, n=None): ...
 def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False): ...
