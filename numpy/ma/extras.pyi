@@ -1,8 +1,15 @@
 from _typeshed import Incomplete, SupportsLenAndGetItem
-from ast import In
 from collections.abc import Callable, Iterator, Sequence
-from typing import Any, Concatenate, Final, Literal as L, SupportsIndex, TypeVar, overload
-from typing_extensions import override
+from typing import (
+    Any,
+    Concatenate,
+    Final,
+    Literal as L,
+    SupportsIndex,
+    TypeVar,
+    overload,
+    override,
+)
 
 import numpy as np
 from numpy import _CastingKind
@@ -18,6 +25,7 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _DTypeLike,
     _NestedSequence,
+    _Shape,
     _ShapeLike,
 )
 from numpy.lib._function_base_impl import average
@@ -602,7 +610,6 @@ def cov(
 # keep in sync with `cov`
 def corrcoef(x: ArrayLike, y: ArrayLike | None = None, rowvar: bool = True, allow_masked: bool = True) -> _MArray[Incomplete]: ...
 
-
 class MAxisConcatenator(AxisConcatenator):
     __slots__ = ()
 
@@ -627,12 +634,31 @@ class mr_class(MAxisConcatenator):
 mr_: Final[mr_class] = ...
 
 #
-def ndenumerate(a: ArrayLike, compressed: bool = True) -> Iterator[tuple[_AnyShape, Incomplete]]: ...
+@overload
+def ndenumerate[ShapeT: _Shape, ScalarT: np.generic](
+    a: np.ndarray[ShapeT, np.dtype[ScalarT]],
+    compressed: bool = True,
+) -> Iterator[tuple[ShapeT, ScalarT]]: ...
+@overload
+def ndenumerate[ScalarT: np.generic](
+    a: _ArrayLike[ScalarT],
+    compressed: bool = True,
+) -> Iterator[tuple[_AnyShape, ScalarT]]: ...
+@overload
+def ndenumerate(
+    a: ArrayLike,
+    compressed: bool = True,
+) -> Iterator[tuple[_AnyShape, Incomplete]]: ...
+
+#
+@overload
+def flatnotmasked_edges[ScalarT: np.generic](a: _ArrayLike[ScalarT]) -> _MArray1D[ScalarT] | None: ...
+@overload
+def flatnotmasked_edges(a: ArrayLike) -> _MArray1D[Incomplete] | None: ...
 
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def flatnotmasked_edges(a): ...
 def notmasked_edges(a, axis=None): ...
 def flatnotmasked_contiguous(a): ...
 def notmasked_contiguous(a, axis=None): ...
