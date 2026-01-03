@@ -79,6 +79,7 @@ type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[Scalar
 
 type _IntArray = NDArray[np.intp]
 type _ScalarNumeric = np.inexact | np.timedelta64 | np.object_
+type _InexactDouble = np.float64 | np.longdouble | np.complex128 | np.clongdouble
 type _ListSeqND[T] = list[T] | _NestedSequence[list[T]]
 
 # Explicitly set all allowed values to prevent accidental castings to
@@ -587,10 +588,19 @@ def isin(
     element: ArrayLike, test_elements: ArrayLike, assume_unique: bool = False, invert: bool = False
 ) -> _MArray[np.bool]: ...
 
+#
+def cov(
+    x: ArrayLike,
+    y: ArrayLike | None = None,
+    rowvar: bool = True,
+    bias: bool = False,
+    allow_masked: bool = True,
+    ddof: int | None = None
+) -> _MArray[Incomplete]: ...
+
 # TODO: everything below
 # mypy: disable-error-code=no-untyped-def
 
-def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None): ...
 def corrcoef(x, y=None, rowvar=True, allow_masked=True): ...
 
 class MAxisConcatenator(AxisConcatenator):
