@@ -830,6 +830,19 @@ class TestEinsum:
             assert_equal(np.einsum('...lmn,lmno->...o', A, B,
                                    optimize=opt), ref)  # used to raise error
 
+    def test_einsum_broadcast_30349(self):
+        # Issue 30349 related to broadcasting with ellipsis
+        # np.einsum with optimize=True was not handling broadcasting
+        # correctly when ellipsis were involved (e.g. 'i...->i')
+        x = np.array([[[1,2,3],[1,2,3],[1,2,3]],
+                    [[1,2,3],[1,2,3],[1,2,3]],
+                    [[1,2,3],[1,2,3],[1,2,3]]])
+        
+        print(np.einsum("i...->i", x, optimize=False))
+
+        assert_equal(np.einsum("i...->i", x, optimize=False), np.array([18, 18, 18]))
+        assert_equal(np.einsum("i...->i", x, optimize=True), np.einsum("i...->i", x, optimize=False))
+
     def test_einsum_fixedstridebug(self):
         # Issue #4485 obscure einsum bug
         # This case revealed a bug in nditer where it reported a stride
