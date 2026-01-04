@@ -63,7 +63,7 @@ class UniqueInverseResult[ScalarT: np.generic](NamedTuple):
     values: _Array1D[ScalarT]
     inverse_indices: NDArray[np.intp]
 
-#
+# keep in sync with `ma.extras.ediff1d`
 @overload
 def ediff1d(
     ary: _ArrayLikeBool_co,

@@ -207,6 +207,7 @@ def triu[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 0) -> NDArray[Sca
 def triu(m: ArrayLike, k: int = 0) -> NDArray[Any]: ...
 
 # we use `list` (invariant) instead of `Sequence` (covariant) to avoid overlap
+# keep in sync with `ma.extras.vander`
 @overload
 def vander[ScalarT: np.number | np.object_](x: _ArrayLike1D[ScalarT], N: int | None = None, increasing: bool = False) -> _Array2D[ScalarT]: ...
 @overload
