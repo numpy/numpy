@@ -834,10 +834,10 @@ class TestEinsum:
         # Issue 30349 related to broadcasting with ellipsis
         # np.einsum with optimize=True was not handling broadcasting
         # correctly when ellipsis were involved (e.g. 'i...->i')
-        x = np.array([[[1,2,3],[1,2,3],[1,2,3]],
-                    [[1,2,3],[1,2,3],[1,2,3]],
-                    [[1,2,3],[1,2,3],[1,2,3]]])
-        
+        x = np.array([[[1, 2, 3], [1, 2, 3], [1, 2, 3]],
+                    [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
+                    [[1, 2, 3], [1, 2, 3], [1, 2, 3]]])
+
         print(np.einsum("i...->i", x, optimize=False))
 
         assert_equal(np.einsum("i...->i", x, optimize=False), np.array([18, 18, 18]))
