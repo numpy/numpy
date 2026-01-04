@@ -170,51 +170,55 @@ argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
-    npy_intp min_idx = 0;
-    npy_intp max_idx = arr_len;
-    T last_key_val;
 
-    if (key_len == 0) {
+    // If the array length is 0 we return all 0s
+    if (arr_len <= 0) {
+        for (npy_intp i = 0; i < key_len; ++i) {
+            *(npy_intp *)(ret + i * ret_str) = 0;
+        }
         return 0;
     }
-    last_key_val = *(const T *)key;
 
-    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
-        const T key_val = *(const T *)key;
-        /*
-         * Updating only one of the indices based on the previous key
-         * gives the search a big boost when keys are sorted, but slightly
-         * slows down things for purely random ones.
-         */
-        if (cmp(last_key_val, key_val)) {
-            max_idx = arr_len;
-        }
-        else {
-            min_idx = 0;
-            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
-        }
+    npy_intp interval_length = arr_len;
+    npy_intp half = interval_length >> 1;
+    interval_length -= half; // length -> ceil(length / 2)
 
-        last_key_val = key_val;
+    npy_intp base = 0;
+    npy_intp mid_idx = *(npy_intp *)(sort + (base + half) * sort_str);
+    if (mid_idx < 0 || mid_idx >= arr_len) {
+        return -1;
+    }
+    const T mid_val = *(const T *)(arr + mid_idx * arr_str);
 
-        while (min_idx < max_idx) {
-            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
-            const npy_intp sort_idx = *(npy_intp *)(sort + mid_idx * sort_str);
-            T mid_val;
+    for (npy_intp i = 0; i < key_len; ++i) {
+        const T key_val = *(const T *)(key + i * key_str);
+        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
+    }
 
-            if (sort_idx < 0 || sort_idx >= arr_len) {
+    while (interval_length > 1) {
+        npy_intp half = interval_length >> 1;
+        interval_length -= half; // length -> ceil(length / 2)
+
+        for (npy_intp i = 0; i < key_len; ++i) {
+            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+            npy_intp mid_idx = *(npy_intp *)(sort + (base + half) * sort_str);
+            if (mid_idx < 0 || mid_idx >= arr_len) {
                 return -1;
             }
-
-            mid_val = *(const T *)(arr + sort_idx * arr_str);
-
-            if (cmp(mid_val, key_val)) {
-                min_idx = mid_idx + 1;
-            }
-            else {
-                max_idx = mid_idx;
-            }
+            const T mid_val = *(const T *)(arr + mid_idx * arr_str);
+            const T key_val = *(const T *)(key + i * key_str);
+            base += cmp(mid_val, key_val) * half;
         }
-        *(npy_intp *)ret = min_idx;
+    }
+
+    for (npy_intp i = 0; i < key_len; ++i) {
+        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+        npy_intp mid_idx = *(npy_intp *)(sort + base * sort_str);
+        if (mid_idx < 0 || mid_idx >= arr_len) {
+            return -1;
+        }
+        const T key_val = *(const T *)(key + i * key_str);
+        base += cmp(*(const T *)(arr + mid_idx * arr_str), key_val);
     }
     return 0;
 }
