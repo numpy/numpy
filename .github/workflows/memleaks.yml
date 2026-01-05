@@ -4,31 +4,67 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
   cancel-in-progress: true
 
-jobs:
-  # Tests for Linux, Windows, macOS
-  test:
-    name: "${{ matrix.os }} / py${{ matrix.python }}"
-    runs-on: ${{ matrix.os }}
 
+jobs:
+  smoke_test:
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python: ["3.12"]
+        version: ["3.12", "3.13", "3.14", "3.14t"]
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      with:
+        python-version: ${{ matrix.version }}
+    - uses: ./.github/meson_actions
+
+  Linux_Python_312_32bit_full:
+    name: i686, cp312, full
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    container:
+       # There are few options for i686 images at https://quay.io/organization/pypa,
+       # use the glibc2.28 one
+      image: quay.io/pypa/manylinux_2_28_i686
 
     steps:
-      - uses: actions/checkout@v5
+    - name: Checkout and initialize submodules
+      # actions/checkout doesn't work in a container image
+      run: |
+        git config --global --add safe.directory $PWD
+        if [ $GITHUB_EVENT_NAME != pull_request ]; then
+            git clone --recursive --branch=$GITHUB_REF_NAME https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git reset --hard $GITHUB_SHA
+        else
+            git clone --recursive https://github.com/${GITHUB_REPOSITORY}.git $GITHUB_WORKSPACE
+            git fetch origin $GITHUB_REF:my_ref_name
+            git checkout $GITHUB_BASE_REF
+            git -c user.email="you@example.com" merge --no-commit my_ref_name
+        fi
+        git submodule update --init --recursive
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python }}
+    - name: build
+      run: |
+        python3.12 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements/ci32_requirements.txt
+        pip install -r requirements/test_requirements.txt
 
-      - name: build
-        run: |
-          python3.12 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements/test_requirements.txt
-          source venv/bin/activate
-          python -m pytest -k numpy/tests/test_memleaks.py
+        spin config-openblas --with-scipy-openblas=32
+        export PKG_CONFIG_PATH=$(pwd)/.openblas
+        python -m pip install . -v -Csetup-args="-Dallow-noblas=false"
+
+    - name: test
+      run: |
+        source venv/bin/activate
+        cd tools
+        python -m pytest --pyargs numpy
