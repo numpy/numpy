@@ -714,15 +714,10 @@ _NBitT2 = TypeVar("_NBitT2", bound=NBitBase, default=_NBitT1)  # pyright: ignore
 
 _ItemT_co = TypeVar("_ItemT_co", default=Any, covariant=True)
 _BoolItemT_co = TypeVar("_BoolItemT_co", bound=py_bool, default=py_bool, covariant=True)
-_NumberItemT_co = TypeVar("_NumberItemT_co", bound=complex, default=int | float | complex, covariant=True)
-_InexactItemT_co = TypeVar("_InexactItemT_co", bound=complex, default=float | complex, covariant=True)
-_FlexibleItemT_co = TypeVar(
-    "_FlexibleItemT_co",
-    bound=_CharLike_co | tuple[Any, ...],
-    default=_CharLike_co | tuple[Any, ...],
-    covariant=True,
-)
-_CharacterItemT_co = TypeVar("_CharacterItemT_co", bound=_CharLike_co, default=_CharLike_co, covariant=True)
+_NumberItemT_co = TypeVar("_NumberItemT_co", bound=complex, default=Any, covariant=True)  # either int, float, or complex
+_InexactItemT_co = TypeVar("_InexactItemT_co", bound=complex, default=Any, covariant=True)  # either float or complex
+_FlexibleItemT_co = TypeVar("_FlexibleItemT_co", bound=bytes | str | tuple[Any, ...], default=Any, covariant=True)
+_CharacterItemT_co = TypeVar("_CharacterItemT_co", bound=bytes | str, default=Any, covariant=True)
 _TD64ItemT_co = TypeVar("_TD64ItemT_co", bound=_TD64Item, default=Any, covariant=True)
 _DT64ItemT_co = TypeVar("_DT64ItemT_co", bound=_DT64Item, default=Any, covariant=True)
 
