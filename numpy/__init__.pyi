@@ -328,6 +328,7 @@ from numpy._core.multiarray import (
     promote_types,
     fromstring,
     frompyfunc,
+    flatiter,
     nested_iters,
     flagsobj,
 )
@@ -1597,64 +1598,6 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     def str(self) -> LiteralString: ...
     @property
     def type(self) -> type[_ScalarT_co]: ...
-
-@final
-class flatiter(Generic[_ArrayT_co]):
-    __hash__: ClassVar[None] = None  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
-
-    @property
-    def base(self, /) -> _ArrayT_co: ...
-    @property
-    def coords[ShapeT: _Shape](self: flatiter[ndarray[ShapeT]], /) -> ShapeT: ...
-    @property
-    def index(self, /) -> int: ...
-
-    # iteration
-    def __len__(self, /) -> int: ...
-    def __iter__(self, /) -> Self: ...
-    def __next__[ScalarT: generic](self: flatiter[NDArray[ScalarT]], /) -> ScalarT: ...
-
-    # indexing
-    @overload  # nd: _[()]
-    def __getitem__(self, key: tuple[()], /) -> _ArrayT_co: ...
-    @overload  # 0d; _[<integer>]
-    def __getitem__[ScalarT: generic](self: flatiter[NDArray[ScalarT]], key: int | integer, /) -> ScalarT: ...
-    @overload  # 1d; _[[*<int>]], _[:], _[...]
-    def __getitem__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        key: list[int] | slice | EllipsisType | flatiter[NDArray[integer]],
-        /,
-    ) -> ndarray[tuple[int], DTypeT]: ...
-    @overload  # 2d; _[[*[*<int>]]]
-    def __getitem__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        key: list[list[int]],
-        /,
-    ) -> ndarray[tuple[int, int], DTypeT]: ...
-    @overload  # ?d
-    def __getitem__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        key: NDArray[integer] | _NestedSequence[int],
-        /,
-    ) -> ndarray[_AnyShape, DTypeT]: ...
-
-    # NOTE: `__setitem__` operates via `unsafe` casting rules, and can thus accept any
-    # type accepted by the relevant underlying `np.generic` constructor, which isn't
-    # known statically. So we cannot meaningfully annotate the value parameter.
-    def __setitem__(self, key: slice | EllipsisType | _ArrayLikeInt, val: object, /) -> None: ...
-
-    # NOTE: `dtype` and `copy` are no-ops at runtime, so we don't support them here to
-    # avoid confusion
-    def __array__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        dtype: None = None,
-        /,
-        *,
-        copy: None = None,
-    ) -> ndarray[tuple[int], DTypeT]: ...
-
-    # This returns a flat copy of the underlying array, not of the iterator itself
-    def copy[DTypeT: dtype](self: flatiter[ndarray[Any, DTypeT]], /) -> ndarray[tuple[int], DTypeT]: ...
 
 @type_check_only
 class _ArrayOrScalarCommon:

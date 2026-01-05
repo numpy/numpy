@@ -1,18 +1,21 @@
 import datetime as dt
 from _typeshed import Incomplete, StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Buffer, Callable, Iterable, Sequence
+from types import EllipsisType
 from typing import (
     Any,
     ClassVar,
     Final,
+    Generic,
     Literal as L,
     Protocol,
+    Self,
     SupportsIndex,
     final,
     overload,
     type_check_only,
 )
-from typing_extensions import CapsuleType
+from typing_extensions import CapsuleType, TypeVar
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
@@ -31,7 +34,6 @@ from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
     datetime64,
     dtype,
     einsum as c_einsum,
-    flatiter,
     float64,
     floating,
     from_dlpack,
@@ -60,6 +62,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeDT64_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
@@ -175,6 +178,8 @@ __all__ = [
     "where",
     "zeros",
 ]
+
+_ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covariant=True)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
@@ -1386,6 +1391,65 @@ class flagsobj:
     def owndata(self) -> bool: ...
     def __getitem__(self, key: _GetItemKeys) -> bool: ...
     def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
+
+@final
+class flatiter(Generic[_ArrayT_co]):
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc] # pyright: ignore[reportIncompatibleVariableOverride]
+    __hash__: ClassVar[None] = None  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    @property
+    def base(self, /) -> _ArrayT_co: ...
+    @property
+    def coords[ShapeT: _Shape](self: flatiter[np.ndarray[ShapeT]], /) -> ShapeT: ...
+    @property
+    def index(self, /) -> int: ...
+
+    # iteration
+    def __len__(self, /) -> int: ...
+    def __iter__(self, /) -> Self: ...
+    def __next__[ScalarT: np.generic](self: flatiter[NDArray[ScalarT]], /) -> ScalarT: ...
+
+    # indexing
+    @overload  # nd: _[()]
+    def __getitem__(self, key: tuple[()], /) -> _ArrayT_co: ...
+    @overload  # 0d; _[<integer>]
+    def __getitem__[ScalarT: np.generic](self: flatiter[NDArray[ScalarT]], key: int | np.integer, /) -> ScalarT: ...
+    @overload  # 1d; _[[*<int>]], _[:], _[...]
+    def __getitem__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        key: list[int] | slice | EllipsisType | flatiter[NDArray[np.integer]],
+        /,
+    ) -> ndarray[tuple[int], DTypeT]: ...
+    @overload  # 2d; _[[*[*<int>]]]
+    def __getitem__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        key: list[list[int]],
+        /,
+    ) -> ndarray[tuple[int, int], DTypeT]: ...
+    @overload  # ?d
+    def __getitem__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        key: NDArray[np.integer] | _NestedSequence[int],
+        /,
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+
+    # NOTE: `__setitem__` operates via `unsafe` casting rules, and can thus accept any
+    # type accepted by the relevant underlying `np.generic` constructor, which isn't
+    # known statically. So we cannot meaningfully annotate the value parameter.
+    def __setitem__(self, key: slice | EllipsisType | _ArrayLikeInt, val: object, /) -> None: ...
+
+    # NOTE: `dtype` and `copy` are no-ops at runtime, so we don't support them here to
+    # avoid confusion
+    def __array__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        dtype: None = None,
+        /,
+        *,
+        copy: None = None,
+    ) -> ndarray[tuple[int], DTypeT]: ...
+
+    # This returns a flat copy of the underlying array, not of the iterator itself
+    def copy[DTypeT: dtype](self: flatiter[np.ndarray[Any, DTypeT]], /) -> ndarray[tuple[int], DTypeT]: ...
 
 def nested_iters(
     op: ArrayLike | Sequence[ArrayLike],
