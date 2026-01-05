@@ -1,5 +1,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+extern "C" {
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -27,12 +28,11 @@
 #endif
 #endif
 
-/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
- * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
+
+/* Do not enable the alloc cache if ASAN or MSAN instrumentation is enabled.
+ * The cache makes ASAN use-after-free or MSAN
  * use-of-uninitialized-memory warnings less useful. */
-#ifdef Py_GIL_DISABLED
-#    define USE_ALLOC_CACHE 0
-#elif defined(__has_feature)
+#if defined(__has_feature)
 #    if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
 #        define USE_ALLOC_CACHE 0
 #    endif
@@ -50,8 +50,26 @@ typedef struct {
     npy_uintp available; /* number of cached pointers */
     void * ptrs[NCACHE];
 } cache_bucket;
-static cache_bucket datacache[NBUCKETS];
-static cache_bucket dimcache[NBUCKETS_DIM];
+
+static NPY_TLS cache_bucket datacache[NBUCKETS];
+static NPY_TLS cache_bucket dimcache[NBUCKETS_DIM];
+
+typedef struct cache_destructor {
+    ~cache_destructor() {
+        for (npy_uint i = 0; i < NBUCKETS; ++i) {
+            while (datacache[i].available > 0) {
+                free(datacache[i].ptrs[--datacache[i].available]);
+            }
+        }
+        for (npy_uint i = 0; i < NBUCKETS_DIM; ++i) {
+            while (dimcache[i].available > 0) {
+                PyArray_free(dimcache[i].ptrs[--dimcache[i].available]);
+            }
+        }
+    }
+} cache_destructor;
+
+static NPY_TLS cache_destructor tls_cache_destructor;
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
@@ -595,3 +613,5 @@ _Npy_MallocWithOverflowCheck(npy_intp size, npy_intp elsize)
     }
     return PyMem_MALLOC(total_size);
 }
+
+} /* extern "C" */

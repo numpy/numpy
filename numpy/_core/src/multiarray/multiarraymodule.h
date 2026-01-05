@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * A struct storing thread-unsafe global state for the _multiarray_umath
  * module. We should refactor so the global state is thread-safe,
@@ -84,5 +88,8 @@ NPY_VISIBILITY_HIDDEN extern npy_thread_unsafe_state_struct npy_thread_unsafe_st
 
 NPY_NO_EXPORT int
 get_legacy_print_mode(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MULTIARRAYMODULE_H_ */
