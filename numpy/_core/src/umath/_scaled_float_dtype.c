@@ -1077,7 +1077,7 @@ sfloat_init_ufuncs(void) {
 NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
-    if (npy_thread_unsafe_state.get_sfloat_dtype_initialized) {
+    if (npy_global_state.get_sfloat_dtype_initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -1106,6 +1106,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    npy_thread_unsafe_state.get_sfloat_dtype_initialized = NPY_TRUE;
+    npy_global_state.get_sfloat_dtype_initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

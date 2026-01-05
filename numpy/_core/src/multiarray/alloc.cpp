@@ -82,7 +82,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (npy_thread_unsafe_state.madvise_hugepage) {
+    if (npy_global_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -100,12 +100,12 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 {
-    int was_enabled = npy_thread_unsafe_state.madvise_hugepage;
+    int was_enabled = npy_global_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    npy_thread_unsafe_state.madvise_hugepage = enabled;
+    npy_global_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
@@ -118,7 +118,7 @@ indicate_hugepages(void *p, size_t size) {
 #ifdef NPY_OS_LINUX
     /* allow kernel allocating huge pages for large arrays */
     if (NPY_UNLIKELY(size >= ((1u<<22u))) &&
-        npy_thread_unsafe_state.madvise_hugepage) {
+        npy_global_state.madvise_hugepage) {
         npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
         npy_uintp length = size - offset;
         /**
