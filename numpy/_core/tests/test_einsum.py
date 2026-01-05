@@ -831,17 +831,19 @@ class TestEinsum:
                                    optimize=opt), ref)  # used to raise error
 
     def test_einsum_broadcast_30349(self):
-        # Issue 30349 related to broadcasting with ellipsis
-        # np.einsum with optimize=True was not handling broadcasting
-        # correctly when ellipsis were involved (e.g. 'i...->i')
-        x = np.array([[[1, 2, 3], [1, 2, 3], [1, 2, 3]],
-                    [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
-                    [[1, 2, 3], [1, 2, 3], [1, 2, 3]]])
-
-        print(np.einsum("i...->i", x, optimize=False))
+        # Issue #30349 related to broadcasting with ellipsis
+        x = np.tile(np.array([1,2,3]), (3, 3, 1))
 
         assert_equal(np.einsum("i...->i", x, optimize=False), np.array([18, 18, 18]))
         assert_equal(np.einsum("i...->i", x, optimize=True), np.einsum("i...->i", x, optimize=False))
+
+        # Test other subscripts for same results with both paths
+        for subscript in {"...i->i", "ij...->i", "ij...->ij",
+                          "...ij->i", "...ij->ij", "i...j->i",
+                          "i...j->ij", "ijk->i", "ijk->ij", "ijk->ijk"}:
+            result = np.einsum(subscript, x, optimize=True)
+            expected = np.einsum(subscript, x, optimize=False)
+            assert_equal(result, expected)
 
     def test_einsum_fixedstridebug(self):
         # Issue #4485 obscure einsum bug
