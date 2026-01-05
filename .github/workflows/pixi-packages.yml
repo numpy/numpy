@@ -22,9 +22,6 @@ jobs:
       matrix:
         runs-on: [ubuntu-latest, macos-15]
         package_variant: [tsan-free-threading, asan, default]
-        exclude:
-          - runs-on: macos-15
-            package_variant: tsan-free-threading
     if: github.repository == 'numpy/numpy'
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1

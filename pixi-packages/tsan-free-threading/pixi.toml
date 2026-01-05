@@ -21,6 +21,7 @@ python.git = "https://github.com/crusaderky/cpython"
 python.subdirectory = "Tools/pixi-packages/tsan-free-threading"
 python.rev = "9a2a8963286077536f67b89a2123355aeb049a3d"
 
-meson-python = "*"
+[dependencies]
+meson-python = "0.18.*"
 cython = "*"
 uv = "*" # used to invoke the wheel build
