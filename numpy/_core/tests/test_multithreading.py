@@ -336,7 +336,6 @@ def test_arg_locking(kernel, outcome):
 
     def read_arrs(b):
         nonlocal done
-        nonlocal arrs
         b.wait()
         try:
             kernel(arrs)
@@ -344,8 +343,6 @@ def test_arg_locking(kernel, outcome):
             done += 1
 
     def contract_and_expand_list(b):
-        nonlocal done
-        nonlocal arrs
         b.wait()
         while done < 4:
             if len(arrs) > 10:
@@ -354,8 +351,6 @@ def test_arg_locking(kernel, outcome):
                 arrs.extend([np.array([1, 2, 3]) for _ in range(1000)])
 
     def replace_list_items(b):
-        nonlocal done
-        nonlocal arrs
         b.wait()
         rng = np.random.RandomState()
         rng.seed(0x4d3d3d3)
@@ -368,7 +363,7 @@ def test_arg_locking(kernel, outcome):
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
                 tasks = [tpe.submit(read_arrs, b) for _ in range(4)]
-                tasks.append(tpe.submit(replace_list_items, b))
+                tasks.append(tpe.submit(mutation_func, b))
                 for t in tasks:
                     t.result()
         except RuntimeError as e:

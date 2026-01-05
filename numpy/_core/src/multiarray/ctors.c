@@ -520,7 +520,7 @@ PyArray_AssignFromCache_Recursive(
         assert(depth != ndim);
         npy_intp orig_length = PyArray_DIMS(self)[0];
         for (npy_intp i = 0; i < orig_length; i++) {
-            int critical_section_error = 0;
+            int err = 0;
             // this macro takes *the argument* of PySequence_Fast, which is orig_seq;
             // not the object returned by PySequence_Fast, which is obj
             NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
@@ -529,14 +529,14 @@ PyArray_AssignFromCache_Recursive(
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Inconsistent object during array creation? "
                                 "Content of sequences changed (length inconsistent).");
-                critical_section_error = 1;
+                err = 1;
             }
             else {
                 Py_XSETREF(item_pyvalue, Py_NewRef(PySequence_Fast_GET_ITEM(obj, i)));
             }
             NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
 
-            if (critical_section_error) {
+            if (err) {
                 goto finish;
             }
 
