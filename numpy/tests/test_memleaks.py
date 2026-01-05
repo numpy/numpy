@@ -1,11 +1,9 @@
 import os
-import numpy as np
 
 import pytest
+from psleak import Checkers, LeakTest as LT, MemoryLeakTestCase
 
-from psleak import LeakTest as LT
-from psleak import MemoryLeakTestCase
-from psleak import Checkers
+import numpy as np
 
 api = {
     # array creation
