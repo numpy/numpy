@@ -6,28 +6,9 @@ concurrency:
 
 
 jobs:
-  smoke_test:
-    # To enable this job on a fork, comment out:
-    runs-on: ubuntu-latest
-    env:
-      MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
-    strategy:
-      matrix:
-        version: ["3.12"]
-    steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      with:
-        submodules: recursive
-        fetch-tags: true
-        persist-credentials: false
-    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
-      with:
-        python-version: ${{ matrix.version }}
-    - uses: ./.github/meson_actions
 
   Linux_Python_312_32bit_full:
     name: i686, cp312, full
-    needs: [smoke_test]
     runs-on: ubuntu-latest
     container:
        # There are few options for i686 images at https://quay.io/organization/pypa,
@@ -66,4 +47,4 @@ jobs:
       run: |
         source venv/bin/activate
         cd tools
-        python -m pytest -v --pyargs numpy.tests.test_memleaks
+        PYTHONMALLOC=malloc PYTHONUNBUFFERED=1 python -m pytest -v --pyargs numpy.tests.test_memleaks
