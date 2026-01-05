@@ -24,6 +24,11 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install deps
+      - name: build
         run: |
-          make ci-test
+          python3.12 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements/test_requirements.txt
+          source venv/bin/activate
+          python -m pytest -k numpy/tests/test_memleaks.py
