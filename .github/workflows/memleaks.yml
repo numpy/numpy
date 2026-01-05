@@ -65,4 +65,5 @@ jobs:
     - name: test
       run: |
         source venv/bin/activate
-        python -m pytest -v numpy/tests/test_memleaks.py
+        cd tools
+        python -m pytest -v --pyargs numpy.tests.test_memleaks
