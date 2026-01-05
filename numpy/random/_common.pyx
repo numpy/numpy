@@ -425,7 +425,7 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
     return 0
 
 
-cdef int check_constraint(double val, object name, constraint_type cons) except -1:
+cdef int check_constraint(double_or_int64 val, object name, constraint_type cons) except -1:
     if cons == CONS_NON_NEGATIVE:
         if not isnan(val) and signbit(val):
             raise ValueError(f"{name} < 0")
