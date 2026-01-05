@@ -2,8 +2,8 @@ import pytest
 
 from numpy._core._multiarray_tests import (
     create_identity_hash,
-    identity_hash_set_item,
     identity_hash_get_item,
+    identity_hash_set_item,
 )
 
 
@@ -25,6 +25,7 @@ def test_identity_hashtable_get_set(key_length, length):
     for key, value in keys_vals:
         got = identity_hash_get_item(ht, key)
         assert got is value
+
 
 @pytest.mark.parametrize("key_length", [1, 3, 6])
 def test_identity_hashtable_replace(key_length):
