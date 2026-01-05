@@ -4,9 +4,7 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
   cancel-in-progress: true
 
-
 jobs:
-
   Linux_Python_312_32bit_full:
     name: i686, cp312, full
     runs-on: ubuntu-latest
