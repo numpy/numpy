@@ -25,7 +25,6 @@ from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
     _OrderKACF,
     _SupportsFileMethods,
     broadcast,
-    busdaycalendar,
     complexfloating,
     correlate,
     count_nonzero,
@@ -1129,6 +1128,23 @@ def arange(
 #
 def datetime_data(dtype: str | _DTypeLike[datetime64 | timedelta64], /) -> tuple[str, int]: ...
 
+#
+@final
+class busdaycalendar:
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc]  # pyright: ignore[reportIncompatibleVariableOverride]
+
+    def __init__(
+        self,
+        /,
+        weekmask: str | Sequence[_IntLike_co] | _SupportsArray[NDArray[np.bool | np.integer]] = "1111100",
+        holidays: Sequence[dt.date | np.datetime64[dt.date]] | _SupportsArray[NDArray[np.datetime64[dt.date]]] | None = None,
+    ) -> None: ...
+    @property
+    def weekmask(self) -> _Array1D[np.bool]: ...
+    @property
+    def holidays(self) -> _Array1D[np.datetime64[dt.date]]: ...
+
+#
 @overload
 def busday_count(
     begindates: _ScalarLike_co | dt.date,

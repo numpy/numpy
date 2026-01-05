@@ -316,6 +316,7 @@ from numpy._core.multiarray import (
     ascontiguousarray,
     asfortranarray,
     arange,
+    busdaycalendar,
     busday_count,
     busday_offset,
     datetime_as_string,
@@ -6062,19 +6063,6 @@ class broadcast:
     def __next__(self) -> tuple[Any, ...]: ...
     def __iter__(self) -> Self: ...
     def reset(self) -> None: ...
-
-@final
-class busdaycalendar:
-    def __init__(
-        self,
-        /,
-        weekmask: str | Sequence[int | bool_ | integer] | _SupportsArray[dtype[bool_ | integer]] = "1111100",
-        holidays: Sequence[dt.date | datetime64] | _SupportsArray[dtype[datetime64]] | None = None,
-    ) -> None: ...
-    @property
-    def weekmask(self) -> ndarray[tuple[int], dtype[bool_]]: ...
-    @property
-    def holidays(self) -> ndarray[tuple[int], dtype[datetime64[dt.date]]]: ...
 
 @final
 class nditer:
