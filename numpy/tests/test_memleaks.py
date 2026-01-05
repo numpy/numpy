@@ -110,6 +110,7 @@ api = {
     "PYTHONMALLOC" not in os.environ, reason="PYTHONMALLOC not set"
 )
 class TestNumpyLeaks(MemoryLeakTestCase):
+    # foo
     verbosity = 0
     checkers = Checkers.exclude("gcgarbage")
 
