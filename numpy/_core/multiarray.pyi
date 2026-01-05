@@ -1,18 +1,21 @@
 import datetime as dt
 from _typeshed import Incomplete, StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Buffer, Callable, Iterable, Sequence
+from types import EllipsisType, TracebackType
 from typing import (
     Any,
     ClassVar,
     Final,
+    Generic,
     Literal as L,
     Protocol,
+    Self,
     SupportsIndex,
     final,
     overload,
     type_check_only,
 )
-from typing_extensions import CapsuleType
+from typing_extensions import CapsuleType, TypeVar
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
@@ -31,7 +34,6 @@ from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
     datetime64,
     dtype,
     einsum as c_einsum,
-    flatiter,
     float64,
     floating,
     from_dlpack,
@@ -40,7 +42,6 @@ from numpy import (  # type: ignore[attr-defined]  # Python >=3.12
     intp,
     matmul,
     ndarray,
-    nditer,
     signedinteger,
     str_,
     timedelta64,
@@ -60,6 +61,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeDT64_co,
     _ArrayLikeFloat_co,
+    _ArrayLikeInt,
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
@@ -175,6 +177,8 @@ __all__ = [
     "where",
     "zeros",
 ]
+
+_ArrayT_co = TypeVar("_ArrayT_co", bound=np.ndarray, default=np.ndarray, covariant=True)
 
 type _Array[ShapeT: _Shape, ScalarT: np.generic] = ndarray[ShapeT, dtype[ScalarT]]
 type _Array1D[ScalarT: np.generic] = ndarray[tuple[int], dtype[ScalarT]]
@@ -1386,6 +1390,163 @@ class flagsobj:
     def owndata(self) -> bool: ...
     def __getitem__(self, key: _GetItemKeys) -> bool: ...
     def __setitem__(self, key: _SetItemKeys, value: bool) -> None: ...
+
+@final
+class flatiter(Generic[_ArrayT_co]):
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc] # pyright: ignore[reportIncompatibleVariableOverride]
+    __hash__: ClassVar[None] = None  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    @property
+    def base(self, /) -> _ArrayT_co: ...
+    @property
+    def coords[ShapeT: _Shape](self: flatiter[np.ndarray[ShapeT]], /) -> ShapeT: ...
+    @property
+    def index(self, /) -> int: ...
+
+    # iteration
+    def __len__(self, /) -> int: ...
+    def __iter__(self, /) -> Self: ...
+    def __next__[ScalarT: np.generic](self: flatiter[NDArray[ScalarT]], /) -> ScalarT: ...
+
+    # indexing
+    @overload  # nd: _[()]
+    def __getitem__(self, key: tuple[()], /) -> _ArrayT_co: ...
+    @overload  # 0d; _[<integer>]
+    def __getitem__[ScalarT: np.generic](self: flatiter[NDArray[ScalarT]], key: int | np.integer, /) -> ScalarT: ...
+    @overload  # 1d; _[[*<int>]], _[:], _[...]
+    def __getitem__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        key: list[int] | slice | EllipsisType | flatiter[NDArray[np.integer]],
+        /,
+    ) -> ndarray[tuple[int], DTypeT]: ...
+    @overload  # 2d; _[[*[*<int>]]]
+    def __getitem__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        key: list[list[int]],
+        /,
+    ) -> ndarray[tuple[int, int], DTypeT]: ...
+    @overload  # ?d
+    def __getitem__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        key: NDArray[np.integer] | _NestedSequence[int],
+        /,
+    ) -> ndarray[_AnyShape, DTypeT]: ...
+
+    # NOTE: `__setitem__` operates via `unsafe` casting rules, and can thus accept any
+    # type accepted by the relevant underlying `np.generic` constructor, which isn't
+    # known statically. So we cannot meaningfully annotate the value parameter.
+    def __setitem__(self, key: slice | EllipsisType | _ArrayLikeInt, val: object, /) -> None: ...
+
+    # NOTE: `dtype` and `copy` are no-ops at runtime, so we don't support them here to
+    # avoid confusion
+    def __array__[DTypeT: dtype](
+        self: flatiter[np.ndarray[Any, DTypeT]],
+        dtype: None = None,
+        /,
+        *,
+        copy: None = None,
+    ) -> ndarray[tuple[int], DTypeT]: ...
+
+    # This returns a flat copy of the underlying array, not of the iterator itself
+    def copy[DTypeT: dtype](self: flatiter[np.ndarray[Any, DTypeT]], /) -> ndarray[tuple[int], DTypeT]: ...
+
+@final
+class nditer:
+    __module__: ClassVar[L["numpy"]] = "numpy"  # type: ignore[misc] # pyright: ignore[reportIncompatibleVariableOverride]
+
+    @overload
+    def __init__(
+        self,
+        /,
+        op: ArrayLike,
+        flags: Sequence[_NDIterFlagsKind] | None = None,
+        op_flags: Sequence[_NDIterFlagsOp] | None = None,
+        op_dtypes: DTypeLike | None = None,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "safe",
+        op_axes: Sequence[SupportsIndex] | None = None,
+        itershape: _ShapeLike | None = None,
+        buffersize: SupportsIndex = 0,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        /,
+        op: Sequence[ArrayLike | None],
+        flags: Sequence[_NDIterFlagsKind] | None = None,
+        op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = None,
+        op_dtypes: Sequence[DTypeLike | None] | None = None,
+        order: _OrderKACF = "K",
+        casting: _CastingKind = "safe",
+        op_axes: Sequence[Sequence[SupportsIndex]] | None = None,
+        itershape: _ShapeLike | None = None,
+        buffersize: SupportsIndex = 0,
+    ) -> None: ...
+
+    #
+    def __enter__(self, /) -> nditer: ...
+    def __exit__(self, cls: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None, /) -> None: ...
+
+    #
+    def __iter__(self) -> nditer: ...
+    def __next__(self) -> tuple[NDArray[Incomplete], ...]: ...
+    def __len__(self) -> int: ...
+
+    #
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> NDArray[Incomplete]: ...
+    @overload
+    def __getitem__(self, index: slice) -> tuple[NDArray[Incomplete], ...]: ...
+    def __setitem__(self, index: slice | SupportsIndex, value: ArrayLike) -> None: ...
+
+    #
+    def __copy__(self) -> Self: ...
+    def copy(self) -> Self: ...
+
+    #
+    def close(self) -> None: ...
+    def debug_print(self) -> None: ...
+    def enable_external_loop(self) -> None: ...
+    def iternext(self) -> bool: ...
+    def remove_axis(self, i: SupportsIndex, /) -> None: ...
+    def remove_multi_index(self) -> None: ...
+    def reset(self) -> None: ...
+
+    #
+    @property
+    def dtypes(self) -> tuple[np.dtype[Incomplete], ...]: ...
+    @property
+    def finished(self) -> bool: ...
+    @property
+    def has_delayed_bufalloc(self) -> bool: ...
+    @property
+    def has_index(self) -> bool: ...
+    @property
+    def has_multi_index(self) -> bool: ...
+    @property
+    def index(self) -> int: ...
+    @property
+    def iterationneedsapi(self) -> bool: ...
+    @property
+    def iterindex(self) -> int: ...
+    @property
+    def iterrange(self) -> tuple[int, ...]: ...
+    @property
+    def itersize(self) -> int: ...
+    @property
+    def itviews(self) -> tuple[NDArray[Incomplete], ...]: ...
+    @property
+    def multi_index(self) -> tuple[int, ...]: ...
+    @property
+    def ndim(self) -> int: ...
+    @property
+    def nop(self) -> int: ...
+    @property
+    def operands(self) -> tuple[NDArray[Incomplete], ...]: ...
+    @property
+    def shape(self) -> tuple[int, ...]: ...
+    @property
+    def value(self) -> tuple[NDArray[Incomplete], ...]: ...
 
 def nested_iters(
     op: ArrayLike | Sequence[ArrayLike],
