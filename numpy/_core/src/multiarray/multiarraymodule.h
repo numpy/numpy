@@ -9,6 +9,9 @@ extern "C" {
  * A struct storing global state for the _multiarray_umath
  * module. The state is initialized when the module is imported
  * so no locking is necessary to access it.
+ *
+ * These globals will need to move to per-module state to
+ * support reloading or subinterpreters.
  */
 typedef struct npy_global_state_struct {
     /*
