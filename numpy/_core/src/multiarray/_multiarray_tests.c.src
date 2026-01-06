@@ -931,7 +931,10 @@ identity_cache_destructor(PyObject *capsule)
     PyArrayIdentityHash_Dealloc(tb);
 }
 
-
+/*
+ * Create an identity hash table with the given key length and return it
+ * as a capsule.
+ */
 static PyObject *
 create_identity_hash(PyObject *NPY_UNUSED(self), PyObject *args)
 {
@@ -961,6 +964,11 @@ create_identity_hash(PyObject *NPY_UNUSED(self), PyObject *args)
     return capsule;
 }
 
+/*
+ * Set item in identity hash table provided as capsule and key as tuple.
+ * If replace is False and the key already exists, RuntimeError is raised else
+ * the value is replaced.
+ */
 static PyObject *
 identity_hash_set_item(PyObject *NPY_UNUSED(self),
                        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -1008,6 +1016,9 @@ identity_hash_set_item(PyObject *NPY_UNUSED(self),
 }
 
 
+/*
+ * Get item from identity hash table provided as capsule and key as tuple.
+ */
 static PyObject *
 identity_hash_get_item(PyObject *NPY_UNUSED(self), PyObject *args)
 {
