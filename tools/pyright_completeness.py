@@ -5,7 +5,7 @@ a minimum threshold.
 Example usage:
 
     spin run python tools/pyright_completeness.py --verifytypes numpy --ignoreexternal \
-        --fail-under 80 --exclude-like '*.tests.*' '*.conftest.*'
+        --exclude-like '*.tests.*' '*.conftest.*'
 
 We use `--ignoreexternal` to avoid "partially unknown" reports coming from the stdlib
 `numbers` module, see https://github.com/microsoft/pyright/discussions/9911.
@@ -21,12 +21,6 @@ from collections.abc import Sequence
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--fail-under",
-        type=float,
-        default=100.0,
-        help="Fail if coverage is below this percentage",
-    )
-    parser.add_argument(
         "--exclude-like",
         required=False,
         nargs="*",
@@ -37,12 +31,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     pyright_args = list(unknownargs)
     if "--outputjson" not in pyright_args:
         pyright_args.append("--outputjson")
-    return run_pyright_with_coverage(pyright_args, args.fail_under, args.exclude_like)
+    return run_pyright_with_coverage(pyright_args, args.exclude_like)
 
 
 def run_pyright_with_coverage(
     pyright_args: list[str],
-    cov_fail_under: float,
     exclude_like: Sequence[str],
 ) -> int:
     result = subprocess.run(["pyright", *pyright_args], capture_output=True, text=True)
@@ -69,15 +62,13 @@ def run_pyright_with_coverage(
         cov_percent = data["typeCompleteness"]["completenessScore"] * 100
 
     sys.stderr.write(result.stderr)
-    if cov_percent < cov_fail_under:
+    if cov_percent < 100:
         sys.stdout.write(
-            f"Coverage {cov_percent:.1f}% is below minimum required "
-            f"{cov_fail_under:.1f}%\n"
+            f"Coverage {cov_percent:.1f}% is below minimum required 100%"
         )
         return 1
     sys.stdout.write(
-        f"Coverage {cov_percent:.1f}% is at or above minimum required "
-        f"{cov_fail_under:.1f}%\n"
+        f"Coverage {cov_percent:.1f}% is at or above minimum required 100%"
     )
     return 0
 
