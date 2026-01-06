@@ -4,14 +4,11 @@ a minimum threshold.
 
 Example usage:
 
-    spin run python tools/pyright_cov.py --verifytypes numpy --ignoreexternal \
-        --fail-under 80 --exclude-like '*.tests.*'
+    spin run python tools/pyright_completeness.py --verifytypes numpy --ignoreexternal \
+        --fail-under 80 --exclude-like '*.tests.*' '*.conftest.*'
 
 We use `--ignoreexternal` to avoid "partially unknown" reports coming from the stdlib
 `numbers` module, see https://github.com/microsoft/pyright/discussions/9911.
-
-It might be possible to replace this with `basedpyright`
-https://github.com/DetachHead/basedpyright/issues/125 in the future.
 """
 from __future__ import annotations
 
@@ -34,6 +31,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--exclude-like",
         required=False,
+        nargs='*',
         type=str,
         help="Exclude symbols whose names matches this glob pattern",
     )
@@ -47,7 +45,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 def run_pyright_with_coverage(
     pyright_args: list[str],
     cov_fail_under: float,
-    exclude_like: str | None,
+    exclude_like: Sequence[str],
 ) -> int:
     result = subprocess.run(
         ["pyright", *pyright_args], capture_output=True, text=True
@@ -60,10 +58,10 @@ def run_pyright_with_coverage(
         sys.stderr.write(result.stderr)
         return 1
 
-    if exclude_like is not None:
+    if exclude_like:
         symbols = data["typeCompleteness"]["symbols"]
         matched_symbols = [
-            x for x in symbols if not fnmatch.fnmatch(x["name"], exclude_like)
+            x for x in symbols if not any(fnmatch.fnmatch(x["name"], pattern) for pattern in exclude_like)
             and x['isExported']
         ]
         cov_percent = (
@@ -73,16 +71,15 @@ def run_pyright_with_coverage(
         cov_percent = data["typeCompleteness"]["completenessScore"] * 100
 
     sys.stderr.write(result.stderr)
-    sys.stdout.write(result.stdout)
     if cov_percent < cov_fail_under:
         sys.stdout.write(
             f"Coverage {cov_percent:.1f}% is below minimum required "
-            f"{cov_fail_under:.1f}%"
+            f"{cov_fail_under:.1f}%\n"
         )
         return 1
     sys.stdout.write(
         f"Coverage {cov_percent:.1f}% is at or above minimum required "
-        f"{cov_fail_under:.1f}%"
+        f"{cov_fail_under:.1f}%\n"
     )
     return 0
 
