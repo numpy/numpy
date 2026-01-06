@@ -1159,7 +1159,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return -1;
     }
 
-    int ret;
+    int ret = -1;
 
     NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
 
@@ -1182,7 +1182,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
 
     /* Allow keyboard interrupts. See gh issue 18117. */
     if (PyErr_CheckSignals() < 0) {
-        ret = -1;
         goto finish;
     }
 
@@ -1203,7 +1202,6 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 flags, copy);
 
         if (max_dims < 0) {
-            ret = -1;
             goto finish;
         }
     }

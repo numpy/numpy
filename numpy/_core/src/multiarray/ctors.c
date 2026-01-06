@@ -522,7 +522,9 @@ PyArray_AssignFromCache_Recursive(
         for (npy_intp i = 0; i < orig_length; i++) {
             int err = 0;
             // this macro takes *the argument* of PySequence_Fast, which is orig_seq;
-            // not the object returned by PySequence_Fast, which is obj
+            // not the object returned by PySequence_Fast, which is a proxy object
+            // with its own per-object PyMutex lock.
+            // We want to lock the list object exposed to users, not the proxy.
             NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
             npy_intp length = PySequence_Fast_GET_SIZE(obj);
             if (length != orig_length) {
