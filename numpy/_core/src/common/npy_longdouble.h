@@ -4,7 +4,7 @@
 #include "npy_config.h"
 #include "numpy/ndarraytypes.h"
 
-/* Convert an npy_longdouble to a python `long` integer.
+/* Convert a npy_longdouble to a python `long` integer.
  *
  * Results are rounded towards zero.
  *
