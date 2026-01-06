@@ -497,6 +497,14 @@ class TestAverage:
 
         assert_equal(type(np.average(a)), subclass)
         assert_equal(type(np.average(a, weights=w)), subclass)
+        # Ensure a possibly returned sum of weights is correct too.
+        ra, rw = np.average(a, weights=w, returned=True)
+        assert_equal(type(ra), subclass)
+        assert_equal(type(rw), subclass)
+        # Even if it needs to be broadcast.
+        ra, rw = np.average(a, weights=w[0], axis=1, returned=True)
+        assert_equal(type(ra), subclass)
+        assert_equal(type(rw), subclass)
 
     def test_upcasting(self):
         typs = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),

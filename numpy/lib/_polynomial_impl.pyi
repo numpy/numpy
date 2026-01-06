@@ -1,4 +1,15 @@
-from typing import Any, Literal as L, NoReturn, SupportsIndex, SupportsInt, overload
+from _typeshed import ConvertibleToInt, Incomplete
+from collections.abc import Iterator
+from typing import (
+    Any,
+    ClassVar,
+    Literal as L,
+    NoReturn,
+    Self,
+    SupportsIndex,
+    SupportsInt,
+    overload,
+)
 
 import numpy as np
 from numpy import (
@@ -9,7 +20,6 @@ from numpy import (
     int32,
     int64,
     object_,
-    poly1d,
     signedinteger,
     unsignedinteger,
 )
@@ -22,6 +32,9 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeUInt_co,
+    _FloatLike_co,
+    _NestedSequence,
+    _ScalarLike_co,
 )
 
 type _2Tup[T] = tuple[T, T]
@@ -43,6 +56,98 @@ __all__ = [
     "polyfit",
 ]
 
+class poly1d:
+    __module__: L["numpy"] = "numpy"
+
+    __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
+
+    @property
+    def variable(self) -> str: ...
+    @property
+    def order(self) -> int: ...
+    @property
+    def o(self) -> int: ...
+    @property
+    def roots(self) -> NDArray[Incomplete]: ...
+    @property
+    def r(self) -> NDArray[Incomplete]: ...
+
+    #
+    @property
+    def coeffs(self) -> NDArray[Incomplete]: ...
+    @coeffs.setter
+    def coeffs(self, value: NDArray[Incomplete], /) -> None: ...
+
+    #
+    @property
+    def c(self) -> NDArray[Any]: ...
+    @c.setter
+    def c(self, value: NDArray[Incomplete], /) -> None: ...
+
+    #
+    @property
+    def coef(self) -> NDArray[Incomplete]: ...
+    @coef.setter
+    def coef(self, value: NDArray[Incomplete], /) -> None: ...
+
+    #
+    @property
+    def coefficients(self) -> NDArray[Incomplete]: ...
+    @coefficients.setter
+    def coefficients(self, value: NDArray[Incomplete], /) -> None: ...
+
+    #
+    def __init__(self, /, c_or_r: ArrayLike, r: bool = False, variable: str | None = None) -> None: ...
+
+    #
+    @overload
+    def __array__(self, /, t: None = None, copy: bool | None = None) -> np.ndarray[tuple[int], np.dtype[Incomplete]]: ...
+    @overload
+    def __array__[DTypeT: np.dtype](self, /, t: DTypeT, copy: bool | None = None) -> np.ndarray[tuple[int], DTypeT]: ...
+
+    #
+    @overload
+    def __call__(self, /, val: _ScalarLike_co) -> Incomplete: ...
+    @overload
+    def __call__(self, /, val: poly1d) -> Self: ...
+    @overload
+    def __call__(self, /, val: NDArray[Incomplete] | _NestedSequence[_ScalarLike_co]) -> NDArray[Incomplete]: ...
+
+    #
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[Incomplete]: ...
+
+    #
+    def __getitem__(self, val: int, /) -> Incomplete: ...
+    def __setitem__(self, key: int, val: Incomplete, /) -> None: ...
+
+    def __neg__(self) -> Self: ...
+    def __pos__(self) -> Self: ...
+
+    #
+    def __add__(self, other: ArrayLike, /) -> Self: ...
+    def __radd__(self, other: ArrayLike, /) -> Self: ...
+
+    #
+    def __sub__(self, other: ArrayLike, /) -> Self: ...
+    def __rsub__(self, other: ArrayLike, /) -> Self: ...
+
+    #
+    def __mul__(self, other: ArrayLike, /) -> Self: ...
+    def __rmul__(self, other: ArrayLike, /) -> Self: ...
+
+    #
+    def __pow__(self, val: _FloatLike_co, /) -> Self: ...  # Integral floats are accepted
+
+    #
+    def __truediv__(self, other: ArrayLike, /) -> Self: ...
+    def __rtruediv__(self, other: ArrayLike, /) -> Self: ...
+
+    #
+    def deriv(self, /, m: ConvertibleToInt = 1) -> Self: ...
+    def integ(self, /, m: ConvertibleToInt = 1, k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0) -> poly1d: ...
+
+#
 def poly(seq_of_zeros: ArrayLike) -> NDArray[floating]: ...
 
 # Returns either a float or complex array depending on the input values.

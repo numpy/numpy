@@ -1055,6 +1055,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],

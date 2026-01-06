@@ -16,7 +16,7 @@ numpy\._core\._simd\.\w+
 
 # these are always either float96/complex192 or float128/complex256
 numpy\.__all__
-numpy\._?core\.__all__
+numpy\._core\.__all__
 numpy\._?core\.numeric\.__all__
 numpy\._?core\.numerictypes\.__all__
 numpy\.matlib\.__all__
@@ -43,22 +43,6 @@ numpy\.(\w+\.)*complexfloating\.__complex__
 numpy\.(\w+\.)*generic\.__hash__
 
 # intentionally missing deprecated module stubs
-numpy\.core\._dtype
-numpy\.core\._dtype_ctypes
-numpy\.core\._internal
-numpy\.core\._multiarray_umath.*
-numpy\.core\.arrayprint.*
-numpy\.core\.defchararray.*
-numpy\.core\.einsumfunc.*
-numpy\.core\.fromnumeric.*
-numpy\.core\.function_base.*
-numpy\.core\.getlimits.*
-numpy\.core\.multiarray.*
-numpy\.core\.numeric.*
-numpy\.core\.overrides
-numpy\.core\.records.*
-numpy\.core\.shape_base.*
-numpy\.core\.umath.*
 numpy\.typing\.mypy_plugin
 
 # false positive "... is not a Union" errors

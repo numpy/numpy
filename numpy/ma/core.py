@@ -6530,11 +6530,11 @@ class mvoid(MaskedArray):
     Fake a 'void' object to use for masked array with structured dtypes.
     """
 
-    def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
+    def __new__(cls, data, mask=nomask, dtype=None, fill_value=None,
                 hardmask=False, copy=False, subok=True):
         copy = None if not copy else True
         _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
-        _data = _data.view(self)
+        _data = _data.view(cls)
         _data._hardmask = hardmask
         if mask is not nomask:
             if isinstance(mask, np.void):

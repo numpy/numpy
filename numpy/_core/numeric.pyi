@@ -3,7 +3,6 @@ from builtins import bool as py_bool
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
-    Final,
     Literal as L,
     SupportsAbs,
     SupportsIndex,
@@ -29,6 +28,7 @@ from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
+    _AnyShape,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeComplex_co,
@@ -127,7 +127,6 @@ from .multiarray import (
     RAISE as RAISE,
     WRAP as WRAP,
     _Array,
-    _ConstructorEmpty,
     arange,
     array,
     asanyarray,
@@ -706,7 +705,115 @@ def zeros_like(
     device: L["cpu"] | None = None,
 ) -> NDArray[Any]: ...
 
-ones: Final[_ConstructorEmpty]
+# keep in sync with empty and zeros (`_core/multiarray.pyi`)
+@overload  # 1d, float64 default
+def ones(
+    shape: SupportsIndex,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.float64]: ...
+@overload  # 1d, specific dtype
+def ones[DTypeT: np.dtype](
+    shape: SupportsIndex,
+    dtype: DTypeT | _SupportsDType[DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> ndarray[tuple[int], DTypeT]: ...
+@overload  # 1d, specific scalar type
+def ones[ScalarT: np.generic](
+    shape: SupportsIndex,
+    dtype: type[ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[ScalarT]: ...
+@overload  # 1d, unknown dtype
+def ones(
+    shape: SupportsIndex,
+    dtype: DTypeLike | None = None,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[Incomplete]: ...
+@overload  # known shape, float64 default
+def ones[ShapeT: _Shape](
+    shape: ShapeT,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array[ShapeT, float64]: ...
+@overload  # known shape, specific dtype
+def ones[ShapeT: _Shape, DTypeT: np.dtype](
+    shape: ShapeT,
+    dtype: DTypeT | _SupportsDType[DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> ndarray[ShapeT, DTypeT]: ...
+@overload  # known shape, specific scalar type
+def ones[ShapeT: _Shape, ScalarT: np.generic](
+    shape: ShapeT,
+    dtype: type[ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array[ShapeT, ScalarT]: ...
+@overload  # known shape, unknown dtype
+def ones[ShapeT: _Shape](
+    shape: ShapeT,
+    dtype: DTypeLike | None = None,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array[ShapeT, Incomplete]: ...
+@overload  # unknown shape, float64 default
+def ones(
+    shape: _ShapeLike,
+    dtype: None = None,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[float64]: ...
+@overload  # unknown shape, specific dtype
+def ones[DTypeT: np.dtype](
+    shape: _ShapeLike,
+    dtype: DTypeT | _SupportsDType[DTypeT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> ndarray[_AnyShape, DTypeT]: ...
+@overload  # unknown shape, specific scalar type
+def ones[ScalarT: np.generic](
+    shape: _ShapeLike,
+    dtype: type[ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[ScalarT]: ...
+@overload  # unknown shape, unknown dtype
+def ones(
+    shape: _ShapeLike,
+    dtype: DTypeLike | None = None,
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> NDArray[Incomplete]: ...
 
 # keep in sync with `zeros_like`
 @overload
@@ -939,7 +1046,7 @@ def isfortran(a: ndarray | generic) -> py_bool: ...
 def argwhere(a: ArrayLike) -> _Array2D[np.intp]: ...
 def flatnonzero(a: ArrayLike) -> _Array1D[np.intp]: ...
 
-# keep in sync with `convolve`
+# keep in sync with `convolve` and `ma.core.correlate`
 @overload
 def correlate(
     a: _ArrayLike1D[_AnyNumericScalarT], v: _ArrayLike1D[_AnyNumericScalarT], mode: _CorrelateMode = "valid"
@@ -979,7 +1086,8 @@ def convolve(
     a: _ArrayLike1DTD64_co, v: _ArrayLike1DTD64_co, mode: _CorrelateMode = "valid"
 ) -> _Array1D[np.timedelta64 | Any]: ...
 
-# keep roughly in sync with `convolve` and `correlate`, but for 2-D output and an additional `out` overload
+# keep roughly in sync with `convolve` and `correlate`, but for 2-D output and an additional `out` overload,
+# and also keep in sync with `ma.core.outer` (minus `out`)
 @overload
 def outer(
     a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT], out: None = None
