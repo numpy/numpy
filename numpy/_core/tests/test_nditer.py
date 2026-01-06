@@ -1,21 +1,24 @@
+import inspect
 import subprocess
 import sys
 import textwrap
+import warnings
 
-import numpy._core._multiarray_tests as _multiarray_tests
 import pytest
 
 import numpy as np
+import numpy._core._multiarray_tests as _multiarray_tests
 import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_64BIT,
+    IS_PYPY,
     IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
-    suppress_warnings,
 )
 from numpy.testing._private.utils import requires_memory
 
@@ -858,7 +861,7 @@ def test_iter_nbo_align_contig():
 
     # Unaligned input
     a = np.zeros((6 * 4 + 1,), dtype='i1')[1:]
-    a.dtype = 'f4'
+    a = a.view('f4')
     a[:] = np.arange(6, dtype='f4')
     assert_(not a.flags.aligned)
     # Without 'aligned', shouldn't copy
@@ -1803,7 +1806,7 @@ def test_iter_buffering():
     arrays.append(np.arange(10, dtype='f4'))
     # Unaligned array
     a = np.zeros((4 * 16 + 1,), dtype='i1')[1:]
-    a.dtype = 'i4'
+    a = a.view('i4')
     a[:] = np.arange(16, dtype='i4')
     arrays.append(a)
     # 4-D F-order array
@@ -1899,8 +1902,8 @@ def test_iter_buffered_cast_byteswapped():
 
     assert_equal(a, 2 * np.arange(10, dtype='f4'))
 
-    with suppress_warnings() as sup:
-        sup.filter(np.exceptions.ComplexWarning)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', np.exceptions.ComplexWarning)
 
         a = np.arange(10, dtype='f8')
         a = a.view(a.dtype.newbyteorder()).byteswap()
@@ -2895,7 +2898,7 @@ def _is_buffered(iterator):
         return True
     return False
 
-@pytest.mark.parametrize("a",
+@pytest.mark.parametrize("arrs",
         [np.zeros((3,), dtype='f8'),
          np.zeros((9876, 3 * 5), dtype='f8')[::2, :],
          np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, :],
@@ -2904,10 +2907,11 @@ def _is_buffered(iterator):
          np.zeros((9,), dtype='f8')[::3],
          np.zeros((9876, 3 * 10), dtype='f8')[::2, ::5],
          np.zeros((4, 312, 124, 3), dtype='f8')[::2, :, ::2, ::-1]])
-def test_iter_writemasked(a):
+def test_iter_writemasked(arrs):
     # Note, the slicing above is to ensure that nditer cannot combine multiple
     # axes into one.  The repetition is just to make things a bit more
     # interesting.
+    a = arrs.copy()
     shape = a.shape
     reps = shape[-1] // 3
     msk = np.empty(shape, dtype=bool)
@@ -3202,6 +3206,13 @@ def test_iter_too_large_with_multiindex():
             with assert_raises(ValueError):
                 _multiarray_tests.test_nditer_too_large(arrays, i * 2 + 1, mode)
 
+
+def test_invalid_call_of_enable_external_loop():
+    with pytest.raises(ValueError,
+                       match='Iterator flag EXTERNAL_LOOP cannot be used'):
+        np.nditer(([[1], [2]], [3, 4]), ['multi_index']).enable_external_loop()
+
+
 def test_writebacks():
     a = np.arange(6, dtype='f4')
     au = a.byteswap()
@@ -3310,13 +3321,10 @@ def test_warn_noclose():
     a = np.arange(6, dtype='f4')
     au = a.byteswap()
     au = au.view(au.dtype.newbyteorder())
-    with suppress_warnings() as sup:
-        sup.record(RuntimeWarning)
+    with pytest.warns(RuntimeWarning):
         it = np.nditer(au, [], [['readwrite', 'updateifcopy']],
-                        casting='equiv', op_dtypes=[np.dtype('f4')])
+                       casting='equiv', op_dtypes=[np.dtype('f4')])
         del it
-        assert len(sup.log) == 1
-
 
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
         [("i", "O"), ("O", "i"),  # most simple cases
@@ -3404,7 +3412,9 @@ def test_arbitrary_number_of_ops_nested():
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @requires_memory(9 * np.iinfo(np.intc).max)
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_arbitrary_number_of_ops_error():
     # A different error may happen for more than integer operands, but that
     # is too large to test nicely.
@@ -3417,6 +3427,7 @@ def test_arbitrary_number_of_ops_error():
         np.nested_iters(args, [[0], []])
 
 
+@pytest.mark.thread_unsafe(reason="capfd is thread-unsafe")
 def test_debug_print(capfd):
     """
     Matches the expected output of a debug print with the actual output.
@@ -3496,3 +3507,27 @@ def test_debug_print(capfd):
         # The actual output may have additional pointers listed that are
         # stripped from the example output:
         assert res_line.startswith(expected_line.strip())
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+def test_signature_constructor():
+    sig = inspect.signature(np.nditer)
+
+    assert sig.parameters
+    assert "self" not in sig.parameters
+    assert "args" not in sig.parameters
+    assert "kwargs" not in sig.parameters
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "method",
+    [fn for name, fn in vars(np.nditer).items() if callable(fn) and name[0] != "_"],
+)
+def test_signature_methods(method):
+    sig = inspect.signature(method)
+
+    assert "self" in sig.parameters
+    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY

@@ -372,7 +372,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
                 PyArray_NDIM(result), PyArray_DIMS(result),
                 PyArray_DESCR(result),
                 PyArray_BYTES(result), PyArray_STRIDES(result),
-                op_dtypes[0], initial_buf);
+                op_dtypes[0], initial_buf, NPY_UNSAFE_CASTING);
         if (ret < 0) {
             goto fail;
         }

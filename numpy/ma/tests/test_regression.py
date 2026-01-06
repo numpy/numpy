@@ -1,10 +1,5 @@
 import numpy as np
-from numpy.testing import (
-    assert_,
-    assert_allclose,
-    assert_array_equal,
-    suppress_warnings,
-)
+from numpy.testing import assert_, assert_array_equal
 
 
 class TestRegression:
@@ -61,18 +56,6 @@ class TestRegression:
         mout = np.ma.array(-1, dtype=float)
         a.var(out=mout)
         assert_(mout._data == 0)
-
-    def test_ddof_corrcoef(self):
-        # See gh-3336
-        x = np.ma.masked_equal([1, 2, 3, 4, 5], 4)
-        y = np.array([2, 2.5, 3.1, 3, 5])
-        # this test can be removed after deprecation.
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            r0 = np.ma.corrcoef(x, y, ddof=0)
-            r1 = np.ma.corrcoef(x, y, ddof=1)
-            # ddof should not have an effect (it gets cancelled out)
-            assert_allclose(r0.data, r1.data)
 
     def test_mask_not_backmangled(self):
         # See gh-10314.  Test case taken from gh-3140.

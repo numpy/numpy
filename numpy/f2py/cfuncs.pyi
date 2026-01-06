@@ -1,11 +1,11 @@
-from typing import Final, TypeAlias
+from typing import Final
 
 from .__version__ import version
 
 ###
 
-_NeedListDict: TypeAlias = dict[str, list[str]]
-_NeedDict: TypeAlias = dict[str, str]
+type _NeedListDict = dict[str, list[str]]
+type _NeedDict = dict[str, str]
 
 ###
 

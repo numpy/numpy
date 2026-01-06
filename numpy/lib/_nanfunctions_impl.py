@@ -717,7 +717,6 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     inf
     >>> np.nansum([1, np.nan, -np.inf])
     -inf
-    >>> from numpy.testing import suppress_warnings
     >>> with np.errstate(invalid="ignore"):
     ...     np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
     np.float64(nan)
@@ -1220,7 +1219,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 def _nanpercentile_dispatcher(
         a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, weights=None, interpolation=None):
+        method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -1235,7 +1234,6 @@ def nanpercentile(
         keepdims=np._NoValue,
         *,
         weights=None,
-        interpolation=None,
 ):
     """
     Compute the qth percentile of the data along the specified axis,
@@ -1314,11 +1312,6 @@ def nanpercentile(
 
         .. versionadded:: 2.0.0
 
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
-
     Returns
     -------
     percentile : scalar or ndarray
@@ -1380,10 +1373,6 @@ def nanpercentile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = fnb._check_interpolation_as_method(
-            method, interpolation, "nanpercentile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
@@ -1408,8 +1397,7 @@ def nanpercentile(
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, weights=None,
-                            interpolation=None):
+                            method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -1424,7 +1412,6 @@ def nanquantile(
         keepdims=np._NoValue,
         *,
         weights=None,
-        interpolation=None,
 ):
     """
     Compute the qth quantile of the data along the specified axis,
@@ -1501,11 +1488,6 @@ def nanquantile(
 
         .. versionadded:: 2.0.0
 
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
-
     Returns
     -------
     quantile : scalar or ndarray
@@ -1566,11 +1548,6 @@ def nanquantile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-
-    if interpolation is not None:
-        method = fnb._check_interpolation_as_method(
-            method, interpolation, "nanquantile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")

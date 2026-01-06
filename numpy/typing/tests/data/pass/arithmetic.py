@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
+
+import pytest
+
 import numpy as np
 import numpy.typing as npt
-import pytest
 
 c16 = np.complex128(1)
 f8 = np.float64(1)
@@ -23,11 +25,11 @@ b_ = np.bool(1)
 b = bool(1)
 c = complex(1)
 f = float(1)
-i = int(1)
+i = 1
 
 
 class Object:
-    def __array__(self, dtype: np.typing.DTypeLike = None,
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
                   copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
@@ -61,6 +63,7 @@ class Object:
 AR_b: npt.NDArray[np.bool] = np.array([True])
 AR_u: npt.NDArray[np.uint32] = np.array([1], dtype=np.uint32)
 AR_i: npt.NDArray[np.int64] = np.array([1])
+AR_integer: npt.NDArray[np.integer] = cast(npt.NDArray[np.integer], AR_i)
 AR_f: npt.NDArray[np.float64] = np.array([1.0])
 AR_c: npt.NDArray[np.complex128] = np.array([1j])
 AR_m: npt.NDArray[np.timedelta64] = np.array([np.timedelta64(1, "D")])
@@ -282,6 +285,10 @@ AR_i *= AR_LIKE_b
 AR_i *= AR_LIKE_u
 AR_i *= AR_LIKE_i
 
+AR_integer *= AR_LIKE_b
+AR_integer *= AR_LIKE_u
+AR_integer *= AR_LIKE_i
+
 AR_f *= AR_LIKE_b
 AR_f *= AR_LIKE_u
 AR_f *= AR_LIKE_i
@@ -313,6 +320,10 @@ AR_u **= AR_LIKE_u
 AR_i **= AR_LIKE_b
 AR_i **= AR_LIKE_u
 AR_i **= AR_LIKE_i
+
+AR_integer **= AR_LIKE_b
+AR_integer **= AR_LIKE_u
+AR_integer **= AR_LIKE_i
 
 AR_f **= AR_LIKE_b
 AR_f **= AR_LIKE_u

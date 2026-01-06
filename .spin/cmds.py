@@ -141,11 +141,24 @@ else:
     default=default,
     help="Run tests with the given markers"
 )
+@click.option(
+    "-p",
+    "--parallel-threads",
+    metavar='PARALLEL_THREADS',
+    default="1",
+    help="Run tests many times in number of parallel threads under pytest-run-parallel."
+         " Can be set to `auto` to use all cores. Use `spin test -p <number> -- "
+         "--skip-thread-unsafe=true` to only run tests that can run in parallel. "
+         "pytest-run-parallel must be installed to use."
+)
 @spin.util.extend_command(spin.cmds.meson.test)
-def test(*, parent_callback, pytest_args, tests, markexpr, **kwargs):
+def test(*, parent_callback, pytest_args, tests, markexpr, parallel_threads, **kwargs):
     """
     By default, spin will run `-m 'not slow'`. To run the full test suite, use
     `spin test -m full`
+
+    When pytest-run-parallel is avaliable, use `spin test -p auto` or
+    `spin test -p <num_of_threads>` to run tests sequentional in parallel threads.
     """  # noqa: E501
     if (not pytest_args) and (not tests):
         pytest_args = ('--pyargs', 'numpy')
@@ -153,6 +166,9 @@ def test(*, parent_callback, pytest_args, tests, markexpr, **kwargs):
     if '-m' not in pytest_args:
         if markexpr != "full":
             pytest_args = ('-m', markexpr) + pytest_args
+
+    if parallel_threads != "1":
+        pytest_args = ('--parallel-threads', parallel_threads) + pytest_args
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
@@ -196,6 +212,8 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
         import scipy_doctest  # noqa: F401
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
+    if scipy_doctest.__version__ < '1.8.0':
+        raise ModuleNotFoundError("please update scipy_doctests to >= 1.8.0")
 
     if (not pytest_args):
         pytest_args = ('--pyargs', 'numpy')
@@ -203,6 +221,7 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
     # turn doctesting on:
     doctest_args = (
         '--doctest-modules',
+        '--doctest-only-doctests=true',
         '--doctest-collect=api'
     )
 
@@ -373,6 +392,16 @@ def lint(ctx, fix):
     '--quick', '-q', is_flag=True, default=False,
     help="Run each benchmark only once (timings won't be accurate)"
 )
+@click.option(
+    '--factor', '-f', default=1.05,
+    help="The factor above or below which a benchmark result is "
+         "considered reportable. This is passed on to the asv command."
+)
+@click.option(
+    '--cpu-affinity', default=None, multiple=False,
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+         "Default: not set"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
@@ -380,7 +409,8 @@ def lint(ctx, fix):
 )
 @meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
+def bench(ctx, tests, compare, verbose, quick, factor, cpu_affinity,
+          commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -423,6 +453,9 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
     if quick:
         bench_args = ['--quick'] + bench_args
 
+    if cpu_affinity:
+        bench_args += ['--cpu-affinity', cpu_affinity]
+
     if not compare:
         # No comparison requested; we build and benchmark the current version
 
@@ -435,7 +468,7 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
         meson._set_pythonpath(build_dir)
 
         p = spin.util.run(
-            ['python', '-c', 'import numpy as np; print(np.__version__)'],
+            [sys.executable, '-c', 'import numpy as np; print(np.__version__)'],
             cwd='benchmarks',
             echo=False,
             output=False
@@ -452,7 +485,7 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
         ] + bench_args
         _run_asv(cmd)
     else:
-        # Ensure that we don't have uncommited changes
+        # Ensure that we don't have uncommitted changes
         commit_a, commit_b = [_commit_to_sha(c) for c in commits]
 
         if commit_b == 'HEAD' and _dirty_git_working_dir():
@@ -463,7 +496,7 @@ def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
             )
 
         cmd_compare = [
-            'asv', 'continuous', '--factor', '1.05',
+            'asv', 'continuous', '--factor', str(factor),
         ] + bench_args + [commit_a, commit_b]
         _run_asv(cmd_compare)
 
@@ -516,6 +549,44 @@ def mypy(ctx):
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
     ctx.params['markexpr'] = 'full'
     ctx.forward(test)
+
+
+@click.command()
+@click.option(
+    '--concise',
+    is_flag=True,
+    default=False,
+    help="Concise output format",
+)
+@meson.build_dir_option
+def stubtest(*, concise: bool, build_dir: str) -> None:
+    """🧐 Run stubtest on NumPy's .pyi stubs
+
+    Requires mypy to be installed
+    """
+    click.get_current_context().invoke(build)
+    meson._set_pythonpath(build_dir)
+    print(f"{build_dir = !r}")
+
+    import sysconfig
+    purellib = sysconfig.get_paths()["purelib"]
+    print(f"{purellib = !r}")
+
+    stubtest_dir = curdir.parent / 'tools' / 'stubtest'
+    mypy_config = stubtest_dir / 'mypy.ini'
+    allowlist = stubtest_dir / 'allowlist.txt'
+
+    cmd = [
+        'stubtest',
+        '--ignore-disjoint-bases',
+        f'--mypy-config-file={mypy_config}',
+        f'--allowlist={allowlist}',
+    ]
+    if concise:
+        cmd.append('--concise')
+    cmd.append('numpy')
+
+    spin.util.run(cmd)
 
 
 @click.command(context_settings={

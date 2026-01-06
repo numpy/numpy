@@ -94,14 +94,14 @@ class __array_namespace_info__:
         >>> info = np.__array_namespace_info__()
         >>> info.capabilities()
         {'boolean indexing': True,
-         'data-dependent shapes': True}
+         'data-dependent shapes': True,
+         'max dimensions': 64}
 
         """
         return {
             "boolean indexing": True,
             "data-dependent shapes": True,
-            # 'max rank' will be part of the 2024.12 standard
-            # "max rank": 64,
+            "max dimensions": 64,
         }
 
     def default_device(self):

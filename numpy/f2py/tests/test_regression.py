@@ -158,7 +158,7 @@ def test_gh26623():
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(platform.system() not in ['Linux', 'Darwin'], reason='Unsupported on this platform for now')
+@pytest.mark.skipif(platform.system() == "Windows", reason='Unsupported on this platform for now')
 def test_gh25784():
     # Compile dubious file using passed flags
     try:
@@ -167,7 +167,7 @@ def test_gh25784():
             options=[
                 # Meson will collect and dedup these to pass to fortran_args:
                 "--f77flags='-ffixed-form -O2'",
-                "--f90flags=\"-ffixed-form -Og\"",
+                "--f90flags=\"-ffixed-form -g\"",
             ],
             module_name="Blah",
         )

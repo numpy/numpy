@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import warnings
+import zipfile
 from ctypes import c_bool
 from datetime import datetime
 from io import BytesIO, StringIO
@@ -22,7 +23,6 @@ from numpy._utils import asbytes
 from numpy.exceptions import VisibleDeprecationWarning
 from numpy.lib import _npyio_impl
 from numpy.lib._iotools import ConversionWarning, ConverterError
-from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     HAS_REFCOUNT,
@@ -35,9 +35,7 @@ from numpy.testing import (
     assert_no_warnings,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
     break_cycles,
-    suppress_warnings,
     tempdir,
     temppath,
 )
@@ -126,8 +124,6 @@ class RoundtripTest:
 
             arr_reloaded = np.load(load_file, **load_kwds)
 
-            self.arr = arr
-            self.arr_reloaded = arr_reloaded
         finally:
             if not isinstance(target_file, BytesIO):
                 target_file.close()
@@ -135,6 +131,8 @@ class RoundtripTest:
                 if 'arr_reloaded' in locals():
                     if not isinstance(arr_reloaded, np.lib.npyio.NpzFile):
                         os.remove(target_file.name)
+
+        return arr, arr_reloaded
 
     def check_roundtrips(self, a):
         self.roundtrip(a)
@@ -196,30 +194,47 @@ class RoundtripTest:
 
 class TestSaveLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
-        RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
-        assert_equal(self.arr[0], self.arr_reloaded)
-        assert_equal(self.arr[0].dtype, self.arr_reloaded.dtype)
-        assert_equal(self.arr[0].flags.fnc, self.arr_reloaded.flags.fnc)
+        arr, arr_reloaded = RoundtripTest.roundtrip(self, np.save, *args, **kwargs)
+        assert_equal(arr[0], arr_reloaded)
+        assert_equal(arr[0].dtype, arr_reloaded.dtype)
+        assert_equal(arr[0].flags.fnc, arr_reloaded.flags.fnc)
 
 
 class TestSavezLoad(RoundtripTest):
     def roundtrip(self, *args, **kwargs):
-        RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
+        arr, arr_reloaded = RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
-            for n, arr in enumerate(self.arr):
-                reloaded = self.arr_reloaded['arr_%d' % n]
-                assert_equal(arr, reloaded)
-                assert_equal(arr.dtype, reloaded.dtype)
-                assert_equal(arr.flags.fnc, reloaded.flags.fnc)
+            for n, a in enumerate(arr):
+                reloaded = arr_reloaded['arr_%d' % n]
+                assert_equal(a, reloaded)
+                assert_equal(a.dtype, reloaded.dtype)
+                assert_equal(a.flags.fnc, reloaded.flags.fnc)
         finally:
             # delete tempfile, must be done here on windows
-            if self.arr_reloaded.fid:
-                self.arr_reloaded.fid.close()
-                os.remove(self.arr_reloaded.fid.name)
+            if arr_reloaded.fid:
+                arr_reloaded.fid.close()
+                os.remove(arr_reloaded.fid.name)
+
+    def test_load_non_npy(self):
+        """Test loading non-.npy files and name mapping in .npz."""
+        with temppath(prefix="numpy_test_npz_load_non_npy_", suffix=".npz") as tmp:
+            with zipfile.ZipFile(tmp, "w") as npz:
+                with npz.open("test1.npy", "w") as out_file:
+                    np.save(out_file, np.arange(10))
+                with npz.open("test2", "w") as out_file:
+                    np.save(out_file, np.arange(10))
+                with npz.open("metadata", "w") as out_file:
+                    out_file.write(b"Name: Test")
+            with np.load(tmp) as npz:
+                assert len(npz["test1"]) == 10
+                assert len(npz["test1.npy"]) == 10
+                assert len(npz["test2"]) == 10
+                assert npz["metadata"] == b"Name: Test"
 
     @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
@@ -319,8 +334,9 @@ class TestSavezLoad(RoundtripTest):
             # goes to zero.  Python running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
             # collector, so we catch the warnings.
-            with suppress_warnings() as sup:
-                sup.filter(ResourceWarning)  # TODO: specify exact message
+            with warnings.catch_warnings():
+                # TODO: specify exact message
+                warnings.simplefilter('ignore', ResourceWarning)
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
@@ -614,6 +630,7 @@ class TestSaveTxt:
     @pytest.mark.skipif(sys.platform == 'win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_large_zip(self):
         def check_large_zip(memoryerror_raised):
             memoryerror_raised.value = False
@@ -645,7 +662,8 @@ class TestSaveTxt:
             raise MemoryError("Child process raised a MemoryError exception")
         # -9 indicates a SIGKILL, probably an OOM.
         if p.exitcode == -9:
-            pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
+            msg = "subprocess got a SIGKILL, apparently free memory was not sufficient"
+            pytest.xfail(msg)
         assert p.exitcode == 0
 
 class LoadTxtBase:
@@ -824,8 +842,6 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_comments_multi_chars(self):
         c = TextIO()
         c.write('/* comment\n1,2,3,5\n')
@@ -1042,8 +1058,6 @@ class TestLoadTxt(LoadTxtBase):
                 c, dtype=dt, converters=float.fromhex, encoding="latin1")
             assert_equal(res, tgt, err_msg=f"{dt}")
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_default_float_converter_no_default_hex_conversion(self):
         """
         Ensure that fromhex is only used for values with the correct prefix and
@@ -1054,8 +1068,6 @@ class TestLoadTxt(LoadTxtBase):
                 match=".*convert string 'a' to float64 at row 0, column 1"):
             np.loadtxt(c)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-                        reason="PyPy bug in error formatting")
     def test_default_float_converter_exception(self):
         """
         Ensure that the exception message raised during failed floating point
@@ -1259,12 +1271,16 @@ class TestLoadTxt(LoadTxtBase):
             (1, ["ignored\n", "1,2\n", "\n", "3,4\n"]),
             # "Bad" lines that do not end in newlines:
             (1, ["ignored", "1,2", "", "3,4"]),
-            (1, StringIO("ignored\n1,2\n\n3,4")),
+            (1, lambda: StringIO("ignored\n1,2\n\n3,4")),
             # Same as above, but do not skip any lines:
             (0, ["-1,0\n", "1,2\n", "\n", "3,4\n"]),
             (0, ["-1,0", "1,2", "", "3,4"]),
-            (0, StringIO("-1,0\n1,2\n\n3,4"))])
+            (0, lambda: StringIO("-1,0\n1,2\n\n3,4"))])
     def test_max_rows_empty_lines(self, skip, data):
+        # gh-26718 re-instantiate StringIO objects each time
+        if callable(data):
+            data = data()
+
         with pytest.warns(UserWarning,
                     match=f"Input line 3.*max_rows={3 - skip}"):
             res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
@@ -1428,8 +1444,8 @@ class TestFromTxt(LoadTxtBase):
         assert_equal(test, ctrl)
 
     def test_skip_footer_with_invalid(self):
-        with suppress_warnings() as sup:
-            sup.filter(ConversionWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ConversionWarning)
             basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
             # Footer too small to get rid of all invalid values
             assert_raises(ValueError, np.genfromtxt,
@@ -1665,20 +1681,20 @@ M   33  21.99
         control = np.array([2009., 23., 46],)
         assert_equal(test, control)
 
-    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1': 0, '1:n': 1, 'm:1': 2, 'm:n': 3}
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('e3', 'i2'), ('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
-        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                          names=None, converters=conv, encoding="bytes")
-        control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)], dtype=dtyp)
+        test = np.genfromtxt(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                             names=None, converters=conv, encoding="bytes")
+        control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)],
+                               dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
-        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                          usecols=(0, 1, 3), names=None, converters=conv,
-                          encoding="bytes")
+        test = np.genfromtxt(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                             usecols=(0, 1, 3), names=None, converters=conv,
+                             encoding="bytes")
         control = np.rec.array([(1, 5, 0), (2, 8, 1), (3, 3, 3)], dtype=dtyp)
         assert_equal(test, control)
 
@@ -1826,8 +1842,8 @@ M   33  21.99
 
     def test_empty_file(self):
         # Test that an empty file raises the proper warning.
-        with suppress_warnings() as sup:
-            sup.filter(message="genfromtxt: Empty input file:")
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message="genfromtxt: Empty input file:")
             data = TextIO()
             test = np.genfromtxt(data)
             assert_equal(test, np.array([]))
@@ -1886,7 +1902,8 @@ M   33  21.99
         #
         basekwargs['dtype'] = mdtype
         test = np.genfromtxt(TextIO(data),
-                            missing_values={0: -9, 1: -99, 2: -999j}, usemask=True, **basekwargs)
+                             missing_values={0: -9, 1: -99, 2: -999j},
+                             usemask=True, **basekwargs)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
                            mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
@@ -1971,7 +1988,7 @@ M   33  21.99
 
         def f():
             return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
-        mtest = assert_warns(ConversionWarning, f)
+        mtest = pytest.warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -1992,7 +2009,7 @@ M   33  21.99
 
         def f():
             return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
-        mtest = assert_warns(ConversionWarning, f)
+        mtest = pytest.warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
@@ -2314,69 +2331,6 @@ M   33  21.99
                      dtype=np.str_)
             assert_array_equal(test, ctl)
 
-    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
-    def test_recfromtxt(self):
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
-        test = recfromtxt(data, **kwargs)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', int), ('B', int)])
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-        #
-        data = TextIO('A,B\n0,1\n2,N/A')
-        test = recfromtxt(data, dtype=None, usemask=True, **kwargs)
-        control = ma.array([(0, 1), (2, -1)],
-                           mask=[(False, False), (False, True)],
-                           dtype=[('A', int), ('B', int)])
-        assert_equal(test, control)
-        assert_equal(test.mask, control.mask)
-        assert_equal(test.A, [0, 2])
-
-    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
-    def test_recfromcsv(self):
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        kwargs = {"missing_values": "N/A", "names": True, "case_sensitive": True,
-                      "encoding": "bytes"}
-        test = recfromcsv(data, dtype=None, **kwargs)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', int), ('B', int)])
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-        #
-        data = TextIO('A,B\n0,1\n2,N/A')
-        test = recfromcsv(data, dtype=None, usemask=True, **kwargs)
-        control = ma.array([(0, 1), (2, -1)],
-                           mask=[(False, False), (False, True)],
-                           dtype=[('A', int), ('B', int)])
-        assert_equal(test, control)
-        assert_equal(test.mask, control.mask)
-        assert_equal(test.A, [0, 2])
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        test = recfromcsv(data, missing_values='N/A',)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=[('a', int), ('b', int)])
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        dtype = [('a', int), ('b', float)]
-        test = recfromcsv(data, missing_values='N/A', dtype=dtype)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=dtype)
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-
-        # gh-10394
-        data = TextIO('color\n"red"\n"blue"')
-        test = recfromcsv(data, converters={0: lambda x: x.strip('\"')})
-        control = np.array([('red',), ('blue',)], dtype=[('color', (str, 4))])
-        assert_equal(test.dtype, control.dtype)
-        assert_equal(test, control)
-
     def test_max_rows(self):
         # Test the `max_rows` keyword argument.
         data = '1 2\n3 4\n5 6\n7 8\n9 10\n'
@@ -2404,8 +2358,8 @@ M   33  21.99
         assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=4)
 
         # Test with invalid not raise
-        with suppress_warnings() as sup:
-            sup.filter(ConversionWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ConversionWarning)
 
             test = np.genfromtxt(TextIO(data), max_rows=4, invalid_raise=False)
             control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
@@ -2549,7 +2503,7 @@ M   33  21.99
 
     @pytest.mark.parametrize("ndim", [0, 1, 2])
     def test_ndmin_keyword(self, ndim: int):
-        # lets have the same behaviour of ndmin as loadtxt
+        # let's have the same behaviour of ndmin as loadtxt
         # as they should be the same for non-missing values
         txt = "42"
 
@@ -2634,38 +2588,6 @@ class TestPathUsage:
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
-
-    @pytest.mark.parametrize("filename_type", [Path, str])
-    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
-    def test_recfromtxt(self, filename_type):
-        with temppath(suffix='.txt') as path:
-            path = filename_type(path)
-            with open(path, 'w') as f:
-                f.write('A,B\n0,1\n2,3')
-
-            kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
-            test = recfromtxt(path, **kwargs)
-            control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', int), ('B', int)])
-            assert_(isinstance(test, np.recarray))
-            assert_equal(test, control)
-
-    @pytest.mark.parametrize("filename_type", [Path, str])
-    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
-    def test_recfromcsv(self, filename_type):
-        with temppath(suffix='.txt') as path:
-            path = filename_type(path)
-            with open(path, 'w') as f:
-                f.write('A,B\n0,1\n2,3')
-
-            kwargs = {
-                "missing_values": "N/A", "names": True, "case_sensitive": True
-            }
-            test = recfromcsv(path, dtype=None, **kwargs)
-            control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', int), ('B', int)])
-            assert_(isinstance(test, np.recarray))
-            assert_equal(test, control)
 
 
 def test_gzip_load():
@@ -2783,6 +2705,7 @@ def test_npzfile_dict():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+@pytest.mark.thread_unsafe(reason="garbage collector is global state")
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.

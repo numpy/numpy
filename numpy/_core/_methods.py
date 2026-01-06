@@ -9,9 +9,7 @@ import warnings
 from contextlib import nullcontext
 
 import numpy as np
-from numpy._core import multiarray as mu
-from numpy._core import numerictypes as nt
-from numpy._core import umath as um
+from numpy._core import multiarray as mu, numerictypes as nt, umath as um
 from numpy._core.multiarray import asanyarray
 from numpy._globals import _NoValue
 
@@ -121,7 +119,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
-        warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
+        warnings.warn("Mean of empty slice", RuntimeWarning, stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None:
@@ -187,15 +185,14 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
-    x = asanyarray(arr - arrmean)
-
+    x = um.subtract(arr, arrmean, out=...)
     if issubclass(arr.dtype.type, (nt.floating, nt.integer)):
-        x = um.multiply(x, x, out=x)
+        x = um.square(x, out=x)
     # Fast-paths for built-in complex types
-    elif x.dtype in _complex_to_float:
-        xv = x.view(dtype=(_complex_to_float[x.dtype], (2,)))
-        um.multiply(xv, xv, out=xv)
-        x = um.add(xv[..., 0], xv[..., 1], out=x.real).real
+    elif (_float_dtype := _complex_to_float.get(x.dtype)) is not None:
+        xv = x.view(dtype=(_float_dtype, (2,)))
+        um.square(xv, out=xv)
+        x = um.add(xv[..., 0], xv[..., 1], out=x.real)
     # Most general case; includes handling object arrays containing imaginary
     # numbers and complex types with non-native byteorder
     else:

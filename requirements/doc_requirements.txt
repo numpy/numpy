@@ -5,7 +5,7 @@ pydata-sphinx-theme>=0.15.2
 sphinx-copybutton
 sphinx-design
 scipy
-matplotlib
+matplotlib!=3.10.6
 pandas
 breathe>4.33.0
 ipython!=8.1.0
@@ -17,9 +17,7 @@ pickleshare
 towncrier
 toml
 
-
-# for doctests, also needs pytz which is in test_requirements
-scipy-doctest==1.6.0
+scipy-doctest>=1.8.0
 
 # interactive documentation utilities
 # see https://github.com/jupyterlite/pyodide-kernel#compatibility

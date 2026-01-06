@@ -35,6 +35,7 @@ from numpy import (
     amax,
     amin,
     angle,
+    array as narray,  # noqa: F401
     bool_,
     expand_dims,
     finfo,  # noqa: F401
@@ -42,11 +43,9 @@ from numpy import (
     iscomplexobj,
     ndarray,
 )
-from numpy import array as narray  # noqa: F401
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
-from numpy._utils._inspect import formatargspec, getargspec
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -134,18 +133,6 @@ def doc_note(initialdoc, note):
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
-def get_object_signature(obj):
-    """
-    Get the signature from obj
-
-    """
-    try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
-        sig = ''
-    return sig
-
-
 ###############################################################################
 #                              Exceptions                                     #
 ###############################################################################
@@ -181,7 +168,8 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': b'???',
-                  'U': 'N/A'
+                  'U': 'N/A',
+                  'T': 'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
@@ -264,16 +252,17 @@ def default_fill_value(obj):
     The default filling value depends on the datatype of the input
     array or the type of the input scalar:
 
-       ========  ========
-       datatype  default
-       ========  ========
-       bool      True
-       int       999999
-       float     1.e20
-       complex   1.e20+0j
-       object    '?'
-       string    'N/A'
-       ========  ========
+       ===========  ========
+       datatype      default
+       ===========  ========
+       bool         True
+       int          999999
+       float        1.e20
+       complex      1.e20+0j
+       object       '?'
+       string       'N/A'
+       StringDType  'N/A'
+       ===========  ========
 
     For structured types, a structured scalar is returned, with each field the
     default fill value for its type.
@@ -498,7 +487,7 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
-    elif isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
+    elif isinstance(fill_value, str) and (ndtype.char not in 'OSTVU'):
         # Note this check doesn't work if fill_value is not a scalar
         err_msg = "Cannot set fill value of string with array of dtype %s"
         raise TypeError(err_msg % ndtype)
@@ -2288,7 +2277,7 @@ def masked_object(x, value, copy=True, shrink=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> food = np.array(['green_eggs', 'ham'], dtype=object)
+    >>> food = np.array(['green_eggs', 'ham'], dtype=np.object_)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
     >>> eat
@@ -2297,7 +2286,7 @@ def masked_object(x, value, copy=True, shrink=True):
            fill_value='green_eggs',
                 dtype=object)
     >>> # plain ol` ham is boring
-    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
+    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=np.object_)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
     >>> eat
     masked_array(data=['cheese', 'ham', 'pineapple'],
@@ -2414,7 +2403,7 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=float)
+    >>> a = np.arange(5, dtype=np.float64)
     >>> a[2] = np.nan
     >>> a[3] = np.inf
     >>> a
@@ -4818,7 +4807,6 @@ class MaskedArray(ndarray):
           fill_value=999999)
 
         """
-        kwargs.update(order=kwargs.get('order', 'C'))
         result = self._data.reshape(*s, **kwargs).view(type(self))
         result._update_from(self)
         mask = self._mask
@@ -5454,8 +5442,8 @@ class MaskedArray(ndarray):
             The default is to use the mean of the flattened array as reference.
         dtype : dtype, optional
             Type to use in computing the variance. For arrays of integer type
-             the default is float32; for arrays of float types it is the same as
-             the array type.
+            the default is float32; for arrays of float types it is the same as
+            the array type.
 
         See Also
         --------
@@ -5628,7 +5616,7 @@ class MaskedArray(ndarray):
             is used.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
-        order : list, optional
+        order : str or list of str, optional
             When `a` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
             specified.
@@ -5811,11 +5799,6 @@ class MaskedArray(ndarray):
             If ``fill_value`` is not None, it supersedes ``endwith``.
         stable : bool, optional
             Only for compatibility with ``np.sort``. Ignored.
-
-        Returns
-        -------
-        sorted_array : ndarray
-            Array of the same type and shape as `a`.
 
         See Also
         --------
@@ -6547,11 +6530,11 @@ class mvoid(MaskedArray):
     Fake a 'void' object to use for masked array with structured dtypes.
     """
 
-    def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
+    def __new__(cls, data, mask=nomask, dtype=None, fill_value=None,
                 hardmask=False, copy=False, subok=True):
         copy = None if not copy else True
         _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
-        _data = _data.view(self)
+        _data = _data.view(cls)
         _data._hardmask = hardmask
         if mask is not nomask:
             if isinstance(mask, np.void):
@@ -6656,14 +6639,14 @@ class mvoid(MaskedArray):
 
     def tolist(self):
         """
-    Transforms the mvoid object into a tuple.
+        Transforms the mvoid object into a tuple.
 
-    Masked fields are replaced by None.
+        Masked fields are replaced by None.
 
-    Returns
-    -------
-    returned_tuple
-        Tuple of fields
+        Returns
+        -------
+        returned_tuple
+            Tuple of fields
         """
         _mask = self._mask
         if _mask is nomask:
@@ -7051,7 +7034,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod:
+def _frommethod(methodname: str, reversed: bool = False):
     """
     Define functions from existing MaskedArray methods.
 
@@ -7059,44 +7042,47 @@ class _frommethod:
     ----------
     methodname : str
         Name of the method to transform.
-
+    reversed : bool, optional
+        Whether to reverse the first two arguments of the method. Default is False.
     """
+    method = getattr(MaskedArray, methodname)
+    assert callable(method)
 
-    def __init__(self, methodname, reversed=False):
-        self.__name__ = methodname
-        self.__qualname__ = methodname
-        self.__doc__ = self.getdoc()
-        self.reversed = reversed
+    signature = inspect.signature(method)
+    params = list(signature.parameters.values())
+    params[0] = params[0].replace(name="a")  # rename 'self' to 'a'
 
-    def getdoc(self):
-        "Return the doc of the function (from the doc of the method)."
-        meth = getattr(MaskedArray, self.__name__, None) or\
-            getattr(np, self.__name__, None)
-        signature = self.__name__ + get_object_signature(meth)
-        if meth is not None:
-            doc = f"""    {signature}
-{getattr(meth, '__doc__', None)}"""
-            return doc
+    if reversed:
+        assert len(params) >= 2
+        params[0], params[1] = params[1], params[0]
 
-    def __call__(self, a, *args, **params):
-        if self.reversed:
-            args = list(args)
-            a, args[0] = args[0], a
+        def wrapper(a, b, *args, **params):
+            return getattr(asanyarray(b), methodname)(a, *args, **params)
 
-        marr = asanyarray(a)
-        method_name = self.__name__
-        method = getattr(type(marr), method_name, None)
-        if method is None:
-            # use the corresponding np function
-            method = getattr(np, method_name)
+    else:
+        def wrapper(a, *args, **params):
+            return getattr(asanyarray(a), methodname)(*args, **params)
 
-        return method(marr, *args, **params)
+    wrapper.__signature__ = signature.replace(parameters=params)
+    wrapper.__name__ = wrapper.__qualname__ = methodname
+
+    # __doc__  is None when using `python -OO ...`
+    if method.__doc__ is not None:
+        str_signature = f"{methodname}{signature}"
+        # TODO: For methods with a docstring "Parameters" section, that do not already
+        # mention `a` (see e.g. `MaskedArray.var.__doc__`), it should be inserted there.
+        wrapper.__doc__ = f"    {str_signature}\n{method.__doc__}"
+
+    return wrapper
 
 
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
+argmax = _frommethod('argmax')
+argmin = _frommethod('argmin')
 compress = _frommethod('compress', reversed=True)
+count = _frommethod('count')
 cumprod = _frommethod('cumprod')
 cumsum = _frommethod('cumsum')
 copy = _frommethod('copy')
@@ -7120,7 +7106,6 @@ swapaxes = _frommethod('swapaxes')
 trace = _frommethod('trace')
 var = _frommethod('var')
 
-count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
@@ -7208,9 +7193,6 @@ def power(a, b, third=None):
         result._data[invalid] = result.fill_value
     return result
 
-
-argmin = _frommethod('argmin')
-argmax = _frommethod('argmax')
 
 def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
             fill_value=None, *, stable=None):
@@ -8620,7 +8602,7 @@ def asarray(a, dtype=None, order=None):
                         subok=False, order=order)
 
 
-def asanyarray(a, dtype=None):
+def asanyarray(a, dtype=None, order=None):
     """
     Convert the input to a masked array, conserving subclasses.
 
@@ -8633,9 +8615,13 @@ def asanyarray(a, dtype=None):
         Input data, in any form that can be converted to an array.
     dtype : dtype, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('FORTRAN') memory
-        representation.  Default is 'C'.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array ``a``.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if ``a`` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'K'.
 
     Returns
     -------
@@ -8665,9 +8651,18 @@ def asanyarray(a, dtype=None):
     """
     # workaround for #8666, to preserve identity. Ideally the bottom line
     # would handle this for us.
-    if isinstance(a, MaskedArray) and (dtype is None or dtype == a.dtype):
+    if (
+        isinstance(a, MaskedArray)
+        and (dtype is None or dtype == a.dtype)
+        and (
+            order in {None, 'A', 'K'}
+            or order == 'C' and a.flags.carray
+            or order == 'F' and a.flags.f_contiguous
+        )
+    ):
         return a
-    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
+    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True,
+                        order=order)
 
 
 ##############################################################################
@@ -8745,78 +8740,76 @@ def fromflex(fxarray):
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
 
 
-class _convert2ma:
+def _convert2ma(funcname: str, np_ret: str, np_ma_ret: str,
+                params: dict[str, str] | None = None):
+    """Convert function from numpy to numpy.ma."""
+    func = getattr(np, funcname)
+    params = params or {}
 
-    """
-    Convert functions from numpy to numpy.ma.
+    @functools.wraps(func, assigned=set(functools.WRAPPER_ASSIGNMENTS) - {"__module__"})
+    def wrapper(*args, **kwargs):
+        common_params = kwargs.keys() & params.keys()
+        extras = params | {p: kwargs.pop(p) for p in common_params}
 
-    Parameters
-    ----------
-        _methodname : string
-            Name of the method to transform.
+        result = func.__call__(*args, **kwargs).view(MaskedArray)
 
-    """
-    __doc__ = None
-
-    def __init__(self, funcname, np_ret, np_ma_ret, params=None):
-        self._func = getattr(np, funcname)
-        self.__doc__ = self.getdoc(np_ret, np_ma_ret)
-        self._extras = params or {}
-
-    def getdoc(self, np_ret, np_ma_ret):
-        "Return the doc of the function (from the doc of the method)."
-        doc = getattr(self._func, '__doc__', None)
-        sig = get_object_signature(self._func)
-        if doc:
-            doc = self._replace_return_type(doc, np_ret, np_ma_ret)
-            # Add the signature of the function at the beginning of the doc
-            if sig:
-                sig = f"{self._func.__name__}{sig}\n"
-            doc = sig + doc
-        return doc
-
-    def _replace_return_type(self, doc, np_ret, np_ma_ret):
-        """
-        Replace documentation of ``np`` function's return type.
-
-        Replaces it with the proper type for the ``np.ma`` function.
-
-        Parameters
-        ----------
-        doc : str
-            The documentation of the ``np`` method.
-        np_ret : str
-            The return type string of the ``np`` method that we want to
-            replace. (e.g. "out : ndarray")
-        np_ma_ret : str
-            The return type string of the ``np.ma`` method.
-            (e.g. "out : MaskedArray")
-        """
-        if np_ret not in doc:
-            raise RuntimeError(
-                f"Failed to replace `{np_ret}` with `{np_ma_ret}`. "
-                f"The documentation string for return type, {np_ret}, is not "
-                f"found in the docstring for `np.{self._func.__name__}`. "
-                f"Fix the docstring for `np.{self._func.__name__}` or "
-                "update the expected string for return type."
-            )
-
-        return doc.replace(np_ret, np_ma_ret)
-
-    def __call__(self, *args, **params):
-        # Find the common parameters to the call and the definition
-        _extras = self._extras
-        common_params = set(params).intersection(_extras)
-        # Drop the common parameters from the call
-        for p in common_params:
-            _extras[p] = params.pop(p)
-        # Get the result
-        result = self._func.__call__(*args, **params).view(MaskedArray)
         if "fill_value" in common_params:
-            result.fill_value = _extras.get("fill_value", None)
+            result.fill_value = extras["fill_value"]
         if "hardmask" in common_params:
-            result._hardmask = bool(_extras.get("hard_mask", False))
+            result._hardmask = bool(extras["hardmask"])
+
         return result
+
+    # workaround for a doctest bug in Python 3.11 that incorrectly assumes `__code__`
+    # exists on wrapped functions
+    del wrapper.__wrapped__
+
+    # `arange`, `empty`, `empty_like`, `frombuffer`, and `zeros` have no signature
+    try:
+        signature = inspect.signature(func)
+    except ValueError:
+        signature = inspect.Signature([
+            inspect.Parameter('args', inspect.Parameter.VAR_POSITIONAL),
+            inspect.Parameter('kwargs', inspect.Parameter.VAR_KEYWORD),
+        ])
+
+    if params:
+        sig_params = list(signature.parameters.values())
+
+        # pop `**kwargs` if present
+        sig_kwargs = None
+        if sig_params[-1].kind is inspect.Parameter.VAR_KEYWORD:
+            sig_kwargs = sig_params.pop()
+
+        # add new keyword-only parameters
+        for param_name, default in params.items():
+            new_param = inspect.Parameter(
+                param_name,
+                inspect.Parameter.KEYWORD_ONLY,
+                default=default,
+            )
+            sig_params.append(new_param)
+
+        # re-append `**kwargs` if it was present
+        if sig_kwargs:
+            sig_params.append(sig_kwargs)
+
+        signature = signature.replace(parameters=sig_params)
+
+    wrapper.__signature__ = signature
+
+    # __doc__  is None when using `python -OO ...`
+    if func.__doc__ is not None:
+        assert np_ret in func.__doc__, (
+            f"Failed to replace `{np_ret}` with `{np_ma_ret}`. "
+            f"The documentation string for return type, {np_ret}, is not "
+            f"found in the docstring for `np.{func.__name__}`. "
+            f"Fix the docstring for `np.{func.__name__}` or "
+            "update the expected string for return type."
+        )
+        wrapper.__doc__ = inspect.cleandoc(func.__doc__).replace(np_ret, np_ma_ret)
+
+    return wrapper
 
 
 arange = _convert2ma(

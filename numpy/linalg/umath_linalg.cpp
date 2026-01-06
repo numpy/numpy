@@ -448,6 +448,15 @@ set_fp_invalid_or_clear(int error_occurred)
     }
 }
 
+static inline void
+report_no_memory()
+{
+    NPY_ALLOW_C_API_DEF
+    NPY_ALLOW_C_API;
+    PyErr_NoMemory();
+    NPY_DISABLE_C_API;
+}
+
 /*
  *****************************************************************************
  **                      Some handy constants                               **
@@ -1199,10 +1208,7 @@ slogdet(char **args,
     }
     else {
         /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
+        report_no_memory();
     }
 }
 
@@ -1255,10 +1261,7 @@ det(char **args,
     }
     else {
         /* TODO: Requires use of new ufunc API to indicate error return */
-        NPY_ALLOW_C_API_DEF
-        NPY_ALLOW_C_API;
-        PyErr_NoMemory();
-        NPY_DISABLE_C_API;
+        report_no_memory();
     }
 }
 
@@ -1331,7 +1334,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
     mem_buff = (npy_uint8 *)malloc(alloc_size);
 
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(typ);
@@ -1365,7 +1368,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
 
     mem_buff2 = (npy_uint8 *)malloc(lwork*sizeof(typ) + liwork*sizeof(fortran_int));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -1377,6 +1380,9 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
     params->IWORK = (fortran_int*)iwork;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
 
  error:
     /* something failed */
@@ -1440,7 +1446,7 @@ using fbasetyp = fortran_type_t<basetyp>;
     mem_buff = (npy_uint8 *)malloc(safe_N * safe_N * sizeof(typ) +
                       safe_N * sizeof(basetyp));
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
     a = mem_buff;
     w = mem_buff + safe_N * safe_N * sizeof(typ);
@@ -1478,7 +1484,7 @@ using fbasetyp = fortran_type_t<basetyp>;
                        lrwork*sizeof(basetyp) +
                        liwork*sizeof(fortran_int));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -1495,6 +1501,8 @@ using fbasetyp = fortran_type_t<basetyp>;
     return 1;
 
     /* something failed */
+no_memory:
+    report_no_memory();
 error:
     memset(params, 0, sizeof(*params));
     free(mem_buff2);
@@ -1733,7 +1741,10 @@ init_gesv(GESV_PARAMS_t<ftyp> *params, fortran_int N, fortran_int NRHS)
     params->LDB = ld;
 
     return 1;
+
  error:
+    report_no_memory();
+
     free(mem_buff);
     memset(params, 0, sizeof(*params));
 
@@ -1977,6 +1988,8 @@ init_potrf(POTR_PARAMS_t<ftyp> *params, char UPLO, fortran_int N)
 
     return 1;
  error:
+    report_no_memory();
+
     free(mem_buff);
     memset(params, 0, sizeof(*params));
 
@@ -2175,7 +2188,7 @@ scalar_trait)
                       vlr_size + vrr_size +
                       w_size + vl_size + vr_size);
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2218,7 +2231,7 @@ scalar_trait)
 
     mem_buff2 = (npy_uint8 *)malloc(work_count*sizeof(typ));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
     work = mem_buff2;
 
@@ -2226,6 +2239,10 @@ scalar_trait)
     params->WORK = (typ*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     free(mem_buff2);
     free(mem_buff);
@@ -2392,7 +2409,7 @@ using realtyp = basetype_t<ftyp>;
 
     mem_buff = (npy_uint8 *)malloc(total_size);
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2434,7 +2451,7 @@ using realtyp = basetype_t<ftyp>;
 
     mem_buff2 = (npy_uint8 *)malloc(work_count*sizeof(ftyp));
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -2443,6 +2460,9 @@ using realtyp = basetype_t<ftyp>;
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
  error:
     free(mem_buff2);
     free(mem_buff);
@@ -2754,7 +2774,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     mem_buff = (npy_uint8 *)malloc(a_size + s_size + u_size + vt_size + iwork_size);
 
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2798,7 +2818,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -2807,6 +2827,9 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -2894,7 +2917,7 @@ using frealtyp = basetype_t<ftyp>;
                       rwork_size +
                       iwork_size);
     if (!mem_buff) {
-        goto error;
+        goto no_memory;
     }
 
     a = mem_buff;
@@ -2939,7 +2962,7 @@ using frealtyp = basetype_t<ftyp>;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2) {
-        goto error;
+        goto no_memory;
     }
 
     work = mem_buff2;
@@ -2948,6 +2971,10 @@ using frealtyp = basetype_t<ftyp>;
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff2);
@@ -3186,7 +3213,7 @@ using ftyp = fortran_doublereal;
     mem_buff = (npy_uint8 *)malloc(a_size + tau_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     a = mem_buff;
     tau = a + a_size;
@@ -3219,13 +3246,17 @@ using ftyp = fortran_doublereal;
     work_size = (size_t) params->LWORK * sizeof(ftyp);
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3260,7 +3291,7 @@ using ftyp = fortran_doublecomplex;
     mem_buff = (npy_uint8 *)malloc(a_size + tau_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     a = mem_buff;
     tau = a + a_size;
@@ -3295,13 +3326,17 @@ using ftyp = fortran_doublecomplex;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3433,7 +3468,7 @@ using ftyp = fortran_doublereal;
     mem_buff = (npy_uint8 *)malloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     q = mem_buff;
     tau = q + q_size;
@@ -3468,13 +3503,17 @@ using ftyp = fortran_doublereal;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
     params->WORK = (ftyp*)work;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3512,7 +3551,7 @@ using ftyp=fortran_doublecomplex;
     mem_buff = (npy_uint8 *)malloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
-        goto error;
+        goto no_memory;
 
     q = mem_buff;
     tau = q + q_size;
@@ -3548,7 +3587,7 @@ using ftyp=fortran_doublecomplex;
 
     mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
-        goto error;
+        goto no_memory;
 
     work = mem_buff2;
 
@@ -3556,6 +3595,10 @@ using ftyp=fortran_doublecomplex;
     params->LWORK = work_count;
 
     return 1;
+
+ no_memory:
+    report_no_memory();
+
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff);
@@ -3898,10 +3941,7 @@ scalar_trait)
     return 1;
 
  no_memory:
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
+    report_no_memory();
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
@@ -4034,10 +4074,7 @@ using frealtyp = basetype_t<ftyp>;
     return 1;
 
  no_memory:
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API;
-    PyErr_NoMemory();
-    NPY_DISABLE_C_API;
+    report_no_memory();
 
  error:
     TRACE_TXT("%s failed init\n", __FUNCTION__);
@@ -4688,57 +4725,54 @@ static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        UMATH_LINALG_MODULE_NAME,
-        NULL,
-        -1,
-        UMath_LinAlgMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static int module_loaded = 0;
 
-PyMODINIT_FUNC PyInit__umath_linalg(void)
+static int
+_umath_linalg_exec(PyObject *m)
 {
-    PyObject *m;
     PyObject *d;
     PyObject *version;
 
-    m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
     }
+    module_loaded = 1;
 
-    import_array();
-    import_ufunc();
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
+    }
 
     d = PyModule_GetDict(m);
     if (d == NULL) {
-        return NULL;
+        return -1;
     }
 
     version = PyUnicode_FromString(umath_linalg_version_string);
     if (version == NULL) {
-        return NULL;
+        return -1;
     }
     int ret = PyDict_SetItemString(d, "__version__", version);
     Py_DECREF(version);
     if (ret < 0) {
-        return NULL;
+        return -1;
     }
 
     /* Load the ufunc operators into the module's namespace */
     if (addUfuncs(d) < 0) {
-        return NULL;
+        return -1;
     }
 
 #if PY_VERSION_HEX < 0x30d00b3 && !HAVE_EXTERNAL_LAPACK
     lapack_lite_lock = PyThread_allocate_lock();
     if (lapack_lite_lock == NULL) {
         PyErr_NoMemory();
-        return NULL;
+        return -1;
     }
 #endif
 
@@ -4748,10 +4782,30 @@ PyMODINIT_FUNC PyInit__umath_linalg(void)
     PyDict_SetItemString(d, "_ilp64", Py_False);
 #endif
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot _umath_linalg_slots[] = {
+    {Py_mod_exec, (void*)_umath_linalg_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,  /* m_base */
+    "_umath_linalg",        /* m_name */
+    NULL,                   /* m_doc */
+    0,                      /* m_size */
+    UMath_LinAlgMethods,    /* m_methods */
+    _umath_linalg_slots,    /* m_slots */
+};
+
+PyMODINIT_FUNC PyInit__umath_linalg(void) {
+    return PyModuleDef_Init(&moduledef);
 }

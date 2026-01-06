@@ -104,12 +104,44 @@ involving precision-based casting.
     >>> import numpy.typing as npt
 
     >>> T = TypeVar("T", bound=npt.NBitBase)
-    >>> def func(a: "np.floating[T]", b: "np.floating[T]") -> "np.floating[T]":
+    >>> def func(a: np.floating[T], b: np.floating[T]) -> np.floating[T]:
     ...     ...
 
 Consequently, the likes of `~numpy.float16`, `~numpy.float32` and
 `~numpy.float64` are still sub-types of `~numpy.floating`, but, contrary to
 runtime, they're not necessarily considered as sub-classes.
+
+.. deprecated:: 2.3
+    The :class:`~numpy.typing.NBitBase` helper is deprecated and will be
+    removed in a future release. Prefer expressing precision relationships via
+    ``typing.overload`` or ``TypeVar`` definitions bounded by concrete scalar
+    classes. For example:
+
+    .. code-block:: python
+
+        from typing import TypeVar
+        import numpy as np
+
+        S = TypeVar("S", bound=np.floating)
+
+        def func(a: S, b: S) -> S:
+            ...
+
+    or in the case of different input types mapping to different output types:
+
+   .. code-block:: python
+
+        from typing import overload
+        import numpy as np
+
+        @overload
+        def phase(x: np.complex64) -> np.float32: ...
+        @overload
+        def phase(x: np.complex128) -> np.float64: ...
+        @overload
+        def phase(x: np.clongdouble) -> np.longdouble: ...
+        def phase(x: np.complexfloating) -> np.floating:
+            ...
 
 Timedelta64
 ~~~~~~~~~~~
@@ -169,7 +201,7 @@ __DIR_SET = frozenset(__DIR)
 def __dir__() -> list[str]:
     return __DIR
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     if name == "NBitBase":
         import warnings
 

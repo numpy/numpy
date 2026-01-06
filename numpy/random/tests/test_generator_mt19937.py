@@ -1,6 +1,7 @@
 import hashlib
 import os.path
 import sys
+import warnings
 
 import pytest
 
@@ -17,8 +18,6 @@ from numpy.testing import (
     assert_equal,
     assert_no_warnings,
     assert_raises,
-    assert_warns,
-    suppress_warnings,
 )
 
 random = Generator(MT19937())
@@ -100,6 +99,24 @@ class TestBinomial:
         # Issue #4571.
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
+    def test_p_extremely_small(self):
+        n = 50000000000
+        p = 5e-17
+        sample_size = 20000000
+        x = random.binomial(n, p, size=sample_size)
+        sample_mean = x.mean()
+        expected_mean = n * p
+        sigma = np.sqrt(n * p * (1 - p) / sample_size)
+        # Note: the parameters were chosen so that expected_mean - 6*sigma
+        # is a positive value.  The first `assert` below validates that
+        # assumption (in case someone edits the parameters in the future).
+        # The second `assert` is the actual test.
+        low_bound = expected_mean - 6 * sigma
+        assert low_bound > 0, "bad test params: 6-sigma lower bound is negative"
+        test_msg = (f"sample mean {sample_mean} deviates from the expected mean "
+                    f"{expected_mean} by more than 6*sigma")
+        assert abs(expected_mean - sample_mean) < 6 * sigma, test_msg
+
 
 class TestMultinomial:
     def test_basic(self):
@@ -158,8 +175,7 @@ class TestMultinomial:
 
 class TestMultivariateHypergeometric:
 
-    def setup_method(self):
-        self.seed = 8675309
+    seed = 8675309
 
     def test_argument_validation(self):
         # Error cases...
@@ -291,37 +307,40 @@ class TestMultivariateHypergeometric:
 
 
 class TestSetState:
-    def setup_method(self):
-        self.seed = 1234567890
-        self.rg = Generator(MT19937(self.seed))
-        self.bit_generator = self.rg.bit_generator
-        self.state = self.bit_generator.state
-        self.legacy_state = (self.state['bit_generator'],
-                             self.state['state']['key'],
-                             self.state['state']['pos'])
+    def _create_rng(self):
+        seed = 1234567890
+        rg = Generator(MT19937(seed))
+        bit_generator = rg.bit_generator
+        state = bit_generator.state
+        legacy_state = (state['bit_generator'],
+                        state['state']['key'],
+                        state['state']['pos'])
+        return rg, bit_generator, state
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
-        old = self.rg.standard_normal(size=3)
-        self.bit_generator.state = self.state
-        new = self.rg.standard_normal(size=3)
+        rg, bit_generator, state = self._create_rng()
+        old = rg.standard_normal(size=3)
+        bit_generator.state = state
+        new = rg.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
-
-        self.rg.standard_normal()
-        state = self.bit_generator.state
-        old = self.rg.standard_normal(size=3)
-        self.bit_generator.state = state
-        new = self.rg.standard_normal(size=3)
+        rg, bit_generator, state = self._create_rng()
+        rg.standard_normal()
+        state = bit_generator.state
+        old = rg.standard_normal(size=3)
+        bit_generator.state = state
+        new = rg.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        self.rg.negative_binomial(0.5, 0.5)
+        rg, _, _ = self._create_rng()
+        rg.negative_binomial(0.5, 0.5)
 
 
 class TestIntegers:
@@ -719,9 +738,7 @@ class TestIntegers:
 class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
-
-    def setup_method(self):
-        self.seed = 1234567890
+    seed = 1234567890
 
     def test_integers(self):
         random = Generator(MT19937(self.seed))
@@ -1249,6 +1266,7 @@ class TestRandomDist:
         assert_array_almost_equal(actual, expected, decimal=15)
 
     @pytest.mark.slow
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_dirichlet_moderately_small_alpha(self):
         # Use alpha.max() < 0.1 to trigger stick breaking code path
         alpha = np.array([0.02, 0.04, 0.03])
@@ -1463,8 +1481,8 @@ class TestRandomDist:
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
         cov = [[1, 2], [2, 1]]
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov)
-        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov,
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov)
+        pytest.warns(RuntimeWarning, random.multivariate_normal, mean, cov,
                      method='eigh')
         assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
                       method='cholesky')
@@ -1491,10 +1509,9 @@ class TestRandomDist:
                           method='cholesky')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             random.multivariate_normal(mean, cov, method=method)
-            w = sup.record(RuntimeWarning)
-            assert len(w) == 0
 
         mu = np.zeros(2)
         cov = np.eye(2)
@@ -1858,6 +1875,11 @@ class TestRandomDist:
                             [2.07093587449261, 0.73073890064369]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    def test_wald_nonnegative(self):
+        random = Generator(MT19937(self.seed))
+        samples = random.wald(mean=1e9, scale=2.25, size=1000)
+        assert_(np.all(samples >= 0.0))
+
     def test_weibull(self):
         random = Generator(MT19937(self.seed))
         actual = random.weibull(a=1.23, size=(3, 2))
@@ -1883,8 +1905,7 @@ class TestRandomDist:
 class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
-    def setup_method(self):
-        self.seed = 123456789
+    seed = 123456789
 
     def test_uniform(self):
         random = Generator(MT19937(self.seed))
@@ -2496,8 +2517,7 @@ class TestBroadcast:
 @pytest.mark.skipif(IS_WASM, reason="can't start thread")
 class TestThread:
     # make sure each state produces the same sequence even in threads
-    def setup_method(self):
-        self.seeds = range(4)
+    seeds = range(4)
 
     def check_function(self, function, sz):
         from threading import Thread
@@ -2542,13 +2562,11 @@ class TestThread:
 
 # See Issue #4263
 class TestSingleEltArrayInput:
-    def setup_method(self):
-        self.argOne = np.array([2])
-        self.argTwo = np.array([3])
-        self.argThree = np.array([4])
-        self.tgtShape = (1,)
+    def _create_arrays(self):
+        return np.array([2]), np.array([3]), np.array([4]), (1,)
 
     def test_one_arg_funcs(self):
+        argOne, _, _, tgtShape = self._create_arrays()
         funcs = (random.exponential, random.standard_gamma,
                  random.chisquare, random.standard_t,
                  random.pareto, random.weibull,
@@ -2563,11 +2581,12 @@ class TestSingleEltArrayInput:
                 out = func(np.array([0.5]))
 
             else:
-                out = func(self.argOne)
+                out = func(argOne)
 
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
     def test_two_arg_funcs(self):
+        argOne, argTwo, _, tgtShape = self._create_arrays()
         funcs = (random.uniform, random.normal,
                  random.beta, random.gamma,
                  random.f, random.noncentral_chisquare,
@@ -2583,18 +2602,19 @@ class TestSingleEltArrayInput:
                 argTwo = np.array([0.5])
 
             else:
-                argTwo = self.argTwo
+                argTwo = argTwo
 
-            out = func(self.argOne, argTwo)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne[0], argTwo)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne[0], argTwo)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne, argTwo[0])
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo[0])
+            assert_equal(out.shape, tgtShape)
 
     def test_integers(self, endpoint):
+        _, _, _, tgtShape = self._create_arrays()
         itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
                  np.int32, np.uint32, np.int64, np.uint64]
         func = random.integers
@@ -2603,27 +2623,28 @@ class TestSingleEltArrayInput:
 
         for dt in itype:
             out = func(low, high, endpoint=endpoint, dtype=dt)
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
             out = func(low[0], high, endpoint=endpoint, dtype=dt)
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
             out = func(low, high[0], endpoint=endpoint, dtype=dt)
-            assert_equal(out.shape, self.tgtShape)
+            assert_equal(out.shape, tgtShape)
 
     def test_three_arg_funcs(self):
+        argOne, argTwo, argThree, tgtShape = self._create_arrays()
         funcs = [random.noncentral_f, random.triangular,
                  random.hypergeometric]
 
         for func in funcs:
-            out = func(self.argOne, self.argTwo, self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo, argThree)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne[0], self.argTwo, self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne[0], argTwo, argThree)
+            assert_equal(out.shape, tgtShape)
 
-            out = func(self.argOne, self.argTwo[0], self.argThree)
-            assert_equal(out.shape, self.tgtShape)
+            out = func(argOne, argTwo[0], argThree)
+            assert_equal(out.shape, tgtShape)
 
 
 @pytest.mark.parametrize("config", JUMP_TEST_DATA)

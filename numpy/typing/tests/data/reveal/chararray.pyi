@@ -1,10 +1,10 @@
-from typing import Any, TypeAlias, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_BytesCharArray: TypeAlias = np.char.chararray[tuple[Any, ...], np.dtype[np.bytes_]]
-_StrCharArray: TypeAlias = np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]
+type _BytesCharArray = np.char.chararray[tuple[Any, ...], np.dtype[np.bytes_]]
+type _StrCharArray = np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]
 
 AR_U: _StrCharArray
 AR_S: _BytesCharArray
@@ -50,6 +50,7 @@ assert_type(AR_S.join([b"_", b""]), _BytesCharArray)
 
 assert_type(AR_U.ljust(5), _StrCharArray)
 assert_type(AR_S.ljust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), _BytesCharArray)
+assert_type(AR_S.ljust([4, 3, 1], fillchar="a"), _BytesCharArray)
 assert_type(AR_U.rjust(5), _StrCharArray)
 assert_type(AR_S.rjust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), _BytesCharArray)
 

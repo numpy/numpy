@@ -237,7 +237,7 @@ your system.
 
     First, install Microsoft Visual Studio - the 2022 Community Edition will
     work (see the `Visual Studio download site <https://visualstudio.microsoft.com/downloads/>`__).
-    Ensure that you have installed necessary Visual Studio components for building NumPy 
+    Ensure that you have installed necessary Visual Studio components for building NumPy
     on WoA from `here <https://gist.github.com/Mugundanmcw/c3bb93018d5da9311fb2b222f205ba19>`__.
 
     To use the flang compiler for Windows on ARM64, install Latest LLVM
@@ -473,7 +473,7 @@ interface is self-documenting, so please see ``spin --help`` and
     install").
 
     Editable installs are supported. It is important to understand that **you
-    may use either an editable install or ``spin`` in a given repository clone,
+    may use either an editable install or** ``spin`` **in a given repository clone,
     but not both**. If you use editable installs, you have to use ``pytest``
     and other development tools directly instead of using ``spin``.
 
@@ -515,6 +515,7 @@ Customizing builds
 
    compilers_and_options
    blas_lapack
+   cpu_simd
    cross_compilation
    redistributable_binaries
 

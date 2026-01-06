@@ -401,7 +401,7 @@ Iterators for the output arguments are then processed.
 Finally, the decision is made about how to execute the looping
 mechanism to ensure that all elements of the input arrays are combined
 to produce the output arrays of the correct type. The options for loop
-execution are one-loop (for :term`contiguous`, aligned, and correct data
+execution are one-loop (for :term:`contiguous`, aligned, and correct data
 type), strided-loop (for non-contiguous but still aligned and correct
 data type), and a buffered loop (for misaligned or incorrect data
 type situations). Depending on which execution method is called for,

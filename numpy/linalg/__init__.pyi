@@ -1,6 +1,4 @@
-from . import _linalg as _linalg
-from . import _umath_linalg as _umath_linalg
-from . import linalg as linalg
+from . import _linalg as _linalg, _umath_linalg as _umath_linalg
 from ._linalg import (
     cholesky,
     cond,

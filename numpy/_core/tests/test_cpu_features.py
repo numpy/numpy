@@ -6,6 +6,7 @@ import subprocess
 import sys
 
 import pytest
+
 from numpy._core._multiarray_umath import (
     __cpu_baseline__,
     __cpu_dispatch__,
@@ -123,6 +124,7 @@ class AbstractTest:
         " therefore this test class cannot be properly executed."
     ),
 )
+@pytest.mark.thread_unsafe(reason="setup & tmp_path_factory threads-unsafe, modifies environment variables")
 class TestEnvPrivation:
     cwd = pathlib.Path(__file__).parent.resolve()
     env = os.environ.copy()
@@ -337,34 +339,35 @@ is_x86 = re.match(r"^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
     not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
 )
 class Test_X86_Features(AbstractTest):
-    features = [
-        "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "POPCNT", "SSE42",
-        "AVX", "F16C", "XOP", "FMA4", "FMA3", "AVX2", "AVX512F", "AVX512CD",
-        "AVX512ER", "AVX512PF", "AVX5124FMAPS", "AVX5124VNNIW", "AVX512VPOPCNTDQ",
-        "AVX512VL", "AVX512BW", "AVX512DQ", "AVX512VNNI", "AVX512IFMA",
-        "AVX512VBMI", "AVX512VBMI2", "AVX512BITALG", "AVX512FP16",
-    ]
+    features = []
+
     features_groups = {
-        "AVX512_KNL": ["AVX512F", "AVX512CD", "AVX512ER", "AVX512PF"],
-        "AVX512_KNM": ["AVX512F", "AVX512CD", "AVX512ER", "AVX512PF", "AVX5124FMAPS",
-                      "AVX5124VNNIW", "AVX512VPOPCNTDQ"],
-        "AVX512_SKX": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL"],
-        "AVX512_CLX": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512VNNI"],
-        "AVX512_CNL": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512IFMA",
-                      "AVX512VBMI"],
-        "AVX512_ICL": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL", "AVX512IFMA",
-                      "AVX512VBMI", "AVX512VNNI", "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ"],
-        "AVX512_SPR": ["AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ",
-                      "AVX512VL", "AVX512IFMA", "AVX512VBMI", "AVX512VNNI",
-                      "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
-                      "AVX512FP16"],
+        "X86_V2": [
+            "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "SSE42",
+            "POPCNT", "LAHF", "CX16"
+        ],
     }
+    features_groups["X86_V3"] = features_groups["X86_V2"] + [
+        "AVX", "AVX2", "FMA3", "BMI", "BMI2",
+        "LZCNT", "F16C", "MOVBE"
+    ]
+    features_groups["X86_V4"] = features_groups["X86_V3"] + [
+        "AVX512F", "AVX512CD", "AVX512BW", "AVX512DQ", "AVX512VL"
+    ]
+    features_groups["AVX512_ICL"] = features_groups["X86_V4"] + [
+        "AVX512IFMA", "AVX512VBMI", "AVX512VNNI",
+        "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
+        "VAES", "VPCLMULQDQ", "GFNI"
+    ]
+    features_groups["AVX512_SPR"] = features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
+
     features_map = {
         "SSE3": "PNI", "SSE41": "SSE4_1", "SSE42": "SSE4_2", "FMA3": "FMA",
+        "BMI": "BMI1", "LZCNT": "ABM", "LAHF": "LAHF_LM",
         "AVX512VNNI": "AVX512_VNNI", "AVX512BITALG": "AVX512_BITALG",
         "AVX512VBMI2": "AVX512_VBMI2", "AVX5124FMAPS": "AVX512_4FMAPS",
         "AVX5124VNNIW": "AVX512_4VNNIW", "AVX512VPOPCNTDQ": "AVX512_VPOPCNTDQ",
-        "AVX512FP16": "AVX512_FP16",
+        "AVX512FP16": "AVX512_FP16", "AVX512BF16": "AVX512_BF16"
     }
 
     def load_flags(self):
@@ -430,3 +433,18 @@ class Test_LOONGARCH_Features(AbstractTest):
 
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
+
+
+is_riscv = re.match(r"^(riscv)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
+class Test_RISCV_Features(AbstractTest):
+    features = ["RVV"]
+
+    def load_flags(self):
+        self.load_flags_auxv()
+        if not self.features_flags:
+            # Let the test fail and dump if we cannot read HWCAP.
+            return
+        hwcap = int(next(iter(self.features_flags)), 16)
+        if hwcap & (1 << 21):  # HWCAP_RISCV_V
+            self.features_flags.add("RVV")

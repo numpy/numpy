@@ -2,24 +2,20 @@ import ctypes as ct
 import datetime as dt
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, Literal, LiteralString, TypeAlias, assert_type
+from typing import Any, Literal, LiteralString, assert_type
 
 import numpy as np
 from numpy.dtypes import StringDType
 
 # a combination of likely `object` dtype-like candidates (no `_co`)
-_PyObjectLike: TypeAlias = Decimal | Fraction | dt.datetime | dt.timedelta
+type _PyObjectLike = Decimal | Fraction | dt.datetime | dt.timedelta
 
 dtype_U: np.dtype[np.str_]
 dtype_V: np.dtype[np.void]
 dtype_i8: np.dtype[np.int64]
 
-py_int_co: type[int]
-py_float_co: type[float]
-py_complex_co: type[complex]
 py_object: type[_PyObjectLike]
 py_character: type[str | bytes]
-py_flexible: type[str | bytes | memoryview]
 
 ct_floating: type[ct.c_float | ct.c_double | ct.c_longdouble]
 ct_number: type[ct.c_uint8 | ct.c_float]
@@ -48,19 +44,16 @@ assert_type(np.dtype("str"), np.dtype[np.str_])
 
 # Python types
 assert_type(np.dtype(bool), np.dtype[np.bool])
-assert_type(np.dtype(py_int_co), np.dtype[np.int_ | np.bool])
-assert_type(np.dtype(int), np.dtype[np.int_ | np.bool])
-assert_type(np.dtype(py_float_co), np.dtype[np.float64 | np.int_ | np.bool])
-assert_type(np.dtype(float), np.dtype[np.float64 | np.int_ | np.bool])
-assert_type(np.dtype(py_complex_co), np.dtype[np.complex128 | np.float64 | np.int_ | np.bool])
-assert_type(np.dtype(complex), np.dtype[np.complex128 | np.float64 | np.int_ | np.bool])
+assert_type(np.dtype(int), np.dtype[np.int_ | Any])
+assert_type(np.dtype(float), np.dtype[np.float64 | Any])
+assert_type(np.dtype(complex), np.dtype[np.complex128 | Any])
 assert_type(np.dtype(py_object), np.dtype[np.object_])
 assert_type(np.dtype(str), np.dtype[np.str_])
 assert_type(np.dtype(bytes), np.dtype[np.bytes_])
-assert_type(np.dtype(py_character), np.dtype[np.character])
 assert_type(np.dtype(memoryview), np.dtype[np.void])
-assert_type(np.dtype(py_flexible), np.dtype[np.flexible])
+assert_type(np.dtype(py_character), np.dtype[np.character])
 
+# object types
 assert_type(np.dtype(list), np.dtype[np.object_])
 assert_type(np.dtype(dt.datetime), np.dtype[np.object_])
 assert_type(np.dtype(dt.timedelta), np.dtype[np.object_])
@@ -71,16 +64,13 @@ assert_type(np.dtype(Fraction), np.dtype[np.object_])
 assert_type(np.dtype("?"), np.dtype[np.bool])
 assert_type(np.dtype("|b1"), np.dtype[np.bool])
 assert_type(np.dtype("u1"), np.dtype[np.uint8])
-assert_type(np.dtype("l"), np.dtype[np.long])
+assert_type(np.dtype("l"), np.dtype[np.int32 | np.int64])
 assert_type(np.dtype("longlong"), np.dtype[np.longlong])
 assert_type(np.dtype(">g"), np.dtype[np.longdouble])
 assert_type(np.dtype(cs_integer), np.dtype[np.integer])
-assert_type(np.dtype(cs_number), np.dtype[np.number])
-assert_type(np.dtype(cs_flex), np.dtype[np.flexible])
-assert_type(np.dtype(cs_generic), np.dtype[np.generic])
 
 # ctypes
-assert_type(np.dtype(ct.c_double), np.dtype[np.double])
+assert_type(np.dtype(ct.c_double), np.dtype[np.float64])  # see numpy/numpy#29155
 assert_type(np.dtype(ct.c_longlong), np.dtype[np.longlong])
 assert_type(np.dtype(ct.c_uint32), np.dtype[np.uint32])
 assert_type(np.dtype(ct.c_bool), np.dtype[np.bool])
@@ -90,7 +80,7 @@ assert_type(np.dtype(ct.py_object), np.dtype[np.object_])
 # Special case for None
 assert_type(np.dtype(None), np.dtype[np.float64])
 
-# Dypes of dtypes
+# dtypes of dtypes
 assert_type(np.dtype(np.dtype(np.float64)), np.dtype[np.float64])
 assert_type(np.dtype(dt_inexact), np.dtype[np.inexact])
 
@@ -99,6 +89,7 @@ assert_type(np.dtype("S8"), np.dtype)
 
 # Void
 assert_type(np.dtype(("U", 10)), np.dtype[np.void])
+assert_type(np.dtype({"formats": (int, "u8"), "names": ("n", "B")}), np.dtype[np.void])
 
 # StringDType
 assert_type(np.dtype(dt_string), StringDType)
@@ -134,3 +125,8 @@ assert_type(dtype_V["f0"], np.dtype)
 assert_type(dtype_V[0], np.dtype)
 assert_type(dtype_V[["f0", "f1"]], np.dtype[np.void])
 assert_type(dtype_V[["f0"]], np.dtype[np.void])
+
+class _D:
+    __numpy_dtype__: np.dtype[np.int8]
+
+assert_type(np.dtype(_D()), np.dtype[np.int8])

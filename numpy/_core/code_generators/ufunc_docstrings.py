@@ -332,7 +332,7 @@ add_newdoc('numpy._core.umath', 'arcsin',
 
 add_newdoc('numpy._core.umath', 'arcsinh',
     """
-    Inverse hyperbolic sine element-wise.
+    Inverse hyperbolic sine, element-wise.
 
     Parameters
     ----------
@@ -534,7 +534,7 @@ add_newdoc('numpy._core.umath', '_arg',
 
 add_newdoc('numpy._core.umath', 'arctanh',
     """
-    Inverse hyperbolic tangent element-wise.
+    Inverse hyperbolic tangent, element-wise.
 
     Parameters
     ----------
@@ -917,7 +917,7 @@ add_newdoc('numpy._core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -1145,7 +1145,7 @@ add_newdoc('numpy._core.umath', 'equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1506,7 +1506,7 @@ add_newdoc('numpy._core.umath', 'greater',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
 
@@ -1545,7 +1545,7 @@ add_newdoc('numpy._core.umath', 'greater_equal',
     -------
     out : bool or ndarray of bool
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1957,7 +1957,7 @@ add_newdoc('numpy._core.umath', 'less',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1994,7 +1994,7 @@ add_newdoc('numpy._core.umath', 'less_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -2963,7 +2963,7 @@ add_newdoc('numpy._core.umath', 'matvec',
     matrix-vector product is defined as:
 
     .. math::
-       \\mathbf{A} \\cdot \\mathbf{b} = \\sum_{j=0}^{n-1} A_{ij} v_j
+       \\mathbf{A} \\cdot \\mathbf{v} = \\sum_{j=0}^{n-1} A_{ij} v_j
 
     where the sum is over the last dimensions in ``x1`` and ``x2``
     (unless ``axes`` is specified).  (For a matrix-vector product with the
@@ -3030,7 +3030,7 @@ add_newdoc('numpy._core.umath', 'vecmat',
     vector-matrix product is defined as:
 
     .. math::
-       \\mathbf{b} \\cdot \\mathbf{A} = \\sum_{i=0}^{n-1} \\overline{v_i}A_{ij}
+       \\mathbf{v} \\cdot \\mathbf{A} = \\sum_{i=0}^{n-1} \\overline{v_i}A_{ij}
 
     where the sum is over the last dimension of ``x1`` and the one-but-last
     dimensions in ``x2`` (unless `axes` is specified) and where
@@ -3174,7 +3174,7 @@ add_newdoc('numpy._core.umath', 'multiply',
 
 add_newdoc('numpy._core.umath', 'negative',
     """
-    Numerical negative, element-wise.
+    Numerical negation, element-wise.
 
     Parameters
     ----------
@@ -3255,7 +3255,7 @@ add_newdoc('numpy._core.umath', 'not_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -3373,9 +3373,9 @@ add_newdoc('numpy._core.umath', 'power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.power(x3, 1.5, dtype=complex)
+    >>> np.power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -3452,9 +3452,9 @@ add_newdoc('numpy._core.umath', 'float_power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.float_power(x3, 1.5, dtype=complex)
+    >>> np.float_power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -3792,6 +3792,11 @@ add_newdoc('numpy._core.umath', 'sign',
         The sign of `x`.
         $OUT_SCALAR_1
 
+    See Also
+    --------
+    signbit
+    copysign
+
     Notes
     -----
     There is more than one definition of sign in common use for complex
@@ -3828,6 +3833,11 @@ add_newdoc('numpy._core.umath', 'signbit',
         Output array, or reference to `out` if that was supplied.
         $OUT_SCALAR_1
 
+    See Also
+    --------
+    sign
+    copysign
+
     Examples
     --------
     >>> import numpy as np
@@ -3858,6 +3868,11 @@ add_newdoc('numpy._core.umath', 'copysign',
     out : ndarray or scalar
         The values of `x1` with the sign of `x2`.
         $OUT_SCALAR_2
+
+    See Also
+    --------
+    sign
+    signbit
 
     Examples
     --------
@@ -4040,7 +4055,7 @@ add_newdoc('numpy._core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -4241,7 +4256,7 @@ add_newdoc('numpy._core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -4256,7 +4271,7 @@ add_newdoc('numpy._core.umath', 'tan',
 
 add_newdoc('numpy._core.umath', 'tanh',
     """
-    Compute hyperbolic tangent element-wise.
+    Hyperbolic tangent, element-wise.
 
     Equivalent to ``np.sinh(x)/np.cosh(x)`` or ``-1j * np.tan(1j*x)``.
 
@@ -4294,7 +4309,7 @@ add_newdoc('numpy._core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True

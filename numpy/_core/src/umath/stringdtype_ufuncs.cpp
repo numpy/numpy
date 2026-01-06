@@ -137,9 +137,9 @@ static int multiply_loop_core(
         size_t newsize;
         int overflowed = npy_mul_with_overflow_size_t(
                 &newsize, cursize, factor);
-        if (overflowed) {
-            npy_gil_error(PyExc_MemoryError,
-                      "Failed to allocate string in string multiply");
+        if (overflowed || newsize > PY_SSIZE_T_MAX) {
+            npy_gil_error(PyExc_OverflowError,
+                      "Overflow encountered in string multiply");
             goto fail;
         }
 
@@ -1736,7 +1736,7 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             size_t num_codepoints = inbuf.num_codepoints();
             npy_intp width = (npy_intp)*(npy_int64*)in2;
 
-            if (num_codepoints > (size_t)width) {
+            if ((npy_intp)num_codepoints > width) {
                 width = num_codepoints;
             }
 
@@ -1748,9 +1748,9 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
                     width - num_codepoints);
             newsize += s1.size;
 
-            if (overflowed) {
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to allocate string in %s", ufunc_name);
+            if (overflowed || newsize > PY_SSIZE_T_MAX) {
+                npy_gil_error(PyExc_OverflowError,
+                              "Overflow encountered in %s", ufunc_name);
                 goto fail;
             }
 
@@ -1866,8 +1866,8 @@ zfill_strided_loop(PyArrayMethod_Context *context,
         {
             Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
             size_t in_codepoints = inbuf.num_codepoints();
-            size_t width = (size_t)*(npy_int64 *)in2;
-            if (in_codepoints > width) {
+            npy_intp width = (npy_intp)*(npy_int64*)in2;
+            if ((npy_intp)in_codepoints > width) {
                 width = in_codepoints;
             }
             // number of leading one-byte characters plus the size of the
@@ -1928,9 +1928,9 @@ fail:
 static NPY_CASTING
 string_partition_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *const given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[5]),
+        PyArray_Descr *const given_descrs[5],
+        PyArray_Descr *loop_descrs[5],
         npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[2] || given_descrs[3] || given_descrs[4]) {
@@ -2264,10 +2264,14 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
 
         if (step == 1) {
             // step == 1 is the easy case, we can just use memcpy
-            npy_intp outsize = ((size_t)stop < num_codepoints
-                                        ? codepoint_offsets[stop]
-                                        : (unsigned char *)is.buf + is.size) -
-                               codepoint_offsets[start];
+            unsigned char *start_bounded = ((size_t)start < num_codepoints
+                                            ? codepoint_offsets[start]
+                                            : (unsigned char *)is.buf + is.size);
+            unsigned char *stop_bounded = ((size_t)stop < num_codepoints
+                                           ? codepoint_offsets[stop]
+                                           : (unsigned char *)is.buf + is.size);
+            npy_intp outsize = stop_bounded - start_bounded;
+            outsize = outsize < 0 ? 0 : outsize;
 
             if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
                 goto fail;
@@ -2276,7 +2280,7 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             /* explicitly discard const; initializing new buffer */
             char *buf = (char *)os.buf;
 
-            memcpy(buf, codepoint_offsets[start], outsize);
+            memcpy(buf, start_bounded, outsize);
         }
         else {
             // handle step != 1

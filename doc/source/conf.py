@@ -114,7 +114,7 @@ for ext, warn in skippable_extensions:
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # General substitutions.
 project = 'NumPy'
@@ -144,14 +144,6 @@ today_fmt = '%B %d, %Y'
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "autolink"
-
-# List of directories, relative to source directories, that shouldn't be searched
-# for source files.
-exclude_dirs = []
-
-exclude_patterns = []
-if sys.version_info[:2] >= (3, 12):
-    exclude_patterns += ["reference/distutils.rst"]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -272,6 +264,10 @@ html_theme_options = {
         "json_url": "https://numpy.org/doc/_static/versions.json",
     },
     "show_version_warning_banner": True,
+    "analytics": {
+        "plausible_analytics_domain": "numpy.org/doc/stable/",
+        "plausible_analytics_url": ("https://views.scientific-python.org/js/script.js"),
+    },
 }
 
 html_title = f"{project} v{version} Manual"

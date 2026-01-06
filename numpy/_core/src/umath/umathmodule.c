@@ -267,11 +267,11 @@ int initumath(PyObject *m)
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
 
-    s = PyDict_GetItemString(d, "divide");
+    s = PyDict_GetItemString(d, "divide"); // noqa: borrowed-ref OK
     PyDict_SetItemString(d, "true_divide", s);
 
-    s = PyDict_GetItemString(d, "conjugate");
-    s2 = PyDict_GetItemString(d, "remainder");
+    s = PyDict_GetItemString(d, "conjugate"); // noqa: borrowed-ref OK
+    s2 = PyDict_GetItemString(d, "remainder"); // noqa: borrowed-ref OK
 
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/

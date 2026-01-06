@@ -14,10 +14,8 @@ from numpy import (
     greater_equal,
     less,
     less_equal,
-    not_equal,
-)
-from numpy import (
     multiply as _multiply_ufunc,
+    not_equal,
 )
 from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
@@ -40,6 +38,10 @@ from numpy._core.umath import (
     _strip_chars,
     _strip_whitespace,
     _zfill,
+    count as _count_ufunc,
+    endswith as _endswith_ufunc,
+    find as _find_ufunc,
+    index as _index_ufunc,
     isalnum,
     isalpha,
     isdecimal,
@@ -49,28 +51,10 @@ from numpy._core.umath import (
     isspace,
     istitle,
     isupper,
-    str_len,
-)
-from numpy._core.umath import (
-    count as _count_ufunc,
-)
-from numpy._core.umath import (
-    endswith as _endswith_ufunc,
-)
-from numpy._core.umath import (
-    find as _find_ufunc,
-)
-from numpy._core.umath import (
-    index as _index_ufunc,
-)
-from numpy._core.umath import (
     rfind as _rfind_ufunc,
-)
-from numpy._core.umath import (
     rindex as _rindex_ufunc,
-)
-from numpy._core.umath import (
     startswith as _startswith_ufunc,
+    str_len,
 )
 
 
@@ -218,7 +202,7 @@ def multiply(a, i):
 
     # Ensure we can do a_len * i without overflow.
     if np.any(a_len > sys.maxsize / np.maximum(i, 1)):
-        raise MemoryError("repeated string is too long")
+        raise OverflowError("Overflow encountered in string multiply")
 
     buffersizes = a_len * i
     out_dtype = f"{a.dtype.char}{buffersizes.max()}"
@@ -1743,7 +1727,7 @@ def translate(a, table, deletechars=None):
         )
 
 @set_module("numpy.strings")
-def slice(a, start=None, stop=None, step=None, /):
+def slice(a, start=None, stop=np._NoValue, step=None, /):
     """
     Slice the strings in `a` by slices specified by `start`, `stop`, `step`.
     Like in the regular Python `slice` object, if only `start` is
@@ -1776,6 +1760,9 @@ def slice(a, start=None, stop=None, step=None, /):
     >>> np.strings.slice(a, 2)
     array(['he', 'wo'], dtype='<U5')
 
+    >>> np.strings.slice(a, 2, None)
+    array(['llo', 'rld'], dtype='<U5')
+
     >>> np.strings.slice(a, 1, 5, 2)
     array(['el', 'ol'], dtype='<U5')
 
@@ -1791,6 +1778,9 @@ def slice(a, start=None, stop=None, step=None, /):
     >>> np.strings.slice(b, -2)
     array(['hello wor', 'γεια σου κόσ', '你好', '👋'], dtype=StringDType())
 
+    >>> np.strings.slice(b, -2, None)
+    array(['ld', 'με', '世界', ' 🌍'], dtype=StringDType())
+
     >>> np.strings.slice(b, [3, -10, 2, -3], [-1, -2, -1, 3])
     array(['lo worl', ' σου κόσ', '世', '👋 🌍'], dtype=StringDType())
 
@@ -1801,7 +1791,7 @@ def slice(a, start=None, stop=None, step=None, /):
     """
     # Just like in the construction of a regular slice object, if only start
     # is specified then start will become stop, see logic in slice_new.
-    if stop is None:
+    if stop is np._NoValue:
         stop = start
         start = None
 

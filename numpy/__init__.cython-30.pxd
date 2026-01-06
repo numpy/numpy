@@ -156,6 +156,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SAFE_CASTING
         NPY_SAME_KIND_CASTING
         NPY_UNSAFE_CASTING
+        NPY_SAME_VALUE_CASTING
 
     ctypedef enum NPY_CLIPMODE:
         NPY_CLIP

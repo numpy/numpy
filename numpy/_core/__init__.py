@@ -23,6 +23,10 @@ try:
 except ImportError as exc:
     import sys
 
+    # Bypass for the module re-initialization opt-out
+    if exc.msg == "cannot load module more than once per process":
+        raise
+
     # Basically always, the problem should be that the C module is wrong/missing...
     if (
         isinstance(exc, ModuleNotFoundError)
@@ -102,15 +106,7 @@ from . import numerictypes as nt
 from .numerictypes import sctypeDict, sctypes
 
 multiarray.set_typeDict(nt.sctypeDict)
-from . import (
-    _machar,
-    einsumfunc,
-    fromnumeric,
-    function_base,
-    getlimits,
-    numeric,
-    shape_base,
-)
+from . import einsumfunc, fromnumeric, function_base, getlimits, numeric, shape_base
 from .einsumfunc import *
 from .fromnumeric import *
 from .function_base import *
@@ -189,18 +185,6 @@ def _DType_reduce(DType):
     # For these, we pickle them by reconstructing them from the scalar type:
     scalar_type = DType.type
     return _DType_reconstruct, (scalar_type,)
-
-
-def __getattr__(name):
-    # Deprecated 2022-11-22, NumPy 1.25.
-    if name == "MachAr":
-        import warnings
-        warnings.warn(
-            "The `np._core.MachAr` is considered private API (NumPy 1.24)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return _machar.MachAr
-    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 
 import copyreg

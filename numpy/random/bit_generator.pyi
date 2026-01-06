@@ -1,4 +1,5 @@
 import abc
+from _typeshed import Incomplete
 from collections.abc import Callable, Mapping, Sequence
 from threading import Lock
 from typing import (
@@ -7,13 +8,10 @@ from typing import (
     Literal,
     NamedTuple,
     Self,
-    TypeAlias,
     TypedDict,
     overload,
     type_check_only,
 )
-
-from _typeshed import Incomplete
 from typing_extensions import CapsuleType
 
 import numpy as np
@@ -30,7 +28,7 @@ __all__ = ["BitGenerator", "SeedSequence"]
 
 ###
 
-_DTypeLikeUint_: TypeAlias = _DTypeLike[np.uint32 | np.uint64] | _UInt32Codes | _UInt64Codes
+type _DTypeLikeUint_ = _DTypeLike[np.uint32 | np.uint64] | _UInt32Codes | _UInt64Codes
 
 @type_check_only
 class _SeedSeqState(TypedDict):

@@ -5,8 +5,8 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 
 """
+import inspect
 import itertools
-import warnings
 
 import pytest
 
@@ -68,7 +68,6 @@ from numpy.ma.testutils import (
     assert_array_equal,
     assert_equal,
 )
-from numpy.testing import assert_warns, suppress_warnings
 
 
 class TestGeneric:
@@ -746,7 +745,7 @@ class TestCompressFunctions:
         x = array(np.arange(9).reshape(3, 3),
                   mask=[[1, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        with assert_warns(DeprecationWarning):
+        with pytest.warns(DeprecationWarning):
             res = func(x, axis=axis)
             assert_equal(res, mask_rowcols(x, rowcols_axis))
 
@@ -1078,7 +1077,7 @@ class TestMedian:
         x = np.ma.arange(24).reshape(3, 4, 2)
         x[x % 3 == 0] = masked
         assert_equal(median(x, 0), [[12, 9], [6, 15], [12, 9], [18, 15]])
-        x.shape = (4, 3, 2)
+        x = x.reshape((4, 3, 2))
         assert_equal(median(x, 0), [[99, 10], [11, 99], [13, 14]])
         x = np.ma.arange(24).reshape(4, 3, 2)
         x[x % 5 == 0] = masked
@@ -1287,19 +1286,14 @@ class TestMedian:
     def test_empty(self):
         # empty arrays
         a = np.ma.masked_array(np.array([], dtype=float))
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             assert_array_equal(np.ma.median(a), np.nan)
-            assert_(w.log[0].category is RuntimeWarning)
 
         # multiple dimensions
         a = np.ma.masked_array(np.array([], dtype=float, ndmin=3))
         # no axis
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
-            warnings.filterwarnings('always', '', RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             assert_array_equal(np.ma.median(a), np.nan)
-            assert_(w.log[0].category is RuntimeWarning)
 
         # axis 0 and 1
         b = np.ma.masked_array(np.array([], dtype=float, ndmin=2))
@@ -1308,10 +1302,8 @@ class TestMedian:
 
         # axis 2
         b = np.ma.masked_array(np.array(np.nan, dtype=float, ndmin=2))
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
             assert_equal(np.ma.median(a, axis=2), b)
-            assert_(w[0].category is RuntimeWarning)
 
     def test_object(self):
         o = np.ma.masked_array(np.arange(7.))
@@ -1322,11 +1314,11 @@ class TestMedian:
 
 class TestCov:
 
-    def setup_method(self):
-        self.data = array(np.random.rand(12))
+    def _create_data(self):
+        return array(np.random.rand(12))
 
     def test_covhelper(self):
-        x = self.data
+        x = self._create_data()
         # Test not mask output type is a float.
         assert_(_covhelper(x, rowvar=True)[1].dtype, np.float32)
         assert_(_covhelper(x, y=x, rowvar=False)[1].dtype, np.float32)
@@ -1347,7 +1339,7 @@ class TestCov:
 
     def test_1d_without_missing(self):
         # Test cov on 1D variable w/o missing values
-        x = self.data
+        x = self._create_data()
         assert_almost_equal(np.cov(x), cov(x))
         assert_almost_equal(np.cov(x, rowvar=False), cov(x, rowvar=False))
         assert_almost_equal(np.cov(x, rowvar=False, bias=True),
@@ -1355,7 +1347,7 @@ class TestCov:
 
     def test_2d_without_missing(self):
         # Test cov on 1 2D variable w/o missing values
-        x = self.data.reshape(3, 4)
+        x = self._create_data().reshape(3, 4)
         assert_almost_equal(np.cov(x), cov(x))
         assert_almost_equal(np.cov(x, rowvar=False), cov(x, rowvar=False))
         assert_almost_equal(np.cov(x, rowvar=False, bias=True),
@@ -1363,7 +1355,7 @@ class TestCov:
 
     def test_1d_with_missing(self):
         # Test cov 1 1D variable w/missing values
-        x = self.data
+        x = self._create_data()
         x[-1] = masked
         x -= x.mean()
         nx = x.compressed()
@@ -1387,7 +1379,7 @@ class TestCov:
 
     def test_2d_with_missing(self):
         # Test cov on 2D variable w/ missing value
-        x = self.data
+        x = self._create_data()
         x[-1] = masked
         x = x.reshape(3, 4)
         valid = np.logical_not(getmaskarray(x)).astype(int)
@@ -1409,74 +1401,33 @@ class TestCov:
 
 class TestCorrcoef:
 
-    def setup_method(self):
-        self.data = array(np.random.rand(12))
-        self.data2 = array(np.random.rand(12))
-
-    def test_ddof(self):
-        # ddof raises DeprecationWarning
-        x, y = self.data, self.data2
-        expected = np.corrcoef(x)
-        expected2 = np.corrcoef(x, y)
-        with suppress_warnings() as sup:
-            warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, x, ddof=-1)
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            # ddof has no or negligible effect on the function
-            assert_almost_equal(np.corrcoef(x, ddof=0), corrcoef(x, ddof=0))
-            assert_almost_equal(corrcoef(x, ddof=-1), expected)
-            assert_almost_equal(corrcoef(x, y, ddof=-1), expected2)
-            assert_almost_equal(corrcoef(x, ddof=3), expected)
-            assert_almost_equal(corrcoef(x, y, ddof=3), expected2)
-
-    def test_bias(self):
-        x, y = self.data, self.data2
-        expected = np.corrcoef(x)
-        # bias raises DeprecationWarning
-        with suppress_warnings() as sup:
-            warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, corrcoef, x, y, True, False)
-            assert_warns(DeprecationWarning, corrcoef, x, y, True, True)
-            assert_warns(DeprecationWarning, corrcoef, x, bias=False)
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            # bias has no or negligible effect on the function
-            assert_almost_equal(corrcoef(x, bias=1), expected)
+    def _create_data(self):
+        data = array(np.random.rand(12))
+        data2 = array(np.random.rand(12))
+        return data, data2
 
     def test_1d_without_missing(self):
         # Test cov on 1D variable w/o missing values
-        x = self.data
+        x = self._create_data()[0]
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
-                                corrcoef(x, rowvar=False, bias=True))
 
     def test_2d_without_missing(self):
         # Test corrcoef on 1 2D variable w/o missing values
-        x = self.data.reshape(3, 4)
+        x = self._create_data()[0].reshape(3, 4)
         assert_almost_equal(np.corrcoef(x), corrcoef(x))
         assert_almost_equal(np.corrcoef(x, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            assert_almost_equal(np.corrcoef(x, rowvar=False, bias=True),
-                                corrcoef(x, rowvar=False, bias=True))
 
     def test_1d_with_missing(self):
         # Test corrcoef 1 1D variable w/missing values
-        x = self.data
+        x = self._create_data()[0]
         x[-1] = masked
         x -= x.mean()
         nx = x.compressed()
-        assert_almost_equal(np.corrcoef(nx), corrcoef(x))
         assert_almost_equal(np.corrcoef(nx, rowvar=False),
                             corrcoef(x, rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            assert_almost_equal(np.corrcoef(nx, rowvar=False, bias=True),
-                                corrcoef(x, rowvar=False, bias=True))
         try:
             corrcoef(x, allow_masked=False)
         except ValueError:
@@ -1486,36 +1437,20 @@ class TestCorrcoef:
         assert_almost_equal(np.corrcoef(nx, nx[::-1]), corrcoef(x, x[::-1]))
         assert_almost_equal(np.corrcoef(nx, nx[::-1], rowvar=False),
                             corrcoef(x, x[::-1], rowvar=False))
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            # ddof and bias have no or negligible effect on the function
-            assert_almost_equal(np.corrcoef(nx, nx[::-1]),
-                                corrcoef(x, x[::-1], bias=1))
-            assert_almost_equal(np.corrcoef(nx, nx[::-1]),
-                                corrcoef(x, x[::-1], ddof=2))
 
     def test_2d_with_missing(self):
         # Test corrcoef on 2D variable w/ missing value
-        x = self.data
+        x = self._create_data()[0]
         x[-1] = masked
         x = x.reshape(3, 4)
 
         test = corrcoef(x)
         control = np.corrcoef(x)
         assert_almost_equal(test[:-1, :-1], control[:-1, :-1])
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            # ddof and bias have no or negligible effect on the function
-            assert_almost_equal(corrcoef(x, ddof=-2)[:-1, :-1],
-                                control[:-1, :-1])
-            assert_almost_equal(corrcoef(x, ddof=3)[:-1, :-1],
-                                control[:-1, :-1])
-            assert_almost_equal(corrcoef(x, bias=1)[:-1, :-1],
-                                control[:-1, :-1])
 
 
 class TestPolynomial:
-    #
+
     def test_polyfit(self):
         # Tests polyfit
         # On ndarrays
@@ -1876,6 +1811,18 @@ class TestShapeBase:
         b = diagflat(1.0)
         assert_equal(b.shape, (1, 1))
         assert_equal(b.mask.shape, b.data.shape)
+
+    @pytest.mark.parametrize("fn", [atleast_1d, vstack, diagflat])
+    def test_inspect_signature(self, fn):
+        name = fn.__name__
+        assert getattr(np.ma, name) is fn
+
+        assert fn.__module__ == "numpy.ma.extras"
+
+        wrapped = getattr(np, fn.__name__)
+        sig_wrapped = inspect.signature(wrapped)
+        sig = inspect.signature(fn)
+        assert sig == sig_wrapped
 
 
 class TestNDEnumerate:

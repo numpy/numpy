@@ -7,9 +7,9 @@ import types
 from typing import Any
 
 import pytest
-from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 
 import numpy as np
+from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 
 
 class TestResolveDescriptors:
