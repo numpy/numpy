@@ -10,9 +10,6 @@ Example usage:
 We use `--ignoreexternal` to avoid "partially unknown" reports coming from the stdlib
 `numbers` module, see https://github.com/microsoft/pyright/discussions/9911.
 """
-
-from __future__ import annotations
-
 import argparse
 import fnmatch
 import json

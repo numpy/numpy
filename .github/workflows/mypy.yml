@@ -82,7 +82,7 @@ jobs:
     - name: Run Mypy
       run: |
         spin mypy
-    - name: Check Pyright's type compelteness is above 80%
+    - name: Check Pyright's type completeness is above 80%
       # Pyright reports different percentages on different platforms
       if: runner.os == 'Linux'
       run: |
