@@ -1,15 +1,38 @@
-/*
- * This functionality is designed specifically for the ufunc machinery to
- * dispatch based on multiple DTypes.  Since this is designed to be used
- * as purely a cache, it currently does no reference counting.
- * Even though this is a cache, there is currently no maximum size.  It may
- * make sense to limit the size, or count collisions:  If too many collisions
- * occur, we could grow the cache, otherwise, just replace an old item that
- * was presumably not used for a long time.
+/* Lock-free hash table implementation for identity based keys
+ * (C arrays of pointers) used for ufunc dispatching cache.
  *
- * If a different part of NumPy requires a custom hashtable, the code should
- * be reused with care since specializing it more for the ufunc dispatching
- * case is likely desired.
+ * This cache does not do any reference counting of the stored objects,
+ * and the stored pointers must remain valid while in the cache.
+ * The cache entries cannot be changed or deleted once added, only new
+ * entries can be added. It is thread safe and lock-free for reading, and
+ * uses a mutex for writing (adding new entries). See below for the details
+ * of thread safety.
+ *
+ * Thread safety notes for free-threading builds:
+ * - Reading from the cache (getting items) is lock-free and thread safe.
+ *   The reader reads the current `buckets` pointer using an atomic load
+ *   with memory_order_acquire order. This ensures that the reader
+ *   synchronizes with any concurrent writers that may be resizing the cache.
+ *   The value of item is then read using an atomic load with memory_order_acquire
+ *   order so that it sees the key written by the writer before the value.
+ *
+ * - Writing to the cache (adding new items) uses ``tb_mutex`` mutex to
+ *   ensure only one thread writes at a time. The new items are added
+ *   concurrently with readers and synchronized using atomic operations.
+ *   The key is stored first (using memcpy), and then the value is stored
+ *   using an atomic store with memory_order_release order so that
+ *   the store of key is visible to readers that see the value.
+ *
+ * - Resizing the cache uses the same mutex to ensure only one thread
+ *   resizes at a time. The new larger cache is built while holding the
+ *   mutex, and then swapped in using an atomic operation. Because,
+ *   readers can be reading from the old cache while the new one is
+ *   swapped in, the old cache is not free immediately. Instead, it is
+ *   kept in a linked list of old caches using the `prev` pointer in the
+ *   `buckets` struct. The old caches are only freed when the identity
+ *   hash table is deallocated, ensuring that no readers are using them
+ *   anymore.
+ *
  */
 
 #include "npy_hashtable.h"
@@ -141,6 +164,7 @@ PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     struct buckets *b = tb->buckets;
 #ifdef Py_GIL_DISABLED
+    // free all old buckets
     while (b != NULL) {
         struct buckets *prev = b->prev;
         PyMem_Free(b);
@@ -217,22 +241,15 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
 
 
 /**
- * Add an item to the identity cache.  The storage location must not change
- * unless the cache is cleared.
+ * Set an item in the identity hash table if it does not already exist.
+ * If it does exist, return the existing item.
  *
  * @param tb The mapping.
  * @param key The key, must be a C-array of pointers of the length
  *        corresponding to the mapping.
- * @param value Normally a Python object, no reference counting is done.
- *        use NULL to clear an item.  If the item does not exist, no
- *        action is performed for NULL.
- * @param replace If 1, allow replacements. If replace is 0 an error is raised
- *        if the stored value is different from the value to be cached. If the
- *        value to be cached is identical to the stored value, the value to be
- *        cached is ignored and no error is raised.
- * @returns 0 on success, -1 with a MemoryError or RuntimeError (if an item
- *        is added which is already in the cache and replace is 0).  The
- *        caller should avoid the RuntimeError.
+ * @param value Normally a Python object, no reference counting is done
+ *        and it should not be NULL.
+ * @returns 0 on success, -1 with a MemoryError set on failure.
  */
 static inline int
 PyArrayIdentityHash_SetItemDefaultLockHeld(PyArrayIdentityHash *tb,

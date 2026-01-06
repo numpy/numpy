@@ -15,13 +15,12 @@ struct buckets {
     struct buckets *prev; /* linked list of old buckets */
     npy_intp size;        /* current size */
     npy_intp nelem;       /* number of elements */
-    PyObject *array[];
+    PyObject *array[];    /* array of keys and values */
 };
 
 typedef struct {
-    int key_len;  /* number of identities used */
-    /* Buckets stores: val1, key1[0], key1[1], ..., val2, key2[0], ... */
-    struct buckets *buckets;
+    int key_len;             /* number of identities used */
+    struct buckets *buckets; /* current buckets */
 #ifdef Py_GIL_DISABLED
     PyMutex mutex;
 #endif
