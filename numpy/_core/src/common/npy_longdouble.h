@@ -14,7 +14,7 @@
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_longdouble_to_PyLong(npy_longdouble ldval);
 
-/* Convert a python `long` integer to an npy_longdouble
+/* Convert a python `long` integer to a npy_longdouble
  *
  * This performs the same task as PyLong_AsDouble, but for long doubles
  * which have a greater range.
