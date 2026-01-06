@@ -3,7 +3,7 @@ import numpy as np
 from .common import Benchmark
 
 
-class SearchSortedInt64(Benchmark):
+class SearchSorted(Benchmark):
     params = [
         [100, 10_000, 1_000_000, 100_000_000],  # array sizes
         [1, 10, 100_000],                       # number of query elements
