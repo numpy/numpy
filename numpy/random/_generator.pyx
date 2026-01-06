@@ -955,7 +955,7 @@ cdef class Generator:
                     cutoff = 20
                 if pop_size_i > 10000 and (size_i > (pop_size_i // cutoff)):
                     # Tail shuffle size elements
-                    idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
+                    idx = np.arange(0, pop_size_i, dtype=np.int64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
                     with self.lock, nogil:
                         _shuffle_int(&self._bitgen, pop_size_i,
