@@ -36,7 +36,7 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
  *
  * This conversion function can be used with the "O&" argument for
  * PyArg_ParseTuple.  It will immediately return an object of array type
- * or will convert to a NPY_ARRAY_CARRAY any other object.
+ * or will convert to an NPY_ARRAY_CARRAY any other object.
  *
  * If you use PyArray_Converter, you must DECREF the array when finished
  * as you get a new reference to it.

@@ -1663,7 +1663,7 @@ class TestMaskedArrayArithmetic:
         for funcname in funclist:
             npfunc = getattr(np, funcname)
             xmmeth = getattr(xm, funcname)
-            # A ndarray as explicit input
+            # An ndarray as explicit input
             output = np.empty(4, dtype=float)
             output.fill(-9999)
             result = npfunc(xm, axis=0, out=output)
@@ -2656,7 +2656,7 @@ class TestUfuncs:
         assert_(amask.min(1)[0].mask)
 
     def test_ndarray_mask(self):
-        # Check that the mask of the result is a ndarray (not a MaskedArray...)
+        # Check that the mask of the result is an ndarray (not a MaskedArray...)
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
         test = np.sqrt(a)
         control = masked_array([-1, 0, 1, np.sqrt(2), -1],
@@ -3937,7 +3937,7 @@ class TestMaskedArrayMethods:
     def test_tolist_specialcase(self):
         # Test mvoid.tolist: make sure we return a standard Python object
         a = array([(0, 1), (2, 3)], dtype=[('a', int), ('b', int)])
-        # w/o mask: each entry is a np.void whose elements are standard Python
+        # w/o mask: each entry is an np.void whose elements are standard Python
         for entry in a:
             for item in entry.tolist():
                 assert_(not isinstance(item, np.generic))
@@ -4091,7 +4091,7 @@ class TestMaskedArrayMathMethods:
             npfunc = getattr(np, funcname)
             xmmeth = getattr(xm, funcname)
 
-            # A ndarray as explicit input
+            # An ndarray as explicit input
             output = np.empty((3, 4), dtype=float)
             output.fill(-9999)
             result = npfunc(xm, axis=0, out=output)
@@ -4269,7 +4269,7 @@ class TestMaskedArrayMathMethods:
             method(out=mout)
             assert_(mout is not masked)
             assert_equal(mout.mask, True)
-            # Using a ndarray as explicit output
+            # Using an ndarray as explicit output
             method(out=nout)
             assert_(np.isnan(nout))
 
@@ -4284,7 +4284,7 @@ class TestMaskedArrayMathMethods:
             method(out=mout, ddof=1)
             assert_(mout is not masked)
             assert_equal(mout.mask, True)
-            # Using a ndarray as explicit output
+            # Using an ndarray as explicit output
             method(out=nout, ddof=1)
             assert_(np.isnan(nout))
 
@@ -4553,7 +4553,7 @@ class TestMaskedArrayFunctions:
         xm = array(np.random.uniform(0, 10, 12)).reshape(3, 4)
         xm[:, 0] = xm[0] = xm[-1, -1] = masked
 
-        # A ndarray as explicit input
+        # An ndarray as explicit input
         output = np.empty((3, 4), dtype=float)
         output.fill(-9999)
         result = np.round(xm, decimals=2, out=output)
@@ -4851,7 +4851,7 @@ class TestMaskedArrayFunctions:
         chosen = choose(indices_, choices, mode='wrap', out=store)
         assert_equal(store, array([99, 31, 12, 99]))
         assert_equal(store.mask, [1, 0, 0, 1])
-        # Check with some masked choices + out ina ndarray !
+        # Check with some masked choices + out in an ndarray !
         choices = array(choices, mask=[[0, 0, 0, 1], [1, 1, 0, 1],
                                        [1, 0, 0, 0], [0, 0, 0, 0]])
         indices_ = [2, 3, 1, 0]
@@ -4938,7 +4938,7 @@ class TestMaskedArrayFunctions:
         test = make_mask(mask)
         assert_equal(test.dtype, MaskType)
         assert_equal(test, [0, 1])
-        # w/ a ndarray as an input
+        # w/ an ndarray as an input
         mask = np.array([0, 1], dtype=bool)
         test = make_mask(mask)
         assert_equal(test.dtype, MaskType)

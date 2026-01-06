@@ -1605,7 +1605,7 @@ class TestArraySetOps:
         assert_equal(test.mask, control.mask)
 
     def test_ediff1d_ndarray(self):
-        # Test ediff1d w/ a ndarray
+        # Test ediff1d w/ an ndarray
         x = np.arange(5)
         test = ediff1d(x)
         control = array([1, 1, 1, 1], mask=[0, 0, 0, 0])

@@ -157,7 +157,7 @@ typedef struct
     npyv_lanetype_u8 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) data[NPY_SIMD_WIDTH];
 } PySIMDVectorObject;
 /**
- * Create a Python obj(PySIMDVectorObject) from a NPYV vector based on the contents
+ * Create a Python obj(PySIMDVectorObject) from an NPYV vector based on the contents
  * of `data`(simd_data) and according to the vector data type `dtype`
  * on range(simd_data_[vu8:vf64]).
  * Return NULL and a Python exception on failure, otherwise new reference.
@@ -173,7 +173,7 @@ typedef struct
 static PySIMDVectorObject *
 PySIMDVector_FromData(simd_data data, simd_data_type dtype);
 /**
- * Return a NPYV vector(simd_data) representation of `obj`(PySIMDVectorObject) and
+ * Return an NPYV vector(simd_data) representation of `obj`(PySIMDVectorObject) and
  * according to the vector data type `dtype` on range (simd_data_[vu8:vf64]).
  * Raise a Python exception on failure.
  *

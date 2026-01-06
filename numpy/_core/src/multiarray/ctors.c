@@ -1331,7 +1331,7 @@ _array_from_buffer_3118(PyObject *memoryview)
                     PyExc_RuntimeError,
                     "For the given ctypes object, neither the item size "
                     "computed from the PEP 3118 buffer format nor from "
-                    "converting the type to a np.dtype matched the actual "
+                    "converting the type to an np.dtype matched the actual "
                     "size. This is a bug both in python and numpy");
             Py_DECREF(descr);
             return NULL;

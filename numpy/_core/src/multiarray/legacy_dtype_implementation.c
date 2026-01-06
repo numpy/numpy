@@ -159,7 +159,7 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
 
     from = PyArray_DescrFromType(fromtype);
     /*
-     * cancastto is a NPY_NOTYPE terminated C-int-array of types that
+     * cancastto is an NPY_NOTYPE terminated C-int-array of types that
      * the data-type can be cast to safely.
      */
     if (PyDataType_GetArrFuncs(from)->cancastto) {

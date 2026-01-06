@@ -891,7 +891,7 @@ npy_set_invalid_cast_error(
 /*NUMPY_API
  * See if array scalars can be cast.
  *
- * TODO: For NumPy 2.0, add a NPY_CASTING parameter.
+ * TODO: For NumPy 2.0, add an NPY_CASTING parameter.
  */
 NPY_NO_EXPORT npy_bool
 PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
@@ -1817,7 +1817,7 @@ PyArray_Zero(PyArrayObject *arr)
         /* XXX this is dangerous, the caller probably is not
            aware that zeroval is actually a static PyObject*
            In the best case they will only use it as-is, but
-           if they simply memcpy it into a ndarray without using
+           if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
         memcpy(zeroval, &npy_static_pydata.zero_obj, sizeof(PyObject *));
@@ -1856,7 +1856,7 @@ PyArray_One(PyArrayObject *arr)
         /* XXX this is dangerous, the caller probably is not
            aware that oneval is actually a static PyObject*
            In the best case they will only use it as-is, but
-           if they simply memcpy it into a ndarray without using
+           if they simply memcpy it into an ndarray without using
            setitem(), refcount errors will occur
         */
         memcpy(oneval, &npy_static_pydata.one_obj, sizeof(PyObject *));
