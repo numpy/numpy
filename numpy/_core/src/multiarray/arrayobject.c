@@ -427,7 +427,7 @@ array_dealloc(PyArrayObject *self)
             }
         }
         if (fa->mem_handler == NULL) {
-            if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
+            if (npy_global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
