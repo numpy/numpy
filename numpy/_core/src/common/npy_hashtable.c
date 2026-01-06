@@ -31,6 +31,16 @@
 #define _NpyHASH_XXROTATE(x) ((x << 13) | (x >> 19))  /* Rotate left 13 bits */
 #endif
 
+#ifdef Py_GIL_DISABLED
+#define FT_ATOMIC_LOAD_PTR_ACQUIRE(ptr) \
+    atomic_load_explicit((_Atomic(void *) *)&(ptr), memory_order_acquire)
+#define FT_ATOMIC_STORE_PTR_RELEASE(ptr, val) \
+    atomic_store_explicit((_Atomic(void *) *)&(ptr), (void *)(val), memory_order_release)
+#else
+#define FT_ATOMIC_LOAD_PTR_ACQUIRE(ptr) (ptr)
+#define FT_ATOMIC_STORE_PTR_RELEASE(ptr, val) (ptr) = (val)
+#endif
+
 /*
  * This hashing function is basically the Python tuple hash with the type
  * identity hash inlined. The tuple hash itself is a reduced version of xxHash.
@@ -70,12 +80,7 @@ find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key)
 
     while (1) {
         PyObject **item = &(buckets->array[bucket * (key_len + 1)]);
-#ifdef Py_GIL_DISABLED
-        PyObject *value = atomic_load_explicit(
-            (_Atomic(void *) *)&item[0], memory_order_acquire);
-#else
-        PyObject *value = item[0];
-#endif
+        PyObject *value = FT_ATOMIC_LOAD_PTR_ACQUIRE(item[0]);
         if (value == NULL) {
             /* The item is not in the cache; return the empty bucket */
             return item;
@@ -94,12 +99,7 @@ find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key)
 static inline PyObject **
 find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 {
-#ifdef Py_GIL_DISABLED
-    struct buckets *buckets = atomic_load_explicit(
-        (_Atomic(void *) *)&tb->buckets, memory_order_acquire);
-#else
-    struct buckets *buckets = tb->buckets;
-#endif
+    struct buckets *buckets = FT_ATOMIC_LOAD_PTR_ACQUIRE(tb->buckets);
     return find_item_buckets(buckets, tb->key_len, key);
 }
 
@@ -208,11 +208,10 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     }
 #ifdef Py_GIL_DISABLED
     new_buckets->prev = old_buckets;
-    atomic_store_explicit((_Atomic(void *) *)&tb->buckets, new_buckets, memory_order_release);
 #else
-    tb->buckets = new_buckets;
     PyMem_Free(old_buckets);
 #endif
+    FT_ATOMIC_STORE_PTR_RELEASE(tb->buckets, new_buckets);
     return 0;
 }
 
@@ -235,7 +234,7 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
  *        is added which is already in the cache and replace is 0).  The
  *        caller should avoid the RuntimeError.
  */
-NPY_NO_EXPORT int
+static inline int
 PyArrayIdentityHash_SetItemDefaultLockHeld(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *default_value, PyObject **result)
 {
@@ -251,12 +250,7 @@ PyArrayIdentityHash_SetItemDefaultLockHeld(PyArrayIdentityHash *tb,
     if (tb_item[0] == NULL) {
         memcpy(tb_item+1, key, tb->key_len * sizeof(PyObject *));
         tb->buckets->nelem++;
-#ifdef Py_GIL_DISABLED
-        atomic_store_explicit(
-            (_Atomic(void *) *)&tb_item[0], default_value, memory_order_release);
-#else
-        tb_item[0] = default_value;
-#endif
+        FT_ATOMIC_STORE_PTR_RELEASE(tb_item[0], default_value);
         *result = default_value;
     } else {
         *result = tb_item[0];
@@ -283,9 +277,6 @@ PyArrayIdentityHash_SetItemDefault(PyArrayIdentityHash *tb,
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
-#ifdef Py_GIL_DISABLED
-    return atomic_load_explicit((_Atomic(void *) *)find_item(tb, key), memory_order_acquire);
-#else
-    return find_item(tb, key)[0];
-#endif
+    PyObject **tb_item = find_item(tb, key);
+    return FT_ATOMIC_LOAD_PTR_ACQUIRE(tb_item[0]);
 }
