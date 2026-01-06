@@ -1607,7 +1607,7 @@ def _nanquantile_unchecked(
                 # for slices will only NaNs, set weigths to 1 so that nan is returned:
                 weights += isnan * all_nan_or_zero_slices
                 warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                    stacklevel=3)            
+                    stacklevel=3)
 
         return fnb._quantile_unchecked(
             a, q, axis, out, overwrite_input, method, keepdims,
