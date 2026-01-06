@@ -10,6 +10,7 @@ Example usage:
 We use `--ignoreexternal` to avoid "partially unknown" reports coming from the stdlib
 `numbers` module, see https://github.com/microsoft/pyright/discussions/9911.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,7 +32,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--exclude-like",
         required=False,
-        nargs='*',
+        nargs="*",
         type=str,
         help="Exclude symbols whose names matches this glob pattern",
     )
@@ -47,9 +48,7 @@ def run_pyright_with_coverage(
     cov_fail_under: float,
     exclude_like: Sequence[str],
 ) -> int:
-    result = subprocess.run(
-        ["pyright", *pyright_args], capture_output=True, text=True
-    )
+    result = subprocess.run(["pyright", *pyright_args], capture_output=True, text=True)
 
     try:
         data = json.loads(result.stdout)
@@ -61,8 +60,10 @@ def run_pyright_with_coverage(
     if exclude_like:
         symbols = data["typeCompleteness"]["symbols"]
         matched_symbols = [
-            x for x in symbols if not any(fnmatch.fnmatch(x["name"], pattern) for pattern in exclude_like)
-            and x['isExported']
+            x
+            for x in symbols
+            if not any(fnmatch.fnmatch(x["name"], pattern) for pattern in exclude_like)
+            and x["isExported"]
         ]
         cov_percent = (
             sum(x["isTypeKnown"] for x in matched_symbols) / len(matched_symbols) * 100
