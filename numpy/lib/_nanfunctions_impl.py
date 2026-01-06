@@ -1594,25 +1594,24 @@ def _nanquantile_unchecked(
     if weights is not None:
         isnan = np.isnan(a)
         if isnan.any():
-            is_zero = weights == 0
-            all_zeros_slices = np.all(is_zero, axis=axis)
-            if all_zeros_slices.any():
-                raise ValueError("Weights are all zero.")
-
-            all_nan_or_zero_slices = np.all(isnan | is_zero, axis=axis, keepdims=True)
             # overwrite if `overwrite_input` is True?
             weights = np.where(isnan, 0., weights)
 
-            if all_nan_or_zero_slices.any():
-                # for slices will only NaNs, set weigths to 1 so that nan is returned:
-                weights += isnan * all_nan_or_zero_slices
-                warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                    stacklevel=3)
+        is_zero = weights == 0
+        all_nan_or_zero_slices = np.all(is_zero, axis=axis, keepdims=True)
+        if all_nan_or_zero_slices.any():
+            # set weights to 1 and values to NaN for those slices:
+            _, set_to_nan = np.broadcast_arrays(weights, all_nan_or_zero_slices)
+            weights = weights + set_to_nan
+            a = np.where(set_to_nan, np.nan, a)
+            warnings.warn("Slice encountered with all NaN or 0-weight samples",
+                          RuntimeWarning, stacklevel=3)
 
         return fnb._quantile_unchecked(
             a, q, axis, out, overwrite_input, method, keepdims,
             weights=weights, ignore_nans=True
         )
+
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,
