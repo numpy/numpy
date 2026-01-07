@@ -3,4 +3,6 @@
 
 extern NPY_NO_EXPORT PyGetSetDef array_getsetlist[];
 
+NPY_NO_EXPORT int array_descr_set_internal(PyArrayObject *self, PyObject *arg);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_GETSET_H_ */
