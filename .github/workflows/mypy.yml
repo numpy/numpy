@@ -82,3 +82,6 @@ jobs:
     - name: Run Mypy
       run: |
         spin mypy
+    - name: Check Pyright's type completeness is at least 100%
+      run: |
+        spin run python tools/pyright_completeness.py --verifytypes numpy --ignoreexternal --exclude-like '*.tests.*' '*.conftest.*'
