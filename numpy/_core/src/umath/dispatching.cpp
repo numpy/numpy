@@ -960,14 +960,16 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     if (info == NULL) {
         return NULL;
     }
-    PyObject *result = NULL;
-    /* Add this to the cache using the original types: */
-    if (cacheable && PyArrayIdentityHash_SetItemDefault(
-                (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+    if (cacheable) {
+        PyObject *result = NULL;
+        /* Add this to the cache using the original types: */
+        if (PyArrayIdentityHash_SetItemDefault((PyArrayIdentityHash *)ufunc->_dispatch_cache,
                 (PyObject **)op_dtypes, info, &result) < 0) {
-        return NULL;
+            return NULL;
+        }
+        return result;
     }
-    return result;
+    return info;
 }
 
 #ifdef Py_GIL_DISABLED
