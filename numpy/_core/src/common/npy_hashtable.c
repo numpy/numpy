@@ -259,6 +259,8 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
  *        corresponding to the mapping.
  * @param value Normally a Python object, no reference counting is done
  *        and it should not be NULL.
+ * @param result The resulting value, either the existing one or the
+ *        newly added value.
  * @returns 0 on success, -1 with a MemoryError set on failure.
  */
 static inline int
