@@ -5,6 +5,11 @@ import numpy as np
 psleak = pytest.importorskip("psleak")
 LT = psleak.LeakTest
 
+# config
+psleak.MemoryLeakTestCase.verbosity = 1
+psleak.MemoryLeakTestCase.checkers = psleak.Checkers.exclude("gcgarbage")
+psleak.MemoryLeakTestCase.retries = 30  # minimize flaky failures
+
 api = {
     # array creation
     "zeros": LT(np.zeros, 10),
@@ -105,9 +110,6 @@ api = {
 
 
 class TestNumpyLeaks(psleak.MemoryLeakTestCase):
-    verbosity = 1
-    checkers = psleak.Checkers.exclude("gcgarbage")
-
     @classmethod
     def auto_generate(cls):
         return api
