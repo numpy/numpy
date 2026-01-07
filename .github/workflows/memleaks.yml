@@ -36,6 +36,7 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements/ci32_requirements.txt
         pip install -r requirements/test_requirements.txt
+        pip install psleak
 
         spin config-openblas --with-scipy-openblas=32
         export PKG_CONFIG_PATH=$(pwd)/.openblas

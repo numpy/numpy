@@ -1,9 +1,9 @@
-import os
-
 import pytest
-from psleak import Checkers, LeakTest as LT, MemoryLeakTestCase
 
 import numpy as np
+
+psleak = pytest.importorskip("psleak")
+LT = psleak.LeakTest
 
 api = {
     # array creation
@@ -104,12 +104,9 @@ api = {
 }
 
 
-@pytest.mark.skipif(
-    "PYTHONMALLOC" not in os.environ, reason="PYTHONMALLOC not set"
-)
-class TestNumpyLeaks(MemoryLeakTestCase):
+class TestNumpyLeaks(psleak.MemoryLeakTestCase):
     verbosity = 1
-    checkers = Checkers.exclude("gcgarbage")
+    checkers = psleak.Checkers.exclude("gcgarbage")
 
     @classmethod
     def auto_generate(cls):
