@@ -19,3 +19,4 @@ numpy/random/_generator.cp312-win32.pyd.p/numpy/random/_generator.pyx.c(26345): 
 numpy/random/_generator.cp312-win32.pyd.p/numpy/random/_generator.pyx.c(38369): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
 numpy/random/_generator.cp312-win_arm64.pyd.p/numpy/random/_generator.pyx.c(26345): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
 numpy/random/_generator.cp312-win_arm64.pyd.p/numpy/random/_generator.pyx.c(38369): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
+numpy/_core/src/common/npy_hashtable.h(18): warning C4200: nonstandard extension used: zero-sized array in struct/union
