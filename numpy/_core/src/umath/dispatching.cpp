@@ -823,6 +823,13 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
  * to use for a ufunc.  This function may recurse with `do_legacy_fallback`
  * set to False.
  *
+ * The result is cached in the ufunc's dispatch cache for faster lookup next time.
+ * It is possible that multiple threads call this function at the same time, and
+ * there is cache miss, in that case all threads will do the full resolution, however
+ * only one will store the result in the cache (the others get the stored result).
+ * This is ensured by `PyArrayIdentityHash_SetItemDefault` which only sets the item
+ * if it is not already set otherwise returning the existing value.
+ *
  * If value-based promotion is necessary, this is handled ahead of time by
  * `promote_and_get_ufuncimpl`.
  */
