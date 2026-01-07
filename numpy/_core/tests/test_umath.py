@@ -1,4 +1,5 @@
 import fnmatch
+import inspect
 import itertools
 import operator
 import platform
@@ -4047,12 +4048,14 @@ class TestSpecialMethods:
         assert_array_equal(res, a + a)
 
     @pytest.mark.thread_unsafe(reason="modifies global module")
+    @pytest.mark.skipif(IS_PYPY, reason="__signature__ descriptor dance fails")
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"
         expected_dict = (
             {} if IS_PYPY else {"__module__": "numpy", "__qualname__": "add"}
         )
+        expected_dict["__signature__"] = inspect.signature(np.add)
 
         np.add.__doc__ = new_doc
         assert np.add.__doc__ == new_doc
@@ -4479,8 +4482,8 @@ class TestSubclass:
     def test_subclass_op(self):
 
         class simple(np.ndarray):
-            def __new__(subtype, shape):
-                self = np.ndarray.__new__(subtype, shape, dtype=object)
+            def __new__(cls, shape):
+                self = np.ndarray.__new__(cls, shape, dtype=object)
                 self.fill(0)
                 return self
 

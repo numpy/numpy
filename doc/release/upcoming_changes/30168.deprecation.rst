@@ -1,5 +1,0 @@
-``np.fix`` is pending deprecation
----------------------------------
-The `numpy.fix` function will be deprecated in a future release. It is recommended to use
-`numpy.trunc` instead, as it provides the same functionality of truncating decimal values to their
-integer parts. Static type checkers might already report a warning for the use of `numpy.fix`.

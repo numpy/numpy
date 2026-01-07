@@ -1,11 +1,12 @@
+from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import Any, NamedTuple, TypeAlias
+from typing import NamedTuple
 
 import numpy as np
 
-__all__: list[str] = ["interface"]
+__all__ = ["interface"]
 
-_CDataVoidPointer: TypeAlias = Any
+type _CDataVoidPointer = Incomplete  # currently not expressible
 
 class interface(NamedTuple):
     state_address: int

@@ -12,6 +12,7 @@ import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_64BIT,
     IS_PYPY,
     IS_WASM,
     assert_,
@@ -3205,6 +3206,13 @@ def test_iter_too_large_with_multiindex():
             with assert_raises(ValueError):
                 _multiarray_tests.test_nditer_too_large(arrays, i * 2 + 1, mode)
 
+
+def test_invalid_call_of_enable_external_loop():
+    with pytest.raises(ValueError,
+                       match='Iterator flag EXTERNAL_LOOP cannot be used'):
+        np.nditer(([[1], [2]], [3, 4]), ['multi_index']).enable_external_loop()
+
+
 def test_writebacks():
     a = np.arange(6, dtype='f4')
     au = a.byteswap()
@@ -3404,6 +3412,7 @@ def test_arbitrary_number_of_ops_nested():
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @requires_memory(9 * np.iinfo(np.intc).max)
 @pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_arbitrary_number_of_ops_error():

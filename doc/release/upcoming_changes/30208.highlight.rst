@@ -1,2 +1,0 @@
-* Runtime signature introspection support has been significantly improved. See the
-  corresponding improvement note for details.

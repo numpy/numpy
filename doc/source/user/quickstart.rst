@@ -163,7 +163,7 @@ The type of the array can also be explicitly specified at creation time:
 
 ::
 
-    >>> c = np.array([[1, 2], [3, 4]], dtype=complex)
+    >>> c = np.array([[1, 2], [3, 4]], dtype=np.complex128)
     >>> c
     array([[1.+0.j, 2.+0.j],
            [3.+0.j, 4.+0.j]])
@@ -346,7 +346,7 @@ existing array rather than create a new one.
 ::
 
     >>> rg = np.random.default_rng(1)  # create instance of default random number generator
-    >>> a = np.ones((2, 3), dtype=int)
+    >>> a = np.ones((2, 3), dtype=np.int_)
     >>> b = rg.random((2, 3))
     >>> a *= 3
     >>> a
@@ -535,7 +535,7 @@ are given in a tuple separated by commas::
     >>> def f(x, y):
     ...     return 10 * x + y
     ...
-    >>> b = np.fromfunction(f, (5, 4), dtype=int)
+    >>> b = np.fromfunction(f, (5, 4), dtype=np.int_)
     >>> b
     array([[ 0,  1,  2,  3],
            [10, 11, 12, 13],
@@ -1256,7 +1256,7 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...     A, B = np.meshgrid(x, y)
     ...     C = A + B*1j
     ...     z = np.zeros_like(C)
-    ...     divtime = maxit + np.zeros(z.shape, dtype=int)
+    ...     divtime = maxit + np.zeros(z.shape, dtype=np.int_)
     ...
     ...     for i in range(maxit):
     ...         z = z**2 + C

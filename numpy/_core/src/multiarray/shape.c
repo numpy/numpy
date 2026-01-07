@@ -32,7 +32,6 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
     npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, elsize;
-    int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
     npy_intp *dimptr;
@@ -93,21 +92,21 @@ PyArray_Resize_int(PyArrayObject *self, PyArray_Dims *newshape, int refcheck)
                     "Use the np.resize function or refcheck=False");
             return -1;
 #else
-            refcnt = Py_REFCNT(self);
+#if PY_VERSION_HEX >= 0x030E00B0
+            if (!PyUnstable_Object_IsUniquelyReferenced((PyObject *)self)) {
+#else
+            if (Py_REFCNT(self) > 2) {
+#endif
+                PyErr_SetString(
+                        PyExc_ValueError,
+                        "cannot resize an array that "
+                        "references or is referenced\n"
+                        "by another array in this way.\n"
+                        "Use the np.resize function or refcheck=False");
+                return -1;
+            }
 #endif /* PYPY_VERSION */
         }
-        else {
-            refcnt = 1;
-        }
-        if (refcnt > 2) {
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot resize an array that "
-                    "references or is referenced\n"
-                    "by another array in this way.\n"
-                    "Use the np.resize function or refcheck=False");
-            return -1;
-        }
-
         /* Reallocate space if needed - allocating 0 is forbidden */
         PyObject *handler = PyArray_HANDLER(self);
         if (handler == NULL) {

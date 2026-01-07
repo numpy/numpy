@@ -184,7 +184,7 @@ class TestDLPack:
         np.from_dlpack(x, device="cpu")
         np.from_dlpack(x, device=None)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(BufferError):
             x.__dlpack__(dl_device=(10, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")

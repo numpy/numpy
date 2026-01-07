@@ -14,8 +14,13 @@
 #if NPY_BLAS_CHECK_FPE_SUPPORT
 /*
  * Static variable to cache runtime check of BLAS FPE support.
+ * Will always be false (ignore all FPE) when accelerate is the compiled backend
  */
+  #if defined(ACCELERATE_NEW_LAPACK)
+static bool blas_supports_fpe = false;
+  #else
 static bool blas_supports_fpe = true;
+  #endif // ACCELERATE_NEW_LAPACK
 
 #endif // NPY_BLAS_CHECK_FPE_SUPPORT
 

@@ -51,6 +51,7 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000013 - 2.2.x
 # 0x00000014 - 2.3.x
 # 0x00000015 - 2.4.x
+# 0x00000015 - 2.5.x
 C_API_VERSION = '0x00000015'
 
 # Check whether we have a mismatch between the set C API VERSION and the
@@ -604,33 +605,6 @@ npymath_lib = static_library('npymath',
   gnu_symbol_visibility: 'hidden',
 )
 
-dir_separator = '/'
-if build_machine.system() == 'windows'
-  dir_separator = '\\'
-endif
-configure_file(
-  input: 'npymath.ini.in',
-  output: 'npymath.ini',
-  configuration: configuration_data({
-    'pkgname' : 'numpy._core',
-    'sep' : dir_separator,
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-configure_file(
-  input: 'mlib.ini.in',
-  output: 'mlib.ini',
-  configuration: configuration_data({
-    'posix_mathlib' : mlib_linkflag,
-    'msvc_mathlib' : 'm.lib',
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-
 if false
   # This doesn't quite work (yet), it assumes we'll install headers under
   # include/, and trying to add the correct path with `extra_cflags` runs into
@@ -927,7 +901,7 @@ foreach gen_mtargets : [
     'loops_arithm_fp.dispatch.h',
     src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
     [
-      X86_V3, X86_V2, 
+      X86_V3, X86_V2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
@@ -960,7 +934,7 @@ foreach gen_mtargets : [
     'loops_exponent_log.dispatch.h',
     src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
     [
-      X86_V4, X86_V3, 
+      X86_V4, X86_V3,
     ]
   ],
   [
@@ -1120,6 +1094,7 @@ src_multiarray_umath_common = [
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
   'src/common/npy_cpu_dispatch.c',
+  'src/common/npy_sort.c',
   src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
@@ -1131,7 +1106,7 @@ endif
 
 src_multiarray = multiarray_gen_headers + [
   'src/multiarray/abstractdtypes.c',
-  'src/multiarray/alloc.c',
+  'src/multiarray/alloc.cpp',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
@@ -1403,6 +1378,7 @@ python_sources = [
   '_type_aliases.pyi',
   '_ufunc_config.py',
   '_ufunc_config.pyi',
+  '_umath_tests.pyi',
   'arrayprint.py',
   'arrayprint.pyi',
   'cversions.py',

@@ -1,0 +1,8 @@
+``numpy.linalg`` typing improvements and preliminary shape-typing support
+-------------------------------------------------------------------------
+Input and output dtypes for ``numpy.linalg`` functions are now more precise. Several of these
+functions also gain preliminary shape-typing support while remaining backward compatible.
+For example, the return type of ``numpy.linalg.matmul`` now depends on the shape-type of its inputs,
+or fall back to the backward-compatible return type if the shape-types are unknown at type-checking
+time. Because of limitations in Python's type system and current type-checkers, shape-typing cannot
+cover every situation and is often only implemented for the most common lower-rank cases.

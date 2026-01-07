@@ -16,7 +16,7 @@ numpy\._core\._simd\.\w+
 
 # these are always either float96/complex192 or float128/complex256
 numpy\.__all__
-numpy\._?core\.__all__
+numpy\._core\.__all__
 numpy\._?core\.numeric\.__all__
 numpy\._?core\.numerictypes\.__all__
 numpy\.matlib\.__all__
@@ -39,27 +39,18 @@ numpy\.(\w+\.)*integer\.bit_count
 numpy\.(\w+\.)*floating\.as_integer_ratio
 numpy\.(\w+\.)*floating\.is_integer
 numpy\.(\w+\.)*complexfloating\.__complex__
+# https://github.com/numpy/numpy/issues/30445#issuecomment-3665484402
+numpy\.(\w+\.)*generic\.__hash__
 
 # intentionally missing deprecated module stubs
-numpy\.core\._dtype
-numpy\.core\._dtype_ctypes
-numpy\.core\._internal
-numpy\.core\._multiarray_umath.*
-numpy\.core\.arrayprint.*
-numpy\.core\.defchararray.*
-numpy\.core\.einsumfunc.*
-numpy\.core\.fromnumeric.*
-numpy\.core\.function_base.*
-numpy\.core\.getlimits.*
-numpy\.core\.multiarray.*
-numpy\.core\.numeric.*
-numpy\.core\.overrides
-numpy\.core\.records.*
-numpy\.core\.shape_base.*
-numpy\.core\.umath.*
 numpy\.typing\.mypy_plugin
 
-# ufuncs
+# false positive "... is not a Union" errors
+numpy\.typing\.ArrayLike
+numpy\.typing\.DTypeLike
+numpy\.typing\.NDArray
+
+# ufuncs, see https://github.com/python/mypy/issues/20223
 numpy\.(\w+\.)*abs
 numpy\.(\w+\.)*absolute
 numpy\.(\w+\.)*acos
@@ -177,7 +168,16 @@ numpy\.(\w+\.)*istitle
 numpy\.(\w+\.)*isupper
 numpy\.(\w+\.)*str_len
 numpy\._core\._methods\.umr_bitwise_count
-numpy\._core\._methods\.umr_bitwise_count
+numpy\._core\._umath_tests\.always_error
+numpy\._core\._umath_tests\.always_error_gufunc
+numpy\._core\._umath_tests\.always_error_unary
+numpy\._core\._umath_tests\.conv1d_full
+numpy\._core\._umath_tests\.cross1d
+numpy\._core\._umath_tests\.euclidean_pdist
+numpy\._core\._umath_tests\.indexed_negative
+numpy\._core\._umath_tests\.inner1d
+numpy\._core\._umath_tests\.inner1d_no_doc
+numpy\._core\._umath_tests\.matrix_multiply
 numpy\.linalg\._umath_linalg\.qr_complete
 numpy\.linalg\._umath_linalg\.qr_reduced
 numpy\.linalg\._umath_linalg\.solve

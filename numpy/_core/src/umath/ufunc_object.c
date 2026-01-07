@@ -4337,9 +4337,18 @@ try_trivial_scalar_call(
     // Try getting info from the (private) cache.  Fall back if not found,
     // so that the the dtype gets registered and things will work next time.
     PyArray_DTypeMeta *op_dtypes[2] = {NPY_DTYPE(dt), NULL};
+#ifdef Py_GIL_DISABLED
+    // Other threads may be in the process of filling the dispatch cache,
+    // so we need to acquire the free-threading-specific dispatch cache mutex
+    // before reading the cache
+    PyObject *info = PyArrayIdentityHash_GetItemWithLock(  // borrowed reference.
+        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+        (PyObject **)op_dtypes);
+#else
     PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
         (PyObject **)op_dtypes);
+#endif
     if (info == NULL) {
         goto bail;
     }
@@ -6575,8 +6584,8 @@ static struct PyMethodDef ufunc_methods[] = {
 };
 
 
-/******************************************************************************
- ***                           UFUNC GETSET                                 ***
+/*****************************************************************************
+ ***                           UFUNC GETSET                                ***
  *****************************************************************************/
 
 
@@ -6725,6 +6734,9 @@ static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
         (getter)ufunc_get_doc, (setter)ufunc_set_doc,
         NULL, NULL},
+    {"__name__",
+        (getter)ufunc_get_name,
+        NULL, NULL, NULL},
     {"nin",
         (getter)ufunc_get_nin,
         NULL, NULL, NULL},
@@ -6740,15 +6752,13 @@ static PyGetSetDef ufunc_getset[] = {
     {"types",
         (getter)ufunc_get_types,
         NULL, NULL, NULL},
-    {"__name__",
-        (getter)ufunc_get_name,
-        NULL, NULL, NULL},
     {"identity",
         (getter)ufunc_get_identity,
         NULL, NULL, NULL},
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    // __signature__ stored in `__dict__`, see `_globals._SignatureDescriptor`
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 

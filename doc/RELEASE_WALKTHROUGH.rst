@@ -290,7 +290,7 @@ Update the ``version`` in ``pyproject.toml``::
     $ gvim pyproject.toml
 
 Commit the result, edit the commit message, note the files in the commit, and
-add a line ``[skip azp] [skip cirrus] [skip actions]``, then push::
+add a line ``[skip cirrus] [skip actions]``, then push::
 
     $ git commit -a -m"MAINT: Prepare 2.4.x for further development"
     $ git rebase -i HEAD^
