@@ -1936,13 +1936,9 @@ with the rest of the ArrayMethod API.
 
     .. versionadded:: 2.5
 
-      Add a dtype-based promoter to the ufunc, which always matches if the given
-      `dtype` is present in the operands.
-
-      Be careful when using this function, as this type of promoter takes
-      precedence over any other promoters, effectively making it impossible
-      to use other promoters for the same DType. This is mainly useful for
-      cases where a DType wants to implement all promotion logic itself.
+    Add a dtype-based promoter to the ufunc, which always matches if the given
+    `dtype` is present in the operands. This promoter is only used if none of
+    the more specific promoters/loops match.
 
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
                 PyArray_DTypeMeta *const op_dtypes[], \

@@ -263,30 +263,6 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
 }
 
 
-static int
-create_dtype_promoter_info(PyUFuncObject *ufunc,
-        PyObject *promoter, PyObject **out_info)
-{
-    int nargs = ufunc->nargs;
-    PyObject *dtype_tuple = PyTuple_New(nargs);
-    if (dtype_tuple == NULL) {
-        return -1;
-    }
-    for (Py_ssize_t j = 0; j < nargs; j++) {
-        Py_INCREF(Py_None);
-        PyTuple_SET_ITEM(dtype_tuple, j, Py_None);
-    }
-
-    PyObject *curr_dtypes = dtype_tuple;
-    PyObject *curr_resolver_info = PyTuple_Pack(2, curr_dtypes, promoter);
-    Py_INCREF(curr_dtypes);
-    Py_INCREF(curr_resolver_info);
-
-    *out_info = curr_resolver_info;
-    return 0;
-}
-
-
 /**
  * Resolves the implementation to use, this uses typical multiple dispatching
  * methods of finding the best matching implementation or resolver.
@@ -326,7 +302,9 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         PyObject **out_info)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
-    PyObject *matched_dtype_promoter = NULL;
+    Py_ssize_t size = PySequence_Length(ufunc->_loops);
+    PyObject *best_dtypes = NULL;
+    PyObject *best_resolver_info = NULL;
 
 #if PROMOTION_DEBUG_TRACING
     printf("Promoting for '%s' promoters only: %d\n",
@@ -339,60 +317,10 @@ resolve_implementation_info(PyUFuncObject *ufunc,
     Py_DECREF(tmp);
 #endif
 
-    Py_ssize_t size = PySequence_Length(ufunc->_dtype_promoters);
-    for (Py_ssize_t i = 0; i < size; i++) {
-        // Test all dtype-based promoters.
-        PyObject *promoter_info = PySequence_Fast_GET_ITEM(
-                ufunc->_dtype_promoters, i);
-        PyArray_DTypeMeta *promoter_dtype = (
-                (PyArray_DTypeMeta *)PyTuple_GET_ITEM(promoter_info, 0));
-
-        npy_bool matches = NPY_FALSE;
-        for (Py_ssize_t j = 0; j < nargs; j++) {
-            PyArray_DTypeMeta *op_dtype = op_dtypes[j];
-            // DType promoters always match exactly.
-            if (op_dtype == promoter_dtype) {
-                matches = NPY_TRUE;
-                break;
-            }
-        }
-        if (!matches) {
-            continue;
-        }
-
-        /*
-         * Dtype-based promoter matches. If we only want promoters, use it.
-         * Otherwise, remember it as the matched promoter and continue searching
-         * for an ArrayMethod match.
-         */
-        PyObject *promoter = PyTuple_GET_ITEM(promoter_info, 1);
-        Py_INCREF(promoter);
-
-        if (only_promoters) {
-            if (create_dtype_promoter_info(ufunc, promoter, out_info) < 0) {
-                Py_DECREF(promoter);
-                return -1;
-            }
-            return 0;
-        }
-
-        matched_dtype_promoter = promoter;
-        break;
-    }
-
-    size = PySequence_Length(ufunc->_loops);
-    PyObject *best_dtypes = NULL;
-    PyObject *best_resolver_info = NULL;
-
     for (Py_ssize_t res_idx = 0; res_idx < size; res_idx++) {
         /* Test all resolvers  */
         PyObject *resolver_info = PySequence_Fast_GET_ITEM(
                 ufunc->_loops, res_idx);
-
-        if (matched_dtype_promoter != NULL && !PyObject_TypeCheck(
-                    PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
-            continue;
-        }
 
         if (only_promoters && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(resolver_info, 1), &PyArrayMethod_Type)) {
@@ -617,16 +545,53 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         best_dtypes = curr_dtypes;
         best_resolver_info = resolver_info;
     }
-    if (best_dtypes == NULL && matched_dtype_promoter != NULL) {
-        /* Dtype promoter matched, but no ArrayMethod */
-        if (create_dtype_promoter_info(ufunc,
-                    matched_dtype_promoter, out_info) < 0) {
-            Py_DECREF(matched_dtype_promoter);
-            return -1;
-        }
+
+    if (best_dtypes != NULL) {
+        *out_info = best_resolver_info;
         return 0;
     }
-    else if (best_dtypes == NULL) {
+
+    /* No normal resolver found, try DType promoters */
+    size = PySequence_Length(ufunc->_dtype_promoters);
+    for (Py_ssize_t i = 0; i < size; i++) {
+        PyObject *promoter_info = PySequence_Fast_GET_ITEM(
+            ufunc->_dtype_promoters, i);
+        PyArray_DTypeMeta *promoter_dtype = (
+                (PyArray_DTypeMeta *)PyTuple_GET_ITEM(promoter_info, 0));
+
+        npy_bool matches = NPY_FALSE;
+        for (Py_ssize_t j = 0; j < nargs; j++) {
+            PyArray_DTypeMeta *op_dtype = op_dtypes[j];
+            // DType promoters always match exactly.
+            if (op_dtype == promoter_dtype) {
+                matches = NPY_TRUE;
+                break;
+            }
+        }
+        if (!matches) {
+            continue;
+        }
+
+        int nargs = ufunc->nargs;
+        PyObject *dtype_tuple = PyTuple_New(nargs);
+        if (dtype_tuple == NULL) {
+            return -1;
+        }
+        for (Py_ssize_t j = 0; j < nargs; j++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(dtype_tuple, j, Py_None);
+        }
+        Py_INCREF(dtype_tuple);
+
+        PyObject *promoter = PyTuple_GET_ITEM(promoter_info, 1);
+        PyObject *resolver_info = PyTuple_Pack(2, dtype_tuple, promoter);
+        Py_INCREF(resolver_info);
+
+        best_resolver_info = resolver_info;
+        break;
+    }
+
+    if (best_resolver_info == NULL) {
         /* The non-legacy lookup failed */
         *out_info = NULL;
         return 0;
@@ -1518,12 +1483,8 @@ PyUFunc_AddPromoter(
 
 /*UFUNC_API
  *      Add a dtype-based promoter to the ufunc, which always matches if the given
- *      `dtype` is present in the operands.
- *
- *      Be careful when using this function, as this type of promoter takes
- *      precedence over any other promoters, effectively making it impossible
- *      to use other promoters for the same DType. This is mainly useful for
- *      cases where a DType wants to implement all promotion logic itself.
+ *      `dtype` is present in the operands. This promoter is only used if none of
+ *      the more specific promoters/loops match.
  *
  * @param ufunc The universal function to add the loop to.
  * @param dtype The DType that this promoter should match on.
