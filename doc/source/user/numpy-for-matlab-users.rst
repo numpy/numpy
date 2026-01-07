@@ -95,7 +95,7 @@ General purpose equivalents
      - Notes
 
    * - ``help func``
-     - ``info(func)`` or ``help(func)`` or ``func?`` (in IPython)
+     - ``np.info(func)`` or ``np.help(func)`` or ``func?`` (in IPython)
      - get help on the function *func*
 
    * - ``which func``
@@ -186,11 +186,11 @@ General purpose equivalents
        will create a dictionary with the saved arrays and further information.)
 
    * - ``ode45``
-     - ``integrate.solve_ivp(f)``
+     - ``np.integrate.solve_ivp(f)``
      - integrate an ODE with Runge-Kutta 4,5
 
    * - ``ode15s``
-     - ``integrate.solve_ivp(f, method='BDF')``
+     - ``np.integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
 
 
@@ -408,7 +408,7 @@ Linear algebra equivalents
      - two 2D arrays: one of x values, the other of y values
 
    * -
-     - ``ogrid[0:9.,0:6.]`` or ``np.ix_(np.r_[0:9.],np.r_[0:6.]``
+     - ``np.ogrid[0:9.,0:6.]`` or ``np.ix_(np.r_[0:9.],np.r_[0:6.]``
      - the best way to eval functions on a grid
 
    * - ``[x,y]=meshgrid([1,2,4],[2,4,5])``
@@ -455,7 +455,7 @@ Linear algebra equivalents
      - L2 norm of vector ``v``
 
    * - ``a & b``
-     - ``logical_and(a,b)``
+     - ``np.logical_and(a,b)``
      - element-by-element AND operator (NumPy ufunc) :ref:`See note
        LOGICOPS <numpy-for-matlab-users.notes>`
 
@@ -473,11 +473,11 @@ Linear algebra equivalents
      - bitwise OR operator (Python native and NumPy ufunc)
 
    * - ``inv(a)``
-     - ``linalg.inv(a)``
+     - ``np.linalg.inv(a)``
      - inverse of square 2D array ``a``
 
    * - ``pinv(a)``
-     - ``linalg.pinv(a)``
+     - ``np.linalg.pinv(a)``
      - pseudo-inverse of 2D array ``a``
 
    * - ``rank(a)``
@@ -485,7 +485,7 @@ Linear algebra equivalents
      - matrix rank of a 2D array ``a``
 
    * - ``a\b``
-     - ``linalg.solve(a, b)`` if ``a`` is square; ``linalg.lstsq(a, b)``
+     - ``np.linalg.solve(a, b)`` if ``a`` is square; ``np.linalg.lstsq(a, b)``
        otherwise
      - solution of a x = b for x
 
@@ -494,20 +494,20 @@ Linear algebra equivalents
      - solution of x a = b for x
 
    * - ``[U,S,V]=svd(a)``
-     - ``U, S, Vh = linalg.svd(a); V = Vh.T``
+     - ``U, S, Vh = np.linalg.svd(a); V = Vh.T``
      - singular value decomposition of ``a``
 
    * - ``chol(a)``
-     - ``linalg.cholesky(a)``
+     - ``np.linalg.cholesky(a)``
      - Cholesky factorization of a 2D array
 
    * - ``[V,D]=eig(a)``
-     - ``D,V = linalg.eig(a)``
+     - ``D,V = np.linalg.eig(a)``
      - eigenvalues :math:`\lambda` and eigenvectors :math:`v` of ``a``,
        where :math:`\mathbf{a} v = \lambda v`
 
    * - ``[V,D]=eig(a,b)``
-     - ``D,V = linalg.eig(a, b)``
+     - ``D,V = np.linalg.eig(a, b)``
      - eigenvalues :math:`\lambda` and eigenvectors :math:`v` of
        ``a``, ``b``
        where :math:`\mathbf{a} v = \lambda \mathbf{b} v`
@@ -517,11 +517,11 @@ Linear algebra equivalents
      - find the ``k=3`` largest eigenvalues and eigenvectors of 2D array, ``a``
 
    * - ``[Q,R]=qr(a,0)``
-     - ``Q,R = linalg.qr(a)``
+     - ``Q,R = np.linalg.qr(a)``
      - QR decomposition
 
    * - ``[L,U,P]=lu(a)`` where ``a==P'*L*U``
-     - ``P,L,U = linalg.lu(a)`` where ``a == P@L@U``
+     - ``P,L,U = np.linalg.lu(a)`` where ``a == P@L@U``
      - LU decomposition with partial pivoting
        (note: P(MATLAB) == transpose(P(NumPy)))
 
@@ -550,7 +550,7 @@ Linear algebra equivalents
      - save the array ``a`` as array ``b`` with rows sorted by the first column
 
    * - ``x = Z\y``
-     - ``x = linalg.lstsq(Z, y)``
+     - ``x = np.linalg.lstsq(Z, y)``
      - perform a linear regression of the form :math:`\mathbf{Zx}=\mathbf{y}`
 
    * - ``decimate(x, q)``
