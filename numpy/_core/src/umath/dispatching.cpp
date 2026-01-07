@@ -972,36 +972,6 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     return info;
 }
 
-#ifdef Py_GIL_DISABLED
-/*
- * Fast path for promote_and_get_info_and_ufuncimpl.
- * Acquires a read lock to check for a cache hit and then
- * only acquires a write lock on a cache miss to fill the cache
- */
-static inline PyObject *
-promote_and_get_info_and_ufuncimpl_with_locking(
-        PyUFuncObject *ufunc,
-        PyArrayObject *const ops[],
-        PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *op_dtypes[],
-        npy_bool legacy_promotion_is_possible)
-{
-    PyObject *info = PyArrayIdentityHash_GetItem(
-            (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-            (PyObject **)op_dtypes);
-
-    if (info != NULL && PyObject_TypeCheck(
-                    PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
-        /* Found the ArrayMethod and NOT a promoter: return it */
-        return info;
-    }
-
-    info = promote_and_get_info_and_ufuncimpl(ufunc,
-            ops, signature, op_dtypes, legacy_promotion_is_possible);
-    return info;
-}
-#endif
-
 /**
  * The central entry-point for the promotion and dispatching machinery.
  *
@@ -1090,20 +1060,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    /*
-     * We hold the GIL here, so on the GIL-enabled build the GIL prevents
-     * races to fill the promotion cache.
-     *
-     * On the free-threaded build we need to set up our own locking to prevent
-     * races to fill the promotion cache.
-     */
-#ifdef Py_GIL_DISABLED
-    PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
-            ops, signature, op_dtypes, legacy_promotion_is_possible);
-#else
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-#endif
 
     if (info == NULL) {
         goto handle_error;
