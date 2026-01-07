@@ -1,3 +1,5 @@
+from threading import Barrier, Thread
+
 import pytest
 
 from numpy._core._multiarray_tests import (
@@ -5,8 +7,6 @@ from numpy._core._multiarray_tests import (
     identity_hash_get_item,
     identity_hash_set_item_default,
 )
-
-from threading import Thread, Barrier
 
 
 @pytest.mark.parametrize("key_length", [1, 3, 6])
