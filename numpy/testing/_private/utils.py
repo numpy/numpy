@@ -64,9 +64,7 @@ except importlib.metadata.PackageNotFoundError:
 else:
     IS_INSTALLED = True
     try:
-        if sys.version_info >= (3, 13):
-            IS_EDITABLE = np_dist.origin.dir_info.editable
-        else:
+        if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
             import json  # noqa: E401
             import types
@@ -75,6 +73,8 @@ else:
                 object_hook=lambda data: types.SimpleNamespace(**data),
             )
             IS_EDITABLE = origin.dir_info.editable
+        else:
+            IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
