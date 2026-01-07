@@ -63,14 +63,9 @@ def run_pyright_with_coverage(
         covered = data["typeCompleteness"]["completenessScore"]
     sys.stderr.write(result.stderr)
     if covered < 1:
-        sys.stdout.write(f"Coverage {covered:.1%} is below minimum required 100%")
+        sys.stdout.write(f"Coverage {covered:.1%} is below minimum required 100%\n")
         return 1
-
-    sys.stderr.write(result.stderr)
-    if covered < 100:
-        sys.stdout.write(f"Coverage {covered:.1f}% is below minimum required 100%")
-        return 1
-    sys.stdout.write("Coverage is at 100%")
+    sys.stdout.write("Coverage is at 100%\n")
     return 0
 
 
