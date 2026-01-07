@@ -1,5 +1,4 @@
 ../numpy/_core/src/common/npy_cpu_features.c(451): warning C4098: 'npy__cpu_cpuid': 'void' function returning a value
-../numpy/_core/src/common/npy_hashtable.h(18): warning C4200: nonstandard extension used: zero-sized array in struct/union
 ../numpy/linalg/lapack_lite/f2c_c_lapack.c(1530): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
 ../numpy/linalg/lapack_lite/f2c_c_lapack.c(230): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data
 ../numpy/linalg/lapack_lite/f2c_c_lapack.c(250): warning C4244: '=': conversion from 'real' to 'integer', possible loss of data

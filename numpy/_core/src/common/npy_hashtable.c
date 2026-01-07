@@ -8,6 +8,11 @@
  * uses a mutex for writing (adding new entries). See below for the details
  * of thread safety.
  *
+ * The actual hash table is stored in the `buckets` struct which contains
+ * a flexible array member for the keys and values. It avoids multiple
+ * atomic operations as resizing the hash table only requires a single atomic
+ * store to swap in the new buckets pointer.
+ *
  * Thread safety notes for free-threading builds:
  * - Reading from the cache (getting items) is lock-free and thread safe.
  *   The reader reads the current `buckets` pointer using an atomic load
@@ -16,7 +21,7 @@
  *   The value of item is then read using an atomic load with memory_order_acquire
  *   order so that it sees the key written by the writer before the value.
  *
- * - Writing to the cache (adding new items) uses ``tb_mutex`` mutex to
+ * - Writing to the cache (adding new items) uses ``tb->mutex`` mutex to
  *   ensure only one thread writes at a time. The new items are added
  *   concurrently with readers and synchronized using atomic operations.
  *   The key is stored first (using memcpy), and then the value is stored
@@ -32,7 +37,6 @@
  *   `buckets` struct. The old caches are only freed when the identity
  *   hash table is deallocated, ensuring that no readers are using them
  *   anymore.
- *
  */
 
 #include "npy_hashtable.h"
@@ -40,7 +44,13 @@
 #include "templ_common.h"
 #include <stdatomic.h>
 
-
+// It is defined here to avoid flexible array member warning in C++.
+struct buckets {
+    struct buckets *prev; /* linked list of old buckets */
+    npy_intp size;        /* current size */
+    npy_intp nelem;       /* number of elements */
+    PyObject *array[];    /* array of keys and values */
+};
 
 #if SIZEOF_PY_UHASH_T > 4
 #define _NpyHASH_XXPRIME_1 ((Py_uhash_t)11400714785074694791ULL)

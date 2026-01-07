@@ -11,12 +11,7 @@
 extern "C" {
 #endif
 
-struct buckets {
-    struct buckets *prev; /* linked list of old buckets */
-    npy_intp size;        /* current size */
-    npy_intp nelem;       /* number of elements */
-    PyObject *array[];    /* array of keys and values */
-};
+struct buckets;
 
 typedef struct {
     int key_len;             /* number of identities used */
