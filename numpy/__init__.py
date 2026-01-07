@@ -766,14 +766,6 @@ else:
                 name=None
             )
 
-        if attr == "chararray":
-            warnings.warn(
-                "`np.chararray` is deprecated and will be removed from "
-                "the main namespace in the future. Use an array with a string "
-                "or bytes dtype instead.", DeprecationWarning, stacklevel=2)
-            import numpy.char as char
-            return char.chararray
-
         raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
 
     def __dir__():

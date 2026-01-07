@@ -265,12 +265,6 @@ class TestMathAlias(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.lib.math)
 
 
-class TestLibImports(_DeprecationTestCase):
-    # Deprecated in Numpy 1.26.0, 2023-09
-    def test_lib_functions_deprecation_call(self):
-        self.assert_deprecated(lambda: np.chararray)
-
-
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
 
     def _check_for_warning(self, func):
