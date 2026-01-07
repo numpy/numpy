@@ -40,7 +40,7 @@ def run_pyright_with_coverage(
     exclude_like: Sequence[str],
 ) -> int:
     result = subprocess.run(
-        ["basedpyright", *pyright_args], capture_output=True, text=True
+        ["pyright", *pyright_args], capture_output=True, text=True
     )
 
     try:
