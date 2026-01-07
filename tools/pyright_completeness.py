@@ -10,6 +10,7 @@ Example usage:
 We use `--ignoreexternal` to avoid "partially unknown" reports coming from the stdlib
 `numbers` module, see https://github.com/microsoft/pyright/discussions/9911.
 """
+
 import argparse
 import fnmatch
 import json
@@ -38,7 +39,9 @@ def run_pyright_with_coverage(
     pyright_args: list[str],
     exclude_like: Sequence[str],
 ) -> int:
-    result = subprocess.run(["pyright", *pyright_args], capture_output=True, text=True)
+    result = subprocess.run(
+        ["basedpyright", *pyright_args], capture_output=True, text=True
+    )
 
     try:
         data = json.loads(result.stdout)
@@ -55,21 +58,19 @@ def run_pyright_with_coverage(
             if not any(fnmatch.fnmatch(x["name"], pattern) for pattern in exclude_like)
             and x["isExported"]
         ]
-        cov_percent = (
-            sum(x["isTypeKnown"] for x in matched_symbols) / len(matched_symbols) * 100
-        )
+        covered = sum(x["isTypeKnown"] for x in matched_symbols) / len(matched_symbols)
     else:
-        cov_percent = data["typeCompleteness"]["completenessScore"] * 100
+        covered = data["typeCompleteness"]["completenessScore"]
+    sys.stderr.write(result.stderr)
+    if covered < 1:
+        sys.stdout.write(f"Coverage {covered:.1%} is below minimum required 100%")
+        return 1
 
     sys.stderr.write(result.stderr)
-    if cov_percent < 100:
-        sys.stdout.write(
-            f"Coverage {cov_percent:.1f}% is below minimum required 100%"
-        )
+    if covered < 100:
+        sys.stdout.write(f"Coverage {covered:.1f}% is below minimum required 100%")
         return 1
-    sys.stdout.write(
-        f"Coverage {cov_percent:.1f}% is at or above minimum required 100%"
-    )
+    sys.stdout.write("Coverage is at 100%")
     return 0
 
 

@@ -8,7 +8,7 @@ pytest-xdist
 pytest-timeout
 # For testing types
 mypy==1.19.1
-pyright
+basedpyright
 # for optional f2py encoding detection
 charset-normalizer
 tzdata
