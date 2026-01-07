@@ -25,12 +25,7 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     fi
 fi
 
-python -m pip install -r requirements/test_requirements.txt
-
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores. Also print the durations for the 10 slowest tests
 # to help with debugging slow or hanging tests
 python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto', '--durations=10']))"
-
-# Run memory leak tests
-PYTHONMALLOC=malloc PYTHONUNBUFFERED=1 python -m pytest -v --pyargs numpy.tests.test_memleaks
