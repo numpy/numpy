@@ -1337,35 +1337,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     ) -> dtype[longdouble]: ...
 
     # `complexfloating` string-based representations and ctypes
-    if sys.version_info >= (3, 14) and sys.platform != "win32":
-        @overload
-        def __new__(
-            cls,
-            dtype: _Complex64Codes | type[ct.c_float_complex],
-            align: py_bool = False,
-            copy: py_bool = False,
-            *,
-            metadata: dict[str, Any] = ...,
-        ) -> dtype[complex64]: ...
-        @overload
-        def __new__(
-            cls,
-            dtype: _Complex128Codes | type[ct.c_double_complex],
-            align: py_bool = False,
-            copy: py_bool = False,
-            *,
-            metadata: dict[str, Any] = ...,
-        ) -> dtype[complex128]: ...
-        @overload
-        def __new__(
-            cls,
-            dtype: _CLongDoubleCodes | type[ct.c_longdouble_complex],
-            align: py_bool = False,
-            copy: py_bool = False,
-            *,
-            metadata: dict[str, Any] = ...,
-        ) -> dtype[clongdouble]: ...
-    else:
+    if sys.version_info < (3, 14) or sys.platform == "win32":
         @overload
         def __new__(
             cls,
@@ -1388,6 +1360,34 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         def __new__(
             cls,
             dtype: _CLongDoubleCodes,
+            align: py_bool = False,
+            copy: py_bool = False,
+            *,
+            metadata: dict[str, Any] = ...,
+        ) -> dtype[clongdouble]: ...
+    else:
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex64Codes | type[ct.c_float_complex],
+            align: py_bool = False,
+            copy: py_bool = False,
+            *,
+            metadata: dict[str, Any] = ...,
+        ) -> dtype[complex64]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex128Codes | type[ct.c_double_complex],
+            align: py_bool = False,
+            copy: py_bool = False,
+            *,
+            metadata: dict[str, Any] = ...,
+        ) -> dtype[complex128]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _CLongDoubleCodes | type[ct.c_longdouble_complex],
             align: py_bool = False,
             copy: py_bool = False,
             *,
