@@ -519,27 +519,23 @@ PyArray_AssignFromCache_Recursive(
     else {
         assert(depth != ndim);
         npy_intp orig_length = PyArray_DIMS(self)[0];
+        int err = 0;
+        NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
         for (npy_intp i = 0; i < orig_length; i++) {
-            int err = 0;
             // this macro takes *the argument* of PySequence_Fast, which is orig_seq;
             // not the object returned by PySequence_Fast, which is a proxy object
             // with its own per-object PyMutex lock.
             // We want to lock the list object exposed to users, not the proxy.
-            NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
             npy_intp length = PySequence_Fast_GET_SIZE(obj);
             if (length != orig_length) {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Inconsistent object during array creation? "
                                 "Content of sequences changed (length inconsistent).");
                 err = 1;
+                goto finish_critical_section;
             }
             else {
                 Py_XSETREF(item_pyvalue, Py_NewRef(PySequence_Fast_GET_ITEM(obj, i)));
-            }
-            NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
-
-            if (err) {
-                goto finish;
             }
 
             if (ndim == depth + 1) {
@@ -554,7 +550,8 @@ PyArray_AssignFromCache_Recursive(
                 char *item;
                 item = (PyArray_BYTES(self) + i * PyArray_STRIDES(self)[0]);
                 if (PyArray_Pack(PyArray_DESCR(self), item, item_pyvalue) < 0) {
-                    goto finish;
+                    err = 1;
+                    goto finish_critical_section;
                 }
                 /* If this was an array(-like) we still need to unlike int: */
                 if (*cache != NULL && (*cache)->converted_obj == item_pyvalue) {
@@ -565,15 +562,25 @@ PyArray_AssignFromCache_Recursive(
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
                 if (view == NULL) {
-                    goto finish;
+                    err = 1;
+                    goto finish_critical_section;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
                     Py_DECREF(view);
-                    goto finish;
+                    err = 1;
+                    goto finish_critical_section;
                 }
                 Py_DECREF(view);
             }
         }
+      finish_critical_section:;
+
+        NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+        if (err) {
+            goto finish;
+        }
+
+
     }
     ret = 0;
 
