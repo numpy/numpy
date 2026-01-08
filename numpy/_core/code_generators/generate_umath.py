@@ -1537,7 +1537,6 @@ def make_ufuncs(funcdict):
             args['identity_expr'] = 'NULL'
 
         mlist.append(fmt.format(**args))
-
         if uf.typereso is not None:
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)

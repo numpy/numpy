@@ -1081,7 +1081,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
             op_flags[i] |= NPY_ITER_CONTIG;
         }
     }
-
     /*
      * Allocate the iterator.  Because the types of the inputs
      * were already checked, we use the casting rule 'unsafe' which
@@ -1976,7 +1975,6 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
         retval = -1;
         goto fail;
     }
-
     /*
      * Set up the iterator per-op flags.  For generalized ufuncs, we
      * can't do buffering, so must COPY or UPDATEIFCOPY.
@@ -2676,7 +2674,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         op_flags[0] |= NPY_ITER_CONTIG;
         op_flags[1] |= NPY_ITER_CONTIG;
     }
-
     op[0] = out;
     op[1] = arr;
 
@@ -2685,7 +2682,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     if (!PyArray_ISALIGNED(arr) || (out && !PyArray_ISALIGNED(out)) ||
             !PyArray_EquivTypes(descrs[1], PyArray_DESCR(arr)) ||
             (out &&
-             !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out))) ||
+            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out))) ||
             (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
         need_outer_iterator = 1;
     }
