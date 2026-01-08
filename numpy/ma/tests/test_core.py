@@ -2278,6 +2278,23 @@ class TestFillingValues:
         res = np.ma.minimum_fill_value(ma)
         assert isinstance(res['foo'], np.datetime64)
 
+    def test_fill_value_datetime_structured_datetime(self):
+        # gh-29818
+        rec = np.array([(dt.datetime(2025, 4, 1, 12, 0),)], 
+                       dtype=[('foo', '<M8[ms]')])
+        ma = np.ma.masked_array(rec)
+        res = np.ma.minimum_fill_value(ma)
+        assert isinstance(res['foo'], np.datetime64)
+
+    def test_fill_value_datetime_structured_integer(self):
+        # gh-29818
+        dtype = np.dtype([('foo', '<M8[D]')])
+        def fill_func(dt):
+            return 42
+        res = np.ma.core._recursive_fill_value(dtype, fill_func)
+        assert isinstance(res['foo'], np.datetime64)
+        assert res['foo'] == np.datetime64(42, 'D')
+
     def test_check_on_fields(self):
         # Tests _check_fill_value with records
         _check_fill_value = np.ma.core._check_fill_value
@@ -4980,7 +4997,6 @@ class TestMaskedArrayFunctions:
         bools = [True, False]
         dtypes = [MaskType, float]
         msgformat = 'copy=%s, shrink=%s, dtype=%s'
-        # renamed 'dt' to 'dtype'
         for cpy, shr, dtype in itertools.product(bools, bools, dtypes):
             res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dtype)
             assert_(res is nomask, msgformat % (cpy, shr, dtype))
@@ -5314,7 +5330,6 @@ class TestMaskedObjectArray:
 
     def test_getitem(self):
         arr = np.ma.array([None, None])
-        # renamed 'dt' to 'dtype'
         for dtype in [float, object]:
             a0 = np.eye(2).astype(dtype)
             a1 = np.eye(3).astype(dtype)

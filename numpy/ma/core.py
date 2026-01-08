@@ -20,7 +20,7 @@ Released for unlimited redistribution.
 
 """
 import builtins
-import datetime
+import datetime as dt
 import functools
 import inspect
 import operator
@@ -242,11 +242,16 @@ def _recursive_fill_value(dtype, f):
             field_dtype = dtype[name]
             val = _recursive_fill_value(field_dtype, f)
             if np.issubdtype(field_dtype, np.datetime64):
-                if isinstance(val, (datetime.date, datetime.datetime)):
+                if isinstance(val, dt.date):
                     val = np.datetime64(val)
+                    val = np.array(val)
                 elif isinstance(val, (int, np.integer)):
                     val = np.array(val).astype(field_dtype)
-            vals.append(np.array(val))
+                else:
+                    val = np.array(val)
+            else:
+                val = np.array(val)
+            vals.append(val)
         return np.array(tuple(vals), dtype=dtype)[()]  # decay to void scalar from 0d
     elif dtype.subdtype:
         subtype, shape = dtype.subdtype
