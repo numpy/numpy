@@ -1795,7 +1795,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         names are read from the first line after the first `skip_header` lines.
         This line can optionally be preceded by a comment delimiter. Any content
         before the comment delimiter is discarded.
-        If `names` is a sequence or a single-string of comma-separated names,
+        If `names` is a sequence or a single string of comma-separated names,
         the output is a structured array whose field names are taken from
         `names`.
         If `names` is None, the output is structured only if `dtype` is
