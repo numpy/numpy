@@ -3065,6 +3065,11 @@ class TestBincount:
         with assert_raises(ValueError):
             np.bincount(vals)
 
+    @pytest.mark.parametrize("vals", [[1.0], [1j], ["1"], [b"1"]])
+    def test_error_not_int(self, vals):
+        with assert_raises(TypeError):
+            np.bincount(vals)
+
     @pytest.mark.parametrize("dt", np.typecodes["AllInteger"])
     def test_gh_28354(self, dt):
         a = np.array([0, 1, 1, 3, 2, 1, 7], dtype=dt)
