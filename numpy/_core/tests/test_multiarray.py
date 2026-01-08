@@ -326,9 +326,13 @@ class TestAttributes:
         assert_equal(one.shape, (10,))
         assert_equal(two.shape, (4, 5))
         assert_equal(three.shape, (2, 5, 6))
-        three.shape = (10, 3, 2)
+        with warnings.catch_warnings():  # gh-28901
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            three.shape = (10, 3, 2)
         assert_equal(three.shape, (10, 3, 2))
-        three.shape = (2, 5, 6)
+        with warnings.catch_warnings():  # gh-28901
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            three.shape = (2, 5, 6)
         assert_equal(one.strides, (one.itemsize,))
         num = two.itemsize
         assert_equal(two.strides, (5 * num, num))

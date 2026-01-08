@@ -1371,8 +1371,7 @@ class TestMaskedArrayArithmetic:
     def test_minmax_funcs_with_output(self):
         # Tests the min/max functions with explicit outputs
         mask = np.random.rand(12).round()
-        xm = array(np.random.uniform(0, 10, 12), mask=mask)
-        xm.shape = (3, 4)
+        xm = array(np.random.uniform(0, 10, 12), mask=mask).reshape((3, 4))
         for funcname in ('min', 'max'):
             # Initialize
             npfunc = getattr(np, funcname)
@@ -1394,7 +1393,7 @@ class TestMaskedArrayArithmetic:
     def test_minmax_methods(self):
         # Additional tests on max/min
         xm = self._create_data()[5]
-        xm.shape = (xm.size,)
+        xm = xm.reshape((xm.size,))
         assert_equal(xm.max(), 10)
         assert_(xm[0].max() is masked)
         assert_(xm[0].max(0) is masked)
@@ -1506,7 +1505,10 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.prod(x, 0), product(x, 0))
         assert_equal(np.prod(filled(xm, 1), axis=0), product(xm, axis=0))
         s = (3, 4)
-        x.shape = y.shape = xm.shape = ym.shape = s
+        x = x.reshape(s)
+        y = y.reshape(s)
+        xm = xm.reshape(s)
+        ym = ym.reshape(s)
         if len(s) > 1:
             assert_equal(np.concatenate((x, y), 1), concatenate((xm, ym), 1))
             assert_equal(np.add.reduce(x, 1), add.reduce(x, 1))
@@ -3633,7 +3635,7 @@ class TestMaskedArrayMethods:
         assert_equal(a.ravel()._mask, [0, 0, 0, 0])
         # Test that the fill_value is preserved
         a.fill_value = -99
-        a.shape = (2, 2)
+        a = a.reshape((2, 2))
         ar = a.ravel()
         assert_equal(ar._mask, [0, 0, 0, 0])
         assert_equal(ar._data, [1, 2, 3, 4])
@@ -3907,7 +3909,7 @@ class TestMaskedArrayMethods:
         assert_(xlist[1] is None)
         assert_(xlist[-2] is None)
         # ... on 2D
-        x.shape = (3, 4)
+        x = x.reshape((3, 4))
         xlist = x.tolist()
         ctrl = [[0, None, 2, 3], [4, 5, 6, 7], [8, 9, None, 11]]
         assert_equal(xlist[0], [0, None, 2, 3])
@@ -5060,8 +5062,7 @@ class TestMaskedArrayFunctions:
     def test_compress(self):
         # Test compress function on ndarray and masked array
         # Address Github #2495.
-        arr = np.arange(8)
-        arr.shape = 4, 2
+        arr = np.arange(8).reshape(4, 2)
         cond = np.array([True, False, True, True])
         control = arr[[0, 2, 3]]
         test = np.ma.compress(cond, arr, axis=0)
@@ -5875,7 +5876,8 @@ def test_fieldless_void():
 def test_mask_shape_assignment_does_not_break_masked():
     a = np.ma.masked
     b = np.ma.array(1, mask=a.mask)
-    b.shape = (1,)
+    with pytest.warns(DeprecationWarning):  # gh-29492
+        b.shape = (1,)
     assert_equal(a.mask.shape, ())
 
 

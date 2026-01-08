@@ -2149,7 +2149,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @property
     def shape(self) -> _ShapeT_co: ...
     @shape.setter
-    @deprecated("In-place shape modification will be deprecated in NumPy 2.5.", category=PendingDeprecationWarning)
+    @deprecated("In-place shape modification has been deprecated in NumPy 2.5.")
     def shape(self, value: _ShapeLike) -> None: ...
 
     #

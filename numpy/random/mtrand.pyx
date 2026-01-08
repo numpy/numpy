@@ -1049,7 +1049,7 @@ cdef class RandomState:
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
-                idx.shape = shape
+                idx = idx.reshape(shape)
 
         if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
@@ -4268,8 +4268,7 @@ cdef class RandomState:
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
-        x.shape = tuple(final_shape)
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, long n, object pvals, size=None):
         """
