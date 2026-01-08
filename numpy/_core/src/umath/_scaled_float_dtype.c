@@ -1027,8 +1027,7 @@ sfloat_init_ufuncs(void) {
     }
 
     PyObject *ufunc = sfloat_get_ufunc("multiply");
-    res = PyUFunc_AddPromoter(
-        (PyUFuncObject *)ufunc, DType, promoter);
+    res = PyUFunc_AddPromoter(ufunc, DType, promoter);
     Py_DECREF(promoter);
     if (res < 0) {
         return -1;
