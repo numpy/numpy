@@ -1483,8 +1483,8 @@ add_dtype_based_promoter(PyUFuncObject *ufunc, PyObject *info, PyObject *DType)
  *     for a matching loop/promoter.
  *
  * @param ufunc The ufunc object to register the promoter with.
- * @param DType_tuple A Python tuple containing DTypes or None matching the
- *        number of inputs and outputs of the ufunc.
+ * @param DType_or_tuple A dtype object, or a Python tuple containing DTypes
+ *         or None matching the number of inputs and outputs of the ufunc.
  * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
  *        a pointer to a `PyArrayMethod_PromoterFunction`.
  */
