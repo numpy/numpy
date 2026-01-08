@@ -2280,7 +2280,7 @@ class TestFillingValues:
 
     def test_fill_value_datetime_structured_datetime(self):
         # gh-29818
-        rec = np.array([(dt.datetime(2025, 4, 1, 12, 0),)], 
+        rec = np.array([(dt.datetime(2025, 4, 1, 12, 0),)],
                        dtype=[('foo', '<M8[ms]')])
         ma = np.ma.masked_array(rec)
         res = np.ma.minimum_fill_value(ma)
@@ -2289,6 +2289,7 @@ class TestFillingValues:
     def test_fill_value_datetime_structured_integer(self):
         # gh-29818
         dtype = np.dtype([('foo', '<M8[D]')])
+
         def fill_func(dt):
             return 42
         res = np.ma.core._recursive_fill_value(dtype, fill_func)
