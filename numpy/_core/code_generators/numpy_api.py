@@ -470,8 +470,6 @@ ufunc_funcs_api = {
     'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
     # End 2.0 API
     'PyUFunc_AddLoopsFromSpecs':                     (47, MinVersion("2.4")),
-    # End 2.4 API
-    'PyUFunc_AddDTypeBasedPromoter':                 (48, MinVersion("2.5")),
 }
 
 # List of all the dicts which define the C API

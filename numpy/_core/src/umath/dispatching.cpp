@@ -1445,68 +1445,9 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
     Py_RETURN_NONE;
 }
 
-/*UFUNC_API
- *     Register a new promoter for a ufunc.  A promoter is a function stored
- *     in a PyCapsule (see in-line comments).  It is passed the operation and
- *     requested DType signatures and can mutate it to attempt a new search
- *     for a matching loop/promoter.
- *
- * @param ufunc The ufunc object to register the promoter with.
- * @param DType_tuple A Python tuple containing DTypes or None matching the
- *        number of inputs and outputs of the ufunc.
- * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
- *        a pointer to a `PyArrayMethod_PromoterFunction`.
- */
 NPY_NO_EXPORT int
-PyUFunc_AddPromoter(
-        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
+add_dtype_based_promoter(PyUFuncObject *ufunc, PyObject *info, PyObject *DType)
 {
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
-        PyErr_SetString(PyExc_TypeError,
-                "ufunc object passed is not a ufunc!");
-        return -1;
-    }
-    if (!PyCapsule_CheckExact(promoter)) {
-        PyErr_SetString(PyExc_TypeError,
-                "promoter must (currently) be a PyCapsule.");
-        return -1;
-    }
-    if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
-        return -1;
-    }
-    PyObject *info = PyTuple_Pack(2, DType_tuple, promoter);
-    if (info == NULL) {
-        return -1;
-    }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
-}
-
-/*UFUNC_API
- *      Add a dtype-based promoter to the ufunc, which always matches if the given
- *      `dtype` is present in the operands. This promoter is only used if none of
- *      the more specific promoters/loops match.
- *
- * @param ufunc The universal function to add the loop to.
- * @param dtype The DType that this promoter should match on.
- * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
- *        a pointer to a `PyArrayMethod_PromoterFunction`.
- */
-NPY_NO_EXPORT int
-PyUFunc_AddDTypeBasedPromoter(
-    PyUFuncObject *ufunc, PyArray_DTypeMeta *dtype, PyObject *promoter)
-{
-    if (!PyCapsule_IsValid(promoter, "numpy._ufunc_promoter")) {
-        PyErr_SetString(PyExc_TypeError,
-                "Second argument to info must be a promoter");
-        return -1;
-    }
-
-    PyObject *DType = (PyObject *)dtype;
-    PyObject *info = PyTuple_Pack(2, DType, promoter);
-    if (info == NULL) {
-        return -1;
-    }
-
     if (ufunc->_dtype_promoters == NULL) {
         ufunc->_dtype_promoters = PyList_New(0);
         if (ufunc->_dtype_promoters == NULL) {
@@ -1533,4 +1474,46 @@ PyUFunc_AddDTypeBasedPromoter(
         return -1;
     }
     return 0;
+}
+
+/*UFUNC_API
+ *     Register a new promoter for a ufunc.  A promoter is a function stored
+ *     in a PyCapsule (see in-line comments).  It is passed the operation and
+ *     requested DType signatures and can mutate it to attempt a new search
+ *     for a matching loop/promoter.
+ *
+ * @param ufunc The ufunc object to register the promoter with.
+ * @param DType_tuple A Python tuple containing DTypes or None matching the
+ *        number of inputs and outputs of the ufunc.
+ * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
+ *        a pointer to a `PyArrayMethod_PromoterFunction`.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddPromoter(
+        PyObject *ufunc, PyObject *DType_or_tuple, PyObject *promoter)
+{
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc object passed is not a ufunc!");
+        return -1;
+    }
+    if (!PyCapsule_CheckExact(promoter)) {
+        PyErr_SetString(PyExc_TypeError,
+                "promoter must (currently) be a PyCapsule.");
+        return -1;
+    }
+    if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, DType_or_tuple, promoter);
+    if (info == NULL) {
+        return -1;
+    }
+
+    if (PyObject_TypeCheck(DType_or_tuple, &PyArrayDTypeMeta_Type)) {
+        return add_dtype_based_promoter(
+            (PyUFuncObject *)ufunc, info, DType_or_tuple);
+    }
+
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }

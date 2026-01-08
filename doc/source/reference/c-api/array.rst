@@ -1931,15 +1931,6 @@ with the rest of the ArrayMethod API.
    passed the operation and requested DType signatures and can mutate it to
    attempt a new search for a matching loop/promoter.
 
-.. c:function:: int PyUFunc_AddDTypeBasedPromoter( \
-                        PyUFuncObject *ufunc, PyArray_DTypeMeta *dtype, PyObject *promoter)
-
-    .. versionadded:: 2.5
-
-    Add a dtype-based promoter to the ufunc, which always matches if the given
-    `dtype` is present in the operands. This promoter is only used if none of
-    the more specific promoters/loops match.
-
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
                 PyArray_DTypeMeta *const op_dtypes[], \
                 PyArray_DTypeMeta *const signature[], \

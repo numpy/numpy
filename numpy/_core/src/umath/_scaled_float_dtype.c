@@ -1017,6 +1017,8 @@ sfloat_init_ufuncs(void) {
      * Add a dtype-based promoter for multiply, matching whenever one
      * of the operands is a scaled float.
      */
+    PyObject *DType = (PyObject *)&PyArray_SFloatDType;
+    
     int res = -1;
     PyObject *promoter = PyCapsule_New(
             &promote_to_sfloat, "numpy._ufunc_promoter", NULL);
@@ -1025,8 +1027,8 @@ sfloat_init_ufuncs(void) {
     }
 
     PyObject *ufunc = sfloat_get_ufunc("multiply");
-    res = PyUFunc_AddDTypeBasedPromoter(
-        (PyUFuncObject *)ufunc, &PyArray_SFloatDType, promoter);
+    res = PyUFunc_AddPromoter(
+        (PyUFuncObject *)ufunc, DType, promoter);
     Py_DECREF(promoter);
     if (res < 0) {
         return -1;
