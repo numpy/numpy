@@ -1759,9 +1759,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     dtype : dtype, optional
         Data type of the resulting array.
         If a structured dtype, the output array will be 1D and structured where
-        each field corresponds to one column. If None, the output array will be
-        structured, and the dtype of each field will be determined by the
-        contents of each column, individually.
+        each field corresponds to one column.
+        If None, the dtype of each column will be inferred automatically, and
+        the output array will be structured only if either the dtypes are not
+        all the same or if `names` is not None.
     comments : str, optional
         The character used to indicate the start of a comment.
         All the characters occurring on a line after a comment are discarded.
