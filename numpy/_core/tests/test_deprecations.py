@@ -9,7 +9,6 @@ import warnings
 import pytest
 
 import numpy as np
-import numpy._core._struct_ufunc_tests as struct_ufunc
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
 from numpy.testing import assert_raises
 
