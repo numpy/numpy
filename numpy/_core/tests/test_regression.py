@@ -1462,22 +1462,6 @@ class TestRegression:
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 12),
-        reason="Python 3.12 has immortal refcounts, this test no longer works."
-    )
-    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-    def test_structured_arrays_with_objects2(self):
-        # Ticket #1299 second test
-        stra = 'aaaa'
-        strb = 'bbbb'
-        numb = sys.getrefcount(strb)
-        numa = sys.getrefcount(stra)
-        x = np.array([[(0, stra), (1, strb)]], 'i8,O')
-        x[x.nonzero()] = x.ravel()[:1]
-        assert_(sys.getrefcount(strb) == numb)
-        assert_(sys.getrefcount(stra) == numa + 2)
-
     def test_duplicate_title_and_name(self):
         # Ticket #1254
         dtspec = [(('a', 'a'), 'i'), ('b', 'i')]

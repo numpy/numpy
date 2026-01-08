@@ -552,16 +552,6 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="see gh-23988")
-@pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
-def test_python2_python3_interoperability():
-    fname = 'win64python2.npy'
-    path = os.path.join(os.path.dirname(__file__), 'data', fname)
-    with pytest.warns(UserWarning, match="Reading.*this warning\\."):
-        data = np.load(path)
-    assert_array_equal(data, np.ones(2))
-
-
 @pytest.mark.filterwarnings(
     "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
