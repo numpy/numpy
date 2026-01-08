@@ -44,7 +44,7 @@
 #include "templ_common.h"
 #include <stdatomic.h>
 
-// It is defined here to avoid flexible array member warning in C++.
+// It is defined here instead of header to avoid flexible array member warning in C++.
 struct buckets {
     struct buckets *prev; /* linked list of old buckets */
     npy_intp size;        /* current size */
