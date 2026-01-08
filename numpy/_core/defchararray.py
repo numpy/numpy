@@ -409,6 +409,10 @@ class chararray(ndarray):
 
     Provides a convenient view on arrays of string and unicode values.
 
+    .. deprecated:: 2.5
+       ``chararray`` is deprecated. Use an ``ndarray`` with a string or
+       bytes dtype instead.
+
     .. note::
        The `chararray` class exists for backwards compatibility with
        Numarray, it is not recommended for new development. Starting from numpy
