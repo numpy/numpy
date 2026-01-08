@@ -266,21 +266,11 @@ class TestMathAlias(_DeprecationTestCase):
 
 
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
-
-    def _check_for_warning(self, func):
-        with pytest.warns(DeprecationWarning,
-                          match="alias 'a' was deprecated in NumPy 2.0") as w:
-            func()
-        assert len(w) == 1
-
-    def test_a_dtype_alias(self):
-        for dtype in ["a", "a10"]:
-            f = lambda: np.dtype(dtype)
-            self._check_for_warning(f)
-            self.assert_deprecated(f)
-            f = lambda: np.array(["hello", "world"]).astype("a10")
-            self._check_for_warning(f)
-            self.assert_deprecated(f)
+    @pytest.mark.parametrize("dtype_code", ["a", "a10"])
+    def test_a_dtype_alias(self, dtype_code: str):
+        # Deprecated in 2.0, removed in 2.5, 2025-12
+        with pytest.raises(TypeError):
+            np.dtype(dtype_code)
 
 
 class TestDeprecatedArrayWrap(_DeprecationTestCase):

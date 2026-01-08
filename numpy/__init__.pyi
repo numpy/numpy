@@ -823,7 +823,6 @@ type _DTypeChar = L[
     "G",  # clongdouble
     "O",  # object
     "S",  # bytes_ (S0)
-    "a",  # bytes_ (deprecated)
     "U",  # str_
     "V",  # void
     "M",  # datetime64
