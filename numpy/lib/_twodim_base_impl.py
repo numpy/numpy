@@ -240,11 +240,15 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     # a problem with inputs with type (for example) np.uint64.
     M = operator.index(M)
     k = operator.index(k)
+    # Compute diagonal indices explicitly to avoid flat iterator memory leak
     if k >= 0:
-        i = k
+        diag_len = min(N, M - k)
+        diag_indices = arange(k, k + diag_len * (M + 1), M + 1, dtype=intp)
     else:
-        i = (-k) * M
-    m[:M - k].flat[i::M + 1] = 1
+        diag_len = min(N + k, M)
+        start_idx = (-k) * M
+        diag_indices = arange(start_idx, start_idx + diag_len * (M + 1), M + 1, dtype=intp)
+    m.flat[diag_indices] = 1
     return m
 
 
