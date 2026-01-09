@@ -519,7 +519,7 @@ PyArray_AssignFromCache_Recursive(
     else {
         assert(depth != ndim);
         npy_intp orig_length = PyArray_DIMS(self)[0];
-        int err = 0;
+        int err = 1;
         NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(orig_seq);
         for (npy_intp i = 0; i < orig_length; i++) {
             // this macro takes *the argument* of PySequence_Fast, which is orig_seq;
@@ -531,7 +531,6 @@ PyArray_AssignFromCache_Recursive(
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Inconsistent object during array creation? "
                                 "Content of sequences changed (length inconsistent).");
-                err = 1;
                 goto finish_critical_section;
             }
             else {
@@ -550,7 +549,6 @@ PyArray_AssignFromCache_Recursive(
                 char *item;
                 item = (PyArray_BYTES(self) + i * PyArray_STRIDES(self)[0]);
                 if (PyArray_Pack(PyArray_DESCR(self), item, item_pyvalue) < 0) {
-                    err = 1;
                     goto finish_critical_section;
                 }
                 /* If this was an array(-like) we still need to unlike int: */
@@ -562,24 +560,22 @@ PyArray_AssignFromCache_Recursive(
                 PyArrayObject *view;
                 view = (PyArrayObject *)array_item_asarray(self, i);
                 if (view == NULL) {
-                    err = 1;
                     goto finish_critical_section;
                 }
                 if (PyArray_AssignFromCache_Recursive(view, ndim, cache) < 0) {
                     Py_DECREF(view);
-                    err = 1;
                     goto finish_critical_section;
                 }
                 Py_DECREF(view);
             }
         }
+    err = 0;
       finish_critical_section:;
 
         NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
         if (err) {
             goto finish;
         }
-
 
     }
     ret = 0;
