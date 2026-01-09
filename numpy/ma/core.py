@@ -236,7 +236,6 @@ def _recursive_fill_value(dtype, f):
         # We wrap into `array` here, which ensures we use NumPy cast rules
         # for integer casts, this allows the use of 99999 as a fill value
         # for int8.
-        # TODO: This is probably a mess, but should best preserve behavior?
         vals = []
         for name in dtype.names:
             field_dtype = dtype[name]
