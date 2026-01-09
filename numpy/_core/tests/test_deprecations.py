@@ -137,14 +137,6 @@ class TestTestDeprecated:
         test_case_instance.assert_deprecated(foo)
 
 
-class TestBincount(_DeprecationTestCase):
-    # 2024-07-29, 2.1.0
-    @pytest.mark.parametrize('badlist', [[0.5, 1.2, 1.5],
-                                         ['0', '1', '1']])
-    def test_bincount_bad_list(self, badlist):
-        self.assert_deprecated(lambda: np.bincount(badlist))
-
-
 class TestCtypesGetter(_DeprecationTestCase):
     ctypes = np.array([1]).ctypes
 
