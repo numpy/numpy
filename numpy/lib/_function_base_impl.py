@@ -4227,6 +4227,7 @@ def percentile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
+    weak_q = type(q) in (int, float)  # use weak promotion for final result type
     q = np.true_divide(q, 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
@@ -4243,7 +4244,7 @@ def percentile(a,
             raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -4475,6 +4476,7 @@ def quantile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
+    weak_q = type(q) in (int, float)  # use weak promotion for final result type
     q = np.asanyarray(q)
 
     if not _quantile_is_valid(q):
@@ -4492,7 +4494,7 @@ def quantile(a,
             raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
 def _quantile_unchecked(a,
@@ -4502,7 +4504,8 @@ def _quantile_unchecked(a,
                         overwrite_input=False,
                         method="linear",
                         keepdims=False,
-                        weights=None):
+                        weights=None,
+                        weak_q=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
     return _ureduce(a,
                     func=_quantile_ureduce_func,
@@ -4512,7 +4515,8 @@ def _quantile_unchecked(a,
                     axis=axis,
                     out=out,
                     overwrite_input=overwrite_input,
-                    method=method)
+                    method=method,
+                    weak_q=weak_q)
 
 
 def _quantile_is_valid(q):
@@ -4551,7 +4555,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
+def _get_gamma(virtual_indexes, previous_indexes, method):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4572,7 +4576,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma, dtype=dtype)
+    return np.asanyarray(gamma)
 
 
 def _lerp(a, b, t, out=None):
@@ -4640,6 +4644,7 @@ def _quantile_ureduce_func(
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
     method: str = "linear",
+    weak_q: bool = False,
 ) -> np.ndarray:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
@@ -4666,7 +4671,8 @@ def _quantile_ureduce_func(
                        axis=axis,
                        method=method,
                        out=out,
-                       weights=wgt)
+                       weights=wgt,
+                       weak_q=weak_q)
     return result
 
 
@@ -4712,6 +4718,7 @@ def _quantile(
     method: str = "linear",
     out: np.ndarray | None = None,
     weights: "np.typing.ArrayLike | None" = None,
+    weak_q: bool = False,
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
@@ -4790,18 +4797,13 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            if arr.dtype.kind in "iu":
-                gtype = None
-            elif arr.dtype.kind == "f":
-                # make sure the return value matches the input array type
-                gtype = arr.dtype
-            else:
-                gtype = virtual_indexes.dtype
-
             gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props, gtype)
-            result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
-            gamma = gamma.reshape(result_shape)
+                               method_props)
+            if weak_q:
+                gamma = float(gamma)
+            else:
+                result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
+                gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
                         next,
                         gamma,
