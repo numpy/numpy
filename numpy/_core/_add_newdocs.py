@@ -4954,32 +4954,6 @@ add_newdoc('numpy._core.multiarray', 'add_docstring',
     raise a TypeError
     """)
 
-add_newdoc('numpy._core.umath', '_add_newdoc_ufunc',
-    """
-    add_ufunc_docstring(ufunc, new_docstring)
-
-    Replace the docstring for a ufunc with new_docstring.
-    This method will only work if the current docstring for
-    the ufunc is NULL. (At the C level, i.e. when ufunc->doc is NULL.)
-
-    Parameters
-    ----------
-    ufunc : numpy.ufunc
-        A ufunc whose current doc is NULL.
-    new_docstring : string
-        The new docstring for the ufunc.
-
-    Notes
-    -----
-    This method allocates memory for new_docstring on
-    the heap. Technically this creates a memory leak, since this
-    memory will not be reclaimed until the end of the program
-    even if the ufunc itself is removed. However this will only
-    be a problem if the user is repeatedly creating ufuncs with
-    no documentation, adding documentation via add_newdoc_ufunc,
-    and then throwing away the ufunc.
-    """)
-
 add_newdoc('numpy._core.multiarray', 'get_handler_name',
     """
     get_handler_name(a: ndarray) -> str | None

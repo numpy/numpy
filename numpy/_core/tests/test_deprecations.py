@@ -9,7 +9,6 @@ import warnings
 import pytest
 
 import numpy as np
-import numpy._core._struct_ufunc_tests as struct_ufunc
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
 from numpy.testing import assert_raises
 
@@ -256,26 +255,6 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
     def test_parenthesized_repeat_count(self, string):
         self.assert_deprecated(np.dtype, args=(string,))
-
-
-class TestAddNewdocUFunc(_DeprecationTestCase):
-    # Deprecated in Numpy 2.2, 2024-11
-    @pytest.mark.thread_unsafe(
-        reason="modifies and checks docstring which is global state"
-    )
-    def test_deprecated(self):
-        doc = struct_ufunc.add_triplet.__doc__
-        # gh-26718
-        # This test mutates the C-level docstring pointer for add_triplet,
-        # which is permanent once set. Skip when re-running tests.
-        if doc is not None and "new docs" in doc:
-            pytest.skip("Cannot retest deprecation, otherwise ValueError: "
-                "Cannot change docstring of ufunc with non-NULL docstring")
-        self.assert_deprecated(
-            lambda: np._core.umath._add_newdoc_ufunc(
-                struct_ufunc.add_triplet, "new docs"
-            )
-        )
 
 
 class TestDTypeAlignBool(_VisibleDeprecationTestCase):

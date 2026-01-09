@@ -4942,16 +4942,6 @@ class TestAddDocstring:
             ncu.add_docstring(func, "different docstring")
 
 
-class TestAdd_newdoc_ufunc:
-    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
-    def test_ufunc_arg(self):
-        assert_raises(TypeError, ncu._add_newdoc_ufunc, 2, "blah")
-        assert_raises(ValueError, ncu._add_newdoc_ufunc, np.add, "blah")
-
-    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
-    def test_string_arg(self):
-        assert_raises(TypeError, ncu._add_newdoc_ufunc, np.add, 3)
-
 class TestHypotErrorMessages:
     def test_hypot_error_message_single_arg(self):
         with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 1 was given"):
