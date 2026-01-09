@@ -77,3 +77,11 @@ def test_zero_padding():
         np.not_equal,
         SeedSequence(42, spawn_key=(0,)).generate_state(4),
         expected42)
+
+
+def test_spawn_negative_argument():
+    import pytest
+    # Regression test for gh-30577
+    ss = SeedSequence(12345)
+    with pytest.raises(ValueError, match="n_children must be non-negative"):
+        ss.spawn(-1)
