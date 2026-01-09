@@ -293,7 +293,9 @@ cdef class Generator:
         >>> more_child_rngs = rng.spawn(20)
         >>> nested_spawn = child_rng1.spawn(20)
 
-        """
+        """                                                                                                                                                                                                                                                                                                                                                                                                                                        
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
 
     def random(self, size=None, dtype=np.float64, out=None):
