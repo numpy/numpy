@@ -1159,6 +1159,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return -1;
     }
 
+    int ret = -1;
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
     npy_intp size = PySequence_Fast_GET_SIZE(seq);
     PyObject **objects = PySequence_Fast_ITEMS(seq);
 
@@ -1166,17 +1170,19 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                      out_shape, 1, &size, NPY_TRUE, flags) < 0) {
         /* But do update, if there this is a ragged case */
         *flags |= FOUND_RAGGED_ARRAY;
-        return max_dims;
+        ret = max_dims;
+        goto finish;
     }
     if (size == 0) {
         /* If the sequence is empty, this must be the last dimension */
         *flags |= MAX_DIMS_WAS_REACHED;
-        return curr_dims + 1;
+        ret = curr_dims + 1;
+        goto finish;
     }
 
     /* Allow keyboard interrupts. See gh issue 18117. */
     if (PyErr_CheckSignals() < 0) {
-        return -1;
+        goto finish;
     }
 
     /*
@@ -1196,10 +1202,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 flags, copy);
 
         if (max_dims < 0) {
-            return -1;
+            goto finish;
         }
     }
-    return max_dims;
+    ret = max_dims;
+
+  finish:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+
+    return ret;
 }
 
 
