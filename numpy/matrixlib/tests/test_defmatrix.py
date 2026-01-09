@@ -288,10 +288,10 @@ class TestMatrixReturn:
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
-            'partition', 'argpartition', 'newbyteorder', 'to_device',
+            'partition', 'argpartition', 'to_device',
             'take', 'tofile', 'tolist', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
-            'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',
+            'prod', 'std', 'ctypes', 'bitwise_count',
             ]
         for attrib in dir(a):
             if attrib.startswith('_') or attrib in excluded_methods:
@@ -373,15 +373,13 @@ class TestNewScalarIndexing:
         assert_array_equal(x[:, 1], [[0], [1]])
 
     def test_boolean_indexing(self):
-        A = np.arange(6)
-        A.shape = (3, 2)
+        A = np.arange(6).reshape((3, 2))
         x = asmatrix(A)
         assert_array_equal(x[:, np.array([True, False])], x[:, 0])
         assert_array_equal(x[np.array([True, False, False]), :], x[0, :])
 
     def test_list_indexing(self):
-        A = np.arange(6)
-        A.shape = (3, 2)
+        A = np.arange(6).reshape((3, 2))
         x = asmatrix(A)
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
         assert_array_equal(x[[2, 1, 0], :], x[::-1, :])

@@ -32,7 +32,7 @@
 template<PyUFuncGenericFunction cpp_ufunc>
 static void
 wrap_legacy_cpp_ufunc(char **args, npy_intp const *dimensions,
-                      ptrdiff_t const *steps, void *func)
+                      npy_intp const *steps, void *func)
 {
     NPY_ALLOW_C_API_DEF
     try {
@@ -86,14 +86,14 @@ copy_output(T buff[], char *out, npy_intp step_out, size_t n)
  */
 template <typename T>
 static void
-fft_loop(char **args, npy_intp const *dimensions, ptrdiff_t const *steps,
+fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps,
          void *func)
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
     size_t n_outer = (size_t)dimensions[0];
-    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    npy_intp si = steps[0], sf = steps[1], so = steps[2];
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
-    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    npy_intp step_in = steps[3], step_out = steps[4];
     bool direction = *((bool *)func); /* pocketfft::FORWARD or BACKWARD */
 
     assert (nout > 0);
@@ -144,9 +144,9 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
     size_t n_outer = (size_t)dimensions[0];
-    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    npy_intp si = steps[0], sf = steps[1], so = steps[2];
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
-    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    npy_intp step_in = steps[3], step_out = steps[4];
 
     assert (nout > 0 && nout == npts / 2 + 1);
 
@@ -233,14 +233,13 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
     ptrdiff_t step_in = steps[3], step_out = steps[4];
 
-    size_t npts_in = nout / 2 + 1;
-
     assert(nout > 0);
 
 #ifndef POCKETFFT_NO_VECTORS
     /*
      * Call pocketfft directly if vectorization is possible.
      */
+    size_t npts_in = nout / 2 + 1;
     constexpr auto vlen = pocketfft::detail::VLEN<T>::val;
     if (vlen > 1 && n_outer >= vlen && nin >= npts_in && sf == 0) {
         std::vector<size_t> axes = { 1 };

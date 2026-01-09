@@ -40,7 +40,6 @@ Python API
    :maxdepth: 1
 
    typing
-   distutils
 
 C API
 =====
@@ -61,8 +60,8 @@ Other topics
    thread_safety
    global_state
    security
+   testing
    distutils_status_migration
-   distutils_guide
    swig
 
 

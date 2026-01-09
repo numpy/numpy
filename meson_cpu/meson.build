@@ -88,13 +88,16 @@ CPU_FEATURES += S390X_FEATURES
 CPU_FEATURES += RV64_FEATURES
 CPU_FEATURES += LOONGARCH64_FEATURES
 
+CPU_FEATURES_REDIRECT = {}
+CPU_FEATURES_REDIRECT += X86_REDIRECT
+
 # Parse the requested baseline (CPU_CONF_BASELINE) and dispatch features
 # (CPU_CONF_DISPATCH).
 cpu_family = host_machine.cpu_family()
 # Used by build option 'min'
 min_features = {
-  'x86': [SSE2],
-  'x86_64': [SSE3],
+  'x86': [X86_V2],
+  'x86_64': [X86_V2],
   'ppc64': [],
   's390x': [],
   'arm': [],
@@ -191,15 +194,31 @@ foreach opt_name, conf : parse_options
       accumulate = min_features
     elif tok == 'MAX'
       accumulate = max_features
-    elif tok in CPU_FEATURES
-      tokobj = CPU_FEATURES[tok]
-      if tokobj not in max_features
-        ignored += tok
-        continue
-      endif
-      accumulate = [tokobj]
     else
-      error('Invalid token "'+tok+'" within option --'+opt_name)
+      if tok in CPU_FEATURES_REDIRECT
+        ntok = CPU_FEATURES_REDIRECT[tok]
+        if ntok == ''
+          warning('Ignoring CPU feature "@0@" in --@1@ option - feature is no longer supported.'.format(tok, opt_name))
+        else
+          warning('CPU Feature "@0@" is no longer explicitly supported, redirecting to "@1@".'.format(tok, ntok))
+        endif
+        warning('Please check the latest documentation for build options.')
+        if ntok == '' or not append # redirected features not safe to be execluded
+          continue
+        endif
+        tok = ntok
+      endif
+      if tok not in CPU_FEATURES
+        error('Invalid token "'+tok+'" within option --'+opt_name)
+      endif
+      if tok in CPU_FEATURES
+        tokobj = CPU_FEATURES[tok]
+        if tokobj not in max_features
+          ignored += tok
+          continue
+        endif
+        accumulate = [tokobj]
+      endif
     endif
     if append
       foreach fet : accumulate
@@ -209,8 +228,17 @@ foreach opt_name, conf : parse_options
       endforeach
     else
       filterd = []
+      # filter out the features that are in the accumulate list 
+      # including any successor features
       foreach fet : result
-        if fet not in accumulate
+        escape = false
+        foreach fet2 : accumulate
+          if fet2 in mod_features.implicit_c(fet)
+            escape = true
+            break
+          endif
+        endforeach
+        if not escape
           filterd += fet
         endif
       endforeach

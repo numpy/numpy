@@ -1,4 +1,5 @@
 import fnmatch
+import inspect
 import itertools
 import operator
 import platform
@@ -3156,7 +3157,8 @@ class TestSpecialMethods:
         do_test(lambda a: np.add(0, 0, out=(a,)), lambda a: (0, 0, a))
 
         # Also check the where mask handling:
-        do_test(lambda a: np.add(a, 0, where=False), lambda a: (a, 0))
+        out = np.zeros([1], dtype=float)
+        do_test(lambda a: np.add(a, 0, where=False, out=None), lambda a: (a, 0))
         do_test(lambda a: np.add(0, 0, a, where=False), lambda a: (0, 0, a))
 
     def test_wrap_with_iterable(self):
@@ -3713,7 +3715,7 @@ class TestSpecialMethods:
 
                 kwargs = kwargs.copy()
                 if "out" in kwargs:
-                    kwargs["out"] = self._unwrap(kwargs["out"])
+                    kwargs["out"] = self._unwrap(kwargs["out"])[0]
                     if kwargs["out"] is NotImplemented:
                         return NotImplemented
 
@@ -3744,21 +3746,28 @@ class TestSpecialMethods:
 
         array = np.array([1, 2, 3])
         where = np.array([True, False, True])
-        expected = ufunc(array, where=where)
+        out = np.zeros(3, dtype=array.dtype)
+        expected = ufunc(array, where=where, out=out)
 
         with pytest.raises(TypeError):
-            ufunc(array, where=where.view(OverriddenArrayOld))
+            ufunc(
+                array,
+                where=where.view(OverriddenArrayOld),
+                out=out,
+            )
 
         result_1 = ufunc(
             array,
-            where=where.view(OverriddenArrayNew)
+            where=where.view(OverriddenArrayNew),
+            out=out,
         )
         assert isinstance(result_1, OverriddenArrayNew)
         assert np.all(np.array(result_1) == expected, where=where)
 
         result_2 = ufunc(
             array.view(OverriddenArrayNew),
-            where=where.view(OverriddenArrayNew)
+            where=where.view(OverriddenArrayNew),
+            out=out.view(OverriddenArrayNew),
         )
         assert isinstance(result_2, OverriddenArrayNew)
         assert np.all(np.array(result_2) == expected, where=where)
@@ -4038,12 +4047,15 @@ class TestSpecialMethods:
         res = a.__array_ufunc__(np.add, "__call__", a, a)
         assert_array_equal(res, a + a)
 
+    @pytest.mark.thread_unsafe(reason="modifies global module")
+    @pytest.mark.skipif(IS_PYPY, reason="__signature__ descriptor dance fails")
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"
         expected_dict = (
             {} if IS_PYPY else {"__module__": "numpy", "__qualname__": "add"}
         )
+        expected_dict["__signature__"] = inspect.signature(np.add)
 
         np.add.__doc__ = new_doc
         assert np.add.__doc__ == new_doc
@@ -4470,8 +4482,8 @@ class TestSubclass:
     def test_subclass_op(self):
 
         class simple(np.ndarray):
-            def __new__(subtype, shape):
-                self = np.ndarray.__new__(subtype, shape, dtype=object)
+            def __new__(cls, shape):
+                self = np.ndarray.__new__(cls, shape, dtype=object)
                 self.fill(0)
                 return self
 
@@ -4708,6 +4720,18 @@ def test_reduceat():
     np.setbufsize(ncu.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
 
+def test_negative_value_raises():
+    with pytest.raises(ValueError, match="buffer size must be non-negative"):
+        np.setbufsize(-5)
+
+    old = np.getbufsize()
+    try:
+        prev = np.setbufsize(4096)
+        assert prev == old
+        assert np.getbufsize() == 4096
+    finally:
+        np.setbufsize(old)
+
 def test_reduceat_empty():
     """Reduceat should work with empty arrays"""
     indices = np.array([], 'i4')
@@ -4818,18 +4842,18 @@ def test_outer_bad_subclass():
         def __array_finalize__(self, obj):
             # The outer call reshapes to 3 dims, try to do a bad reshape.
             if self.ndim == 3:
-                self.shape = self.shape + (1,)
+                self._set_shape(self.shape + (1,))
 
     class BadArr2(np.ndarray):
         def __array_finalize__(self, obj):
             if isinstance(obj, BadArr2):
                 # outer inserts 1-sized dims. In that case disturb them.
                 if self.shape[-1] == 1:
-                    self.shape = self.shape[::-1]
+                    self._set_shape(self.shape[::-1])
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)
-        with assert_raises(TypeError) as a:
+        with pytest.raises(TypeError):
             # The first array gets reshaped (not the second one)
             np.add.outer(arr, [1, 2])
 
@@ -4870,6 +4894,15 @@ def test_bad_legacy_ufunc_silent_errors():
 
     with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
         ncu_tests.always_error.at(arr, [0, 1, 2], arr)
+
+
+def test_bad_legacy_unary_ufunc_silent_errors():
+    # Unary has a special scalar path right now, so test it explicitly.
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_unary(np.arange(3).astype(np.float64))
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_unary(1.5)
 
 
 @pytest.mark.parametrize('x1', [np.arange(3.0), [0.0, 1.0, 2.0]])

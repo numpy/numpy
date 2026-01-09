@@ -200,9 +200,7 @@ For examples, see the various functions.
 
 """
 
-# TODO: `numpy.fft.helper`` was deprecated in NumPy 2.0. It should
-# be deleted once downstream libraries move to `numpy.fft`.
-from . import _helper, _pocketfft, helper
+from . import _helper, _pocketfft
 from ._helper import *
 from ._pocketfft import *
 

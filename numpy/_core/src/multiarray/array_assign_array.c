@@ -29,6 +29,8 @@
 
 #include "umathmodule.h"
 
+#define NPY_ALIGNED_CASTING_FLAG 1
+
 /*
  * Check that array data is both uint-aligned and true-aligned for all array
  * elements, as required by the copy/casting code in lowlevel_strided_loops.c
@@ -79,7 +81,8 @@ copycast_isaligned(int ndim, npy_intp const *shape,
 NPY_NO_EXPORT int
 raw_array_assign_array(int ndim, npy_intp const *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides)
+        PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides,
+        int flags)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS];
@@ -87,13 +90,10 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     npy_intp src_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    int aligned;
+    int aligned = (flags & NPY_ALIGNED_CASTING_FLAG) != 0;
+    int same_value_cast = (flags & NPY_SAME_VALUE_CASTING_FLAG) != 0;
 
     NPY_BEGIN_THREADS_DEF;
-
-    aligned =
-        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
-        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
@@ -120,21 +120,25 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;
-    NPY_ARRAYMETHOD_FLAGS flags;
+    NPY_ARRAYMETHOD_FLAGS method_flags;
     if (PyArray_GetDTypeTransferFunction(aligned,
                         src_strides_it[0], dst_strides_it[0],
                         src_dtype, dst_dtype,
                         0,
-                        &cast_info, &flags) != NPY_SUCCEED) {
+                        &cast_info, &method_flags) != NPY_SUCCEED) {
         return -1;
     }
 
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+    if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char*)&src_data);
     }
 
+    if (same_value_cast) {
+        cast_info.context.flags |= NPY_SAME_VALUE_CONTEXT_FLAG;
+    }
+
     /* Ensure number of elements exceeds threshold for threading */
-    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+    if (!(method_flags & NPY_METH_REQUIRES_PYAPI)) {
         npy_intp nitems = 1, i;
         for (i = 0; i < ndim; i++) {
             nitems *= shape_it[i];
@@ -144,11 +148,14 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
+    int result = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        if (cast_info.func(&cast_info.context,
-                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
+        result = cast_info.func(&cast_info.context,
+                                args, &shape_it[0], strides,
+                                cast_info.auxdata);
+        if (result < 0) {
             goto fail;
         }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
@@ -158,7 +165,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
 
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+    if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         int fpes = npy_get_floatstatus_barrier((char*)&src_data);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
@@ -183,7 +190,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp const *wheremask_strides)
+        npy_intp const *wheremask_strides, int flags)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS];
@@ -192,13 +199,10 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    int aligned;
+    int aligned = (flags & NPY_ALIGNED_CASTING_FLAG) != 0;
+    int same_value_cast = (flags & NPY_SAME_VALUE_CASTING_FLAG) != 0;
 
     NPY_BEGIN_THREADS_DEF;
-
-    aligned =
-        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
-        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareThreeRawArrayIter(
@@ -229,39 +233,45 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;
-    NPY_ARRAYMETHOD_FLAGS flags;
+    NPY_ARRAYMETHOD_FLAGS method_flags;
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
                         src_strides_it[0],
                         dst_strides_it[0],
                         wheremask_strides_it[0],
                         src_dtype, dst_dtype, wheremask_dtype,
                         0,
-                        &cast_info, &flags) != NPY_SUCCEED) {
+                        &cast_info, &method_flags) != NPY_SUCCEED) {
         return -1;
     }
+    if (same_value_cast) {
+        cast_info.context.flags |= NPY_SAME_VALUE_CONTEXT_FLAG;
+    }
 
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+    if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier(src_data);
     }
-    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
+    if (!(method_flags & NPY_METH_REQUIRES_PYAPI)) {
         npy_intp nitems = 1, i;
         for (i = 0; i < ndim; i++) {
             nitems *= shape_it[i];
         }
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
+
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
+    int result = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         PyArray_MaskedStridedUnaryOp *stransfer;
         stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
 
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        if (stransfer(&cast_info.context,
-                args, &shape_it[0], strides,
-                (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                cast_info.auxdata) < 0) {
+        result = stransfer(&cast_info.context,
+                            args, &shape_it[0], strides,
+                            (npy_bool *)wheremask_data, wheremask_strides_it[0],
+                            cast_info.auxdata);
+        if (result < 0) {
             goto fail;
         }
     } NPY_RAW_ITER_THREE_NEXT(idim, ndim, coord, shape_it,
@@ -272,15 +282,13 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
 
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+    if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         int fpes = npy_get_floatstatus_barrier(src_data);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
         }
     }
-
     return 0;
-
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
@@ -307,7 +315,6 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     NPY_CASTING casting)
 {
     int copied_src = 0;
-
     npy_intp src_strides[NPY_MAXDIMS];
 
     /* Use array_assign_scalar if 'src' NDIM is 0 */
@@ -438,12 +445,21 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         }
     }
 
+    int flags = (NPY_SAME_VALUE_CASTING_FLAG & casting);
+    if (copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(dst),
+                           PyArray_DATA(dst), PyArray_STRIDES(dst)) && 
+        copycast_isaligned(PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(src),
+                           PyArray_DATA(src), src_strides)) {
+        /* NPY_ALIGNED_CASTING_FLAG is internal to this file */
+        flags |= NPY_ALIGNED_CASTING_FLAG;
+    }
+
     if (wheremask == NULL) {
         /* A straightforward value assignment */
         /* Do the assignment with raw array iteration */
         if (raw_array_assign_array(PyArray_NDIM(dst), PyArray_DIMS(dst),
                 PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
-                PyArray_DESCR(src), PyArray_DATA(src), src_strides) < 0) {
+                PyArray_DESCR(src), PyArray_DATA(src), src_strides, flags) < 0){
             goto fail;
         }
     }
@@ -465,7 +481,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                 PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
                 PyArray_DESCR(src), PyArray_DATA(src), src_strides,
                 PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
-                        wheremask_strides) < 0) {
+                        wheremask_strides, flags) < 0) {
             goto fail;
         }
     }

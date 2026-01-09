@@ -6,6 +6,7 @@ import concurrent.futures
 import contextlib
 import gc
 import importlib.metadata
+import importlib.util
 import operator
 import os
 import pathlib
@@ -63,9 +64,7 @@ except importlib.metadata.PackageNotFoundError:
 else:
     IS_INSTALLED = True
     try:
-        if sys.version_info >= (3, 13):
-            IS_EDITABLE = np_dist.origin.dir_info.editable
-        else:
+        if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
             import json  # noqa: E401
             import types
@@ -74,6 +73,8 @@ else:
                 object_hook=lambda data: types.SimpleNamespace(**data),
             )
             IS_EDITABLE = origin.dir_info.editable
+        else:
+            IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
@@ -90,14 +91,7 @@ IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
-BLAS_SUPPORTS_FPE = True
-if platform.system() == 'Darwin' or platform.machine() == 'arm64':
-    try:
-        blas = np.__config__.CONFIG['Build Dependencies']['blas']
-        if blas['name'] == 'accelerate':
-            BLAS_SUPPORTS_FPE = False
-    except KeyError:
-        pass
+BLAS_SUPPORTS_FPE = np._core._multiarray_umath._blas_supports_fpe(None)
 
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
@@ -1061,6 +1055,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
@@ -1448,12 +1444,13 @@ def rundocs(filename=None, raise_on_error=True):
     """
     import doctest
 
-    from numpy.distutils.misc_util import exec_mod_from_location
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
     name = os.path.splitext(os.path.basename(filename))[0]
-    m = exec_mod_from_location(name, filename)
+    spec = importlib.util.spec_from_file_location(name, filename)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
 
     tests = doctest.DocTestFinder().find(m)
     runner = doctest.DocTestRunner(verbose=False)
@@ -1692,7 +1689,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         Array desired.
     rtol : float, optional
         Relative tolerance.
-    atol : float, optional
+    atol : float | np.timedelta64, optional
         Absolute tolerance.
     equal_nan : bool, optional.
         If True, NaNs will compare equal.
@@ -1771,7 +1768,11 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
                                        equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
+    if isinstance(atol, np.timedelta64):
+        atol_str = str(atol)
+    else:
+        atol_str = f"{atol:g}"
+    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol_str}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
                          verbose=verbose, header=header, equal_nan=equal_nan,
                          strict=strict)
@@ -2835,3 +2836,30 @@ def run_threaded(func, max_workers=8, pass_count=False,
                     barrier.abort()
             for f in futures:
                 f.result()
+
+
+def requires_deep_recursion(func):
+    """Decorator to skip test if deep recursion is not supported."""
+    import pytest
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if IS_PYSTON:
+            pytest.skip("Pyston disables recursion checking")
+        if IS_WASM:
+            pytest.skip("WASM has limited stack size")
+        cflags = sysconfig.get_config_var('CFLAGS') or ''
+        config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
+        address_sanitizer = (
+            '-fsanitize=address' in cflags or
+            '--with-address-sanitizer' in config_args
+        )
+        thread_sanitizer = (
+            '-fsanitize=thread' in cflags or
+            '--with-thread-sanitizer' in config_args
+        )
+        if address_sanitizer or thread_sanitizer:
+            pytest.skip("AddressSanitizer and ThreadSanitizer do not support "
+                        "deep recursion")
+        return func(*args, **kwargs)
+    return wrapper

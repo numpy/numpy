@@ -10,6 +10,7 @@ import numpy.exceptions as ex
 from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises
 
 
+@pytest.mark.thread_unsafe(reason="reloads global module")
 def test_numpy_reloading():
     # gh-7844. Also check that relevant globals retain their identity.
     import numpy as np

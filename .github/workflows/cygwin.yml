@@ -4,6 +4,11 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -18,13 +23,13 @@ jobs:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
       - name: Install Cygwin
-        uses: egor-tensin/setup-cygwin@d2c752bab416d4b0662591bd366fc2686297c82d # v4
+        uses: egor-tensin/setup-cygwin@fca9069f92361187d4abfaa5d8a7490e435d8349 # v4
         with:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
@@ -33,7 +38,7 @@ jobs:
             python-setuptools-wheel liblapack-devel liblapack0 gcc-fortran
             gcc-g++ git dash cmake ninja
       - name: Set Windows PATH
-        uses: egor-tensin/cleanup-path@f04bc953e6823bf491cc0bdcff959c630db1b458 # v4.0.1
+        uses: egor-tensin/cleanup-path@64ef0b5036b30ce7845058a1d7a8d0830db39b94 # v4.0.2
         with:
           dirs: 'C:\tools\cygwin\bin;C:\tools\cygwin\lib\lapack'
       - name: Verify that bash is Cygwin bash
@@ -63,7 +68,7 @@ jobs:
           cd tools
           /usr/bin/python3.9 -m pytest --pyargs numpy -n2 -m "not slow"
       - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: failure()
         with:
           name: numpy-cygwin-wheel

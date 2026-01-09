@@ -552,16 +552,6 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 12), reason="see gh-23988")
-@pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
-def test_python2_python3_interoperability():
-    fname = 'win64python2.npy'
-    path = os.path.join(os.path.dirname(__file__), 'data', fname)
-    with pytest.warns(UserWarning, match="Reading.*this warning\\."):
-        data = np.load(path)
-    assert_array_equal(data, np.ones(2))
-
-
 @pytest.mark.filterwarnings(
     "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
@@ -957,6 +947,7 @@ def test_large_file_support(tmpdir):
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_archive(tmpdir):
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
@@ -1034,8 +1025,6 @@ def test_header_growth_axis():
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
     ]}),
     ])
-@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-        reason="PyPy bug in error formatting")
 def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)

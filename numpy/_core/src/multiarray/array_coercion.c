@@ -479,20 +479,13 @@ npy_cast_raw_scalar_item(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
 {
-    PyArrayObject_fields arr_fields = {
-            .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
-        };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
-
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*
          * We always have store objects directly, casting will lose some
          * type information. Any other dtype discards the type information.
          * TODO: For a Categorical[object] this path may be necessary?
          */
-        arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return NPY_DT_CALL_setitem(descr, value, item);
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
@@ -527,8 +520,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
-        arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return NPY_DT_CALL_setitem(descr, value, item);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
@@ -546,8 +538,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
         memset(data, 0, tmp_descr->elsize);
     }
-    arr_fields.descr = tmp_descr;
-    if (PyDataType_GetArrFuncs(tmp_descr)->setitem(value, data, &arr_fields) < 0) {
+    if (NPY_DT_CALL_setitem(tmp_descr, value, data) < 0) {
         PyObject_Free(data);
         Py_DECREF(tmp_descr);
         return -1;
