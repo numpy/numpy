@@ -1,0 +1,1 @@
+* The ``numpy.lib.math`` alias for the standard library ``math`` module has been removed (deprecated since 1.25).

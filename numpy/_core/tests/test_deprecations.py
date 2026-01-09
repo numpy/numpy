@@ -215,11 +215,6 @@ class TestRemovedGlobals:
             getattr(np, name)
 
 
-class TestMathAlias(_DeprecationTestCase):
-    def test_deprecated_np_lib_math(self):
-        self.assert_deprecated(lambda: np.lib.math)
-
-
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
 
     def _check_for_warning(self, func):
