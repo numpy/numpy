@@ -382,47 +382,23 @@ class TestAsCtypesType:
         })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)
 
-    @pytest.mark.parametrize("numpy_scalar_type, value1, value2", [
-        (np.int8, 10, 100),
-        (np.int16, 10, 100),
-        (np.int32, 10, 100),
-        (np.int64, 10, 100),
-        (np.uint8, 10, 100),
-        (np.uint16, 10, 100),
-        (np.uint32, 10, 100),
-        (np.uint64, 10, 100),
-        (np.float32, 1.5, 2.5),
-        (np.float64, 1.5, 2.5),
-        (np.bool, True, False),
-    ])
-    def test_retrieve_same_scalar_value(
-        self,
-        numpy_scalar_type: np.generic,
-        value1: int | float | bool,
-        value2: int | float | bool,
-    ):
-        # gh-30354
-        a = numpy_scalar_type(value1)
-        b = numpy_scalar_type(value2)
+    def test_cannot_convert_to_ctypes(self):
 
-        s1 = np.ctypeslib.as_ctypes(a)
-        s2 = np.ctypeslib.as_ctypes(b)
+        _type_to_value = {
+            np.str_: "aa",
+            np.bool: True,
+            np.datetime64: "2026-01-01",
+        }
+        for _scalar_type in np.sctypeDict.values():
+            if _scalar_type == np.object_:
+                continue
 
-        assert s1.value == value1
-        assert s2.value == value2
+            if _scalar_type in _type_to_value:
+                numpy_scalar = _scalar_type(_type_to_value[_scalar_type])
+            else:
+                numpy_scalar = _scalar_type(1)
 
-    @pytest.mark.parametrize(
-        "numpy_scalar",
-        [
-            (np.str_("aaa")),
-            (np.datetime64("2026-01-01")),
-            (np.timedelta64(100, "s")),
-            (np.complex64(1 + 2j)),
-            (np.complex128(1 + 2j)),
-        ],
-    )
-    def test_cannot_convert_to_ctypes(self, numpy_scalar: np.generic):
-        with pytest.raises(
-            NotImplementedError, match="Converting dtype.* to a ctypes type"
-        ):
-            np.ctypeslib.as_ctypes(numpy_scalar)
+            with pytest.raises(
+                TypeError, match="readonly arrays unsupported"
+            ):
+                np.ctypeslib.as_ctypes(numpy_scalar)

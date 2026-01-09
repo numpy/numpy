@@ -1791,24 +1791,11 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 static PyObject *
 gentype_dataptr_get(PyObject *self)
 {
-    PyArrayObject *arr;
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-
-    if (arr == NULL) {
-        return NULL;
-    }
-
-    /* NOTE: sclar array is always readonly, but we need writable flags
-     * to use `ctypeslib.as_ctyps` via `__array_interface__`.
-     * So, we set the flag borrowing from the temporary array. 
-     */
-    PyObject* ptr = Py_BuildValue(
-        "NO", PyLong_FromVoidPtr(scalar_value(self, NULL)),
-        (PyArray_FLAGS(arr) & NPY_ARRAY_WRITEABLE) ? Py_False : Py_True
+    return Py_BuildValue(
+        "NO",
+        PyLong_FromVoidPtr(scalar_value(self, NULL)),
+        Py_True
     );
-
-    Py_DECREF(arr);
-    return ptr;
 }
 
 static PyObject *
