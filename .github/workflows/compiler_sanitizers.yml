@@ -69,7 +69,7 @@ jobs:
         pip uninstall -y pytest-xdist
     - name: Build
       run:
-        python -m spin build -- -Db_sanitize=address,undefined -Db_lundef=false
+        python -m spin build -j2 -- -Db_sanitize=address,undefined -Db_lundef=false
     - name: Test
       run: |
         # pass -s to pytest to see ASAN errors and warnings, otherwise pytest captures them
@@ -99,7 +99,7 @@ jobs:
         run: pip install -U spin
 
       - name: Build NumPy with ThreadSanitizer
-        run: python -m spin build -- -Db_sanitize=thread
+        run: python -m spin build -j2 -- -Db_sanitize=thread
 
       - name: Run tests under prebuilt TSAN container
         run: |
