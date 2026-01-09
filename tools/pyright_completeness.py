@@ -2,6 +2,8 @@
 Run PyRight's `--verifytypes` and check that its reported type completeness is above
 a minimum threshold.
 
+Requires `basedpyright` to be installed in the environment.
+
 Example usage:
 
     spin run python tools/pyright_completeness.py --verifytypes numpy --ignoreexternal \
@@ -40,7 +42,9 @@ def run_pyright_with_coverage(
     exclude_like: Sequence[str],
 ) -> int:
     result = subprocess.run(
-        ["pyright", *pyright_args], capture_output=True, text=True
+        ["basedpyright", *pyright_args],
+        capture_output=True,
+        text=True,
     )
 
     try:
