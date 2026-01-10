@@ -810,10 +810,11 @@ sfloat_init_ufuncs(void) {
 
     spec.name = "sfloat_add";
     spec.casting = NPY_SAME_KIND_CASTING;
+    spec.flags = NPY_METH_REQUIRES_CONTIGUOUS;
 
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &add_sfloats_resolve_descriptors;
-    slots[1].slot = NPY_METH_strided_loop;
+    slots[1].slot = NPY_METH_contiguous_loop;
     slots[1].pfunc = &add_sfloats;
     bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
     if (bmeth == NULL) {

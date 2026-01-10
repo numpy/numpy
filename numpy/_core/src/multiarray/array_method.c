@@ -150,6 +150,11 @@ npy_default_get_strided_loop(
     if (aligned) {
         if (meth->contiguous_loop == NULL ||
                 !is_contiguous(strides, descrs, nargs)) {
+            if (meth->strided_loop == NULL &&
+                    (meth->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
+                *out_loop = (PyArrayMethod_StridedLoop *)meth->contiguous_loop;
+                return 0;
+            }
             *out_loop = meth->strided_loop;
             return 0;
         }
@@ -203,6 +208,8 @@ validate_spec(PyArrayMethod_Spec *spec)
     if (spec->flags & ~(NPY_METH_REQUIRES_PYAPI |
                         NPY_METH_NO_FLOATINGPOINT_ERRORS |
                         NPY_METH_SUPPORTS_UNALIGNED |
+                        NPY_METH_IS_REORDERABLE |
+                        _NPY_METH_FORCE_CAST_INPUTS |
                         NPY_METH_REQUIRES_CONTIGUOUS)) {
         PyErr_Format(PyExc_ValueError,
                 "Invalid flags set for ArrayMethod: 0x%x. (method: %s)",
@@ -391,12 +398,14 @@ fill_arraymethod_from_slots(
     }
 
     if (meth->strided_loop == NULL) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide a strided inner loop function. (method: %s)",
-                spec->name);
-        return -1;
+        if (!(meth->flags & NPY_METH_REQUIRES_CONTIGUOUS) ||
+                meth->contiguous_loop == NULL) {
+            PyErr_Format(PyExc_TypeError,
+                    "Must provide a strided inner loop function. (method: %s)",
+                    spec->name);
+            return -1;
+        }
     }
-
     return 0;
 }
 
