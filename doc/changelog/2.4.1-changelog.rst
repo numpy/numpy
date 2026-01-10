@@ -1,0 +1,37 @@
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Alexander Shadchin
+* Bill Tompkins +
+* Charles Harris
+* Joren Hammudoglu
+* Marten van Kerkwijk
+* Nathan Goldbaum
+* Raghuveer Devulapalli
+* Ralf Gommers
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 15 pull requests were merged for this release.
+
+* `#30490 <https://github.com/numpy/numpy/pull/30490>`__: MAINT: Prepare 2.4.x for further development
+* `#30503 <https://github.com/numpy/numpy/pull/30503>`__: DOC: ``numpy.select``\ : fix ``default`` parameter docstring...
+* `#30504 <https://github.com/numpy/numpy/pull/30504>`__: REV: Revert part of #30164 (#30500)
+* `#30506 <https://github.com/numpy/numpy/pull/30506>`__: TYP: ``numpy.select``\ : allow passing array-like ``default``...
+* `#30507 <https://github.com/numpy/numpy/pull/30507>`__: MNT: use if constexpr for compile-time branch selection
+* `#30513 <https://github.com/numpy/numpy/pull/30513>`__: BUG: Fix leak in flat assignment iterator
+* `#30516 <https://github.com/numpy/numpy/pull/30516>`__: BUG: fix heap overflow in fixed-width string multiply (#30511)
+* `#30523 <https://github.com/numpy/numpy/pull/30523>`__: BUG: Ensure summed weights returned by np.average always are...
+* `#30527 <https://github.com/numpy/numpy/pull/30527>`__: TYP: Fix return type of histogram2d
+* `#30594 <https://github.com/numpy/numpy/pull/30594>`__: MAINT: avoid passing ints to random functions that take double...
+* `#30595 <https://github.com/numpy/numpy/pull/30595>`__: BLD: Avoiding conflict with pygit2 for static build
+* `#30596 <https://github.com/numpy/numpy/pull/30596>`__: MAINT: Fix msvccompiler missing error on FreeBSD
+* `#30608 <https://github.com/numpy/numpy/pull/30608>`__: BLD: update vendored Meson to 1.9.2
+* `#30620 <https://github.com/numpy/numpy/pull/30620>`__: ENH: use more fine-grained critical sections in array coercion...
+* `#30623 <https://github.com/numpy/numpy/pull/30623>`__: BUG: Undo result type change of quantile/percentile but keep...
