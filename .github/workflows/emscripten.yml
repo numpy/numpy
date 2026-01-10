@@ -5,6 +5,14 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
 
 env:
   FORCE_COLOR: 3
@@ -16,21 +24,19 @@ concurrency:
 
 jobs:
   build-wasm-emscripten:
-    permissions:
-      contents: read  # to fetch code (actions/checkout)
     name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout NumPy
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
           submodules: recursive
           fetch-tags: true
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6  # v3.1.4
+      - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e  # v3.3.1
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp312-*

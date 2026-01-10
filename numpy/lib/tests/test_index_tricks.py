@@ -199,6 +199,11 @@ class TestRavelUnravelIndex:
         with assert_raises(ValueError):
             np.unravel_index([1], (2, 1, 0))
 
+    def test_regression_size_1_index(self):
+        # actually tests the nditer size one index tracking
+        # regression test for gh-29690
+        np.unravel_index(np.array([[1, 0, 1, 0]], dtype=np.uint32), (4,))
+
 class TestGrid:
     def test_basic(self):
         a = mgrid[-1:1:10j]

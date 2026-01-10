@@ -1,7 +1,6 @@
 import functools
 import math
 import sys
-import warnings
 from itertools import product
 
 import numpy as np
@@ -473,9 +472,9 @@ class RClass(AxisConcatenator):
     Optional character strings placed as the first element of the index
     expression can be used to change the output. The strings 'r' or 'c' result
     in matrix output. If the result is 1-D and 'r' is specified a 1 x N (row)
-    matrix is produced. If the result is 1-D and 'c' is specified, then a N x 1
-    (column) matrix is produced. If the result is 2-D then both provide the
-    same matrix result.
+    matrix is produced. If the result is 1-D and 'c' is specified, then
+    an N x 1 (column) matrix is produced.
+    If the result is 2-D then both provide the same matrix result.
 
     A string integer specifies which axis to stack multiple comma separated
     arrays along. A string of two comma-separated integers allows indication
@@ -694,22 +693,6 @@ class ndindex:
 
     def __iter__(self):
         return self
-
-    def ndincr(self):
-        """
-        Increment the multi-dimensional index by one.
-
-        This method is for backward compatibility only: do not use.
-
-        .. deprecated:: 1.20.0
-            This method has been advised against since numpy 1.8.0, but only
-            started emitting DeprecationWarning as of this version.
-        """
-        # NumPy 1.20.0, 2020-09-08
-        warnings.warn(
-            "`ndindex.ndincr()` is deprecated, use `next(ndindex)` instead",
-            DeprecationWarning, stacklevel=2)
-        next(self)
 
     def __next__(self):
         """
@@ -994,7 +977,7 @@ def diag_indices(n, ndim=2):
 
     And use it to set the diagonal of an array of zeros to 1:
 
-    >>> a = np.zeros((2, 2, 2), dtype=int)
+    >>> a = np.zeros((2, 2, 2), dtype=np.int_)
     >>> a[d3] = 1
     >>> a
     array([[[1, 0],

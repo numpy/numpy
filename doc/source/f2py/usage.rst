@@ -101,10 +101,6 @@ Here ``<fortran files>`` may also contain signature files. Among other options
             and ``;`` on Windows. In ``CMake`` this corresponds to using
             ``$<SEMICOLON>``.
 
-``--help-link [<list of resources names>]``
-  List system resources found by ``numpy_distutils/system_info.py``. For
-  example, try ``f2py --help-link lapack_opt``.
-
 3. Building a module
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -127,7 +123,7 @@ module is constructed by scanning all Fortran source codes for routine
 signatures, before proceeding to build the extension module.
 
 .. warning::
-   From Python 3.12 onwards, ``distutils`` has been removed. Use environment
+   ``distutils`` has been removed. Use environment
    variables or native files to interact with ``meson`` instead. See its `FAQ
    <https://mesonbuild.com/howtox.html>`__ for more information.
 
@@ -135,17 +131,13 @@ Among other options (see below) and options described for previous modes, the fo
 
 .. note::
 
-   .. versionchanged:: 1.26.0
-      There are now two separate build backends which can be used, ``distutils``
-      and ``meson``. Users are **strongly** recommended to switch to ``meson``
-      since it is the default above Python ``3.12``.
+   .. versionchanged:: 2.5.0
+      The ``distutils`` backend has been removed.
 
 Common build flags:
 
 ``--backend <backend_type>``
-  Specify the build backend for the compilation process.  The supported backends
-  are ``meson`` and ``distutils``.  If not specified, defaults to ``distutils``.
-  On Python 3.12 or higher, the default is ``meson``.
+  Legacy option, only ``meson`` is supported.
 ``--f77flags=<string>``
   Specify F77 compiler flags
 ``--f90flags=<string>``
@@ -165,38 +157,12 @@ Common build flags:
   Add directory ``<dir>`` to the list of directories to be searched for
   ``-l``.
 
-The ``meson`` specific flags are:
-
-``--dep <dependency>`` **meson only**
+``--dep <dependency>``
   Specify a meson dependency for the module. This may be passed multiple times
   for multiple dependencies. Dependencies are stored in a list for further
   processing. Example: ``--dep lapack --dep scalapack`` This will identify
   "lapack" and "scalapack" as dependencies and remove them from argv, leaving a
   dependencies list containing ["lapack", "scalapack"].
-
-The older ``distutils`` flags are:
-
-``--help-fcompiler`` **no meson**
-  List the available Fortran compilers.
-``--fcompiler=<Vendor>`` **no meson**
-  Specify a Fortran compiler type by vendor.
-``--f77exec=<path>`` **no meson**
-  Specify the path to a F77 compiler
-``--f90exec=<path>`` **no meson**
-  Specify the path to a F90 compiler
-``--opt=<string>`` **no meson**
-  Specify optimization flags
-``--arch=<string>`` **no meson**
-  Specify architecture specific optimization flags
-``--noopt`` **no meson**
-  Compile without optimization flags
-``--noarch`` **no meson**
-  Compile without arch-dependent optimization flags
-``link-<resource>`` **no meson**
-  Link the extension module with <resource> as defined by
-  ``numpy_distutils/system_info.py``. E.g. to link with optimized LAPACK
-  libraries (vecLib on MacOSX, ATLAS elsewhere), use ``--link-lapack_opt``.
-  See also ``--help-link`` switch.
 
 .. note::
   
@@ -295,35 +261,64 @@ When using ``numpy.f2py`` as a module, the following functions can be invoked.
 .. automodule:: numpy.f2py
     :members:
 
-Automatic extension module generation
-=====================================
+Building with Meson (Examples)
+==============================
 
-If you want to distribute your f2py extension module, then you only
-need to include the .pyf file and the Fortran code. The distutils
-extensions in NumPy allow you to define an extension module entirely
-in terms of this interface file. A valid ``setup.py`` file allowing
-distribution of the ``add.f`` module (as part of the package
-``f2py_examples`` so that it would be loaded as ``f2py_examples.add``) is:
+Using f2py with Meson
+~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
+Meson is a modern build system recommended for building Python extension
+modules, especially starting with Python 3.12 and NumPy 2.x. Meson provides
+a robust and maintainable way to build Fortran extensions with f2py.
 
-    def configuration(parent_package='', top_path=None)
-        from numpy.distutils.misc_util import Configuration
-        config = Configuration('f2py_examples',parent_package, top_path)
-        config.add_extension('add', sources=['add.pyf','add.f'])
-        return config
+To build a Fortran extension using f2py and Meson, you can use Meson's
+``custom_target`` to invoke f2py and generate the extension module. The
+following minimal example demonstrates how to do this:
 
-    if __name__ == '__main__':
-        from numpy.distutils.core import setup
-        setup(**configuration(top_path='').todict())
+This example shows how to build the ``add`` extension from the ``add.f`` and ``add.pyf``
+files described in the :ref:`f2py-examples` (note that you do not always need
+a ``.pyf`` file: in many cases ``f2py`` can figure out the annotations by itself).
 
-Installation of the new package is easy using::
+Project layout:
 
-    pip install .
+  f2py_examples/
+    meson.build
+    add.f
+    add.pyf (optional)
+    __init__.py  (can be empty)
 
-assuming you have the proper permissions to write to the main site-
-packages directory for the version of Python you are using. For the
-resulting package to work, you need to create a file named ``__init__.py``
-(in the same directory as ``add.pyf``). Notice the extension module is
-defined entirely in terms of the ``add.pyf`` and ``add.f`` files. The
-conversion of the .pyf file to a .c file is handled by `numpy.distutils`.
+Example ``meson.build``:
+
+.. code-block:: meson
+
+   project('f2py_examples', 'fortran')
+
+   py = import('python').find_installation()
+
+   # List your Fortran source files
+   sources = files('add.pyf', 'add.f')
+
+   # Build the extension by invoking f2py via a custom target
+   add_mod = custom_target(
+     'add_extension',
+     input: sources,
+     output: ['add' + py.extension_suffix()],
+     command: [
+       py.full_path(), '-m', 'numpy.f2py',
+       '-c', 'add.pyf', 'add.f',
+       '-m', 'add'
+     ],
+     build_by_default: true
+   )
+
+   # Install into site-packages under the f2py_examples package
+   install_subdir('.', install_dir: join_paths(py.site_packages_dir(), 'f2py_examples'),
+                  strip_directory: false,
+                  exclude_files: ['meson.build'])
+
+   # Also install the built extension (place it beside __init__.py)
+   install_data(add_mod, install_dir: join_paths(py.site_packages_dir(), 'f2py_examples'))
+
+For more details and advanced usage, see the Meson build guide in the
+user documentation or refer to SciPy's Meson build files for real-world
+examples: https://github.com/scipy/scipy/tree/main/meson.build

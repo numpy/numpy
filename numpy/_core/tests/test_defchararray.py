@@ -309,12 +309,18 @@ class TestInformation:
     def test_isspace(self):
         A = self.A()
         assert_(issubclass(A.isspace().dtype.type, np.bool))
-        assert_array_equal(A.isspace(), [[False, False], [False, False], [False, False]])
+        assert_array_equal(
+            A.isspace(),
+            [[False, False], [False, False], [False, False]],
+        )
 
     def test_istitle(self):
         A = self.A()
         assert_(issubclass(A.istitle().dtype.type, np.bool))
-        assert_array_equal(A.istitle(), [[False, False], [False, False], [False, False]])
+        assert_array_equal(
+            A.istitle(),
+            [[False, False], [False, False], [False, False]],
+        )
 
     def test_isupper(self):
         A = self.A()
@@ -693,6 +699,11 @@ class TestOperations:
     def B(self):
         return np.array([['efg', '456'],
                          ['051', 'tuv']]).view(np.char.chararray)
+
+    def test_argsort(self):
+        arr = np.array(['abc'] * 4).view(np.char.chararray)
+        actual = arr.argsort(stable=True)
+        assert_array_equal(actual, [0, 1, 2, 3])
 
     def test_add(self):
         A, B = self.A(), self.B()

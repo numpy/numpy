@@ -246,6 +246,7 @@ class TestLinebreaking:
                 assert_(len(line) < lw)
 
 
+@pytest.mark.thread_unsafe(reason="set_default_printstyle() is global state")
 def test_set_default_printoptions():
     p = poly.Polynomial([1, 2, 3])
     c = poly.Chebyshev([1, 2, 3])
@@ -259,6 +260,7 @@ def test_set_default_printoptions():
         poly.set_default_printstyle('invalid_input')
 
 
+@pytest.mark.thread_unsafe(reason="set_default_printstyle() is global state")
 def test_complex_coefficients():
     """Test both numpy and built-in complex."""
     coefs = [0 + 1j, 1 + 1j, -2 + 2j, 3 + 0j]

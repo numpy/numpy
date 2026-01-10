@@ -1870,6 +1870,10 @@ class TestDateTime:
                             '2032-07-18')
         assert_equal(np.datetime_as_string(a, unit='D', casting='unsafe'),
                             '2032-07-18')
+
+        with pytest.raises(ValueError):
+            np.datetime_as_string(a, unit='Y', casting='same_value')
+
         assert_equal(np.datetime_as_string(a, unit='h'), '2032-07-18T12')
         assert_equal(np.datetime_as_string(a, unit='m'),
                             '2032-07-18T12:23')
@@ -2696,6 +2700,65 @@ class TestDateTime:
         td2 = np.timedelta64(td, unit)
         _assert_equal_hash(td, td2)
 
+    @pytest.mark.parametrize(
+        "inputs, divisor, expected",
+        [
+            (
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.int64(2),
+                np.array(
+                    [datetime.timedelta(seconds=10), datetime.timedelta(days=1)],
+                    dtype="object",
+                ),
+            ),
+            (
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.timedelta64(2, "s"),
+                np.array(
+                    [10.0, 24.0 * 60.0 * 60.0],
+                    dtype="object",
+                ),
+            ),
+            (
+                datetime.timedelta(seconds=2),
+                np.array(
+                    [datetime.timedelta(seconds=20), datetime.timedelta(days=2)],
+                    dtype="object",
+                ),
+                np.array(
+                    [1.0 / 10.0, 1.0 / (24.0 * 60.0 * 60.0)],
+                    dtype="object",
+                ),
+            ),
+        ],
+    )
+    def test_true_divide_object_by_timedelta(
+        self,
+        inputs: np.ndarray | type[np.generic],
+        divisor: np.ndarray | type[np.generic],
+        expected: np.ndarray,
+    ):
+        # gh-30025
+        results = inputs / divisor
+        assert_array_equal(results, expected)
+
+    @pytest.mark.parametrize(
+        "atol", [np.timedelta64(1, "s"), np.timedelta64(1, "ms")]
+    )
+    def test_assert_all_close_with_timedelta_atol(
+        self, atol: np.timedelta64 | datetime.timedelta
+    ):
+        # gh-30382
+        a = np.array([1, 2], dtype="m8[s]")
+        b = np.array([3, 4], dtype="m8[s]")
+        with pytest.raises(AssertionError):
+            np.testing.assert_allclose(a, b, atol=atol)
 
 class TestDateTimeData:
 

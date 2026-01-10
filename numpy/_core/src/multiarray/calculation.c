@@ -652,7 +652,15 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
     else {
         op1 = n_ops.true_divide;
         op2 = n_ops.multiply;
-        decimals = -decimals;
+        if (decimals == INT_MIN) {
+            // not technically correct but it doesn't matter because no one in
+            // this millenium is using floating point numbers with enough
+            // accuracy for this to matter
+            decimals = INT_MAX;
+        }
+        else {
+            decimals = -decimals;
+        }
     }
     if (!out) {
         if (PyArray_ISINTEGER(a)) {

@@ -387,12 +387,12 @@ NPY_NO_EXPORT int
 can_elide_temp_unary(PyArrayObject * m1)
 {
     int cannot;
-    if (Py_REFCNT(m1) != 1 || !PyArray_CheckExact(m1) ||
+    if (!check_unique_temporary((PyObject *)m1) ||
+            !PyArray_CheckExact(m1) ||
             !PyArray_ISNUMBER(m1) ||
             !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(m1) ||
-            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES ||
-            !check_unique_temporary((PyObject *)m1)) {
+            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
     if (check_callers(&cannot)) {
