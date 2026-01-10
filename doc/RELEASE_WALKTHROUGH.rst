@@ -312,10 +312,12 @@ This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
 
 - For all releases, go to the bottom of the page and add a one line link. Look
   to the previous links for example.
-- For the ``*.0`` release in a cycle, add a new section at the top with a short
-  description of the new features and point the news link to it.
-- Edit the newsHeader and date fields at the top of news.md
-- Also edit the buttonText on line 14 in content/en/config.yaml
+- For the ``*.0`` release in a cycle:
+
+  - Add a new section at the top with a short description of the new
+    features and point the news link to it.
+  - Edit the newsHeader and date fields at the top of news.md
+  - Also edit the buttonText on line 14 in content/en/config.yaml
 
 commit and push::
 
