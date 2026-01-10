@@ -122,6 +122,9 @@ from numpy._typing._char_codes import (
     _DT64Codes_date,
     _DT64Codes_datetime,
     _DT64Codes_int,
+    _TD64Codes_any,
+    _TD64Codes_int,
+    _TD64Codes_timedelta,
 )
 
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
@@ -1437,10 +1440,28 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     ) -> dtype[datetime64]: ...
 
     # timedelta64
+    @overload  # timedelta64[{W,D,h,m,s,ms,us}]
+    def __new__(
+        cls,
+        dtype: _TD64Codes_timedelta,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[timedelta64[dt.timedelta]]: ...
+    @overload  # timedelta64[{Y,M,ns,ps,fs,as}]
+    def __new__(
+        cls,
+        dtype: _TD64Codes_int,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[timedelta64[int]]: ...
     @overload  # timedelta64[?]
     def __new__(
         cls,
-        dtype: _TD64Codes,
+        dtype: _TD64Codes_any,
         align: py_bool = False,
         copy: py_bool = False,
         *,

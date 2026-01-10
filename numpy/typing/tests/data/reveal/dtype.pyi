@@ -85,6 +85,23 @@ assert_type(np.dtype("datetime64[as]"), np.dtype[np.datetime64[int]])
 assert_type(np.dtype("datetime64"), np.dtype[np.datetime64])
 assert_type(np.dtype("M8"), np.dtype[np.datetime64])
 assert_type(np.dtype("M"), np.dtype[np.datetime64])
+# char-codes - timedelta64
+assert_type(np.dtype("timedelta64[Y]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[M]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[W]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[D]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[h]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[m]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[s]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[ms]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[us]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[ns]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[ps]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[fs]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[as]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64"), np.dtype[np.timedelta64])
+assert_type(np.dtype("m8"), np.dtype[np.timedelta64])
+assert_type(np.dtype("m"), np.dtype[np.timedelta64])
 
 # ctypes
 assert_type(np.dtype(ct.c_double), np.dtype[np.float64])  # see numpy/numpy#29155
