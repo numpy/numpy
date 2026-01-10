@@ -95,6 +95,7 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
     _CharLike_co,
+    _DT64Codes,
     _DTypeLike,
     _DTypeLikeBool,
     _DTypeLikeVoid,
@@ -3286,11 +3287,23 @@ def arange(
     fill_value: _FillValue | None = None,
     hardmask: bool = False,
 ) -> _Masked1D[np.datetime64[Incomplete]]: ...
+@overload  # (str, str, timedelta-like, dtype=dt64-like) (requires both start and stop)
+def arange(
+    start_or_stop: str,
+    /,
+    stop: str,
+    step: _TD64Like_co | None = 1,
+    *,
+    dtype: _DTypeLike[np.datetime64] | _DT64Codes,
+    like: _SupportsArrayFunc | None = None,
+    fill_value: _FillValue | None = None,
+    hardmask: bool = False,
+) -> _Masked1D[np.datetime64[Incomplete]]: ...
 @overload  # dtype=<unknown>
 def arange(
-    start_or_stop: _ArangeScalar | float,
+    start_or_stop: _ArangeScalar | float | str,
     /,
-    stop: _ArangeScalar | float | None = None,
+    stop: _ArangeScalar | float | str | None = None,
     step: _ArangeScalar | float | None = 1,
     *,
     dtype: DTypeLike | None = None,
