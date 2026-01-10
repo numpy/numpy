@@ -1,0 +1,11 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.4.2 Release Notes
+=========================
+
+The NumPy 2.4.2 is a patch release that fixes bugs discovered after the
+2.4.1 release.
+
+This release supports Python versions 3.11-3.14
+
