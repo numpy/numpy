@@ -2880,14 +2880,20 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
     if (!PyDataType_ISLEGACY(self)) {
         PyErr_SetString(PyExc_RuntimeError,
-            "Cannot unpickle new style DType without custom methods.");
-            return NULL;
-        }
+                "Cannot unpickle new style DType without custom methods.");
+        return NULL;
+    }
+
+    if (self->fields == Py_None) {
+        Py_RETURN_NONE;
+    }
+
     if (PyTuple_GET_SIZE(args) != 1 ||
             !PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
         PyErr_BadInternalCall();
         return NULL;
     }
+
     PyObject *state = PyTuple_GET_ITEM(args, 0);
     Py_ssize_t n = PyTuple_GET_SIZE(state);
     
@@ -2897,56 +2903,57 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
                 "invalid numpy.dtype pickle state");
         return NULL;
     }
+
     switch (n) {
         case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
-                    &version, &endian_obj,
-                    &subarray, &names, &fields, &elsize,
-                    &alignment, &signed_dtypeflags, &metadata)) {
-            PyErr_Clear();
-            return NULL;
-        }
-        break;
-    case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOnnk):__setstate__",
-                    &version, &endian_obj,
-                    &subarray, &names, &fields, &elsize,
-                    &alignment, &signed_dtypeflags)) {
-            return NULL;
-        }
-        break;
-    case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOnn):__setstate__",
-                    &version, &endian_obj,
-                    &subarray, &names, &fields, &elsize,
-                    &alignment)) {
-            return NULL;
-        }
-        break;
-    case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOnn):__setstate__",
-                    &version,
-                    &endian_obj, &subarray, &fields,
-                    &elsize, &alignment)) {
-            return NULL;
-        }
-        break;
-    case 5:
-        version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOnn):__setstate__",
-                    &endian_obj, &subarray, &fields, &elsize,
-                    &alignment)) {
-            return NULL;
-        }
-        break;
-    default:
-        /* raise an error */
-        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
-        }
-        else {
-            version = -1;
-        }
+            if (!PyArg_ParseTuple(args, "(iOOOOnnkO):__setstate__",
+                        &version, &endian_obj,
+                        &subarray, &names, &fields, &elsize,
+                        &alignment, &signed_dtypeflags, &metadata)) {
+                PyErr_Clear();
+                return NULL;
+            }
+            break;
+        case 8:
+            if (!PyArg_ParseTuple(args, "(iOOOOnnk):__setstate__",
+                        &version, &endian_obj,
+                        &subarray, &names, &fields, &elsize,
+                        &alignment, &signed_dtypeflags)) {
+                return NULL;
+            }
+            break;
+        case 7:
+            if (!PyArg_ParseTuple(args, "(iOOOOnn):__setstate__",
+                        &version, &endian_obj,
+                        &subarray, &names, &fields, &elsize,
+                        &alignment)) {
+                return NULL;
+            }
+            break;
+        case 6:
+            if (!PyArg_ParseTuple(args, "(iOOOnn):__setstate__",
+                        &version,
+                        &endian_obj, &subarray, &fields,
+                        &elsize, &alignment)) {
+                return NULL;
+            }
+            break;
+        case 5:
+            version = 0;
+            if (!PyArg_ParseTuple(args, "(OOOnn):__setstate__",
+                        &endian_obj, &subarray, &fields, &elsize,
+                        &alignment)) {
+                return NULL;
+            }
+            break;
+        default:
+            /* raise an error */
+            if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
+                version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
+            }
+            else {
+                version = -1;
+            }
     }
 
     /*
