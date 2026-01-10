@@ -120,18 +120,20 @@ _x_float: float
 _x_timedelta: np.timedelta64[int]
 _x_datetime: np.datetime64[int]
 
-assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.int_]])
-assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.int_]])
-assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.int_]])
-assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(np.arange(0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
-assert_type(np.arange(_x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
-assert_type(np.arange(0, _x_timedelta), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
-assert_type(np.arange(_x_datetime, _x_datetime), np.ndarray[tuple[int], np.dtype[np.datetime64]])
-assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
-assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[np.int_]])
-assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype])
+assert_type(np.arange(False, True), _Array1D[np.int_])
+assert_type(np.arange(10), _Array1D[np.int_])
+assert_type(np.arange(0, 10, step=2), _Array1D[np.int_])
+assert_type(np.arange(10.0), _Array1D[np.float64 | Any])
+assert_type(np.arange(0, stop=10.0), _Array1D[np.float64 | Any])
+assert_type(np.arange(_x_timedelta), _Array1D[np.timedelta64])
+assert_type(np.arange(0, _x_timedelta), _Array1D[np.timedelta64])
+assert_type(np.arange(_x_datetime, _x_datetime), _Array1D[np.datetime64])
+assert_type(np.arange(10, dtype=np.float64), _Array1D[np.float64])
+assert_type(np.arange(0, 10, step=2, dtype=np.int16), _Array1D[np.int16])
+assert_type(np.arange(10, dtype=int), _Array1D[np.int_])
+assert_type(np.arange(0, 10, dtype="f8"), _Array1D[Any])
+# https://github.com/numpy/numpy/issues/30628
+assert_type(np.arange("2025-12-20", "2025-12-23", dtype="datetime64[D]"), _Array1D[np.datetime64])
 
 assert_type(np.require(A), npt.NDArray[np.float64])
 assert_type(np.require(B), SubClass[np.float64])
