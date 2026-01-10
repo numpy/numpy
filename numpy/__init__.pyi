@@ -7,7 +7,7 @@ from abc import abstractmethod
 from builtins import bool as py_bool
 from decimal import Decimal
 from fractions import Fraction
-from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
+from types import EllipsisType, ModuleType, MappingProxyType, GenericAlias
 from uuid import UUID
 
 from numpy.__config__ import show as show_config
@@ -18,7 +18,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     # Arrays
     ArrayLike,
     NDArray,
-    _SupportsArray,
     _NestedSequence,
     _ArrayLike,
     _ArrayLikeBool_co,
