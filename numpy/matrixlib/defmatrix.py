@@ -84,6 +84,10 @@ class matrix(N.ndarray):
     .. note:: It is no longer recommended to use this class, even for linear
               algebra. Instead use regular arrays. The class may be removed
               in the future.
+              Matrix multiplication with 1D arrays is not supported and will raise a
+            ValueError. Vectors must be explicitly reshaped to 2D column or row
+            matrices before multiplication.
+
 
     Parameters
     ----------
@@ -112,6 +116,10 @@ class matrix(N.ndarray):
     >>> np.matrix([[1, 2], [3, 4]])
     matrix([[1, 2],
             [3, 4]])
+    >>> A = np.asmatrix(np.eye(2))
+    >>> v = np.ones((2, 1))
+    >>> A * v
+    matrix([[1.],[1.]])
 
     """
     __array_priority__ = 10.0
