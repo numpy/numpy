@@ -97,7 +97,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ULongLongCodes,
     _LongDoubleCodes,
     _CLongDoubleCodes,
-    _DT64Codes,
     _TD64Codes,
     _StrCodes,
     _BytesCodes,
@@ -117,6 +116,12 @@ from numpy._typing import (  # type: ignore[deprecated]
     _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
+)
+from numpy._typing._char_codes import (
+    _DT64Codes_any,
+    _DT64Codes_date,
+    _DT64Codes_datetime,
+    _DT64Codes_int,
 )
 
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
@@ -1393,8 +1398,46 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             metadata: dict[str, Any] = ...,
         ) -> dtype[clongdouble]: ...
 
-    # Miscellaneous string-based representations and ctypes
-    @overload
+    # datetime64
+    @overload  # datetime64[{Y,M,W,D}]
+    def __new__(
+        cls,
+        dtype: _DT64Codes_date,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[datetime64[dt.date]]: ...
+    @overload  # datetime64[{h,m,s,ms,us}]
+    def __new__(
+        cls,
+        dtype: _DT64Codes_datetime,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[datetime64[dt.datetime]]: ...
+    @overload  # datetime64[{ns,ps,fs,as}]
+    def __new__(
+        cls,
+        dtype: _DT64Codes_int,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[datetime64[int]]: ...
+    @overload  # datetime64[?]
+    def __new__(
+        cls,
+        dtype: _DT64Codes_any,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[datetime64]: ...
+
+    # timedelta64
+    @overload  # timedelta64[?]
     def __new__(
         cls,
         dtype: _TD64Codes,
@@ -1403,15 +1446,6 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
         *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[timedelta64]: ...
-    @overload
-    def __new__(
-        cls,
-        dtype: _DT64Codes,
-        align: py_bool = False,
-        copy: py_bool = False,
-        *,
-        metadata: dict[str, Any] = ...,
-    ) -> dtype[datetime64]: ...
 
     # `StringDType` requires special treatment because it has no scalar type
     @overload

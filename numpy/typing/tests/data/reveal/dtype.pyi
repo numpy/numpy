@@ -68,6 +68,23 @@ assert_type(np.dtype("l"), np.dtype[np.int32 | np.int64])
 assert_type(np.dtype("longlong"), np.dtype[np.longlong])
 assert_type(np.dtype(">g"), np.dtype[np.longdouble])
 assert_type(np.dtype(cs_integer), np.dtype[np.integer])
+# char-codes - datetime64
+assert_type(np.dtype("datetime64[Y]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[M]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[W]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[D]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[h]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[m]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[s]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[ms]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[us]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[ns]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64[ps]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64[fs]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64[as]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64"), np.dtype[np.datetime64])
+assert_type(np.dtype("M8"), np.dtype[np.datetime64])
+assert_type(np.dtype("M"), np.dtype[np.datetime64])
 
 # ctypes
 assert_type(np.dtype(ct.c_double), np.dtype[np.float64])  # see numpy/numpy#29155
