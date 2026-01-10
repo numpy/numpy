@@ -6553,7 +6553,7 @@ class mvoid(MaskedArray):
 
     @property
     def _data(self):
-        # Make sure that the _data part is an np.void
+        # Make sure that the _data part is a np.void
         return super()._data[()]
 
     def __getitem__(self, indx):

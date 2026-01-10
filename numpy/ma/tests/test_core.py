@@ -3937,7 +3937,7 @@ class TestMaskedArrayMethods:
     def test_tolist_specialcase(self):
         # Test mvoid.tolist: make sure we return a standard Python object
         a = array([(0, 1), (2, 3)], dtype=[('a', int), ('b', int)])
-        # w/o mask: each entry is an np.void whose elements are standard Python
+        # w/o mask: each entry is a np.void whose elements are standard Python
         for entry in a:
             for item in entry.tolist():
                 assert_(not isinstance(item, np.generic))

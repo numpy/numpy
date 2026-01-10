@@ -653,7 +653,7 @@ NpyString_free(npy_packed_static_string *str, npy_string_allocator *allocator)
 }
 
 /*NUMPY_API
- * Pack the null string into an npy_packed_static_string
+ * Pack the null string into a npy_packed_static_string
  *
  * Pack the null string into *packed_string*. Returns 0 on success and -1
  * on failure.
@@ -758,7 +758,7 @@ NpyString_size(const npy_packed_static_string *packed_string)
 }
 
 /*NUMPY_API
- * Pack a string buffer into an npy_packed_static_string
+ * Pack a string buffer into a npy_packed_static_string
  *
  * Copy and pack the first *size* entries of the buffer pointed to by *buf*
  * into the *packed_string*. Returns 0 on success and -1 on failure.

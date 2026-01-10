@@ -891,7 +891,7 @@ npy_set_invalid_cast_error(
 /*NUMPY_API
  * See if array scalars can be cast.
  *
- * TODO: For NumPy 2.0, add an NPY_CASTING parameter.
+ * TODO: For NumPy 2.0, add a NPY_CASTING parameter.
  */
 NPY_NO_EXPORT npy_bool
 PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)

@@ -1106,7 +1106,7 @@ cdef extern from "numpy/arrayobject.h":
     int NpyIter_CreateCompatibleStrides(NpyIter* it, npy_intp itemsize,
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
-    # functions for iterating an NpyIter object
+    # functions for iterating a NpyIter object
     #
     # These don't match the definition in the C API because Cython can't wrap
     # function pointers that return functions.

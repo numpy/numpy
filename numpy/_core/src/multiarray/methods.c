@@ -1820,7 +1820,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
        1) an integer with the pickle version.
        2) a Tuple giving the shape
        3) a PyArray_Descr Object (with correct bytorder set)
-       4) an npy_bool stating if Fortran or not
+       4) a npy_bool stating if Fortran or not
        5) a Python object representing the data (a string, or
        a list or any user-defined object).
 
