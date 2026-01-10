@@ -1638,12 +1638,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     array([0.+1.j , 1.+1.5j])
 
     """
-    fp = np.asarray(fp)
-    # Special-case fully empty input: np.interp([], [], [])
-    if period is None:
-        x_arr = np.asarray(x)
-        if x_arr.size == 0 and len(xp) == 0:
-            return x_arr.astype(fp.dtype, copy=False)
+
     if np.iscomplexobj(fp):
         interp_func = compiled_interp_complex
         input_dtype = np.complex128
