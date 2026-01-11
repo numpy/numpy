@@ -132,6 +132,8 @@ assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
 assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[np.int_]])
 assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype])
+# https://github.com/numpy/numpy/issues/30628
+assert_type(np.arange("2025-12-20", "2025-12-23", dtype="datetime64[D]"), np.ndarray[tuple[int], np.dtype[np.datetime64[Any]]])
 
 assert_type(np.require(A), npt.NDArray[np.float64])
 assert_type(np.require(B), SubClass[np.float64])
