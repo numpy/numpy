@@ -34,9 +34,9 @@ from numpy.testing import (
 @pytest.mark.thread_unsafe(reason="setup & memmap is thread-unsafe (gh-29126)")
 class TestMemmap:
     def setup_method(self):
-        self.tmpfp = NamedTemporaryFile(prefix="mmap")
+        self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.shape = (3, 4)
-        self.dtype = "float32"
+        self.dtype = 'float32'
         self.data = arange(12, dtype=self.dtype).reshape(self.shape)
 
     def teardown_method(self):
@@ -48,19 +48,22 @@ class TestMemmap:
 
     def test_roundtrip(self):
         # Write data to file
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
         fp[:] = self.data[:]
         del fp  # Test __del__ machinery, which handles cleanup
 
         # Read data back from file
-        newfp = memmap(self.tmpfp, dtype=self.dtype, mode="r", shape=self.shape)
+        newfp = memmap(self.tmpfp, dtype=self.dtype, mode='r',
+                       shape=self.shape)
         assert_(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
         assert_equal(newfp.flags.writeable, False)
 
     def test_open_with_filename(self, tmp_path):
-        tmpname = tmp_path / "mmap"
-        fp = memmap(tmpname, dtype=self.dtype, mode="w+", shape=self.shape)
+        tmpname = tmp_path / 'mmap'
+        fp = memmap(tmpname, dtype=self.dtype, mode='w+',
+                       shape=self.shape)
         fp[:] = self.data[:]
         del fp
 
@@ -72,16 +75,16 @@ class TestMemmap:
     def test_attributes(self):
         offset = 1
         mode = "w+"
-        fp = memmap(
-            self.tmpfp, dtype=self.dtype, mode=mode, shape=self.shape, offset=offset
-        )
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode=mode,
+                    shape=self.shape, offset=offset)
         assert_equal(offset, fp.offset)
         assert_equal(mode, fp.mode)
         del fp
 
     def test_filename(self, tmp_path):
         tmpname = tmp_path / "mmap"
-        fp = memmap(tmpname, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(tmpname, dtype=self.dtype, mode='w+',
+                       shape=self.shape)
         abspath = Path(os.path.abspath(tmpname))
         fp[:] = self.data[:]
         assert_equal(abspath, fp.filename)
@@ -92,7 +95,8 @@ class TestMemmap:
 
     def test_path(self, tmp_path):
         tmpname = tmp_path / "mmap"
-        fp = memmap(Path(tmpname), dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
+                       shape=self.shape)
         # os.path.realpath does not resolve symlinks on Windows
         # see: https://bugs.python.org/issue9949
         # use Path.resolve, just as memmap class does internally
@@ -105,19 +109,23 @@ class TestMemmap:
         del fp
 
     def test_filename_fileobj(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",
+                    shape=self.shape)
         assert_equal(fp.filename, self.tmpfp.name)
 
-    @pytest.mark.skipif(sys.platform == "gnu0", reason="Known to fail on hurd")
+    @pytest.mark.skipif(sys.platform == 'gnu0',
+                        reason="Known to fail on hurd")
     def test_flush(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
         fp[:] = self.data[:]
         assert_equal(fp[0], self.data[0])
         fp.flush()
 
     def test_del(self):
         # Make sure a view does not delete the underlying mmap
-        fp_base = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp_base = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
         fp_base[0] = 5
         fp_view = fp_base[0:1]
         assert_equal(fp_view[0], 5)
@@ -129,19 +137,22 @@ class TestMemmap:
         assert_equal(fp_base[0], 6)
 
     def test_arithmetic_drops_references(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
-        tmp = fp + 10
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        tmp = (fp + 10)
         if isinstance(tmp, memmap):
             assert_(tmp._mmap is not fp._mmap)
 
     def test_indexing_drops_references(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
         tmp = fp[(1, 2), (2, 3)]
         if isinstance(tmp, memmap):
             assert_(tmp._mmap is not fp._mmap)
 
     def test_slicing_keeps_references(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+", shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
         assert_(fp[:2, :2]._mmap is fp._mmap)
 
     def test_view(self):
@@ -159,8 +170,7 @@ class TestMemmap:
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                "ignore", "np.average currently does not preserve", FutureWarning
-            )
+                'ignore', "np.average currently does not preserve", FutureWarning)
             for unary_op in [sum, average, prod]:
                 result = unary_op(fp)
                 assert_(isscalar(result))
@@ -204,65 +214,64 @@ class TestMemmap:
     def test_mmap_offset_greater_than_allocation_granularity(self):
         size = 5 * mmap.ALLOCATIONGRANULARITY
         offset = mmap.ALLOCATIONGRANULARITY + 1
-        fp = memmap(self.tmpfp, shape=size, mode="w+", offset=offset)
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_(fp.offset == offset)
 
     def test_empty_array_with_offset_multiple_of_allocation_granularity(self):
-        self.tmpfp.write(b"a" * mmap.ALLOCATIONGRANULARITY)
+        self.tmpfp.write(b'a' * mmap.ALLOCATIONGRANULARITY)
         size = 0
         offset = mmap.ALLOCATIONGRANULARITY
-        fp = memmap(self.tmpfp, shape=size, mode="w+", offset=offset)
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_equal(fp.offset, offset)
 
     def test_no_shape(self):
-        self.tmpfp.write(b"a" * 16)
-        mm = memmap(self.tmpfp, dtype="float64")
+        self.tmpfp.write(b'a' * 16)
+        mm = memmap(self.tmpfp, dtype='float64')
         assert_equal(mm.shape, (2,))
 
     def test_empty_array(self):
         # gh-12653
-        with pytest.raises(ValueError, match="empty file"):
-            memmap(self.tmpfp, shape=(0, 4), mode="r")
+        with pytest.raises(ValueError, match='empty file'):
+            memmap(self.tmpfp, shape=(0, 4), mode='r')
 
         # gh-27723
         # empty memmap works with mode in ('w+','r+')
-        memmap(self.tmpfp, shape=(0, 4), mode="w+")
+        memmap(self.tmpfp, shape=(0, 4), mode='w+')
 
         # ok now the file is not empty
-        memmap(self.tmpfp, shape=(0, 4), mode="w+")
+        memmap(self.tmpfp, shape=(0, 4), mode='w+')
 
     def test_shape_type(self):
-        memmap(self.tmpfp, shape=3, mode="w+")
-        memmap(self.tmpfp, shape=self.shape, mode="w+")
-        memmap(self.tmpfp, shape=list(self.shape), mode="w+")
-        memmap(self.tmpfp, shape=asarray(self.shape), mode="w+")
+        memmap(self.tmpfp, shape=3, mode='w+')
+        memmap(self.tmpfp, shape=self.shape, mode='w+')
+        memmap(self.tmpfp, shape=list(self.shape), mode='w+')
+        memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
 
     def test_pickle(self, tmp_path):
-        """Test that memmap pickles metadata instead of data"""
-        tmpname = tmp_path / "mmap"
+        tmpname = tmp_path / 'mmap'
         shape = (100, 100)
-        dtype = "float32"
-
+        dtype = 'float32'
+        
         # Create and populate memmap
-        fp = memmap(tmpname, dtype=dtype, mode="w+", shape=shape)
+        fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape)
         fp[:] = arange(10000, dtype=dtype).reshape(shape)
         fp.flush()
-
+        
         # Reopen for reading
-        fp = memmap(tmpname, dtype=dtype, mode="r", shape=shape)
-
+        fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape)
+        
         # Pickle and unpickle
         pickled = pickle.dumps(fp)
         fp_restored = pickle.loads(pickled)
-
+        
         # Verify it's still a memmap with correct data
         assert_(isinstance(fp_restored, memmap))
         assert_array_equal(fp, fp_restored)
-        assert_equal(fp_restored.mode, "r")
-
+        assert_equal(fp_restored.mode, 'r')
+        
         # Verify pickle is small (metadata only, not data)
         # 100x100 float32 is 40KB. Metadata should be much smaller.
         assert len(pickled) < 1024
-
+        
         del fp
         del fp_restored
