@@ -13,9 +13,11 @@ from numpy.version import version as __version__
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []
-for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
+for envkey in ['OPENBLAS_MAIN_FREE']:
     if envkey not in os.environ:
-        os.environ[envkey] = '1'
+        # Note: using `putenv` (and `unsetenv` further down) instead of updating
+        # `os.environ` on purpose to avoid a race condition, see gh-30627.
+        os.putenv(envkey, '1')
         env_added.append(envkey)
 
 try:
@@ -83,7 +85,7 @@ Original error was: {exc}
     raise ImportError(msg) from exc
 finally:
     for envkey in env_added:
-        del os.environ[envkey]
+        os.unsetenv(envkey)
 del envkey
 del env_added
 del os
