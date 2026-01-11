@@ -709,3 +709,8 @@ cdef class BitGenerator:
         if self._cffi is None:
             self._cffi = prepare_cffi(&self._bitgen)
         return self._cffi
+
+# NOTE: This has no implementation and should not be used. It purely exists for
+# backwards compatibility, see https://github.com/scipy/scipy/issues/24215.
+cdef class SeedlessSequence:
+    pass

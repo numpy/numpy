@@ -502,7 +502,7 @@ if ctypes is not None:
         --------
         Converting a simple dtype:
 
-        >>> dt = np.dtype('int8')
+        >>> dt = np.dtype(np.int8)
         >>> ctype = np.ctypeslib.as_ctypes_type(dt)
         >>> ctype
         <class 'ctypes.c_byte'>

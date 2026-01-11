@@ -126,9 +126,11 @@ public:
 //
 // Instead of
 //
+//   Py_INCREF(descr);
 //   npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 //   [code that uses allocator]
 //   NpyString_release_allocator(allocator);
+//   Py_DECREF(descr);
 //
 // use
 //
@@ -139,16 +141,19 @@ public:
 //
 class NpyStringAcquireAllocator
 {
+    PyArray_StringDTypeObject *_descr;
     npy_string_allocator *_allocator;
 
 public:
 
-    NpyStringAcquireAllocator(PyArray_StringDTypeObject *descr) {
-        _allocator = NpyString_acquire_allocator(descr);
+    NpyStringAcquireAllocator(PyArray_StringDTypeObject *descr) : _descr(descr) {
+        Py_INCREF(_descr);
+        _allocator = NpyString_acquire_allocator(_descr);
     }
 
     ~NpyStringAcquireAllocator() {
         NpyString_release_allocator(_allocator);
+        Py_DECREF(_descr);
     }
 
     NpyStringAcquireAllocator(const NpyStringAcquireAllocator&) = delete;

@@ -917,7 +917,7 @@ add_newdoc('numpy._core.umath', 'cos',
     array([  1.00000000e+00,   6.12303177e-17,  -1.00000000e+00])
     >>>
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -1145,7 +1145,7 @@ add_newdoc('numpy._core.umath', 'equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1506,7 +1506,7 @@ add_newdoc('numpy._core.umath', 'greater',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
 
@@ -1545,7 +1545,7 @@ add_newdoc('numpy._core.umath', 'greater_equal',
     -------
     out : bool or ndarray of bool
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1957,7 +1957,7 @@ add_newdoc('numpy._core.umath', 'less',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -1994,7 +1994,7 @@ add_newdoc('numpy._core.umath', 'less_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -3255,7 +3255,7 @@ add_newdoc('numpy._core.umath', 'not_equal',
     -------
     out : ndarray or scalar
         Output array, element-wise comparison of `x1` and `x2`.
-        Typically of type bool, unless ``dtype=object`` is passed.
+        Typically of type bool, unless ``dtype=np.object_`` is passed.
         $OUT_SCALAR_2
 
     See Also
@@ -3373,9 +3373,9 @@ add_newdoc('numpy._core.umath', 'power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.power(x3, 1.5, dtype=complex)
+    >>> np.power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -3452,9 +3452,9 @@ add_newdoc('numpy._core.umath', 'float_power',
     >>> p
     array([nan, nan])
 
-    To get complex results, give the argument ``dtype=complex``.
+    To get complex results, give the argument ``dtype=np.complex128``.
 
-    >>> np.float_power(x3, 1.5, dtype=complex)
+    >>> np.float_power(x3, 1.5, dtype=np.complex128)
     array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
@@ -4055,7 +4055,7 @@ add_newdoc('numpy._core.umath', 'sinh',
     >>> # Discrepancy due to vagaries of floating point arithmetic.
 
     >>> # Example of providing the optional output parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.sinh([0.1], out1)
     >>> out2 is out1
     True
@@ -4256,7 +4256,7 @@ add_newdoc('numpy._core.umath', 'tan',
     >>>
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.cos([0.1], out1)
     >>> out2 is out1
     True
@@ -4309,7 +4309,7 @@ add_newdoc('numpy._core.umath', 'tanh',
 
     >>> # Example of providing the optional output parameter illustrating
     >>> # that what is returned is a reference to said parameter
-    >>> out1 = np.array([0], dtype='d')
+    >>> out1 = np.array([0], dtype=np.float64)
     >>> out2 = np.tanh([0.1], out1)
     >>> out2 is out1
     True

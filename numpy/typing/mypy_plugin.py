@@ -108,10 +108,10 @@ try:
     from mypy.nodes import ImportFrom, MypyFile, Statement
     from mypy.plugin import AnalyzeTypeContext, Plugin
 
-except ModuleNotFoundError as e:
+except ModuleNotFoundError as _exc:
 
     def plugin(version: str) -> type:
-        raise e
+        raise _exc
 
 else:
 

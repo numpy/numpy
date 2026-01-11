@@ -19,6 +19,10 @@ that takes a fixed number of specific inputs and produces a fixed number of
 specific outputs. For detailed information on universal functions, see
 :ref:`ufuncs-basics`.
 
+
+There are also :ref:`generalized ufuncs <c-api.generalized-ufuncs>` which
+are functions over vectors (or arrays) instead of only single-element scalars.
+
 :class:`ufunc`
 ==============
 

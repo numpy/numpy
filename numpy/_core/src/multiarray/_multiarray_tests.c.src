@@ -923,36 +923,24 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
+static void
+identity_cache_destructor(PyObject *capsule)
+{
+    PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
+    assert(tb != NULL);
+    PyArrayIdentityHash_Dealloc(tb);
+}
 
 /*
- * Helper to test the identity cache, takes a list of values and adds
- * all to the cache except the last key/value pair.  The last value is
- * ignored, instead the last key is looked up.
- * None is returned, if the key is not found.
- * If `replace` is True, duplicate entries are ignored when adding to the
- * hashtable.
+ * Create an identity hash table with the given key length and return it
+ * as a capsule.
  */
 static PyObject *
-identityhash_tester(PyObject *NPY_UNUSED(mod),
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+create_identity_hash(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    NPY_PREPARE_ARGPARSER;
-
     int key_len;
-    int replace;
-    PyObject *replace_obj = Py_False;
-    PyObject *sequence;
-    PyObject *result = NULL;
 
-    if (npy_parse_arguments("identityhash_tester", args, len_args, kwnames,
-            "key_len", &PyArray_PythonPyIntFromInt, &key_len,
-            "sequence", NULL, &sequence,
-            "|replace", NULL, &replace_obj,
-            NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
-    replace = PyObject_IsTrue(replace_obj);
-    if (error_converting(replace)) {
+    if (!PyArg_ParseTuple(args, "i", &key_len)) {
         return NULL;
     }
 
@@ -960,52 +948,106 @@ identityhash_tester(PyObject *NPY_UNUSED(mod),
         PyErr_SetString(PyExc_ValueError, "must have 1 to max-args keys.");
         return NULL;
     }
+
     PyArrayIdentityHash *tb = PyArrayIdentityHash_New(key_len);
     if (tb == NULL) {
         return NULL;
     }
 
-    /* Replace the sequence with a guaranteed fast-sequence */
-    sequence = PySequence_Fast(sequence, "converting sequence."); // noqa: borrowed-ref OK
-    if (sequence == NULL) {
-        goto finish;
+    PyObject *capsule = PyCapsule_New((void *)tb, "PyArrayIdentityHash",
+                                       identity_cache_destructor);
+    if (capsule == NULL) {
+        PyArrayIdentityHash_Dealloc(tb);
+        return NULL;
     }
 
-    Py_ssize_t length = PySequence_Fast_GET_SIZE(sequence);
-    for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *key_val = PySequence_Fast_GET_ITEM(sequence, i);
-        if (!PyTuple_CheckExact(key_val) || PyTuple_GET_SIZE(key_val) != 2) {
-            PyErr_SetString(PyExc_TypeError, "bad key-value pair.");
-            goto finish;
-        }
-        PyObject *key = PyTuple_GET_ITEM(key_val, 0);
-        PyObject *value = PyTuple_GET_ITEM(key_val, 1);
-        if (!PyTuple_CheckExact(key) || PyTuple_GET_SIZE(key) != key_len) {
-            PyErr_SetString(PyExc_TypeError, "bad key tuple.");
-            goto finish;
-        }
+    return capsule;
+}
 
-        PyObject *keys[NPY_MAXARGS];
-        for (int j = 0; j < key_len; j++) {
-            keys[j] = PyTuple_GET_ITEM(key, j);
-        }
-        if (i != length - 1) {
-            if (PyArrayIdentityHash_SetItem(tb, keys, value, replace) < 0) {
-                goto finish;
-            }
-        }
-        else {
-            result = PyArrayIdentityHash_GetItem(tb, keys);
-            if (result == NULL) {
-                result = Py_None;
-            }
-            Py_INCREF(result);
-        }
+/*
+ * Set item in identity hash table provided as capsule and key as tuple.
+ * If replace is False and the key already exists, RuntimeError is raised else
+ * the value is replaced.
+ */
+static PyObject *
+identity_hash_set_item(PyObject *NPY_UNUSED(self),
+                       PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+
+    PyObject *capsule, *key_tuple, *value;
+    int replace = 0;
+    PyObject *replace_obj = Py_False;
+
+    if (npy_parse_arguments("identity_hash_set_item", args, len_args, kwnames,
+            "capsule", NULL, &capsule,
+            "key", NULL, &key_tuple,
+            "value", NULL, &value,
+            "|replace", NULL, &replace_obj,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
     }
 
-  finish:
-    Py_DECREF(sequence);
-    PyArrayIdentityHash_Dealloc(tb);
+    if (!PyCapsule_IsValid(capsule, "PyArrayIdentityHash")) {
+        PyErr_SetString(PyExc_TypeError,
+                       "First argument must be a valid PyArrayIdentityHash capsule.");
+        return NULL;
+    }
+
+    replace = PyObject_IsTrue(replace_obj);
+    if (error_converting(replace)) {
+        return NULL;
+    }
+
+    PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
+    assert(tb != NULL);
+
+    if (!PyTuple_CheckExact(key_tuple) || PyTuple_GET_SIZE(key_tuple) != tb->key_len) {
+        PyErr_Format(PyExc_TypeError,
+                    "key must be a tuple of length %d", tb->key_len);
+        return NULL;
+    }
+
+    if (PyArrayIdentityHash_SetItem(tb, &PyTuple_GET_ITEM(key_tuple, 0), value, replace) < 0) {
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+/*
+ * Get item from identity hash table provided as capsule and key as tuple.
+ */
+static PyObject *
+identity_hash_get_item(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *capsule, *key_tuple;
+
+    if (!PyArg_ParseTuple(args, "OO", &capsule, &key_tuple)) {
+        return NULL;
+    }
+
+    if (!PyCapsule_IsValid(capsule, "PyArrayIdentityHash")) {
+        PyErr_SetString(PyExc_TypeError,
+                       "First argument must be a valid PyArrayIdentityHash capsule.");
+        return NULL;
+    }
+
+    PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
+    assert(tb != NULL);
+
+    if (!PyTuple_CheckExact(key_tuple) || PyTuple_GET_SIZE(key_tuple) != tb->key_len) {
+        PyErr_Format(PyExc_TypeError,
+                    "key must be a tuple of length %d", tb->key_len);
+        return NULL;
+    }
+
+    PyObject *result = PyArrayIdentityHash_GetItem(tb, &PyTuple_GET_ITEM(key_tuple, 0));
+    if (result == NULL) {
+        Py_RETURN_NONE;
+    }
+    Py_INCREF(result);
     return result;
 }
 
@@ -2309,9 +2351,15 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         "Return a list with info on all available casts. Some of the info"
         "may differ for an actual cast if it uses value-based casting "
         "(flexible types)."},
-    {"identityhash_tester",
-        (PyCFunction)identityhash_tester,
-        METH_KEYWORDS | METH_FASTCALL, NULL},
+    {"create_identity_hash",
+        create_identity_hash,
+        METH_VARARGS, "Create a new PyArrayIdentityHash wrapped in a PyCapsule."},
+    {"identity_hash_set_item",
+        (PyCFunction)identity_hash_set_item,
+        METH_KEYWORDS | METH_FASTCALL, "Set an item in a PyArrayIdentityHash capsule."},
+    {"identity_hash_get_item",
+        identity_hash_get_item,
+        METH_VARARGS, "Get an item from a PyArrayIdentityHash capsule."},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},

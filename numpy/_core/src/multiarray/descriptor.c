@@ -1829,14 +1829,6 @@ _convert_from_str(PyObject *obj, int align)
                     check_num = NPY_STRING;
                     break;
 
-                case NPY_DEPRECATED_STRINGLTR2:
-                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                                  "Use the 'S' alias instead.") < 0) {
-                        return NULL;
-                    }
-                    check_num = NPY_STRING;
-                    break;
-
                 /*
                  * When specifying length of UNICODE
                  * the number of characters is given to match
@@ -1905,13 +1897,6 @@ _convert_from_str(PyObject *obj, int align)
             }
 
             goto fail;
-        }
-
-        if (strcmp(type, "a") == 0) {
-            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                          "Use the 'S' alias instead.") < 0) {
-                return NULL;
-            }
         }
 
         /*

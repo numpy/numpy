@@ -7,12 +7,6 @@
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
  * hardcoded.
- *
- * Note that distutils/pip will attempt a universal2 build when Python itself
- * is built as universal2, hence this hardcoding is needed even if we do not
- * support universal2 wheels anymore (see gh-22796).
- * This code block can be removed after we have dropped the setup.py based
- * build completely.
  */
 #ifdef __APPLE__
     #undef NPY_SIZEOF_LONG

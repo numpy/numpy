@@ -539,7 +539,7 @@ cdef class Generator:
             Byteorder must be native. The default value is np.float64.
         method : str, optional
             Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
-            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
+            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang [1]_.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -549,6 +549,12 @@ cdef class Generator:
         -------
         out : float or ndarray
             Drawn samples.
+
+        References
+        ----------
+        .. [1] Marsaglia, G. and Tsang, W. W. (2000). The Ziggurat method for
+               generating random variables. Journal of Statistical Software, 5, 1-7.
+               https://doi.org/10.18637/jss.v005.i08
 
         Examples
         --------
@@ -793,7 +799,7 @@ cdef class Generator:
         than the optimized sampler even if each element of ``p`` is 1 / len(a).
 
         ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
-        to normalize using ``p = p / np.sum(p, dtype=float)``.
+        to normalize using ``p = p / np.sum(p, dtype=np.float64)``.
 
         When passing ``a`` as an integer type and ``size`` is not specified, the return
         type is a native Python ``int``.
@@ -949,7 +955,7 @@ cdef class Generator:
                     cutoff = 20
                 if pop_size_i > 10000 and (size_i > (pop_size_i // cutoff)):
                     # Tail shuffle size elements
-                    idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
+                    idx = np.arange(0, pop_size_i, dtype=np.int64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
                     with self.lock, nogil:
                         _shuffle_int(&self._bitgen, pop_size_i,
@@ -982,7 +988,7 @@ cdef class Generator:
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
                             _shuffle_int(&self._bitgen, size_i, 1, idx_data)
-                idx.shape = shape
+                idx = idx.reshape(shape)
 
         if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
@@ -3946,8 +3952,7 @@ cdef class Generator:
             _factor = u * np.sqrt(s)
 
         x = mean + x @ _factor.T
-        x.shape = tuple(final_shape)
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, object n, object pvals, size=None):
         """

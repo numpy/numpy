@@ -222,12 +222,13 @@ cdef class RandomState:
                              "be instantized.")
         self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
         self._aug_state.bit_generator = &self._bitgen
-        self._reset_gauss()
         self.lock = bit_generator.lock
+        self._reset_gauss()
 
     cdef _reset_gauss(self):
-        self._aug_state.has_gauss = 0
-        self._aug_state.gauss = 0.0
+        with self.lock:
+            self._aug_state.has_gauss = 0
+            self._aug_state.gauss = 0.0
 
     def seed(self, seed=None):
         """
@@ -301,8 +302,9 @@ cdef class RandomState:
                           'MT19937 BitGenerator. To silence this warning, '
                           'set `legacy` to False.', RuntimeWarning)
             legacy = False
-        st['has_gauss'] = self._aug_state.has_gauss
-        st['gauss'] = self._aug_state.gauss
+        with self.lock:
+            st['has_gauss'] = self._aug_state.has_gauss
+            st['gauss'] = self._aug_state.gauss
         if legacy and not isinstance(self._bit_generator, _MT19937):
             raise ValueError(
                 "legacy can only be True when the underlying bitgenerator is "
@@ -1047,7 +1049,7 @@ cdef class RandomState:
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
-                idx.shape = shape
+                idx = idx.reshape(shape)
 
         if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
@@ -4266,8 +4268,7 @@ cdef class RandomState:
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
-        x.shape = tuple(final_shape)
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, long n, object pvals, size=None):
         """

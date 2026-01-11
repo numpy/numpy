@@ -764,6 +764,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
 
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    PyArrayObject *arrval = NULL;
+    PyArrayIterObject *val_it = NULL;
     npy_intp dtype_size = dtype->elsize;
     NPY_cast_info cast_info = {.func = NULL};
 
@@ -830,12 +832,12 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     Py_INCREF(dtype);
-    PyArrayObject *arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
+    arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
                                               NPY_ARRAY_FORCECAST, NULL);
     if (arrval == NULL) {
         goto finish;
     }
-    PyArrayIterObject *val_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arrval);
+    val_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arrval);
     if (val_it == NULL) {
         goto finish;
     }
@@ -908,6 +910,8 @@ finish:
     for (int i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
+    Py_XDECREF(val_it);
+    Py_XDECREF(arrval);
     return ret;
 }
 
@@ -1350,7 +1354,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
     if (fast_seq == NULL) {
         return NULL;
     }
-    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(args)
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(args);
     n = PySequence_Fast_GET_SIZE(fast_seq);
     if (n > NPY_MAXARGS) {
         ret = multiiter_wrong_number_of_args();
@@ -1358,7 +1362,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
         ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
     }
     Py_DECREF(fast_seq);
-    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST()
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
     return ret;
 }
 

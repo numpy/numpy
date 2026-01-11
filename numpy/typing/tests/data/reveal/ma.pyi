@@ -217,7 +217,10 @@ assert_type(MAR_f4.partition(1), None)
 assert_type(MAR_V.partition(1, axis=0, kind="introselect", order="K"), None)
 
 assert_type(MAR_f4.argpartition(1), MaskedArray[np.intp])
-assert_type(MAR_1d.argpartition(1, axis=0, kind="introselect", order="K"), MaskedArray[np.intp])
+assert_type(
+    MAR_1d.argpartition(1, axis=0, kind="introselect", order="K"),
+    np.ma.MaskedArray[tuple[int], np.dtype[np.intp]],
+)
 
 assert_type(np.ma.ndim(f4), int)
 assert_type(np.ma.ndim(MAR_b), int)

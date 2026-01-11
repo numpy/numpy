@@ -1,21 +1,18 @@
+from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Any, Concatenate, Protocol, SupportsIndex, overload, type_check_only
-from typing_extensions import deprecated
+from typing import (
+    Any,
+    Concatenate,
+    Protocol,
+    Self,
+    SupportsIndex,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
-from numpy import (
-    _CastingKind,
-    complexfloating,
-    floating,
-    integer,
-    object_,
-    signedinteger,
-    ufunc,
-    unsignedinteger,
-)
 from numpy._typing import (
     ArrayLike,
-    DTypeLike,
     NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
@@ -29,7 +26,6 @@ from numpy._typing import (
 
 __all__ = [
     "column_stack",
-    "row_stack",
     "dstack",
     "array_split",
     "split",
@@ -51,7 +47,7 @@ class _ArrayWrap(Protocol):
     def __call__(
         self,
         array: NDArray[Any],
-        context: tuple[ufunc, tuple[Any, ...], int] | None = ...,
+        context: tuple[np.ufunc, tuple[Any, ...], int] | None = ...,
         return_scalar: bool = ...,
         /,
     ) -> Any: ...
@@ -61,21 +57,35 @@ class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...
 
+# Protocol for array-like objects that preserve their type through split operations.
+# Requires shape for size, ndim for dimensional checks in hsplit/vsplit/dsplit,
+# swapaxes for axis manipulation, and __getitem__ for slicing.
+@type_check_only
+class _SupportsSplitOps(Protocol):
+    @property
+    def shape(self) -> tuple[int, ...]: ...
+    @property
+    def ndim(self) -> int: ...
+    def swapaxes(self, axis1: int, axis2: int, /) -> Self: ...
+    def __getitem__(self, key: Any, /) -> Self: ...
+
 ###
 
 def take_along_axis[ScalarT: np.generic](
     arr: ScalarT | NDArray[ScalarT],
-    indices: NDArray[integer],
+    indices: NDArray[np.integer],
     axis: int | None = -1,
 ) -> NDArray[ScalarT]: ...
 
+#
 def put_along_axis[ScalarT: np.generic](
     arr: NDArray[ScalarT],
-    indices: NDArray[integer],
+    indices: NDArray[np.integer],
     values: ArrayLike,
     axis: int | None,
 ) -> None: ...
 
+#
 @overload
 def apply_along_axis[**Tss, ScalarT: np.generic](
     func1d: Callable[Concatenate[np.ndarray, Tss], _ArrayLike[ScalarT]],
@@ -86,45 +96,45 @@ def apply_along_axis[**Tss, ScalarT: np.generic](
 ) -> NDArray[ScalarT]: ...
 @overload
 def apply_along_axis[**Tss](
-    func1d: Callable[Concatenate[NDArray[Any], Tss], Any],
+    func1d: Callable[Concatenate[np.ndarray, Tss], Any],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: Tss.args,
     **kwargs: Tss.kwargs,
 ) -> NDArray[Any]: ...
 
+#
 def apply_over_axes[ScalarT: np.generic](
     func: Callable[[np.ndarray, int], NDArray[ScalarT]],
     a: ArrayLike,
-    axes: int | Sequence[int],
+    axes: _ShapeLike,
 ) -> NDArray[ScalarT]: ...
 
+#
 @overload
 def expand_dims[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis: _ShapeLike) -> NDArray[ScalarT]: ...
 @overload
-def expand_dims(a: ArrayLike, axis: _ShapeLike) -> NDArray[Any]: ...
-
-# Deprecated in NumPy 2.0, 2023-08-18
-@deprecated("`row_stack` alias is deprecated. Use `np.vstack` directly.")
-def row_stack(
-    tup: Sequence[ArrayLike],
-    *,
-    dtype: DTypeLike | None = None,
-    casting: _CastingKind = "same_kind",
-) -> NDArray[Any]: ...
+def expand_dims(a: ArrayLike, axis: _ShapeLike) -> NDArray[Incomplete]: ...
 
 # keep in sync with `numpy.ma.extras.column_stack`
 @overload
 def column_stack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
 @overload
-def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
+def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
 
 # keep in sync with `numpy.ma.extras.dstack`
 @overload
 def dstack[ScalarT: np.generic](tup: Sequence[_ArrayLike[ScalarT]]) -> NDArray[ScalarT]: ...
 @overload
-def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
+def dstack(tup: Sequence[ArrayLike]) -> NDArray[Incomplete]: ...
 
+#
+@overload
+def array_split[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
+    indices_or_sections: _ShapeLike,
+    axis: SupportsIndex = 0,
+) -> list[SplitableT]: ...
 @overload
 def array_split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
@@ -132,12 +142,15 @@ def array_split[ScalarT: np.generic](
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def array_split(
-    ary: ArrayLike,
+def array_split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
+
+#
+@overload
+def split[SplitableT: _SupportsSplitOps](
+    ary: SplitableT,
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = 0,
-) -> list[NDArray[Any]]: ...
-
+) -> list[SplitableT]: ...
 @overload
 def split[ScalarT: np.generic](
     ary: _ArrayLike[ScalarT],
@@ -145,73 +158,50 @@ def split[ScalarT: np.generic](
     axis: SupportsIndex = 0,
 ) -> list[NDArray[ScalarT]]: ...
 @overload
-def split(
-    ary: ArrayLike,
-    indices_or_sections: _ShapeLike,
-    axis: SupportsIndex = 0,
-) -> list[NDArray[Any]]: ...
+def split(ary: ArrayLike, indices_or_sections: _ShapeLike, axis: SupportsIndex = 0) -> list[NDArray[Incomplete]]: ...
 
 # keep in sync with `numpy.ma.extras.hsplit`
 @overload
-def hsplit[ScalarT: np.generic](
-    ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
-) -> list[NDArray[ScalarT]]: ...
+def hsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
 @overload
-def hsplit(
-    ary: ArrayLike,
-    indices_or_sections: _ShapeLike,
-) -> list[NDArray[Any]]: ...
+def hsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+@overload
+def hsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
 
+#
 @overload
-def vsplit[ScalarT: np.generic](
-    ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
-) -> list[NDArray[ScalarT]]: ...
+def vsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
 @overload
-def vsplit(
-    ary: ArrayLike,
-    indices_or_sections: _ShapeLike,
-) -> list[NDArray[Any]]: ...
+def vsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+@overload
+def vsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
 
+#
 @overload
-def dsplit[ScalarT: np.generic](
-    ary: _ArrayLike[ScalarT],
-    indices_or_sections: _ShapeLike,
-) -> list[NDArray[ScalarT]]: ...
+def dsplit[SplitableT: _SupportsSplitOps](ary: SplitableT, indices_or_sections: _ShapeLike) -> list[SplitableT]: ...
 @overload
-def dsplit(
-    ary: ArrayLike,
-    indices_or_sections: _ShapeLike,
-) -> list[NDArray[Any]]: ...
+def dsplit[ScalarT: np.generic](ary: _ArrayLike[ScalarT], indices_or_sections: _ShapeLike) -> list[NDArray[ScalarT]]: ...
+@overload
+def dsplit(ary: ArrayLike, indices_or_sections: _ShapeLike) -> list[NDArray[Incomplete]]: ...
 
-@overload
-def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...
-@overload
-def get_array_wrap(*args: object) -> _ArrayWrap | None: ...
-
+#
 @overload
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...
 @overload
-def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[unsignedinteger]: ...
+def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[np.unsignedinteger]: ...
 @overload
-def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[signedinteger]: ...
+def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[np.signedinteger]: ...
 @overload
-def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[floating]: ...
+def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[np.floating]: ...
 @overload
-def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[complexfloating]: ...
+def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[np.complexfloating]: ...
 @overload
-def kron(a: _ArrayLikeObject_co, b: Any) -> NDArray[object_]: ...
+def kron(a: _ArrayLikeObject_co, b: object) -> NDArray[np.object_]: ...
 @overload
-def kron(a: Any, b: _ArrayLikeObject_co) -> NDArray[object_]: ...
+def kron(a: object, b: _ArrayLikeObject_co) -> NDArray[np.object_]: ...
 
+#
 @overload
-def tile[ScalarT: np.generic](
-    A: _ArrayLike[ScalarT],
-    reps: int | Sequence[int],
-) -> NDArray[ScalarT]: ...
+def tile[ScalarT: np.generic](A: _ArrayLike[ScalarT], reps: int | Sequence[int]) -> NDArray[ScalarT]: ...
 @overload
-def tile(
-    A: ArrayLike,
-    reps: int | Sequence[int],
-) -> NDArray[Any]: ...
+def tile(A: ArrayLike, reps: int | Sequence[int]) -> NDArray[Incomplete]: ...

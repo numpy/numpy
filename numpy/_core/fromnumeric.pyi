@@ -54,6 +54,7 @@ from numpy._typing import (
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
+    _SupportsArray,
 )
 
 __all__ = [
@@ -183,6 +184,7 @@ def take[ArrayT: np.ndarray](
     mode: _ModeKind = "raise",
 ) -> ArrayT: ...
 
+# keep in sync with `ma.core.reshape`
 @overload  # shape: index
 def reshape[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
@@ -238,6 +240,7 @@ def reshape(
     copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
+# keep in sync with `ma.core.choose`
 @overload
 def choose(
     a: _IntLike_co,
@@ -293,7 +296,7 @@ def repeat(
     axis: SupportsIndex,
 ) -> NDArray[Any]: ...
 
-#
+# keep in sync with `ma.core.put`
 def put(
     a: NDArray[Any],
     ind: _ArrayLikeInt_co,
@@ -309,6 +312,7 @@ def swapaxes[ScalarT: np.generic](a: _ArrayLike[ScalarT], axis1: SupportsIndex, 
 @overload
 def swapaxes(a: ArrayLike, axis1: SupportsIndex, axis2: SupportsIndex) -> NDArray[Any]: ...
 
+# keep in sync with `ma.core.transpose`
 @overload
 def transpose[ScalarT: np.generic](
     a: _ArrayLike[ScalarT],
@@ -351,14 +355,63 @@ def partition(
     order: str | Sequence[str] | None = None,
 ) -> NDArray[Any]: ...
 
-#
+# keep roughly in sync with `ndarray.argpartition`
+@overload  # axis: None
 def argpartition(
     a: ArrayLike,
     kth: _ArrayLikeInt,
-    axis: SupportsIndex | None = -1,
+    axis: None,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.intp]]: ...
+@overload  # known shape, axis: index (default)
+def argpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
+@overload  # 1d array-like, axis: index (default)
+def argpartition(
+    a: Sequence[np.generic | complex],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[tuple[int], np.dtype[np.intp]]: ...
+@overload  # 2d array-like, axis: index (default)
+def argpartition(
+    a: Sequence[Sequence[np.generic | complex]],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> np.ndarray[tuple[int, int], np.dtype[np.intp]]: ...
+@overload  # ?d array-like, axis: index (default)
+def argpartition(
+    a: ArrayLike,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
+) -> NDArray[np.intp]: ...
+@overload  # void, axis: None
+def argpartition(
+    a: _SupportsArray[np.dtype[np.void]],
+    kth: _ArrayLikeInt,
+    axis: None,
     kind: _PartitionKind = "introselect",
     order: str | Sequence[str] | None = None,
-) -> NDArray[intp]: ...
+) -> np.ndarray[tuple[int], np.dtype[intp]]: ...
+@overload  # void, axis: index (default)
+def argpartition[ShapeT: _Shape](
+    a: np.ndarray[ShapeT, np.dtype[np.void]],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex = -1,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
+) -> np.ndarray[ShapeT, np.dtype[np.intp]]: ...
 
 #
 @overload
@@ -471,7 +524,7 @@ def searchsorted(
     sorter: _ArrayLikeInt_co | None = None,  # 1D int array
 ) -> NDArray[intp]: ...
 
-#
+# keep in sync with `ma.core.resize`
 @overload
 def resize[ScalarT: np.generic](a: _ArrayLike[ScalarT], new_shape: SupportsIndex | tuple[SupportsIndex]) -> _Array1D[ScalarT]: ...
 @overload

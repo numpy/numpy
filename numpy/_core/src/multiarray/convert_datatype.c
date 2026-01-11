@@ -669,7 +669,6 @@ dtype_kind_to_ordering(char kind)
             return 5;
         /* String kind */
         case 'S':
-        case 'a':
             return 6;
         /* Unicode kind */
         case 'U':

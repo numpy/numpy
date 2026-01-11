@@ -29,7 +29,7 @@ from numpy._typing import (
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
-    _IntCodes,
+    _IntPCodes,
     _LongCodes,
     _ShapeLike,
     _SupportsDType,
@@ -37,7 +37,7 @@ from numpy._typing import (
     _UInt16Codes,
     _UInt32Codes,
     _UInt64Codes,
-    _UIntCodes,
+    _UIntPCodes,
     _ULongCodes,
 )
 from numpy.random.bit_generator import BitGenerator
@@ -209,7 +209,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,  # noqa: E501
+        dtype: dtype[uint] | type[uint] | _UIntPCodes | _SupportsDType[dtype[uint]] = ...,  # noqa: E501
     ) -> uint: ...
     @overload
     def randint(
@@ -257,7 +257,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[int_] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,  # noqa: E501
+        dtype: dtype[int_] | type[int_] | _IntPCodes | _SupportsDType[dtype[int_]] = ...,  # noqa: E501
     ) -> int_: ...
     @overload
     def randint(

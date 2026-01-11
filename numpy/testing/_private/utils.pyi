@@ -319,7 +319,7 @@ def assert_allclose(
     actual: _ArrayLikeTD64_co,
     desired: _ArrayLikeTD64_co,
     rtol: float = 1e-7,
-    atol: float = 0,
+    atol: float | np.timedelta64 = 0,
     equal_nan: bool = True,
     err_msg: object = "",
     verbose: bool = True,

@@ -309,12 +309,18 @@ class TestInformation:
     def test_isspace(self):
         A = self.A()
         assert_(issubclass(A.isspace().dtype.type, np.bool))
-        assert_array_equal(A.isspace(), [[False, False], [False, False], [False, False]])
+        assert_array_equal(
+            A.isspace(),
+            [[False, False], [False, False], [False, False]],
+        )
 
     def test_istitle(self):
         A = self.A()
         assert_(issubclass(A.istitle().dtype.type, np.bool))
-        assert_array_equal(A.istitle(), [[False, False], [False, False], [False, False]])
+        assert_array_equal(
+            A.istitle(),
+            [[False, False], [False, False], [False, False]],
+        )
 
     def test_isupper(self):
         A = self.A()
