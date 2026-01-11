@@ -213,7 +213,7 @@ The ``__array_ufunc__`` protocol
 A :ref:`universal function (or ufunc for short) <ufuncs-basics>` is a
 “vectorized” wrapper for a function that takes a fixed number of specific inputs
 and produces a fixed number of specific outputs. The output of the ufunc (and
-its methods) is not necessarily a ndarray, if not all input arguments are
+its methods) is not necessarily an ndarray, if not all input arguments are
 ndarrays. Indeed, if any input defines an ``__array_ufunc__`` method, control
 will be passed completely to that function, i.e., the ufunc is overridden. The
 ``__array_ufunc__`` method defined on that (non-ndarray) object has access to
@@ -283,10 +283,10 @@ Consider the following:
  >>> type(ser)
  pandas.core.series.Series
 
-Now, ``ser`` is **not** a ndarray, but because it
+Now, ``ser`` is **not** an ndarray, but because it
 `implements the __array_ufunc__ protocol
 <https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions>`__,
-we can apply ufuncs to it as if it were a ndarray:
+we can apply ufuncs to it as if it were an ndarray:
 
  >>> np.exp(ser)
     0     2.718282

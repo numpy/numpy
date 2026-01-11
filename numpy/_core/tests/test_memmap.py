@@ -204,7 +204,7 @@ class TestMemmap:
         fp[:] = self.data
 
         # We keep previous behavior for subclasses of memmap, i.e. the
-        # ufunc and __getitem__ output is never turned into a ndarray
+        # ufunc and __getitem__ output is never turned into an ndarray
         assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
         assert_(sum(fp).__class__ is MemmapSubClass)
         assert_(fp[1:, :-1].__class__ is MemmapSubClass)
