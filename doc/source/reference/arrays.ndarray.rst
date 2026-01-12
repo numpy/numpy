@@ -535,6 +535,12 @@ Arithmetic, in-place:
    ndarray.__ior__
    ndarray.__ixor__
 
+In-place arithmetic methods modify the array itself and return the
+modified array. Although the corresponding operators are written using
+augmented assignment syntax (for example, ``a += b``), the underlying
+special methods return ``self`` after performing the operation.
+
+
 .. warning::
 
    In place operations will perform the calculation using the
