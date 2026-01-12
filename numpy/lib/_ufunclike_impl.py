@@ -20,7 +20,7 @@ def fix(x, out=None):
     """
     Round to nearest integer towards zero.
 
-    .. deprecated:: 2.3
+    .. deprecated:: 2.5
         `numpy.fix` is deprecated. Use `numpy.trunc` instead,
         which is faster and follows the Array API standard.
 
@@ -62,7 +62,7 @@ def fix(x, out=None):
     array([ 2.,  2., -2., -2.])
 
     """
-    # Deprecated in NumPy 2.3, 2025-01-12
+    # Deprecated in NumPy 2.5, 2026-01-12
     warnings.warn(
         "numpy.fix is deprecated. Use numpy.trunc instead, "
         "which is faster and follows the Array API standard.",
