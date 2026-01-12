@@ -37,6 +37,10 @@ jobs:
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64, ""]
           - [ubuntu-22.04, musllinux_x86_64, ""]
+          - [ubuntu-22.04, manylinux_ppc64le, ""]
+          - [ubuntu-22.04, musllinux_ppc64le, ""]
+          - [ubuntu-22.04, manylinux_s390x, ""]
+          - [ubuntu-22.04, musllinux_s390x, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-15-intel, macosx_x86_64, openblas]
@@ -53,6 +57,12 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
+
+      - name: Setup QEMU
+        if: runner.os == 'Linux' && runner.arch == 'X64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
 
       - name: Setup MSVC (32-bit)
         if: ${{ matrix.buildplat[1] == 'win32' }}
@@ -97,6 +107,12 @@ jobs:
             DYLD="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
+
+      - name: Setup Linux
+        if: matrix.buildplat[0] == 'ubuntu-22.04' || matrix.buildplat[0] == 'ubuntu-22.04-arm'
+        run: |
+          policy=${{ matrix.buildplat[1] }}
+          echo "CIBW_ARCHS=${policy#*_}" >> "$GITHUB_ENV"
 
       - name: Build wheels
         uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e  # v3.3.1

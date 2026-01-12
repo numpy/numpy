@@ -188,7 +188,7 @@ tracker = "https://github.com/numpy/numpy/issues"
 # Note: the below skip command doesn't do much currently, the platforms to
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml`.
 # universal2 wheels are not supported (see gh-21233), use `delocate-fuse` if you need them
-skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
+skip = ["*_i686", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
@@ -202,8 +202,12 @@ build-dir = "build"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
+musllinux-ppc64le-image = "musllinux_1_2"
+musllinux-s390x-image = "musllinux_1_2"
 
 [tool.cibuildwheel.linux.environment]
 # RUNNER_OS is a GitHub Actions specific env var; define it here so it's
@@ -215,6 +219,14 @@ PKG_CONFIG_PATH="/project/.openblas"
 [tool.cibuildwheel.windows]
 config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=false"], build-dir="build"}
 repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
+
+[[tool.cibuildwheel.overrides]]
+select = ["*-*linux*"]
+before-all = "./tools/install-static-clang.sh"
+inherit.environment = "append"
+environment = { CC = "/opt/clang/bin/clang", CXX = "/opt/clang/bin/clang++", LDFLAGS = "-fuse-ld=lld" }
+inherit.environment-pass = "append"
+environment-pass = ["RUNNER_ARCH"]
 
 [[tool.cibuildwheel.overrides]]
 select = ["*-win32"]
