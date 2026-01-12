@@ -1,5 +1,3 @@
-import warnings
-
 import pytest
 
 import numpy as np
@@ -39,20 +37,20 @@ class TestUfunclike:
         with assert_raises(TypeError):
             isneginf(a)
 
+    @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
     def test_fix(self):
         a = np.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
         out = np.zeros(a.shape, float)
         tgt = np.array([[1., 1., 1., 1.], [-1., -1., -1., -1.]])
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            res = fix(a)
-            assert_equal(res, tgt)
-            res = fix(a, out)
-            assert_equal(res, tgt)
-            assert_equal(out, tgt)
-            assert_equal(fix(3.14), 3)
+        res = fix(a)
+        assert_equal(res, tgt)
+        res = fix(a, out)
+        assert_equal(res, tgt)
+        assert_equal(out, tgt)
+        assert_equal(fix(3.14), 3)
 
+    @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
     def test_fix_with_subclass(self):
         class MyArray(np.ndarray):
             def __new__(cls, data, metadata=None):
@@ -73,20 +71,19 @@ class TestUfunclike:
 
         a = np.array([1.1, -1.1])
         m = MyArray(a, metadata='foo')
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            f = fix(m)
-            assert_array_equal(f, np.array([1, -1]))
-            assert_(isinstance(f, MyArray))
-            assert_equal(f.metadata, 'foo')
+        f = fix(m)
+        assert_array_equal(f, np.array([1, -1]))
+        assert_(isinstance(f, MyArray))
+        assert_equal(f.metadata, 'foo')
 
-            # check 0d arrays don't decay to scalars
-            m0d = m[0, ...]
-            m0d.metadata = 'bar'
-            f0d = fix(m0d)
-            assert_(isinstance(f0d, MyArray))
-            assert_equal(f0d.metadata, 'bar')
+        # check 0d arrays don't decay to scalars
+        m0d = m[0, ...]
+        m0d.metadata = 'bar'
+        f0d = fix(m0d)
+        assert_(isinstance(f0d, MyArray))
+        assert_equal(f0d.metadata, 'bar')
 
+    @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
     def test_scalar(self):
         x = np.inf
         actual = np.isposinf(x)
@@ -95,16 +92,14 @@ class TestUfunclike:
         assert_equal(type(actual), type(expected))
 
         x = -3.4
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            actual = np.fix(x)
-            expected = np.float64(-3.0)
-            assert_equal(actual, expected)
-            assert_equal(type(actual), type(expected))
+        actual = np.fix(x)
+        expected = np.float64(-3.0)
+        assert_equal(actual, expected)
+        assert_equal(type(actual), type(expected))
 
-            out = np.array(0.0)
-            actual = np.fix(x, out=out)
-            assert_(actual is out)
+        out = np.array(0.0)
+        actual = np.fix(x, out=out)
+        assert_(actual is out)
 
 
 class TestFixDeprecation:
