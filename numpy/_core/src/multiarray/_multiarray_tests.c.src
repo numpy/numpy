@@ -965,37 +965,21 @@ create_identity_hash(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 /*
- * Set item in identity hash table provided as capsule and key as tuple.
- * If replace is False and the key already exists, RuntimeError is raised else
- * the value is replaced.
+ * Set default item in identity hash table provided as capsule and key as tuple.
+ * If the key is already present, return the existing value else set to value and
+ * return that.
  */
 static PyObject *
-identity_hash_set_item(PyObject *NPY_UNUSED(self),
-                       PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+identity_hash_set_item_default(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    NPY_PREPARE_ARGPARSER;
-
     PyObject *capsule, *key_tuple, *value;
-    int replace = 0;
-    PyObject *replace_obj = Py_False;
-
-    if (npy_parse_arguments("identity_hash_set_item", args, len_args, kwnames,
-            "capsule", NULL, &capsule,
-            "key", NULL, &key_tuple,
-            "value", NULL, &value,
-            "|replace", NULL, &replace_obj,
-            NULL, NULL, NULL) < 0) {
+    if (!PyArg_ParseTuple(args, "OOO", &capsule, &key_tuple, &value)) {
         return NULL;
     }
 
     if (!PyCapsule_IsValid(capsule, "PyArrayIdentityHash")) {
         PyErr_SetString(PyExc_TypeError,
                        "First argument must be a valid PyArrayIdentityHash capsule.");
-        return NULL;
-    }
-
-    replace = PyObject_IsTrue(replace_obj);
-    if (error_converting(replace)) {
         return NULL;
     }
 
@@ -1008,11 +992,12 @@ identity_hash_set_item(PyObject *NPY_UNUSED(self),
         return NULL;
     }
 
-    if (PyArrayIdentityHash_SetItem(tb, &PyTuple_GET_ITEM(key_tuple, 0), value, replace) < 0) {
+    PyObject *result = NULL;
+    if (PyArrayIdentityHash_SetItemDefault(tb, &PyTuple_GET_ITEM(key_tuple, 0), value, &result) < 0) {
         return NULL;
     }
-
-    Py_RETURN_NONE;
+    Py_INCREF(result);
+    return result;
 }
 
 
@@ -2354,9 +2339,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"create_identity_hash",
         create_identity_hash,
         METH_VARARGS, "Create a new PyArrayIdentityHash wrapped in a PyCapsule."},
-    {"identity_hash_set_item",
-        (PyCFunction)identity_hash_set_item,
-        METH_KEYWORDS | METH_FASTCALL, "Set an item in a PyArrayIdentityHash capsule."},
+    {"identity_hash_set_item_default",
+        (PyCFunction)identity_hash_set_item_default,
+        METH_VARARGS, "Set a default item in a PyArrayIdentityHash capsule."},
     {"identity_hash_get_item",
         identity_hash_get_item,
         METH_VARARGS, "Get an item from a PyArrayIdentityHash capsule."},

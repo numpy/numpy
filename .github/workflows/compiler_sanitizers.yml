@@ -106,5 +106,5 @@ jobs:
           export TSAN_OPTIONS="halt_on_error=0:allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt"
           echo "TSAN_OPTIONS=$TSAN_OPTIONS"
           python -m spin test \
-          `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
+          `find numpy -name "test*.py" | xargs grep -E -l "import threading|ThreadPoolExecutor" | tr '\n' ' '` \
            -- -v -s --timeout=600 --durations=10
