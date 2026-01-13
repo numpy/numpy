@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 import numpy as np
-
-# Suppress DeprecationWarning for np.fix during runtime testing
-warnings.filterwarnings("ignore", "numpy.fix is deprecated", DeprecationWarning)
 
 
 class Object:
