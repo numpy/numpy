@@ -255,7 +255,8 @@ class TestMemmap:
         # Create and populate memmap
         fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape)
         fp[:] = arange(10000, dtype=dtype).reshape(shape)
-        fp.flush()
+        if sys.platform != 'emscripten':
+            fp.flush()
         
         # Reopen for reading
         fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape)
