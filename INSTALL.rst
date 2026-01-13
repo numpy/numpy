@@ -1,5 +1,10 @@
 Building and installing NumPy
 +++++++++++++++++++++++++++++
+Note for most users
+------------------
+If you only want to use NumPy, you do not need to build it from source. Instead,
+install NumPy with ``pip install numpy`` or use a scientific Python distribution.
+Building from source is primarily intended for contributors or advanced users.
 
 **IMPORTANT**: the below notes are about building NumPy, which for most users
 is *not* the recommended way to install NumPy.  Instead, use either a complete
