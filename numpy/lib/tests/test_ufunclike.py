@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from numpy import fix, isneginf, isposinf
 from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
@@ -40,12 +42,16 @@ class TestUfunclike:
         out = np.zeros(a.shape, float)
         tgt = np.array([[1., 1., 1., 1.], [-1., -1., -1., -1.]])
 
-        res = fix(a)
-        assert_equal(res, tgt)
-        res = fix(a, out)
-        assert_equal(res, tgt)
-        assert_equal(out, tgt)
-        assert_equal(fix(3.14), 3)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "Calling numpy.fix is deprecated", DeprecationWarning
+            )
+            res = fix(a)
+            assert_equal(res, tgt)
+            res = fix(a, out)
+            assert_equal(res, tgt)
+            assert_equal(out, tgt)
+            assert_equal(fix(3.14), 3)
 
     def test_fix_with_subclass(self):
         class MyArray(np.ndarray):
@@ -67,17 +73,21 @@ class TestUfunclike:
 
         a = np.array([1.1, -1.1])
         m = MyArray(a, metadata='foo')
-        f = fix(m)
-        assert_array_equal(f, np.array([1, -1]))
-        assert_(isinstance(f, MyArray))
-        assert_equal(f.metadata, 'foo')
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "Calling numpy.fix is deprecated", DeprecationWarning
+            )
+            f = fix(m)
+            assert_array_equal(f, np.array([1, -1]))
+            assert_(isinstance(f, MyArray))
+            assert_equal(f.metadata, 'foo')
 
-        # check 0d arrays don't decay to scalars
-        m0d = m[0, ...]
-        m0d.metadata = 'bar'
-        f0d = fix(m0d)
-        assert_(isinstance(f0d, MyArray))
-        assert_equal(f0d.metadata, 'bar')
+            # check 0d arrays don't decay to scalars
+            m0d = m[0, ...]
+            m0d.metadata = 'bar'
+            f0d = fix(m0d)
+            assert_(isinstance(f0d, MyArray))
+            assert_equal(f0d.metadata, 'bar')
 
     def test_scalar(self):
         x = np.inf
@@ -87,11 +97,15 @@ class TestUfunclike:
         assert_equal(type(actual), type(expected))
 
         x = -3.4
-        actual = np.fix(x)
-        expected = np.float64(-3.0)
-        assert_equal(actual, expected)
-        assert_equal(type(actual), type(expected))
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "Calling numpy.fix is deprecated", DeprecationWarning
+            )
+            actual = np.fix(x)
+            expected = np.float64(-3.0)
+            assert_equal(actual, expected)
+            assert_equal(type(actual), type(expected))
 
-        out = np.array(0.0)
-        actual = np.fix(x, out=out)
-        assert_(actual is out)
+            out = np.array(0.0)
+            actual = np.fix(x, out=out)
+            assert_(actual is out)

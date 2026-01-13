@@ -5,6 +5,8 @@ storing results in an output array.
 """
 __all__ = ['fix', 'isneginf', 'isposinf']
 
+import warnings
+
 import numpy._core.numeric as nx
 from numpy._core.overrides import array_function_dispatch
 
@@ -17,6 +19,9 @@ def _dispatcher(x, out=None):
 def fix(x, out=None):
     """
     Round to nearest integer towards zero.
+
+    .. deprecated:: 2.5.0
+        `numpy.fix` is deprecated. Use `numpy.trunc` instead.
 
     Round an array of floats element-wise to nearest integer towards zero.
     The rounded values have the same data-type as the input.
@@ -44,18 +49,14 @@ def fix(x, out=None):
     --------
     rint, trunc, floor, ceil
     around : Round to given number of decimals
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.fix(3.14)
-    3.0
-    >>> np.fix(3)
-    3
-    >>> np.fix([2.1, 2.9, -2.1, -2.9])
-    array([ 2.,  2., -2., -2.])
-
     """
+    # NumPy 2.5.0, 2025-10-30
+    warnings.warn(
+        'Calling numpy.fix is deprecated since NumPy 2.5.0. '
+        'Use numpy.trunc instead.',
+        DeprecationWarning,
+        stacklevel=2
+    )
     return nx.trunc(x, out=out)
 
 
