@@ -1352,7 +1352,8 @@ class TestPickling:
 
         for size in [1, 2, 3, 4]:
             with pytest.raises(
-                ValueError, match=r"invalid tuple size \d+ in numpy.dtype setstate"
+                ValueError,
+                match=r"invalid input tuple size \d+ in numpy.dtype setstate"
             ):
                 dt.__setstate__(valid_state[:size])
 
@@ -1360,7 +1361,8 @@ class TestPickling:
         for extra in range(min_extra, min_extra + 5):
             extended = valid_state + (None,) * extra
             with pytest.raises(
-                ValueError, match=r"invalid tuple size \d+ in numpy.dtype setstate"
+                ValueError,
+                match=r"invalid input tuple size \d+ in numpy.dtype setstate"
             ):
                 dt.__setstate__(extended)
 

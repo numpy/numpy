@@ -2918,7 +2918,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         break;
     default:
         PyErr_Format(PyExc_ValueError,
-                     "invalid tuple size %zd in numpy.dtype setstate",
+                     "invalid input tuple size %zd in numpy.dtype setstate",
                      PyTuple_GET_SIZE(PyTuple_GET_ITEM(args, 0)));
         return NULL;
     }
