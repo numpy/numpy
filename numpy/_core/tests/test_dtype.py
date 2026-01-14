@@ -1341,6 +1341,29 @@ class TestPickling:
             assert roundtrip_dt == dt
             assert hash(roundtrip_dt) == pre_pickle_hash
 
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_invalid_tuple_size(self, dt):
+        # gh-30476
+        valid_state = dt.__reduce__()[2]
+        dt.__setstate__(valid_state)
+
+        for size in [1, 2, 3, 4]:
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(valid_state[:size])
+
+        min_extra = 10 - len(valid_state)
+        for extra in range(min_extra, min_extra + 5):
+            extended = valid_state + (None,) * extra
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(extended)
+
 
 class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
