@@ -22,11 +22,11 @@ extra-args = ["-Csetup-args=-Dbuildtype=debug"]
 # comment  out the other.
 
 # Use latest cpython release from conda-forge
-# python = "*"
+# python-freethreading = "*"
 
 # Use cpython git tip
 python.git = "https://github.com/crusaderky/cpython"
-python.subdirectory = "Tools/pixi-packages/default"
+python.subdirectory = "Tools/pixi-packages/freethreading"
 python.rev = "tsan"
 
 meson-python = "*"
