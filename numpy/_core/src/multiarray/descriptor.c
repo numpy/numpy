@@ -2917,9 +2917,9 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     default:
-        PyErr_Format(PyExc_ValueError,
-                     "invalid input tuple size %zd in numpy.dtype setstate",
-                     PyTuple_GET_SIZE(PyTuple_GET_ITEM(args, 0)));
+        PyErr_SetString(PyExc_ValueError,
+                        "Invalid state while unpickling. Is the pickle corrupted "
+                        "or created with a newer NumPy version?");
         return NULL;
     }
 
