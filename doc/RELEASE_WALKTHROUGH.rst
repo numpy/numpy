@@ -97,7 +97,9 @@ make sure that the release notes have an entry in the ``release.rst`` file::
 Generate the changelog
 ----------------------
 
-The changelog is generated using the changelog tool::
+The changelog is generated using the changelog tool (``spin changelog``),
+which collects merged pull requests and formats them into a release-ready
+changelog::
 
     $ spin changelog $GITHUB v2.3.0..maintenance/2.4.x > doc/changelog/2.4.0-changelog.rst
 
@@ -120,7 +122,7 @@ run ``spin notes``, which will incorporate the snippets into the
     $ spin notes
     $ gvim doc/source/release/notes-towncrier.rst doc/source/release/2.4.0-notes.rst
     
-Once the ``notes-towncrier`` contents has been incorporated into release note
+Once the ``notes-towncrier`` contents have been incorporated into release notes
 the ``.. include:: notes-towncrier.rst`` directive can be removed.  The notes
 will always need some fixups, the introduction will need to be written, and
 significant changes should be called out. For patch releases the changelog text
@@ -185,7 +187,7 @@ If you need to delete the tag due to error::
 Go to the ``numpy-release`` repository in your browser and manually trigger the
 workflow on the ``maintenance/2.4.x`` branch using the ``Run workflow`` button
 in ``actions``.  Make sure that the upload target is ``pypi`` in the
-*evironment* dropdown. the wheels take about 1 hour to build, but sometimes
+*evironment* dropdown. The wheels take about 1 hour to build, but sometimes
 GitHub is very slow. If some wheel builds fail for unrelated reasons, you can
 re-run them as normal in the GitHub Actions UI with ``re-run failed``. After
 the wheels are built review the results, checking that the number of artifacts
