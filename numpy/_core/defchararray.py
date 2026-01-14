@@ -274,7 +274,7 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     i : array_like, with any integer dtype
 
