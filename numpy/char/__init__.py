@@ -25,3 +25,9 @@ def __getattr__(name: str):
         return export
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    import numpy._core.defchararray as char
+
+    return dir(char)
