@@ -4209,7 +4209,7 @@ class TestKeepdims:
 
 class TestTensordot:
 
-   def test_rejects_duplicate_axes(self):
+    def test_rejects_duplicate_axes(self):
         a = np.ones((2, 3, 3))
         b = np.ones((3, 3, 4))
         with pytest.raises(ValueError):
