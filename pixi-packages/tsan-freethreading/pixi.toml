@@ -17,9 +17,10 @@ env.TSAN_OPTIONS = "halt_on_error=0:allocator_may_return_null=1"
 extra-args = ["-Csetup-args=-Db_sanitize=thread", "-Csetup-args=-Dbuildtype=debug"]
 
 [package.host-dependencies]
-python.git = "https://github.com/ngoldbaum/cpython"
-python.subdirectory = "Tools/pixi-packages/tsan-free-threading"
-python.rev = "39df6fe96a2da23b09a7f8930eff0cb1f9259862"
+python.git = "https://github.com/crusaderky/cpython"
+python.subdirectory = "Tools/pixi-packages/tsan-freethreading"
+python.rev = "tsan"
+
 meson-python = "*"
 cython = "*"
 uv = "*" # used to invoke the wheel build
