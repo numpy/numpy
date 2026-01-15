@@ -1,9 +1,7 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    # TODO: Point at an actual meson-python release.
-    # "meson-python>=0.19.0",
-    "meson-python @ git+https://github.com/mesonbuild/meson-python",
+    "meson-python>=0.19.0",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
