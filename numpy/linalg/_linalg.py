@@ -352,8 +352,7 @@ def tensorsolve(a, b, axes=None):
     a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
-    res.shape = oldshape
-    return res
+    return res.reshape(oldshape)
 
 
 def _solve_dispatcher(a, b):
@@ -2130,6 +2129,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
@@ -2137,7 +2137,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
             rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
         else:
             rtol = asarray(rtol)[..., newaxis]
-        tol = S.max(axis=-1, keepdims=True) * rtol
+        tol = S.max(axis=-1, keepdims=True, initial=0) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
 
@@ -3305,14 +3305,6 @@ def cross(x1, x2, /, *, axis=-1):
     """
     x1 = asanyarray(x1)
     x2 = asanyarray(x2)
-
-    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
-        raise ValueError(
-            "Both input arrays must be (arrays of) 3-dimensional vectors, "
-            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
-            "dimensional instead."
-        )
-
     return _core_cross(x1, x2, axis=axis)
 
 

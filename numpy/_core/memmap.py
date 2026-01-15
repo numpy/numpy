@@ -130,8 +130,7 @@ class memmap(ndarray):
     Examples
     --------
     >>> import numpy as np
-    >>> data = np.arange(12, dtype=np.float32)
-    >>> data.resize((3,4))
+    >>> data = np.arange(12, dtype=np.float32).reshape((3, 4))
 
     This example uses a temporary file so that doctest doesn't write
     files to your directory. You would use a 'normal' filename.
@@ -213,7 +212,7 @@ class memmap(ndarray):
 
     __array_priority__ = -100.0
 
-    def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
+    def __new__(cls, filename, dtype=uint8, mode='r+', offset=0,
                 shape=None, order='C'):
         # Import here to minimize 'import numpy' overhead
         import mmap
@@ -290,7 +289,7 @@ class memmap(ndarray):
             array_offset = offset - start
             mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
-            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
+            self = ndarray.__new__(cls, shape, dtype=descr, buffer=mm,
                                    offset=array_offset, order=order)
             self._mmap = mm
             self.offset = offset

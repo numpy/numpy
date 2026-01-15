@@ -2885,7 +2885,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
 
     .. warning::
 
-        Setting ``arr.shape`` is discouraged and may be deprecated in the
+        Setting ``arr.shape`` is deprecated and may be removed in the
         future.  Using `ndarray.reshape` is the preferred approach.
 
     Examples
@@ -2897,20 +2897,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
     >>> y = np.zeros((2, 3, 4))
     >>> y.shape
     (2, 3, 4)
-    >>> y.shape = (3, 8)
-    >>> y
-    array([[ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]])
-    >>> y.shape = (3, 6)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    ValueError: cannot reshape array of size 24 into shape (3,6)
-    >>> np.zeros((4,2))[::2].shape = (-1,)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    AttributeError: Incompatible shape for in-place modification. Use
-    `.reshape()` to make a copy with the desired shape.
 
     See Also
     --------
@@ -4966,32 +4952,6 @@ add_newdoc('numpy._core.multiarray', 'add_docstring',
     If the obj already has a docstring raise a RuntimeError
     If this routine does not know how to add a docstring to the object
     raise a TypeError
-    """)
-
-add_newdoc('numpy._core.umath', '_add_newdoc_ufunc',
-    """
-    add_ufunc_docstring(ufunc, new_docstring)
-
-    Replace the docstring for a ufunc with new_docstring.
-    This method will only work if the current docstring for
-    the ufunc is NULL. (At the C level, i.e. when ufunc->doc is NULL.)
-
-    Parameters
-    ----------
-    ufunc : numpy.ufunc
-        A ufunc whose current doc is NULL.
-    new_docstring : string
-        The new docstring for the ufunc.
-
-    Notes
-    -----
-    This method allocates memory for new_docstring on
-    the heap. Technically this creates a memory leak, since this
-    memory will not be reclaimed until the end of the program
-    even if the ufunc itself is removed. However this will only
-    be a problem if the user is repeatedly creating ufuncs with
-    no documentation, adding documentation via add_newdoc_ufunc,
-    and then throwing away the ufunc.
     """)
 
 add_newdoc('numpy._core.multiarray', 'get_handler_name',

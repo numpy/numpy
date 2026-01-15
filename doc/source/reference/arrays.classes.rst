@@ -338,6 +338,66 @@ NumPy provides several hooks that classes can customize:
              <ufuncs-output-type>`, results will *not* be written to the object
              returned by :func:`__array__`. This practice will return ``TypeError``.
 
+   **Example**
+
+   Use ``__array__`` to create a diagonal array of fixed size and value:
+
+   >>> import numpy as np
+   >>> class DiagonalArray:
+   ...     def __init__(self, N, value):
+   ...         self._N = N
+   ...         self._i = value
+   ...     def __repr__(self):
+   ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
+   ...     def __array__(self, dtype=None, copy=None):
+   ...         if copy is False:
+   ...             raise ValueError(
+   ...                 "`copy=False` isn't supported. A copy is always created."
+   ...             )
+   ...         return self._i * np.eye(self._N, dtype=dtype)
+
+   Our custom array can be instantiated like:
+
+   >>> arr = DiagonalArray(5, 1)
+   >>> arr
+   DiagonalArray(N=5, value=1)
+
+   We can convert to a numpy array using :func:`numpy.array` or
+   :func:`numpy.asarray`, which will call its ``__array__`` method to obtain a
+   standard ``numpy.ndarray``.
+
+   >>> np.asarray(arr)
+   array([[1., 0., 0., 0., 0.],
+          [0., 1., 0., 0., 0.],
+          [0., 0., 1., 0., 0.],
+          [0., 0., 0., 1., 0.],
+          [0., 0., 0., 0., 1.]])
+
+   Using ``dtype`` should return an appropriate ndarray or raise an error:
+
+   >>> np.asarray(arr, dtype=np.float32)
+   array([[1., 0., 0., 0., 0.],
+          [0., 1., 0., 0., 0.],
+          [0., 0., 1., 0., 0.],
+          [0., 0., 0., 1., 0.],
+          [0., 0., 0., 0., 1.]], dtype=float32)
+
+   If we operate on ``arr`` with a numpy function, numpy will again use the
+   ``__array__`` interface to convert it to an array and then apply the function
+   in the usual way.
+
+   >>> np.multiply(arr, 2)
+   array([[2., 0., 0., 0., 0.],
+          [0., 2., 0., 0., 0.],
+          [0., 0., 2., 0., 0.],
+          [0., 0., 0., 2., 0.],
+          [0., 0., 0., 0., 2.]])
+
+   Notice that the return type is a standard ``numpy.ndarray``.
+
+   >>> type(np.multiply(arr, 2))
+   <class 'numpy.ndarray'>
+
 .. _matrix-objects:
 
 Matrix objects

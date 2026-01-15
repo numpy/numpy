@@ -4482,8 +4482,8 @@ class TestSubclass:
     def test_subclass_op(self):
 
         class simple(np.ndarray):
-            def __new__(subtype, shape):
-                self = np.ndarray.__new__(subtype, shape, dtype=object)
+            def __new__(cls, shape):
+                self = np.ndarray.__new__(cls, shape, dtype=object)
                 self.fill(0)
                 return self
 
@@ -4842,18 +4842,18 @@ def test_outer_bad_subclass():
         def __array_finalize__(self, obj):
             # The outer call reshapes to 3 dims, try to do a bad reshape.
             if self.ndim == 3:
-                self.shape = self.shape + (1,)
+                self._set_shape(self.shape + (1,))
 
     class BadArr2(np.ndarray):
         def __array_finalize__(self, obj):
             if isinstance(obj, BadArr2):
                 # outer inserts 1-sized dims. In that case disturb them.
                 if self.shape[-1] == 1:
-                    self.shape = self.shape[::-1]
+                    self._set_shape(self.shape[::-1])
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)
-        with assert_raises(TypeError) as a:
+        with pytest.raises(TypeError):
             # The first array gets reshaped (not the second one)
             np.add.outer(arr, [1, 2])
 
@@ -4941,16 +4941,6 @@ class TestAddDocstring:
         with assert_raises(RuntimeError):
             ncu.add_docstring(func, "different docstring")
 
-
-class TestAdd_newdoc_ufunc:
-    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
-    def test_ufunc_arg(self):
-        assert_raises(TypeError, ncu._add_newdoc_ufunc, 2, "blah")
-        assert_raises(ValueError, ncu._add_newdoc_ufunc, np.add, "blah")
-
-    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
-    def test_string_arg(self):
-        assert_raises(TypeError, ncu._add_newdoc_ufunc, np.add, 3)
 
 class TestHypotErrorMessages:
     def test_hypot_error_message_single_arg(self):

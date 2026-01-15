@@ -5,7 +5,6 @@ __all__ = ['finfo', 'iinfo']
 
 import math
 import types
-import warnings
 from functools import cached_property
 
 from numpy._utils import set_module
@@ -17,16 +16,14 @@ from ._multiarray_umath import _populate_finfo_constants
 def _fr0(a):
     """fix rank-0 --> rank-1"""
     if a.ndim == 0:
-        a = a.copy()
-        a.shape = (1,)
+        a = a.reshape((1,))
     return a
 
 
 def _fr1(a):
     """fix rank > 0 --> rank-0"""
     if a.size == 1:
-        a = a.copy()
-        a.shape = ()
+        a = a.reshape(())
     return a
 
 
@@ -176,21 +173,15 @@ class finfo:
     __class_getitem__ = classmethod(types.GenericAlias)
 
     def __new__(cls, dtype):
+        if dtype is None:
+            raise TypeError("dtype must not be None")
+
         try:
             obj = cls._finfo_cache.get(dtype)  # most common path
             if obj is not None:
                 return obj
         except TypeError:
             pass
-
-        if dtype is None:
-            # Deprecated in NumPy 1.25, 2023-01-16
-            warnings.warn(
-                "finfo() dtype cannot be None. This behavior will "
-                "raise an error in the future. (Deprecated in NumPy 1.25)",
-                DeprecationWarning,
-                stacklevel=2
-            )
 
         try:
             dtype = numeric.dtype(dtype)

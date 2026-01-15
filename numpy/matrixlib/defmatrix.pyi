@@ -30,12 +30,7 @@ type _ToIndex2 = tuple[_ToIndex1, _ToIndex1 | SupportsIndex] | tuple[_ToIndex1 |
 class matrix(np.ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: ClassVar[float] = 10.0  # pyright: ignore[reportIncompatibleMethodOverride]
 
-    def __new__(
-        subtype,  # pyright: ignore[reportSelfClsParameterName]
-        data: ArrayLike,
-        dtype: DTypeLike | None = None,
-        copy: bool = True,
-    ) -> _Matrix[Incomplete]: ...
+    def __new__(cls, data: ArrayLike, dtype: DTypeLike | None = None, copy: bool = True) -> _Matrix[Incomplete]: ...
 
     #
     @overload  # type: ignore[override]

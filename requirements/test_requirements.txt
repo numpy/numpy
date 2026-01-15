@@ -7,7 +7,7 @@ ninja; sys_platform != "emscripten"
 pytest-xdist
 pytest-timeout
 # For testing types
-mypy==1.19.0
+mypy==1.19.1
 # for optional f2py encoding detection
 charset-normalizer
 tzdata

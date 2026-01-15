@@ -1765,7 +1765,7 @@ class TestUfunc:
         # Not contiguous and not aligned
         a = np.empty((3 * 4 * 5 * 8 + 1,), dtype='i1')
         a = a[1:].view(dtype='f8')
-        a.shape = (3, 4, 5)
+        a = a.reshape((3, 4, 5))
         a = a[1:, 1:, 1:]
         yield a
 
@@ -2261,14 +2261,14 @@ class TestUfunc:
         np.add.at(arr, index, values)
         assert arr[0] == len(values)
 
-    @pytest.mark.parametrize("value", [
-        np.ones(1), np.ones(()), np.float64(1.), 1.])
-    def test_ufunc_at_scalar_value_fastpath(self, value):
-        arr = np.zeros(1000)
-        # index must be cast, which may be buffered in chunks:
-        index = np.repeat(np.arange(1000), 2)
-        np.add.at(arr, index, value)
-        assert_array_equal(arr, np.full_like(arr, 2 * value))
+    def test_ufunc_at_scalar_value_fastpath(self):
+        values = [np.ones(1), np.ones(()), np.float64(1.), 1.]
+        for value in values:
+            arr = np.zeros(1000)
+            # index must be cast, which may be buffered in chunks:
+            index = np.repeat(np.arange(1000), 2)
+            np.add.at(arr, index, value)
+            assert_array_equal(arr, np.full_like(arr, 2 * value))
 
     def test_ufunc_at_multiD(self):
         a = np.arange(9).reshape(3, 3)

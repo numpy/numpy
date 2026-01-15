@@ -1,3 +1,5 @@
+.. _cpu-build-options:
+
 *****************
 CPU Build Options
 *****************

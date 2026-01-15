@@ -18,6 +18,25 @@ is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function
 that takes a fixed number of specific inputs and produces a fixed number of
 specific outputs.
 
+There are also :ref:`generalized ufuncs <c-api.generalized-ufuncs>` which
+are functions over vectors (or arrays) instead of single-element scalars.
+For example, :func:`numpy.add` is a ufunc that operates element-by-element,
+while :func:`numpy.matmul` is a gufunc that operates on vectors/matrices::
+
+   >>> a = np.arange(6).reshape(3, 2)
+   >>> a
+   array([[0, 1],
+          [2, 3],
+          [4, 5]])
+   >>> np.add(a, a)  # element-wise addition
+   array([[ 0,  2],
+          [ 4,  6],
+          [ 8, 10]])
+   >>> np.matmul(a, a.T)  # matrix multiplication (3x2) @ (2x3) -> (3x3)
+   array([[ 1,  3,  5],
+          [ 3, 13, 23],
+          [ 5, 23, 41]])
+
 In NumPy, universal functions are instances of the
 :class:`numpy.ufunc` class. Many of the built-in functions are
 implemented in compiled C code. The basic ufuncs operate on scalars, but
@@ -35,11 +54,29 @@ One can also produce custom :class:`numpy.ufunc` instances using the
 Ufunc methods
 =============
 
-All ufuncs have four methods. They can be found at
-:ref:`ufuncs.methods`. However, these methods only make sense on scalar
-ufuncs that take two input arguments and return one output argument.
+All ufuncs have 5 methods. 4 reduce-like methods
+(:meth:`~numpy.ufunc.reduce`, :meth:`~numpy.ufunc.accumulate`,
+:meth:`~numpy.ufunc.reduceat`, :meth:`~numpy.ufunc.outer`) and one
+for inplace operations (:meth:`~numpy.ufunc.at`).
+See :ref:`ufuncs.methods` for more. However, these methods only make sense on 
+ufuncs that take two input arguments and return one output argument (so-called
+"scalar" ufuncs since the inner loop operates on a single scalar value).
 Attempting to call these methods on other ufuncs will cause a
 :exc:`ValueError`.
+
+For example, :func:`numpy.add` takes two inputs and returns one output,
+so its methods work::
+
+   >>> np.add.reduce([1, 2, 3])
+   6
+
+But :func:`numpy.divmod` returns two outputs (quotient and remainder),
+so calling its methods raises an error::
+
+   >>> np.divmod.reduce([1, 2, 3])
+   Traceback (most recent call last):
+       ...
+   ValueError: reduce only supported for functions returning a single value
 
 The reduce-like methods all take an *axis* keyword, a *dtype*
 keyword, and an *out* keyword, and the arrays must all have dimension >= 1.

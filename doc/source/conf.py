@@ -114,7 +114,7 @@ for ext, warn in skippable_extensions:
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # General substitutions.
 project = 'NumPy'

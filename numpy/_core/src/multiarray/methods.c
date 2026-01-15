@@ -25,6 +25,7 @@
 #include "dtypemeta.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
+#include "getset.h"
 #include "shape.h"
 #include "strfuncs.h"
 #include "array_assign.h"
@@ -2875,6 +2876,16 @@ array_class_getitem(PyObject *cls, PyObject *args)
     return Py_GenericAlias(cls, args);
 }
 
+static PyObject* array__set_shape(PyObject *self, PyObject *args)
+{
+    int r = array_shape_set_internal((PyArrayObject *)self, args);
+
+    if (r < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -3099,6 +3110,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         (PyCFunction)array_dlpack_device,
         METH_NOARGS, NULL},
 
+    // For deprecation of ndarray setters
+    {"_set_shape",
+        (PyCFunction)array__set_shape,
+        METH_O, NULL},
     // For Array API compatibility
     {"__array_namespace__",
         (PyCFunction)array_array_namespace,

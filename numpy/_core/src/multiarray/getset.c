@@ -49,17 +49,13 @@ array_shape_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 }
 
 
-static int
-array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
+NPY_NO_EXPORT int
+array_shape_set_internal(PyArrayObject *self, PyObject *val)
 {
     int nd;
     PyArrayObject *ret;
+    assert(val);
 
-    if (val == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array shape");
-        return -1;
-    }
     /* Assumes C-order */
     ret = (PyArrayObject *)PyArray_Reshape(self, val);
     if (ret == NULL) {
@@ -106,6 +102,25 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
     return 0;
 }
 
+static int
+array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
+{
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array shape");
+        return -1;
+    }
+
+    /* Deprecated NumPy 2.5, 2026-01-05 */
+    if (DEPRECATE("Setting the shape on a NumPy array has been deprecated"
+                  " in NumPy 2.5.\nAs an alternative, you can create a new"
+                  " view using np.reshape (with copy=False if needed)."
+                 ) < 0 ) {
+            return -1;
+    }
+
+    return array_shape_set_internal(self, val);
+}
 
 static PyObject *
 array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))

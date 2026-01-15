@@ -103,9 +103,7 @@ except importlib.metadata.PackageNotFoundError:
 else:
     IS_INSTALLED = True
     try:
-        if sys.version_info >= (3, 13):
-            IS_EDITABLE = np_dist.origin.dir_info.editable
-        else:
+        if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
             import json  # noqa: E401
             import types
@@ -115,6 +113,8 @@ else:
                 object_hook=lambda data: types.SimpleNamespace(**data),
             )
             IS_EDITABLE = origin.dir_info.editable
+        else:
+            IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
@@ -1139,6 +1139,8 @@ def assert_array_equal(actual, desired, err_msg="", verbose=True, *, strict=Fals
 
     Examples
     --------
+    >>> import numpy as np
+
     The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
@@ -1797,7 +1799,7 @@ def assert_allclose(
         Array desired.
     rtol : float, optional
         Relative tolerance.
-    atol : float, optional
+    atol : float | np.timedelta64, optional
         Absolute tolerance.
     equal_nan : bool, optional.
         If True, NaNs will compare equal.
@@ -1875,7 +1877,11 @@ def assert_allclose(
         return np._core.numeric.isclose(x, y, rtol=rtol, atol=atol, equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    header = f"Not equal to tolerance rtol={rtol:g}, atol={atol:g}"
+    if isinstance(atol, np.timedelta64):
+        atol_str = str(atol)
+    else:
+        atol_str = f"{atol:g}"
+    header = f"Not equal to tolerance rtol={rtol:g}, atol={atol_str}"
     assert_array_compare(
         compare,
         actual,
