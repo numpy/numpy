@@ -76,6 +76,21 @@ numpy.subdirectory = "pixi-packages/tsan-freethreading"
 
 - Keep host dependency requirements up to date
 
+## Troubleshooting
+
+TSan builds may crash on Linux with
+```
+FATAL: ThreadSanitizer: unexpected memory mapping 0x7977bd072000-0x7977bd500000
+```
+To fix it, try reducing `mmap_rnd_bits`:
+
+```bash
+$ sudo sysctl vm.mmap_rnd_bits
+vm.mmap_rnd_bits = 32  # too high for TSan
+$ sudo sysctl vm.mmap_rnd_bits=28  # reduce it
+vm.mmap_rnd_bits = 28
+```
+
 ## Opportunities for future improvement
 
 - More package variants (such as UBSan)
