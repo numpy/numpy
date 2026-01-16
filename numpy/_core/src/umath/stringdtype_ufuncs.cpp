@@ -2435,7 +2435,8 @@ string_multiply_promoter(PyObject *ufunc_obj,
             tmp = op_dtypes[i];
         }
         else {
-            tmp = &PyArray_StringDType;
+            // not set and not integer
+            return -1;
         }
         Py_INCREF(tmp);
         new_op_dtypes[i] = tmp;
@@ -2539,6 +2540,38 @@ add_promoter(PyObject *numpy, const char *ufunc_name,
 
     Py_DECREF(promoter_capsule);
     Py_DECREF(DType_tuple);
+    Py_DECREF(ufunc);
+
+    return 0;
+}
+
+int
+add_dtype_promoter(PyObject *numpy, const char *ufunc_name,
+                   PyArrayMethod_PromoterFunction *promoter_impl)
+{
+    PyObject *ufunc = PyObject_GetAttrString((PyObject *)numpy, ufunc_name);
+    if (ufunc == NULL) {
+        return -1;
+    }
+    PyObject *DType = (PyObject *)&PyArray_StringDType;
+    PyObject *promoter_capsule = PyCapsule_New((void *)promoter_impl,
+                                               "numpy._ufunc_promoter", NULL);
+
+    if (promoter_capsule == NULL) {
+        Py_DECREF(ufunc);
+        Py_DECREF(DType);
+        return -1;
+    }
+
+    if (PyUFunc_AddPromoter(ufunc, DType, promoter_capsule) < 0) {
+        Py_DECREF(promoter_capsule);
+        Py_DECREF(DType);
+        Py_DECREF(ufunc);
+        return -1;
+    }
+
+    Py_DECREF(promoter_capsule);
+    Py_DECREF(DType);
     Py_DECREF(ufunc);
 
     return 0;
@@ -2760,22 +2793,7 @@ init_stringdtype_ufuncs(PyObject *umath)
     INIT_MULTIPLY(UInt64, uint64);
 
     // all other integer dtypes are handled with a generic promoter
-
-    PyArray_DTypeMeta *rdtypes[] = {
-        &PyArray_StringDType,
-        &PyArray_IntAbstractDType,
-        &PyArray_StringDType};
-
-    if (add_promoter(umath, "multiply", rdtypes, 3, string_multiply_promoter) < 0) {
-        return -1;
-    }
-
-    PyArray_DTypeMeta *ldtypes[] = {
-        &PyArray_IntAbstractDType,
-        &PyArray_StringDType,
-        &PyArray_StringDType};
-
-    if (add_promoter(umath, "multiply", ldtypes, 3, string_multiply_promoter) < 0) {
+    if (add_dtype_promoter(umath, "multiply", string_multiply_promoter) < 0) {
         return -1;
     }
 
