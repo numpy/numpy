@@ -104,7 +104,8 @@ identity_list_hash(PyObject *const *v, int len)
 
 
 static inline PyObject **
-find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key)
+find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key,
+                  PyObject **pvalue)
 {
     Py_hash_t hash = identity_list_hash(key, key_len);
     npy_uintp perturb = (npy_uintp)hash;
@@ -113,8 +114,11 @@ find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key)
 
     while (1) {
         PyObject **item = &(buckets->array[bucket * (key_len + 1)]);
-        PyObject *value = FT_ATOMIC_LOAD_PTR_ACQUIRE(item[0]);
-        if (value == NULL) {
+        PyObject *val = FT_ATOMIC_LOAD_PTR_ACQUIRE(item[0]);
+        if (pvalue != NULL) {
+            *pvalue = val;
+        }
+        if (val == NULL) {
             /* The item is not in the cache; return the empty bucket */
             return item;
         }
@@ -130,10 +134,10 @@ find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key)
 
 
 static inline PyObject **
-find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
+find_item(PyArrayIdentityHash const *tb, PyObject *const *key, PyObject **pvalue)
 {
     struct buckets *buckets = FT_ATOMIC_LOAD_PTR_ACQUIRE(tb->buckets);
-    return find_item_buckets(buckets, tb->key_len, key);
+    return find_item_buckets(buckets, tb->key_len, key, pvalue);
 }
 
 
@@ -196,28 +200,16 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
 #endif
     struct buckets *old_buckets = tb->buckets;
     int key_len = tb->key_len;
-    npy_intp new_size, prev_size = old_buckets->size;
+    npy_intp prev_size = old_buckets->size;
     assert(prev_size > 0);
 
-    if ((old_buckets->nelem + 1) * 2 > prev_size) {
-        /* Double in size */
-        new_size = prev_size * 2;
-    }
-    else {
-        new_size = prev_size;
-        while ((old_buckets->nelem + 8) * 2 < new_size / 2) {
-            /*
-             * Should possibly be improved.  However, we assume that we
-             * almost never shrink.  Still if we do, do not shrink as much
-             * as possible to avoid growing right away.
-             */
-            new_size /= 2;
-        }
-        assert(new_size >= 4);
-    }
-    if (new_size == prev_size) {
+    if ((old_buckets->nelem + 1) * 2 <= old_buckets->size) {
+        /* No resize necessary if load factor is not more than 0.5 */
         return 0;
     }
+
+    /* Double in size */
+    npy_intp new_size = old_buckets->size * 2;
 
     npy_intp alloc_size;
     if (npy_mul_sizes_with_overflow(&alloc_size, new_size, key_len + 1)) {
@@ -234,7 +226,7 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     for (npy_intp i = 0; i < prev_size; i++) {
         PyObject **item = &old_buckets->array[i * (key_len + 1)];
         if (item[0] != NULL) {
-            PyObject **tb_item = find_item_buckets(new_buckets, key_len, item + 1);
+            PyObject **tb_item = find_item_buckets(new_buckets, key_len, item + 1, NULL);
             memcpy(tb_item+1, item+1, key_len * sizeof(PyObject *));
             new_buckets->nelem++;
             tb_item[0] = item[0];
@@ -275,7 +267,7 @@ PyArrayIdentityHash_SetItemDefaultLockHeld(PyArrayIdentityHash *tb,
         return -1;
     }
 
-    PyObject **tb_item = find_item(tb, key);
+    PyObject **tb_item = find_item(tb, key, NULL);
     if (tb_item[0] == NULL) {
         memcpy(tb_item+1, key, tb->key_len * sizeof(PyObject *));
         tb->buckets->nelem++;
@@ -306,6 +298,7 @@ PyArrayIdentityHash_SetItemDefault(PyArrayIdentityHash *tb,
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
-    PyObject **tb_item = find_item(tb, key);
-    return FT_ATOMIC_LOAD_PTR_ACQUIRE(tb_item[0]);
+    PyObject *value = NULL;
+    find_item(tb, key, &value);
+    return value;
 }
