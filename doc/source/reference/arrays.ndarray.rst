@@ -641,5 +641,4 @@ Nested patterns work too, matching inner dimensions::
    ...         print(f"a={a}, b={b}, c={c}, d={d}")
    a=1, b=2, c=3, d=4
 
-This is enabled by the ``Py_TPFLAGS_SEQUENCE`` flag on the array type.
 All ndarray subclasses inherit this behavior.
