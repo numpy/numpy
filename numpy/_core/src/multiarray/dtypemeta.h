@@ -73,6 +73,12 @@ typedef struct {
      */
     PyArrayDTypeMeta_GetConstant *get_constant;
     /*
+     * Function to fetch the sort comparison function for this DType.
+     * Can be NULL. If defined, it is used to implement sort and argsort
+     * operations for arrays of this DType.
+     */
+    PyArrayDTypeMeta_SortCompare *sort_compare;
+    /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
@@ -100,7 +106,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 12
+#define NPY_NUM_DTYPE_SLOTS 13
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
