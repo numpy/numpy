@@ -290,7 +290,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False,
         mask differences are ignored for backward compatibility. Only applies
         when comparing masked arrays.
 
-        .. versionadded:: 2.2.0
+        .. versionadded:: 2.5.0
 
     Raises
     ------
@@ -1091,6 +1091,7 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
         (default), mask differences are ignored and masked entries are filled
         before comparison.
 
+        .. versionadded:: 2.5.0
     Raises
     ------
     AssertionError
