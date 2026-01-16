@@ -2759,8 +2759,5 @@ def test_genfromtxt_ndmin_regression():
 
     import numpy as np
 
-   
     data = np.genfromtxt(BytesIO(b"1 2 3"), ndmin=2)
     assert data.ndim == 2
-    
-    
