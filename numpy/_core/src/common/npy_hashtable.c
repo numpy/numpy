@@ -200,18 +200,16 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
 #endif
     struct buckets *old_buckets = tb->buckets;
     int key_len = tb->key_len;
-    npy_intp new_size = 0, prev_size = old_buckets->size;
+    npy_intp prev_size = old_buckets->size;
     assert(prev_size > 0);
 
-    if ((old_buckets->nelem + 1) * 2 > prev_size) {
-        /* Double in size */
-        new_size = prev_size * 2;
-    }
-
-    if (new_size == 0) {
-        /* No resize necessary */
+    if ((old_buckets->nelem + 1) * 2 <= old_buckets->size) {
+        /* No resize necessary if load factor is not more than 0.5 */
         return 0;
     }
+
+    /* Double in size */
+    npy_intp new_size = old_buckets->size * 2;
 
     npy_intp alloc_size;
     if (npy_mul_sizes_with_overflow(&alloc_size, new_size, key_len + 1)) {
