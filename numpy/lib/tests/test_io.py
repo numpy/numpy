@@ -2753,9 +2753,9 @@ def test_savez_nopickle():
         with pytest.raises(ValueError, match="Object arrays cannot be saved when.*"):
             np.savez_compressed(tmp, obj_array, allow_pickle=False)
 def test_genfromtxt_ndmin_regression():
-    import numpy as np
-    from io import BytesIO
-    # Regression test for gh-25662
-    # Ensure ndmin argument is respected
+    from io import BytesIO          
+    import numpy as np              
+    
     data = np.genfromtxt(BytesIO(b"1 2 3"), ndmin=2)
     assert data.ndim == 2
+    
