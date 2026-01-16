@@ -105,7 +105,7 @@ identity_list_hash(PyObject *const *v, int len)
 
 static inline PyObject **
 find_item_buckets(struct buckets *buckets, int key_len, PyObject *const *key,
-                PyObject **pvalue)
+                  PyObject **pvalue)
 {
     Py_hash_t hash = identity_list_hash(key, key_len);
     npy_uintp perturb = (npy_uintp)hash;
