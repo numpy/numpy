@@ -342,3 +342,17 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
     def test_extremem_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
+
+
+class TestTakeOutDtype(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2026-01
+    message = "Implicit casting of output to a different kind."
+
+    def test_out_dtype_deprecated(self):
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        diffrent_dtype_out = np.zeros_like(indices, dtype=np.uint32)
+
+        self.assert_deprecated(
+            np.take, args=(a, indices), kwargs={"out": diffrent_dtype_out}
+        )
