@@ -1247,14 +1247,7 @@ def eigvals(a):
                   under='ignore'):
         w = _umath_linalg.eigvals(a, signature=signature)
 
-    if not isComplexType(t):
-        if all(w.imag == 0):
-            w = w.real
-            result_t = _realType(result_t)
-        else:
-            result_t = _complexType(result_t)
-
-    return w.astype(result_t, copy=False)
+    return w.astype(_complexType(result_t), copy=False)
 
 
 def _eigvalsh_dispatcher(a, UPLO=None):
@@ -1500,15 +1493,9 @@ def eig(a):
                   under='ignore'):
         w, vt = _umath_linalg.eig(a, signature=signature)
 
-    if not isComplexType(t) and all(w.imag == 0.0):
-        w = w.real
-        vt = vt.real
-        result_t = _realType(result_t)
-    else:
-        result_t = _complexType(result_t)
-
-    vt = vt.astype(result_t, copy=False)
-    return EigResult(w.astype(result_t, copy=False), wrap(vt))
+    w = w.astype(_complexType(result_t), copy=False)
+    vt = vt.astype(_complexType(result_t), copy=False)
+    return EigResult(w, wrap(vt))
 
 
 @array_function_dispatch(_eigvalsh_dispatcher)
