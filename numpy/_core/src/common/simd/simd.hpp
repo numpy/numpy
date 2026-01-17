@@ -1,6 +1,5 @@
 #ifndef NUMPY__CORE_SRC_COMMON_SIMD_SIMD_HPP_
 #define NUMPY__CORE_SRC_COMMON_SIMD_SIMD_HPP_
-
 /**
  * This header provides a thin wrapper over Google's Highway SIMD library.
  *
@@ -19,7 +18,9 @@
  */
 #ifndef NPY_DISABLE_OPTIMIZATION
 #include <hwy/highway.h>
-
+#include <npsr/npsr.h>
+#include <type_traits>
+#include <limits>
 /**
  * We avoid using Highway scalar operations for the following reasons:
  *
@@ -67,6 +68,48 @@ namespace hn = hwy::HWY_NAMESPACE;
 // internaly used by the template header
 template <typename TLane>
 using _Tag = hn::ScalableTag<TLane>;
+
+/// NumPy SIMD Routines namespace alias
+/// npsr is tag free by design so we only include it within main namespace (np::simd)
+namespace sr = npsr::HWY_NAMESPACE;
+
+/// Default precision configrations for NumPy SIMD Routines
+// TODO: Allow user to configure the default precision at build time.
+namespace detail {
+// `npsr::Precise` is a meta-RAII class responsible for managing the floating-point environment at runtime
+// and holding compile-time configurations for intrinsic floating-point behavior.
+// Default configurations are set to the highest IEEE compliance intent.
+// For more information, see:
+// https://github.com/numpy/numpy-simd-routines/blob/1acd14571b9f58072d1f7f17886945000d78b56a/npsr/precise.h#L93
+// However, when float64 SIMD is not available or disabled, we define a dummy type to avoid
+// clearing floating-point exceptions within its destructor.
+struct PresiceDummy {};
+
+template <typename T>
+struct PreciseByType {};
+template <>
+struct PreciseByType<float> {
+    using Type = decltype(npsr::Precise{npsr::kLowAccuracy});
+};
+template <>
+struct PreciseByType<double> {
+#if NPY_HWY_F64
+    using Type = decltype(npsr::Precise{});
+#else
+    // If float64 SIMD isn’t available, use a dummy type.
+    // The scalar path will run, but `Type` must still be defined.
+    // The dummy is never passed; it only satisfies interfaces.
+    // This also avoids spurious FP exceptions during RAII.
+    using Type = PresiceDummy;
+#endif
+};
+} // namespace detail
+
+/// `npsr::Precise<...>` for the given type `T`.
+/// If `T` is `float`, it uses the low-accuracy configuration by default.
+/// If `T` is `double`, it uses the high-accuracy configuration by default(if float64 SIMD is available).
+template <typename T>
+using Precise = typename detail::PreciseByType<T>::Type;
 #endif
 #include "simd.inc.hpp"
 }  // namespace simd
