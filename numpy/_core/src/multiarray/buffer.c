@@ -793,8 +793,10 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
 
     /* Fill in information (and add it to _buffer_info if necessary) */
+    Py_BEGIN_CRITICAL_SECTION(self);
     info = _buffer_get_info(
             &((PyArrayObject_fields *)self)->_buffer_info, obj, flags);
+    Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         goto fail;
     }
