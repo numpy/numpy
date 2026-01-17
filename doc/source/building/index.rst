@@ -140,15 +140,13 @@ your system.
   .. tab-item:: Windows
     :sync: windows
 
-    On Windows, the use of a Fortran compiler is more tricky than on other
-    platforms, because MSVC does not support Fortran, and gfortran and MSVC
-    can't be used together. If you don't need to run the ``f2py`` tests, simply
-    using MSVC is easiest. Otherwise, you will need one of these sets of
-    compilers:
+    .. note::
 
-    1. MSVC + Intel Fortran (``ifort``)
-    2. Intel compilers (``icc``, ``ifort``)
-    3. Mingw-w64 compilers (``gcc``, ``g++``, ``gfortran``)
+   Building NumPy on Windows with a Fortran compiler requires special care.
+   Detailed and up-to-date instructions are maintained in the F2PY
+   documentation:
+
+   https://numpy.org/doc/stable/f2py/windows.html
 
     Compared to macOS and Linux, building NumPy on Windows is a little more
     difficult, due to the need to set up these compilers. It is not possible to
@@ -165,6 +163,7 @@ your system.
     >= 10.0.22621.0.
 
     .. tab-set::
+    
 
       .. tab-item:: MSVC
 
