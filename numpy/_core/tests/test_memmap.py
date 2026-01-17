@@ -1,5 +1,6 @@
 import mmap
 import os
+import pickle
 import sys
 import warnings
 from pathlib import Path
@@ -245,3 +246,33 @@ class TestMemmap:
         memmap(self.tmpfp, shape=self.shape, mode='w+')
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
+
+    def test_pickle(self, tmp_path):
+        tmpname = tmp_path / 'mmap'
+        shape = (100, 100)
+        dtype = 'float32'
+        
+        # Create and populate memmap
+        fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape)
+        fp[:] = arange(10000, dtype=dtype).reshape(shape)
+        if sys.platform != 'emscripten':
+            fp.flush()
+        
+        # Reopen for reading
+        fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape)
+        
+        # Pickle and unpickle
+        pickled = pickle.dumps(fp)
+        fp_restored = pickle.loads(pickled)
+        
+        # Verify it's still a memmap with correct data
+        assert_(isinstance(fp_restored, memmap))
+        assert_array_equal(fp, fp_restored)
+        assert_equal(fp_restored.mode, 'r')
+        
+        # Verify pickle is small (metadata only, not data)
+        # 100x100 float32 is 40KB. Metadata should be much smaller.
+        assert len(pickled) < 1024
+        
+        del fp
+        del fp_restored

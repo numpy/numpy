@@ -360,3 +360,35 @@ class memmap(ndarray):
         if type(res) is memmap and res._mmap is None:
             return res.view(type=ndarray)
         return res
+
+    def __reduce__(self):
+        """
+        Pickle support for memmap objects.
+        
+        When pickling (e.g., for multiprocessing), instead of serializing
+        the array data, we serialize the metadata needed to recreate the
+        memory-mapped file in the unpickling process. This allows for
+        efficient sharing of large arrays across processes without copying.
+        """
+        if self.filename is None:
+            # Fall back to ndarray pickling for memmaps without a filename
+            return super().__reduce__()
+        
+        # Return the class and arguments needed to reconstruct the memmap
+        return (
+            self.__class__,
+            (
+                self.filename,
+                self.dtype,
+                self.mode,
+                self.offset,
+                self.shape,
+                self._get_order(),
+            )
+        )
+
+    def _get_order(self):
+        """Helper to determine array order for pickling."""
+        if self.flags.f_contiguous and not self.flags.c_contiguous:
+            return 'F'
+        return 'C'
