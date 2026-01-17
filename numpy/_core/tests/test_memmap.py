@@ -245,3 +245,51 @@ class TestMemmap:
         memmap(self.tmpfp, shape=self.shape, mode='w+')
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_1d(self):
+        with NamedTemporaryFile() as f:
+            arr = memmap(f, dtype='int64', mode='w+', shape=(3,))
+            arr[:] = [1, 2, 3]
+            match arr:
+                case [a, b, c]:
+                    assert a == 1
+                    assert b == 2
+                    assert c == 3
+                case _:
+                    raise AssertionError("1D memmap did not match sequence pattern")
+
+    def test_match_sequence_pattern_2d(self):
+        with NamedTemporaryFile() as f:
+            arr = memmap(f, dtype='int64', mode='w+', shape=(2, 2))
+            arr[:] = [[1, 2], [3, 4]]
+            match arr:
+                case [row1, row2]:
+                    assert_array_equal(row1, [1, 2])
+                    assert_array_equal(row2, [3, 4])
+                case _:
+                    raise AssertionError("2D memmap did not match sequence pattern")
+
+    def test_match_sequence_pattern_3d(self):
+        with NamedTemporaryFile() as f:
+            arr = memmap(f, dtype='int64', mode='w+', shape=(2, 2, 2))
+            arr[:] = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+            # outer matching
+            match arr:
+                case [plane1, plane2]:
+                    assert_array_equal(plane1, [[1, 2], [3, 4]])
+                    assert_array_equal(plane2, [[5, 6], [7, 8]])
+                case _:
+                    raise AssertionError("3D memmap did not match sequence pattern")
+            # inner matching
+            match arr:
+                case [[row1, row2], [row3, row4]]:
+                    assert_array_equal(row1, [1, 2])
+                    assert_array_equal(row2, [3, 4])
+                    assert_array_equal(row3, [5, 6])
+                    assert_array_equal(row4, [7, 8])
+                case _:
+                    raise AssertionError("3D memmap did not match sequence pattern")

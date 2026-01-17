@@ -1232,7 +1232,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_as_mapping = &array_as_mapping,
     .tp_str = (reprfunc)array_str,
     .tp_as_buffer = &array_as_buffer,
-    .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
+    .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_SEQUENCE),
 
     .tp_richcompare = (richcmpfunc)array_richcompare,
     .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
