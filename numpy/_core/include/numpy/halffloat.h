@@ -4,6 +4,13 @@
 #include <Python.h>
 #include <numpy/npy_math.h>
 
+/*
+ * Deprecation warning for downstream users.
+ * halffloat.h functions have been replaced by numpy/float16.h, a
+ * header only implmentation that does not require linking
+ * against the ``npymath`` static library.
+*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
