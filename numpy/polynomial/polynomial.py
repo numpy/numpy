@@ -747,11 +747,25 @@ def polyval(x, c, tensor=True):
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
+
+    # Convert lists/tuples to arrays, leave array-likes and objects untouched
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
-    if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,) * x.ndim)
 
+    # Safely check for array-like objects exposing .ndim
+    nd = getattr(x, "ndim", -1)
+
+    # Only reshape for tensor=True (outer-product evaluation)
+    # Prevents double-reshaping inside polyval2d/polyval3d
+    if tensor and nd > 0 and c.ndim == 1:
+        c = c.reshape(c.shape + (1,) * nd)
+    # Handle tensor=False for multi-dimensional coefficient arrays
+    # (preserves Array API consistency and per-column evaluation)
+    elif not tensor and c.ndim > 1:
+        return np.array([
+            polyval(x, c[:, i], tensor=False)
+            for i in range(c.shape[1])
+        ])
     c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
         c0 = c[-i] + c0 * x
