@@ -186,6 +186,7 @@ if HAVE_SCPDT:
                 "Arrays of 2-dimensional vectors",   # matlib.cross
                 "NumPy warning suppression and assertion utilities are deprecated.",
                 "numpy.fix is deprecated",  # fix -> trunc
+                "The chararray class is deprecated",  # char.chararray
         ]
         msg = "|".join(msgs)
 

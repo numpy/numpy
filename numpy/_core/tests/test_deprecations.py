@@ -206,6 +206,11 @@ class TestRemovedGlobals:
             getattr(np, name)
 
 
+class TestCharArray(_DeprecationTestCase):
+    def test_deprecated_chararray(self):
+        self.assert_deprecated(lambda: np.char.chararray)
+
+
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
     @pytest.mark.parametrize("dtype_code", ["a", "a10"])
     def test_a_dtype_alias(self, dtype_code: str):

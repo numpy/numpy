@@ -1,6 +1,6 @@
 from collections.abc import Buffer
 from typing import Any, Literal as L, Self, SupportsIndex, SupportsInt, overload
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, deprecated
 
 import numpy as np
 from numpy import _OrderKACF, bytes_, dtype, int_, ndarray, object_, str_
@@ -78,7 +78,7 @@ __all__ = [
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], default=dtype, covariant=True)
 
-type _CharArray[ScalarT: np.character] = chararray[_AnyShape, dtype[ScalarT]]
+type _CharArray[ScalarT: np.character] = chararray[_AnyShape, dtype[ScalarT]]  # type: ignore[deprecated]
 
 type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
 type _StringDTypeOrUnicodeArray = _StringDTypeArray | NDArray[np.str_]
@@ -86,6 +86,10 @@ type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 
 ###
 
+@deprecated(
+    "The chararray class is deprecated and will be removed in a future release. "
+    "Use an ndarray with a string or bytes dtype instead."
+)
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload
     def __new__(

@@ -1,4 +1,4 @@
-from numpy._core.defchararray import (
+from numpy._core.defchararray import (  # type: ignore[deprecated]
     add,
     array,
     asarray,
