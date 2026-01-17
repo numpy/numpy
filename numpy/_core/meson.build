@@ -440,7 +440,13 @@ endforeach
 # as well as https://github.com/mesonbuild/meson/issues/11068
 longdouble_format = meson.get_external_property('longdouble_format', 'UNKNOWN')
 if longdouble_format == 'UNKNOWN'
-  longdouble_format = meson.get_compiler('c').run(
+  # We can't programmatically check iOS; but we do know what format it uses.
+  # On iOS, long double is identical to the double type:
+  # https://developer.apple.com/documentation/xcode/writing-arm64-code-for-apple-platforms#Handle-data-types-and-data-alignment-properly
+  if host_machine.system() == 'ios'
+    longdouble_format = 'IEEE_DOUBLE_LE'
+  else
+    longdouble_format = meson.get_compiler('c').run(
 '''
 #include <stdio.h>
 #include <string.h>
@@ -520,6 +526,7 @@ int main(void) {
   }
 }
   ''').stdout()
+  endif
 endif
 if longdouble_format == 'UNKNOWN' or longdouble_format == 'UNDEFINED'
   error('Unknown long double format of size: ' + cc.sizeof('long double').to_string())
