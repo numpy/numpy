@@ -1,5 +1,10 @@
 import concurrent.futures
 import threading
+import inspect
+import random
+import os
+import subprocess
+import sys
 
 import pytest
 
@@ -375,3 +380,70 @@ def test_arg_locking(kernel, outcome):
         finally:
             if len(tasks) < 5:
                 b.abort()
+
+def test_buffer_protocol_tsan_race():
+    """
+    Tests for race conditions in the buffer protocol.
+    Expects TSAN to detect races when multiple threads access the same array.
+    - Done in a subprocess as TSAN explicitly exits with 66 regardless of pytest, failing the suite
+    - Race condition happens when python code crosses into C code
+    - Doesn't (usually) happen locally, only under TSAN, which CI has set up (or if you're built for TSAN locally)
+    """
+    code = """
+import numpy as np
+import threading
+import random
+import inspect
+
+arr = np.array([1, 2, 3, 4, 5])
+flags = [inspect.BufferFlags.STRIDED, inspect.BufferFlags.READ]
+barrier = threading.Barrier(4)
+
+def func():
+    barrier.wait()
+    arr.__buffer__(random.choice(flags))
+
+threads = [threading.Thread(target=func) for _ in range(4)]
+for t in threads:
+    t.start()
+
+for t in threads:
+    t.join()
+"""
+    
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        capture_output=True,
+        text=True
+    )
+    
+    # Print any output for debugging
+    if result.stderr:
+        print("\n" + "="*70)
+        print("Subprocess stderr:")
+        print("="*70)
+        print(result.stderr)
+        print("="*70)
+    
+    # Check if TSAN is enabled which causes the race condition
+    has_tsan = 'TSAN_OPTIONS' in os.environ
+    
+    # Check if TSAN detected the race or tries to exit with code 66
+    tsan_detected = (
+        'ThreadSanitizer: data race' in result.stderr or
+        result.returncode == 66
+    )
+    
+    # If we have TSAN, we expect it to detect the race condition
+    if has_tsan:
+        if tsan_detected:
+            pytest.xfail("TSAN detected expected race condition in _buffer_get_info")
+        else:
+            pytest.fail("Expected TSAN to detect race condition, but it didn't")
+
+    # Running locally without TSAN, we won't get a race condition- but we sanity check to ensure
+    # the subprocess completes successfully as a sanity check, so XFAIL isn't a false negative
+    else:
+        if result.returncode != 0 and not tsan_detected:
+            pytest.fail(f"Subprocess failed with code {result.returncode}: {result.stderr}")
+        # Pass, the subprocess completes without errors/crashing

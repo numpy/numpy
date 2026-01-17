@@ -8,7 +8,6 @@ on:
     branches:
       - main
       - maintenance/**
-      - add-buffer-test
     paths-ignore:
       - '**.pyi'
       - '**.md'
@@ -29,7 +28,7 @@ permissions:
 jobs:
   clang_ASAN_UBSAN:
     # To enable this workflow on a fork, comment out:
-    #if: github.repository == 'numpy/numpy'
+    if: github.repository == 'numpy/numpy'
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -78,10 +77,9 @@ jobs:
         ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1 \
         UBSAN_OPTIONS=halt_on_error=1:suppressions=${GITHUB_WORKSPACE}/tools/ci/ubsan_suppressions_arm64.txt \
         python -m spin test -- -k "not test_casting_floatingpoint_errors" -v -s --timeout=600 --durations=10
-
   clang_TSAN:
     # To enable this workflow on a fork, comment out:
-    #if: github.repository == 'numpy/numpy'
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container:
         image: ghcr.io/nascheme/numpy-tsan:3.14t
