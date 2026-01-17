@@ -262,43 +262,164 @@ def test_iter_best_order_multi_index_3d():
     a = arange(12)
     # 3D C-order
     i = nditer(a.reshape(2, 3, 2), ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1),
-                             (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1), (1, 2, 0), (1, 2, 1)])
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (0, 0, 0),
+            (0, 0, 1),
+            (0, 1, 0),
+            (0, 1, 1),
+            (0, 2, 0),
+            (0, 2, 1),
+            (1, 0, 0),
+            (1, 0, 1),
+            (1, 1, 0),
+            (1, 1, 1),
+            (1, 2, 0),
+            (1, 2, 1),
+        ],
+    )
     # 3D Fortran-order
     i = nditer(a.reshape(2, 3, 2).copy(order='F'), ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(0, 0, 0), (1, 0, 0), (0, 1, 0), (1, 1, 0), (0, 2, 0), (1, 2, 0),
-                             (0, 0, 1), (1, 0, 1), (0, 1, 1), (1, 1, 1), (0, 2, 1), (1, 2, 1)])
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (0, 0, 0),
+            (1, 0, 0),
+            (0, 1, 0),
+            (1, 1, 0),
+            (0, 2, 0),
+            (1, 2, 0),
+            (0, 0, 1),
+            (1, 0, 1),
+            (0, 1, 1),
+            (1, 1, 1),
+            (0, 2, 1),
+            (1, 2, 1),
+        ],
+    )
     # 3D reversed C-order
     i = nditer(a.reshape(2, 3, 2)[::-1], ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1), (1, 2, 0), (1, 2, 1),
-                             (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (0, 2, 0), (0, 2, 1)])
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (1, 0, 0),
+            (1, 0, 1),
+            (1, 1, 0),
+            (1, 1, 1),
+            (1, 2, 0),
+            (1, 2, 1),
+            (0, 0, 0),
+            (0, 0, 1),
+            (0, 1, 0),
+            (0, 1, 1),
+            (0, 2, 0),
+            (0, 2, 1),
+        ],
+    )
     i = nditer(a.reshape(2, 3, 2)[:, ::-1], ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(0, 2, 0), (0, 2, 1), (0, 1, 0), (0, 1, 1), (0, 0, 0), (0, 0, 1),
-                             (1, 2, 0), (1, 2, 1), (1, 1, 0), (1, 1, 1), (1, 0, 0), (1, 0, 1)])
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (0, 2, 0),
+            (0, 2, 1),
+            (0, 1, 0),
+            (0, 1, 1),
+            (0, 0, 0),
+            (0, 0, 1),
+            (1, 2, 0),
+            (1, 2, 1),
+            (1, 1, 0),
+            (1, 1, 1),
+            (1, 0, 0),
+            (1, 0, 1),
+        ],
+    )
     i = nditer(a.reshape(2, 3, 2)[:, :, ::-1], ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(0, 0, 1), (0, 0, 0), (0, 1, 1), (0, 1, 0), (0, 2, 1), (0, 2, 0),
-                             (1, 0, 1), (1, 0, 0), (1, 1, 1), (1, 1, 0), (1, 2, 1), (1, 2, 0)])
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (0, 0, 1),
+            (0, 0, 0),
+            (0, 1, 1),
+            (0, 1, 0),
+            (0, 2, 1),
+            (0, 2, 0),
+            (1, 0, 1),
+            (1, 0, 0),
+            (1, 1, 1),
+            (1, 1, 0),
+            (1, 2, 1),
+            (1, 2, 0),
+        ],
+    )
     # 3D reversed Fortran-order
-    i = nditer(a.reshape(2, 3, 2).copy(order='F')[::-1],
-                                                    ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(1, 0, 0), (0, 0, 0), (1, 1, 0), (0, 1, 0), (1, 2, 0), (0, 2, 0),
-                             (1, 0, 1), (0, 0, 1), (1, 1, 1), (0, 1, 1), (1, 2, 1), (0, 2, 1)])
-    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:, ::-1],
-                                                    ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(0, 2, 0), (1, 2, 0), (0, 1, 0), (1, 1, 0), (0, 0, 0), (1, 0, 0),
-                             (0, 2, 1), (1, 2, 1), (0, 1, 1), (1, 1, 1), (0, 0, 1), (1, 0, 1)])
-    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:, :, ::-1],
-                                                    ['multi_index'], [['readonly']])
-    assert_equal(iter_multi_index(i),
-                            [(0, 0, 1), (1, 0, 1), (0, 1, 1), (1, 1, 1), (0, 2, 1), (1, 2, 1),
-                             (0, 0, 0), (1, 0, 0), (0, 1, 0), (1, 1, 0), (0, 2, 0), (1, 2, 0)])
+    i = nditer(
+        a.reshape(2, 3, 2).copy(order='F')[::-1],
+        ['multi_index'],
+        [['readonly']],
+    )
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (1, 0, 0),
+            (0, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),
+            (1, 2, 0),
+            (0, 2, 0),
+            (1, 0, 1),
+            (0, 0, 1),
+            (1, 1, 1),
+            (0, 1, 1),
+            (1, 2, 1),
+            (0, 2, 1),
+        ],
+    )
+    i = nditer(
+        a.reshape(2, 3, 2).copy(order="F")[:, ::-1],
+        ["multi_index"],
+        [["readonly"]],
+    )
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (0, 2, 0),
+            (1, 2, 0),
+            (0, 1, 0),
+            (1, 1, 0),
+            (0, 0, 0),
+            (1, 0, 0),
+            (0, 2, 1),
+            (1, 2, 1),
+            (0, 1, 1),
+            (1, 1, 1),
+            (0, 0, 1),
+            (1, 0, 1),
+        ],
+    )
+    i = nditer(
+        a.reshape(2, 3, 2).copy(order="F")[:, :, ::-1],
+        ["multi_index"],
+        [["readonly"]],
+    )
+    assert_equal(
+        iter_multi_index(i),
+        [
+            (0, 0, 1),
+            (1, 0, 1),
+            (0, 1, 1),
+            (1, 1, 1),
+            (0, 2, 1),
+            (1, 2, 1),
+            (0, 0, 0),
+            (1, 0, 0),
+            (0, 1, 0),
+            (1, 1, 0),
+            (0, 2, 0),
+            (1, 2, 0),
+        ],
+    )
 
 def test_iter_best_order_c_index_1d():
     # The C index should be correct with any reordering
@@ -1223,8 +1344,14 @@ def test_iter_copy_if_overlap():
     x = arange(10)
     a = x
     b = x
-    i = nditer([a, b], ['copy_if_overlap'], [['readonly', 'overlap_assume_elementwise'],
-                                             ['readwrite', 'overlap_assume_elementwise']])
+    i = nditer(
+        [a, b],
+        ["copy_if_overlap"],
+        [
+            ["readonly", "overlap_assume_elementwise"],
+            ["readwrite", "overlap_assume_elementwise"],
+        ],
+    )
     with i:
         assert_(i.operands[0] is a and i.operands[1] is b)
     with nditer([a, b], ['copy_if_overlap'], [['readonly'], ['readwrite']]) as i:
@@ -2646,7 +2773,10 @@ class TestIterNested:
 
         i, j = np.nested_iters(a, [[1, 0, 2], []])
         vals = [list(j) for _ in i]
-        assert_equal(vals, [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11]])
+        assert_equal(
+            vals,
+            [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11]],
+        )
 
         i, j, k = np.nested_iters(a, [[2, 0], [], [1]])
         vals = []
