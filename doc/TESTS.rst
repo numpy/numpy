@@ -64,7 +64,11 @@ Running tests from the command line
 -----------------------------------
 
 If you want to build NumPy in order to work on NumPy itself, use the ``spin``
-utility. To run NumPy's full test suite::
+utility.The spin utility is NumPy’s developer command-line tool used when 
+working with a local source checkout of NumPy. It provides convenient wrappers
+around common development tasks such as building NumPy, running tests, and 
+checking documentation, ensuring the correct build environment is used. 
+To run NumPy's full test suite::
 
   $ spin test -m full
 
