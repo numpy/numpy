@@ -637,6 +637,7 @@ _buffer_info_untag(
     return 0;
 }
 
+
 /*
  * NOTE: for backward compatibility (esp. with PyArg_ParseTuple("s#", ...))
  * we do *not* define bf_releasebuffer at all.
@@ -682,22 +683,6 @@ _buffer_info_free(void *buffer_info, PyObject *obj)
 }
 
 /*
- * Checks whether the pointer is tagged, and then frees the cache list.
- * (The tag check is only for transition due to changed structure size in 1.20)
- */
-NPY_NO_EXPORT int
-_buffer_info_free(void *buffer_info, PyObject *obj)
-{
-    _buffer_info_t *untagged_buffer_info;
-    if (_buffer_info_untag(buffer_info, &untagged_buffer_info, obj) < 0) {
-        return -1;
-    }
-    _buffer_info_free_untagged(untagged_buffer_info);
-    return 0;
-}
-
-
-/*
  * Get the buffer info returning either the old one (passed in) or a new
  * buffer info which adds holds on to (and thus replaces) the old one.
  */
@@ -715,7 +700,6 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
     /* GIL protects us in traditional Python builds */
     cache_snapshot = *buffer_info_cache_ptr;
 #endif 
-
 
     if (_buffer_info_untag(cache_snapshot, &stored_info, obj) < 0) {
         return NULL;
@@ -749,7 +733,12 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
          }
     }
     if (old_info != NULL) {
-
+        /*
+         * The two info->format are considered equal if one of them
+         * has no format set (meaning the format is arbitrary and can
+         * be modified). If the new info has a format, but we reuse
+         * the old one, this transfers the ownership to the old one.
+         */
 #ifdef Py_GIL_DISABLED
         /* 
         * In free-threaded Python, use atomic compare-exchange to safely
