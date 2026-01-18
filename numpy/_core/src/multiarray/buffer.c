@@ -637,7 +637,6 @@ _buffer_info_untag(
     return 0;
 }
 
-
 /*
  * NOTE: for backward compatibility (esp. with PyArg_ParseTuple("s#", ...))
  * we do *not* define bf_releasebuffer at all.
@@ -682,6 +681,21 @@ _buffer_info_free(void *buffer_info, PyObject *obj)
     return 0;
 }
 
+/*
+ * Checks whether the pointer is tagged, and then frees the cache list.
+ * (The tag check is only for transition due to changed structure size in 1.20)
+ */
+NPY_NO_EXPORT int
+_buffer_info_free(void *buffer_info, PyObject *obj)
+{
+    _buffer_info_t *untagged_buffer_info;
+    if (_buffer_info_untag(buffer_info, &untagged_buffer_info, obj) < 0) {
+        return -1;
+    }
+    _buffer_info_free_untagged(untagged_buffer_info);
+    return 0;
+}
+
 
 /*
  * Get the buffer info returning either the old one (passed in) or a new
@@ -703,7 +717,7 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
 #endif 
 
 
-    if (_buffer_info_untag(*buffer_info_cache_ptr, &stored_info, obj) < 0) {
+    if (_buffer_info_untag(cache_snapshot, &stored_info, obj) < 0) {
         return NULL;
     }
     _buffer_info_t *old_info = stored_info;
@@ -772,15 +786,14 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
 */
 #ifdef Py_GIL_DISABLED 
 
-            _Py_atomic_store_ptr(buffer_info_cache_ptr, buffer_info_tag(info));
+        _Py_atomic_store_ptr(buffer_info_cache_ptr, buffer_info_tag(info));
 #else
-            *buffer_info_cache_ptr = buffer_info_tag(info);
+        *buffer_info_cache_ptr = buffer_info_tag(info);
 #endif 
     }
 
     return info;
 }
-
 
 /*
  * Retrieving buffers for ndarray
