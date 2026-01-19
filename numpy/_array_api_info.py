@@ -58,8 +58,6 @@ class __array_namespace_info__:
 
     """
 
-    __module__ = 'numpy'
-
     def capabilities(self):
         """
         Return a dictionary of array API library capabilities.
