@@ -51,26 +51,17 @@ typedef struct {
     void * ptrs[NCACHE];
 } cache_bucket;
 
-// See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61991
-// gcc has a bug where if the thread_local variable is unused
-// then its destructor may not get called at thread exit.
-// to work around this we define consolidate both datacache
-// and dimcache into a single thread_local variable so
-// that there is no issue of unused thread_local variables.
-typedef struct thread_local_cache {
-    cache_bucket datacache[NBUCKETS];
-    cache_bucket dimcache[NBUCKETS_DIM];
+static NPY_TLS cache_bucket _datacache[NBUCKETS];
+static NPY_TLS cache_bucket _dimcache[NBUCKETS_DIM];
 
-    thread_local_cache() {
-        for (npy_uint i = 0; i < NBUCKETS; ++i) {
-            datacache[i].available = 0;
-        }
-        for (npy_uint i = 0; i < NBUCKETS_DIM; ++i) {
-            dimcache[i].available = 0;
-        }
+typedef struct cache_destructor {
+    cache_bucket *dimcache;
+    cache_bucket *datacache;
+    cache_destructor() {
+        dimcache = &_dimcache[0];
+        datacache = &_datacache[0];
     }
-
-    ~thread_local_cache() {
+    ~cache_destructor() {
         for (npy_uint i = 0; i < NBUCKETS; ++i) {
             while (datacache[i].available > 0) {
                 free(datacache[i].ptrs[--datacache[i].available]);
@@ -82,12 +73,12 @@ typedef struct thread_local_cache {
             }
         }
     }
-} thread_local_cache;
+} cache_destructor;
 
-static NPY_TLS thread_local_cache tls_cache;
+static NPY_TLS cache_destructor tls_cache_destructor;
 
-#define datacache (tls_cache.datacache)
-#define dimcache (tls_cache.dimcache)
+#define datacache tls_cache_destructor.datacache
+#define dimcache tls_cache_destructor.dimcache
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
