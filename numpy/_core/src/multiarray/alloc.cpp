@@ -51,6 +51,12 @@ typedef struct {
     void * ptrs[NCACHE];
 } cache_bucket;
 
+// See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61991
+// gcc has a bug where if the thread_local variable is unused
+// then its destructor may not get called at thread exit.
+// to work around this we define consolidate both datacache
+// and dimcache into a single thread_local variable so
+// that there is no issue of unused thread_local variables.
 typedef struct thread_local_cache {
     cache_bucket datacache[NBUCKETS];
     cache_bucket dimcache[NBUCKETS_DIM];
