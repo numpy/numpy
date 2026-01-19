@@ -51,11 +51,10 @@ typedef struct {
     void * ptrs[NCACHE];
 } cache_bucket;
 
-static NPY_TLS cache_bucket datacache[NBUCKETS];
-static NPY_TLS cache_bucket dimcache[NBUCKETS_DIM];
-
-typedef struct cache_destructor {
-    ~cache_destructor() {
+typedef struct thread_local_cache {
+    cache_bucket datacache[NBUCKETS];
+    cache_bucket dimcache[NBUCKETS_DIM];
+    ~thread_local_cache() {
         for (npy_uint i = 0; i < NBUCKETS; ++i) {
             while (datacache[i].available > 0) {
                 free(datacache[i].ptrs[--datacache[i].available]);
@@ -67,9 +66,12 @@ typedef struct cache_destructor {
             }
         }
     }
-} cache_destructor;
+} thread_local_cache;
 
-static NPY_TLS cache_destructor tls_cache_destructor;
+static NPY_TLS thread_local_cache tls_cache;
+
+#define datacache (tls_cache.datacache)
+#define dimcache (tls_cache.dimcache)
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
