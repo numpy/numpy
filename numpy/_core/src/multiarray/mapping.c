@@ -440,6 +440,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                     && DEPRECATE("Invalid non-array indices for iterator objects are deprecated and will be "
                                  "removed in a future version. (Deprecated NumPy 2.4)") < 0) {
                     Py_DECREF(tmp_arr);
+                    Py_DECREF(arr);
                     goto failed_building_indices;
                 }
                 Py_DECREF(tmp_arr);

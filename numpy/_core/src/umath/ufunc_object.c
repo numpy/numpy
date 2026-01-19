@@ -2734,6 +2734,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     npy_intp fixed_strides[3];
     if (need_outer_iterator) {
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        fixed_strides[2] = fixed_strides[0];
     }
     else {
         fixed_strides[0] = PyArray_STRIDES(op[0])[axis];

@@ -955,7 +955,7 @@ datetimetype_repr(PyObject *self)
                 ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
             }
         }
-
+        Py_DECREF(meta);
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
