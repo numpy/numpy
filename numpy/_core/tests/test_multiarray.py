@@ -11148,3 +11148,13 @@ class TestPatternMatching:
                 assert_array_equal(row4, [7, 8])
             case _:
                 raise AssertionError("3D ndarray did not match sequence pattern")
+
+def test_frompyfunc_nonfunction_callable():
+    class F:
+        def __call__(self, x):
+            return x
+
+    assert np.frompyfunc(F(), 1, 1)(42) == 42
+    assert np.frompyfunc(F(), 1)(42) == 42
+    assert np.frompyfunc(F())(42) == 42
+    assert np.frompyfunc(F(), nout=1)(42) == 42
