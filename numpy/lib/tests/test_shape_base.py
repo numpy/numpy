@@ -363,7 +363,7 @@ class TestArraySplit:
         desired[8] = np.array([[15]])
         desired = np.reshape(desired, (3, 3))
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
@@ -384,7 +384,7 @@ class TestArraySplit:
         desired[8] = np.array([[15]])
         desired = np.reshape(desired, (3, 3))
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
@@ -404,7 +404,7 @@ class TestArraySplit:
         desired[7] = np.array([[14, 15]])
         desired = np.reshape(desired, (4, 2))
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
@@ -420,7 +420,7 @@ class TestArraySplit:
         desired[3] = np.array([[10, 11], [14, 15]])
         desired = np.reshape(desired, (2, 2))
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
@@ -459,7 +459,7 @@ class TestArraySplit:
         desired[5] = np.array([[11], [15]])
         desired = np.reshape(desired, (2, 3))
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
@@ -660,7 +660,7 @@ class TestSplit:
         desired[7] = np.array([[14, 15]])
         desired = np.reshape(desired, (4, 2))
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
@@ -687,12 +687,12 @@ class TestSplit:
         desired[1, 0] = np.array([[8, 9], [12, 13]])
         desired[1, 1] = np.array([[10, 11], [14, 15]])
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
 
-        assert(res.shape == desired.shape)
+        assert res.shape == desired.shape
 
         for i, element in enumerate(res):
             compare_results(element, desired[i])
