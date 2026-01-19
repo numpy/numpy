@@ -882,7 +882,10 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      * to find the correct format.  This format must also be stored, since
      * at least in theory it can change (in practice it should never change).
      */
-    _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    _buffer_info_t *info = NULL;
+    Py_BEGIN_CRITICAL_SECTION(scalar);
+    info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         Py_DECREF(self);
         return -1;
