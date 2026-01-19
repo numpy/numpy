@@ -62,7 +62,7 @@ __all__ = [
 
 
 @set_module("numpy")
-def frompyfunc(func, /, nin, nout, **kwargs):
+def frompyfunc(func, /, nin=-1, nout=1, **kwargs):
     """
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
@@ -111,4 +111,7 @@ def frompyfunc(func, /, nin, nout, **kwargs):
     array(['0o12', '0o36', '0o144'], dtype='<U5')
 
     """
+    if nin < 0:
+        import inspect
+        nin = len(inspect.signature(func).parameters)
     return _frompyfunc(func, nin=nin, nout=nout, **kwargs)
