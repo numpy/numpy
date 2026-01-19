@@ -60,6 +60,16 @@ typedef struct {
 typedef struct thread_local_cache {
     cache_bucket datacache[NBUCKETS];
     cache_bucket dimcache[NBUCKETS_DIM];
+
+    thread_local_cache() {
+        for (npy_uint i = 0; i < NBUCKETS; ++i) {
+            datacache[i].available = 0;
+        }
+        for (npy_uint i = 0; i < NBUCKETS_DIM; ++i) {
+            dimcache[i].available = 0;
+        }
+    }
+
     ~thread_local_cache() {
         for (npy_uint i = 0; i < NBUCKETS; ++i) {
             while (datacache[i].available > 0) {
