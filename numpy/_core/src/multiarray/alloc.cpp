@@ -54,6 +54,17 @@ typedef struct {
 static NPY_TLS cache_bucket _datacache[NBUCKETS];
 static NPY_TLS cache_bucket _dimcache[NBUCKETS_DIM];
 
+// See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61991
+// gcc has a bug where if the thread local variable
+// is unused then in some cases it's destructor may not get
+// called at thread exit. So to workaround this, we access the
+// datacache and dimcache through this struct so that
+// cache_destructor gets initialized and used, ensuring that
+// the destructor gets called properly at thread exit.
+// The datacache and dimcache are not embedded in this struct
+// because that would make this struct very large and certain
+// platforms like armhf can crash while allocating that large
+// TLS block.
 typedef struct cache_destructor {
     cache_bucket *dimcache;
     cache_bucket *datacache;
