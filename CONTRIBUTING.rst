@@ -16,3 +16,17 @@ to all interactions, including issues and PRs.
 For more, please read https://www.numpy.org/devdocs/dev/index.html
 
 Thank you for contributing, and happy coding!
+
+Spin: NumPy’s developer tool
+----------------------------
+
+NumPy uses a command-line tool called ``spin`` to support common development
+tasks such as running tests, building documentation, and managing other
+developer workflows.
+
+The ``spin`` tool provides a consistent interface for contributors working on
+NumPy itself, wrapping multiple underlying tools and configurations into a
+single command that follows NumPy’s development conventions.
+
+Most contributors will interact with ``spin`` when running tests locally,
+building the documentation, or preparing changes for review.
