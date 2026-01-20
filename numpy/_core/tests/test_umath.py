@@ -790,8 +790,8 @@ class TestRemainder:
                         assert_(b > rem >= 0, msg)
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.xfail(sys.platform.startswith("darwin"),
-            reason="MacOS seems to not give the correct 'invalid' warning for "
+    @pytest.mark.xfail(sys.platform in {"darwin", "ios"},
+            reason="macOS/iOS seems to not give the correct 'invalid' warning for "
                    "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_float_divmod_errors(self, dtype):
@@ -819,9 +819,9 @@ class TestRemainder:
     @pytest.mark.skipif(hasattr(np.__config__, "blas_ssl2_info"),
             reason="gh-22982")
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
-    @pytest.mark.xfail(sys.platform.startswith("darwin"),
-           reason="MacOS seems to not give the correct 'invalid' warning for "
-                  "`fmod`.  Hopefully, others always do.")
+    @pytest.mark.xfail(sys.platform in {"darwin", "ios"},
+            reason="macOS/iOS seems to not give the correct 'invalid' warning for "
+                   "`fmod`.  Hopefully, others always do.")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
@@ -1559,7 +1559,7 @@ class TestSpecialFloats:
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(
-        sys.platform.startswith("darwin"),
+        sys.platform in {"darwin", "ios"},
         reason="underflow is triggered for scalar 'sin'"
     )
     def test_sincos_underflow(self):

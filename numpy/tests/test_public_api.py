@@ -12,7 +12,7 @@ import pytest
 
 import numpy
 import numpy as np
-from numpy.testing import IS_WASM
+from numpy.testing import HAS_SUBPROCESSES
 
 try:
     import ctypes
@@ -46,7 +46,7 @@ def test_numpy_namespace():
     assert bad_results == allowlist
 
 
-@pytest.mark.skipif(IS_WASM, reason="can't start subprocess")
+@pytest.mark.skipif(not HAS_SUBPROCESSES, reason="platform cannot start subprocesses")
 @pytest.mark.parametrize('name', ['testing'])
 def test_import_lazy_import(name):
     """Make sure we can actually use the modules we lazy load.
