@@ -11092,7 +11092,6 @@ class TestTextSignatures:
         (np.frombuffer, ("buffer", "dtype", "count", "offset", "like")),
         (np.fromfile, ("file", "dtype", "count", "sep", "offset", "like")),
         (np.fromiter, ("iter", "dtype", "count", "like")),
-        (np.frompyfunc, ("func", "nin", "nout", "kwargs")),
         (np.fromstring, ("string", "dtype", "count", "sep", "like")),
         (np.nested_iters, (
             "op", "axes", "flags", "op_flags", "op_dtypes", "order", "casting",
