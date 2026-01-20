@@ -884,7 +884,7 @@ def test_iter_broadcasting_errors():
         )
         assert_(
             msg.find("(2,)->(2,newaxis)") >= 0,
-            ('Message "%s" doesn\'t contain remapped operand shape(2,)->(2,newaxis)')
+            ('Message "%s" doesn\'t contain remapped operand shape' "(2,)->(2,newaxis)")
             % msg,
         )
         # The message should contain the itershape parameter
@@ -2478,11 +2478,11 @@ def test_iter_buffered_cast_structured_type():
     vals = [np.array(x) for x in i]
     assert_equal(vals[0]["a"], 0.5)
     assert_equal(vals[0]["b"], 0)
-    assert_equal(vals[0]["c"], [[(0.5)] * 3] * 2)
+    assert_equal(vals[0]["c"], [[0.5] * 3] * 2)
     assert_equal(vals[0]["d"], 0.5)
     assert_equal(vals[1]["a"], 1.5)
     assert_equal(vals[1]["b"], 1)
-    assert_equal(vals[1]["c"], [[(1.5)] * 3] * 2)
+    assert_equal(vals[1]["c"], [[1.5] * 3] * 2)
     assert_equal(vals[1]["d"], 1.5)
     assert_equal(vals[0].dtype, np.dtype(sdt))
 
@@ -2500,11 +2500,11 @@ def test_iter_buffered_cast_structured_type():
     vals = [x.copy() for x in i]
     assert_equal(vals[0]["a"], 0.5)
     assert_equal(vals[0]["b"], 0)
-    assert_equal(vals[0]["c"], [[(0.5)] * 3] * 2)
+    assert_equal(vals[0]["c"], [[0.5] * 3] * 2)
     assert_equal(vals[0]["d"], 0.5)
     assert_equal(vals[1]["a"], 1.5)
     assert_equal(vals[1]["b"], 1)
-    assert_equal(vals[1]["c"], [[(1.5)] * 3] * 2)
+    assert_equal(vals[1]["c"], [[1.5] * 3] * 2)
     assert_equal(vals[1]["d"], 1.5)
     assert_equal(vals[0].dtype, np.dtype(sdt))
     vals, i, x = [None] * 3
@@ -3053,6 +3053,7 @@ def test_iter_no_broadcast():
 
 
 class TestIterNested:
+
     def test_basic(self):
         # Test nested iteration basic usage
         a = arange(12).reshape(2, 3, 2)
@@ -3248,6 +3249,7 @@ class TestIterNested:
 
 
 def test_iter_reduction_error():
+
     a = np.arange(6)
     assert_raises(
         ValueError,
@@ -3800,7 +3802,7 @@ def test_0d_iter():
     vals = next(i)
     assert_equal(vals["a"], 0.5)
     assert_equal(vals["b"], 0)
-    assert_equal(vals["c"], [[(0.5)] * 3] * 2)
+    assert_equal(vals["c"], [[0.5] * 3] * 2)
     assert_equal(vals["d"], 0.5)
 
 
