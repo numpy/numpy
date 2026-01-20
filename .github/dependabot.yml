@@ -19,3 +19,8 @@ updates:
       prefix: "MAINT"
     labels:
       - "03 - Maintenance"
+    ignore:
+      - dependency-name: "scipy-openblas32"
+      - dependency-name: "scipy-openblas64"
+      - dependency-name: "jupyterlite-pyodide-kernel"
+      - dependency-name: "sphinx"
