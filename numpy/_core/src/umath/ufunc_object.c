@@ -4516,7 +4516,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 "use the `out` keyword argument instead. If you hoped to work with "
                 "more than 2 inputs, combine them into a single array and get the extrema "
                 "for the relevant axis.") < 0) {
-                return NULL;
+                goto fail;
             }
         }
 
