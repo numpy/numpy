@@ -1022,7 +1022,8 @@ def tensordot(a, b, axes=2):
         * (2,) array_like
           Or, a list of axes to be summed over, first sequence applying to `a`,
           second to `b`. Both elements array_like must be of the same length.
-
+          Each axis may appear at most once; repeated axes are not allowed.
+          For example, ``axes=([1, 1], [0, 0])`` is invalid.
     Returns
     -------
     output : ndarray
@@ -1052,6 +1053,13 @@ def tensordot(a, b, axes=2):
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
     The calculation can be referred to ``numpy.einsum``.
+
+    For example, if ``a.shape == (2, 3, 4)`` and ``b.shape == (3, 4, 5)``,
+    then ``axes=([1, 2], [0, 1])`` sums over the ``(3, 4)`` dimensions of
+    both arrays and produces an output of shape ``(2, 5)``.
+
+    Each summation axis corresponds to a distinct contraction index; repeating
+    an axis (for example ``axes=([1, 1], [0, 0])``) is invalid.
 
     The shape of the result consists of the non-contracted axes of the
     first tensor, followed by the non-contracted axes of the second.
@@ -1169,6 +1177,11 @@ def tensordot(a, b, axes=2):
     except TypeError:
         axes_b = [axes_b]
         nb = 1
+
+    if len(set(axes_a)) != len(axes_a):
+        raise ValueError("duplicate axes are not allowed in tensordot")
+    if len(set(axes_b)) != len(axes_b):
+        raise ValueError("duplicate axes are not allowed in tensordot")
 
     a, b = asarray(a), asarray(b)
     as_ = a.shape
