@@ -2848,6 +2848,8 @@ def requires_deep_recursion(func):
             pytest.skip("Pyston disables recursion checking")
         if IS_WASM:
             pytest.skip("WASM has limited stack size")
+        if not IS_64BIT:
+            pytest.skip("32 bit Python has limited stack size")
         cflags = sysconfig.get_config_var('CFLAGS') or ''
         config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
         address_sanitizer = (
