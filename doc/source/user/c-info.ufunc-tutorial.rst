@@ -608,7 +608,7 @@ After the above has been installed, it can be imported and used as follows.
 >>> import npufunc
 >>> npufunc.logit(0.5)
 np.float64(0.0)
->>> a = np.linspace(0, 1, 5, dtype="f4")
+>>> a = np.linspace(0, 1, 5, dtype=np.float32)
 >>> npufunc.logit(a)
 <python-input-4>:1: RuntimeWarning: divide by zero encountered in logit
 array([      -inf, -1.0986123,  0.       ,  1.0986123,        inf],

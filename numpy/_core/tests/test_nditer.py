@@ -3206,6 +3206,13 @@ def test_iter_too_large_with_multiindex():
             with assert_raises(ValueError):
                 _multiarray_tests.test_nditer_too_large(arrays, i * 2 + 1, mode)
 
+
+def test_invalid_call_of_enable_external_loop():
+    with pytest.raises(ValueError,
+                       match='Iterator flag EXTERNAL_LOOP cannot be used'):
+        np.nditer(([[1], [2]], [3, 4]), ['multi_index']).enable_external_loop()
+
+
 def test_writebacks():
     a = np.arange(6, dtype='f4')
     au = a.byteswap()

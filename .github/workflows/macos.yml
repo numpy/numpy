@@ -9,6 +9,7 @@ on:
       - '**.pyi'
       - '**.md'
       - '**.rst'
+      - 'tools/stubtest/**'
 
 permissions:
    contents: read  # to fetch code (actions/checkout)
@@ -32,7 +33,7 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -49,7 +50,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -73,7 +74,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -118,10 +119,10 @@ jobs:
         build_runner:
           - [ macos-15-intel, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
-        version: ["3.11", "3.14t"]
+        version: ["3.12", "3.14t"]
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
         fetch-tags: true
@@ -153,5 +154,5 @@ jobs:
     - name: Test in multiple threads
       if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-14' }}
       run:  |
-        pip install pytest-run-parallel==0.7.0
+        pip install pytest-run-parallel==0.8.2
         spin test -p 4 -- --timeout=600 --durations=10

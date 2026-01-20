@@ -183,9 +183,9 @@ if HAVE_SCPDT:
                 "numpy.core",
                 "Importing from numpy.matlib",
                 "This function is deprecated.",    # random_integers
-                "Data type alias 'a'",     # numpy.rec.fromfile
                 "Arrays of 2-dimensional vectors",   # matlib.cross
-                "NumPy warning suppression and assertion utilities are deprecated."
+                "NumPy warning suppression and assertion utilities are deprecated.",
+                "numpy.fix is deprecated",  # fix -> trunc
         ]
         msg = "|".join(msgs)
 

@@ -561,7 +561,7 @@ This equivalence can only be handled through ``==``, not through ``is``.
 
       >>> import numpy as np
 
-      >>> a = np.array([1, 2], dtype=float)
+      >>> a = np.array([1, 2], dtype=np.float64)
       >>> a.dtype == np.dtype(np.float64)
       True
       >>> a.dtype == np.float64

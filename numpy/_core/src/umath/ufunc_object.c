@@ -4337,18 +4337,9 @@ try_trivial_scalar_call(
     // Try getting info from the (private) cache.  Fall back if not found,
     // so that the the dtype gets registered and things will work next time.
     PyArray_DTypeMeta *op_dtypes[2] = {NPY_DTYPE(dt), NULL};
-#ifdef Py_GIL_DISABLED
-    // Other threads may be in the process of filling the dispatch cache,
-    // so we need to acquire the free-threading-specific dispatch cache mutex
-    // before reading the cache
-    PyObject *info = PyArrayIdentityHash_GetItemWithLock(  // borrowed reference.
-        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
-        (PyObject **)op_dtypes);
-#else
     PyObject *info = PyArrayIdentityHash_GetItem(  // borrowed reference.
         (PyArrayIdentityHash *)ufunc->_dispatch_cache,
         (PyObject **)op_dtypes);
-#endif
     if (info == NULL) {
         goto bail;
     }

@@ -1,0 +1,8 @@
+Improved performance of ``numpy.searchsorted``
+----------------------------------------------
+The C++ binary search implementation used by ``numpy.searchsorted`` now has
+a much better performance when searching for multiple keys. The new
+implementation batches binary search steps across all keys to leverage cache
+locality and out-of-order execution. Benchmarks show the new implementation can
+be up to 20 times faster for hundreds of thousands keys while single-key
+performance remains comparable to previous versions.

@@ -269,7 +269,7 @@ class TestFromrecords:
         ra.mean = [1.1, 2.2, 3.3]
         assert_array_almost_equal(ra['mean'], [1.1, 2.2, 3.3])
         assert_(type(ra.mean) is type(ra.var))
-        ra.shape = (1, 3)
+        ra = ra.reshape((1, 3))
         assert_(ra.shape == (1, 3))
         ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])

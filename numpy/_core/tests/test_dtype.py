@@ -1,5 +1,5 @@
+import contextlib
 import ctypes
-import gc
 import inspect
 import operator
 import pickle
@@ -20,13 +20,12 @@ from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
-    IS_PYSTON,
-    IS_WASM,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
 )
+from numpy.testing._private.utils import requires_deep_recursion
 
 
 def assert_dtype_equal(a, b):
@@ -822,115 +821,6 @@ def iter_struct_object_dtypes():
     yield pytest.param(dt, p, 12, obj, id="<structured subarray 2>")
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 12),
-    reason="Python 3.12 has immortal refcounts, this test will no longer "
-           "work. See gh-23986"
-)
-@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-class TestStructuredObjectRefcounting:
-    """These tests cover various uses of complicated structured types which
-    include objects and thus require reference counting.
-    """
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    @pytest.mark.parametrize(["creation_func", "creation_obj"], [
-        pytest.param(np.empty, None,
-             # None is probably used for too many things
-             marks=pytest.mark.skip("unreliable due to python's behaviour")),
-        (np.ones, 1),
-        (np.zeros, 0)])
-    def test_structured_object_create_delete(self, dt, pat, count, singleton,
-                                             creation_func, creation_obj):
-        """Structured object reference counting in creation and deletion"""
-        # The test assumes that 0, 1, and None are singletons.
-        gc.collect()
-        before = sys.getrefcount(creation_obj)
-        arr = creation_func(3, dt)
-
-        now = sys.getrefcount(creation_obj)
-        assert now - before == count * 3
-        del arr
-        now = sys.getrefcount(creation_obj)
-        assert now == before
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    def test_structured_object_item_setting(self, dt, pat, count, singleton):
-        """Structured object reference counting for simple item setting"""
-        one = 1
-
-        gc.collect()
-        before = sys.getrefcount(singleton)
-        arr = np.array([pat] * 3, dt)
-        assert sys.getrefcount(singleton) - before == count * 3
-        # Fill with `1` and check that it was replaced correctly:
-        before2 = sys.getrefcount(one)
-        arr[...] = one
-        after2 = sys.getrefcount(one)
-        assert after2 - before2 == count * 3
-        del arr
-        gc.collect()
-        assert sys.getrefcount(one) == before2
-        assert sys.getrefcount(singleton) == before
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    @pytest.mark.parametrize(
-        ['shape', 'index', 'items_changed'],
-        [((3,), ([0, 2],), 2),
-         ((3, 2), ([0, 2], slice(None)), 4),
-         ((3, 2), ([0, 2], [1]), 2),
-         ((3,), ([True, False, True]), 2)])
-    def test_structured_object_indexing(self, shape, index, items_changed,
-                                        dt, pat, count, singleton):
-        """Structured object reference counting for advanced indexing."""
-        # Use two small negative values (should be singletons, but less likely
-        # to run into race-conditions).  This failed in some threaded envs
-        # When using 0 and 1.  If it fails again, should remove all explicit
-        # checks, and rely on `pytest-leaks` reference count checker only.
-        val0 = -4
-        val1 = -5
-
-        arr = np.full(shape, val0, dt)
-
-        gc.collect()
-        before_val0 = sys.getrefcount(val0)
-        before_val1 = sys.getrefcount(val1)
-        # Test item getting:
-        part = arr[index]
-        after_val0 = sys.getrefcount(val0)
-        assert after_val0 - before_val0 == count * items_changed
-        del part
-        # Test item setting:
-        arr[index] = val1
-        gc.collect()
-        after_val0 = sys.getrefcount(val0)
-        after_val1 = sys.getrefcount(val1)
-        assert before_val0 - after_val0 == count * items_changed
-        assert after_val1 - before_val1 == count * items_changed
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    def test_structured_object_take_and_repeat(self, dt, pat, count, singleton):
-        """Structured object reference counting for specialized functions.
-        The older functions such as take and repeat use different code paths
-        then item setting (when writing this).
-        """
-        indices = [0, 1]
-
-        arr = np.array([pat] * 3, dt)
-        gc.collect()
-        before = sys.getrefcount(singleton)
-        res = arr.take(indices)
-        after = sys.getrefcount(singleton)
-        assert after - before == count * 2
-        new = res.repeat(10)
-        gc.collect()
-        after_repeat = sys.getrefcount(singleton)
-        assert after_repeat - after == count * 2 * 10
-
-
 class TestStructuredDtypeSparseFields:
     """Tests subarray fields which contain sparse dtypes so that
     not all memory is used by the dtype work. Such dtype's should
@@ -977,25 +867,24 @@ class TestMonsterType:
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
             d = (d, (1,))
-        with pytest.raises(RecursionError):
+        # depending on OS and Python version, this might succeed
+        # see gh-30370 and cpython issue #142253
+        with contextlib.suppress(RecursionError):
             np.dtype(d)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
@@ -1452,6 +1341,29 @@ class TestPickling:
             assert roundtrip_dt == dt
             assert hash(roundtrip_dt) == pre_pickle_hash
 
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_invalid_tuple_size(self, dt):
+        # gh-30476
+        valid_state = dt.__reduce__()[2]
+        dt.__setstate__(valid_state)
+
+        for size in [1, 2, 3, 4]:
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(valid_state[:size])
+
+        min_extra = 10 - len(valid_state)
+        for extra in range(min_extra, min_extra + 5):
+            extended = valid_state + (None,) * extra
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(extended)
+
 
 class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
@@ -1836,7 +1748,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1860,7 +1777,12 @@ class TestFromCTypes:
             ]
         expected = np.dtype({
             "names": ['a', 'b', 'c', 'd'],
-            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "formats": [
+                'u1',
+                np.uint16,
+                np.uint32,
+                [('one', 'u1'), ('two', np.uint32)],
+            ],
             "offsets": [0, 0, 0, 0],
             "itemsize": ctypes.sizeof(Union)
         })
@@ -1892,7 +1814,15 @@ class TestFromCTypes:
                 ('g', ctypes.c_uint8)
                 ]
         expected = np.dtype({
-            "formats": [np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
+            "formats": [
+                np.uint8,
+                np.uint16,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint32,
+                np.uint8,
+            ],
             "offsets": [0, 2, 4, 6, 8, 12, 16],
             "names": ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             "itemsize": 18})
@@ -1965,7 +1895,9 @@ class TestFromCTypes:
 
 class TestUserDType:
     @pytest.mark.leaks_references(reason="dynamically creates custom dtype.")
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1986,7 +1918,9 @@ class TestUserDType:
             del a
             assert sys.getrefcount(o) == startcount
 
-    @pytest.mark.thread_unsafe(reason="crashes when GIL disabled, dtype setup is thread-unsafe")
+    @pytest.mark.thread_unsafe(
+        reason="crashes when GIL disabled, dtype setup is thread-unsafe",
+    )
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass

@@ -397,6 +397,11 @@ def lint(ctx, fix):
     help="The factor above or below which a benchmark result is "
          "considered reportable. This is passed on to the asv command."
 )
+@click.option(
+    '--cpu-affinity', default=None, multiple=False,
+    help="Set CPU affinity for running the benchmark, in format: 0 or 0,1,2 or 0-3."
+         "Default: not set"
+)
 @click.argument(
     'commits', metavar='',
     required=False,
@@ -404,7 +409,8 @@ def lint(ctx, fix):
 )
 @meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, factor, commits, build_dir):
+def bench(ctx, tests, compare, verbose, quick, factor, cpu_affinity,
+          commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -446,6 +452,9 @@ def bench(ctx, tests, compare, verbose, quick, factor, commits, build_dir):
 
     if quick:
         bench_args = ['--quick'] + bench_args
+
+    if cpu_affinity:
+        bench_args += ['--cpu-affinity', cpu_affinity]
 
     if not compare:
         # No comparison requested; we build and benchmark the current version
@@ -535,6 +544,7 @@ def ipython(*, ipython_args, build_dir):
 def mypy(ctx):
     """🦆 Run Mypy tests for NumPy
     """
+    ctx.invoke(build)
     env = os.environ
     env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]
@@ -565,17 +575,13 @@ def stubtest(*, concise: bool, build_dir: str) -> None:
 
     stubtest_dir = curdir.parent / 'tools' / 'stubtest'
     mypy_config = stubtest_dir / 'mypy.ini'
-    allowlists = [stubtest_dir / 'allowlist.txt']
-    if sys.version_info < (3, 12):
-        allowlists.append(stubtest_dir / 'allowlist_py311.txt')
-    else:
-        allowlists.append(stubtest_dir / 'allowlist_py312.txt')
+    allowlist = stubtest_dir / 'allowlist.txt'
 
     cmd = [
         'stubtest',
         '--ignore-disjoint-bases',
         f'--mypy-config-file={mypy_config}',
-        *(f'--allowlist={allowlist}' for allowlist in allowlists),
+        f'--allowlist={allowlist}',
     ]
     if concise:
         cmd.append('--concise')
