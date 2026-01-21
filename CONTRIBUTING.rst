@@ -17,6 +17,8 @@ For more, please read https://www.numpy.org/devdocs/dev/index.html
 
 Thank you for contributing, and happy coding!
 
+.. _spin_tool:
+
 Spin: NumPy’s developer tool
 ----------------------------
 
