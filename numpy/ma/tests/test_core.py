@@ -6035,3 +6035,48 @@ def test_frommethod_signature(fn, signature):
 def test_convert2ma_signature(fn, signature):
     assert str(inspect.signature(fn)) == signature
     assert fn.__module__ == 'numpy.ma.core'
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_1d(self):
+        arr = array([1, 2, 3], mask=[0, 1, 0])
+        match arr:
+            case [a, b, c]:
+                assert a == 1
+                assert b is masked
+                assert c == 3
+            case _:
+                raise AssertionError("1D MaskedArray did not match sequence pattern")
+
+    def test_match_sequence_pattern_2d(self):
+        arr = array([[1, 2], [3, 4]], mask=[[0, 1], [1, 0]])
+        match arr:
+            case [row1, row2]:
+                assert_array_equal(row1, array([1, 2], mask=[0, 1]))
+                assert_array_equal(row2, array([3, 4], mask=[1, 0]))
+            case _:
+                raise AssertionError("2D MaskedArray did not match sequence pattern")
+
+    def test_match_sequence_pattern_3d(self):
+        arr = array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+                    mask=[[[0, 1], [1, 0]], [[1, 0], [0, 1]]])
+        # outer matching
+        match arr:
+            case [plane1, plane2]:
+                assert_array_equal(plane1, array([[1, 2], [3, 4]],
+                                                 mask=[[0, 1], [1, 0]]))
+                assert_array_equal(plane2, array([[5, 6], [7, 8]],
+                                                 mask=[[1, 0], [0, 1]]))
+            case _:
+                raise AssertionError("3D MaskedArray did not match sequence pattern")
+        # inner matching
+        match arr:
+            case [[row1, row2], [row3, row4]]:
+                assert_array_equal(row1, array([1, 2], mask=[0, 1]))
+                assert_array_equal(row2, array([3, 4], mask=[1, 0]))
+                assert_array_equal(row3, array([5, 6], mask=[1, 0]))
+                assert_array_equal(row4, array([7, 8], mask=[0, 1]))
+            case _:
+                raise AssertionError("3D MaskedArray did not match sequence pattern")
