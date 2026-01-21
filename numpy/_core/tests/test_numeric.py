@@ -4254,6 +4254,12 @@ class TestKeepdims:
 
 class TestTensordot:
 
+    def test_rejects_duplicate_axes(self):
+        a = np.ones((2, 3, 3))
+        b = np.ones((3, 3, 4))
+        with pytest.raises(ValueError):
+            np.tensordot(a, b, axes=([1, 1], [0, 0]))
+
     def test_zero_dimension(self):
         # Test resolution to issue #5663
         a = np.ndarray((3, 0))
