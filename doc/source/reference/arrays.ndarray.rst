@@ -6,9 +6,9 @@
 The N-dimensional array (:class:`ndarray`)
 ******************************************
 
-An :class:`ndarray` is a (usually fixed-size) multidimensional
-container of items of the same type and size. The number of dimensions
-and items in an array is defined by its :attr:`shape <ndarray.shape>`,
+An :class:`ndarray` is a (usually fixed-size) multidimensional array
+that stores elements of the same data type in a contiguous block of memory.
+The number of dimensions and items in an array is defined by its :attr:`shape <ndarray.shape>`,
 which is a :class:`tuple` of *N* non-negative integers that specify the
 sizes of each dimension. The type of items in the array is specified by
 a separate :ref:`data-type object (dtype) <arrays.dtypes>`, one of which
@@ -33,6 +33,37 @@ objects implementing the :class:`memoryview` or :ref:`array
 .. admonition:: Example
 
    .. try_examples::
+
+      A 1-dimensional array of size 4, composed of 4-byte integer
+      elements:
+
+      >>> import numpy as np
+
+      >>> a = np.array([1, 2, 3, 4], np.int32)
+      >>> type(a)
+      <class 'numpy.ndarray'>
+      >>> a.shape
+      (4,)
+      >>> a.dtype
+      dtype('int32')
+      The array can be indexed using Python container-like syntax:
+
+      >>> # The element of a at index 2, namely, 3.
+      >>> a[2]
+      3
+
+      For example :ref:`slicing <arrays.indexing>` can produce views of
+      the array:
+
+      >>> b = a[1:3]
+      >>> b
+      array([2, 3], dtype=int32)
+      >>> b[0] = 9  # this also changes the corresponding element in a
+      >>> b
+      array([9, 3], dtype=int32)
+      >>> a
+      array([1, 9, 3, 4], dtype=int32)
+
 
       A 2-dimensional array of size 2 x 3, composed of 4-byte integer
       elements:
