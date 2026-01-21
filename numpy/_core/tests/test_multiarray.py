@@ -5681,7 +5681,7 @@ class TestIO:
     def param_filename(self, request):
         # This fixtures returns string or path_obj
         # so that every test doesn't need to have the
-        # paramterize marker.
+        # parametrize marker.
         return request.param
 
     def test_nofile(self):
