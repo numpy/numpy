@@ -21,7 +21,8 @@ Spin: NumPy’s developer tool
 ----------------------------
 
 NumPy uses a command-line tool called ``spin`` to support common development
-tasks such as running tests, building documentation, and managing other
+tasks such as building from source, running tests, building documentation, 
+and managing other
 developer workflows.
 
 The ``spin`` tool provides a consistent interface for contributors working on
