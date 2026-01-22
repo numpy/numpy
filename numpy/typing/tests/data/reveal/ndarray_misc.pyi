@@ -161,7 +161,9 @@ assert_type(AR_f8.var(axis=0), Any)
 assert_type(AR_f8.var(keepdims=True), Any)
 assert_type(AR_f8.var(out=B), SubClass)
 
+assert_type(AR_f8.argpartition(0), npt.NDArray[np.intp])
 assert_type(AR_f8.argpartition([0]), npt.NDArray[np.intp])
+assert_type(AR_f8.argpartition(0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
 assert_type(AR_f8.diagonal(), npt.NDArray[np.float64])
 

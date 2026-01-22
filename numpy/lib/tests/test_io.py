@@ -23,7 +23,6 @@ from numpy._utils import asbytes
 from numpy.exceptions import VisibleDeprecationWarning
 from numpy.lib import _npyio_impl
 from numpy.lib._iotools import ConversionWarning, ConverterError
-from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     HAS_REFCOUNT,
@@ -1682,21 +1681,20 @@ M   33  21.99
         control = np.array([2009., 23., 46],)
         assert_equal(test, control)
 
-    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1': 0, '1:n': 1, 'm:1': 2, 'm:n': 3}
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('e3', 'i2'), ('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
-        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                          names=None, converters=conv, encoding="bytes")
+        test = np.genfromtxt(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                             names=None, converters=conv, encoding="bytes")
         control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)],
                                dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
-        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                          usecols=(0, 1, 3), names=None, converters=conv,
-                          encoding="bytes")
+        test = np.genfromtxt(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                             usecols=(0, 1, 3), names=None, converters=conv,
+                             encoding="bytes")
         control = np.rec.array([(1, 5, 0), (2, 8, 1), (3, 3, 3)], dtype=dtyp)
         assert_equal(test, control)
 
@@ -2333,69 +2331,6 @@ M   33  21.99
                      dtype=np.str_)
             assert_array_equal(test, ctl)
 
-    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
-    def test_recfromtxt(self):
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
-        test = recfromtxt(data, **kwargs)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', int), ('B', int)])
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-        #
-        data = TextIO('A,B\n0,1\n2,N/A')
-        test = recfromtxt(data, dtype=None, usemask=True, **kwargs)
-        control = ma.array([(0, 1), (2, -1)],
-                           mask=[(False, False), (False, True)],
-                           dtype=[('A', int), ('B', int)])
-        assert_equal(test, control)
-        assert_equal(test.mask, control.mask)
-        assert_equal(test.A, [0, 2])
-
-    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
-    def test_recfromcsv(self):
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        kwargs = {"missing_values": "N/A", "names": True, "case_sensitive": True,
-                      "encoding": "bytes"}
-        test = recfromcsv(data, dtype=None, **kwargs)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=[('A', int), ('B', int)])
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-        #
-        data = TextIO('A,B\n0,1\n2,N/A')
-        test = recfromcsv(data, dtype=None, usemask=True, **kwargs)
-        control = ma.array([(0, 1), (2, -1)],
-                           mask=[(False, False), (False, True)],
-                           dtype=[('A', int), ('B', int)])
-        assert_equal(test, control)
-        assert_equal(test.mask, control.mask)
-        assert_equal(test.A, [0, 2])
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        test = recfromcsv(data, missing_values='N/A',)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=[('a', int), ('b', int)])
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-        #
-        data = TextIO('A,B\n0,1\n2,3')
-        dtype = [('a', int), ('b', float)]
-        test = recfromcsv(data, missing_values='N/A', dtype=dtype)
-        control = np.array([(0, 1), (2, 3)],
-                           dtype=dtype)
-        assert_(isinstance(test, np.recarray))
-        assert_equal(test, control)
-
-        # gh-10394
-        data = TextIO('color\n"red"\n"blue"')
-        test = recfromcsv(data, converters={0: lambda x: x.strip('\"')})
-        control = np.array([('red',), ('blue',)], dtype=[('color', (str, 4))])
-        assert_equal(test.dtype, control.dtype)
-        assert_equal(test, control)
-
     def test_max_rows(self):
         # Test the `max_rows` keyword argument.
         data = '1 2\n3 4\n5 6\n7 8\n9 10\n'
@@ -2653,38 +2588,6 @@ class TestPathUsage:
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
-
-    @pytest.mark.parametrize("filename_type", [Path, str])
-    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
-    def test_recfromtxt(self, filename_type):
-        with temppath(suffix='.txt') as path:
-            path = filename_type(path)
-            with open(path, 'w') as f:
-                f.write('A,B\n0,1\n2,3')
-
-            kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
-            test = recfromtxt(path, **kwargs)
-            control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', int), ('B', int)])
-            assert_(isinstance(test, np.recarray))
-            assert_equal(test, control)
-
-    @pytest.mark.parametrize("filename_type", [Path, str])
-    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
-    def test_recfromcsv(self, filename_type):
-        with temppath(suffix='.txt') as path:
-            path = filename_type(path)
-            with open(path, 'w') as f:
-                f.write('A,B\n0,1\n2,3')
-
-            kwargs = {
-                "missing_values": "N/A", "names": True, "case_sensitive": True
-            }
-            test = recfromcsv(path, dtype=None, **kwargs)
-            control = np.array([(0, 1), (2, 3)],
-                               dtype=[('A', int), ('B', int)])
-            assert_(isinstance(test, np.recarray))
-            assert_equal(test, control)
 
 
 def test_gzip_load():

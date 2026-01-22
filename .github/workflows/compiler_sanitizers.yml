@@ -69,7 +69,7 @@ jobs:
         pip uninstall -y pytest-xdist
     - name: Build
       run:
-        python -m spin build -- -Db_sanitize=address,undefined -Db_lundef=false
+        python -m spin build -j2 -- -Db_sanitize=address,undefined -Db_lundef=false
     - name: Test
       run: |
         # pass -s to pytest to see ASAN errors and warnings, otherwise pytest captures them
@@ -99,12 +99,12 @@ jobs:
         run: pip install -U spin
 
       - name: Build NumPy with ThreadSanitizer
-        run: python -m spin build -- -Db_sanitize=thread
+        run: python -m spin build -j2 -- -Db_sanitize=thread
 
       - name: Run tests under prebuilt TSAN container
         run: |
           export TSAN_OPTIONS="halt_on_error=0:allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt"
           echo "TSAN_OPTIONS=$TSAN_OPTIONS"
           python -m spin test \
-          `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
+          `find numpy -name "test*.py" | xargs grep -E -l "import threading|ThreadPoolExecutor" | tr '\n' ' '` \
            -- -v -s --timeout=600 --durations=10

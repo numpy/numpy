@@ -519,19 +519,19 @@ def extract(condition: ArrayLike, arr: ArrayLike) -> _Array1D[Incomplete]: ...
 def select[ArrayT: np.ndarray](
     condlist: _SizedIterable[_ArrayLikeBool_co],
     choicelist: Sequence[ArrayT],
-    default: _ScalarLike_co = 0,
+    default: ArrayLike = 0,
 ) -> ArrayT: ...
 @overload
 def select[ScalarT: np.generic](
     condlist: _SizedIterable[_ArrayLikeBool_co],
     choicelist: Sequence[_ArrayLike[ScalarT]] | NDArray[ScalarT],
-    default: _ScalarLike_co = 0,
+    default: ArrayLike = 0,
 ) -> NDArray[ScalarT]: ...
 @overload
 def select(
     condlist: _SizedIterable[_ArrayLikeBool_co],
     choicelist: Sequence[ArrayLike],
-    default: _ScalarLike_co = 0,
+    default: ArrayLike = 0,
 ) -> np.ndarray: ...
 
 # keep roughly in sync with `ma.core.copy`
@@ -652,7 +652,7 @@ def gradient(
     edge_order: L[1, 2] = 1,
 ) -> Incomplete: ...
 
-#
+# keep in sync with `ma.core.diff`
 @overload  # n == 0; return input unchanged
 def diff[T](
     a: T,
@@ -2272,7 +2272,7 @@ def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: None = None
 @overload  # unknown scalar-type, axis specified
 def insert(arr: ArrayLike, obj: _IndexLike, values: ArrayLike, axis: SupportsIndex) -> NDArray[Any]: ...
 
-#
+# keep in sync with `ma.core.append`
 @overload  # known array type, axis specified
 def append[ArrayT: np.ndarray](arr: ArrayT, values: ArrayT, axis: SupportsIndex) -> ArrayT: ...
 @overload  # 1d, known scalar type, axis specified

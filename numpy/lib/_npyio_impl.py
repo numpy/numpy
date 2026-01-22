@@ -1365,9 +1365,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             max_rows=max_rows
         )
 
-    if isinstance(delimiter, bytes):
-        delimiter.decode("latin1")
-
     if dtype is None:
         dtype = np.float64
 
@@ -2485,99 +2482,3 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 _genfromtxt_with_like = array_function_dispatch()(genfromtxt)
-
-
-def recfromtxt(fname, **kwargs):
-    """
-    Load ASCII data from a file and return it in a record array.
-
-    If ``usemask=False`` a standard `recarray` is returned,
-    if ``usemask=True`` a MaskedRecords array is returned.
-
-    .. deprecated:: 2.0
-        Use `numpy.genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function
-
-    Notes
-    -----
-    By default, `dtype` is None, which means that the data-type of the output
-    array will be determined from the data.
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`recfromtxt` is deprecated, "
-        "use `numpy.genfromtxt` instead."
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    kwargs.setdefault("dtype", None)
-    usemask = kwargs.get('usemask', False)
-    output = genfromtxt(fname, **kwargs)
-    if usemask:
-        from numpy.ma.mrecords import MaskedRecords
-        output = output.view(MaskedRecords)
-    else:
-        output = output.view(np.recarray)
-    return output
-
-
-def recfromcsv(fname, **kwargs):
-    """
-    Load ASCII data stored in a comma-separated file.
-
-    The returned array is a record array (if ``usemask=False``, see
-    `recarray`) or a masked record array (if ``usemask=True``,
-    see `ma.mrecords.MaskedRecords`).
-
-    .. deprecated:: 2.0
-        Use `numpy.genfromtxt` with comma as `delimiter` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function to load ASCII data.
-
-    Notes
-    -----
-    By default, `dtype` is None, which means that the data-type of the output
-    array will be determined from the data.
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`recfromcsv` is deprecated, "
-        "use `numpy.genfromtxt` with comma as `delimiter` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    # Set default kwargs for genfromtxt as relevant to csv import.
-    kwargs.setdefault("case_sensitive", "lower")
-    kwargs.setdefault("names", True)
-    kwargs.setdefault("delimiter", ",")
-    kwargs.setdefault("dtype", None)
-    output = genfromtxt(fname, **kwargs)
-
-    usemask = kwargs.get("usemask", False)
-    if usemask:
-        from numpy.ma.mrecords import MaskedRecords
-        output = output.view(MaskedRecords)
-    else:
-        output = output.view(np.recarray)
-    return output

@@ -270,7 +270,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
     npy_intp n;
 
     PyObject *obj = NULL;
-    PyArrayObject *arr;
+    PyArrayObject *arr = NULL;  // free'd on error use Py_CLEAR to decref.
 
     int index_type = 0;
     int ellipsis_pos = -1;
@@ -489,6 +489,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                     index_type = HAS_BOOL;
                     indices[curr_idx].type = HAS_BOOL;
                     indices[curr_idx].object = (PyObject *)arr;
+                    arr = NULL;  // Reference moved, clean up for error path.
 
                     /* keep track anyway, just to be complete */
                     used_ndim = array_ndims;
@@ -523,7 +524,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 indices[curr_idx].value = n;
                 indices[curr_idx].object = PyArray_Zeros(1, &n,
                                             PyArray_DescrFromType(NPY_INTP), 0);
-                Py_DECREF(arr);
+                Py_CLEAR(arr);
 
                 if (indices[curr_idx].object == NULL) {
                     goto failed_building_indices;
@@ -541,7 +542,6 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
             n = _nonzero_indices((PyObject *)arr, nonzero_result);
 
             if (n < 0) {
-                Py_DECREF(arr);
                 goto failed_building_indices;
             }
 
@@ -552,7 +552,6 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 for (i=0; i < n; i++) {
                     Py_DECREF(nonzero_result[i]);
                 }
-                Py_DECREF(arr);
                 goto failed_building_indices;
             }
 
@@ -566,7 +565,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 used_ndim += 1;
                 curr_idx += 1;
             }
-            Py_DECREF(arr);
+            Py_CLEAR(arr);
 
             /* All added indices have 1 dimension */
             if (fancy_ndim < 1) {
@@ -587,7 +586,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                  */
                 npy_intp ind = PyArray_PyIntAsIntp((PyObject *)arr);
 
-                Py_DECREF(arr);
+                Py_CLEAR(arr);
                 if (error_converting(ind)) {
                     goto failed_building_indices;
                 }
@@ -603,15 +602,17 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                 }
             }
 
+            if (fancy_ndim < PyArray_NDIM(arr)) {
+                fancy_ndim = PyArray_NDIM(arr);
+            }
+
             index_type |= HAS_FANCY;
             indices[curr_idx].type = HAS_FANCY;
             indices[curr_idx].value = -1;
             indices[curr_idx].object = (PyObject *)arr;
+            arr = NULL;  // Reference moved, clean up for error path.
 
             used_ndim += 1;
-            if (fancy_ndim < PyArray_NDIM(arr)) {
-                fancy_ndim = PyArray_NDIM(arr);
-            }
             curr_idx += 1;
             continue;
         }
@@ -632,7 +633,6 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
                     is_flatiter_object ? "" : ", numpy.newaxis (`None`)"
                 );
         }
-        Py_DECREF(arr);
         goto failed_building_indices;
     }
 
@@ -760,6 +760,7 @@ prepare_index_noarray(int array_ndims, npy_intp *array_dims, PyObject *index,
     return index_type;
 
   failed_building_indices:
+    Py_XDECREF(arr);
     for (i=0; i < curr_idx; i++) {
         Py_XDECREF(indices[i].object);
     }

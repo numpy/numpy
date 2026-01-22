@@ -7,7 +7,7 @@ from abc import abstractmethod
 from builtins import bool as py_bool
 from decimal import Decimal
 from fractions import Fraction
-from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
+from types import EllipsisType, ModuleType, MappingProxyType, GenericAlias
 from uuid import UUID
 
 from numpy.__config__ import show as show_config
@@ -18,7 +18,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     # Arrays
     ArrayLike,
     NDArray,
-    _SupportsArray,
     _NestedSequence,
     _ArrayLike,
     _ArrayLikeBool_co,
@@ -97,7 +96,6 @@ from numpy._typing import (  # type: ignore[deprecated]
     _ULongLongCodes,
     _LongDoubleCodes,
     _CLongDoubleCodes,
-    _DT64Codes,
     _TD64Codes,
     _StrCodes,
     _BytesCodes,
@@ -117,6 +115,15 @@ from numpy._typing import (  # type: ignore[deprecated]
     _UFunc_Nin1_Nout2,
     _UFunc_Nin2_Nout2,
     _GUFunc_Nin2_Nout1,
+)
+from numpy._typing._char_codes import (
+    _DT64Codes_any,
+    _DT64Codes_date,
+    _DT64Codes_datetime,
+    _DT64Codes_int,
+    _TD64Codes_any,
+    _TD64Codes_int,
+    _TD64Codes_timedelta,
 )
 
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
@@ -289,7 +296,7 @@ from numpy._core.getlimits import (
     finfo,
     iinfo,
 )
-
+from numpy._core.memmap import memmap
 from numpy._core.multiarray import (
     array,
     empty_like,
@@ -316,6 +323,7 @@ from numpy._core.multiarray import (
     ascontiguousarray,
     asfortranarray,
     arange,
+    busdaycalendar,
     busday_count,
     busday_offset,
     datetime_as_string,
@@ -327,6 +335,8 @@ from numpy._core.multiarray import (
     promote_types,
     fromstring,
     frompyfunc,
+    flatiter,
+    nditer,
     nested_iters,
     flagsobj,
 )
@@ -506,12 +516,12 @@ from numpy.lib._polynomial_impl import (
     polymul,
     polydiv,
     polyval,
+    poly1d,
     polyfit,
 )
 
-from numpy.lib._shape_base_impl import (  # type: ignore[deprecated]
+from numpy.lib._shape_base_impl import (
     column_stack,
-    row_stack,
     dstack,
     array_split,
     split,
@@ -670,7 +680,7 @@ __all__ = [  # noqa: RUF022
     # lib._shape_base_impl.__all__
     "column_stack", "dstack", "array_split", "split", "hsplit", "vsplit", "dsplit",
     "apply_over_axes", "expand_dims", "apply_along_axis", "kron", "tile",
-    "take_along_axis", "put_along_axis", "row_stack",
+    "take_along_axis", "put_along_axis",
     # lib._type_check_impl.__all__
     "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
     "real_if_close", "typename", "mintypecode", "common_type",
@@ -714,15 +724,10 @@ _NBitT2 = TypeVar("_NBitT2", bound=NBitBase, default=_NBitT1)  # pyright: ignore
 
 _ItemT_co = TypeVar("_ItemT_co", default=Any, covariant=True)
 _BoolItemT_co = TypeVar("_BoolItemT_co", bound=py_bool, default=py_bool, covariant=True)
-_NumberItemT_co = TypeVar("_NumberItemT_co", bound=complex, default=int | float | complex, covariant=True)
-_InexactItemT_co = TypeVar("_InexactItemT_co", bound=complex, default=float | complex, covariant=True)
-_FlexibleItemT_co = TypeVar(
-    "_FlexibleItemT_co",
-    bound=_CharLike_co | tuple[Any, ...],
-    default=_CharLike_co | tuple[Any, ...],
-    covariant=True,
-)
-_CharacterItemT_co = TypeVar("_CharacterItemT_co", bound=_CharLike_co, default=_CharLike_co, covariant=True)
+_NumberItemT_co = TypeVar("_NumberItemT_co", bound=complex, default=Any, covariant=True)  # either int, float, or complex
+_InexactItemT_co = TypeVar("_InexactItemT_co", bound=complex, default=Any, covariant=True)  # either float or complex
+_FlexibleItemT_co = TypeVar("_FlexibleItemT_co", bound=bytes | str | tuple[Any, ...], default=Any, covariant=True)
+_CharacterItemT_co = TypeVar("_CharacterItemT_co", bound=bytes | str, default=Any, covariant=True)
 _TD64ItemT_co = TypeVar("_TD64ItemT_co", bound=_TD64Item, default=Any, covariant=True)
 _DT64ItemT_co = TypeVar("_DT64ItemT_co", bound=_DT64Item, default=Any, covariant=True)
 
@@ -825,7 +830,6 @@ type _DTypeChar = L[
     "G",  # clongdouble
     "O",  # object
     "S",  # bytes_ (S0)
-    "a",  # bytes_ (deprecated)
     "U",  # str_
     "V",  # void
     "M",  # datetime64
@@ -923,13 +927,6 @@ type _NDIterFlagsOp = L[
     "writemasked",
 ]
 
-type _MemMapModeKind = L[
-    "readonly", "r",
-    "copyonwrite", "c",
-    "readwrite", "r+",
-    "write", "w+",
-]  # fmt: skip
-
 type _DT64Item = dt.date | int | None
 type _TD64Item = dt.timedelta | int | None
 
@@ -986,9 +983,6 @@ class _SupportsFileMethods(SupportsFlush, Protocol):
     def fileno(self) -> SupportsIndex: ...
     def tell(self) -> SupportsIndex: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
-
-@type_check_only
-class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protocol): ...
 
 @type_check_only
 class _SupportsDLPack[StreamT](Protocol):
@@ -1349,35 +1343,7 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     ) -> dtype[longdouble]: ...
 
     # `complexfloating` string-based representations and ctypes
-    if sys.version_info >= (3, 14) and sys.platform != "win32":
-        @overload
-        def __new__(
-            cls,
-            dtype: _Complex64Codes | type[ct.c_float_complex],
-            align: py_bool = False,
-            copy: py_bool = False,
-            *,
-            metadata: dict[str, Any] = ...,
-        ) -> dtype[complex64]: ...
-        @overload
-        def __new__(
-            cls,
-            dtype: _Complex128Codes | type[ct.c_double_complex],
-            align: py_bool = False,
-            copy: py_bool = False,
-            *,
-            metadata: dict[str, Any] = ...,
-        ) -> dtype[complex128]: ...
-        @overload
-        def __new__(
-            cls,
-            dtype: _CLongDoubleCodes | type[ct.c_longdouble_complex],
-            align: py_bool = False,
-            copy: py_bool = False,
-            *,
-            metadata: dict[str, Any] = ...,
-        ) -> dtype[clongdouble]: ...
-    else:
+    if sys.version_info < (3, 14) or sys.platform == "win32":
         @overload
         def __new__(
             cls,
@@ -1405,26 +1371,101 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
             *,
             metadata: dict[str, Any] = ...,
         ) -> dtype[clongdouble]: ...
+    else:
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex64Codes | type[ct.c_float_complex],
+            align: py_bool = False,
+            copy: py_bool = False,
+            *,
+            metadata: dict[str, Any] = ...,
+        ) -> dtype[complex64]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _Complex128Codes | type[ct.c_double_complex],
+            align: py_bool = False,
+            copy: py_bool = False,
+            *,
+            metadata: dict[str, Any] = ...,
+        ) -> dtype[complex128]: ...
+        @overload
+        def __new__(
+            cls,
+            dtype: _CLongDoubleCodes | type[ct.c_longdouble_complex],
+            align: py_bool = False,
+            copy: py_bool = False,
+            *,
+            metadata: dict[str, Any] = ...,
+        ) -> dtype[clongdouble]: ...
 
-    # Miscellaneous string-based representations and ctypes
-    @overload
+    # datetime64
+    @overload  # datetime64[{Y,M,W,D}]
     def __new__(
         cls,
-        dtype: _TD64Codes,
+        dtype: _DT64Codes_date,
         align: py_bool = False,
         copy: py_bool = False,
         *,
         metadata: dict[str, Any] = ...,
-    ) -> dtype[timedelta64]: ...
-    @overload
+    ) -> dtype[datetime64[dt.date]]: ...
+    @overload  # datetime64[{h,m,s,ms,us}]
     def __new__(
         cls,
-        dtype: _DT64Codes,
+        dtype: _DT64Codes_datetime,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[datetime64[dt.datetime]]: ...
+    @overload  # datetime64[{ns,ps,fs,as}]
+    def __new__(
+        cls,
+        dtype: _DT64Codes_int,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[datetime64[int]]: ...
+    @overload  # datetime64[?]
+    def __new__(
+        cls,
+        dtype: _DT64Codes_any,
         align: py_bool = False,
         copy: py_bool = False,
         *,
         metadata: dict[str, Any] = ...,
     ) -> dtype[datetime64]: ...
+
+    # timedelta64
+    @overload  # timedelta64[{W,D,h,m,s,ms,us}]
+    def __new__(
+        cls,
+        dtype: _TD64Codes_timedelta,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[timedelta64[dt.timedelta]]: ...
+    @overload  # timedelta64[{Y,M,ns,ps,fs,as}]
+    def __new__(
+        cls,
+        dtype: _TD64Codes_int,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[timedelta64[int]]: ...
+    @overload  # timedelta64[?]
+    def __new__(
+        cls,
+        dtype: _TD64Codes_any,
+        align: py_bool = False,
+        copy: py_bool = False,
+        *,
+        metadata: dict[str, Any] = ...,
+    ) -> dtype[timedelta64]: ...
 
     # `StringDType` requires special treatment because it has no scalar type
     @overload
@@ -1606,64 +1647,6 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     def str(self) -> LiteralString: ...
     @property
     def type(self) -> type[_ScalarT_co]: ...
-
-@final
-class flatiter(Generic[_ArrayT_co]):
-    __hash__: ClassVar[None] = None  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
-
-    @property
-    def base(self, /) -> _ArrayT_co: ...
-    @property
-    def coords[ShapeT: _Shape](self: flatiter[ndarray[ShapeT]], /) -> ShapeT: ...
-    @property
-    def index(self, /) -> int: ...
-
-    # iteration
-    def __len__(self, /) -> int: ...
-    def __iter__(self, /) -> Self: ...
-    def __next__[ScalarT: generic](self: flatiter[NDArray[ScalarT]], /) -> ScalarT: ...
-
-    # indexing
-    @overload  # nd: _[()]
-    def __getitem__(self, key: tuple[()], /) -> _ArrayT_co: ...
-    @overload  # 0d; _[<integer>]
-    def __getitem__[ScalarT: generic](self: flatiter[NDArray[ScalarT]], key: int | integer, /) -> ScalarT: ...
-    @overload  # 1d; _[[*<int>]], _[:], _[...]
-    def __getitem__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        key: list[int] | slice | EllipsisType | flatiter[NDArray[integer]],
-        /,
-    ) -> ndarray[tuple[int], DTypeT]: ...
-    @overload  # 2d; _[[*[*<int>]]]
-    def __getitem__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        key: list[list[int]],
-        /,
-    ) -> ndarray[tuple[int, int], DTypeT]: ...
-    @overload  # ?d
-    def __getitem__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        key: NDArray[integer] | _NestedSequence[int],
-        /,
-    ) -> ndarray[_AnyShape, DTypeT]: ...
-
-    # NOTE: `__setitem__` operates via `unsafe` casting rules, and can thus accept any
-    # type accepted by the relevant underlying `np.generic` constructor, which isn't
-    # known statically. So we cannot meaningfully annotate the value parameter.
-    def __setitem__(self, key: slice | EllipsisType | _ArrayLikeInt, val: object, /) -> None: ...
-
-    # NOTE: `dtype` and `copy` are no-ops at runtime, so we don't support them here to
-    # avoid confusion
-    def __array__[DTypeT: dtype](
-        self: flatiter[ndarray[Any, DTypeT]],
-        dtype: None = None,
-        /,
-        *,
-        copy: None = None,
-    ) -> ndarray[tuple[int], DTypeT]: ...
-
-    # This returns a flat copy of the underlying array, not of the iterator itself
-    def copy[DTypeT: dtype](self: flatiter[ndarray[Any, DTypeT]], /) -> ndarray[tuple[int], DTypeT]: ...
 
 @type_check_only
 class _ArrayOrScalarCommon:
@@ -2219,7 +2202,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @property
     def shape(self) -> _ShapeT_co: ...
     @shape.setter
-    @deprecated("In-place shape modification will be deprecated in NumPy 2.5.", category=PendingDeprecationWarning)
+    @deprecated("In-place shape modification has been deprecated in NumPy 2.5.")
     def shape(self, value: _ShapeLike) -> None: ...
 
     #
@@ -2259,8 +2242,10 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def tolist(self, /) -> Any: ...
 
     @overload
+    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.5")
     def resize(self, new_shape: _ShapeLike, /, *, refcheck: py_bool = True) -> None: ...
     @overload
+    @deprecated("Resizing a NumPy array inplace has been deprecated in NumPy 2.5")
     def resize(self, /, *new_shape: SupportsIndex, refcheck: py_bool = True) -> None: ...
 
     # keep in sync with `ma.MaskedArray.squeeze`
@@ -2371,25 +2356,44 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         order: str | Sequence[str] | None = None,
     ) -> None: ...
 
-    #
-    @overload
+    # keep in sync with `ma.core.MaskedArray.argpartition`
+    # keep roughly in sync with `_core.fromnumeric.argpartition`
+    @overload  # axis: None
     def argpartition(
         self,
         kth: _ArrayLikeInt,
         /,
-        axis: SupportsIndex | None = -1,
+        axis: None,
         kind: _PartitionKind = "introselect",
         order: None = None,
-    ) -> NDArray[intp]: ...
-    @overload
+    ) -> ndarray[tuple[int], dtype[intp]]: ...
+    @overload  # axis: index (default)
+    def argpartition(
+        self,
+        kth: _ArrayLikeInt,
+        /,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: None = None,
+    ) -> ndarray[_ShapeT_co, dtype[intp]]: ...
+    @overload  # void, axis: None
     def argpartition(
         self: NDArray[void],
         kth: _ArrayLikeInt,
         /,
-        axis: SupportsIndex | None = -1,
+        axis: None,
         kind: _PartitionKind = "introselect",
         order: str | Sequence[str] | None = None,
-    ) -> NDArray[intp]: ...
+    ) -> ndarray[tuple[int], dtype[intp]]: ...
+    @overload  # void, axis: index (default)
+    def argpartition(
+        self: NDArray[void],
+        kth: _ArrayLikeInt,
+        /,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None,
+    ) -> ndarray[_ShapeT_co, dtype[intp]]: ...
 
     # keep in sync with `ma.MaskedArray.diagonal`
     def diagonal(
@@ -3770,8 +3774,10 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
 
     # NOTE: this wont't raise, but won't do anything either
     @overload
+    @deprecated("Resizing a NumPy generic inplace has been deprecated in NumPy 2.5")
     def resize(self, /, *, refcheck: py_bool = True) -> None: ...
     @overload
+    @deprecated("Resizing a NumPy generic inplace has been deprecated in NumPy 2.5")
     def resize(self, new_shape: L[0, -1] | tuple[L[0, -1]] | tuple[()], /, *, refcheck: py_bool = True) -> None: ...
 
     #
@@ -6050,227 +6056,6 @@ class broadcast:
     def __next__(self) -> tuple[Any, ...]: ...
     def __iter__(self) -> Self: ...
     def reset(self) -> None: ...
-
-@final
-class busdaycalendar:
-    def __init__(
-        self,
-        /,
-        weekmask: str | Sequence[int | bool_ | integer] | _SupportsArray[dtype[bool_ | integer]] = "1111100",
-        holidays: Sequence[dt.date | datetime64] | _SupportsArray[dtype[datetime64]] | None = None,
-    ) -> None: ...
-    @property
-    def weekmask(self) -> ndarray[tuple[int], dtype[bool_]]: ...
-    @property
-    def holidays(self) -> ndarray[tuple[int], dtype[datetime64[dt.date]]]: ...
-
-@final
-class nditer:
-    @overload
-    def __init__(
-        self,
-        /,
-        op: ArrayLike,
-        flags: Sequence[_NDIterFlagsKind] | None = None,
-        op_flags: Sequence[_NDIterFlagsOp] | None = None,
-        op_dtypes: DTypeLike | None = None,
-        order: _OrderKACF = "K",
-        casting: _CastingKind = "safe",
-        op_axes: Sequence[SupportsIndex] | None = None,
-        itershape: _ShapeLike | None = None,
-        buffersize: SupportsIndex = 0,
-    ) -> None: ...
-    @overload
-    def __init__(
-        self,
-        /,
-        op: Sequence[ArrayLike | None],
-        flags: Sequence[_NDIterFlagsKind] | None = None,
-        op_flags: Sequence[Sequence[_NDIterFlagsOp]] | None = None,
-        op_dtypes: Sequence[DTypeLike | None] | None = None,
-        order: _OrderKACF = "K",
-        casting: _CastingKind = "safe",
-        op_axes: Sequence[Sequence[SupportsIndex]] | None = None,
-        itershape: _ShapeLike | None = None,
-        buffersize: SupportsIndex = 0,
-    ) -> None: ...
-
-    def __enter__(self) -> nditer: ...
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None: ...
-    def __iter__(self) -> nditer: ...
-    def __next__(self) -> tuple[NDArray[Any], ...]: ...
-    def __len__(self) -> int: ...
-    def __copy__(self) -> nditer: ...
-    @overload
-    def __getitem__(self, index: SupportsIndex) -> NDArray[Any]: ...
-    @overload
-    def __getitem__(self, index: slice) -> tuple[NDArray[Any], ...]: ...
-    def __setitem__(self, index: slice | SupportsIndex, value: ArrayLike) -> None: ...
-    def close(self) -> None: ...
-    def copy(self) -> nditer: ...
-    def debug_print(self) -> None: ...
-    def enable_external_loop(self) -> None: ...
-    def iternext(self) -> py_bool: ...
-    def remove_axis(self, i: SupportsIndex, /) -> None: ...
-    def remove_multi_index(self) -> None: ...
-    def reset(self) -> None: ...
-    @property
-    def dtypes(self) -> tuple[dtype, ...]: ...
-    @property
-    def finished(self) -> py_bool: ...
-    @property
-    def has_delayed_bufalloc(self) -> py_bool: ...
-    @property
-    def has_index(self) -> py_bool: ...
-    @property
-    def has_multi_index(self) -> py_bool: ...
-    @property
-    def index(self) -> int: ...
-    @property
-    def iterationneedsapi(self) -> py_bool: ...
-    @property
-    def iterindex(self) -> int: ...
-    @property
-    def iterrange(self) -> tuple[int, ...]: ...
-    @property
-    def itersize(self) -> int: ...
-    @property
-    def itviews(self) -> tuple[NDArray[Any], ...]: ...
-    @property
-    def multi_index(self) -> tuple[int, ...]: ...
-    @property
-    def ndim(self) -> int: ...
-    @property
-    def nop(self) -> int: ...
-    @property
-    def operands(self) -> tuple[NDArray[Any], ...]: ...
-    @property
-    def shape(self) -> tuple[int, ...]: ...
-    @property
-    def value(self) -> tuple[NDArray[Any], ...]: ...
-
-class memmap(ndarray[_ShapeT_co, _DTypeT_co]):
-    __array_priority__: ClassVar[float] = 100.0  # pyright: ignore[reportIncompatibleMethodOverride]
-    filename: str | None
-    offset: int
-    mode: str
-    @overload
-    def __new__(
-        subtype,
-        filename: StrOrBytesPath | _SupportsFileMethodsRW,
-        dtype: type[uint8] = ...,
-        mode: _MemMapModeKind = "r+",
-        offset: int = 0,
-        shape: int | tuple[int, ...] | None = None,
-        order: _OrderKACF = "C",
-    ) -> memmap[Any, dtype[uint8]]: ...
-    @overload
-    def __new__[ScalarT: generic](
-        subtype,
-        filename: StrOrBytesPath | _SupportsFileMethodsRW,
-        dtype: _DTypeLike[ScalarT],
-        mode: _MemMapModeKind = "r+",
-        offset: int = 0,
-        shape: int | tuple[int, ...] | None = None,
-        order: _OrderKACF = "C",
-    ) -> memmap[Any, dtype[ScalarT]]: ...
-    @overload
-    def __new__(
-        subtype,
-        filename: StrOrBytesPath | _SupportsFileMethodsRW,
-        dtype: DTypeLike,
-        mode: _MemMapModeKind = "r+",
-        offset: int = 0,
-        shape: int | tuple[int, ...] | None = None,
-        order: _OrderKACF = "C",
-    ) -> memmap[Any, dtype]: ...
-    def __array_finalize__(self, obj: object) -> None: ...
-    def __array_wrap__(  # type: ignore[override]
-        self,
-        array: memmap[_ShapeT_co, _DTypeT_co],
-        context: tuple[ufunc, tuple[Any, ...], int] | None = None,
-        return_scalar: py_bool = False,
-    ) -> Any: ...
-    def flush(self) -> None: ...
-
-class poly1d:
-    @property
-    def variable(self) -> LiteralString: ...
-    @property
-    def order(self) -> int: ...
-    @property
-    def o(self) -> int: ...
-    @property
-    def roots(self) -> NDArray[Any]: ...
-    @property
-    def r(self) -> NDArray[Any]: ...
-
-    @property
-    def coeffs(self) -> NDArray[Any]: ...
-    @coeffs.setter
-    def coeffs(self, value: NDArray[Any]) -> None: ...
-
-    @property
-    def c(self) -> NDArray[Any]: ...
-    @c.setter
-    def c(self, value: NDArray[Any]) -> None: ...
-
-    @property
-    def coef(self) -> NDArray[Any]: ...
-    @coef.setter
-    def coef(self, value: NDArray[Any]) -> None: ...
-
-    @property
-    def coefficients(self) -> NDArray[Any]: ...
-    @coefficients.setter
-    def coefficients(self, value: NDArray[Any]) -> None: ...
-
-    __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
-
-    @overload
-    def __array__(self, /, t: None = None, copy: py_bool | None = None) -> ndarray[tuple[int]]: ...
-    @overload
-    def __array__[DTypeT: dtype](self, /, t: DTypeT, copy: py_bool | None = None) -> ndarray[tuple[int], DTypeT]: ...
-
-    @overload
-    def __call__(self, val: _ScalarLike_co) -> Any: ...
-    @overload
-    def __call__(self, val: poly1d) -> poly1d: ...
-    @overload
-    def __call__(self, val: ArrayLike) -> NDArray[Any]: ...
-
-    def __init__(
-        self,
-        c_or_r: ArrayLike,
-        r: py_bool = False,
-        variable: str | None = None,
-    ) -> None: ...
-    def __len__(self) -> int: ...
-    def __neg__(self) -> poly1d: ...
-    def __pos__(self) -> poly1d: ...
-    def __mul__(self, other: ArrayLike, /) -> poly1d: ...
-    def __rmul__(self, other: ArrayLike, /) -> poly1d: ...
-    def __add__(self, other: ArrayLike, /) -> poly1d: ...
-    def __radd__(self, other: ArrayLike, /) -> poly1d: ...
-    def __pow__(self, val: _FloatLike_co, /) -> poly1d: ...  # Integral floats are accepted
-    def __sub__(self, other: ArrayLike, /) -> poly1d: ...
-    def __rsub__(self, other: ArrayLike, /) -> poly1d: ...
-    def __truediv__(self, other: ArrayLike, /) -> poly1d: ...
-    def __rtruediv__(self, other: ArrayLike, /) -> poly1d: ...
-    def __getitem__(self, val: int, /) -> Any: ...
-    def __setitem__(self, key: int, val: Any, /) -> None: ...
-    def __iter__(self) -> Iterator[Any]: ...
-    def deriv(self, m: SupportsInt | SupportsIndex = 1) -> poly1d: ...
-    def integ(
-        self,
-        m: SupportsInt | SupportsIndex = 1,
-        k: _ArrayLikeComplex_co | _ArrayLikeObject_co | None = 0,
-    ) -> poly1d: ...
 
 def from_dlpack(
     x: _SupportsDLPack[None],

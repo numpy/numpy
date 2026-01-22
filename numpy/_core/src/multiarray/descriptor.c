@@ -844,7 +844,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         return (PyArray_Descr *)Py_NotImplemented;
     }
     if (!PyDataType_ISLEGACY(type) || !PyDataType_ISLEGACY(conv)) {
-        /* 
+        /*
          * This specification should probably be never supported, but
          * certainly not for new-style DTypes.
          */
@@ -1829,14 +1829,6 @@ _convert_from_str(PyObject *obj, int align)
                     check_num = NPY_STRING;
                     break;
 
-                case NPY_DEPRECATED_STRINGLTR2:
-                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                                  "Use the 'S' alias instead.") < 0) {
-                        return NULL;
-                    }
-                    check_num = NPY_STRING;
-                    break;
-
                 /*
                  * When specifying length of UNICODE
                  * the number of characters is given to match
@@ -1907,13 +1899,6 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-        if (strcmp(type, "a") == 0) {
-            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                          "Use the 'S' alias instead.") < 0) {
-                return NULL;
-            }
-        }
-
         /*
          * Probably only ever dispatches to `_convert_from_type`, but who
          * knows what users are injecting into `np.typeDict`.
@@ -1966,7 +1951,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base_descr)
 {
     if (!PyDataType_ISLEGACY(base_descr)) {
-        /* 
+        /*
          * The main use of this function is mutating strings, so probably
          * disallowing this is fine in practice.
          */
@@ -2932,13 +2917,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     default:
-        /* raise an error */
-        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
-        }
-        else {
-            version = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                        "Invalid state while unpickling. Is the pickle corrupted "
+                        "or created with a newer NumPy version?");
+        return NULL;
     }
 
     /*

@@ -1875,9 +1875,11 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
         int type = PyArray_TYPE(arr);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(std::make_tuple(type, equal_nan, return_index, return_inverse, return_counts)) == unique_funcs.end()) {
-            Py_RETURN_NOTIMPLEMENTED;
+            result = Py_NewRef(Py_NotImplemented);
         }
-        result = reinterpret_cast<PyObject *>(unique_funcs[std::make_tuple(type, equal_nan, return_index, return_inverse, return_counts)](arr));
+        else {
+            result = reinterpret_cast<PyObject *>(unique_funcs[std::make_tuple(type, equal_nan, return_index, return_inverse, return_counts)](arr));
+        }
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();

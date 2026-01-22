@@ -237,7 +237,7 @@ your system.
 
     First, install Microsoft Visual Studio - the 2022 Community Edition will
     work (see the `Visual Studio download site <https://visualstudio.microsoft.com/downloads/>`__).
-    Ensure that you have installed necessary Visual Studio components for building NumPy 
+    Ensure that you have installed necessary Visual Studio components for building NumPy
     on WoA from `here <https://gist.github.com/Mugundanmcw/c3bb93018d5da9311fb2b222f205ba19>`__.
 
     To use the flang compiler for Windows on ARM64, install Latest LLVM
@@ -515,6 +515,7 @@ Customizing builds
 
    compilers_and_options
    blas_lapack
+   cpu_simd
    cross_compilation
    redistributable_binaries
 

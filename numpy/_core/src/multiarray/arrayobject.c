@@ -427,7 +427,7 @@ array_dealloc(PyArrayObject *self)
             }
         }
         if (fa->mem_handler == NULL) {
-            if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
+            if (npy_global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -1232,7 +1232,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     .tp_as_mapping = &array_as_mapping,
     .tp_str = (reprfunc)array_str,
     .tp_as_buffer = &array_as_buffer,
-    .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
+    .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_SEQUENCE),
 
     .tp_richcompare = (richcmpfunc)array_richcompare,
     .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),

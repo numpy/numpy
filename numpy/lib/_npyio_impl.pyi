@@ -25,7 +25,6 @@ from typing_extensions import TypeVar
 import numpy as np
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._typing import ArrayLike, DTypeLike, NDArray, _DTypeLike, _SupportsArrayFunc
-from numpy.ma.mrecords import MaskedRecords
 
 from ._datasource import DataSource as DataSource
 
@@ -283,13 +282,3 @@ def genfromtxt(
     ndmin: L[0, 1, 2] = 0,
     like: _SupportsArrayFunc | None = None,
 ) -> NDArray[Any]: ...
-
-@overload
-def recfromtxt(fname: _FName, *, usemask: L[False] = False, **kwargs: object) -> np.recarray[Any, np.dtype[np.record]]: ...
-@overload
-def recfromtxt(fname: _FName, *, usemask: L[True], **kwargs: object) -> MaskedRecords[Any, np.dtype[np.void]]: ...
-
-@overload
-def recfromcsv(fname: _FName, *, usemask: L[False] = False, **kwargs: object) -> np.recarray[Any, np.dtype[np.record]]: ...
-@overload
-def recfromcsv(fname: _FName, *, usemask: L[True], **kwargs: object) -> MaskedRecords[Any, np.dtype[np.void]]: ...

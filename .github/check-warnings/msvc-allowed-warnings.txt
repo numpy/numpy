@@ -15,7 +15,7 @@
 C:\a\numpy\numpy\numpy\random\src\pcg64\pcg64.h(342): warning C4146: unary minus operator applied to unsigned type, result still unsigned
 D:\a\numpy\numpy\numpy\random\src\pcg64\pcg64.h(342): warning C4146: unary minus operator applied to unsigned type, result still unsigned
 cl : Command line warning D9025 : overriding '/arch:SSE2' with '/arch:AVX2'
-numpy/random/_generator.cp312-win32.pyd.p/numpy/random/_generator.pyx.c(26329): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
-numpy/random/_generator.cp312-win32.pyd.p/numpy/random/_generator.pyx.c(38353): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
-numpy/random/_generator.cp312-win_arm64.pyd.p/numpy/random/_generator.pyx.c(26329): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
-numpy/random/_generator.cp312-win_arm64.pyd.p/numpy/random/_generator.pyx.c(38353): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
+numpy/random/_generator.cp312-win32.pyd.p/numpy/random/_generator.pyx.c(26345): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
+numpy/random/_generator.cp312-win32.pyd.p/numpy/random/_generator.pyx.c(38369): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
+numpy/random/_generator.cp312-win_arm64.pyd.p/numpy/random/_generator.pyx.c(26345): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data
+numpy/random/_generator.cp312-win_arm64.pyd.p/numpy/random/_generator.pyx.c(38369): warning C4244: 'function': conversion from 'int64_t' to 'double', possible loss of data

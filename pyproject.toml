@@ -174,6 +174,11 @@ tracker = "https://github.com/numpy/numpy/issues"
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "typing"
+        name = "Typing improvements and changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "change"
         name = "Changes"
         showcontent = true

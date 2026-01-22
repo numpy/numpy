@@ -544,6 +544,7 @@ def ipython(*, ipython_args, build_dir):
 def mypy(ctx):
     """🦆 Run Mypy tests for NumPy
     """
+    ctx.invoke(build)
     env = os.environ
     env['NPY_RUN_MYPY_IN_TESTSUITE'] = '1'
     ctx.params['pytest_args'] = [os.path.join('numpy', 'typing')]

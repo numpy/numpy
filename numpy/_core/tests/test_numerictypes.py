@@ -66,9 +66,9 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
+    # depth1: x Info color info y z
+    # depth2: value y2 Info2 name z2 Name Value
+    # depth3: name value y3 z3
     ([3, 2], (6j, 6., (b'nn', [6j, 4j], [6., 4.], [1, 2]), b'NN', True),
      b'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., (b'oo', [7j, 5j], [7., 5.], [2, 1]), b'OO', False),
@@ -543,10 +543,14 @@ def test_issctype(rep, expected):
     assert_equal(actual, expected)
 
 
-@pytest.mark.skipif(sys.flags.optimize > 1,
-                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
-@pytest.mark.xfail(IS_PYPY,
-                   reason="PyPy cannot modify tp_doc after PyType_Ready")
+@pytest.mark.skipif(
+    sys.flags.optimize > 1,
+    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1",
+)
+@pytest.mark.xfail(
+    IS_PYPY,
+    reason="PyPy cannot modify tp_doc after PyType_Ready",
+)
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:

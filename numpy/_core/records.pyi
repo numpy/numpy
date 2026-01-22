@@ -75,7 +75,7 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
 
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         dtype: None = None,
         buf: Buffer | None = None,
@@ -91,7 +91,7 @@ class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> _RecArray[record]: ...
     @overload
     def __new__(
-        subtype,
+        cls,
         shape: _ShapeLike,
         dtype: DTypeLike | None,
         buf: Buffer | None = None,

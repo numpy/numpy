@@ -605,33 +605,6 @@ npymath_lib = static_library('npymath',
   gnu_symbol_visibility: 'hidden',
 )
 
-dir_separator = '/'
-if build_machine.system() == 'windows'
-  dir_separator = '\\'
-endif
-configure_file(
-  input: 'npymath.ini.in',
-  output: 'npymath.ini',
-  configuration: configuration_data({
-    'pkgname' : 'numpy._core',
-    'sep' : dir_separator,
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-configure_file(
-  input: 'mlib.ini.in',
-  output: 'mlib.ini',
-  configuration: configuration_data({
-    'posix_mathlib' : mlib_linkflag,
-    'msvc_mathlib' : 'm.lib',
-  }),
-  install: true,
-  install_dir: np_dir / '_core/lib/npy-pkg-config',
-  install_tag: 'devel'
-)
-
 if false
   # This doesn't quite work (yet), it assumes we'll install headers under
   # include/, and trying to add the correct path with `extra_cflags` runs into
@@ -759,7 +732,7 @@ py.extension_module('_multiarray_tests',
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
-    'src/common/npy_hashtable.cpp',
+    'src/common/npy_hashtable.c',
     'src/common/npy_import.c',
     src_file.process('src/common/templ_common.h.src')
   ],
@@ -1114,7 +1087,7 @@ src_multiarray_umath_common = [
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
-  'src/common/npy_hashtable.cpp',
+  'src/common/npy_hashtable.c',
   'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ufunc_override.c',
@@ -1133,7 +1106,7 @@ endif
 
 src_multiarray = multiarray_gen_headers + [
   'src/multiarray/abstractdtypes.c',
-  'src/multiarray/alloc.c',
+  'src/multiarray/alloc.cpp',
   'src/multiarray/arrayobject.c',
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',

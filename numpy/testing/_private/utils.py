@@ -64,9 +64,7 @@ except importlib.metadata.PackageNotFoundError:
 else:
     IS_INSTALLED = True
     try:
-        if sys.version_info >= (3, 13):
-            IS_EDITABLE = np_dist.origin.dir_info.editable
-        else:
+        if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
             import json  # noqa: E401
             import types
@@ -75,6 +73,8 @@ else:
                 object_hook=lambda data: types.SimpleNamespace(**data),
             )
             IS_EDITABLE = origin.dir_info.editable
+        else:
+            IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
@@ -905,8 +905,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
-            remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
-                       f'({percent_mismatch:.3g}%)']
+            remarks = [(f'Mismatched elements: {n_mismatch} / {n_elements} '
+                        f'({percent_mismatch:.3g}%)')]
             if invalids.ndim != 0:
                 if flagged.ndim > 0:
                     positions = np.argwhere(np.asarray(~flagged))[invalids]
@@ -1055,6 +1055,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
@@ -1687,7 +1689,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         Array desired.
     rtol : float, optional
         Relative tolerance.
-    atol : float, optional
+    atol : float | np.timedelta64, optional
         Absolute tolerance.
     equal_nan : bool, optional.
         If True, NaNs will compare equal.
@@ -1766,7 +1768,11 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
                                        equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
+    if isinstance(atol, np.timedelta64):
+        atol_str = str(atol)
+    else:
+        atol_str = f"{atol:g}"
+    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol_str}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
                          verbose=verbose, header=header, equal_nan=equal_nan,
                          strict=strict)
@@ -2842,6 +2848,8 @@ def requires_deep_recursion(func):
             pytest.skip("Pyston disables recursion checking")
         if IS_WASM:
             pytest.skip("WASM has limited stack size")
+        if not IS_64BIT:
+            pytest.skip("32 bit Python has limited stack size")
         cflags = sysconfig.get_config_var('CFLAGS') or ''
         config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
         address_sanitizer = (
