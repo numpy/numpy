@@ -11,7 +11,6 @@ developer workflows.
 The ``spin`` tool provides a consistent interface for contributors working on
 NumPy itself, wrapping multiple underlying tools and configurations into a
 single command that follows NumPy’s development conventions.
-
 Running the full test suite::
 
     $ spin test -m full
