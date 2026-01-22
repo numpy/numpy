@@ -508,9 +508,11 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
         auto type = PyArray_TYPE(arr);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
-            Py_RETURN_NOTIMPLEMENTED;
+            result = Py_NewRef(Py_NotImplemented);
         }
-        result = unique_funcs[type](arr, equal_nan);
+        else {
+            result = unique_funcs[type](arr, equal_nan);
+        }
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();

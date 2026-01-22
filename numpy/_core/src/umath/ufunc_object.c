@@ -2738,8 +2738,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else {
         fixed_strides[0] = PyArray_STRIDES(op[0])[axis];
         fixed_strides[1] = PyArray_STRIDES(op[1])[axis];
-        fixed_strides[2] = fixed_strides[0];
     }
+    // First argument is also passed as output (e.g. see dataptr below).
+    fixed_strides[2] = fixed_strides[0];
 
 
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -4515,7 +4516,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 "use the `out` keyword argument instead. If you hoped to work with "
                 "more than 2 inputs, combine them into a single array and get the extrema "
                 "for the relevant axis.") < 0) {
-                return NULL;
+                goto fail;
             }
         }
 

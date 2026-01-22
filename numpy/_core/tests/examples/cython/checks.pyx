@@ -248,6 +248,7 @@ def test_get_multi_index_iter_next(it: "nditer", cnp.ndarray[cnp.float64_t, ndim
         cnp.NpyIter_GetGetMultiIndex(cit, NULL)
     cdef cnp.NpyIter_IterNextFunc _iternext = \
         cnp.NpyIter_GetIterNext(cit, NULL)
+    cnp.NpyIter_Deallocate(cit)
     return 1
 
 
