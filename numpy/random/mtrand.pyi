@@ -24,7 +24,7 @@ from numpy._typing import (
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
     _DTypeLike,
-    _DTypeLikeBool,
+    _DTypeLikeInt,
     _Int8Codes,
     _Int16Codes,
     _Int32Codes,
@@ -171,15 +171,6 @@ class RandomState:
         high: int | None = None,
         size: None = None,
         *,
-        dtype: type[np.bool],
-    ) -> np.bool: ...
-    @overload
-    def randint(
-        self,
-        low: int,
-        high: int | None = None,
-        size: None = None,
-        *,
         dtype: _DTypeLike[np.int8] | _Int8Codes,
     ) -> int8: ...
     @overload
@@ -218,14 +209,6 @@ class RandomState:
         *,
         dtype: _DTypeLike[np.int64] | _Int64Codes,
     ) -> int64: ...
-    @overload
-    def randint(
-        self,
-        low: _ArrayLikeInt_co,
-        high: _ArrayLikeInt_co | None = None,
-        size: _ShapeLike | None = None,
-        dtype: type[int] | _DTypeLike[np.int_] | _IntPCodes = int,
-    ) -> NDArray[np.int_]: ...
     @overload
     def randint(
         self,
@@ -269,15 +252,6 @@ class RandomState:
         high: int | None = None,
         size: None = None,
         *,
-        dtype: _DTypeLike[np.ulong] | _ULongCodes,
-    ) -> ulong: ...
-    @overload
-    def randint(
-        self,
-        low: int,
-        high: int | None = None,
-        size: None = None,
-        *,
         dtype: _DTypeLike[np.uint64] | _UInt64Codes,
     ) -> uint64: ...
     @overload
@@ -286,9 +260,8 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        *,
-        dtype: _DTypeLikeBool,
-    ) -> NDArray[np.bool]: ...
+        dtype: type[int] | _DTypeLike[np.int_] | _IntPCodes = int,
+    ) -> NDArray[np.int_]: ...
     @overload
     def randint(
         self,
@@ -368,17 +341,8 @@ class RandomState:
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
         *,
-        dtype: _DTypeLike[np.long] | _LongCodes,
-    ) -> NDArray[long]: ...
-    @overload
-    def randint(
-        self,
-        low: _ArrayLikeInt_co,
-        high: _ArrayLikeInt_co | None = None,
-        size: _ShapeLike | None = None,
-        *,
-        dtype: _DTypeLike[np.ulong] | _ULongCodes,
-    ) -> NDArray[ulong]: ...
+        dtype: _DTypeLikeInt,
+    ) -> NDArray[Any]: ...
 
     #
     def bytes(self, length: int) -> py_bytes: ...
