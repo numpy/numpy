@@ -2799,8 +2799,11 @@ class TestMeshgrid:
 
     def test_sparse(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True)
+        [A, B] = meshgrid([1, 2, 3, 4], [4, 5, 6], sparse=True, copy=False)
         assert_array_equal(X, np.array([[1, 2, 3]]))
         assert_array_equal(Y, np.array([[4], [5], [6], [7]]))
+        assert_array_equal(A, np.array([[1, 2, 3, 4]]))
+        assert_array_equal(B, np.array([[4], [5], [6]]))
 
     def test_invalid_arguments(self):
         # Test that meshgrid complains about invalid arguments
