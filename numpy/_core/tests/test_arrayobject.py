@@ -1,7 +1,9 @@
+import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import HAS_REFCOUNT, assert_array_equal
 
 
 def test_matrix_transpose_raises_error_for_1d():
@@ -73,3 +75,21 @@ def test_array_wrap(subclass_self, subclass_arr):
     # Non 0-D array can't be converted to scalar, so we ignore that
     arr1d = np.array([3], dtype=np.int8).view(subclass_arr)
     assert type(arr.__array_wrap__(arr1d, None, True)) is type(arr)
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_cleanup_with_refs_non_contig():
+    # Regression test, leaked the dtype (but also good for rest)
+    dtype = np.dtype("O,i")
+    obj = object()
+    expected_ref_dtype = sys.getrefcount(dtype)
+    expected_ref_obj = sys.getrefcount(obj)
+    proto = np.full((3, 4, 5, 6, 7), np.array((obj, 2), dtype=dtype))
+    # Give array a non-trivial order to exercise more cleanup paths.
+    arr = proto.transpose((2, 0, 3, 1, 4)).copy("K")
+    del proto, arr
+
+    actual_ref_dtype = sys.getrefcount(dtype)
+    actual_ref_obj = sys.getrefcount(obj)
+    assert actual_ref_dtype == expected_ref_dtype
+    assert actual_ref_obj == actual_ref_dtype
