@@ -4,7 +4,6 @@ from typing import Any, Literal, overload
 
 import numpy as np
 from numpy import (
-    dtype,
     float64,
     int8,
     int16,
@@ -24,6 +23,7 @@ from numpy._typing import (
     NDArray,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _DTypeLike,
     _DTypeLikeBool,
     _Int8Codes,
     _Int16Codes,
@@ -32,7 +32,6 @@ from numpy._typing import (
     _IntPCodes,
     _LongCodes,
     _ShapeLike,
-    _SupportsDType,
     _UInt8Codes,
     _UInt16Codes,
     _UInt32Codes,
@@ -149,12 +148,7 @@ class RandomState:
     # Generates long values, but stores it in a 64bit int:
     def tomaxint(self, size: _ShapeLike) -> NDArray[int64]: ...
     @overload
-    def randint(
-        self,
-        low: int,
-        high: int | None = None,
-        size: None = None,
-    ) -> int: ...
+    def randint(self, low: int, high: int | None = None, size: None = None) -> int: ...
     @overload
     def randint(
         self,
@@ -185,7 +179,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
+        dtype: _DTypeLike[np.uint8] | _UInt8Codes = ...,
     ) -> uint8: ...
     @overload
     def randint(
@@ -193,7 +187,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
+        dtype: _DTypeLike[np.uint16] | _UInt16Codes = ...,
     ) -> uint16: ...
     @overload
     def randint(
@@ -201,7 +195,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
+        dtype: _DTypeLike[np.uint32] | _UInt32Codes = ...,
     ) -> uint32: ...
     @overload
     def randint(
@@ -209,7 +203,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[uint] | type[uint] | _UIntPCodes | _SupportsDType[dtype[uint]] = ...,
+        dtype: _DTypeLike[np.uintp] | _UIntPCodes = ...,
     ) -> uint: ...
     @overload
     def randint(
@@ -217,7 +211,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[ulong] | type[ulong] | _ULongCodes | _SupportsDType[dtype[ulong]] = ...,
+        dtype: _DTypeLike[np.ulong] | _ULongCodes = ...,
     ) -> ulong: ...
     @overload
     def randint(
@@ -225,7 +219,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
+        dtype: _DTypeLike[np.uint64] | _UInt64Codes = ...,
     ) -> uint64: ...
     @overload
     def randint(
@@ -233,7 +227,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
+        dtype: _DTypeLike[np.int8] | _Int8Codes = ...,
     ) -> int8: ...
     @overload
     def randint(
@@ -241,7 +235,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
+        dtype: _DTypeLike[np.int16] | _Int16Codes = ...,
     ) -> int16: ...
     @overload
     def randint(
@@ -249,7 +243,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
+        dtype: _DTypeLike[np.int32] | _Int32Codes = ...,
     ) -> int32: ...
     @overload
     def randint(
@@ -257,7 +251,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[int_] | type[int_] | _IntPCodes | _SupportsDType[dtype[int_]] = ...,
+        dtype: _DTypeLike[np.intp] | _IntPCodes = ...,
     ) -> int_: ...
     @overload
     def randint(
@@ -265,7 +259,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[long] | type[long] | _LongCodes | _SupportsDType[dtype[long]] = ...,
+        dtype: _DTypeLike[np.long] | _LongCodes = ...,
     ) -> long: ...
     @overload
     def randint(
@@ -273,7 +267,7 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
-        dtype: dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,
+        dtype: _DTypeLike[np.int64] | _Int64Codes = ...,
     ) -> int64: ...
     @overload
     def randint(
@@ -296,7 +290,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
+        dtype: _DTypeLike[np.int8] | _Int8Codes = ...,
     ) -> NDArray[int8]: ...
     @overload
     def randint(
@@ -304,7 +298,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
+        dtype: _DTypeLike[np.int16] | _Int16Codes = ...,
     ) -> NDArray[int16]: ...
     @overload
     def randint(
@@ -312,7 +306,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
+        dtype: _DTypeLike[np.int32] | _Int32Codes = ...,
     ) -> NDArray[int32]: ...
     @overload
     def randint(
@@ -320,7 +314,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] | None = ...,
+        dtype: _DTypeLike[np.int64] | _Int64Codes = ...,
     ) -> NDArray[int64]: ...
     @overload
     def randint(
@@ -328,7 +322,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
+        dtype: _DTypeLike[np.uint8] = ...,
     ) -> NDArray[uint8]: ...
     @overload
     def randint(
@@ -336,7 +330,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
+        dtype: _DTypeLike[np.uint16] | _UInt16Codes = ...,
     ) -> NDArray[uint16]: ...
     @overload
     def randint(
@@ -344,7 +338,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
+        dtype: _DTypeLike[np.uint32] | _UInt32Codes = ...,
     ) -> NDArray[uint32]: ...
     @overload
     def randint(
@@ -352,7 +346,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
+        dtype: _DTypeLike[np.uint64] | _UInt64Codes = ...,
     ) -> NDArray[uint64]: ...
     @overload
     def randint(
@@ -360,7 +354,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[long] | type[int] | type[long] | _LongCodes | _SupportsDType[dtype[long]] = ...,
+        dtype: _DTypeLike[np.long] | _LongCodes = ...,
     ) -> NDArray[long]: ...
     @overload
     def randint(
@@ -368,9 +362,9 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
-        dtype: dtype[ulong] | type[ulong] | _ULongCodes | _SupportsDType[dtype[ulong]] = ...,
+        dtype: _DTypeLike[np.ulong] | _ULongCodes = ...,
     ) -> NDArray[ulong]: ...
-    def bytes(self, length: int) -> builtins.bytes: ...
+    def bytes(self, length: int) -> bytes: ...
     @overload
     def choice(
         self,
