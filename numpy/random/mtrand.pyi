@@ -8,7 +8,9 @@ from numpy._typing import (
     NDArray,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _BoolCodes,
     _DTypeLike,
+    _DTypeLikeBool,
     _DTypeLikeInt,
     _Int8Codes,
     _Int16Codes,
@@ -151,8 +153,26 @@ class RandomState:
         low: int,
         high: int | None = None,
         size: None = None,
+        *,
+        dtype: type[bool],
+    ) -> bool: ...
+    @overload
+    def randint(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
         dtype: type[int] = int,
     ) -> int: ...
+    @overload
+    def randint(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLike[np.bool] | _BoolCodes,
+    ) -> np.bool: ...
     @overload
     def randint(
         self,
@@ -246,6 +266,24 @@ class RandomState:
     @overload
     def randint(
         self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLikeInt,
+    ) -> np.integer | Any: ...
+    @overload
+    def randint(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _DTypeLikeBool,
+    ) -> NDArray[np.bool] | Any: ...
+    @overload
+    def randint(
+        self,
         low: _ArrayLikeInt_co,
         high: _ArrayLikeInt_co | None = None,
         size: _ShapeLike | None = None,
@@ -331,7 +369,7 @@ class RandomState:
         size: _ShapeLike | None = None,
         *,
         dtype: _DTypeLikeInt,
-    ) -> NDArray[Any] | Any: ...
+    ) -> NDArray[np.integer] | Any: ...
 
     #
     def bytes(self, length: int) -> py_bytes: ...
