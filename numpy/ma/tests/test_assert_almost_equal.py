@@ -1,5 +1,6 @@
-import numpy as np
 import pytest
+
+import numpy as np
 from numpy.ma.testutils import assert_almost_equal
 
 def test_assert_almost_equal_decimal_6_fails():
