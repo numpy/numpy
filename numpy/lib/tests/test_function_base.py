@@ -3941,6 +3941,9 @@ class TestPercentile:
         a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
         value = np.percentile(a, np.float64(50), method=method)
         assert value.dtype == np.float64
+        # Check that we don't do accidental promotion either:
+        value = np.percentile(a, np.float32(50), method=method)
+        assert value.dtype == np.float32
 
 
 class TestQuantile:
@@ -4379,6 +4382,9 @@ class TestQuantile:
         a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
         value = np.quantile(a, np.float64(0.5), method=method)
         assert value.dtype == np.float64
+        # Check that we don't do accidental promotion either:
+        value = np.quantile(a, np.float32(0.5), method=method)
+        assert value.dtype == np.float32
 
 
 class TestLerp:
