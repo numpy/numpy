@@ -118,7 +118,13 @@ def save(file: _FNameWriteBytes, arr: ArrayLike, allow_pickle: bool = True, *, f
 def savez(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
 
 #
-def savez_compressed(file: _FNameWriteBytes, *args: ArrayLike, allow_pickle: bool = True, **kwds: ArrayLike) -> None: ...
+def savez_compressed(
+    file: _FNameWriteBytes,
+    *args: ArrayLike,
+    allow_pickle: bool = True,
+    zipfile_kwargs: Mapping[str, Any] | None = None,
+    **kwds: ArrayLike,
+) -> None: ...
 
 # File-like objects only have to implement `__iter__` and,
 # optionally, `encoding`
