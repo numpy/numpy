@@ -62,7 +62,6 @@ ignore = [
     "E302",    # TODO: Expected 2 blank lines, found 1
     "E402",    # Module level import not at top of file
     "E712",    # Avoid equality comparisons to `True` or `False`
-    "E721",    # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
     "E731",    # Do not assign a `lambda` expression, use a `def`
     "E741",    # Ambiguous variable name
     # pyflakes

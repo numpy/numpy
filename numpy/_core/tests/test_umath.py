@@ -217,25 +217,25 @@ class TestOut:
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             r = np.add(a, 2, None, subok=subok)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             r = np.add(a, 2, out=None, subok=subok)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             r = np.add(a, 2, out=(None,), subok=subok)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             d = ArrayWrap([5.7])
             o1 = np.empty((1,))
@@ -245,31 +245,31 @@ class TestOut:
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
-                assert_(type(r2) == np.ndarray)
+                assert_(type(r2) is np.ndarray)
 
             r1, r2 = np.frexp(d, o1, None, subok=subok)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
-                assert_(type(r2) == np.ndarray)
+                assert_(type(r2) is np.ndarray)
 
             r1, r2 = np.frexp(d, None, o2, subok=subok)
             if subok:
                 assert_(isinstance(r1, ArrayWrap))
             else:
-                assert_(type(r1) == np.ndarray)
+                assert_(type(r1) is np.ndarray)
 
             r1, r2 = np.frexp(d, out=(o1, None), subok=subok)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
-                assert_(type(r2) == np.ndarray)
+                assert_(type(r2) is np.ndarray)
 
             r1, r2 = np.frexp(d, out=(None, o2), subok=subok)
             if subok:
                 assert_(isinstance(r1, ArrayWrap))
             else:
-                assert_(type(r1) == np.ndarray)
+                assert_(type(r1) is np.ndarray)
 
             with assert_raises(TypeError):
                 # Out argument must be tuple, since there are multiple outputs.
@@ -3702,7 +3702,7 @@ class TestSpecialMethods:
                 for obj in objs:
                     if isinstance(obj, cls):
                         obj = np.array(obj)
-                    elif type(obj) != np.ndarray:
+                    elif type(obj) is not np.ndarray:
                         return NotImplemented
                     result.append(obj)
                 return result

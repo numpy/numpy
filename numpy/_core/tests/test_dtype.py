@@ -778,7 +778,7 @@ class TestSubarray:
         arr = np.ones(3, dtype=[("f", "i", 3)])
         cast = arr.astype(object)
         for fields in cast:
-            assert type(fields) == tuple and len(fields) == 1
+            assert type(fields) is tuple and len(fields) == 1
             subarr = fields[0]
             assert subarr.base is None
             assert subarr.flags.owndata
