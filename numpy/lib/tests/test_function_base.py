@@ -2805,8 +2805,8 @@ class TestMeshgrid:
     def test_always_tuple(self):
         A = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True, copy=False)
         B = meshgrid([], sparse=True, copy=False)
-        assert_equal(isinstance(A, tuple), True)
-        assert_equal(isinstance(B, tuple), True)
+        assert isinstance(A, tuple)
+        assert isinstance(B, tuple)
 
     def test_invalid_arguments(self):
         # Test that meshgrid complains about invalid arguments
