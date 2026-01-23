@@ -274,8 +274,8 @@ class TestCasting:
                 for to_dt in [to_Dt(), to_Dt().newbyteorder()]:
                     casting, (from_res, to_res), view_off = (
                             cast._resolve_descriptors((from_dt, to_dt)))
-                    assert type(from_res) == from_Dt
-                    assert type(to_res) == to_Dt
+                    assert type(from_res) is from_Dt
+                    assert type(to_res) is to_Dt
                     if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
