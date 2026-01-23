@@ -2803,13 +2803,10 @@ class TestMeshgrid:
         assert_array_equal(Y, np.array([[4], [5], [6], [7]]))
 
     def test_always_tuple(self):
-        [A, B] = meshgrid([1, 2], [3, 4], sparse=True, copy=False)
-        C = (np.array([[1, 2]]))
-        D = (np.array([[3], [4]]))
-        assert_array_equal(A, C)
-        assert_array_equal(B, D)
-        assert_equal(type(A), type(C))
-        assert_equal(type(B), type(D))
+        A = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True, copy=False)
+        B = meshgrid([], sparse=True, copy=False)
+        assert_equal(isinstance(A, tuple), True)
+        assert_equal(isinstance(B, tuple), True)
 
     def test_invalid_arguments(self):
         # Test that meshgrid complains about invalid arguments
