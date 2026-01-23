@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-15]
+        runs-on: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
         package_variant:
           - default
           - freethreading
@@ -36,9 +36,7 @@ jobs:
 
     - uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # v0.9.3
       with:
-        # FIXME regression in 0.63.0:
-        # https://github.com/prefix-dev/rattler-build/issues/2094
-        pixi-version: v0.62.2
+        pixi-version: v0.63.2
         run-install: false
 
     - name: Build
