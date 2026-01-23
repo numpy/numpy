@@ -3279,7 +3279,12 @@ class MaskedArray(ndarray):
         # ensure subclass views preserve mask and fill_value
         
         if not hasattr(output, "_mask"):
-            output._mask = self._mask
+            mask = getmask(self)
+            if mask is nomask:
+                output._mask = make_mask_none(output.shape)
+            else:
+                output._mask = mask.view()
+
         if not hasattr(output, "_fill_value"):
             output._fill_value = self._fill_value
 
