@@ -1,12 +1,11 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
 from typing import Any, assert_type
-from typing import Literal as L
 
 import numpy as np
 import numpy.typing as npt
 
-class NDArraySubclass(npt.NDArray[np.complex128]): ...
+class NDArraySubclass(np.ndarray[tuple[Any, ...], np.dtype[np.complex128]]): ...
 
 AR_b: npt.NDArray[np.bool]
 AR_f4: npt.NDArray[np.float32]
@@ -26,7 +25,7 @@ i8: np.int64
 f: float
 
 # integer‑dtype subclass for argmin/argmax
-class NDArrayIntSubclass(npt.NDArray[np.intp]): ...
+class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
 AR_sub_i: NDArrayIntSubclass
 
 assert_type(np.take(b, 0), np.bool)
@@ -81,6 +80,11 @@ assert_type(np.argpartition(f4, 0), npt.NDArray[np.intp])
 assert_type(np.argpartition(f, 0), npt.NDArray[np.intp])
 assert_type(np.argpartition(AR_b, 0), npt.NDArray[np.intp])
 assert_type(np.argpartition(AR_f4, 0), npt.NDArray[np.intp])
+assert_type(np.argpartition(b, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(f4, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(f, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(AR_b, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(AR_f4, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
 assert_type(np.sort([2, 1], 0), npt.NDArray[Any])
 assert_type(np.sort(AR_b, 0), npt.NDArray[np.bool])
@@ -128,7 +132,7 @@ assert_type(np.trace(AR_f4, out=AR_subclass, dtype=None), NDArraySubclass)
 
 assert_type(np.ravel(b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(f4), np.ndarray[tuple[int], np.dtype[np.float32]])
-assert_type(np.ravel(f), np.ndarray[tuple[int], np.dtype[np.float64 | np.int_ | np.bool]])
+assert_type(np.ravel(f), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.ravel(AR_b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(AR_f4), np.ndarray[tuple[int], np.dtype[np.float32]])
 

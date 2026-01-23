@@ -1,8 +1,8 @@
 #ifndef __NPY_SORT_COMMON_H__
 #define __NPY_SORT_COMMON_H__
 
-#include <stdlib.h>
 #include <numpy/ndarraytypes.h>
+#include <stdlib.h>
 #include <numpy/npy_math.h>
 #include "dtypemeta.h"
 
@@ -39,6 +39,20 @@ extern "C" {
 
 /* Need this for the argsort functions */
 #define INTP_SWAP(a,b) {npy_intp tmp = (b); (b)=(a); (a) = tmp;}
+
+/*
+ ******************************************************************************
+ **                        SORTING WRAPPERS                                  **
+ ******************************************************************************
+ */
+
+static inline void
+get_sort_data_from_array(void *varr, npy_intp *elsize, PyArray_CompareFunc **cmp)
+{
+    PyArrayObject *arr = (PyArrayObject *)varr;
+    *elsize = PyArray_ITEMSIZE(arr);
+    *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+}
 
 /*
  *****************************************************************************

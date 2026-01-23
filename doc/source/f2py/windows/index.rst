@@ -71,12 +71,6 @@ Cygwin (FOSS)
    Cygwin is meant to compile UNIX software on Windows, instead of building
    native Windows programs. This means cross compilation is required.
 
-The compilation suites described so far are compatible with the `now
-deprecated`_ ``np.distutils`` build backend which is exposed by the F2PY CLI.
-Additional build system usage (``meson``, ``cmake``) as described in
-:ref:`f2py-bldsys` allows for a more flexible set of compiler
-backends including:
-
 Intel oneAPI
    The newer Intel compilers (``ifx``, ``icx``) are based on LLVM and can be
    used for native compilation. Licensing requirements can be onerous.

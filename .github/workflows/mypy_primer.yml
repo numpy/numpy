@@ -4,9 +4,13 @@ on:
   # Only run on PR, since we diff against main
   pull_request:
     paths:
-      - "**/*.pyi"
       - ".github/workflows/mypy_primer.yml"
       - ".github/workflows/mypy_primer_comment.yml"
+      - "numpy/**/*.pyi"
+      - "numpy/_typing/*.py"
+      - "numpy/typing/*.py"
+      - "!numpy/typing/tests/**"
+      - "numpy/py.typed"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -24,11 +28,11 @@ jobs:
         shard-index: [0]  # e.g. change this to [0, 1, 2] and --num-shards below to 3
       fail-fast: false
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           path: numpy_to_test
           fetch-depth: 0
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.12"
       - name: Install dependencies
@@ -61,6 +65,7 @@ jobs:
             --known-dependency-selector numpy \
             --old-prepend-path numpy_base --new-prepend-path numpy_to_test \
             --num-shards 1 --shard-index ${{ matrix.shard-index }} \
+            --additional-flags="--python-version=3.12" \
             --debug \
             --output concise \
             | tee diff_${{ matrix.shard-index }}.txt
@@ -70,7 +75,7 @@ jobs:
         run: |
           echo ${{ github.event.pull_request.number }} | tee pr_number.txt
       - name: Upload mypy_primer diff + PR number
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: ${{ matrix.shard-index == 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -78,7 +83,7 @@ jobs:
             diff_${{ matrix.shard-index }}.txt
             pr_number.txt
       - name: Upload mypy_primer diff
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: ${{ matrix.shard-index != 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -92,7 +97,7 @@ jobs:
       contents: read
     steps:
       - name: Merge artifacts
-        uses: actions/upload-artifact/merge@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact/merge@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: mypy_primer_diffs
           pattern: mypy_primer_diffs-*

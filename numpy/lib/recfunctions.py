@@ -326,7 +326,7 @@ def _izip_records(seqarrays, fill_value=None, flatten=True):
 
 def _fix_output(output, usemask=True, asrecarray=False):
     """
-    Private function: return a recarray, a ndarray, a MaskedArray
+    Private function: return a recarray, an ndarray, a MaskedArray
     or a MaskedRecords depending on the input parameters
     """
     if not isinstance(output, ma.MaskedArray):
@@ -1334,7 +1334,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
         Dictionary mapping field names to the corresponding default values.
     usemask : {True, False}, optional
         Whether to return a MaskedArray (or MaskedRecords is
-        `asrecarray==True`) or a ndarray.
+        `asrecarray==True`) or an ndarray.
     asrecarray : {False, True}, optional
         Whether to return a recarray (or MaskedRecords if `usemask==True`)
         or just a flexible-type ndarray.
@@ -1514,7 +1514,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
         Dictionary mapping field names to the corresponding default values.
     usemask : {True, False}, optional
         Whether to return a MaskedArray (or MaskedRecords is
-        `asrecarray==True`) or a ndarray.
+        `asrecarray==True`) or an ndarray.
     asrecarray : {False, True}, optional
         Whether to return a recarray (or MaskedRecords if `usemask==True`)
         or just a flexible-type ndarray.

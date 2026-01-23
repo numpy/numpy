@@ -496,7 +496,6 @@ class chararray(ndarray):
     title
     tofile
     tolist
-    tostring
     translate
     transpose
     upper
@@ -544,7 +543,7 @@ class chararray(ndarray):
                [b'abc', b'abc', b'abc']], dtype='|S5')
 
     """
-    def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
+    def __new__(cls, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
         if unicode:
             dtype = str_
@@ -564,10 +563,10 @@ class chararray(ndarray):
             filler = None
 
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+            self = ndarray.__new__(cls, shape, (dtype, itemsize),
                                    order=order)
         else:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+            self = ndarray.__new__(cls, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
                                    order=order)
@@ -719,7 +718,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind=None, order=None):
+    def argsort(self, axis=-1, kind=None, order=None, *, stable=None):
         """
         Return the indices that sort the array lexicographically.
 
@@ -737,7 +736,7 @@ class chararray(ndarray):
               dtype='|S5')
 
         """
-        return self.__array__().argsort(axis, kind, order)
+        return self.__array__().argsort(axis, kind, order, stable=stable)
     argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):

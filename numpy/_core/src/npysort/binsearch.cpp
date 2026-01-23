@@ -64,43 +64,100 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
-    npy_intp min_idx = 0;
-    npy_intp max_idx = arr_len;
-    T last_key_val;
 
-    if (key_len == 0) {
+    // If the array length is 0 we return all 0s
+    if (arr_len <= 0) {
+        for (npy_intp i = 0; i < key_len; ++i) {
+            *(npy_intp *)(ret + i * ret_str) = 0;
+        }
         return;
     }
-    last_key_val = *(const T *)key;
 
-    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
-        const T key_val = *(const T *)key;
-        /*
-         * Updating only one of the indices based on the previous key
-         * gives the search a big boost when keys are sorted, but slightly
-         * slows down things for purely random ones.
-         */
-        if (cmp(last_key_val, key_val)) {
-            max_idx = arr_len;
-        }
-        else {
-            min_idx = 0;
-            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
-        }
+    /*
+    In this binary search implementation, the candidate insertion indices for
+    the jth key are in the range [base_j, base_j+length] and on each iteration
+    we pick a pivot at the mid-point of the range to compare against the jth
+    key. Depending on the comparison result, we adjust the base_j and halve
+    the length of the interval.
 
-        last_key_val = key_val;
+    To batch multiple queries, we do one pivot pass for each different length
+    for all keys, storing intermediate values of base_j for every key_j. To
+    avoid consuming extra memory, we use the ret array to store intermediate
+    values of each base until they become the final result in the last step.
 
-        while (min_idx < max_idx) {
-            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
-            const T mid_val = *(const T *)(arr + mid_idx * arr_str);
-            if (cmp(mid_val, key_val)) {
-                min_idx = mid_idx + 1;
-            }
-            else {
-                max_idx = mid_idx;
-            }
+    There are two benefits of this approach:
+
+    1. Cache locallity of pivots. In early iterations each key is compared
+    against the same set of pivots. For example, in the first iteration all
+    keys are compared against the median. In the second iteration, all keys
+    end up being compared against 1st and 3rd quartiles.
+
+    2. Independent calculations for out-of-order execution. In the single-key
+    version, step i+1 depends on computation of step i. Meaning that step i+1
+    must wait for step i to complete before proceeding. When batching multiple
+    keys, we compute each step for all keys before continuing on the next
+    step. All the computations at a given step are independent across
+    different keys. Meaning that the CPU can execute multiple keys
+    out-of-order in parallel.
+
+    Invariant:
+    - cmp(arr[i], key_val) == true  for all i < base
+    - cmp(arr[i], key_val) == false for all i >= base + length
+
+    The insertion index candidates are in range [base, base+length] and
+    on each iteration we shrink the range into either
+        [base, ceil(length / 2)]
+    or
+        [base + floor(length / 2), ceil(length / 2)]
+
+    Optimization: we unroll the first iteration for the following reasons:
+        1. ret is not initialized with the bases, so we save |keys| writes
+        by not having to intialize it with 0s.
+        2. By assuming the initial base for every key is 0, we also save
+        |keys| reads.
+        3. In the first iteration, all elements are compared against the
+        median. So we can store it in a variable and use it for all keys.
+
+    This initial block replaces the initialization loop that is used for the
+    arr_len==0 case. Note that when arr_len = 1, then half is 0 so the
+    following block initializes the array as with 0s.
+    */
+    npy_intp interval_length = arr_len;
+    npy_intp half = interval_length >> 1;
+    interval_length -= half; // length -> ceil(length / 2)
+
+    npy_intp base = 0;
+    const T mid_val = *(const T *)(arr + (base + half) * arr_str);
+
+    for (npy_intp i = 0; i < key_len; ++i) {
+        const T key_val = *(const T *)(key + i * key_str);
+        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
+    }
+
+    while (interval_length > 1) {
+        npy_intp half = interval_length >> 1;
+        interval_length -= half; // length -> ceil(length / 2)
+
+        for (npy_intp i = 0; i < key_len; ++i) {
+            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+            const T mid_val = *(const T *)(arr + (base + half) * arr_str);
+            const T key_val = *(const T *)(key + i * key_str);
+            base += cmp(mid_val, key_val) * half;
         }
-        *(npy_intp *)ret = min_idx;
+    }
+
+    /*
+    At this point interval_length == 1, so the candidates are in the 
+    interval [base, base + 1].
+
+    We have two options:
+        If cmp(arr[base], key_val) == true, insertion index is base + 1
+        Otherwise the insertion order is just base
+    */
+    for (npy_intp i = 0; i < key_len; ++i) {
+        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+        const T key_val = *(const T *)(key + i * key_str);
+        base += cmp(*(const T *)(arr + base * arr_str), key_val);
     }
 }
 
@@ -113,51 +170,55 @@ argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
 {
     using T = typename Tag::type;
     auto cmp = side_to_cmp<Tag, side>::value;
-    npy_intp min_idx = 0;
-    npy_intp max_idx = arr_len;
-    T last_key_val;
 
-    if (key_len == 0) {
+    // If the array length is 0 we return all 0s
+    if (arr_len <= 0) {
+        for (npy_intp i = 0; i < key_len; ++i) {
+            *(npy_intp *)(ret + i * ret_str) = 0;
+        }
         return 0;
     }
-    last_key_val = *(const T *)key;
 
-    for (; key_len > 0; key_len--, key += key_str, ret += ret_str) {
-        const T key_val = *(const T *)key;
-        /*
-         * Updating only one of the indices based on the previous key
-         * gives the search a big boost when keys are sorted, but slightly
-         * slows down things for purely random ones.
-         */
-        if (cmp(last_key_val, key_val)) {
-            max_idx = arr_len;
-        }
-        else {
-            min_idx = 0;
-            max_idx = (max_idx < arr_len) ? (max_idx + 1) : arr_len;
-        }
+    npy_intp interval_length = arr_len;
+    npy_intp half = interval_length >> 1;
+    interval_length -= half; // length -> ceil(length / 2)
 
-        last_key_val = key_val;
+    npy_intp base = 0;
+    npy_intp mid_idx = *(npy_intp *)(sort + (base + half) * sort_str);
+    if (mid_idx < 0 || mid_idx >= arr_len) {
+        return -1;
+    }
+    const T mid_val = *(const T *)(arr + mid_idx * arr_str);
 
-        while (min_idx < max_idx) {
-            const npy_intp mid_idx = min_idx + ((max_idx - min_idx) >> 1);
-            const npy_intp sort_idx = *(npy_intp *)(sort + mid_idx * sort_str);
-            T mid_val;
+    for (npy_intp i = 0; i < key_len; ++i) {
+        const T key_val = *(const T *)(key + i * key_str);
+        *(npy_intp *)(ret + i * ret_str) = cmp(mid_val, key_val) * half;
+    }
 
-            if (sort_idx < 0 || sort_idx >= arr_len) {
+    while (interval_length > 1) {
+        npy_intp half = interval_length >> 1;
+        interval_length -= half; // length -> ceil(length / 2)
+
+        for (npy_intp i = 0; i < key_len; ++i) {
+            npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+            npy_intp mid_idx = *(npy_intp *)(sort + (base + half) * sort_str);
+            if (mid_idx < 0 || mid_idx >= arr_len) {
                 return -1;
             }
-
-            mid_val = *(const T *)(arr + sort_idx * arr_str);
-
-            if (cmp(mid_val, key_val)) {
-                min_idx = mid_idx + 1;
-            }
-            else {
-                max_idx = mid_idx;
-            }
+            const T mid_val = *(const T *)(arr + mid_idx * arr_str);
+            const T key_val = *(const T *)(key + i * key_str);
+            base += cmp(mid_val, key_val) * half;
         }
-        *(npy_intp *)ret = min_idx;
+    }
+
+    for (npy_intp i = 0; i < key_len; ++i) {
+        npy_intp &base = *(npy_intp *)(ret + i * ret_str);
+        npy_intp mid_idx = *(npy_intp *)(sort + base * sort_str);
+        if (mid_idx < 0 || mid_idx >= arr_len) {
+            return -1;
+        }
+        const T key_val = *(const T *)(key + i * key_str);
+        base += cmp(*(const T *)(arr + mid_idx * arr_str), key_val);
     }
     return 0;
 }

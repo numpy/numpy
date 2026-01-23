@@ -50,6 +50,7 @@ class MesonTemplate:
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
+            self.objects_substitution,
             self.deps_substitution,
             self.include_substitution,
             self.libraries_substitution,
@@ -77,6 +78,11 @@ class MesonTemplate:
     def sources_substitution(self) -> None:
         self.substitutions["source_list"] = ",\n".join(
             [f"{self.indent}'''{source}'''," for source in self.sources]
+        )
+
+    def objects_substitution(self) -> None:
+        self.substitutions["obj_list"] = ",\n".join(
+            [f"{self.indent}'''{obj}'''," for obj in self.objects]
         )
 
     def deps_substitution(self) -> None:
@@ -186,6 +192,7 @@ class MesonBackend(Backend):
 
     def compile(self) -> None:
         self.sources = _prepare_sources(self.modulename, self.sources, self.build_dir)
+        _prepare_objects(self.modulename, self.extra_objects, self.build_dir)
         self.write_meson_build(self.build_dir)
         self.run_meson(self.build_dir)
         self._move_exec_to_root(self.build_dir)
@@ -216,6 +223,12 @@ def _prepare_sources(mname, sources, bdir):
     ]
     return extended_sources
 
+def _prepare_objects(mname, objects, bdir):
+    Path(bdir).mkdir(parents=True, exist_ok=True)
+    # Copy objects
+    for obj in objects:
+        if Path(obj).exists() and Path(obj).is_file():
+            shutil.copy(obj, bdir)
 
 def _get_flags(fc_flags):
     flag_values = []

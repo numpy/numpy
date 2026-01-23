@@ -1,5 +1,5 @@
 from builtins import bool as py_bool
-from typing import Final, Literal as L, TypedDict, type_check_only
+from typing import Any, Final, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 from numpy import (
@@ -144,18 +144,18 @@ __all__ = [
 
 @type_check_only
 class _TypeCodes(TypedDict):
-    Character: L['c']
-    Integer: L['bhilqnp']
-    UnsignedInteger: L['BHILQNP']
-    Float: L['efdg']
-    Complex: L['FDG']
-    AllInteger: L['bBhHiIlLqQnNpP']
-    AllFloat: L['efdgFDG']
-    Datetime: L['Mm']
-    All: L['?bhilqnpBHILQNPefdgFDGSUVOMm']
+    Character: L["c"]
+    Integer: L["bhilqnp"]
+    UnsignedInteger: L["BHILQNP"]
+    Float: L["efdg"]
+    Complex: L["FDG"]
+    AllInteger: L["bBhHiIlLqQnNpP"]
+    AllFloat: L["efdgFDG"]
+    Datetime: L["Mm"]
+    All: L["?bhilqnpBHILQNPefdgFDGSUVOMm"]
 
 def isdtype(dtype: dtype | type, kind: DTypeLike | tuple[DTypeLike, ...]) -> py_bool: ...
-def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> py_bool: ...
+def issubdtype(arg1: DTypeLike | None, arg2: DTypeLike | None) -> py_bool: ...
 
 typecodes: Final[_TypeCodes] = ...
 ScalarType: Final[
@@ -166,30 +166,30 @@ ScalarType: Final[
         type[py_bool],
         type[bytes],
         type[str],
-        type[memoryview],
+        type[memoryview[Any]],
         type[np.bool],
-        type[csingle],
-        type[cdouble],
-        type[clongdouble],
-        type[half],
-        type[single],
-        type[double],
-        type[longdouble],
-        type[byte],
-        type[short],
-        type[intc],
-        type[long],
-        type[longlong],
-        type[timedelta64],
+        type[complex64],
+        type[complex128],
+        type[complex128 | complex192 | complex256],
+        type[float16],
+        type[float32],
+        type[float64],
+        type[float64 | float96 | float128],
+        type[int8],
+        type[int16],
+        type[int32],
+        type[int32 | int64],
+        type[int64],
         type[datetime64],
+        type[timedelta64],
         type[object_],
         type[bytes_],
         type[str_],
-        type[ubyte],
-        type[ushort],
-        type[uintc],
-        type[ulong],
-        type[ulonglong],
+        type[uint8],
+        type[uint16],
+        type[uint32],
+        type[uint32 | uint64],
+        type[uint64],
         type[void],
     ]
 ] = ...

@@ -1,11 +1,11 @@
-from typing import TypeAlias, assert_type
+from typing import assert_type
 
 import numpy as np
 import numpy._typing as np_t
 import numpy.typing as npt
 
-AR_T_alias: TypeAlias = np.ndarray[np_t._AnyShape, np.dtypes.StringDType]
-AR_TU_alias: TypeAlias = AR_T_alias | npt.NDArray[np.str_]
+type AR_T_alias = np.ndarray[np_t._AnyShape, np.dtypes.StringDType]
+type AR_TU_alias = AR_T_alias | npt.NDArray[np.str_]
 
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
@@ -65,6 +65,7 @@ assert_type(np.char.join(AR_T, "_"), AR_TU_alias)
 
 assert_type(np.char.ljust(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.char.ljust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
+assert_type(np.char.ljust(AR_S, [4, 3, 1], fillchar="a"), npt.NDArray[np.bytes_])
 assert_type(np.char.ljust(AR_T, 5), AR_T_alias)
 assert_type(np.char.ljust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_TU_alias)
 

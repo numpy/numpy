@@ -124,6 +124,7 @@ class TestNdpointer:
         assert_(p.from_param(x))
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
+    @pytest.mark.thread_unsafe(reason="checks that global ndpointer cache is updating")
     def test_cache(self):
         assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
 
@@ -178,6 +179,7 @@ class TestNdpointerCFunc:
             arr.__array_interface__['data']
         )
 
+    @pytest.mark.thread_unsafe(reason="mutates global test vars")
     def test_vague_return_value(self):
         """ Test that vague ndpointer return values do not promote to arrays """
         arr = np.zeros((2, 3))
@@ -252,6 +254,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0]), shape=(2,)))
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes
@@ -302,6 +305,7 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_equal(ct, ctypes.c_uint16)
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_subarray(self):
         dt = np.dtype((np.int32, (2, 3)))
         ct = np.ctypeslib.as_ctypes_type(dt)
@@ -321,6 +325,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_structure_aligned(self):
         dt = np.dtype([
             ('a', np.uint16),
@@ -351,6 +356,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_padded_union(self):
         dt = np.dtype({
             'names': ['a', 'b'],

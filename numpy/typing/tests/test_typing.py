@@ -189,6 +189,7 @@ def test_reveal(path: str) -> None:
 
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
+@pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_code_runs(path: str) -> None:
     """Validate that the code in `path` properly during runtime."""

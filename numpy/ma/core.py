@@ -20,6 +20,7 @@ Released for unlimited redistribution.
 
 """
 import builtins
+import datetime as dt
 import functools
 import inspect
 import operator
@@ -46,7 +47,6 @@ from numpy import (
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
-from numpy._utils._inspect import formatargspec, getargspec
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -134,18 +134,6 @@ def doc_note(initialdoc, note):
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
-def get_object_signature(obj):
-    """
-    Get the signature from obj
-
-    """
-    try:
-        sig = formatargspec(*getargspec(obj))
-    except TypeError:
-        sig = ''
-    return sig
-
-
 ###############################################################################
 #                              Exceptions                                     #
 ###############################################################################
@@ -181,7 +169,8 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': b'???',
-                  'U': 'N/A'
+                  'U': 'N/A',
+                  'T': 'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
@@ -234,11 +223,22 @@ def _recursive_fill_value(dtype, f):
         # We wrap into `array` here, which ensures we use NumPy cast rules
         # for integer casts, this allows the use of 99999 as a fill value
         # for int8.
-        # TODO: This is probably a mess, but should best preserve behavior?
-        vals = tuple(
-                np.array(_recursive_fill_value(dtype[name], f))
-                for name in dtype.names)
-        return np.array(vals, dtype=dtype)[()]  # decay to void scalar from 0d
+        vals = []
+        for name in dtype.names:
+            field_dtype = dtype[name]
+            val = _recursive_fill_value(field_dtype, f)
+            if np.issubdtype(field_dtype, np.datetime64):
+                if isinstance(val, dt.date):
+                    val = np.datetime64(val)
+                    val = np.array(val)
+                elif isinstance(val, (int, np.integer)):
+                    val = np.array(val).astype(field_dtype)
+                else:
+                    val = np.array(val)
+            else:
+                val = np.array(val)
+            vals.append(val)
+        return np.array(tuple(vals), dtype=dtype)[()]  # decay to void scalar from 0d
     elif dtype.subdtype:
         subtype, shape = dtype.subdtype
         subval = _recursive_fill_value(subtype, f)
@@ -264,16 +264,17 @@ def default_fill_value(obj):
     The default filling value depends on the datatype of the input
     array or the type of the input scalar:
 
-       ========  ========
-       datatype  default
-       ========  ========
-       bool      True
-       int       999999
-       float     1.e20
-       complex   1.e20+0j
-       object    '?'
-       string    'N/A'
-       ========  ========
+       ===========  ========
+       datatype      default
+       ===========  ========
+       bool         True
+       int          999999
+       float        1.e20
+       complex      1.e20+0j
+       object       '?'
+       string       'N/A'
+       StringDType  'N/A'
+       ===========  ========
 
     For structured types, a structured scalar is returned, with each field the
     default fill value for its type.
@@ -498,7 +499,7 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
-    elif isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
+    elif isinstance(fill_value, str) and (ndtype.char not in 'OSTVU'):
         # Note this check doesn't work if fill_value is not a scalar
         err_msg = "Cannot set fill value of string with array of dtype %s"
         raise TypeError(err_msg % ndtype)
@@ -721,12 +722,12 @@ def getdata(a, subok=True):
     Return the data of a masked array as an ndarray.
 
     Return the data of `a` (if any) as an ndarray if `a` is a ``MaskedArray``,
-    else return `a` as a ndarray or subclass (depending on `subok`) if not.
+    else return `a` as an ndarray or subclass (depending on `subok`) if not.
 
     Parameters
     ----------
     a : array_like
-        Input ``MaskedArray``, alternatively a ndarray or a subclass thereof.
+        Input ``MaskedArray``, alternatively an ndarray or a subclass thereof.
     subok : bool
         Whether to force the output to be a `pure` ndarray (False) or to
         return a subclass of ndarray if appropriate (True, default).
@@ -1116,8 +1117,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         if t.shape == ():
             t = t.reshape(1)
             if m is not nomask:
-                m = make_mask(m, copy=True)
-                m.shape = (1,)
+                m = make_mask(m, copy=True).reshape((1,))
 
         if m is nomask:
             tr = self.f.reduce(t, axis)
@@ -2288,7 +2288,7 @@ def masked_object(x, value, copy=True, shrink=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> food = np.array(['green_eggs', 'ham'], dtype=object)
+    >>> food = np.array(['green_eggs', 'ham'], dtype=np.object_)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
     >>> eat
@@ -2297,7 +2297,7 @@ def masked_object(x, value, copy=True, shrink=True):
            fill_value='green_eggs',
                 dtype=object)
     >>> # plain ol` ham is boring
-    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
+    >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=np.object_)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
     >>> eat
     masked_array(data=['cheese', 'ham', 'pineapple'],
@@ -2414,7 +2414,7 @@ def masked_invalid(a, copy=True):
     --------
     >>> import numpy as np
     >>> import numpy.ma as ma
-    >>> a = np.arange(5, dtype=float)
+    >>> a = np.arange(5, dtype=np.float64)
     >>> a[2] = np.nan
     >>> a[3] = np.inf
     >>> a
@@ -2608,7 +2608,7 @@ def flatten_structured_array(a):
     if len(inishape) > 1:
         newshape = list(out.shape)
         newshape[0] = inishape
-        out.shape = tuple(flatten_sequence(newshape))
+        out = out.reshape(tuple(flatten_sequence(newshape)))
     return out
 
 
@@ -2724,8 +2724,7 @@ class MaskedIterator:
             _mask = self.maskiter.__getitem__(indx)
             if isinstance(_mask, ndarray):
                 # set shape to match that of data; this is needed for matrices
-                _mask.shape = result.shape
-                result._mask = _mask
+                result._mask = _mask.reshape(result.shape)
             elif isinstance(_mask, np.void):
                 return mvoid(result, mask=_mask, hardmask=self.ma._hardmask)
             elif _mask:  # Just a scalar, masked
@@ -2952,7 +2951,7 @@ class MaskedArray(ndarray):
                         # the shapes were the same, so we can at least
                         # avoid that path
                         if data._mask.shape != data.shape:
-                            data._mask.shape = data.shape
+                            data._mask = data._mask.reshape(data.shape)
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
@@ -3127,7 +3126,7 @@ class MaskedArray(ndarray):
         # Finalize the mask
         if self._mask is not nomask:
             try:
-                self._mask.shape = self.shape
+                self._mask = self._mask.reshape(self.shape)
             except ValueError:
                 self._mask = nomask
             except (TypeError, AttributeError):
@@ -3163,7 +3162,7 @@ class MaskedArray(ndarray):
             # Get the domain mask
             domain = ufunc_domain.get(func)
             if domain is not None:
-                # Take the domain, and make sure it's a ndarray
+                # Take the domain, and make sure it's an ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
                     # The result may be masked for two (unary) domains.
                     # That can't really be right as some domains drop
@@ -3502,7 +3501,7 @@ class MaskedArray(ndarray):
             # Try to reset the shape of the mask (if we don't have a void).
             # This raises a ValueError if the dtype change won't work.
             try:
-                self._mask.shape = self.shape
+                self._mask = self._mask.reshape(self.shape)
             except (AttributeError, TypeError):
                 pass
 
@@ -3516,7 +3515,7 @@ class MaskedArray(ndarray):
         # Cannot use self._mask, since it may not (yet) exist when a
         # masked matrix sets the shape.
         if getmask(self) is not nomask:
-            self._mask.shape = self.shape
+            self._mask = self._mask.reshape(self.shape)
 
     def __setmask__(self, mask, copy=False):
         """
@@ -3563,7 +3562,7 @@ class MaskedArray(ndarray):
                     mask = mask.astype(mdtype)
             # Mask is a sequence
             else:
-                # Make sure the new mask is a ndarray with the proper dtype
+                # Make sure the new mask is an ndarray with the proper dtype
                 try:
                     copy = None if not copy else True
                     mask = np.array(mask, copy=copy, dtype=mdtype)
@@ -3585,7 +3584,7 @@ class MaskedArray(ndarray):
                 current_mask.flat = mask
         # Reshape if needed
         if current_mask.shape:
-            current_mask.shape = self.shape
+            self._mask = current_mask.reshape(self.shape)
         return
 
     _set_mask = __setmask__
@@ -3608,7 +3607,7 @@ class MaskedArray(ndarray):
     def recordmask(self):
         """
         Get or set the mask of the array if it has no named fields. For
-        structured arrays, returns a ndarray of booleans where entries are
+        structured arrays, returns an ndarray of booleans where entries are
         ``True`` if **all** the fields are masked, ``False`` otherwise:
 
         >>> x = np.ma.array([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
@@ -4790,8 +4789,9 @@ class MaskedArray(ndarray):
 
         Notes
         -----
-        The reshaping operation cannot guarantee that a copy will not be made,
-        to modify the shape in place, use ``a.shape = s``
+        By default, the reshaping operation will make a copy if a view
+        with different strides is not possible. To ensure a view,
+        pass ``copy=False``.
 
         Examples
         --------
@@ -4818,7 +4818,6 @@ class MaskedArray(ndarray):
           fill_value=999999)
 
         """
-        kwargs.update(order=kwargs.get('order', 'C'))
         result = self._data.reshape(*s, **kwargs).view(type(self))
         result._update_from(self)
         mask = self._mask
@@ -5628,7 +5627,7 @@ class MaskedArray(ndarray):
             is used.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
-        order : list, optional
+        order : str or list of str, optional
             When `a` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
             specified.
@@ -5722,7 +5721,7 @@ class MaskedArray(ndarray):
         --------
         >>> import numpy as np
         >>> x = np.ma.array(np.arange(4), mask=[1,1,0,0])
-        >>> x.shape = (2,2)
+        >>> x = x.reshape((2,2))
         >>> x
         masked_array(
           data=[[--, --],
@@ -6357,7 +6356,7 @@ class MaskedArray(ndarray):
         inishape = self.shape
         result = np.array(self._data.ravel(), dtype=object)
         result[_mask.ravel()] = None
-        result.shape = inishape
+        result = result.reshape(inishape)
         return result.tolist()
 
     def tobytes(self, fill_value=None, order='C'):
@@ -6542,11 +6541,11 @@ class mvoid(MaskedArray):
     Fake a 'void' object to use for masked array with structured dtypes.
     """
 
-    def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
+    def __new__(cls, data, mask=nomask, dtype=None, fill_value=None,
                 hardmask=False, copy=False, subok=True):
         copy = None if not copy else True
         _data = np.array(data, copy=copy, subok=subok, dtype=dtype)
-        _data = _data.view(self)
+        _data = _data.view(cls)
         _data._hardmask = hardmask
         if mask is not nomask:
             if isinstance(mask, np.void):
@@ -6651,14 +6650,14 @@ class mvoid(MaskedArray):
 
     def tolist(self):
         """
-    Transforms the mvoid object into a tuple.
+        Transforms the mvoid object into a tuple.
 
-    Masked fields are replaced by None.
+        Masked fields are replaced by None.
 
-    Returns
-    -------
-    returned_tuple
-        Tuple of fields
+        Returns
+        -------
+        returned_tuple
+            Tuple of fields
         """
         _mask = self._mask
         if _mask is nomask:
@@ -7046,7 +7045,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod:
+def _frommethod(methodname: str, reversed: bool = False):
     """
     Define functions from existing MaskedArray methods.
 
@@ -7054,44 +7053,47 @@ class _frommethod:
     ----------
     methodname : str
         Name of the method to transform.
-
+    reversed : bool, optional
+        Whether to reverse the first two arguments of the method. Default is False.
     """
+    method = getattr(MaskedArray, methodname)
+    assert callable(method)
 
-    def __init__(self, methodname, reversed=False):
-        self.__name__ = methodname
-        self.__qualname__ = methodname
-        self.__doc__ = self.getdoc()
-        self.reversed = reversed
+    signature = inspect.signature(method)
+    params = list(signature.parameters.values())
+    params[0] = params[0].replace(name="a")  # rename 'self' to 'a'
 
-    def getdoc(self):
-        "Return the doc of the function (from the doc of the method)."
-        meth = getattr(MaskedArray, self.__name__, None) or\
-            getattr(np, self.__name__, None)
-        signature = self.__name__ + get_object_signature(meth)
-        if meth is not None:
-            doc = f"""    {signature}
-{getattr(meth, '__doc__', None)}"""
-            return doc
+    if reversed:
+        assert len(params) >= 2
+        params[0], params[1] = params[1], params[0]
 
-    def __call__(self, a, *args, **params):
-        if self.reversed:
-            args = list(args)
-            a, args[0] = args[0], a
+        def wrapper(a, b, *args, **params):
+            return getattr(asanyarray(b), methodname)(a, *args, **params)
 
-        marr = asanyarray(a)
-        method_name = self.__name__
-        method = getattr(type(marr), method_name, None)
-        if method is None:
-            # use the corresponding np function
-            method = getattr(np, method_name)
+    else:
+        def wrapper(a, *args, **params):
+            return getattr(asanyarray(a), methodname)(*args, **params)
 
-        return method(marr, *args, **params)
+    wrapper.__signature__ = signature.replace(parameters=params)
+    wrapper.__name__ = wrapper.__qualname__ = methodname
+
+    # __doc__  is None when using `python -OO ...`
+    if method.__doc__ is not None:
+        str_signature = f"{methodname}{signature}"
+        # TODO: For methods with a docstring "Parameters" section, that do not already
+        # mention `a` (see e.g. `MaskedArray.var.__doc__`), it should be inserted there.
+        wrapper.__doc__ = f"    {str_signature}\n{method.__doc__}"
+
+    return wrapper
 
 
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
+argmax = _frommethod('argmax')
+argmin = _frommethod('argmin')
 compress = _frommethod('compress', reversed=True)
+count = _frommethod('count')
 cumprod = _frommethod('cumprod')
 cumsum = _frommethod('cumsum')
 copy = _frommethod('copy')
@@ -7115,7 +7117,6 @@ swapaxes = _frommethod('swapaxes')
 trace = _frommethod('trace')
 var = _frommethod('var')
 
-count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
@@ -7203,9 +7204,6 @@ def power(a, b, third=None):
         result._data[invalid] = result.fill_value
     return result
 
-
-argmin = _frommethod('argmin')
-argmax = _frommethod('argmax')
 
 def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
             fill_value=None, *, stable=None):
@@ -8260,9 +8258,9 @@ def inner(a, b):
     fa = filled(a, 0)
     fb = filled(b, 0)
     if fa.ndim == 0:
-        fa.shape = (1,)
+        fa = fa.reshape((1,))
     if fb.ndim == 0:
-        fb.shape = (1,)
+        fb = fb.reshape((1,))
     return np.inner(fa, fb).view(MaskedArray)
 
 
@@ -8615,7 +8613,7 @@ def asarray(a, dtype=None, order=None):
                         subok=False, order=order)
 
 
-def asanyarray(a, dtype=None):
+def asanyarray(a, dtype=None, order=None):
     """
     Convert the input to a masked array, conserving subclasses.
 
@@ -8628,9 +8626,13 @@ def asanyarray(a, dtype=None):
         Input data, in any form that can be converted to an array.
     dtype : dtype, optional
         By default, the data-type is inferred from the input data.
-    order : {'C', 'F'}, optional
-        Whether to use row-major ('C') or column-major ('FORTRAN') memory
-        representation.  Default is 'C'.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Memory layout.  'A' and 'K' depend on the order of input array ``a``.
+        'C' row-major (C-style),
+        'F' column-major (Fortran-style) memory representation.
+        'A' (any) means 'F' if ``a`` is Fortran contiguous, 'C' otherwise
+        'K' (keep) preserve input order
+        Defaults to 'K'.
 
     Returns
     -------
@@ -8660,9 +8662,18 @@ def asanyarray(a, dtype=None):
     """
     # workaround for #8666, to preserve identity. Ideally the bottom line
     # would handle this for us.
-    if isinstance(a, MaskedArray) and (dtype is None or dtype == a.dtype):
+    if (
+        isinstance(a, MaskedArray)
+        and (dtype is None or dtype == a.dtype)
+        and (
+            order in {None, 'A', 'K'}
+            or order == 'C' and a.flags.carray
+            or order == 'F' and a.flags.f_contiguous
+        )
+    ):
         return a
-    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
+    return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True,
+                        order=order)
 
 
 ##############################################################################
@@ -8740,78 +8751,76 @@ def fromflex(fxarray):
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
 
 
-class _convert2ma:
+def _convert2ma(funcname: str, np_ret: str, np_ma_ret: str,
+                params: dict[str, str] | None = None):
+    """Convert function from numpy to numpy.ma."""
+    func = getattr(np, funcname)
+    params = params or {}
 
-    """
-    Convert functions from numpy to numpy.ma.
+    @functools.wraps(func, assigned=set(functools.WRAPPER_ASSIGNMENTS) - {"__module__"})
+    def wrapper(*args, **kwargs):
+        common_params = kwargs.keys() & params.keys()
+        extras = params | {p: kwargs.pop(p) for p in common_params}
 
-    Parameters
-    ----------
-        _methodname : string
-            Name of the method to transform.
+        result = func.__call__(*args, **kwargs).view(MaskedArray)
 
-    """
-    __doc__ = None
-
-    def __init__(self, funcname, np_ret, np_ma_ret, params=None):
-        self._func = getattr(np, funcname)
-        self.__doc__ = self.getdoc(np_ret, np_ma_ret)
-        self._extras = params or {}
-
-    def getdoc(self, np_ret, np_ma_ret):
-        "Return the doc of the function (from the doc of the method)."
-        doc = getattr(self._func, '__doc__', None)
-        sig = get_object_signature(self._func)
-        if doc:
-            doc = self._replace_return_type(doc, np_ret, np_ma_ret)
-            # Add the signature of the function at the beginning of the doc
-            if sig:
-                sig = f"{self._func.__name__}{sig}\n"
-            doc = sig + doc
-        return doc
-
-    def _replace_return_type(self, doc, np_ret, np_ma_ret):
-        """
-        Replace documentation of ``np`` function's return type.
-
-        Replaces it with the proper type for the ``np.ma`` function.
-
-        Parameters
-        ----------
-        doc : str
-            The documentation of the ``np`` method.
-        np_ret : str
-            The return type string of the ``np`` method that we want to
-            replace. (e.g. "out : ndarray")
-        np_ma_ret : str
-            The return type string of the ``np.ma`` method.
-            (e.g. "out : MaskedArray")
-        """
-        if np_ret not in doc:
-            raise RuntimeError(
-                f"Failed to replace `{np_ret}` with `{np_ma_ret}`. "
-                f"The documentation string for return type, {np_ret}, is not "
-                f"found in the docstring for `np.{self._func.__name__}`. "
-                f"Fix the docstring for `np.{self._func.__name__}` or "
-                "update the expected string for return type."
-            )
-
-        return doc.replace(np_ret, np_ma_ret)
-
-    def __call__(self, *args, **params):
-        # Find the common parameters to the call and the definition
-        _extras = self._extras
-        common_params = set(params).intersection(_extras)
-        # Drop the common parameters from the call
-        for p in common_params:
-            _extras[p] = params.pop(p)
-        # Get the result
-        result = self._func.__call__(*args, **params).view(MaskedArray)
         if "fill_value" in common_params:
-            result.fill_value = _extras.get("fill_value", None)
+            result.fill_value = extras["fill_value"]
         if "hardmask" in common_params:
-            result._hardmask = bool(_extras.get("hard_mask", False))
+            result._hardmask = bool(extras["hardmask"])
+
         return result
+
+    # workaround for a doctest bug in Python 3.11 that incorrectly assumes `__code__`
+    # exists on wrapped functions
+    del wrapper.__wrapped__
+
+    # `arange`, `empty`, `empty_like`, `frombuffer`, and `zeros` have no signature
+    try:
+        signature = inspect.signature(func)
+    except ValueError:
+        signature = inspect.Signature([
+            inspect.Parameter('args', inspect.Parameter.VAR_POSITIONAL),
+            inspect.Parameter('kwargs', inspect.Parameter.VAR_KEYWORD),
+        ])
+
+    if params:
+        sig_params = list(signature.parameters.values())
+
+        # pop `**kwargs` if present
+        sig_kwargs = None
+        if sig_params[-1].kind is inspect.Parameter.VAR_KEYWORD:
+            sig_kwargs = sig_params.pop()
+
+        # add new keyword-only parameters
+        for param_name, default in params.items():
+            new_param = inspect.Parameter(
+                param_name,
+                inspect.Parameter.KEYWORD_ONLY,
+                default=default,
+            )
+            sig_params.append(new_param)
+
+        # re-append `**kwargs` if it was present
+        if sig_kwargs:
+            sig_params.append(sig_kwargs)
+
+        signature = signature.replace(parameters=sig_params)
+
+    wrapper.__signature__ = signature
+
+    # __doc__  is None when using `python -OO ...`
+    if func.__doc__ is not None:
+        assert np_ret in func.__doc__, (
+            f"Failed to replace `{np_ret}` with `{np_ma_ret}`. "
+            f"The documentation string for return type, {np_ret}, is not "
+            f"found in the docstring for `np.{func.__name__}`. "
+            f"Fix the docstring for `np.{func.__name__}` or "
+            "update the expected string for return type."
+        )
+        wrapper.__doc__ = inspect.cleandoc(func.__doc__).replace(np_ret, np_ma_ret)
+
+    return wrapper
 
 
 arange = _convert2ma(

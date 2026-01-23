@@ -1,0 +1,56 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.3.2 Release Notes
+=========================
+
+The NumPy 2.3.2 release is a patch release with a number of bug fixes and
+maintenance updates.  The highlights are:
+
+- Wheels for Python 3.14.0rc1
+- PyPy updated to the latest stable release
+- OpenBLAS updated to 0.3.30
+
+This release supports Python versions 3.11-3.14
+
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* !DWesl
+* Charles Harris
+* Joren Hammudoglu
+* Maanas Arora
+* Marco Edward Gorelli
+* Matti Picus
+* Nathan Goldbaum
+* Sebastian Berg
+* kostayScr +
+
+
+Pull requests merged
+====================
+
+A total of 16 pull requests were merged for this release.
+
+* `#29256 <https://github.com/numpy/numpy/pull/29256>`__: MAINT: Prepare 2.3.x for further development
+* `#29283 <https://github.com/numpy/numpy/pull/29283>`__: TYP: Work around a mypy issue with bool arrays (#29248)
+* `#29284 <https://github.com/numpy/numpy/pull/29284>`__: BUG: fix fencepost error in StringDType internals
+* `#29287 <https://github.com/numpy/numpy/pull/29287>`__: BUG: handle case in mapiter where descriptors might get replaced...
+* `#29350 <https://github.com/numpy/numpy/pull/29350>`__: BUG: Fix shape error path in array-interface
+* `#29412 <https://github.com/numpy/numpy/pull/29412>`__: BUG: Allow reading non-npy files in npz and add test
+* `#29413 <https://github.com/numpy/numpy/pull/29413>`__: TST: Avoid uninitialized values in test (#29341)
+* `#29414 <https://github.com/numpy/numpy/pull/29414>`__: BUG: Fix reference leakage for output arrays in reduction functions
+* `#29415 <https://github.com/numpy/numpy/pull/29415>`__: BUG: fix casting issue in center, ljust, rjust, and zfill (#29369)
+* `#29416 <https://github.com/numpy/numpy/pull/29416>`__: TYP: Fix overloads in ``np.char.array`` and ``np.char.asarray``...
+* `#29417 <https://github.com/numpy/numpy/pull/29417>`__: BUG: Any dtype should call ``square`` on ``arr \*\* 2`` (#29392)
+* `#29424 <https://github.com/numpy/numpy/pull/29424>`__: MAINT: use a stable pypy release in CI
+* `#29425 <https://github.com/numpy/numpy/pull/29425>`__: MAINT: Support python 314rc1
+* `#29429 <https://github.com/numpy/numpy/pull/29429>`__: MAINT: Update highway to match main.
+* `#29430 <https://github.com/numpy/numpy/pull/29430>`__: BLD: use github to build macos-arm64 wheels with OpenBLAS and...
+* `#29437 <https://github.com/numpy/numpy/pull/29437>`__: BUG: fix datetime/timedelta hash memory leak (#29411)
+
+

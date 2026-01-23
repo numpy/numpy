@@ -782,59 +782,24 @@ amerge_at_(type *arr, npy_intp *tosort, const run *stack, const npy_intp at,
 
 template <typename Tag, typename type>
 static int
-atry_collapse_(type *arr, npy_intp *tosort, run *stack, npy_intp *stack_ptr,
-               buffer_intp *buffer)
+afound_new_run_(type *arr, npy_intp *tosort, run *stack, npy_intp *stack_ptr, npy_intp n2,
+                npy_intp num, buffer_intp *buffer)
 {
     int ret;
-    npy_intp A, B, C, top;
-    top = *stack_ptr;
-
-    while (1 < top) {
-        B = stack[top - 2].l;
-        C = stack[top - 1].l;
-
-        if ((2 < top && stack[top - 3].l <= B + C) ||
-            (3 < top && stack[top - 4].l <= stack[top - 3].l + B)) {
-            A = stack[top - 3].l;
-
-            if (A <= C) {
-                ret = amerge_at_<Tag>(arr, tosort, stack, top - 3, buffer);
-
-                if (NPY_UNLIKELY(ret < 0)) {
-                    return ret;
-                }
-
-                stack[top - 3].l += B;
-                stack[top - 2] = stack[top - 1];
-                --top;
-            }
-            else {
-                ret = amerge_at_<Tag>(arr, tosort, stack, top - 2, buffer);
-
-                if (NPY_UNLIKELY(ret < 0)) {
-                    return ret;
-                }
-
-                stack[top - 2].l += C;
-                --top;
-            }
-        }
-        else if (1 < top && B <= C) {
-            ret = amerge_at_<Tag>(arr, tosort, stack, top - 2, buffer);
-
+    if (*stack_ptr > 0) {
+        npy_intp s1 = stack[*stack_ptr - 1].s;
+        npy_intp n1 = stack[*stack_ptr - 1].l;
+        int power = powerloop(s1, n1, n2, num);
+        while (*stack_ptr > 1 && stack[*stack_ptr - 2].power > power) {
+            ret = amerge_at_<Tag>(arr, tosort, stack, *stack_ptr - 2, buffer);
             if (NPY_UNLIKELY(ret < 0)) {
                 return ret;
             }
-
-            stack[top - 2].l += C;
-            --top;
+            stack[*stack_ptr - 2].l += stack[*stack_ptr - 1].l;
+            --(*stack_ptr);
         }
-        else {
-            break;
-        }
+        stack[*stack_ptr - 1].power = power;
     }
-
-    *stack_ptr = top;
     return 0;
 }
 
@@ -897,16 +862,13 @@ atimsort_(void *v, npy_intp *tosort, npy_intp num)
 
     for (l = 0; l < num;) {
         n = acount_run_<Tag>((type *)v, tosort, l, num, minrun);
-        stack[stack_ptr].s = l;
-        stack[stack_ptr].l = n;
-        ++stack_ptr;
-        ret = atry_collapse_<Tag>((type *)v, tosort, stack, &stack_ptr,
-                                  &buffer);
-
+        ret = afound_new_run_<Tag>((type*)v, tosort, stack, &stack_ptr, n, num, &buffer);
         if (NPY_UNLIKELY(ret < 0)) {
             goto cleanup;
         }
-
+        stack[stack_ptr].s = l;
+        stack[stack_ptr].l = n;
+        ++stack_ptr;
         l += n;
     }
 

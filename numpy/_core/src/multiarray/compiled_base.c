@@ -158,20 +158,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
             lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
             Py_DECREF(tmp1);
             if (lst == NULL) {
-                /* Failed converting to NPY_INTP. */
-                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                    PyErr_Clear();
-                    /* Deprecated 2024-08-02, NumPy 2.1 */
-                    if (DEPRECATE("Non-integer input passed to bincount. In a "
-                                  "future version of NumPy, this will be an "
-                                  "error. (Deprecated NumPy 2.1)") < 0) {
-                        goto fail;
-                    }
-                }
-                else {
-                    /* Failure was not a TypeError. */
-                    goto fail;
-                }
+                goto fail;
             }
         }
         else {
@@ -450,7 +437,7 @@ _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, 
 
 /** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
- * If an starting index guess is in-range, the array values around this
+ * If a starting index guess is in-range, the array values around this
  * index are first checked.  This allows for repeated calls for well-ordered
  * keys (a very common case) to use the previous index as a very good guess.
  *

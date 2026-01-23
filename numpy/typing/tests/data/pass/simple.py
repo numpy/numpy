@@ -1,9 +1,9 @@
 """Simple expression that should pass with mypy."""
 import operator
+from collections.abc import Iterable
 
 import numpy as np
 import numpy.typing as npt
-from collections.abc import Iterable
 
 # Basic checks
 array = np.array([1, 2])

@@ -151,7 +151,7 @@ def zeros_like(
     array([[0, 0, 0],
            [0, 0, 0]])
 
-    >>> y = np.arange(3, dtype=float)
+    >>> y = np.arange(3, dtype=np.float64)
     >>> y
     array([0., 1., 2.])
     >>> np.zeros_like(y)
@@ -211,7 +211,7 @@ def ones(shape, dtype=None, order='C', *, device=None, like=None):
     >>> np.ones(5)
     array([1., 1., 1., 1., 1.])
 
-    >>> np.ones((5,), dtype=int)
+    >>> np.ones((5,), dtype=np.int_)
     array([1, 1, 1, 1, 1])
 
     >>> np.ones((2, 1))
@@ -300,7 +300,7 @@ def ones_like(
     array([[1, 1, 1],
            [1, 1, 1]])
 
-    >>> y = np.arange(3, dtype=float)
+    >>> y = np.arange(3, dtype=np.float64)
     >>> y
     array([0., 1., 2.])
     >>> np.ones_like(y)
@@ -448,21 +448,21 @@ def full_like(
     Examples
     --------
     >>> import numpy as np
-    >>> x = np.arange(6, dtype=int)
+    >>> x = np.arange(6, dtype=np.int_)
     >>> np.full_like(x, 1)
     array([1, 1, 1, 1, 1, 1])
     >>> np.full_like(x, 0.1)
     array([0, 0, 0, 0, 0, 0])
-    >>> np.full_like(x, 0.1, dtype=np.double)
+    >>> np.full_like(x, 0.1, dtype=np.float64)
     array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
-    >>> np.full_like(x, np.nan, dtype=np.double)
+    >>> np.full_like(x, np.nan, dtype=np.float64)
     array([nan, nan, nan, nan, nan, nan])
 
-    >>> y = np.arange(6, dtype=np.double)
+    >>> y = np.arange(6, dtype=np.float64)
     >>> np.full_like(y, 0.1)
     array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
-    >>> y = np.zeros([2, 2, 3], dtype=int)
+    >>> y = np.zeros([2, 2, 3], dtype=np.int_)
     >>> np.full_like(y, [0, 0, 255])
     array([[[  0,   0, 255],
             [  0,   0, 255]],
@@ -523,11 +523,11 @@ def count_nonzero(a, axis=None, *, keepdims=False):
     --------
     >>> import numpy as np
     >>> np.count_nonzero(np.eye(4))
-    4
+    np.int64(4)
     >>> a = np.array([[0, 1, 7, 0],
     ...               [3, 0, 2, 19]])
     >>> np.count_nonzero(a)
-    5
+    np.int64(5)
     >>> np.count_nonzero(a, axis=0)
     array([1, 1, 2, 1])
     >>> np.count_nonzero(a, axis=1)
@@ -893,12 +893,12 @@ def convolve(a, v, mode='full'):
 
     """
     a, v = array(a, copy=None, ndmin=1), array(v, copy=None, ndmin=1)
-    if (len(v) > len(a)):
-        a, v = v, a
     if len(a) == 0:
         raise ValueError('a cannot be empty')
     if len(v) == 0:
         raise ValueError('v cannot be empty')
+    if len(v) > len(a):
+        a, v = v, a
     return multiarray.correlate(a, v[::-1], mode)
 
 
@@ -982,7 +982,7 @@ def outer(a, b, out=None):
 
     An example using a "vector" of letters:
 
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> x = np.array(['a', 'b', 'c'], dtype=np.object_)
     >>> np.outer(x, [1, 2, 3])
     array([['a', 'aa', 'aaa'],
            ['b', 'bb', 'bbb'],
@@ -1022,7 +1022,8 @@ def tensordot(a, b, axes=2):
         * (2,) array_like
           Or, a list of axes to be summed over, first sequence applying to `a`,
           second to `b`. Both elements array_like must be of the same length.
-
+          Each axis may appear at most once; repeated axes are not allowed.
+          For example, ``axes=([1, 1], [0, 0])`` is invalid.
     Returns
     -------
     output : ndarray
@@ -1052,6 +1053,13 @@ def tensordot(a, b, axes=2):
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
     The calculation can be referred to ``numpy.einsum``.
+
+    For example, if ``a.shape == (2, 3, 4)`` and ``b.shape == (3, 4, 5)``,
+    then ``axes=([1, 2], [0, 1])`` sums over the ``(3, 4)`` dimensions of
+    both arrays and produces an output of shape ``(2, 5)``.
+
+    Each summation axis corresponds to a distinct contraction index; repeating
+    an axis (for example ``axes=([1, 1], [0, 0])``) is invalid.
 
     The shape of the result consists of the non-contracted axes of the
     first tensor, followed by the non-contracted axes of the second.
@@ -1106,10 +1114,9 @@ def tensordot(a, b, axes=2):
 
     An extended example taking advantage of the overloading of + and \\*:
 
-    >>> a = np.array(range(1, 9))
-    >>> a.shape = (2, 2, 2)
-    >>> A = np.array(('a', 'b', 'c', 'd'), dtype=object)
-    >>> A.shape = (2, 2)
+    >>> a = np.array(range(1, 9)).reshape((2, 2, 2))
+    >>> A = np.array(('a', 'b', 'c', 'd'), dtype=np.object_)
+    >>> A = A.reshape((2, 2))
     >>> a; A
     array([[[1, 2],
             [3, 4]],
@@ -1170,6 +1177,11 @@ def tensordot(a, b, axes=2):
     except TypeError:
         axes_b = [axes_b]
         nb = 1
+
+    if len(set(axes_a)) != len(axes_a):
+        raise ValueError("duplicate axes are not allowed in tensordot")
+    if len(set(axes_b)) != len(axes_b):
+        raise ValueError("duplicate axes are not allowed in tensordot")
 
     a, b = asarray(a), asarray(b)
     as_ = a.shape
@@ -1560,10 +1572,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     The cross product of `a` and `b` in :math:`R^3` is a vector perpendicular
     to both `a` and `b`.  If `a` and `b` are arrays of vectors, the vectors
     are defined by the last axis of `a` and `b` by default, and these axes
-    can have dimensions 2 or 3.  Where the dimension of either `a` or `b` is
-    2, the third component of the input vector is assumed to be zero and the
-    cross product calculated accordingly.  In cases where both input vectors
-    have dimension 2, the z-component of the cross product is returned.
+    must have 3 dimensions.
 
     Parameters
     ----------
@@ -1576,9 +1585,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     axisb : int, optional
         Axis of `b` that defines the vector(s).  By default, the last axis.
     axisc : int, optional
-        Axis of `c` containing the cross product vector(s).  Ignored if
-        both input vectors have dimension 2, as the return is scalar.
-        By default, the last axis.
+        Axis of `c` containing the cross product vector(s).  By default, the last axis.
     axis : int, optional
         If defined, the axis of `a`, `b` and `c` that defines the vector(s)
         and cross product(s).  Overrides `axisa`, `axisb` and `axisc`.
@@ -1591,26 +1598,18 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     Raises
     ------
     ValueError
-        When the dimension of the vector(s) in `a` and/or `b` does not
-        equal 2 or 3.
+        When the dimension of the vector(s) in `a` or `b` does not equal 3.
 
     See Also
     --------
     inner : Inner product
     outer : Outer product.
-    linalg.cross : An Array API compatible variation of ``np.cross``,
-                   which accepts (arrays of) 3-element vectors only.
+    linalg.cross : An Array API compatible variation of ``np.cross``.
     ix_ : Construct index arrays.
 
     Notes
     -----
     Supports full broadcasting of the inputs.
-
-    Dimension-2 input arrays were deprecated in 2.0.0. If you do need this
-    functionality, you can use::
-
-        def cross2d(x, y):
-            return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
 
     Examples
     --------
@@ -1624,13 +1623,6 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     One vector with dimension 2.
 
-    >>> x = [1, 2]
-    >>> y = [4, 5, 6]
-    >>> np.cross(x, y)
-    array([12, -6, -3])
-
-    Equivalently:
-
     >>> x = [1, 2, 0]
     >>> y = [4, 5, 6]
     >>> np.cross(x, y)
@@ -1638,10 +1630,10 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     Both vectors with dimension 2.
 
-    >>> x = [1,2]
-    >>> y = [4,5]
+    >>> x = [1, 2, 0]
+    >>> y = [4, 5, 0]
     >>> np.cross(x, y)
-    array(-3)
+    array([0, 0, -3])
 
     Multiple vector cross-products. Note that the direction of the cross
     product vector is defined by the *right-hand rule*.
@@ -1688,24 +1680,16 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     # Move working axis to the end of the shape
     a = moveaxis(a, axisa, -1)
     b = moveaxis(b, axisb, -1)
-    msg = ("incompatible dimensions for cross product\n"
-           "(dimension must be 2 or 3)")
-    if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
-        raise ValueError(msg)
-    if a.shape[-1] == 2 or b.shape[-1] == 2:
-        # Deprecated in NumPy 2.0, 2023-09-26
-        warnings.warn(
-            "Arrays of 2-dimensional vectors are deprecated. Use arrays of "
-            "3-dimensional vectors instead. (deprecated in NumPy 2.0)",
-            DeprecationWarning, stacklevel=2
+    if a.shape[-1] != 3 or b.shape[-1] != 3:
+        raise ValueError(
+            f"Both input arrays must be (arrays of) 3-dimensional vectors, "
+            f"but they are {a.shape[-1]} and {b.shape[-1]} dimensional instead."
         )
 
     # Create the output array
-    shape = broadcast(a[..., 0], b[..., 0]).shape
-    if a.shape[-1] == 3 or b.shape[-1] == 3:
-        shape += (3,)
-        # Check axisc is within bounds
-        axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
+    shape = *broadcast(a[..., 0], b[..., 0]).shape, 3
+    # Check axisc is within bounds
+    axisc = normalize_axis_index(axisc, len(shape), msg_prefix='axisc')
     dtype = promote_types(a.dtype, b.dtype)
     cp = empty(shape, dtype)
 
@@ -1716,58 +1700,26 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     # create local aliases for readability
     a0 = a[..., 0]
     a1 = a[..., 1]
-    if a.shape[-1] == 3:
-        a2 = a[..., 2]
+    a2 = a[..., 2]
     b0 = b[..., 0]
     b1 = b[..., 1]
-    if b.shape[-1] == 3:
-        b2 = b[..., 2]
-    if cp.ndim != 0 and cp.shape[-1] == 3:
-        cp0 = cp[..., 0]
-        cp1 = cp[..., 1]
-        cp2 = cp[..., 2]
+    b2 = b[..., 2]
+    cp0 = cp[..., 0]
+    cp1 = cp[..., 1]
+    cp2 = cp[..., 2]
 
-    if a.shape[-1] == 2:
-        if b.shape[-1] == 2:
-            # a0 * b1 - a1 * b0
-            multiply(a0, b1, out=cp)
-            cp -= a1 * b0
-            return cp
-        else:
-            assert b.shape[-1] == 3
-            # cp0 = a1 * b2 - 0  (a2 = 0)
-            # cp1 = 0 - a0 * b2  (a2 = 0)
-            # cp2 = a0 * b1 - a1 * b0
-            multiply(a1, b2, out=cp0)
-            multiply(a0, b2, out=cp1)
-            negative(cp1, out=cp1)
-            multiply(a0, b1, out=cp2)
-            cp2 -= a1 * b0
-    else:
-        assert a.shape[-1] == 3
-        if b.shape[-1] == 3:
-            # cp0 = a1 * b2 - a2 * b1
-            # cp1 = a2 * b0 - a0 * b2
-            # cp2 = a0 * b1 - a1 * b0
-            multiply(a1, b2, out=cp0)
-            tmp = np.multiply(a2, b1, out=...)
-            cp0 -= tmp
-            multiply(a2, b0, out=cp1)
-            multiply(a0, b2, out=tmp)
-            cp1 -= tmp
-            multiply(a0, b1, out=cp2)
-            multiply(a1, b0, out=tmp)
-            cp2 -= tmp
-        else:
-            assert b.shape[-1] == 2
-            # cp0 = 0 - a2 * b1  (b2 = 0)
-            # cp1 = a2 * b0 - 0  (b2 = 0)
-            # cp2 = a0 * b1 - a1 * b0
-            multiply(a2, b1, out=cp0)
-            negative(cp0, out=cp0)
-            multiply(a2, b0, out=cp1)
-            multiply(a0, b1, out=cp2)
-            cp2 -= a1 * b0
+    # cp0 = a1 * b2 - a2 * b1
+    # cp1 = a2 * b0 - a0 * b2
+    # cp2 = a0 * b1 - a1 * b0
+    multiply(a1, b2, out=cp0)
+    tmp = np.multiply(a2, b1, out=...)
+    cp0 -= tmp
+    multiply(a2, b0, out=cp1)
+    multiply(a0, b2, out=tmp)
+    cp1 -= tmp
+    multiply(a0, b1, out=cp2)
+    multiply(a1, b0, out=tmp)
+    cp2 -= tmp
 
     return moveaxis(cp, -1, axisc)
 
@@ -1923,20 +1875,20 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     Examples
     --------
     >>> import numpy as np
-    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
+    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=np.float64)
     array([[0., 0.],
            [1., 1.]])
 
-    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=np.float64)
     array([[0., 1.],
            [0., 1.]])
 
-    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
+    >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=np.int_)
     array([[ True, False, False],
            [False,  True, False],
            [False, False,  True]])
 
-    >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=int)
+    >>> np.fromfunction(lambda i, j: i + j, (3, 3), dtype=np.int_)
     array([[0, 1, 2],
            [1, 2, 3],
            [2, 3, 4]])

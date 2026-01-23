@@ -1,4 +1,3 @@
-import importlib
 import importlib.metadata
 import os
 import pathlib
@@ -35,7 +34,7 @@ class TestNumpyConfig:
 
     def test_configtool_pkgconfigdir(self):
         stdout = self.check_numpyconfig('--pkgconfigdir')
-        assert pathlib.Path(stdout) == PKG_CONFIG_DIR
+        assert pathlib.Path(stdout) == PKG_CONFIG_DIR.resolve()
 
 
 @pytest.mark.skipif(not IS_INSTALLED,

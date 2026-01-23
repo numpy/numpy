@@ -5,7 +5,6 @@ from typing import (
     Final,
     Literal,
     TypedDict,
-    TypeVar,
     Unpack,
     overload,
     type_check_only,
@@ -14,8 +13,6 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from numpy._typing._dtype_like import _DTypeLikeNested
-
-_T = TypeVar("_T")
 
 @type_check_only
 class _NameValidatorKwargs(TypedDict, total=False):
@@ -46,11 +43,11 @@ class LineSplitter:
         encoding: str | None = None,
     ) -> None: ...
     def __call__(self, /, line: str | bytes) -> list[str]: ...
-    def autostrip(self, /, method: Callable[[_T], Iterable[str]]) -> Callable[[_T], list[str]]: ...
+    def autostrip[T](self, /, method: Callable[[T], Iterable[str]]) -> Callable[[T], list[str]]: ...
 
 class NameValidator:
-    defaultexcludelist: ClassVar[Sequence[str]]
-    defaultdeletechars: ClassVar[Sequence[str]]
+    defaultexcludelist: ClassVar[Sequence[str]] = ...
+    defaultdeletechars: ClassVar[frozenset[str]] = ...
     excludelist: list[str]
     deletechars: set[str]
     case_converter: Callable[[str], str]
@@ -99,7 +96,7 @@ class StringConverter:
     @classmethod
     def upgrade_mapper(cls, func: Callable[[str], Any], default: object | None = None) -> None: ...
 
-def _decode_line(line: str | bytes, encoding: str) -> str: ...
+def _decode_line(line: str | bytes, encoding: str | None = None) -> str: ...
 def _is_string_like(obj: object) -> bool: ...
 def _is_bytes_like(obj: object) -> bool: ...
 def has_nested_fields(ndtype: np.dtype[np.void]) -> bool: ...

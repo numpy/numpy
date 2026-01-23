@@ -32,7 +32,7 @@ endif
 # than a `.a` file extension in order not to break including them in a
 # distutils-based build (see gh-23981 and
 # https://mesonbuild.com/FAQ.html#why-does-building-my-project-with-msvc-output-static-libraries-called-libfooa)
-if is_windows and cc.get_id() == 'msvc'
+if is_windows and cc.get_id() in ['msvc', 'clang-cl']
   name_prefix_staticlib = ''
   name_suffix_staticlib = 'lib'
 else

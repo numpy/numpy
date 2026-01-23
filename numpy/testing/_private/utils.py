@@ -6,6 +6,7 @@ import concurrent.futures
 import contextlib
 import gc
 import importlib.metadata
+import importlib.util
 import operator
 import os
 import pathlib
@@ -25,7 +26,7 @@ from warnings import WarningMessage
 
 import numpy as np
 import numpy.linalg._umath_linalg
-from numpy import isfinite, isinf, isnan
+from numpy import isfinite, isnan
 from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
 
 __all__ = [
@@ -63,9 +64,7 @@ except importlib.metadata.PackageNotFoundError:
 else:
     IS_INSTALLED = True
     try:
-        if sys.version_info >= (3, 13):
-            IS_EDITABLE = np_dist.origin.dir_info.editable
-        else:
+        if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
             import json  # noqa: E401
             import types
@@ -74,6 +73,8 @@ else:
                 object_hook=lambda data: types.SimpleNamespace(**data),
             )
             IS_EDITABLE = origin.dir_info.editable
+        else:
+            IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
@@ -90,14 +91,7 @@ IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
-BLAS_SUPPORTS_FPE = True
-if platform.system() == 'Darwin' or platform.machine() == 'arm64':
-    try:
-        blas = np.__config__.CONFIG['Build Dependencies']['blas']
-        if blas['name'] == 'accelerate':
-            BLAS_SUPPORTS_FPE = False
-    except KeyError:
-        pass
+BLAS_SUPPORTS_FPE = np._core._multiarray_umath._blas_supports_fpe(None)
 
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
@@ -364,7 +358,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
         if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
         assert_equal(len(actual), len(desired), err_msg, verbose)
-        for k, i in desired.items():
+        for k in desired:
             if k not in actual:
                 raise AssertionError(repr(k))
             assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}',
@@ -758,17 +752,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def isvstring(x):
         return x.dtype.char == "T"
 
-    def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
-        """Handling nan/inf.
-
-        Combine results of running func on x and y, checking that they are True
-        at the same locations.
-
-        """
-        __tracebackhide__ = True  # Hide traceback for py.test
-
-        x_id = func(x)
-        y_id = func(y)
+    def robust_any_difference(x, y):
         # We include work-arounds here to handle three types of slightly
         # pathological ndarray subclasses:
         # (1) all() on fully masked arrays returns np.ma.masked, so we use != True
@@ -781,10 +765,23 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting cases (2) and (3), but it's nice to
         # support them if possible.
-        result = x_id == y_id
+        result = x == y
         if not hasattr(result, "all") or not callable(result.all):
             result = np.bool(result)
-        if result.all() != True:
+        return result.all() != True
+
+    def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
+        """Handling nan/inf.
+
+        Combine results of running func on x and y, checking that they are True
+        at the same locations.
+
+        """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
+        x_id = func(x)
+        y_id = func(y)
+        if robust_any_difference(x_id, y_id):
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
@@ -803,6 +800,29 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             return np.bool(y_id)
         else:
             return y_id
+
+    def assert_same_inf_values(x, y, infs_mask):
+        """
+        Verify all inf values match in the two arrays
+        """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
+        if not infs_mask.any():
+            return
+        if x.ndim > 0 and y.ndim > 0:
+            x = x[infs_mask]
+            y = y[infs_mask]
+        else:
+            assert infs_mask.all()
+
+        if robust_any_difference(x, y):
+            msg = build_err_msg(
+                [x, y],
+                err_msg + '\ninf values mismatch:',
+                verbose=verbose, header=header,
+                names=names,
+                precision=precision)
+            raise AssertionError(msg)
 
     try:
         if strict:
@@ -828,12 +848,15 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
             if equal_inf:
-                flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == +inf,
-                                                hasval='+inf')
-                flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == -inf,
-                                                hasval='-inf')
+                # If equal_nan=True, skip comparing nans below for equality if they are
+                # also infs (e.g. inf+nanj) since that would always fail.
+                isinf_func = lambda xy: np.logical_and(np.isinf(xy), np.invert(flagged))
+                infs_mask = func_assert_same_pos(
+                    x, y,
+                    func=isinf_func,
+                    hasval='inf')
+                assert_same_inf_values(x, y, infs_mask)
+                flagged |= infs_mask
 
         elif istime(x) and istime(y):
             # If one is datetime64 and the other timedelta64 there is no point
@@ -882,8 +905,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
-            remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
-                       f'({percent_mismatch:.3g}%)']
+            remarks = [(f'Mismatched elements: {n_mismatch} / {n_elements} '
+                        f'({percent_mismatch:.3g}%)')]
             if invalids.ndim != 0:
                 if flagged.ndim > 0:
                     positions = np.argwhere(np.asarray(~flagged))[invalids]
@@ -1032,6 +1055,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     The first assert does not raise an exception:
 
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
@@ -1183,24 +1208,9 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy._core import number, result_type
-    from numpy._core.fromnumeric import any as npany
     from numpy._core.numerictypes import issubdtype
 
     def compare(x, y):
-        try:
-            if npany(isinf(x)) or npany(isinf(y)):
-                xinfid = isinf(x)
-                yinfid = isinf(y)
-                if not (xinfid == yinfid).all():
-                    return False
-                # if one item, x and y is +- inf
-                if x.size == y.size == 1:
-                    return x == y
-                x = x[~xinfid]
-                y = y[~yinfid]
-        except (TypeError, NotImplementedError):
-            pass
-
         # make sure y is an inexact type to avoid abs(MIN_INT); will cause
         # casting of x later.
         dtype = result_type(y, 1.)
@@ -1434,12 +1444,13 @@ def rundocs(filename=None, raise_on_error=True):
     """
     import doctest
 
-    from numpy.distutils.misc_util import exec_mod_from_location
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
     name = os.path.splitext(os.path.basename(filename))[0]
-    m = exec_mod_from_location(name, filename)
+    spec = importlib.util.spec_from_file_location(name, filename)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
 
     tests = doctest.DocTestFinder().find(m)
     runner = doctest.DocTestRunner(verbose=False)
@@ -1678,7 +1689,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         Array desired.
     rtol : float, optional
         Relative tolerance.
-    atol : float, optional
+    atol : float | np.timedelta64, optional
         Absolute tolerance.
     equal_nan : bool, optional.
         If True, NaNs will compare equal.
@@ -1757,7 +1768,11 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
                                        equal_nan=equal_nan)
 
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
+    if isinstance(atol, np.timedelta64):
+        atol_str = str(atol)
+    else:
+        atol_str = f"{atol:g}"
+    header = f'Not equal to tolerance rtol={rtol:g}, atol={atol_str}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
                          verbose=verbose, header=header, equal_nan=equal_nan,
                          strict=strict)
@@ -1971,7 +1986,7 @@ def integer_repr(x):
 @contextlib.contextmanager
 def _assert_warns_context(warning_class, name=None):
     __tracebackhide__ = True  # Hide traceback for py.test
-    with suppress_warnings() as sup:
+    with suppress_warnings(_warn=False) as sup:
         l = sup.record(warning_class)
         yield
         if not len(l) > 0:
@@ -1994,6 +2009,11 @@ def assert_warns(warning_class, *args, **kwargs):
             do_something()
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
+
+    .. deprecated:: 2.4
+
+        This is deprecated. Use `warnings.catch_warnings` or
+        ``pytest.warns`` instead.
 
     Parameters
     ----------
@@ -2022,6 +2042,11 @@ def assert_warns(warning_class, *args, **kwargs):
     >>> ret = np.testing.assert_warns(DeprecationWarning, deprecated_func, 4)
     >>> assert ret == 16
     """
+    warnings.warn(
+        "NumPy warning suppression and assertion utilities are deprecated. "
+        "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+        "or pytest.filterwarnings instead. (Deprecated NumPy 2.4)",
+        DeprecationWarning, stacklevel=2)
     if not args and not kwargs:
         return _assert_warns_context(warning_class)
     elif len(args) < 1:
@@ -2274,6 +2299,11 @@ class suppress_warnings:
     tests might need to see the warning. Additionally it allows easier
     specificity for testing warnings and can be nested.
 
+    .. deprecated:: 2.4
+
+        This is deprecated. Use `warnings.filterwarnings` or
+        ``pytest.filterwarnings`` instead.
+
     Parameters
     ----------
     forwarding_rule : str, optional
@@ -2334,7 +2364,13 @@ class suppress_warnings:
             # do something which causes a warning in np.ma.core
             pass
     """
-    def __init__(self, forwarding_rule="always"):
+    def __init__(self, forwarding_rule="always", _warn=True):
+        if _warn:
+            warnings.warn(
+                "NumPy warning suppression and assertion utilities are deprecated. "
+                "Use warnings.catch_warnings, warnings.filterwarnings, pytest.warns, "
+                "or pytest.filterwarnings instead. (Deprecated NumPy 2.4)",
+                DeprecationWarning, stacklevel=2)
         self._entered = False
 
         # Suppressions are either instance or defined inside one with block:
@@ -2800,3 +2836,32 @@ def run_threaded(func, max_workers=8, pass_count=False,
                     barrier.abort()
             for f in futures:
                 f.result()
+
+
+def requires_deep_recursion(func):
+    """Decorator to skip test if deep recursion is not supported."""
+    import pytest
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if IS_PYSTON:
+            pytest.skip("Pyston disables recursion checking")
+        if IS_WASM:
+            pytest.skip("WASM has limited stack size")
+        if not IS_64BIT:
+            pytest.skip("32 bit Python has limited stack size")
+        cflags = sysconfig.get_config_var('CFLAGS') or ''
+        config_args = sysconfig.get_config_var('CONFIG_ARGS') or ''
+        address_sanitizer = (
+            '-fsanitize=address' in cflags or
+            '--with-address-sanitizer' in config_args
+        )
+        thread_sanitizer = (
+            '-fsanitize=thread' in cflags or
+            '--with-thread-sanitizer' in config_args
+        )
+        if address_sanitizer or thread_sanitizer:
+            pytest.skip("AddressSanitizer and ThreadSanitizer do not support "
+                        "deep recursion")
+        return func(*args, **kwargs)
+    return wrapper
