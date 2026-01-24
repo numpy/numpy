@@ -37,6 +37,7 @@ class _SupportsArrayFunc(Protocol):
 
 
 # TODO: Wait until mypy supports recursive objects in combination with typevars
+# Limited to 4 nesting levels - e.g. [[[[1]]]] works, [[[[[1]]]]] doesn't
 type _FiniteNestedSequence[T] = (
     T
     | Sequence[T]
