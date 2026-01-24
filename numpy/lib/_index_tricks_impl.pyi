@@ -23,7 +23,6 @@ from numpy._typing import (
     _AnyShape,
     _ArrayLike,
     _DTypeLike,
-    _FiniteNestedSequence,
     _HasDType,
     _NestedSequence,
     _SupportsArray,
@@ -61,7 +60,7 @@ class ndenumerate(Generic[_ScalarT_co]):  # noqa: UP046
     @overload
     def __init__[ScalarT: np.generic](
         self: ndenumerate[ScalarT],
-        arr: _FiniteNestedSequence[_SupportsArray[np.dtype[ScalarT]]],
+        arr: _NestedSequence[_SupportsArray[np.dtype[ScalarT]]] | _SupportsArray[np.dtype[ScalarT]],
     ) -> None: ...
     @overload
     def __init__(self: ndenumerate[np.str_], arr: str | _NestedSequence[str]) -> None: ...
@@ -232,7 +231,9 @@ class IndexExpression(Generic[_BoolT_co]):
     def __getitem__[T](self: IndexExpression[L[False]], item: T) -> T: ...
 
 @overload
-def ix_[DTypeT: np.dtype](*args: _FiniteNestedSequence[_HasDType[DTypeT]]) -> tuple[np.ndarray[_AnyShape, DTypeT], ...]: ...
+def ix_[DTypeT: np.dtype](
+    *args: _NestedSequence[_HasDType[DTypeT]] | _HasDType[DTypeT]
+) -> tuple[np.ndarray[_AnyShape, DTypeT], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[np.str_], ...]: ...
 @overload
