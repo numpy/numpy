@@ -1,4 +1,4 @@
-from collections.abc import Buffer, Callable, Collection, Sequence
+from collections.abc import Buffer, Callable, Collection
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import numpy as np
@@ -35,15 +35,6 @@ class _SupportsArrayFunc(Protocol):
         kwargs: dict[str, Any],
     ) -> object: ...
 
-
-# TODO: Wait until mypy supports recursive objects in combination with typevars
-type _FiniteNestedSequence[T] = (
-    T
-    | Sequence[T]
-    | Sequence[Sequence[T]]
-    | Sequence[Sequence[Sequence[T]]]
-    | Sequence[Sequence[Sequence[Sequence[T]]]]
-)
 
 # A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
 type _ArrayLike[ScalarT: np.generic] = (
