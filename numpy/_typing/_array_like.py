@@ -1,4 +1,4 @@
-from collections.abc import Buffer, Callable, Collection, Sequence
+from collections.abc import Buffer, Callable, Collection
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import numpy as np
