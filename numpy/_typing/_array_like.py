@@ -36,16 +36,6 @@ class _SupportsArrayFunc(Protocol):
     ) -> object: ...
 
 
-# TODO: Wait until mypy supports recursive objects in combination with typevars
-# Limited to 4 nesting levels - e.g. [[[[1]]]] works, [[[[[1]]]]] doesn't
-type _FiniteNestedSequence[T] = (
-    T
-    | Sequence[T]
-    | Sequence[Sequence[T]]
-    | Sequence[Sequence[Sequence[T]]]
-    | Sequence[Sequence[Sequence[Sequence[T]]]]
-)
-
 # A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
 type _ArrayLike[ScalarT: np.generic] = (
     _SupportsArray[np.dtype[ScalarT]]
