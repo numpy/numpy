@@ -1,5 +1,4 @@
 import concurrent.futures
-from sys import flags
 import threading
 
 import pytest
