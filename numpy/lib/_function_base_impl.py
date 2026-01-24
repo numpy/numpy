@@ -5195,6 +5195,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     if copy:
         output = tuple(x.copy() for x in output)
 
+    if sparse and not copy:
+        return tuple(output)
+
     return output
 
 
