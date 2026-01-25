@@ -20,7 +20,6 @@ import pytest
 import numpy as np
 import numpy.ma as ma
 from numpy._utils import asbytes
-from numpy.exceptions import VisibleDeprecationWarning
 from numpy.lib import _npyio_impl
 from numpy.lib._iotools import ConversionWarning, ConverterError
 from numpy.ma.testutils import assert_equal
@@ -709,6 +708,7 @@ class LoadTxtBase:
                 f.write(nonascii.encode("UTF-16"))
             x = self.loadfunc(path, encoding="UTF-16", dtype=np.str_)
             assert_array_equal(x, nonascii)
+
     def test_binary_decode(self):
         # Verify we can read UTF-16 encoded data
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
@@ -1192,7 +1192,6 @@ class TestLoadTxt(LoadTxtBase):
 
     @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
                         reason="Wrong preferred encoding")
-   
     def test_max_rows(self):
         c = TextIO()
         c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
@@ -1445,11 +1444,11 @@ class TestFromTxt(LoadTxtBase):
     def test_header(self):
         # Test retrieving a header
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
-      
+
         test = np.genfromtxt(data, dtype=None, names=True,
                                  encoding='utf-8')
-            
-        control = {'gender': np.array(['M','F']),
+
+        control = {'gender': np.array(['M', 'F']),
                    'age': np.array([64.0, 25.0]),
                    'weight': np.array([75.0, 60.0])}
         assert_equal(test['gender'], control['gender'])
@@ -1460,7 +1459,7 @@ class TestFromTxt(LoadTxtBase):
         # Test the automatic definition of the output dtype
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
 
-        test=np.genfromtxt(data,dtype=None, encoding="utf-8")
+        test = np.genfromtxt(data, dtype=None, encoding="utf-8")
 
         control = [np.array(['A', 'BCD']),
                    np.array([64, 25]),
@@ -1511,11 +1510,11 @@ F   35  58.330000
 M   33  21.99
         """)
         # The # is part of the first name and should be deleted automatically.
-        
+
         # FIX: Align this line with 'data =' above it
         test = np.genfromtxt(data, names=True, dtype=None,
                              encoding="utf-8")
-            
+
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
                         dtype=[('gender', 'U1'), ('age', int), ('weight', float)])
         assert_equal(test, ctrl)
@@ -1527,13 +1526,12 @@ M   21  72.100000
 F   35  58.330000
 M   33  21.99
         """)
-        
+
         # FIX: Align this line too
         test = np.genfromtxt(data, names=True, dtype=None,
                              encoding="utf-8")
-            
-        assert_equal(test, ctrl)
 
+        assert_equal(test, ctrl)
 
     def test_file_is_closed_on_error(self):
         # gh-13200
@@ -1553,7 +1551,7 @@ M   33  21.99
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         test = np.genfromtxt(data, usecols=('A', 'C', 'D'),
                                 names=True, dtype=None, encoding="utf-8")
-            
+
         control = np.array(('aaaa', 45, 9.1),
                            dtype=[('A', 'U4'), ('C', int), ('D', float)])
         assert_equal(test, control)
@@ -1570,11 +1568,11 @@ M   33  21.99
     def test_converters_with_usecols_and_names(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
-       
+
         test = np.genfromtxt(data, usecols=('A', 'C', 'D'), names=True,
                                 dtype=None, encoding="utf-8",
                                 converters={'C': lambda s: 2 * int(s)})
-            
+
         control = np.array(('aaaa', 90, 9.1),
                            dtype=[('A', 'U4'), ('C', int), ('D', float)])
         assert_equal(test, control)
@@ -2043,16 +2041,16 @@ M   33  21.99
         # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
         kwargs = {"delimiter": ",", "dtype": None, "encoding": "utf-8"}
-        
+
         mtest = np.genfromtxt(TextIO(data), **kwargs)
-            
+
         assert_equal(mtest['f0'], "01/01/2003  ")
         assert_equal(mtest['f1'], 1.3)
         assert_equal(mtest['f2'], "   abcde")
-       
+
         mtest = np.genfromtxt(TextIO(data), autostrip=True, **kwargs)
-          
-     # Check stripped values
+
+        # Check stripped values
         assert_equal(mtest['f0'], "01/01/2003")
         assert_equal(mtest['f1'], 1.3)
         assert_equal(mtest['f2'], "abcde")
@@ -2176,7 +2174,7 @@ M   33  21.99
                                  dtype=None, comments=None, delimiter=',',
                                  encoding="utf-8")
         assert_equal(test[1], 'testNonetherestofthedata')
-        
+
         test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
                                  dtype=None, comments=None, delimiter=',',
                                  encoding="utf-8")
@@ -2187,21 +2185,19 @@ M   33  21.99
         norm = b"norm1,norm2,norm3\n"
         enc = b"test1,testNonethe" + latin1 + b",test3\n"
         s = norm + enc + norm
-       
+
         test = np.genfromtxt(TextIO(s),
                                  dtype=None, comments=None, delimiter=',',
                                  encoding="latin1")
-            
+
         assert_equal(test[1, 0], "test1")
         assert_equal(test[1, 1], "testNonethe" + latin1.decode('latin1'))
         assert_equal(test[1, 2], "test3")
-        test = np.genfromtxt(TextIO(b"0,testNonethe"+latin1),
+        test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
                              dtype=None, comments=None, delimiter=',',
                              encoding='latin1')
         assert_equal(test['f0'], 0)
         assert_equal(test['f1'], "testNonethe" + latin1.decode('latin1'))
-    
-    
 
     def test_binary_decode_autodtype(self):
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
