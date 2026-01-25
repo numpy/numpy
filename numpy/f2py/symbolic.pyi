@@ -1,28 +1,25 @@
 from collections.abc import Callable, Mapping
 from enum import Enum
-from typing import Any, Generic, Literal as L, ParamSpec, Self, TypeAlias, overload
+from typing import Any, Generic, Literal as L, Self, overload
 from typing_extensions import TypeVar
 
 __all__ = ["Expr"]
 
 ###
 
-_Tss = ParamSpec("_Tss")
-_ExprT = TypeVar("_ExprT", bound=Expr)
-_ExprT1 = TypeVar("_ExprT1", bound=Expr)
-_ExprT2 = TypeVar("_ExprT2", bound=Expr)
+# Explicit covariance is required here due to the inexpressible read-only attributes.
 _OpT_co = TypeVar("_OpT_co", bound=Op, default=Op, covariant=True)
 _LanguageT_co = TypeVar("_LanguageT_co", bound=Language, default=Language, covariant=True)
 _DataT_co = TypeVar("_DataT_co", default=Any, covariant=True)
 _LeftT_co = TypeVar("_LeftT_co", default=Any, covariant=True)
 _RightT_co = TypeVar("_RightT_co", default=Any, covariant=True)
 
-_RelCOrPy: TypeAlias = L["==", "!=", "<", "<=", ">", ">="]
-_RelFortran: TypeAlias = L[".eq.", ".ne.", ".lt.", ".le.", ".gt.", ".ge."]
+type _RelCOrPy = L["==", "!=", "<", "<=", ">", ">="]
+type _RelFortran = L[".eq.", ".ne.", ".lt.", ".le.", ".gt.", ".ge."]
 
-_ToExpr: TypeAlias = Expr | complex | str
-_ToExprN: TypeAlias = _ToExpr | tuple[_ToExprN, ...]
-_NestedString: TypeAlias = str | tuple[_NestedString, ...] | list[_NestedString]
+type _ToExpr = Expr | complex | str
+type _ToExprN = _ToExpr | tuple[_ToExprN, ...]
+type _NestedString = str | tuple[_NestedString, ...] | list[_NestedString]
 
 ###
 
@@ -97,8 +94,8 @@ class Precedence(Enum):
     NONE = 100
 
 class Expr(Generic[_OpT_co, _DataT_co]):
-    op: _OpT_co
-    data: _DataT_co
+    op: _OpT_co  # read-only
+    data: _DataT_co  # read-only
 
     @staticmethod
     def parse(s: str, language: Language = ...) -> Expr: ...
@@ -149,7 +146,7 @@ class Expr(Generic[_OpT_co, _DataT_co]):
 
     #
     @overload
-    def __getitem__(self, index: _ExprT | tuple[_ExprT], /) -> Expr[L[Op.INDEXING], tuple[Self, _ExprT]]: ...
+    def __getitem__[ExprT: Expr](self, index: ExprT | tuple[ExprT], /) -> Expr[L[Op.INDEXING], tuple[Self, ExprT]]: ...
     @overload
     def __getitem__(self, index: _ToExpr | tuple[_ToExpr], /) -> Expr[L[Op.INDEXING], tuple[Self, Expr]]: ...
 
@@ -158,9 +155,9 @@ class Expr(Generic[_OpT_co, _DataT_co]):
 
     #
     @overload
-    def traverse(self, /, visit: Callable[_Tss, None], *args: _Tss.args, **kwargs: _Tss.kwargs) -> Expr: ...
+    def traverse[**Tss](self, /, visit: Callable[Tss, None], *args: Tss.args, **kwargs: Tss.kwargs) -> Expr: ...
     @overload
-    def traverse(self, /, visit: Callable[_Tss, _ExprT], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _ExprT: ...
+    def traverse[**Tss, ExprT: Expr](self, /, visit: Callable[Tss, ExprT], *args: Tss.args, **kwargs: Tss.kwargs) -> ExprT: ...
 
     #
     def contains(self, /, other: Expr) -> bool: ...
@@ -176,23 +173,23 @@ class Expr(Generic[_OpT_co, _DataT_co]):
     def tostring(self, /, parent_precedence: Precedence = ..., language: Language = ...) -> str: ...
 
 class _Pair(Generic[_LeftT_co, _RightT_co]):
-    left: _LeftT_co
-    right: _RightT_co
+    left: _LeftT_co  # read-only
+    right: _RightT_co  # read-only
 
     def __init__(self, /, left: _LeftT_co, right: _RightT_co) -> None: ...
 
     #
     @overload
-    def substitute(self: _Pair[_ExprT1, _ExprT2], /, symbols_map: Mapping[Expr, Expr]) -> _Pair[Expr, Expr]: ...
+    def substitute[ExprT: Expr](self: _Pair[ExprT, ExprT], /, symbols_map: Mapping[Expr, Expr]) -> _Pair[Expr, Expr]: ...
     @overload
-    def substitute(self: _Pair[_ExprT1, object], /, symbols_map: Mapping[Expr, Expr]) -> _Pair[Expr, Any]: ...
+    def substitute[ExprT: Expr](self: _Pair[ExprT, object], /, symbols_map: Mapping[Expr, Expr]) -> _Pair[Expr, Any]: ...
     @overload
-    def substitute(self: _Pair[object, _ExprT2], /, symbols_map: Mapping[Expr, Expr]) -> _Pair[Any, Expr]: ...
+    def substitute[ExprT: Expr](self: _Pair[object, ExprT], /, symbols_map: Mapping[Expr, Expr]) -> _Pair[Any, Expr]: ...
     @overload
     def substitute(self, /, symbols_map: Mapping[Expr, Expr]) -> _Pair: ...
 
 class _FromStringWorker(Generic[_LanguageT_co]):
-    language: _LanguageT_co
+    language: _LanguageT_co  # read-only
 
     original: str | None
     quotes_map: dict[str, str]

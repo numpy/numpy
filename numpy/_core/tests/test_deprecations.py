@@ -9,7 +9,6 @@ import warnings
 import pytest
 
 import numpy as np
-import numpy._core._struct_ufunc_tests as struct_ufunc
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
 from numpy.testing import IS_PYPY, assert_raises
 
@@ -137,65 +136,6 @@ class TestTestDeprecated:
         test_case_instance.assert_deprecated(foo)
 
 
-class TestBincount(_DeprecationTestCase):
-    # 2024-07-29, 2.1.0
-    @pytest.mark.parametrize('badlist', [[0.5, 1.2, 1.5],
-                                         ['0', '1', '1']])
-    def test_bincount_bad_list(self, badlist):
-        self.assert_deprecated(lambda: np.bincount(badlist))
-
-
-class TestGeneratorSum(_DeprecationTestCase):
-    # 2018-02-25, 1.15.0
-    def test_generator_sum(self):
-        self.assert_deprecated(np.sum, args=((i for i in range(5)),))
-
-
-class BuiltInRoundComplexDType(_DeprecationTestCase):
-    # 2020-03-31 1.19.0
-    deprecated_types = [np.csingle, np.cdouble, np.clongdouble]
-    not_deprecated_types = [
-        np.int8, np.int16, np.int32, np.int64,
-        np.uint8, np.uint16, np.uint32, np.uint64,
-        np.float16, np.float32, np.float64,
-    ]
-
-    def test_deprecated(self):
-        for scalar_type in self.deprecated_types:
-            scalar = scalar_type(0)
-            self.assert_deprecated(round, args=(scalar,))
-            self.assert_deprecated(round, args=(scalar, 0))
-            self.assert_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-
-    def test_not_deprecated(self):
-        for scalar_type in self.not_deprecated_types:
-            scalar = scalar_type(0)
-            self.assert_not_deprecated(round, args=(scalar,))
-            self.assert_not_deprecated(round, args=(scalar, 0))
-            self.assert_not_deprecated(round, args=(scalar,), kwargs={'ndigits': 0})
-
-
-class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):
-    # NumPy 1.20, 2020-09-03
-    message = "concatenate with `axis=None` will use same-kind casting"
-
-    def test_deprecated(self):
-        self.assert_deprecated(np.concatenate,
-                args=(([0.], [1.]),),
-                kwargs={'axis': None, 'out': np.empty(2, dtype=np.int64)})
-
-    def test_not_deprecated(self):
-        self.assert_not_deprecated(np.concatenate,
-                args=(([0.], [1.]),),
-                kwargs={'axis': None, 'out': np.empty(2, dtype=np.int64),
-                        'casting': "unsafe"})
-
-        with assert_raises(TypeError):
-            # Tests should notice if the deprecation warning is given first...
-            np.concatenate(([0.], [1.]), out=np.empty(2, dtype=np.int64),
-                           casting="same_kind")
-
-
 class TestCtypesGetter(_DeprecationTestCase):
     ctypes = np.array([1]).ctypes
 
@@ -266,57 +206,12 @@ class TestRemovedGlobals:
             getattr(np, name)
 
 
-class TestDeprecatedFinfo(_DeprecationTestCase):
-    # Deprecated in NumPy 1.25, 2023-01-16
-    def test_deprecated_none(self):
-        self.assert_deprecated(np.finfo, args=(None,))
-
-
-class TestMathAlias(_DeprecationTestCase):
-    def test_deprecated_np_lib_math(self):
-        self.assert_deprecated(lambda: np.lib.math)
-
-
-class TestLibImports(_DeprecationTestCase):
-    # Deprecated in Numpy 1.26.0, 2023-09
-    def test_lib_functions_deprecation_call(self):
-        from numpy import row_stack
-        from numpy._core.numerictypes import maximum_sctype
-        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
-        from numpy.lib._shape_base_impl import get_array_wrap
-        from numpy.lib._utils_impl import safe_eval
-        from numpy.lib.tests.test_io import TextIO
-
-        self.assert_deprecated(lambda: safe_eval("None"))
-
-        data_gen = lambda: TextIO('A,B\n0,1\n2,3')
-        kwargs = {'delimiter': ",", 'missing_values': "N/A", 'names': True}
-        self.assert_deprecated(lambda: recfromcsv(data_gen()))
-        self.assert_deprecated(lambda: recfromtxt(data_gen(), **kwargs))
-
-        self.assert_deprecated(get_array_wrap)
-        self.assert_deprecated(lambda: maximum_sctype(int))
-
-        self.assert_deprecated(lambda: row_stack([[]]))
-        self.assert_deprecated(lambda: np.chararray)
-
-
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
-
-    def _check_for_warning(self, func):
-        with pytest.warns(DeprecationWarning,
-                          match="alias 'a' was deprecated in NumPy 2.0") as w:
-            func()
-        assert len(w) == 1
-
-    def test_a_dtype_alias(self):
-        for dtype in ["a", "a10"]:
-            f = lambda: np.dtype(dtype)
-            self._check_for_warning(f)
-            self.assert_deprecated(f)
-            f = lambda: np.array(["hello", "world"]).astype("a10")
-            self._check_for_warning(f)
-            self.assert_deprecated(f)
+    @pytest.mark.parametrize("dtype_code", ["a", "a10"])
+    def test_a_dtype_alias(self, dtype_code: str):
+        # Deprecated in 2.0, removed in 2.5, 2025-12
+        with pytest.raises(TypeError):
+            np.dtype(dtype_code)
 
 
 class TestDeprecatedArrayWrap(_DeprecationTestCase):
@@ -355,6 +250,9 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, "dtype", int))
 
+    def test_deprecated_shape_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, "shape", (4, 1)))
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
@@ -362,26 +260,6 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
     def test_parenthesized_repeat_count(self, string):
         self.assert_deprecated(np.dtype, args=(string,))
-
-
-class TestAddNewdocUFunc(_DeprecationTestCase):
-    # Deprecated in Numpy 2.2, 2024-11
-    @pytest.mark.thread_unsafe(
-        reason="modifies and checks docstring which is global state"
-    )
-    def test_deprecated(self):
-        doc = struct_ufunc.add_triplet.__doc__
-        # gh-26718
-        # This test mutates the C-level docstring pointer for add_triplet,
-        # which is permanent once set. Skip when re-running tests.
-        if doc is not None and "new docs" in doc:
-            pytest.skip("Cannot retest deprecation, otherwise ValueError: "
-                "Cannot change docstring of ufunc with non-NULL docstring")
-        self.assert_deprecated(
-            lambda: np._core.umath._add_newdoc_ufunc(
-                struct_ufunc.add_triplet, "new docs"
-            )
-        )
 
 
 class TestDTypeAlignBool(_VisibleDeprecationTestCase):

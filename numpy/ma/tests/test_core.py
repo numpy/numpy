@@ -6,6 +6,7 @@
 __author__ = "Pierre GF Gerard-Marchant"
 
 import copy
+import datetime as dt
 import inspect
 import itertools
 import operator
@@ -1371,8 +1372,7 @@ class TestMaskedArrayArithmetic:
     def test_minmax_funcs_with_output(self):
         # Tests the min/max functions with explicit outputs
         mask = np.random.rand(12).round()
-        xm = array(np.random.uniform(0, 10, 12), mask=mask)
-        xm.shape = (3, 4)
+        xm = array(np.random.uniform(0, 10, 12), mask=mask).reshape((3, 4))
         for funcname in ('min', 'max'):
             # Initialize
             npfunc = getattr(np, funcname)
@@ -1394,7 +1394,7 @@ class TestMaskedArrayArithmetic:
     def test_minmax_methods(self):
         # Additional tests on max/min
         xm = self._create_data()[5]
-        xm.shape = (xm.size,)
+        xm = xm.reshape((xm.size,))
         assert_equal(xm.max(), 10)
         assert_(xm[0].max() is masked)
         assert_(xm[0].max(0) is masked)
@@ -1506,7 +1506,10 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.prod(x, 0), product(x, 0))
         assert_equal(np.prod(filled(xm, 1), axis=0), product(xm, axis=0))
         s = (3, 4)
-        x.shape = y.shape = xm.shape = ym.shape = s
+        x = x.reshape(s)
+        y = y.reshape(s)
+        xm = xm.reshape(s)
+        ym = ym.reshape(s)
         if len(s) > 1:
             assert_equal(np.concatenate((x, y), 1), concatenate((xm, ym), 1))
             assert_equal(np.add.reduce(x, 1), add.reduce(x, 1))
@@ -2271,6 +2274,32 @@ class TestFillingValues:
         assert_equal(fval, default_fill_value(b"camelot!"))
         assert_raises(TypeError, _check_fill_value, 1e+20, int)
         assert_raises(TypeError, _check_fill_value, 'stuff', int)
+
+    def test_fill_value_datetime_structured(self):
+        # gh-29818
+        rec = np.array([(dt.date(2025, 4, 1),)], dtype=[('foo', '<M8[D]')])
+        ma = np.ma.masked_array(rec)
+        np.sort(ma)
+        res = np.ma.minimum_fill_value(ma)
+        assert isinstance(res['foo'], np.datetime64)
+
+    def test_fill_value_datetime_structured_datetime(self):
+        # gh-29818
+        rec = np.array([(dt.datetime(2025, 4, 1, 12, 0),)],
+                       dtype=[('foo', '<M8[ms]')])
+        ma = np.ma.masked_array(rec)
+        res = np.ma.minimum_fill_value(ma)
+        assert isinstance(res['foo'], np.datetime64)
+
+    def test_fill_value_datetime_structured_integer(self):
+        # gh-29818
+        dtype = np.dtype([('foo', '<M8[D]')])
+
+        def fill_func(dt):
+            return 42
+        res = np.ma.core._recursive_fill_value(dtype, fill_func)
+        assert isinstance(res['foo'], np.datetime64)
+        assert res['foo'] == np.datetime64(42, 'D')
 
     def test_check_on_fields(self):
         # Tests _check_fill_value with records
@@ -3633,7 +3662,7 @@ class TestMaskedArrayMethods:
         assert_equal(a.ravel()._mask, [0, 0, 0, 0])
         # Test that the fill_value is preserved
         a.fill_value = -99
-        a.shape = (2, 2)
+        a = a.reshape((2, 2))
         ar = a.ravel()
         assert_equal(ar._mask, [0, 0, 0, 0])
         assert_equal(ar._data, [1, 2, 3, 4])
@@ -3907,7 +3936,7 @@ class TestMaskedArrayMethods:
         assert_(xlist[1] is None)
         assert_(xlist[-2] is None)
         # ... on 2D
-        x.shape = (3, 4)
+        x = x.reshape((3, 4))
         xlist = x.tolist()
         ctrl = [[0, None, 2, 3], [4, 5, 6, 7], [8, 9, None, 11]]
         assert_equal(xlist[0], [0, None, 2, 3])
@@ -4975,9 +5004,9 @@ class TestMaskedArrayFunctions:
         bools = [True, False]
         dtypes = [MaskType, float]
         msgformat = 'copy=%s, shrink=%s, dtype=%s'
-        for cpy, shr, dt in itertools.product(bools, bools, dtypes):
-            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dt)
-            assert_(res is nomask, msgformat % (cpy, shr, dt))
+        for cpy, shr, dtype in itertools.product(bools, bools, dtypes):
+            res = make_mask(nomask, copy=cpy, shrink=shr, dtype=dtype)
+            assert_(res is nomask, msgformat % (cpy, shr, dtype))
 
     def test_mask_or(self):
         # Initialize
@@ -5060,8 +5089,7 @@ class TestMaskedArrayFunctions:
     def test_compress(self):
         # Test compress function on ndarray and masked array
         # Address Github #2495.
-        arr = np.arange(8)
-        arr.shape = 4, 2
+        arr = np.arange(8).reshape(4, 2)
         cond = np.array([True, False, True, True])
         control = arr[[0, 2, 3]]
         test = np.ma.compress(cond, arr, axis=0)
@@ -5308,9 +5336,9 @@ class TestMaskedObjectArray:
 
     def test_getitem(self):
         arr = np.ma.array([None, None])
-        for dt in [float, object]:
-            a0 = np.eye(2).astype(dt)
-            a1 = np.eye(3).astype(dt)
+        for dtype in [float, object]:
+            a0 = np.eye(2).astype(dtype)
+            a1 = np.eye(3).astype(dtype)
             arr[0] = a0
             arr[1] = a1
 
@@ -5875,7 +5903,8 @@ def test_fieldless_void():
 def test_mask_shape_assignment_does_not_break_masked():
     a = np.ma.masked
     b = np.ma.array(1, mask=a.mask)
-    b.shape = (1,)
+    with pytest.warns(DeprecationWarning):  # gh-29492
+        b.shape = (1,)
     assert_equal(a.mask.shape, ())
 
 
@@ -5977,3 +6006,77 @@ def test_uint_fill_value_and_filled():
 )
 def test_frommethod_signature(fn, signature):
     assert str(inspect.signature(fn)) == signature
+
+
+@pytest.mark.parametrize(
+    ('fn', 'signature'),
+    [
+        (
+            np.ma.empty,
+            (
+                "(shape, dtype=None, order='C', *, device=None, like=None, "
+                "fill_value=None, hardmask=False)"
+            ),
+        ),
+        (
+            np.ma.empty_like,
+            (
+                "(prototype, /, dtype=None, order='K', subok=True, shape=None, *, "
+                "device=None)"
+            ),
+        ),
+        (np.ma.squeeze, "(a, axis=None, *, fill_value=None, hardmask=False)"),
+        (
+            np.ma.identity,
+            "(n, dtype=None, *, like=None, fill_value=None, hardmask=False)",
+        ),
+    ]
+)
+def test_convert2ma_signature(fn, signature):
+    assert str(inspect.signature(fn)) == signature
+    assert fn.__module__ == 'numpy.ma.core'
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_1d(self):
+        arr = array([1, 2, 3], mask=[0, 1, 0])
+        match arr:
+            case [a, b, c]:
+                assert a == 1
+                assert b is masked
+                assert c == 3
+            case _:
+                raise AssertionError("1D MaskedArray did not match sequence pattern")
+
+    def test_match_sequence_pattern_2d(self):
+        arr = array([[1, 2], [3, 4]], mask=[[0, 1], [1, 0]])
+        match arr:
+            case [row1, row2]:
+                assert_array_equal(row1, array([1, 2], mask=[0, 1]))
+                assert_array_equal(row2, array([3, 4], mask=[1, 0]))
+            case _:
+                raise AssertionError("2D MaskedArray did not match sequence pattern")
+
+    def test_match_sequence_pattern_3d(self):
+        arr = array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+                    mask=[[[0, 1], [1, 0]], [[1, 0], [0, 1]]])
+        # outer matching
+        match arr:
+            case [plane1, plane2]:
+                assert_array_equal(plane1, array([[1, 2], [3, 4]],
+                                                 mask=[[0, 1], [1, 0]]))
+                assert_array_equal(plane2, array([[5, 6], [7, 8]],
+                                                 mask=[[1, 0], [0, 1]]))
+            case _:
+                raise AssertionError("3D MaskedArray did not match sequence pattern")
+        # inner matching
+        match arr:
+            case [[row1, row2], [row3, row4]]:
+                assert_array_equal(row1, array([1, 2], mask=[0, 1]))
+                assert_array_equal(row2, array([3, 4], mask=[1, 0]))
+                assert_array_equal(row3, array([5, 6], mask=[1, 0]))
+                assert_array_equal(row4, array([7, 8], mask=[0, 1]))
+            case _:
+                raise AssertionError("3D MaskedArray did not match sequence pattern")

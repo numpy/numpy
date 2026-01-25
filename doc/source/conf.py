@@ -2,6 +2,7 @@ import importlib
 import os
 import re
 import sys
+import sysconfig
 from datetime import datetime
 
 from docutils import nodes
@@ -17,6 +18,9 @@ needs_sphinx = '4.3'
 # must be kept alive to hold the patched names
 _name_cache = {}
 
+FREE_THREADED_BUILD = sysconfig.get_config_var('Py_GIL_DISABLED')
+
+
 def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
@@ -30,10 +34,19 @@ def replace_scalar_type_names():
     class PyTypeObject(ctypes.Structure):
         pass
 
-    PyObject._fields_ = [
-        ('ob_refcnt', Py_ssize_t),
-        ('ob_type', ctypes.POINTER(PyTypeObject)),
-    ]
+    if not FREE_THREADED_BUILD:
+        PyObject._fields_ = [
+            ('ob_refcnt', Py_ssize_t),
+            ('ob_type', ctypes.POINTER(PyTypeObject)),
+        ]
+    else:
+        # As of Python 3.14
+        PyObject._fields_ = [
+            ('ob_refcnt_full', ctypes.c_int64),
+            # an anonymous struct that we don't try to model
+            ('__private', ctypes.c_int64),
+            ('ob_type', ctypes.POINTER(PyTypeObject)),
+        ]
 
     PyTypeObject._fields_ = [
         # varhead
@@ -114,7 +127,7 @@ for ext, warn in skippable_extensions:
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # General substitutions.
 project = 'NumPy'
@@ -144,32 +157,6 @@ today_fmt = '%B %d, %Y'
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "autolink"
-
-# List of directories, relative to source directories, that shouldn't be searched
-# for source files.
-exclude_dirs = []
-
-exclude_patterns = []
-suppress_warnings = []
-nitpick_ignore = []
-
-if sys.version_info[:2] >= (3, 12):
-    exclude_patterns += [
-        "reference/distutils.rst",
-        "reference/distutils/misc_util.rst",
-    ]
-    suppress_warnings += [
-        'toc.excluded',  # Suppress warnings about excluded toctree entries
-    ]
-    nitpicky = True
-    nitpick_ignore += [
-        ('ref', 'numpy-distutils-refguide'),
-        # The first ignore is not catpured without nitpicky = True.
-        # These three ignores are required once nitpicky = True is set.
-        ('py:mod', 'numpy.distutils'),
-        ('py:class', 'Extension'),
-        ('py:class', 'numpy.distutils.misc_util.Configuration'),
-    ]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -634,7 +621,7 @@ breathe_default_project = "numpy"
 breathe_default_members = ("members", "undoc-members", "protected-members")
 
 # See https://github.com/breathe-doc/breathe/issues/696
-nitpick_ignore += [
+nitpick_ignore = [
     ('c:identifier', 'FILE'),
     ('c:identifier', 'size_t'),
     ('c:identifier', 'PyHeapTypeObject'),

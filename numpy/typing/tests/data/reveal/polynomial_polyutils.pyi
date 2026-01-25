@@ -1,20 +1,20 @@
 from collections.abc import Sequence
 from decimal import Decimal
 from fractions import Fraction
-from typing import Literal as L, TypeAlias, assert_type
+from typing import Literal as L, assert_type
 
 import numpy as np
 import numpy.polynomial.polyutils as pu
 import numpy.typing as npt
 from numpy.polynomial._polytypes import _Tuple2
 
-_ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating]]
-_ArrComplex1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
-_ArrObject1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.object_]]
+type _ArrFloat1D = np.ndarray[tuple[int], np.dtype[np.floating]]
+type _ArrComplex1D = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
+type _ArrObject1D = np.ndarray[tuple[int], np.dtype[np.object_]]
 
-_ArrFloat1D_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.float64]]
-_ArrComplex1D_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.complex128]]
-_ArrObject1D_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
+type _ArrFloat1D_2 = np.ndarray[tuple[L[2]], np.dtype[np.float64]]
+type _ArrComplex1D_2 = np.ndarray[tuple[L[2]], np.dtype[np.complex128]]
+type _ArrObject1D_2 = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
 
 num_int: int
 num_float: float

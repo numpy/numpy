@@ -1055,7 +1055,7 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
 
     # inheritance has to override, or this is correctly lost:
     res = op(myf_simple1(1), myf_simple2(2))
-    assert type(res) == sctype or type(res) == np.bool
+    assert type(res) is sctype or type(res) is np.bool
     assert op(myf_simple1(1), myf_simple2(2)) == op(1, 2)  # inherited
 
     # Two independent subclasses do not really define an order.  This could
@@ -1092,7 +1092,7 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     assert op(myt(1), np.float64(2)) == __op__
     assert op(np.float64(1), myt(2)) == __rop__
 
-    if op in {operator.mod, operator.floordiv} and subtype == complex:
+    if op in {operator.mod, operator.floordiv} and subtype is complex:
         return  # module is not support for complex.  Do not test.
 
     if __rop__ == __op__:
@@ -1106,12 +1106,11 @@ def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     res = op(myt(1), np.float16(2))
     expected = op(behaves_like(1), np.float16(2))
     assert res == expected
-    assert type(res) == type(expected)
+    assert type(res) is type(expected)
     res = op(np.float32(2), myt(1))
     expected = op(np.float32(2), behaves_like(1))
     assert res == expected
-    assert type(res) == type(expected)
-
+    assert type(res) is type(expected)
     # Same check for longdouble (compare via dtype to accept float64 when
     # longdouble has the identical size), which is currently not perfectly
     # consistent.

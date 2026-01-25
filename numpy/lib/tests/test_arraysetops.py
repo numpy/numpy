@@ -637,46 +637,46 @@ class TestUnique:
         msg = base_msg.format('values', dt)
         v = unique(a)
         assert_array_equal(v, b, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_index', dt)
         v, j = unique(a, True, False, False)
         assert_array_equal(v, b, msg)
         assert_array_equal(j, i1, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_inverse', dt)
         v, j = unique(a, False, True, False)
         assert_array_equal(v, b, msg)
         assert_array_equal(j, i2, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_counts', dt)
         v, j = unique(a, False, False, True)
         assert_array_equal(v, b, msg)
         assert_array_equal(j, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_index and return_inverse', dt)
         v, j1, j2 = unique(a, True, True, False)
         assert_array_equal(v, b, msg)
         assert_array_equal(j1, i1, msg)
         assert_array_equal(j2, i2, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_index and return_counts', dt)
         v, j1, j2 = unique(a, True, False, True)
         assert_array_equal(v, b, msg)
         assert_array_equal(j1, i1, msg)
         assert_array_equal(j2, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format('return_inverse and return_counts', dt)
         v, j1, j2 = unique(a, False, True, True)
         assert_array_equal(v, b, msg)
         assert_array_equal(j1, i2, msg)
         assert_array_equal(j2, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
         msg = base_msg.format(('return_index, return_inverse '
                                 'and return_counts'), dt)
@@ -685,9 +685,10 @@ class TestUnique:
         assert_array_equal(j1, i1, msg)
         assert_array_equal(j2, i2, msg)
         assert_array_equal(j3, c, msg)
-        assert type(v) == type(b)
+        assert type(v) is type(b)
 
     def get_types(self):
+
         types = []
         types.extend(np.typecodes['AllInteger'])
         types.extend(np.typecodes['AllFloat'])
@@ -1291,3 +1292,12 @@ class TestUnique:
         arr1d = np.array([np.nan, 0, 0, np.nan])
         with pytest.raises(TypeError, match="integer argument expected"):
             np.unique(arr1d, axis=0.0, equal_nan=False)
+
+    @pytest.mark.parametrize('dt', [np.dtype('F'), np.dtype('D')])
+    @pytest.mark.parametrize('values', [[complex(0.0, -1), complex(-0.0, -1), 0],
+                                        [-200, complex(-200, -0.0), -1],
+                                        [-25, 3, -5j, complex(-25, -0.0), 3j]])
+    def test_unique_complex_signed_zeros(self, dt, values):
+        z = np.array(values, dtype=dt)
+        u = np.unique(z)
+        assert len(u) == len(values) - 1

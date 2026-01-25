@@ -1,4 +1,5 @@
 import fnmatch
+import inspect
 import itertools
 import operator
 import platform
@@ -216,25 +217,25 @@ class TestOut:
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             r = np.add(a, 2, None, subok=subok)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             r = np.add(a, 2, out=None, subok=subok)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             r = np.add(a, 2, out=(None,), subok=subok)
             if subok:
                 assert_(isinstance(r, ArrayWrap))
             else:
-                assert_(type(r) == np.ndarray)
+                assert_(type(r) is np.ndarray)
 
             d = ArrayWrap([5.7])
             o1 = np.empty((1,))
@@ -244,31 +245,31 @@ class TestOut:
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
-                assert_(type(r2) == np.ndarray)
+                assert_(type(r2) is np.ndarray)
 
             r1, r2 = np.frexp(d, o1, None, subok=subok)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
-                assert_(type(r2) == np.ndarray)
+                assert_(type(r2) is np.ndarray)
 
             r1, r2 = np.frexp(d, None, o2, subok=subok)
             if subok:
                 assert_(isinstance(r1, ArrayWrap))
             else:
-                assert_(type(r1) == np.ndarray)
+                assert_(type(r1) is np.ndarray)
 
             r1, r2 = np.frexp(d, out=(o1, None), subok=subok)
             if subok:
                 assert_(isinstance(r2, ArrayWrap))
             else:
-                assert_(type(r2) == np.ndarray)
+                assert_(type(r2) is np.ndarray)
 
             r1, r2 = np.frexp(d, out=(None, o2), subok=subok)
             if subok:
                 assert_(isinstance(r1, ArrayWrap))
             else:
-                assert_(type(r1) == np.ndarray)
+                assert_(type(r1) is np.ndarray)
 
             with assert_raises(TypeError):
                 # Out argument must be tuple, since there are multiple outputs.
@@ -3701,7 +3702,7 @@ class TestSpecialMethods:
                 for obj in objs:
                     if isinstance(obj, cls):
                         obj = np.array(obj)
-                    elif type(obj) != np.ndarray:
+                    elif type(obj) is not np.ndarray:
                         return NotImplemented
                     result.append(obj)
                 return result
@@ -4047,12 +4048,14 @@ class TestSpecialMethods:
         assert_array_equal(res, a + a)
 
     @pytest.mark.thread_unsafe(reason="modifies global module")
+    @pytest.mark.skipif(IS_PYPY, reason="__signature__ descriptor dance fails")
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"
         expected_dict = (
             {} if IS_PYPY else {"__module__": "numpy", "__qualname__": "add"}
         )
+        expected_dict["__signature__"] = inspect.signature(np.add)
 
         np.add.__doc__ = new_doc
         assert np.add.__doc__ == new_doc
@@ -4479,8 +4482,8 @@ class TestSubclass:
     def test_subclass_op(self):
 
         class simple(np.ndarray):
-            def __new__(subtype, shape):
-                self = np.ndarray.__new__(subtype, shape, dtype=object)
+            def __new__(cls, shape):
+                self = np.ndarray.__new__(cls, shape, dtype=object)
                 self.fill(0)
                 return self
 
@@ -4839,18 +4842,18 @@ def test_outer_bad_subclass():
         def __array_finalize__(self, obj):
             # The outer call reshapes to 3 dims, try to do a bad reshape.
             if self.ndim == 3:
-                self.shape = self.shape + (1,)
+                self._set_shape(self.shape + (1,))
 
     class BadArr2(np.ndarray):
         def __array_finalize__(self, obj):
             if isinstance(obj, BadArr2):
                 # outer inserts 1-sized dims. In that case disturb them.
                 if self.shape[-1] == 1:
-                    self.shape = self.shape[::-1]
+                    self._set_shape(self.shape[::-1])
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)
-        with assert_raises(TypeError) as a:
+        with pytest.raises(TypeError):
             # The first array gets reshaped (not the second one)
             np.add.outer(arr, [1, 2])
 
@@ -4893,6 +4896,15 @@ def test_bad_legacy_ufunc_silent_errors():
         ncu_tests.always_error.at(arr, [0, 1, 2], arr)
 
 
+def test_bad_legacy_unary_ufunc_silent_errors():
+    # Unary has a special scalar path right now, so test it explicitly.
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_unary(np.arange(3).astype(np.float64))
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_unary(1.5)
+
+
 @pytest.mark.parametrize('x1', [np.arange(3.0), [0.0, 1.0, 2.0]])
 def test_bad_legacy_gufunc_silent_errors(x1):
     # Verify that an exception raised in a gufunc loop propagates correctly.
@@ -4929,16 +4941,6 @@ class TestAddDocstring:
         with assert_raises(RuntimeError):
             ncu.add_docstring(func, "different docstring")
 
-
-class TestAdd_newdoc_ufunc:
-    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
-    def test_ufunc_arg(self):
-        assert_raises(TypeError, ncu._add_newdoc_ufunc, 2, "blah")
-        assert_raises(ValueError, ncu._add_newdoc_ufunc, np.add, "blah")
-
-    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
-    def test_string_arg(self):
-        assert_raises(TypeError, ncu._add_newdoc_ufunc, np.add, 3)
 
 class TestHypotErrorMessages:
     def test_hypot_error_message_single_arg(self):

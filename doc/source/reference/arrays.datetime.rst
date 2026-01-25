@@ -124,10 +124,10 @@ datetime type with generic units.
 
     >>> import numpy as np
 
-    >>> np.array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64')
+    >>> np.array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype=np.datetime64)
     array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64[D]')
 
-    >>> np.array(['2001-01-01T12:00', '2002-02-03T13:56:03.172'], dtype='datetime64')
+    >>> np.array(['2001-01-01T12:00', '2002-02-03T13:56:03.172'], dtype=np.datetime64)
     array(['2001-01-01T12:00:00.000', '2002-02-03T13:56:03.172'],
           dtype='datetime64[ms]')
 

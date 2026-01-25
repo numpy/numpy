@@ -1,4 +1,5 @@
 import ctypes as ct
+import inspect
 import itertools
 import pickle
 import sys
@@ -1764,7 +1765,7 @@ class TestUfunc:
         # Not contiguous and not aligned
         a = np.empty((3 * 4 * 5 * 8 + 1,), dtype='i1')
         a = a[1:].view(dtype='f8')
-        a.shape = (3, 4, 5)
+        a = a.reshape((3, 4, 5))
         a = a[1:, 1:, 1:]
         yield a
 
@@ -2260,14 +2261,14 @@ class TestUfunc:
         np.add.at(arr, index, values)
         assert arr[0] == len(values)
 
-    @pytest.mark.parametrize("value", [
-        np.ones(1), np.ones(()), np.float64(1.), 1.])
-    def test_ufunc_at_scalar_value_fastpath(self, value):
-        arr = np.zeros(1000)
-        # index must be cast, which may be buffered in chunks:
-        index = np.repeat(np.arange(1000), 2)
-        np.add.at(arr, index, value)
-        assert_array_equal(arr, np.full_like(arr, 2 * value))
+    def test_ufunc_at_scalar_value_fastpath(self):
+        values = [np.ones(1), np.ones(()), np.float64(1.), 1.]
+        for value in values:
+            arr = np.zeros(1000)
+            # index must be cast, which may be buffered in chunks:
+            index = np.repeat(np.arange(1000), 2)
+            np.add.at(arr, index, value)
+            assert_array_equal(arr, np.full_like(arr, 2 * value))
 
     def test_ufunc_at_multiD(self):
         a = np.arange(9).reshape(3, 3)
@@ -2976,6 +2977,21 @@ def test_ufunc_input_floatingpoint_error(bad_offset):
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize(
+    "methodname",
+    ["__call__", "accumulate", "at", "outer", "reduce", "reduceat", "resolve_dtypes"],
+)
+def test_ufunc_method_signatures(methodname: str):
+    method = getattr(np.ufunc, methodname)
+
+    try:
+        _ = inspect.signature(method)
+    except ValueError as e:
+        pytest.fail(e.args[0])
+
+
 def test_trivial_loop_invalid_cast():
     # This tests the fast-path "invalid cast", see gh-19904.
     with pytest.raises(TypeError,
@@ -3320,3 +3336,70 @@ class TestLowlevelAPIAccess:
         t[28][414] = 1
         tc = np.cos(t)
         assert_equal(tc[0][0], tc[28][414])
+
+
+class TestUFuncInspectSignature:
+    PARAMS_COMMON = {
+        "casting": "same_kind",
+        "order": "K",
+        "dtype": None,
+        "subok": True,
+        "signature": None,
+    }
+
+    PARAMS_UFUNC = {
+        "where": True,
+    } | PARAMS_COMMON
+
+    PARAMS_GUFUNC = {
+        "axes": np._NoValue,
+        "axis": np._NoValue,
+        "keepdims": False,
+    } | PARAMS_COMMON
+
+    @pytest.mark.parametrize("ufunc", [np.log, np.gcd, np.frexp, np.divmod, np.matvec])
+    def test_dunder_signature_attr(self, ufunc: np.ufunc):
+        assert hasattr(ufunc, "__signature__")
+        assert isinstance(ufunc.__signature__, inspect.Signature)
+        assert inspect.signature(ufunc) == ufunc.__signature__
+
+    @pytest.mark.parametrize("ufunc", [np.exp, np.mod, np.frexp, np.divmod, np.vecmat])
+    def test_params_common_positional(self, ufunc: np.ufunc):
+        sig = inspect.signature(ufunc)
+
+        # check positional-only parameters
+        posonly_params = {name: param.default
+                          for name, param in sig.parameters.items()
+                          if param.kind is param.POSITIONAL_ONLY}
+        assert len(posonly_params) == ufunc.nin
+        assert all(default is inspect.Parameter.empty
+                   for default in posonly_params.values())
+
+        # check 'out' parameter
+        out_param = sig.parameters.get("out")
+        assert out_param is not None
+        assert out_param.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+
+    @pytest.mark.parametrize("ufunc", [np.sin, np.add, np.frexp, np.divmod])
+    def test_params_common_ufunc(self, ufunc: np.ufunc):
+        assert ufunc.signature is None  # sanity check
+
+        sig = inspect.signature(ufunc)
+
+        # check keyword-only parameters
+        keyword_params = {name: param.default
+                          for name, param in sig.parameters.items()
+                          if param.kind is param.KEYWORD_ONLY}
+        assert keyword_params == self.PARAMS_UFUNC
+
+    @pytest.mark.parametrize("gufunc", [np.matmul, np.matvec, np.vecdot, np.vecmat])
+    def test_params_common_gufunc(self, gufunc: np.ufunc):
+        assert gufunc.signature is not None  # sanity check
+
+        sig = inspect.signature(gufunc)
+
+        # check keyword-only parameters
+        keyword_params = {name: param.default
+                          for name, param in sig.parameters.items()
+                          if param.kind is param.KEYWORD_ONLY}
+        assert keyword_params == self.PARAMS_GUFUNC

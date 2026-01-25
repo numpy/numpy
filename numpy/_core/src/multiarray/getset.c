@@ -49,17 +49,13 @@ array_shape_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 }
 
 
-static int
-array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
+NPY_NO_EXPORT int
+array_shape_set_internal(PyArrayObject *self, PyObject *val)
 {
     int nd;
     PyArrayObject *ret;
+    assert(val);
 
-    if (val == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array shape");
-        return -1;
-    }
     /* Assumes C-order */
     ret = (PyArrayObject *)PyArray_Reshape(self, val);
     if (ret == NULL) {
@@ -106,6 +102,25 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
     return 0;
 }
 
+static int
+array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
+{
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array shape");
+        return -1;
+    }
+
+    /* Deprecated NumPy 2.5, 2026-01-05 */
+    if (DEPRECATE("Setting the shape on a NumPy array has been deprecated"
+                  " in NumPy 2.5.\nAs an alternative, you can create a new"
+                  " view using np.reshape (with copy=False if needed)."
+                 ) < 0 ) {
+            return -1;
+    }
+
+    return array_shape_set_internal(self, val);
+}
 
 static PyObject *
 array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
@@ -495,15 +510,23 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
         if (temp == NULL) {
             return -1;
         }
+        /* create new dimensions cache and fill it */
+        npy_intp new_nd = PyArray_NDIM(temp);
+        npy_intp *new_dims = npy_alloc_cache_dim(2 * new_nd);
+        if (new_dims == NULL) {
+            Py_DECREF(temp);
+            PyErr_NoMemory();
+            return -1;
+        }
+        memcpy(new_dims, PyArray_DIMS(temp), new_nd * sizeof(npy_intp));
+        memcpy(new_dims + new_nd, PyArray_STRIDES(temp), new_nd * sizeof(npy_intp));
+        /* Update self with new cache */
         npy_free_cache_dim_array(self);
-        ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
-        ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
-        ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);
+        ((PyArrayObject_fields *)self)->nd = new_nd;
+        ((PyArrayObject_fields *)self)->dimensions = new_dims;
+        ((PyArrayObject_fields *)self)->strides = new_dims + new_nd;
         newtype = PyArray_DESCR(temp);
-        Py_INCREF(PyArray_DESCR(temp));
-        /* Fool deallocator not to delete these*/
-        ((PyArrayObject_fields *)temp)->nd = 0;
-        ((PyArrayObject_fields *)temp)->dimensions = NULL;
+        Py_INCREF(newtype);
         Py_DECREF(temp);
     }
 

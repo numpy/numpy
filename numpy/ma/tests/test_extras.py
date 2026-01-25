@@ -5,6 +5,7 @@ Adapted from the original test_ma by Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 
 """
+import inspect
 import itertools
 
 import pytest
@@ -1810,6 +1811,18 @@ class TestShapeBase:
         b = diagflat(1.0)
         assert_equal(b.shape, (1, 1))
         assert_equal(b.mask.shape, b.data.shape)
+
+    @pytest.mark.parametrize("fn", [atleast_1d, vstack, diagflat])
+    def test_inspect_signature(self, fn):
+        name = fn.__name__
+        assert getattr(np.ma, name) is fn
+
+        assert fn.__module__ == "numpy.ma.extras"
+
+        wrapped = getattr(np, fn.__name__)
+        sig_wrapped = inspect.signature(wrapped)
+        sig = inspect.signature(fn)
+        assert sig == sig_wrapped
 
 
 class TestNDEnumerate:
