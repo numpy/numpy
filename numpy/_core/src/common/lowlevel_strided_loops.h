@@ -13,7 +13,7 @@
 /*
  * NOTE: This API should remain private for the time being, to allow
  *       for further refinement.  I think the 'aligned' mechanism
- *       needs changing, for example. 
+ *       needs changing, for example.
  *
  *       Note: Updated in 2018 to distinguish "true" from "uint" alignment.
  */
@@ -786,5 +786,10 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                     stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1); \
                     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
                 }
+
+NPY_NO_EXPORT npy_bool
+nonzero_idxs_dispatcher(void const* data, npy_intp* idxs, int dim, const npy_intp* shape,
+                        const npy_intp* strides, int dtype, npy_intp nonzero_count);
+
 
 #endif  /* NUMPY_CORE_SRC_COMMON_LOWLEVEL_STRIDED_LOOPS_H_ */
