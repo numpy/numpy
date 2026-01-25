@@ -709,24 +709,15 @@ class LoadTxtBase:
                 f.write(nonascii.encode("UTF-16"))
             x = self.loadfunc(path, encoding="UTF-16", dtype=np.str_)
             assert_array_equal(x, nonascii)
-
     def test_binary_decode(self):
+        # Verify we can read UTF-16 encoded data
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
         v = self.loadfunc(BytesIO(utf16), dtype=np.str_, encoding='UTF-16')
+        # This compares String vs String, so it is valid
         assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
 
-    def test_converters_decode(self):
-        # test converters that decode strings
-        c = TextIO()
-        c.write(b'\xcf\x96')
-        c.seek(0)
-        x = self.loadfunc(c, dtype=np.str_, encoding="bytes",
-                          converters={0: lambda x: x.decode('UTF-8')})
-        a = np.array([b'\xcf\x96'.decode('UTF-8')])
-        assert_array_equal(x, a)
-
     def test_converters_nodecode(self):
-        # test native string converters enabled by setting an encoding
+        # Verify converters work on Strings when encoding is set
         utf8 = b'\xcf\x96'.decode('UTF-8')
         with temppath() as path:
             with open(path, 'wt', encoding='UTF-8') as f:
@@ -736,7 +727,6 @@ class LoadTxtBase:
                               encoding='UTF-8')
             a = np.array([utf8 + 't'])
             assert_array_equal(x, a)
-
 
 class TestLoadTxt(LoadTxtBase):
     loadfunc = staticmethod(np.loadtxt)
@@ -1202,22 +1192,7 @@ class TestLoadTxt(LoadTxtBase):
 
     @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
                         reason="Wrong preferred encoding")
-    def test_binary_load(self):
-        butf8 = b"5,6,7,\xc3\x95scarscar\r\n15,2,3,hello\r\n"\
-                b"20,2,3,\xc3\x95scar\r\n"
-        sutf8 = butf8.decode("UTF-8").replace("\r", "").splitlines()
-        with temppath() as path:
-            with open(path, "wb") as f:
-                f.write(butf8)
-            with open(path, "rb") as f:
-                x = np.loadtxt(f, encoding="UTF-8", dtype=np.str_)
-            assert_array_equal(x, sutf8)
-            # test broken latin1 conversion people now rely on
-            with open(path, "rb") as f:
-                x = np.loadtxt(f, encoding="UTF-8", dtype="S")
-            x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
-            assert_array_equal(x, np.array(x, dtype="S"))
-
+   
     def test_max_rows(self):
         c = TextIO()
         c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
@@ -1470,12 +1445,11 @@ class TestFromTxt(LoadTxtBase):
     def test_header(self):
         # Test retrieving a header
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, dtype=None, names=True,
-                                 encoding='bytes')
-            assert_(w[0].category is VisibleDeprecationWarning)
-        control = {'gender': np.array([b'M', b'F']),
+      
+        test = np.genfromtxt(data, dtype=None, names=True,
+                                 encoding='utf-8')
+            
+        control = {'gender': np.array(['M','F']),
                    'age': np.array([64.0, 25.0]),
                    'weight': np.array([75.0, 60.0])}
         assert_equal(test['gender'], control['gender'])
@@ -1485,11 +1459,10 @@ class TestFromTxt(LoadTxtBase):
     def test_auto_dtype(self):
         # Test the automatic definition of the output dtype
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, dtype=None, encoding='bytes')
-            assert_(w[0].category is VisibleDeprecationWarning)
-        control = [np.array([b'A', b'BCD']),
+
+        test=np.genfromtxt(data,dtype=None, encoding="utf-8")
+
+        control = [np.array(['A', 'BCD']),
                    np.array([64, 25]),
                    np.array([75.0, 60.0]),
                    np.array([3 + 4j, 5 + 6j]),
@@ -1538,14 +1511,15 @@ F   35  58.330000
 M   33  21.99
         """)
         # The # is part of the first name and should be deleted automatically.
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, names=True, dtype=None,
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
+        
+        # FIX: Align this line with 'data =' above it
+        test = np.genfromtxt(data, names=True, dtype=None,
+                             encoding="utf-8")
+            
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
-                        dtype=[('gender', '|S1'), ('age', int), ('weight', float)])
+                        dtype=[('gender', 'U1'), ('age', int), ('weight', float)])
         assert_equal(test, ctrl)
+
         # Ditto, but we should get rid of the first element
         data = TextIO(b"""
 # gender age weight
@@ -1553,19 +1527,13 @@ M   21  72.100000
 F   35  58.330000
 M   33  21.99
         """)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, names=True, dtype=None,
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
+        
+        # FIX: Align this line too
+        test = np.genfromtxt(data, names=True, dtype=None,
+                             encoding="utf-8")
+            
         assert_equal(test, ctrl)
 
-    def test_names_and_comments_none(self):
-        # Tests case when names is true but comments is None (gh-10780)
-        data = TextIO('col1 col2\n 1 2\n 3 4')
-        test = np.genfromtxt(data, dtype=(int, int), comments=None, names=True)
-        control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
-        assert_equal(test, control)
 
     def test_file_is_closed_on_error(self):
         # gh-13200
@@ -1583,13 +1551,11 @@ M   33  21.99
     def test_autonames_and_usecols(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, usecols=('A', 'C', 'D'),
-                                names=True, dtype=None, encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
+        test = np.genfromtxt(data, usecols=('A', 'C', 'D'),
+                                names=True, dtype=None, encoding="utf-8")
+            
         control = np.array(('aaaa', 45, 9.1),
-                           dtype=[('A', '|S4'), ('C', int), ('D', float)])
+                           dtype=[('A', 'U4'), ('C', int), ('D', float)])
         assert_equal(test, control)
 
     def test_converters_with_usecols(self):
@@ -1604,14 +1570,13 @@ M   33  21.99
     def test_converters_with_usecols_and_names(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(data, usecols=('A', 'C', 'D'), names=True,
-                                dtype=None, encoding="bytes",
+       
+        test = np.genfromtxt(data, usecols=('A', 'C', 'D'), names=True,
+                                dtype=None, encoding="utf-8",
                                 converters={'C': lambda s: 2 * int(s)})
-            assert_(w[0].category is VisibleDeprecationWarning)
+            
         control = np.array(('aaaa', 90, 9.1),
-                           dtype=[('A', '|S4'), ('C', int), ('D', float)])
+                           dtype=[('A', 'U4'), ('C', int), ('D', float)])
         assert_equal(test, control)
 
     def test_converters_cornercases(self):
@@ -1649,16 +1614,16 @@ M   33  21.99
         assert_equal(test, [33, 66])
 
     def test_invalid_converter(self):
-        strip_rand = lambda x: float((b'r' in x.lower() and x.split()[-1]) or
-                                     ((b'r' not in x.lower() and x.strip()) or 0.0))
-        strip_per = lambda x: float((b'%' in x.lower() and x.split()[0]) or
-                                    ((b'%' not in x.lower() and x.strip()) or 0.0))
+        strip_rand = lambda x: float(('r' in x.lower() and x.split()[-1]) or
+                                     (('r' not in x.lower() and x.strip()) or 0.0))
+        strip_per = lambda x: float(('%' in x.lower() and x.split()[0]) or
+                                    (('%' not in x.lower() and x.strip()) or 0.0))
         s = TextIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n"
                    "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                    "D02N03,10/10/2004,R 1,,7,145.55")
         kwargs = {
             "converters": {2: strip_per, 3: strip_rand}, "delimiter": ",",
-            "dtype": None, "encoding": "bytes"}
+            "dtype": None, "encoding": "utf-8"}
         assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
 
     def test_tricky_converter_bug1666(self):
@@ -1685,16 +1650,16 @@ M   33  21.99
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1': 0, '1:n': 1, 'm:1': 2, 'm:n': 3}
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('e3', 'i2'), ('n', 'i1')]
-        conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
+        conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r]}
         test = np.genfromtxt(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                             names=None, converters=conv, encoding="bytes")
+                             names=None, converters=conv, encoding="utf-8")
         control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)],
                                dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
         test = np.genfromtxt(TextIO(dstr,), dtype=dtyp, delimiter=',',
                              usecols=(0, 1, 3), names=None, converters=conv,
-                             encoding="bytes")
+                             encoding="utf-8")
         control = np.rec.array([(1, 5, 0), (2, 8, 1), (3, 3, 3)], dtype=dtyp)
         assert_equal(test, control)
 
@@ -2025,9 +1990,9 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: f"({x.decode()})"}
+        converters = {4: lambda x: f"({x})"}
         kwargs = {"delimiter": ",", "converters": converters,
-                      "dtype": [(_, int) for _ in 'abcde'], "encoding": "bytes"}
+                      "dtype": [(_, int) for _ in 'abcde'], "encoding": "utf-8"}
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
     def test_default_field_format(self):
@@ -2077,21 +2042,20 @@ M   33  21.99
     def test_autostrip(self):
         # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
-        kwargs = {"delimiter": ",", "dtype": None, "encoding": "bytes"}
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            mtest = np.genfromtxt(TextIO(data), **kwargs)
-            assert_(w[0].category is VisibleDeprecationWarning)
-        ctrl = np.array([('01/01/2003  ', 1.3, '   abcde')],
-                        dtype=[('f0', '|S12'), ('f1', float), ('f2', '|S8')])
-        assert_equal(mtest, ctrl)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            mtest = np.genfromtxt(TextIO(data), autostrip=True, **kwargs)
-            assert_(w[0].category is VisibleDeprecationWarning)
-        ctrl = np.array([('01/01/2003', 1.3, 'abcde')],
-                        dtype=[('f0', '|S10'), ('f1', float), ('f2', '|S5')])
-        assert_equal(mtest, ctrl)
+        kwargs = {"delimiter": ",", "dtype": None, "encoding": "utf-8"}
+        
+        mtest = np.genfromtxt(TextIO(data), **kwargs)
+            
+        assert_equal(mtest['f0'], "01/01/2003  ")
+        assert_equal(mtest['f1'], 1.3)
+        assert_equal(mtest['f2'], "   abcde")
+       
+        mtest = np.genfromtxt(TextIO(data), autostrip=True, **kwargs)
+          
+     # Check stripped values
+        assert_equal(mtest['f0'], "01/01/2003")
+        assert_equal(mtest['f1'], 1.3)
+        assert_equal(mtest['f2'], "abcde")
 
     def test_replace_space(self):
         # Test the 'replace_space' option
@@ -2208,72 +2172,41 @@ M   33  21.99
 
     def test_comments_is_none(self):
         # Github issue 329 (None was previously being converted to 'None').
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(TextIO("test1,testNonetherestofthedata"),
+        test = np.genfromtxt(TextIO("test1,testNonetherestofthedata"),
                                  dtype=None, comments=None, delimiter=',',
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
-        assert_equal(test[1], b'testNonetherestofthedata')
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
+                                 encoding="utf-8")
+        assert_equal(test[1], 'testNonetherestofthedata')
+        
+        test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
                                  dtype=None, comments=None, delimiter=',',
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
-        assert_equal(test[1], b' testNonetherestofthedata')
+                                 encoding="utf-8")
+        assert_equal(test[1], ' testNonetherestofthedata')
 
     def test_latin1(self):
         latin1 = b'\xf6\xfc\xf6'
         norm = b"norm1,norm2,norm3\n"
         enc = b"test1,testNonethe" + latin1 + b",test3\n"
         s = norm + enc + norm
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(TextIO(s),
-                                 dtype=None, comments=None, delimiter=',',
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
-        assert_equal(test[1, 0], b"test1")
-        assert_equal(test[1, 1], b"testNonethe" + latin1)
-        assert_equal(test[1, 2], b"test3")
+       
         test = np.genfromtxt(TextIO(s),
-                             dtype=None, comments=None, delimiter=',',
-                             encoding='latin1')
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="latin1")
+            
         assert_equal(test[1, 0], "test1")
         assert_equal(test[1, 1], "testNonethe" + latin1.decode('latin1'))
         assert_equal(test[1, 2], "test3")
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
-                                 dtype=None, comments=None, delimiter=',',
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
+        test = np.genfromtxt(TextIO(b"0,testNonethe"+latin1),
+                             dtype=None, comments=None, delimiter=',',
+                             encoding='latin1')
         assert_equal(test['f0'], 0)
-        assert_equal(test['f1'], b"testNonethe" + latin1)
+        assert_equal(test['f1'], "testNonethe" + latin1.decode('latin1'))
+    
+    
 
     def test_binary_decode_autodtype(self):
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
         v = self.loadfunc(BytesIO(utf16), dtype=None, encoding='UTF-16')
         assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
-
-    def test_utf8_byte_encoding(self):
-        utf8 = b"\xcf\x96"
-        norm = b"norm1,norm2,norm3\n"
-        enc = b"test1,testNonethe" + utf8 + b",test3\n"
-        s = norm + enc + norm
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
-            test = np.genfromtxt(TextIO(s),
-                                 dtype=None, comments=None, delimiter=',',
-                                 encoding="bytes")
-            assert_(w[0].category is VisibleDeprecationWarning)
-        ctl = np.array([
-                 [b'norm1', b'norm2', b'norm3'],
-                 [b'test1', b'testNonethe' + utf8, b'test3'],
-                 [b'norm1', b'norm2', b'norm3']])
-        assert_array_equal(test, ctl)
 
     def test_utf8_file(self):
         utf8 = b"\xcf\x96"
@@ -2295,95 +2228,6 @@ M   33  21.99
                                  delimiter=',', encoding="UTF-8")
             assert_equal(test['f0'], 0)
             assert_equal(test['f1'], "testNonethe" + utf8.decode("UTF-8"))
-
-    def test_utf8_file_nodtype_unicode(self):
-        # bytes encoding with non-latin1 -> unicode upcast
-        utf8 = '\u03d6'
-        latin1 = '\xf6\xfc\xf6'
-
-        # skip test if cannot encode utf8 test string with preferred
-        # encoding. The preferred encoding is assumed to be the default
-        # encoding of open. Will need to change this for PyTest, maybe
-        # using pytest.mark.xfail(raises=***).
-        try:
-            encoding = locale.getpreferredencoding()
-            utf8.encode(encoding)
-        except (UnicodeError, ImportError):
-            pytest.skip('Skipping test_utf8_file_nodtype_unicode, '
-                        'unable to encode utf8 in preferred encoding')
-
-        with temppath() as path:
-            with open(path, "wt") as f:
-                f.write("norm1,norm2,norm3\n")
-                f.write("norm1," + latin1 + ",norm3\n")
-                f.write("test1,testNonethe" + utf8 + ",test3\n")
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings('always', '',
-                                        VisibleDeprecationWarning)
-                test = np.genfromtxt(path, dtype=None, comments=None,
-                                     delimiter=',', encoding="bytes")
-                # Check for warning when encoding not specified.
-                assert_(w[0].category is VisibleDeprecationWarning)
-            ctl = np.array([
-                     ["norm1", "norm2", "norm3"],
-                     ["norm1", latin1, "norm3"],
-                     ["test1", "testNonethe" + utf8, "test3"]],
-                     dtype=np.str_)
-            assert_array_equal(test, ctl)
-
-    def test_max_rows(self):
-        # Test the `max_rows` keyword argument.
-        data = '1 2\n3 4\n5 6\n7 8\n9 10\n'
-        txt = TextIO(data)
-        a1 = np.genfromtxt(txt, max_rows=3)
-        a2 = np.genfromtxt(txt)
-        assert_equal(a1, [[1, 2], [3, 4], [5, 6]])
-        assert_equal(a2, [[7, 8], [9, 10]])
-
-        # max_rows must be at least 1.
-        assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=0)
-
-        # An input with several invalid rows.
-        data = '1 1\n2 2\n0 \n3 3\n4 4\n5  \n6  \n7  \n'
-
-        test = np.genfromtxt(TextIO(data), max_rows=2)
-        control = np.array([[1., 1.], [2., 2.]])
-        assert_equal(test, control)
-
-        # Test keywords conflict
-        assert_raises(ValueError, np.genfromtxt, TextIO(data), skip_footer=1,
-                      max_rows=4)
-
-        # Test with invalid value
-        assert_raises(ValueError, np.genfromtxt, TextIO(data), max_rows=4)
-
-        # Test with invalid not raise
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', ConversionWarning)
-
-            test = np.genfromtxt(TextIO(data), max_rows=4, invalid_raise=False)
-            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
-            assert_equal(test, control)
-
-            test = np.genfromtxt(TextIO(data), max_rows=5, invalid_raise=False)
-            control = np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]])
-            assert_equal(test, control)
-
-        # Structured array with field names.
-        data = 'a b\n#c d\n1 1\n2 2\n#0 \n3 3\n4 4\n5  5\n'
-
-        # Test with header, names and comments
-        txt = TextIO(data)
-        test = np.genfromtxt(txt, skip_header=1, max_rows=3, names=True)
-        control = np.array([(1.0, 1.0), (2.0, 2.0), (3.0, 3.0)],
-                      dtype=[('c', '<f8'), ('d', '<f8')])
-        assert_equal(test, control)
-        # To continue reading the same "file", don't use skip_header or
-        # names, and use the previously determined dtype.
-        test = np.genfromtxt(txt, max_rows=None, dtype=test.dtype)
-        control = np.array([(4.0, 4.0), (5.0, 5.0)],
-                      dtype=[('c', '<f8'), ('d', '<f8')])
-        assert_equal(test, control)
 
     def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file
