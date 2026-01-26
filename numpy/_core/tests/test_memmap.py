@@ -14,6 +14,7 @@ from numpy import (
     arange,
     asarray,
     average,
+    dtype,
     isscalar,
     memmap,
     multiply,
@@ -247,20 +248,20 @@ class TestMemmap:
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
 
-    @pytest.mark.parametrize("dtype", [">f8", "<f4"])
+    @pytest.mark.parametrize("dtype_name", [">f8", "<f4"])
     @pytest.mark.parametrize("order", ["C", "F"])
-    def test_pickle(self, dtype, order, tmp_path):
+    def test_pickle(self, dtype_name, order, tmp_path):
         tmpname = tmp_path / 'mmap'
         shape = (10, 10)
 
         # Create and populate memmap
-        fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape, order=order)
-        data = arange(prod(shape), dtype=dtype).reshape(shape, order=order)
+        fp = memmap(tmpname, dtype=dtype_name, mode='w+', shape=shape, order=order)
+        data = arange(prod(shape), dtype=dtype_name).reshape(shape, order=order)
         fp[:] = data
         if sys.platform != 'emscripten':
             fp.flush()
 
-        fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape, order=order)
+        fp = memmap(tmpname, dtype=dtype_name, mode='r', shape=shape, order=order)
 
         # Pickle and unpickle
         pickled = pickle.dumps(fp)
@@ -270,7 +271,7 @@ class TestMemmap:
         assert_(isinstance(fp_restored, memmap))
         assert_array_equal(fp, fp_restored)
         assert_equal(fp_restored.mode, 'r')
-        assert_equal(fp_restored.dtype, np.dtype(dtype))
+        assert_equal(fp_restored.dtype, dtype(dtype_name))
         assert_equal(fp_restored.flags.f_contiguous, order == 'F')
 
         # Verify pickle is metadata only
