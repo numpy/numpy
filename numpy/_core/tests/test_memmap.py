@@ -270,7 +270,7 @@ class TestMemmap:
         assert_(isinstance(fp_restored, memmap))
         assert_array_equal(fp, fp_restored)
         assert_equal(fp_restored.mode, 'r')
-        assert_equal(fp_restored.dtype, dtype)
+        assert_equal(fp_restored.dtype, np.dtype(dtype))
         assert_equal(fp_restored.flags.f_contiguous, order == 'F')
 
         # Verify pickle is metadata only
