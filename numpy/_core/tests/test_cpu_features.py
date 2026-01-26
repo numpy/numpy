@@ -79,7 +79,11 @@ class AbstractTest:
         self.load_flags()
         for gname, features in self.features_groups.items():
             test_features = [self.cpu_have(f) for f in features]
-            assert_features_equal(__cpu_features__.get(gname), all(test_features), gname)
+            assert_features_equal(
+                __cpu_features__.get(gname),
+                all(test_features),
+                gname,
+            )
 
         for feature_name in self.features:
             cpu_have = self.cpu_have(feature_name)
@@ -124,7 +128,9 @@ class AbstractTest:
         " therefore this test class cannot be properly executed."
     ),
 )
-@pytest.mark.thread_unsafe(reason="setup & tmp_path_factory threads-unsafe, modifies environment variables")
+@pytest.mark.thread_unsafe(
+    reason="setup & tmp_path_factory threads-unsafe, modifies environment variables",
+)
 class TestEnvPrivation:
     cwd = pathlib.Path(__file__).parent.resolve()
     env = os.environ.copy()
@@ -336,7 +342,8 @@ is_cygwin = sys.platform.startswith('cygwin')
 machine = platform.machine()
 is_x86 = re.match(r"^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
-    not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
+    not (is_linux or is_cygwin) or not is_x86,
+    reason="Only for Linux and x86",
 )
 class Test_X86_Features(AbstractTest):
     features = []
@@ -359,7 +366,9 @@ class Test_X86_Features(AbstractTest):
         "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
         "VAES", "VPCLMULQDQ", "GFNI"
     ]
-    features_groups["AVX512_SPR"] = features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
+    features_groups["AVX512_SPR"] = (
+        features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
+    )
 
     features_map = {
         "SSE3": "PNI", "SSE41": "SSE4_1", "SSE42": "SSE4_2", "FMA3": "FMA",
@@ -420,14 +429,18 @@ class Test_ARM_Features(AbstractTest):
         else:
             self.features_map = {
                 # ELF auxiliary vector and /proc/cpuinfo on Linux kernel(armv8 aarch32)
-                # doesn't provide information about ASIMD, so we assume that ASIMD is supported
+                # doesn't provide information about ASIMD
+                # so we assume that ASIMD is supported
                 # if the kernel reports any one of the following ARM8 features.
                 "ASIMD": ("AES", "SHA1", "SHA2", "PMULL", "CRC32")
             }
 
 
 is_loongarch = re.match(r"^(loongarch)", machine, re.IGNORECASE)
-@pytest.mark.skipif(not is_linux or not is_loongarch, reason="Only for Linux and LoongArch")
+@pytest.mark.skipif(
+    not is_linux or not is_loongarch,
+    reason="Only for Linux and LoongArch",
+)
 class Test_LOONGARCH_Features(AbstractTest):
     features = ["LSX"]
 

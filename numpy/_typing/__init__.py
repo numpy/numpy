@@ -21,7 +21,6 @@ from ._array_like import (
     _ArrayLikeTD64_co as _ArrayLikeTD64_co,
     _ArrayLikeUInt_co as _ArrayLikeUInt_co,
     _ArrayLikeVoid_co as _ArrayLikeVoid_co,
-    _FiniteNestedSequence as _FiniteNestedSequence,
     _SupportsArray as _SupportsArray,
     _SupportsArrayFunc as _SupportsArrayFunc,
 )

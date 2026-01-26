@@ -12,16 +12,16 @@ from numpy._typing import (
 __all__ = ["fix", "isneginf", "isposinf"]
 
 @overload
-@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+@deprecated("numpy.fix is deprecated. Use numpy.trunc instead.")
 def fix(x: _FloatLike_co, out: None = None) -> np.floating: ...
 @overload
-@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+@deprecated("numpy.fix is deprecated. Use numpy.trunc instead.")
 def fix(x: _ArrayLikeFloat_co, out: None = None) -> NDArray[np.floating]: ...
 @overload
-@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+@deprecated("numpy.fix is deprecated. Use numpy.trunc instead.")
 def fix(x: _ArrayLikeObject_co, out: None = None) -> NDArray[np.object_]: ...
 @overload
-@deprecated("np.fix will be deprecated in NumPy 2.5 in favor of np.trunc", category=PendingDeprecationWarning)
+@deprecated("numpy.fix is deprecated. Use numpy.trunc instead.")
 def fix[ArrayT: np.ndarray](x: _ArrayLikeFloat_co | _ArrayLikeObject_co, out: ArrayT) -> ArrayT: ...
 
 #

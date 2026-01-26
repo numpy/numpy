@@ -63,8 +63,10 @@ example, the ``_core`` module, use the following::
 Running tests from the command line
 -----------------------------------
 
-If you want to build NumPy in order to work on NumPy itself, use the ``spin``
-utility. To run NumPy's full test suite::
+If you want to build NumPy in order to work on NumPy itself, use the
+:ref:`spin utility <spin_tool>`.
+
+To run NumPy's full test suite::
 
   $ spin test -m full
 

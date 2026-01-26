@@ -778,7 +778,7 @@ class TestSubarray:
         arr = np.ones(3, dtype=[("f", "i", 3)])
         cast = arr.astype(object)
         for fields in cast:
-            assert type(fields) == tuple and len(fields) == 1
+            assert type(fields) is tuple and len(fields) == 1
             subarr = fields[0]
             assert subarr.base is None
             assert subarr.flags.owndata
@@ -1340,6 +1340,29 @@ class TestPickling:
             roundtrip_dt = pickle.loads(pickle.dumps(dt, proto))
             assert roundtrip_dt == dt
             assert hash(roundtrip_dt) == pre_pickle_hash
+
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_invalid_tuple_size(self, dt):
+        # gh-30476
+        valid_state = dt.__reduce__()[2]
+        dt.__setstate__(valid_state)
+
+        for size in [1, 2, 3, 4]:
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(valid_state[:size])
+
+        min_extra = 10 - len(valid_state)
+        for extra in range(min_extra, min_extra + 5):
+            extended = valid_state + (None,) * extra
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(extended)
 
 
 class TestPromotion:

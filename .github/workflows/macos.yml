@@ -50,7 +50,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -59,7 +59,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Miniforge
-      uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
+      uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
@@ -74,7 +74,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -154,5 +154,5 @@ jobs:
     - name: Test in multiple threads
       if: ${{ matrix.version == '3.14t' && matrix.build_runner[0] == 'macos-14' }}
       run:  |
-        pip install pytest-run-parallel==0.7.0
-        spin test -p 4 -- --timeout=600 --durations=10
+        pip install pytest-run-parallel==0.8.2
+        spin test -p 4 -- -sv --timeout=600 --durations=10

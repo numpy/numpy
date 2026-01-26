@@ -51,10 +51,27 @@ typedef struct {
     void * ptrs[NCACHE];
 } cache_bucket;
 
-static NPY_TLS cache_bucket datacache[NBUCKETS];
-static NPY_TLS cache_bucket dimcache[NBUCKETS_DIM];
+static NPY_TLS cache_bucket _datacache[NBUCKETS];
+static NPY_TLS cache_bucket _dimcache[NBUCKETS_DIM];
 
+// See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61991
+// gcc has a bug where if the thread local variable
+// is unused then in some cases it's destructor may not get
+// called at thread exit. So to workaround this, we access the
+// datacache and dimcache through this struct so that
+// cache_destructor gets initialized and used, ensuring that
+// the destructor gets called properly at thread exit.
+// The datacache and dimcache are not embedded in this struct
+// because that would make this struct very large and certain
+// platforms like armhf can crash while allocating that large
+// TLS block.
 typedef struct cache_destructor {
+    cache_bucket *dimcache;
+    cache_bucket *datacache;
+    cache_destructor() {
+        dimcache = &_dimcache[0];
+        datacache = &_datacache[0];
+    }
     ~cache_destructor() {
         for (npy_uint i = 0; i < NBUCKETS; ++i) {
             while (datacache[i].available > 0) {
@@ -70,6 +87,9 @@ typedef struct cache_destructor {
 } cache_destructor;
 
 static NPY_TLS cache_destructor tls_cache_destructor;
+
+#define datacache tls_cache_destructor.datacache
+#define dimcache tls_cache_destructor.dimcache
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with

@@ -844,7 +844,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         return (PyArray_Descr *)Py_NotImplemented;
     }
     if (!PyDataType_ISLEGACY(type) || !PyDataType_ISLEGACY(conv)) {
-        /* 
+        /*
          * This specification should probably be never supported, but
          * certainly not for new-style DTypes.
          */
@@ -1951,7 +1951,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base_descr)
 {
     if (!PyDataType_ISLEGACY(base_descr)) {
-        /* 
+        /*
          * The main use of this function is mutating strings, so probably
          * disallowing this is fine in practice.
          */
@@ -2917,13 +2917,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     default:
-        /* raise an error */
-        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
-        }
-        else {
-            version = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                        "Invalid state while unpickling. Is the pickle corrupted "
+                        "or created with a newer NumPy version?");
+        return NULL;
     }
 
     /*

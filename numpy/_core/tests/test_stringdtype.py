@@ -1457,7 +1457,7 @@ PASSES_THROUGH_NAN_NULLS = [
     "strip",
     "lstrip",
     "rstrip",
-    "replace"
+    "replace",
     "zfill",
 ]
 

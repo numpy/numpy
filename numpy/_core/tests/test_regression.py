@@ -35,6 +35,7 @@ from numpy.testing._private.utils import (
 )
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 class TestRegression:
     def test_invalid_round(self):
         # Ticket #3

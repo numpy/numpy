@@ -3581,7 +3581,7 @@ class TestLikeFuncs:
         b = a[:, ::2]  # Ensure b is not contiguous.
         kwargs = {'fill_value': ''} if likefunc == np.full_like else {}
         result = likefunc(b, dtype=dtype, **kwargs)
-        if dtype == str:
+        if dtype is str:
             assert result.strides == (16, 4)
         else:
             # dtype is bytes
@@ -4208,6 +4208,12 @@ class TestKeepdims:
 
 
 class TestTensordot:
+
+    def test_rejects_duplicate_axes(self):
+        a = np.ones((2, 3, 3))
+        b = np.ones((3, 3, 4))
+        with pytest.raises(ValueError):
+            np.tensordot(a, b, axes=([1, 1], [0, 0]))
 
     def test_zero_dimension(self):
         # Test resolution to issue #5663
