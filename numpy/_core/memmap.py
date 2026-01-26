@@ -364,7 +364,6 @@ class memmap(ndarray):
     def __reduce__(self):
         """
         Pickle support for memmap objects.
-        
         When pickling (e.g., for multiprocessing), instead of serializing
         the array data, we serialize the metadata needed to recreate the
         memory-mapped file in the unpickling process. This allows for
@@ -373,7 +372,7 @@ class memmap(ndarray):
         if self.filename is None:
             # Fall back to ndarray pickling for memmaps without a filename
             return super().__reduce__()
-        
+
         # Return the class and arguments needed to reconstruct the memmap
         return (
             self.__class__,

@@ -252,32 +252,32 @@ class TestMemmap:
     def test_pickle(self, dtype, order, tmp_path):
         tmpname = tmp_path / 'mmap'
         shape = (10, 10)
-        
+
         # Create and populate memmap
         fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape, order=order)
         data = arange(prod(shape), dtype=dtype).reshape(shape, order=order)
         fp[:] = data
         if sys.platform != 'emscripten':
             fp.flush()
-        
+
         fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape, order=order)
-        
+
         # Pickle and unpickle
         pickled = pickle.dumps(fp)
         fp_restored = pickle.loads(pickled)
-        
+
         # Verify it's still a memmap with correct data
         assert_(isinstance(fp_restored, memmap))
         assert_array_equal(fp, fp_restored)
         assert_equal(fp_restored.mode, 'r')
         assert_equal(fp_restored.dtype, dtype)
         assert_equal(fp_restored.flags.f_contiguous, order == 'F')
-        
+
         # Verify pickle is metadata only
         # 10x10 float64 is 800 bytes, float32 is 400.
         # Metadata should be small.
         assert len(pickled) < 1024
-        
+
         # Test sliced view
         # Slice to start at element 1,1
         fp_sliced = fp[1:-1, 1:-1]
