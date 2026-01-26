@@ -59,10 +59,16 @@ type ArrayLike = Buffer | _DualArrayLike[np.dtype, complex | bytes | str]
 type _ArrayLikeBool_co = _DualArrayLike[np.dtype[np.bool], bool]
 type _ArrayLikeUInt_co = _DualArrayLike[np.dtype[np.bool | np.unsignedinteger], bool]
 type _ArrayLikeInt_co = _DualArrayLike[np.dtype[np.bool | np.integer], int]
-type _ArrayLikeFloat_co = _DualArrayLike[np.dtype[np.bool | np.integer | np.floating], float]
+type _ArrayLikeFloat_co = _DualArrayLike[
+    np.dtype[np.bool | np.integer | np.floating],
+    float,
+]
 type _ArrayLikeComplex_co = _DualArrayLike[np.dtype[np.bool | np.number], complex]
 type _ArrayLikeNumber_co = _ArrayLikeComplex_co
-type _ArrayLikeTD64_co = _DualArrayLike[np.dtype[np.bool | np.integer | np.timedelta64], int]
+type _ArrayLikeTD64_co = _DualArrayLike[
+    np.dtype[np.bool | np.integer | np.timedelta64],
+    int,
+]
 type _ArrayLikeDT64_co = _ArrayLike[np.datetime64]
 type _ArrayLikeObject_co = _ArrayLike[np.object_]
 
@@ -70,10 +76,15 @@ type _ArrayLikeVoid_co = _ArrayLike[np.void]
 type _ArrayLikeBytes_co = _DualArrayLike[np.dtype[np.bytes_], bytes]
 type _ArrayLikeStr_co = _DualArrayLike[np.dtype[np.str_], str]
 type _ArrayLikeString_co = _DualArrayLike[StringDType, str]
-type _ArrayLikeAnyString_co = _DualArrayLike[np.dtype[np.character] | StringDType, bytes | str]
+type _ArrayLikeAnyString_co = _DualArrayLike[
+    np.dtype[np.character] | StringDType,
+    bytes | str,
+]
 
 type __Float64_co = np.floating[_64Bit] | np.float32 | np.float16 | np.integer | np.bool
-type __Complex128_co = np.number[_64Bit] | np.number[_32Bit] | np.float16 | np.integer | np.bool
+type __Complex128_co = (
+    np.number[_64Bit] | np.number[_32Bit] | np.float16 | np.integer | np.bool
+)
 type _ArrayLikeFloat64_co = _DualArrayLike[np.dtype[__Float64_co], float]
 type _ArrayLikeComplex128_co = _DualArrayLike[np.dtype[__Complex128_co], complex]
 
