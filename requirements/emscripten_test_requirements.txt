@@ -1,4 +1,4 @@
-hypothesis==6.150.3
+hypothesis==6.151.2
 pytest==9.0.2
 tzdata
 pytest-xdist
