@@ -802,7 +802,7 @@ def array2string(a, max_line_width=None, precision=None,
     return _array2string(a, options, separator, prefix)
 
 
-def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
+def _extendLine(s_list, line, word, line_width, next_line_prefix, legacy):
     needs_wrap = len(line) + len(word) > line_width
     if legacy > 113:
         # don't wrap lines if it won't help
@@ -810,24 +810,24 @@ def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
             needs_wrap = False
 
     if needs_wrap:
-        s += line.rstrip() + "\n"
+        s_list.append(line.rstrip() + "\n")
         line = next_line_prefix
     line += word
-    return s, line
+    return line
 
 
-def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
+def _extendLine_pretty(s_list, line, word, line_width, next_line_prefix, legacy):
     """
     Extends line with nicely formatted (possibly multi-line) string ``word``.
     """
     words = word.splitlines()
     if len(words) == 1 or legacy <= 113:
-        return _extendLine(s, line, word, line_width, next_line_prefix, legacy)
+        return _extendLine(s_list, line, word, line_width, next_line_prefix, legacy)
 
     max_word_length = max(len(word) for word in words)
     if (len(line) + max_word_length > line_width and
             len(line) > len(next_line_prefix)):
-        s += line.rstrip() + '\n'
+        s_list.append(line.rstrip() + '\n')
         line = next_line_prefix + words[0]
         indent = next_line_prefix
     else:
@@ -835,13 +835,13 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
         line += words[0]
 
     for word in words[1::]:
-        s += line.rstrip() + '\n'
+        s_list.append(line.rstrip() + '\n')
         line = indent + word
 
     suffix_length = max_word_length - len(words[-1])
     line += suffix_length * ' '
 
-    return s, line
+    return line
 
 def _formatArray(a, format_function, line_width, next_line_prefix,
                  separator, edge_items, summary_insert, legacy):
@@ -882,7 +882,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             trailing_items = a_len
 
         # stringify the array with the hanging indent on the first line too
-        s = ''
+        s_list = []
 
         # last axis (rows) - wrap elements if they would not fit on one line
         if axes_left == 1:
@@ -897,13 +897,13 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             line = hanging_indent
             for i in range(leading_items):
                 word = recurser(index + (i,), next_hanging_indent, next_width)
-                s, line = _extendLine_pretty(
-                    s, line, word, elem_width, hanging_indent, legacy)
+                line = _extendLine_pretty(
+                    s_list, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
             if show_summary:
-                s, line = _extendLine(
-                    s, line, summary_insert, elem_width, hanging_indent, legacy
+                line = _extendLine(
+                    s_list, line, summary_insert, elem_width, hanging_indent, legacy
                 )
                 if legacy <= 113:
                     line += ", "
@@ -912,45 +912,47 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
             for i in range(trailing_items, 1, -1):
                 word = recurser(index + (-i,), next_hanging_indent, next_width)
-                s, line = _extendLine_pretty(
-                    s, line, word, elem_width, hanging_indent, legacy)
+                line = _extendLine_pretty(
+                    s_list, line, word, elem_width, hanging_indent, legacy)
                 line += separator
 
             if legacy <= 113:
                 # width of the separator is not considered on 1.13
                 elem_width = curr_width
             word = recurser(index + (-1,), next_hanging_indent, next_width)
-            s, line = _extendLine_pretty(
-                s, line, word, elem_width, hanging_indent, legacy)
+            line = _extendLine_pretty(
+                s_list, line, word, elem_width, hanging_indent, legacy)
 
-            s += line
+            s_list.append(line)
 
         # other axes - insert newlines between rows
         else:
-            s = ''
+            s_list = []
             line_sep = separator.rstrip() + '\n' * (axes_left - 1)
 
             for i in range(leading_items):
                 nested = recurser(
                     index + (i,), next_hanging_indent, next_width
                 )
-                s += hanging_indent + nested + line_sep
+                s_list.append(hanging_indent + nested + line_sep)
 
             if show_summary:
                 if legacy <= 113:
                     # trailing space, fixed nbr of newlines,
                     # and fixed separator
-                    s += hanging_indent + summary_insert + ", \n"
+                    s_list.append(hanging_indent + summary_insert + ", \n")
                 else:
-                    s += hanging_indent + summary_insert + line_sep
+                    s_list.append(hanging_indent + summary_insert + line_sep)
 
             for i in range(trailing_items, 1, -1):
                 nested = recurser(index + (-i,), next_hanging_indent,
                                   next_width)
-                s += hanging_indent + nested + line_sep
+                s_list.append(hanging_indent + nested + line_sep)
 
             nested = recurser(index + (-1,), next_hanging_indent, next_width)
-            s += hanging_indent + nested
+            s_list.append(hanging_indent + nested)
+
+        s = "".join(s_list)
 
         # remove the hanging indent, and wrap in []
         s = '[' + s[len(hanging_indent):] + ']'
@@ -962,9 +964,6 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
                         hanging_indent=next_line_prefix,
                         curr_width=line_width)
     finally:
-        # recursive closures have a cyclic reference to themselves, which
-        # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
         recurser = None
 
 def _none_or_positive_arg(x, name):
