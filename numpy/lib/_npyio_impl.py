@@ -8,6 +8,7 @@ import operator
 import os
 import pickle
 import re
+import sys
 import warnings
 import weakref
 from collections.abc import Mapping
@@ -718,8 +719,12 @@ def savez_compressed(file, *args, allow_pickle=True,
         Default: True
     zipfile_kwargs : dict, optional
         Dictionary of keyword arguments forwarded directly to
-        ``zipfile.ZipFile`` (e.g. ``compression``, ``compresslevel``).
-        By default, ``compression`` is set to ``ZIP_DEFLATED``.
+        ``zipfile.ZipFile`` when creating the ``.npz`` archive (for example:
+        ``compression``, ``compresslevel``).
+
+        NumPy does not validate these arguments; any errors are raised by
+        ``zipfile.ZipFile``. By default, ``compression`` is set to
+        ``zipfile.ZIP_DEFLATED``.
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -738,11 +743,10 @@ def savez_compressed(file, *args, allow_pickle=True,
     Notes
     -----
     The ``.npz`` file format is a zipped archive of files named after the
-    variables they contain.  The archive is compressed with
-    ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
-    in ``.npy`` format. For a description of the ``.npy`` format, see
-    :py:mod:`numpy.lib.format`.
-
+    variables they contain. The archive is compressed with ``zipfile.ZIP_DEFLATED``
+    by default; this can be changed by passing ``zipfile_kwargs``. Each file in
+    the archive contains one variable in ``.npy`` format. For a description of
+    the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
     When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
     object is returned. This is a dictionary-like object which can be queried
@@ -789,78 +793,13 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
 
     # Default behaviour: use DEFLATED for the compressed variant, STORED
     # otherwise – unless the user explicitly asked for something else.
-    comp = zipfile_kwargs.get("compression")
-    if comp is None:
-        comp = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
-    else:
-        # Translate textual aliases such as ``"deflated"`` to their integer
-        # counterparts.  Accepting the textual form mirrors the behaviour of
-        # ``zipfile.ZipFile`` and provides a more friendly public API.
-        if isinstance(comp, str):
-            _str_to_const = {
-                "stored": zipfile.ZIP_STORED,
-                "deflated": zipfile.ZIP_DEFLATED,
-            }
-            if hasattr(zipfile, "ZIP_BZIP2"):
-                _str_to_const["bzip2"] = zipfile.ZIP_BZIP2
-            if hasattr(zipfile, "ZIP_LZMA"):
-                _str_to_const["lzma"] = zipfile.ZIP_LZMA
-
-            key = comp.lower()
-            if key not in _str_to_const:
-                raise ValueError(
-                    f"Unknown compression method: {comp!r}. "
-                    f"Valid options: {list(_str_to_const)}"
-                )
-            comp = _str_to_const[key]
-        elif isinstance(comp, int):
-            # Verify that the provided integer constant is supported by the
-            # runtime Python build.
-            _valid_ints = {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
-            if hasattr(zipfile, "ZIP_BZIP2"):
-                _valid_ints.add(zipfile.ZIP_BZIP2)
-            if hasattr(zipfile, "ZIP_LZMA"):
-                _valid_ints.add(zipfile.ZIP_LZMA)
-
-            if comp not in _valid_ints:
-                raise ValueError(
-                    f"Unknown compression method: {comp}. "
-                    f"Valid options: {sorted(_valid_ints)}"
-                )
-        else:
-            raise TypeError(
-                "compression must be an int (zipfile constant) or a str "
-                "specifying the method"
-            )
-
-    # Persist the (possibly normalised) compression constant back into kwargs
-    zipfile_kwargs["compression"] = comp
-
-    # Validate ``compresslevel`` – ignore if the user passed ``None``.
-    cl = zipfile_kwargs.pop("compresslevel", None)
-    if cl is not None:
-        if not isinstance(cl, int):
-            raise ValueError("compresslevel must be an integer or None")
-
-        if comp == zipfile.ZIP_STORED:
-            raise ValueError(
-                "compresslevel is not applicable when using ZIP_STORED."
-            )
-
-        def _in_range(minv: int, maxv: int) -> bool:
-            return minv <= cl <= maxv
-
-        if comp == zipfile.ZIP_DEFLATED and not _in_range(0, 9):
-            raise ValueError("For DEFLATED, compresslevel must be between 0 and 9.")
-        if (hasattr(zipfile, "ZIP_BZIP2") and comp == zipfile.ZIP_BZIP2
-                and not _in_range(1, 9)):
-            raise ValueError("For BZIP2, compresslevel must be between 1 and 9.")
-        if (hasattr(zipfile, "ZIP_LZMA") and comp == zipfile.ZIP_LZMA
-                and not _in_range(0, 9)):
-            raise ValueError("For LZMA, compresslevel must be between 0 and 9.")
-
-        # Store the validated compresslevel back into kwargs
-        zipfile_kwargs["compresslevel"] = cl
+    #
+    # We intentionally do not validate or normalise ``zipfile_kwargs`` here:
+    # all keyword arguments are forwarded to ``zipfile.ZipFile``.
+    if "compression" not in zipfile_kwargs:
+        zipfile_kwargs["compression"] = (
+            zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+        )
 
     # Create the ZipFile object
     zipf = zipfile_factory(file, mode="w", **zipfile_kwargs)
@@ -875,7 +814,16 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
     finally:
-        zipf.close()
+        # If an exception occurs during writing, `zipfile.ZipFile.close()` may
+        # itself raise (e.g. due to an unfinished write handle). Avoid masking
+        # the original exception in that case.
+        if sys.exc_info()[0] is None:
+            zipf.close()
+        else:
+            try:
+                zipf.close()
+            except Exception:
+                pass
 
 
 def _ensure_ndmin_ndarray_check_param(ndmin):
