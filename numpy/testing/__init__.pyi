@@ -47,7 +47,7 @@ from ._private.utils import (  # type: ignore[deprecated]
     run_threaded,
     rundocs,
     runstring,
-    suppress_warnings,
+    suppress_warnings,  # pyrefly: ignore[deprecated]
     tempdir,
     temppath,
     verbose,

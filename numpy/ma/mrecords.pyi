@@ -81,7 +81,7 @@ class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co], Generic[_ShapeT_co, _DT
     # keep in sync with `MaskedArray.view`, but without the `fill_value`
     @override  # type: ignore[override]
     @overload  # ()
-    def view(self, /, dtype: None = None, type: None = None) -> Self: ...
+    def view(self, /, dtype: None = None, type: None = None) -> Self: ...  # pyrefly: ignore[bad-override]
     @overload  # (dtype: DTypeT)
     def view[DTypeT: np.dtype](
         self, /, dtype: DTypeT | _HasDType[DTypeT], type: None = None
