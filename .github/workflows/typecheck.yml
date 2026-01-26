@@ -1,4 +1,4 @@
-name: Run MyPy
+name: Type-checking
 
 # Mypy is too slow to run as part of regular CI. The purpose of the jobs in
 # this file is to cover running Mypy across:
