@@ -333,8 +333,8 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
         **kwds: Unpack[_UFunc3Kwargs],
     ) -> NDArray[Incomplete] | Incomplete: ...
 
-    @override  # type: ignore[override]
-    def at(  # pyrefly: ignore[bad-override]
+    @override
+    def at(  # type: ignore[override]
         self,
         a: np.ndarray | _SupportsArrayUFunc,
         indices: _ArrayLikeInt_co,
@@ -840,8 +840,8 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
     ) -> Incomplete: ...
 
-    @override  # type: ignore[override]
-    def at(  # pyrefly: ignore[bad-override]
+    @override
+    def at(  # type: ignore[override]
         self,
         a: np.ndarray | _SupportsArrayUFunc,
         indices: _ArrayLikeInt_co,
