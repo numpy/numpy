@@ -383,12 +383,6 @@ class memmap(ndarray):
                 self.mode,
                 self.offset,
                 self.shape,
-                self._get_order(),
+                'F' if self.flags.f_contiguous and not self.flags.c_contiguous else 'C',
             )
         )
-
-    def _get_order(self):
-        """Helper to determine array order for pickling."""
-        if self.flags.f_contiguous and not self.flags.c_contiguous:
-            return 'F'
-        return 'C'

@@ -247,19 +247,20 @@ class TestMemmap:
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
 
-    def test_pickle(self, tmp_path):
+    @pytest.mark.parametrize("dtype", [">f8", "<f4"])
+    @pytest.mark.parametrize("order", ["C", "F"])
+    def test_pickle(self, dtype, order, tmp_path):
         tmpname = tmp_path / 'mmap'
-        shape = (100, 100)
-        dtype = 'float32'
+        shape = (10, 10)
         
         # Create and populate memmap
-        fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape)
-        fp[:] = arange(10000, dtype=dtype).reshape(shape)
+        fp = memmap(tmpname, dtype=dtype, mode='w+', shape=shape, order=order)
+        data = arange(prod(shape), dtype=dtype).reshape(shape, order=order)
+        fp[:] = data
         if sys.platform != 'emscripten':
             fp.flush()
         
-        # Reopen for reading
-        fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape)
+        fp = memmap(tmpname, dtype=dtype, mode='r', shape=shape, order=order)
         
         # Pickle and unpickle
         pickled = pickle.dumps(fp)
@@ -269,10 +270,23 @@ class TestMemmap:
         assert_(isinstance(fp_restored, memmap))
         assert_array_equal(fp, fp_restored)
         assert_equal(fp_restored.mode, 'r')
+        assert_equal(fp_restored.dtype, dtype)
+        assert_equal(fp_restored.flags.f_contiguous, order == 'F')
         
-        # Verify pickle is small (metadata only, not data)
-        # 100x100 float32 is 40KB. Metadata should be much smaller.
+        # Verify pickle is metadata only
+        # 10x10 float64 is 800 bytes, float32 is 400.
+        # Metadata should be small.
         assert len(pickled) < 1024
         
-        del fp
-        del fp_restored
+        # Test sliced view
+        # Slice to start at element 1,1
+        fp_sliced = fp[1:-1, 1:-1]
+        pickled_sliced = pickle.dumps(fp_sliced)
+        fp_sliced_restored = pickle.loads(pickled_sliced)
+        assert_array_equal(fp_sliced, fp_sliced_restored)
+
+        # Test strided view
+        fp_strided = fp[::2, ::2]
+        pickled_strided = pickle.dumps(fp_strided)
+        fp_strided_restored = pickle.loads(pickled_strided)
+        assert_array_equal(fp_strided, fp_strided_restored)
