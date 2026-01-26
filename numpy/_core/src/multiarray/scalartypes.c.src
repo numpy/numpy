@@ -1798,41 +1798,6 @@ gentype_dataptr_get(PyObject *self)
     );
 }
 
-static PyObject *
-gentype_typestr_get(PyObject *self)
-{
-    return arraydescr_protocol_typestr_get(PyArray_DescrFromScalar(self), NULL);
-}
-
-
-static PyObject *
-gentype_protocol_descr_get(PyObject *self)
-{
-    PyObject *res;
-    PyObject *dobj;
-
-    res = arraydescr_protocol_descr_get(PyArray_DescrFromScalar(self), NULL);
-    if (res) {
-        return res;
-    }
-    PyErr_Clear();
-
-    /* get default */
-    dobj = PyTuple_New(2);
-    if (dobj == NULL) {
-        return NULL;
-    }
-    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
-    PyTuple_SET_ITEM(dobj, 1, gentype_typestr_get(self));
-    res = PyList_New(1);
-    if (res == NULL) {
-        Py_DECREF(dobj);
-        return NULL;
-    }
-    PyList_SET_ITEM(res, 0, dobj);
-    return res;
-}
-
 
 static PyObject *
 gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
@@ -1863,7 +1828,7 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
         return NULL;
     }
 
-    obj = gentype_protocol_descr_get(self);
+    obj = array_protocol_descr_get(PyArray_DescrFromScalar(self));
     ret = PyDict_SetItemString(inter, "descr", obj);
     Py_DECREF(obj);
     if (ret < 0) {
@@ -1871,7 +1836,7 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
         return NULL;
     }
 
-    obj = gentype_typestr_get(self);
+    obj = arraydescr_protocol_typestr_get(PyArray_DescrFromScalar(self), NULL);
     ret = PyDict_SetItemString(inter, "typestr", obj);
     Py_DECREF(obj);
     if (ret < 0) {

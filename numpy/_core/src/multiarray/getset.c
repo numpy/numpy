@@ -201,44 +201,10 @@ array_priority_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-array_typestr_get(PyArrayObject *self)
-{
-    return arraydescr_protocol_typestr_get(PyArray_DESCR(self), NULL);
-}
-
-static PyObject *
 array_descr_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
     Py_INCREF(PyArray_DESCR(self));
     return (PyObject *)PyArray_DESCR(self);
-}
-
-static PyObject *
-array_protocol_descr_get(PyArrayObject *self)
-{
-    PyObject *res;
-    PyObject *dobj;
-
-    res = arraydescr_protocol_descr_get(PyArray_DESCR(self), NULL);
-    if (res) {
-        return res;
-    }
-    PyErr_Clear();
-
-    /* get default */
-    dobj = PyTuple_New(2);
-    if (dobj == NULL) {
-        return NULL;
-    }
-    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
-    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
-    res = PyList_New(1);
-    if (res == NULL) {
-        Py_DECREF(dobj);
-        return NULL;
-    }
-    PyList_SET_ITEM(res, 0, dobj);
-    return res;
 }
 
 static PyObject *
@@ -307,7 +273,7 @@ array_interface_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
         return NULL;
     }
 
-    obj = array_protocol_descr_get(self);
+    obj = array_protocol_descr_get(PyArray_DESCR(self));
     ret = PyDict_SetItemString(dict, "descr", obj);
     Py_DECREF(obj);
     if (ret < 0) {
