@@ -20,6 +20,13 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
+PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
+                         NPY_CASTING casting,
+                         PyArrayObject **operands,
+                         PyObject *type_tup,
+                         PyArray_Descr **out_dtypes);
+
+NPY_NO_EXPORT int
 PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc,
                              NPY_CASTING casting,
                              PyArrayObject **operands,
