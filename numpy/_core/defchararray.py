@@ -274,7 +274,7 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     i : array_like, with any integer dtype
 
@@ -408,6 +408,10 @@ class chararray(ndarray):
               strides=None, order=None)
 
     Provides a convenient view on arrays of string and unicode values.
+
+    .. deprecated:: 2.5
+       ``chararray`` is deprecated. Use an ``ndarray`` with a string or
+       bytes dtype instead.
 
     .. note::
        The `chararray` class exists for backwards compatibility with
