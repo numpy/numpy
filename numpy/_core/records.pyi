@@ -55,7 +55,7 @@ class _SupportsReadInto(Protocol):
 # exported in `numpy.rec`
 class record(np.void):  # type: ignore[misc]
     __name__: ClassVar[Literal["record"]] = "record"
-    __module__: Literal["numpy"] = "numpy"
+    __module__: Literal["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     def pprint(self) -> str: ...
 
@@ -64,14 +64,14 @@ class record(np.void):  # type: ignore[misc]
 
     #
     @overload  # type: ignore[override]
-    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...
+    def __getitem__(self, key: str | SupportsIndex, /) -> Incomplete: ...  # pyrefly: ignore[bad-override]
     @overload
     def __getitem__(self, key: list[str], /) -> record: ...
 
 # exported in `numpy.rec`
 class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
     __name__: ClassVar[Literal["recarray"]] = "recarray"
-    __module__: Literal["numpy.rec"] = "numpy.rec"
+    __module__: Literal["numpy.rec"] = "numpy.rec"  # pyrefly: ignore[bad-override]
 
     @overload
     def __new__(
