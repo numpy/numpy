@@ -553,6 +553,13 @@ def mypy(ctx):
 
 
 @click.command()
+def pyrefly() -> None:
+    """🪲 Type-check the stubs with Pyrefly
+    """
+    spin.util.run(['pyrefly', 'check'])
+
+
+@click.command()
 @click.option(
     '--concise',
     is_flag=True,

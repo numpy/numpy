@@ -251,6 +251,7 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:build",
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
+  ".spin/cmds.py:pyrefly",
   ".spin/cmds.py:stubtest",
   ".spin/cmds.py:config_openblas",
   ".spin/cmds.py:lint",
