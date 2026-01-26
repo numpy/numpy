@@ -1,16 +1,37 @@
+import sys
+
 import pytest
+
 import numpy as np
 from numpy._core import (
-    array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
-    newaxis, concatenate, stack
-    )
+    arange,
+    array,
+    atleast_1d,
+    atleast_2d,
+    atleast_3d,
+    block,
+    concatenate,
+    hstack,
+    newaxis,
+    stack,
+    vstack,
+)
+from numpy._core.shape_base import (
+    _block_concatenate,
+    _block_dispatcher,
+    _block_setup,
+    _block_slicing,
+)
 from numpy.exceptions import AxisError
-from numpy._core.shape_base import (_block_dispatcher, _block_setup,
-                                   _block_concatenate, _block_slicing)
 from numpy.testing import (
-    assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns, IS_PYPY
-    )
+    IS_PYPY,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
+from numpy.testing._private.utils import requires_memory
 
 
 class TestAtleast1d:
@@ -111,7 +132,7 @@ class TestAtleast3d:
         a = array([[1, 2], [1, 2]])
         b = array([[2, 3], [2, 3]])
         res = [atleast_3d(a), atleast_3d(b)]
-        desired = [a[:,:, newaxis], b[:,:, newaxis]]
+        desired = [a[:, :, newaxis], b[:, :, newaxis]]
         assert_array_equal(res, desired)
 
     def test_3D_array(self):
@@ -156,7 +177,7 @@ class TestHstack:
         with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(np.arange(3) for _ in range(2))
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            hstack((x for x in np.ones((3, 2))))
+            hstack(x for x in np.ones((3, 2)))
 
     def test_casting_and_dtype(self):
         a = np.array([1, 2, 3])
@@ -225,7 +246,6 @@ class TestVstack:
             vstack((a, b), casting="safe", dtype=np.int64)
 
 
-
 class TestConcatenate:
     def test_returns_copy(self):
         a = np.eye(3)
@@ -236,7 +256,7 @@ class TestConcatenate:
     def test_exceptions(self):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
-            a = np.ones((1,)*ndim)
+            a = np.ones((1,) * ndim)
             np.concatenate((a, a), axis=0)  # OK
             assert_raises(AxisError, np.concatenate, (a, a), axis=ndim)
             assert_raises(AxisError, np.concatenate, (a, a), axis=-(ndim + 1))
@@ -262,9 +282,8 @@ class TestConcatenate:
             assert_raises_regex(
                 ValueError,
                 "all the input array dimensions except for the concatenation axis "
-                "must match exactly, but along dimension {}, the array at "
-                "index 0 has size 1 and the array at index 1 has size 2"
-                .format(i),
+                f"must match exactly, but along dimension {i}, the array at "
+                "index 0 has size 1 and the array at index 1 has size 2",
                 np.concatenate, (a, b), axis=axis[1])
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
             a = np.moveaxis(a, -1, 0)
@@ -273,6 +292,22 @@ class TestConcatenate:
 
         # No arrays to concatenate raises ValueError
         assert_raises(ValueError, concatenate, ())
+
+    @pytest.mark.slow
+    @pytest.mark.skipif(
+        sys.maxsize < 2**32,
+        reason="only problematic on 64bit platforms"
+    )
+    @requires_memory(2 * np.iinfo(np.intc).max)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
+    def test_huge_list_error(self):
+        a = np.array([1])
+        max_int = np.iinfo(np.intc).max
+        arrs = (a,) * (max_int + 1)
+        msg = (fr"concatenate\(\) only supports up to {max_int} arrays"
+               f" but got {max_int + 1}.")
+        with pytest.raises(ValueError, match=msg):
+            np.concatenate(arrs)
 
     def test_concatenate_axis_None(self):
         a = np.arange(4, dtype=np.float64).reshape((2, 2))
@@ -349,12 +384,20 @@ class TestConcatenate:
         assert_(out is rout)
         assert_equal(res, rout)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PYPY handles sq_concat, nb_add differently than cpython")
+    def test_concatenate_same_value(self):
+        r4 = list(range(4))
+        with pytest.raises(ValueError, match="^casting must be one of"):
+            concatenate([r4, r4], casting="same_value")
+
+    @pytest.mark.skipif(
+        IS_PYPY,
+        reason="PYPY handles sq_concat, nb_add differently than cpython"
+    )
     def test_operator_concat(self):
         import operator
         a = array([1, 2])
         b = array([3, 4])
-        n = [1,2]
+        n = [1, 2]
         res = array([1, 2, 3, 4])
         assert_raises(TypeError, operator.concat, a, b)
         assert_raises(TypeError, operator.concat, a, n)
@@ -367,8 +410,8 @@ class TestConcatenate:
         b = array([3, 4])
 
         assert_raises(ValueError, concatenate, (a, b), out=np.empty(5))
-        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4,1)))
-        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1,4)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4, 1)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1, 4)))
         concatenate((a, b), out=np.empty(4))
 
     @pytest.mark.parametrize("axis", [None, 0])
@@ -479,13 +522,13 @@ def test_stack():
     with pytest.raises(TypeError, match="arrays to stack must be"):
         stack(x for x in range(3))
 
-    #casting and dtype test
+    # casting and dtype test
     a = np.array([1, 2, 3])
     b = np.array([2.5, 3.5, 4.5])
     res = np.stack((a, b), axis=1, casting="unsafe", dtype=np.int64)
     expected_res = np.array([[1, 2], [2, 3], [3, 4]])
     assert_array_equal(res, expected_res)
-    #casting and dtype with TypeError
+    # casting and dtype with TypeError
     with assert_raises(TypeError):
         stack((a, b), dtype=np.int64, axis=1, casting="safe")
 
@@ -765,9 +808,10 @@ class TestBlock:
         assert_raises(ValueError, block, [a, b])
         assert_raises(ValueError, block, [b, a])
 
-        to_block = [[np.ones((2,3)), np.ones((2,2))],
-                    [np.ones((2,2)), np.ones((2,2))]]
+        to_block = [[np.ones((2, 3)), np.ones((2, 2))],
+                    [np.ones((2, 2)), np.ones((2, 2))]]
         assert_raises(ValueError, block, to_block)
+
     def test_no_lists(self, block):
         assert_equal(block(1),         np.array(1))
         assert_equal(block(np.eye(3)), np.eye(3))
@@ -817,8 +861,8 @@ class TestBlock:
 
     def test_block_memory_order(self, block):
         # 3D
-        arr_c = np.zeros((3,)*3, order='C')
-        arr_f = np.zeros((3,)*3, order='F')
+        arr_c = np.zeros((3,) * 3, order='C')
+        arr_f = np.zeros((3,) * 3, order='F')
 
         b_c = [[[arr_c, arr_c],
                 [arr_c, arr_c]],

@@ -28,11 +28,13 @@ NPY_FINLINE npyv_f32 npyv_square_f32(npyv_f32 a)
     // Based on ARM doc, see https://developer.arm.com/documentation/dui0204/j/CIHDIACI
     NPY_FINLINE npyv_f32 npyv_sqrt_f32(npyv_f32 a)
     {
+        const npyv_f32 one = vdupq_n_f32(1.0f);
         const npyv_f32 zero = vdupq_n_f32(0.0f);
         const npyv_u32 pinf = vdupq_n_u32(0x7f800000);
         npyv_u32 is_zero = vceqq_f32(a, zero), is_inf = vceqq_u32(vreinterpretq_u32_f32(a), pinf);
-        // guard against floating-point division-by-zero error
-        npyv_f32 guard_byz = vbslq_f32(is_zero, vreinterpretq_f32_u32(pinf), a);
+        npyv_u32 is_special = vorrq_u32(is_zero, is_inf);
+        // guard against division-by-zero and infinity input to vrsqrte to avoid invalid fp error
+        npyv_f32 guard_byz = vbslq_f32(is_special, one, a);
         // estimate to (1/√a)
         npyv_f32 rsqrte = vrsqrteq_f32(guard_byz);
         /**
@@ -47,10 +49,8 @@ NPY_FINLINE npyv_f32 npyv_square_f32(npyv_f32 a)
         rsqrte = vmulq_f32(vrsqrtsq_f32(vmulq_f32(a, rsqrte), rsqrte), rsqrte);
         // a * (1/√a)
         npyv_f32 sqrt = vmulq_f32(a, rsqrte);
-        // return zero if the a is zero
-        // - return zero if a is zero.
-        // - return positive infinity if a is positive infinity
-        return vbslq_f32(vorrq_u32(is_zero, is_inf), a, sqrt);
+        // Handle special cases: return a for zeros and positive infinities
+        return vbslq_f32(is_special, a, sqrt);
     }
 #endif // NPY_SIMD_F64
 

@@ -92,6 +92,7 @@ one of::
     $ spin test -v
     $ spin test numpy/random  # to run the tests in a specific module
     $ spin test -v -t numpy/_core/tests/test_nditer.py::test_iter_c_order
+    $ spin test -p auto # to run tests in parallel threads using pytest-run-parallel
 
 This builds NumPy first, so the first time it may take a few minutes.
 
@@ -185,6 +186,16 @@ For more extensive information, see :ref:`testing-guidelines`.
 Note: do not run the tests from the root directory of your numpy git repo without ``spin``,
 that will result in strange test errors.
 
+Running type checks
+-------------------
+Changes that involve static type declarations are also executed using ``spin``.
+The invocation will look like the following:
+
+    $ spin mypy
+
+This will look in the ``typing/tests`` directory for sets of operations to
+test for type incompatibility.
+
 Running linting
 ---------------
 Lint checks can be performed on newly added lines of Python code.
@@ -199,12 +210,12 @@ To run lint checks before committing new code, run::
 
 To check all changes in newly added Python code of current branch with target branch, run::
 
-    $ python tools/linter.py --branch main
+    $ python tools/linter.py
 
 If there are no errors, the script exits with no message. In case of errors,
 check the error message for details::
 
-    $ python tools/linter.py --branch main
+    $ python tools/linter.py
     ./numpy/_core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
     1       E303 too many blank lines (3)
 

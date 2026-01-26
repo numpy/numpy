@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 C declarations, CPP macros, and C functions for f2py2e.
 Only required declarations/macros/functions will be used.
@@ -10,8 +9,8 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import sys
 import copy
+import sys
 
 from . import __version__
 
@@ -28,6 +27,7 @@ def errmess(s: str) -> None:
         sys.stderr.write(s)
 
 ##################### Definitions ##################
+
 
 outneeds = {'includes0': [], 'includes': [], 'typedefs': [], 'typedefs_generated': [],
             'userincludes': [],
@@ -549,24 +549,32 @@ cppmacros['OLDPYNUM'] = """
 #error You need to install NumPy version 0.13 or higher. See https://scipy.org/install.html
 #endif
 """
+
+# Defining the correct value to indicate thread-local storage in C without
+# running a compile-time check (which we have no control over in generated
+# code used outside of NumPy) is hard. Therefore we support overriding this
+# via an external define - the f2py-using package can then use the same
+# compile-time checks as we use for `NPY_TLS` when building NumPy (see
+# scipy#21860 for an example of that).
+#
+# __STDC_NO_THREADS__ should not be coupled to the availability of _Thread_local.
+# In case we get a bug report, guard it with __STDC_NO_THREADS__ after all.
+#
+# `thread_local` has become a keyword in C23, but don't try to use that yet
+# (too new, doing so while C23 support is preliminary will likely cause more
+#  problems than it solves).
+#
+# Note: do not try to use `threads.h`, its availability is very low
+# *and* threads.h isn't actually used where `F2PY_THREAD_LOCAL_DECL` is
+# in the generated code. See gh-27718 for more details.
 cppmacros["F2PY_THREAD_LOCAL_DECL"] = """
 #ifndef F2PY_THREAD_LOCAL_DECL
 #if defined(_MSC_VER)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
 #elif defined(NPY_OS_MINGW)
 #define F2PY_THREAD_LOCAL_DECL __thread
-#elif defined(__STDC_VERSION__) \\
-      && (__STDC_VERSION__ >= 201112L) \\
-      && !defined(__STDC_NO_THREADS__) \\
-      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12)) \\
-      && !defined(NPY_OS_OPENBSD) && !defined(NPY_OS_HAIKU)
-/* __STDC_NO_THREADS__ was first defined in a maintenance release of glibc 2.12,
-   see https://lists.gnu.org/archive/html/commit-hurd/2012-07/msg00180.html,
-   so `!defined(__STDC_NO_THREADS__)` may give false positive for the existence
-   of `threads.h` when using an older release of glibc 2.12
-   See gh-19437 for details on OpenBSD */
-#include <threads.h>
-#define F2PY_THREAD_LOCAL_DECL thread_local
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define F2PY_THREAD_LOCAL_DECL _Thread_local
 #elif defined(__GNUC__) \\
       && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 4)))
 #define F2PY_THREAD_LOCAL_DECL __thread
@@ -590,32 +598,37 @@ static int calcarrindextr(int *i,PyArrayObject *arr) {
     return ii;
 }"""
 cfuncs['forcomb'] = """
-static struct { int nd;npy_intp *d;int *i,*i_tr,tr; } forcombcache;
-static int initforcomb(npy_intp *dims,int nd,int tr) {
+struct ForcombCache { int nd;npy_intp *d;int *i,*i_tr,tr; };
+static int initforcomb(struct ForcombCache *cache, npy_intp *dims,int nd,int tr) {
   int k;
   if (dims==NULL) return 0;
   if (nd<0) return 0;
-  forcombcache.nd = nd;
-  forcombcache.d = dims;
-  forcombcache.tr = tr;
-  if ((forcombcache.i = (int *)malloc(sizeof(int)*nd))==NULL) return 0;
-  if ((forcombcache.i_tr = (int *)malloc(sizeof(int)*nd))==NULL) return 0;
+  cache->nd = nd;
+  cache->d = dims;
+  cache->tr = tr;
+
+  cache->i = (int *)malloc(sizeof(int)*nd);
+  if (cache->i==NULL) return 0;
+  cache->i_tr = (int *)malloc(sizeof(int)*nd);
+  if (cache->i_tr==NULL) {free(cache->i); return 0;};
+
   for (k=1;k<nd;k++) {
-    forcombcache.i[k] = forcombcache.i_tr[nd-k-1] = 0;
+    cache->i[k] = cache->i_tr[nd-k-1] = 0;
   }
-  forcombcache.i[0] = forcombcache.i_tr[nd-1] = -1;
+  cache->i[0] = cache->i_tr[nd-1] = -1;
   return 1;
 }
-static int *nextforcomb(void) {
+static int *nextforcomb(struct ForcombCache *cache) {
+  if (cache==NULL) return NULL;
   int j,*i,*i_tr,k;
-  int nd=forcombcache.nd;
-  if ((i=forcombcache.i) == NULL) return NULL;
-  if ((i_tr=forcombcache.i_tr) == NULL) return NULL;
-  if (forcombcache.d == NULL) return NULL;
+  int nd=cache->nd;
+  if ((i=cache->i) == NULL) return NULL;
+  if ((i_tr=cache->i_tr) == NULL) return NULL;
+  if (cache->d == NULL) return NULL;
   i[0]++;
-  if (i[0]==forcombcache.d[0]) {
+  if (i[0]==cache->d[0]) {
     j=1;
-    while ((j<nd) && (i[j]==forcombcache.d[j]-1)) j++;
+    while ((j<nd) && (i[j]==cache->d[j]-1)) j++;
     if (j==nd) {
       free(i);
       free(i_tr);
@@ -626,7 +639,7 @@ static int *nextforcomb(void) {
     i_tr[nd-j-1]++;
   } else
     i_tr[nd-1]++;
-  if (forcombcache.tr) return i_tr;
+  if (cache->tr) return i_tr;
   return i;
 }"""
 needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
@@ -1039,9 +1052,12 @@ long_double_from_pyobj(long_double* v, PyObject *obj, const char *errmess)
             PyArray_ScalarAsCtype(obj, v);
             return 1;
         }
-        else if (PyArray_Check(obj) && PyArray_TYPE(obj) == NPY_LONGDOUBLE) {
-            (*v) = *((npy_longdouble *)PyArray_DATA(obj));
-            return 1;
+        else if (PyArray_Check(obj)) {
+            PyArrayObject *arr = (PyArrayObject *)obj;
+            if (PyArray_TYPE(arr) == NPY_LONGDOUBLE) {
+                (*v) = *((npy_longdouble *)PyArray_DATA(arr));
+                return 1;
+            }
         }
     }
     if (double_from_pyobj(&d, obj, errmess)) {
@@ -1123,10 +1139,13 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
             PyArray_ScalarAsCtype(obj, v);
             return 1;
         }
-        else if (PyArray_Check(obj) && PyArray_TYPE(obj)==NPY_CLONGDOUBLE) {
-            (*v).r = npy_creall(*(((npy_clongdouble *)PyArray_DATA(obj))));
-            (*v).i = npy_cimagl(*(((npy_clongdouble *)PyArray_DATA(obj))));
-            return 1;
+        else if (PyArray_Check(obj)) {
+            PyArrayObject *arr = (PyArrayObject *)obj;
+            if (PyArray_TYPE(arr)==NPY_CLONGDOUBLE) {
+                (*v).r = npy_creall(*(((npy_clongdouble *)PyArray_DATA(arr))));
+                (*v).i = npy_cimagl(*(((npy_clongdouble *)PyArray_DATA(arr))));
+                return 1;
+            }
         }
     }
     if (complex_double_from_pyobj(&cd,obj,errmess)) {
@@ -1431,14 +1450,14 @@ capi_fail:
 def buildcfuncs():
     from .capi_maps import c2capi_map
     for k in c2capi_map.keys():
-        m = 'pyarr_from_p_%s1' % k
+        m = f'pyarr_from_p_{k}1'
         cppmacros[
-            m] = '#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))' % (m, c2capi_map[k])
+            m] = f'#define {m}(v) (PyArray_SimpleNewFromData(0,NULL,{c2capi_map[k]},(char *)v))'
     k = 'string'
-    m = 'pyarr_from_p_%s1' % k
+    m = f'pyarr_from_p_{k}1'
     # NPY_CHAR compatibility, NPY_STRING with itemsize 1
     cppmacros[
-        m] = '#define %s(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))' % (m)
+        m] = f'#define {m}(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))'
 
 
 ############ Auxiliary functions for sorting needs ###################
@@ -1470,7 +1489,7 @@ def append_needs(need, flag=1):
         elif need in commonhooks:
             n = 'commonhooks'
         else:
-            errmess('append_needs: unknown need %s\n' % (repr(need)))
+            errmess(f'append_needs: unknown need {repr(need)}\n')
             return
         if need in outneeds[n]:
             return
@@ -1506,8 +1525,7 @@ def append_needs(need, flag=1):
             tmp[n].append(need)
             return tmp
     else:
-        errmess('append_needs: expected list or string but got :%s\n' %
-                (repr(need)))
+        errmess(f'append_needs: expected list or string but got :{repr(need)}\n')
 
 
 def get_needs():

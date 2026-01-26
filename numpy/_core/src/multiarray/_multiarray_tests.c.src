@@ -7,6 +7,7 @@
 #include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
+#include "npy_import.h"
 #include "common.h"
 #include "npy_argparse.h"
 #include "mem_overlap.h"
@@ -644,7 +645,7 @@ incref_elide_l(PyObject *dummy, PyObject *args)
     }
     /* get item without increasing refcount, item may still be on the python
      * stack but above the inaccessible top */
-    r = PyList_GetItem(arg, 4);
+    r = PyList_GetItem(arg, 4); // noqa: borrowed-ref OK
     res = PyNumber_Add(r, r);
 
     return res;
@@ -863,7 +864,7 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     if (classes == NULL) {
         goto fail;
     }
-    Py_SETREF(classes, PySequence_Fast(classes, NULL));
+    Py_SETREF(classes, PySequence_Fast(classes, NULL)); // noqa: borrowed-ref OK
     if (classes == NULL) {
         goto fail;
     }
@@ -883,7 +884,7 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         PyObject *to_dtype, *cast_obj;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(NPY_DT_SLOTS(from_dtype)->castingimpls,
+        while (PyDict_Next(NPY_DT_SLOTS(from_dtype)->castingimpls, // noqa: borrowed-ref OK
                            &pos, &to_dtype, &cast_obj)) {
             if (cast_obj == Py_None) {
                 continue;
@@ -922,36 +923,24 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
+static void
+identity_cache_destructor(PyObject *capsule)
+{
+    PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
+    assert(tb != NULL);
+    PyArrayIdentityHash_Dealloc(tb);
+}
 
 /*
- * Helper to test the identity cache, takes a list of values and adds
- * all to the cache except the last key/value pair.  The last value is
- * ignored, instead the last key is looked up.
- * None is returned, if the key is not found.
- * If `replace` is True, duplicate entries are ignored when adding to the
- * hashtable.
+ * Create an identity hash table with the given key length and return it
+ * as a capsule.
  */
 static PyObject *
-identityhash_tester(PyObject *NPY_UNUSED(mod),
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+create_identity_hash(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    NPY_PREPARE_ARGPARSER;
-
     int key_len;
-    int replace;
-    PyObject *replace_obj = Py_False;
-    PyObject *sequence;
-    PyObject *result = NULL;
 
-    if (npy_parse_arguments("identityhash_tester", args, len_args, kwnames,
-            "key_len", &PyArray_PythonPyIntFromInt, &key_len,
-            "sequence", NULL, &sequence,
-            "|replace", NULL, &replace_obj,
-            NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
-    replace = PyObject_IsTrue(replace_obj);
-    if (error_converting(replace)) {
+    if (!PyArg_ParseTuple(args, "i", &key_len)) {
         return NULL;
     }
 
@@ -959,52 +948,91 @@ identityhash_tester(PyObject *NPY_UNUSED(mod),
         PyErr_SetString(PyExc_ValueError, "must have 1 to max-args keys.");
         return NULL;
     }
+
     PyArrayIdentityHash *tb = PyArrayIdentityHash_New(key_len);
     if (tb == NULL) {
         return NULL;
     }
 
-    /* Replace the sequence with a guaranteed fast-sequence */
-    sequence = PySequence_Fast(sequence, "converting sequence.");
-    if (sequence == NULL) {
-        goto finish;
+    PyObject *capsule = PyCapsule_New((void *)tb, "PyArrayIdentityHash",
+                                       identity_cache_destructor);
+    if (capsule == NULL) {
+        PyArrayIdentityHash_Dealloc(tb);
+        return NULL;
     }
 
-    Py_ssize_t length = PySequence_Fast_GET_SIZE(sequence);
-    for (Py_ssize_t i = 0; i < length; i++) {
-        PyObject *key_val = PySequence_Fast_GET_ITEM(sequence, i);
-        if (!PyTuple_CheckExact(key_val) || PyTuple_GET_SIZE(key_val) != 2) {
-            PyErr_SetString(PyExc_TypeError, "bad key-value pair.");
-            goto finish;
-        }
-        PyObject *key = PyTuple_GET_ITEM(key_val, 0);
-        PyObject *value = PyTuple_GET_ITEM(key_val, 1);
-        if (!PyTuple_CheckExact(key) || PyTuple_GET_SIZE(key) != key_len) {
-            PyErr_SetString(PyExc_TypeError, "bad key tuple.");
-            goto finish;
-        }
+    return capsule;
+}
 
-        PyObject *keys[NPY_MAXARGS];
-        for (int j = 0; j < key_len; j++) {
-            keys[j] = PyTuple_GET_ITEM(key, j);
-        }
-        if (i != length - 1) {
-            if (PyArrayIdentityHash_SetItem(tb, keys, value, replace) < 0) {
-                goto finish;
-            }
-        }
-        else {
-            result = PyArrayIdentityHash_GetItem(tb, keys);
-            if (result == NULL) {
-                result = Py_None;
-            }
-            Py_INCREF(result);
-        }
+/*
+ * Set default item in identity hash table provided as capsule and key as tuple.
+ * If the key is already present, return the existing value else set to value and
+ * return that.
+ */
+static PyObject *
+identity_hash_set_item_default(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *capsule, *key_tuple, *value;
+    if (!PyArg_ParseTuple(args, "OOO", &capsule, &key_tuple, &value)) {
+        return NULL;
     }
 
-  finish:
-    Py_DECREF(sequence);
-    PyArrayIdentityHash_Dealloc(tb);
+    if (!PyCapsule_IsValid(capsule, "PyArrayIdentityHash")) {
+        PyErr_SetString(PyExc_TypeError,
+                       "First argument must be a valid PyArrayIdentityHash capsule.");
+        return NULL;
+    }
+
+    PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
+    assert(tb != NULL);
+
+    if (!PyTuple_CheckExact(key_tuple) || PyTuple_GET_SIZE(key_tuple) != tb->key_len) {
+        PyErr_Format(PyExc_TypeError,
+                    "key must be a tuple of length %d", tb->key_len);
+        return NULL;
+    }
+
+    PyObject *result = NULL;
+    if (PyArrayIdentityHash_SetItemDefault(tb, &PyTuple_GET_ITEM(key_tuple, 0), value, &result) < 0) {
+        return NULL;
+    }
+    Py_INCREF(result);
+    return result;
+}
+
+
+/*
+ * Get item from identity hash table provided as capsule and key as tuple.
+ */
+static PyObject *
+identity_hash_get_item(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *capsule, *key_tuple;
+
+    if (!PyArg_ParseTuple(args, "OO", &capsule, &key_tuple)) {
+        return NULL;
+    }
+
+    if (!PyCapsule_IsValid(capsule, "PyArrayIdentityHash")) {
+        PyErr_SetString(PyExc_TypeError,
+                       "First argument must be a valid PyArrayIdentityHash capsule.");
+        return NULL;
+    }
+
+    PyArrayIdentityHash *tb = (PyArrayIdentityHash *)PyCapsule_GetPointer(capsule, "PyArrayIdentityHash");
+    assert(tb != NULL);
+
+    if (!PyTuple_CheckExact(key_tuple) || PyTuple_GET_SIZE(key_tuple) != tb->key_len) {
+        PyErr_Format(PyExc_TypeError,
+                    "key must be a tuple of length %d", tb->key_len);
+        return NULL;
+    }
+
+    PyObject *result = PyArrayIdentityHash_GetItem(tb, &PyTuple_GET_ITEM(key_tuple, 0));
+    if (result == NULL) {
+        Py_RETURN_NONE;
+    }
+    Py_INCREF(result);
     return result;
 }
 
@@ -1877,7 +1905,9 @@ get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
         result = _controlfp(0, 0);
         return PyLong_FromLongLong(result);
     }
-#elif (defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))) || (defined(_MSC_VER) && defined(__clang__))
+#elif (defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))) \
+  || (defined(_MSC_VER) && defined(__clang__) && \
+      (defined(_M_IX86) || defined(_M_AMD64)))
     {
         unsigned short cw = 0;
         __asm__("fstcw %w0" : "=m" (cw));
@@ -2087,10 +2117,18 @@ run_sortkind_converter(PyObject* NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     switch (kind) {
-        case _NPY_SORT_UNDEFINED: return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
-        case NPY_QUICKSORT: return PyUnicode_FromString("NPY_QUICKSORT");
-        case NPY_HEAPSORT: return PyUnicode_FromString("NPY_HEAPSORT");
-        case NPY_STABLESORT: return PyUnicode_FromString("NPY_STABLESORT");
+        case _NPY_SORT_UNDEFINED:
+            return PyUnicode_FromString("_NPY_SORT_UNDEFINED");
+        case NPY_QUICKSORT:
+            return PyUnicode_FromString("NPY_QUICKSORT");
+        case NPY_HEAPSORT:
+            return PyUnicode_FromString("NPY_HEAPSORT");
+        case NPY_STABLESORT:
+            return PyUnicode_FromString("NPY_STABLESORT");
+        default:
+            // the other possible values in NPY_SORTKIND can only
+            // be set with keywords.
+            break;
     }
     return PyLong_FromLong(kind);
 }
@@ -2160,12 +2198,17 @@ run_casting_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     if (!PyArg_ParseTuple(args, "O&", PyArray_CastingConverter, &casting)) {
         return NULL;
     }
-    switch (casting) {
+    switch ((int)casting) {
         case NPY_NO_CASTING: return PyUnicode_FromString("NPY_NO_CASTING");
         case NPY_EQUIV_CASTING: return PyUnicode_FromString("NPY_EQUIV_CASTING");
         case NPY_SAFE_CASTING: return PyUnicode_FromString("NPY_SAFE_CASTING");
         case NPY_SAME_KIND_CASTING: return PyUnicode_FromString("NPY_SAME_KIND_CASTING");
         case NPY_UNSAFE_CASTING: return PyUnicode_FromString("NPY_UNSAFE_CASTING");
+        case NPY_SAME_VALUE_CASTING: return PyUnicode_FromString("NPY_SAME_VALUE_CASTING");
+        case NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_NO_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_EQUIV_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_SAFE_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
+        case NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG: return PyUnicode_FromString("NPY_SAME_KIND_CASTING | NPY_SAME_VALUE_CASTING_FLAG");
         default: return PyLong_FromLong(casting);
     }
 }
@@ -2221,6 +2264,15 @@ run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
         return NULL;
     }
     return PyArray_IntTupleFromIntp(1, vals);
+}
+
+static PyObject *
+_npy_import_entry_point(PyObject *NPY_UNUSED(self), PyObject *obj) {
+    PyObject *res = PyUnicode_AsASCIIString(obj);
+    if (res != NULL) {
+        Py_SETREF(res, npy_import_entry_point(PyBytes_AS_STRING(res)));
+    }
+    return res;
 }
 
 static PyMethodDef Multiarray_TestsMethods[] = {
@@ -2284,9 +2336,15 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         "Return a list with info on all available casts. Some of the info"
         "may differ for an actual cast if it uses value-based casting "
         "(flexible types)."},
-    {"identityhash_tester",
-        (PyCFunction)identityhash_tester,
-        METH_KEYWORDS | METH_FASTCALL, NULL},
+    {"create_identity_hash",
+        create_identity_hash,
+        METH_VARARGS, "Create a new PyArrayIdentityHash wrapped in a PyCapsule."},
+    {"identity_hash_set_item_default",
+        (PyCFunction)identity_hash_set_item_default,
+        METH_VARARGS, "Set a default item in a PyArrayIdentityHash capsule."},
+    {"identity_hash_get_item",
+        identity_hash_get_item,
+        METH_VARARGS, "Get an item from a PyArrayIdentityHash capsule."},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},
@@ -2407,45 +2465,63 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"run_intp_converter",
         run_intp_converter,
         METH_VARARGS, NULL},
+    {"npy_import_entry_point",
+        _npy_import_entry_point,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_multiarray_tests",
-        NULL,
-        -1,
-        Multiarray_TestsMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static int module_loaded = 0;
 
-PyMODINIT_FUNC PyInit__multiarray_tests(void)
+static int
+_multiarray_tests_exec(PyObject *m)
 {
-    PyObject *m;
-
-    m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return m;
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
     }
-    import_array();
+    module_loaded = 1;
+
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
     if (init_argparse_mutex() < 0) {
-        return NULL;
+        return -1;
     }
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _multiarray_tests module.");
     }
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot _multiarray_tests_slots[] = {
+    {Py_mod_exec, _multiarray_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_multiarray_tests",
+    .m_size = 0,
+    .m_methods = Multiarray_TestsMethods,
+    .m_slots = _multiarray_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__multiarray_tests(void)
+{
+    return PyModuleDef_Init(&moduledef);
 }
 
 NPY_NO_EXPORT int

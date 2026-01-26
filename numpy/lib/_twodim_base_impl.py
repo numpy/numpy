@@ -4,17 +4,30 @@
 import functools
 import operator
 
+from numpy._core import iinfo, overrides
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
-    diagonal, nonzero, indices
-    )
-from numpy._core.overrides import set_array_function_like_doc, set_module
-from numpy._core import overrides
-from numpy._core import iinfo
+    arange,
+    asanyarray,
+    asarray,
+    diagonal,
+    empty,
+    greater_equal,
+    indices,
+    int8,
+    int16,
+    int32,
+    int64,
+    intp,
+    multiply,
+    nonzero,
+    ones,
+    promote_types,
+    where,
+    zeros,
+)
+from numpy._core.overrides import finalize_array_function_like, set_module
 from numpy.lib._stride_tricks_impl import broadcast_to
-
 
 __all__ = [
     'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
@@ -160,7 +173,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
@@ -204,7 +217,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     Examples
     --------
     >>> import numpy as np
-    >>> np.eye(2, dtype=int)
+    >>> np.eye(2, dtype=np.int_)
     array([[1, 0],
            [0, 1]])
     >>> np.eye(3, k=1)
@@ -231,7 +244,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
         i = k
     else:
         i = (-k) * M
-    m[:M-k].flat[i::M+1] = 1
+    m[:M - k].flat[i::M + 1] = 1
     return m
 
 
@@ -301,13 +314,13 @@ def diag(v, k=0):
     v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
-        n = s[0]+abs(k)
+        n = s[0] + abs(k)
         res = zeros((n, n), v.dtype)
         if k >= 0:
             i = k
         else:
             i = (-k) * n
-        res[:n-k].flat[i::n+1] = v
+        res[:n - k].flat[i::n + 1] = v
         return res
     elif len(s) == 2:
         return diagonal(v, k)
@@ -363,17 +376,17 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k, dtype=intp)
-        fi = i+k+i*n
+        i = arange(0, n - k, dtype=intp)
+        fi = i + k + i * n
     else:
-        i = arange(0, n+k, dtype=intp)
-        fi = i+(i-k)*n
+        i = arange(0, n + k, dtype=intp)
+        fi = i + (i - k) * n
     res.flat[fi] = v
 
     return conv.wrap(res)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
@@ -405,7 +418,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     Examples
     --------
     >>> import numpy as np
-    >>> np.tri(3, 5, 2, dtype=int)
+    >>> np.tri(3, 5, 2, dtype=np.int_)
     array([[1, 1, 1, 0, 0],
            [1, 1, 1, 1, 0],
            [1, 1, 1, 1, 1]])
@@ -423,7 +436,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         M = N
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
-                            arange(-k, M-k, dtype=_min_int(-k, M - k)))
+                            arange(-k, M - k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
@@ -534,7 +547,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+    mask = tri(*m.shape[-2:], k=k - 1, dtype=bool)
 
     return where(mask, zeros(1, m.dtype), m)
 
@@ -815,7 +828,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     except TypeError:
         N = 1
 
-    if N != 1 and N != 2:
+    if N not in {1, 2}:
         xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
     hist, edges = histogramdd([x, y], bins, range, density, weights)
@@ -855,9 +868,6 @@ def mask_indices(n, mask_func, k=0):
     See Also
     --------
     triu, tril, triu_indices, tril_indices
-
-    Notes
-    -----
 
     Examples
     --------
@@ -916,7 +926,7 @@ def tril_indices(n, k=0, m=None):
     -------
     inds : tuple of arrays
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
@@ -924,9 +934,6 @@ def tril_indices(n, k=0, m=None):
     triu_indices : similar function, for upper-triangular.
     mask_indices : generic function accepting an arbitrary mask function.
     tril, triu
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1038,10 +1045,6 @@ def tril_indices_from(arr, k=0):
     See Also
     --------
     tril_indices, tril, triu_indices_from
-
-    Notes
-    -----
-
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
@@ -1070,7 +1073,7 @@ def triu_indices(n, k=0, m=None):
     -------
     inds : tuple, shape(2) of ndarrays, shape(`n`)
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
@@ -1078,9 +1081,6 @@ def triu_indices(n, k=0, m=None):
     tril_indices : similar function, for lower-triangular.
     mask_indices : generic function accepting an arbitrary mask function.
     triu, tril
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1195,10 +1195,6 @@ def triu_indices_from(arr, k=0):
     See Also
     --------
     triu_indices, triu, tril_indices_from
-
-    Notes
-    -----
-
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")

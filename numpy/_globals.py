@@ -49,6 +49,7 @@ class _NoValueType:
 
     """
     __instance = None
+
     def __new__(cls):
         # ensure that only one instance exists
         if not cls.__instance:
@@ -93,3 +94,28 @@ class _CopyMode(enum.Enum):
             return False
 
         raise ValueError(f"{self} is neither True nor False.")
+
+
+class _SignatureDescriptor:
+    # A descriptor to store on the ufunc __dict__ that avoids definig a
+    # signature for the ufunc class/type but allows the instance to have one.
+    # This is needed because inspect.signature() chokes on normal properties
+    # (as of 3.14 at least).
+    # We could also set __signature__ on the instance but this allows deferred
+    # computation of the signature.
+    def __get__(self, obj, objtype=None):
+        # Delay import, not a critical path but need to avoid circular import.
+        from numpy._core._internal import _ufunc_inspect_signature_builder
+
+        if obj is None:
+            # could also return None, which is accepted as "not set" by
+            # inspect.signature().
+            raise AttributeError(
+                "type object 'numpy.ufunc' has no attribute '__signature__'")
+
+        # Store on the instance, after this the descriptor won't be used.
+        obj.__signature__ = _ufunc_inspect_signature_builder(obj)
+        return obj.__signature__
+
+
+_signature_descriptor = _SignatureDescriptor()

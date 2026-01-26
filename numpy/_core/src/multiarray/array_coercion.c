@@ -247,13 +247,17 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 }
 
 /*
- * Note: This function never fails, but will return `NULL` for unknown scalars
- *       and `None` for known array-likes (e.g. tuple, list, ndarray).
+ * Note: This function never fails, but will return `NULL` for unknown scalars or
+ *       known array-likes (e.g. tuple, list, ndarray).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
 {
-    return (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    PyObject *DType = (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    if (DType == NULL || DType == Py_None) {
+        return NULL;
+    }
+    return DType;
 }
 
 
@@ -475,20 +479,13 @@ npy_cast_raw_scalar_item(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
 {
-    PyArrayObject_fields arr_fields = {
-            .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
-        };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
-
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*
          * We always have store objects directly, casting will lose some
          * type information. Any other dtype discards the type information.
          * TODO: For a Categorical[object] this path may be necessary?
          */
-        arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return NPY_DT_CALL_setitem(descr, value, item);
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
@@ -523,8 +520,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
-        arr_fields.descr = descr;
-        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
+        return NPY_DT_CALL_setitem(descr, value, item);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
@@ -542,8 +538,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
     if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
         memset(data, 0, tmp_descr->elsize);
     }
-    arr_fields.descr = tmp_descr;
-    if (PyDataType_GetArrFuncs(tmp_descr)->setitem(value, data, &arr_fields) < 0) {
+    if (NPY_DT_CALL_setitem(tmp_descr, value, data) < 0) {
         PyObject_Free(data);
         Py_DECREF(tmp_descr);
         return -1;
@@ -1144,7 +1139,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
   force_sequence_due_to_char_dtype:
 
     /* Ensure we have a sequence (required for PyPy) */
-    seq = PySequence_Fast(obj, "Could not convert object to sequence");
+    seq = PySequence_Fast(obj, "Could not convert object to sequence"); // noqa: borrowed-ref - manual fix needed
     if (seq == NULL) {
         /*
          * Specifically do not fail on things that look like a dictionary,
@@ -1164,6 +1159,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return -1;
     }
 
+    int ret = -1;
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
     npy_intp size = PySequence_Fast_GET_SIZE(seq);
     PyObject **objects = PySequence_Fast_ITEMS(seq);
 
@@ -1171,17 +1170,19 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                      out_shape, 1, &size, NPY_TRUE, flags) < 0) {
         /* But do update, if there this is a ragged case */
         *flags |= FOUND_RAGGED_ARRAY;
-        return max_dims;
+        ret = max_dims;
+        goto finish;
     }
     if (size == 0) {
         /* If the sequence is empty, this must be the last dimension */
         *flags |= MAX_DIMS_WAS_REACHED;
-        return curr_dims + 1;
+        ret = curr_dims + 1;
+        goto finish;
     }
 
     /* Allow keyboard interrupts. See gh issue 18117. */
     if (PyErr_CheckSignals() < 0) {
-        return -1;
+        goto finish;
     }
 
     /*
@@ -1201,10 +1202,16 @@ PyArray_DiscoverDTypeAndShape_Recursive(
                 flags, copy);
 
         if (max_dims < 0) {
-            return -1;
+            goto finish;
         }
     }
-    return max_dims;
+    ret = max_dims;
+
+  finish:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+
+    return ret;
 }
 
 

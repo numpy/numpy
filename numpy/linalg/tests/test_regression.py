@@ -4,10 +4,14 @@
 import pytest
 
 import numpy as np
-from numpy import linalg, arange, float64, array, dot, transpose
+from numpy import arange, array, dot, float64, linalg, transpose
 from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_array_less
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    assert_equal,
+    assert_raises,
 )
 
 
@@ -29,7 +33,7 @@ class TestRegression:
                      1.51971555e-15 + 0.j,
                      -1.51308713e-15 + 0.j])
         a = arange(13 * 13, dtype=float64)
-        a.shape = (13, 13)
+        a = a.reshape((13, 13))
         a = a % 17
         va, ve = linalg.eig(a)
         va.sort()
@@ -40,9 +44,9 @@ class TestRegression:
         # Ticket 662.
         rvals = [68.60568999, 89.57756725, 106.67185574]
 
-        cov = array([[77.70273908,   3.51489954,  15.64602427],
-                     [3.51489954,  88.97013878,  -1.07431931],
-                     [15.64602427,  -1.07431931,  98.18223512]])
+        cov = array([[77.70273908,  3.51489954, 15.64602427],
+                     [ 3.51489954, 88.97013878, -1.07431931],
+                     [15.64602427, -1.07431931, 98.18223512]])
 
         vals, vecs = linalg.eigh(cov)
         assert_array_almost_equal(vals, rvals)
@@ -64,8 +68,8 @@ class TestRegression:
 
     def test_lapack_endian(self):
         # For bug #1482
-        a = array([[5.7998084,  -2.1825367],
-                   [-2.1825367,   9.85910595]], dtype='>f8')
+        a = array([[ 5.7998084, -2.1825367],
+                   [-2.1825367,  9.85910595]], dtype='>f8')
         b = array(a, dtype='<f8')
 
         ap = linalg.cholesky(a)
@@ -161,14 +165,15 @@ class TestRegression:
         res = np.linalg.matrix_rank(x, rtol=rtol)
         assert res.shape == (4,)
 
+    @pytest.mark.thread_unsafe(reason="test is already testing threads with openblas")
     def test_openblas_threading(self):
         # gh-27036
         # Test whether matrix multiplication involving a large matrix always
         # gives the same (correct) answer
         x = np.arange(500000, dtype=np.float64)
-        src = np.vstack((x, -10*x)).T
+        src = np.vstack((x, -10 * x)).T
         matrix = np.array([[0, 1], [1, 0]])
-        expected = np.vstack((-10*x, x)).T  # src @ matrix
+        expected = np.vstack((-10 * x, x)).T  # src @ matrix
         for i in range(200):
             result = src @ matrix
             mismatches = (~np.isclose(result, expected)).sum()

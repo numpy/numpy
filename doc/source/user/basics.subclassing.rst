@@ -42,7 +42,7 @@ This can result in surprising behavior if you use NumPy methods or
 functions you have not explicitly tested.
 
 On the other hand, compared to other interoperability approaches,
-subclassing can be a useful because many thing will "just work".
+subclassing can be useful because many things will "just work".
 
 This means that subclassing can be a convenient approach and for a long time
 it was also often the only available approach.
@@ -227,7 +227,7 @@ like::
 
   obj = ndarray.__new__(subtype, shape, ...
 
-where ``subdtype`` is the subclass.  Thus the returned view is of the
+where ``subtype`` is the subclass.  Thus the returned view is of the
 same class as the subclass, rather than being of class ``ndarray``.
 
 That solves the problem of returning views of the same type, but now
@@ -346,7 +346,7 @@ Simple example - adding an extra attribute to ndarray
 
   class InfoArray(np.ndarray):
 
-      def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
+      def __new__(subtype, shape, dtype=np.float64, buffer=None, offset=0,
                   strides=None, order=None, info=None):
           # Create the ndarray instance of our type, given the usual
           # ndarray input arguments.  This will call the standard
@@ -469,7 +469,7 @@ implemented.
 
 The signature of ``__array_ufunc__`` is::
 
-    def __array_ufunc__(ufunc, method, *inputs, **kwargs):
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 
 - *ufunc* is the ufunc object that was called.
 - *method* is a string indicating how the Ufunc was called, either
@@ -567,7 +567,7 @@ which inputs and outputs it converted. Hence, e.g.,
 Note that another approach would be to use ``getattr(ufunc,
 methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
 the result would be identical, but there is a difference if another operand
-also defines ``__array_ufunc__``. E.g., lets assume that we evaluate
+also defines ``__array_ufunc__``. E.g., let's assume that we evaluate
 ``np.add(a, b)``, where ``b`` is an instance of another class ``B`` that has
 an override.  If you use ``super`` as in the example,
 ``ndarray.__array_ufunc__`` will notice that ``b`` has an override, which
@@ -779,5 +779,3 @@ your function's signature should accept ``**kwargs``. For example:
 This object is now compatible with ``np.sum`` again because any extraneous arguments
 (i.e. keywords that are not ``axis`` or ``dtype``) will be hidden away in the
 ``**unused_kwargs`` parameter.
-
-

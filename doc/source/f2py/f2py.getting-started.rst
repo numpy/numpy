@@ -22,14 +22,11 @@ following steps:
 * F2PY compiles all sources and builds an extension module containing
   the wrappers.
 
-  * In building the extension modules, F2PY uses ``meson`` and used to use
-    ``numpy.distutils`` For different build systems, see :ref:`f2py-bldsys`.
+  * In building the extension modules, F2PY uses ``meson``. For different
+    build systems, see :ref:`f2py-bldsys`.
 
 
 .. note::
-
-   See :ref:`f2py-meson-distutils` for migration information.
-
 
   * Depending on your operating system, you may need to install the Python
     development headers (which provide the file ``Python.h``) separately. In
@@ -224,7 +221,7 @@ Fortran code, we can apply the wrapping steps one by one.
   .. literalinclude:: ./code/fib2.pyf
      :language: fortran
 
-* Finally, we build the extension module with ``numpy.distutils`` by running:
+* Finally, we build the extension module by running:
 
   ::
 
@@ -308,4 +305,4 @@ the previous case::
   >>> print(fib3.fib(8))
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
-.. _`system dependencies panel`: http://scipy.github.io/devdocs/building/index.html#system-level-dependencies
+.. _`system dependencies panel`: https://scipy.github.io/devdocs/building/index.html#system-level-dependencies

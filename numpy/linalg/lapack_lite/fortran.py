@@ -1,6 +1,7 @@
 # WARNING! This a Python 2 script. Read README.rst for rationale.
-import re
 import itertools
+import re
+
 
 def isBlank(line):
     return not line
@@ -10,6 +11,7 @@ def isComment(line):
     return line[0] != ' '
 def isContinuation(line):
     return line[5] != ' '
+
 
 COMMENT, STATEMENT, CONTINUATION = 0, 1, 2
 def lineType(line):

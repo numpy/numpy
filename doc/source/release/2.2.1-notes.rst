@@ -1,0 +1,54 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.1 Release Notes
+==========================
+
+NumPy 2.2.1 is a patch release following 2.2.0. It fixes bugs found after the
+2.2.0 release and has several maintenance pins to work around upstream changes.
+
+There was some breakage in downstream projects following the 2.2.0 release due
+to updates to NumPy typing. Because of problems due to MyPy defects, we
+recommend using basedpyright for type checking, it can be installed from
+PyPI.  The Pylance extension for Visual Studio Code is also based on Pyright.
+Problems that persist when using basedpyright should be reported as issues
+on the NumPy github site.
+
+This release supports Python 3.10-3.13.
+
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Joren Hammudoglu
+* Matti Picus
+* Nathan Goldbaum
+* Peter Hawkins
+* Simon Altrogge
+* Thomas A Caswell
+* Warren Weckesser
+* Yang Wang +
+
+
+Pull requests merged
+====================
+
+A total of 12 pull requests were merged for this release.
+
+* `#27935 <https://github.com/numpy/numpy/pull/27935>`__: MAINT: Prepare 2.2.x for further development
+* `#27950 <https://github.com/numpy/numpy/pull/27950>`__: TEST: cleanups [skip cirrus][skip azp]
+* `#27958 <https://github.com/numpy/numpy/pull/27958>`__: BUG: fix use-after-free error in npy_hashtable.cpp (#27955)
+* `#27959 <https://github.com/numpy/numpy/pull/27959>`__: BLD: add missing include
+* `#27982 <https://github.com/numpy/numpy/pull/27982>`__: BUG:fix compile error libatomic link test to meson.build
+* `#27990 <https://github.com/numpy/numpy/pull/27990>`__: TYP: Fix falsely rejected value types in ``ndarray.__setitem__``
+* `#27991 <https://github.com/numpy/numpy/pull/27991>`__: MAINT: Don't wrap ``#include <Python.h>`` with ``extern "C"``
+* `#27993 <https://github.com/numpy/numpy/pull/27993>`__: BUG: Fix segfault in stringdtype lexsort
+* `#28006 <https://github.com/numpy/numpy/pull/28006>`__: MAINT: random: Tweak module code in mtrand.pyx to fix a Cython...
+* `#28007 <https://github.com/numpy/numpy/pull/28007>`__: BUG: Cython API was missing NPY_UINTP.
+* `#28021 <https://github.com/numpy/numpy/pull/28021>`__: CI: pin scipy-doctest to 1.5.1
+* `#28044 <https://github.com/numpy/numpy/pull/28044>`__: TYP: allow ``None`` in operand sequence of nditer
+

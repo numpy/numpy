@@ -13,6 +13,8 @@ Most commonly, ndarrays contain elements of a single type, e.g. floats,
 integers, bools etc.  However, it is possible for elements to be combinations
 of these using structured types, such as:
 
+.. try_examples::
+
   >>> import numpy as np
   >>> a = np.array([(1, 2.0), (1, 2.0)],
   ...     dtype=[('x', np.int64), ('y', np.float64)])

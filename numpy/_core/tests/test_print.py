@@ -1,13 +1,11 @@
 import sys
+from io import StringIO
 
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, IS_MUSL
 from numpy._core.tests._locales import CommaDecimalPointLocale
-
-
-from io import StringIO
+from numpy.testing import IS_MUSL, assert_, assert_equal
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
@@ -23,15 +21,15 @@ def test_float_types(tp):
     """
     for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(float(x)),
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
 
     if tp(1e16).itemsize > 4:
         assert_equal(str(tp(1e16)), str(float('1e16')),
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
     else:
         ref = '1e+16'
         assert_equal(str(tp(1e16)), ref,
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
 
 
 @pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
@@ -45,7 +43,7 @@ def test_nan_inf_float(tp):
     """
     for x in [np.inf, -np.inf, np.nan]:
         assert_equal(str(tp(x)), _REF[x],
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
 
 
 @pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
@@ -59,19 +57,19 @@ def test_complex_types(tp):
     """
     for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(complex(x)),
-                     err_msg='Failed str formatting for type %s' % tp)
-        assert_equal(str(tp(x*1j)), str(complex(x*1j)),
-                     err_msg='Failed str formatting for type %s' % tp)
-        assert_equal(str(tp(x + x*1j)), str(complex(x + x*1j)),
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
+        assert_equal(str(tp(x * 1j)), str(complex(x * 1j)),
+                     err_msg=f'Failed str formatting for type {tp}')
+        assert_equal(str(tp(x + x * 1j)), str(complex(x + x * 1j)),
+                     err_msg=f'Failed str formatting for type {tp}')
 
     if tp(1e16).itemsize > 8:
         assert_equal(str(tp(1e16)), str(complex(1e16)),
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
     else:
         ref = '(1e+16+0j)'
         assert_equal(str(tp(1e16)), ref,
-                     err_msg='Failed str formatting for type %s' % tp)
+                     err_msg=f'Failed str formatting for type {tp}')
 
 
 @pytest.mark.parametrize('dtype', [np.complex64, np.cdouble, np.clongdouble])
@@ -116,9 +114,10 @@ def _test_redirected_print(x, tp, ref=None):
         sys.stdout = stdout
 
     assert_equal(file.getvalue(), file_tp.getvalue(),
-                 err_msg='print failed for type%s' % tp)
+                 err_msg=f'print failed for type{tp}')
 
 
+@pytest.mark.thread_unsafe(reason="sys.stdout not thread-safe")
 @pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
 def test_float_type_print(tp):
     """Check formatting when using print """
@@ -129,12 +128,13 @@ def test_float_type_print(tp):
         _test_redirected_print(float(x), tp, _REF[x])
 
     if tp(1e16).itemsize > 4:
-        _test_redirected_print(float(1e16), tp)
+        _test_redirected_print(1e16, tp)
     else:
         ref = '1e+16'
-        _test_redirected_print(float(1e16), tp, ref)
+        _test_redirected_print(1e16, tp, ref)
 
 
+@pytest.mark.thread_unsafe(reason="sys.stdout not thread-safe")
 @pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
 def test_complex_type_print(tp):
     """Check formatting when using print """
@@ -170,14 +170,14 @@ def test_scalar_format():
             ('{0:g}', 1.5, np.float32),
             ('{0:g}', 1.5, np.float64),
             ('{0:g}', 1.5, np.longdouble),
-            ('{0:g}', 1.5+0.5j, np.complex64),
-            ('{0:g}', 1.5+0.5j, np.complex128),
-            ('{0:g}', 1.5+0.5j, np.clongdouble)]
+            ('{0:g}', 1.5 + 0.5j, np.complex64),
+            ('{0:g}', 1.5 + 0.5j, np.complex128),
+            ('{0:g}', 1.5 + 0.5j, np.clongdouble)]
 
     for (fmat, val, valtype) in tests:
         try:
             assert_equal(fmat.format(val), fmat.format(valtype(val)),
-                    "failed with val %s, type %s" % (val, valtype))
+                    f"failed with val {val}, type {valtype}")
         except ValueError as e:
             assert_(False,
                "format raised exception (fmt='%s', val=%s, type=%s, exc='%s')" %
@@ -191,12 +191,12 @@ def test_scalar_format():
 class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 
     def test_locale_single(self):
-        assert_equal(str(np.float32(1.2)), str(float(1.2)))
+        assert_equal(str(np.float32(1.2)), str(1.2))
 
     def test_locale_double(self):
-        assert_equal(str(np.double(1.2)), str(float(1.2)))
+        assert_equal(str(np.double(1.2)), str(1.2))
 
     @pytest.mark.skipif(IS_MUSL,
                         reason="test flaky on musllinux")
     def test_locale_longdouble(self):
-        assert_equal(str(np.longdouble('1.2')), str(float(1.2)))
+        assert_equal(str(np.longdouble('1.2')), str(1.2))

@@ -8,8 +8,16 @@ extern "C" {
 NPY_NO_EXPORT size_t
 utf8_char_to_ucs4_code(const unsigned char *c, Py_UCS4 *code);
 
-NPY_NO_EXPORT int
-num_bytes_for_utf8_character(const unsigned char *c);
+static inline int num_bytes_for_utf8_character(const unsigned char *c)
+{
+    // adapted from https://github.com/skeeto/branchless-utf8
+    // the first byte of a UTF-8 character encodes the length of the character
+    static const char LENGTHS_LUT[] = {
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+    };
+    return LENGTHS_LUT[c[0] >> 3];
+}
 
 NPY_NO_EXPORT const unsigned char*
 find_previous_utf8_character(const unsigned char *c, size_t nchar);

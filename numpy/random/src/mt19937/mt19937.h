@@ -8,8 +8,8 @@
 
 #define RK_STATE_LEN 624
 
-#define N 624
-#define M 397
+#define _MT19937_N 624
+#define _MT19937_M 397
 #define MATRIX_A 0x9908b0dfUL
 #define UPPER_MASK 0x80000000UL
 #define LOWER_MASK 0x7fffffffUL

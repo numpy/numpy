@@ -7,6 +7,7 @@
 #include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
 
+#include "alloc.h"
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "abstractdtypes.h"
@@ -211,19 +212,10 @@ PyArray_PromoteDTypeSequence(
     PyArray_DTypeMeta *result = NULL;
 
     /* Copy dtypes so that we can reorder them (only allocate when many) */
-    PyObject *_scratch_stack[NPY_MAXARGS];
-    PyObject **_scratch_heap = NULL;
-    PyArray_DTypeMeta **dtypes = (PyArray_DTypeMeta **)_scratch_stack;
-
-    if (length > NPY_MAXARGS) {
-        _scratch_heap = PyMem_Malloc(length * sizeof(PyObject *));
-        if (_scratch_heap == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-        dtypes = (PyArray_DTypeMeta **)_scratch_heap;
+    NPY_ALLOC_WORKSPACE(dtypes, PyArray_DTypeMeta *, 16, length);
+    if (dtypes == NULL) {
+        return NULL;
     }
-
     memcpy(dtypes, dtypes_in, length * sizeof(PyObject *));
 
     /*
@@ -311,6 +303,6 @@ PyArray_PromoteDTypeSequence(
     }
 
   finish:
-    PyMem_Free(_scratch_heap);
+    npy_free_workspace(dtypes);
     return result;
 }

@@ -1,13 +1,18 @@
 import sys
 
+import pytest
+
 import numpy as np
 import numpy._core.umath as ncu
 from numpy._core._rational_tests import rational
-import pytest
+from numpy.lib import stride_tricks
 from numpy.testing import (
-     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
-     HAS_REFCOUNT
-    )
+    HAS_REFCOUNT,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 def test_array_array():
@@ -56,7 +61,7 @@ def test_array_array():
                  np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, U3)
     assert_equal(np.array("1.0", dtype=str).dtype, U3)
-    assert_equal(np.array("1.0", dtype=U2), np.array(str("1.")))
+    assert_equal(np.array("1.0", dtype=U2), np.array("1."))
     assert_equal(np.array("1", dtype=U5), np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
@@ -74,23 +79,23 @@ def test_array_array():
     # test array interface
     a = np.array(100.0, dtype=np.float64)
     o = type("o", (object,),
-             dict(__array_interface__=a.__array_interface__))
+             {"__array_interface__": a.__array_interface__})
     assert_equal(np.array(o, dtype=np.float64), a)
 
     # test array_struct interface
     a = np.array([(1, 4.0, 'Hello'), (2, 6.0, 'World')],
                  dtype=[('f0', int), ('f1', float), ('f2', str)])
     o = type("o", (object,),
-             dict(__array_struct__=a.__array_struct__))
-    ## wasn't what I expected... is np.array(o) supposed to equal a ?
-    ## instead we get a array([...], dtype=">V18")
+             {"__array_struct__": a.__array_struct__})
+    # wasn't what I expected... is np.array(o) supposed to equal a ?
+    # instead we get an array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
-    # test array
+    # test __array__
     def custom__array__(self, dtype=None, copy=None):
         return np.array(100.0, dtype=dtype, copy=copy)
 
-    o = type("o", (object,), dict(__array__=custom__array__))()
+    o = type("o", (object,), {"__array__": custom__array__})()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test recursion
@@ -151,6 +156,39 @@ def test_array_array():
                  np.ones((1, 10), dtype=np.float64))
     assert_equal(np.array([(1.0,) * 10] * 10, dtype=np.float64),
                  np.ones((10, 10), dtype=np.float64))
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test___array___refcount():
+    class MyArray:
+        def __init__(self, dtype):
+            self.val = np.array(-1, dtype=dtype)
+
+        def __array__(self, dtype=None, copy=None):
+            return self.val.__array__(dtype=dtype, copy=copy)
+
+    # test all possible scenarios:
+    # dtype(none | same | different) x copy(true | false | none)
+    dt = np.dtype(np.int32)
+    old_refcount = sys.getrefcount(dt)
+    np.array(MyArray(dt))
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), dtype=dt)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), copy=None)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    np.array(MyArray(dt), dtype=dt, copy=None)
+    assert_equal(old_refcount, sys.getrefcount(dt))
+    dt2 = np.dtype(np.int16)
+    old_refcount2 = sys.getrefcount(dt2)
+    np.array(MyArray(dt), dtype=dt2)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+    np.array(MyArray(dt), dtype=dt2, copy=None)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+    with pytest.raises(ValueError):
+        np.array(MyArray(dt), dtype=dt2, copy=False)
+    assert_equal(old_refcount2, sys.getrefcount(dt2))
+
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
@@ -228,21 +266,21 @@ def test_array_astype():
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
-    a = np.array([b'a'*100], dtype='O')
+    a = np.array([b'a' * 100], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array(['a'*100], dtype='O')
+    a = np.array(['a' * 100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
 
     # Same test as above but for strings shorter than 64 characters
-    a = np.array([b'a'*10], dtype='O')
+    a = np.array([b'a' * 10], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array(['a'*10], dtype='O')
+    a = np.array(['a' * 10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -309,7 +347,7 @@ def test_object_array_astype_to_void():
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
     a = np.array(10, dtype=np.complex128)
-    assert_warns(np.exceptions.ComplexWarning, a.astype, t)
+    pytest.warns(np.exceptions.ComplexWarning, a.astype, t)
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool),
@@ -335,12 +373,12 @@ def test_string_to_boolean_cast(dtype, out_dtype):
         [np.complex64, np.complex128, np.clongdouble])
 def test_string_to_complex_cast(str_type, scalar_type):
     value = scalar_type(b"1+3j")
-    assert scalar_type(value) == 1+3j
-    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
-    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    assert scalar_type(value) == 1 + 3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1 + 3j
+    assert np.array(value).astype(scalar_type)[()] == 1 + 3j
     arr = np.zeros(1, dtype=scalar_type)
     arr[0] = value
-    assert arr[0] == 1+3j
+    assert arr[0] == 1 + 3j
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
 def test_none_to_nan_cast(dtype):
@@ -441,8 +479,8 @@ def test_copyto_permut():
     # test explicit overflow case
     pad = 500
     l = [True] * pad + [True, True, True, True]
-    r = np.zeros(len(l)-pad)
-    d = np.ones(len(l)-pad)
+    r = np.zeros(len(l) - pad)
+    d = np.ones(len(l) - pad)
     mask = np.array(l)[pad:]
     np.copyto(r, d, where=mask[::-1])
 
@@ -552,8 +590,8 @@ def test_copy_order():
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
 def test_contiguous_flags():
-    a = np.ones((4, 4, 1))[::2,:,:]
-    a.strides = a.strides[:2] + (-123,)
+    a = np.ones((4, 4, 1))[::2, :, :]
+    a = stride_tricks.as_strided(a, strides=a.strides[:2] + (-123,))
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
@@ -585,11 +623,12 @@ def test_contiguous_flags():
 
 def test_broadcast_arrays():
     # Test user defined dtypes
-    a = np.array([(1, 2, 3)], dtype='u4,u4,u4')
-    b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4')
+    dtype = 'u4,u4,u4'
+    a = np.array([(1, 2, 3)], dtype=dtype)
+    b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype=dtype)
     result = np.broadcast_arrays(a, b)
-    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
-    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype=dtype))
+    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype=dtype))
 
 @pytest.mark.parametrize(["shape", "fill_value", "expected_output"],
         [((2, 2), [5.0,  6.0], np.array([[5.0, 6.0], [5.0, 6.0]])),

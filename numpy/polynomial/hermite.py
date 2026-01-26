@@ -76,8 +76,6 @@ See also
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -177,7 +175,7 @@ def herm2poly(c):
     array([0., 1., 2., 3.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polymulx, polysub
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -192,9 +190,9 @@ def herm2poly(c):
         # i is the current degree of c1
         for i in range(n - 1, 1, -1):
             tmp = c0
-            c0 = polysub(c[i - 2], c1*(2*(i - 1)))
-            c1 = polyadd(tmp, polymulx(c1)*2)
-        return polyadd(c0, polymulx(c1)*2)
+            c0 = polysub(c[i - 2], c1 * (2 * (i - 1)))
+            c1 = polyadd(tmp, polymulx(c1) * 2)
+        return polyadd(c0, polymulx(c1) * 2)
 
 
 #
@@ -212,7 +210,7 @@ hermzero = np.array([0])
 hermone = np.array([1])
 
 # Hermite coefficients representing the identity x.
-hermx = np.array([0, 1/2])
+hermx = np.array([0, 1 / 2])
 
 
 def hermline(off, scl):
@@ -250,7 +248,7 @@ def hermline(off, scl):
 
     """
     if scl != 0:
-        return np.array([off, scl/2])
+        return np.array([off, scl / 2])
     else:
         return np.array([off])
 
@@ -436,11 +434,11 @@ def hermmulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
-    prd[1] = c[0]/2
+    prd[0] = c[0] * 0
+    prd[1] = c[0] / 2
     for i in range(1, len(c)):
-        prd[i + 1] = c[i]/2
-        prd[i - 1] += c[i]*i
+        prd[i + 1] = c[i] / 2
+        prd[i - 1] += c[i] * i
     return prd
 
 
@@ -493,21 +491,21 @@ def hermmul(c1, c2):
         xs = c2
 
     if len(c) == 1:
-        c0 = c[0]*xs
+        c0 = c[0] * xs
         c1 = 0
     elif len(c) == 2:
-        c0 = c[0]*xs
-        c1 = c[1]*xs
+        c0 = c[0] * xs
+        c1 = c[1] * xs
     else:
         nd = len(c)
-        c0 = c[-2]*xs
-        c1 = c[-1]*xs
+        c0 = c[-2] * xs
+        c1 = c[-1] * xs
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = hermsub(c[-i]*xs, c1*(2*(nd - 1)))
-            c1 = hermadd(tmp, hermmulx(c1)*2)
-    return hermadd(c0, hermmulx(c1)*2)
+            c0 = hermsub(c[-i] * xs, c1 * (2 * (nd - 1)))
+            c1 = hermadd(tmp, hermmulx(c1) * 2)
+    return hermadd(c0, hermmulx(c1) * 2)
 
 
 def hermdiv(c1, c2):
@@ -655,7 +653,7 @@ def hermder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -663,14 +661,14 @@ def hermder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 0, -1):
-                der[j - 1] = (2*j)*c[j]
+                der[j - 1] = (2 * j) * c[j]
             c = der
     c = np.moveaxis(c, 0, iaxis)
     return c
@@ -772,13 +770,13 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
     c = np.moveaxis(c, iaxis, 0)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -786,10 +784,10 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
-            tmp[0] = c[0]*0
-            tmp[1] = c[0]/2
+            tmp[0] = c[0] * 0
+            tmp[1] = c[0] / 2
             for j in range(1, n):
-                tmp[j + 1] = c[j]/(2*(j + 1))
+                tmp[j + 1] = c[j] / (2 * (j + 1))
             tmp[0] += k[i] - hermval(lbnd, tmp)
             c = tmp
     c = np.moveaxis(c, 0, iaxis)
@@ -798,7 +796,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
 def hermval(x, c, tensor=True):
     """
-    Evaluate an Hermite series at points x.
+    Evaluate a Hermite series at points x.
 
     If `c` is of length ``n + 1``, this function returns the value:
 
@@ -869,9 +867,9 @@ def hermval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
-    x2 = x*2
+    x2 = x * 2
     if len(c) == 1:
         c0 = c[0]
         c1 = 0
@@ -885,9 +883,9 @@ def hermval(x, c, tensor=True):
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = c[-i] - c1*(2*(nd - 1))
-            c1 = tmp + c1*x2
-    return c0 + c1*x2
+            c0 = c[-i] - c1 * (2 * (nd - 1))
+            c1 = tmp + c1 * x2
+    return c0 + c1 * x2
 
 
 def hermval2d(x, y, c):
@@ -929,9 +927,6 @@ def hermval2d(x, y, c):
     See Also
     --------
     hermval, hermgrid2d, hermval3d, hermgrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -990,9 +985,6 @@ def hermgrid2d(x, y, c):
     --------
     hermval, hermval2d, hermval3d, hermgrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermgrid2d
@@ -1049,9 +1041,6 @@ def hermval3d(x, y, z, c):
     See Also
     --------
     hermval, hermval2d, hermgrid2d, hermgrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1113,9 +1102,6 @@ def hermgrid3d(x, y, z, c):
     See Also
     --------
     hermval, hermval2d, hermgrid2d, hermval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1187,12 +1173,12 @@ def hermvander(x, deg):
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
-        x2 = x*2
+        x2 = x * 2
         v[1] = x2
         for i in range(2, ideg + 1):
-            v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
+            v[i] = (v[i - 1] * x2 - v[i - 2] * (2 * (i - 1)))
     return np.moveaxis(v, 0, -1)
 
 
@@ -1239,9 +1225,6 @@ def hermvander2d(x, y, deg):
     See Also
     --------
     hermvander, hermvander3d, hermval2d, hermval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1302,9 +1285,6 @@ def hermvander3d(x, y, z, deg):
     See Also
     --------
     hermvander, hermvander3d, hermval2d, hermval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1459,7 +1439,7 @@ def hermcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Hermite basis polynomial. This provides
+    symmetric when `c` is a Hermite basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1475,9 +1455,6 @@ def hermcompanion(c):
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermcompanion
@@ -1491,17 +1468,17 @@ def hermcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-.5*c[0]/c[1]]])
+        return np.array([[-.5 * c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = np.hstack((1., 1./np.sqrt(2.*np.arange(n - 1, 0, -1))))
+    scl = np.hstack((1., 1. / np.sqrt(2. * np.arange(n - 1, 0, -1))))
     scl = np.multiply.accumulate(scl)[::-1]
-    top = mat.reshape(-1)[1::n+1]
-    bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.sqrt(.5*np.arange(1, n))
+    top = mat.reshape(-1)[1::n + 1]
+    bot = mat.reshape(-1)[n::n + 1]
+    top[...] = np.sqrt(.5 * np.arange(1, n))
     bot[...] = top
-    mat[:, -1] -= scl*c[:-1]/(2.0*c[-1])
+    mat[:, -1] -= scl * c[:-1] / (2.0 * c[-1])
     return mat
 
 
@@ -1560,11 +1537,11 @@ def hermroots(c):
     if len(c) <= 1:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-.5*c[0]/c[1]])
+        return np.array([-.5 * c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = hermcompanion(c)[::-1,::-1]
-    r = la.eigvals(m)
+    m = hermcompanion(c)[::-1, ::-1]
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1597,17 +1574,17 @@ def _normed_hermite_n(x, n):
 
     """
     if n == 0:
-        return np.full(x.shape, 1/np.sqrt(np.sqrt(np.pi)))
+        return np.full(x.shape, 1 / np.sqrt(np.sqrt(np.pi)))
 
     c0 = 0.
-    c1 = 1./np.sqrt(np.sqrt(np.pi))
+    c1 = 1. / np.sqrt(np.sqrt(np.pi))
     nd = float(n)
     for i in range(n - 1):
         tmp = c0
-        c0 = -c1*np.sqrt((nd - 1.)/nd)
-        c1 = tmp + c1*x*np.sqrt(2./nd)
+        c0 = -c1 * np.sqrt((nd - 1.) / nd)
+        c1 = tmp + c1 * x * np.sqrt(2. / nd)
         nd = nd - 1.0
-    return c0 + c1*x*np.sqrt(2)
+    return c0 + c1 * x * np.sqrt(2)
 
 
 def hermgauss(deg):
@@ -1655,24 +1632,24 @@ def hermgauss(deg):
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1], dtype=np.float64)
+    c = np.array([0] * deg + [1], dtype=np.float64)
     m = hermcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = _normed_hermite_n(x, ideg)
-    df = _normed_hermite_n(x, ideg - 1) * np.sqrt(2*ideg)
-    x -= dy/df
+    df = _normed_hermite_n(x, ideg - 1) * np.sqrt(2 * ideg)
+    x -= dy / df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
     fm = _normed_hermite_n(x, ideg - 1)
     fm /= np.abs(fm).max()
-    w = 1/(fm * fm)
+    w = 1 / (fm * fm)
 
     # for Hermite we can also symmetrize
-    w = (w + w[::-1])/2
-    x = (x - x[::-1])/2
+    w = (w + w[::-1]) / 2
+    x = (x - x[::-1]) / 2
 
     # scale w to get the right value
     w *= np.sqrt(np.pi) / w.sum()
@@ -1698,9 +1675,6 @@ def hermweight(x):
     w : ndarray
        The weight function at `x`.
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1719,7 +1693,7 @@ def hermweight(x):
 #
 
 class Hermite(ABCPolyBase):
-    """An Hermite series class.
+    """A Hermite series class.
 
     The Hermite class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the

@@ -1,8 +1,9 @@
 import pytest
+
 import numpy as np
+from numpy.f2py.crackfortran import crackfortran
 
 from . import util
-from numpy.f2py.crackfortran import crackfortran
 
 
 class TestData(util.F2PyTest):
@@ -16,9 +17,9 @@ class TestData(util.F2PyTest):
         assert self.module.cmplxdat.x == 1.5
         assert self.module.cmplxdat.y == 2.0
         assert self.module.cmplxdat.pi == 3.1415926535897932384626433832795028841971693993751058209749445923078164062
-        assert self.module.cmplxdat.medium_ref_index == np.array(1.+0.j)
+        assert self.module.cmplxdat.medium_ref_index == np.array(1. + 0.j)
         assert np.all(self.module.cmplxdat.z == np.array([3.5, 7.0]))
-        assert np.all(self.module.cmplxdat.my_array == np.array([ 1.+2.j, -3.+4.j]))
+        assert np.all(self.module.cmplxdat.my_array == np.array([ 1. + 2.j, -3. + 4.j]))
         assert np.all(self.module.cmplxdat.my_real_array == np.array([ 1., 2., 3.]))
         assert np.all(self.module.cmplxdat.ref_index_one == np.array([13.0 + 21.0j]))
         assert np.all(self.module.cmplxdat.ref_index_two == np.array([-30.0 + 43.0j]))

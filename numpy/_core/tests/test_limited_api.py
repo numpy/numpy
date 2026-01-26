@@ -2,9 +2,10 @@ import os
 import subprocess
 import sys
 import sysconfig
+
 import pytest
 
-from numpy.testing import IS_WASM, IS_PYPY, NOGIL_BUILD, IS_EDITABLE
+from numpy.testing import IS_EDITABLE, IS_PYPY, IS_WASM, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:
@@ -52,6 +53,8 @@ def install_temp(tmpdir_factory):
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
         pytest.skip("No usable 'meson' found")
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--werror",
@@ -76,7 +79,6 @@ def install_temp(tmpdir_factory):
     sys.path.append(str(build_dir))
 
 
-
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.xfail(
     sysconfig.get_config_var("Py_DEBUG"),
@@ -95,6 +97,6 @@ def test_limited_api(install_temp):
     and building a cython extension with the limited API
     """
 
-    import limited_api1  # Earliest (3.6)
-    import limited_api_latest  # Latest version (current Python)
-    import limited_api2  # cython
+    import limited_api1  # Earliest (3.6)  # noqa: F401
+    import limited_api2  # cython  # noqa: F401
+    import limited_api_latest  # Latest version (current Python)  # noqa: F401

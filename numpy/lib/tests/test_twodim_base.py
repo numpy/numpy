@@ -1,18 +1,36 @@
 """Test functions for matrix module
 
 """
-from numpy.testing import (
-    assert_equal, assert_array_equal, assert_array_max_ulp,
-    assert_array_almost_equal, assert_raises, assert_
-)
-from numpy import (
-    arange, add, fliplr, flipud, zeros, ones, eye, array, diag, histogram2d,
-    tri, mask_indices, triu_indices, triu_indices_from, tril_indices,
-    tril_indices_from, vander,
-)
-import numpy as np
-
 import pytest
+
+import numpy as np
+from numpy import (
+    add,
+    arange,
+    array,
+    diag,
+    eye,
+    fliplr,
+    flipud,
+    histogram2d,
+    mask_indices,
+    ones,
+    tri,
+    tril_indices,
+    tril_indices_from,
+    triu_indices,
+    triu_indices_from,
+    vander,
+    zeros,
+)
+from numpy.testing import (
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+)
 
 
 def get_mat(n):
@@ -220,7 +238,7 @@ class TestHistogram2d:
              [1, 0, 0, 0, 0],
              [0, 1, 1, 1, 0],
              [0, 0, 0, 0, 1]])
-        assert_array_almost_equal(H, answer/8., 3)
+        assert_array_almost_equal(H, answer / 8., 3)
         assert_array_equal(xed, np.linspace(0, 6, 7))
         assert_array_equal(yed, np.linspace(0, 5, 6))
 
@@ -231,7 +249,7 @@ class TestHistogram2d:
             x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], density=True)
         answer = array([[1, 1, .5],
                         [1, 1, .5],
-                        [.5, .5, .25]])/9.
+                        [.5, .5, .25]]) / 9.
         assert_array_almost_equal(H, answer, 3)
 
     def test_all_outliers(self):
@@ -290,12 +308,12 @@ class TestHistogram2d:
         r = histogram2d(xy, s_d)
         assert_(r == ((ShouldDispatch,), (xy, s_d), {}))
         r = histogram2d(xy, xy, bins=s_d)
-        assert_(r, ((ShouldDispatch,), (xy, xy), dict(bins=s_d)))
+        assert_(r, ((ShouldDispatch,), (xy, xy), {'bins': s_d}))
         r = histogram2d(xy, xy, bins=[s_d, 5])
-        assert_(r, ((ShouldDispatch,), (xy, xy), dict(bins=[s_d, 5])))
+        assert_(r, ((ShouldDispatch,), (xy, xy), {'bins': [s_d, 5]}))
         assert_raises(Exception, histogram2d, xy, xy, bins=[s_d])
         r = histogram2d(xy, xy, weights=s_d)
-        assert_(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
+        assert_(r, ((ShouldDispatch,), (xy, xy), {'weights': s_d}))
 
     @pytest.mark.parametrize(("x_len", "y_len"), [(10, 11), (20, 19)])
     def test_bad_length(self, x_len, y_len):
@@ -521,7 +539,7 @@ class TestVander:
         m = powers.shape[1]
         for n in range(6):
             v = vander(c, N=n)
-            assert_array_equal(v, powers[:, m-n:m])
+            assert_array_equal(v, powers[:, m - n:m])
 
     def test_dtypes(self):
         c = array([11, -12, 13], dtype=np.int8)
@@ -531,10 +549,10 @@ class TestVander:
                              [169, 13, 1]])
         assert_array_equal(v, expected)
 
-        c = array([1.0+1j, 1.0-1j])
+        c = array([1.0 + 1j, 1.0 - 1j])
         v = vander(c, N=3)
-        expected = np.array([[2j, 1+1j, 1],
-                             [-2j, 1-1j, 1]])
+        expected = np.array([[2j, 1 + 1j, 1],
+                             [-2j, 1 - 1j, 1]])
         # The data is floating point, but the values are small integers,
         # so assert_array_equal *should* be safe here (rather than, say,
         # assert_array_almost_equal).

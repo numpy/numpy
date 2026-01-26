@@ -1,0 +1,38 @@
+name: "Check Warnings"
+description: "Filter build warnings against an allowlist"
+
+inputs:
+  log-file:
+    description: "Path to build log file"
+    required: true
+  allowlist:
+    description: "Path to allowed warnings regex file"
+    required: true
+  warning-regex:
+    description: "Regex to extract warnings from the log"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Extract warnings
+      shell: bash
+      run: |
+        echo "Extracting warnings from ${{ inputs.log-file }} using regex: ${{ inputs['warning-regex'] }}"
+        grep -E "${{ inputs['warning-regex'] }}" "${{ inputs.log-file }}" | tee warnings.log || true
+
+        if [ ! -s warnings.log ]; then
+          echo "No warnings found."
+          exit 0
+        fi
+
+        echo "Filtering against allowlist ${{ inputs.allowlist }}"
+        grep -v -F -f "${{ inputs.allowlist }}" warnings.log | tee disallowed.log || true
+
+        if [ -s disallowed.log ]; then
+          echo "::error::Disallowed warnings detected:"
+          cat disallowed.log
+          exit 1
+        else
+          echo "All warnings are allowed."
+        fi

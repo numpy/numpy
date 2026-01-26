@@ -59,11 +59,6 @@ typedef struct {
       */
      bool python_byte_converters;
      bool c_byte_converters;
-     /*
-      * Flag to store whether a warning was already given for an integer being
-      * parsed by first converting to a float.
-      */
-     bool gave_int_via_float_warning;
 } parser_config;
 
 

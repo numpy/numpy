@@ -1,22 +1,24 @@
-from typing import Literal, Final
-
-__all__: list[str] = []
-
-EXPECTED_KEYS: Final[set[str]]
-MAGIC_PREFIX: Final[bytes]
-MAGIC_LEN: Literal[8]
-ARRAY_ALIGN: Literal[64]
-BUFFER_SIZE: Literal[262144]  # 2**18
-
-def magic(major, minor): ...
-def read_magic(fp): ...
-def dtype_to_descr(dtype): ...
-def descr_to_dtype(descr): ...
-def header_data_from_array_1_0(array): ...
-def write_array_header_1_0(fp, d): ...
-def write_array_header_2_0(fp, d): ...
-def read_array_header_1_0(fp): ...
-def read_array_header_2_0(fp): ...
-def write_array(fp, array, version=..., allow_pickle=..., pickle_kwargs=...): ...
-def read_array(fp, allow_pickle=..., pickle_kwargs=...): ...
-def open_memmap(filename, mode=..., dtype=..., shape=..., fortran_order=..., version=...): ...
+from ._format_impl import (
+    ARRAY_ALIGN as ARRAY_ALIGN,
+    BUFFER_SIZE as BUFFER_SIZE,
+    EXPECTED_KEYS as EXPECTED_KEYS,
+    GROWTH_AXIS_MAX_DIGITS as GROWTH_AXIS_MAX_DIGITS,
+    MAGIC_LEN as MAGIC_LEN,
+    MAGIC_PREFIX as MAGIC_PREFIX,
+    __all__ as __all__,
+    __doc__ as __doc__,
+    descr_to_dtype as descr_to_dtype,
+    drop_metadata as drop_metadata,
+    dtype_to_descr as dtype_to_descr,
+    header_data_from_array_1_0 as header_data_from_array_1_0,
+    isfileobj as isfileobj,
+    magic as magic,
+    open_memmap as open_memmap,
+    read_array as read_array,
+    read_array_header_1_0 as read_array_header_1_0,
+    read_array_header_2_0 as read_array_header_2_0,
+    read_magic as read_magic,
+    write_array as write_array,
+    write_array_header_1_0 as write_array_header_1_0,
+    write_array_header_2_0 as write_array_header_2_0,
+)

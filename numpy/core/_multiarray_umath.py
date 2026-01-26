@@ -1,5 +1,5 @@
-from numpy._core import _multiarray_umath
 from numpy import ufunc
+from numpy._core import _multiarray_umath
 
 for item in _multiarray_umath.__dir__():
     # ufuncs appear in pickles with a path in numpy.core._multiarray_umath
@@ -11,13 +11,15 @@ for item in _multiarray_umath.__dir__():
 
 def __getattr__(attr_name):
     from numpy._core import _multiarray_umath
+
     from ._utils import _raise_warning
 
     if attr_name in {"_ARRAY_API", "_UFUNC_API"}:
-        from numpy.version import short_version
+        import sys
         import textwrap
         import traceback
-        import sys
+
+        from numpy.version import short_version
 
         msg = textwrap.dedent(f"""
             A module that was compiled using NumPy 1.x cannot be run in

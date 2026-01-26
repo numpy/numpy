@@ -1,15 +1,15 @@
-from importlib.util import spec_from_file_location, module_from_spec
 import os
-import pytest
 import shutil
 import subprocess
 import sys
 import sysconfig
 import warnings
+from importlib.util import module_from_spec, spec_from_file_location
+
+import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM, IS_EDITABLE
-
+from numpy.testing import IS_EDITABLE, IS_WASM
 
 try:
     import cffi
@@ -54,7 +54,13 @@ else:
 )
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
+@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64',
+                    reason='Meson unable to find MSVC linker on win-arm64')
 @pytest.mark.slow
+@pytest.mark.thread_unsafe(
+    reason="building cython code in a subprocess doesn't make sense to do in many "
+           "threads and sometimes crashes"
+)
 def test_cython(tmp_path):
     import glob
     # build the examples in a temporary directory
@@ -94,8 +100,7 @@ def test_cython(tmp_path):
             if txt_to_find in line:
                 break
         else:
-            assert False, ("Could not find '{}' in C file, "
-                           "wrong pxd used".format(txt_to_find))
+            assert False, f"Could not find '{txt_to_find}' in C file, wrong pxd used"
     # import without adding the directory to sys.path
     suffix = sysconfig.get_config_var('EXT_SUFFIX')
 

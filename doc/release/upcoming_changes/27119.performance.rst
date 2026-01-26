@@ -1,4 +1,0 @@
-* NumPy now uses fast-on-failure attribute lookups for protocols.
-  This can greatly reduce overheads of function calls or array creation
-  especially with custom Python objects.  The largest improvements
-  will be seen on Python 3.12 or newer.

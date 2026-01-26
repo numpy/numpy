@@ -9,7 +9,7 @@ F2PY and Windows
    F2PY support for Windows is not always at par with Linux support
 
 .. note::
-   `ScPy's documentation`_ has some information on system-level dependencies
+   `SciPy's documentation`_ has some information on system-level dependencies
    which are well tested for Fortran as well.
 
 Broadly speaking, there are two issues working with F2PY on Windows:
@@ -70,12 +70,6 @@ Cygwin (FOSS)
    Can also be used for ``gfortran``. However, the POSIX API compatibility layer provided by
    Cygwin is meant to compile UNIX software on Windows, instead of building
    native Windows programs. This means cross compilation is required.
-
-The compilation suites described so far are compatible with the `now
-deprecated`_ ``np.distutils`` build backend which is exposed by the F2PY CLI.
-Additional build system usage (``meson``, ``cmake``) as described in
-:ref:`f2py-bldsys` allows for a more flexible set of compiler
-backends including:
 
 Intel oneAPI
    The newer Intel compilers (``ifx``, ``icx``) are based on LLVM and can be
@@ -217,4 +211,4 @@ path using a hash. This needs to be added to the ``PATH`` variable.
 .. _are outdated: https://github.com/conda-forge/conda-forge.github.io/issues/1044
 .. _now deprecated: https://github.com/numpy/numpy/pull/20875
 .. _LLVM Flang: https://releases.llvm.org/11.0.0/tools/flang/docs/ReleaseNotes.html
-.. _ScPy's documentation: http://scipy.github.io/devdocs/building/index.html#system-level-dependencies
+.. _SciPy's documentation: https://scipy.github.io/devdocs/building/index.html#system-level-dependencies

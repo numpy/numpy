@@ -18,23 +18,24 @@ The preferred alias for `defchararray` is `numpy.char`.
 import functools
 
 import numpy as np
-from .._utils import set_module
-from .numerictypes import bytes_, str_, character
-from .numeric import ndarray, array as narray, asarray as asnarray
-from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
+from numpy._core.multiarray import compare_chararrays
+from numpy._core.strings import (
+    _join as join,
+    _rsplit as rsplit,
+    _split as split,
+    _splitlines as splitlines,
+)
+from numpy._utils import set_module
 from numpy.strings import *
 from numpy.strings import (
     multiply as strings_multiply,
     partition as strings_partition,
     rpartition as strings_rpartition,
 )
-from numpy._core.strings import (
-    _split as split,
-    _rsplit as rsplit,
-    _splitlines as splitlines,
-    _join as join,
-)
+
+from .numeric import array as narray, asarray as asnarray, ndarray
+from .numerictypes import bytes_, character, str_
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
@@ -262,6 +263,7 @@ def less(x1, x2):
     return compare_chararrays(x1, x2, '<', True)
 
 
+@set_module("numpy.char")
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -272,7 +274,7 @@ def multiply(a, i):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     i : array_like, with any integer dtype
 
@@ -313,6 +315,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
 
 
+@set_module("numpy.char")
 def partition(a, sep):
     """
     Partition each element in `a` around `sep`.
@@ -354,6 +357,7 @@ def partition(a, sep):
     return np.stack(strings_partition(a, sep), axis=-1)
 
 
+@set_module("numpy.char")
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -404,6 +408,10 @@ class chararray(ndarray):
               strides=None, order=None)
 
     Provides a convenient view on arrays of string and unicode values.
+
+    .. deprecated:: 2.5
+       ``chararray`` is deprecated. Use an ``ndarray`` with a string or
+       bytes dtype instead.
 
     .. note::
        The `chararray` class exists for backwards compatibility with
@@ -492,7 +500,6 @@ class chararray(ndarray):
     title
     tofile
     tolist
-    tostring
     translate
     transpose
     upper
@@ -540,7 +547,7 @@ class chararray(ndarray):
                [b'abc', b'abc', b'abc']], dtype='|S5')
 
     """
-    def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
+    def __new__(cls, shape, itemsize=1, unicode=False, buffer=None,
                 offset=0, strides=None, order='C'):
         if unicode:
             dtype = str_
@@ -560,10 +567,10 @@ class chararray(ndarray):
             filler = None
 
         if buffer is None:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+            self = ndarray.__new__(cls, shape, (dtype, itemsize),
                                    order=order)
         else:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+            self = ndarray.__new__(cls, shape, (dtype, itemsize),
                                    buffer=buffer,
                                    offset=offset, strides=strides,
                                    order=order)
@@ -715,7 +722,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind=None, order=None):
+    def argsort(self, axis=-1, kind=None, order=None, *, stable=None):
         """
         Return the indices that sort the array lexicographically.
 
@@ -733,7 +740,7 @@ class chararray(ndarray):
               dtype='|S5')
 
         """
-        return self.__array__().argsort(axis, kind, order)
+        return self.__array__().argsort(axis, kind, order, stable=stable)
     argsort.__doc__ = ndarray.argsort.__doc__
 
     def capitalize(self):
@@ -1269,7 +1276,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
-    
+
     Examples
     --------
 

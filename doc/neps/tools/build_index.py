@@ -4,10 +4,11 @@ metadata is passed to Jinja for filling out the toctrees for various NEP
 categories.
 """
 
-import os
-import jinja2
 import glob
+import os
 import re
+
+import jinja2
 
 
 def render(tpl_path, context):
@@ -45,7 +46,7 @@ def nep_metadata():
             else:
                 raise RuntimeError("Unable to find NEP title.")
 
-            tags['Title'] = lines[i+1].strip()
+            tags['Title'] = lines[i + 1].strip()
             tags['Filename'] = source
 
         if not tags['Title'].startswith(f'NEP {nr} — '):
@@ -117,7 +118,7 @@ for nepcat in (
     "open", "rejected",
 ):
     infile = f"{nepcat}.rst.tmpl"
-    outfile =f"{nepcat}.rst"
+    outfile = f"{nepcat}.rst"
 
     print(f'Compiling {infile} -> {outfile}')
     genf = render(infile, meta)

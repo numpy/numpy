@@ -12,8 +12,5 @@ gitpython>=3.1.30
 # uploading wheels
 twine
 
-# building and notes
-Paver
-
 # uploading release documentation
 packaging

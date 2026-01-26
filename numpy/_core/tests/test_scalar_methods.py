@@ -2,15 +2,17 @@
 Test the scalar constructors, which also do type-coercion
 """
 import fractions
+import inspect
 import platform
+import sys
 import types
-from typing import Any, Type
+from typing import Any, Literal
 
 import pytest
-import numpy as np
 
+import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises, IS_MUSL
+from numpy.testing import IS_PYPY, assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -105,7 +107,7 @@ class TestAsIntegerRatio:
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")
 
-            assert_equal(nf / df, f, "{}/{}".format(n, d))
+            assert_equal(nf / df, f, f"{n}/{d}")
 
 
 class TestIsInteger:
@@ -143,7 +145,7 @@ class TestClassGetItem:
         np.signedinteger,
         np.floating,
     ])
-    def test_abc(self, cls: Type[np.number]) -> None:
+    def test_abc(self, cls: type[np.number]) -> None:
         alias = cls[Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is cls
@@ -164,15 +166,19 @@ class TestClassGetItem:
                 np.complexfloating[arg_tup]
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
-    def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:
+    def test_abc_non_numeric(self, cls: type[np.generic]) -> None:
         with pytest.raises(TypeError):
             cls[Any]
 
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        with pytest.raises(TypeError):
-            cls[Any]
+        if cls in {np.bool, np.datetime64}:
+            # these are intentionally subscriptable
+            assert cls[Any]
+        else:
+            with pytest.raises(TypeError):
+                cls[Any]
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
@@ -186,15 +192,19 @@ class TestClassGetItem:
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
 
+    @pytest.mark.parametrize("subscript", [Literal[True], Literal[False]])
+    def test_subscript_bool(self, subscript: Literal[True, False]) -> None:
+        assert isinstance(np.bool[subscript], types.GenericAlias)
+
 
 class TestBitCount:
     # derived in part from the cpython test "test_bit_count"
 
-    @pytest.mark.parametrize("itype", sctypes['int']+sctypes['uint'])
+    @pytest.mark.parametrize("itype", sctypes['int'] + sctypes['uint'])
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
             msg = f"Smoke test for {itype}({a}).bit_count()"
-            assert itype(a).bit_count() == bin(a).count("1"), msg
+            assert itype(a).bit_count() == a.bit_count(), msg
 
     def test_bit_count(self):
         for exp in [10, 17, 63]:
@@ -210,7 +220,7 @@ class TestDevice:
     Test scalar.device attribute and scalar.to_device() method.
     """
     scalars = [np.bool(True), np.int64(1), np.uint64(1), np.float64(1.0),
-               np.complex128(1+1j)]
+               np.complex128(1 + 1j)]
 
     @pytest.mark.parametrize("scalar", scalars)
     def test_device(self, scalar):
@@ -223,3 +233,96 @@ class TestDevice:
     @pytest.mark.parametrize("scalar", scalars)
     def test___array_namespace__(self, scalar):
         assert scalar.__array_namespace__() is np
+
+
+@pytest.mark.parametrize("scalar", [np.bool(True), np.int8(1), np.float64(1)])
+def test_array_wrap(scalar):
+    # Test scalars array wrap as long as it exists.  NumPy itself should
+    # probably not use it, so it may not be necessary to keep it around.
+
+    arr0d = np.array(3, dtype=np.int8)
+    # Third argument not passed, None, or True "decays" to scalar.
+    # (I don't think NumPy would pass `None`, but it seems clear to support)
+    assert type(scalar.__array_wrap__(arr0d)) is np.int8
+    assert type(scalar.__array_wrap__(arr0d, None, None)) is np.int8
+    assert type(scalar.__array_wrap__(arr0d, None, True)) is np.int8
+
+    # Otherwise, result should be the input
+    assert scalar.__array_wrap__(arr0d, None, False) is arr0d
+
+    # An old bug.  A non 0-d array cannot be converted to scalar:
+    arr1d = np.array([3], dtype=np.int8)
+    assert scalar.__array_wrap__(arr1d) is arr1d
+    assert scalar.__array_wrap__(arr1d, None, True) is arr1d
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestSignature:
+    # test that scalar types have a valid __text_signature__ or __signature__ set
+    @pytest.mark.parametrize(
+        "sctype",
+        [
+            *sctypes["int"],
+            *sctypes["uint"],
+            *sctypes["float"],
+            *sctypes["complex"],
+            *sctypes["others"],
+            np.datetime64,
+            np.timedelta64,
+        ],
+    )
+    def test_constructor_signatures(self, sctype: type[np.generic]):
+        try:
+            sig = inspect.signature(sctype)
+        except ValueError:
+            pytest.fail(f"missing signature: {sctype}")
+
+        assert sig.parameters
+
+    @pytest.mark.parametrize(
+        "sctype",
+        [np.integer, *sctypes["int"], *sctypes["uint"], *sctypes["float"]],
+    )
+    def test_method_signatures_is_integer(self, sctype: type[np.integer | np.floating]):
+        try:
+            sig = inspect.signature(sctype.is_integer)
+        except ValueError:
+            pytest.fail(f"missing signature: {sctype.__name__}.is_integer")
+
+        assert len(sig.parameters) == 1
+        assert sig.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
+    @pytest.mark.parametrize("sctype", sctypes["float"])
+    def test_method_signatures_as_integer_ratio(self, sctype: type[np.floating]):
+        try:
+            sig = inspect.signature(sctype.as_integer_ratio)
+        except ValueError:
+            pytest.fail(f"missing signature: {sctype.__name__}.as_integer_ratio")
+
+        assert len(sig.parameters) == 1
+        assert sig.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
+    @pytest.mark.parametrize(
+        "method_name",
+        [
+            "__array_namespace__", "__copy__", "__deepcopy__", "all", "any", "argmax",
+            "argmin", "argsort", "astype", "byteswap", "choose", "clip", "compress",
+            "conj", "conjugate", "copy", "cumprod", "cumsum", "diagonal", "dump",
+            "dumps", "fill", "flatten", "getfield", "item", "max", "mean", "min",
+            "nonzero", "prod", "put", "ravel", "repeat", "reshape", "resize", "round",
+            "searchsorted", "setfield", "setflags", "sort", "squeeze", "std", "sum",
+            "swapaxes", "take", "to_device", "tobytes", "tofile", "tolist", "trace",
+            "transpose", "var", "view",
+        ],
+    )
+    def test_array_scalar_method_signatures(self, method_name: str):
+        # methods shared by np.generic and np.ndarray should have the same signature
+        fn_generic = getattr(np.generic, method_name)
+        sig_generic = inspect.signature(fn_generic)
+        assert "self" in sig_generic.parameters
+        assert sig_generic.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+
+        fn_ndarray = getattr(np.ndarray, method_name)
+        sig_ndarray = inspect.signature(fn_ndarray)
+        assert sig_generic == sig_ndarray

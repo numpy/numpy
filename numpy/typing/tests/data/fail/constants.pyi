@@ -1,3 +1,3 @@
 import numpy as np
 
-np.little_endian = np.little_endian  # E: Cannot assign to final
+np.little_endian = np.little_endian  # type: ignore[misc]

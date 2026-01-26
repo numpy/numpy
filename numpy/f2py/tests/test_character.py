@@ -1,8 +1,10 @@
-import pytest
 import textwrap
-from numpy.testing import assert_array_equal, assert_equal, assert_raises
+
+import pytest
+
 import numpy as np
 from numpy.f2py.tests import util
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
 
 @pytest.mark.slow
@@ -15,7 +17,7 @@ class TestCharacterString(util.F2PyTest):
     code = ''
     for length in length_list:
         fsuffix = length
-        clength = dict(star='(*)').get(length, length)
+        clength = {'star': '(*)'}.get(length, length)
 
         code += textwrap.dedent(f"""
 
@@ -538,13 +540,13 @@ class TestMiscCharacter(util.F2PyTest):
         f = getattr(self.module, self.fprefix + '_gh4519')
 
         for x, expected in [
-                ('a', dict(shape=(), dtype=np.dtype('S1'))),
-                ('text', dict(shape=(), dtype=np.dtype('S4'))),
+                ('a', {'shape': (), 'dtype': np.dtype('S1')}),
+                ('text', {'shape': (), 'dtype': np.dtype('S4')}),
                 (np.array(['1', '2', '3'], dtype='S1'),
-                 dict(shape=(3,), dtype=np.dtype('S1'))),
+                 {'shape': (3,), 'dtype': np.dtype('S1')}),
                 (['1', '2', '34'],
-                 dict(shape=(3,), dtype=np.dtype('S2'))),
-                (['', ''], dict(shape=(2,), dtype=np.dtype('S1')))]:
+                 {'shape': (3,), 'dtype': np.dtype('S2')}),
+                (['', ''], {'shape': (2,), 'dtype': np.dtype('S1')})]:
             r = f(x)
             for k, v in expected.items():
                 assert_equal(getattr(r, k), v)
@@ -587,7 +589,7 @@ class TestStringScalarArr(util.F2PyTest):
     def test_char_arr(self):
         for out in (self.module.string_test.strarr,
                     self.module.string_test.strarr77):
-            expected = (5,7)
+            expected = (5, 7)
             assert out.shape == expected
             expected = '|S12'
             assert out.dtype == expected
@@ -607,7 +609,7 @@ class TestStringOptionalInOut(util.F2PyTest):
         a = np.array('hi', dtype='S32')
         self.module.string_inout_optional(a)
         assert "output string" in a.tobytes().decode()
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             aa = "Hi"
             self.module.string_inout_optional(aa)
 

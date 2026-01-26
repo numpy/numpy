@@ -5,10 +5,8 @@ import functools
 import itertools
 import operator
 
-from . import numeric as _nx
-from . import overrides
+from . import fromnumeric as _from_nx, numeric as _nx, overrides
 from .multiarray import array, asanyarray, normalize_axis_index
-from . import fromnumeric as _from_nx
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -538,6 +536,7 @@ def unstack(x, /, *, axis=0):
         raise ValueError("Input array must be at least 1-d.")
     return tuple(_nx.moveaxis(x, axis, 0))
 
+
 # Internal functions to eliminate the overhead of repeated dispatch in one of
 # the two possible paths inside np.block.
 # Use getattr to protect against __array_function__ being disabled.
@@ -551,7 +550,7 @@ def _block_format_index(index):
     """
     Convert a list of indices ``[0, 1, 2]`` into ``"arrays[0][1][2]"``.
     """
-    idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
+    idx_str = ''.join(f'[{i}]' for i in index if i is not None)
     return 'arrays' + idx_str
 
 
@@ -586,20 +585,18 @@ def _block_check_depths_match(arrays, parent_index=[]):
         the choice of algorithm used using benchmarking wisdom.
 
     """
-    if type(arrays) is tuple:
+    if isinstance(arrays, tuple):
         # not strictly necessary, but saves us from:
         #  - more than one way to do things - no point treating tuples like
         #    lists
         #  - horribly confusing behaviour that results when tuples are
         #    treated like ndarray
         raise TypeError(
-            '{} is a tuple. '
+            f'{_block_format_index(parent_index)} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
-            'not allow implicit conversion from tuple to ndarray.'.format(
-                _block_format_index(parent_index)
-            )
+            'not allow implicit conversion from tuple to ndarray.'
         )
-    elif type(arrays) is list and len(arrays) > 0:
+    elif isinstance(arrays, list) and len(arrays) > 0:
         idxs_ndims = (_block_check_depths_match(arr, parent_index + [i])
                       for i, arr in enumerate(arrays))
 
@@ -610,19 +607,16 @@ def _block_check_depths_match(arrays, parent_index=[]):
                 max_arr_ndim = ndim
             if len(index) != len(first_index):
                 raise ValueError(
-                    "List depths are mismatched. First element was at depth "
-                    "{}, but there is an element at depth {} ({})".format(
-                        len(first_index),
-                        len(index),
-                        _block_format_index(index)
-                    )
+                    "List depths are mismatched. First element was at "
+                    f"depth {len(first_index)}, but there is an element at "
+                    f"depth {len(index)} ({_block_format_index(index)})"
                 )
             # propagate our flag that indicates an empty list at the bottom
             if index[-1] is None:
                 first_index = index
 
         return first_index, max_arr_ndim, final_size
-    elif type(arrays) is list and len(arrays) == 0:
+    elif isinstance(arrays, list) and len(arrays) == 0:
         # We've 'bottomed out' on an empty list
         return parent_index + [None], 0, 0
     else:
@@ -682,14 +676,14 @@ def _concatenate_shapes(shapes, axis):
     # Take a shape, any shape
     first_shape = shapes[0]
     first_shape_pre = first_shape[:axis]
-    first_shape_post = first_shape[axis+1:]
+    first_shape_post = first_shape[axis + 1:]
 
     if any(shape[:axis] != first_shape_pre or
-           shape[axis+1:] != first_shape_post for shape in shapes):
+           shape[axis + 1:] != first_shape_post for shape in shapes):
         raise ValueError(
-            'Mismatched array shapes in block along axis {}.'.format(axis))
+            f'Mismatched array shapes in block along axis {axis}.')
 
-    shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis+1:])
+    shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis + 1:])
 
     offsets_at_axis = _accumulate(shape_at_axis)
     slice_prefixes = [(slice(start, end),)
@@ -727,7 +721,7 @@ def _block_info_recursion(arrays, max_depth, result_ndim, depth=0):
     """
     if depth < max_depth:
         shapes, slices, arrays = zip(
-            *[_block_info_recursion(arr, max_depth, result_ndim, depth+1)
+            *[_block_info_recursion(arr, max_depth, result_ndim, depth + 1)
               for arr in arrays])
 
         axis = result_ndim - max_depth + depth
@@ -761,9 +755,9 @@ def _block(arrays, max_depth, result_ndim, depth=0):
     for details).
     """
     if depth < max_depth:
-        arrs = [_block(arr, max_depth, result_ndim, depth+1)
+        arrs = [_block(arr, max_depth, result_ndim, depth + 1)
                 for arr in arrays]
-        return _concatenate(arrs, axis=-(max_depth-depth))
+        return _concatenate(arrs, axis=-(max_depth - depth))
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
         # type(arrays) is not list
@@ -774,7 +768,7 @@ def _block_dispatcher(arrays):
     # Use type(...) is list to match the behavior of np.block(), which special
     # cases list specifically rather than allowing for generic iterables or
     # tuple. Also, we know that list.__array_function__ will never exist.
-    if type(arrays) is list:
+    if isinstance(arrays, list):
         for subarrays in arrays:
             yield from _block_dispatcher(subarrays)
     else:
@@ -839,7 +833,6 @@ def block(arrays):
 
     Notes
     -----
-
     When called with only scalars, ``np.block`` is equivalent to an ndarray
     call. So ``np.block([[1, 2], [3, 4]])`` is equivalent to
     ``np.array([[1, 2], [3, 4]])``.
@@ -967,9 +960,7 @@ def _block_setup(arrays):
     list_ndim = len(bottom_index)
     if bottom_index and bottom_index[-1] is None:
         raise ValueError(
-            'List at {} cannot be empty'.format(
-                _block_format_index(bottom_index)
-            )
+            f'List at {_block_format_index(bottom_index)} cannot be empty'
         )
     result_ndim = max(arr_ndim, list_ndim)
     return arrays, list_ndim, result_ndim, final_size

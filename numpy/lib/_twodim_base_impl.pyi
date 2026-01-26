@@ -1,41 +1,19 @@
+from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    TypeAlias,
-    overload,
-    TypeVar,
-    Literal as L,
-)
+from typing import Any, Literal as L, Never, Protocol, overload, type_check_only
 
 import numpy as np
-from numpy import (
-    generic,
-    number,
-    timedelta64,
-    datetime64,
-    int_,
-    intp,
-    float64,
-    complex128,
-    signedinteger,
-    floating,
-    complexfloating,
-    object_,
-    _OrderCF,
-)
-
+from numpy import _OrderCF
 from numpy._typing import (
-    DTypeLike,
-    _DTypeLike,
     ArrayLike,
-    _ArrayLike,
+    DTypeLike,
     NDArray,
+    _ArrayLike,
+    _DTypeLike,
+    _NumberLike_co,
+    _ScalarLike_co,
     _SupportsArray,
     _SupportsArrayFunc,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
 )
 
 __all__ = [
@@ -56,382 +34,358 @@ __all__ = [
     "triu_indices_from",
 ]
 
-_T = TypeVar("_T")
-_SCT = TypeVar("_SCT", bound=generic)
+###
+
+type _Int_co = np.integer | np.bool
+type _Float_co = np.floating | _Int_co
+type _Number_co = np.number | np.bool
+
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
+type _Array2D[ScalarT: np.generic] = np.ndarray[tuple[int, int], np.dtype[ScalarT]]
+# Workaround for mypy's and pyright's lack of compliance with the typing spec for
+# overloads for gradual types. This works because only `Any` and `Never` are assignable
+# to `Never`.
+type _ArrayNoD[ScalarT: np.generic] = np.ndarray[tuple[Never] | tuple[Never, Never], np.dtype[ScalarT]]
+
+type _ArrayLike1D[ScalarT: np.generic] = _SupportsArray[np.dtype[ScalarT]] | Sequence[ScalarT]
+type _ArrayLike1DInt_co = _SupportsArray[np.dtype[_Int_co]] | Sequence[int | _Int_co]
+type _ArrayLike1DFloat_co = _SupportsArray[np.dtype[_Float_co]] | Sequence[float | _Float_co]
+type _ArrayLike2DFloat_co = _SupportsArray[np.dtype[_Float_co]] | Sequence[_ArrayLike1DFloat_co]
+type _ArrayLike1DNumber_co = _SupportsArray[np.dtype[_Number_co]] | Sequence[complex | _Number_co]
 
 # The returned arrays dtype must be compatible with `np.equal`
-_MaskFunc: TypeAlias = Callable[
-    [NDArray[int_], _T],
-    NDArray[number[Any] | np.bool | timedelta64 | datetime64 | object_],
-]
+type _MaskFunc[_T] = Callable[[NDArray[np.int_], _T], NDArray[_Number_co | np.timedelta64 | np.datetime64 | np.object_]]
 
+type _Indices2D = tuple[_Array1D[np.intp], _Array1D[np.intp]]
+type _Histogram2D[ScalarT: np.generic] = tuple[_Array2D[np.float64], _Array1D[ScalarT], _Array1D[ScalarT]]
+
+@type_check_only
+class _HasShapeAndNDim(Protocol):
+    @property  # TODO: require 2d shape once shape-typing has matured
+    def shape(self) -> tuple[int, ...]: ...
+    @property
+    def ndim(self) -> int: ...
+
+###
+
+# keep in sync with `flipud`
 @overload
-def fliplr(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+def fliplr[ArrayT: np.ndarray](m: ArrayT) -> ArrayT: ...
+@overload
+def fliplr[ScalarT: np.generic](m: _ArrayLike[ScalarT]) -> NDArray[ScalarT]: ...
 @overload
 def fliplr(m: ArrayLike) -> NDArray[Any]: ...
 
+# keep in sync with `fliplr`
 @overload
-def flipud(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+def flipud[ArrayT: np.ndarray](m: ArrayT) -> ArrayT: ...
+@overload
+def flipud[ScalarT: np.generic](m: _ArrayLike[ScalarT]) -> NDArray[ScalarT]: ...
 @overload
 def flipud(m: ArrayLike) -> NDArray[Any]: ...
 
+#
 @overload
 def eye(
     N: int,
-    M: None | int = ...,
-    k: int = ...,
-    dtype: None = ...,
-    order: _OrderCF = ...,
+    M: int | None = None,
+    k: int = 0,
+    dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
+    order: _OrderCF = "C",
     *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[float64]: ...
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[np.float64]: ...
+@overload
+def eye[ScalarT: np.generic](
+    N: int,
+    M: int | None,
+    k: int,
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderCF = "C",
+    *,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[ScalarT]: ...
+@overload
+def eye[ScalarT: np.generic](
+    N: int,
+    M: int | None = None,
+    k: int = 0,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    order: _OrderCF = "C",
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[ScalarT]: ...
 @overload
 def eye(
     N: int,
-    M: None | int = ...,
-    k: int = ...,
-    dtype: _DTypeLike[_SCT] = ...,
-    order: _OrderCF = ...,
+    M: int | None = None,
+    k: int = 0,
+    dtype: DTypeLike | None = ...,  # = float
+    order: _OrderCF = "C",
     *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[_SCT]: ...
-@overload
-def eye(
-    N: int,
-    M: None | int = ...,
-    k: int = ...,
-    dtype: DTypeLike = ...,
-    order: _OrderCF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array2D[Incomplete]: ...
 
+#
 @overload
-def diag(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
+def diag[ScalarT: np.generic](v: _ArrayNoD[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> NDArray[ScalarT]: ...
 @overload
-def diag(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
+def diag[ScalarT: np.generic](v: _Array2D[ScalarT] | Sequence[Sequence[ScalarT]], k: int = 0) -> _Array1D[ScalarT]: ...
+@overload
+def diag[ScalarT: np.generic](v: _Array1D[ScalarT] | Sequence[ScalarT], k: int = 0) -> _Array2D[ScalarT]: ...
+@overload
+def diag(v: Sequence[Sequence[_ScalarLike_co]], k: int = 0) -> _Array1D[Incomplete]: ...
+@overload
+def diag(v: Sequence[_ScalarLike_co], k: int = 0) -> _Array2D[Incomplete]: ...
+@overload
+def diag[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> NDArray[ScalarT]: ...
+@overload
+def diag(v: ArrayLike, k: int = 0) -> NDArray[Incomplete]: ...
 
+# keep in sync with `numpy.ma.extras.diagflat`
 @overload
-def diagflat(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
+def diagflat[ScalarT: np.generic](v: _ArrayLike[ScalarT], k: int = 0) -> _Array2D[ScalarT]: ...
 @overload
-def diagflat(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
+def diagflat(v: ArrayLike, k: int = 0) -> _Array2D[Incomplete]: ...
 
+#
 @overload
 def tri(
     N: int,
-    M: None | int = ...,
-    k: int = ...,
-    dtype: None = ...,
+    M: int | None = None,
+    k: int = 0,
+    dtype: None = ...,  # = float  # stubdefaulter: ignore[missing-default]
     *,
-    like: None | _SupportsArrayFunc = ...
-) -> NDArray[float64]: ...
+    like: _SupportsArrayFunc | None = None
+) -> _Array2D[np.float64]: ...
+@overload
+def tri[ScalarT: np.generic](
+    N: int,
+    M: int | None,
+    k: int,
+    dtype: _DTypeLike[ScalarT],
+    *,
+    like: _SupportsArrayFunc | None = None
+) -> _Array2D[ScalarT]: ...
+@overload
+def tri[ScalarT: np.generic](
+    N: int,
+    M: int | None = None,
+    k: int = 0,
+    *,
+    dtype: _DTypeLike[ScalarT],
+    like: _SupportsArrayFunc | None = None
+) -> _Array2D[ScalarT]: ...
 @overload
 def tri(
     N: int,
-    M: None | int = ...,
-    k: int = ...,
-    dtype: _DTypeLike[_SCT] = ...,
+    M: int | None = None,
+    k: int = 0,
+    dtype: DTypeLike | None = ...,  # = float
     *,
-    like: None | _SupportsArrayFunc = ...
-) -> NDArray[_SCT]: ...
-@overload
-def tri(
-    N: int,
-    M: None | int = ...,
-    k: int = ...,
-    dtype: DTypeLike = ...,
-    *,
-    like: None | _SupportsArrayFunc = ...
-) -> NDArray[Any]: ...
+    like: _SupportsArrayFunc | None = None
+) -> _Array2D[Any]: ...
 
+# keep in sync with `triu`
 @overload
-def tril(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
+def tril[ArrayT: np.ndarray](m: ArrayT, k: int = 0) -> ArrayT: ...
 @overload
-def tril(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
+def tril[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 0) -> NDArray[ScalarT]: ...
 @overload
-def triu(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
+def tril(m: ArrayLike, k: int = 0) -> NDArray[Any]: ...
+
+# keep in sync with `tril`
 @overload
-def triu(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
+def triu[ArrayT: np.ndarray](m: ArrayT, k: int = 0) -> ArrayT: ...
 @overload
-def vander(  # type: ignore[misc]
-    x: _ArrayLikeInt_co,
-    N: None | int = ...,
-    increasing: bool = ...,
-) -> NDArray[signedinteger[Any]]: ...
+def triu[ScalarT: np.generic](m: _ArrayLike[ScalarT], k: int = 0) -> NDArray[ScalarT]: ...
 @overload
-def vander(  # type: ignore[misc]
-    x: _ArrayLikeFloat_co,
-    N: None | int = ...,
-    increasing: bool = ...,
-) -> NDArray[floating[Any]]: ...
+def triu(m: ArrayLike, k: int = 0) -> NDArray[Any]: ...
+
+# we use `list` (invariant) instead of `Sequence` (covariant) to avoid overlap
+# keep in sync with `ma.extras.vander`
 @overload
-def vander(
-    x: _ArrayLikeComplex_co,
-    N: None | int = ...,
-    increasing: bool = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+def vander[ScalarT: np.number | np.object_](x: _ArrayLike1D[ScalarT], N: int | None = None, increasing: bool = False) -> _Array2D[ScalarT]: ...
 @overload
-def vander(
-    x: _ArrayLikeObject_co,
-    N: None | int = ...,
-    increasing: bool = ...,
-) -> NDArray[object_]: ...
+def vander(x: _ArrayLike1D[np.bool] | list[int], N: int | None = None, increasing: bool = False) -> _Array2D[np.int_]: ...
+@overload
+def vander(x: list[float], N: int | None = None, increasing: bool = False) -> _Array2D[np.float64]: ...
+@overload
+def vander(x: list[complex], N: int | None = None, increasing: bool = False) -> _Array2D[np.complex128]: ...
+@overload  # fallback
+def vander(x: Sequence[_NumberLike_co], N: int | None = None, increasing: bool = False) -> _Array2D[Any]: ...
 
-
-_Int_co: TypeAlias = np.integer[Any] | np.bool
-_Float_co: TypeAlias = np.floating[Any] | _Int_co
-_Number_co: TypeAlias = np.number[Any] | np.bool
-
-_ArrayLike1D: TypeAlias = _SupportsArray[np.dtype[_SCT]] | Sequence[_SCT]
-_ArrayLike2D: TypeAlias = (
-    _SupportsArray[np.dtype[_SCT]]
-    | Sequence[_ArrayLike1D[_SCT]]
-)
-
-_ArrayLike1DInt_co: TypeAlias = (
-    _SupportsArray[np.dtype[_Int_co]]
-    | Sequence[int | _Int_co]
-)
-_ArrayLike1DFloat_co: TypeAlias = (
-    _SupportsArray[np.dtype[_Float_co]]
-    | Sequence[float | int | _Float_co]
-)
-_ArrayLike2DFloat_co: TypeAlias = (
-    _SupportsArray[np.dtype[_Float_co]]
-    | Sequence[_ArrayLike1DFloat_co]
-)
-_ArrayLike1DNumber_co: TypeAlias = (
-    _SupportsArray[np.dtype[_Number_co]]
-    | Sequence[int | float | complex | _Number_co]
-)
-
-_SCT_complex = TypeVar("_SCT_complex", bound=np.complexfloating[Any, Any])
-_SCT_inexact = TypeVar("_SCT_inexact", bound=np.inexact[Any])
-_SCT_number_co = TypeVar("_SCT_number_co", bound=_Number_co)
-
+#
+@overload
+def histogram2d[ScalarT: np.complexfloating](
+    x: _ArrayLike1D[ScalarT],
+    y: _ArrayLike1D[ScalarT | _Float_co],
+    bins: int | Sequence[int] = 10,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT]: ...
+@overload
+def histogram2d[ScalarT: np.complexfloating](
+    x: _ArrayLike1D[ScalarT | _Float_co],
+    y: _ArrayLike1D[ScalarT],
+    bins: int | Sequence[int] = 10,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT]: ...
+@overload
+def histogram2d[ScalarT: np.inexact](
+    x: _ArrayLike1D[ScalarT],
+    y: _ArrayLike1D[ScalarT | _Int_co],
+    bins: int | Sequence[int] = 10,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT]: ...
+@overload
+def histogram2d[ScalarT: np.inexact](
+    x: _ArrayLike1D[ScalarT | _Int_co],
+    y: _ArrayLike1D[ScalarT],
+    bins: int | Sequence[int] = 10,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT]: ...
 @overload
 def histogram2d(
-    x: _ArrayLike1D[_SCT_complex],
-    y: _ArrayLike1D[_SCT_complex | _Float_co],
-    bins: int | Sequence[int] = ...,
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_complex],
-    NDArray[_SCT_complex],
-]: ...
+    x: _ArrayLike1DInt_co | Sequence[float],
+    y: _ArrayLike1DInt_co | Sequence[float],
+    bins: int | Sequence[int] = 10,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.float64]: ...
 @overload
 def histogram2d(
-    x: _ArrayLike1D[_SCT_complex | _Float_co],
-    y: _ArrayLike1D[_SCT_complex],
-    bins: int | Sequence[int] = ...,
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_complex],
-    NDArray[_SCT_complex],
-]: ...
+    x: Sequence[complex],
+    y: Sequence[complex],
+    bins: int | Sequence[int] = 10,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.complex128 | Any]: ...
+@overload
+def histogram2d[ScalarT: _Number_co](
+    x: _ArrayLike1DNumber_co,
+    y: _ArrayLike1DNumber_co,
+    bins: _ArrayLike1D[ScalarT] | Sequence[_ArrayLike1D[ScalarT]],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT]: ...
+@overload
+def histogram2d[ScalarT: np.inexact, BinsScalarT: _Number_co](
+    x: _ArrayLike1D[ScalarT],
+    y: _ArrayLike1D[ScalarT],
+    bins: Sequence[_ArrayLike1D[BinsScalarT] | int],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT | BinsScalarT]: ...
+@overload
+def histogram2d[ScalarT: np.inexact](
+    x: _ArrayLike1D[ScalarT],
+    y: _ArrayLike1D[ScalarT],
+    bins: Sequence[_ArrayLike1DNumber_co | int],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[ScalarT | Any]: ...
+@overload
+def histogram2d[ScalarT: _Number_co](
+    x: _ArrayLike1DInt_co | Sequence[float],
+    y: _ArrayLike1DInt_co | Sequence[float],
+    bins: Sequence[_ArrayLike1D[ScalarT] | int],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.float64 | ScalarT]: ...
 @overload
 def histogram2d(
-    x: _ArrayLike1D[_SCT_inexact],
-    y: _ArrayLike1D[_SCT_inexact | _Int_co],
-    bins: int | Sequence[int] = ...,
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_inexact],
-    NDArray[_SCT_inexact],
-]: ...
+    x: _ArrayLike1DInt_co | Sequence[float],
+    y: _ArrayLike1DInt_co | Sequence[float],
+    bins: Sequence[_ArrayLike1DNumber_co | int],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.float64 | Any]: ...
+@overload
+def histogram2d[ScalarT: _Number_co](
+    x: Sequence[complex],
+    y: Sequence[complex],
+    bins: Sequence[_ArrayLike1D[ScalarT] | int],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.complex128 | ScalarT]: ...
 @overload
 def histogram2d(
-    x: _ArrayLike1D[_SCT_inexact | _Int_co],
-    y: _ArrayLike1D[_SCT_inexact],
-    bins: int | Sequence[int] = ...,
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_inexact],
-    NDArray[_SCT_inexact],
-]: ...
-@overload
-def histogram2d(
-    x: _ArrayLike1DInt_co | Sequence[float | int],
-    y: _ArrayLike1DInt_co | Sequence[float | int],
-    bins: int | Sequence[int] = ...,
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[float64],
-    NDArray[float64],
-]: ...
-@overload
-def histogram2d(
-    x: Sequence[complex | float | int],
-    y: Sequence[complex | float | int],
-    bins: int | Sequence[int] = ...,
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[complex128 | float64],
-    NDArray[complex128 | float64],
-]: ...
+    x: Sequence[complex],
+    y: Sequence[complex],
+    bins: Sequence[_ArrayLike1DNumber_co | int],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.complex128 | Any]: ...
 @overload
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: _ArrayLike1D[_SCT_number_co] | Sequence[_ArrayLike1D[_SCT_number_co]],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_number_co],
-    NDArray[_SCT_number_co],
-]: ...
-@overload
-def histogram2d(
-    x: _ArrayLike1D[_SCT_inexact],
-    y: _ArrayLike1D[_SCT_inexact],
-    bins: Sequence[_ArrayLike1D[_SCT_number_co] | int],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_number_co | _SCT_inexact],
-    NDArray[_SCT_number_co | _SCT_inexact],
-]: ...
-@overload
-def histogram2d(
-    x: _ArrayLike1DInt_co | Sequence[float | int],
-    y: _ArrayLike1DInt_co | Sequence[float | int],
-    bins: Sequence[_ArrayLike1D[_SCT_number_co] | int],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_number_co | float64],
-    NDArray[_SCT_number_co | float64],
-]: ...
-@overload
-def histogram2d(
-    x: Sequence[complex | float | int],
-    y: Sequence[complex | float | int],
-    bins: Sequence[_ArrayLike1D[_SCT_number_co] | int],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[_SCT_number_co | complex128 | float64],
-    NDArray[_SCT_number_co | complex128 | float64] ,
-]: ...
-
+    bins: Sequence[Sequence[int]],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.int_]: ...
 @overload
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[bool]],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[np.bool],
-    NDArray[np.bool],
-]: ...
+    bins: Sequence[Sequence[float]],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.float64 | Any]: ...
 @overload
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[int | bool]],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[np.int_ | np.bool],
-    NDArray[np.int_ | np.bool],
-]: ...
+    bins: Sequence[Sequence[complex]],
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[np.complex128 | Any]: ...
 @overload
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[float | int | bool]],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[np.float64 | np.int_ | np.bool],
-    NDArray[np.float64 | np.int_ | np.bool],
-]: ...
-@overload
-def histogram2d(
-    x: _ArrayLike1DNumber_co,
-    y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[complex | float | int | bool]],
-    range: None | _ArrayLike2DFloat_co = ...,
-    density: None | bool = ...,
-    weights: None | _ArrayLike1DFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[np.complex128 | np.float64 | np.int_ | np.bool],
-    NDArray[np.complex128 | np.float64 | np.int_ | np.bool],
-]: ...
+    bins: Sequence[_ArrayLike1DNumber_co | int] | int,
+    range: _ArrayLike2DFloat_co | None = None,
+    density: bool | None = None,
+    weights: _ArrayLike1DFloat_co | None = None,
+) -> _Histogram2D[Any]: ...
 
 # NOTE: we're assuming/demanding here the `mask_func` returns
 # an ndarray of shape `(n, n)`; otherwise there is the possibility
 # of the output tuple having more or less than 2 elements
 @overload
-def mask_indices(
-    n: int,
-    mask_func: _MaskFunc[int],
-    k: int = ...,
-) -> tuple[NDArray[intp], NDArray[intp]]: ...
+def mask_indices(n: int, mask_func: _MaskFunc[int], k: int = 0) -> _Indices2D: ...
 @overload
-def mask_indices(
-    n: int,
-    mask_func: _MaskFunc[_T],
-    k: _T,
-) -> tuple[NDArray[intp], NDArray[intp]]: ...
+def mask_indices[T](n: int, mask_func: _MaskFunc[T], k: T) -> _Indices2D: ...
 
-def tril_indices(
-    n: int,
-    k: int = ...,
-    m: None | int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
+#
+def tril_indices(n: int, k: int = 0, m: int | None = None) -> _Indices2D: ...
+def triu_indices(n: int, k: int = 0, m: int | None = None) -> _Indices2D: ...
 
-def tril_indices_from(
-    arr: NDArray[Any],
-    k: int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
-
-def triu_indices(
-    n: int,
-    k: int = ...,
-    m: None | int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
-
-def triu_indices_from(
-    arr: NDArray[Any],
-    k: int = ...,
-) -> tuple[NDArray[int_], NDArray[int_]]: ...
+# these will accept anything with `shape: tuple[int, int]` and `ndim: int` attributes
+def tril_indices_from(arr: _HasShapeAndNDim, k: int = 0) -> _Indices2D: ...
+def triu_indices_from(arr: _HasShapeAndNDim, k: int = 0) -> _Indices2D: ...

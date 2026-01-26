@@ -3,10 +3,11 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal
 from numpy._core._multiarray_umath import (
-    _discover_array_parameters as discover_array_params, _get_sfloat_dtype)
-
+    _discover_array_parameters as discover_array_params,
+    _get_sfloat_dtype,
+)
+from numpy.testing import assert_array_equal
 
 SF = _get_sfloat_dtype()
 
@@ -14,13 +15,13 @@ SF = _get_sfloat_dtype()
 class TestSFloat:
     def _get_array(self, scaling, aligned=True):
         if not aligned:
-            a = np.empty(3*8 + 1, dtype=np.uint8)[1:]
+            a = np.empty(3 * 8 + 1, dtype=np.uint8)[1:]
             a = a.view(np.float64)
             a[:] = [1., 2., 3.]
         else:
             a = np.array([1., 2., 3.])
 
-        a *= 1./scaling  # the casting code also uses the reciprocal.
+        a *= 1. / scaling  # the casting code also uses the reciprocal.
         return a.view(SF(scaling))
 
     def test_sfloat_rescaled(self):
@@ -46,6 +47,9 @@ class TestSFloat:
     def test_repr(self):
         # Check the repr, mainly to cover the code paths:
         assert repr(SF(scaling=1.)) == "_ScaledFloatTestDType(scaling=1.0)"
+
+    def test_dtype_str(self):
+        assert SF(1.).str == "_ScaledFloatTestDType(scaling=1.0)"
 
     def test_dtype_name(self):
         assert SF(1.).name == "_ScaledFloatTestDType64"
@@ -227,6 +231,78 @@ class TestSFloat:
         expected = np.hypot.reduce(float_equiv, keepdims=True)
         assert res.view(np.float64) * 2 == expected
 
+    def test_sort(self):
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        a.sort()
+        assert_array_equal(a.view(np.float64), [1., 2., 3.])
+
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        sorted_a = np.sort(a)
+        assert_array_equal(sorted_a.view(np.float64), [1., 2., 3.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [3., 2., 1.])
+
+        a = self._get_array(0.5)  # different factor
+        a = a[::2][::-1]  # non-contiguous
+        sorted_a = np.sort(a)
+        assert_array_equal(sorted_a.view(np.float64), [2., 6.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 2.])
+
+        a = self._get_array(0.5, aligned=False)
+        a = a[::-1]  # reverse it
+        sorted_a = np.sort(a)
+        assert_array_equal(sorted_a.view(np.float64), [2., 4., 6.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_a = np.sort(a, stable=True)
+        assert_array_equal(sorted_a.view(np.float64), [2., 4., 6.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_a = np.sort(a, stable=False)
+        assert_array_equal(sorted_a.view(np.float64), [2., 4., 6.])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+    def test_argsort(self):
+        a = self._get_array(1.)
+        a = a[::-1]  # reverse it
+
+        indices = np.argsort(a)
+        assert_array_equal(indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [3., 2., 1.])
+
+        a = self._get_array(0.5)
+        a = a[::2][::-1]  # reverse it
+        indices = np.argsort(a)
+        assert_array_equal(indices, [1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 2.])
+
+        a = self._get_array(0.5, aligned=False)
+        a = a[::-1]  # reverse it
+        indices = np.argsort(a)
+        assert_array_equal(indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_indices = np.argsort(a, stable=True)
+        assert_array_equal(sorted_indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
+        sorted_indices = np.argsort(a, stable=False)
+        assert_array_equal(sorted_indices, [2, 1, 0])
+        # original is unchanged
+        assert_array_equal(a.view(np.float64), [6., 4., 2.])
+
     def test_astype_class(self):
         # Very simple test that we accept `.astype()` also on the class.
         # ScaledFloat always returns the default descriptor, but it does
@@ -251,6 +327,9 @@ class TestSFloat:
         assert np.zeros(3, dtype=SF).dtype == SF(1.)
         assert np.zeros_like(arr1, dtype=SF).dtype == SF(1.)
 
+    @pytest.mark.thread_unsafe(
+        reason="_ScaledFloatTestDType setup is thread-unsafe (gh-29850)"
+    )
     def test_np_save_load(self):
         # this monkeypatch is needed because pickle
         # uses the repr of a type to reconstruct it
@@ -294,6 +373,9 @@ class TestSFloat:
         np.testing.assert_array_equal(
             arr.view(np.float64), arr2.view(np.float64))
 
+@pytest.mark.thread_unsafe(
+    reason="_ScaledFloatTestDType setup is thread-unsafe (gh-29850)"
+)
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)
     import pickle

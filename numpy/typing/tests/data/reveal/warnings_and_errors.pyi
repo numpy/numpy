@@ -1,6 +1,6 @@
-import numpy.exceptions as ex
+from typing import assert_type
 
-from typing_extensions import assert_type
+import numpy.exceptions as ex
 
 assert_type(ex.ModuleDeprecationWarning(), ex.ModuleDeprecationWarning)
 assert_type(ex.VisibleDeprecationWarning(), ex.VisibleDeprecationWarning)

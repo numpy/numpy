@@ -1,14 +1,11 @@
 import os
-import sys
-import textwrap
-import types
-import warnings
-import functools
 import platform
+import sys
+import types
 
+import numpy as np
 from numpy._core import ndarray
 from numpy._utils import set_module
-import numpy as np
 
 __all__ = [
     'get_include', 'info', 'show_runtime'
@@ -36,10 +33,13 @@ def show_runtime():
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     """
-    from numpy._core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
     from pprint import pprint
+
+    from numpy._core._multiarray_umath import (
+        __cpu_baseline__,
+        __cpu_dispatch__,
+        __cpu_features__,
+    )
     config_found = [{
         "numpy_version": np.__version__,
         "python": sys.version,
@@ -58,6 +58,11 @@ def show_runtime():
             "not_found": features_not_found
         }
     })
+    config_found.append({
+        "ignore_floating_point_errors_in_matmul":
+            not np._core._multiarray_umath._blas_supports_fpe(None),
+    })
+
     try:
         from threadpoolctl import threadpool_info
         config_found.extend(threadpool_info())
@@ -115,74 +120,6 @@ def get_include():
     return d
 
 
-class _Deprecate:
-    """
-    Decorator class to deprecate old functions.
-
-    Refer to `deprecate` for details.
-
-    See Also
-    --------
-    deprecate
-
-    """
-
-    def __init__(self, old_name=None, new_name=None, message=None):
-        self.old_name = old_name
-        self.new_name = new_name
-        self.message = message
-
-    def __call__(self, func, *args, **kwargs):
-        """
-        Decorator call.  Refer to ``decorate``.
-
-        """
-        old_name = self.old_name
-        new_name = self.new_name
-        message = self.message
-
-        if old_name is None:
-            old_name = func.__name__
-        if new_name is None:
-            depdoc = "`%s` is deprecated!" % old_name
-        else:
-            depdoc = "`%s` is deprecated, use `%s` instead!" % \
-                     (old_name, new_name)
-
-        if message is not None:
-            depdoc += "\n" + message
-
-        @functools.wraps(func)
-        def newfunc(*args, **kwds):
-            warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
-            return func(*args, **kwds)
-
-        newfunc.__name__ = old_name
-        doc = func.__doc__
-        if doc is None:
-            doc = depdoc
-        else:
-            lines = doc.expandtabs().split('\n')
-            indent = _get_indent(lines[1:])
-            if lines[0].lstrip():
-                # Indent the original first line to let inspect.cleandoc()
-                # dedent the docstring despite the deprecation notice.
-                doc = indent * ' ' + doc
-            else:
-                # Remove the same leading blank lines as cleandoc() would.
-                skip = len(lines[0]) + 1
-                for line in lines[1:]:
-                    if len(line) > indent:
-                        break
-                    skip += len(line) + 1
-                doc = doc[skip:]
-            depdoc = textwrap.indent(depdoc, ' ' * indent)
-            doc = f'{depdoc}\n\n{doc}'
-        newfunc.__doc__ = doc
-
-        return newfunc
-
-
 def _get_indent(lines):
     """
     Determines the leading whitespace that could be removed from all the lines.
@@ -195,112 +132,6 @@ def _get_indent(lines):
     if indent == sys.maxsize:
         indent = 0
     return indent
-
-
-def deprecate(*args, **kwargs):
-    """
-    Issues a DeprecationWarning, adds warning to `old_name`'s
-    docstring, rebinds ``old_name.__name__`` and returns the new
-    function object.
-
-    This function may also be used as a decorator.
-
-    .. deprecated:: 2.0
-        Use `~warnings.warn` with :exc:`DeprecationWarning` instead.
-
-    Parameters
-    ----------
-    func : function
-        The function to be deprecated.
-    old_name : str, optional
-        The name of the function to be deprecated. Default is None, in
-        which case the name of `func` is used.
-    new_name : str, optional
-        The new name for the function. Default is None, in which case the
-        deprecation message is that `old_name` is deprecated. If given, the
-        deprecation message is that `old_name` is deprecated and `new_name`
-        should be used instead.
-    message : str, optional
-        Additional explanation of the deprecation.  Displayed in the
-        docstring after the warning.
-
-    Returns
-    -------
-    old_func : function
-        The deprecated function.
-
-    Examples
-    --------
-    Note that ``olduint`` returns a value after printing Deprecation
-    Warning:
-
-    >>> olduint = np.lib.utils.deprecate(np.uint)
-    DeprecationWarning: `uint64` is deprecated! # may vary
-    >>> olduint(6)
-    6
-
-    """
-    # Deprecate may be run as a function or as a decorator
-    # If run as a function, we initialise the decorator class
-    # and execute its __call__ method.
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`deprecate` is deprecated, "
-        "use `warn` with `DeprecationWarning` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    if args:
-        fn = args[0]
-        args = args[1:]
-
-        return _Deprecate(*args, **kwargs)(fn)
-    else:
-        return _Deprecate(*args, **kwargs)
-
-
-def deprecate_with_doc(msg):
-    """
-    Deprecates a function and includes the deprecation in its docstring.
-
-    .. deprecated:: 2.0
-        Use `~warnings.warn` with :exc:`DeprecationWarning` instead.
-
-    This function is used as a decorator. It returns an object that can be
-    used to issue a DeprecationWarning, by passing the to-be decorated
-    function as argument, this adds warning to the to-be decorated function's
-    docstring and returns the new function object.
-
-    See Also
-    --------
-    deprecate : Decorate a function such that it issues a
-                :exc:`DeprecationWarning`
-
-    Parameters
-    ----------
-    msg : str
-        Additional explanation of the deprecation. Displayed in the
-        docstring after the warning.
-
-    Returns
-    -------
-    obj : object
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`deprecate` is deprecated, "
-        "use `warn` with `DeprecationWarning` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    return _Deprecate(message=msg)
 
 
 #-----------------------------------------------------------------------------
@@ -326,10 +157,11 @@ def _split_line(name, arguments, width):
         k = k + len(argument) + len(addstr)
         if k > width:
             k = firstwidth + 1 + len(argument)
-            newstr = newstr + ",\n" + " "*(firstwidth+2) + argument
+            newstr = newstr + ",\n" + " " * (firstwidth + 2) + argument
         else:
             newstr = newstr + addstr + argument
     return newstr
+
 
 _namedict = None
 _dictlist = None
@@ -338,7 +170,7 @@ _dictlist = None
 # to see if something is defined
 def _makenamedict(module='numpy'):
     module = __import__(module, globals(), locals(), [])
-    thedict = {module.__name__:module.__dict__}
+    thedict = {module.__name__: module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
     while True:
@@ -393,21 +225,21 @@ def _info(obj, output=None):
     print("contiguous: ", bp(obj.flags.contiguous), file=output)
     print("fortran: ", obj.flags.fortran, file=output)
     print(
-        "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra),
+        f"data pointer: {hex(obj.ctypes._as_parameter_.value)}{extra}",
         file=output
         )
     print("byteorder: ", end=' ', file=output)
     if endian in ['|', '=']:
-        print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
+        print(f"{tic}{sys.byteorder}{tic}", file=output)
         byteswap = False
     elif endian == '>':
-        print("%sbig%s" % (tic, tic), file=output)
+        print(f"{tic}big{tic}", file=output)
         byteswap = sys.byteorder != "big"
     else:
-        print("%slittle%s" % (tic, tic), file=output)
+        print(f"{tic}little{tic}", file=output)
         byteswap = sys.byteorder != "little"
     print("byteswap: ", bp(byteswap), file=output)
-    print("type: %s" % obj.dtype, file=output)
+    print(f"type: {obj.dtype}", file=output)
 
 
 @set_module('numpy')
@@ -476,8 +308,8 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     """
     global _namedict, _dictlist
     # Local import to speed up numpy's import time.
-    import pydoc
     import inspect
+    import pydoc
 
     if (hasattr(object, '_ppimport_importer') or
            hasattr(object, '_ppimport_module')):
@@ -501,20 +333,19 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
             try:
                 obj = _namedict[namestr][object]
                 if id(obj) in objlist:
-                    print("\n     "
-                          "*** Repeat reference found in %s *** " % namestr,
+                    print(f"\n     *** Repeat reference found in {namestr} *** ",
                           file=output
                           )
                 else:
                     objlist.append(id(obj))
-                    print("     *** Found in %s ***" % namestr, file=output)
+                    print(f"     *** Found in {namestr} ***", file=output)
                     info(obj)
-                    print("-"*maxwidth, file=output)
+                    print("-" * maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
         if numfound == 0:
-            print("Help for %s not found." % object, file=output)
+            print(f"Help for {object} not found.", file=output)
         else:
             print("\n     "
                   "*** Total of %d references found. ***" % numfound,
@@ -528,7 +359,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -543,7 +374,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -567,77 +398,10 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
                     methstr, other = pydoc.splitdoc(
                             inspect.getdoc(thisobj) or "None"
                             )
-                print("  %s  --  %s" % (meth, methstr), file=output)
+                print(f"  {meth}  --  {methstr}", file=output)
 
     elif hasattr(object, '__doc__'):
         print(inspect.getdoc(object), file=output)
-
-
-def safe_eval(source):
-    """
-    Protected string evaluation.
-
-    .. deprecated:: 2.0
-        Use `ast.literal_eval` instead.
-
-    Evaluate a string containing a Python literal expression without
-    allowing the execution of arbitrary non-literal code.
-
-    .. warning::
-
-        This function is identical to :py:meth:`ast.literal_eval` and
-        has the same security implications.  It may not always be safe
-        to evaluate large input strings.
-
-    Parameters
-    ----------
-    source : str
-        The string to evaluate.
-
-    Returns
-    -------
-    obj : object
-       The result of evaluating `source`.
-
-    Raises
-    ------
-    SyntaxError
-        If the code has invalid Python syntax, or if it contains
-        non-literal code.
-
-    Examples
-    --------
-    >>> np.safe_eval('1')
-    1
-    >>> np.safe_eval('[1, 2, 3]')
-    [1, 2, 3]
-    >>> np.safe_eval('{"foo": ("bar", 10.0)}')
-    {'foo': ('bar', 10.0)}
-
-    >>> np.safe_eval('import os')
-    Traceback (most recent call last):
-      ...
-    SyntaxError: invalid syntax
-
-    >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
-    Traceback (most recent call last):
-      ...
-    ValueError: malformed node or string: <_ast.Call object at 0x...>
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`safe_eval` is deprecated. Use `ast.literal_eval` instead. "
-        "Be aware of security implications, such as memory exhaustion "
-        "based attacks (deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    # Local import to speed up numpy's import time.
-    import ast
-    return ast.literal_eval(source)
 
 
 def _median_nancheck(data, result, axis):
@@ -697,7 +461,9 @@ def _opt_info():
         str: A formatted string indicating the supported CPU features.
     """
     from numpy._core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+        __cpu_baseline__,
+        __cpu_dispatch__,
+        __cpu_features__,
     )
 
     if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
@@ -753,9 +519,9 @@ def drop_metadata(dtype, /):
         if not found_metadata:
             return dtype
 
-        structure = dict(
-            names=names, formats=formats, offsets=offsets, titles=titles,
-            itemsize=dtype.itemsize)
+        structure = {
+            'names': names, 'formats': formats, 'offsets': offsets, 'titles': titles,
+            'itemsize': dtype.itemsize}
 
         # NOTE: Could pass (dtype.type, structure) to preserve record dtypes...
         return np.dtype(structure, align=dtype.isalignedstruct)

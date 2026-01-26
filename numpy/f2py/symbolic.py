@@ -155,14 +155,14 @@ def ewarn(message):
 
 
 class Expr:
-    """Represents a Fortran expression as a op-data pair.
+    """Represents a Fortran expression as an op-data pair.
 
     Expr instances are hashable and sortable.
     """
 
     @staticmethod
     def parse(s, language=Language.C):
-        """Parse a Fortran expression to a Expr.
+        """Parse a Fortran expression to an Expr.
         """
         return fromstring(s, language=language)
 
@@ -190,7 +190,7 @@ class Expr:
             # (default is 1)
             assert isinstance(data, tuple) and len(data) == 2
             assert (isinstance(data[0], str)
-                    and data[0][::len(data[0])-1] in ('""', "''", '@@'))
+                    and data[0][::len(data[0]) - 1] in ('""', "''", '@@'))
             assert isinstance(data[1], (int, str)), data
         elif op is Op.SYMBOL:
             # data is any hashable object
@@ -310,12 +310,11 @@ class Expr:
                     op = ' + '
                 if coeff == 1:
                     term = term.tostring(Precedence.SUM, language=language)
+                elif term == as_number(1):
+                    term = str(coeff)
                 else:
-                    if term == as_number(1):
-                        term = str(coeff)
-                    else:
-                        term = f'{coeff} * ' + term.tostring(
-                            Precedence.PRODUCT, language=language)
+                    term = f'{coeff} * ' + term.tostring(
+                        Precedence.PRODUCT, language=language)
                 if terms:
                     terms.append(op)
                 elif op == ' - ':
@@ -570,7 +569,7 @@ class Expr:
         # TODO: implement a method for deciding when __call__ should
         # return an INDEXING expression.
         return as_apply(self, *map(as_expr, args),
-                        **dict((k, as_expr(v)) for k, v in kwargs.items()))
+                        **{k: as_expr(v) for k, v in kwargs.items()})
 
     def __getitem__(self, index):
         # Provided to support C indexing operations that .pyf files
@@ -636,8 +635,8 @@ class Expr:
             if isinstance(target, Expr):
                 target = target.substitute(symbols_map)
             args = tuple(a.substitute(symbols_map) for a in args)
-            kwargs = dict((k, v.substitute(symbols_map))
-                          for k, v in kwargs.items())
+            kwargs = {k: v.substitute(symbols_map)
+                          for k, v in kwargs.items()}
             return normalize(Expr(self.op, (target, args, kwargs)))
         if self.op is Op.INDEXING:
             func = self.data[0]
@@ -693,8 +692,8 @@ class Expr:
                     if isinstance(obj, Expr) else obj)
             operands = tuple(operand.traverse(visit, *args, **kwargs)
                              for operand in self.data[1])
-            kwoperands = dict((k, v.traverse(visit, *args, **kwargs))
-                              for k, v in self.data[2].items())
+            kwoperands = {k: v.traverse(visit, *args, **kwargs)
+                              for k, v in self.data[2].items()}
             return normalize(Expr(self.op, (func, operands, kwoperands)))
         elif self.op is Op.INDEXING:
             obj = self.data[0]
@@ -866,9 +865,9 @@ def normalize(obj):
         t2, c2 = as_term_coeff(divisor)
         if isinstance(c1, integer_types) and isinstance(c2, integer_types):
             g = gcd(c1, c2)
-            c1, c2 = c1//g, c2//g
+            c1, c2 = c1 // g, c2 // g
         else:
-            c1, c2 = c1/c2, 1
+            c1, c2 = c1 / c2, 1
 
         if t1.op is Op.APPLY and t1.data[0] is ArithOp.DIV:
             numer = t1.data[1][0] * c1
@@ -1011,7 +1010,7 @@ def as_apply(func, *args, **kwargs):
     """
     return Expr(Op.APPLY,
                 (func, tuple(map(as_expr, args)),
-                 dict((k, as_expr(v)) for k, v in kwargs.items())))
+                 {k: as_expr(v) for k, v in kwargs.items()}))
 
 
 def as_ternary(cond, expr1, expr2):
@@ -1237,17 +1236,19 @@ def replace_parenthesis(s):
 
     i = mn_i
     j = s.find(right, i)
+    if j == -1:
+        raise ValueError(f'Mismatch of {left + right} parenthesis in {s!r}')
 
     while s.count(left, i + 1, j) != s.count(right, i + 1, j):
         j = s.find(right, j + 1)
         if j == -1:
-            raise ValueError(f'Mismatch of {left+right} parenthesis in {s!r}')
+            raise ValueError(f'Mismatch of {left + right} parenthesis in {s!r}')
 
     p = {'(': 'ROUND', '[': 'SQUARE', '{': 'CURLY', '(/': 'ROUNDDIV'}[left]
 
     k = f'@__f2py_PARENTHESIS_{p}_{COUNTER.__next__()}@'
-    v = s[i+len(left):j]
-    r, d = replace_parenthesis(s[j+len(right):])
+    v = s[i + len(left):j]
+    r, d = replace_parenthesis(s[j + len(right):])
     d[k] = v
     return s[:i] + k + r, d
 
@@ -1262,8 +1263,8 @@ def unreplace_parenthesis(s, d):
     """
     for k, v in d.items():
         p = _get_parenthesis_kind(k)
-        left = dict(ROUND='(', SQUARE='[', CURLY='{', ROUNDDIV='(/')[p]
-        right = dict(ROUND=')', SQUARE=']', CURLY='}', ROUNDDIV='/)')[p]
+        left = {'ROUND': '(', 'SQUARE': '[', 'CURLY': '{', 'ROUNDDIV': '(/'}[p]
+        right = {'ROUND': ')', 'SQUARE': ']', 'CURLY': '}', 'ROUNDDIV': '/)'}[p]
         s = s.replace(k, left + v + right)
     return s
 
@@ -1479,7 +1480,7 @@ class _FromStringWorker:
                 if isinstance(items, Expr):
                     return items
             if paren in ['ROUNDDIV', 'SQUARE']:
-                # Expression is a array constructor
+                # Expression is an array constructor
                 if isinstance(items, Expr):
                     items = (items,)
                 return as_array(items)
@@ -1494,8 +1495,8 @@ class _FromStringWorker:
             if not isinstance(args, tuple):
                 args = args,
             if paren == 'ROUND':
-                kwargs = dict((a.left, a.right) for a in args
-                              if isinstance(a, _Pair))
+                kwargs = {a.left: a.right for a in args
+                              if isinstance(a, _Pair)}
                 args = tuple(a for a in args if not isinstance(a, _Pair))
                 # Warning: this could also be Fortran indexing operation..
                 return as_apply(target, *args, **kwargs)

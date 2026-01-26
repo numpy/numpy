@@ -160,7 +160,7 @@ void Array2::allocateRows()
 
 void Array2::deallocateMemory()
 {
-  if (_ownData && _nrows*_ncols && _buffer)
+  if (_ownData && _nrows && _ncols && _buffer)
   {
     delete [] _rows;
     delete [] _buffer;

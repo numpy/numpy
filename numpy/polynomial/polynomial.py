@@ -81,8 +81,7 @@ __all__ = [
     'polycompanion']
 
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
+from numpy._core.overrides import array_function_dispatch as _array_function_dispatch
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -308,9 +307,6 @@ def polymulx(c):
     --------
     polyadd, polysub, polymul, polydiv, polypow
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -326,7 +322,7 @@ def polymulx(c):
         return c
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
-    prd[0] = c[0]*0
+    prd[0] = c[0] * 0
     prd[1:] = c
     return prd
 
@@ -411,20 +407,20 @@ def polydiv(c1, c2):
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
-        return c1[:1]*0, c1
+        return c1[:1] * 0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        return c1 / c2[-1], c1[:1] * 0
     else:
         dlen = lc1 - lc2
         scl = c2[-1]
-        c2 = c2[:-1]/scl
+        c2 = c2[:-1] / scl
         i = dlen
         j = lc1 - 1
         while i >= 0:
-            c1[i:j] -= c2*c1[j]
+            c1[i:j] -= c2 * c1[j]
             i -= 1
             j -= 1
-        return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
+        return c1[j + 1:] / scl, pu.trimseq(c1[:j + 1])
 
 
 def polypow(c, pow, maxpower=None):
@@ -525,7 +521,7 @@ def polyder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -533,14 +529,14 @@ def polyder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=cdt)
             for j in range(n, 0, -1):
-                der[j - 1] = j*c[j]
+                der[j - 1] = j * c[j]
             c = der
     c = np.moveaxis(c, 0, iaxis)
     return c
@@ -639,12 +635,12 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     c = np.moveaxis(c, iaxis, 0)
     for i in range(cnt):
         n = len(c)
@@ -653,10 +649,10 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             c[0] += k[i]
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt)
-            tmp[0] = c[0]*0
+            tmp[0] = c[0] * 0
             tmp[1] = c[0]
             for j in range(1, n):
-                tmp[j + 1] = c[j]/(j + 1)
+                tmp[j + 1] = c[j] / (j + 1)
             tmp[0] += k[i] - polyval(lbnd, tmp)
             c = tmp
     c = np.moveaxis(c, 0, iaxis)
@@ -719,6 +715,10 @@ def polyval(x, c, tensor=True):
     -----
     The evaluation uses Horner's method.
 
+    When using coefficients from polynomials created with ``Polynomial.fit()``,
+    use ``p(x)`` or ``polyval(x, p.convert().coef)`` to handle domain/window
+    scaling correctly, not ``polyval(x, p.coef)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -750,11 +750,11 @@ def polyval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
-    c0 = c[-1] + x*0
+    c0 = c[-1] + x * 0
     for i in range(2, len(c) + 1):
-        c0 = c[-i] + c0*x
+        c0 = c[-i] + c0 * x
     return c0
 
 
@@ -839,12 +839,18 @@ def polyvalfromroots(x, r, tensor=True):
         x = np.asarray(x)
     if isinstance(x, np.ndarray):
         if tensor:
-            r = r.reshape(r.shape + (1,)*x.ndim)
+            r = r.reshape(r.shape + (1,) * x.ndim)
         elif x.ndim >= r.ndim:
             raise ValueError("x.ndim must be < r.ndim when tensor == False")
     return np.prod(x - r, axis=0)
 
+def _polyval2d_dispatcher(x, y, c):
+    return (x, y, c)
 
+def _polygrid2d_dispatcher(x, y, c):
+    return (x, y, c)
+
+@_array_function_dispatch(_polyval2d_dispatcher)
 def polyval2d(x, y, c):
     """
     Evaluate a 2-D polynomial at points (x, y).
@@ -886,9 +892,6 @@ def polyval2d(x, y, c):
     --------
     polyval, polygrid2d, polyval3d, polygrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -899,7 +902,7 @@ def polyval2d(x, y, c):
     """
     return pu._valnd(polyval, c, x, y)
 
-
+@_array_function_dispatch(_polygrid2d_dispatcher)
 def polygrid2d(x, y, c):
     """
     Evaluate a 2-D polynomial on the Cartesian product of x and y.
@@ -943,9 +946,6 @@ def polygrid2d(x, y, c):
     See Also
     --------
     polyval, polyval2d, polyval3d, polygrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1000,9 +1000,6 @@ def polyval3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polygrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1061,9 +1058,6 @@ def polygrid3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polyval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1136,11 +1130,11 @@ def polyvander(x, deg):
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = x
         for i in range(2, ideg + 1):
-            v[i] = v[i-1]*x
+            v[i] = v[i - 1] * x
     return np.moveaxis(v, 0, -1)
 
 
@@ -1267,9 +1261,6 @@ def polyvander3d(x, y, z, deg):
     See Also
     --------
     polyvander, polyvander3d, polyval2d, polyval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1473,9 +1464,6 @@ def polycompanion(c):
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1490,13 +1478,13 @@ def polycompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[-c[0]/c[1]]])
+        return np.array([[-c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    bot = mat.reshape(-1)[n::n+1]
+    bot = mat.reshape(-1)[n::n + 1]
     bot[...] = 1
-    mat[:, -1] -= c[:-1]/c[-1]
+    mat[:, -1] -= c[:-1] / c[-1]
     return mat
 
 
@@ -1554,11 +1542,10 @@ def polyroots(c):
     if len(c) < 2:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+        return np.array([-c[0] / c[1]])
 
-    # rotated companion matrix reduces error
-    m = polycompanion(c)[::-1,::-1]
-    r = la.eigvals(m)
+    m = polycompanion(c)
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 

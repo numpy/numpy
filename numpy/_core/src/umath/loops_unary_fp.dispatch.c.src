@@ -1,10 +1,3 @@
-/*@targets
- ** $maxopt baseline
- ** sse2 sse41
- ** vsx2
- ** neon asimd
- ** vx vxe
- **/
 /**
  * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
  * through the baseline, since scatter(AVX512F) and gather very costly

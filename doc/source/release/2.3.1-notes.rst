@@ -1,0 +1,53 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.3.1 Release Notes
+=========================
+
+The NumPy 2.3.1 release is a patch release with several bug fixes, annotation
+improvements, and better support for OpenBSD. Highlights are:
+
+- Fix bug in ``matmul`` for non-contiguous out kwarg parameter
+- Fix for Accelerate runtime warnings on M4 hardware
+- Fix new in NumPy 2.3.0 ``np.vectorize`` casting errors
+- Improved support of cpu features for FreeBSD and OpenBSD 
+
+This release supports Python versions 3.11-3.13, Python 3.14 will be supported
+when it is released.
+
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Brad Smith +
+* Charles Harris
+* Developer-Ecosystem-Engineering
+* François Rozet
+* Joren Hammudoglu
+* Matti Picus
+* Mugundan Selvanayagam
+* Nathan Goldbaum
+* Sebastian Berg
+
+
+Pull requests merged
+====================
+
+A total of 12 pull requests were merged for this release.
+
+* `#29140 <https://github.com/numpy/numpy/pull/29140>`__: MAINT: Prepare 2.3.x for further development
+* `#29191 <https://github.com/numpy/numpy/pull/29191>`__: BUG: fix matmul with transposed out arg (#29179)
+* `#29192 <https://github.com/numpy/numpy/pull/29192>`__: TYP: Backport typing fixes and improvements.
+* `#29205 <https://github.com/numpy/numpy/pull/29205>`__: BUG: Revert ``np.vectorize`` casting to legacy behavior (#29196)
+* `#29222 <https://github.com/numpy/numpy/pull/29222>`__: TYP: Backport typing fixes
+* `#29233 <https://github.com/numpy/numpy/pull/29233>`__: BUG: avoid negating unsigned integers in resize implementation...
+* `#29234 <https://github.com/numpy/numpy/pull/29234>`__: TST: Fix test that uses uninitialized memory (#29232)
+* `#29235 <https://github.com/numpy/numpy/pull/29235>`__: BUG: Address interaction between SME and FPSR (#29223)
+* `#29237 <https://github.com/numpy/numpy/pull/29237>`__: BUG: Enforce integer limitation in concatenate (#29231)
+* `#29238 <https://github.com/numpy/numpy/pull/29238>`__: CI: Add support for building NumPy with LLVM for Win-ARM64
+* `#29241 <https://github.com/numpy/numpy/pull/29241>`__: ENH: Detect CPU features on OpenBSD ARM and PowerPC64
+* `#29242 <https://github.com/numpy/numpy/pull/29242>`__: ENH: Detect CPU features on FreeBSD / OpenBSD RISC-V64.
+

@@ -1,9 +1,11 @@
+import inspect
 import sys
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises,
-    )
-from numpy import random
+
+import pytest
+
 import numpy as np
+from numpy import random
+from numpy.testing import IS_PYPY, assert_, assert_array_equal, assert_raises
 
 
 class TestRegression:
@@ -53,9 +55,9 @@ class TestRegression:
                   [(1, 1), (2, 2), (3, 3), None],
                   [1, (2, 2), (3, 3), None],
                   [(1, 1), 2, 3, None]]:
-            np.random.seed(12345)
+            rng = np.random.RandomState(12345)
             shuffled = list(t)
-            random.shuffle(shuffled)
+            rng.shuffle(shuffled)
             expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
             assert_array_equal(np.array(shuffled, dtype=object), expected)
 
@@ -67,7 +69,7 @@ class TestRegression:
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -95,7 +97,7 @@ class TestRegression:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = np.random.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, np.random.choice, a, p=probs*0.9)
+            assert_raises(ValueError, np.random.choice, a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
@@ -130,9 +132,9 @@ class TestRegression:
         class N(np.ndarray):
             pass
 
-        np.random.seed(1)
+        rng = np.random.RandomState(1)
         orig = np.arange(3).view(N)
-        perm = np.random.permutation(orig)
+        perm = rng.permutation(orig)
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
@@ -142,8 +144,32 @@ class TestRegression:
             def __array__(self, dtype=None, copy=None):
                 return self.a
 
-        np.random.seed(1)
+        rng = np.random.RandomState(1)
         m = M()
-        perm = np.random.permutation(m)
+        perm = rng.permutation(m)
         assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
         assert_array_equal(m.__array__(), np.arange(5))
+
+    @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+    @pytest.mark.parametrize(
+        "cls",
+        [
+            random.Generator,
+            random.MT19937,
+            random.PCG64,
+            random.PCG64DXSM,
+            random.Philox,
+            random.RandomState,
+            random.SFC64,
+            random.BitGenerator,
+            random.SeedSequence,
+            random.bit_generator.SeedlessSeedSequence,
+        ],
+    )
+    def test_inspect_signature(self, cls: type) -> None:
+        assert hasattr(cls, "__text_signature__")
+        try:
+            inspect.signature(cls)
+        except ValueError:
+            pytest.fail(f"invalid signature: {cls.__module__}.{cls.__qualname__}")

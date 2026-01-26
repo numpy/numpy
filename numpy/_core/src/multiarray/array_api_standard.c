@@ -60,7 +60,8 @@ array_array_namespace(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds
             return NULL;
         } else if (PyUnicode_CompareWithASCIIString(array_api_version, "2021.12") != 0 &&
             PyUnicode_CompareWithASCIIString(array_api_version, "2022.12") != 0 &&
-            PyUnicode_CompareWithASCIIString(array_api_version, "2023.12") != 0)
+            PyUnicode_CompareWithASCIIString(array_api_version, "2023.12") != 0 &&
+            PyUnicode_CompareWithASCIIString(array_api_version, "2024.12") != 0)
         {
             PyErr_Format(PyExc_ValueError,
                 "Version \"%U\" of the Array API Standard is not supported.",

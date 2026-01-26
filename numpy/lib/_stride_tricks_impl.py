@@ -3,12 +3,6 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
@@ -179,6 +173,14 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Notes
     -----
+    .. warning::
+
+       This function creates views with overlapping memory. When
+       ``writeable=True``, writing to the view will modify the original array
+       and may affect multiple view positions. See the examples below and
+       :doc:`this guide </user/basics.copies>`
+       about the difference between copies and views.
+
     For many applications using a sliding window view can be convenient, but
     potentially very slow. Often specialized solutions exist, for example:
 
@@ -303,6 +305,31 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> moving_average
     array([1., 2., 3., 4.])
 
+    The two examples below demonstrate the effect of ``writeable=True``.
+
+    Creating a view with the default ``writeable=False`` and then writing to
+    it raises an error.
+
+    >>> v = sliding_window_view(x, 3)
+    >>> v[0,1] = 10
+    Traceback (most recent call last):
+    ...
+    ValueError: assignment destination is read-only
+
+    Creating a view with ``writeable=True`` and then writing to it changes
+    the original array and multiple view positions.
+
+    >>> x = np.arange(6)  # reset x for the second example
+    >>> v = sliding_window_view(x, 3, writeable=True)
+    >>> v[0,1] = 10
+    >>> x
+    array([ 0, 10,  2,  3,  4,  5])
+    >>> v
+    array([[ 0, 10,  2],
+           [10,  2,  3],
+           [ 2,  3,  4],
+           [ 3,  4,  5]])
+
     Note that a sliding window approach is often **not** optimal (see Notes).
     """
     window_shape = (tuple(window_shape)
@@ -404,9 +431,6 @@ def broadcast_to(array, shape, subok=False):
     broadcast_arrays
     broadcast_shapes
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -425,14 +449,14 @@ def _broadcast_shape(*args):
     """
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
-    b = np.broadcast(*args[:32])
-    # unfortunately, it cannot handle 32 or more arguments directly
-    for pos in range(32, len(args), 31):
+    b = np.broadcast(*args[:64])
+    # unfortunately, it cannot handle 64 or more arguments directly
+    for pos in range(64, len(args), 63):
         # ironically, np.broadcast does not properly handle np.broadcast
         # objects (it treats them as scalars)
         # use broadcasting to avoid allocating the full array
         b = broadcast_to(0, b.shape)
-        b = np.broadcast(b, *args[pos:(pos + 31)])
+        b = np.broadcast(b, *args[pos:(pos + 63)])
     return b.shape
 
 
@@ -543,7 +567,7 @@ def broadcast_arrays(*args, subok=False):
             [5, 5, 5]])]
 
     """
-    # nditer is not used here to avoid the limit of 32 arrays.
+    # nditer is not used here to avoid the limit of 64 arrays.
     # Otherwise, something like the following one-liner would suffice:
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews

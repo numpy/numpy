@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Core(Benchmark):
@@ -14,6 +14,7 @@ class Core(Benchmark):
         self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
         self.float64_dtype = np.dtype(np.float64)
+        self.arr = np.arange(10000).reshape(100, 100)
 
     def time_array_1(self):
         np.array(1)
@@ -47,6 +48,9 @@ class Core(Benchmark):
 
     def time_can_cast(self):
         np.can_cast(self.l10x10, self.float64_dtype)
+
+    def time_tobytes_noncontiguous(self):
+        self.arr.T.tobytes()
 
     def time_can_cast_same_kind(self):
         np.can_cast(self.l10x10, self.float64_dtype, casting="same_kind")
@@ -137,7 +141,7 @@ class CorrConv(Benchmark):
 
     def setup(self, size1, size2, mode):
         self.x1 = np.linspace(0, 1, num=size1)
-        self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
         np.correlate(self.x1, self.x2, mode=mode)
@@ -151,7 +155,8 @@ class CountNonzero(Benchmark):
     params = [
         [1, 2, 3],
         [100, 10000, 1000000],
-        [bool, np.int8, np.int16, np.int32, np.int64, str, object]
+        [bool, np.int8, np.int16, np.int32, np.int64, np.float32,
+         np.float64, str, object]
     ]
 
     def setup(self, numaxes, size, dtype):
@@ -276,10 +281,10 @@ class StatsMethods(Benchmark):
 
 class NumPyChar(Benchmark):
     def setup(self):
-        self.A = np.array([100*'x', 100*'y'])
+        self.A = np.array([100 * 'x', 100 * 'y'])
         self.B = np.array(1000 * ['aa'])
 
-        self.C = np.array([100*'x' + 'z', 100*'y' + 'z' + 'y', 100*'x'])
+        self.C = np.array([100 * 'x' + 'z', 100 * 'y' + 'z' + 'y', 100 * 'x'])
         self.D = np.array(1000 * ['ab'] + 1000 * ['ac'])
 
     def time_isalpha_small_list_big_string(self):

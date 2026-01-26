@@ -14,12 +14,12 @@ exception, so it should hopefully not get unnoticed).
 
 """
 
-import os
 import importlib.util
+import os
 
 
 def get_annotations():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import numpy
     # (numpy is not yet built)
     genapi_py = os.path.join(os.path.dirname(__file__), 'genapi.py')
     spec = importlib.util.spec_from_file_location('conv_template', genapi_py)
@@ -106,7 +106,7 @@ multiarray_funcs_api = {
     '__unused_indices__': (
         [1, 4, 40, 41, 66, 67, 68, 81, 82, 83,
          103, 115, 117, 122, 163, 164, 171, 173, 197,
-         201, 202, 208, 219, 220, 221, 222, 223, 278,
+         201, 202, 208, 219, 220, 221, 222, 278,
          291, 293, 294, 295, 301]
         # range/slots reserved DType classes (see _public_dtype_api_table.h):
         + list(range(320, 361)) + [366, 367, 368]
@@ -293,8 +293,8 @@ multiarray_funcs_api = {
     # Unused slot 220, was `PyArray_DatetimeToDatetimeStruct`
     # Unused slot 221, was `PyArray_TimedeltaToTimedeltaStruct`
     # Unused slot 222, was `PyArray_DatetimeStructToDatetime`
-    # Unused slot 223, was `PyArray_TimedeltaStructToTimedelta`
     # NDIter API
+    'NpyIter_GetTransferFlags':             (223, MinVersion("2.3")),
     'NpyIter_New':                          (224,),
     'NpyIter_MultiNew':                     (225,),
     'NpyIter_AdvancedNew':                  (226,),
@@ -407,10 +407,12 @@ multiarray_funcs_api = {
     # `PyDataType_GetArrFuncs` checks for the NumPy runtime version.
     '_PyDataType_GetArrFuncs':                       (365,),
     # End 2.0 API
+    # NpyIterGetTransferFlags (slot 223) added.
+    # End 2.3 API
 }
 
 ufunc_types_api = {
-    'PyUFunc_Type':                             (0,)
+    'PyUFunc_Type':                             (0,),
 }
 
 ufunc_funcs_api = {
@@ -466,6 +468,8 @@ ufunc_funcs_api = {
     'PyUFunc_AddPromoter':                           (44, MinVersion("2.0")),
     'PyUFunc_AddWrappingLoop':                       (45, MinVersion("2.0")),
     'PyUFunc_GiveFloatingpointErrors':               (46, MinVersion("2.0")),
+    # End 2.0 API
+    'PyUFunc_AddLoopsFromSpecs':                     (47, MinVersion("2.4")),
 }
 
 # List of all the dicts which define the C API

@@ -1,18 +1,18 @@
-import numpy as np
-import pytest
-from numpy.random import random
-from numpy.testing import (
-        assert_array_equal, assert_raises, assert_allclose, IS_WASM
-        )
-import threading
 import queue
+import threading
+
+import pytest
+
+import numpy as np
+from numpy.random import random
+from numpy.testing import IS_WASM, assert_allclose, assert_array_equal, assert_raises
 
 
 def fft1(x):
     L = len(x)
     phase = -2j * np.pi * (np.arange(L) / L)
     phase = np.arange(L).reshape(-1, 1) * phase
-    return np.sum(x*np.exp(phase), axis=1)
+    return np.sum(x * np.exp(phase), axis=1)
 
 
 class TestFFTShift:
@@ -25,7 +25,7 @@ class TestFFT1D:
 
     def test_identity(self):
         maxlen = 512
-        x = random(maxlen) + 1j*random(maxlen)
+        x = random(maxlen) + 1j * random(maxlen)
         xr = random(maxlen)
         for i in range(1, maxlen):
             assert_allclose(np.fft.ifft(np.fft.fft(x[0:i])), x[0:i],
@@ -39,11 +39,11 @@ class TestFFT1D:
         # smaller and for n larger than the input size.
         maxlen = 16
         atol = 5 * np.spacing(np.array(1., dtype=dtype))
-        x = random(maxlen).astype(dtype) + 1j*random(maxlen).astype(dtype)
+        x = random(maxlen).astype(dtype) + 1j * random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
         xr = random(maxlen).astype(dtype)
         xxr = np.concatenate([xr, np.zeros_like(xr)])
-        for i in range(1, maxlen*2):
+        for i in range(1, maxlen * 2):
             check_c = np.fft.ifft(np.fft.fft(x, n=i), n=i)
             assert check_c.real.dtype == dtype
             assert_allclose(check_c, xx[0:i], atol=atol, rtol=0)
@@ -55,10 +55,10 @@ class TestFFT1D:
     def test_identity_long_short_reversed(self, dtype):
         # Also test explicitly given number of points in reversed order.
         maxlen = 16
-        atol = 5 * np.spacing(np.array(1., dtype=dtype))
-        x = random(maxlen).astype(dtype) + 1j*random(maxlen).astype(dtype)
+        atol = 6 * np.spacing(np.array(1., dtype=dtype))
+        x = random(maxlen).astype(dtype) + 1j * random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
-        for i in range(1, maxlen*2):
+        for i in range(1, maxlen * 2):
             check_via_c = np.fft.fft(np.fft.ifft(x, n=i), n=i)
             assert check_via_c.dtype == x.dtype
             assert_allclose(check_via_c, xx[0:i], atol=atol, rtol=0)
@@ -69,14 +69,14 @@ class TestFFT1D:
             n = i // 2 + 1
             y.imag[0] = 0
             if i % 2 == 0:
-                y.imag[n-1:] = 0
+                y.imag[n - 1:] = 0
             yy = np.concatenate([y, np.zeros_like(y)])
             check_via_r = np.fft.rfft(np.fft.irfft(x, n=i), n=i)
             assert check_via_r.dtype == x.dtype
             assert_allclose(check_via_r, yy[0:n], atol=atol, rtol=0)
 
     def test_fft(self):
-        x = random(30) + 1j*random(30)
+        x = random(30) + 1j * random(30)
         assert_allclose(fft1(x), np.fft.fft(x), atol=1e-6)
         assert_allclose(fft1(x), np.fft.fft(x, norm="backward"), atol=1e-6)
         assert_allclose(fft1(x) / np.sqrt(30),
@@ -96,7 +96,7 @@ class TestFFT1D:
 
         # tests below only test the out parameter
         if dtype is complex:
-            y = random((10, 20)) + 1j*random((10, 20))
+            y = random((10, 20)) + 1j * random((10, 20))
             fft, ifft = np.fft.fft, np.fft.ifft
         else:
             y = random((10, 20))
@@ -117,7 +117,7 @@ class TestFFT1D:
     @pytest.mark.parametrize("axis", [0, 1])
     def test_fft_inplace_out(self, axis):
         # Test some weirder in-place combinations
-        y = random((20, 20)) + 1j*random((20, 20))
+        y = random((20, 20)) + 1j * random((20, 20))
         # Fully in-place.
         y1 = y.copy()
         expected1 = np.fft.fft(y1, axis=axis)
@@ -185,7 +185,7 @@ class TestFFT1D:
 
     @pytest.mark.parametrize('norm', (None, 'backward', 'ortho', 'forward'))
     def test_ifft(self, norm):
-        x = random(30) + 1j*random(30)
+        x = random(30) + 1j * random(30)
         assert_allclose(
             x, np.fft.ifft(np.fft.fft(x, norm=norm), norm=norm),
             atol=1e-6)
@@ -195,7 +195,7 @@ class TestFFT1D:
             np.fft.ifft([], norm=norm)
 
     def test_fft2(self):
-        x = random((30, 20)) + 1j*random((30, 20))
+        x = random((30, 20)) + 1j * random((30, 20))
         assert_allclose(np.fft.fft(np.fft.fft(x, axis=1), axis=0),
                         np.fft.fft2(x), atol=1e-6)
         assert_allclose(np.fft.fft2(x),
@@ -206,7 +206,7 @@ class TestFFT1D:
                         np.fft.fft2(x, norm="forward"), atol=1e-6)
 
     def test_ifft2(self):
-        x = random((30, 20)) + 1j*random((30, 20))
+        x = random((30, 20)) + 1j * random((30, 20))
         assert_allclose(np.fft.ifft(np.fft.ifft(x, axis=1), axis=0),
                         np.fft.ifft2(x), atol=1e-6)
         assert_allclose(np.fft.ifft2(x),
@@ -217,7 +217,7 @@ class TestFFT1D:
                         np.fft.ifft2(x, norm="forward"), atol=1e-6)
 
     def test_fftn(self):
-        x = random((30, 20, 10)) + 1j*random((30, 20, 10))
+        x = random((30, 20, 10)) + 1j * random((30, 20, 10))
         assert_allclose(
             np.fft.fft(np.fft.fft(np.fft.fft(x, axis=2), axis=1), axis=0),
             np.fft.fftn(x), atol=1e-6)
@@ -229,7 +229,7 @@ class TestFFT1D:
                         np.fft.fftn(x, norm="forward"), atol=1e-6)
 
     def test_ifftn(self):
-        x = random((30, 20, 10)) + 1j*random((30, 20, 10))
+        x = random((30, 20, 10)) + 1j * random((30, 20, 10))
         assert_allclose(
             np.fft.ifft(np.fft.ifft(np.fft.ifft(x, axis=2), axis=1), axis=0),
             np.fft.ifftn(x), atol=1e-6)
@@ -242,10 +242,10 @@ class TestFFT1D:
 
     def test_rfft(self):
         x = random(30)
-        for n in [x.size, 2*x.size]:
+        for n in [x.size, 2 * x.size]:
             for norm in [None, 'backward', 'ortho', 'forward']:
                 assert_allclose(
-                    np.fft.fft(x, n=n, norm=norm)[:(n//2 + 1)],
+                    np.fft.fft(x, n=n, norm=norm)[:(n // 2 + 1)],
                     np.fft.rfft(x, n=n, norm=norm), atol=1e-6)
             assert_allclose(
                 np.fft.rfft(x, n=n),
@@ -261,7 +261,7 @@ class TestFFT1D:
         x = np.arange(8)
         n = 4
         y = np.fft.rfft(x, n)
-        assert_allclose(y, np.fft.fft(x[:n])[:n//2 + 1], rtol=1e-14)
+        assert_allclose(y, np.fft.fft(x[:n])[:n // 2 + 1], rtol=1e-14)
 
     def test_rfft_odd(self):
         x = np.array([1, 0, 2, 3, -3])
@@ -327,7 +327,7 @@ class TestFFT1D:
                         norm="forward"), atol=1e-6)
 
     def test_hfft(self):
-        x = random(14) + 1j*random(14)
+        x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
         x = np.concatenate((x_herm, x[::-1].conj()))
         assert_allclose(np.fft.fft(x), np.fft.hfft(x_herm), atol=1e-6)
@@ -339,7 +339,7 @@ class TestFFT1D:
                         np.fft.hfft(x_herm, norm="forward"), atol=1e-6)
 
     def test_ihfft(self):
-        x = random(14) + 1j*random(14)
+        x = random(14) + 1j * random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
         x = np.concatenate((x_herm, x[::-1].conj()))
         assert_allclose(x_herm, np.fft.ihfft(np.fft.hfft(x_herm)), atol=1e-6)
@@ -400,7 +400,7 @@ class TestFFT1D:
                       (np.fft.ihfft, np.fft.hfft),
                       ]
         for forw, back in func_pairs:
-            for n in [x.size, 2*x.size]:
+            for n in [x.size, 2 * x.size]:
                 for norm in [None, 'backward', 'ortho', 'forward']:
                     tmp = forw(x, n=n, norm=norm)
                     tmp = back(tmp, n=n, norm=norm)
@@ -419,7 +419,7 @@ class TestFFT1D:
 
         # tests below only test the out parameter
         if dtype is complex:
-            x = random((10, 5, 6)) + 1j*random((10, 5, 6))
+            x = random((10, 5, 6)) + 1j * random((10, 5, 6))
             fft, ifft = np.fft.fftn, np.fft.ifftn
         else:
             x = random((10, 5, 6))
@@ -443,7 +443,7 @@ class TestFFT1D:
         if fft is np.fft.rfftn:
             x = random((10, 5, 6))
         else:
-            x = random((10, 5, 6)) + 1j*random((10, 5, 6))
+            x = random((10, 5, 6)) + 1j * random((10, 5, 6))
         with pytest.raises(ValueError, match="has wrong shape"):
             fft(x, out=np.zeros_like(x), s=(3, 3, 3), axes=(0, 1, 2))
         # Except on the first axis done (which is the last of axes).
@@ -458,7 +458,7 @@ class TestFFT1D:
     def test_irfftn_out_and_s_interaction(self, s):
         # Since for irfftn, the output is real and thus cannot be used for
         # intermediate steps, it should always work.
-        x = random((9, 5, 6, 2)) + 1j*random((9, 5, 6, 2))
+        x = random((9, 5, 6, 2)) + 1j * random((9, 5, 6, 2))
         expected = np.fft.irfftn(x, s=s, axes=(0, 1, 2))
         out = np.zeros_like(expected)
         result = np.fft.irfftn(x, s=s, axes=(0, 1, 2), out=out)
@@ -539,11 +539,11 @@ class TestFFTThreadSafe:
                 'Function returned wrong value in multithreaded context')
 
     def test_fft(self):
-        a = np.ones(self.input_shape) * 1+0j
+        a = np.ones(self.input_shape) * 1 + 0j
         self._test_mtsame(np.fft.fft, a)
 
     def test_ifft(self):
-        a = np.ones(self.input_shape) * 1+0j
+        a = np.ones(self.input_shape) * 1 + 0j
         self._test_mtsame(np.fft.ifft, a)
 
     def test_rfft(self):
@@ -551,7 +551,7 @@ class TestFFTThreadSafe:
         self._test_mtsame(np.fft.rfft, a)
 
     def test_irfft(self):
-        a = np.ones(self.input_shape) * 1+0j
+        a = np.ones(self.input_shape) * 1 + 0j
         self._test_mtsame(np.fft.irfft, a)
 
 

@@ -1,8 +1,5 @@
 .. currentmodule:: numpy.ma
 
-.. for doctests
-   >>> from numpy import ma
-
 .. _numpy.ma.constants:
 
 Constants of the :mod:`numpy.ma` module
@@ -18,12 +15,14 @@ defines several constants.
    specific entry of a masked array is masked, or to mask one or several
    entries of a masked array::
 
+   .. try_examples::
+
       >>> import numpy as np
 
-      >>> x = ma.array([1, 2, 3], mask=[0, 1, 0])
-      >>> x[1] is ma.masked
+      >>> x = np.ma.array([1, 2, 3], mask=[0, 1, 0])
+      >>> x[1] is np.ma.masked
       True
-      >>> x[-1] = ma.masked
+      >>> x[-1] = np.ma.masked
       >>> x
       masked_array(data=[1, --, --],
                    mask=[False,  True,  True],
@@ -138,7 +137,6 @@ Conversion
    MaskedArray.toflex
    MaskedArray.tolist
    MaskedArray.torecords
-   MaskedArray.tostring
    MaskedArray.tobytes
 
 
@@ -266,7 +264,6 @@ Arithmetic:
    MaskedArray.__rsub__
    MaskedArray.__mul__
    MaskedArray.__rmul__
-   MaskedArray.__div__
    MaskedArray.__truediv__
    MaskedArray.__rtruediv__
    MaskedArray.__floordiv__
@@ -298,7 +295,6 @@ Arithmetic, in-place:
    MaskedArray.__iadd__
    MaskedArray.__isub__
    MaskedArray.__imul__
-   MaskedArray.__idiv__
    MaskedArray.__itruediv__
    MaskedArray.__ifloordiv__
    MaskedArray.__imod__

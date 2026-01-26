@@ -1,6 +1,10 @@
 #ifndef _NPY_PRIVATE__UFUNC_TYPE_RESOLUTION_H_
 #define _NPY_PRIVATE__UFUNC_TYPE_RESOLUTION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT int
 PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                            NPY_CASTING casting,
@@ -14,6 +18,13 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
                              PyArrayObject **operands,
                              PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
+
+NPY_NO_EXPORT int
+PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
+                         NPY_CASTING casting,
+                         PyArrayObject **operands,
+                         PyObject *type_tup,
+                         PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
 PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc,
@@ -141,5 +152,9 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
 
 NPY_NO_EXPORT int
 raise_no_loop_found_error(PyUFuncObject *ufunc, PyObject **dtypes);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

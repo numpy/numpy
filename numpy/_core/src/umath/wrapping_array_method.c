@@ -83,8 +83,8 @@ typedef struct {
 
 
 #define WRAPPING_AUXDATA_FREELIST_SIZE 5
-static int wrapping_auxdata_freenum = 0;
-static wrapping_auxdata *wrapping_auxdata_freelist[WRAPPING_AUXDATA_FREELIST_SIZE] = {NULL};
+static NPY_TLS int wrapping_auxdata_freenum = 0;
+static NPY_TLS wrapping_auxdata *wrapping_auxdata_freelist[WRAPPING_AUXDATA_FREELIST_SIZE] = {NULL};
 
 
 static void
@@ -114,7 +114,7 @@ get_wrapping_auxdata(void)
     }
     else {
         res = PyMem_Calloc(1, sizeof(wrapping_auxdata));
-        if (res < 0) {
+        if (res == NULL) {
             PyErr_NoMemory();
             return NULL;
         }

@@ -1,7 +1,5 @@
 import numpy as np
-from numpy.testing import (
-    assert_, assert_array_equal, assert_allclose, suppress_warnings
-    )
+from numpy.testing import assert_, assert_array_equal
 
 
 class TestRegression:
@@ -17,19 +15,19 @@ class TestRegression:
 
     def test_mem_masked_where(self):
         # Ticket #62
-        from numpy.ma import masked_where, MaskType
+        from numpy.ma import MaskType, masked_where
         a = np.zeros((1, 1))
         b = np.zeros(a.shape, MaskType)
         c = masked_where(b, a)
-        a-c
+        a - c
 
     def test_masked_array_multiply(self):
         # Ticket #254
         a = np.ma.zeros((4, 1))
         a[2, 0] = np.ma.masked
         b = np.zeros((4, 2))
-        a*b
-        b*a
+        a * b
+        b * a
 
     def test_masked_array_repeat(self):
         # Ticket #271
@@ -59,18 +57,6 @@ class TestRegression:
         a.var(out=mout)
         assert_(mout._data == 0)
 
-    def test_ddof_corrcoef(self):
-        # See gh-3336
-        x = np.ma.masked_equal([1, 2, 3, 4, 5], 4)
-        y = np.array([2, 2.5, 3.1, 3, 5])
-        # this test can be removed after deprecation.
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "bias and ddof have no effect")
-            r0 = np.ma.corrcoef(x, y, ddof=0)
-            r1 = np.ma.corrcoef(x, y, ddof=1)
-            # ddof should not have an effect (it gets cancelled out)
-            assert_allclose(r0.data, r1.data)
-
     def test_mask_not_backmangled(self):
         # See gh-10314.  Test case taken from gh-3140.
         a = np.ma.MaskedArray([1., 2.], mask=[False, False])
@@ -87,7 +73,7 @@ class TestRegression:
         assert_array_equal(ma[[]], ma[:0])
 
     def test_masked_array_tobytes_fortran(self):
-        ma = np.ma.arange(4).reshape((2,2))
+        ma = np.ma.arange(4).reshape((2, 2))
         assert_array_equal(ma.tobytes(order='F'), ma.T.tobytes())
 
     def test_structured_array(self):

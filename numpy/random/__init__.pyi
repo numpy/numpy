@@ -1,11 +1,9 @@
-from ._generator import Generator
-from ._generator import default_rng
+from ._generator import Generator, default_rng
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64, PCG64DXSM
 from ._philox import Philox
 from ._sfc64 import SFC64
-from .bit_generator import BitGenerator
-from .bit_generator import SeedSequence
+from .bit_generator import BitGenerator, SeedSequence
 from .mtrand import (
     RandomState,
     beta,

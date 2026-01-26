@@ -1,8 +1,10 @@
-from contextlib import nullcontext
 import operator
+from contextlib import nullcontext
+
 import numpy as np
-from .._utils import set_module
-from .numeric import uint8, ndarray, dtype
+from numpy._utils import set_module
+
+from .numeric import dtype, ndarray, uint8
 
 __all__ = ['memmap']
 
@@ -11,10 +13,10 @@ valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+", "w+"]
 
 mode_equivalents = {
-    "readonly":"r",
-    "copyonwrite":"c",
-    "readwrite":"r+",
-    "write":"w+"
+    "readonly": "r",
+    "copyonwrite": "c",
+    "readwrite": "r+",
+    "write": "w+"
     }
 
 
@@ -128,8 +130,7 @@ class memmap(ndarray):
     Examples
     --------
     >>> import numpy as np
-    >>> data = np.arange(12, dtype='float32')
-    >>> data.resize((3,4))
+    >>> data = np.arange(12, dtype=np.float32).reshape((3, 4))
 
     This example uses a temporary file so that doctest doesn't write
     files to your directory. You would use a 'normal' filename.
@@ -140,7 +141,7 @@ class memmap(ndarray):
 
     Create a memmap with dtype and shape that matches our data:
 
-    >>> fp = np.memmap(filename, dtype='float32', mode='w+', shape=(3,4))
+    >>> fp = np.memmap(filename, dtype=np.float32, mode='w+', shape=(3,4))
     >>> fp
     memmap([[0., 0., 0., 0.],
             [0., 0., 0., 0.],
@@ -163,7 +164,7 @@ class memmap(ndarray):
 
     Load the memmap and verify data was stored:
 
-    >>> newfp = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
+    >>> newfp = np.memmap(filename, dtype=np.float32, mode='r', shape=(3,4))
     >>> newfp
     memmap([[  0.,   1.,   2.,   3.],
             [  4.,   5.,   6.,   7.],
@@ -171,13 +172,13 @@ class memmap(ndarray):
 
     Read-only memmap:
 
-    >>> fpr = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
+    >>> fpr = np.memmap(filename, dtype=np.float32, mode='r', shape=(3,4))
     >>> fpr.flags.writeable
     False
 
     Copy-on-write memmap:
 
-    >>> fpc = np.memmap(filename, dtype='float32', mode='c', shape=(3,4))
+    >>> fpc = np.memmap(filename, dtype=np.float32, mode='c', shape=(3,4))
     >>> fpc.flags.writeable
     True
 
@@ -203,7 +204,7 @@ class memmap(ndarray):
 
     Offset into a memmap:
 
-    >>> fpo = np.memmap(filename, dtype='float32', mode='r', offset=16)
+    >>> fpo = np.memmap(filename, dtype=np.float32, mode='r', offset=16)
     >>> fpo
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)
 
@@ -211,7 +212,7 @@ class memmap(ndarray):
 
     __array_priority__ = -100.0
 
-    def __new__(subtype, filename, dtype=uint8, mode='r+', offset=0,
+    def __new__(cls, filename, dtype=uint8, mode='r+', offset=0,
                 shape=None, order='C'):
         # Import here to minimize 'import numpy' overhead
         import mmap
@@ -220,9 +221,9 @@ class memmap(ndarray):
             mode = mode_equivalents[mode]
         except KeyError as e:
             if mode not in valid_filemodes:
+                all_modes = valid_filemodes + list(mode_equivalents.keys())
                 raise ValueError(
-                    "mode must be one of {!r} (got {!r})"
-                    .format(valid_filemodes + list(mode_equivalents.keys()), mode)
+                    f"mode must be one of {all_modes!r} (got {mode!r})"
                 ) from None
 
         if mode == 'w+' and shape is None:
@@ -233,7 +234,7 @@ class memmap(ndarray):
         else:
             f_ctx = open(
                 os.fspath(filename),
-                ('r' if mode == 'c' else mode)+'b'
+                ('r' if mode == 'c' else mode) + 'b'
             )
 
         with f_ctx as fid:
@@ -250,22 +251,26 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if type(shape) not in (tuple, list):
+                if not isinstance(shape, (tuple, list)):
                     try:
                         shape = [operator.index(shape)]
                     except TypeError:
                         pass
                 shape = tuple(shape)
-                size = np.intp(1)  # avoid default choice of np.int_, which might overflow
+                size = np.intp(1)  # avoid overflows
                 for k in shape:
                     size *= k
 
-            bytes = int(offset + size*_dbytes)
+            bytes = int(offset + size * _dbytes)
 
-            if mode in ('w+', 'r+') and flen < bytes:
-                fid.seek(bytes - 1, 0)
-                fid.write(b'\0')
-                fid.flush()
+            if mode in ('w+', 'r+'):
+                # gh-27723
+                # if bytes == 0, we write out 1 byte to allow empty memmap.
+                bytes = max(bytes, 1)
+                if flen < bytes:
+                    fid.seek(bytes - 1, 0)
+                    fid.write(b'\0')
+                    fid.flush()
 
             if mode == 'c':
                 acc = mmap.ACCESS_COPY
@@ -276,10 +281,15 @@ class memmap(ndarray):
 
             start = offset - offset % mmap.ALLOCATIONGRANULARITY
             bytes -= start
+            # bytes == 0 is problematic as in mmap length=0 maps the full file.
+            # See PR gh-27723 for a more detailed explanation.
+            if bytes == 0 and start > 0:
+                bytes += mmap.ALLOCATIONGRANULARITY
+                start -= mmap.ALLOCATIONGRANULARITY
             array_offset = offset - start
             mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
-            self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
+            self = ndarray.__new__(cls, shape, dtype=descr, buffer=mm,
                                    offset=array_offset, order=order)
             self._mmap = mm
             self.offset = offset

@@ -1,0 +1,97 @@
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "npy_svml.h"
+#include "fast_loop_macros.h"
+
+
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+  #define NPY__SVML_IS_ENABLED 1
+#else
+  #define NPY__SVML_IS_ENABLED 0
+#endif
+
+#if NPY__SVML_IS_ENABLED && !defined(NPY_HAVE_AVX512_SPR)
+
+typedef __m256i npyvh_f16;
+#define npyv_cvt_f16_f32 _mm512_cvtph_ps
+#define npyv_cvt_f32_f16 _mm512_cvtps_ph
+#define npyvh_load_f16(PTR) _mm256_loadu_si256((const __m256i*)(PTR))
+#define npyvh_store_f16(PTR, data) _mm256_storeu_si256((__m256i*)PTR, data)
+NPY_FINLINE npyvh_f16 npyvh_load_till_f16(const npy_half *ptr, npy_uintp nlane, npy_half fill)
+{
+    assert(nlane > 0);
+    const __m256i vfill = _mm256_set1_epi16(fill);
+    const __mmask16 mask = (0x0001 << nlane) - 0x0001;
+    return _mm256_mask_loadu_epi16(vfill, mask, ptr);
+}
+NPY_FINLINE void npyvh_store_till_f16(npy_half *ptr, npy_uintp nlane, npyvh_f16 data)
+{
+    assert(nlane > 0);
+    const __mmask16 mask = (0x0001 << nlane) - 0x0001;
+    _mm256_mask_storeu_epi16(ptr, mask, data);
+}
+
+/**begin repeat
+ * #func = sin, cos, tan, exp, exp2, expm1, log, log2, log10, log1p, cbrt, asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh#
+ * #default_val = 0, 0, 0, 0, 0, 0x3c00, 0x3c00, 0x3c00, 0x3c00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x3c00, 0#
+ */
+static void
+avx512_@func@_f16(const npy_half *src, npy_half *dst, npy_intp len)
+{
+    const int num_lanes = npyv_nlanes_f32;
+    npyvh_f16 x, out;
+    npyv_f32 x_ps, out_ps;
+    for (; len > 0; len -= num_lanes, src += num_lanes, dst += num_lanes) {
+        if (len >= num_lanes) {
+            x       = npyvh_load_f16(src);
+            x_ps    = npyv_cvt_f16_f32(x);
+            out_ps  = __svml_@func@f16(x_ps);
+            out     = npyv_cvt_f32_f16(out_ps, 0);
+            npyvh_store_f16(dst, out);
+        }
+        else {
+            x       = npyvh_load_till_f16(src, len, @default_val@);
+            x_ps    = npyv_cvt_f16_f32(x);
+            out_ps  = __svml_@func@f16(x_ps);
+            out     = npyv_cvt_f32_f16(out_ps, 0);
+            npyvh_store_till_f16(dst, len, out);
+        }
+    }
+    npyv_cleanup();
+}
+/**end repeat**/
+#endif // NPY__SVML_IS_ENABLED
+
+/**begin repeat
+ *  #func = sin, cos, tan, exp, exp2, expm1, log, log2, log10, log1p, cbrt, arcsin, arccos, arctan, sinh, cosh, tanh, arcsinh, arccosh, arctanh#
+ *  #intrin = sin, cos, tan, exp, exp2, expm1, log, log2, log10, log1p, cbrt, asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
+{
+#if NPY__SVML_IS_ENABLED
+    const npy_half *src = (npy_half*)args[0];
+          npy_half *dst = (npy_half*)args[1];
+
+    const npy_intp len = dimensions[0];
+
+    if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
+        (steps[0] == sizeof(npy_half)) &&
+        (steps[1] == sizeof(npy_half))) {
+    #ifdef NPY_HAVE_AVX512_SPR
+        __svml_@intrin@s32(src, dst, len);
+    #else
+        avx512_@intrin@_f16(src, dst, len);
+    #endif
+        return;
+    }
+#endif // NPY__SVML_IS_ENABLED
+    UNARY_LOOP {
+        const npy_float in1 = npy_half_to_float(*(npy_half *)ip1);
+        *((npy_half *)op1) = npy_float_to_half(npy_@intrin@f(in1));
+    }
+}
+/**end repeat**/
+

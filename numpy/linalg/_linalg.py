@@ -19,26 +19,67 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 import functools
 import operator
 import warnings
-from typing import NamedTuple, Any
+from typing import Any, NamedTuple
 
-from numpy._utils import set_module
 from numpy._core import (
-    array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
-    add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
-    amax, prod, abs, atleast_2d, intp, asanyarray, object_,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
-    cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
-    matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
-    transpose as _core_transpose, vecdot as _core_vecdot,
+    abs,
+    add,
+    all,
+    amax,
+    amin,
+    argsort,
+    array,
+    asanyarray,
+    asarray,
+    atleast_2d,
+    cdouble,
+    complexfloating,
+    count_nonzero,
+    cross as _core_cross,
+    csingle,
+    diagonal as _core_diagonal,
+    divide,
+    dot,
+    double,
+    empty,
+    empty_like,
+    errstate,
+    finfo,
+    inexact,
+    inf,
+    intc,
+    intp,
+    isfinite,
+    isnan,
+    matmul as _core_matmul,
+    matrix_transpose as _core_matrix_transpose,
+    moveaxis,
+    multiply,
+    newaxis,
+    object_,
+    outer as _core_outer,
+    overrides,
+    prod,
+    reciprocal,
+    sign,
+    single,
+    sort,
+    sqrt,
+    sum,
+    swapaxes,
+    tensordot as _core_tensordot,
+    trace as _core_trace,
+    transpose as _core_transpose,
+    vecdot as _core_vecdot,
+    zeros,
 )
 from numpy._globals import _NoValue
-from numpy.lib._twodim_base_impl import triu, eye
+from numpy._typing import NDArray
+from numpy._utils import set_module
+from numpy.lib._twodim_base_impl import eye, triu
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.linalg import _umath_linalg
 
-from numpy._typing import NDArray
 
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]
@@ -159,8 +200,7 @@ def _commonType(*arrays):
                 result_type = double
             elif rt is None:
                 # unsupported inexact scalar
-                raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                raise TypeError(f"array type {a.dtype.name} is unsupported in linalg")
         else:
             result_type = double
     if is_complex:
@@ -197,7 +237,11 @@ def _assert_stacked_2d(*arrays):
 
 def _assert_stacked_square(*arrays):
     for a in arrays:
-        m, n = a.shape[-2:]
+        try:
+            m, n = a.shape[-2:]
+        except ValueError:
+            raise LinAlgError('%d-dimensional array given. Array must be '
+                    'at least two-dimensional' % a.ndim)
         if m != n:
             raise LinAlgError('Last 2 dimensions of the array must be square')
 
@@ -273,8 +317,7 @@ def tensorsolve(a, b, axes=None):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(2*3*4)
-    >>> a.shape = (2*3, 4, 2, 3, 4)
+    >>> a = np.eye(2*3*4).reshape((2*3, 4, 2, 3, 4))
     >>> rng = np.random.default_rng()
     >>> b = rng.normal(size=(2*3, 4))
     >>> x = np.linalg.tensorsolve(a, b)
@@ -289,13 +332,13 @@ def tensorsolve(a, b, axes=None):
     an = a.ndim
 
     if axes is not None:
-        allaxes = list(range(0, an))
+        allaxes = list(range(an))
         for k in axes:
             allaxes.remove(k)
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
 
-    oldshape = a.shape[-(an-b.ndim):]
+    oldshape = a.shape[-(an - b.ndim):]
     prod = 1
     for k in oldshape:
         prod *= k
@@ -309,8 +352,7 @@ def tensorsolve(a, b, axes=None):
     a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
-    res.shape = oldshape
-    return res
+    return res.reshape(oldshape)
 
 
 def _solve_dispatcher(a, b):
@@ -392,7 +434,6 @@ def solve(a, b):
 
     """
     a, _ = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     b, wrap = _makearray(b)
     t, result_t = _commonType(a, b)
@@ -452,8 +493,7 @@ def tensorinv(a, ind=2):
     Examples
     --------
     >>> import numpy as np
-    >>> a = np.eye(4*6)
-    >>> a.shape = (4, 6, 8, 3)
+    >>> a = np.eye(4*6).reshape((4, 6, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=2)
     >>> ainv.shape
     (8, 3, 4, 6)
@@ -462,8 +502,7 @@ def tensorinv(a, ind=2):
     >>> np.allclose(np.tensordot(ainv, b), np.linalg.tensorsolve(a, b))
     True
 
-    >>> a = np.eye(4*6)
-    >>> a.shape = (24, 8, 3)
+    >>> a = np.eye(4*6).reshape((24, 8, 3))
     >>> ainv = np.linalg.tensorinv(a, ind=1)
     >>> ainv.shape
     (8, 3, 24)
@@ -599,7 +638,6 @@ def inv(a):
 
     """
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
@@ -681,7 +719,6 @@ def matrix_power(a, n):
 
     """
     a = asanyarray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
 
     try:
@@ -830,7 +867,6 @@ def cholesky(a, /, *, upper=False):
     """
     gufunc = _umath_linalg.cholesky_up if upper else _umath_linalg.cholesky_lo
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
@@ -901,7 +937,7 @@ def outer(x1, x2, /):
 
     An example using a "vector" of letters:
 
-    >>> x = np.array(['a', 'b', 'c'], dtype=object)
+    >>> x = np.array(['a', 'b', 'c'], dtype=np.object_)
     >>> np.linalg.outer(x, [1, 2, 3])
     array([['a', 'aa', 'aaa'],
            ['b', 'bb', 'bbb'],
@@ -958,9 +994,6 @@ def qr(a, mode='reduced'):
 
     Returns
     -------
-    When mode is 'reduced' or 'complete', the result will be a namedtuple with
-    the attributes `Q` and `R`.
-
     Q : ndarray of float or complex, optional
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
@@ -989,6 +1022,9 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
+    When mode is 'reduced' or 'complete', the result will be a namedtuple with
+    the attributes ``Q`` and ``R``.
+
     This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
     ``dorgqr``, and ``zungqr``.
 
@@ -1201,7 +1237,6 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     _assert_finite(a)
     t, result_t = _commonType(a)
@@ -1294,8 +1329,9 @@ def eigvalsh(a, UPLO='L'):
            [0.+2.j, 2.+0.j]])
     >>> wa = LA.eigvalsh(a)
     >>> wb = LA.eigvals(b)
-    >>> wa; wb
+    >>> wa
     array([1., 6.])
+    >>> wb
     array([6.+0.j, 1.+0.j])
 
     """
@@ -1309,7 +1345,6 @@ def eigvalsh(a, UPLO='L'):
         gufunc = _umath_linalg.eigvalsh_up
 
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->d' if isComplexType(t) else 'd->d'
@@ -1318,11 +1353,6 @@ def eigvalsh(a, UPLO='L'):
                   under='ignore'):
         w = gufunc(a, signature=signature)
     return w.astype(_realType(result_t), copy=False)
-
-def _convertarray(a):
-    t, result_t = _commonType(a)
-    a = a.astype(t).T.copy()
-    return a, t, result_t
 
 
 # Eigenvectors
@@ -1460,7 +1490,6 @@ def eig(a):
 
     """
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     _assert_finite(a)
     t, result_t = _commonType(a)
@@ -1611,7 +1640,6 @@ def eigh(a, UPLO='L'):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
@@ -1667,9 +1695,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Returns
     -------
-    When `compute_uv` is True, the result is a namedtuple with the following
-    attribute names:
-
     U : { (..., M, M), (..., M, K) } array
         Unitary array(s). The first ``a.ndim - 2`` dimensions have the same
         size as those of the input `a`. The size of the last two dimensions
@@ -1697,6 +1722,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Notes
     -----
+    When `compute_uv` is True, the result is a namedtuple with the following
+    attribute names: `U`, `S`, and `Vh`.
+
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
     SVD is usually described for the factorization of a 2D matrix :math:`A`.
@@ -1735,7 +1763,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     ((9, 9), (6,), (6, 6))
     >>> np.allclose(a, np.dot(U[:, :6] * S, Vh))
     True
-    >>> smat = np.zeros((9, 6), dtype=complex)
+    >>> smat = np.zeros((9, 6), dtype=np.complex128)
     >>> smat[:6, :6] = np.diag(S)
     >>> np.allclose(a, np.dot(U, np.dot(smat, Vh)))
     True
@@ -1772,7 +1800,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     True
 
     """
-    import numpy as _nx
+    import numpy as np
     a, wrap = _makearray(a)
 
     if hermitian:
@@ -1784,9 +1812,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             sgn = sign(s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
-            sgn = _nx.take_along_axis(sgn, sidx, axis=-1)
-            s = _nx.take_along_axis(s, sidx, axis=-1)
-            u = _nx.take_along_axis(u, sidx[..., None, :], axis=-1)
+            sgn = np.take_along_axis(sgn, sidx, axis=-1)
+            s = np.take_along_axis(s, sidx, axis=-1)
+            u = np.take_along_axis(u, sidx[..., None, :], axis=-1)
             # singular values are unsigned, move the sign into v
             vt = transpose(u * sgn[..., None, :]).conjugate()
             return SVDResult(wrap(u), s, wrap(vt))
@@ -1967,7 +1995,7 @@ def cond(x, p=None):
     x = asarray(x)  # in case we have a matrix
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
-    if p is None or p == 2 or p == -2:
+    if p is None or p in {2, -2}:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
             if p == -2:
@@ -1977,9 +2005,9 @@ def cond(x, p=None):
     else:
         # Call inv(x) ignoring errors. The result array will
         # contain nans in the entries where inversion failed.
-        _assert_stacked_2d(x)
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
+        result_t = _realType(result_t)  # condition number is always real
         signature = 'D->D' if isComplexType(t) else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
@@ -1987,18 +2015,14 @@ def cond(x, p=None):
         r = r.astype(result_t, copy=False)
 
     # Convert nans to infs unless the original array had nan entries
-    r = asarray(r)
     nan_mask = isnan(r)
     if nan_mask.any():
         nan_mask &= ~isnan(x).any(axis=(-2, -1))
         if r.ndim > 0:
             r[nan_mask] = inf
         elif nan_mask:
-            r[()] = inf
-
-    # Convention is to return scalars instead of 0d arrays
-    if r.ndim == 0:
-        r = r[()]
+            # Convention is to return scalars instead of 0d arrays.
+            r = r.dtype.type(inf)
 
     return r
 
@@ -2044,9 +2068,9 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     The default threshold to detect rank deficiency is a test on the magnitude
     of the singular values of `A`.  By default, we identify singular values
     less than ``S.max() * max(M, N) * eps`` as indicating rank deficiency
-    (with the symbols defined above). This is the algorithm MATLAB uses [1].
+    (with the symbols defined above). This is the algorithm MATLAB uses [1]_.
     It also appears in *Numerical recipes* in the discussion of SVD solutions
-    for linear least squares [2].
+    for linear least squares [2]_.
 
     This default threshold is designed to detect rank deficiency accounting
     for the numerical errors of the SVD computation. Imagine that there
@@ -2105,6 +2129,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     A = asarray(A)
     if A.ndim < 2:
         return int(not all(A == 0))
+
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
@@ -2112,7 +2137,7 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
             rtol = max(A.shape[-2:]) * finfo(S.dtype).eps
         else:
             rtol = asarray(rtol)[..., newaxis]
-        tol = S.max(axis=-1, keepdims=True) * rtol
+        tol = S.max(axis=-1, keepdims=True, initial=0) * rtol
     else:
         tol = asarray(tol)[..., newaxis]
 
@@ -2317,7 +2342,6 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
@@ -2376,7 +2400,6 @@ def det(a):
 
     """
     a = asarray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
@@ -2540,7 +2563,7 @@ def lstsq(a, b, rcond=None):
     return wrap(x), wrap(resids), rank, s
 
 
-def _multi_svd_norm(x, row_axis, col_axis, op):
+def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
     """Compute a function of the singular values of the 2-D matrices in `x`.
 
     This is a private utility function used by `numpy.linalg.norm()`.
@@ -2564,7 +2587,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
 
     """
     y = moveaxis(x, (row_axis, col_axis), (-2, -1))
-    result = op(svd(y, compute_uv=False), axis=-1)
+    result = op(svd(y, compute_uv=False), axis=-1, initial=initial)
     return result
 
 
@@ -2587,8 +2610,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
         Input array.  If `axis` is None, `x` must be 1-D or 2-D, unless `ord`
         is None. If both `axis` and `ord` are None, the 2-norm of
         ``x.ravel`` will be returned.
-    ord : {non-zero int, inf, -inf, 'fro', 'nuc'}, optional
-        Order of the norm (see table under ``Notes``). inf means numpy's
+    ord : {int, float, inf, -inf, 'fro', 'nuc'}, optional
+        Order of the norm (see table under ``Notes`` for what values are
+        supported for matrices and vectors respectively). inf means numpy's
         `inf` object. The default is None.
     axis : {None, int, 2-tuple of ints}, optional.
         If `axis` is an integer, it specifies the axis of `x` along which to
@@ -2743,7 +2767,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
-                ret = ret.reshape(ndim*[1])
+                ret = ret.reshape(ndim * [1])
             return ret
 
     # Normalize the `axis` argument to a tuple.
@@ -2761,7 +2785,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     if len(axis) == 1:
         if ord == inf:
-            return abs(x).max(axis=axis, keepdims=keepdims)
+            return abs(x).max(axis=axis, keepdims=keepdims, initial=0)
         elif ord == -inf:
             return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:
@@ -2795,17 +2819,17 @@ def norm(x, ord=None, axis=None, keepdims=False):
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
-            ret = _multi_svd_norm(x, row_axis, col_axis, amax)
+            ret = _multi_svd_norm(x, row_axis, col_axis, amax, 0)
         elif ord == -2:
             ret = _multi_svd_norm(x, row_axis, col_axis, amin)
         elif ord == 1:
             if col_axis > row_axis:
                 col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
+            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis, initial=0)
         elif ord == inf:
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
+            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis, initial=0)
         elif ord == -1:
             if col_axis > row_axis:
                 col_axis -= 1
@@ -2817,7 +2841,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
         elif ord == 'nuc':
-            ret = _multi_svd_norm(x, row_axis, col_axis, sum)
+            ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)
         else:
             raise ValueError("Invalid norm order for matrices.")
         if keepdims:
@@ -2914,7 +2938,7 @@ def multi_dot(arrays, *, out=None):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Assume we have three matrices
-    :math:`A_{10x100}, B_{100x5}, C_{5x50}`.
+    :math:`A_{10 \\times 100}, B_{100 \\times 5}, C_{5 \\times 50}`.
 
     The costs for the two different parenthesizations are as follows::
 
@@ -3011,7 +3035,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
             j = i + l
             m[i, j] = inf
             for k in range(i, j):
-                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]
+                q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:
                     m[i, j] = q
                     s[i, j] = k  # Note that Cormen uses 1-based index
@@ -3281,14 +3305,6 @@ def cross(x1, x2, /, *, axis=-1):
     """
     x1 = asanyarray(x1)
     x2 = asanyarray(x2)
-
-    if x1.shape[axis] != 3 or x2.shape[axis] != 3:
-        raise ValueError(
-            "Both input arrays must be (arrays of) 3-dimensional vectors, "
-            f"but they are {x1.shape[axis]} and {x2.shape[axis]} "
-            "dimensional instead."
-        )
-
     return _core_cross(x1, x2, axis=axis)
 
 
@@ -3406,7 +3422,12 @@ def matrix_transpose(x, /):
     return _core_matrix_transpose(x)
 
 
-matrix_transpose.__doc__ = _core_matrix_transpose.__doc__
+matrix_transpose.__doc__ = f"""{_core_matrix_transpose.__doc__}
+
+    Notes
+    -----
+    This function is an alias of `numpy.matrix_transpose`.
+"""
 
 
 # matrix_norm
@@ -3498,7 +3519,7 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     keepdims : bool, optional
         If this is set to True, the axes which are normed over are left in
         the result as dimensions with size one. Default: False.
-    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+    ord : {int, float, inf, -inf}, optional
         The order of the norm. For details see the table under ``Notes``
         in `numpy.linalg.norm`.
 
@@ -3525,6 +3546,8 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     >>> LA.vector_norm(b, ord=-np.inf)
     1.0
 
+    >>> LA.vector_norm(b, ord=0)
+    9.0
     >>> LA.vector_norm(b, ord=1)
     45.0
     >>> LA.vector_norm(b, ord=-1)

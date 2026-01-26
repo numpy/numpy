@@ -76,8 +76,6 @@ See also
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -177,7 +175,7 @@ def lag2poly(c):
     array([0., 1., 2., 3.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polymulx, polysub
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -189,8 +187,8 @@ def lag2poly(c):
         # i is the current degree of c1
         for i in range(n - 1, 1, -1):
             tmp = c0
-            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
-            c1 = polyadd(tmp, polysub((2*i - 1)*c1, polymulx(c1))/i)
+            c0 = polysub(c[i - 2], (c1 * (i - 1)) / i)
+            c1 = polyadd(tmp, polysub((2 * i - 1) * c1, polymulx(c1)) / i)
         return polyadd(c0, polysub(c1, polymulx(c1)))
 
 
@@ -434,9 +432,9 @@ def lagmulx(c):
     prd[0] = c[0]
     prd[1] = -c[0]
     for i in range(1, len(c)):
-        prd[i + 1] = -c[i]*(i + 1)
-        prd[i] += c[i]*(2*i + 1)
-        prd[i - 1] -= c[i]*i
+        prd[i + 1] = -c[i] * (i + 1)
+        prd[i] += c[i] * (2 * i + 1)
+        prd[i - 1] -= c[i] * i
     return prd
 
 
@@ -489,20 +487,20 @@ def lagmul(c1, c2):
         xs = c2
 
     if len(c) == 1:
-        c0 = c[0]*xs
+        c0 = c[0] * xs
         c1 = 0
     elif len(c) == 2:
-        c0 = c[0]*xs
-        c1 = c[1]*xs
+        c0 = c[0] * xs
+        c1 = c[1] * xs
     else:
         nd = len(c)
-        c0 = c[-2]*xs
-        c1 = c[-1]*xs
+        c0 = c[-2] * xs
+        c1 = c[-1] * xs
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = lagsub(c[-i]*xs, (c1*(nd - 1))/nd)
-            c1 = lagadd(tmp, lagsub((2*nd - 1)*c1, lagmulx(c1))/nd)
+            c0 = lagsub(c[-i] * xs, (c1 * (nd - 1)) / nd)
+            c1 = lagadd(tmp, lagsub((2 * nd - 1) * c1, lagmulx(c1)) / nd)
     return lagadd(c0, lagsub(c1, lagmulx(c1)))
 
 
@@ -650,7 +648,7 @@ def lagder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -658,7 +656,7 @@ def lagder(c, m=1, scl=1, axis=0):
     c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
-        c = c[:1]*0
+        c = c[:1] * 0
     else:
         for i in range(cnt):
             n = n - 1
@@ -770,13 +768,13 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
     c = np.moveaxis(c, iaxis, 0)
-    k = list(k) + [0]*(cnt - len(k))
+    k = list(k) + [0] * (cnt - len(k))
     for i in range(cnt):
         n = len(c)
         c *= scl
@@ -868,7 +866,7 @@ def lagval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,) * x.ndim)
 
     if len(c) == 1:
         c0 = c[0]
@@ -883,9 +881,9 @@ def lagval(x, c, tensor=True):
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = c[-i] - (c1*(nd - 1))/nd
-            c1 = tmp + (c1*((2*nd - 1) - x))/nd
-    return c0 + c1*(1 - x)
+            c0 = c[-i] - (c1 * (nd - 1)) / nd
+            c1 = tmp + (c1 * ((2 * nd - 1) - x)) / nd
+    return c0 + c1 * (1 - x)
 
 
 def lagval2d(x, y, c):
@@ -927,9 +925,6 @@ def lagval2d(x, y, c):
     See Also
     --------
     lagval, laggrid2d, lagval3d, laggrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -985,9 +980,6 @@ def laggrid2d(x, y, c):
     --------
     lagval, lagval2d, lagval3d, laggrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import laggrid2d
@@ -1041,9 +1033,6 @@ def lagval3d(x, y, z, c):
     See Also
     --------
     lagval, lagval2d, laggrid2d, laggrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1102,9 +1091,6 @@ def laggrid3d(x, y, z, c):
     See Also
     --------
     lagval, lagval2d, laggrid2d, lagval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1173,11 +1159,11 @@ def lagvander(x, deg):
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    v[0] = x*0 + 1
+    v[0] = x * 0 + 1
     if ideg > 0:
         v[1] = 1 - x
         for i in range(2, ideg + 1):
-            v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
+            v[i] = (v[i - 1] * (2 * i - 1 - x) - v[i - 2] * (i - 1)) / i
     return np.moveaxis(v, 0, -1)
 
 
@@ -1197,7 +1183,7 @@ def lagvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, ... , c_{10}, c_{11}, c_{12}, ...
 
     and ``np.dot(V, c.flat)`` and ``lagval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1224,9 +1210,6 @@ def lagvander2d(x, y, deg):
     See Also
     --------
     lagvander, lagvander3d, lagval2d, lagval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1285,9 +1268,6 @@ def lagvander3d(x, y, z, deg):
     See Also
     --------
     lagvander, lagvander3d, lagval2d, lagval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1457,9 +1437,6 @@ def lagcompanion(c):
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagcompanion
@@ -1473,17 +1450,17 @@ def lagcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array([[1 + c[0]/c[1]]])
+        return np.array([[1 + c[0] / c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    top = mat.reshape(-1)[1::n+1]
-    mid = mat.reshape(-1)[0::n+1]
-    bot = mat.reshape(-1)[n::n+1]
+    top = mat.reshape(-1)[1::n + 1]
+    mid = mat.reshape(-1)[0::n + 1]
+    bot = mat.reshape(-1)[n::n + 1]
     top[...] = -np.arange(1, n)
-    mid[...] = 2.*np.arange(n) + 1.
+    mid[...] = 2. * np.arange(n) + 1.
     bot[...] = top
-    mat[:, -1] += (c[:-1]/c[-1])*n
+    mat[:, -1] += (c[:-1] / c[-1]) * n
     return mat
 
 
@@ -1542,11 +1519,11 @@ def lagroots(c):
     if len(c) <= 1:
         return np.array([], dtype=c.dtype)
     if len(c) == 2:
-        return np.array([1 + c[0]/c[1]])
+        return np.array([1 + c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = lagcompanion(c)[::-1,::-1]
-    r = la.eigvals(m)
+    m = lagcompanion(c)[::-1, ::-1]
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1596,21 +1573,21 @@ def laggauss(deg):
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
-    c = np.array([0]*deg + [1])
+    c = np.array([0] * deg + [1])
     m = lagcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = lagval(x, c)
     df = lagval(x, lagder(c))
-    x -= dy/df
+    x -= dy / df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
     fm = lagval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
-    w = 1/(fm * df)
+    w = 1 / (fm * df)
 
     # scale w to get the right value, 1 in this case
     w /= w.sum()
@@ -1634,9 +1611,6 @@ def lagweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
 
     Examples
     --------

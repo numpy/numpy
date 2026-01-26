@@ -214,7 +214,7 @@ arrays that are not 0-D, such as ``array([2])``.
      - ``int64(301)``
      - *Exception* [T5]_
    * - ``uint8(100) + 200``
-     - ``int64(301)``
+     - ``int64(300)``
      - ``uint8(44)`` *and* ``RuntimeWarning``  [T6]_
    * - ``float32(1) + 3e100``
      - ``float64(3e100)``
@@ -509,9 +509,9 @@ will be ignored.  This means, that operations will never silently use the
 The user will have to write one of::
 
     np.array([3]) + np.array(2**100)
-    np.array([3]) + np.array(2**100, dtype=object)
+    np.array([3]) + np.array(2**100, dtype=np.object_)
 
-As such implicit conversion to ``object`` should be rare and the work-around
+As such implicit conversion to ``object_`` should be rare and the work-around
 is clear, we expect that the backwards compatibility concerns are fairly small.
 
 

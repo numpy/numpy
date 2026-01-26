@@ -11,6 +11,7 @@
 #include "numpy/arrayscalars.h"
 
 
+#include "alloc.h"
 #include "common.h"
 #include "arrayobject.h"
 #include "ctors.h"
@@ -43,6 +44,7 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      */
 #if defined(HAVE_FALLOCATE) && defined(__linux__)
     int r;
+    npy_intp offset;
     /* small files not worth the system call */
     if (nbytes < 16 * 1024 * 1024) {
         return 0;
@@ -59,7 +61,8 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      * the flag "1" (=FALLOC_FL_KEEP_SIZE) is needed for the case of files
      * opened in append mode (issue #8329)
      */
-    r = fallocate(fileno(fp), 1, npy_ftell(fp), nbytes);
+    offset = npy_ftell(fp);
+    r = fallocate(fileno(fp), 1, offset, nbytes);
     NPY_END_ALLOW_THREADS;
 
     /*
@@ -67,7 +70,8 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      */
     if (r == -1 && errno == ENOSPC) {
         PyErr_Format(PyExc_OSError, "Not enough free space to write "
-                     "%"NPY_INTP_FMT" bytes", nbytes);
+                     "%"NPY_INTP_FMT" bytes after offset %"NPY_INTP_FMT,
+                     nbytes, offset);
         return -1;
     }
 #endif
@@ -331,11 +335,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
     npy_intp numbytes;
-    npy_intp i;
-    char *dptr;
-    int elsize;
     PyObject *ret;
-    PyArrayIterObject *it;
 
     if (order == NPY_ANYORDER)
         order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
@@ -350,41 +350,65 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     numbytes = PyArray_NBYTES(self);
     if ((PyArray_IS_C_CONTIGUOUS(self) && (order == NPY_CORDER))
         || (PyArray_IS_F_CONTIGUOUS(self) && (order == NPY_FORTRANORDER))) {
-        ret = PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
+        return PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
-    else {
-        PyObject *new;
-        if (order == NPY_FORTRANORDER) {
-            /* iterators are always in C-order */
-            new = PyArray_Transpose(self, NULL);
-            if (new == NULL) {
-                return NULL;
-            }
-        }
-        else {
-            Py_INCREF(self);
-            new = (PyObject *)self;
-        }
-        it = (PyArrayIterObject *)PyArray_IterNew(new);
-        Py_DECREF(new);
-        if (it == NULL) {
-            return NULL;
-        }
+    
+    /* Avoid Ravel where possible for fewer copies. */
+    if (!PyDataType_REFCHK(PyArray_DESCR(self)) && 
+        ((PyArray_DESCR(self)->flags & NPY_NEEDS_INIT) == 0)) {
+        
+        /* Allocate final Bytes Object */
         ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
         if (ret == NULL) {
-            Py_DECREF(it);
             return NULL;
         }
-        dptr = PyBytes_AS_STRING(ret);
-        i = it->size;
-        elsize = PyArray_ITEMSIZE(self);
-        while (i--) {
-            memcpy(dptr, it->dataptr, elsize);
-            dptr += elsize;
-            PyArray_ITER_NEXT(it);
+        
+        /* Writable Buffer */
+        char* dest = PyBytes_AS_STRING(ret);
+
+        int flags = NPY_ARRAY_WRITEABLE;
+        if (order == NPY_FORTRANORDER) {
+            flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
-        Py_DECREF(it);
+
+        Py_INCREF(PyArray_DESCR(self));
+        /* Array view */
+        PyArrayObject *dest_array = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type,
+            PyArray_DESCR(self),
+            PyArray_NDIM(self),
+            PyArray_DIMS(self),
+            NULL, // strides
+            dest,
+            flags,
+            NULL
+        );
+
+        if (dest_array == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        
+        /* Copy directly from source to destination with proper ordering */
+        if (PyArray_CopyInto(dest_array, self) < 0) {
+            Py_DECREF(dest_array);
+            Py_DECREF(ret);
+            return NULL;
+        }
+        
+        Py_DECREF(dest_array);
+        return ret;
+
     }
+
+    /* Non-contiguous, Has References and/or Init Path.  */
+    PyArrayObject *contig = (PyArrayObject *)PyArray_Ravel(self, order);
+    if (contig == NULL) {
+        return NULL;
+    }
+    
+    ret = PyBytes_FromStringAndSize(PyArray_DATA(contig), numbytes);
+    Py_DECREF(contig);
     return ret;
 }
 
@@ -397,28 +421,24 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         return -1;
     }
 
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+
     /*
      * If we knew that the output array has at least one element, we would
      * not actually need a helping buffer, we always null it, just in case.
-     *
-     * (The longlong here should help with alignment.)
+     * Use `long double` to ensure that the heap allocation is aligned.
      */
-    npy_longlong value_buffer_stack[4] = {0};
-    char *value_buffer_heap = NULL;
-    char *value = (char *)value_buffer_stack;
-    PyArray_Descr *descr = PyArray_DESCR(arr);
-
-    if (PyDataType_ELSIZE(descr) > sizeof(value_buffer_stack)) {
-        /* We need a large temporary buffer... */
-        value_buffer_heap = PyMem_Calloc(1, PyDataType_ELSIZE(descr));
-        if (value_buffer_heap == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        value = value_buffer_heap;
+    size_t n_max_align_t = (descr->elsize + sizeof(long double) - 1) / sizeof(long double);
+    NPY_ALLOC_WORKSPACE(value, long double, 2, n_max_align_t);
+    if (value == NULL) {
+        return -1;
     }
+    if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+        memset(value, 0, descr->elsize);
+    }
+
     if (PyArray_Pack(descr, value, obj) < 0) {
-        PyMem_FREE(value_buffer_heap);
+        npy_free_workspace(value);
         return -1;
     }
 
@@ -429,12 +449,12 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     int retcode = raw_array_assign_scalar(
             PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
-            descr, value);
+            descr, (void *)value, NPY_UNSAFE_CASTING);
 
     if (PyDataType_REFCHK(descr)) {
-        PyArray_ClearBuffer(descr, value, 0, 1, 1);
+        PyArray_ClearBuffer(descr, (void *)value, 0, 1, 1);
     }
-    PyMem_FREE(value_buffer_heap);
+    npy_free_workspace(value);
     return retcode;
 }
 

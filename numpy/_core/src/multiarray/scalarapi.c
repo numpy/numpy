@@ -11,8 +11,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
-
+#include "npy_pycompat.h"  // PyObject_GetOptionalAttr
 
 #include "array_coercion.h"
 #include "ctors.h"
@@ -294,64 +293,42 @@ PyArray_DescrFromTypeObject(PyObject *type)
         return PyArray_DescrFromType(typenum);
     }
 
-    /* Check the generic types */
+    /* Check the generic types, was deprecated in 1.19 and removed for 2.3 */
     if ((type == (PyObject *) &PyNumberArrType_Type) ||
             (type == (PyObject *) &PyInexactArrType_Type) ||
             (type == (PyObject *) &PyFloatingArrType_Type)) {
-        if (DEPRECATE("Converting `np.inexact` or `np.floating` to "
-                      "a dtype is deprecated. The current result is `float64` "
-                      "which is not strictly correct.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_DOUBLE;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.inexact` or `np.floating` to "
+                      "a dtype not allowed");
+        return NULL;
     }
     else if (type == (PyObject *)&PyComplexFloatingArrType_Type) {
-        if (DEPRECATE("Converting `np.complex` to a dtype is deprecated. "
-                      "The current result is `complex128` which is not "
-                      "strictly correct.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_CDOUBLE;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.complex` to a dtype is not allowed.");
+        return NULL;
     }
     else if ((type == (PyObject *)&PyIntegerArrType_Type) ||
             (type == (PyObject *)&PySignedIntegerArrType_Type)) {
-        if (DEPRECATE("Converting `np.integer` or `np.signedinteger` to "
-                      "a dtype is deprecated. The current result is "
-                      "`np.dtype(np.int_)` which is not strictly correct. "
-                      "Note that the result depends on the system. To ensure "
-                      "stable results use may want to use `np.int64` or "
-                      "`np.int32`.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_LONG;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting 'np.integer' or 'np.signedinteger' to "
+                      "a dtype is not allowed");
+        return NULL;
     }
     else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type) {
-        if (DEPRECATE("Converting `np.unsignedinteger` to a dtype is "
-                      "deprecated. The current result is `np.dtype(np.uint)` "
-                      "which is not strictly correct. Note that the result "
-                      "depends on the system. To ensure stable results you may "
-                      "want to use `np.uint64` or `np.uint32`.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_ULONG;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.unsignedinteger` to a dtype is not allowed");
+        return NULL;
     }
     else if (type == (PyObject *) &PyCharacterArrType_Type) {
-        if (DEPRECATE("Converting `np.character` to a dtype is deprecated. "
-                      "The current result is `np.dtype(np.str_)` "
-                      "which is not strictly correct. Note that `np.character` "
-                      "is generally deprecated and 'S1' should be used.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_STRING;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.character` to a dtype is not allowed");
+        return NULL;
     }
     else if ((type == (PyObject *) &PyGenericArrType_Type) ||
             (type == (PyObject *) &PyFlexibleArrType_Type)) {
-        if (DEPRECATE("Converting `np.generic` to a dtype is "
-                      "deprecated. The current result is `np.dtype(np.void)` "
-                      "which is not strictly correct.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_VOID;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.generic` to a dtype is not allowed.");
+        return NULL;
     }
 
     if (typenum != NPY_NOTYPE) {
@@ -365,17 +342,34 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
+        PyObject *attr;
+        _PyArray_LegacyDescr *conv = NULL;
+        int res = PyObject_GetOptionalAttr(type, npy_interned_str.dtype, &attr);
+        if (res < 0) {
+            return NULL;  // Should be a rather criticial error, so just fail.
+        }
+        if (res == 1) {
+            if (!PyArray_DescrCheck(attr)) {
+                if (PyObject_HasAttrString(attr, "__get__")) {
+                    /* If the object has a __get__, assume this is a class property. */
+                    Py_DECREF(attr);
+                    conv = NULL;
+                }
+                else {
+                    PyErr_Format(PyExc_ValueError,
+                        "`.dtype` attribute %R is not a valid dtype instance",
+                        attr);
+                    Py_DECREF(attr);
+                    return NULL;
+                }
+            }
+        }
+
         _PyArray_LegacyDescr *new = (_PyArray_LegacyDescr  *)PyArray_DescrNewFromType(NPY_VOID);
         if (new == NULL) {
             return NULL;
         }
-        _PyArray_LegacyDescr *conv = (_PyArray_LegacyDescr *)(
-                _arraydescr_try_convert_from_dtype_attr(type));
-        if (conv == NULL) {
-            Py_DECREF(new);
-            return NULL;
-        }
-        if ((PyObject *)conv != Py_NotImplemented && PyDataType_ISLEGACY(conv)) {
+        if (conv != NULL && PyDataType_ISLEGACY(conv)) {
             new->fields = conv->fields;
             Py_XINCREF(new->fields);
             new->names = conv->names;
@@ -384,12 +378,18 @@ PyArray_DescrFromTypeObject(PyObject *type)
             new->subarray = conv->subarray;
             conv->subarray = NULL;
         }
-        Py_DECREF(conv);
+        Py_XDECREF(conv);
         Py_XDECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
         return (PyArray_Descr *)new;
     }
+
+    PyObject *DType = PyArray_DiscoverDTypeFromScalarType((PyTypeObject *)type);
+    if (DType != NULL) {
+        return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+    }
+
     return _descr_from_subtype(type);
 }
 
@@ -535,15 +535,10 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         if (buff == NULL) {
             return PyErr_NoMemory();
         }
-        /* copyswap needs an array object, but only actually cares about the
-         * dtype
-         */
-        PyArrayObject_fields dummy_arr;
-        if (base == NULL) {
-            dummy_arr.descr = descr;
-            base = (PyObject *)&dummy_arr;
+        memcpy(buff, data, itemsize);
+        if (swap) {
+            byte_swap_vector(buff, itemsize / 4, 4);
         }
-        copyswap(buff, data, swap, base);
 
         /* truncation occurs here */
         PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buff, itemsize / 4);
@@ -586,9 +581,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
             destptr = PyBytes_AS_STRING(obj);
-            #if PY_VERSION_HEX < 0x030b00b0
-                ((PyBytesObject *)obj)->ob_shash = -1;
-            #endif
             memcpy(destptr, data, itemsize);
             return obj;
         }

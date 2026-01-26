@@ -1,9 +1,10 @@
 import platform
+
 import pytest
 
 import numpy as np
-from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, IS_WASM
+from numpy import float16, float32, float64, uint16
+from numpy.testing import IS_WASM, assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -11,62 +12,69 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         callable(*args, **kwargs)
     except FloatingPointError as exc:
         assert_(str(exc).find(strmatch) >= 0,
-                "Did not raise floating point %s error" % strmatch)
+                f"Did not raise floating point {strmatch} error")
     else:
         assert_(False,
-                "Did not raise floating point %s error" % strmatch)
+                f"Did not raise floating point {strmatch} error")
 
 class TestHalf:
-    def setup_method(self):
+    def _create_arrays_all(self):
         # An array of all possible float16 values
-        self.all_f16 = np.arange(0x10000, dtype=uint16)
-        self.all_f16.dtype = float16
+        all_f16 = np.arange(0x10000, dtype=uint16)
+        all_f16 = all_f16.view(float16)
 
         # NaN value can cause an invalid FP exception if HW is being used
         with np.errstate(invalid='ignore'):
-            self.all_f32 = np.array(self.all_f16, dtype=float32)
-            self.all_f64 = np.array(self.all_f16, dtype=float64)
+            all_f32 = np.array(all_f16, dtype=float32)
+            all_f64 = np.array(all_f16, dtype=float64)
+        return all_f16, all_f32, all_f64
 
+    def _create_arrays_nonan(self):
         # An array of all non-NaN float16 values, in sorted order
-        self.nonan_f16 = np.concatenate(
+        nonan_f16 = np.concatenate(
                                 (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
                                  np.arange(0x0000, 0x7c01, 1, dtype=uint16)))
-        self.nonan_f16.dtype = float16
-        self.nonan_f32 = np.array(self.nonan_f16, dtype=float32)
-        self.nonan_f64 = np.array(self.nonan_f16, dtype=float64)
+        nonan_f16 = nonan_f16.view(float16)
+        nonan_f32 = np.array(nonan_f16, dtype=float32)
+        nonan_f64 = np.array(nonan_f16, dtype=float64)
+        return nonan_f16, nonan_f32, nonan_f64
 
-        # An array of all finite float16 values, in sorted order
-        self.finite_f16 = self.nonan_f16[1:-1]
-        self.finite_f32 = self.nonan_f32[1:-1]
-        self.finite_f64 = self.nonan_f64[1:-1]
+    def _create_arrays_finite(self):
+        nonan_f16, nonan_f32, nonan_f64 = self._create_arrays_nonan()
+        finite_f16 = nonan_f16[1:-1]
+        finite_f32 = nonan_f32[1:-1]
+        finite_f64 = nonan_f64[1:-1]
+        return finite_f16, finite_f32, finite_f64
 
     def test_half_conversions(self):
         """Checks that all 16-bit values survive conversion
            to/from 32-bit and 64-bit float"""
         # Because the underlying routines preserve the NaN bits, every
         # value is preserved when converting to/from other floats.
+        all_f16, all_f32, all_f64 = self._create_arrays_all()
+        nonan_f16, _, _ = self._create_arrays_nonan()
 
         # Convert from float32 back to float16
         with np.errstate(invalid='ignore'):
-            b = np.array(self.all_f32, dtype=float16)
+            b = np.array(all_f32, dtype=float16)
         # avoid testing NaNs due to differing bit patterns in Q/S NaNs
         b_nn = b == b
-        assert_equal(self.all_f16[b_nn].view(dtype=uint16),
+        assert_equal(all_f16[b_nn].view(dtype=uint16),
                      b[b_nn].view(dtype=uint16))
 
         # Convert from float64 back to float16
         with np.errstate(invalid='ignore'):
-            b = np.array(self.all_f64, dtype=float16)
+            b = np.array(all_f64, dtype=float16)
         b_nn = b == b
-        assert_equal(self.all_f16[b_nn].view(dtype=uint16),
+        assert_equal(all_f16[b_nn].view(dtype=uint16),
                      b[b_nn].view(dtype=uint16))
 
         # Convert float16 to longdouble and back
         # This doesn't necessarily preserve the extra NaN bits,
         # so exclude NaNs.
-        a_ld = np.array(self.nonan_f16, dtype=np.longdouble)
+        a_ld = np.array(nonan_f16, dtype=np.longdouble)
         b = np.array(a_ld, dtype=float16)
-        assert_equal(self.nonan_f16.view(dtype=uint16),
+        assert_equal(nonan_f16.view(dtype=uint16),
                      b.view(dtype=uint16))
 
         # Check the range for which all integers can be represented
@@ -85,6 +93,21 @@ class TestHalf:
         arr = np.ones(3, dtype=np.float16).astype(string_dt)
         assert arr.dtype == expected_dt
 
+    @pytest.mark.parametrize("dtype", ["S", "U", object])
+    def test_to_half_cast_error(self, dtype):
+        arr = np.array(["3M"], dtype=dtype)
+        with pytest.raises(ValueError):
+            arr.astype(np.float16)
+
+        arr = np.array(["23490349034"], dtype=dtype)
+        with np.errstate(all="warn"):
+            with pytest.warns(RuntimeWarning):
+                arr.astype(np.float16)
+
+        with np.errstate(all="raise"):
+            with pytest.raises(FloatingPointError):
+                arr.astype(np.float16)
+
     @pytest.mark.parametrize("string_dt", ["S", "U"])
     def test_half_conversion_from_string(self, string_dt):
         string = np.array("3.1416", dtype=string_dt)
@@ -99,7 +122,7 @@ class TestHalf:
 
         # Test all (positive) finite numbers, denormals are most interesting
         # however:
-        f16s_patterns = np.arange(0, max_pattern+1, dtype=np.uint16)
+        f16s_patterns = np.arange(0, max_pattern + 1, dtype=np.uint16)
         f16s_float = f16s_patterns.view(np.float16).astype(float_t)
 
         # Shift the values by half a bit up or a down (or do not shift),
@@ -170,34 +193,35 @@ class TestHalf:
             assert larger_value.astype(np.float16) == smallest_value
 
     def test_nans_infs(self):
+        all_f16, all_f32, _ = self._create_arrays_all()
         with np.errstate(all='ignore'):
             # Check some of the ufuncs
-            assert_equal(np.isnan(self.all_f16), np.isnan(self.all_f32))
-            assert_equal(np.isinf(self.all_f16), np.isinf(self.all_f32))
-            assert_equal(np.isfinite(self.all_f16), np.isfinite(self.all_f32))
-            assert_equal(np.signbit(self.all_f16), np.signbit(self.all_f32))
+            assert_equal(np.isnan(all_f16), np.isnan(all_f32))
+            assert_equal(np.isinf(all_f16), np.isinf(all_f32))
+            assert_equal(np.isfinite(all_f16), np.isfinite(all_f32))
+            assert_equal(np.signbit(all_f16), np.signbit(all_f32))
             assert_equal(np.spacing(float16(65504)), np.inf)
 
             # Check comparisons of all values with NaN
             nan = float16(np.nan)
 
-            assert_(not (self.all_f16 == nan).any())
-            assert_(not (nan == self.all_f16).any())
+            assert_(not (all_f16 == nan).any())
+            assert_(not (nan == all_f16).any())
 
-            assert_((self.all_f16 != nan).all())
-            assert_((nan != self.all_f16).all())
+            assert_((all_f16 != nan).all())
+            assert_((nan != all_f16).all())
 
-            assert_(not (self.all_f16 < nan).any())
-            assert_(not (nan < self.all_f16).any())
+            assert_(not (all_f16 < nan).any())
+            assert_(not (nan < all_f16).any())
 
-            assert_(not (self.all_f16 <= nan).any())
-            assert_(not (nan <= self.all_f16).any())
+            assert_(not (all_f16 <= nan).any())
+            assert_(not (nan <= all_f16).any())
 
-            assert_(not (self.all_f16 > nan).any())
-            assert_(not (nan > self.all_f16).any())
+            assert_(not (all_f16 > nan).any())
+            assert_(not (nan > all_f16).any())
 
-            assert_(not (self.all_f16 >= nan).any())
-            assert_(not (nan >= self.all_f16).any())
+            assert_(not (all_f16 >= nan).any())
+            assert_(not (nan >= all_f16).any())
 
     def test_half_values(self):
         """Confirms a small number of known half values"""
@@ -207,7 +231,7 @@ class TestHalf:
                       65504, -65504,           # Maximum magnitude
                       2.0**(-14), -2.0**(-14),  # Minimum normal
                       2.0**(-24), -2.0**(-24),  # Minimum subnormal
-                      0, -1/1e1000,            # Signed zeros
+                      0, -1 / 1e1000,            # Signed zeros
                       np.inf, -np.inf])
         b = np.array([0x3c00, 0xbc00,
                       0x4000, 0xc000,
@@ -217,7 +241,7 @@ class TestHalf:
                       0x0001, 0x8001,
                       0x0000, 0x8000,
                       0x7c00, 0xfc00], dtype=uint16)
-        b.dtype = float16
+        b = b.view(dtype=float16)
         assert_equal(a, b)
 
     def test_half_rounding(self):
@@ -225,16 +249,16 @@ class TestHalf:
         a = np.array([2.0**-25 + 2.0**-35,  # Rounds to minimum subnormal
                       2.0**-25,       # Underflows to zero (nearest even mode)
                       2.0**-26,       # Underflows to zero
-                      1.0+2.0**-11 + 2.0**-16,  # rounds to 1.0+2**(-10)
-                      1.0+2.0**-11,   # rounds to 1.0 (nearest even mode)
-                      1.0+2.0**-12,   # rounds to 1.0
+                      1.0 + 2.0**-11 + 2.0**-16,  # rounds to 1.0+2**(-10)
+                      1.0 + 2.0**-11,   # rounds to 1.0 (nearest even mode)
+                      1.0 + 2.0**-12,   # rounds to 1.0
                       65519,          # rounds to 65504
                       65520],         # rounds to inf
                       dtype=float64)
         rounded = [2.0**-24,
                    0.0,
                    0.0,
-                   1.0+2.0**(-10),
+                   1.0 + 2.0**(-10),
                    1.0,
                    1.0,
                    65504,
@@ -254,9 +278,10 @@ class TestHalf:
     def test_half_correctness(self):
         """Take every finite float16, and check the casting functions with
            a manual conversion."""
+        finite_f16, finite_f32, finite_f64 = self._create_arrays_finite()
 
         # Create an array of all finite float16s
-        a_bits = self.finite_f16.view(dtype=uint16)
+        a_bits = finite_f16.view(dtype=uint16)
 
         # Convert to 64-bit float manually
         a_sgn = (-1.0)**((a_bits & 0x8000) >> 15)
@@ -269,29 +294,30 @@ class TestHalf:
 
         a_manual = a_sgn * a_man * 2.0**a_exp
 
-        a32_fail = np.nonzero(self.finite_f32 != a_manual)[0]
+        a32_fail = np.nonzero(finite_f32 != a_manual)[0]
         if len(a32_fail) != 0:
             bad_index = a32_fail[0]
-            assert_equal(self.finite_f32, a_manual,
+            assert_equal(finite_f32, a_manual,
                  "First non-equal is half value 0x%x -> %g != %g" %
                             (a_bits[bad_index],
-                             self.finite_f32[bad_index],
+                             finite_f32[bad_index],
                              a_manual[bad_index]))
 
-        a64_fail = np.nonzero(self.finite_f64 != a_manual)[0]
+        a64_fail = np.nonzero(finite_f64 != a_manual)[0]
         if len(a64_fail) != 0:
             bad_index = a64_fail[0]
-            assert_equal(self.finite_f64, a_manual,
+            assert_equal(finite_f64, a_manual,
                  "First non-equal is half value 0x%x -> %g != %g" %
                             (a_bits[bad_index],
-                             self.finite_f64[bad_index],
+                             finite_f64[bad_index],
                              a_manual[bad_index]))
 
     def test_half_ordering(self):
         """Make sure comparisons are working right"""
+        nonan_f16, _, _ = self._create_arrays_nonan()
 
         # All non-NaN float16 values in reverse order
-        a = self.nonan_f16[::-1].copy()
+        a = nonan_f16[::-1].copy()
 
         # 32-bit float copy
         b = np.array(a, dtype=float32)
@@ -307,8 +333,8 @@ class TestHalf:
         assert_((a[1:] >= a[:-1]).all())
         assert_(not (a[1:] < a[:-1]).any())
         # All != except for +/-0
-        assert_equal(np.nonzero(a[:-1] < a[1:])[0].size, a.size-2)
-        assert_equal(np.nonzero(a[1:] > a[:-1])[0].size, a.size-2)
+        assert_equal(np.nonzero(a[:-1] < a[1:])[0].size, a.size - 2)
+        assert_equal(np.nonzero(a[1:] > a[:-1])[0].size, a.size - 2)
 
     def test_half_funcs(self):
         """Test the various ArrFuncs"""
@@ -323,7 +349,7 @@ class TestHalf:
         assert_equal(a, np.ones((5,), dtype=float16))
 
         # nonzero and copyswap
-        a = np.array([0, 0, -1, -1/1e20, 0, 2.0**-24, 7.629e-6], dtype=float16)
+        a = np.array([0, 0, -1, -1 / 1e20, 0, 2.0**-24, 7.629e-6], dtype=float16)
         assert_equal(a.nonzero()[0],
                      [2, 5, 6])
         a = a.byteswap()
@@ -358,7 +384,7 @@ class TestHalf:
         hnan = np.array((np.nan,), dtype=float16)
         a_f16 = a.view(dtype=float16)
 
-        assert_equal(np.spacing(a_f16[:-1]), a_f16[1:]-a_f16[:-1])
+        assert_equal(np.spacing(a_f16[:-1]), a_f16[1:] - a_f16[:-1])
 
         assert_equal(np.nextafter(a_f16[:-1], hinf), a_f16[1:])
         assert_equal(np.nextafter(a_f16[0], -hinf), -a_f16[1])
@@ -383,7 +409,7 @@ class TestHalf:
         a |= 0x8000
 
         assert_equal(np.spacing(a_f16[0]), np.spacing(a_f16[1]))
-        assert_equal(np.spacing(a_f16[1:]), a_f16[:-1]-a_f16[1:])
+        assert_equal(np.spacing(a_f16[1:]), a_f16[:-1] - a_f16[1:])
 
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
@@ -497,40 +523,40 @@ class TestHalf:
             by16 = float16(1e4)
 
             # Underflow errors
-            assert_raises_fpe('underflow', lambda a, b:a*b, sx16, sx16)
-            assert_raises_fpe('underflow', lambda a, b:a*b, sx16, sy16)
-            assert_raises_fpe('underflow', lambda a, b:a*b, sy16, sx16)
-            assert_raises_fpe('underflow', lambda a, b:a*b, sy16, sy16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sx16, bx16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sx16, by16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sy16, bx16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sy16, by16)
-            assert_raises_fpe('underflow', lambda a, b:a/b,
+            assert_raises_fpe('underflow', lambda a, b: a * b, sx16, sx16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sx16, sy16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sy16, sx16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sy16, sy16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sx16, bx16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sx16, by16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sy16, bx16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sy16, by16)
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(-2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
-                                             float16(2.**-14+2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
-                                             float16(-2.**-14-2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
-                                             float16(2.**-14+2**-23), float16(4))
+            assert_raises_fpe('underflow', lambda a, b: a / b,
+                                             float16(2.**-14 + 2**-24), float16(2))
+            assert_raises_fpe('underflow', lambda a, b: a / b,
+                                             float16(-2.**-14 - 2**-24), float16(2))
+            assert_raises_fpe('underflow', lambda a, b: a / b,
+                                             float16(2.**-14 + 2**-23), float16(4))
 
             # Overflow errors
-            assert_raises_fpe('overflow', lambda a, b:a*b, bx16, bx16)
-            assert_raises_fpe('overflow', lambda a, b:a*b, bx16, by16)
-            assert_raises_fpe('overflow', lambda a, b:a*b, by16, bx16)
-            assert_raises_fpe('overflow', lambda a, b:a*b, by16, by16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, bx16, sx16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, bx16, sy16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, by16, sx16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, by16, sy16)
-            assert_raises_fpe('overflow', lambda a, b:a+b,
+            assert_raises_fpe('overflow', lambda a, b: a * b, bx16, bx16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, bx16, by16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, by16, bx16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, by16, by16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, bx16, sx16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, bx16, sy16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, by16, sx16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, by16, sy16)
+            assert_raises_fpe('overflow', lambda a, b: a + b,
                                              float16(65504), float16(17))
-            assert_raises_fpe('overflow', lambda a, b:a-b,
+            assert_raises_fpe('overflow', lambda a, b: a - b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
-            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
+            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))  # noqa: E501
             assert_raises_fpe('overflow', np.spacing, float16(65504))
 
             # Invalid value errors
@@ -539,9 +565,9 @@ class TestHalf:
             assert_raises_fpe('invalid', np.spacing, float16(np.nan))
 
             # These should not raise
-            float16(65472)+float16(32)
-            float16(2**-13)/float16(2)
-            float16(2**-14)/float16(2**10)
+            float16(65472) + float16(32)
+            float16(2**-13) / float16(2)
+            float16(2**-14) / float16(2**10)
             np.spacing(float16(-65504))
             np.nextafter(float16(65504), float16(-np.inf))
             np.nextafter(float16(-65504), float16(np.inf))
@@ -549,10 +575,10 @@ class TestHalf:
             np.nextafter(float16(-np.inf), float16(0))
             np.nextafter(float16(0), float16(np.nan))
             np.nextafter(float16(np.nan), float16(0))
-            float16(2**-14)/float16(2**10)
-            float16(-2**-14)/float16(2**10)
-            float16(2**-14+2**-23)/float16(2)
-            float16(-2**-14-2**-23)/float16(2)
+            float16(2**-14) / float16(2**10)
+            float16(-2**-14) / float16(2**10)
+            float16(2**-14 + 2**-23) / float16(2)
+            float16(-2**-14 - 2**-23) / float16(2)
 
     def test_half_array_interface(self):
         """Test that half is compatible with __array_interface__"""

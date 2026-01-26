@@ -1,8 +1,10 @@
 import sys
+
 import pytest
-from . import util
 
 from numpy.testing import IS_PYPY
+
+from . import util
 
 
 @pytest.mark.slow

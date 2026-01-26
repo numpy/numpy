@@ -1,34 +1,37 @@
-from numpy.testing import (assert_, assert_array_equal)
-import numpy as np
 import pytest
-from numpy.random import Generator, MT19937
+
+import numpy as np
+from numpy.random import MT19937, Generator
+from numpy.testing import assert_, assert_array_equal
 
 
 class TestRegression:
-
-    def setup_method(self):
-        self.mt19937 = Generator(MT19937(121263137472525314065))
+    def _create_generator(self):
+        return Generator(MT19937(121263137472525314065))
 
     def test_vonmises_range(self):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
+        mt19937 = self._create_generator()
         for mu in np.linspace(-7., 7., 5):
-            r = self.mt19937.vonmises(mu, 1, 50)
+            r = mt19937.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_hypergeometric_range(self):
         # Test for ticket #921
-        assert_(np.all(self.mt19937.hypergeometric(3, 18, 11, size=10) < 4))
-        assert_(np.all(self.mt19937.hypergeometric(18, 3, 11, size=10) > 0))
+        mt19937 = self._create_generator()
+        assert_(np.all(mt19937.hypergeometric(3, 18, 11, size=10) < 4))
+        assert_(np.all(mt19937.hypergeometric(18, 3, 11, size=10) > 0))
 
         # Test for ticket #5623
         args = (2**20 - 2, 2**20 - 2, 2**20 - 2)  # Check for 32-bit systems
-        assert_(self.mt19937.hypergeometric(*args) > 0)
+        assert_(mt19937.hypergeometric(*args) > 0)
 
     def test_logseries_convergence(self):
         # Test for ticket #923
+        mt19937 = self._create_generator()
         N = 1000
-        rvsn = self.mt19937.logseries(0.8, size=N)
+        rvsn = mt19937.logseries(0.8, size=N)
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
         # theoretical large N result is 0.49706795
@@ -59,40 +62,45 @@ class TestRegression:
             mt19937 = Generator(MT19937(i))
             m = Generator(MT19937(4321))
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
         # Check that the multivariate_normal size argument can be a
         # numpy integer.
-        self.mt19937.multivariate_normal([0], [[0]], size=1)
-        self.mt19937.multivariate_normal([0], [[0]], size=np.int_(1))
-        self.mt19937.multivariate_normal([0], [[0]], size=np.int64(1))
+        mt19937 = self._create_generator()
+        mt19937.multivariate_normal([0], [[0]], size=1)
+        mt19937.multivariate_normal([0], [[0]], size=np.int_(1))
+        mt19937.multivariate_normal([0], [[0]], size=np.int64(1))
 
     def test_beta_small_parameters(self):
         # Test that beta with small a and b parameters does not produce
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
-        x = self.mt19937.beta(0.0001, 0.0001, size=100)
+        mt19937 = self._create_generator()
+        x = mt19937.beta(0.0001, 0.0001, size=100)
         assert_(not np.any(np.isnan(x)), 'Nans in mt19937.beta')
 
     def test_beta_very_small_parameters(self):
         # gh-24203: beta would hang with very small parameters.
-        self.mt19937.beta(1e-49, 1e-40)
+        mt19937 = self._create_generator()
+        mt19937.beta(1e-49, 1e-40)
 
     def test_beta_ridiculously_small_parameters(self):
         # gh-24266: beta would generate nan when the parameters
         # were subnormal or a small multiple of the smallest normal.
+        mt19937 = self._create_generator()
         tiny = np.finfo(1.0).tiny
-        x = self.mt19937.beta(tiny/32, tiny/40, size=50)
+        x = mt19937.beta(tiny / 32, tiny / 40, size=50)
         assert not np.any(np.isnan(x))
 
     def test_beta_expected_zero_frequency(self):
         # gh-24475: For small a and b (e.g. a=0.0025, b=0.0025), beta
         # would generate too many zeros.
+        mt19937 = self._create_generator()
         a = 0.0025
         b = 0.0025
         n = 1000000
-        x = self.mt19937.beta(a, b, size=n)
+        x = mt19937.beta(a, b, size=n)
         nzeros = np.count_nonzero(x == 0)
         # beta CDF at x = np.finfo(np.double).smallest_subnormal/2
         # is p = 0.0776169083131899, e.g,
@@ -107,30 +115,32 @@ class TestRegression:
         #    exprected_freq = float(n*p)
         #
         expected_freq = 77616.90831318991
-        assert 0.95*expected_freq < nzeros < 1.05*expected_freq
+        assert 0.95 * expected_freq < nzeros < 1.05 * expected_freq
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
         # For low precision dtypes the tolerance was too tight.
         # See numpy github issue 6123.
+        mt19937 = self._create_generator()
         a = [1, 2, 3]
         counts = [4, 4, 2]
         for dt in np.float16, np.float32, np.float64:
             probs = np.array(counts, dtype=dt) / sum(counts)
-            c = self.mt19937.choice(a, p=probs)
+            c = mt19937.choice(a, p=probs)
             assert_(c in a)
             with pytest.raises(ValueError):
-                self.mt19937.choice(a, p=probs*0.9)
+                mt19937.choice(a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
         # will not cause a segfault on garbage collection
         # Tests gh-7710
+        mt19937 = self._create_generator()
 
         a = np.array(['a', 'a' * 1000])
 
         for _ in range(100):
-            self.mt19937.shuffle(a)
+            mt19937.shuffle(a)
 
         # Force Garbage Collection - should not segfault.
         import gc
@@ -140,10 +150,11 @@ class TestRegression:
         # Test that permuting an array of objects will not cause
         # a segfault on garbage collection.
         # See gh-7719
+        mt19937 = self._create_generator()
         a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
-            self.mt19937.shuffle(a)
+            mt19937.shuffle(a)
 
         # Force Garbage Collection - should not segfault.
         import gc
@@ -173,10 +184,11 @@ class TestRegression:
         assert_array_equal(m.__array__(), np.arange(5))
 
     def test_gamma_0(self):
-        assert self.mt19937.standard_gamma(0.0) == 0.0
-        assert_array_equal(self.mt19937.standard_gamma([0.0]), 0.0)
+        mt19937 = self._create_generator()
+        assert mt19937.standard_gamma(0.0) == 0.0
+        assert_array_equal(mt19937.standard_gamma([0.0]), 0.0)
 
-        actual = self.mt19937.standard_gamma([0.0], dtype='float')
+        actual = mt19937.standard_gamma([0.0], dtype='float')
         expected = np.array([0.], dtype=np.float32)
         assert_array_equal(actual, expected)
 
@@ -184,23 +196,26 @@ class TestRegression:
         # Regression test for gh-17007.
         # When p = 1e-30, the probability that a sample will exceed 2**63-1
         # is 0.9999999999907766, so we expect the result to be all 2**63-1.
-        assert_array_equal(self.mt19937.geometric(p=1e-30, size=3),
+        mt19937 = self._create_generator()
+        assert_array_equal(mt19937.geometric(p=1e-30, size=3),
                            np.iinfo(np.int64).max)
 
     def test_zipf_large_parameter(self):
         # Regression test for part of gh-9829: a call such as rng.zipf(10000)
         # would hang.
+        mt19937 = self._create_generator()
         n = 8
-        sample = self.mt19937.zipf(10000, size=n)
+        sample = mt19937.zipf(10000, size=n)
         assert_array_equal(sample, np.ones(n, dtype=np.int64))
 
     def test_zipf_a_near_1(self):
         # Regression test for gh-9829: a call such as rng.zipf(1.0000000000001)
         # would hang.
+        mt19937 = self._create_generator()
         n = 100000
-        sample = self.mt19937.zipf(1.0000000000001, size=n)
+        sample = mt19937.zipf(1.0000000000001, size=n)
         # Not much of a test, but let's do something more than verify that
         # it doesn't hang.  Certainly for a monotonically decreasing
         # discrete distribution truncated to signed 64 bit integers, more
         # than half should be less than 2**62.
-        assert np.count_nonzero(sample < 2**62) > n/2
+        assert np.count_nonzero(sample < 2**62) > n / 2
