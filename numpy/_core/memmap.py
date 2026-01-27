@@ -373,6 +373,17 @@ class memmap(ndarray):
             # Fall back to ndarray pickling for memmaps without a filename
             return super().__reduce__()
 
+        if not self.flags.c_contiguous and not self.flags.f_contiguous:
+            # For non-contiguous, eg: strided arrays.
+            return super().__reduce__()
+
+        # Byte-Offset for unpickling sliced views.
+        actual_offset = self.offset
+        if self.base is not None and isinstance(self.base, memmap):
+            base_ptr = self.base.__array_interface__['data'][0]
+            view_ptr = self.__array_interface__['data'][0]
+            actual_offset += (view_ptr - base_ptr)
+
         # Return the class and arguments needed to reconstruct the memmap
         return (
             self.__class__,
@@ -380,7 +391,7 @@ class memmap(ndarray):
                 self.filename,
                 self.dtype,
                 self.mode,
-                self.offset,
+                actual_offset,
                 self.shape,
                 'F' if self.flags.f_contiguous and not self.flags.c_contiguous else 'C',
             )
