@@ -9,11 +9,10 @@ Users who need to convert scalar types to ctypes should first convert them to an
 (e.g., ``numpy.asarray``) before passing them to ``numpy.ctypeslib.as_ctypes``.
 
 
-``__ref`` value in ``__array_interface__`` for scalar types is removed
-------------------------------------------------------------------------
-Previously, scalar types in NumPy had a ``__ref`` entry in their ``__array_interface__``
-dictionary, which pointed to the temporary array created to hold the scalar value.
-This behavior has been removed to avoid the issue `gh-30354 <https://github.com/numpy/numpy/issues/30354>`__.
-Now, scalar types will not have a ``__ref`` entry in their ``__array_interface__``.
-Instead, ``data`` entry in ``__array_interface__`` will directly point to the memory location of the scalar value and
-will be marked as readonly.
+``__array_interface__`` changes on scalars
+------------------------------------------
+Scalars now export the ``__array_interface__`` directly rather than including
+an array copy as a ``__ref`` entry. This means that scalars are now exported
+as read-only while they previously exported as writeable.
+The path via ``__ref__`` was undocumented and not consistently used even
+within NumPy itself.
