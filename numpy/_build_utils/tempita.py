@@ -3,7 +3,9 @@ import argparse
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(__file__))
 import tempita
+sys.path.pop(0)
 
 
 def process_tempita(fromfile, outfile=None):

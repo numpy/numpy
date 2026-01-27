@@ -2,9 +2,9 @@
 import argparse
 import os
 
-import genapi
-import numpy_api
-from genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
+from . import genapi
+from . import numpy_api
+from .genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
 
 # use annotated api when running under cpychecker
 h_template = r"""
