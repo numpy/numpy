@@ -358,24 +358,19 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 /*********************** end C-API functions **********************/
 
 
-/* dealloc must not raise an error, best effort try to write
-   to stderr and clear the error
-*/
-
-static inline void
-WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
-    if (PyErr_WarnEx(warning, msg, 1) < 0) {
-        PyObject * s;
-
-        s = PyUnicode_FromString("array_dealloc");
-        if (s) {
-            PyErr_WriteUnraisable(s);
-            Py_DECREF(s);
-        }
-        else {
-            PyErr_WriteUnraisable(Py_None);
-        }
+/*
+ * During dealloc we cannot propagate errors so if unraisable is set
+ * we simply print out the error message and convert the error into
+ * success (returning 0).
+ */
+static inline int
+write_and_clear_error_if_unraisable(int status, npy_bool unraisable)
+{
+    if (status < 0 && unraisable) {
+        PyErr_WriteUnraisable(npy_interned_str.array_dealloc);
+        return 0;
     }
+    return status;
 }
 
 /* array object functions */
@@ -392,23 +387,20 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     if (_buffer_info_free(fa->_buffer_info, (PyObject *)self) < 0) {
-        if (!unraisable) {
+        if (write_and_clear_error_if_unraisable(-1, unraisable) < 0) {
             return -1;
         }
-        PyErr_WriteUnraisable(NULL);
     }
     fa->_buffer_info = NULL;
 
     if (fa->base) {
-        int retval;
         if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
         {
             char const * msg = "WRITEBACKIFCOPY detected in clearing of array. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing.";
-            /* For non-dealloc case, we simply error */
-            if (!unraisable) {
-                PyErr_SetString(PyExc_RuntimeError, msg);
+            int retval = PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
+            if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
                 return -1;
             }
             /*
@@ -416,11 +408,9 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
              * Increasing sys.gettotalrefcount, but path should not be taken.
              */
             Py_INCREF(self);
-            WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
-            if (retval < 0)
-            {
-                PyErr_WriteUnraisable(NULL);
+            if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
+                return -1;
             }
         }
         /*
@@ -434,10 +424,9 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         /* Free any internal references */
         if (PyDataType_REFCHK(fa->descr)) {
             if (PyArray_ClearArray(self) < 0) {
-                if (!unraisable) {
+                if (write_and_clear_error_if_unraisable(-1, unraisable) < 0) {
                     return -1;
                 }
-                PyErr_WriteUnraisable(NULL);
             }
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
@@ -446,7 +435,10 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
-                WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
+                int retval = PyErr_WarnEx(PyExc_RuntimeWarning, msg, 1);
+                if (write_and_clear_error_if_unraisable(retval, unraisable) < 0) {
+                    return -1;
+                }
             }
             // Guess at malloc/free ???
             free(fa->data);
