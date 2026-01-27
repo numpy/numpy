@@ -3804,7 +3804,7 @@ array_typestr_get(PyArray_Descr *self)
 }
 
 
-PyObject *
+NPY_NO_EXPORT PyObject *
 array_protocol_descr_get(PyArray_Descr *self)
 {
     PyObject *res;
