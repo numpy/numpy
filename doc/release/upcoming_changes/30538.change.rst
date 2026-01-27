@@ -14,5 +14,5 @@ Users who need to convert scalar types to ctypes should first convert them to an
 Scalars now export the ``__array_interface__`` directly rather than including
 an array copy as a ``__ref`` entry. This means that scalars are now exported
 as read-only while they previously exported as writeable.
-The path via ``__ref__`` was undocumented and not consistently used even
+The path via ``__ref`` was undocumented and not consistently used even
 within NumPy itself.
