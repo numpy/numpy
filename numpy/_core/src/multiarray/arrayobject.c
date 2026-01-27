@@ -442,12 +442,6 @@ _clear_array_attributes(PyArrayObject *self, npy_bool unraisable)
         }
         /* mem_handler can be absent if NPY_ARRAY_OWNDATA arbitrarily set */
         if (fa->mem_handler == NULL) {
-            /* For non-dealloc case, we simply error */
-            if (!unraisable) {
-                PyErr_SetString(PyExc_RuntimeError,
-                                "no memory handler found but OWNDATA flag set");
-                return -1;
-            }
             if (npy_global_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
