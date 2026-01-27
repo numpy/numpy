@@ -2,8 +2,7 @@
 import argparse
 import os
 
-from . import genapi
-from . import numpy_api
+from . import genapi, numpy_api
 from .genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
 
 # use annotated api when running under cpychecker
