@@ -394,6 +394,7 @@ def test_void_dtype__buffer__thread_safety():
     x = np.array(('ndarray_scalar', (1.2, 3.0)), dtype=dt)[()]
     assert isinstance(x, np.void)
     flags = [inspect.BufferFlags.STRIDES, inspect.BufferFlags.READ]
+
     def func(b):
         b.wait()
         for i in range(100):
