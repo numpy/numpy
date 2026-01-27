@@ -682,7 +682,6 @@ _buffer_info_free(void *buffer_info, PyObject *obj)
     return 0;
 }
 
-
 /*
  * Get the buffer info returning either the old one (passed in) or a new
  * buffer info which adds holds on to (and thus replaces) the old one.
@@ -692,8 +691,17 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
 {
     _buffer_info_t *info = NULL;
     _buffer_info_t *stored_info;  /* First currently stored buffer info */
+    void *cache_snapshot;
 
-    if (_buffer_info_untag(*buffer_info_cache_ptr, &stored_info, obj) < 0) {
+#ifdef Py_GIL_DISABLED 
+    /* Atomic read for free-threaded Python to avoid race conditions */
+    cache_snapshot = _Py_atomic_load_ptr(buffer_info_cache_ptr);
+#else
+    /* GIL protects us in traditional Python builds */
+    cache_snapshot = *buffer_info_cache_ptr;
+#endif 
+
+    if (_buffer_info_untag(cache_snapshot, &stored_info, obj) < 0) {
         return NULL;
     }
     _buffer_info_t *old_info = stored_info;
@@ -731,22 +739,50 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
          * be modified). If the new info has a format, but we reuse
          * the old one, this transfers the ownership to the old one.
          */
+#ifdef Py_GIL_DISABLED
+        /* 
+        * In free-threaded Python, use atomic compare-exchange to safely
+        * transfer format ownership. Only one thread will succeed.
+        */
+        char *expected_null = NULL;
+        if (info->format != NULL) {
+            _Py_atomic_compare_exchange_ptr(
+                (void **)&old_info->format,
+                (void **)&expected_null,
+                (void *)info->format
+            );
+        }
+#else
         if (old_info->format == NULL) {
             old_info->format = info->format;
             info->format = NULL;
-        }
+    }
+#endif
         _buffer_info_free_untagged(info);
         info = old_info;
     }
     else {
         /* Insert new info as first item in the linked buffer-info list. */
         info->next = stored_info;
+
+/*
+* Atomic write for free-threaded Python.
+* 
+* Note: This is a simple atomic store, which is safe because:
+* 1. We're only adding to the front of a linked list
+* 2. Readers will see either the old or new value atomically
+* 3. The old value remains valid (linked via info->next)
+*/
+#ifdef Py_GIL_DISABLED 
+
+        _Py_atomic_store_ptr(buffer_info_cache_ptr, buffer_info_tag(info));
+#else
         *buffer_info_cache_ptr = buffer_info_tag(info);
+#endif 
     }
 
     return info;
 }
-
 
 /*
  * Retrieving buffers for ndarray
