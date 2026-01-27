@@ -477,3 +477,61 @@ check_is_convertible_to_scalar(PyArrayObject *v)
             "only 0-dimensional arrays can be converted to Python scalars");
     return -1;
 }
+
+NPY_NO_EXPORT PyObject *
+build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
+                      PyObject *typestr, PyObject *shape)
+{
+    PyObject *inter = NULL;
+    PyObject *version = NULL;
+    int ret;
+
+    inter = PyDict_New();
+    if (inter == NULL) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "data", dataptr);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "strides", strides);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "descr", descr);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "typestr", typestr);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "shape", shape);
+    if (ret < 0) {
+        goto fail;
+    }
+
+    version = PyLong_FromLong(3);
+    if (version == NULL) {
+        goto fail;
+    }
+
+    ret = PyDict_SetItemString(inter, "version", version);
+    if (ret < 0) {
+        goto fail;
+    }
+    Py_XDECREF(version);
+    return inter;
+
+
+fail:
+    Py_XDECREF(inter);
+    Py_XDECREF(version);
+    return NULL;
+
+}

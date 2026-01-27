@@ -1802,96 +1802,60 @@ gentype_dataptr_get(PyObject *self)
 static PyObject *
 gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
+    PyObject *dataptr = NULL;
+    PyObject *strides = NULL;
+    PyObject *shape = NULL;
+    PyObject *descr = NULL;
+    PyObject *typestr = NULL;
+    PyArray_Descr *array_descr = NULL;
     PyObject *inter = NULL;
-    PyObject *obj = NULL;
-    PyArray_Descr *descr = NULL;
-    int ret;
 
-    inter = PyDict_New();
-    if (inter == NULL) {
-        goto fail;
-    }
 
-    descr = PyArray_DescrFromScalar(self);
-    if (descr == NULL) {
-        goto fail;
+    array_descr = PyArray_DescrFromScalar(self);
+    if (array_descr == NULL) {
+        goto finish;
     }
 
     /* dataptr */
-    obj = gentype_dataptr_get(self);
-    if (obj == NULL) {
-        goto fail;
-    }
-    ret = PyDict_SetItemString(inter, "data", obj);
-    Py_CLEAR(obj);
-    if (ret < 0) {
-        goto fail;
+    dataptr = gentype_dataptr_get(self);
+    if (dataptr == NULL) {
+        goto finish;
     }
 
     /* strides */
-    obj = gentype_shape_get(self, NULL);
-    if (obj == NULL) {
-        goto fail;
-    }
-    ret = PyDict_SetItemString(inter, "strides", obj);
-    Py_CLEAR(obj);
-    if (ret < 0) {
-        goto fail;
+    strides = gentype_shape_get(self, NULL);
+    if (strides == NULL) {
+        goto finish;
     }
     
-    /* shape */
-    obj = array_protocol_descr_get(descr);
-    if (obj == NULL) {
-        goto fail;
-    }
-    ret = PyDict_SetItemString(inter, "descr", obj);
-    Py_CLEAR(obj);
-    if (ret < 0) {
-        goto fail;
+    /* descr */
+    descr = array_protocol_descr_get(array_descr);
+    if (descr == NULL) {
+        goto finish;
     }
 
     /* typestr */
-    obj = arraydescr_protocol_typestr_get(descr, NULL);
-    if (obj == NULL) {
-        goto fail;
-    }
-    ret = PyDict_SetItemString(inter, "typestr", obj);
-    Py_CLEAR(obj);
-    if (ret < 0) {
-        goto fail;
+    typestr = arraydescr_protocol_typestr_get(array_descr, NULL);
+    if (typestr == NULL) {
+        goto finish;
     }
 
     /* shape */
-    obj = gentype_shape_get(self, NULL);
-    if (obj == NULL) {
-        goto fail;
-    }
-    ret = PyDict_SetItemString(inter, "shape", obj);
-    Py_CLEAR(obj);
-    if (ret < 0) {
-        goto fail;
+    shape = gentype_shape_get(self, NULL);
+    if (shape == NULL) {
+        goto finish;
     }
 
-    /* version */
-    obj = PyLong_FromLong(3);
-    if (obj == NULL) {
-        goto fail;
-    }
-    ret = PyDict_SetItemString(inter, "version", obj);
-    Py_CLEAR(obj);
-    if (ret < 0) {
-        goto fail;
-    }
-    goto finish;
-
-fail:
-    Py_XDECREF(inter);
-    inter = NULL;
+    inter = build_array_interface(dataptr, descr, strides, typestr, shape);
     goto finish;
 
 finish:
     Py_XDECREF(descr);
-    Py_XDECREF(obj);
+    Py_XDECREF(dataptr);
+    Py_XDECREF(strides);
+    Py_XDECREF(shape);
+    Py_XDECREF(typestr);
+    Py_XDECREF(array_descr);
     return inter;
 }
 
