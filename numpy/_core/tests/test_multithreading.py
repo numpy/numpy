@@ -1,4 +1,5 @@
 import concurrent.futures
+import sys
 import threading
 
 import pytest
@@ -376,6 +377,7 @@ def test_arg_locking(kernel, outcome):
             if len(tasks) < 5:
                 b.abort()
 
+@pytest.mark.skipif(sys.version_info < (3, 12), reason="Python >= 3.12 required")
 def test_array__buffer__thread_safety():
     import inspect
     arr = np.arange(1000)
@@ -388,6 +390,7 @@ def test_array__buffer__thread_safety():
 
     run_threaded(func, max_workers=8, pass_barrier=True)
 
+@pytest.mark.skipif(sys.version_info < (3, 12), reason="Python >= 3.12 required")
 def test_void_dtype__buffer__thread_safety():
     import inspect
     dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
