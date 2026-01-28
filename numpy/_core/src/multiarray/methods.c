@@ -2073,17 +2073,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    /*
-     * Reassigning fa->descr messes with the reallocation strategy,
-     * since fa could be a 0-d or scalar, and then
-     * PyDataMem_UserFREE will be confused
-     */
-    size_t n_tofree = PyArray_NBYTES(self);
-    if (n_tofree == 0) {
-        n_tofree = 1;
-    }
-    Py_XDECREF(PyArray_DESCR(self));
-    fa->descr = typecode;
     Py_INCREF(typecode);
     nd = PyArray_IntpFromSequence(shape, dimensions, NPY_MAXDIMS);
     if (nd < 0) {
@@ -2097,30 +2086,18 @@ array_setstate(PyArrayObject *self, PyObject *args)
      *    copy from the pickled data (may not match allocation currently if 0).
      * Compare with `PyArray_NewFromDescr`, raise MemoryError for simplicity.
      */
-    npy_bool empty = NPY_FALSE;
-    nbytes = 1;
+    nbytes = typecode->elsize;
     for (int i = 0; i < nd; i++) {
         if (dimensions[i] < 0) {
             PyErr_SetString(PyExc_TypeError,
                     "impossible dimension while unpickling array");
             return NULL;
         }
-        if (dimensions[i] == 0) {
-            empty = NPY_TRUE;
-        }
         overflowed = npy_mul_sizes_with_overflow(
                 &nbytes, nbytes, dimensions[i]);
         if (overflowed) {
             return PyErr_NoMemory();
         }
-    }
-    overflowed = npy_mul_sizes_with_overflow(
-            &nbytes, nbytes, PyArray_ITEMSIZE(self));
-    if (overflowed) {
-        return PyErr_NoMemory();
-    }
-    if (empty) {
-        nbytes = 0;
     }
 
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
@@ -2135,11 +2112,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
         /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
-            PyObject *tmp;
-            tmp = PyUnicode_AsLatin1String(rawdata);
-            Py_DECREF(rawdata);
-            rawdata = tmp;
-            if (tmp == NULL) {
+            Py_SETREF(rawdata, PyUnicode_AsLatin1String(rawdata));
+            if (rawdata == NULL) {
                 /* More informative error message */
                 PyErr_SetString(PyExc_ValueError,
                                 ("Failed to encode latin1 string when unpickling a Numpy array. "
@@ -2167,32 +2141,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
             return NULL;
         }
     }
-
-    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        /*
-         * Allocation will never be 0, see comment in ctors.c
-         * line 820
-         */
-        PyObject *handler = PyArray_HANDLER(self);
-        if (handler == NULL) {
-            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
-            PyErr_SetString(PyExc_RuntimeError,
-                            "no memory handler found but OWNDATA flag set");
-            return NULL;
-        }
-        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
-        PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
+    /*
+     * Get rid of everything on self, and then populate with pickle data.
+     */
+    if (clear_array_attributes(self) < 0) {
+        return NULL;
     }
-    Py_XDECREF(PyArray_BASE(self));
-    fa->base = NULL;
-
-    PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
-
-    if (PyArray_DIMS(self) != NULL) {
-        npy_free_cache_dim_array(self);
-        fa->dimensions = NULL;
-    }
-
+    fa->descr = typecode;
     fa->flags = NPY_ARRAY_DEFAULT;
 
     fa->nd = nd;
@@ -2222,11 +2177,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
             if (num == 0) {
                 num = 1;
             }
-            /* Store the handler in case the default is modified */
-            Py_XDECREF(fa->mem_handler);
             fa->mem_handler = PyDataMem_GetHandler();
             if (fa->mem_handler == NULL) {
-                Py_CLEAR(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return NULL;
             }
@@ -2274,7 +2226,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         else {
             /* The handlers should never be called in this case */
-            Py_XDECREF(fa->mem_handler);
             fa->mem_handler = NULL;
             fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
@@ -2288,9 +2239,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (num == 0) {
             num = 1;
         }
-
         /* Store the functions in case the default handler is modified */
-        Py_XDECREF(fa->mem_handler);
         fa->mem_handler = PyDataMem_GetHandler();
         if (fa->mem_handler == NULL) {
             return NULL;
