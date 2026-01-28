@@ -110,13 +110,7 @@ def zipfile_factory(file, *args, **kwargs):
         file = os.fspath(file)
     import zipfile
 
-    # Handle compression parameters
-    compresslevel = kwargs.pop('compresslevel', None)
-    compression = kwargs.pop('compression', zipfile.ZIP_STORED)
-
-    # Modern Python versions support compresslevel
-    return zipfile.ZipFile(file, *args, compression=compression,
-                           compresslevel=compresslevel, **kwargs)
+    return zipfile.ZipFile(file, *args, **kwargs)
 
 
 @set_module('numpy.lib.npyio')
@@ -720,11 +714,7 @@ def savez_compressed(file, *args, allow_pickle=True,
     zipfile_kwargs : dict, optional
         Dictionary of keyword arguments forwarded directly to
         ``zipfile.ZipFile`` when creating the ``.npz`` archive (for example:
-        ``compression``, ``compresslevel``).
-
-        NumPy does not validate these arguments; any errors are raised by
-        ``zipfile.ZipFile``. By default, ``compression`` is set to
-        ``zipfile.ZIP_DEFLATED``.
+        ``compression``, ``compresslevel``). By default, ``compression`` is set to ``zipfile.ZIP_DEFLATED``.
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -790,6 +780,9 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
     # Prepare ZipFile keyword arguments
     if zipfile_kwargs is None:
         zipfile_kwargs = {}
+    else:
+        # Avoid mutating user-provided dict.
+        zipfile_kwargs = dict(zipfile_kwargs)
 
     # Default behaviour: use DEFLATED for the compressed variant, STORED
     # otherwise – unless the user explicitly asked for something else.
@@ -814,16 +807,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
     finally:
-        # If an exception occurs during writing, `zipfile.ZipFile.close()` may
-        # itself raise (e.g. due to an unfinished write handle). Avoid masking
-        # the original exception in that case.
-        if sys.exc_info()[0] is None:
-            zipf.close()
-        else:
-            try:
-                zipf.close()
-            except Exception:
-                pass
+        zipf.close()
 
 
 def _ensure_ndmin_ndarray_check_param(ndmin):
