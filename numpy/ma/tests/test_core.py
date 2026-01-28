@@ -6080,3 +6080,17 @@ class TestPatternMatching:
                 assert_array_equal(row4, array([7, 8], mask=[0, 1]))
             case _:
                 raise AssertionError("3D MaskedArray did not match sequence pattern")
+
+class TestRoundDeprecation:
+    """Test that numpy.ma.round_ emits a DeprecationWarning."""
+
+    message = "numpy.ma.round_ is deprecated. Use numpy.ma.round instead."
+
+    def test_round_emits_deprecation_warning_array(self):
+        a = np.array([1.5, 2.7, -1.5, -2.7])
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.ma.round_(a)
+
+    def test_round_emits_deprecation_warning_scalar(self):
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.ma.round_(3.14)

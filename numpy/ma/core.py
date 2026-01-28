@@ -8093,6 +8093,9 @@ def round_(a, decimals=0, out=None):
     """
     Return a copy of a, rounded to 'decimals' places.
 
+    .. deprecated:: 2.5
+        `numpy.ma.round_` is deprecated. Use `numpy.ma.round` instead.
+
     When 'decimals' is negative, it specifies the number of positions
     to the left of the decimal point.  The real and imaginary parts of
     complex numbers are rounded separately. Nothing is done if the
@@ -8136,6 +8139,11 @@ def round_(a, decimals=0, out=None):
                  mask=[False, False, False, True],
         fill_value=1e+20)
     """
+    warnings.warn(
+        "numpy.ma.round_ is deprecated. Use numpy.ma.round instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if out is None:
         return np.round(a, decimals, out)
     else:
@@ -8145,7 +8153,7 @@ def round_(a, decimals=0, out=None):
         return out
 
 
-round = round_
+round = np.round
 
 
 def _mask_propagate(a, axis):
