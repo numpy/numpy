@@ -893,32 +893,32 @@ def fromstring(
 @overload
 def frompyfunc[ReturnT](
     func: Callable[[Any], ReturnT], /,
-    nin: L[1],
-    nout: L[1],
+    nin: L[1, -1] = -1,
+    nout: L[1] = 1,
     *,
     identity: None = None,
 ) -> _PyFunc_Nin1_Nout1[ReturnT, None]: ...
 @overload
 def frompyfunc[ReturnT, IdentityT](
     func: Callable[[Any], ReturnT], /,
-    nin: L[1],
-    nout: L[1],
+    nin: L[1, -1] = -1,
+    nout: L[1] = 1,
     *,
     identity: IdentityT,
 ) -> _PyFunc_Nin1_Nout1[ReturnT, IdentityT]: ...
 @overload
 def frompyfunc[ReturnT](
     func: Callable[[Any, Any], ReturnT], /,
-    nin: L[2],
-    nout: L[1],
+    nin: L[2, -1] = -1,
+    nout: L[1] = 1,
     *,
     identity: None = None,
 ) -> _PyFunc_Nin2_Nout1[ReturnT, None]: ...
 @overload
 def frompyfunc[ReturnT, IdentityT](
     func: Callable[[Any, Any], ReturnT], /,
-    nin: L[2],
-    nout: L[1],
+    nin: L[2, -1] = -1,
+    nout: L[1] = 1,
     *,
     identity: IdentityT,
 ) -> _PyFunc_Nin2_Nout1[ReturnT, IdentityT]: ...
@@ -926,7 +926,7 @@ def frompyfunc[ReturnT, IdentityT](
 def frompyfunc[ReturnT, NInT: int](
     func: Callable[..., ReturnT], /,
     nin: NInT,
-    nout: L[1],
+    nout: L[1] = 1,
     *,
     identity: None = None,
 ) -> _PyFunc_Nin3P_Nout1[ReturnT, None, NInT]: ...
@@ -934,7 +934,7 @@ def frompyfunc[ReturnT, NInT: int](
 def frompyfunc[ReturnT, NInT: int, IdentityT](
     func: Callable[..., ReturnT], /,
     nin: NInT,
-    nout: L[1],
+    nout: L[1] = 1,
     *,
     identity: IdentityT,
 ) -> _PyFunc_Nin3P_Nout1[ReturnT, IdentityT, NInT]: ...
@@ -957,8 +957,8 @@ def frompyfunc[ReturnT, NInT: int, NOutT: int, IdentityT](
 @overload
 def frompyfunc(
     func: Callable[..., Any], /,
-    nin: SupportsIndex,
-    nout: SupportsIndex,
+    nin: SupportsIndex = -1,
+    nout: SupportsIndex = 1,
     *,
     identity: object | None = ...,
 ) -> ufunc: ...

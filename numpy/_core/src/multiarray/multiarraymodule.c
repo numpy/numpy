@@ -4682,7 +4682,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,
         METH_VARARGS, NULL},
     /* from umath */
-    {"frompyfunc",
+    {"_frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_make_extobj",
