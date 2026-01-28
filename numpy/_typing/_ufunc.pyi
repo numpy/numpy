@@ -19,6 +19,7 @@ from typing import (
     TypedDict,
     Unpack,
     overload,
+    override,
     type_check_only,
 )
 
@@ -226,8 +227,9 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
         out: np.ndarray | EllipsisType | None = None,
     ) -> NDArray[Incomplete]: ...
 
-    @overload  # type: ignore[override]
-    def reduce(  # out=None (default), keepdims=False (default)
+    @override  # type: ignore[override]
+    @overload  # out=None (default), keepdims=False (default)
+    def reduce(  # pyrefly: ignore[bad-override]
         self,
         array: ArrayLike,
         /,
@@ -263,6 +265,7 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
         **kwargs: Unpack[_ReduceKwargs],
     ) -> NDArray[Incomplete]: ...
 
+    @override
     def reduceat(
         self,
         array: ArrayLike,
@@ -273,7 +276,8 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
         out: np.ndarray | EllipsisType | None = None,
     ) -> NDArray[Incomplete]: ...
 
-    @overload  # type: ignore[override]
+    @override  # type: ignore[override]
+    @overload
     def outer(  # (scalar, scalar) -> scalar
         self,
         A: _ScalarLike_co,
@@ -329,6 +333,7 @@ class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # t
         **kwds: Unpack[_UFunc3Kwargs],
     ) -> NDArray[Incomplete] | Incomplete: ...
 
+    @override
     def at(  # type: ignore[override]
         self,
         a: np.ndarray | _SupportsArrayUFunc,
@@ -680,8 +685,9 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
     ) -> Incomplete: ...
 
-    @overload  # type: ignore[override]
-    def accumulate(
+    @override  # type: ignore[override]
+    @overload
+    def accumulate(  # pyrefly: ignore[bad-override]
         self,
         array: ArrayLike,
         /,
@@ -700,8 +706,9 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         out: OutT,
     ) -> OutT: ...
 
-    @overload  # type: ignore[override]
-    def reduce[OutT: np.ndarray](  # out=array
+    @override  # type: ignore[override]
+    @overload  # out=array
+    def reduce[OutT: np.ndarray](  # pyrefly: ignore[bad-override]
         self,
         array: ArrayLike,
         /,
@@ -748,8 +755,9 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         **kwargs: Unpack[_ReduceKwargs],
     ) -> ReturnT | NDArray[np.object_]: ...
 
-    @overload  # type: ignore[override]
-    def reduceat[OutT: np.ndarray](
+    @override  # type: ignore[override]
+    @overload
+    def reduceat[OutT: np.ndarray](  # pyrefly: ignore[bad-override]
         self,
         array: ArrayLike,
         /,
@@ -780,8 +788,9 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         out: np.ndarray | tuple[np.ndarray] | EllipsisType | None = None,
     ) -> Incomplete: ...
 
-    @overload  # type: ignore[override]
-    def outer(
+    @override  # type: ignore[override]
+    @overload
+    def outer(  # pyrefly: ignore[bad-override]
         self,
         A: _ScalarLike_co,
         B: _ScalarLike_co,
@@ -831,6 +840,7 @@ class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
     ) -> Incomplete: ...
 
+    @override
     def at(  # type: ignore[override]
         self,
         a: np.ndarray | _SupportsArrayUFunc,
