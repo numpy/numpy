@@ -960,9 +960,15 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
 
     try:
         # invoke the recursive part with an initial index and prefix
-        recurser(index=(),
+        res = recurser(index=(),
                         hanging_indent=next_line_prefix,
                         curr_width=line_width)
+        
+        # If recurser returned a string, it means we had a 0-d array (scalar)
+        # which didn't go through the list appending logic.
+        if res is not None:
+            s_list.append(res)
+
         return "".join(s_list)
     finally:
         # recursive closures have a cyclic reference to themselves, which
