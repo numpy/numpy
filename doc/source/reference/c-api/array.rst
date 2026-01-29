@@ -1918,18 +1918,22 @@ with the rest of the ArrayMethod API.
     ufunc and spec needed to create the loop.
 
 .. c:function:: int PyUFunc_AddPromoter( \
-                        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
+                        PyObject *ufunc, PyObject *DType_or_tuple, PyObject *promoter)
 
    Note that currently the output dtypes are always ``NULL`` unless they are
    also part of the signature. This is an implementation detail and could
    change in the future. However, in general promoters should not have a
    need for output dtypes.
+
    Register a new promoter for a ufunc. The first argument is the ufunc to
-   register the promoter with. The second argument is a Python tuple containing
-   DTypes or None matching the number of inputs and outputs for the ufuncs. The
-   last argument is a promoter is a function stored in a PyCapsule.  It is
-   passed the operation and requested DType signatures and can mutate it to
-   attempt a new search for a matching loop/promoter.
+   register the promoter with. The second argument is either a dtype object, or
+   a Python tuple containing DTypes or None matching the number of inputs and
+   outputs for the ufuncs. If a dtype is passed, it will be used as a fallback
+   when no other promoter matches and the dtype matches one of the arguments.
+
+   The last argument is a promoter is a function stored
+   in a PyCapsule.  It is passed the operation and requested DType signatures
+   and can mutate it to attempt a new search for a matching loop/promoter.
 
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
                 PyArray_DTypeMeta *const op_dtypes[], \
