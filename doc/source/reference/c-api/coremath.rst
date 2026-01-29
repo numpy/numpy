@@ -344,6 +344,15 @@ When you are building with `Meson <https://mesonbuild.com>`__, use::
 Half-precision functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note::
+
+   It is recommended to include ``<numpy/float16.h>`` instead of
+   ``<numpy/halffloat.h>``. The ``float16.h`` header provides the same
+   half-precision helpers in a header only implementation and does not
+   require linking against ``npymath``.
+
+   See :ref:`float16` for details.
+
 The header file ``<numpy/halffloat.h>`` provides functions to work with
 IEEE 754-2008 16-bit floating point values. While this format is
 not typically used for numerical computations, it is useful for
@@ -417,6 +426,11 @@ __ https://www.openexr.com/about.html
 .. c:macro:: NPY_HALF_NAN
 
     This macro is defined to a NaN value, guaranteed to have its sign bit unset.
+
+.. c:macro:: NPY_MAX_HALF
+
+    This macro is defined to the largest finite half-precision value 
+    representable in IEEE 754 (``65504.0``).
 
 .. c:function:: float npy_half_to_float(npy_half h)
 
