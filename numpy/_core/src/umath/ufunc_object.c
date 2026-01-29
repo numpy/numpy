@@ -4892,6 +4892,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->process_core_dims_func = NULL;
 
     ufunc->op_flags = NULL;
+    ufunc->_dtype_promoters = NULL;
     ufunc->_loops = NULL;
     if (nin + nout != 0) {
         ufunc->_dispatch_cache = PyArrayIdentityHash_New(nin + nout);
@@ -4907,6 +4908,12 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
          */
         ufunc->_dispatch_cache = NULL;
     }
+    ufunc->_dtype_promoters = PyList_New(0);
+    if (ufunc->_dtype_promoters == NULL) {
+        Py_DECREF(ufunc);
+        return NULL;
+    }
+
     ufunc->_loops = PyList_New(0);
     if (ufunc->_loops == NULL) {
         Py_DECREF(ufunc);
