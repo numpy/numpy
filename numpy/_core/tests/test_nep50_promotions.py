@@ -70,7 +70,7 @@ def test_nep50_weak_integers_with_inexact(dtype):
 
     too_big_int = int(np.finfo(dtype).max) * 2
 
-    if dtype in "dDG":
+    if dtype in "dD":
         # These dtypes currently convert to Python float internally, which
         # raises an OverflowError, while the other dtypes overflow to inf.
         # NOTE: It may make sense to normalize the behavior!
