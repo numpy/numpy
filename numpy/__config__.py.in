@@ -97,7 +97,7 @@ CONFIG = cleanup_empty_dict_values(
 )
 
 
-def show(mode=ConfigDisplayModes.stdout.value):
+def show(mode):
     """
     Show libraries and system information on which NumPy was built
     and is being used
@@ -129,7 +129,7 @@ def show(mode=ConfigDisplayModes.stdout.value):
     return print_or_return_config(mode, CONFIG)
 
 
-def show_config(mode=DisplayModes.stdout.value):
+def show_config(mode=ConfigDisplayModes.stdout.value):
     return show(mode)
 
 
