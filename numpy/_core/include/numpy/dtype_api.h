@@ -80,6 +80,7 @@ typedef enum {
      * assume that if set, it also applies to normal operations though!
      */
     NPY_METH_IS_REORDERABLE = 1 << 3,
+    NPY_METH_REQUIRES_CONTIGUOUS = 1 << 4,
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans
@@ -95,7 +96,8 @@ typedef enum {
     /* All flags which can change at runtime */
     NPY_METH_RUNTIME_FLAGS = (
             NPY_METH_REQUIRES_PYAPI |
-            NPY_METH_NO_FLOATINGPOINT_ERRORS),
+            NPY_METH_NO_FLOATINGPOINT_ERRORS |
+            NPY_METH_REQUIRES_CONTIGUOUS),
 } NPY_ARRAYMETHOD_FLAGS;
 
 

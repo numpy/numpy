@@ -976,6 +976,22 @@ sfloat_init_ufuncs(void) {
         .casting = NPY_NO_CASTING,
     };
 
+    spec.name = "sfloat_add";
+    spec.casting = NPY_SAME_KIND_CASTING;
+    spec.flags = NPY_METH_REQUIRES_CONTIGUOUS;
+
+    slots[0].slot = NPY_METH_resolve_descriptors;
+    slots[0].pfunc = &add_sfloats_resolve_descriptors;
+    slots[1].slot = NPY_METH_contiguous_loop;
+    slots[1].pfunc = &add_sfloats;
+    bmeth = PyArrayMethod_FromSpec_int(&spec, 0);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    res = sfloat_add_loop("add",
+            bmeth->dtypes, (PyObject *)bmeth->method);
+    Py_DECREF(bmeth);
+    if (res < 0) {
     PyType_Slot add_slots[3] = {
         {NPY_METH_resolve_descriptors, &add_sfloats_resolve_descriptors},
         {NPY_METH_strided_loop, &add_sfloats},
