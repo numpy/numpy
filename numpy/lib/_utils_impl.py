@@ -5,8 +5,7 @@ import types
 
 import numpy as np
 from numpy._core import ndarray
-from numpy._utils import set_module, _config_helpers
-import numpy as np
+from numpy._utils import _config_helpers, set_module
 
 __all__ = [
     'get_include', 'info', 'show_runtime'
@@ -46,7 +45,6 @@ def show_runtime(mode=_config_helpers.ConfigDisplayModes.stdout.value):
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     """
-    from pprint import pprint
 
     from numpy._core._multiarray_umath import (
         __cpu_baseline__,
