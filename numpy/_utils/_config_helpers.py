@@ -34,8 +34,8 @@ def print_or_return_config(mode, config):
 
             print(yaml.dump(config))
         except ModuleNotFoundError:
-            import warnings
             import json
+            import warnings
 
             warnings.warn("Install `pyyaml` for better output", stacklevel=1)
             print(json.dumps(config, indent=2))
