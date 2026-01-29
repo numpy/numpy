@@ -641,6 +641,11 @@ codegen_files = [
   'code_generators/ufunc_docstrings.py',
 ]
 codegen_env = {
+  # Explicitly set PYTHONPATH to avoid depending on the current working directory
+  # at build time, and on unsafe paths that may be prepended to sys.path and can be
+  # disabled by PYTHONSAFEPATH. See:
+  # [1] https://github.com/numpy/numpy/issues/24907
+  # [2] https://docs.python.org/3/library/sys.html#sys.path
   'PYTHONPATH': meson.current_source_dir(),
 }
 

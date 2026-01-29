@@ -3,6 +3,10 @@ import argparse
 import os
 import sys
 
+# Explicitly insert the directory into sys.path in case PYTHONSAFEPATH is
+# set by the user. See:
+# [1] https://github.com/numpy/numpy/issues/24907
+# [2] https://docs.python.org/3/library/sys.html#sys.path
 sys.path.insert(0, os.path.dirname(__file__))
 import tempita
 
