@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "MAINT"
     labels:
@@ -15,6 +17,8 @@ updates:
     directory: /requirements
     schedule:
       interval: daily
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "MAINT"
     labels:
