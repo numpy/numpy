@@ -373,7 +373,7 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         -3
         """.format(
             float_name=float_name,
-            versionadded="\n        .. versionadded:: 2.3\n" if float_name != "double" else ""
+            versionadded="\n        .. versionadded:: 2.5\n" if float_name != "double" else ""
         )))
 
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
@@ -405,7 +405,7 @@ for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
 
         Truncating an Integral returns itself.
 
-        .. versionadded:: 2.3
+        .. versionadded:: 2.5
 
         Examples
         --------
