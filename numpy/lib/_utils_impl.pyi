@@ -1,12 +1,15 @@
 from _typeshed import SupportsWrite
-from typing import LiteralString
+from typing import Any, Literal, LiteralString, overload
 
 import numpy as np
 
 __all__ = ["get_include", "info", "show_runtime"]
 
 def get_include() -> LiteralString: ...
-def show_runtime(mode: str = "stdout") -> None | dict: ...
+@overload
+def show_runtime(mode: Literal["stdout"] = ...) -> None: ...
+@overload
+def show_runtime(mode: Literal["dicts"]) -> list[dict[str, Any]]: ...
 def info(
     object: object = None, maxwidth: int = 76, output: SupportsWrite[str] | None = None, toplevel: str = "numpy"
 ) -> None: ...
