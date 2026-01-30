@@ -377,8 +377,8 @@ _strided_to_strided_zero_pad_copy(
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
-    npy_intp dst_itemsize = context->descriptors[1]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
+    npy_intp dst_itemsize = PyDataType_ELSIZE(context->descriptors[1]);
 
     npy_intp zero_size = dst_itemsize-src_itemsize;
 
@@ -405,7 +405,7 @@ _strided_to_strided_truncate_copy(
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp dst_itemsize = context->descriptors[1]->elsize;
+    npy_intp dst_itemsize = PyDataType_ELSIZE(context->descriptors[1]);
 
     while (N > 0) {
         memcpy(dst, src, dst_itemsize);
@@ -429,8 +429,8 @@ _strided_to_strided_unicode_copyswap(
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
-    npy_intp dst_itemsize = context->descriptors[1]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
+    npy_intp dst_itemsize = PyDataType_ELSIZE(context->descriptors[1]);
 
     npy_intp zero_size = dst_itemsize - src_itemsize;
     npy_intp copy_size = zero_size > 0 ? src_itemsize : dst_itemsize;
@@ -923,7 +923,7 @@ _strided_to_strided_string_to_datetime(
 {
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
     npy_intp src_stride = strides[0], dst_stride = strides[1];
 
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)auxdata;
@@ -1023,7 +1023,7 @@ get_nbo_cast_datetime_transfer_function(int aligned,
      * units (years and months). For timedelta, an average
      * years and months value is used.
      */
-    if (src_dtype->type_num == NPY_DATETIME &&
+    if (PyDataType_TYPENUM(src_dtype) == NPY_DATETIME &&
             (src_meta->base == NPY_FR_Y ||
              src_meta->base == NPY_FR_M ||
              dst_meta->base == NPY_FR_Y ||
@@ -1077,7 +1077,7 @@ get_nbo_datetime_to_string_transfer_function(
     }
     data->base.free = &_strided_datetime_cast_data_free;
     data->base.clone = &_strided_datetime_cast_data_clone;
-    data->dst_itemsize = dst_dtype->elsize;
+    data->dst_itemsize = PyDataType_ELSIZE(dst_dtype);
     data->tmp_buffer = NULL;
 
     memcpy(&data->src_meta, src_meta, sizeof(data->src_meta));
@@ -1112,7 +1112,7 @@ get_datetime_to_unicode_transfer_function(int aligned,
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
-    str_dtype->elsize = dst_dtype->elsize / 4;
+    PyDataType_SET_ELSIZE(str_dtype, PyDataType_ELSIZE(dst_dtype) / 4);
 
     /* ensured in resolve_descriptors for simplicity */
     assert(PyDataType_ISNOTSWAPPED(src_dtype));
@@ -1163,7 +1163,7 @@ get_nbo_string_to_datetime_transfer_function(
     }
     data->base.free = &_strided_datetime_cast_data_free;
     data->base.clone = &_strided_datetime_cast_data_clone;
-    data->src_itemsize = src_dtype->elsize;
+    data->src_itemsize = PyDataType_ELSIZE(src_dtype);
     data->tmp_buffer = PyMem_Malloc(data->src_itemsize + 1);
     if (data->tmp_buffer == NULL) {
         PyErr_NoMemory();
@@ -1204,8 +1204,8 @@ get_unicode_to_datetime_transfer_function(int aligned,
     if (str_dtype == NULL) {
         return NPY_FAIL;
     }
-    assert(src_dtype->type_num == NPY_UNICODE);
-    str_dtype->elsize = src_dtype->elsize / 4;
+    assert(PyDataType_TYPENUM(src_dtype) == NPY_UNICODE);
+    PyDataType_SET_ELSIZE(str_dtype, PyDataType_ELSIZE(src_dtype) / 4);
 
     /* Get the string to NBO datetime aligned function */
     if (get_nbo_string_to_datetime_transfer_function(
@@ -1242,15 +1242,15 @@ get_legacy_dtype_cast_function(
     PyArray_VectorUnaryFunc *castfunc;
     PyArray_Descr *tmp_dtype;
     npy_intp shape = 1;
-    npy_intp src_itemsize = src_dtype->elsize;
-    npy_intp dst_itemsize = dst_dtype->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(src_dtype);
+    npy_intp dst_itemsize = PyDataType_ELSIZE(dst_dtype);
 
     *out_needs_wrap = !aligned ||
-                      !PyArray_ISNBO(src_dtype->byteorder) ||
-                      !PyArray_ISNBO(dst_dtype->byteorder);
+                      !PyArray_ISNBO(PyDataType_BYTEORDER(src_dtype)) ||
+                      !PyArray_ISNBO(PyDataType_BYTEORDER(dst_dtype));
 
     /* Check the data types whose casting functions use API calls */
-    switch (src_dtype->type_num) {
+    switch (PyDataType_TYPENUM(src_dtype)) {
         case NPY_OBJECT:
         case NPY_STRING:
         case NPY_UNICODE:
@@ -1260,7 +1260,7 @@ get_legacy_dtype_cast_function(
             }
             break;
     }
-    switch (dst_dtype->type_num) {
+    switch (PyDataType_TYPENUM(dst_dtype)) {
         case NPY_OBJECT:
         case NPY_STRING:
         case NPY_UNICODE:
@@ -1279,7 +1279,7 @@ get_legacy_dtype_cast_function(
     }
 
     /* Get the cast function */
-    castfunc = PyArray_GetCastFunc(src_dtype, dst_dtype->type_num);
+    castfunc = PyArray_GetCastFunc(src_dtype, PyDataType_TYPENUM(dst_dtype));
     if (!castfunc) {
         *out_stransfer = NULL;
         *out_transferdata = NULL;
@@ -1304,7 +1304,7 @@ get_legacy_dtype_cast_function(
      *       always handle byte order conversions, this array should
      *       have native byte order.
      */
-    if (PyArray_ISNBO(src_dtype->byteorder)) {
+    if (PyArray_ISNBO(PyDataType_BYTEORDER(src_dtype))) {
         tmp_dtype = src_dtype;
         Py_INCREF(tmp_dtype);
     }
@@ -1330,7 +1330,7 @@ get_legacy_dtype_cast_function(
      *       always handle byte order conversions, this array should
      *       have native byte order.
      */
-    if (PyArray_ISNBO(dst_dtype->byteorder)) {
+    if (PyArray_ISNBO(PyDataType_BYTEORDER(dst_dtype))) {
         tmp_dtype = dst_dtype;
         Py_INCREF(tmp_dtype);
     }
@@ -1354,7 +1354,7 @@ get_legacy_dtype_cast_function(
     }
 
     /* If it's aligned and all native byte order, we're all done */
-    if (move_references && src_dtype->type_num == NPY_OBJECT) {
+    if (move_references && PyDataType_TYPENUM(src_dtype) == NPY_OBJECT) {
         *out_stransfer = _aligned_strided_to_strided_cast_decref_src;
     }
     else {
@@ -1443,7 +1443,7 @@ _strided_to_strided_one_to_n(
     _one_to_n_data *d = (_one_to_n_data *)auxdata;
 
     const npy_intp subN = d->N;
-    npy_intp sub_strides[2] = {0, d->wrapped.descriptors[1]->elsize};
+    npy_intp sub_strides[2] = {0, PyDataType_ELSIZE(d->wrapped.descriptors[1])};
 
     while (N > 0) {
         char *sub_args[2] = {src, dst};
@@ -1473,7 +1473,7 @@ _strided_to_strided_one_to_n_with_finish(
 
     const npy_intp subN = d->N;
     const npy_intp one_item = 1, zero_stride = 0;
-    npy_intp sub_strides[2] = {0, d->wrapped.descriptors[1]->elsize};
+    npy_intp sub_strides[2] = {0, PyDataType_ELSIZE(d->wrapped.descriptors[1])};
 
     while (N > 0) {
         char *sub_args[2] = {src, dst};
@@ -1523,7 +1523,7 @@ get_one_to_n_transfer_function(int aligned,
      * contiguous.
      */
     if (PyArray_GetDTypeTransferFunction(aligned,
-                    0, dst_dtype->elsize,
+                    0, PyDataType_ELSIZE(dst_dtype),
                     src_dtype, dst_dtype,
                     0,
                     &data->wrapped,
@@ -1680,8 +1680,8 @@ get_n_to_n_transfer_function(int aligned,
          * If N == 1, we can use the original strides,
          * otherwise fields are contiguous
          */
-        src_stride = src_dtype->elsize;
-        dst_stride = dst_dtype != NULL ? dst_dtype->elsize : 0;
+        src_stride = PyDataType_ELSIZE(src_dtype);
+        dst_stride = dst_dtype != NULL ? PyDataType_ELSIZE(dst_dtype) : 0;
         /* Store the wrapped strides for easier access */
         data->strides[0] = src_stride;
         data->strides[1] = dst_stride;
@@ -1808,8 +1808,8 @@ _strided_to_strided_subarray_broadcast(
     npy_intp run, run_count = d->run_count;
     npy_intp loop_index, offset, count;
 
-    npy_intp src_subitemsize = d->wrapped.descriptors[0]->elsize;
-    npy_intp dst_subitemsize = d->wrapped.descriptors[1]->elsize;
+    npy_intp src_subitemsize = PyDataType_ELSIZE(d->wrapped.descriptors[0]);
+    npy_intp dst_subitemsize = PyDataType_ELSIZE(d->wrapped.descriptors[1]);
 
     npy_intp sub_strides[2] = {src_subitemsize, dst_subitemsize};
 
@@ -1854,8 +1854,8 @@ _strided_to_strided_subarray_broadcast_withrefs(
     npy_intp run, run_count = d->run_count;
     npy_intp loop_index, offset, count;
 
-    npy_intp src_subitemsize = d->wrapped.descriptors[0]->elsize;
-    npy_intp dst_subitemsize = d->wrapped.descriptors[1]->elsize;
+    npy_intp src_subitemsize = PyDataType_ELSIZE(d->wrapped.descriptors[0]);
+    npy_intp dst_subitemsize = PyDataType_ELSIZE(d->wrapped.descriptors[1]);
 
     npy_intp sub_strides[2] = {src_subitemsize, dst_subitemsize};
 
@@ -1939,7 +1939,7 @@ get_subarray_broadcast_transfer_function(int aligned,
      * be 1 when it's called.
      */
     if (PyArray_GetDTypeTransferFunction(aligned,
-                    src_dtype->elsize, dst_dtype->elsize,
+                    PyDataType_ELSIZE(src_dtype), PyDataType_ELSIZE(dst_dtype),
                     src_dtype, dst_dtype,
                     0,
                     &data->wrapped,
@@ -1951,7 +1951,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     /* If the src object will need a DECREF */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
         if (PyArray_GetClearFunction(aligned,
-                        src_dtype->elsize, src_dtype,
+                        PyDataType_ELSIZE(src_dtype), src_dtype,
                         &data->decref_src, out_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
@@ -1961,7 +1961,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     /* If the dst object needs a DECREF to set it to NULL */
     if (PyDataType_REFCHK(dst_dtype)) {
         if (PyArray_GetClearFunction(aligned,
-                        dst_dtype->elsize, dst_dtype,
+                        PyDataType_ELSIZE(dst_dtype), dst_dtype,
                         &data->decref_dst, out_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
@@ -2051,7 +2051,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     /* Multiply all the offsets by the src item size */
     while (run--) {
         if (offsetruns[run].offset != -1) {
-            offsetruns[run].offset *= src_dtype->elsize;
+            offsetruns[run].offset *= PyDataType_ELSIZE(src_dtype);
         }
     }
 
@@ -2666,13 +2666,13 @@ _multistep_cast_auxdata_clone_int(_multistep_castdata *castdata, int move_info)
 
     Py_ssize_t from_buffer_offset = datasize;
     if (castdata->from.func != NULL) {
-        Py_ssize_t src_itemsize = castdata->main.context.descriptors[0]->elsize;
+        Py_ssize_t src_itemsize = PyDataType_ELSIZE(castdata->main.context.descriptors[0]);
         datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * src_itemsize;
         datasize = (datasize + 15) & ~0xf;
     }
     Py_ssize_t to_buffer_offset = datasize;
     if (castdata->to.func != NULL) {
-        Py_ssize_t dst_itemsize = castdata->main.context.descriptors[1]->elsize;
+        Py_ssize_t dst_itemsize = PyDataType_ELSIZE(castdata->main.context.descriptors[1]);
         datasize += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * dst_itemsize;
     }
 
@@ -2764,7 +2764,7 @@ _strided_to_strided_multistep_cast(
         }
 
         if (castdata->from.func != NULL) {
-            npy_intp out_stride = castdata->from.descriptors[1]->elsize;
+            npy_intp out_stride = PyDataType_ELSIZE(castdata->from.descriptors[1]);
             char *const data[2] = {src, castdata->from_buffer};
             npy_intp strides[2] = {src_stride, out_stride};
             if (castdata->from.func(&castdata->from.context,
@@ -2784,7 +2784,7 @@ _strided_to_strided_multistep_cast(
 
         if (castdata->to.func != NULL) {
             main_dst = castdata->to_buffer;
-            main_dst_stride = castdata->main.descriptors[1]->elsize;
+            main_dst_stride = PyDataType_ELSIZE(castdata->main.descriptors[1]);
         }
         else {
             main_dst = dst;
@@ -2984,7 +2984,7 @@ define_cast_for_descrs(
         else {
             /* Fetch the cast function and set up */
             PyArrayMethod_Context *context = &castdata.from.context;
-            npy_intp strides[2] = {src_stride, cast_info->descriptors[0]->elsize};
+            npy_intp strides[2] = {src_stride, PyDataType_ELSIZE(cast_info->descriptors[0])};
             NPY_ARRAYMETHOD_FLAGS flags;
             if (context->method->get_strided_loop(
                     context, aligned, move_references, strides,
@@ -3023,7 +3023,7 @@ define_cast_for_descrs(
         else {
             /* Fetch the cast function and set up */
             PyArrayMethod_Context *context = &castdata.to.context;
-            npy_intp strides[2] = {cast_info->descriptors[1]->elsize, dst_stride};
+            npy_intp strides[2] = {PyDataType_ELSIZE(cast_info->descriptors[1]), dst_stride};
             NPY_ARRAYMETHOD_FLAGS flags;
             if (context->method->get_strided_loop(
                     context, aligned, 1 /* clear buffer */, strides,
@@ -3170,7 +3170,7 @@ wrap_aligned_transferfunction(
     if (must_wrap || src_wrapped_dtype != src_dtype) {
         NPY_ARRAYMETHOD_FLAGS flags;
         if (PyArray_GetDTypeTransferFunction(aligned,
-                src_stride, castdata.main.descriptors[0]->elsize,
+                src_stride, PyDataType_ELSIZE(castdata.main.descriptors[0]),
                 src_dtype, castdata.main.descriptors[0], 0,
                 &castdata.from, &flags) != NPY_SUCCEED) {
             goto fail;
@@ -3182,7 +3182,7 @@ wrap_aligned_transferfunction(
     if (must_wrap || dst_wrapped_dtype != dst_dtype) {
         NPY_ARRAYMETHOD_FLAGS flags;
         if (PyArray_GetDTypeTransferFunction(aligned,
-                castdata.main.descriptors[1]->elsize, dst_stride,
+                PyDataType_ELSIZE(castdata.main.descriptors[1]), dst_stride,
                 castdata.main.descriptors[1], dst_dtype,
                 1,  /* clear buffer if it includes references */
                 &castdata.to, &flags) != NPY_SUCCEED) {
@@ -3237,7 +3237,7 @@ get_wrapped_legacy_cast_function(int aligned,
     /* Note: We ignore `needs_wrap`; needs-wrap is handled by another cast */
     int needs_wrap = 0;
 
-    if (src_dtype->type_num == dst_dtype->type_num) {
+    if (PyDataType_TYPENUM(src_dtype) == PyDataType_TYPENUM(dst_dtype)) {
         /*
          * This is a cast within the same dtype. For legacy user-dtypes,
          * it is always valid to handle this using the copy swap function.
@@ -3319,8 +3319,8 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
 {
     NPY_cast_info_init(cast_info);
 
-    if (mask_dtype->type_num != NPY_BOOL &&
-                            mask_dtype->type_num != NPY_UINT8) {
+    if (PyDataType_TYPENUM(mask_dtype) != NPY_BOOL &&
+            PyDataType_TYPENUM(mask_dtype) != NPY_UINT8) {
         PyErr_SetString(PyExc_TypeError,
                 "Only bool and uint8 masks are supported.");
         return NPY_FAIL;
@@ -3399,13 +3399,13 @@ PyArray_CastRawArrays(npy_intp count,
 
     /* Check data alignment, both uint and true */
     aligned = raw_array_is_aligned(1, &count, dst, &dst_stride,
-                                   npy_uint_alignment(dst_dtype->elsize)) &&
+                                   npy_uint_alignment(PyDataType_ELSIZE(dst_dtype))) &&
               raw_array_is_aligned(1, &count, dst, &dst_stride,
-                                   dst_dtype->alignment) &&
+                                   PyDataType_ALIGNMENT(dst_dtype)) &&
               raw_array_is_aligned(1, &count, src, &src_stride,
-                                   npy_uint_alignment(src_dtype->elsize)) &&
+                                   npy_uint_alignment(PyDataType_ELSIZE(src_dtype))) &&
               raw_array_is_aligned(1, &count, src, &src_stride,
-                                   src_dtype->alignment);
+                                   PyDataType_ALIGNMENT(src_dtype));
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;

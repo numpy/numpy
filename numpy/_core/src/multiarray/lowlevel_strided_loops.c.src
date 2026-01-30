@@ -274,7 +274,7 @@ _strided_to_strided(
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     while (N > 0) {
         memmove(dst, src, src_itemsize);
@@ -299,7 +299,7 @@ _swap_strided_to_strided(
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     char *a, *b, c;
 
@@ -330,7 +330,7 @@ _swap_pair_strided_to_strided(
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
     npy_intp src_stride = strides[0], dst_stride = strides[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     char *a, *b, c;
     npy_intp itemsize_half = src_itemsize / 2;
@@ -370,7 +370,7 @@ _contig_to_contig(
 {
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
-    npy_intp src_itemsize = context->descriptors[0]->elsize;
+    npy_intp src_itemsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     memmove(dst, src, src_itemsize*N);
     return 0;

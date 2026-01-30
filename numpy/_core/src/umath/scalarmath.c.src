@@ -1049,7 +1049,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         return OTHER_IS_UNKNOWN_OBJECT;
     }
 
-    if (descr->typeobj != Py_TYPE(value)) {
+    if (PyDataType_TYPEOBJ(descr) != Py_TYPE(value)) {
         /*
          * This is a subclass of a builtin type, we may continue normally,
          * but should check whether we need to defer.
@@ -1070,7 +1070,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
      * since it would disable `np.float64(1.) * [1, 2, 3, 4]`.
      */
     int ret;  /* set by the GET_VALUE_OR_DEFER macro */
-    switch (descr->type_num) {
+    switch (PyDataType_TYPENUM(descr)) {
         GET_VALUE_OR_DEFER(BOOL, Bool, value);
         /* UInts */
         GET_VALUE_OR_DEFER(UBYTE, UByte, value);

@@ -249,7 +249,7 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
 
-    long max_in_size = (descrs[0]->elsize) / sizeof(Py_UCS4);
+    long max_in_size = (PyDataType_ELSIZE(descrs[0])) / sizeof(Py_UCS4);
 
     npy_intp N = dimensions[0];
     Py_UCS4 *in = (Py_UCS4 *)data[0];
@@ -391,7 +391,7 @@ string_to_unicode(PyArrayMethod_Context *context, char *const data[],
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1] / sizeof(Py_UCS4);
     // max number of UCS4 characters that can fit in the output
-    size_t max_out_size = (context->descriptors[1]->elsize) / sizeof(Py_UCS4);
+    size_t max_out_size = (PyDataType_ELSIZE(context->descriptors[1])) / sizeof(Py_UCS4);
 
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
@@ -1805,7 +1805,7 @@ string_to_void(PyArrayMethod_Context *context, char *const data[],
     char *out = data[1];
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
-    size_t max_out_size = context->descriptors[1]->elsize;
+    size_t max_out_size = PyDataType_ELSIZE(context->descriptors[1]);
 
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
@@ -1856,7 +1856,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 
-    long max_in_size = descrs[0]->elsize;
+    long max_in_size = PyDataType_ELSIZE(descrs[0]);
 
     npy_intp N = dimensions[0];
     unsigned char *in = (unsigned char *)data[0];
@@ -1922,7 +1922,7 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
     char *out = data[1];
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1];
-    size_t max_out_size = context->descriptors[1]->elsize;
+    size_t max_out_size = PyDataType_ELSIZE(context->descriptors[1]);
 
     while (N--) {
         const npy_packed_static_string *ps = (npy_packed_static_string *)in;
@@ -1998,7 +1998,7 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
 
-    size_t max_in_size = descrs[0]->elsize;
+    size_t max_in_size = PyDataType_ELSIZE(descrs[0]);
 
     npy_intp N = dimensions[0];
     unsigned char *in = (unsigned char *)data[0];

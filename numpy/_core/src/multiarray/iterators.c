@@ -460,7 +460,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
     }
 
     npy_intp one = 1;
-    itemsize = dtype->elsize;
+    itemsize = PyDataType_ELSIZE(dtype);
     counter = ind_it->size;
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
@@ -499,7 +499,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
 
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    npy_intp dtype_size = dtype->elsize;
+    npy_intp dtype_size = PyDataType_ELSIZE(dtype);
     NPY_cast_info cast_info = {.func = NULL};
 
     /* Prepare the indices */
@@ -667,7 +667,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     /* Loop over Boolean array */
     npy_intp one = 1;
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    int itemsize = dtype->elsize;
+    int itemsize = PyDataType_ELSIZE(dtype);
     npy_intp transfer_strides[2] = {itemsize, itemsize};
     while (counter--) {
         if (*((npy_bool *)dptr) != 0) {
@@ -698,7 +698,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 
     npy_intp one = 1;
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
-    int itemsize = dtype->elsize;
+    int itemsize = PyDataType_ELSIZE(dtype);
     npy_intp transfer_strides[2] = {itemsize, itemsize};
 
     if (PyArray_NDIM(ind) == 0) {
@@ -766,7 +766,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     PyArray_Descr *dtype = PyArray_DESCR(self->ao);
     PyArrayObject *arrval = NULL;
     PyArrayIterObject *val_it = NULL;
-    npy_intp dtype_size = dtype->elsize;
+    npy_intp dtype_size = PyDataType_ELSIZE(dtype);
     NPY_cast_info cast_info = {.func = NULL};
 
     /* Prepare the indices */

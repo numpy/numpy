@@ -28,7 +28,7 @@
             x = (intw##_t)parsed;                                           \
         }                                                                   \
         memcpy(dataptr, &x, sizeof(x));                                     \
-        if (!PyArray_ISNBO(descr->byteorder)) {                             \
+        if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {                  \
             byteswap_unaligned(dataptr);                                    \
         }                                                                   \
         return 0;                                                           \
@@ -51,7 +51,7 @@
             x = (uintw##_t)parsed;                                          \
         }                                                                   \
         memcpy(dataptr, &x, sizeof(x));                                     \
-        if (!PyArray_ISNBO(descr->byteorder)) {                             \
+        if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {                  \
             byteswap_unaligned(dataptr);                                    \
         }                                                                   \
         return 0;                                                           \

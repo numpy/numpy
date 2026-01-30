@@ -137,7 +137,7 @@ IsAligned(PyArrayObject *ap)
 {
     return raw_array_is_aligned(PyArray_NDIM(ap), PyArray_DIMS(ap),
                                 PyArray_DATA(ap), PyArray_STRIDES(ap),
-                                PyArray_DESCR(ap)->alignment);
+                                PyDataType_ALIGNMENT(PyArray_DESCR(ap)));
 }
 
 NPY_NO_EXPORT int

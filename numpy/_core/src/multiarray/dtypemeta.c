@@ -491,7 +491,7 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    res->elsize = (int)size;
+    PyDataType_SET_ELSIZE(res, (int)size);
     return (PyObject *)res;
 }
 
@@ -531,7 +531,7 @@ string_discover_descr_from_pyobject(
         if (res == NULL) {
             return NULL;
         }
-        res->elsize = (int)itemsize;
+        PyDataType_SET_ELSIZE(res, (int)itemsize);
         return res;
     }
     return PyArray_DTypeFromObjectStringDiscovery(obj, NULL, cls->type_num);
@@ -559,7 +559,7 @@ void_discover_descr_from_pyobject(
             Py_DECREF(descr);
             return NULL;
         }
-        descr->elsize = (int)itemsize;
+        PyDataType_SET_ELSIZE(descr, (int)itemsize);
         return descr;
     }
     PyErr_Format(PyExc_TypeError,
@@ -604,7 +604,7 @@ nonparametric_default_descr(PyArray_DTypeMeta *cls)
 static PyArray_Descr *
 ensure_native_byteorder(PyArray_Descr *descr)
 {
-    if (PyArray_ISNBO(descr->byteorder)) {
+    if (PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {
         Py_INCREF(descr);
         return descr;
     }
@@ -634,7 +634,7 @@ void_default_descr(PyArray_DTypeMeta *cls)
      * This is because `[]` uses `float64` as dtype, and then that is used
      * for the size of the requested void.
      */
-    res->elsize = 8;
+    PyDataType_SET_ELSIZE(res, 8);
     return res;
 }
 
@@ -645,9 +645,11 @@ string_and_unicode_default_descr(PyArray_DTypeMeta *cls)
     if (res == NULL) {
         return NULL;
     }
-    res->elsize = 1;
     if (cls->type_num == NPY_UNICODE) {
-        res->elsize *= 4;
+        PyDataType_SET_ELSIZE(res, 4);
+    }
+    else {
+        PyDataType_SET_ELSIZE(res, 1);
     }
     return res;
 }
@@ -656,7 +658,7 @@ string_and_unicode_default_descr(PyArray_DTypeMeta *cls)
 static PyArray_Descr *
 string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
-    if (descr1->elsize >= descr2->elsize) {
+    if (PyDataType_ELSIZE(descr1) >= PyDataType_ELSIZE(descr2)) {
         return NPY_DT_CALL_ensure_canonical(descr1);
     }
     else {
@@ -726,13 +728,13 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                 Py_DECREF(new);
                 return NULL;
             }
-            new->flags |= field_descr->flags & NPY_FROM_FIELDS;
+            new->flags |= PyDataType_FLAGS(field_descr) & NPY_FROM_FIELDS;
             PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
 
             if (aligned) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(
-                        totalsize, field_descr->alignment);
-                maxalign = PyArray_MAX(maxalign, field_descr->alignment);
+                        totalsize, PyDataType_ALIGNMENT(field_descr));
+                maxalign = PyArray_MAX(maxalign, PyDataType_ALIGNMENT(field_descr));
             }
             PyObject *offset_obj = PyLong_FromLong(totalsize);
             if (offset_obj == NULL) {
@@ -758,7 +760,7 @@ void_ensure_canonical(_PyArray_LegacyDescr *self)
                 return NULL;
             }
             Py_DECREF(new_tuple);  /* Reference now owned by PyDataType_FIELDS(new) */
-            totalsize += field_descr->elsize;
+            totalsize += PyDataType_ELSIZE(field_descr);
         }
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
         new->elsize = totalsize;

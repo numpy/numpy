@@ -608,10 +608,60 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+#if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+
+/*
+ * Public descriptor fields. Fields are separated from the "main" struct
+ * to hide PyObject_HEAD in opaque PyObject builds.
+ */
+
+typedef struct _PyArray_Descr_fields {
+     /*
+     * the type object representing an
+     * instance of this type -- should not
+     * be two type_numbers with the same type
+     * object.
+     */
+    PyTypeObject *typeobj;
+    /* kind for this type */
+    char kind;
+    /* unique-character representing this type */
+    char type;
+    /*
+     * '>' (big), '<' (little), '|'
+     * (not-applicable), or '=' (native).
+     */
+    char byteorder;
+    /* Former flags flags space (unused) to ensure type_num is stable. */
+    char _former_flags;
+    /* number representing this type */
+    int type_num;
+    /* Space for dtype instance specific flags. */
+    npy_uint64 flags;
+    /* element size (itemsize) for this type */
+    npy_intp elsize;
+    /* alignment needed for this type */
+    npy_intp alignment;
+    /* metadata dict or NULL */
+    PyObject *metadata;
+    /* Cached hash value (-1 if not yet computed). */
+    npy_hash_t hash;
+    /* Unused slot (must be initialized to NULL) for future use */
+    void *reserved_null[2];
+} PyArray_Descr_fields;
+
+
 /*
  * Public version of the Descriptor struct as of 2.x
  */
+typedef struct _PyArray_Descr {
+    PyObject_HEAD
+    PyArray_Descr_fields fields;
+} PyArray_Descr;
+
+
+#elif NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+
 typedef struct _PyArray_Descr {
         PyObject_HEAD
         /*
@@ -1594,10 +1644,16 @@ PyArray_FLAGS(const PyArrayObject *arr)
 }
 
 
+#if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+#define PyDataType_TYPENUM(dtype) ((dtype)->fields.type_num)
+#else
+#define PyDataType_TYPENUM(dtype) ((dtype)->type_num)
+#endif
+
 static inline int
 PyArray_TYPE(const PyArrayObject *arr)
 {
-    return ((PyArrayObject_fields *)arr)->descr->type_num;
+    return PyDataType_TYPENUM(((PyArrayObject_fields *)arr)->descr);
 }
 
 static inline int
@@ -1692,21 +1748,21 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
 
 
-#define PyDataType_ISLEGACY(dtype) ((dtype)->type_num < NPY_VSTRING && ((dtype)->type_num >= 0))
-#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)(obj))->type_num )
-#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
+#define PyDataType_ISLEGACY(dtype) (PyDataType_TYPENUM(dtype) < NPY_VSTRING && (PyDataType_TYPENUM(dtype) >= 0))
+#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(PyDataType_TYPENUM((PyArray_Descr*)(obj)) )
+#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_MAKEUNSIZED(dtype) (PyDataType_SET_ELSIZE(dtype, 0))
 /*
  * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
  * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
@@ -1755,7 +1811,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 
 #define PyArray_ISNBO(arg) ((arg) != NPY_OPPBYTE)
 #define PyArray_IsNativeByteOrder PyArray_ISNBO
-#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
+#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyDataType_BYTEORDER(PyArray_DESCR(m)))
 #define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
 
 #define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&       \
@@ -1769,7 +1825,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_ALIGNED)
 
 
-#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
+#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(PyDataType_BYTEORDER((PyArray_Descr *)(d)))
 #define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
 
 /************************************************************

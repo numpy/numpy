@@ -922,7 +922,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         if (op[nin] == NULL) {
             return -1;
         }
-        fixed_strides[nin] = context->descriptors[nin]->elsize;
+        fixed_strides[nin] = PyDataType_ELSIZE(context->descriptors[nin]);
     }
     else {
         /* If any input overlaps with the output, we use the full path. */
@@ -2790,7 +2790,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = PyDataType_ELSIZE(descrs[0]);
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -2855,7 +2855,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = PyDataType_ELSIZE(descrs[0]);
 
         /* Execute the loop with no iterators */
         npy_intp count = PyArray_DIM(op[1], axis);
@@ -3051,7 +3051,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     assert(PyArray_EquivTypes(descrs[0], descrs[1])
            && PyArray_EquivTypes(descrs[0], descrs[2]));
 
-    if (PyDataType_REFCHK(descrs[2]) && descrs[2]->type_num != NPY_OBJECT) {
+    if (PyDataType_REFCHK(descrs[2]) && PyDataType_TYPENUM(descrs[2]) != NPY_OBJECT) {
         /* This can be removed, but the initial element copy needs fixing */
         PyErr_SetString(PyExc_TypeError,
                 "reduceat currently only supports `object` dtype with "
@@ -3209,7 +3209,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         npy_intp stride0, stride1;
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = PyDataType_ELSIZE(descrs[0]);
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -3251,7 +3251,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                  * to the same memory, e.g.
                  * np.add.reduceat(a, np.arange(len(a)), out=a).
                  */
-                if (descrs[2]->type_num == NPY_OBJECT) {
+                if (PyDataType_TYPENUM(descrs[2]) == NPY_OBJECT) {
                     /*
                      * Incref before decref to avoid the possibility of
                      * the reference count being zero temporarily.
@@ -3282,7 +3282,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     else if (iter == NULL) {
         char *dataptr_copy[3];
 
-        int itemsize = descrs[0]->elsize;
+        int itemsize = PyDataType_ELSIZE(descrs[0]);
 
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
         npy_intp stride1 = PyArray_STRIDE(op[1], axis);
@@ -3310,7 +3310,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
              * the same memory, e.g.
              * np.add.reduceat(a, np.arange(len(a)), out=a).
              */
-            if (descrs[2]->type_num == NPY_OBJECT) {
+            if (PyDataType_TYPENUM(descrs[2]) == NPY_OBJECT) {
                 /*
                  * Incref before decref to avoid the possibility of the
                  * reference count being zero temporarily.
@@ -5079,7 +5079,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         return -1;
     }
 
-    key = PyLong_FromLong((long) user_dtype->type_num);
+    key = PyLong_FromLong((long) PyDataType_TYPENUM(user_dtype));
     if (key == NULL) {
         return -1;
     }
@@ -5092,16 +5092,16 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
     }
     if (arg_dtypes != NULL) {
         for (i = 0; i < ufunc->nargs; i++) {
-            arg_typenums[i] = arg_dtypes[i]->type_num;
+            arg_typenums[i] = PyDataType_TYPENUM(arg_dtypes[i]);
         }
     }
     else {
         for (i = 0; i < ufunc->nargs; i++) {
-            arg_typenums[i] = user_dtype->type_num;
+            arg_typenums[i] = PyDataType_TYPENUM(user_dtype);
         }
     }
 
-    result = PyUFunc_RegisterLoopForType(ufunc, user_dtype->type_num,
+    result = PyUFunc_RegisterLoopForType(ufunc, PyDataType_TYPENUM(user_dtype),
         function, arg_typenums, data);
 
     if (result == 0) {
@@ -6070,9 +6070,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     /* Use contiguous strides; if there is such a loop it may be faster */
     npy_intp strides[3] = {
-            operation_descrs[0]->elsize, operation_descrs[1]->elsize, 0};
+            PyDataType_ELSIZE(operation_descrs[0]), PyDataType_ELSIZE(operation_descrs[1]), 0};
     if (nop == 3) {
-        strides[2] = operation_descrs[2]->elsize;
+        strides[2] = PyDataType_ELSIZE(operation_descrs[2]);
     }
 
     NPY_ARRAYMETHOD_FLAGS flags;
@@ -6587,7 +6587,7 @@ _typecharfromnum(int num) {
     char ret;
 
     descr = PyArray_DescrFromType(num);
-    ret = descr->type;
+    ret = PyDataType_TYPE(descr);
     Py_DECREF(descr);
     return ret;
 }

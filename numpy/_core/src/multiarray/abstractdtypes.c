@@ -403,7 +403,7 @@ npy_update_operand_for_scalar(
         }
     }
     else if (NPY_UNLIKELY(casting == NPY_EQUIV_CASTING) &&
-             descr->type_num != NPY_OBJECT) {
+             PyDataType_TYPENUM(descr) != NPY_OBJECT) {
         /*
          * incredibly niche, but users could pass equiv casting and we
          * actually need to cast.  Let object pass (technically correct) but

@@ -145,16 +145,52 @@ PyArray_ImportNumPyAPI(void)
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
     {
+    #if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+        dtype->fields.elsize = size;
+    #else
         dtype->elsize = size;
+    #endif
     }
+
+    #if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+    static inline void
+    PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
+    {
+        dtype->fields.type = type;
+    }
+    #endif
 
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
-    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+    #if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+        return dtype->fields.flags;
+    #elif NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
         return dtype->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
+    #endif
+    }
+
+    static inline void
+    PyDataType_SET_FLAGS(PyArray_Descr *dtype, npy_uint64 flags)
+    {
+    #if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+        dtype->fields.flags = flags;
+    #elif NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+        dtype->flags = flags;
+    #else
+        dtype->flags = (unsigned char)flags;  /* Need unsigned cast on 1.x */
+    #endif
+    }
+
+    static inline void
+    PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
+    {
+    #if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
+        dtype->fields.byteorder = byteorder;
+    #else
+        dtype->byteorder = byteorder;
     #endif
     }
 
@@ -213,6 +249,10 @@ DESCR_ACCESSOR(SUBARRAY, subarray, PyArray_ArrayDescr *, 1)
 DESCR_ACCESSOR(NAMES, names, PyObject *, 1)
 DESCR_ACCESSOR(FIELDS, fields, PyObject *, 1)
 DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
+DESCR_ACCESSOR(TYPE, type, char, 0)
+DESCR_ACCESSOR(KIND, kind, char, 0)
+DESCR_ACCESSOR(BYTEORDER, byteorder, char, 0)
+DESCR_ACCESSOR(TYPEOBJ, typeobj, PyTypeObject *, 0)
 
 #undef DESCR_ACCESSOR
 

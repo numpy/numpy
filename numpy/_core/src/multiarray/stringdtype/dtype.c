@@ -119,14 +119,15 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     snew->default_string = default_string;
 
     PyArray_Descr *base = (PyArray_Descr *)new;
-    base->elsize = SIZEOF_NPY_PACKED_STATIC_STRING;
-    base->alignment = ALIGNOF_NPY_PACKED_STATIC_STRING;
-    base->flags |= NPY_NEEDS_INIT;
-    base->flags |= NPY_LIST_PICKLE;
-    base->flags |= NPY_ITEM_REFCOUNT;
-    base->type_num = NPY_VSTRING;
-    base->kind = NPY_VSTRINGLTR;
-    base->type = NPY_VSTRINGLTR;
+    PyArray_Descr_fields *fields = &(base->fields);
+    fields->elsize = SIZEOF_NPY_PACKED_STATIC_STRING;
+    fields->alignment = ALIGNOF_NPY_PACKED_STATIC_STRING;
+    fields->flags |= NPY_NEEDS_INIT;
+    fields->flags |= NPY_LIST_PICKLE;
+    fields->flags |= NPY_ITEM_REFCOUNT;
+    fields->type_num = NPY_VSTRING;
+    fields->kind = NPY_VSTRINGLTR;
+    fields->type = NPY_VSTRINGLTR;
 
     return new;
 
@@ -528,7 +529,7 @@ int
 argmax(char *data, npy_intp n, npy_intp *max_ind, void *arr)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
-    npy_intp elsize = descr->elsize;
+    npy_intp elsize = PyDataType_ELSIZE(descr);
     *max_ind = 0;
     for (int i = 1; i < n; i++) {
         if (compare(data + i * elsize, data + (*max_ind) * elsize, arr) > 0) {
@@ -544,7 +545,7 @@ int
 argmin(char *data, npy_intp n, npy_intp *min_ind, void *arr)
 {
     PyArray_Descr *descr = PyArray_DESCR(arr);
-    npy_intp elsize = descr->elsize;
+    npy_intp elsize = PyDataType_ELSIZE(descr);
     *min_ind = 0;
     for (int i = 1; i < n; i++) {
         if (compare(data + i * elsize, data + (*min_ind) * elsize, arr) < 0) {

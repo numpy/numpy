@@ -120,7 +120,7 @@ npy_to_float(PyArray_Descr *descr,
 
     float val = (float)double_val;
     memcpy(dataptr, &val, sizeof(float));
-    if (!PyArray_ISNBO(descr->byteorder)) {
+    if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {
         npy_bswap4_unaligned(dataptr);
     }
     return 0;
@@ -142,7 +142,7 @@ npy_to_double(PyArray_Descr *descr,
     }
 
     memcpy(dataptr, &val, sizeof(double));
-    if (!PyArray_ISNBO(descr->byteorder)) {
+    if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {
         npy_bswap8_unaligned(dataptr);
     }
     return 0;
@@ -241,7 +241,7 @@ npy_to_cfloat(PyArray_Descr *descr,
     npy_csetrealf(&val, (float) real);
     npy_csetimagf(&val, (float) imag);
     memcpy(dataptr, &val, sizeof(npy_complex64));
-    if (!PyArray_ISNBO(descr->byteorder)) {
+    if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {
         npy_bswap4_unaligned(dataptr);
         npy_bswap4_unaligned(dataptr + 4);
     }
@@ -267,7 +267,7 @@ npy_to_cdouble(PyArray_Descr *descr,
     npy_csetreal(&val, real);
     npy_csetimag(&val, imag);
     memcpy(dataptr, &val, sizeof(npy_complex128));
-    if (!PyArray_ISNBO(descr->byteorder)) {
+    if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {
         npy_bswap8_unaligned(dataptr);
         npy_bswap8_unaligned(dataptr + 8);
     }
@@ -284,7 +284,7 @@ npy_to_string(PyArray_Descr *descr,
         parser_config *NPY_UNUSED(unused))
 {
     const Py_UCS4* c = str;
-    size_t length = descr->elsize;
+    size_t length = PyDataType_ELSIZE(descr);
 
     for (size_t i = 0; i < length; i++) {
         if (c < end) {
@@ -312,7 +312,7 @@ npy_to_unicode(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(unused))
 {
-    int length = descr->elsize / 4;
+    int length = PyDataType_ELSIZE(descr) / 4;
 
     if (length <= end - str) {
         memcpy(dataptr, str, length * 4);
@@ -323,7 +323,7 @@ npy_to_unicode(PyArray_Descr *descr,
         memset(dataptr + given_len * 4, '\0', (length - given_len) * 4);
     }
 
-    if (!PyArray_ISNBO(descr->byteorder)) {
+    if (!PyArray_ISNBO(PyDataType_BYTEORDER(descr))) {
         for (int i = 0; i < length; i++) {
             npy_bswap4_unaligned(dataptr);
             dataptr += 4;

@@ -173,7 +173,7 @@ read_rows(stream *s,
 {
     char *data_ptr = NULL;
     Py_ssize_t current_num_fields;
-    npy_intp row_size = out_descr->elsize;
+    npy_intp row_size = PyDataType_ELSIZE(out_descr);
     PyObject **conv_funcs = NULL;
 
     int ndim = homogeneous ? 2 : 1;
@@ -368,7 +368,7 @@ read_rows(stream *s,
             char *item_ptr;
             if (homogeneous) {
                 f = 0;
-                item_ptr = data_ptr + i * field_types[0].descr->elsize;
+                item_ptr = data_ptr + i * PyDataType_ELSIZE(field_types[0].descr);
             }
             else {
                 f = i;

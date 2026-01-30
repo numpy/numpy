@@ -42,8 +42,8 @@ copycast_isaligned(int ndim, npy_intp const *shape,
     int aligned;
     int big_aln, small_aln;
 
-    int uint_aln = npy_uint_alignment(dtype->elsize);
-    int true_aln = dtype->alignment;
+    int uint_aln = npy_uint_alignment(PyDataType_ELSIZE(dtype));
+    int true_aln = PyDataType_ALIGNMENT(dtype);
 
     /* uint alignment can be 0, meaning not uint alignable */
     if (uint_aln == 0) {
@@ -433,7 +433,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     /* optimization: scalar boolean mask */
     if (wheremask != NULL &&
             PyArray_NDIM(wheremask) == 0 &&
-            PyArray_DESCR(wheremask)->type_num == NPY_BOOL) {
+            PyDataType_TYPENUM(PyArray_DESCR(wheremask)) == NPY_BOOL) {
         npy_bool value = *(npy_bool *)PyArray_DATA(wheremask);
         if (value) {
             /* where=True is the same as no where at all */

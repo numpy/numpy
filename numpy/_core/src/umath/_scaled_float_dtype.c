@@ -139,14 +139,16 @@ NPY_DType_Slots sfloat_slots = {
     }
 };
 
-static PyArray_SFloatDescr SFloatSingleton = {{
-        .byteorder = '|',  /* do not bother with byte-swapping... */
-        .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
-        .type_num = -1,
-        .elsize = sizeof(double),
-        .alignment = NPY_ALIGNOF(double),
-    },
-    .scaling = 1,
+static PyArray_SFloatDescr SFloatSingleton = {
+        .base={.fields={
+                    .byteorder = '|',  /* do not bother with byte-swapping... */
+                    .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
+                    .type_num = -1,
+                    .elsize = sizeof(double),
+                    .alignment = NPY_ALIGNOF(double),
+               },
+        },
+    .scaling = 1
 };
 
 
@@ -853,7 +855,7 @@ sfloat_sort_resolve_descriptors(
         npy_intp *view_offset)
 {
     assert(!(given_descrs[1] != given_descrs[0] && given_descrs[1] != NULL));
-    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+    assert(PyArray_IsNativeByteOrder(PyDataType_BYTEORDER(given_descrs[0])));
 
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);
@@ -941,8 +943,8 @@ sfloat_argsort_resolve_descriptors(
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset)
 {
-    assert(given_descrs[1] == NULL || given_descrs[1]->type_num == NPY_INTP);
-    assert(PyArray_IsNativeByteOrder(given_descrs[0]->byteorder));
+    assert(given_descrs[1] == NULL || PyDataType_TYPENUM(given_descrs[1]) == NPY_INTP);
+    assert(PyArray_IsNativeByteOrder(PyDataType_BYTEORDER(given_descrs[0])));
 
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);

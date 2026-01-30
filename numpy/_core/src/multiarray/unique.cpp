@@ -266,7 +266,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
 
     PyArray_Descr *descr = PyArray_DESCR(self);
     // variables for the string
-    npy_intp itemsize = descr->elsize;
+    npy_intp itemsize = descr->fields.elsize;
     npy_intp num_chars = itemsize / sizeof(T);
 
     auto hash = [num_chars](const T *value) -> size_t {

@@ -1144,7 +1144,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
 
-    itemsize = descr->elsize;
+    itemsize = PyDataType_ELSIZE(descr);
 
     if (strides.len != -1) {
         npy_intp nb, off;

@@ -232,7 +232,7 @@ find_binary_operation_path(
         return -1;
     }
 
-    if (!was_scalar || PyArray_DESCR(arr)->type_num != NPY_OBJECT) {
+    if (!was_scalar || PyDataType_TYPENUM(PyArray_DESCR(arr)) != NPY_OBJECT) {
         /* 
          * The array is OK for usage and we can simply forward it.  There
          * is a theoretical subtlety here:  If the other object implements
@@ -523,7 +523,7 @@ genint_type_str(PyObject *self)
     PyObject  *item, *item_str;
     PyArray_Descr *dtype = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(self));
     void *val = scalar_value(self, dtype);
-    switch (dtype->type_num) {
+    switch (PyDataType_TYPENUM(dtype)) {
         case NPY_BYTE:
             item = PyLong_FromLong(*(npy_byte *)val);
             break;
@@ -593,7 +593,7 @@ genint_type_repr(PyObject *self)
     }
 
     PyArray_Descr *descr = PyArray_DescrFromType(num);  /* cannot fail */
-    int bitsize = descr->elsize * 8;
+    int bitsize = PyDataType_ELSIZE(descr) * 8;
     Py_DECREF(descr);
     if (PyTypeNum_ISUNSIGNED(num)) {
         repr = PyUnicode_FromFormat("np.uint%d(%S)", bitsize, value_string);
@@ -1706,7 +1706,7 @@ gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
     int elsize;
 
     typecode = PyArray_DescrFromScalar(self);
-    elsize = typecode->elsize;
+    elsize = PyDataType_ELSIZE(typecode);
     ret = PyLong_FromLong((long) elsize);
     Py_DECREF(typecode);
     return ret;
@@ -1764,7 +1764,7 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
     inter->flags = PyArray_FLAGS(arr);
     inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_OWNDATA);
     inter->flags |= NPY_ARRAY_NOTSWAPPED;
-    inter->typekind = PyArray_DESCR(arr)->kind;
+    inter->typekind = PyDataType_KIND(PyArray_DESCR(arr));
     inter->itemsize = PyArray_ITEMSIZE(arr);
     inter->strides = NULL;
     inter->shape = NULL;
@@ -1942,7 +1942,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
         char *ptr;
         typecode = _realdescr_fromcomplexscalar(self, &typenum);
         ptr = (char *)scalar_value(self, NULL);
-        ret = PyArray_Scalar(ptr + typecode->elsize, typecode, NULL);
+        ret = PyArray_Scalar(ptr + PyDataType_ELSIZE(typecode), typecode, NULL);
     }
     else if (PyArray_IsScalar(self, Object)) {
         PyObject *obj = PyArrayScalar_VAL(self, Object);
@@ -1961,7 +1961,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
         char *temp;
         int elsize;
         typecode = PyArray_DescrFromScalar(self);
-        elsize = typecode->elsize;
+        elsize = PyDataType_ELSIZE(typecode);
         temp = npy_alloc_cache_zero(1, elsize);
         ret = PyArray_Scalar(temp, typecode, NULL);
         npy_free_cache(temp, elsize);
@@ -2177,7 +2177,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         descr = PyArray_DescrFromScalar(self);
         data = (void *)scalar_value(self, descr);
 
-        newmem = PyObject_Malloc(descr->elsize);
+        newmem = PyObject_Malloc(PyDataType_ELSIZE(descr));
         if (newmem == NULL) {
             Py_DECREF(descr);
             return PyErr_NoMemory();
@@ -3209,8 +3209,8 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
         return -1;
     }
     view->ndim = 0;
-    view->len = descr->elsize;
-    view->itemsize = descr->elsize;
+    view->len = PyDataType_ELSIZE(descr);
+    view->itemsize = PyDataType_ELSIZE(descr);
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
@@ -3866,7 +3866,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return NULL;
         }
     }
-    else if (descr->type_num != NPY_VOID || PyDataType_HASSUBARRAY(descr)) {
+    else if (PyDataType_TYPENUM(descr) != NPY_VOID || PyDataType_HASSUBARRAY(descr)) {
         /* we reject subarrays, since subarray scalars do not exist. */
         PyErr_Format(PyExc_TypeError,
                 "void: descr must be a `void` dtype that is not "
