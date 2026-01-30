@@ -2,8 +2,8 @@
 Test the scalar constructors, which also do type-coercion
 """
 import fractions
-import math
 import inspect
+import math
 import platform
 import sys
 import types
@@ -159,7 +159,8 @@ class TestTruncate:
 
     @pytest.mark.parametrize("str_value, exception_class, match", [
         ("inf", OverflowError, "cannot convert (float|longdouble) infinity to integer"),
-        ("-inf", OverflowError, "cannot convert (float|longdouble) infinity to integer"),
+        ("-inf", OverflowError,
+         "cannot convert (float|longdouble) infinity to integer"),
         ("nan", ValueError, "cannot convert (float|longdouble) NaN to integer"),
     ])
     @pytest.mark.parametrize("code", np.typecodes["Float"])
