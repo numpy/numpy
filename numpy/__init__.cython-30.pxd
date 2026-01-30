@@ -226,19 +226,31 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef struct PyArray_Descr:
         pass
 
-    ctypedef class numpy.dtype [object PyArray_Descr, check_size ignore]:
-        # Use PyDataType_* macros when possible, however there are no macros
-        # for accessing some of the fields, so some are defined.
-        cdef PyTypeObject* typeobj
-        cdef char kind
-        cdef char type
+    ctypedef class numpy.dtype [object PyArray_Descr_fields, check_size ignore]:
+        @property
+        cdef inline PyTypeObject* typeobj(self) noexcept nogil:
+            return PyDataType_TYPEOBJ(self)
+
+        @property
+        cdef inline char kind(self) noexcept nogil:
+            return PyDataType_KIND(self)
+
+        @property
+        cdef inline char type(self) noexcept nogil:
+            return PyDataType_TYPE(self)
+        
         # Numpy sometimes mutates this without warning (e.g. it'll
         # sometimes change "|" to "<" in shared dtype objects on
         # little-endian machines). If this matters to you, use
         # PyArray_IsNativeByteOrder(dtype.byteorder) instead of
         # directly accessing this field.
-        cdef char byteorder
-        cdef int type_num
+        @property
+        cdef inline char byteorder(self) noexcept nogil:
+            return PyDataType_BYTEORDER(self)
+
+        @property
+        cdef inline int type_num(self) noexcept nogil:
+            return PyDataType_TYPENUM(self)
 
         @property
         cdef inline npy_intp itemsize(self) noexcept nogil:
@@ -428,6 +440,11 @@ cdef extern from "numpy/arrayobject.h":
     PyArray_ArrayDescr* PyDataType_SUBARRAY(dtype) nogil
     PyObject* PyDataType_NAMES(dtype) nogil
     PyObject* PyDataType_FIELDS(dtype) nogil
+    char PyDataType_TYPE(dtype) nogil
+    char PyDataType_KIND(dtype) nogil
+    int PyDataType_TYPENUM(dtype) nogil
+    char PyDataType_BYTEORDER(dtype) nogil
+    PyTypeObject* PyDataType_TYPEOBJ(dtype) nogil
 
     bint PyDataType_ISBOOL(dtype) nogil
     bint PyDataType_ISUNSIGNED(dtype) nogil

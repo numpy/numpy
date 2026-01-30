@@ -29,7 +29,7 @@
 #include "multiarraymodule.h"
 
 typedef struct {
-    PyArray_Descr base;
+    PyArray_Descr_fields base;
     double scaling;
 } PyArray_SFloatDescr;
 
@@ -140,13 +140,12 @@ NPY_DType_Slots sfloat_slots = {
 };
 
 static PyArray_SFloatDescr SFloatSingleton = {
-        .base={.fields={
-                    .byteorder = '|',  /* do not bother with byte-swapping... */
-                    .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
-                    .type_num = -1,
-                    .elsize = sizeof(double),
-                    .alignment = NPY_ALIGNOF(double),
-               },
+        .base={
+                .byteorder = '|',  /* do not bother with byte-swapping... */
+                .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
+                .type_num = -1,
+                .elsize = sizeof(double),
+                .alignment = NPY_ALIGNOF(double),
         },
     .scaling = 1
 };

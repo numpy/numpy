@@ -304,14 +304,14 @@ PyArray_DescrHash(PyObject* odescr)
     }
     descr = (PyArray_Descr*)odescr;
 
-    hash = atomic_load_explicit((_Atomic(npy_hash_t) *)&(descr->fields.hash), memory_order_relaxed);
+    hash = atomic_load_explicit((_Atomic(npy_hash_t) *)&(((PyArray_Descr_fields *)descr)->hash), memory_order_relaxed);
 
     if (hash == -1) {
         hash = _PyArray_DescrHashImp(descr);
         if (hash == -1) {
             return -1;
         }
-        atomic_store_explicit((_Atomic(npy_hash_t) *)&(descr->fields.hash), hash, memory_order_relaxed);
+        atomic_store_explicit((_Atomic(npy_hash_t) *)&(((PyArray_Descr_fields *)descr)->hash), hash, memory_order_relaxed);
     }
 
     return hash;

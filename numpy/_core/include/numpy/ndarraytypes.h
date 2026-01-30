@@ -447,9 +447,9 @@ typedef void (PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,
  * is bumped. It used to be the separator.
  */
 typedef int (PyArray_ScanFunc)(FILE *fp, void *dptr,
-                               char *ignore, struct _PyArray_Descr *);
+                               char *ignore,  struct _PyArray_Descr *);
 typedef int (PyArray_FromStrFunc)(char *s, void *dptr, char **endptr,
-                                  struct _PyArray_Descr *);
+                                   struct _PyArray_Descr *);
 
 typedef int (PyArray_FillFunc)(void *, npy_intp, void *);
 
@@ -608,14 +608,16 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
-
 /*
- * Public descriptor fields. Fields are separated from the "main" struct
- * to hide PyObject_HEAD in opaque PyObject builds.
+ * As of NumPy 2.5, direct access to descriptor object fields is
+ * deprecated. Set NPY_NO_DEPRECATED_API to NPY_2_5_API_VERSION to ensure you
+ * access descriptor struct members via accessor or setter macros.
  */
 
-typedef struct _PyArray_Descr_fields {
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+
+typedef struct tagPyArray_Descr_fields {
+    PyObject_HEAD
      /*
      * the type object representing an
      * instance of this type -- should not
@@ -650,57 +652,9 @@ typedef struct _PyArray_Descr_fields {
     void *reserved_null[2];
 } PyArray_Descr_fields;
 
-
-/*
- * Public version of the Descriptor struct as of 2.x
- */
-typedef struct _PyArray_Descr {
-    PyObject_HEAD
-    PyArray_Descr_fields fields;
-} PyArray_Descr;
-
-
-#elif NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-
-typedef struct _PyArray_Descr {
-        PyObject_HEAD
-        /*
-         * the type object representing an
-         * instance of this type -- should not
-         * be two type_numbers with the same type
-         * object.
-         */
-        PyTypeObject *typeobj;
-        /* kind for this type */
-        char kind;
-        /* unique-character representing this type */
-        char type;
-        /*
-         * '>' (big), '<' (little), '|'
-         * (not-applicable), or '=' (native).
-         */
-        char byteorder;
-        /* Former flags flags space (unused) to ensure type_num is stable. */
-        char _former_flags;
-        /* number representing this type */
-        int type_num;
-        /* Space for dtype instance specific flags. */
-        npy_uint64 flags;
-        /* element size (itemsize) for this type */
-        npy_intp elsize;
-        /* alignment needed for this type */
-        npy_intp alignment;
-        /* metadata dict or NULL */
-        PyObject *metadata;
-        /* Cached hash value (-1 if not yet computed). */
-        npy_hash_t hash;
-        /* Unused slot (must be initialized to NULL) for future use */
-        void *reserved_null[2];
-} PyArray_Descr;
-
 #else  /* 1.x and 2.x compatible version (only shared fields): */
 
-typedef struct _PyArray_Descr {
+typedef struct tagPyArray_Descr_fields {
         PyObject_HEAD
         PyTypeObject *typeobj;
         char kind;
@@ -708,7 +662,7 @@ typedef struct _PyArray_Descr {
         char byteorder;
         char _former_flags;
         int type_num;
-} PyArray_Descr;
+} PyArray_Descr_fields;
 
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
@@ -728,6 +682,21 @@ typedef struct {
 } _PyArray_DescrNumPy2;
 
 #endif  /* 1.x and 2.x compatible version */
+
+#if !defined(NPY_NO_DEPRECATED_API) || \
+        (NPY_NO_DEPRECATED_API < NPY_2_5_API_VERSION)
+typedef PyArray_Descr_fields PyArray_Descr;
+#else
+/*
+ * Public version of the Descriptor struct
+ * To hide implementation details, we only expose
+ * the Python struct HEAD.
+ */
+typedef struct _PyArray_Descr {
+    PyObject_HEAD
+} PyArray_Descr;
+#endif
+
 
 /*
  * Semi-private struct with additional field of legacy descriptors (must
@@ -874,10 +843,7 @@ typedef struct tagPyArrayObject_fields {
  */
 #if !defined(NPY_NO_DEPRECATED_API) || \
     (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
-/*
- * Can't put this in npy_deprecated_api.h like the others.
- * PyArrayObject field access is deprecated as of NumPy 1.7.
- */
+
 typedef PyArrayObject_fields PyArrayObject;
 #else
 typedef struct tagPyArrayObject {
@@ -1643,12 +1609,11 @@ PyArray_FLAGS(const PyArrayObject *arr)
     return ((PyArrayObject_fields *)arr)->flags;
 }
 
-
-#if NPY_FEATURE_VERSION >= NPY_2_5_API_VERSION
-#define PyDataType_TYPENUM(dtype) ((dtype)->fields.type_num)
-#else
-#define PyDataType_TYPENUM(dtype) ((dtype)->type_num)
-#endif
+// defined here to avoid a forward-declaration
+static inline int PyDataType_TYPENUM(const PyArray_Descr *descr)
+{
+    return ((PyArray_Descr_fields *)descr)->type_num;
+}
 
 static inline int
 PyArray_TYPE(const PyArrayObject *arr)
@@ -1907,7 +1872,7 @@ typedef struct npy_unpacked_static_string {
 typedef struct npy_string_allocator npy_string_allocator;
 
 typedef struct {
-    PyArray_Descr base;
+    PyArray_Descr_fields base;
     // The object representing a null value
     PyObject *na_object;
     // Flag indicating whether or not to coerce arbitrary objects to strings

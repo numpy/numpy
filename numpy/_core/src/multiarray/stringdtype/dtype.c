@@ -119,7 +119,7 @@ new_stringdtype_instance(PyObject *na_object, int coerce)
     snew->default_string = default_string;
 
     PyArray_Descr *base = (PyArray_Descr *)new;
-    PyArray_Descr_fields *fields = &(base->fields);
+    PyArray_Descr_fields *fields = PyDataType_FIELDS_STRUCT(base);
     fields->elsize = SIZEOF_NPY_PACKED_STATIC_STRING;
     fields->alignment = ALIGNOF_NPY_PACKED_STATIC_STRING;
     fields->flags |= NPY_NEEDS_INIT;

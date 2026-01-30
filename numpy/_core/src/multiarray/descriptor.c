@@ -2510,12 +2510,12 @@ arraydescr_new(PyTypeObject *subtype,
                 return NULL;
             }
             Py_XINCREF(DType->scalar_type);
-            descr->fields.typeobj = DType->scalar_type;
-            descr->fields.type_num = DType->type_num;
-            descr->fields.flags = NPY_USE_GETITEM|NPY_USE_SETITEM;
-            descr->fields.byteorder = '|';  /* If DType uses it, let it override */
-            descr->fields.elsize = -1;  /* Initialize to invalid value */
-            descr->fields.hash = -1;
+            PyDataType_SET_TYPEOBJ(descr, DType->scalar_type);
+            PyDataType_SET_TYPENUM(descr, DType->type_num);
+            PyDataType_SET_FLAGS(descr, NPY_USE_GETITEM|NPY_USE_SETITEM);
+            PyDataType_SET_BYTEORDER(descr, '|');  /* If DType uses it, let it override */
+            PyDataType_SET_ELSIZE(descr, -1);  /* Initialize to invalid value */
+            ((PyArray_Descr_fields *)descr)->hash = -1;
             return (PyObject *)descr;
         }
         /* The DTypeMeta class should prevent this from happening. */
@@ -3845,7 +3845,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
         /* NULL represents `type`, this is set to DTypeMeta at import time */
         PyVarObject_HEAD_INIT(NULL, 0)
         .tp_name = "numpy.dtype",
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
         .tp_dealloc = (destructor)arraydescr_dealloc,
         .tp_repr = (reprfunc)arraydescr_repr,
         .tp_as_number = &descr_as_number,
