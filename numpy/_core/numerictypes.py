@@ -77,14 +77,20 @@ Exported symbols include:
 
 """
 import numbers
-import warnings
+
+from numpy._utils import set_module
 
 from . import multiarray as ma
 from .multiarray import (
-        ndarray, dtype, datetime_data, datetime_as_string,
-        busday_offset, busday_count, is_busday, busdaycalendar
-        )
-from numpy._utils import set_module
+    busday_count,
+    busday_offset,
+    busdaycalendar,
+    datetime_as_string,
+    datetime_data,
+    dtype,
+    is_busday,
+    ndarray,
+)
 
 # we add more at the bottom
 __all__ = [
@@ -95,19 +101,18 @@ __all__ = [
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np._core.numerictypes.UPPER_TABLE
-from ._string_helpers import (  # noqa: F401
-    english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
-)
-
-from ._type_aliases import (
-    sctypeDict, allTypes, sctypes
-)
-from ._dtype import _kind_name
-
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str, bytes  # noqa: F401, UP029
+from builtins import bool, bytes, complex, float, int, object, str  # noqa: F401, UP029
 
+from ._string_helpers import (  # noqa: F401
+    LOWER_TABLE,
+    UPPER_TABLE,
+    english_capitalize,
+    english_lower,
+    english_upper,
+)
+from ._type_aliases import allTypes, sctypeDict, sctypes
 
 # We use this later
 generic = allTypes['generic']
@@ -117,68 +122,6 @@ genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'float16', 'float32', 'float64', 'float96', 'float128',
                    'complex64', 'complex128', 'complex192', 'complex256',
                    'object']
-
-@set_module('numpy')
-def maximum_sctype(t):
-    """
-    Return the scalar type of highest precision of the same kind as the input.
-
-    .. deprecated:: 2.0
-        Use an explicit dtype like int64 or float64 instead.
-
-    Parameters
-    ----------
-    t : dtype or dtype specifier
-        The input data type. This can be a `dtype` object or an object that
-        is convertible to a `dtype`.
-
-    Returns
-    -------
-    out : dtype
-        The highest precision data type of the same kind (`dtype.kind`) as `t`.
-
-    See Also
-    --------
-    obj2sctype, mintypecode, sctype2char
-    dtype
-
-    Examples
-    --------
-    >>> from numpy._core.numerictypes import maximum_sctype
-    >>> maximum_sctype(int)
-    <class 'numpy.int64'>
-    >>> maximum_sctype(np.uint8)
-    <class 'numpy.uint64'>
-    >>> maximum_sctype(complex)
-    <class 'numpy.complex256'> # may vary
-
-    >>> maximum_sctype(str)
-    <class 'numpy.str_'>
-
-    >>> maximum_sctype('i2')
-    <class 'numpy.int64'>
-    >>> maximum_sctype('f4')
-    <class 'numpy.float128'> # may vary
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`maximum_sctype` is deprecated. Use an explicit dtype like int64 "
-        "or float64 instead. (deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    g = obj2sctype(t)
-    if g is None:
-        return t
-    t = g
-    base = _kind_name(dtype(t))
-    if base in sctypes:
-        return sctypes[base][-1]
-    else:
-        return t
 
 
 @set_module('numpy')
@@ -213,7 +156,7 @@ def issctype(rep):
 
     Strings are also a scalar type:
 
-    >>> issctype(np.dtype('str'))
+    >>> issctype(np.dtype(np.str_))
     True
 
     """
@@ -591,7 +534,7 @@ def _scalar_type_key(typ):
 
 
 ScalarType = [int, float, complex, bool, bytes, str, memoryview]
-ScalarType += sorted(set(sctypeDict.values()), key=_scalar_type_key)
+ScalarType += sorted(dict.fromkeys(sctypeDict.values()), key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
 

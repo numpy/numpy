@@ -1,9 +1,9 @@
-from operator import mul
 from functools import reduce
+from operator import mul
 
 import numpy as np
-from numpy.random import randint
 from numpy.lib import Arrayterator
+from numpy.random import randint
 from numpy.testing import assert_
 
 
@@ -14,8 +14,7 @@ def test():
     ndims = randint(5) + 1
     shape = tuple(randint(10) + 1 for dim in range(ndims))
     els = reduce(mul, shape)
-    a = np.arange(els)
-    a.shape = shape
+    a = np.arange(els).reshape(shape)
 
     buf_size = randint(2 * els)
     b = Arrayterator(a, buf_size)

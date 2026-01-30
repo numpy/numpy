@@ -4,8 +4,8 @@ Copied from fftpack.helper by Pearu Peterson, October 2005
 
 """
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 from numpy import fft, pi
+from numpy.testing import assert_array_almost_equal
 
 
 class TestFFTShift:
@@ -85,7 +85,7 @@ class TestFFTShift:
 
     def test_equal_to_original(self):
         """ Test the new (>=v1.15) and old implementations are equal (see #10073) """
-        from numpy._core import asarray, concatenate, arange, take
+        from numpy._core import arange, asarray, concatenate, take
 
         def original_fftshift(x, axes=None):
             """ How fftshift was implemented in v1.14"""

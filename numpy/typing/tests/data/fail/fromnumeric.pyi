@@ -7,6 +7,7 @@ A = np.array(True, ndmin=2, dtype=bool)
 A.setflags(write=False)
 AR_U: npt.NDArray[np.str_]
 AR_M: npt.NDArray[np.datetime64]
+AR_f4: npt.NDArray[np.float32]
 
 a = np.bool(True)
 
@@ -31,18 +32,19 @@ np.swapaxes(A, 1, [0])  # type: ignore[call-overload]
 np.transpose(A, axes=1.0)  # type: ignore[call-overload]
 
 np.partition(a, None)  # type: ignore[call-overload]
-np.partition(a, 0, axis="bob") # type: ignore[call-overload]
+np.partition(a, 0, axis="bob")  # type: ignore[call-overload]
 np.partition(A, 0, kind="bob")  # type: ignore[call-overload]
 np.partition(A, 0, order=range(5))  # type: ignore[arg-type]
 
-np.argpartition(a, None)  # type: ignore[arg-type]
-np.argpartition(a, 0, axis="bob")  # type: ignore[arg-type]
-np.argpartition(A, 0, kind="bob") # type: ignore[arg-type]
+np.argpartition(a, None)  # type: ignore[call-overload]
+np.argpartition(a, 0, axis="bob")  # type: ignore[call-overload]
+np.argpartition(A, 0, kind="bob")  # type: ignore[call-overload]
 np.argpartition(A, 0, order=range(5))  # type: ignore[arg-type]
+np.argpartition(AR_f4, 0, order="a")  # type: ignore[arg-type]
 
 np.sort(A, axis="bob")  # type: ignore[call-overload]
 np.sort(A, kind="bob")  # type: ignore[call-overload]
-np.sort(A, order=range(5)) # type: ignore[arg-type]
+np.sort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argsort(A, axis="bob")  # type: ignore[arg-type]
 np.argsort(A, kind="bob")  # type: ignore[arg-type]
@@ -50,9 +52,11 @@ np.argsort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argmax(A, axis="bob")  # type: ignore[call-overload]
 np.argmax(A, kind="bob")  # type: ignore[call-overload]
+np.argmax(A, out=AR_f4)  # type: ignore[type-var]
 
 np.argmin(A, axis="bob")  # type: ignore[call-overload]
 np.argmin(A, kind="bob")  # type: ignore[call-overload]
+np.argmin(A, out=AR_f4)  # type: ignore[type-var]
 
 np.searchsorted(A[0], 0, side="bob")  # type: ignore[call-overload]
 np.searchsorted(A[0], 0, sorter=1.0)  # type: ignore[call-overload]
@@ -134,12 +138,12 @@ np.mean(AR_M)  # type: ignore[arg-type]
 
 np.std(a, axis=1.0)  # type: ignore[call-overload]
 np.std(a, out=False)  # type: ignore[call-overload]
-np.std(a, ddof='test')  # type: ignore[call-overload]
+np.std(a, ddof="test")  # type: ignore[call-overload]
 np.std(a, keepdims=1.0)  # type: ignore[call-overload]
 np.std(AR_U)  # type: ignore[arg-type]
 
 np.var(a, axis=1.0)  # type: ignore[call-overload]
 np.var(a, out=False)  # type: ignore[call-overload]
-np.var(a, ddof='test')  # type: ignore[call-overload]
+np.var(a, ddof="test")  # type: ignore[call-overload]
 np.var(a, keepdims=1.0)  # type: ignore[call-overload]
 np.var(AR_U)  # type: ignore[arg-type]

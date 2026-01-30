@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-import os
 import argparse
+import os
 
 import genapi
-from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
-
 import numpy_api
+from genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
 
 # use annotated api when running under cpychecker
 h_template = r"""
@@ -159,6 +157,12 @@ _import_array(void)
   return 0;
 }
 
+#if (SWIG_VERSION < 0x040400)
+#define _RETURN_VALUE NULL
+#else
+#define _RETURN_VALUE 0
+#endif
+
 #define import_array() { \
   if (_import_array() < 0) { \
     PyErr_Print(); \
@@ -166,7 +170,7 @@ _import_array(void)
         PyExc_ImportError, \
         "numpy._core.multiarray failed to import" \
     ); \
-    return NULL; \
+    return _RETURN_VALUE; \
   } \
 }
 
@@ -192,7 +196,7 @@ _import_array(void)
 #endif
 
 #endif
-"""
+"""  # noqa: E501
 
 
 c_template = r"""

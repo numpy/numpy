@@ -46,41 +46,91 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
+import copy
 import os
 import sys
 import time
-import copy
 from pathlib import Path
 
 # __version__.version is now the same as the NumPy version
-from . import __version__
-
-from .auxfuncs import (
-    applyrules, debugcapi, dictappend, errmess, gentitle, getargs2,
-    hascallstatement, hasexternals, hasinitvalue, hasnote,
-    hasresultnote, isarray, isarrayofstrings, ischaracter,
-    ischaracterarray, ischaracter_or_characterarray, iscomplex,
-    iscomplexarray, iscomplexfunction, iscomplexfunction_warn,
-    isdummyroutine, isexternal, isfunction, isfunction_wrap, isint1,
-    isint1array, isintent_aux, isintent_c, isintent_callback,
-    isintent_copy, isintent_hide, isintent_inout, isintent_nothide,
-    isintent_out, isintent_overwrite, islogical, islong_complex,
-    islong_double, islong_doublefunction, islong_long,
-    islong_longfunction, ismoduleroutine, isoptional, isrequired,
-    isscalar, issigned_long_longarray, isstring, isstringarray,
-    isstringfunction, issubroutine, isattr_value,
-    issubroutine_wrap, isthreadsafe, isunsigned, isunsigned_char,
-    isunsigned_chararray, isunsigned_long_long,
-    isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
-    l_and, l_not, l_or, outmess, replace, stripcomma, requiresf90wrapper
+from . import (
+    __version__,
+    capi_maps,
+    cfuncs,
+    common_rules,
+    f90mod_rules,
+    func2subr,
+    use_rules,
 )
-
-from . import capi_maps
-from . import cfuncs
-from . import common_rules
-from . import use_rules
-from . import f90mod_rules
-from . import func2subr
+from .auxfuncs import (
+    applyrules,
+    debugcapi,
+    dictappend,
+    errmess,
+    gentitle,
+    getargs2,
+    hascallstatement,
+    hasexternals,
+    hasinitvalue,
+    hasnote,
+    hasresultnote,
+    isarray,
+    isarrayofstrings,
+    isattr_value,
+    ischaracter,
+    ischaracter_or_characterarray,
+    ischaracterarray,
+    iscomplex,
+    iscomplexarray,
+    iscomplexfunction,
+    iscomplexfunction_warn,
+    isdummyroutine,
+    isexternal,
+    isfunction,
+    isfunction_wrap,
+    isint1,
+    isint1array,
+    isintent_aux,
+    isintent_c,
+    isintent_callback,
+    isintent_copy,
+    isintent_hide,
+    isintent_inout,
+    isintent_nothide,
+    isintent_out,
+    isintent_overwrite,
+    islogical,
+    islong_complex,
+    islong_double,
+    islong_doublefunction,
+    islong_long,
+    islong_longfunction,
+    ismoduleroutine,
+    isoptional,
+    isrequired,
+    isscalar,
+    issigned_long_longarray,
+    isstring,
+    isstringarray,
+    isstringfunction,
+    issubroutine,
+    issubroutine_wrap,
+    isthreadsafe,
+    isunsigned,
+    isunsigned_char,
+    isunsigned_chararray,
+    isunsigned_long_long,
+    isunsigned_long_longarray,
+    isunsigned_short,
+    isunsigned_shortarray,
+    l_and,
+    l_not,
+    l_or,
+    outmess,
+    replace,
+    requiresf90wrapper,
+    stripcomma,
+)
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -236,7 +286,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initcommonhooks#
 #interface_usercode#
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal whether this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m , #gil_used#);
 #endif
@@ -965,8 +1015,8 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [{hasinitvalue: '    if (#varname#_capi==Py_None) {#varname#.r = #init.r#, #varname#.i = #init.i#;} else'},
                       {l_and(isoptional, l_not(hasinitvalue))
                              : '    if (#varname#_capi != Py_None)'},
-                      '        f2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
-                      '\n    if (f2py_success) {'],
+                      ('        f2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
+                       '\n    if (f2py_success) {')],
         'cleanupfrompyobj': '    }  /*if (f2py_success) of #varname# frompyobj*/',
         'need': ['#ctype#_from_pyobj'],
         '_check': l_and(iscomplex, isintent_nothide),
@@ -1007,13 +1057,13 @@ if (#varname#_cb.capi==Py_None) {
                  {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
         '_check': isstring
     }, {  # Common
-        'frompyobj': [
+        'frompyobj': [(
             """\
     slen(#varname#) = #elsize#;
     f2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,"""
 """#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth#"""
 """`#varname#\' of #pyname# to C #ctype#\");
-    if (f2py_success) {""",
+    if (f2py_success) {"""),
             # The trailing null value for Fortran is blank.
             {l_not(isintent_c):
              "        STRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
@@ -1104,7 +1154,7 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [
             '    #setdims#;',
             '    capi_#varname#_intent |= #intent#;',
-            ('    const char * capi_errmess = "#modulename#.#pyname#:'
+            ('    const char capi_errmess[] = "#modulename#.#pyname#:'
              ' failed to create array from the #nth# `#varname#`";'),
             {isintent_hide:
              '    capi_#varname#_as_array = ndarray_from_pyobj('
@@ -1134,9 +1184,10 @@ if (#varname#_cb.capi==Py_None) {
                 """\
         int *_i,capi_i=0;
         CFUNCSMESS(\"#name#: Initializing #varname#=#init#\\n\");
-        if (initforcomb(PyArray_DIMS(capi_#varname#_as_array),
+        struct ForcombCache cache;
+        if (initforcomb(&cache, PyArray_DIMS(capi_#varname#_as_array),
                         PyArray_NDIM(capi_#varname#_as_array),1)) {
-            while ((_i = nextforcomb()))
+            while ((_i = nextforcomb(&cache)))
                 #varname#[capi_i++] = #init#; /* fortran way */
         } else {
             PyObject *exc, *val, *tb;
@@ -1150,8 +1201,8 @@ if (#varname#_cb.capi==Py_None) {
     if (f2py_success) {"""]},
                       ],
         'cleanupfrompyobj': [  # note that this list will be reversed
-            '    }  '
-            '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */',
+            ('    }  '
+             '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */'),
             {l_not(l_or(isintent_out, isintent_hide)): """\
     if((PyObject *)capi_#varname#_as_array!=#varname#_capi) {
         Py_XDECREF(capi_#varname#_as_array); }"""},

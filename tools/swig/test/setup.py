@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-# System imports
 from distutils.core import Extension, setup
 
-# Third-party modules - we depend on numpy for everything
 import numpy
 
 # Obtain the numpy include directory.

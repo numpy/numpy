@@ -30,7 +30,7 @@ AR_LIKE_M: list[np.datetime64]
 # NOTE: mypys `NoReturn` errors are, unfortunately, not that great
 _1 = AR_b - AR_LIKE_b  # type: ignore[var-annotated]
 _2 = AR_LIKE_b - AR_b  # type: ignore[var-annotated]
-AR_i - bytes()  # type: ignore[operator]
+AR_i - b""  # type: ignore[operator]
 
 AR_f - AR_LIKE_m  # type: ignore[operator]
 AR_f - AR_LIKE_M  # type: ignore[operator]
@@ -72,6 +72,11 @@ AR_i // AR_LIKE_m  # type: ignore[operator]
 AR_f // AR_LIKE_m  # type: ignore[operator]
 AR_c // AR_LIKE_m  # type: ignore[operator]
 
+# regression tests for https://github.com/numpy/numpy/issues/28957
+AR_c // 2  # type: ignore[operator]
+AR_c // AR_i  # type: ignore[operator]
+AR_c // AR_c  # type: ignore[operator]
+
 # Array multiplication
 
 AR_b *= AR_LIKE_u  # type: ignore[arg-type]
@@ -80,7 +85,6 @@ AR_b *= AR_LIKE_f  # type: ignore[arg-type]
 AR_b *= AR_LIKE_c  # type: ignore[arg-type]
 AR_b *= AR_LIKE_m  # type: ignore[arg-type]
 
-AR_u *= AR_LIKE_i  # type: ignore[arg-type]
 AR_u *= AR_LIKE_f  # type: ignore[arg-type]
 AR_u *= AR_LIKE_c  # type: ignore[arg-type]
 AR_u *= AR_LIKE_m  # type: ignore[arg-type]
@@ -100,7 +104,6 @@ AR_b **= AR_LIKE_i  # type: ignore[misc]
 AR_b **= AR_LIKE_f  # type: ignore[misc]
 AR_b **= AR_LIKE_c  # type: ignore[misc]
 
-AR_u **= AR_LIKE_i  # type: ignore[arg-type]
 AR_u **= AR_LIKE_f  # type: ignore[arg-type]
 AR_u **= AR_LIKE_c  # type: ignore[arg-type]
 
@@ -111,7 +114,7 @@ AR_f **= AR_LIKE_c  # type: ignore[arg-type]
 
 # Scalars
 
-b_ - b_  # type: ignore[call-overload]
+b_ - b_  # type: ignore[operator]
 
 dt + dt  # type: ignore[operator]
 td - dt  # type: ignore[operator]

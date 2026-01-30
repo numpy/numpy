@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-# System imports
 import sys
 import unittest
 
-# Import NumPy
 import numpy as np
+
 major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
@@ -379,9 +378,9 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(Array1TestCase))
-    suite.addTest(unittest.makeSuite(Array2TestCase))
-    suite.addTest(unittest.makeSuite(ArrayZTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(Array1TestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(Array2TestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(ArrayZTestCase))
 
     # Execute the test suite
     print("Testing Classes of Module Array")

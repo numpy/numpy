@@ -1,8 +1,9 @@
 import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 def new_and_old_dlpack():
@@ -183,7 +184,7 @@ class TestDLPack:
         np.from_dlpack(x, device="cpu")
         np.from_dlpack(x, device=None)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(BufferError):
             x.__dlpack__(dl_device=(10, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")

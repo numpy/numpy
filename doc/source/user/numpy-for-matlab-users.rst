@@ -674,11 +674,10 @@ are only a handful of key differences between the two.
 
 -  Operators ``*`` and ``@``, functions ``dot()``, and ``multiply()``:
 
-   -  For ``array``, **``*`` means element-wise multiplication**, while
-      **``@`` means matrix multiplication**; they have associated functions
-      ``multiply()`` and ``dot()``.  (Before Python 3.5, ``@`` did not exist
-      and one had to use ``dot()`` for matrix multiplication).
-   -  For ``matrix``, **``*`` means matrix multiplication**, and for
+   -  For ``array``, ``*`` **means element-wise multiplication**, while
+      ``@`` **means matrix multiplication**; they have associated functions
+      ``multiply()`` and ``dot()``.
+   -  For ``matrix``, ``*`` **means matrix multiplication**, and for
       element-wise multiplication one has to use the ``multiply()`` function.
 
 -  Handling of vectors (one-dimensional arrays)

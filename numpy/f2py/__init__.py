@@ -9,14 +9,14 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 __all__ = ['run_main', 'get_include']
 
-import sys
-import subprocess
 import os
+import subprocess
+import sys
 import warnings
 
 from numpy.exceptions import VisibleDeprecationWarning
-from . import f2py2e
-from . import diagnose
+
+from . import diagnose, f2py2e
 
 run_main = f2py2e.run_main
 main = f2py2e.main
@@ -25,12 +25,6 @@ main = f2py2e.main
 def get_include():
     """
     Return the directory that contains the ``fortranobject.c`` and ``.h`` files.
-
-    .. note::
-
-        This function is not needed when building an extension with
-        `numpy.distutils` directly from ``.f`` and/or ``.pyf`` files
-        in one go.
 
     Python extension modules built with f2py-generated code need to use
     ``fortranobject.c`` as a source file, and include the ``fortranobject.h``

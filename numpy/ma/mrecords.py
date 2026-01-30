@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 import numpy.ma as ma
 
-
 _byteorderconv = np._core.records._byteorderconv
 
 
@@ -117,7 +116,8 @@ class MaskedRecords(ma.MaskedArray):
                 elif nm == nd:
                     mask = np.reshape(mask, self.shape)
                 else:
-                    msg = f"Mask and data not compatible: data size is {nd}, mask size is {nm}."
+                    msg = (f"Mask and data not compatible: data size is {nd},"
+                           " mask size is {nm}.")
                     raise ma.MAError(msg)
             if not keep_mask:
                 self.__setmask__(mask)
@@ -149,7 +149,6 @@ class MaskedRecords(ma.MaskedArray):
         self._update_from(obj)
         if _dict['_baseclass'] == np.ndarray:
             _dict['_baseclass'] = np.recarray
-        return
 
     @property
     def _data(self):
@@ -386,7 +385,7 @@ class MaskedRecords(ma.MaskedArray):
         if (getattr(output, '_mask', ma.nomask) is not ma.nomask):
             mdtype = ma.make_mask_descr(output.dtype)
             output._mask = self._mask.view(mdtype, np.ndarray)
-            output._mask.shape = output.shape
+            output._mask = output._mask.reshape(output.shape)
         return output
 
     def harden_mask(self):
@@ -658,8 +657,7 @@ def openfile(fname):
 
 
 def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
-                 varnames=None, vartypes=None,
-                 *, delimitor=np._NoValue):  # backwards compatibility
+                 varnames=None, vartypes=None):
     """
     Creates a mrecarray from data stored in the file `filename`.
 
@@ -683,16 +681,6 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
 
 
     Ultra simple: the varnames are in the header, one line"""
-    if delimitor is not np._NoValue:
-        if delimiter is not None:
-            raise TypeError("fromtextfile() got multiple values for argument "
-                            "'delimiter'")
-        # NumPy 1.22.0, 2021-09-23
-        warnings.warn("The 'delimitor' keyword argument of "
-                      "numpy.ma.mrecords.fromtextfile() is deprecated "
-                      "since NumPy 1.22.0, use 'delimiter' instead.",
-                      DeprecationWarning, stacklevel=2)
-        delimiter = delimitor
 
     # Try to open the file.
     ftext = openfile(fname)

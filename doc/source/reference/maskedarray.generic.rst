@@ -20,8 +20,8 @@ What is a masked array?
 -----------------------
 
 In many circumstances, datasets can be incomplete or tainted by the presence
-of invalid data. For example, a sensor may have failed to record a data, or
-recorded an invalid value. The :mod:`numpy.ma` module provides a convenient
+of invalid data. For example, a sensor may have failed to record a data point,
+or recorded an invalid value. The :mod:`numpy.ma` module provides a convenient
 way to address this issue, by introducing masked arrays.
 
 A masked array is the combination of a standard :class:`numpy.ndarray` and a
@@ -66,7 +66,7 @@ attributes and methods are described in more details in the
 
 .. try_examples::
 
-The :mod:`numpy.ma` module can be used as an addition to :mod:`numpy`:
+   The :mod:`numpy.ma` module can be used as an addition to :mod:`numpy`:
 
    >>> import numpy as np
    >>> import numpy.ma as ma
@@ -521,7 +521,7 @@ Numerical operations
 --------------------
 
 Numerical operations can be easily performed without worrying about missing
-values, dividing by zero, square roots of negative numbers, etc.::
+values, dividing by zero, square roots of negative numbers, etc.:
 
 .. try_examples::
 

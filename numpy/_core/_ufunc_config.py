@@ -7,7 +7,8 @@ This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
 import functools
 
 from numpy._utils import set_module
-from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
+
+from .umath import _extobj_contextvar, _get_extobj_dict, _make_extobj
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
@@ -56,6 +57,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     seterrcall : Set a callback function for the 'call' mode.
     geterr, geterrcall, errstate
 
+
     Notes
     -----
     The floating-point exceptions are defined in the IEEE 754 standard [1]_:
@@ -66,6 +68,8 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
       was lost.
     - Invalid operation: result is not an expressible number, typically
       indicates that a NaN was produced.
+
+    **Concurrency note:** see  :ref:`fp_error_handling`
 
     .. [1] https://en.wikipedia.org/wiki/IEEE_754
 
@@ -126,6 +130,8 @@ def geterr():
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
     Examples
     --------
     >>> import numpy as np
@@ -171,6 +177,10 @@ def setbufsize(size):
     bufsize : int
         Previous size of ufunc buffer in bytes.
 
+    Notes
+    -----
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
     Examples
     --------
     When exiting a `numpy.errstate` context manager the bufsize is restored:
@@ -186,6 +196,8 @@ def setbufsize(size):
     8192
 
     """
+    if size < 0:
+        raise ValueError("buffer size must be non-negative")
     old = _get_extobj_dict()["bufsize"]
     extobj = _make_extobj(bufsize=size)
     _extobj_contextvar.set(extobj)
@@ -201,6 +213,12 @@ def getbufsize():
     -------
     getbufsize : int
         Size of ufunc buffer in bytes.
+
+    Notes
+    -----
+
+    **Concurrency note:** see :doc:`/reference/routines.err`
+
 
     Examples
     --------
@@ -252,6 +270,11 @@ def seterrcall(func):
     See Also
     --------
     seterr, geterr, geterrcall
+
+    Notes
+    -----
+
+    **Concurrency note:** see :doc:`/reference/routines.err`
 
     Examples
     --------
@@ -328,6 +351,8 @@ def geterrcall():
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
 
+    **Concurrency note:** see :ref:`fp_error_handling`
+
     Examples
     --------
     >>> import numpy as np
@@ -395,6 +420,8 @@ class errstate:
     -----
     For complete documentation of the types of floating-point exceptions and
     treatment options, see `seterr`.
+
+    **Concurrency note:** see :ref:`fp_error_handling`
 
     Examples
     --------

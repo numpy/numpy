@@ -1,5 +1,0 @@
-New function `numpy.strings.slice`
-----------------------------------
-The new function `numpy.strings.slice` was added, which implements fast
-native slicing of string arrays. It supports the full slicing API including
-negative slice offsets and steps.

@@ -1,3 +1,0 @@
-* The ``__repr__`` for user-defined dtypes now prefers the ``__name__`` of the
-  custom dtype over a more generic name constructed from its ``kind`` and
-  ``itemsize``.

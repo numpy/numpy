@@ -1,8 +1,9 @@
 import pytest
+
 import numpy as np
+from numpy.f2py.crackfortran import crackfortran
 
 from . import util
-from numpy.f2py.crackfortran import crackfortran
 
 
 class TestData(util.F2PyTest):

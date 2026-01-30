@@ -10,22 +10,25 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import sys
+import argparse
 import os
 import pprint
 import re
-import argparse
+import sys
 
-from . import crackfortran
-from . import rules
-from . import cb_rules
-from . import auxfuncs
-from . import cfuncs
-from . import f90mod_rules
-from . import __version__
-from . import capi_maps
-from .cfuncs import errmess
 from numpy.f2py._backends import f2py_build_generator
+
+from . import (
+    __version__,
+    auxfuncs,
+    capi_maps,
+    cb_rules,
+    cfuncs,
+    crackfortran,
+    f90mod_rules,
+    rules,
+)
+from .cfuncs import errmess
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -33,7 +36,6 @@ numpy_version = __version__.version
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
-MESON_ONLY_VER = (sys.version_info >= (3, 12))
 
 __usage__ =\
 f"""Usage:
@@ -113,10 +115,6 @@ Options:
 
   --include-paths <path1>:<path2>:...   Search include files from the given
                    directories.
-
-  --help-link [..] List system resources found by system_info.py. See also
-                   --link-<resource> switch below. [..] is optional list
-                   of resources names. E.g. try 'f2py --help-link lapack_opt'.
 
   --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
                    file. Default: .f2py_f2cmap in current directory.
@@ -375,6 +373,8 @@ def callcrackfortran(files, options):
             mod['gil_used'] = 'Py_MOD_GIL_USED'
         else:
             mod['gil_used'] = 'Py_MOD_GIL_NOT_USED'
+    # gh-26718 Reset global
+    crackfortran.f77modulename = ''
     return postlist
 
 
@@ -539,7 +539,7 @@ class CombineIncludePaths(argparse.Action):
         include_paths_set = set(getattr(namespace, 'include_paths', []) or [])
         if option_string == "--include_paths":
             outmess("Use --include-paths or -I instead of --include_paths which will be removed")
-        if option_string == "--include-paths" or option_string == "--include_paths":
+        if option_string in {"--include-paths", "--include_paths"}:
             include_paths_set.update(values.split(':'))
         else:
             include_paths_set.add(values)
@@ -578,7 +578,7 @@ def preparse_sysargv():
     sys.argv = [sys.argv[0]] + remaining_argv
 
     backend_key = args.backend
-    if MESON_ONLY_VER and backend_key == 'distutils':
+    if backend_key == 'distutils':
         outmess("Cannot use distutils backend with Python>=3.12,"
                 " using meson backend instead.\n")
         backend_key = "meson"
@@ -652,35 +652,16 @@ def run_compile():
     reg_distutils_flags = re.compile(r'--((f(77|90)exec|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if reg_f77_f90_flags.match(_m)]
     distutils_flags = [_m for _m in sys.argv[1:] if reg_distutils_flags.match(_m)]
-    if not (MESON_ONLY_VER or backend_key == 'meson'):
-        fc_flags.extend(distutils_flags)
     sys.argv = [_m for _m in sys.argv if _m not in (fc_flags + distutils_flags)]
 
     del_list = []
     for s in flib_flags:
         v = '--fcompiler='
         if s[:len(v)] == v:
-            if MESON_ONLY_VER or backend_key == 'meson':
-                outmess(
-                    "--fcompiler cannot be used with meson,"
-                    "set compiler with the FC environment variable\n"
-                    )
-            else:
-                from numpy.distutils import fcompiler
-                fcompiler.load_all_fcompiler_classes()
-                allowed_keys = list(fcompiler.fcompiler_class.keys())
-                nv = ov = s[len(v):].lower()
-                if ov not in allowed_keys:
-                    vmap = {}  # XXX
-                    try:
-                        nv = vmap[ov]
-                    except KeyError:
-                        if ov not in vmap.values():
-                            print(f'Unknown vendor: "{s[len(v):]}"')
-                    nv = ov
-                i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
-                continue
+            outmess(
+                "--fcompiler cannot be used with meson,"
+                "set compiler with the FC environment variable\n"
+                )
     for s in del_list:
         i = flib_flags.index(s)
         del flib_flags[i]
@@ -768,15 +749,6 @@ def validate_modulename(pyf_files, modulename='untitled'):
     return modulename
 
 def main():
-    if '--help-link' in sys.argv[1:]:
-        sys.argv.remove('--help-link')
-        if MESON_ONLY_VER:
-            outmess("Use --dep for meson builds\n")
-        else:
-            from numpy.distutils.system_info import show_all
-            show_all()
-        return
-
     if '-c' in sys.argv[1:]:
         run_compile()
     else:

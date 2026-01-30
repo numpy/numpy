@@ -1,7 +1,8 @@
-import numpy as np
 import random
 from functools import lru_cache
 from pathlib import Path
+
+import numpy as np
 
 # Various pre-crafted datasets/variables for testing
 # !!! Must not be changed -- only appended !!!

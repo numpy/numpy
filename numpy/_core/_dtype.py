@@ -5,7 +5,6 @@ String handling is much easier to do correctly in python.
 """
 import numpy as np
 
-
 _kind_to_stem = {
     'u': 'uint',
     'i': 'int',
@@ -125,7 +124,7 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
-    elif dtype.type == str:
+    elif dtype.type is str:
         return "'T'"
 
     elif not type(dtype)._legacy:

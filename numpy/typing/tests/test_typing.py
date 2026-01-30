@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib.util
 import os
 import re
@@ -9,7 +7,6 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import pytest
-
 
 # Only trigger a full `mypy` run if this environment variable is set
 # Note that these tests tend to take over a minute even on a macOS M1 CPU,
@@ -34,6 +31,7 @@ else:
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
     # We need this as annotation, but it's located in a private namespace.
     # As a compromise, do *not* import it during runtime
     from _pytest.mark.structures import ParameterSet
@@ -118,7 +116,7 @@ def run_mypy() -> None:
                 filename = None
 
 
-def get_test_cases(*directories: str) -> Iterator[ParameterSet]:
+def get_test_cases(*directories: str) -> "Iterator[ParameterSet]":
     for directory in directories:
         for root, _, files in os.walk(directory):
             for fname in files:
@@ -136,13 +134,6 @@ _FAIL_SEP = "\n" + "_" * 79 + "\n\n"
 _FAIL_MSG_REVEAL = """{}:{} - reveal mismatch:
 
 {}"""
-
-_FAIL_MSG_MISC = """{}:{} - error mismatch:
-
-Expression: {}
-Expected error: {}
-Observed error: {}
-"""
 
 
 @pytest.mark.slow
@@ -196,51 +187,9 @@ def test_reveal(path: str) -> None:
         pytest.fail(reasons, pytrace=False)
 
 
-LINENO_MAPPING = {
-    6: "float96",
-    7: "float128",
-    8: "complex192",
-    9: "complex256",
-}
-
-
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
-def test_extended_precision() -> None:
-    from numpy.typing.mypy_plugin import _EXTENDED_PRECISION_LIST
-
-    path = os.path.join(MISC_DIR, "extended_precision.pyi")
-    output_mypy = OUTPUT_MYPY
-    assert path in output_mypy
-
-    expected_msg = 'Expression is of type "Any"'
-
-    with open(path) as f:
-        expression_list = f.readlines()
-
-    failures = []
-    for _msg in output_mypy[path]:
-        lineno, error_msg = _strip_filename(_msg)
-        expr = expression_list[lineno - 1].rstrip("\n")
-
-        if LINENO_MAPPING[lineno] in _EXTENDED_PRECISION_LIST:
-            raise AssertionError(_FAIL_MSG_REVEAL.format(lineno, error_msg))
-        if "error" in error_msg or expected_msg not in error_msg:
-            continue
-
-        if "\n" in error_msg:
-            error_msg = "\n" + textwrap.indent(error_msg, _FAIL_INDENT)
-        relpath = os.path.relpath(path)
-        failure = _FAIL_MSG_MISC.format(relpath, lineno, expr, expected_msg, error_msg)
-        failures.append(failure)
-
-    if failures:
-        reasons = _FAIL_SEP.join(failures)
-        pytest.fail(reasons, pytrace=False)
-
-
-@pytest.mark.slow
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
+@pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")
 @pytest.mark.parametrize("path", get_test_cases(PASS_DIR))
 def test_code_runs(path: str) -> None:
     """Validate that the code in `path` properly during runtime."""

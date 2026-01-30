@@ -268,7 +268,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             int ret;
 
             name = PyTuple_GET_ITEM(ldescr->names, k);
-            item = PyDict_GetItem(ldescr->fields, name);
+            item = PyDict_GetItem(ldescr->fields, name); // noqa: borrowed-ref OK
 
             child = (PyArray_Descr*)PyTuple_GetItem(item, 0);
             offset_obj = PyTuple_GetItem(item, 1);
@@ -793,8 +793,10 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
 
     /* Fill in information (and add it to _buffer_info if necessary) */
+    Py_BEGIN_CRITICAL_SECTION(self);
     info = _buffer_get_info(
             &((PyArrayObject_fields *)self)->_buffer_info, obj, flags);
+    Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         goto fail;
     }
@@ -880,7 +882,10 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      * to find the correct format.  This format must also be stored, since
      * at least in theory it can change (in practice it should never change).
      */
-    _buffer_info_t *info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    _buffer_info_t *info = NULL;
+    Py_BEGIN_CRITICAL_SECTION(scalar);
+    info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         Py_DECREF(self);
         return -1;

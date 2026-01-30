@@ -1,22 +1,25 @@
 import functools
-import warnings
 
+import numpy as np
 import numpy._core.numeric as _nx
-from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
+from numpy._core import atleast_3d, overrides
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
-from numpy._core._multiarray_umath import _array_converter
-from numpy._core import overrides
-from numpy._core import vstack, atleast_3d
-from numpy._core.numeric import normalize_axis_tuple
-from numpy._core.overrides import set_module
+from numpy._core.numeric import (
+    array,
+    asanyarray,
+    asarray,
+    normalize_axis_tuple,
+    zeros,
+    zeros_like,
+)
 from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
 
-
 __all__ = [
-    'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
+    'column_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
     'apply_along_axis', 'kron', 'tile', 'take_along_axis',
     'put_along_axis'
@@ -167,15 +170,13 @@ def take_along_axis(arr, indices, axis=-1):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = arr.flat
-        arr_shape = (len(arr),)  # flatiter has no .shape
+        arr = np.array(arr.flat)
         axis = 0
     else:
         axis = normalize_axis_index(axis, arr.ndim)
-        arr_shape = arr.shape
 
     # use the fancy index
-    return arr[_make_along_axis_idx(arr_shape, indices, axis)]
+    return arr[_make_along_axis_idx(arr.shape, indices, axis)]
 
 
 def _put_along_axis_dispatcher(arr, indices, values, axis):
@@ -259,15 +260,13 @@ def put_along_axis(arr, indices, values, axis):
         if indices.ndim != 1:
             raise ValueError(
                 'when axis=None, `indices` must have a single dimension.')
-        arr = arr.flat
+        arr = np.array(arr.flat)
         axis = 0
-        arr_shape = (len(arr),)  # flatiter has no .shape
     else:
         axis = normalize_axis_index(axis, arr.ndim)
-        arr_shape = arr.shape
 
     # use the fancy index
-    arr[_make_along_axis_idx(arr_shape, indices, axis)] = values
+    arr[_make_along_axis_idx(arr.shape, indices, axis)] = values
 
 
 def _apply_along_axis_dispatcher(func1d, axis, arr, *args, **kwargs):
@@ -589,7 +588,7 @@ def expand_dims(a, axis):
     else:
         a = asanyarray(a)
 
-    if type(axis) not in (tuple, list):
+    if not isinstance(axis, (tuple, list)):
         axis = (axis,)
 
     out_ndim = len(axis) + a.ndim
@@ -599,22 +598,6 @@ def expand_dims(a, axis):
     shape = [1 if ax in axis else next(shape_it) for ax in range(out_ndim)]
 
     return a.reshape(shape)
-
-
-# NOTE: Remove once deprecation period passes
-@set_module("numpy")
-def row_stack(tup, *, dtype=None, casting="same_kind"):
-    # Deprecated in NumPy 2.0, 2023-08-18
-    warnings.warn(
-        "`row_stack` alias is deprecated. "
-        "Use `np.vstack` directly.",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return vstack(tup, dtype=dtype, casting=casting)
-
-
-row_stack.__doc__ = vstack.__doc__
 
 
 def _column_stack_dispatcher(tup):
@@ -649,11 +632,11 @@ def column_stack(tup):
     --------
     >>> import numpy as np
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.column_stack((a,b))
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
     arrays = []
@@ -709,33 +692,24 @@ def dstack(tup):
     --------
     >>> import numpy as np
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.dstack((a,b))
-    array([[[1, 2],
-            [2, 3],
-            [3, 4]]])
+    array([[[1, 4],
+            [2, 5],
+            [3, 6]]])
 
     >>> a = np.array([[1],[2],[3]])
-    >>> b = np.array([[2],[3],[4]])
+    >>> b = np.array([[4],[5],[6]])
     >>> np.dstack((a,b))
-    array([[[1, 2]],
-           [[2, 3]],
-           [[3, 4]]])
+    array([[[1, 4]],
+           [[2, 5]],
+           [[3, 6]]])
 
     """
     arrs = atleast_3d(*tup)
     if not isinstance(arrs, tuple):
         arrs = (arrs,)
     return _nx.concatenate(arrs, 2)
-
-
-def _replace_zero_by_x_arrays(sub_arys):
-    for i in range(len(sub_arys)):
-        if _nx.ndim(sub_arys[i]) == 0:
-            sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
-        elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]), 0)):
-            sub_arys[i] = _nx.empty(0, dtype=sub_arys[i].dtype)
-    return sub_arys
 
 
 def _array_split_dispatcher(ary, indices_or_sections, axis=None):
@@ -1057,30 +1031,6 @@ def dsplit(ary, indices_or_sections):
     return split(ary, indices_or_sections, 2)
 
 
-def get_array_wrap(*args):
-    """Find the wrapper for the array with the highest priority.
-
-    In case of ties, leftmost wins. If no wrapper is found, return None.
-
-    .. deprecated:: 2.0
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`get_array_wrap` is deprecated. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    wrappers = sorted((getattr(x, '__array_priority__', 0), -i,
-                 x.__array_wrap__) for i, x in enumerate(args)
-                                   if hasattr(x, '__array_wrap__'))
-    if wrappers:
-        return wrappers[-1][-1]
-    return None
-
-
 def _kron_dispatcher(a, b):
     return (a, b)
 
@@ -1109,7 +1059,7 @@ def kron(a, b):
     -----
     The function assumes that the number of dimensions of `a` and `b`
     are the same, if necessary prepending the smallest with ones.
-    If ``a.shape = (r0,r1,..,rN)`` and ``b.shape = (s0,s1,...,sN)``,
+    If ``a.shape = (r0,r1,...,rN)`` and ``b.shape = (s0,s1,...,sN)``,
     the Kronecker product has shape ``(r0*s0, r1*s1, ..., rN*SN)``.
     The elements are products of elements from `a` and `b`, organized
     explicitly by::

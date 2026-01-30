@@ -47,7 +47,7 @@ F2PySwapThreadLocalCallbackPtr(char *key, void *ptr)
                 "failed");
     }
 
-    value = PyDict_GetItemString(local_dict, key);
+    value = PyDict_GetItemString(local_dict, key); // noqa: borrowed-ref OK
     if (value != NULL) {
         prev = PyLong_AsVoidPtr(value);
         if (PyErr_Occurred()) {
@@ -87,7 +87,7 @@ F2PyGetThreadLocalCallbackPtr(char *key)
                 "F2PyGetThreadLocalCallbackPtr: PyThreadState_GetDict failed");
     }
 
-    value = PyDict_GetItemString(local_dict, key);
+    value = PyDict_GetItemString(local_dict, key); // noqa: borrowed-ref OK
     if (value != NULL) {
         prev = PyLong_AsVoidPtr(value);
         if (PyErr_Occurred()) {
@@ -363,7 +363,9 @@ fortran_getattr(PyFortranObject *fp, char *name)
 {
     int i, j, k, flag;
     if (fp->dict != NULL) {
-        PyObject *v = _PyDict_GetItemStringWithError(fp->dict, name);
+        // python 3.13 added PyDict_GetItemRef
+#if PY_VERSION_HEX < 0x030D0000
+        PyObject *v = _PyDict_GetItemStringWithError(fp->dict, name); // noqa: borrowed-ref OK
         if (v == NULL && PyErr_Occurred()) {
             return NULL;
         }
@@ -371,6 +373,17 @@ fortran_getattr(PyFortranObject *fp, char *name)
             Py_INCREF(v);
             return v;
         }
+#else
+        PyObject *v;
+        int result = PyDict_GetItemStringRef(fp->dict, name, &v);
+        if (result == -1) {
+            return NULL;
+        }
+        else if (result == 1) {
+            return v;
+        }
+#endif
+
     }
     for (i = 0, j = 1; i < fp->len && (j = strcmp(name, fp->defs[i].name));
          i++)
@@ -809,7 +822,7 @@ get_elsize(PyObject *obj) {
   } else if (PyUnicode_Check(obj)) {
     return PyUnicode_GET_LENGTH(obj);
   } else if (PySequence_Check(obj)) {
-    PyObject* fast = PySequence_Fast(obj, "f2py:fortranobject.c:get_elsize");
+    PyObject* fast = PySequence_Fast(obj, "f2py:fortranobject.c:get_elsize"); // noqa: borrowed-ref OK
     if (fast != NULL) {
       Py_ssize_t i, n = PySequence_Fast_GET_SIZE(fast);
       int sz, elsize = 0;

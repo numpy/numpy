@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 import numpy as np
-from numpy.ctypeslib import ndpointer, load_library, as_array
-from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
+from numpy.ctypeslib import as_array, load_library, ndpointer
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 try:
     import ctypes
@@ -124,6 +124,7 @@ class TestNdpointer:
         assert_(p.from_param(x))
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
+    @pytest.mark.thread_unsafe(reason="checks that global ndpointer cache is updating")
     def test_cache(self):
         assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
 
@@ -178,6 +179,7 @@ class TestNdpointerCFunc:
             arr.__array_interface__['data']
         )
 
+    @pytest.mark.thread_unsafe(reason="mutates global test vars")
     def test_vague_return_value(self):
         """ Test that vague ndpointer return values do not promote to arrays """
         arr = np.zeros((2, 3))
@@ -205,7 +207,7 @@ class TestAsArray:
         assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
 
     def test_pointer(self):
-        from ctypes import c_int, cast, POINTER
+        from ctypes import POINTER, c_int, cast
 
         p = cast((c_int * 10)(*range(10)), POINTER(c_int))
 
@@ -225,7 +227,7 @@ class TestAsArray:
             reason="Broken in 3.12.0rc1, see gh-24399",
     )
     def test_struct_array_pointer(self):
-        from ctypes import c_int16, Structure, pointer
+        from ctypes import Structure, c_int16, pointer
 
         class Struct(Structure):
             _fields_ = [('a', c_int16)]
@@ -252,6 +254,7 @@ class TestAsArray:
         check(as_array(pointer(c_array[0]), shape=(2,)))
         check(as_array(pointer(c_array[0][0]), shape=(2, 3)))
 
+    @pytest.mark.thread_unsafe(reason="garbage collector is global state")
     def test_reference_cycles(self):
         # related to gh-6511
         import ctypes
@@ -302,6 +305,7 @@ class TestAsCtypesType:
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_equal(ct, ctypes.c_uint16)
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_subarray(self):
         dt = np.dtype((np.int32, (2, 3)))
         ct = np.ctypeslib.as_ctypes_type(dt)
@@ -321,6 +325,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_structure_aligned(self):
         dt = np.dtype([
             ('a', np.uint16),
@@ -351,6 +356,7 @@ class TestAsCtypesType:
             ('b', ctypes.c_uint32),
         ])
 
+    @pytest.mark.thread_unsafe(reason="some sort of data race? (gh-29943)")
     def test_padded_union(self):
         dt = np.dtype({
             'names': ['a', 'b'],
@@ -375,3 +381,24 @@ class TestAsCtypesType:
             'formats': [np.uint32, np.uint32]
         })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)
+
+    def test_cannot_convert_to_ctypes(self):
+
+        _type_to_value = {
+            np.str_: "aa",
+            np.bool: True,
+            np.datetime64: "2026-01-01",
+        }
+        for _scalar_type in np.sctypeDict.values():
+            if _scalar_type == np.object_:
+                continue
+
+            if _scalar_type in _type_to_value:
+                numpy_scalar = _scalar_type(_type_to_value[_scalar_type])
+            else:
+                numpy_scalar = _scalar_type(1)
+
+            with pytest.raises(
+                TypeError, match="readonly arrays unsupported"
+            ):
+                np.ctypeslib.as_ctypes(numpy_scalar)

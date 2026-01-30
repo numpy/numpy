@@ -1,9 +1,9 @@
-import os
 import argparse
+import os
 
 import genapi
-from genapi import TypeApi, FunctionApi
 import numpy_api
+from genapi import FunctionApi, TypeApi
 
 h_template = r"""
 #ifdef _UMATHMODULE

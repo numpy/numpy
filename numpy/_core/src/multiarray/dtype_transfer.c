@@ -2319,7 +2319,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         *out_flags = PyArrayMethod_MINIMAL_FLAGS;
         for (i = 0; i < field_count; ++i) {
             key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
-            tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key);
+            tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
             if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                     &dst_offset, &title)) {
                 PyMem_Free(data);
@@ -2383,7 +2383,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         NPY_traverse_info_init(&data->decref_src);
 
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), 0);
-        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O",
                               &src_fld_dtype, &src_offset, &title)) {
             PyMem_Free(data);
@@ -2435,14 +2435,14 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     /* set up the transfer function for each field */
     for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(PyDataType_NAMES(dst_dtype), i);
-        tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(dst_dtype), key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O", &dst_fld_dtype,
                                                 &dst_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
         key = PyTuple_GET_ITEM(PyDataType_NAMES(src_dtype), i);
-        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key);
+        tup = PyDict_GetItem(PyDataType_FIELDS(src_dtype), key); // noqa: borrowed-ref OK
         if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
                                                 &src_offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
@@ -2909,8 +2909,6 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  * a view.
  * TODO: Expand the view functionality for general offsets, not just 0:
  *       Partial casts could be skipped also for `view_offset != 0`.
- *
- * The `out_needs_api` flag must be initialized.
  *
  * NOTE: In theory casting errors here could be slightly misleading in case
  *       of a multi-step casting scenario. It should be possible to improve
@@ -3428,11 +3426,13 @@ PyArray_CastRawArrays(npy_intp count,
     /* Cast */
     char *args[2] = {src, dst};
     npy_intp strides[2] = {src_stride, dst_stride};
-    cast_info.func(&cast_info.context, args, &count, strides, cast_info.auxdata);
+    int result = cast_info.func(&cast_info.context, args, &count, strides, cast_info.auxdata);
 
     /* Cleanup */
     NPY_cast_info_xfree(&cast_info);
-
+    if (result < 0) {
+        return NPY_FAIL;
+    }
     if (flags & NPY_METH_REQUIRES_PYAPI && PyErr_Occurred()) {
         return NPY_FAIL;
     }

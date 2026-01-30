@@ -7,22 +7,21 @@ specified.
 
 """
 import hashlib
+import importlib.util
 import io
 import os
 import re
 import sys
-import importlib.util
 import textwrap
-
 from os.path import join
 
 
 def get_processor():
-    # Convoluted because we can't import from numpy.distutils
+    # Convoluted because we can't import from numpy
     # (numpy is not yet built)
     conv_template_path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', 'distutils', 'conv_template.py'
+        '..', '..', '_build_utils', 'conv_template.py'
     )
     spec = importlib.util.spec_from_file_location(
         'conv_template', conv_template_path
@@ -38,7 +37,7 @@ process_c_file = get_processor()
 __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
-API_FILES = [join('multiarray', 'alloc.c'),
+API_FILES = [join('multiarray', 'alloc.cpp'),
              join('multiarray', 'abstractdtypes.c'),
              join('multiarray', 'arrayfunction_override.c'),
              join('multiarray', 'array_api_standard.c'),
@@ -63,7 +62,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'descriptor.c'),
              join('multiarray', 'dlpack.c'),
              join('multiarray', 'dtypemeta.c'),
-             join('multiarray', 'einsum.c.src'),
+             join('multiarray', 'einsum.cpp'),
              join('multiarray', 'public_dtype_api.c'),
              join('multiarray', 'flagsobject.c'),
              join('multiarray', 'getset.c'),
@@ -467,8 +466,7 @@ def order_dict(d):
 def merge_api_dicts(dicts):
     ret = {}
     for d in dicts:
-        for k, v in d.items():
-            ret[k] = v
+        ret.update(d)
 
     return ret
 

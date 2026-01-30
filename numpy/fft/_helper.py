@@ -2,7 +2,7 @@
 Discrete Fourier Transforms - _helper.py
 
 """
-from numpy._core import integer, empty, arange, asarray, roll
+from numpy._core import arange, asarray, empty, integer, roll
 from numpy._core.overrides import array_function_dispatch, set_module
 
 # Created by Pearu Peterson, September 2002
@@ -156,7 +156,7 @@ def fftfreq(n, d=1.0, device=None):
     Examples
     --------
     >>> import numpy as np
-    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=float)
+    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5], dtype=np.float64)
     >>> fourier = np.fft.fft(signal)
     >>> n = signal.size
     >>> timestep = 0.1
@@ -215,7 +215,7 @@ def rfftfreq(n, d=1.0, device=None):
     Examples
     --------
     >>> import numpy as np
-    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)
+    >>> signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=np.float64)
     >>> fourier = np.fft.rfft(signal)
     >>> n = signal.size
     >>> sample_rate = 100

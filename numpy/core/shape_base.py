@@ -1,5 +1,6 @@
 def __getattr__(attr_name):
     from numpy._core import shape_base
+
     from ._utils import _raise_warning
     ret = getattr(shape_base, attr_name, None)
     if ret is None:

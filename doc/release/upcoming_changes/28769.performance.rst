@@ -1,8 +1,0 @@
-Performance improvements for ``np.float16`` casts
---------------------------------------------------
-Earlier, floating point casts to and from ``np.float16`` types
-were emulated in software on all platforms.
-
-Now, on ARM devices that support Neon float16 intrinsics (such as
-recent Apple Silicon), the native float16 path is used to achieve
-the best performance.

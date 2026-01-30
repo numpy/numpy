@@ -1,14 +1,18 @@
-import warnings
 import platform
+import warnings
+
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    temppath, IS_MUSL
-    )
 from numpy._core.tests._locales import CommaDecimalPointLocale
-
+from numpy.testing import (
+    IS_MUSL,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    temppath,
+)
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -287,7 +291,8 @@ def test_array_repr():
     b = np.array([1], dtype=np.longdouble)
     if not np.all(a != b):
         raise ValueError("precision loss creating arrays")
-    assert_(repr(a) != repr(b))
+    with np.printoptions(precision=LD_INFO.precision + 1):
+        assert_(repr(a) != repr(b))
 
 #
 # Locale tests: scalar types formatting should be independent of the locale

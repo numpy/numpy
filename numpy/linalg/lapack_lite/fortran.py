@@ -1,6 +1,7 @@
 # WARNING! This a Python 2 script. Read README.rst for rationale.
-import re
 import itertools
+import re
+
 
 def isBlank(line):
     return not line

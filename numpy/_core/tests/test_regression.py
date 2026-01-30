@@ -1,26 +1,41 @@
 import copy
-import sys
 import gc
+import pickle
+import sys
 import tempfile
-import pytest
-from os import path
+import warnings
 from io import BytesIO
 from itertools import chain
-import pickle
+from os import path
+
+import pytest
 
 import numpy as np
-from numpy.exceptions import AxisError, ComplexWarning
-from numpy.testing import (
-        assert_, assert_equal, IS_PYPY, assert_almost_equal,
-        assert_array_equal, assert_array_almost_equal, assert_raises,
-        assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM,
-        IS_64BIT,
-        )
-from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy._utils import asbytes, asunicode
+from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib.stride_tricks import as_strided
+from numpy.testing import (
+    HAS_REFCOUNT,
+    IS_64BIT,
+    IS_PYPY,
+    IS_WASM,
+    _assert_valid_refcount,
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
+from numpy.testing._private.utils import (
+    _no_tracing,
+    requires_deep_recursion,
+    requires_memory,
+)
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
@@ -98,7 +113,8 @@ class TestRegression:
         def rs():
             b.shape = (10,)
 
-        assert_raises(AttributeError, rs)
+        with pytest.warns(DeprecationWarning):  # gh-29536
+            assert_raises(AttributeError, rs)
 
     def test_bool(self):
         # Ticket #60
@@ -148,8 +164,8 @@ class TestRegression:
 
     def test_mem_dtype_align(self):
         # Ticket #93
-        assert_raises(TypeError, np.dtype,
-                              {'names': ['a'], 'formats': ['foo']}, align=1)
+        with pytest.raises(TypeError):
+            np.dtype({'names': ['a'], 'formats': ['foo']}, align=True)
 
     def test_endian_bool_indexing(self):
         # Ticket #105
@@ -197,7 +213,7 @@ class TestRegression:
         # Dummy array to detect bad memory access:
         _z = np.ones(10)
         _dummy = np.empty((0, 10))
-        z = np.lib.stride_tricks.as_strided(_z, _dummy.shape, _dummy.strides)
+        z = as_strided(_z, _dummy.shape, _dummy.strides)
         np.dot(x, np.transpose(y), out=z)
         assert_equal(_z, np.ones(10))
         # Do the same for the built-in dot:
@@ -427,19 +443,16 @@ class TestRegression:
         xs = np.array([], dtype='i8')
         assert np.lexsort((xs,)).shape[0] == 0  # Works
 
-        xs.strides = (16,)
+        xs = as_strided(xs, strides=(16,))
         assert np.lexsort((xs,)).shape[0] == 0  # Was: MemoryError
 
     def test_lexsort_zerolen_custom_strides_2d(self):
         xs = np.array([], dtype='i8')
+        xt = as_strided(xs, shape=(0, 2), strides=(16, 16))
+        assert np.lexsort((xt,), axis=0).shape[0] == 0
 
-        xs.shape = (0, 2)
-        xs.strides = (16, 16)
-        assert np.lexsort((xs,), axis=0).shape[0] == 0
-
-        xs.shape = (2, 0)
-        xs.strides = (16, 16)
-        assert np.lexsort((xs,), axis=0).shape[0] == 2
+        xt = as_strided(xs, shape=(2, 0), strides=(16, 16))
+        assert np.lexsort((xt,), axis=0).shape[0] == 2
 
     def test_lexsort_invalid_axis(self):
         assert_raises(AxisError, np.lexsort, (np.arange(1),), axis=2)
@@ -452,6 +465,9 @@ class TestRegression:
 
         assert np.lexsort((xs,)).shape[0] == xs.shape[0]
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
+    )
     def test_pickle_py2_bytes_encoding(self):
         # Check that arrays and scalars pickled on Py2 are
         # unpickleable on Py3 using encoding='bytes'
@@ -633,13 +649,14 @@ class TestRegression:
     def test_reshape_zero_strides(self):
         # Issue #380, test reshaping of zero strided arrays
         a = np.ones(1)
-        a = np.lib.stride_tricks.as_strided(a, shape=(5,), strides=(0,))
+        a = as_strided(a, shape=(5,), strides=(0,))
         assert_(a.reshape(5, 1).strides[0] == 0)
 
     def test_reshape_zero_size(self):
         # GitHub Issue #2700, setting shape failed for 0-sized arrays
         a = np.ones((0, 2))
-        a.shape = (-1, 2)
+        with pytest.warns(DeprecationWarning):
+            a.shape = (-1, 2)
 
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
@@ -841,8 +858,8 @@ class TestRegression:
         assert_raises(IndexError, ia, x, s, np.zeros(11, dtype=float))
 
         # Old special case (different code path):
-        assert_raises(ValueError, ia, x.flat, s, np.zeros(9, dtype=float))
-        assert_raises(ValueError, ia, x.flat, s, np.zeros(11, dtype=float))
+        assert_raises(IndexError, ia, x.flat, s, np.zeros(9, dtype=float))
+        assert_raises(IndexError, ia, x.flat, s, np.zeros(11, dtype=float))
 
     def test_mem_scalar_indexing(self):
         # Ticket #603
@@ -998,8 +1015,6 @@ class TestRegression:
         assert_(cnt(a) == cnt0_a + 5 + 2)
         assert_(cnt(b) == cnt0_b + 5 + 3)
 
-        del tmp  # Avoid pyflakes unused variable warning
-
     def test_mem_custom_float_to_array(self):
         # Ticket 702
         class MyFloat:
@@ -1063,6 +1078,9 @@ class TestRegression:
             # This shouldn't cause a segmentation fault:
             np.dot(z, y)
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
+    )
     def test_astype_copy(self):
         # Ticket #788, changeset r5155
         # The test data file was generated by scipy.io.savemat.
@@ -1447,22 +1465,6 @@ class TestRegression:
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 12),
-        reason="Python 3.12 has immortal refcounts, this test no longer works."
-    )
-    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-    def test_structured_arrays_with_objects2(self):
-        # Ticket #1299 second test
-        stra = 'aaaa'
-        strb = 'bbbb'
-        numb = sys.getrefcount(strb)
-        numa = sys.getrefcount(stra)
-        x = np.array([[(0, stra), (1, strb)]], 'i8,O')
-        x[x.nonzero()] = x.ravel()[:1]
-        assert_(sys.getrefcount(strb) == numb)
-        assert_(sys.getrefcount(stra) == numa + 2)
-
     def test_duplicate_title_and_name(self):
         # Ticket #1254
         dtspec = [(('a', 'a'), 'i'), ('b', 'i')]
@@ -1570,8 +1572,7 @@ class TestRegression:
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_take_refcount(self):
         # ticket #939
-        a = np.arange(16, dtype=float)
-        a.shape = (4, 4)
+        a = np.arange(16, dtype=float).reshape((4, 4))
         lut = np.ones((5 + 3, 4), float)
         rgba = np.empty(shape=a.shape + (4,), dtype=lut.dtype)
         c1 = sys.getrefcount(rgba)
@@ -1583,8 +1584,7 @@ class TestRegression:
         assert_equal(c1, c2)
 
     def test_fromfile_tofile_seeks(self):
-        # On Python 3, tofile/fromfile used to get (#1610) the Python
-        # file handle out of sync
+        # tofile/fromfile used to get (#1610) the Python file handle out of sync
         with tempfile.NamedTemporaryFile() as f:
             f.write(np.arange(255, dtype='u1').tobytes())
 
@@ -1609,9 +1609,9 @@ class TestRegression:
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1 + 2j)
-            assert_warns(ComplexWarning, float, x)
-            with suppress_warnings() as sup:
-                sup.filter(ComplexWarning)
+            pytest.warns(ComplexWarning, float, x)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', ComplexWarning)
                 assert_equal(float(x), float(x.real))
 
     def test_complex_scalar_complex_cast(self):
@@ -1646,7 +1646,7 @@ class TestRegression:
 
     def test_nonzero_byteswap(self):
         a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
-        a.dtype = np.float32
+        a = a.view(np.float32)
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap()
         a = a.view(a.dtype.newbyteorder())
@@ -1768,8 +1768,7 @@ class TestRegression:
         assert_(a.flags.f_contiguous)
         assert_(b.flags.c_contiguous)
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
@@ -1778,8 +1777,7 @@ class TestRegression:
         assert_raises(RecursionError, float, a)
         a[()] = None
 
-    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
-    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
+    @requires_deep_recursion
     def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
         a = np.array(0, dtype=object)
@@ -1870,7 +1868,8 @@ class TestRegression:
         # Check that alignment flag is updated on stride setting
         a = np.arange(10)
         assert_(a.flags.aligned)
-        a.strides = 3
+        with pytest.warns(DeprecationWarning):
+            a.strides = 3
         assert_(not a.flags.aligned)
 
     def test_ticket_1770(self):
@@ -1913,18 +1912,29 @@ class TestRegression:
             bytestring = "\x01  ".encode('ascii')
             assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
+    )
     def test_pickle_py2_array_latin1_hack(self):
         # Check that unpickling hacks in Py3 that support
         # encoding='latin1' work correctly.
 
         # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
-        data = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb."
+        data = (
+            b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\n"
+            b"ndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\n"
+            b"cnumpy\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'"
+            b"\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb."
+        )
         # This should work:
         result = pickle.loads(data, encoding='latin1')
         assert_array_equal(result, np.array([129]).astype('b'))
         # Should not segfault:
         assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
 
+    @pytest.mark.filterwarnings(
+        "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
+    )
     def test_pickle_py2_scalar_latin1_hack(self):
         # Check that scalar unpickling hack in Py3 that supports
         # encoding='latin1' work correctly.
@@ -2276,8 +2286,6 @@ class TestRegression:
             new_shape = (2, 7, 7, 43826197)
         assert_raises(ValueError, a.reshape, new_shape)
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-            reason="PyPy bug in error formatting")
     def test_invalid_structured_dtypes(self):
         # gh-2865
         # mapping python objects to other dtypes
@@ -2477,6 +2485,7 @@ class TestRegression:
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     @requires_memory(free_bytes=9e9)
+    @pytest.mark.thread_unsafe(reason="crashes with low memory")
     def test_dot_big_stride(self):
         # gh-17111
         # blas stride = stride//itemsize > int32 max
@@ -2555,7 +2564,10 @@ class TestRegression:
         # ufuncs are pickled with a semi-private path in
         # numpy.core._multiarray_umath and must be loadable without warning
         # despite np.core being deprecated.
-        test_data = b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core._multiarray_umath\x94\x8c\x03add\x94\x93\x94.'
+        test_data = (
+            b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core.'
+            b'_multiarray_umath\x94\x8c\x03add\x94\x93\x94.'
+        )
         result = pickle.loads(test_data, encoding='bytes')
         assert result is np.add
 

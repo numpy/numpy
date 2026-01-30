@@ -1,6 +1,8 @@
-from . import common
-import sys
 import os
+import sys
+
+from . import common
+
 
 def show_cpu_features():
     from numpy.lib._utils_impl import _opt_info

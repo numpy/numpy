@@ -1,41 +1,41 @@
 from collections.abc import Iterable
-from typing import Any, TypeAlias, TypeVar, overload, Literal
+from typing import Any, Literal, overload
 
-from numpy._typing import NDArray, DTypeLike, _SupportsArrayFunc
+from numpy._typing import DTypeLike, NDArray, _SupportsArrayFunc
 
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+__all__ = ["require"]
 
-_Requirements: TypeAlias = Literal[
+type _Requirements = Literal[
     "C", "C_CONTIGUOUS", "CONTIGUOUS",
     "F", "F_CONTIGUOUS", "FORTRAN",
     "A", "ALIGNED",
     "W", "WRITEABLE",
     "O", "OWNDATA"
 ]
-_E: TypeAlias = Literal["E", "ENSUREARRAY"]
-_RequirementsWithE: TypeAlias = _Requirements | _E
+type _E = Literal["E", "ENSUREARRAY"]
+type _RequirementsWithE = _Requirements | _E
 
 @overload
-def require(
-    a: _ArrayT,
-    dtype: None = ...,
-    requirements: _Requirements | Iterable[_Requirements] | None = ...,
+def require[ArrayT: NDArray[Any]](
+    a: ArrayT,
+    dtype: None = None,
+    requirements: _Requirements | Iterable[_Requirements] | None = None,
     *,
-    like: _SupportsArrayFunc = ...
-) -> _ArrayT: ...
+    like: _SupportsArrayFunc | None = None
+) -> ArrayT: ...
 @overload
 def require(
     a: object,
-    dtype: DTypeLike = ...,
-    requirements: _E | Iterable[_RequirementsWithE] = ...,
+    dtype: DTypeLike | None = None,
+    requirements: _E | Iterable[_RequirementsWithE] | None = None,
     *,
-    like: _SupportsArrayFunc = ...
+    like: _SupportsArrayFunc | None = None
 ) -> NDArray[Any]: ...
 @overload
 def require(
     a: object,
-    dtype: DTypeLike = ...,
-    requirements: _Requirements | Iterable[_Requirements] | None = ...,
+    dtype: DTypeLike | None = None,
+    requirements: _Requirements | Iterable[_Requirements] | None = None,
     *,
-    like: _SupportsArrayFunc = ...
+    like: _SupportsArrayFunc | None = None
 ) -> NDArray[Any]: ...

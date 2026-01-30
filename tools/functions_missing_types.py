@@ -33,11 +33,9 @@ EXCLUDE_LIST = {
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
         "_core",
-        "get_array_wrap",
         "int_asbuffer",
         "numarray",
         "oldnumeric",
-        "safe_eval",
         "test",
         "typeDict",
         # Builtins
@@ -82,7 +80,6 @@ class FindAttributes(ast.NodeVisitor):
     def visit_ClassDef(self, node):
         if not node.name.startswith("_"):
             self.attributes.add(node.name)
-        return
 
     def visit_AnnAssign(self, node):
         self.attributes.add(node.target.id)

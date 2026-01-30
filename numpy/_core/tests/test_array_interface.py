@@ -1,8 +1,10 @@
 import sys
-import pytest
-import numpy as np
-from numpy.testing import extbuild, IS_WASM, IS_EDITABLE
 import sysconfig
+
+import pytest
+
+import numpy as np
+from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
 
 
 @pytest.fixture

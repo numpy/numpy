@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# System imports
-from distutils.util import get_platform
 import os
 import sys
 import unittest
 
-# Import NumPy
+from distutils.util import get_platform
+
 import numpy as np
+
 major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 
     # Build the test suite
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(FarrayTestCase))
+    suite.addTest(unittest.TestLoader().loadTestsFromTestCase(FarrayTestCase))
 
     # Execute the test suite
     print("Testing Classes of Module Farray")

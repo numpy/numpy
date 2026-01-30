@@ -4,7 +4,7 @@ import os
 import re
 import sys
 
-from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
+from plex import IGNORE, TEXT, AnyChar, Bol, Lexicon, Opt, Scanner, State, Str
 from plex.traditional import re as Re
 
 try:

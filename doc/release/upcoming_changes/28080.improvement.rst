@@ -1,2 +1,0 @@
-* ``np.nditer`` now has no limit on the number of supported operands
-  (C-integer).

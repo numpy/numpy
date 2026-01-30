@@ -1,12 +1,13 @@
-import sys
 import copy
 import platform
-import pytest
+import sys
 from pathlib import Path
 
-import numpy as np
+import pytest
 
+import numpy as np
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
+
 from . import util
 
 wrap = None
@@ -146,9 +147,9 @@ _cast_dict['CHARACTER'] = ['CHARACTER']
 # and several tests fail as the alignment flag can be randomly true or false
 # when numpy gains an aligned allocator the tests could be enabled again
 #
-# Furthermore, on macOS ARM64, LONGDOUBLE is an alias for DOUBLE.
+# Furthermore, on macOS ARM64 and AIX, LONGDOUBLE is an alias for DOUBLE.
 if ((np.intp().dtype.itemsize != 4 or np.clongdouble().dtype.alignment <= 8)
-        and sys.platform != "win32"
+        and sys.platform not in ["win32", "aix"]
         and (platform.system(), platform.processor()) != ("Darwin", "arm")):
     _type_names.extend(["LONGDOUBLE", "CDOUBLE", "CLONGDOUBLE"])
     _cast_dict["LONGDOUBLE"] = _cast_dict["LONG"] + [

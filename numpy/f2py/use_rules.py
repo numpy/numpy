@@ -13,10 +13,7 @@ __version__ = "$Revision: 1.3 $"[10:-1]
 f2py_version = 'See `f2py -v`'
 
 
-from .auxfuncs import (
-    applyrules, dictappend, gentitle, hasnote, outmess
-)
-
+from .auxfuncs import applyrules, dictappend, gentitle, hasnote, outmess
 
 usemodule_rules = {
     'body': """

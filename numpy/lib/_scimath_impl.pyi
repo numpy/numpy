@@ -1,11 +1,10 @@
-from typing import overload, Any
+from typing import Any, overload
 
 from numpy import complexfloating
-
 from numpy._typing import (
     NDArray,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
     _ComplexLike_co,
     _FloatLike_co,
 )

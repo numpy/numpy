@@ -9,11 +9,18 @@ a.index
 iter(a)
 next(a)
 a[0]
-a[[0, 1, 2]]
 a[...]
 a[:]
 a.__array__()
-a.__array__(np.dtype(np.float64))
 
 b = np.array([1]).flat
 a[b]
+
+a[0] = "1"
+a[:] = "2"
+a[...] = "3"
+a[[]] = "4"
+a[[0]] = "5"
+a[[[0]]] = "6"
+a[[[[[0]]]]] = "7"
+a[b] = "8"

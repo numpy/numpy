@@ -28,8 +28,8 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-import sys
 import os
+import sys
 
 __all__ = ['PytestTester']
 
@@ -124,7 +124,6 @@ class PytestTester:
 
         """
         import pytest
-        import warnings
 
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
@@ -134,14 +133,6 @@ class PytestTester:
 
         # offset verbosity. The "-q" cancels a "-v".
         pytest_args += ["-q"]
-
-        if sys.version_info < (3, 12):
-            with warnings.catch_warnings():
-                warnings.simplefilter("always")
-                # Filter out distutils cpu warnings (could be localized to
-                # distutils tests). ASV has problems with top level import,
-                # so fetch module for suppression here.
-                from numpy.distutils import cpuinfo  # noqa: F401
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.

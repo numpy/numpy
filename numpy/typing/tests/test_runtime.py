@@ -1,35 +1,40 @@
 """Test the runtime usage of `numpy.typing`."""
 
-from __future__ import annotations
-
 from typing import (
-    get_type_hints,
-    Union,
+    Any,
     NamedTuple,
+    Self,
+    TypeAliasType,
     get_args,
     get_origin,
-    Any,
+    get_type_hints,
 )
 
 import pytest
+
 import numpy as np
-import numpy.typing as npt
 import numpy._typing as _npt
+import numpy.typing as npt
 
 
 class TypeTup(NamedTuple):
-    typ: type
-    args: tuple[type, ...]
-    origin: type | None
+    typ: type  # type expression
+    args: tuple[type, ...]  # generic type parameters or arguments
+    origin: type | None  # e.g. `UnionType` or `GenericAlias`
 
+    @classmethod
+    def from_type_alias(cls, alias: TypeAliasType, /) -> Self:
+        # PEP 695 `type _ = ...` aliases wrap the type expression as a
+        # `types.TypeAliasType` instance with a `__value__` attribute.
+        tp = alias.__value__
+        return cls(typ=tp, args=get_args(tp), origin=get_origin(tp))
 
-NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)
 
 TYPES = {
-    "ArrayLike": TypeTup(npt.ArrayLike, npt.ArrayLike.__args__, Union),
-    "DTypeLike": TypeTup(npt.DTypeLike, npt.DTypeLike.__args__, Union),
-    "NBitBase": TypeTup(npt.NBitBase, (), None),
-    "NDArray": NDArrayTup,
+    "ArrayLike": TypeTup.from_type_alias(npt.ArrayLike),
+    "DTypeLike": TypeTup.from_type_alias(npt.DTypeLike),
+    "NBitBase": TypeTup(npt.NBitBase, (), None),  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+    "NDArray": TypeTup.from_type_alias(npt.NDArray),
 }
 
 
@@ -54,10 +59,7 @@ def test_get_type_hints(name: type, tup: TypeTup) -> None:
     """Test `typing.get_type_hints`."""
     typ = tup.typ
 
-    # Explicitly set `__annotations__` in order to circumvent the
-    # stringification performed by `from __future__ import annotations`
-    def func(a): pass
-    func.__annotations__ = {"a": typ, "return": None}
+    def func(a: typ) -> None: pass
 
     out = get_type_hints(func)
     ref = {"a": typ, "return": type(None)}
@@ -69,13 +71,10 @@ def test_get_type_hints_str(name: type, tup: TypeTup) -> None:
     """Test `typing.get_type_hints` with string-representation of types."""
     typ_str, typ = f"npt.{name}", tup.typ
 
-    # Explicitly set `__annotations__` in order to circumvent the
-    # stringification performed by `from __future__ import annotations`
-    def func(a): pass
-    func.__annotations__ = {"a": typ_str, "return": None}
+    def func(a: typ_str) -> None: pass
 
     out = get_type_hints(func)
-    ref = {"a": typ, "return": type(None)}
+    ref = {"a": getattr(npt, str(name)), "return": type(None)}
     assert out == ref
 
 
@@ -87,7 +86,6 @@ def test_keys() -> None:
 
 
 PROTOCOLS: dict[str, tuple[type[Any], object]] = {
-    "_SupportsDType": (_npt._SupportsDType, np.int64(1)),
     "_SupportsArray": (_npt._SupportsArray, np.arange(10)),
     "_SupportsArrayFunc": (_npt._SupportsArrayFunc, np.arange(10)),
     "_NestedSequence": (_npt._NestedSequence, [1]),
@@ -101,9 +99,5 @@ class TestRuntimeProtocol:
         assert not isinstance(None, cls)
 
     def test_issubclass(self, cls: type[Any], obj: object) -> None:
-        if cls is _npt._SupportsDType:
-            pytest.xfail(
-                "Protocols with non-method members don't support issubclass()"
-            )
         assert issubclass(type(obj), cls)
         assert not issubclass(type(None), cls)

@@ -1,6 +1,6 @@
 import decimal
 import fractions
-from typing import Any, assert_type
+from typing import assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -20,10 +20,10 @@ td = np.timedelta64(0, "D")
 
 b_ = np.bool()
 
-b = bool()
+b = False
 c = complex()
-f = float()
-i = int()
+f = 0.0
+i = 0
 
 AR = np.array([0], dtype=np.int64)
 AR.setflags(write=False)

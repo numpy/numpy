@@ -13,7 +13,6 @@ import numpy.ma.mrecords as mrec
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
 
-
 __all__ = [
     'append_fields', 'apply_along_fields', 'assign_fields_by_name',
     'drop_fields', 'find_duplicates', 'flatten_descr',
@@ -327,7 +326,7 @@ def _izip_records(seqarrays, fill_value=None, flatten=True):
 
 def _fix_output(output, usemask=True, asrecarray=False):
     """
-    Private function: return a recarray, a ndarray, a MaskedArray
+    Private function: return a recarray, an ndarray, a MaskedArray
     or a MaskedRecords depending on the input parameters
     """
     if not isinstance(output, ma.MaskedArray):
@@ -996,7 +995,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     >>> np.mean(rfn.structured_to_unstructured(b[['x', 'z']]), axis=-1)
     array([ 3. ,  5.5,  9. , 11. ])
 
-    """
+    """  # noqa: E501
     if arr.dtype.names is None:
         raise ValueError('arr must be a structured array')
 
@@ -1128,7 +1127,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
            (10, (11., 12), [13., 14.]), (15, (16., 17), [18., 19.])],
           dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
 
-    """
+    """  # noqa: E501
     if arr.shape == ():
         raise ValueError('arr must have at least one dimension')
     n_elem = arr.shape[-1]
@@ -1335,7 +1334,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
         Dictionary mapping field names to the corresponding default values.
     usemask : {True, False}, optional
         Whether to return a MaskedArray (or MaskedRecords is
-        `asrecarray==True`) or a ndarray.
+        `asrecarray==True`) or an ndarray.
     asrecarray : {False, True}, optional
         Whether to return a recarray (or MaskedRecords if `usemask==True`)
         or just a flexible-type ndarray.
@@ -1515,7 +1514,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
         Dictionary mapping field names to the corresponding default values.
     usemask : {True, False}, optional
         Whether to return a MaskedArray (or MaskedRecords is
-        `asrecarray==True`) or a ndarray.
+        `asrecarray==True`) or an ndarray.
     asrecarray : {False, True}, optional
         Whether to return a recarray (or MaskedRecords if `usemask==True`)
         or just a flexible-type ndarray.
@@ -1553,9 +1552,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()
     r2 = r2.ravel()
-    # Fixme: nb2 below is never used. Commenting out for pyflakes.
-    # (nb1, nb2) = (len(r1), len(r2))
-    nb1 = len(r1)
+    (nb1, nb2) = (len(r1), len(r2))
     (r1names, r2names) = (r1.dtype.names, r2.dtype.names)
 
     # Check the names for collision

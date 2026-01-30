@@ -1,9 +1,8 @@
-from typing import Any, Literal, TypeAlias, TypeVar, overload
+from typing import Any, Literal, overload
 
 import numpy as np
 import numpy.typing as npt
-
-from numpy import (  # noqa: F401
+from numpy import (  # type: ignore[deprecated]  # noqa: F401
     False_,
     ScalarType,
     True_,
@@ -223,7 +222,6 @@ from numpy import (  # noqa: F401
     i0,
     iinfo,
     imag,
-    in1d,
     index_exp,
     indices,
     inexact,
@@ -398,7 +396,6 @@ from numpy import (  # noqa: F401
     roots,
     rot90,
     round,
-    row_stack,
     s_,
     save,
     savetxt,
@@ -452,7 +449,6 @@ from numpy import (  # noqa: F401
     trace,
     transpose,
     trapezoid,
-    trapz,
     tri,
     tril,
     tril_indices,
@@ -508,9 +504,8 @@ __all__ += np.__all__
 
 ###
 
-_T = TypeVar("_T", bound=np.generic)
-_Matrix: TypeAlias = np.matrix[tuple[int, int], np.dtype[_T]]
-_Order: TypeAlias = Literal["C", "F"]
+type _Matrix[ScalarT: np.generic] = np.matrix[tuple[int, int], np.dtype[ScalarT]]
+type _Order = Literal["C", "F"]
 
 ###
 
@@ -518,7 +513,7 @@ _Order: TypeAlias = Literal["C", "F"]
 @overload
 def empty(shape: int | tuple[int, int], dtype: None = None, order: _Order = "C") -> _Matrix[np.float64]: ...
 @overload
-def empty(shape: int | tuple[int, int], dtype: _DTypeLike[_T], order: _Order = "C") -> _Matrix[_T]: ...
+def empty[ScalarT: np.generic](shape: int | tuple[int, int], dtype: _DTypeLike[ScalarT], order: _Order = "C") -> _Matrix[ScalarT]: ...
 @overload
 def empty(shape: int | tuple[int, int], dtype: npt.DTypeLike, order: _Order = "C") -> _Matrix[Any]: ...
 
@@ -526,7 +521,7 @@ def empty(shape: int | tuple[int, int], dtype: npt.DTypeLike, order: _Order = "C
 @overload
 def ones(shape: int | tuple[int, int], dtype: None = None, order: _Order = "C") -> _Matrix[np.float64]: ...
 @overload
-def ones(shape: int | tuple[int, int], dtype: _DTypeLike[_T], order: _Order = "C") -> _Matrix[_T]: ...
+def ones[ScalarT: np.generic](shape: int | tuple[int, int], dtype: _DTypeLike[ScalarT], order: _Order = "C") -> _Matrix[ScalarT]: ...
 @overload
 def ones(shape: int | tuple[int, int], dtype: npt.DTypeLike, order: _Order = "C") -> _Matrix[Any]: ...
 
@@ -534,7 +529,7 @@ def ones(shape: int | tuple[int, int], dtype: npt.DTypeLike, order: _Order = "C"
 @overload
 def zeros(shape: int | tuple[int, int], dtype: None = None, order: _Order = "C") -> _Matrix[np.float64]: ...
 @overload
-def zeros(shape: int | tuple[int, int], dtype: _DTypeLike[_T], order: _Order = "C") -> _Matrix[_T]: ...
+def zeros[ScalarT: np.generic](shape: int | tuple[int, int], dtype: _DTypeLike[ScalarT], order: _Order = "C") -> _Matrix[ScalarT]: ...
 @overload
 def zeros(shape: int | tuple[int, int], dtype: npt.DTypeLike, order: _Order = "C") -> _Matrix[Any]: ...
 
@@ -542,7 +537,7 @@ def zeros(shape: int | tuple[int, int], dtype: npt.DTypeLike, order: _Order = "C
 @overload
 def identity(n: int, dtype: None = None) -> _Matrix[np.float64]: ...
 @overload
-def identity(n: int, dtype: _DTypeLike[_T]) -> _Matrix[_T]: ...
+def identity[ScalarT: np.generic](n: int, dtype: _DTypeLike[ScalarT]) -> _Matrix[ScalarT]: ...
 @overload
 def identity(n: int, dtype: npt.DTypeLike | None = None) -> _Matrix[Any]: ...
 
@@ -556,11 +551,11 @@ def eye(
     order: _Order = "C",
 ) -> _Matrix[np.float64]: ...
 @overload
-def eye(n: int, M: int | None, k: int, dtype: _DTypeLike[_T], order: _Order = "C") -> _Matrix[_T]: ...
+def eye[ScalarT: np.generic](n: int, M: int | None, k: int, dtype: _DTypeLike[ScalarT], order: _Order = "C") -> _Matrix[ScalarT]: ...
 @overload
-def eye(n: int, M: int | None = None, k: int = 0, *, dtype: _DTypeLike[_T], order: _Order = "C") -> _Matrix[_T]: ...
+def eye[ScalarT: np.generic](n: int, M: int | None = None, k: int = 0, *, dtype: _DTypeLike[ScalarT], order: _Order = "C") -> _Matrix[ScalarT]: ...
 @overload
-def eye(n: int, M: int | None = None, k: int = 0, dtype: npt.DTypeLike = ..., order: _Order = "C") -> _Matrix[Any]: ...
+def eye(n: int, M: int | None = None, k: int = 0, dtype: npt.DTypeLike | None = ..., order: _Order = "C") -> _Matrix[Any]: ...
 
 #
 @overload
@@ -576,8 +571,8 @@ def randn(arg: int, /, *args: int) -> _Matrix[np.float64]: ...
 
 #
 @overload
-def repmat(a: _Matrix[_T], m: int, n: int) -> _Matrix[_T]: ...
+def repmat[ScalarT: np.generic](a: _Matrix[ScalarT], m: int, n: int) -> _Matrix[ScalarT]: ...
 @overload
-def repmat(a: _ArrayLike[_T], m: int, n: int) -> npt.NDArray[_T]: ...
+def repmat[ScalarT: np.generic](a: _ArrayLike[ScalarT], m: int, n: int) -> npt.NDArray[ScalarT]: ...
 @overload
 def repmat(a: npt.ArrayLike, m: int, n: int) -> npt.NDArray[Any]: ...

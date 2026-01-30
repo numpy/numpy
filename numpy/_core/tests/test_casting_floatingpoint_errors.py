@@ -1,7 +1,8 @@
 import pytest
 from pytest import param
-from numpy.testing import IS_WASM
+
 import numpy as np
+from numpy.testing import IS_WASM
 
 
 def values_and_dtypes():

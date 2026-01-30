@@ -1,13 +1,11 @@
 import sys
+from io import StringIO
 
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, IS_MUSL
 from numpy._core.tests._locales import CommaDecimalPointLocale
-
-
-from io import StringIO
+from numpy.testing import IS_MUSL, assert_, assert_equal
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
@@ -119,6 +117,7 @@ def _test_redirected_print(x, tp, ref=None):
                  err_msg=f'print failed for type{tp}')
 
 
+@pytest.mark.thread_unsafe(reason="sys.stdout not thread-safe")
 @pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
 def test_float_type_print(tp):
     """Check formatting when using print """
@@ -135,6 +134,7 @@ def test_float_type_print(tp):
         _test_redirected_print(1e16, tp, ref)
 
 
+@pytest.mark.thread_unsafe(reason="sys.stdout not thread-safe")
 @pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
 def test_complex_type_print(tp):
     """Check formatting when using print """

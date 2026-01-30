@@ -8,16 +8,39 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-from . import __version__
+from . import __version__, cfuncs
 from .auxfuncs import (
-    applyrules, debugcapi, dictappend, errmess, getargs, hasnote, isarray,
-    iscomplex, iscomplexarray, iscomplexfunction, isfunction, isintent_c,
-    isintent_hide, isintent_in, isintent_inout, isintent_nothide,
-    isintent_out, isoptional, isrequired, isscalar, isstring,
-    isstringfunction, issubroutine, l_and, l_not, l_or, outmess, replace,
-    stripcomma, throw_error
+    applyrules,
+    debugcapi,
+    dictappend,
+    errmess,
+    getargs,
+    hasnote,
+    isarray,
+    iscomplex,
+    iscomplexarray,
+    iscomplexfunction,
+    isfunction,
+    isintent_c,
+    isintent_hide,
+    isintent_in,
+    isintent_inout,
+    isintent_nothide,
+    isintent_out,
+    isoptional,
+    isrequired,
+    isscalar,
+    isstring,
+    isstringfunction,
+    issubroutine,
+    l_and,
+    l_not,
+    l_or,
+    outmess,
+    replace,
+    stripcomma,
+    throw_error,
 )
-from . import cfuncs
 
 f2py_version = __version__.version
 
@@ -639,5 +662,4 @@ def buildcallback(rout, um):
                                       'argname': rd['argname']
                                       }
     outmess(f"      {ar['docstrshort']}\n")
-    return
 ################## Build call-back function #############

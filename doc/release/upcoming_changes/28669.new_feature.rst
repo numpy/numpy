@@ -1,3 +1,0 @@
-* The type parameter of ``np.dtype`` now defaults to ``typing.Any``.
-  This way, static type-checkers will infer ``dtype: np.dtype`` as
-  ``dtype: np.dtype[Any]``, without reporting an error.

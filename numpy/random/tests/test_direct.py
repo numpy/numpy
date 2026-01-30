@@ -1,17 +1,28 @@
 import os
-from os.path import join
 import sys
+from os.path import join
 
-import numpy as np
-from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
-                           assert_raises)
 import pytest
 
+import numpy as np
 from numpy.random import (
-    Generator, MT19937, PCG64, PCG64DXSM, Philox, RandomState, SeedSequence,
-    SFC64, default_rng
+    MT19937,
+    PCG64,
+    PCG64DXSM,
+    SFC64,
+    Generator,
+    Philox,
+    RandomState,
+    SeedSequence,
+    default_rng,
 )
 from numpy.random._common import interface
+from numpy.testing import (
+    assert_allclose,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 try:
     import cffi  # noqa: F401
@@ -130,9 +141,11 @@ def gauss_from_uint(x, n, bits):
 
 
 def test_seedsequence():
-    from numpy.random.bit_generator import (ISeedSequence,
-                                            ISpawnableSeedSequence,
-                                            SeedlessSeedSequence)
+    from numpy.random.bit_generator import (
+        ISeedSequence,
+        ISpawnableSeedSequence,
+        SeedlessSeedSequence,
+    )
 
     s1 = SeedSequence(range(10), spawn_key=(1, 2), pool_size=6)
     s1.spawn(10)
@@ -168,6 +181,31 @@ def test_generator_spawning():
 
     # Sanity check that streams are actually different:
     assert new_rngs[0].uniform() != new_rngs[1].uniform()
+
+
+def test_spawn_negative_n_children():
+    """Test that spawn raises ValueError for negative n_children."""
+    from numpy.random.bit_generator import SeedlessSeedSequence
+
+    rng = np.random.default_rng(42)
+    seq = rng.bit_generator.seed_seq
+
+    # Test SeedSequence.spawn
+    with pytest.raises(ValueError, match="n_children must be non-negative"):
+        seq.spawn(-1)
+
+    # Test SeedlessSeedSequence.spawn
+    seedless = SeedlessSeedSequence()
+    with pytest.raises(ValueError, match="n_children must be non-negative"):
+        seedless.spawn(-1)
+
+    # Test BitGenerator.spawn
+    with pytest.raises(ValueError, match="n_children must be non-negative"):
+        rng.bit_generator.spawn(-1)
+
+    # Test Generator.spawn
+    with pytest.raises(ValueError, match="n_children must be non-negative"):
+        rng.spawn(-1)
 
 
 def test_non_spawnable():
@@ -559,6 +597,9 @@ class TestDefaultRNG:
         assert rg2 is rg
         assert rg2.bit_generator is bg
 
+    @pytest.mark.thread_unsafe(
+        reason="np.random.set_bit_generator affects global state"
+    )
     def test_coercion_RandomState_Generator(self):
         # use default_rng to coerce RandomState to Generator
         rs = RandomState(1234)

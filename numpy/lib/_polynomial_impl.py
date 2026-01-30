@@ -5,23 +5,28 @@ Functions to operate on polynomials.
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit']
-
 import functools
 import re
 import warnings
 
-from numpy._utils import set_module
 import numpy._core.numeric as NX
-
-from numpy._core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
-                        ones)
-from numpy._core import overrides
+from numpy._core import (
+    abs,
+    array,
+    atleast_1d,
+    dot,
+    finfo,
+    hstack,
+    isscalar,
+    ones,
+    overrides,
+)
+from numpy._utils import set_module
 from numpy.exceptions import RankWarning
-from numpy.lib._twodim_base_impl import diag, vander
 from numpy.lib._function_base_impl import trim_zeros
-from numpy.lib._type_check_impl import iscomplex, real, imag, mintypecode
-from numpy.linalg import eigvals, lstsq, inv
-
+from numpy.lib._twodim_base_impl import diag, vander
+from numpy.lib._type_check_impl import imag, iscomplex, mintypecode, real
+from numpy.linalg import eigvals, inv, lstsq
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -135,8 +140,7 @@ def poly(seq_of_zeros):
         seq_of_zeros = eigvals(seq_of_zeros)
     elif len(sh) == 1:
         dt = seq_of_zeros.dtype
-        # Let object arrays slip through, e.g. for arbitrary precision
-        if dt != object:
+        if dt.type is not NX.object_:
             seq_of_zeros = seq_of_zeros.astype(mintypecode(dt.char))
     else:
         raise ValueError("input must be 1d or non-empty square 2d array.")
@@ -460,7 +464,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
        A summary of the differences can be found in the
        :doc:`transition guide </reference/routines.polynomials>`.
 
-    Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
+    Fit a polynomial ``p[0] * x**deg + ... + p[deg]`` of degree `deg`
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
     the squared error in the order `deg`, `deg-1`, ... `0`.
 
@@ -514,9 +518,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
         - residuals -- sum of squared residuals of the least squares fit
         - rank -- the effective rank of the scaled Vandermonde
-           coefficient matrix
+          coefficient matrix
         - singular_values -- singular values of the scaled Vandermonde
-           coefficient matrix
+          coefficient matrix
         - rcond -- value of `rcond`.
 
         For more details, see `numpy.linalg.lstsq`.
@@ -1305,11 +1309,10 @@ class poly1d:
             if power == 0:
                 if coefstr != '0':
                     newstr = f'{coefstr}'
+                elif k == 0:
+                    newstr = '0'
                 else:
-                    if k == 0:
-                        newstr = '0'
-                    else:
-                        newstr = ''
+                    newstr = ''
             elif power == 1:
                 if coefstr == '0':
                     newstr = ''
@@ -1317,13 +1320,12 @@ class poly1d:
                     newstr = var
                 else:
                     newstr = f'{coefstr} {var}'
+            elif coefstr == '0':
+                newstr = ''
+            elif coefstr == 'b':
+                newstr = '%s**%d' % (var, power,)
             else:
-                if coefstr == '0':
-                    newstr = ''
-                elif coefstr == 'b':
-                    newstr = '%s**%d' % (var, power,)
-                else:
-                    newstr = '%s %s**%d' % (coefstr, var, power)
+                newstr = '%s %s**%d' % (coefstr, var, power)
 
             if k > 0:
                 if newstr != '':
@@ -1425,7 +1427,6 @@ class poly1d:
             self._coeffs = NX.concatenate((zr, self.coeffs))
             ind = 0
         self._coeffs[ind] = val
-        return
 
     def __iter__(self):
         return iter(self.coeffs)

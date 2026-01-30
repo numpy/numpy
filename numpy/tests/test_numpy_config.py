@@ -1,9 +1,11 @@
 """
 Check the numpy config is valid.
 """
-import numpy as np
-import pytest
 from unittest.mock import patch
+
+import pytest
+
+import numpy as np
 
 pytestmark = pytest.mark.skipif(
     not hasattr(np.__config__, "_built_with_meson"),
@@ -19,6 +21,7 @@ class TestNumPyConfigs:
     ]
 
     @patch("numpy.__config__._check_pyyaml")
+    @pytest.mark.thread_unsafe(reason="unittest.mock.patch updates global state")
     def test_pyyaml_not_found(self, mock_yaml_importer):
         mock_yaml_importer.side_effect = ModuleNotFoundError()
         with pytest.warns(UserWarning):

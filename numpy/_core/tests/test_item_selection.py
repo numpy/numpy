@@ -3,9 +3,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_raises, assert_array_equal, HAS_REFCOUNT
-    )
+from numpy.testing import HAS_REFCOUNT, assert_, assert_array_equal, assert_raises
 
 
 class TestTake:
@@ -31,8 +29,8 @@ class TestTake:
             tresult = list(ta.T.copy())
             for index_array in index_arrays:
                 if index_array.size != 0:
-                    tresult[0].shape = (2,) + index_array.shape
-                    tresult[1].shape = (2,) + index_array.shape
+                    tresult[0] = tresult[0].reshape((2,) + index_array.shape)
+                    tresult[1] = tresult[1].reshape((2,) + index_array.shape)
                 for mode in modes:
                     for index in indices:
                         real_index = real_indices[mode][index]

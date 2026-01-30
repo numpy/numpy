@@ -1,19 +1,22 @@
 import concurrent.futures
 import threading
-import string
 
-import numpy as np
 import pytest
 
-from numpy.testing import IS_WASM, IS_64BIT
-from numpy.testing._private.utils import run_threaded
+import numpy as np
 from numpy._core import _rational_tests
+from numpy._core.tests.test_stringdtype import random_unicode_string_list
+from numpy.testing import IS_64BIT, IS_WASM
+from numpy.testing._private.utils import run_threaded
 
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
 
+pytestmark = pytest.mark.thread_unsafe(
+    reason="tests in this module are already explicitly multi-threaded"
+)
 
-def test_parallel_randomstate_creation():
+def test_parallel_randomstate():
     # if the coercion cache is enabled and not thread-safe, creating
     # RandomState instances simultaneously leads to a data race
     def func(seed):
@@ -21,16 +24,26 @@ def test_parallel_randomstate_creation():
 
     run_threaded(func, 500, pass_count=True)
 
+    # seeding and setting state shouldn't race with generating RNG samples
+    rng = np.random.RandomState()
+
+    def func(seed):
+        base_rng = np.random.RandomState(seed)
+        state = base_rng.get_state()
+        rng.seed(seed)
+        rng.random()
+        rng.set_state(state)
+
+    run_threaded(func, 8, pass_count=True)
 
 def test_parallel_ufunc_execution():
     # if the loop data cache or dispatch cache are not thread-safe
     # computing ufuncs simultaneously in multiple threads leads
     # to a data race that causes crashes or spurious exceptions
-    def func():
-        arr = np.random.random((25,))
-        np.isnan(arr)
-
-    run_threaded(func, 500)
+    for dtype in [np.float32, np.float64, np.int32]:
+        for op in [np.random.random((25,)).astype(dtype), dtype(25)]:
+            for ufunc in [np.isnan, np.sin]:
+                run_threaded(lambda: ufunc(op), 500)
 
     # see gh-26690
     NUM_THREADS = 50
@@ -120,6 +133,8 @@ def test_printoptions_thread_safety():
 
     task1.start()
     task2.start()
+    task1.join()
+    task2.join()
 
 
 def test_parallel_reduction():
@@ -218,16 +233,12 @@ def test_structured_threadsafety2():
     assert arr.dtype is dt
 
 
-def test_stringdtype_multithreaded_access_and_mutation(
-        dtype, random_string_list):
+def test_stringdtype_multithreaded_access_and_mutation():
     # this test uses an RNG and may crash or cause deadlocks if there is a
     # threading bug
     rng = np.random.default_rng(0x4D3D3D3)
 
-    chars = list(string.ascii_letters + string.digits)
-    chars = np.array(chars, dtype="U1")
-    ret = rng.choice(chars, size=100 * 10, replace=True)
-    random_string_list = ret.view("U100")
+    string_list = random_unicode_string_list()
 
     def func(arr):
         rnd = rng.random()
@@ -247,10 +258,10 @@ def test_stringdtype_multithreaded_access_and_mutation(
             else:
                 np.multiply(arr, np.int64(2), out=arr)
         else:
-            arr[:] = random_string_list
+            arr[:] = string_list
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        arr = np.array(random_string_list, dtype=dtype)
+        arr = np.array(string_list, dtype="T")
         futures = [tpe.submit(func, arr) for _ in range(500)]
 
         for f in futures:
@@ -272,12 +283,15 @@ def test_legacy_usertype_cast_init_thread_safety():
 def test_nonzero(dtype):
     # See: gh-28361
     #
-    # np.nonzero uses np.count_nonzero to determine the size of the output array
-    # In a second pass the indices of the non-zero elements are determined, but they can have changed
+    # np.nonzero uses np.count_nonzero to determine the size of the output.
+    # array. In a second pass the indices of the non-zero elements are
+    # determined, but they can have changed
     #
-    # This test triggers a data race which is suppressed in the TSAN CI. The test is to ensure
-    # np.nonzero does not generate a segmentation fault
+    # This test triggers a data race which is suppressed in the TSAN CI.
+    # The test is to ensure np.nonzero does not generate a segmentation fault
     x = np.random.randint(4, size=100).astype(dtype)
+    expected_warning = ('number of non-zero array elements changed'
+                        ' during function execution')
 
     def func(index):
         for _ in range(10):
@@ -287,6 +301,103 @@ def test_nonzero(dtype):
                 try:
                     _ = np.nonzero(x)
                 except RuntimeError as ex:
-                    assert 'number of non-zero array elements changed during function execution' in str(ex)
+                    assert expected_warning in str(ex)
 
     run_threaded(func, max_workers=10, pass_count=True, outer_iterations=5)
+
+
+# These are all implemented using PySequence_Fast, which needs locking to be safe
+def np_broadcast(arrs):
+    for i in range(50):
+        np.broadcast(arrs)
+
+def create_array(arrs):
+    for i in range(50):
+        np.array(arrs)
+
+def create_nditer(arrs):
+    for i in range(50):
+        np.nditer(arrs)
+
+
+@pytest.mark.parametrize(
+    "kernel, outcome",
+    (
+        (np_broadcast, "error"),
+        (create_array, "error"),
+        (create_nditer, "success"),
+    ),
+)
+def test_arg_locking(kernel, outcome):
+    # should complete without triggering races but may error
+
+    done = 0
+    arrs = [np.array([1, 2, 3]) for _ in range(1000)]
+
+    def read_arrs(b):
+        nonlocal done
+        b.wait()
+        try:
+            kernel(arrs)
+        finally:
+            done += 1
+
+    def contract_and_expand_list(b):
+        b.wait()
+        while done < 4:
+            if len(arrs) > 10:
+                arrs.pop(0)
+            elif len(arrs) <= 10:
+                arrs.extend([np.array([1, 2, 3]) for _ in range(1000)])
+
+    def replace_list_items(b):
+        b.wait()
+        rng = np.random.RandomState()
+        rng.seed(0x4d3d3d3)
+        while done < 4:
+            data = rng.randint(0, 1000, size=4)
+            arrs[data[0]] = data[1:]
+
+    for mutation_func in (replace_list_items, contract_and_expand_list):
+        b = threading.Barrier(5)
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as tpe:
+                tasks = [tpe.submit(read_arrs, b) for _ in range(4)]
+                tasks.append(tpe.submit(mutation_func, b))
+                for t in tasks:
+                    t.result()
+        except RuntimeError as e:
+            if outcome == "success":
+                raise
+            assert "Inconsistent object during array creation?" in str(e)
+            msg = "replace_list_items should not raise errors"
+            assert mutation_func is contract_and_expand_list, msg
+        finally:
+            if len(tasks) < 5:
+                b.abort()
+
+def test_array__buffer__thread_safety():
+    import inspect
+    arr = np.arange(1000)
+    flags = [inspect.BufferFlags.STRIDED, inspect.BufferFlags.READ]
+
+    def func(b):
+        b.wait()
+        for i in range(100):
+            arr.__buffer__(flags[i % 2])
+
+    run_threaded(func, max_workers=8, pass_barrier=True)
+
+def test_void_dtype__buffer__thread_safety():
+    import inspect
+    dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    x = np.array(('ndarray_scalar', (1.2, 3.0)), dtype=dt)[()]
+    assert isinstance(x, np.void)
+    flags = [inspect.BufferFlags.STRIDES, inspect.BufferFlags.READ]
+
+    def func(b):
+        b.wait()
+        for i in range(100):
+            x.__buffer__(flags[i % 2])
+
+    run_threaded(func, max_workers=8, pass_barrier=True)

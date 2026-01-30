@@ -2,15 +2,21 @@
 
 Note that tests with MaskedArray and linalg are done in separate files.
 """
-import pytest
-
 import textwrap
 import warnings
 
+import pytest
+
 import numpy as np
-from numpy.testing import (assert_, assert_equal, assert_raises,
-                           assert_raises_regex, assert_array_equal,
-                           assert_almost_equal, assert_array_almost_equal)
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 def test_fancy_indexing():

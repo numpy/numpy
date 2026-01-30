@@ -1,13 +1,13 @@
 from ._ctypeslib import (
     __all__,
     __doc__,
+    _concrete_ndptr,
+    _ndptr,
     as_array,
     as_ctypes,
     as_ctypes_type,
-    ctypes,
     c_intp,
+    ctypes,
     load_library,
     ndpointer,
-    _concrete_ndptr,
-    _ndptr,
 )

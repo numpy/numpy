@@ -18,11 +18,10 @@ meant for use in CI so it's not like many files will be missing at once.
 
 """
 
-import os
 import glob
-import sys
 import json
-
+import os
+import sys
 
 CUR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 ROOT_DIR = os.path.dirname(CUR_DIR)
@@ -84,11 +83,6 @@ def get_files(dir_to_check, kind='test'):
     for path in glob.glob(patterns[kind], recursive=True):
         relpath = os.path.relpath(path, dir_to_check)
         files[relpath] = path
-
-    if sys.version_info >= (3, 12):
-        files = {
-            k: v for k, v in files.items() if not k.startswith('distutils')
-        }
 
     # ignore python files in vendored pythoncapi-compat submodule
     files = {

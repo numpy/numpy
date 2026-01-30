@@ -4,6 +4,7 @@ purposes. The original `core` was renamed to `_core` and made private.
 `numpy.core` will be removed in the future.
 """
 from numpy import _core
+
 from ._utils import _raise_warning
 
 

@@ -25,24 +25,33 @@ __docformat__ = 'restructuredtext'
 import functools
 import numbers
 import sys
+
 try:
     from _thread import get_ident
 except ImportError:
     from _dummy_thread import get_ident
 
-import numpy as np
-from . import numerictypes as _nt
-from .umath import absolute, isinf, isfinite, isnat
-from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, ndarray)
-from .fromnumeric import any
-from .numeric import concatenate, asarray, errstate
-from .numerictypes import int_, float64, complex128, flexible
-from .overrides import array_function_dispatch, set_module
-from .printoptions import format_options
+import contextlib
 import operator
 import warnings
-import contextlib
+
+import numpy as np
+
+from . import numerictypes as _nt
+from .fromnumeric import any
+from .multiarray import (
+    array,
+    datetime_as_string,
+    datetime_data,
+    dragon4_positional,
+    dragon4_scientific,
+    ndarray,
+)
+from .numeric import asarray, concatenate, errstate
+from .numerictypes import complex128, flexible, float64, int_
+from .overrides import array_function_dispatch, set_module
+from .printoptions import format_options
+from .umath import absolute, isfinite, isinf, isnat
 
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
@@ -239,11 +248,15 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     --------
     get_printoptions, printoptions, array2string
 
+
     Notes
     -----
-    `formatter` is always reset with a call to `set_printoptions`.
 
-    Use `printoptions` as a context manager to set the values temporarily.
+    * ``formatter`` is always reset with a call to `set_printoptions`.
+    * Use `printoptions` as a context manager to set the values temporarily.
+    * These print options apply only to NumPy ndarrays, not to scalars.
+
+    **Concurrency note:** see :ref:`text_formatting_options`
 
     Examples
     --------
@@ -343,6 +356,12 @@ def get_printoptions():
 
         For a full description of these options, see `set_printoptions`.
 
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
+
+    **Concurrency note:** see :ref:`text_formatting_options`
+
     See Also
     --------
     set_printoptions, printoptions
@@ -400,6 +419,12 @@ def printoptions(*args, **kwargs):
     See Also
     --------
     set_printoptions, get_printoptions
+
+    Notes
+    -----
+    These print options apply only to NumPy ndarrays, not to scalars.
+
+    **Concurrency note:** see :ref:`text_formatting_options`
 
     """
     token = _set_printoptions(*args, **kwargs)
@@ -601,18 +626,18 @@ def _array2string(a, options, separator=' ', prefix=""):
 def _array2string_dispatcher(
         a, max_line_width=None, precision=None,
         suppress_small=None, separator=None, prefix=None,
-        style=None, formatter=None, threshold=None,
+        *, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
-        *, legacy=None):
+        legacy=None):
     return (a,)
 
 
 @array_function_dispatch(_array2string_dispatcher, module='numpy')
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
-                 style=np._NoValue, formatter=None, threshold=None,
+                 *, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
-                 *, legacy=None):
+                 legacy=None):
     """
     Return a string representation of an array.
 
@@ -645,10 +670,6 @@ def array2string(a, max_line_width=None, precision=None,
         wrapping is forced at the column ``max_line_width - len(suffix)``.
         It should be noted that the content of prefix and suffix strings are
         not included in the output.
-    style : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.14.0
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -768,16 +789,8 @@ def array2string(a, max_line_width=None, precision=None,
     options.update(overrides)
 
     if options['legacy'] <= 113:
-        if style is np._NoValue:
-            style = repr
-
         if a.shape == () and a.dtype.names is None:
-            return style(a.item())
-    elif style is not np._NoValue:
-        # Deprecation 11-9-2017  v1.14
-        warnings.warn("'style' argument is deprecated and no longer functional"
-                      " except in 1.13 'legacy' mode",
-                      DeprecationWarning, stacklevel=2)
+            return repr(a.item())
 
     if options['legacy'] > 113:
         options['linewidth'] -= len(suffix)
