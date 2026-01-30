@@ -4,16 +4,529 @@
 NumPy 2.3.0 Release Notes
 ==========================
 
+The NumPy 2.3.0 release continues the work to improve free threaded Python
+support and annotations together with the usual set of bug fixes. It is unusual
+in the number of expired deprecations, code modernizations, and style cleanups.
+The latter may not be visible to users, but is important for code maintenance
+over the long term. Note that we have also upgraded from manylinux2014 to
+manylinux_2_28.
+
+Users running on a Mac having an M4 cpu might see various warnings about
+invalid values and such. The warnings are a known problem with Accelerate.
+They are annoying, but otherwise harmless. Apple promises to fix them.
+
+This release supports Python versions 3.11-3.13, Python 3.14 will be supported
+when it is released.
+
 
 Highlights
 ==========
 
-*We'll choose highlights for this release near the end of the release cycle.*
+* Interactive examples in the NumPy documentation.
+* Building NumPy with OpenMP Parallelization.
+* Preliminary support for Windows on ARM.
+* Improved support for free threaded Python.
+* Improved annotations.
 
 
-.. if release snippets have been incorporated already, uncomment the follow
-   line (leave the `.. include:: directive)
+New functions
+=============
 
-.. **Content from release note snippets in doc/release/upcoming_changes:**
+New function ``numpy.strings.slice``
+------------------------------------
+The new function ``numpy.strings.slice`` was added, which implements fast
+native slicing of string arrays. It supports the full slicing API including
+negative slice offsets and steps.
 
-.. include:: notes-towncrier.rst
+(`gh-27789 <https://github.com/numpy/numpy/pull/27789>`__)
+
+
+Deprecations
+============
+
+* The ``numpy.typing.mypy_plugin`` has been deprecated in favor of platform-agnostic
+  static type inference. Please remove ``numpy.typing.mypy_plugin`` from the ``plugins``
+  section of your mypy configuration. If this change results in new errors being
+  reported, kindly open an issue.
+
+  (`gh-28129 <https://github.com/numpy/numpy/pull/28129>`__)
+
+* The ``numpy.typing.NBitBase`` type has been deprecated and will be removed in
+  a future version.
+
+  This type was previously intended to be used as a generic upper bound for
+  type-parameters, for example:
+
+  .. code-block:: python
+
+      import numpy as np
+      import numpy.typing as npt
+
+      def f[NT: npt.NBitBase](x: np.complexfloating[NT]) -> np.floating[NT]: ...
+
+  But in NumPy 2.2.0, ``float64`` and ``complex128`` were changed to concrete
+  subtypes, causing static type-checkers to reject ``x: np.float64 =
+  f(np.complex128(42j))``.
+
+  So instead, the better approach is to use ``typing.overload``:
+
+  .. code-block:: python
+
+      import numpy as np
+      from typing import overload
+
+      @overload
+      def f(x: np.complex64) -> np.float32: ...
+      @overload
+      def f(x: np.complex128) -> np.float64: ...
+      @overload
+      def f(x: np.clongdouble) -> np.longdouble: ...
+
+  (`gh-28884 <https://github.com/numpy/numpy/pull/28884>`__)
+
+
+Expired deprecations
+====================
+
+* Remove deprecated macros like ``NPY_OWNDATA`` from Cython interfaces in favor
+  of ``NPY_ARRAY_OWNDATA`` (deprecated since 1.7)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Remove ``numpy/npy_1_7_deprecated_api.h`` and C macros like ``NPY_OWNDATA``
+  in favor of ``NPY_ARRAY_OWNDATA`` (deprecated since 1.7)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Remove alias ``generate_divbyzero_error`` to
+  ``npy_set_floatstatus_divbyzero`` and ``generate_overflow_error`` to
+  ``npy_set_floatstatus_overflow`` (deprecated since 1.10)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Remove ``np.tostring`` (deprecated since 1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Raise on ``np.conjugate`` of non-numeric types (deprecated since 1.13)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Raise when using ``np.bincount(...minlength=None)``, use 0 instead
+  (deprecated since 1.14)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Passing ``shape=None`` to functions with a non-optional shape argument
+  errors, use ``()`` instead (deprecated since 1.20)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Inexact matches for ``mode`` and ``searchside`` raise (deprecated since 1.20)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Setting ``__array_finalize__ = None`` errors (deprecated since 1.23)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* ``np.fromfile`` and ``np.fromstring`` error on bad data, previously they
+  would guess (deprecated since 1.18)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* ``datetime64`` and ``timedelta64`` construction with a tuple no longer
+  accepts an ``event`` value, either use a two-tuple of (unit, num) or a
+  4-tuple of (unit, num, den, 1) (deprecated since 1.14)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* When constructing a ``dtype`` from a class with a ``dtype`` attribute, that
+  attribute must be a dtype-instance rather than a thing that can be parsed as
+  a dtype instance (deprecated in 1.19). At some point the whole construct of
+  using a dtype attribute will be deprecated (see #25306)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Passing booleans as partition index errors (deprecated since 1.23)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Out-of-bounds indexes error even on empty arrays (deprecated since 1.20)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* ``np.tostring`` has been removed, use ``tobytes`` instead (deprecated since 1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Disallow make a non-writeable array writeable for arrays with a base that do
+  not own their data (deprecated since 1.17)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* ``concatenate()`` with ``axis=None`` uses ``same-kind`` casting by default,
+  not ``unsafe`` (deprecated since 1.20)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Unpickling a scalar with object dtype errors (deprecated since 1.20)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+
+* The binary mode of ``fromstring`` now errors, use ``frombuffer`` instead
+  (deprecated since 1.14)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Converting ``np.inexact`` or ``np.floating`` to a dtype errors (deprecated
+  since 1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Converting ``np.complex``, ``np.integer``, ``np.signedinteger``,
+  ``np.unsignedinteger``, ``np.generic`` to a dtype errors (deprecated since
+  1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* The Python built-in ``round`` errors for complex scalars. Use ``np.round`` or
+  ``scalar.round`` instead (deprecated since 1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* 'np.bool' scalars can no longer be interpreted as an index (deprecated since 1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Parsing an integer via a float string is no longer supported. (deprecated
+  since 1.23) To avoid this error you can
+  * make sure the original data is stored as integers.
+  * use the ``converters=float`` keyword argument.
+  * Use ``np.loadtxt(...).astype(np.int64)``
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+
+* The use of a length 1 tuple for the ufunc ``signature`` errors. Use ``dtype``
+  or  fill the tuple with ``None`` (deprecated since 1.19)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+ 
+* Special handling of matrix is in np.outer is removed. Convert to a ndarray
+  via ``matrix.A`` (deprecated since 1.20)
+
+  (`gh-28254 <https://github.com/numpy/numpy/pull/28254>`__)
+
+* Removed the ``np.compat`` package source code (removed in 2.0)
+
+  (`gh-28961 <https://github.com/numpy/numpy/pull/28961>`__)
+
+
+C API changes
+=============
+
+* ``NpyIter_GetTransferFlags`` is now available to check if
+  the iterator needs the Python API or if casts may cause floating point
+  errors (FPE).  FPEs can for example be set when casting ``float64(1e300)``
+  to ``float32`` (overflow to infinity) or a NaN to an integer (invalid value).
+
+  (`gh-27883 <https://github.com/numpy/numpy/pull/27883>`__)
+
+* ``NpyIter`` now has no limit on the number of operands it supports.
+
+  (`gh-28080 <https://github.com/numpy/numpy/pull/28080>`__)
+
+New ``NpyIter_GetTransferFlags`` and ``NpyIter_IterationNeedsAPI`` change
+-------------------------------------------------------------------------
+NumPy now has the new ``NpyIter_GetTransferFlags`` function as a more precise
+way checking of iterator/buffering needs.  I.e. whether the Python API/GIL is
+required or floating point errors may occur.
+This function is also faster if you already know your needs without buffering.
+
+The ``NpyIter_IterationNeedsAPI`` function now performs all the checks that were
+previously performed at setup time.  While it was never necessary to call it
+multiple times, doing so will now have a larger cost.
+
+(`gh-27998 <https://github.com/numpy/numpy/pull/27998>`__)
+
+
+New Features
+============
+
+* The type parameter of ``np.dtype`` now defaults to ``typing.Any``.
+  This way, static type-checkers will infer ``dtype: np.dtype`` as
+  ``dtype: np.dtype[Any]``, without reporting an error.
+
+  (`gh-28669 <https://github.com/numpy/numpy/pull/28669>`__)
+
+* Static type-checkers now interpret:
+
+  - ``_: np.ndarray`` as ``_: npt.NDArray[typing.Any]``.
+  - ``_: np.flatiter`` as ``_: np.flatiter[np.ndarray]``.
+
+  This is because their type parameters now have default values.
+
+  (`gh-28940 <https://github.com/numpy/numpy/pull/28940>`__)
+
+NumPy now registers its pkg-config paths with the pkgconf_ PyPI package
+-----------------------------------------------------------------------
+The pkgconf_ PyPI package provides an interface for projects like NumPy to
+register their own paths to be added to the pkg-config search path. This means
+that when using pkgconf_ from PyPI, NumPy will be discoverable without needing
+for any custom environment configuration.
+
+.. attention:: Attention
+
+    This only applies when using the pkgconf_ package from PyPI_, or put another
+    way, this only applies when installing pkgconf_ via a Python package
+    manager.
+
+    If you are using ``pkg-config`` or ``pkgconf`` provided by your system, or
+    any other source that does not use the pkgconf-pypi_ project, the NumPy
+    pkg-config directory will not be automatically added to the search path. In
+    these situations, you might want to use ``numpy-config``.
+
+
+.. _pkgconf: https://github.com/pypackaging-native/pkgconf-pypi
+.. _PyPI: https://pypi.org/
+.. _pkgconf-pypi: https://github.com/pypackaging-native/pkgconf-pypi
+
+(`gh-28214 <https://github.com/numpy/numpy/pull/28214>`__)
+
+Allow ``out=...`` in ufuncs to ensure array result
+--------------------------------------------------
+NumPy has the sometimes difficult behavior that it currently usually
+returns scalars rather than 0-D arrays (even if the inputs were 0-D arrays).
+This is especially problematic for non-numerical dtypes (e.g. ``object``).
+
+For ufuncs (i.e. most simple math functions) it is now possible to use
+``out=...`` (literally \`...\`, e.g. ``out=Ellipsis``) which is identical in
+behavior to ``out`` not being passed, but will ensure a non-scalar return.
+This spelling is borrowed from ``arr1d[0, ...]`` where the ``...`` also ensures
+a non-scalar return.
+
+Other functions with an ``out=`` kwarg should gain support eventually.
+Downstream libraries that interoperate via ``__array_ufunc__`` or
+``__array_function__`` may need to adapt to support this.
+
+(`gh-28576 <https://github.com/numpy/numpy/pull/28576>`__)
+
+Building NumPy with OpenMP Parallelization
+------------------------------------------
+NumPy now supports OpenMP parallel processing capabilities when built with the
+``-Denable_openmp=true`` Meson build flag. This feature is disabled by default.
+When enabled, ``np.sort`` and ``np.argsort`` functions can utilize OpenMP for
+parallel thread execution, improving performance for these operations.
+
+(`gh-28619 <https://github.com/numpy/numpy/pull/28619>`__)
+
+Interactive examples in the NumPy documentation
+-----------------------------------------------
+The NumPy documentation includes a number of examples that
+can now be run interactively in your browser using WebAssembly
+and Pyodide.
+
+Please note that the examples are currently experimental in
+nature and may not work as expected for all methods in the
+public API.
+
+(`gh-26745 <https://github.com/numpy/numpy/pull/26745>`__)
+
+
+Improvements
+============
+
+* Scalar comparisons between non-comparable dtypes such as
+  ``np.array(1) == np.array('s')`` now return a NumPy bool instead of
+  a Python bool.
+
+  (`gh-27288 <https://github.com/numpy/numpy/pull/27288>`__)
+
+* ``np.nditer`` now has no limit on the number of supported operands
+  (C-integer).
+
+  (`gh-28080 <https://github.com/numpy/numpy/pull/28080>`__)
+
+* No-copy pickling is now supported for any 
+  array that can be transposed to a C-contiguous array.
+
+  (`gh-28105 <https://github.com/numpy/numpy/pull/28105>`__)
+
+* The ``__repr__`` for user-defined dtypes now prefers the ``__name__`` of the
+  custom dtype over a more generic name constructed from its ``kind`` and
+  ``itemsize``.
+
+  (`gh-28250 <https://github.com/numpy/numpy/pull/28250>`__)
+
+* ``np.dot`` now reports floating point exceptions.
+
+  (`gh-28442 <https://github.com/numpy/numpy/pull/28442>`__)
+
+* ``np.dtypes.StringDType`` is now a
+  `generic type <https://typing.python.org/en/latest/spec/generics.html>`_ which
+  accepts a type argument for ``na_object`` that defaults to ``typing.Never``.
+  For example, ``StringDType(na_object=None)`` returns a ``StringDType[None]``,
+  and ``StringDType()`` returns a ``StringDType[typing.Never]``.
+
+  (`gh-28856 <https://github.com/numpy/numpy/pull/28856>`__)
+
+Added warnings to ``np.isclose``
+--------------------------------
+Added warning messages if at least one of atol or rtol are either ``np.nan`` or
+``np.inf`` within ``np.isclose``.
+
+* Warnings follow the user's ``np.seterr`` settings
+
+(`gh-28205 <https://github.com/numpy/numpy/pull/28205>`__)
+
+
+Performance improvements and changes
+====================================
+
+Performance improvements to ``np.unique``
+-----------------------------------------
+``np.unique`` now tries to use a hash table to find unique values instead of
+sorting values before finding unique values. This is limited to certain dtypes
+for now, and the function is now faster for those dtypes. The function now also
+exposes a ``sorted`` parameter to allow returning unique values as they were
+found, instead of sorting them afterwards.
+
+(`gh-26018 <https://github.com/numpy/numpy/pull/26018>`__)
+
+Performance improvements to ``np.sort`` and ``np.argsort``
+----------------------------------------------------------
+``np.sort`` and ``np.argsort`` functions now can leverage OpenMP for parallel
+thread execution, resulting in up to 3.5x speedups on x86 architectures with
+AVX2 or AVX-512 instructions. This opt-in feature requires NumPy to be built
+with the -Denable_openmp Meson flag. Users can control the number of threads
+used by setting the OMP_NUM_THREADS environment variable.
+
+(`gh-28619 <https://github.com/numpy/numpy/pull/28619>`__)
+
+Performance improvements for ``np.float16`` casts
+-------------------------------------------------
+Earlier, floating point casts to and from ``np.float16`` types
+were emulated in software on all platforms.
+
+Now, on ARM devices that support Neon float16 intrinsics (such as
+recent Apple Silicon), the native float16 path is used to achieve
+the best performance.
+
+(`gh-28769 <https://github.com/numpy/numpy/pull/28769>`__)
+
+Performance improvements for ``np.matmul``
+------------------------------------------
+Enable using BLAS for ``matmul`` even when operands are non-contiguous by copying
+if needed.
+
+(`gh-23752 <https://github.com/numpy/numpy/pull/23752>`__)
+
+Changes
+=======
+
+* The vector norm ``ord=inf`` and the matrix norms ``ord={1, 2, inf, 'nuc'}``
+  now always returns zero for empty arrays. Empty arrays have at least one axis
+  of size zero. This affects ``np.linalg.norm``, ``np.linalg.vector_norm``, and
+  ``np.linalg.matrix_norm``. Previously, NumPy would raises errors or return
+  zero depending on the shape of the array.
+
+  (`gh-28343 <https://github.com/numpy/numpy/pull/28343>`__)
+
+* A spelling error in the error message returned when converting a string to a
+  float with the method ``np.format_float_positional`` has been fixed.
+
+  (`gh-28569 <https://github.com/numpy/numpy/pull/28569>`__)
+
+* NumPy's ``__array_api_version__`` was upgraded from ``2023.12`` to ``2024.12``.
+ 
+* ``numpy.count_nonzero`` for ``axis=None`` (default) now returns a NumPy scalar
+  instead of a Python integer.
+
+* The parameter ``axis`` in ``numpy.take_along_axis`` function has now a default
+  value of ``-1``.
+
+  (`gh-28615 <https://github.com/numpy/numpy/pull/28615>`__)
+
+* Printing of ``np.float16`` and ``np.float32`` scalars and arrays have been improved by
+  adjusting the transition to scientific notation based on the floating point precision.
+  A new legacy ``np.printoptions`` mode ``'2.2'`` has been added for backwards compatibility.
+
+  (`gh-28703 <https://github.com/numpy/numpy/pull/28703>`__)
+
+* Multiplication between a string and integer now raises OverflowError instead
+  of MemoryError if the result of the multiplication would create a string that
+  is too large to be represented. This follows Python's behavior.
+
+  (`gh-29060 <https://github.com/numpy/numpy/pull/29060>`__)
+
+``unique_values`` may return unsorted data
+------------------------------------------
+The relatively new function (added in NumPy 2.0) ``unique_values`` may now
+return unsorted results.  Just as ``unique_counts`` and ``unique_all`` these
+never guaranteed a sorted result, however, the result was sorted until now.  In
+cases where these do return a sorted result, this may change in future releases
+to improve performance.
+
+(`gh-26018 <https://github.com/numpy/numpy/pull/26018>`__)
+
+Changes to the main iterator and potential numerical changes
+------------------------------------------------------------
+The main iterator, used in math functions and via ``np.nditer`` from Python and
+``NpyIter`` in C, now behaves differently for some buffered iterations.  This
+means that:
+
+* The buffer size used will often be smaller than the maximum buffer sized
+  allowed by the ``buffersize`` parameter.
+
+* The "growinner" flag is now honored with buffered reductions when no operand
+  requires buffering.
+
+For ``np.sum()`` such changes in buffersize may slightly change numerical
+results of floating point operations.  Users who use "growinner" for custom
+reductions could notice changes in precision (for example, in NumPy we removed
+it from ``einsum`` to avoid most precision changes and improve precision for
+some 64bit floating point inputs).
+
+(`gh-27883 <https://github.com/numpy/numpy/pull/27883>`__)
+
+The minimum supported GCC version is now 9.3.0
+----------------------------------------------
+The minimum supported version was updated from 8.4.0 to 9.3.0, primarily in
+order to reduce the chance of platform-specific bugs in old GCC versions from
+causing issues.
+
+(`gh-28102 <https://github.com/numpy/numpy/pull/28102>`__)
+
+Changes to automatic bin selection in numpy.histogram
+-----------------------------------------------------
+The automatic bin selection algorithm in ``numpy.histogram`` has been modified
+to avoid out-of-memory errors for samples with low variation.  For full control
+over the selected bins the user can use set the ``bin`` or ``range`` parameters
+of ``numpy.histogram``.
+
+(`gh-28426 <https://github.com/numpy/numpy/pull/28426>`__)
+
+Build manylinux_2_28 wheels
+---------------------------
+Wheels for linux systems will use the ``manylinux_2_28`` tag (instead of the
+``manylinux2014`` tag), which means dropping support for redhat7/centos7,
+amazonlinux2, debian9, ubuntu18.04, and other pre-glibc2.28 operating system
+versions, as per the `PEP 600 support table`_.
+
+.. _`PEP 600 support table`: https://github.com/mayeut/pep600_compliance?tab=readme-ov-file#pep600-compliance-check
+
+(`gh-28436 <https://github.com/numpy/numpy/pull/28436>`__)
+
+Remove use of -Wl,-ld_classic on macOS
+--------------------------------------
+Remove use of -Wl,-ld_classic on macOS. This hack is no longer needed by Spack,
+and results in libraries that cannot link to other libraries built with ld
+(new).
+
+(`gh-28713 <https://github.com/numpy/numpy/pull/28713>`__)
+
+Re-enable overriding functions in the ``numpy.strings``
+-------------------------------------------------------
+Re-enable overriding functions in the ``numpy.strings`` module.
+
+(`gh-28741 <https://github.com/numpy/numpy/pull/28741>`__)

@@ -779,7 +779,7 @@ You can add the arrays together with the plus sign.
 ::
 
   >>> data = np.array([1, 2])
-  >>> ones = np.ones(2, dtype=int)
+  >>> ones = np.ones(2, dtype=np.int_)
   >>> data + ones
   array([2, 3])
 
@@ -863,12 +863,13 @@ NumPy also performs aggregation functions. In addition to ``min``, ``max``, and
 result of multiplying the elements together, ``std`` to get the standard
 deviation, and more. ::
 
+  >>> data = np.array([1, 2, 3])
   >>> data.max()
-  2.0
+  3
   >>> data.min()
-  1.0
+  1
   >>> data.sum()
-  3.0
+  6
 
 .. image:: images/np_aggregation.png
 
@@ -1347,7 +1348,7 @@ For example::
       With a single iterable argument, return its biggest item. The
       default keyword-only argument specifies an object to return if
       the provided iterable is empty.
-      With two or more arguments, return the largest argument.
+      With two or more ...arguments, return the largest argument.
   <BLANKLINE>
 
 
@@ -1740,4 +1741,5 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar https://jalammar.github.io/*
+*Image credits: Jay Alammar*
+`https://jalammar.github.io/ <https://jalammar.github.io/>`_

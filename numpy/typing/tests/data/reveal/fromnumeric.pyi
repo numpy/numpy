@@ -1,12 +1,11 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
 from typing import Any, assert_type
-from typing import Literal as L
 
 import numpy as np
 import numpy.typing as npt
 
-class NDArraySubclass(npt.NDArray[np.complex128]): ...
+class NDArraySubclass(np.ndarray[tuple[Any, ...], np.dtype[np.complex128]]): ...
 
 AR_b: npt.NDArray[np.bool]
 AR_f4: npt.NDArray[np.float32]
@@ -16,9 +15,9 @@ AR_i8: npt.NDArray[np.int64]
 AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
 AR_m: npt.NDArray[np.timedelta64]
-AR_0d: np.ndarray[tuple[()], np.dtype]
-AR_1d: np.ndarray[tuple[int], np.dtype]
-AR_nd: np.ndarray[tuple[int, ...], np.dtype]
+AR_0d: np.ndarray[tuple[()]]
+AR_1d: np.ndarray[tuple[int]]
+AR_nd: np.ndarray
 
 b: np.bool
 f4: np.float32
@@ -26,7 +25,7 @@ i8: np.int64
 f: float
 
 # integer‑dtype subclass for argmin/argmax
-class NDArrayIntSubclass(npt.NDArray[np.intp]): ...
+class NDArrayIntSubclass(np.ndarray[tuple[Any, ...], np.dtype[np.intp]]): ...
 AR_sub_i: NDArrayIntSubclass
 
 assert_type(np.take(b, 0), np.bool)
@@ -81,6 +80,11 @@ assert_type(np.argpartition(f4, 0), npt.NDArray[np.intp])
 assert_type(np.argpartition(f, 0), npt.NDArray[np.intp])
 assert_type(np.argpartition(AR_b, 0), npt.NDArray[np.intp])
 assert_type(np.argpartition(AR_f4, 0), npt.NDArray[np.intp])
+assert_type(np.argpartition(b, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(f4, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(f, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(AR_b, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
+assert_type(np.argpartition(AR_f4, 0, axis=None), np.ndarray[tuple[int], np.dtype[np.intp]])
 
 assert_type(np.sort([2, 1], 0), npt.NDArray[Any])
 assert_type(np.sort(AR_b, 0), npt.NDArray[np.bool])
@@ -124,25 +128,26 @@ assert_type(np.diagonal(AR_f4), npt.NDArray[np.float32])
 assert_type(np.trace(AR_b), Any)
 assert_type(np.trace(AR_f4), Any)
 assert_type(np.trace(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.trace(AR_f4, out=AR_subclass, dtype=None), NDArraySubclass)
 
 assert_type(np.ravel(b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(f4), np.ndarray[tuple[int], np.dtype[np.float32]])
-assert_type(np.ravel(f), np.ndarray[tuple[int], np.dtype[np.float64 | np.int_ | np.bool]])
+assert_type(np.ravel(f), np.ndarray[tuple[int], np.dtype[np.float64 | Any]])
 assert_type(np.ravel(AR_b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(AR_f4), np.ndarray[tuple[int], np.dtype[np.float32]])
 
-assert_type(np.nonzero(AR_b), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(AR_f4), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(AR_1d), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(AR_nd), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(AR_b), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
+assert_type(np.nonzero(AR_f4), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
+assert_type(np.nonzero(AR_1d), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
+assert_type(np.nonzero(AR_nd), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
 
 assert_type(np.shape(b), tuple[()])
 assert_type(np.shape(f), tuple[()])
 assert_type(np.shape([1]), tuple[int])
 assert_type(np.shape([[2]]), tuple[int, int])
-assert_type(np.shape([[[3]]]), tuple[int, ...])
-assert_type(np.shape(AR_b), tuple[int, ...])
-assert_type(np.shape(AR_nd), tuple[int, ...])
+assert_type(np.shape([[[3]]]), tuple[Any, ...])
+assert_type(np.shape(AR_b), tuple[Any, ...])
+assert_type(np.shape(AR_nd), tuple[Any, ...])
 # these fail on mypy, but it works as expected with pyright/pylance
 # assert_type(np.shape(AR_0d), tuple[()])
 # assert_type(np.shape(AR_1d), tuple[int])

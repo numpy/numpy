@@ -645,7 +645,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
             "may be necessary.")
 
     # The header is a pretty-printed string representation of a literal
-    # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
+    # Python dictionary with trailing newlines padded to an ARRAY_ALIGN byte
     # boundary. The keys are strings.
     #   "shape" : tuple of int
     #   "fortran_order" : bool
@@ -879,10 +879,10 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
             )
 
         if fortran_order:
-            array.shape = shape[::-1]
+            array = array.reshape(shape[::-1])
             array = array.transpose()
         else:
-            array.shape = shape
+            array = array.reshape(shape)
 
     return array
 

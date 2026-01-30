@@ -2,6 +2,7 @@ import importlib
 import os
 import re
 import sys
+import sysconfig
 from datetime import datetime
 
 from docutils import nodes
@@ -17,6 +18,9 @@ needs_sphinx = '4.3'
 # must be kept alive to hold the patched names
 _name_cache = {}
 
+FREE_THREADED_BUILD = sysconfig.get_config_var('Py_GIL_DISABLED')
+
+
 def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
@@ -30,10 +34,19 @@ def replace_scalar_type_names():
     class PyTypeObject(ctypes.Structure):
         pass
 
-    PyObject._fields_ = [
-        ('ob_refcnt', Py_ssize_t),
-        ('ob_type', ctypes.POINTER(PyTypeObject)),
-    ]
+    if not FREE_THREADED_BUILD:
+        PyObject._fields_ = [
+            ('ob_refcnt', Py_ssize_t),
+            ('ob_type', ctypes.POINTER(PyTypeObject)),
+        ]
+    else:
+        # As of Python 3.14
+        PyObject._fields_ = [
+            ('ob_refcnt_full', ctypes.c_int64),
+            # an anonymous struct that we don't try to model
+            ('__private', ctypes.c_int64),
+            ('ob_type', ctypes.POINTER(PyTypeObject)),
+        ]
 
     PyTypeObject._fields_ = [
         # varhead
@@ -114,7 +127,7 @@ for ext, warn in skippable_extensions:
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # General substitutions.
 project = 'NumPy'
@@ -144,14 +157,6 @@ today_fmt = '%B %d, %Y'
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = "autolink"
-
-# List of directories, relative to source directories, that shouldn't be searched
-# for source files.
-exclude_dirs = []
-
-exclude_patterns = []
-if sys.version_info[:2] >= (3, 12):
-    exclude_patterns += ["reference/distutils.rst"]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -272,6 +277,10 @@ html_theme_options = {
         "json_url": "https://numpy.org/doc/_static/versions.json",
     },
     "show_version_warning_banner": True,
+    "analytics": {
+        "plausible_analytics_domain": "numpy.org/doc/stable/",
+        "plausible_analytics_url": ("https://views.scientific-python.org/js/script.js"),
+    },
 }
 
 html_title = f"{project} v{version} Manual"
@@ -544,14 +553,14 @@ def linkcode_resolve(domain, info):
     fn = None
     lineno = None
 
-    # Make a poor effort at linking C extension types
-    if isinstance(obj, type) and obj.__module__ == 'numpy':
-        fn = _get_c_source_file(obj)
+    if isinstance(obj, type):
+        # Make a poor effort at linking C extension types
+        if obj.__module__ == 'numpy':
+            fn = _get_c_source_file(obj)
 
-    # This can be removed when removing the decorator set_module. Fix issue #28629
-    if hasattr(obj, '_module_file'):
-        fn = obj._module_file
-        fn = relpath(fn, start=dirname(numpy.__file__))
+        # This can be removed when removing the decorator set_module. Fix issue #28629
+        if hasattr(obj, '_module_source'):
+            obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if fn is None:
         try:
@@ -577,6 +586,9 @@ def linkcode_resolve(domain, info):
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
+
+    if isinstance(obj, type) and hasattr(obj, '_module_source'):
+        obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if 'dev' in numpy.__version__:
         return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"

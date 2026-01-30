@@ -24,8 +24,10 @@ from numpy._core import (
     uint32,
     uint64,
 )
+from numpy._utils import set_module
 
 
+@set_module('numpy')
 class __array_namespace_info__:
     """
     Get the array API inspection namespace for NumPy.
@@ -57,8 +59,6 @@ class __array_namespace_info__:
      'indexing': numpy.int64}
 
     """
-
-    __module__ = 'numpy'
 
     def capabilities(self):
         """
@@ -94,14 +94,14 @@ class __array_namespace_info__:
         >>> info = np.__array_namespace_info__()
         >>> info.capabilities()
         {'boolean indexing': True,
-         'data-dependent shapes': True}
+         'data-dependent shapes': True,
+         'max dimensions': 64}
 
         """
         return {
             "boolean indexing": True,
             "data-dependent shapes": True,
-            # 'max rank' will be part of the 2024.12 standard
-            # "max rank": 64,
+            "max dimensions": 64,
         }
 
     def default_device(self):

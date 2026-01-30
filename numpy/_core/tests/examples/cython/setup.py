@@ -4,10 +4,10 @@ for testing.
 """
 
 import os
-from distutils.core import setup
 
 import Cython
 from Cython.Build import cythonize
+from distutils.core import setup
 from setuptools.extension import Extension
 
 import numpy as np

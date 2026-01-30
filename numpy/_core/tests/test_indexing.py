@@ -1,22 +1,23 @@
 import functools
+import inspect
 import operator
 import sys
 import warnings
 from itertools import product
 
 import pytest
-from numpy._core._multiarray_tests import array_indexing
 
 import numpy as np
+from numpy._core._multiarray_tests import array_indexing
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     HAS_REFCOUNT,
+    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
 )
 
 
@@ -615,22 +616,6 @@ class TestIndexing:
         assert_equal(a[[0, 1], [0, 1]], np.array([0, 6]))
         assert_raises(IndexError, a.__getitem__, [slice(None)])
 
-    def test_flat_index_on_flatiter(self):
-        a = np.arange(9).reshape((3, 3))
-        b = np.array([0, 5, 6])
-        assert_equal(a.flat[b.flat], np.array([0, 5, 6]))
-
-    def test_empty_string_flat_index_on_flatiter(self):
-        a = np.arange(9).reshape((3, 3))
-        b = np.array([], dtype="S")
-        assert_equal(a.flat[b.flat], np.array([]))
-
-    def test_nonempty_string_flat_index_on_flatiter(self):
-        a = np.arange(9).reshape((3, 3))
-        b = np.array(["a"], dtype="S")
-        with pytest.raises(IndexError, match="unsupported iterator index"):
-            a.flat[b.flat]
-
 
 class TestFieldIndexing:
     def test_scalar_return_type(self):
@@ -784,14 +769,15 @@ class TestFancyIndexingCast:
         assert_equal(zero_array[0, 1], 1)
 
         # Fancy indexing works, although we get a cast warning.
-        assert_warns(ComplexWarning,
+        pytest.warns(ComplexWarning,
                      zero_array.__setitem__, ([0], [1]), np.array([2 + 1j]))
         assert_equal(zero_array[0, 1], 2)  # No complex part
 
         # Cast complex to float, throwing away the imaginary portion.
-        assert_warns(ComplexWarning,
+        pytest.warns(ComplexWarning,
                      zero_array.__setitem__, bool_index, np.array([1j]))
         assert_equal(zero_array[0, 1], 0)
+
 
 class TestFancyIndexingEquivalence:
     def test_object_assign(self):
@@ -863,10 +849,11 @@ class TestMultiIndexingAutomated:
 
     """
 
-    def setup_method(self):
-        self.a = np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
-        self.b = np.empty((3, 0, 5, 6))
-        self.complex_indices = ['skip', Ellipsis,
+    def _create_array(self):
+        return np.arange(np.prod([3, 1, 5, 6])).reshape(3, 1, 5, 6)
+
+    def _create_complex_indices(self):
+        return ['skip', Ellipsis,
             0,
             # Boolean indices, up to 3-d for some special cases of eating up
             # dimensions, also need to test all False
@@ -886,11 +873,6 @@ class TestMultiIndexingAutomated:
             np.array([2, -1], dtype=np.int8),
             np.zeros([1] * 31, dtype=int),  # trigger too large array.
             np.array([0., 1.])]  # invalid datatype
-        # Some simpler indices that still cover a bit more
-        self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]),
-                               'skip']
-        # Very simple ones to fill the rest:
-        self.fill_indices = [slice(None, None), 0]
 
     def _get_multi_index(self, arr, indices):
         """Mimic multi dimensional indexing.
@@ -1223,16 +1205,23 @@ class TestMultiIndexingAutomated:
         # it is aligned to the left. This is probably correct for
         # consistency with arr[boolean_array,] also no broadcasting
         # is done at all
+        a = self._create_array()
         self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool),))
+            a, (np.zeros_like(a, dtype=bool),))
         self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool)[..., 0],))
+            a, (np.zeros_like(a, dtype=bool)[..., 0],))
         self._check_multi_index(
-            self.a, (np.zeros_like(self.a, dtype=bool)[None, ...],))
+            a, (np.zeros_like(a, dtype=bool)[None, ...],))
 
     def test_multidim(self):
         # Automatically test combinations with complex indexes on 2nd (or 1st)
         # spot and the simple ones in one other spot.
+        a = self._create_array()
+        b = np.empty((3, 0, 5, 6))
+        complex_indices = self._create_complex_indices()
+        simple_indices = [Ellipsis, None, -1, [1], np.array([True]), 'skip']
+        fill_indices = [slice(None, None), 0]
+
         with warnings.catch_warnings():
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file separately.
@@ -1243,27 +1232,29 @@ class TestMultiIndexingAutomated:
                 return isinstance(idx, str) and idx == "skip"
 
             for simple_pos in [0, 2, 3]:
-                tocheck = [self.fill_indices, self.complex_indices,
-                           self.fill_indices, self.fill_indices]
-                tocheck[simple_pos] = self.simple_indices
+                tocheck = [fill_indices, complex_indices,
+                           fill_indices, fill_indices]
+                tocheck[simple_pos] = simple_indices
                 for index in product(*tocheck):
                     index = tuple(i for i in index if not isskip(i))
-                    self._check_multi_index(self.a, index)
-                    self._check_multi_index(self.b, index)
+                    self._check_multi_index(a, index)
+                    self._check_multi_index(b, index)
 
         # Check very simple item getting:
-        self._check_multi_index(self.a, (0, 0, 0, 0))
-        self._check_multi_index(self.b, (0, 0, 0, 0))
+        self._check_multi_index(a, (0, 0, 0, 0))
+        self._check_multi_index(b, (0, 0, 0, 0))
         # Also check (simple cases of) too many indices:
-        assert_raises(IndexError, self.a.__getitem__, (0, 0, 0, 0, 0))
-        assert_raises(IndexError, self.a.__setitem__, (0, 0, 0, 0, 0), 0)
-        assert_raises(IndexError, self.a.__getitem__, (0, 0, [1], 0, 0))
-        assert_raises(IndexError, self.a.__setitem__, (0, 0, [1], 0, 0), 0)
+        assert_raises(IndexError, a.__getitem__, (0, 0, 0, 0, 0))
+        assert_raises(IndexError, a.__setitem__, (0, 0, 0, 0, 0), 0)
+        assert_raises(IndexError, a.__getitem__, (0, 0, [1], 0, 0))
+        assert_raises(IndexError, a.__setitem__, (0, 0, [1], 0, 0), 0)
 
     def test_1d(self):
         a = np.arange(10)
-        for index in self.complex_indices:
+        complex_indices = self._create_complex_indices()
+        for index in complex_indices:
             self._check_single_index(a, index)
+
 
 class TestFloatNonIntegerArgument:
     """
@@ -1352,7 +1343,8 @@ class TestBooleanIndexing:
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx1])
 
-        # This used to incorrectly give a ValueError: operands could not be broadcast together
+        # This used to incorrectly give a ValueError: operands could not be
+        # broadcast together
         idx2 = np.array([[False] * 8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
@@ -1453,3 +1445,248 @@ class TestCApiAccess:
         a = a.reshape(5, 2)
         assign(a, 4, 10)
         assert_array_equal(a[-1], [10, 10])
+
+
+class TestFlatiterIndexing:
+    def test_flatiter_indexing_single_integer(self):
+        a = np.arange(9).reshape((3, 3))
+        assert_array_equal(a.flat[0], 0)
+        assert_array_equal(a.flat[4], 4)
+        assert_array_equal(a.flat[-1], 8)
+
+        with pytest.raises(IndexError, match="index 9 is out of bounds"):
+            a.flat[9]
+
+    def test_flatiter_indexing_slice(self):
+        a = np.arange(9).reshape((3, 3))
+        assert_array_equal(a.flat[:], np.arange(9))
+        assert_array_equal(a.flat[:5], np.arange(5))
+        assert_array_equal(a.flat[5:10], np.arange(5, 9))
+        assert_array_equal(a.flat[::2], np.arange(0, 9, 2))
+        assert_array_equal(a.flat[::-1], np.arange(8, -1, -1))
+        assert_array_equal(a.flat[10:5], np.array([]))
+
+        assert_array_equal(a.flat[()], np.arange(9))
+        assert_array_equal(a.flat[...], np.arange(9))
+
+    def test_flatiter_indexing_boolean(self):
+        a = np.arange(9).reshape((3, 3))
+
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            assert_array_equal(a.flat[True], 0)
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            assert_array_equal(a.flat[False], np.array([]))
+
+        mask = np.zeros(len(a.flat), dtype=bool)
+        mask[::2] = True
+        assert_array_equal(a.flat[mask], np.arange(0, 9, 2))
+
+        wrong_mask = np.zeros(len(a.flat) + 1, dtype=bool)
+        with pytest.raises(IndexError,
+                           match="boolean index did not match indexed flat iterator"):
+            a.flat[wrong_mask]
+
+    def test_flatiter_indexing_fancy(self):
+        a = np.arange(9).reshape((3, 3))
+
+        indices = np.array([1, 3, 5])
+        assert_array_equal(a.flat[indices], indices)
+
+        assert_array_equal(a.flat[[-1, -2]], np.array([8, 7]))
+
+        indices_2d = np.array([[1, 2], [3, 4]])
+        assert_array_equal(a.flat[indices_2d], indices_2d)
+
+        assert_array_equal(a.flat[[True, 1]], np.array([1, 1]))
+
+        assert_array_equal(a.flat[[]], np.array([], dtype=a.dtype))
+
+        with pytest.raises(IndexError,
+                           match="boolean indices for iterators are not supported"):
+            a.flat[[True, True]]
+
+        a = np.arange(3)
+        with pytest.raises(IndexError,
+                           match="boolean indices for iterators are not supported"):
+            a.flat[[True, False, True]]
+        assert_array_equal(a.flat[np.asarray([True, False, True])], np.array([0, 2]))
+
+    def test_flatiter_indexing_not_supported_newaxis_mutlidimensional_float(self):
+        a = np.arange(9).reshape((3, 3))
+        with pytest.raises(IndexError,
+                           match=r"only integers, slices \(`:`\), "
+                                 r"ellipsis \(`\.\.\.`\) and "
+                                 r"integer or boolean arrays are valid indices"):
+            a.flat[None]
+
+        with pytest.raises(IndexError,
+                           match=r"too many indices for flat iterator: flat iterator "
+                                 r"is 1-dimensional, but 2 were indexed"):
+            a.flat[1, 2]
+
+        with pytest.warns(DeprecationWarning,
+                          match="Invalid non-array indices for iterator objects are "
+                                "deprecated"):
+            assert_array_equal(a.flat[[1.0, 2.0]], np.array([1, 2]))
+
+    def test_flatiter_assign_single_integer(self):
+        a = np.arange(9).reshape((3, 3))
+
+        a.flat[0] = 10
+        assert_array_equal(a, np.array([[10, 1, 2], [3, 4, 5], [6, 7, 8]]))
+
+        a.flat[4] = 20
+        assert_array_equal(a, np.array([[10, 1, 2], [3, 20, 5], [6, 7, 8]]))
+
+        a.flat[-1] = 30
+        assert_array_equal(a, np.array([[10, 1, 2], [3, 20, 5], [6, 7, 30]]))
+
+        with pytest.raises(IndexError, match="index 9 is out of bounds"):
+            a.flat[9] = 40
+
+    def test_flatiter_indexing_slice_assign(self):
+        a = np.arange(9).reshape((3, 3))
+        a.flat[:] = 10
+        assert_array_equal(a, np.full((3, 3), 10))
+
+        a = np.arange(9).reshape((3, 3))
+        a.flat[:5] = 20
+        assert_array_equal(a, np.array([[20, 20, 20], [20, 20, 5], [6, 7, 8]]))
+
+        a = np.arange(9).reshape((3, 3))
+        a.flat[5:10] = 30
+        assert_array_equal(a, np.array([[0, 1, 2], [3, 4, 30], [30, 30, 30]]))
+
+        a = np.arange(9).reshape((3, 3))
+        a.flat[::2] = 40
+        assert_array_equal(a, np.array([[40, 1, 40], [3, 40, 5], [40, 7, 40]]))
+
+        a = np.arange(9).reshape((3, 3))
+        a.flat[::-1] = 50
+        assert_array_equal(a, np.full((3, 3), 50))
+
+        a = np.arange(9).reshape((3, 3))
+        a.flat[10:5] = 60
+        assert_array_equal(a, np.arange(9).reshape((3, 3)))
+
+        a = np.arange(9).reshape((3, 3))
+        with pytest.raises(IndexError,
+                           match="Assigning to a flat iterator with a 0-D index"):
+            a.flat[()] = 70
+
+        a = np.arange(9).reshape((3, 3))
+        a.flat[...] = 80
+        assert_array_equal(a, np.full((3, 3), 80))
+
+    def test_flatiter_indexing_boolean_assign(self):
+        a = np.arange(9).reshape((3, 3))
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            a.flat[True] = 10
+        assert_array_equal(a, np.array([[10, 1, 2], [3, 4, 5], [6, 7, 8]]))
+
+        a = np.arange(9).reshape((3, 3))
+        with pytest.warns(DeprecationWarning, match="0-dimensional boolean index"):
+            a.flat[False] = 20
+        assert_array_equal(a, np.arange(9).reshape((3, 3)))
+
+        a = np.arange(9).reshape((3, 3))
+        mask = np.zeros(len(a.flat), dtype=bool)
+        mask[::2] = True
+        a.flat[mask] = 30
+        assert_array_equal(a, np.array([[30, 1, 30], [3, 30, 5], [30, 7, 30]]))
+
+        wrong_mask = np.zeros(len(a.flat) + 1, dtype=bool)
+        with pytest.raises(IndexError,
+                           match="boolean index did not match indexed flat iterator"):
+            a.flat[wrong_mask] = 40
+
+    def test_flatiter_indexing_fancy_assign(self):
+        a = np.arange(9).reshape((3, 3))
+        indices = np.array([1, 3, 5])
+        a.flat[indices] = 10
+        assert_array_equal(a, np.array([[0, 10, 2], [10, 4, 10], [6, 7, 8]]))
+
+        a.flat[[-1, -2]] = 20
+        assert_array_equal(a, np.array([[0, 10, 2], [10, 4, 10], [6, 20, 20]]))
+
+        a = np.arange(9).reshape((3, 3))
+        indices_2d = np.array([[1, 2], [3, 4]])
+        a.flat[indices_2d] = 30
+        assert_array_equal(a, np.array([[0, 30, 30], [30, 30, 5], [6, 7, 8]]))
+
+        a.flat[[True, 1]] = 40
+        assert_array_equal(a, np.array([[0, 40, 30], [30, 30, 5], [6, 7, 8]]))
+
+        with pytest.raises(IndexError,
+                           match="boolean indices for iterators are not supported"):
+            a.flat[[True, True]] = 50
+
+        a = np.arange(3)
+        with pytest.raises(IndexError,
+                           match="boolean indices for iterators are not supported"):
+            a.flat[[True, False, True]] = 20
+        a.flat[np.asarray([True, False, True])] = 20
+        assert_array_equal(a, np.array([20, 1, 20]))
+
+    def test_flatiter_indexing_fancy_int16_dtype(self):
+        a = np.arange(9).reshape((3, 3))
+        indices = np.array([1, 3, 5], dtype=np.int16)
+        assert_array_equal(a.flat[indices], np.array([1, 3, 5]))
+
+        a.flat[indices] = 10
+        assert_array_equal(a, np.array([[0, 10, 2], [10, 4, 10], [6, 7, 8]]))
+
+    def test_flatiter_indexing_not_supported_newaxis_mutlid_float_assign(self):
+        a = np.arange(9).reshape((3, 3))
+        with pytest.raises(IndexError,
+                           match=r"only integers, slices \(`:`\), "
+                                 r"ellipsis \(`\.\.\.`\) and "
+                                 r"integer or boolean arrays are valid indices"):
+            a.flat[None] = 10
+
+        a.flat[[1, 2]] = 10
+        assert_array_equal(a, np.array([[0, 10, 10], [3, 4, 5], [6, 7, 8]]))
+
+        with pytest.warns(DeprecationWarning,
+                          match="Invalid non-array indices for iterator objects are "
+                                "deprecated"):
+            a.flat[[1.0, 2.0]] = 20
+        assert_array_equal(a, np.array([[0, 20, 20], [3, 4, 5], [6, 7, 8]]))
+
+    def test_flat_index_on_flatiter(self):
+        a = np.arange(9).reshape((3, 3))
+        b = np.array([0, 5, 6])
+        assert_equal(a.flat[b.flat], np.array([0, 5, 6]))
+
+    def test_empty_string_flat_index_on_flatiter(self):
+        a = np.arange(9).reshape((3, 3))
+        b = np.array([], dtype="S")
+        # This is arguably incorrect, and should be removed (ideally with
+        # deprecation).  But it matches the array path and comes from not
+        # distinguishing `arr[np.array([]).flat]` and `arr[[]]` and the latter
+        # must pass.
+        assert_equal(a.flat[b.flat], np.array([]))
+
+    def test_nonempty_string_flat_index_on_flatiter(self):
+        a = np.arange(9).reshape((3, 3))
+        b = np.array(["a"], dtype="S")
+        with pytest.raises(IndexError,
+                match=r"only integers, slices \(`:`\), ellipsis \(`\.\.\.`\) "
+                      r"and integer or boolean arrays are valid indices"):
+            a.flat[b.flat]
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
+@pytest.mark.parametrize("methodname", ["__array__", "copy"])
+def test_flatiter_method_signatures(methodname: str):
+    method = getattr(np.flatiter, methodname)
+    assert callable(method)
+
+    try:
+        sig = inspect.signature(method)
+    except ValueError as e:
+        pytest.fail(f"Could not get signature for np.flatiter.{methodname}: {e}")
+
+    assert "self" in sig.parameters
+    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY

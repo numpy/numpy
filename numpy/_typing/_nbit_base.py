@@ -30,14 +30,13 @@ class NBitBase:
 
     .. code-block:: python
 
-        >>> from typing import TypeVar, TYPE_CHECKING
+        >>> from typing import TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
 
-        >>> S = TypeVar("S", bound=npt.NBitBase)
-        >>> T = TypeVar("T", bound=npt.NBitBase)
-
-        >>> def add(a: np.floating[S], b: np.integer[T]) -> np.floating[S | T]:
+        >>> def add[S: npt.NBitBase, T: npt.NBitBase](
+        ...     a: np.floating[S], b: np.integer[T]
+        ... ) -> np.floating[S | T]:
         ...     return a + b
 
         >>> a = np.float16()

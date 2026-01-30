@@ -4,11 +4,7 @@ Test the scalar constructors, which also do type-coercion
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_almost_equal,
-    assert_equal,
-    assert_warns,
-)
+from numpy.testing import assert_almost_equal, assert_equal
 
 
 class TestFromString:
@@ -29,7 +25,7 @@ class TestFromString:
         assert_equal(fsingle, np.inf)
         fdouble = np.double('1e10000')
         assert_equal(fdouble, np.inf)
-        flongdouble = assert_warns(RuntimeWarning, np.longdouble, '1e10000')
+        flongdouble = pytest.warns(RuntimeWarning, np.longdouble, '1e10000')
         assert_equal(flongdouble, np.inf)
 
         fhalf = np.half('-1e10000')
@@ -38,7 +34,7 @@ class TestFromString:
         assert_equal(fsingle, -np.inf)
         fdouble = np.double('-1e10000')
         assert_equal(fdouble, -np.inf)
-        flongdouble = assert_warns(RuntimeWarning, np.longdouble, '-1e10000')
+        flongdouble = pytest.warns(RuntimeWarning, np.longdouble, '-1e10000')
         assert_equal(flongdouble, -np.inf)
 
 

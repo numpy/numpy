@@ -32,7 +32,7 @@
 template<PyUFuncGenericFunction cpp_ufunc>
 static void
 wrap_legacy_cpp_ufunc(char **args, npy_intp const *dimensions,
-                      ptrdiff_t const *steps, void *func)
+                      npy_intp const *steps, void *func)
 {
     NPY_ALLOW_C_API_DEF
     try {
@@ -86,14 +86,14 @@ copy_output(T buff[], char *out, npy_intp step_out, size_t n)
  */
 template <typename T>
 static void
-fft_loop(char **args, npy_intp const *dimensions, ptrdiff_t const *steps,
+fft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps,
          void *func)
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
     size_t n_outer = (size_t)dimensions[0];
-    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    npy_intp si = steps[0], sf = steps[1], so = steps[2];
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
-    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    npy_intp step_in = steps[3], step_out = steps[4];
     bool direction = *((bool *)func); /* pocketfft::FORWARD or BACKWARD */
 
     assert (nout > 0);
@@ -144,9 +144,9 @@ rfft_impl(char **args, npy_intp const *dimensions, npy_intp const *steps,
 {
     char *ip = args[0], *fp = args[1], *op = args[2];
     size_t n_outer = (size_t)dimensions[0];
-    ptrdiff_t si = steps[0], sf = steps[1], so = steps[2];
+    npy_intp si = steps[0], sf = steps[1], so = steps[2];
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
-    ptrdiff_t step_in = steps[3], step_out = steps[4];
+    npy_intp step_in = steps[3], step_out = steps[4];
 
     assert (nout > 0 && nout == npts / 2 + 1);
 
@@ -233,14 +233,13 @@ irfft_loop(char **args, npy_intp const *dimensions, npy_intp const *steps, void 
     size_t nin = (size_t)dimensions[1], nout = (size_t)dimensions[2];
     ptrdiff_t step_in = steps[3], step_out = steps[4];
 
-    size_t npts_in = nout / 2 + 1;
-
     assert(nout > 0);
 
 #ifndef POCKETFFT_NO_VECTORS
     /*
      * Call pocketfft directly if vectorization is possible.
      */
+    size_t npts_in = nout / 2 + 1;
     constexpr auto vlen = pocketfft::detail::VLEN<T>::val;
     if (vlen > 1 && n_outer >= vlen && nin >= npts_in && sf == 0) {
         std::vector<size_t> axes = { 1 };
@@ -388,41 +387,57 @@ add_gufuncs(PyObject *dictionary) {
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_multiarray_umath",
-    NULL,
-    -1,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static int module_loaded = 0;
 
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit__pocketfft_umath(void)
+static int
+_pocketfft_umath_exec(PyObject *m)
 {
-    PyObject *m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
     }
+    module_loaded = 1;
 
     /* Import the array and ufunc objects */
-    import_array();
-    import_ufunc();
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
+    }
 
     PyObject *d = PyModule_GetDict(m);
     if (add_gufuncs(d) < 0) {
         Py_DECREF(d);
-        Py_DECREF(m);
-        return NULL;
+        return -1;
     }
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot _pocketfft_umath_slots[] = {
+    {Py_mod_exec, (void*)_pocketfft_umath_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,  /* m_base */
+    "_pocketfft_umath",     /* m_name */
+    NULL,                   /* m_doc */
+    0,                      /* m_size */
+    NULL,                   /* m_methods */
+    _pocketfft_umath_slots, /* m_slots */
+};
+
+PyMODINIT_FUNC PyInit__pocketfft_umath(void) {
+    return PyModuleDef_Init(&moduledef);
 }

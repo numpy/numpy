@@ -148,7 +148,9 @@ class Einsum(Benchmark):
         self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=dtype)
         self.non_contiguous_dim1 = np.arange(1, 4000, 2, dtype=dtype)
         self.non_contiguous_dim2 = np.arange(1, 2400, 2, dtype=dtype).reshape(30, 40)
-        self.non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=dtype).reshape(20, 30, 40)
+
+        non_contiguous_dim3 = np.arange(1, 48000, 2, dtype=dtype)
+        self.non_contiguous_dim3 = non_contiguous_dim3.reshape(20, 30, 40)
 
     # outer(a,b): trigger sum_of_products_contig_stride0_outcontig_two
     def time_einsum_outer(self, dtype):
@@ -180,11 +182,13 @@ class Einsum(Benchmark):
 
     # outer(a,b): non_contiguous arrays
     def time_einsum_noncon_outer(self, dtype):
-        np.einsum("i,j", self.non_contiguous_dim1, self.non_contiguous_dim1, optimize=True)
+        np.einsum("i,j", self.non_contiguous_dim1,
+                  self.non_contiguous_dim1, optimize=True)
 
     # multiply(a, b):non_contiguous arrays
     def time_einsum_noncon_multiply(self, dtype):
-        np.einsum("..., ...", self.non_contiguous_dim2, self.non_contiguous_dim3, optimize=True)
+        np.einsum("..., ...", self.non_contiguous_dim2,
+                  self.non_contiguous_dim3, optimize=True)
 
     # sum and multiply:non_contiguous arrays
     def time_einsum_noncon_sum_mul(self, dtype):
@@ -200,7 +204,8 @@ class Einsum(Benchmark):
 
     # contig_contig_outstride0_two: non_contiguous arrays
     def time_einsum_noncon_contig_contig(self, dtype):
-        np.einsum("ji,i->", self.non_contiguous_dim2, self.non_contiguous_dim1_small, optimize=True)
+        np.einsum("ji,i->", self.non_contiguous_dim2,
+                  self.non_contiguous_dim1_small, optimize=True)
 
     # sum_of_products_contig_outstride0_one: non_contiguous arrays
     def time_einsum_noncon_contig_outstride0(self, dtype):

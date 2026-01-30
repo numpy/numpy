@@ -4,7 +4,7 @@ from string import Template
 
 
 def main():
-    doxy_gen(os.path.abspath(os.path.join('..')))
+    doxy_gen(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def doxy_gen(root_path):
     """
@@ -24,6 +24,7 @@ def doxy_gen(root_path):
 class DoxyTpl(Template):
     delimiter = '@'
 
+
 def doxy_config(root_path):
     """
     Fetch all Doxygen sub-config files and gather it with the main config file.
@@ -35,13 +36,14 @@ def doxy_config(root_path):
         conf = DoxyTpl(fd.read())
         confs.append(conf.substitute(CUR_DIR=dsrc_path, **sub))
 
-    for dpath, _, files in os.walk(root_path):
-        if ".doxyfile" not in files:
-            continue
-        conf_path = os.path.join(dpath, ".doxyfile")
-        with open(conf_path) as fd:
-            conf = DoxyTpl(fd.read())
-            confs.append(conf.substitute(CUR_DIR=dpath, **sub))
+    for subdir in ["doc", "numpy"]:
+        for dpath, _, files in os.walk(os.path.join(root_path, subdir)):
+            if ".doxyfile" not in files:
+                continue
+            conf_path = os.path.join(dpath, ".doxyfile")
+            with open(conf_path) as fd:
+                conf = DoxyTpl(fd.read())
+                confs.append(conf.substitute(CUR_DIR=dpath, **sub))
     return confs
 
 

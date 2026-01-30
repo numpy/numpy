@@ -20,6 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
+#include "descriptor.h" 
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -160,7 +161,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  * valid self (a generic scalar) and an other item.
  * May fill self_item and/or other_arr (but not both) with non-NULL values.
  *
- * Why this dance?  When the other object is a exactly Python scalar something
+ * Why this dance?  When the other object is exactly a Python scalar something
  * awkward happens historically in NumPy.
  * NumPy doesn't define a result, but the ufunc would cast to `astype(object)`
  * which is the same as `scalar.item()`.  And that operation converts e.g.
@@ -226,7 +227,7 @@ find_binary_operation_path(
      */
     int was_scalar;
     PyArrayObject *arr = (PyArrayObject *)PyArray_FromAny_int(
-                other, NULL, NULL, 0, 0, 0, NULL, &was_scalar);
+                other, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL, &was_scalar);
     if (arr == NULL) {
         return -1;
     }
@@ -939,12 +940,23 @@ datetimetype_repr(PyObject *self)
         if (legacy_print_mode == -1) {
             return NULL;
         }
-        if (legacy_print_mode > 125) {
-            ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+
+        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        if((scal->obval == NPY_DATETIME_NAT) && (meta != NULL)){
+            if (legacy_print_mode > 125) {
+                ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
+            } else {
+                ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+            }
+        } else {
+            if (legacy_print_mode > 125) {
+                ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
+            }
+            else {
+                ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+            }
         }
-        else {
-            ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
-        }
+        Py_DECREF(meta);
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -1777,23 +1789,75 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_dataptr_get(PyObject *self)
 {
-    PyArrayObject *arr;
-    PyObject *inter;
-
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
-    }
-    inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-    if (inter != NULL) {
-        PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
-    }
-    Py_DECREF(arr);
-    return inter;
+    return Py_BuildValue(
+        "NO",
+        PyLong_FromVoidPtr(scalar_value(self, NULL)),
+        Py_True
+    );
 }
 
+
+static PyObject *
+gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+{
+    PyObject *dataptr = NULL;
+    PyObject *strides = NULL;
+    PyObject *shape = NULL;
+    PyObject *descr = NULL;
+    PyObject *typestr = NULL;
+    PyArray_Descr *array_descr = NULL;
+    PyObject *inter = NULL;
+
+
+    array_descr = PyArray_DescrFromScalar(self);
+    if (array_descr == NULL) {
+        goto finish;
+    }
+
+    /* dataptr */
+    dataptr = gentype_dataptr_get(self);
+    if (dataptr == NULL) {
+        goto finish;
+    }
+
+    /* strides */
+    strides = gentype_shape_get(self, NULL);
+    if (strides == NULL) {
+        goto finish;
+    }
+    
+    /* descr */
+    descr = array_protocol_descr_get(array_descr);
+    if (descr == NULL) {
+        goto finish;
+    }
+
+    /* typestr */
+    typestr = arraydescr_protocol_typestr_get(array_descr, NULL);
+    if (typestr == NULL) {
+        goto finish;
+    }
+
+    /* shape */
+    shape = gentype_shape_get(self, NULL);
+    if (shape == NULL) {
+        goto finish;
+    }
+
+    inter = build_array_interface(dataptr, descr, strides, typestr, shape);
+    goto finish;
+
+finish:
+    Py_XDECREF(descr);
+    Py_XDECREF(dataptr);
+    Py_XDECREF(strides);
+    Py_XDECREF(shape);
+    Py_XDECREF(typestr);
+    Py_XDECREF(array_descr);
+    return inter;
+}
 
 
 static PyObject *
@@ -1929,33 +1993,6 @@ gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
     return self;
 }
 
-static PyObject *
-gentype_newbyteorder(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`newbyteorder` was removed from scalar types in NumPy 2.0. "
-                    "Use `sc.view(sc.dtype.newbyteorder(order))` instead.");
-    return NULL;
-}
-
-static PyObject *
-gentype_itemset(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`itemset` was removed from scalar types in NumPy 2.0 "
-                    "because scalars are immutable.");
-    return NULL;
-}
-
-static PyObject *
-gentype_ptp(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`ptp` was removed from scalar types in NumPy 2.0. "
-                    "For a scalar, the range of values always equals 0.");
-    return NULL;
-}
-
 
 static PyGetSetDef gentype_getsets[] = {
     {"ndim",
@@ -1999,15 +2036,6 @@ static PyGetSetDef gentype_getsets[] = {
         (setter)0, NULL, NULL},
     {"T",
         (getter)gentype_transpose_get,
-        (setter)0, NULL, NULL},
-    {"newbyteorder",
-        (getter)gentype_newbyteorder,
-        (setter)0, NULL, NULL},
-    {"itemset",
-        (getter)gentype_itemset,
-        (setter)0, NULL, NULL},
-    {"ptp",
-        (getter)gentype_ptp,
         (setter)0, NULL, NULL},
     {"device",
         (getter)array_device,
@@ -2082,12 +2110,11 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 
 /*
  * These gentype_* functions do not take keyword arguments.
- * The proper flag is METH_VARARGS.
+ * The proper flag is METH_VARARGS or METH_NOARGS.
  */
 /**begin repeat
  *
- * #name = tolist, item, __deepcopy__, __copy__,
- *         swapaxes, conj, conjugate, nonzero,
+ * #name = tolist, item, swapaxes, conj, conjugate, nonzero,
  *         fill, transpose#
  */
 static PyObject *
@@ -2096,6 +2123,34 @@ gentype_@name@(PyObject *self, PyObject *args)
     return gentype_generic_method(self, args, NULL, "@name@");
 }
 /**end repeat**/
+
+static PyObject *
+gentype___copy__(PyObject *self)
+{
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
+        // path via array
+        return gentype_generic_method(self, NULL, NULL, "__copy__");
+    }
+    return Py_NewRef(self);
+}
+
+static PyObject *
+gentype___deepcopy__(PyObject *self, PyObject *args)
+{
+    // note: maybe the signature needs to be updated as __deepcopy__ can accept the keyword memo
+
+    // scalars are immutable, so we can return a new reference
+    // the only expections are scalars with void dtype
+    // if the number of arguments is not 1, we let gentype_generic_method do the
+    // error handling
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (PyTuple_Size(args)!=1)) {
+        // path via array
+        return gentype_generic_method(self, args, NULL, "__deepcopy__");
+    }
+    return Py_NewRef(self);
+}
 
 static PyObject *
 gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2147,7 +2202,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, any, all, astype, resize,
- *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
+ *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
 static PyObject *
@@ -2622,9 +2677,6 @@ static PyMethodDef gentype_methods[] = {
     {"tofile",
         (PyCFunction)gentype_tofile,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"tostring",
-        (PyCFunction)gentype_tostring,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2658,7 +2710,7 @@ static PyMethodDef gentype_methods[] = {
     /* for the copy module */
     {"__copy__",
         (PyCFunction)gentype___copy__,
-        METH_VARARGS, NULL},
+        METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
         METH_VARARGS, NULL},
@@ -2858,6 +2910,16 @@ static PyMethodDef numbertype_methods[] = {
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
+
+/**begin repeat
+ * #name = boolean,datetime#
+ */
+static PyMethodDef @name@type_methods[] = {
+    /* for typing */
+    {"__class_getitem__", Py_GenericAlias, METH_CLASS | METH_O, NULL},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+/**end repeat**/
 
 /**begin repeat
  * #name = cfloat,clongdouble#
@@ -3920,7 +3982,6 @@ static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
     PyArray_DatetimeMetaData *meta;
-    PyArray_Descr *dtype;
     npy_@lname@ val = PyArrayScalar_VAL(obj, @name@);
 
     if (val == NPY_DATETIME_NAT) {
@@ -3928,10 +3989,10 @@ static npy_hash_t
         return PyBaseObject_Type.tp_hash(obj);
     }
 
-    dtype = PyArray_DescrFromScalar(obj);
-    meta = get_datetime_metadata_from_dtype(dtype);
+    meta = &((PyDatetimeScalarObject *)obj)->obmeta;
 
-    return @lname@_hash(meta, val);
+    npy_hash_t res = @lname@_hash(meta, val);
+    return res;
 }
 /**end repeat**/
 
@@ -4568,6 +4629,7 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    PyDatetimeArrType_Type.tp_methods = datetimetype_methods;
 
     /**begin repeat
      * #Type = Byte, UByte, Short, UShort, Int, UInt, Long,
@@ -4581,6 +4643,7 @@ initialize_numeric_types(void)
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
     PyBoolArrType_Type.tp_repr = genbool_type_repr;
+    PyBoolArrType_Type.tp_methods = booleantype_methods;
 
 
     /**begin repeat

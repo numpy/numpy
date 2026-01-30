@@ -1,3 +1,0 @@
-* Printing of ``np.float16`` and ``np.float32`` scalars and arrays have been improved by
-  adjusting the transition to scientific notation based on the floating point precision.
-  A new legacy ``np.printoptions`` mode ``'2.2'`` has been added for backwards compatibility.

@@ -717,7 +717,6 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     inf
     >>> np.nansum([1, np.nan, -np.inf])
     -inf
-    >>> from numpy.testing import suppress_warnings
     >>> with np.errstate(invalid="ignore"):
     ...     np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
     np.float64(nan)
@@ -1220,7 +1219,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 def _nanpercentile_dispatcher(
         a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, weights=None, interpolation=None):
+        method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -1235,7 +1234,6 @@ def nanpercentile(
         keepdims=np._NoValue,
         *,
         weights=None,
-        interpolation=None,
 ):
     """
     Compute the qth percentile of the data along the specified axis,
@@ -1314,11 +1312,6 @@ def nanpercentile(
 
         .. versionadded:: 2.0.0
 
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
-
     Returns
     -------
     percentile : scalar or ndarray
@@ -1380,15 +1373,12 @@ def nanpercentile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-    if interpolation is not None:
-        method = fnb._check_interpolation_as_method(
-            method, interpolation, "nanpercentile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
+    weak_q = type(q) in (int, float)  # use weak promotion for final result type
+    q = np.true_divide(q, 100, out=...)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -1404,12 +1394,11 @@ def nanpercentile(
             raise ValueError("Weights must be non-negative.")
 
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, weights=None,
-                            interpolation=None):
+                            method=None, keepdims=None, *, weights=None):
     return (a, q, out, weights)
 
 
@@ -1424,7 +1413,6 @@ def nanquantile(
         keepdims=np._NoValue,
         *,
         weights=None,
-        interpolation=None,
 ):
     """
     Compute the qth quantile of the data along the specified axis,
@@ -1501,11 +1489,6 @@ def nanquantile(
 
         .. versionadded:: 2.0.0
 
-    interpolation : str, optional
-        Deprecated name for the method keyword argument.
-
-        .. deprecated:: 1.22.0
-
     Returns
     -------
     quantile : scalar or ndarray
@@ -1566,20 +1549,12 @@ def nanquantile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
-
-    if interpolation is not None:
-        method = fnb._check_interpolation_as_method(
-            method, interpolation, "nanquantile")
-
     a = np.asanyarray(a)
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    # Use dtype of array if possible (e.g., if q is a python int or float).
-    if isinstance(q, (int, float)) and a.dtype.kind == "f":
-        q = np.asanyarray(q, dtype=a.dtype)
-    else:
-        q = np.asanyarray(q)
+    weak_q = type(q) in (int, float)  # use weak promotion for final result type
+    q = np.asanyarray(q)
 
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -1596,7 +1571,7 @@ def nanquantile(
             raise ValueError("Weights must be non-negative.")
 
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
 def _nanquantile_unchecked(
@@ -1608,6 +1583,7 @@ def _nanquantile_unchecked(
         method="linear",
         keepdims=np._NoValue,
         weights=None,
+        weak_q=False,
 ):
     """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
@@ -1622,7 +1598,8 @@ def _nanquantile_unchecked(
                         axis=axis,
                         out=out,
                         overwrite_input=overwrite_input,
-                        method=method)
+                        method=method,
+                        weak_q=weak_q)
 
 
 def _nanquantile_ureduce_func(
@@ -1633,6 +1610,7 @@ def _nanquantile_ureduce_func(
         out=None,
         overwrite_input: bool = False,
         method="linear",
+        weak_q=False,
 ):
     """
     Private function that doesn't support extended axis or keepdims.
@@ -1642,11 +1620,12 @@ def _nanquantile_ureduce_func(
     if axis is None or a.ndim == 1:
         part = a.ravel()
         wgt = None if weights is None else weights.ravel()
-        result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
+        result = _nanquantile_1d(part, q, overwrite_input, method,
+                                 weights=wgt, weak_q=weak_q)
     # Note that this code could try to fill in `out` right away
     elif weights is None:
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method, weights)
+                                     overwrite_input, method, weights, weak_q)
         # apply_along_axis fills in collapsed axis with results.
         # Move those axes to the beginning to match percentile's
         # convention.
@@ -1670,6 +1649,7 @@ def _nanquantile_ureduce_func(
             result[(...,) + ii] = _nanquantile_1d(
                     a[ii], q, weights=weights[ii],
                     overwrite_input=overwrite_input, method=method,
+                    weak_q=weak_q,
             )
         # This path dealt with `out` already...
         return result
@@ -1681,6 +1661,7 @@ def _nanquantile_ureduce_func(
 
 def _nanquantile_1d(
     arr1d, q, overwrite_input=False, method="linear", weights=None,
+    weak_q=False,
 ):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
@@ -1699,6 +1680,7 @@ def _nanquantile_1d(
         overwrite_input=overwrite_input,
         method=method,
         weights=weights,
+        weak_q=weak_q,
     )
 
 

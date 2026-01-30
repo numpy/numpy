@@ -42,7 +42,7 @@ __all__ = [
     'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
     'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
-    'process_f2cmap_dict', 'containscommon'
+    'process_f2cmap_dict', 'containscommon', 'containsderivedtypes'
 ]
 
 
@@ -565,6 +565,20 @@ def containscommon(rout):
     if hasbody(rout):
         for b in rout['body']:
             if containscommon(b):
+                return 1
+    return 0
+
+
+def hasderivedtypes(rout):
+    return ('block' in rout) and rout['block'] == 'type'
+
+
+def containsderivedtypes(rout):
+    if hasderivedtypes(rout):
+        return 1
+    if hasbody(rout):
+        for b in rout['body']:
+            if hasderivedtypes(b):
                 return 1
     return 0
 

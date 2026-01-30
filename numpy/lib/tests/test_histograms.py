@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 
 import numpy as np
@@ -12,7 +14,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    suppress_warnings,
 )
 
 
@@ -135,14 +136,12 @@ class TestHistogram:
         a = np.array([1, 1, 0], dtype=np.uint8)
         int_hist, int_edges = np.histogram(a)
 
-        # Should raise an warning on booleans
+        # Should raise a warning on booleans
         # Ensure that the histograms are equivalent, need to suppress
         # the warnings to get the actual outputs
-        with suppress_warnings() as sup:
-            rec = sup.record(RuntimeWarning, 'Converting input from .*')
+        with pytest.warns(RuntimeWarning, match='Converting input from .*'):
             hist, edges = np.histogram([True, True, False])
             # A warning should be issued
-            assert_equal(len(rec), 1)
             assert_array_equal(hist, int_hist)
             assert_array_equal(edges, int_edges)
 
@@ -284,9 +283,8 @@ class TestHistogram:
         all_nan = np.array([np.nan, np.nan])
 
         # the internal comparisons with NaN give warnings
-        sup = suppress_warnings()
-        sup.filter(RuntimeWarning)
-        with sup:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
             # can't infer range with nan
             assert_raises(ValueError, histogram, one_nan, bins='auto')
             assert_raises(ValueError, histogram, all_nan, bins='auto')
@@ -554,7 +552,8 @@ class TestHistogramOptimBinNums:
             assert_equal(len(a), numbins)
 
     def test_scott_vs_stone(self):
-        """Verify that Scott's rule and Stone's rule converges for normally distributed data"""
+        # Verify that Scott's rule and Stone's rule converges for normally
+        # distributed data
 
         def nbins_ratio(seed, size):
             rng = np.random.RandomState(seed)
@@ -562,10 +561,11 @@ class TestHistogramOptimBinNums:
             a, b = len(np.histogram(x, 'stone')[0]), len(np.histogram(x, 'scott')[0])
             return a / (a + b)
 
-        ll = [[nbins_ratio(seed, size) for size in np.geomspace(start=10, stop=100, num=4).round().astype(int)]
-              for seed in range(10)]
+        geom_space = np.geomspace(start=10, stop=100, num=4).round().astype(int)
+        ll = [[nbins_ratio(seed, size) for size in geom_space] for seed in range(10)]
 
-        # the average difference between the two methods decreases as the dataset size increases.
+        # the average difference between the two methods decreases as the dataset
+        # size increases.
         avg = abs(np.mean(ll, axis=0) - 0.5)
         assert_almost_equal(avg, [0.15, 0.09, 0.08, 0.03], decimal=2)
 
@@ -616,9 +616,9 @@ class TestHistogramOptimBinNums:
         """
         Test that bin width for integer data is at least 1.
         """
-        with suppress_warnings() as sup:
+        with warnings.catch_warnings():
             if bins == 'stone':
-                sup.filter(RuntimeWarning)
+                warnings.simplefilter('ignore', RuntimeWarning)
             assert_equal(
                 np.histogram_bin_edges(np.tile(np.arange(9), 1000), bins),
                 np.arange(9))

@@ -13,42 +13,79 @@ from numpy.version import version as __version__
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []
-for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
+for envkey in ['OPENBLAS_MAIN_FREE']:
     if envkey not in os.environ:
-        os.environ[envkey] = '1'
+        # Note: using `putenv` (and `unsetenv` further down) instead of updating
+        # `os.environ` on purpose to avoid a race condition, see gh-30627.
+        os.putenv(envkey, '1')
         env_added.append(envkey)
 
 try:
     from . import multiarray
 except ImportError as exc:
     import sys
-    msg = """
+
+    # Bypass for the module re-initialization opt-out
+    if exc.msg == "cannot load module more than once per process":
+        raise
+
+    # Basically always, the problem should be that the C module is wrong/missing...
+    if (
+        isinstance(exc, ModuleNotFoundError)
+        and exc.name == "numpy._core._multiarray_umath"
+    ):
+        import sys
+        candidates = []
+        for path in __path__:
+            candidates.extend(
+                f for f in os.listdir(path) if f.startswith("_multiarray_umath"))
+        if len(candidates) == 0:
+            bad_c_module_info = (
+                "We found no compiled module, did NumPy build successfully?\n")
+        else:
+            candidate_str = '\n  * '.join(candidates)
+            # cache_tag is documented to be possibly None, so just use name if it is
+            # this guesses at cache_tag being the same as the extension module scheme
+            tag = sys.implementation.cache_tag or sys.implementation.name
+            bad_c_module_info = (
+                f"The following compiled module files exist, but seem incompatible\n"
+                f"with with either python '{tag}' or the "
+                f"platform '{sys.platform}':\n\n  * {candidate_str}\n"
+            )
+    else:
+        bad_c_module_info = ""
+
+    major, minor, *_ = sys.version_info
+    msg = f"""
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
 
 Importing the numpy C-extensions failed. This error can happen for
 many reasons, often due to issues with your setup or how NumPy was
 installed.
-
+{bad_c_module_info}
 We have compiled some common reasons and troubleshooting tips at:
 
     https://numpy.org/devdocs/user/troubleshooting-importerror.html
 
 Please note and check the following:
 
-  * The Python version is: Python%d.%d from "%s"
-  * The NumPy version is: "%s"
+  * The Python version is: Python {major}.{minor} from "{sys.executable}"
+  * The NumPy version is: "{__version__}"
 
 and make sure that they are the versions you expect.
-Please carefully study the documentation linked above for further help.
 
-Original error was: %s
-""" % (sys.version_info[0], sys.version_info[1], sys.executable,
-        __version__, exc)
+Please carefully study the information and documentation linked above.
+This is unlikely to be a NumPy issue but will be caused by a bad install
+or environment on your machine.
+
+Original error was: {exc}
+"""
+
     raise ImportError(msg) from exc
 finally:
     for envkey in env_added:
-        del os.environ[envkey]
+        os.unsetenv(envkey)
 del envkey
 del env_added
 del os
@@ -71,15 +108,7 @@ from . import numerictypes as nt
 from .numerictypes import sctypeDict, sctypes
 
 multiarray.set_typeDict(nt.sctypeDict)
-from . import (
-    _machar,
-    einsumfunc,
-    fromnumeric,
-    function_base,
-    getlimits,
-    numeric,
-    shape_base,
-)
+from . import einsumfunc, fromnumeric, function_base, getlimits, numeric, shape_base
 from .einsumfunc import *
 from .fromnumeric import *
 from .function_base import *
@@ -158,18 +187,6 @@ def _DType_reduce(DType):
     # For these, we pickle them by reconstructing them from the scalar type:
     scalar_type = DType.type
     return _DType_reconstruct, (scalar_type,)
-
-
-def __getattr__(name):
-    # Deprecated 2022-11-22, NumPy 1.25.
-    if name == "MachAr":
-        import warnings
-        warnings.warn(
-            "The `np._core.MachAr` is considered private API (NumPy 1.24)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return _machar.MachAr
-    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 
 import copyreg

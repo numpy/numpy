@@ -81,8 +81,7 @@ __all__ = [
     'polycompanion']
 
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
+from numpy._core.overrides import array_function_dispatch as _array_function_dispatch
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -522,7 +521,7 @@ def polyder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -636,7 +635,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -715,6 +714,10 @@ def polyval(x, c, tensor=True):
     Notes
     -----
     The evaluation uses Horner's method.
+
+    When using coefficients from polynomials created with ``Polynomial.fit()``,
+    use ``p(x)`` or ``polyval(x, p.convert().coef)`` to handle domain/window
+    scaling correctly, not ``polyval(x, p.coef)``.
 
     Examples
     --------
@@ -841,7 +844,13 @@ def polyvalfromroots(x, r, tensor=True):
             raise ValueError("x.ndim must be < r.ndim when tensor == False")
     return np.prod(x - r, axis=0)
 
+def _polyval2d_dispatcher(x, y, c):
+    return (x, y, c)
 
+def _polygrid2d_dispatcher(x, y, c):
+    return (x, y, c)
+
+@_array_function_dispatch(_polyval2d_dispatcher)
 def polyval2d(x, y, c):
     """
     Evaluate a 2-D polynomial at points (x, y).
@@ -893,7 +902,7 @@ def polyval2d(x, y, c):
     """
     return pu._valnd(polyval, c, x, y)
 
-
+@_array_function_dispatch(_polygrid2d_dispatcher)
 def polygrid2d(x, y, c):
     """
     Evaluate a 2-D polynomial on the Cartesian product of x and y.
@@ -1536,7 +1545,7 @@ def polyroots(c):
         return np.array([-c[0] / c[1]])
 
     m = polycompanion(c)
-    r = la.eigvals(m)
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 

@@ -5,9 +5,7 @@ import functools
 import itertools
 import operator
 
-from . import fromnumeric as _from_nx
-from . import numeric as _nx
-from . import overrides
+from . import fromnumeric as _from_nx, numeric as _nx, overrides
 from .multiarray import array, asanyarray, normalize_axis_index
 
 array_function_dispatch = functools.partial(

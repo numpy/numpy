@@ -13,6 +13,7 @@ https://anaconda.org/conda-forge/numpy)
 https://stackoverflow.com/questions/tagged/numpy)
 [![Nature Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41586--020--2649--2-blue)](
 https://doi.org/10.1038/s41586-020-2649-2)
+[![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=numpy)](https://insights.linuxfoundation.org/project/numpy)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://securityscorecards.dev/viewer/?uri=github.com/numpy/numpy)
 [![Typing](https://img.shields.io/pypi/types/numpy)](https://pypi.org/project/numpy/)
 
@@ -25,7 +26,7 @@ NumPy is the fundamental package for scientific computing with Python.
 - **Source code:** https://github.com/numpy/numpy
 - **Contributing:** https://numpy.org/devdocs/dev/index.html
 - **Bug reports:** https://github.com/numpy/numpy/issues
-- **Report a security vulnerability:** https://tidelift.com/docs/security
+- **Report a security vulnerability:** https://github.com/numpy/numpy/security/policy (via Tidelift)
 
 It provides:
 

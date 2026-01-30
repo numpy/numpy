@@ -1,12 +1,10 @@
 from collections.abc import Iterable
-from typing import Any, SupportsIndex, TypeVar, overload
+from typing import Any, SupportsIndex, overload
 
-from numpy import generic
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, _Shape, _ShapeLike
+import numpy as np
+from numpy._typing import ArrayLike, NDArray, _AnyShape, _ArrayLike, _ShapeLike
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
-
-_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 class DummyArray:
     __array_interface__: dict[str, Any]
@@ -14,61 +12,60 @@ class DummyArray:
     def __init__(
         self,
         interface: dict[str, Any],
-        base: NDArray[Any] | None = ...,
+        base: NDArray[Any] | None = None,
     ) -> None: ...
 
 @overload
-def as_strided(
-    x: _ArrayLike[_ScalarT],
-    shape: Iterable[int] | None = ...,
-    strides: Iterable[int] | None = ...,
-    subok: bool = ...,
-    writeable: bool = ...,
-) -> NDArray[_ScalarT]: ...
+def as_strided[ScalarT: np.generic](
+    x: _ArrayLike[ScalarT],
+    shape: Iterable[int] | None = None,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
+) -> NDArray[ScalarT]: ...
 @overload
 def as_strided(
     x: ArrayLike,
-    shape: Iterable[int] | None = ...,
-    strides: Iterable[int] | None = ...,
-    subok: bool = ...,
-    writeable: bool = ...,
+    shape: Iterable[int] | None = None,
+    strides: Iterable[int] | None = None,
+    subok: bool = False,
+    writeable: bool = True,
 ) -> NDArray[Any]: ...
 
 @overload
-def sliding_window_view(
-    x: _ArrayLike[_ScalarT],
+def sliding_window_view[ScalarT: np.generic](
+    x: _ArrayLike[ScalarT],
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = ...,
+    axis: SupportsIndex | None = None,
     *,
-    subok: bool = ...,
-    writeable: bool = ...,
-) -> NDArray[_ScalarT]: ...
+    subok: bool = False,
+    writeable: bool = False,
+) -> NDArray[ScalarT]: ...
 @overload
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
-    axis: SupportsIndex | None = ...,
+    axis: SupportsIndex | None = None,
     *,
-    subok: bool = ...,
-    writeable: bool = ...,
+    subok: bool = False,
+    writeable: bool = False,
 ) -> NDArray[Any]: ...
 
 @overload
-def broadcast_to(
-    array: _ArrayLike[_ScalarT],
+def broadcast_to[ScalarT: np.generic](
+    array: _ArrayLike[ScalarT],
     shape: int | Iterable[int],
-    subok: bool = ...,
-) -> NDArray[_ScalarT]: ...
+    subok: bool = False,
+) -> NDArray[ScalarT]: ...
 @overload
 def broadcast_to(
     array: ArrayLike,
     shape: int | Iterable[int],
-    subok: bool = ...,
+    subok: bool = False,
 ) -> NDArray[Any]: ...
 
-def broadcast_shapes(*args: _ShapeLike) -> _Shape: ...
+def broadcast_shapes(*args: _ShapeLike) -> _AnyShape: ...
+def broadcast_arrays(*args: ArrayLike, subok: bool = False) -> tuple[NDArray[Any], ...]: ...
 
-def broadcast_arrays(
-    *args: ArrayLike,
-    subok: bool = ...,
-) -> tuple[NDArray[Any], ...]: ...
+# used internally by `lib._function_base_impl._parse_input_dimensions`
+def _broadcast_shape(*args: ArrayLike) -> _AnyShape: ...

@@ -286,7 +286,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initcommonhooks#
 #interface_usercode#
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal whether this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m , #gil_used#);
 #endif
@@ -1015,8 +1015,8 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [{hasinitvalue: '    if (#varname#_capi==Py_None) {#varname#.r = #init.r#, #varname#.i = #init.i#;} else'},
                       {l_and(isoptional, l_not(hasinitvalue))
                              : '    if (#varname#_capi != Py_None)'},
-                      '        f2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
-                      '\n    if (f2py_success) {'],
+                      ('        f2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
+                       '\n    if (f2py_success) {')],
         'cleanupfrompyobj': '    }  /*if (f2py_success) of #varname# frompyobj*/',
         'need': ['#ctype#_from_pyobj'],
         '_check': l_and(iscomplex, isintent_nothide),
@@ -1057,13 +1057,13 @@ if (#varname#_cb.capi==Py_None) {
                  {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
         '_check': isstring
     }, {  # Common
-        'frompyobj': [
+        'frompyobj': [(
             """\
     slen(#varname#) = #elsize#;
     f2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,"""
 """#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth#"""
 """`#varname#\' of #pyname# to C #ctype#\");
-    if (f2py_success) {""",
+    if (f2py_success) {"""),
             # The trailing null value for Fortran is blank.
             {l_not(isintent_c):
              "        STRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
@@ -1154,7 +1154,7 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [
             '    #setdims#;',
             '    capi_#varname#_intent |= #intent#;',
-            ('    const char * capi_errmess = "#modulename#.#pyname#:'
+            ('    const char capi_errmess[] = "#modulename#.#pyname#:'
              ' failed to create array from the #nth# `#varname#`";'),
             {isintent_hide:
              '    capi_#varname#_as_array = ndarray_from_pyobj('
@@ -1184,9 +1184,10 @@ if (#varname#_cb.capi==Py_None) {
                 """\
         int *_i,capi_i=0;
         CFUNCSMESS(\"#name#: Initializing #varname#=#init#\\n\");
-        if (initforcomb(PyArray_DIMS(capi_#varname#_as_array),
+        struct ForcombCache cache;
+        if (initforcomb(&cache, PyArray_DIMS(capi_#varname#_as_array),
                         PyArray_NDIM(capi_#varname#_as_array),1)) {
-            while ((_i = nextforcomb()))
+            while ((_i = nextforcomb(&cache)))
                 #varname#[capi_i++] = #init#; /* fortran way */
         } else {
             PyObject *exc, *val, *tb;
@@ -1200,8 +1201,8 @@ if (#varname#_cb.capi==Py_None) {
     if (f2py_success) {"""]},
                       ],
         'cleanupfrompyobj': [  # note that this list will be reversed
-            '    }  '
-            '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */',
+            ('    }  '
+             '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */'),
             {l_not(l_or(isintent_out, isintent_hide)): """\
     if((PyObject *)capi_#varname#_as_array!=#varname#_capi) {
         Py_XDECREF(capi_#varname#_as_array); }"""},

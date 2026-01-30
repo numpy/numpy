@@ -57,13 +57,13 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     PyObject *m = NULL;
     PyObject *ufunc;
 
+    import_array();
+    import_umath();
+
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
         goto fail;
     }
-
-    import_array();
-    import_umath();
 
     ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
                                     PyUFunc_None, "inplace_add",
@@ -77,7 +77,7 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
     PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

@@ -99,6 +99,11 @@ typedef enum {
 } NPY_ARRAYMETHOD_FLAGS;
 
 
+typedef enum {
+    /* Casting via same_value logic */
+    NPY_SAME_VALUE_CONTEXT_FLAG=1,
+} NPY_ARRAYMETHOD_CONTEXT_FLAGS;
+
 typedef struct PyArrayMethod_Context_tag {
     /* The caller, which is typically the original ufunc.  May be NULL */
     PyObject *caller;
@@ -107,7 +112,22 @@ typedef struct PyArrayMethod_Context_tag {
 
     /* Operand descriptors, filled in by resolve_descriptors */
     PyArray_Descr *const *descriptors;
+ #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
+    void * _reserved;
+    /* 
+     * Optional flag to pass information into the inner loop
+     * NPY_ARRAYMETHOD_CONTEXT_FLAGS
+     */
+    uint64_t flags;
+    
+    /*
+     * Optional run-time parameters to pass to the loop (currently used in sorting).
+     * Fixed parameters are expected to be passed via auxdata.
+     */
+    void *parameters;
+    
     /* Structure may grow (this is harmless for DType authors) */
+ #endif
 } PyArrayMethod_Context;
 
 
@@ -123,6 +143,13 @@ typedef struct {
     PyArray_DTypeMeta **dtypes;
     PyType_Slot *slots;
 } PyArrayMethod_Spec;
+
+
+// This is used for the convenience function `PyUFunc_AddLoopsFromSpecs`
+typedef struct {
+    const char *name;
+    PyArrayMethod_Spec *spec;
+} PyUFunc_LoopSlot;
 
 
 /*
@@ -143,7 +170,6 @@ typedef struct {
 #define NPY_METH_unaligned_contiguous_loop 8
 #define NPY_METH_contiguous_indexed_loop 9
 #define _NPY_METH_static_data 10
-
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -367,6 +393,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
+#define NPY_DT_get_constant 12
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -377,7 +404,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 
 // used to separate dtype slots from arrfuncs slots
 // intended only for internal use but defined here for clarity
-#define _NPY_DT_ARRFUNCS_OFFSET (1 << 10)
+#define _NPY_DT_ARRFUNCS_OFFSET (1 << 11)
 
 // Cast is disabled
 // #define NPY_DT_PyArray_ArrFuncs_cast 0 + _NPY_DT_ARRFUNCS_OFFSET
@@ -468,6 +495,42 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_EnsureCanonical)(PyArray_Descr *dtype);
 typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtype);
 
 /*
+ * Constants that can be queried and used e.g. by reduce identies defaults.
+ * These are also used to expose .finfo and .iinfo for example.
+ */
+/* Numerical constants */
+#define NPY_CONSTANT_zero 1
+#define NPY_CONSTANT_one 2
+#define NPY_CONSTANT_all_bits_set 3
+#define NPY_CONSTANT_maximum_finite 4
+#define NPY_CONSTANT_minimum_finite 5
+#define NPY_CONSTANT_inf 6
+#define NPY_CONSTANT_ninf 7
+#define NPY_CONSTANT_nan 8
+#define NPY_CONSTANT_finfo_radix 9
+#define NPY_CONSTANT_finfo_eps 10
+#define NPY_CONSTANT_finfo_smallest_normal 11
+#define NPY_CONSTANT_finfo_smallest_subnormal 12
+/* Constants that are always of integer type, value is `npy_intp/Py_ssize_t` */
+#define NPY_CONSTANT_finfo_nmant (1 << 16) + 0
+#define NPY_CONSTANT_finfo_min_exp (1 << 16) + 1
+#define NPY_CONSTANT_finfo_max_exp (1 << 16) + 2
+#define NPY_CONSTANT_finfo_decimal_digits (1 << 16) + 3
+
+/* It may make sense to continue with other constants here, e.g. pi, etc? */
+
+/*
+ * Function to get a constant value for the dtype.  Data may be unaligned, the
+ * function is always called with the GIL held.
+ *
+ * @param descr The dtype instance (i.e. self)
+ * @param ID The ID of the constant to get.
+ * @param data Pointer to the data to be written too, may be unaligned.
+ * @returns 1 on success, 0 if the constant is not available, or -1 with an error set.
+ */
+typedef int (PyArrayDTypeMeta_GetConstant)(PyArray_Descr *descr, int ID, void *data);
+
+/*
  * TODO: These two functions are currently only used for experimental DType
  *       API support.  Their relation should be "reversed": NumPy should
  *       always use them internally.
@@ -476,5 +539,9 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtyp
  */
 typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
+
+typedef struct {
+    NPY_SORTKIND flags;
+} PyArrayMethod_SortParameters;
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

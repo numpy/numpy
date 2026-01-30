@@ -217,7 +217,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     Examples
     --------
     >>> import numpy as np
-    >>> np.eye(2, dtype=int)
+    >>> np.eye(2, dtype=np.int_)
     array([[1, 0],
            [0, 1]])
     >>> np.eye(3, k=1)
@@ -418,7 +418,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     Examples
     --------
     >>> import numpy as np
-    >>> np.tri(3, 5, 2, dtype=int)
+    >>> np.tri(3, 5, 2, dtype=np.int_)
     array([[1, 1, 1, 0, 0],
            [1, 1, 1, 1, 0],
            [1, 1, 1, 1, 1]])
@@ -926,7 +926,7 @@ def tril_indices(n, k=0, m=None):
     -------
     inds : tuple of arrays
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also
@@ -1073,7 +1073,7 @@ def triu_indices(n, k=0, m=None):
     -------
     inds : tuple, shape(2) of ndarrays, shape(`n`)
         The row and column indices, respectively. The row indices are sorted
-        in non-decreasing order, and the correspdonding column indices are
+        in non-decreasing order, and the corresponding column indices are
         strictly increasing for each row.
 
     See also

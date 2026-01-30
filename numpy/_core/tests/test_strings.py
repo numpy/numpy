@@ -4,7 +4,8 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
+from numpy._core._exceptions import _UFuncNoLoopError
+from numpy.testing import assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
@@ -17,8 +18,6 @@ COMPARISONS = [
 ]
 
 MAX = np.iinfo(np.int64).max
-
-IS_PYPY_LT_7_3_16 = IS_PYPY and sys.implementation.version < (7, 3, 16)
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -135,6 +134,7 @@ def test_string_size_dtype_large_repr(str_dt):
 @pytest.mark.slow
 @requires_memory(2 * np.iinfo(np.intc).max)
 @pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_string_coercion_error(str_dt):
     very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
     try:
@@ -162,6 +162,7 @@ def test_large_string_coercion_error(str_dt):
 @pytest.mark.slow
 @requires_memory(2 * np.iinfo(np.intc).max)
 @pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_string_addition_error(str_dt):
     very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
 
@@ -189,6 +190,14 @@ def test_large_string_cast():
     # (this happens due clunky code and/or buffer setup.)
     with pytest.raises((TypeError, MemoryError)):
         a.astype("U")
+
+
+@pytest.mark.parametrize("dt", ["S1", "U1"])
+def test_in_place_mutiply_no_overflow(dt):
+    # see gh-30495
+    a = np.array("a", dtype=dt)
+    a *= 20
+    assert_array_equal(a, np.array("a", dtype=dt))
 
 
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
@@ -224,8 +233,19 @@ class TestMethods:
         with pytest.raises(TypeError, match="unsupported type"):
             np.strings.multiply(np.array("abc", dtype=dt), 3.14)
 
-        with pytest.raises(MemoryError):
+        with pytest.raises(OverflowError):
             np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
+
+    def test_inplace_multiply(self, dt):
+        arr = np.array(['foo ', 'bar'], dtype=dt)
+        arr *= 2
+        if dt != "T":
+            assert_array_equal(arr, np.array(['foo ', 'barb'], dtype=dt))
+        else:
+            assert_array_equal(arr, ['foo foo ', 'barbar'])
+
+        with pytest.raises(OverflowError):
+            arr *= sys.maxsize
 
     @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32,
                                       np.int64, np.int_])
@@ -810,6 +830,20 @@ class TestMethods:
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), 2**61)
 
+    def test_expandtabs_length_not_cause_segfault(self, dt):
+        # see gh-28829
+        with pytest.raises(
+            _UFuncNoLoopError,
+            match="did not contain a loop with signature matching types",
+        ):
+            np._core.strings._expandtabs_length.reduce(np.zeros(200))
+
+        with pytest.raises(
+            _UFuncNoLoopError,
+            match="did not contain a loop with signature matching types",
+        ):
+            np.strings.expandtabs(np.zeros(200))
+
     FILL_ERROR = "The fill character must be exactly one character long"
 
     def test_center_raises_multiple_character_fill(self, dt):
@@ -835,6 +869,7 @@ class TestMethods:
         ('abc', 6, ' ', ' abc  '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '***abc****'),
     ])
     def test_center(self, buf, width, fillchar, res, dt):
@@ -848,6 +883,7 @@ class TestMethods:
         ('abc', 6, ' ', 'abc   '),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', 'abc*******'),
     ])
     def test_ljust(self, buf, width, fillchar, res, dt):
@@ -861,6 +897,7 @@ class TestMethods:
         ('abc', 6, ' ', '   abc'),
         ('abc', 3, ' ', 'abc'),
         ('abc', 2, ' ', 'abc'),
+        ('abc', -2, ' ', 'abc'),
         ('abc', 10, '*', '*******abc'),
     ])
     def test_rjust(self, buf, width, fillchar, res, dt):
@@ -882,6 +919,7 @@ class TestMethods:
         ('-0123', 5, '-0123'),
         ('000', 3, '000'),
         ('34', 1, '34'),
+        ('34', -1, '34'),
         ('0034', 4, '0034'),
     ])
     def test_zfill(self, buf, width, res, dt):
@@ -945,17 +983,39 @@ class TestMethods:
 
     @pytest.mark.parametrize("args", [
         (None,),
+        (None, None),
+        (None, None, -1),
         (0,),
+        (0, None),
+        (0, None, -1),
         (1,),
+        (1, None),
+        (1, None, -1),
         (3,),
+        (3, None),
         (5,),
+        (5, None),
+        (5, 5),
+        (5, 5, -1),
         (6,),  # test index past the end
+        (6, None),
+        (6, None, -1),
+        (6, 7),  # test start and stop index past the end
+        (4, 3),  # test start > stop index
         (-1,),
+        (-1, None),
+        (-1, None, -1),
         (-3,),
+        (-3, None),
         ([3, 4],),
+        ([3, 4], None),
         ([2, 4],),
         ([-3, 5],),
+        ([-3, 5], None),
+        ([-3, 5], None, -1),
         ([0, -5],),
+        ([0, -5], None),
+        ([0, -5], None, -1),
         (1, 4),
         (-3, 5),
         (None, -1),
@@ -965,8 +1025,16 @@ class TestMethods:
         (None, None, -1),
         ([0, 6], [-1, 0], [2, -1]),
     ])
-    def test_slice(self, args, dt):
-        buf = np.array(["hello", "world"], dtype=dt)
+    @pytest.mark.parametrize("buf", [
+        ["hello", "world"],
+        ['hello world', 'γεια σου κόσμε', '你好世界', '👋 🌍'],
+    ])
+    def test_slice(self, args, buf, dt):
+        if dt == "S" and "你好世界" in buf:
+            pytest.skip("Bytes dtype does not support non-ascii input")
+        if len(buf) == 4:
+            args = tuple(s * 2 if isinstance(s, list) else s for s in args)
+        buf = np.array(buf, dtype=dt)
         act = np.strings.slice(buf, *args)
         bcast_args = tuple(np.broadcast_to(arg, buf.shape) for arg in args)
         res = np.array([s[slice(*arg)]
@@ -978,22 +1046,36 @@ class TestMethods:
         with pytest.raises(TypeError, match="did not contain a loop"):
             np.strings.slice(np.array([1, 2, 3]), 4)
 
-        with pytest.raises(TypeError, match=r"Cannot cast ufunc '_slice' input .* from .* to dtype\('int(64|32)'\)"):
-            np.strings.slice(np.array(['foo', 'bar'], dtype=dt), np.array(['foo', 'bar'], dtype=dt))
+        regexp = (r"Cannot cast ufunc '_slice' input .* "
+                  r"from .* to dtype\('int(64|32)'\)")
+        with pytest.raises(TypeError, match=regexp):
+            np.strings.slice(np.array(['foo', 'bar'], dtype=dt),
+                             np.array(['foo', 'bar'], dtype=dt))
 
-    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32, np.int64,
-                                        np.uint8, np.uint16, np.uint32, np.uint64])
+    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32,
+                                        np.int64, np.uint8, np.uint16,
+                                        np.uint32, np.uint64])
     def test_slice_int_type_promotion(self, int_dt, dt):
         buf = np.array(["hello", "world"], dtype=dt)
+        np_slice = np.strings.slice
+        assert_array_equal(np_slice(buf, int_dt(4)),
+                           np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np_slice(buf, np.array([4, 4], dtype=int_dt)),
+                           np.array(["hell", "worl"], dtype=dt))
 
-        assert_array_equal(np.strings.slice(buf, int_dt(4)), np.array(["hell", "worl"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([4, 4], dtype=int_dt)), np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np_slice(buf, int_dt(2), int_dt(4)),
+                           np.array(["ll", "rl"], dtype=dt))
+        assert_array_equal(np_slice(buf, np.array([2, 2], dtype=int_dt),
+                                    np.array([4, 4], dtype=int_dt)),
+                           np.array(["ll", "rl"], dtype=dt))
 
-        assert_array_equal(np.strings.slice(buf, int_dt(2), int_dt(4)), np.array(["ll", "rl"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([2, 2], dtype=int_dt), np.array([4, 4], dtype=int_dt)), np.array(["ll", "rl"], dtype=dt))
-
-        assert_array_equal(np.strings.slice(buf, int_dt(0), int_dt(4), int_dt(2)), np.array(["hl", "wr"], dtype=dt))
-        assert_array_equal(np.strings.slice(buf, np.array([0, 0], dtype=int_dt), np.array([4, 4], dtype=int_dt), np.array([2, 2], dtype=int_dt)), np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np_slice(buf, int_dt(0), int_dt(4), int_dt(2)),
+                           np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np_slice(buf,
+                                    np.array([0, 0], dtype=int_dt),
+                                    np.array([4, 4], dtype=int_dt),
+                                    np.array([2, 2], dtype=int_dt)),
+                           np.array(["hl", "wr"], dtype=dt))
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -1047,10 +1129,7 @@ class TestMethodsWithUnicode:
         '\U0001D7F6',
         '\U00011066',
         '\U000104A0',
-        pytest.param('\U0001F107', marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISALNUM",
-            strict=True)),
+        '\U0001F107',
     ])
     def test_isalnum_unicode(self, in_, dt):
         in_ = np.array(in_, dtype=dt)
@@ -1064,10 +1143,7 @@ class TestMethodsWithUnicode:
         ('\U0001F40D', False),
         ('\U0001F46F', False),
         ('\u2177', True),
-        pytest.param('\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISLOWER",
-            strict=True)),
+        ('\U00010429', True),
         ('\U0001044E', True),
     ])
     def test_islower_unicode(self, in_, out, dt):
@@ -1082,10 +1158,7 @@ class TestMethodsWithUnicode:
         ('\U0001F40D', False),
         ('\U0001F46F', False),
         ('\u2177', False),
-        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISUPPER",
-            strict=True)),
+        ('\U00010429', False),
         ('\U0001044E', False),
     ])
     def test_isupper_unicode(self, in_, out, dt):
@@ -1095,15 +1168,9 @@ class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
-        pytest.param('\U00010401\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISISTITLE",
-            strict=True)),
+        ('\U00010401\U00010429', True),
         ('\U00010427\U0001044E', True),
-        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISISTITLE",
-            strict=True)),
+        ('\U00010429', False),
         ('\U0001044E', False),
         ('\U0001F40D', False),
         ('\U0001F46F', False),

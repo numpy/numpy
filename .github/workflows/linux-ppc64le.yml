@@ -1,0 +1,72 @@
+name: Native ppc64le Linux Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  native_ppc64le:
+    # This job runs only in the main NumPy repository.
+    # It requires a native ppc64le GHA runner, which is not available on forks.
+    # For more details, see: https://github.com/numpy/numpy/issues/29125
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-24.04-ppc64le-p10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "GCC"
+            args: "-Dallow-noblas=false"
+          - name: "clang"
+            args: "-Dallow-noblas=false"
+
+    name: "${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3.12 python3-pip python3-dev ninja-build gfortran \
+                            build-essential libopenblas-dev liblapack-dev pkg-config
+        pip install --upgrade pip
+        pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        echo "/home/runner/.local/bin" >> $GITHUB_PATH
+
+    - name: Install clang
+      if: matrix.config.name == 'clang'
+      run: |
+        sudo apt install -y clang
+        export CC=clang
+        export CXX=clang++
+
+    - name: Meson Build
+      run: |
+        spin build -- ${{ matrix.config.args }}
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: Run Tests
+      run: |
+        spin test -- --timeout=60 --durations=10

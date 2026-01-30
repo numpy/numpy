@@ -1,5 +1,20 @@
 # finfo return type misalignment
 array_api_tests/test_data_type_functions.py::test_finfo[float32]
+array_api_tests/test_data_type_functions.py::test_finfo[complex64]
+
+# finfo: data type <class 'numpy.object_'> not inexact
+array_api_tests/test_data_type_functions.py::test_finfo[float64]
+array_api_tests/test_data_type_functions.py::test_finfo[complex128]
+
+# iinfo: Invalid integer data type 'O'
+array_api_tests/test_data_type_functions.py::test_iinfo[int8]
+array_api_tests/test_data_type_functions.py::test_iinfo[uint8]
+array_api_tests/test_data_type_functions.py::test_iinfo[int16]
+array_api_tests/test_data_type_functions.py::test_iinfo[uint16]
+array_api_tests/test_data_type_functions.py::test_iinfo[int32]
+array_api_tests/test_data_type_functions.py::test_iinfo[uint32]
+array_api_tests/test_data_type_functions.py::test_iinfo[int64]
+array_api_tests/test_data_type_functions.py::test_iinfo[uint64]
 
 # 'shape' arg is present. 'newshape' is retained for backward compat.
 array_api_tests/test_signatures.py::test_func_signature[reshape]

@@ -120,6 +120,10 @@ def buildhooks(pymod):
         if m['name'] in usenames and containscommon(m):
             outmess(f"\t\t\tSkipping {m['name']} since it is in 'use' and contains a common block...\n")
             continue
+        # skip modules with derived types
+        if m['name'] in usenames and containsderivedtypes(m):
+            outmess(f"\t\t\tSkipping {m['name']} since it is in 'use' and contains a derived type...\n")
+            continue
         if onlyvars:
             outmess(f"\t\t  Variables: {' '.join(onlyvars)}\n")
         chooks = ['']

@@ -1,0 +1,51 @@
+# This file contains suppressions for the default (with GIL) build to prevent runtime errors
+# when numpy is built with -Db_sanitize=undefined for arm64 architecture
+#
+# reference: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#available-checks
+
+# Per this prior discussion, integer overflow is not a concern
+# https://github.com/numpy/numpy/issues/24209#issuecomment-2160154181
+signed-integer-overflow:*
+
+# all alignment runtime errors ignored in favor of this being tracked via TypeSanitizer
+# otherwise ubsan may detect system file alignment errors outside numpy
+alignment:*
+
+# suggested fix for runtime error: use INT_MIN constant
+shift-base:_core/src/umath/_rational_tests.c
+# suggested fix for runtime error: check for overflow if signed
+shift-base:_core/src/npymath/npy_math_internal.h
+
+# suggested fix for runtime error: null check before loop
+pointer-overflow:_core/src/common/simd/neon/memory.h
+pointer-overflow:_core/src/multiarray/datetime_busdaycal.c
+pointer-overflow:_core/src/multiarray/nditer_templ.c
+pointer-overflow:_core/src/multiarray/nditer_constr.c
+pointer-overflow:_core/src/umath/loops_arithm_fp.dispatch.c.src
+pointer-overflow:_core/src/umath/loops_unary.dispatch.c.src
+pointer-overflow:_core/src/umath/loops_unary_complex.dispatch.c.src
+pointer-overflow:_core/src/umath/loops_unary_fp_le.dispatch.c.src
+pointer-overflow:_core/src/umath/string_buffer.h
+pointer-overflow:linalg/umath_linalg.cpp
+pointer-overflow:numpy/random/bit_generator.pyx.c
+
+float-cast-overflow:_core/src/multiarray/lowlevel_strided_loops.c.src
+
+# flagged in CI - call to function through pointer to incorrect function type
+# Many functions in the modules/files listed below cause undefined behavior in CI
+# general disable this check until further investigation, but keep the specific files
+# as a starting point for resolving the checks later
+function:_core/src/*
+function:numpy/random/*
+# function:_core/src/common/cblasfunc.c
+# function:_core/src/common/npy_argparse.c
+# function:_core/src/multiarray/number.c
+# function:_core/src/multiarray/ctors.c
+# function:_core/src/multiarray/convert_datatype.c
+# function:_core/src/multiarray/dtype_transfer.c
+# function:_core/src/multiarray/dtype_traversal.c
+# function:_core/src/multiarray/getset.c
+# function:_core/src/multiarray/scalarapi.c
+# function:_core/src/multiarray/scalartypes.c.src
+# function:_core/src/umath/*
+# function:numpy/random/*
