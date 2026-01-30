@@ -11,10 +11,9 @@ from fractions import Fraction
 from types import EllipsisType, ModuleType, MappingProxyType, GenericAlias
 from uuid import UUID
 
-from numpy.__config__ import show as show_config
+from numpy.__config__ import show_config
 from numpy._pytesttester import PytestTester
 from numpy._core._internal import _ctypes
-from numpy._utils._config_helpers import ConfigDisplayModes
 
 from numpy._typing import (  # type: ignore[deprecated]
     # Arrays
