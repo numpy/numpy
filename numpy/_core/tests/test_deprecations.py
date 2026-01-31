@@ -10,7 +10,7 @@ import pytest
 
 import numpy as np
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
-from numpy.testing import assert_raises
+from numpy.testing import IS_PYPY, assert_raises
 
 
 class _DeprecationTestCase:
@@ -249,6 +249,11 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
     def test_deprecated_strides_set(self):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
+
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy handles refcounts differently")
+    def test_deprecated_dtype_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, "dtype", int))
 
     def test_deprecated_shape_set(self):
         x = np.eye(2)
