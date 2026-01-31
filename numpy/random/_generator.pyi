@@ -1,3 +1,4 @@
+# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import bytes as py_bytes
 from collections.abc import Callable, MutableSequence
 from typing import Any, Literal, Self, overload

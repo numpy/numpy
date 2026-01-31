@@ -1,4 +1,5 @@
 # ruff: noqa: ANN401
+# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import str as py_str, type as py_type
 from typing import (
     Any,

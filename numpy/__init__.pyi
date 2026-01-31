@@ -4,6 +4,7 @@ import datetime as dt
 import inspect
 import sys
 from abc import abstractmethod
+# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import bool as py_bool, str as py_str, type as py_type
 from decimal import Decimal
 from fractions import Fraction
@@ -1647,9 +1648,6 @@ class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
     def str(self) -> LiteralString: ...
     @property
     def type(self) -> py_type[_ScalarT_co]: ...
-
-# NOTE: This should _not_ be `Final[_]`, `_: TypeAlias`, or `type _`
-_dtype = dtype
 
 @type_check_only
 class _ArrayOrScalarCommon:

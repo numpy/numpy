@@ -1,3 +1,4 @@
+# Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import object as py_object
 from collections.abc import Callable
 
