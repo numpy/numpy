@@ -588,7 +588,7 @@ def typename(char):
     try:
         return dtype(char).name
     except TypeError as e:
-        raise TypeError(f"{char} does not represent a valid dtype") from None
+        raise TypeError(f"{char!r} does not represent a valid dtype") from None
 
 #-----------------------------------------------------------------------------
 
