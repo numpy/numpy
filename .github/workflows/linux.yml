@@ -67,7 +67,7 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.12", "3.13", "3.14", "3.14t"]
+        version: ["3.12", "3.14t"]
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
@@ -106,6 +106,28 @@ jobs:
       run: |
         cd tools
         pytest --timeout=600 --durations=10 --pyargs numpy -m "not slow"
+
+  all_versions:
+    # like the smoke tests but runs on more Python versions
+    needs: [smoke_test]
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    env:
+      MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
+    strategy:
+      matrix:
+        version: ["3.13", "3.14", "3.15-dev", "3.15t-dev"]
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      with:
+        python-version: ${{ matrix.version }}
+    - uses: ./.github/meson_actions
 
   full:
     # Install as editable, then run the full test suite with code coverage
