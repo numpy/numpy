@@ -241,7 +241,7 @@ to define string equality, will be added to a ufunc.
         nin = 1
         nout = 1
         # DTypes are stored on the BoundArrayMethod and not on the internal
-        # ArrayMethod, to reference cyles.
+        # ArrayMethod, to reference cycles.
         DTypes = (String, String, Bool)
 
         def resolve_descriptors(self: ArrayMethod, DTypes, given_descrs):
