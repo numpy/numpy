@@ -10,8 +10,9 @@ from numpy import (
     mintypecode,
     nan_to_num,
     real_if_close,
+    typename,
 )
-from numpy.testing import assert_, assert_array_equal, assert_equal
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 
 def assert_all(x):
@@ -471,3 +472,22 @@ class TestRealIfClose:
         assert_all(iscomplexobj(b))
         b = real_if_close(a + 1e-7j, tol=1e-6)
         assert_all(isrealobj(b))
+
+
+class TestTypename:
+
+    def test_basic(self):
+        assert_equal(typename('f'), np.dtype('f').name)
+        assert_equal(typename('i'), np.dtype('i').name)
+
+    def test_datetime_timedelta(self):
+        assert_equal(typename('M'), np.dtype('M').name)
+        assert_equal(typename('m'), np.dtype('m').name)
+
+    def test_bytes(self):
+        name = typename('S')
+        assert_('bytes' in name or name.startswith(('S', '|S')))
+        assert_(name != 'string')
+
+    def test_invalid(self):
+        assert_raises(TypeError, typename, 'foo')

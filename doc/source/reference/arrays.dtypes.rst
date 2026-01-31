@@ -265,8 +265,10 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'i'``            (signed) integer
    ``'u'``            unsigned integer
    ``'f'``            floating-point
-   ``'c'``            complex-floating point
    ``'m'``            timedelta
+   ``'F'``            complex single precision
+   ``'D'``            complex double precision
+   ``'G'``            complex long double precision
    ``'M'``            datetime
    ``'O'``            (Python) objects
    ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
