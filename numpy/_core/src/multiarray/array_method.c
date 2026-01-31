@@ -108,7 +108,7 @@ is_contiguous(
         npy_intp const *strides, PyArray_Descr *const *descriptors, int nargs)
 {
     for (int i = 0; i < nargs; i++) {
-        if (strides[i] != descriptors[i]->elsize) {
+        if (strides[i] != PyDataType_ELSIZE(descriptors[i])) {
             return 0;
         }
     }

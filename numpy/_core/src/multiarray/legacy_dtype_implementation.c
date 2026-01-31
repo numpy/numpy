@@ -92,15 +92,15 @@ PyArray_LegacyEquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return NPY_FALSE;
     }
 
-    type_num1 = type1->type_num;
-    type_num2 = type2->type_num;
-    size1 = type1->elsize;
-    size2 = type2->elsize;
+    type_num1 = PyDataType_TYPENUM(type1);
+    type_num2 = PyDataType_TYPENUM(type2);
+    size1 = PyDataType_ELSIZE(type1);
+    size2 = PyDataType_ELSIZE(type2);
 
     if (size1 != size2) {
         return NPY_FALSE;
     }
-    if (PyArray_ISNBO(type1->byteorder) != PyArray_ISNBO(type2->byteorder)) {
+    if (PyArray_ISNBO(PyDataType_BYTEORDER(type1)) != PyArray_ISNBO(PyDataType_BYTEORDER(type2))) {
         return NPY_FALSE;
     }
     if (PyDataType_SUBARRAY(type1) || PyDataType_SUBARRAY(type2)) {
@@ -118,7 +118,7 @@ PyArray_LegacyEquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         return ((type_num1 == type_num2)
                 && has_equivalent_datetime_metadata(type1, type2));
     }
-    return type1->kind == type2->kind;
+    return PyDataType_KIND(type1) == PyDataType_KIND(type2);
 }
 
 
@@ -180,8 +180,8 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
 static npy_bool
 PyArray_LegacyCanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
-    int from_type_num = from->type_num;
-    int to_type_num = to->type_num;
+    int from_type_num = PyDataType_TYPENUM(from);
+    int to_type_num = PyDataType_TYPENUM(to);
     npy_bool ret;
 
     ret = (npy_bool) PyArray_LegacyCanCastSafely(from_type_num, to_type_num);
@@ -189,15 +189,15 @@ PyArray_LegacyCanCastTo(PyArray_Descr *from, PyArray_Descr *to)
         /* Check String and Unicode more closely */
         if (from_type_num == NPY_STRING) {
             if (to_type_num == NPY_STRING) {
-                ret = (from->elsize <= to->elsize);
+                ret = (PyDataType_ELSIZE(from) <= PyDataType_ELSIZE(to));
             }
             else if (to_type_num == NPY_UNICODE) {
-                ret = (from->elsize << 2 <= to->elsize);
+                ret = (PyDataType_ELSIZE(from) << 2 <= PyDataType_ELSIZE(to));
             }
         }
         else if (from_type_num == NPY_UNICODE) {
             if (to_type_num == NPY_UNICODE) {
-                ret = (from->elsize <= to->elsize);
+                ret = (PyDataType_ELSIZE(from) <= PyDataType_ELSIZE(to));
             }
         }
             /*
@@ -260,27 +260,27 @@ PyArray_LegacyCanCastTo(PyArray_Descr *from, PyArray_Descr *to)
                  * Need at least 5 characters to convert from boolean
                  * to 'True' or 'False'.
                  */
-            else if (from->kind == 'b' && to->elsize >= 5 * char_size) {
+            else if (PyDataType_KIND(from) == 'b' && PyDataType_ELSIZE(to) >= 5 * char_size) {
                 ret = 1;
             }
-            else if (from->kind == 'u') {
+            else if (PyDataType_KIND(from) == 'u') {
                 /* Guard against unexpected integer size */
-                if (from->elsize > 8 || from->elsize < 0) {
+                if (PyDataType_ELSIZE(from) > 8 || PyDataType_ELSIZE(from) < 0) {
                     ret = 0;
                 }
-                else if (to->elsize >=
-                         REQUIRED_STR_LEN[from->elsize] * char_size) {
+                else if (PyDataType_ELSIZE(to) >=
+                         REQUIRED_STR_LEN[PyDataType_ELSIZE(from)] * char_size) {
                     ret = 1;
                 }
             }
-            else if (from->kind == 'i') {
+            else if (PyDataType_KIND(from) == 'i') {
                 /* Guard against unexpected integer size */
-                if (from->elsize > 8 || from->elsize < 0) {
+                if (PyDataType_ELSIZE(from) > 8 || PyDataType_ELSIZE(from) < 0) {
                     ret = 0;
                 }
                     /* Extra character needed for sign */
-                else if (to->elsize >=
-                         (REQUIRED_STR_LEN[from->elsize] + 1) * char_size) {
+                else if (PyDataType_ELSIZE(to) >=
+                         (REQUIRED_STR_LEN[PyDataType_ELSIZE(from)] + 1) * char_size) {
                     ret = 1;
                 }
             }
@@ -350,8 +350,8 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
     if (from == to ||
         ((NPY_LIKELY(PyDataType_ISNUMBER(from)) ||
           PyDataType_ISOBJECT(from)) &&
-         NPY_LIKELY(from->type_num == to->type_num) &&
-         NPY_LIKELY(from->byteorder == to->byteorder))) {
+         NPY_LIKELY(PyDataType_TYPENUM(from) == PyDataType_TYPENUM(to)) &&
+         NPY_LIKELY(PyDataType_BYTEORDER(from) == PyDataType_BYTEORDER(to)))) {
         return 1;
     }
     if (!PyDataType_ISLEGACY(from) || !PyDataType_ISLEGACY(to)) {
@@ -422,16 +422,16 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
      * Equivalent simple types can be cast with any value of 'casting', but
      * we need to be careful about structured to structured.
      */
-    if (PyArray_LegacyEquivTypenums(from->type_num, to->type_num)) {
+    if (PyArray_LegacyEquivTypenums(PyDataType_TYPENUM(from), PyDataType_TYPENUM(to))) {
         /* For complicated case, use EquivTypes (for now) */
-        if (PyTypeNum_ISUSERDEF(from->type_num) ||
+        if (PyTypeNum_ISUSERDEF(PyDataType_TYPENUM(from)) ||
                         PyDataType_SUBARRAY(from) != NULL) {
             int ret;
 
             /* Only NPY_NO_CASTING prevents byte order conversion */
             if ((casting != NPY_NO_CASTING) &&
-                                (!PyArray_ISNBO(from->byteorder) ||
-                                 !PyArray_ISNBO(to->byteorder))) {
+                                (!PyArray_ISNBO(PyDataType_BYTEORDER(from)) ||
+                                 !PyArray_ISNBO(PyDataType_BYTEORDER(to)))) {
                 PyArray_Descr *nbo_from, *nbo_to;
 
                 nbo_from = PyArray_DescrNewByteorder(from, NPY_NATIVE);
@@ -469,7 +469,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
             }
         }
 
-        switch (from->type_num) {
+        switch (PyDataType_TYPENUM(from)) {
             case NPY_DATETIME: {
                 PyArray_DatetimeMetaData *meta1, *meta2;
                 meta1 = get_datetime_metadata_from_dtype(from);
@@ -484,8 +484,8 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                 }
 
                 if (casting == NPY_NO_CASTING) {
-                    return PyArray_ISNBO(from->byteorder) ==
-                                        PyArray_ISNBO(to->byteorder) &&
+                    return PyArray_ISNBO(PyDataType_BYTEORDER(from)) ==
+                                        PyArray_ISNBO(PyDataType_BYTEORDER(to)) &&
                             can_cast_datetime64_metadata(meta1, meta2, casting);
                 }
                 else {
@@ -506,8 +506,8 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                 }
 
                 if (casting == NPY_NO_CASTING) {
-                    return PyArray_ISNBO(from->byteorder) ==
-                                        PyArray_ISNBO(to->byteorder) &&
+                    return PyArray_ISNBO(PyDataType_BYTEORDER(from)) ==
+                                        PyArray_ISNBO(PyDataType_BYTEORDER(to)) &&
                         can_cast_timedelta64_metadata(meta1, meta2, casting);
                 }
                 else {
@@ -519,9 +519,9 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                     case NPY_NO_CASTING:
                         return PyArray_LegacyEquivTypes(from, to);
                     case NPY_EQUIV_CASTING:
-                        return (from->elsize == to->elsize);
+                        return (PyDataType_ELSIZE(from) == PyDataType_ELSIZE(to));
                     case NPY_SAFE_CASTING:
-                        return (from->elsize <= to->elsize);
+                        return (PyDataType_ELSIZE(from) <= PyDataType_ELSIZE(to));
                     default:
                         return 1;
                 }
@@ -542,10 +542,10 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
              */
             int from_order, to_order;
 
-            from_order = dtype_kind_to_ordering(from->kind);
-            to_order = dtype_kind_to_ordering(to->kind);
+            from_order = dtype_kind_to_ordering(PyDataType_KIND(from));
+            to_order = dtype_kind_to_ordering(PyDataType_KIND(to));
 
-            if (to->kind == 'm') {
+            if (PyDataType_KIND(to) == 'm') {
                 /* both types being timedelta is already handled before. */
                 int integer_order = dtype_kind_to_ordering('i');
                 return (from_order != -1) && (from_order <= integer_order);

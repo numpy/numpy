@@ -74,14 +74,14 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
 {
     Py_ssize_t i;
     PyObject *t, *item;
-    char nbyteorder = _normalize_byteorder(descr->byteorder);
+    char nbyteorder = _normalize_byteorder(PyDataType_BYTEORDER(descr));
 
     /*
      * For builtin type, hash relies on : kind + byteorder + flags +
      * type_num + elsize + alignment
      */
-    t = Py_BuildValue("(ccKnn)", descr->kind, nbyteorder,
-            descr->flags, descr->elsize, descr->alignment);
+    t = Py_BuildValue("(ccKnn)", PyDataType_KIND(descr), nbyteorder,
+            PyDataType_FLAGS(descr), PyDataType_ELSIZE(descr), PyDataType_ALIGNMENT(descr));
 
     for(i = 0; i < PyTuple_Size(t); ++i) {
         item = PyTuple_GetItem(t, i);
@@ -304,14 +304,14 @@ PyArray_DescrHash(PyObject* odescr)
     }
     descr = (PyArray_Descr*)odescr;
 
-    hash = atomic_load_explicit((_Atomic(npy_hash_t) *)&descr->hash, memory_order_relaxed);
+    hash = atomic_load_explicit((_Atomic(npy_hash_t) *)&(((PyArray_Descr_fields *)descr)->hash), memory_order_relaxed);
 
     if (hash == -1) {
         hash = _PyArray_DescrHashImp(descr);
         if (hash == -1) {
             return -1;
         }
-        atomic_store_explicit((_Atomic(npy_hash_t) *)&descr->hash, hash, memory_order_relaxed);
+        atomic_store_explicit((_Atomic(npy_hash_t) *)&(((PyArray_Descr_fields *)descr)->hash), hash, memory_order_relaxed);
     }
 
     return hash;

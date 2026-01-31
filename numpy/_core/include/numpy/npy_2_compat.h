@@ -142,20 +142,60 @@ PyArray_ImportNumPyAPI(void)
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || NPY_ABI_VERSION < 0x02000000
     /* Compiling for 1.x or 2.x only, direct field access is OK: */
 
+    static inline PyArray_Descr_fields *
+    PyDataType_FIELDS_STRUCT(const PyArray_Descr *dtype)
+    {
+        return (PyArray_Descr_fields *)dtype;
+    }
+
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
     {
-        dtype->elsize = size;
+        PyDataType_FIELDS_STRUCT(dtype)->elsize = size;
+    }
+
+    static inline void
+    PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
+    {
+        PyDataType_FIELDS_STRUCT(dtype)->type = type;
     }
 
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
     #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-        return dtype->flags;
+        return PyDataType_FIELDS_STRUCT(dtype)->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
     #endif
+    }
+
+    static inline void
+    PyDataType_SET_FLAGS(PyArray_Descr *dtype, npy_uint64 flags)
+    {
+    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
+        PyDataType_FIELDS_STRUCT(dtype)->flags = flags;
+    #else
+        dtype->flags = (unsigned char)flags;  /* Need unsigned cast on 1.x */
+#endif
+    }
+
+    static inline void
+    PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
+    {
+        PyDataType_FIELDS_STRUCT(dtype)->byteorder = byteorder;
+    }
+
+    static inline void
+    PyDataType_SET_TYPEOBJ(PyArray_Descr *dtype, PyTypeObject *typeobj)
+    {
+        PyDataType_FIELDS_STRUCT(dtype)->typeobj = typeobj;
+    }
+
+    static inline void
+    PyDataType_SET_TYPENUM(PyArray_Descr *dtype, int type_num)
+    {
+        PyDataType_FIELDS_STRUCT(dtype)->type_num = type_num;
     }
 
     #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)    \
@@ -213,6 +253,10 @@ DESCR_ACCESSOR(SUBARRAY, subarray, PyArray_ArrayDescr *, 1)
 DESCR_ACCESSOR(NAMES, names, PyObject *, 1)
 DESCR_ACCESSOR(FIELDS, fields, PyObject *, 1)
 DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
+DESCR_ACCESSOR(TYPE, type, char, 0)
+DESCR_ACCESSOR(KIND, kind, char, 0)
+DESCR_ACCESSOR(BYTEORDER, byteorder, char, 0)
+DESCR_ACCESSOR(TYPEOBJ, typeobj, PyTypeObject *, 0)
 
 #undef DESCR_ACCESSOR
 

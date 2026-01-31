@@ -479,7 +479,7 @@ npy_cast_raw_scalar_item(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
 {
-    if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
+    if (NPY_UNLIKELY(PyDataType_TYPENUM(descr) == NPY_OBJECT)) {
         /*
          * We always have store objects directly, casting will lose some
          * type information. Any other dtype discards the type information.
@@ -510,7 +510,7 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         PyArrayObject *arr = (PyArrayObject *)value;
         if (PyArray_DESCR(arr) == descr && !PyDataType_REFCHK(descr)) {
             /* light-weight fast-path for when the descrs obviously matches */
-            memcpy(item, PyArray_BYTES(arr), descr->elsize);
+            memcpy(item, PyArray_BYTES(arr), PyDataType_ELSIZE(descr));
             return 0;  /* success (it was an array-like) */
         }
         return npy_cast_raw_scalar_item(
@@ -529,14 +529,14 @@ PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
         return -1;
     }
 
-    char *data = PyObject_Malloc(tmp_descr->elsize);
+    char *data = PyObject_Malloc(PyDataType_ELSIZE(tmp_descr));
     if (data == NULL) {
         PyErr_NoMemory();
         Py_DECREF(tmp_descr);
         return -1;
     }
     if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
-        memset(data, 0, tmp_descr->elsize);
+        memset(data, 0, PyDataType_ELSIZE(tmp_descr));
     }
     if (NPY_DT_CALL_setitem(tmp_descr, value, data) < 0) {
         PyObject_Free(data);
@@ -1294,12 +1294,12 @@ PyArray_DiscoverDTypeAndShape(
 
     /* Legacy discovery flags */
     if (requested_descr != NULL) {
-        if (requested_descr->type_num == NPY_STRING &&
-                requested_descr->type == 'c') {
+        if (PyDataType_TYPENUM(requested_descr) == NPY_STRING &&
+            PyDataType_TYPE(requested_descr) == 'c') {
             /* Character dtype variation of string (should be deprecated...) */
             flags |= DISCOVER_STRINGS_AS_SEQUENCES;
         }
-        else if (requested_descr->type_num == NPY_VOID &&
+        else if (PyDataType_TYPENUM(requested_descr) == NPY_VOID &&
                     (((_PyArray_LegacyDescr *)requested_descr)->names
                      || ((_PyArray_LegacyDescr *)requested_descr)->subarray))  {
             /* Void is a chimera, in that it may or may not be structured... */

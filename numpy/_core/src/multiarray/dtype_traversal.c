@@ -433,7 +433,7 @@ traverse_subarray_func(
     const PyArray_Descr *sub_descr = subarr_data->info.descr;
     npy_intp sub_N = subarr_data->count;
     NpyAuxData *sub_auxdata = subarr_data->info.auxdata;
-    npy_intp sub_stride = sub_descr->elsize;
+    npy_intp sub_stride = PyDataType_ELSIZE(sub_descr);
 
     while (N--) {
         if (func(traverse_context, sub_descr, data,
@@ -465,7 +465,7 @@ get_subarray_traverse_func(
 
     if (get_traverse_func(
             traverse_context, dtype, aligned,
-            dtype->elsize, &auxdata->info, flags) < 0) {
+            PyDataType_ELSIZE(dtype), &auxdata->info, flags) < 0) {
         PyMem_Free(auxdata);
         return -1;
     }

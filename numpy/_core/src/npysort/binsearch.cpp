@@ -423,7 +423,7 @@ _get_binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
     npy_intp nfuncs = binsearch::map.size();
     npy_intp min_idx = 0;
     npy_intp max_idx = nfuncs;
-    int type = dtype->type_num;
+    int type = PyDataType_TYPENUM(dtype);
 
     if ((int)side >= (int)NPY_NSEARCHSIDES) {
         return NULL;

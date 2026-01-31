@@ -292,7 +292,7 @@ fortran_doc(FortranDataDef def)
     }
     else {
         PyArray_Descr *d = PyArray_DescrFromType(def.type);
-        n = PyOS_snprintf(p, size, "%s : '%c'-", def.name, d->type);
+        n = PyOS_snprintf(p, size, "%s : '%c'-", def.name, PyDataType_TYPE(d));
         Py_DECREF(d);
         if (n < 0 || n >= size) {
             goto fail;
@@ -1029,7 +1029,7 @@ ndarray_from_pyobj(const int type_num,
             if (!(ARRAY_ISCOMPATIBLE(arr, type_num))) {
                 sprintf(mess + strlen(mess),
                         " -- input '%c' not compatible to '%c'",
-                        PyArray_DESCR(arr)->type, descr->type);
+                        PyDataType_TYPE(PyArray_DESCR(arr)), PyDataType_TYPE(descr));
             }
             if (!(F2PY_CHECK_ALIGNMENT(arr, intent)))
                 sprintf(mess + strlen(mess), " -- input not %d-aligned",
@@ -1351,7 +1351,7 @@ f2py_describe(PyObject *obj, char *buf) {
     sprintf(localbuf, "%d-%s", (npy_int)PyUnicode_GET_LENGTH(obj), Py_TYPE(obj)->tp_name);
   } else if (PyArray_CheckScalar(obj)) {
     PyArrayObject* arr = (PyArrayObject*)obj;
-    sprintf(localbuf, "%c%" NPY_INTP_FMT "-%s-scalar", PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), Py_TYPE(obj)->tp_name);
+    sprintf(localbuf, "%c%" NPY_INTP_FMT "-%s-scalar", PyDataType_KIND(PyArray_DESCR(arr)), PyArray_ITEMSIZE(arr), Py_TYPE(obj)->tp_name);
   } else if (PyArray_Check(obj)) {
     int i;
     PyArrayObject* arr = (PyArrayObject*)obj;
@@ -1362,7 +1362,7 @@ f2py_describe(PyObject *obj, char *buf) {
       }
       sprintf(localbuf + strlen(localbuf), "%" NPY_INTP_FMT ",", PyArray_DIM(arr, i));
     }
-    sprintf(localbuf + strlen(localbuf), ")-%c%" NPY_INTP_FMT "-%s", PyArray_DESCR(arr)->kind, PyArray_ITEMSIZE(arr), Py_TYPE(obj)->tp_name);
+    sprintf(localbuf + strlen(localbuf), ")-%c%" NPY_INTP_FMT "-%s", PyDataType_KIND(PyArray_DESCR(arr)), PyArray_ITEMSIZE(arr), Py_TYPE(obj)->tp_name);
   } else if (PySequence_Check(obj)) {
     sprintf(localbuf, "%d-%s", (npy_int)PySequence_Length(obj), Py_TYPE(obj)->tp_name);
   } else {

@@ -699,7 +699,7 @@ UNICODE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
     }
 
     /* truncate if needed */
-    Py_ssize_t max_len = descr->elsize >> 2;
+    Py_ssize_t max_len = PyDataType_ELSIZE(descr) >> 2;
     Py_ssize_t actual_len = PyUnicode_GetLength(temp);
     if (actual_len < 0) {
         Py_DECREF(temp);
@@ -740,8 +740,8 @@ UNICODE_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
     }
 
     /* Fill in the rest of the space with 0 */
-    if (descr->elsize > num_bytes) {
-        memset((char*)ov + num_bytes, 0, (descr->elsize - num_bytes));
+    if (PyDataType_ELSIZE(descr) > num_bytes) {
+        memset((char*)ov + num_bytes, 0, (PyDataType_ELSIZE(descr) - num_bytes));
     }
     if (PyDataType_ISBYTESWAPPED(descr)) {
         byte_swap_vector(ov, actual_len, 4);
@@ -816,13 +816,13 @@ STRING_setitem(PyArray_Descr *descr, PyObject *op, char *ov)
         Py_DECREF(temp);
         return -1;
     }
-    memcpy(ov, ptr, PyArray_MIN(descr->elsize, len));
+    memcpy(ov, ptr, PyArray_MIN(PyDataType_ELSIZE(descr), len));
     /*
      * If string length is smaller than room in array
      * Then fill the rest of the element size with NULL
      */
-    if (descr->elsize > len) {
-        memset((char *)ov + len, 0, (descr->elsize - len));
+    if (PyDataType_ELSIZE(descr) > len) {
+        memset((char *)ov + len, 0, (PyDataType_ELSIZE(descr) - len));
     }
     Py_DECREF(temp);
     return 0;
@@ -894,8 +894,8 @@ VOID_getitem(void *input, void *vap)
             }
             dummy_fields.descr = new;
             /* update alignment based on offset */
-            if ((new->alignment > 1)
-                    && ((((npy_intp)(ip+offset)) % new->alignment) != 0)) {
+            if ((PyDataType_ALIGNMENT(new) > 1)
+                && ((((npy_intp)(ip+offset)) % PyDataType_ALIGNMENT(new)) != 0)) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             else {
@@ -981,8 +981,8 @@ _setup_field(int i, _PyArray_LegacyDescr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) &&
-                ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
+    if ((PyDataType_ALIGNMENT(new) > 1) &&
+                ((((uintptr_t)dstdata + offset) % PyDataType_ALIGNMENT(new)) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
     else {
@@ -1032,7 +1032,7 @@ static int
 VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
 {
     _PyArray_LegacyDescr *descr = (_PyArray_LegacyDescr *)descr_;
-    int itemsize = descr->elsize;
+    int itemsize = PyDataType_ELSIZE(descr_);
     int res;
 
     if (PyDataType_HASFIELDS(descr)) {
@@ -2310,7 +2310,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 !PyDataType_HASFIELDS(descr->subarray->base) &&
                 !PyDataType_HASSUBARRAY(descr->subarray->base) &&
                 !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
+                (PyDataType_TYPENUM(descr->subarray->base) < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
@@ -2320,7 +2320,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         new = descr->subarray->base;
         dstptr = dst;
         srcptr = src;
-        subitemsize = new->elsize;
+        subitemsize = PyDataType_ELSIZE(new);
         if (subitemsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -2393,7 +2393,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 !PyDataType_HASFIELDS(descr->subarray->base) &&
                 !PyDataType_HASSUBARRAY(descr->subarray->base) &&
                 !PyDataType_REFCHK(descr->subarray->base) &&
-                (descr->subarray->base->type_num < NPY_NTYPES_LEGACY));
+                (PyDataType_TYPENUM(descr->subarray->base) < NPY_NTYPES_LEGACY));
 
         if (can_optimize_subarray) {
             _basic_copy(dst, src, descr->elsize);
@@ -2401,7 +2401,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         }
 
         new = descr->subarray->base;
-        subitemsize = new->elsize;
+        subitemsize = PyDataType_ELSIZE(new);
         if (subitemsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -2695,8 +2695,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             }
 
             dummy_fields.descr = new;
-            if ((new->alignment > 1) && !NPY__ALIGNED(ip + offset,
-                        new->alignment)) {
+            if ((PyDataType_ALIGNMENT(new) > 1) && !NPY__ALIGNED(ip + offset,
+                        PyDataType_ALIGNMENT(new))) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             else {
@@ -3052,47 +3052,47 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
-        if (swap || new->alignment > 1) {
-            if (swap || !npy_is_aligned(nip1, new->alignment)) {
+        if (swap || PyDataType_ALIGNMENT(new) > 1) {
+            if (swap || !npy_is_aligned(nip1, PyDataType_ALIGNMENT(new))) {
                 /*
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip1 = PyDataMem_UserNEW(new->elsize, mem_handler);
+                nip1 = PyDataMem_UserNEW(PyDataType_ELSIZE(new), mem_handler);
                 if (nip1 == NULL) {
                     goto finish;
                 }
-                memcpy(nip1, ip1 + offset, new->elsize);
+                memcpy(nip1, ip1 + offset, PyDataType_ELSIZE(new));
                 if (swap)
                     PyDataType_GetArrFuncs(new)->copyswap(nip1, NULL, swap, dummy);
             }
-            if (swap || !npy_is_aligned(nip2, new->alignment)) {
+            if (swap || !npy_is_aligned(nip2, PyDataType_ALIGNMENT(new))) {
                 /*
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip2 = PyDataMem_UserNEW(new->elsize, mem_handler);
+                nip2 = PyDataMem_UserNEW(PyDataType_ELSIZE(new), mem_handler);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
                         /* destroy temporary buffer */
-                        PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
+                        PyDataMem_UserFREE(nip1, PyDataType_ELSIZE(new), mem_handler);
                     }
                     goto finish;
                 }
-                memcpy(nip2, ip2 + offset, new->elsize);
+                memcpy(nip2, ip2 + offset, PyDataType_ELSIZE(new));
                 if (swap)
                     PyDataType_GetArrFuncs(new)->copyswap(nip2, NULL, swap, dummy);
             }
         }
         res = PyDataType_GetArrFuncs(new)->compare(nip1, nip2, dummy);
-        if (swap || new->alignment > 1) {
+        if (swap || PyDataType_ALIGNMENT(new) > 1) {
             if (nip1 != ip1 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
+                PyDataMem_UserFREE(nip1, PyDataType_ELSIZE(new), mem_handler);
             }
             if (nip2 != ip2 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip2, new->elsize, mem_handler);
+                PyDataMem_UserFREE(nip2, PyDataType_ELSIZE(new), mem_handler);
             }
         }
         if (res != 0) {
@@ -4287,8 +4287,8 @@ PyArray_DescrFromType(int type)
         if (ret == NULL) {
             return NULL;
         }
-        ret->elsize = 1;
-        ret->type = NPY_CHARLTR;
+        PyDataType_SET_ELSIZE(ret, 1);
+        PyDataType_SET_TYPE(ret, NPY_CHARLTR);
         return ret;
     }
     else if (PyTypeNum_ISUSERDEF(type)) {
@@ -4373,7 +4373,7 @@ static int
         default:
             return 0;
     }
-    @NAME@_copyswap(ptr, &val, !PyArray_ISNBO(descr->byteorder), NULL);
+    @NAME@_copyswap(ptr, &val, !PyArray_ISNBO(PyDataType_BYTEORDER(descr)), NULL);
     return 1;
 }
 /**end repeat**/
@@ -4489,7 +4489,7 @@ static int
         default:
             return 0;
     }
-    @NAME@_copyswap(ptr, &val, !PyArray_ISNBO(descr->byteorder), NULL);
+    @NAME@_copyswap(ptr, &val, !PyArray_ISNBO(PyDataType_BYTEORDER(descr)), NULL);
     return 1;
 }
 /**end repeat**/
@@ -4716,7 +4716,7 @@ set_typeinfo(PyObject *dict)
       * #name = STRING, UNICODE, VOID#
       */
 
-    PyDataType_MAKEUNSIZED(&@name@_Descr);
+    PyDataType_MAKEUNSIZED((PyArray_Descr *)&@name@_Descr);
 
     /**end repeat**/
 
