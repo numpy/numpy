@@ -11,3 +11,4 @@ mypy==1.19.1
 # for optional f2py encoding detection
 charset-normalizer
 tzdata
+types-PyYAML
