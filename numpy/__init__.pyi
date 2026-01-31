@@ -785,7 +785,8 @@ type _BuiltinObjectLike = (
 )  # fmt: skip
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
-type _dtype[ScalarT: generic] = dtype[ScalarT]
+# NOTE: This should _not_ be `Final[_]`, `_: TypeAlias`, or `type _`
+_dtype = dtype
 
 type _ByteOrderChar = L["<", ">", "=", "|"]
 # can be anything, is case-insensitive, and only the first character matters
