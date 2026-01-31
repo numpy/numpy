@@ -136,7 +136,7 @@ Test the wheel builds
 After the release PR is merged, go to the ``numpy-release`` repository in your
 browser and manually trigger the workflow on the ``maintenance/2.4.x`` branch
 using the ``Run workflow`` button in ``actions``.  Make sure that the upload
-target is ``none`` in the *evironment* dropdown. The wheels take about 1 hour
+target is ``none`` in the *environment* dropdown. The wheels take about 1 hour
 to build, but sometimes GitHub is very slow. If some wheel builds fail for
 unrelated reasons, you can re-run them as normal in the GitHub Actions UI with
 ``re-run failed``. After the wheels are built review the results, checking that
@@ -187,7 +187,7 @@ If you need to delete the tag due to error::
 Go to the ``numpy-release`` repository in your browser and manually trigger the
 workflow on the ``maintenance/2.4.x`` branch using the ``Run workflow`` button
 in ``actions``.  Make sure that the upload target is ``pypi`` in the
-*evironment* dropdown. The wheels take about 1 hour to build, but sometimes
+*environment* dropdown. The wheels take about 1 hour to build, but sometimes
 GitHub is very slow. If some wheel builds fail for unrelated reasons, you can
 re-run them as normal in the GitHub Actions UI with ``re-run failed``. After
 the wheels are built review the results, checking that the number of artifacts
