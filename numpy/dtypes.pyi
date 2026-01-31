@@ -1,4 +1,5 @@
 # ruff: noqa: ANN401
+from builtins import str as py_str, type as py_type
 from typing import (
     Any,
     Generic,
@@ -610,7 +611,7 @@ class StringDType(  # type: ignore[misc]
     @property
     def subdtype(self) -> None: ...
     @property
-    def type(self) -> type[str]: ...
+    def type(self) -> py_type[py_str]: ...
     @property
     def str(self) -> L["|T8", "|T16"]: ...
 

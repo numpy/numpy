@@ -1,3 +1,4 @@
+from builtins import bytes as py_bytes
 from collections.abc import Callable, MutableSequence
 from typing import Any, Literal, Self, overload
 
@@ -47,7 +48,7 @@ class Generator:
     @property
     def bit_generator(self) -> BitGenerator: ...
     def spawn(self, n_children: int) -> list[Self]: ...
-    def bytes(self, length: int) -> bytes: ...
+    def bytes(self, length: int) -> py_bytes: ...
 
     # continuous distributions
 
