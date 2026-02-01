@@ -259,16 +259,24 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    type, or an error will be raised.  The supported kinds are
 
    ==================  ========================
-   ``'?'``, ``'b1'``   boolean
+   ``'?'``             boolean
    ``'b'``             (signed) byte
    ``'B'``             unsigned byte
+   ``'h'``             (signed) short
+   ``'H'``             unsigned short
    ``'i'``             (signed) integer
    ``'I'``             unsigned integer
-   ``'f'``             floating-point
+   ``'l'``             (signed) long integer
+   ``'L'``             unsigned long integer
+   ``'q'``             (signed) long long integer
+   ``'Q'``             unsigned long long integer
+   ``'f'``             single precision
+   ``'F'``             complex single precision
+   ``'d'``             double precision
+   ``'D'``             complex double precision
+   ``'g'``             long precision
+   ``'G'``             complex long double precision
    ``'m'``             timedelta
-   ``'F'``, ``'c8'``   complex single precision
-   ``'D'``, ``'c16'``  complex double precision
-   ``'G'``, ``'c32'``  complex long double precision
    ``'M'``             datetime
    ``'O'``             (Python) objects
    ``'S'``             zero-terminated bytes (not recommended)
