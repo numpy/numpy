@@ -1,0 +1,50 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.4.2 Release Notes
+=========================
+
+The NumPy 2.4.2 is a patch release that fixes bugs discovered after the
+2.4.1 release. Highlights are:
+
+- Fixes memory leaks
+- Updates OpenBLAS to fix hangs
+
+This release supports Python versions 3.11-3.14
+
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Daniel Tang +
+* Joren Hammudoglu
+* Kumar Aditya
+* Matti Picus
+* Nathan Goldbaum
+* Ralf Gommers
+* Sebastian Berg
+* Vikram Kumar +
+
+
+Pull requests merged
+====================
+
+A total of 12 pull requests were merged for this release.
+
+* `#30629 <https://github.com/numpy/numpy/pull/30629>`__: MAINT: Prepare 2.4.x for further development
+* `#30636 <https://github.com/numpy/numpy/pull/30636>`__: TYP: ``arange``\ : accept datetime strings
+* `#30657 <https://github.com/numpy/numpy/pull/30657>`__: MAINT: avoid possible race condition by not touching ``os.environ``...
+* `#30700 <https://github.com/numpy/numpy/pull/30700>`__: BUG: validate contraction axes in tensordot (#30521)
+* `#30701 <https://github.com/numpy/numpy/pull/30701>`__: DOC: __array_namespace__info__: set_module not __module__ (#30679)
+* `#30702 <https://github.com/numpy/numpy/pull/30702>`__: BUG: fix free-threaded PyObject layout in replace_scalar_type_names...
+* `#30703 <https://github.com/numpy/numpy/pull/30703>`__: TST: fix limited API example in tests for latest Cython
+* `#30709 <https://github.com/numpy/numpy/pull/30709>`__: BUG: Fix some bugs found via valgrind (#30680)
+* `#30712 <https://github.com/numpy/numpy/pull/30712>`__: MAINT: replace ob_type access with Py_TYPE in PyArray_CheckExact
+* `#30713 <https://github.com/numpy/numpy/pull/30713>`__: BUG: Fixup the quantile promotion fixup
+* `#30736 <https://github.com/numpy/numpy/pull/30736>`__: BUG: fix thread safety of ``array_getbuffer`` (#30667)
+* `#30737 <https://github.com/numpy/numpy/pull/30737>`__: backport scipy-openblas version change
+
