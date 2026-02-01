@@ -542,7 +542,53 @@ resolve_implementation_info(PyUFuncObject *ufunc,
         best_dtypes = curr_dtypes;
         best_resolver_info = resolver_info;
     }
-    if (best_dtypes == NULL) {
+
+    if (best_dtypes != NULL) {
+        *out_info = best_resolver_info;
+        return 0;
+    }
+
+    /* No normal resolver found, try DType promoters */
+    size = PySequence_Length(ufunc->_dtype_promoters);
+    for (Py_ssize_t i = 0; i < size; i++) {
+        PyObject *promoter_info = PySequence_Fast_GET_ITEM(
+            ufunc->_dtype_promoters, i);
+        PyArray_DTypeMeta *promoter_dtype = (
+                (PyArray_DTypeMeta *)PyTuple_GET_ITEM(promoter_info, 0));
+
+        npy_bool matches = NPY_FALSE;
+        for (Py_ssize_t j = 0; j < nargs; j++) {
+            PyArray_DTypeMeta *op_dtype = op_dtypes[j];
+            // DType promoters always match exactly.
+            if (op_dtype == promoter_dtype) {
+                matches = NPY_TRUE;
+                break;
+            }
+        }
+        if (!matches) {
+            continue;
+        }
+
+        int nargs = ufunc->nargs;
+        PyObject *dtype_tuple = PyTuple_New(nargs);
+        if (dtype_tuple == NULL) {
+            return -1;
+        }
+        for (Py_ssize_t j = 0; j < nargs; j++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(dtype_tuple, j, Py_None);
+        }
+        Py_INCREF(dtype_tuple);
+
+        PyObject *promoter = PyTuple_GET_ITEM(promoter_info, 1);
+        PyObject *resolver_info = PyTuple_Pack(2, dtype_tuple, promoter);
+        Py_INCREF(resolver_info);
+
+        best_resolver_info = resolver_info;
+        break;
+    }
+
+    if (best_resolver_info == NULL) {
         /* The non-legacy lookup failed */
         *out_info = NULL;
         return 0;
@@ -1361,6 +1407,37 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
     Py_RETURN_NONE;
 }
 
+NPY_NO_EXPORT int
+add_dtype_based_promoter(PyUFuncObject *ufunc, PyObject *info, PyObject *DType)
+{
+    if (ufunc->_dtype_promoters == NULL) {
+        ufunc->_dtype_promoters = PyList_New(0);
+        if (ufunc->_dtype_promoters == NULL) {
+            return -1;
+        }
+    }
+
+    PyObject *promoters = ufunc->_dtype_promoters;
+    Py_ssize_t length = PyList_Size(promoters);
+    for (Py_ssize_t i = 0; i < length; i++) {
+        PyObject *item = PyList_GetItemRef(promoters, i);
+        PyObject *cur_DType = PyTuple_GetItem(item, 0);
+        Py_DECREF(item);
+        if (cur_DType != DType) {
+            continue;
+        }
+        PyErr_Format(PyExc_TypeError,
+                "A promoter has already been registered with '%s' for DType %R",
+                ufunc_get_name_cstr(ufunc), DType);
+        return -1;
+    }
+
+    if (PyList_Append(promoters, info) < 0) {
+        return -1;
+    }
+    return 0;
+}
+
 /*UFUNC_API
  *     Register a new promoter for a ufunc.  A promoter is a function stored
  *     in a PyCapsule (see in-line comments).  It is passed the operation and
@@ -1368,14 +1445,14 @@ get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
  *     for a matching loop/promoter.
  *
  * @param ufunc The ufunc object to register the promoter with.
- * @param DType_tuple A Python tuple containing DTypes or None matching the
- *        number of inputs and outputs of the ufunc.
+ * @param DType_or_tuple A dtype object, or a Python tuple containing DTypes
+ *         or None matching the number of inputs and outputs of the ufunc.
  * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
  *        a pointer to a `PyArrayMethod_PromoterFunction`.
  */
 NPY_NO_EXPORT int
 PyUFunc_AddPromoter(
-        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter)
+        PyObject *ufunc, PyObject *DType_or_tuple, PyObject *promoter)
 {
     if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
         PyErr_SetString(PyExc_TypeError,
@@ -1390,9 +1467,15 @@ PyUFunc_AddPromoter(
     if (PyCapsule_GetPointer(promoter, "numpy._ufunc_promoter") == NULL) {
         return -1;
     }
-    PyObject *info = PyTuple_Pack(2, DType_tuple, promoter);
+    PyObject *info = PyTuple_Pack(2, DType_or_tuple, promoter);
     if (info == NULL) {
         return -1;
     }
+
+    if (PyObject_TypeCheck(DType_or_tuple, &PyArrayDTypeMeta_Type)) {
+        return add_dtype_based_promoter(
+            (PyUFuncObject *)ufunc, info, DType_or_tuple);
+    }
+
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }
