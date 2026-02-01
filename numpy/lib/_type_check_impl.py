@@ -563,6 +563,10 @@ def typename(char):
     """
     Return a description for the given data type code.
 
+    Returns ``dtype(char).name`` for most types, with exceptions for
+    legacy codes ('F', 'D', 'G', 'S1') which retain their verbose descriptions
+    for backward compatibility.
+
     Parameters
     ----------
     char : str
@@ -580,11 +584,22 @@ def typename(char):
     Examples
     --------
     >>> import numpy as np
-    >>> type(np.typename('S'))
-    <class 'str'>
     >>> np.typename('S')
     'bytes'
+    >>> np.typename('F')
+    'complex single precision'
     """
+    # Preserve backward compatibility
+    _legacy_mapping = {
+            'F': 'complex single precision',
+            'D': 'complex double precision',
+            'G': 'complex long double precision',
+            'S1': 'character',
+    }
+
+    if char in _legacy_mapping:
+        return _legacy_mapping[char]
+
     try:
         return dtype(char).name
     except TypeError as e:
