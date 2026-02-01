@@ -258,21 +258,29 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    which represents boolean.  The item size must correspond to an existing
    type, or an error will be raised.  The supported kinds are
 
-   =================  ========================
-   ``'?'``, ``'b1'``  boolean
-   ``'b'``            (signed) byte
-   ``'B'``            unsigned byte
-   ``'i'``            (signed) integer
-   ``'u'``            unsigned integer
-   ``'f'``            floating-point
-   ``'c'``            complex-floating point
-   ``'m'``            timedelta
-   ``'M'``            datetime
-   ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
-   ``'U'``            Unicode string
-   ``'V'``            raw data (:class:`void`)
-   =================  ========================
+   ==================  ========================
+   ``'?'``             boolean
+   ``'b'``             (signed) byte
+   ``'B'``             unsigned byte
+   ``'h'``             (signed) short
+   ``'H'``             unsigned short
+   ``'i'``             (signed) integer
+   ``'I'``             unsigned integer
+   ``'l'``             (signed) long integer
+   ``'L'``             unsigned long integer
+   ``'q'``             (signed) long long integer
+   ``'Q'``             unsigned long long integer
+   ``'f'``             single precision
+   ``'F'``             complex single precision
+   ``'d'``             double precision
+   ``'D'``             complex double precision
+   ``'g'``             long precision
+   ``'G'``             complex long double precision
+   ``'O'``             (Python) objects
+   ``'S'``             zero-terminated bytes (not recommended)
+   ``'U'``             Unicode string
+   ``'V'``             raw data (:class:`void`)
+   ==================  ========================
 
    .. admonition:: Example
 
