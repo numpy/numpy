@@ -276,8 +276,6 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'D'``             complex double precision
    ``'g'``             long precision
    ``'G'``             complex long double precision
-   ``'m'``             timedelta
-   ``'M'``             datetime
    ``'O'``             (Python) objects
    ``'S'``             zero-terminated bytes (not recommended)
    ``'U'``             Unicode string
