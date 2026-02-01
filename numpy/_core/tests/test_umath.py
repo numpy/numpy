@@ -17,7 +17,6 @@ from numpy._core import _umath_tests as ncu_tests, sctypes
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,
-    IS_PYPY,
     IS_WASM,
     _gen_alignment_data,
     assert_,
@@ -4189,13 +4188,10 @@ class TestSpecialMethods:
         assert_array_equal(res, a + a)
 
     @pytest.mark.thread_unsafe(reason="modifies global module")
-    @pytest.mark.skipif(IS_PYPY, reason="__signature__ descriptor dance fails")
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"
-        expected_dict = (
-            {} if IS_PYPY else {"__module__": "numpy", "__qualname__": "add"}
-        )
+        expected_dict = {"__module__": "numpy", "__qualname__": "add"}
         expected_dict["__signature__"] = inspect.signature(np.add)
 
         np.add.__doc__ = new_doc
@@ -5104,7 +5100,6 @@ def test_bad_legacy_gufunc_silent_errors(x1):
 
 class TestAddDocstring:
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_same_docstring(self):
         # test for attributes (which are C-level defined)
         ncu.add_docstring(np.ndarray.flat, np.ndarray.flat.__doc__)

@@ -1,7 +1,7 @@
 name: Linux tests
 
 # This file is meant for testing across supported Python versions, build types
-# and interpreters (PyPy, python-dbg, a pre-release Python in summer time),
+# and interpreters (python-dbg, a pre-release Python in summer time),
 # build-via-sdist, run benchmarks, measure code coverage, and other build
 # options.
 

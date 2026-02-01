@@ -5,7 +5,7 @@ import sysconfig
 
 import pytest
 
-from numpy.testing import IS_EDITABLE, IS_PYPY, IS_WASM, NOGIL_BUILD
+from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:
@@ -91,7 +91,6 @@ def install_temp(tmpdir_factory):
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not currently support the limited API",
 )
-@pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):
     """Test building a third-party C extension with the limited API
     and building a cython extension with the limited API
