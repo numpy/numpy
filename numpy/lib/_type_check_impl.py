@@ -10,7 +10,7 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
 
 import numpy._core.numeric as _nx
 from numpy._core import getlimits, overrides
-from numpy._core.numeric import asanyarray, asarray, dtype, isnan, zeros
+from numpy._core.numeric import asanyarray, asarray, isnan, zeros
 from numpy._utils import set_module
 
 from ._ufunclike_impl import isneginf, isposinf
@@ -558,14 +558,34 @@ def real_if_close(a, tol=100):
 
 #-----------------------------------------------------------------------------
 
+_namefromtype = {'S1': 'character',
+                 '?': 'bool',
+                 'b': 'signed char',
+                 'B': 'unsigned char',
+                 'h': 'short',
+                 'H': 'unsigned short',
+                 'i': 'integer',
+                 'I': 'unsigned integer',
+                 'l': 'long integer',
+                 'L': 'unsigned long integer',
+                 'q': 'long long integer',
+                 'Q': 'unsigned long long integer',
+                 'f': 'single precision',
+                 'd': 'double precision',
+                 'g': 'long precision',
+                 'F': 'complex single precision',
+                 'D': 'complex double precision',
+                 'G': 'complex long double precision',
+                 'S': 'string',
+                 'U': 'unicode',
+                 'V': 'void',
+                 'O': 'object'
+                 }
+
 @set_module('numpy')
 def typename(char):
     """
     Return a description for the given data type code.
-
-    Returns ``dtype(char).name`` for most types, with exceptions for
-    legacy codes ('F', 'D', 'G', 'S1') which retain their verbose descriptions
-    for backward compatibility.
 
     Parameters
     ----------
@@ -584,26 +604,36 @@ def typename(char):
     Examples
     --------
     >>> import numpy as np
-    >>> np.typename('S')
-    'bytes'
-    >>> np.typename('F')
-    'complex single precision'
+    >>> typechars = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
+    ...              'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
+    >>> for typechar in typechars:
+    ...     print(typechar, ' : ', np.typename(typechar))
+    ...
+    S1  :  character
+    ?  :  bool
+    B  :  unsigned char
+    D  :  complex double precision
+    G  :  complex long double precision
+    F  :  complex single precision
+    I  :  unsigned integer
+    H  :  unsigned short
+    L  :  unsigned long integer
+    O  :  object
+    Q  :  unsigned long long integer
+    S  :  string
+    U  :  unicode
+    V  :  void
+    b  :  signed char
+    d  :  double precision
+    g  :  long precision
+    f  :  single precision
+    i  :  integer
+    h  :  short
+    l  :  long integer
+    q  :  long long integer
+
     """
-    # Preserve backward compatibility
-    _legacy_mapping = {
-            'F': 'complex single precision',
-            'D': 'complex double precision',
-            'G': 'complex long double precision',
-            'S1': 'character',
-    }
-
-    if char in _legacy_mapping:
-        return _legacy_mapping[char]
-
-    try:
-        return dtype(char).name
-    except TypeError as e:
-        raise TypeError(f"{char!r} does not represent a valid dtype") from None
+    return _namefromtype[char]
 
 #-----------------------------------------------------------------------------
 
