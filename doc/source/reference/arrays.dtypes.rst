@@ -263,15 +263,15 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'b'``            (signed) byte
    ``'B'``            unsigned byte
    ``'i'``            (signed) integer
-   ``'u'``            unsigned integer
+   ``'I'``            unsigned integer
    ``'f'``            floating-point
    ``'m'``            timedelta
-   ``'F'``            complex single precision
-   ``'D'``            complex double precision
-   ``'G'``            complex long double precision
+   ``'F'``, ``'c8'``  complex single precision
+   ``'D'``, ``'c16'`` complex double precision
+   ``'G'``, ``'c32'`` complex long double precision
    ``'M'``            datetime
    ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
+   ``'S'``            zero-terminated bytes (not recommended)
    ``'U'``            Unicode string
    ``'V'``            raw data (:class:`void`)
    =================  ========================
