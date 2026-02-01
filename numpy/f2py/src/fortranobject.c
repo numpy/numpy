@@ -192,13 +192,24 @@ PyFortranObject_NewAsAttr(FortranDataDef *defs)
     }
     fp->len = 1;
     fp->defs = defs;
+    PyObject *name;
     if (defs->rank == -1) {
-      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("function %s", defs->name));
+      name = PyUnicode_FromFormat("function %s", defs->name);
     } else if (defs->rank == 0) {
-      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("scalar %s", defs->name));
+      name = PyUnicode_FromFormat("scalar %s", defs->name);
     } else {
-      PyDict_SetItemString(fp->dict, "__name__", PyUnicode_FromFormat("array %s", defs->name));
+      name = PyUnicode_FromFormat("array %s", defs->name);
     }
+    if (name == NULL) {
+        Py_DECREF(fp);
+        return NULL;
+    }
+    if (PyDict_SetItemString(fp->dict, "__name__", name) < 0) {
+        Py_DECREF(name);
+        Py_DECREF(fp);
+        return NULL;
+    }
+    Py_DECREF(name);
     return (PyObject *)fp;
 }
 
