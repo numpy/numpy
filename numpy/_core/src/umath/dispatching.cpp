@@ -179,6 +179,7 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
     PyObject *dtypes = PyArray_TupleFromItems(
             nargs, (PyObject **)bmeth->dtypes, 1);
     if (dtypes == NULL) {
+        Py_DECREF(bmeth);
         return -1;
     }
     PyObject *info = PyTuple_Pack(2, dtypes, bmeth->method);
@@ -187,7 +188,9 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
     if (info == NULL) {
         return -1;
     }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(info);
+    return res;
 }
 
 
@@ -1319,8 +1322,9 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     if (info == NULL) {
         return -1;
     }
-
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(info);
+    return res;
 }
 
 /*
@@ -1394,5 +1398,7 @@ PyUFunc_AddPromoter(
     if (info == NULL) {
         return -1;
     }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+    Py_DECREF(info);
+    return res;
 }
