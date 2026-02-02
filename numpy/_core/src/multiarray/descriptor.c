@@ -3186,6 +3186,15 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         self->flags = _descr_find_object((PyArray_Descr *)self);
     }
 
+    /*
+     * Mark as not trivially copyable if layout is not simple (has padding).
+     * Needed for pickles created before NPY_NOT_TRIVIALLY_COPYABLE existed.
+     */
+    if (PyDataType_HASFIELDS((PyArray_Descr *)self) &&
+            !is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)self)) {
+        self->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
+
     PyObject *old_metadata, *new_metadata;
     if (PyDataType_ISDATETIME(self)) {
         PyArray_DatetimeMetaData temp_dt_data;
