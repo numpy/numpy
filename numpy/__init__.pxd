@@ -1,10 +1,18 @@
 # NumPy static imports for Cython < 3.0
 #
-# If any of the PyArray_* functions are called, import_array must be
-# called first.
-#
 # Author: Dag Sverre Seljebotn
 #
+# DO NOT USE THIS HEADER
+#
+# Only Cython versions older than 3.0.0 will attempt to process this
+# header. It is left unchanged from its state when we dropped support
+# for Cython < 3.0 but using it will generate a build error when
+# compiling the generated C file due to the error in the C header
+# included below.
+#
+
+cdef extern from "numpy/_fail_builds_with_old_cython.h":
+    pass
 
 DEF _buffer_format_string_len = 255
 
