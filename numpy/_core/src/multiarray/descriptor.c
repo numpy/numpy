@@ -3754,6 +3754,10 @@ arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind)
     view_dtype->names = names;
     view_dtype->fields = fields;
     view_dtype->flags = self->flags;
+    /* Mark as not trivially copyable if layout is not simple (has padding) */
+    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)view_dtype)) {
+        view_dtype->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
     return (PyArray_Descr *)view_dtype;
 
 fail:
