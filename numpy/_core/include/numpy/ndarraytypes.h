@@ -596,7 +596,7 @@ typedef struct {
 #define NPY_USE_SETITEM     0x40
 /* A sticky flag specifically for structured arrays */
 #define NPY_ALIGNED_STRUCT  0x80
-/* Dtype has holes/padding - cannot use memcpy for structured copy */
+/* Structured dtype has non-contiguous field layout */
 #define NPY_NOT_TRIVIALLY_COPYABLE  0x100
 
 /*
