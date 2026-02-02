@@ -8,7 +8,7 @@ import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._core.overrides import array_function_dispatch, set_module
 
-__all__ = ['broadcast_to', 'broadcast_arrays', 'broadcast_shapes']
+__all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes", "as_strided_checked"]
 
 
 class DummyArray:
@@ -32,6 +32,210 @@ def _maybe_view_as_subclass(original_array, new_array):
         if new_array.__array_finalize__:
             new_array.__array_finalize__(original_array)
     return new_array
+
+
+def _compute_strided_offset_bounds(shape, strides):
+    """
+    Compute the minimum and maximum byte offsets for a strided array view.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        The shape of the strided view.
+    strides : tuple of int
+        The strides (in bytes) of the view.
+
+    Returns
+    -------
+    min_offset : int
+        The minimum byte offset that would be accessed.
+    max_offset : int
+        The maximum byte offset that would be accessed (not including itemsize).
+
+    Notes
+    -----
+    This function computes the minimum and maximum byte offsets that could
+    be accessed by a strided view. For each dimension, the offset contribution
+    ranges from 0 to (shape[i] - 1) * strides[i] if strides[i] >= 0, or from
+    (shape[i] - 1) * strides[i] to 0 if strides[i] < 0.
+
+    Examples
+    --------
+    >>> shape = (5,)
+    >>> strides = (8,)
+    >>> _compute_strided_offset_bounds(shape, strides)
+    (0, 32)
+
+    >>> shape = (5,)
+    >>> strides = (-8,)
+    >>> _compute_strided_offset_bounds(shape, strides)
+    (-32, 0)
+
+    >>> shape = (2, 3)
+    >>> strides = (24, 8)
+    >>> _compute_strided_offset_bounds(shape, strides)
+    (0, 40)
+    """
+    min_offset = 0
+    max_offset = 0
+
+    for size, stride in zip(shape, strides):
+        if size == 0:
+            # Empty dimension, no access
+            continue
+
+        # The offset contribution from this dimension
+        contribution = (size - 1) * stride
+
+        if contribution > 0:
+            max_offset += contribution
+        else:
+            min_offset += contribution
+
+    return min_offset, max_offset
+
+
+@set_module("numpy.lib.stride_tricks")
+def as_strided_checked(x, shape=None, strides=None, subok=False, writeable=True):
+    """
+    Create a view into the array with the given shape and strides, with bounds checking.
+
+    This is a safer version of :func:`as_strided` that validates the shape and
+    strides to ensure that all memory accesses will be within bounds of the
+    original array. If the bounds check fails, a ``ValueError`` is raised.
+
+    Parameters
+    ----------
+    x : ndarray
+        Array to create a view from. Must be an ndarray or an object that
+        can be converted to an array without copying (such as another array
+        view). If a copy would be required, a ValueError is raised.
+    shape : sequence of int, optional
+        The shape of the new array. Defaults to ``x.shape``.
+    strides : sequence of int, optional
+        The strides of the new array. Defaults to ``x.strides``.
+    subok : bool, optional
+        If True, subclasses are preserved.
+    writeable : bool, optional
+        If set to False, the returned array will always be readonly.
+        Otherwise it will be writable if the original array was. It
+        is advisable to set this to False if possible (see Notes).
+
+    Returns
+    -------
+    view : ndarray
+
+    Raises
+    ------
+    ValueError
+        If the given shape and strides would result in out-of-bounds memory
+        access, or if the input cannot be converted to an array without copying.
+
+    See also
+    --------
+    as_strided : Create a view without bounds checking (unsafe).
+
+    Notes
+    -----
+    This function performs bounds checking by calculating the minimum and
+    maximum byte offsets that could be accessed by the strided view. For a view
+    to be valid:
+
+    - The minimum offset (accounting for negative strides) must be >= 0
+    - The maximum offset (accounting for positive strides) must be within the
+      array's allocated memory
+
+    For each dimension ``i``, the contribution to the offset ranges from:
+
+    - 0 to ``(shape[i] - 1) * strides[i]`` if ``strides[i] >= 0``
+    - ``(shape[i] - 1) * strides[i]`` to 0 if ``strides[i] < 0``
+
+    When ``x`` is a view of another array (e.g., created by slicing), the
+    bounds checking is performed against the underlying base array, not just
+    the view. This allows creating strided views that access memory beyond
+    the view's own bounds, as long as the accesses stay within the base
+    array's allocated memory.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy.lib.stride_tricks import as_strided_checked
+    >>> x = np.arange(10)
+    >>> y = as_strided_checked(x, shape=(5,), strides=(8,))
+    >>> y
+    array([0, 1, 2, 3, 4])
+
+    Attempting to create an out-of-bounds view raises an error:
+
+    >>> as_strided_checked(x, shape=(20,), strides=(8,))
+    Traceback (most recent call last):
+    ...
+    ValueError: Given shape and strides would access memory out of bounds...
+
+    When working with views, bounds are checked against the base array:
+
+    >>> a = np.arange(1000)
+    >>> b = a[:2]
+    >>> c = as_strided_checked(b, shape=(2,), strides=(400,))
+    >>> c[0], c[1]
+    (0, 50)
+    """
+    # Convert input to array, but don't allow copying
+    x = np.array(x, copy=False, subok=subok)
+
+    # Use current shape and strides if not provided
+    if shape is None:
+        shape = x.shape
+    else:
+        shape = tuple(shape)
+
+    if strides is None:
+        strides = x.strides
+    else:
+        strides = tuple(strides)
+
+    if len(shape) != len(strides):
+        raise ValueError(
+            f"shape and strides must have the same length; "
+            f"got shape length {len(shape)} and strides length {len(strides)}"
+        )
+
+    for size in shape:
+        if size < 0:
+            raise ValueError(f"shape dimensions must be non-negative; got {shape}")
+
+    min_offset, max_offset = _compute_strided_offset_bounds(shape, strides)
+
+    # Find the base array and calculate byte offset from it
+    # This is crucial for views - we need to check against the underlying memory
+    base = x
+    while base.base is not None:
+        base = base.base
+
+    # Calculate the byte offset of x from the base array
+    if base is x:
+        byte_offset = 0
+    else:
+        byte_offset = (
+            x.__array_interface__["data"][0] - base.__array_interface__["data"][0]
+        )
+
+    # Validate bounds against the base array
+    if byte_offset + min_offset < 0:
+        raise ValueError(
+            f"Given shape and strides would access memory out of bounds. "
+            f"Minimum offset is {byte_offset + min_offset} bytes (should be >= 0). "
+        )
+
+    if byte_offset + max_offset + x.itemsize > base.nbytes:
+        raise ValueError(
+            f"Given shape and strides would access memory out of bounds. "
+            f"Maximum offset is {byte_offset + max_offset} bytes, with item size {x.itemsize} bytes, "
+            f"but base array only has {base.nbytes} bytes. "
+            f"This would access up to byte {byte_offset + max_offset + x.itemsize}."
+        )
+
+    return as_strided(x, shape=shape, strides=strides, subok=subok, writeable=writeable)
 
 
 @set_module("numpy.lib.stride_tricks")
@@ -62,6 +266,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     See also
     --------
+    as_strided_checked : Create a view with bounds checking (safer alternative).
     broadcast_to : broadcast an array to a given shape.
     reshape : reshape an array.
     lib.stride_tricks.sliding_window_view :
@@ -169,6 +374,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
     --------
     lib.stride_tricks.as_strided: A lower-level and less safe routine for
         creating arbitrary views from custom shape and strides.
+    lib.stride_tricks.as_strided_checked: Similar to as_strided but with
+        bounds validation for safer usage.
     broadcast_to: broadcast an array to a given shape.
 
     Notes
