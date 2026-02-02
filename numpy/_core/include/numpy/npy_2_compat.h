@@ -139,14 +139,29 @@ PyArray_ImportNumPyAPI(void)
  *
  * Most of these are defined via the `DESCR_ACCESSOR` macro helper.
  */
+
+static inline PyArray_Descr_fields *
+PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
+{
+    return (PyArray_Descr_fields *)dtype;
+}
+
+static inline void
+_PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
+{
+    PyDataType_GET_ITEM_DATA(dtype)->type = type;
+}
+
+static inline void
+PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
+{
+    PyDataType_GET_ITEM_DATA(dtype)->byteorder = byteorder;
+}
+
+
+
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || NPY_ABI_VERSION < 0x02000000
     /* Compiling for 1.x or 2.x only, direct field access is OK: */
-
-    static inline PyArray_Descr_fields *
-    PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
-    {
-        return (PyArray_Descr_fields *)dtype;
-    }
 
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
@@ -213,7 +228,7 @@ PyArray_ImportNumPyAPI(void)
             ((_PyArray_DescrNumPy2 *)dtype)->flags = flags;
         }
         else {
-            ((PyArray_DescrProto *)dtype)->flags = (npy_uint64)(unsigned char)flags
+            ((PyArray_DescrProto *)dtype)->flags = (npy_uint64)(unsigned char)flags;
         }
     }
 
@@ -232,25 +247,6 @@ PyArray_ImportNumPyAPI(void)
             }                                                      \
         }
 #endif
-
-static inline PyArray_Descr_fields *
-PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
-{
-    return (PyArray_Descr_fields *)dtype;
-}
-
-static inline void
-_PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
-{
-    PyDataType_GET_ITEM_DATA(dtype)->type = type;
-}
-
-static inline void
-PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
-{
-    PyDataType_GET_ITEM_DATA(dtype)->byteorder = byteorder;
-}
-
 
 DESCR_ACCESSOR(ELSIZE, elsize, npy_intp, 0)
 DESCR_ACCESSOR(ALIGNMENT, alignment, npy_intp, 0)
