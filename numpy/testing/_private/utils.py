@@ -38,7 +38,7 @@ __all__ = [
         'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
-        'SkipTest', 'KnownFailureException', 'temppath', 'tempdir',
+        'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
@@ -88,6 +88,7 @@ else:
         IS_INSTALLED = False
 
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
+IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 BLAS_SUPPORTS_FPE = np._core._multiarray_umath._blas_supports_fpe(None)
@@ -2662,10 +2663,18 @@ def break_cycles():
     """
     Break reference cycles by calling gc.collect
     Objects can call other objects' methods (for instance, another object's
-     __del__) inside their own __del__.
+     __del__) inside their own __del__. On PyPy, the interpreter only runs
+    between calls to gc.collect, so multiple calls are needed to completely
+    release all cycles.
     """
 
     gc.collect()
+    if IS_PYPY:
+        # a few more, just to make sure all the finalizers are called
+        gc.collect()
+        gc.collect()
+        gc.collect()
+        gc.collect()
 
 
 def requires_memory(free_bytes):
