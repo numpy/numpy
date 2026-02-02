@@ -836,14 +836,15 @@ def test_as_strided_checked_zero_stride_broadcasting(size):
         (10, (100,), (8,)),
         # 2D out of bounds cases
         (20, (5, 5), (80, 8)),
-        (20, (3, 10), (64, 8)),  # Negative strides that go before array start
+        (20, (3, 10), (64, 8)),
+        # Negative strides that go before array start
         (10, (5,), (-8,)),
         (10, (10,), (-8,)),
         (20, (5,), (-16,)),
         # ND negative strides
-        (10, (2, 3, 4), (96, 32, -8)),  # Negative stride in 3rd dim
-        (20, (3, 4), (64, -8)),  # Negative stride in 2nd dim
-        (30, (2, 3, 4), (-96, 32, 8)),  # Negative stride in 1st dim
+        (10, (2, 3, 4), (96, 32, -8)),
+        (20, (3, 4), (64, -8)),
+        (30, (2, 3, 4), (-96, 32, 8)),
     ],
 )
 def test_as_strided_checked_out_of_bounds_positive_strides(size, shape, strides):
@@ -884,7 +885,6 @@ def test_as_strided_checked_view_with_offset():
     """Test as_strided_checked on a view that doesn't start at the beginning."""
     a = np.arange(1000, dtype=np.int64)
 
-    # Create a view starting at element 100
     b = a[100:102]
 
     y = as_strided_checked(b, shape=(2,), strides=(80,))
@@ -905,7 +905,7 @@ def test_as_strided_checked_view_out_of_bounds_negative():
 
 def test_as_strided_checked_view_out_of_bounds_positive():
     """Test that positive strides on a view correctly detect out of bounds."""
-    a = np.arange(100, dtype=np.int64)  # 800 bytes total
+    a = np.arange(100, dtype=np.int64)
 
     b = a[95:97]
 
@@ -922,7 +922,7 @@ def test_as_strided_checked_nested_views():
     y = as_strided_checked(c, shape=(2,), strides=(160,))
     assert_equal(y.shape, (2,))
     assert_equal(y[0], 15)
-    assert_equal(y[1], 35)  # 160 bytes / 8 bytes = 20 elements forward
+    assert_equal(y[1], 35)
 
 
 def test_as_strided_checked_sliced_array():
@@ -933,7 +933,7 @@ def test_as_strided_checked_sliced_array():
     y = as_strided_checked(b, shape=(5,), strides=(16,))
     assert_equal(y.shape, (5,))
 
-    c = a[::2]  # Every other element
+    c = a[::2]
     y = as_strided_checked(c, shape=(10,), strides=(16,))
     assert_equal(y.shape, (10,))
 
@@ -941,11 +941,12 @@ def test_as_strided_checked_sliced_array():
 @pytest.mark.parametrize(
     "start,stop,stride_bytes,should_pass",
     [
-        (0, 10, 160, True),
-        (0, 10, 800, True),
-        (90, 95, 320, True),
-        (95, 97, 200, False),
-        (5, 7, -48, False),
+        (0, 10, 552, True),
+        (0, 10, 552 + 1, True),
+        (90, 95, 72, True),
+        (90, 95, 72 + 1, False),
+        (5, 7, -40, True),
+        (5, 7, -40 - 1, False),
     ],
 )
 def test_as_strided_checked_view_parametrized(start, stop, stride_bytes, should_pass):

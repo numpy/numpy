@@ -7,6 +7,7 @@ An explanation of strides can be found in the :ref:`arrays.ndarray`.
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._core.overrides import array_function_dispatch, set_module
+from numpy.lib._array_utils_impl import byte_bounds
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes", "as_strided_checked"]
 
@@ -107,9 +108,7 @@ def as_strided_checked(x, shape=None, strides=None, subok=False, writeable=True)
     Parameters
     ----------
     x : ndarray
-        Array to create a view from. Must be an ndarray or an object that
-        can be converted to an array without copying (such as another array
-        view). If a copy would be required, a ValueError is raised.
+        Array to create a new.
     shape : sequence of int, optional
         The shape of the new array. Defaults to ``x.shape``.
     strides : sequence of int, optional
@@ -135,27 +134,6 @@ def as_strided_checked(x, shape=None, strides=None, subok=False, writeable=True)
     --------
     as_strided : Create a view without bounds checking (unsafe).
 
-    Notes
-    -----
-    This function performs bounds checking by calculating the minimum and
-    maximum byte offsets that could be accessed by the strided view. For a view
-    to be valid:
-
-    - The minimum offset (accounting for negative strides) must be >= 0
-    - The maximum offset (accounting for positive strides) must be within the
-      array's allocated memory
-
-    For each dimension ``i``, the contribution to the offset ranges from:
-
-    - 0 to ``(shape[i] - 1) * strides[i]`` if ``strides[i] >= 0``
-    - ``(shape[i] - 1) * strides[i]`` to 0 if ``strides[i] < 0``
-
-    When ``x`` is a view of another array (e.g., created by slicing), the
-    bounds checking is performed against the underlying base array, not just
-    the view. This allows creating strided views that access memory beyond
-    the view's own bounds, as long as the accesses stay within the base
-    array's allocated memory.
-
     Examples
     --------
     >>> import numpy as np
@@ -180,62 +158,30 @@ def as_strided_checked(x, shape=None, strides=None, subok=False, writeable=True)
     >>> c[0], c[1]
     (0, 50)
     """
-    # Convert input to array, but don't allow copying
-    x = np.array(x, copy=False, subok=subok)
 
-    # Use current shape and strides if not provided
-    if shape is None:
-        shape = x.shape
-    else:
-        shape = tuple(shape)
+    view = as_strided(x, shape=shape, strides=strides, subok=subok, writeable=writeable)
 
-    if strides is None:
-        strides = x.strides
-    else:
-        strides = tuple(strides)
-
-    if len(shape) != len(strides):
-        raise ValueError(
-            f"shape and strides must have the same length; "
-            f"got shape length {len(shape)} and strides length {len(strides)}"
-        )
-
-    for size in shape:
-        if size < 0:
-            raise ValueError(f"shape dimensions must be non-negative; got {shape}")
-
-    min_offset, max_offset = _compute_strided_offset_bounds(shape, strides)
-
-    # Find the base array and calculate byte offset from it
-    # This is crucial for views - we need to check against the underlying memory
-    base = x
+    # Find the base array
+    base = np.array(x, copy=None, subok=subok)
     while base.base is not None:
         base = base.base
 
-    # Calculate the byte offset of x from the base array
-    if base is x:
-        byte_offset = 0
-    else:
-        byte_offset = (
-            x.__array_interface__["data"][0] - base.__array_interface__["data"][0]
-        )
+    base_low, base_high = byte_bounds(base)
+    view_low, view_high = byte_bounds(view)
 
-    # Validate bounds against the base array
-    if byte_offset + min_offset < 0:
+    if view_low < base_low:
         raise ValueError(
             f"Given shape and strides would access memory out of bounds. "
-            f"Minimum offset is {byte_offset + min_offset} bytes (should be >= 0). "
+            f"View starts {base_low-view_low} before starts"
         )
 
-    if byte_offset + max_offset + x.itemsize > base.nbytes:
+    if view_high > base_high:
         raise ValueError(
             f"Given shape and strides would access memory out of bounds. "
-            f"Maximum offset is {byte_offset + max_offset} bytes, with item size {x.itemsize} bytes, "
-            f"but base array only has {base.nbytes} bytes. "
-            f"This would access up to byte {byte_offset + max_offset + x.itemsize}."
+            f"View ends {view_high-base_high} after ends"
         )
 
-    return as_strided(x, shape=shape, strides=strides, subok=subok, writeable=writeable)
+    return view
 
 
 @set_module("numpy.lib.stride_tricks")
