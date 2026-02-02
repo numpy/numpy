@@ -1,5 +1,4 @@
 installed_headers = [
-  'numpy/_fail_build_with_old_cython.h',
   'numpy/_neighborhood_iterator_imp.h',
   'numpy/_public_dtype_api_table.h',
   'numpy/arrayobject.h',
