@@ -2,15 +2,17 @@
 Test the scalar constructors, which also do type-coercion
 """
 import fractions
+import inspect
 import platform
+import sys
 import types
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
 import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import IS_PYPY, assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -171,8 +173,12 @@ class TestClassGetItem:
     @pytest.mark.parametrize("code", np.typecodes["All"])
     def test_concrete(self, code: str) -> None:
         cls = np.dtype(code).type
-        with pytest.raises(TypeError):
-            cls[Any]
+        if cls in {np.bool, np.datetime64}:
+            # these are intentionally subscriptable
+            assert cls[Any]
+        else:
+            with pytest.raises(TypeError):
+                cls[Any]
 
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
@@ -185,6 +191,10 @@ class TestClassGetItem:
 
     def test_subscript_scalar(self) -> None:
         assert np.number[Any]
+
+    @pytest.mark.parametrize("subscript", [Literal[True], Literal[False]])
+    def test_subscript_bool(self, subscript: Literal[True, False]) -> None:
+        assert isinstance(np.bool[subscript], types.GenericAlias)
 
 
 class TestBitCount:
@@ -244,3 +254,75 @@ def test_array_wrap(scalar):
     arr1d = np.array([3], dtype=np.int8)
     assert scalar.__array_wrap__(arr1d) is arr1d
     assert scalar.__array_wrap__(arr1d, None, True) is arr1d
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
+class TestSignature:
+    # test that scalar types have a valid __text_signature__ or __signature__ set
+    @pytest.mark.parametrize(
+        "sctype",
+        [
+            *sctypes["int"],
+            *sctypes["uint"],
+            *sctypes["float"],
+            *sctypes["complex"],
+            *sctypes["others"],
+            np.datetime64,
+            np.timedelta64,
+        ],
+    )
+    def test_constructor_signatures(self, sctype: type[np.generic]):
+        try:
+            sig = inspect.signature(sctype)
+        except ValueError:
+            pytest.fail(f"missing signature: {sctype}")
+
+        assert sig.parameters
+
+    @pytest.mark.parametrize(
+        "sctype",
+        [np.integer, *sctypes["int"], *sctypes["uint"], *sctypes["float"]],
+    )
+    def test_method_signatures_is_integer(self, sctype: type[np.integer | np.floating]):
+        try:
+            sig = inspect.signature(sctype.is_integer)
+        except ValueError:
+            pytest.fail(f"missing signature: {sctype.__name__}.is_integer")
+
+        assert len(sig.parameters) == 1
+        assert sig.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
+    @pytest.mark.parametrize("sctype", sctypes["float"])
+    def test_method_signatures_as_integer_ratio(self, sctype: type[np.floating]):
+        try:
+            sig = inspect.signature(sctype.as_integer_ratio)
+        except ValueError:
+            pytest.fail(f"missing signature: {sctype.__name__}.as_integer_ratio")
+
+        assert len(sig.parameters) == 1
+        assert sig.parameters["self"].kind == inspect.Parameter.POSITIONAL_ONLY
+
+    @pytest.mark.parametrize(
+        "method_name",
+        [
+            "__array_namespace__", "__copy__", "__deepcopy__", "all", "any", "argmax",
+            "argmin", "argsort", "astype", "byteswap", "choose", "clip", "compress",
+            "conj", "conjugate", "copy", "cumprod", "cumsum", "diagonal", "dump",
+            "dumps", "fill", "flatten", "getfield", "item", "max", "mean", "min",
+            "nonzero", "prod", "put", "ravel", "repeat", "reshape", "resize", "round",
+            "searchsorted", "setfield", "setflags", "sort", "squeeze", "std", "sum",
+            "swapaxes", "take", "to_device", "tobytes", "tofile", "tolist", "trace",
+            "transpose", "var", "view",
+        ],
+    )
+    def test_array_scalar_method_signatures(self, method_name: str):
+        # methods shared by np.generic and np.ndarray should have the same signature
+        fn_generic = getattr(np.generic, method_name)
+        sig_generic = inspect.signature(fn_generic)
+        assert "self" in sig_generic.parameters
+        assert sig_generic.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY
+
+        fn_ndarray = getattr(np.ndarray, method_name)
+        sig_ndarray = inspect.signature(fn_ndarray)
+        assert sig_generic == sig_ndarray

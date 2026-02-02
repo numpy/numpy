@@ -65,9 +65,9 @@ from .fromnumeric import (
     take,
     trace,
     transpose,
+    transpose as permute_dims,
     var,
 )
-from .fromnumeric import transpose as permute_dims
 from .function_base import geomspace, linspace, logspace
 from .getlimits import finfo, iinfo
 from .memmap import memmap
@@ -91,6 +91,7 @@ from .numeric import (
     broadcast,
     can_cast,
     concatenate,
+    concatenate as concat,
     convolve,
     copyto,
     correlate,
@@ -145,7 +146,6 @@ from .numeric import (
     zeros,
     zeros_like,
 )
-from .numeric import concatenate as concat
 from .numerictypes import (
     ScalarType,
     bool,
@@ -228,14 +228,22 @@ from .shape_base import (
 )
 from .umath import (
     absolute,
+    absolute as abs,
     add,
     arccos,
+    arccos as acos,
     arccosh,
+    arccosh as acosh,
     arcsin,
+    arcsin as asin,
     arcsinh,
+    arcsinh as asinh,
     arctan,
+    arctan as atan,
     arctan2,
+    arctan2 as atan2,
     arctanh,
+    arctanh as atanh,
     bitwise_and,
     bitwise_count,
     bitwise_or,
@@ -272,6 +280,7 @@ from .umath import (
     heaviside,
     hypot,
     invert,
+    invert as bitwise_invert,
     isfinite,
     isinf,
     isnan,
@@ -279,6 +288,7 @@ from .umath import (
     lcm,
     ldexp,
     left_shift,
+    left_shift as bitwise_left_shift,
     less,
     less_equal,
     log,
@@ -303,11 +313,13 @@ from .umath import (
     pi,
     positive,
     power,
+    power as pow,
     rad2deg,
     radians,
     reciprocal,
     remainder,
     right_shift,
+    right_shift as bitwise_right_shift,
     rint,
     sign,
     signbit,
@@ -323,18 +335,6 @@ from .umath import (
     trunc,
     vecmat,
 )
-from .umath import absolute as abs
-from .umath import arccos as acos
-from .umath import arccosh as acosh
-from .umath import arcsin as asin
-from .umath import arcsinh as asinh
-from .umath import arctan as atan
-from .umath import arctan2 as atan2
-from .umath import arctanh as atanh
-from .umath import invert as bitwise_invert
-from .umath import left_shift as bitwise_left_shift
-from .umath import power as pow
-from .umath import right_shift as bitwise_right_shift
 
 __all__ = [
     "False_",

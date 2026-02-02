@@ -19,9 +19,7 @@ np.char.join(AR_U, b"_")  # type: ignore[arg-type]
 np.char.join(AR_S, "_")  # type: ignore[arg-type]
 
 np.char.ljust(AR_U, 5, fillchar=b"a")  # type: ignore[arg-type]
-np.char.ljust(AR_S, 5, fillchar="a")  # type: ignore[arg-type]
 np.char.rjust(AR_U, 5, fillchar=b"a")  # type: ignore[arg-type]
-np.char.rjust(AR_S, 5, fillchar="a")  # type: ignore[arg-type]
 
 np.char.lstrip(AR_U, chars=b"a")  # type: ignore[arg-type]
 np.char.lstrip(AR_S, chars="a")  # type: ignore[arg-type]

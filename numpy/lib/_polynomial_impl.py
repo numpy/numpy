@@ -5,7 +5,6 @@ Functions to operate on polynomials.
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',
            'polyfit']
-
 import functools
 import re
 import warnings
@@ -141,8 +140,7 @@ def poly(seq_of_zeros):
         seq_of_zeros = eigvals(seq_of_zeros)
     elif len(sh) == 1:
         dt = seq_of_zeros.dtype
-        # Let object arrays slip through, e.g. for arbitrary precision
-        if dt != object:
+        if dt.type is not NX.object_:
             seq_of_zeros = seq_of_zeros.astype(mintypecode(dt.char))
     else:
         raise ValueError("input must be 1d or non-empty square 2d array.")
@@ -466,7 +464,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
        A summary of the differences can be found in the
        :doc:`transition guide </reference/routines.polynomials>`.
 
-    Fit a polynomial ``p(x) = p[0] * x**deg + ... + p[deg]`` of degree `deg`
+    Fit a polynomial ``p[0] * x**deg + ... + p[deg]`` of degree `deg`
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
     the squared error in the order `deg`, `deg-1`, ... `0`.
 

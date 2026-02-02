@@ -1,12 +1,19 @@
-from typing import Final
-from typing import Literal as L
+from typing import Any, ClassVar, Final, overload
 
 import numpy as np
+import numpy.typing as npt
+from numpy._typing import (
+    _ArrayLikeFloat_co,
+    _ArrayLikeNumber_co,
+    _FloatLike_co,
+    _NumberLike_co,
+)
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
     _Array1,
     _Array2,
+    _ArrayLikeCoef_co,
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
@@ -20,7 +27,6 @@ from ._polytypes import (
     _FuncVal,
     _FuncVal2D,
     _FuncVal3D,
-    _FuncValFromRoots,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
@@ -58,32 +64,46 @@ __all__ = [
     "polycompanion",
 ]
 
-polydomain: Final[_Array2[np.float64]]
-polyzero: Final[_Array1[np.int_]]
-polyone: Final[_Array1[np.int_]]
-polyx: Final[_Array2[np.int_]]
+polydomain: Final[_Array2[np.float64]] = ...
+polyzero: Final[_Array1[np.int_]] = ...
+polyone: Final[_Array1[np.int_]] = ...
+polyx: Final[_Array2[np.int_]] = ...
 
-polyline: _FuncLine[L["Polyline"]]
-polyfromroots: _FuncFromRoots[L["polyfromroots"]]
-polyadd: _FuncBinOp[L["polyadd"]]
-polysub: _FuncBinOp[L["polysub"]]
-polymulx: _FuncUnOp[L["polymulx"]]
-polymul: _FuncBinOp[L["polymul"]]
-polydiv: _FuncBinOp[L["polydiv"]]
-polypow: _FuncPow[L["polypow"]]
-polyder: _FuncDer[L["polyder"]]
-polyint: _FuncInteg[L["polyint"]]
-polyval: _FuncVal[L["polyval"]]
-polyval2d: _FuncVal2D[L["polyval2d"]]
-polyval3d: _FuncVal3D[L["polyval3d"]]
-polyvalfromroots: _FuncValFromRoots[L["polyvalfromroots"]]
-polygrid2d: _FuncVal2D[L["polygrid2d"]]
-polygrid3d: _FuncVal3D[L["polygrid3d"]]
-polyvander: _FuncVander[L["polyvander"]]
-polyvander2d: _FuncVander2D[L["polyvander2d"]]
-polyvander3d: _FuncVander3D[L["polyvander3d"]]
-polyfit: _FuncFit[L["polyfit"]]
-polycompanion: _FuncCompanion[L["polycompanion"]]
-polyroots: _FuncRoots[L["polyroots"]]
+polyline: Final[_FuncLine] = ...
+polyfromroots: Final[_FuncFromRoots] = ...
+polyadd: Final[_FuncBinOp] = ...
+polysub: Final[_FuncBinOp] = ...
+polymulx: Final[_FuncUnOp] = ...
+polymul: Final[_FuncBinOp] = ...
+polydiv: Final[_FuncBinOp] = ...
+polypow: Final[_FuncPow] = ...
+polyder: Final[_FuncDer] = ...
+polyint: Final[_FuncInteg] = ...
+polyval: Final[_FuncVal] = ...
+polyval2d: Final[_FuncVal2D] = ...
+polyval3d: Final[_FuncVal3D] = ...
 
-class Polynomial(ABCPolyBase[None]): ...
+@overload
+def polyvalfromroots(x: _FloatLike_co, r: _FloatLike_co, tensor: bool = True) -> np.float64 | Any: ...
+@overload
+def polyvalfromroots(x: _NumberLike_co, r: _NumberLike_co, tensor: bool = True) -> np.complex128 | Any: ...
+@overload
+def polyvalfromroots(x: _ArrayLikeFloat_co, r: _ArrayLikeFloat_co, tensor: bool = True) -> npt.NDArray[np.float64 | Any]: ...
+@overload
+def polyvalfromroots(x: _ArrayLikeNumber_co, r: _ArrayLikeNumber_co, tensor: bool = True) -> npt.NDArray[np.complex128 | Any]: ...
+@overload
+def polyvalfromroots(x: _ArrayLikeCoef_co, r: _ArrayLikeCoef_co, tensor: bool = True) -> npt.NDArray[np.object_ | Any]: ...
+
+polygrid2d: Final[_FuncVal2D] = ...
+polygrid3d: Final[_FuncVal3D] = ...
+polyvander: Final[_FuncVander] = ...
+polyvander2d: Final[_FuncVander2D] = ...
+polyvander3d: Final[_FuncVander3D] = ...
+polyfit: Final[_FuncFit] = ...
+polycompanion: Final[_FuncCompanion] = ...
+polyroots: Final[_FuncRoots] = ...
+
+class Polynomial(ABCPolyBase[None]):
+    basis_name: ClassVar[None] = None  # pyright: ignore[reportIncompatibleMethodOverride]
+    domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
+    window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]

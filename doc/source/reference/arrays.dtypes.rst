@@ -254,25 +254,33 @@ One-character strings
 Array-protocol type strings (see :ref:`arrays.interface`)
    The first character specifies the kind of data and the remaining
    characters specify the number of bytes per item, except for Unicode,
-   where it is interpreted as the number of characters.  The item size
-   must correspond to an existing type, or an error will be raised.  The
-   supported kinds are
+   where it is interpreted as the number of characters, and except ``b1``
+   which represents boolean.  The item size must correspond to an existing
+   type, or an error will be raised.  The supported kinds are
 
-   ================   ========================
-   ``'?'``            boolean
-   ``'b'``            (signed) byte
-   ``'B'``            unsigned byte
-   ``'i'``            (signed) integer
-   ``'u'``            unsigned integer
-   ``'f'``            floating-point
-   ``'c'``            complex-floating point
-   ``'m'``            timedelta
-   ``'M'``            datetime
-   ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
-   ``'U'``            Unicode string
-   ``'V'``            raw data (:class:`void`)
-   ================   ========================
+   ==================  ========================
+   ``'?'``             boolean
+   ``'b'``             (signed) byte
+   ``'B'``             unsigned byte
+   ``'h'``             (signed) short
+   ``'H'``             unsigned short
+   ``'i'``             (signed) integer
+   ``'I'``             unsigned integer
+   ``'l'``             (signed) long integer
+   ``'L'``             unsigned long integer
+   ``'q'``             (signed) long long integer
+   ``'Q'``             unsigned long long integer
+   ``'f'``             single precision
+   ``'F'``             complex single precision
+   ``'d'``             double precision
+   ``'D'``             complex double precision
+   ``'g'``             long precision
+   ``'G'``             complex long double precision
+   ``'O'``             (Python) objects
+   ``'S'``             zero-terminated bytes (not recommended)
+   ``'U'``             Unicode string
+   ``'V'``             raw data (:class:`void`)
+   ==================  ========================
 
    .. admonition:: Example
 
@@ -561,7 +569,7 @@ This equivalence can only be handled through ``==``, not through ``is``.
 
       >>> import numpy as np
 
-      >>> a = np.array([1, 2], dtype=float)
+      >>> a = np.array([1, 2], dtype=np.float64)
       >>> a.dtype == np.dtype(np.float64)
       True
       >>> a.dtype == np.float64

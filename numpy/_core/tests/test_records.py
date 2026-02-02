@@ -269,7 +269,7 @@ class TestFromrecords:
         ra.mean = [1.1, 2.2, 3.3]
         assert_array_almost_equal(ra['mean'], [1.1, 2.2, 3.3])
         assert_(type(ra.mean) is type(ra.var))
-        ra.shape = (1, 3)
+        ra = ra.reshape((1, 3))
         assert_(ra.shape == (1, 3))
         ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
@@ -359,26 +359,26 @@ class TestPathUsage:
 
 
 class TestRecord:
-    def setup_method(self):
-        self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
+    def _create_data(self):
+        return np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
                                    ("col2", "<i4"),
                                    ("col3", "<i4")])
 
     def test_assignment1(self):
-        a = self.data
+        a = self._create_data()
         assert_equal(a.col1[0], 1)
         a[0].col1 = 0
         assert_equal(a.col1[0], 0)
 
     def test_assignment2(self):
-        a = self.data
+        a = self._create_data()
         assert_equal(a.col1[0], 1)
         a.col1[0] = 0
         assert_equal(a.col1[0], 0)
 
     def test_invalid_assignment(self):
-        a = self.data
+        a = self._create_data()
 
         def assign_invalid_column(x):
             x[0].col5 = 1
@@ -396,14 +396,14 @@ class TestRecord:
 
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
-        x = self.data[['col1', 'col2']]
+        x = self._create_data()[['col1', 'col2']]
         assert_equal(x.dtype.names, ('col1', 'col2'))
         assert_equal(x.dtype.descr,
                      [('col1', '<i4'), ('col2', '<i4'), ('', '|V4')])
 
         # names change order to match indexing, as of 1.14 - descr can't
         # represent that
-        y = self.data[['col2', 'col1']]
+        y = self._create_data()[['col2', 'col1']]
         assert_equal(y.dtype.names, ('col2', 'col1'))
         assert_raises(ValueError, lambda: y.dtype.descr)
 
@@ -416,7 +416,7 @@ class TestRecord:
                                                          protocol=proto)))
 
     def test_pickle_2(self):
-        a = self.data
+        a = self._create_data()
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
             assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
@@ -424,7 +424,7 @@ class TestRecord:
 
     def test_pickle_3(self):
         # Issue #7140
-        a = self.data
+        a = self._create_data()
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             pa = pickle.loads(pickle.dumps(a[0], protocol=proto))
             assert_(pa.flags.c_contiguous)
@@ -542,3 +542,51 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_1d(self):
+        dt = np.dtype([('x', 'i4'), ('y', 'f8')])
+        arr = np.array([(1, 1.5), (2, 2.5), (3, 3.5)], dtype=dt).view(np.recarray)
+        match arr:
+            case [a, b, c]:
+                assert a.x == 1 and a.y == 1.5
+                assert b.x == 2 and b.y == 2.5
+                assert c.x == 3 and c.y == 3.5
+            case _:
+                raise AssertionError("1D recarray did not match sequence pattern")
+
+    def test_match_sequence_pattern_2d(self):
+        dt = np.dtype([('x', 'i4'), ('y', 'f8')])
+        arr = np.array([[(1, 1.5), (2, 2.5)], [(3, 3.5), (4, 4.5)]],
+                       dtype=dt).view(np.recarray)
+        match arr:
+            case [row1, row2]:
+                assert_array_equal(row1.x, [1, 2])
+                assert_array_equal(row2.x, [3, 4])
+            case _:
+                raise AssertionError("2D recarray did not match sequence pattern")
+
+    def test_match_sequence_pattern_3d(self):
+        dt = np.dtype([('x', 'i4'), ('y', 'f8')])
+        arr = np.array([[[(1, 1.5), (2, 2.5)], [(3, 3.5), (4, 4.5)]],
+                        [[(5, 5.5), (6, 6.5)], [(7, 7.5), (8, 8.5)]]],
+                       dtype=dt).view(np.recarray)
+        # outer matching
+        match arr:
+            case [plane1, plane2]:
+                assert_array_equal(plane1.x, [[1, 2], [3, 4]])
+                assert_array_equal(plane2.x, [[5, 6], [7, 8]])
+            case _:
+                raise AssertionError("3D recarray did not match sequence pattern")
+        # inner matching
+        match arr:
+            case [[row1, row2], [row3, row4]]:
+                assert_array_equal(row1.x, [1, 2])
+                assert_array_equal(row2.x, [3, 4])
+                assert_array_equal(row3.x, [5, 6])
+                assert_array_equal(row4.x, [7, 8])
+            case _:
+                raise AssertionError("3D recarray did not match sequence pattern")

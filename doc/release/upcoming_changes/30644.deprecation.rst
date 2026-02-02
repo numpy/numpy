@@ -1,0 +1,6 @@
+``numpy.fix`` is deprecated
+---------------------------
+
+`numpy.fix` is deprecated. Use `numpy.trunc` instead, which is faster
+and follows the Array API standard. Both functions provide identical
+functionality: rounding array elements towards zero.

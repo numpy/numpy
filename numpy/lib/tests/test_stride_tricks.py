@@ -16,7 +16,6 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
     assert_raises_regex,
-    assert_warns,
 )
 
 
@@ -593,9 +592,9 @@ def test_writeable():
         for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
             if array_is_broadcast:
-                with assert_warns(FutureWarning):
+                with pytest.warns(FutureWarning):
                     assert_equal(result.flags.writeable, True)
-                with assert_warns(DeprecationWarning):
+                with pytest.warns(DeprecationWarning):
                     result[:] = 0
                 # Warning not emitted, writing to the array resets it
                 assert_equal(result.flags.writeable, True)

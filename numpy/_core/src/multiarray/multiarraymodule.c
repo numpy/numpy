@@ -1560,7 +1560,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *in_descr, PyArray_DTypeMeta *in_DType,
-        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin)
+        NPY_COPYMODE copy, NPY_ORDER order, npy_bool subok, int ndmin, int ndmax)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
     PyArray_Descr *oldtype = NULL;
@@ -1570,10 +1570,9 @@ _array_fromobject_generic(
     Py_XINCREF(in_descr);
     PyArray_Descr *dtype = in_descr;
 
-    if (ndmin > NPY_MAXDIMS) {
+    if (ndmin > ndmax) {
         PyErr_Format(PyExc_ValueError,
-                "ndmin bigger than allowable number of dimensions "
-                "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
+                "ndmin must be <= ndmax (%d)", ndmax);
         goto finish;
     }
     /* fast exit if simple call */
@@ -1682,7 +1681,7 @@ _array_fromobject_generic(
     flags |= NPY_ARRAY_FORCECAST;
 
     ret = (PyArrayObject *)PyArray_CheckFromAny_int(
-            op, dtype, in_DType, 0, 0, flags, NULL);
+            op, dtype, in_DType, 0, ndmax, flags, NULL);
 
 finish:
     Py_XDECREF(dtype);
@@ -1713,6 +1712,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     npy_bool subok = NPY_FALSE;
     NPY_COPYMODE copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
+    int ndmax = NPY_MAXDIMS;
     npy_dtype_info dt_info = {NULL, NULL};
     NPY_ORDER order = NPY_KEEPORDER;
     PyObject *like = Py_None;
@@ -1726,6 +1726,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
+                "$ndmax", &PyArray_PythonPyIntFromInt, &ndmax,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(dt_info.descr);
@@ -1747,8 +1748,15 @@ array_array(PyObject *NPY_UNUSED(ignored),
         op = args[0];
     }
 
+    if (ndmax > NPY_MAXDIMS || ndmax < 0) {
+        PyErr_Format(PyExc_ValueError, "ndmax must be in the range [0, NPY_MAXDIMS (%d)] ", NPY_MAXDIMS);
+        Py_XDECREF(dt_info.descr);
+        Py_XDECREF(dt_info.dtype);
+        return NULL;
+    }
+
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin);
+            op, dt_info.descr, dt_info.dtype, copy, order, subok, ndmin, ndmax);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1794,7 +1802,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_FALSE, 0, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1840,7 +1848,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0);
+            op, dt_info.descr, dt_info.dtype, copy, order, NPY_TRUE, 0, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1882,7 +1890,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_CORDER, NPY_FALSE,
-            1);
+            1, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -1924,7 +1932,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 
     PyObject *res = _array_fromobject_generic(
             op, dt_info.descr, dt_info.dtype, NPY_COPY_IF_NEEDED, NPY_FORTRANORDER,
-            NPY_FALSE, 1);
+            NPY_FALSE, 1, NPY_MAXDIMS);
     Py_XDECREF(dt_info.descr);
     Py_XDECREF(dt_info.dtype);
     return res;
@@ -2330,6 +2338,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
             "The binary mode of fromstring is removed, use frombuffer instead");
+        Py_XDECREF(descr);
         return NULL;
     }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
@@ -2398,6 +2407,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
+        Py_XDECREF(type);
         goto cleanup;
     }
     if (type == NULL) {
@@ -2760,32 +2770,33 @@ fail:
 static int
 einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
 {
-    int ellipsis = 0, subindex = 0;
+    int ellipsis = 0, subindex = 0, ret = -1;
     npy_intp i, size;
-    PyObject *item;
+    PyObject *item, *seq;
 
-    obj = PySequence_Fast(obj, "the subscripts for each operand must "
+    seq = PySequence_Fast(obj, "the subscripts for each operand must " // noqa: borrowed-ref OK
                                "be a list or a tuple");
-    if (obj == NULL) {
+    if (seq == NULL) {
         return -1;
     }
-    size = PySequence_Size(obj);
+
+    NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST(obj);
+
+    size = PySequence_Size(seq);
 
     for (i = 0; i < size; ++i) {
-        item = PySequence_Fast_GET_ITEM(obj, i);
+        item = PySequence_Fast_GET_ITEM(seq, i);
         /* Ellipsis */
         if (item == Py_Ellipsis) {
             if (ellipsis) {
                 PyErr_SetString(PyExc_ValueError,
                         "each subscripts list may have only one ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             if (subindex + 3 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             subscripts[subindex++] = '.';
             subscripts[subindex++] = '.';
@@ -2800,16 +2811,14 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
                 PyErr_SetString(PyExc_TypeError,
                         "each subscript must be either an integer "
                         "or an ellipsis");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
             npy_bool bad_input = 0;
 
             if (subindex + 1 >= subsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscripts list is too long");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
 
             if (s < 0) {
@@ -2828,16 +2837,19 @@ einsum_list_to_subscripts(PyObject *obj, char *subscripts, int subsize)
             if (bad_input) {
                 PyErr_SetString(PyExc_ValueError,
                         "subscript is not within the valid range [0, 52)");
-                Py_DECREF(obj);
-                return -1;
+                goto cleanup;
             }
         }
-
     }
 
-    Py_DECREF(obj);
+    ret = subindex;
 
-    return subindex;
+  cleanup:;
+
+    NPY_END_CRITICAL_SECTION_SEQUENCE_FAST();
+    Py_DECREF(seq);
+
+    return ret;
 }
 
 /*
@@ -4318,19 +4330,140 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
+_populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    if (PyTuple_Size(args) != 2) {
+        PyErr_SetString(PyExc_TypeError, "Expected 2 arguments");
+        return NULL;
+    }
+    PyObject *finfo = PyTuple_GetItem(args, 0);
+    if (finfo == NULL || finfo == Py_None) {
+        PyErr_SetString(PyExc_TypeError, "First argument cannot be None");
+        return NULL;
+    }
+    PyArray_Descr *descr = (PyArray_Descr *)PyTuple_GetItem(args, 1);
+    if (!PyArray_DescrCheck(descr)) {
+        PyErr_SetString(PyExc_TypeError, "Second argument must be a dtype");
+        return NULL;
+    }
+
+    static const struct {
+        char *name;
+        int id;
+        npy_bool is_int;
+    } finfo_constants[] = {
+        {"max", NPY_CONSTANT_maximum_finite, 0},
+        {"min", NPY_CONSTANT_minimum_finite, 0},
+        {"_radix", NPY_CONSTANT_finfo_radix, 0},
+        {"eps", NPY_CONSTANT_finfo_eps, 0},
+        {"smallest_normal", NPY_CONSTANT_finfo_smallest_normal, 0},
+        {"smallest_subnormal", NPY_CONSTANT_finfo_smallest_subnormal, 0},
+        {"nmant", NPY_CONSTANT_finfo_nmant, 1},
+        {"minexp", NPY_CONSTANT_finfo_min_exp, 1},
+        {"maxexp", NPY_CONSTANT_finfo_max_exp, 1},
+        {"precision", NPY_CONSTANT_finfo_decimal_digits, 1},
+    };
+    static const int n_finfo_constants = sizeof(finfo_constants) / sizeof(finfo_constants[0]);
+
+    int n_float_constants = 0;
+    for (int i = 0; i < n_finfo_constants; i++) {
+        if (!finfo_constants[i].is_int) {
+            n_float_constants++;
+        }
+    }
+
+    PyArrayObject *buffer_array = NULL;
+    char *buffer_data = NULL;
+    npy_intp dims[1] = {n_float_constants};
+
+    Py_INCREF(descr);
+    buffer_array = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+            descr, 1, dims, NULL, NULL, 0, NULL);
+    if (buffer_array == NULL) {
+        return NULL;
+    }
+    buffer_data = PyArray_BYTES(buffer_array);
+    npy_intp elsize = PyArray_DESCR(buffer_array)->elsize;
+
+    for (int i = 0; i < n_finfo_constants; i++)
+    {
+        PyObject *value_obj;
+        if (!finfo_constants[i].is_int) {
+            int res = NPY_DT_CALL_get_constant(descr,
+                    finfo_constants[i].id, buffer_data);
+            if (res < 0) {
+                goto fail;
+            }
+            if (res == 0) {
+                buffer_data += elsize;  // Move to next element
+                continue;
+            }
+            // Return as 0-d array item to preserve numpy scalar type
+            value_obj = PyArray_ToScalar(buffer_data, buffer_array);
+            buffer_data += elsize;  // Move to next element
+        }
+        else {
+            npy_intp int_value;
+            int res = NPY_DT_CALL_get_constant(descr, finfo_constants[i].id, &int_value);
+            if (res < 0) {
+                goto fail;
+            }
+            if (res == 0) {
+                continue;
+            }
+            value_obj = PyLong_FromSsize_t(int_value);
+        }
+        if (value_obj == NULL) {
+            goto fail;
+        }
+        int res = PyObject_SetAttrString(finfo, finfo_constants[i].name, value_obj);
+        Py_DECREF(value_obj);
+        if (res < 0) {
+            goto fail;
+        }
+    }
+
+    Py_DECREF(buffer_array);
+    Py_RETURN_NONE;
+  fail:
+    Py_XDECREF(buffer_array);
+    return NULL;
+}
+
+
+static PyObject *
 _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
     if (res < 0) {
         return NULL;
     }
-    int old_value = npy_thread_unsafe_state.warn_if_no_mem_policy;
-    npy_thread_unsafe_state.warn_if_no_mem_policy = res;
+    int old_value = npy_global_state.warn_if_no_mem_policy;
+    npy_global_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
     else {
         Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
+_blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
+    if (arg == Py_None) {
+        return PyBool_FromLong(npy_blas_supports_fpe());
+    }
+    else if (arg == Py_True) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(true));
+    }
+    else if (arg == Py_False) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(false));
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "BLAS FPE support must be None, True, or False");
+        return NULL;
     }
 }
 
@@ -4352,11 +4485,11 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        npy_thread_unsafe_state.reload_guard_initialized = 1;
+        npy_global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
 #endif
-    if (npy_thread_unsafe_state.reload_guard_initialized) {
+    if (npy_global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4364,7 +4497,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    npy_thread_unsafe_state.reload_guard_initialized = 1;
+    npy_global_state.reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -4546,6 +4679,8 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_load_from_filelike", (PyCFunction)_load_from_filelike,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_populate_finfo_constants", (PyCFunction)_populate_finfo_constants,
+        METH_VARARGS, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4565,14 +4700,14 @@ static struct PyMethodDef array_module_methods[] = {
     {"_set_numpy_warn_if_no_mem_policy",
          (PyCFunction)_set_numpy_warn_if_no_mem_policy,
          METH_O, "Change the warn if no mem policy flag for testing."},
-    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
         get_sfloat_dtype, METH_NOARGS, NULL},
     {"_get_madvise_hugepage", (PyCFunction)_get_madvise_hugepage,
         METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
+    {"_blas_supports_fpe", (PyCFunction)_blas_supports_fpe,
+        METH_O, "BLAS FPE support pass None, True, or False and returns new value"},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
@@ -4751,16 +4886,16 @@ set_flaginfo(PyObject *d)
 }
 
 // static variables are automatically zero-initialized
-NPY_VISIBILITY_HIDDEN npy_thread_unsafe_state_struct npy_thread_unsafe_state;
+NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
 
 static int
-initialize_thread_unsafe_state(void) {
+initialize_global_state(void) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        npy_thread_unsafe_state.warn_if_no_mem_policy = 1;
+        npy_global_state.warn_if_no_mem_policy = 1;
     }
     else {
-        npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
+        npy_global_state.warn_if_no_mem_policy = 0;
     }
 
     return 0;
@@ -4788,10 +4923,6 @@ _multiarray_umath_exec(PyObject *m) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         return -1;
     }
-
-#if NPY_BLAS_CHECK_FPE_SUPPORT
-    npy_blas_init();
-#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
@@ -4823,7 +4954,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_thread_unsafe_state() < 0) {
+    if (initialize_global_state() < 0) {
         return -1;
     }
 
@@ -4835,7 +4966,18 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    /* Set __signature__ to None on the type (the instance has a property) */
+    s = npy_import("numpy._globals", "_signature_descriptor");
+    if (s == NULL) {
+        return -1;
+    }
+    PyUFunc_Type.tp_dict = Py_BuildValue(
+        "{ON}", npy_interned_str.__signature__, s);
+    if (PyUFunc_Type.tp_dict == NULL) {
+        return -1;
+    }
     if (PyType_Ready(&PyUFunc_Type) < 0) {
+        Py_CLEAR(PyUFunc_Type.tp_dict);
         return -1;
     }
 

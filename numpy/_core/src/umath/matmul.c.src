@@ -517,7 +517,7 @@ NPY_NO_EXPORT void
         void *ip1=args[0], *ip2=args[1], *op=args[2];
 #if @USEBLAS@ && defined(HAVE_CBLAS)
         /*
-         * TODO: refactor this out to a inner_loop_selector, in
+         * TODO: refactor this out to an inner_loop_selector, in
          * PyUFunc_MatmulLoopSelector. But that call does not have access to
          * n, m, p and strides.
          */

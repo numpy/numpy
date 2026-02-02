@@ -23,8 +23,6 @@ import operator
 import warnings
 
 import numpy as np
-from numpy._core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.exceptions import RankWarning
 
 __all__ = [
     'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
@@ -661,7 +659,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=2)
+        warnings.warn(msg, np.exceptions.RankWarning, stacklevel=2)
 
     if full:
         return c, [resids, rank, s, rcond]
@@ -725,6 +723,8 @@ def _as_int(x, desc):
 
 
 def format_float(x, parens=False):
+    from numpy._core.multiarray import dragon4_positional, dragon4_scientific
+
     if not np.issubdtype(type(x), np.floating):
         return str(x)
 

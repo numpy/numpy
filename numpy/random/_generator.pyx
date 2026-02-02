@@ -16,13 +16,11 @@ from numpy.lib.array_utils import normalize_axis_index
 from .c_distributions cimport *
 from libc cimport string
 from libc.math cimport sqrt
-from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int32_t, int64_t, INT64_MAX, SIZE_MAX)
+from libc.stdint cimport (uint64_t, int64_t, INT64_MAX, SIZE_MAX)
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8, _gen_mask)
 from ._pcg64 import PCG64
-from ._mt19937 import MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
@@ -142,8 +140,8 @@ cdef bint _check_bit_generator(object bitgen):
 
 
 cdef class Generator:
-    """
-    Generator(bit_generator)
+    # the first line is used to populate `__text_signature__`
+    """Generator(bit_generator)\n--
 
     Container for the BitGenerators.
 
@@ -296,6 +294,8 @@ cdef class Generator:
         >>> nested_spawn = child_rng1.spawn(20)
 
         """
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
 
     def random(self, size=None, dtype=np.float64, out=None):
@@ -352,7 +352,6 @@ cdef class Generator:
                [-1.23204345, -1.75224494]])
 
         """
-        cdef double temp
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
             return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
@@ -399,8 +398,8 @@ cdef class Generator:
             Drawn samples from the parameterized beta distribution.
 
         Examples
-        -------- 
-        The beta distribution has mean a/(a+b). If ``a == b`` and both 
+        --------
+        The beta distribution has mean a/(a+b). If ``a == b`` and both
         are > 1, the distribution is symmetric with mean 0.5.
 
         >>> rng = np.random.default_rng()
@@ -408,11 +407,11 @@ cdef class Generator:
         >>> sample = rng.beta(a=a, b=b, size=size)
         >>> np.mean(sample)
         0.5047328775385895  # may vary
-        
+
         Otherwise the distribution is skewed left or right according to
         whether ``a`` or ``b`` is greater. The distribution is mirror
         symmetric. See for example:
-        
+
         >>> a, b, size = 2, 7, 10000
         >>> sample_left = rng.beta(a=a, b=b, size=size)
         >>> sample_right = rng.beta(a=b, b=a, size=size)
@@ -425,12 +424,12 @@ cdef class Generator:
         -0.0003163943736596009  # may vary
 
         Display the histogram of the two samples:
-        
+
         >>> import matplotlib.pyplot as plt
-        >>> plt.hist([sample_left, sample_right], 
+        >>> plt.hist([sample_left, sample_right],
         ...          50, density=True, histtype='bar')
         >>> plt.show()
-        
+
         References
         ----------
         .. [1] Wikipedia, "Beta distribution",
@@ -480,17 +479,17 @@ cdef class Generator:
 
         Examples
         --------
-        Assume a company has 10000 customer support agents and the time 
-        between customer calls is exponentially distributed and that the 
+        Assume a company has 10000 customer support agents and the time
+        between customer calls is exponentially distributed and that the
         average time between customer calls is 4 minutes.
 
         >>> scale, size = 4, 10000
         >>> rng = np.random.default_rng()
         >>> time_between_calls = rng.exponential(scale=scale, size=size)
 
-        What is the probability that a customer will call in the next 
-        4 to 5 minutes? 
-        
+        What is the probability that a customer will call in the next
+        4 to 5 minutes?
+
         >>> x = ((time_between_calls < 5).sum())/size
         >>> y = ((time_between_calls < 4).sum())/size
         >>> x - y
@@ -542,7 +541,7 @@ cdef class Generator:
             Byteorder must be native. The default value is np.float64.
         method : str, optional
             Either 'inv' or 'zig'. 'inv' uses the default inverse CDF method.
-            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang.
+            'zig' uses the much faster Ziggurat method of Marsaglia and Tsang [1]_.
         out : ndarray, optional
             Alternative output array in which to place the result. If size is not None,
             it must have the same shape as the provided size and must match the type of
@@ -552,6 +551,12 @@ cdef class Generator:
         -------
         out : float or ndarray
             Drawn samples.
+
+        References
+        ----------
+        .. [1] Marsaglia, G. and Tsang, W. W. (2000). The Ziggurat method for
+               generating random variables. Journal of Statistical Software, 5, 1-7.
+               https://doi.org/10.18637/jss.v005.i08
 
         Examples
         --------
@@ -721,10 +726,10 @@ cdef class Generator:
 
         Notes
         -----
-        This function generates random bytes from a discrete uniform 
-        distribution. The generated bytes are independent from the CPU's 
+        This function generates random bytes from a discrete uniform
+        distribution. The generated bytes are independent from the CPU's
         native endianness.
-        
+
         Examples
         --------
         >>> rng = np.random.default_rng()
@@ -796,7 +801,7 @@ cdef class Generator:
         than the optimized sampler even if each element of ``p`` is 1 / len(a).
 
         ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
-        to normalize using ``p = p / np.sum(p, dtype=float)``.
+        to normalize using ``p = p / np.sum(p, dtype=np.float64)``.
 
         When passing ``a`` as an integer type and ``size`` is not specified, the return
         type is a native Python ``int``.
@@ -845,7 +850,7 @@ cdef class Generator:
 
         """
 
-        cdef int64_t val, t, loc, size_i, pop_size_i
+        cdef int64_t val, loc, size_i, pop_size_i
         cdef int64_t *idx_data
         cdef np.npy_intp j
         cdef uint64_t set_size, mask
@@ -952,7 +957,7 @@ cdef class Generator:
                     cutoff = 20
                 if pop_size_i > 10000 and (size_i > (pop_size_i // cutoff)):
                     # Tail shuffle size elements
-                    idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
+                    idx = np.arange(0, pop_size_i, dtype=np.int64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
                     with self.lock, nogil:
                         _shuffle_int(&self._bitgen, pop_size_i,
@@ -985,7 +990,7 @@ cdef class Generator:
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
                             _shuffle_int(&self._bitgen, size_i, 1, idx_data)
-                idx.shape = shape
+                idx = idx.reshape(shape)
 
         if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
@@ -1027,9 +1032,9 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The high limit may be included in the returned array of 
-            floats due to floating-point rounding in the equation 
-            ``low + (high-low) * random_sample()``.  high - low must be 
+            less than high.  The high limit may be included in the returned array of
+            floats due to floating-point rounding in the equation
+            ``low + (high-low) * random_sample()``.  high - low must be
             non-negative.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -1080,7 +1085,6 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
         cdef double _low, _high, rng
         cdef object temp
@@ -1370,7 +1374,6 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        cdef void *func
         _dtype = np.dtype(dtype)
         if _dtype == np.float64:
             return cont(&random_standard_gamma, &self._bitgen, size, self.lock, 1,
@@ -1521,7 +1524,7 @@ cdef class Generator:
 
         Examples
         --------
-        An example from Glantz[1], pp 47-40:
+        An example from Glantz [1]_, pp 47-40:
 
         Two groups, children of diabetics (25 people) and children from people
         without diabetes (25 controls). Fasting blood glucose was measured,
@@ -1546,10 +1549,10 @@ cdef class Generator:
         So there is about a 1% chance that the F statistic will exceed 7.62,
         the measured value is 36, so the null hypothesis is rejected at the 1%
         level.
-        
-        The corresponding probability density function for ``n = 20`` 
+
+        The corresponding probability density function for ``n = 20``
         and ``m = 20`` is:
-        
+
         >>> import matplotlib.pyplot as plt
         >>> from scipy import stats
         >>> dfnum, dfden, size = 20, 20, 10000
@@ -1559,7 +1562,7 @@ cdef class Generator:
         >>> plt.plot(x, stats.f.pdf(x, dfnum, dfden))
         >>> plt.xlim([0, 5])
         >>> plt.show()
-        
+
         """
         return cont(&random_f, &self._bitgen, size, self.lock, 2,
                     dfnum, 'dfnum', CONS_POSITIVE,
@@ -1706,7 +1709,7 @@ cdef class Generator:
 
         The distribution of a chi-square random variable
         with 20 degrees of freedom looks as follows:
-        
+
         >>> import matplotlib.pyplot as plt
         >>> import scipy.stats as stats
         >>> s = rng.chisquare(20, 10000)
@@ -1926,14 +1929,14 @@ cdef class Generator:
         Does their energy intake deviate systematically from the recommended
         value of 7725 kJ? Our null hypothesis will be the absence of deviation,
         and the alternate hypothesis will be the presence of an effect that could be
-        either positive or negative, hence making our test 2-tailed. 
+        either positive or negative, hence making our test 2-tailed.
 
         Because we are estimating the mean and we have N=11 values in our sample,
-        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
-        compute the t statistic using the empirical mean and empirical standard 
-        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and
+        compute the t statistic using the empirical mean and empirical standard
+        deviation of our intake. We use a ddof of 1 to base the computation of our
         empirical standard deviation on an unbiased estimate of the variance (note:
-        the final estimate is not unbiased due to the concave nature of the square 
+        the final estimate is not unbiased due to the concave nature of the square
         root).
 
         >>> np.mean(intake)
@@ -1952,18 +1955,18 @@ cdef class Generator:
         >>> s = rng.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        Does our t statistic land in one of the two critical regions found at 
+        Does our t statistic land in one of the two critical regions found at
         both tails of the distribution?
 
         >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
         0.018318  #random < 0.05, statistic is in critical region
 
-        The probability value for this 2-tailed test is about 1.83%, which is 
-        lower than the 5% pre-determined significance threshold. 
+        The probability value for this 2-tailed test is about 1.83%, which is
+        lower than the 5% pre-determined significance threshold.
 
         Therefore, the probability of observing values as extreme as our intake
-        conditionally on the null hypothesis being true is too low, and we reject 
-        the null hypothesis of no deviation. 
+        conditionally on the null hypothesis being true is too low, and we reject
+        the null hypothesis of no deviation.
 
         """
         return cont(&random_standard_t, &self._bitgen, size, self.lock, 1,
@@ -2088,7 +2091,7 @@ cdef class Generator:
         -----
         The probability density for the Pareto II distribution is
 
-        .. math:: p(x) = \\frac{a}{{x+1}^{a+1}} , x \ge 0
+        .. math:: p(x) = \\frac{a}{(x+1)^{a+1}} , x \ge 0
 
         where :math:`a > 0` is the shape.
 
@@ -2932,7 +2935,6 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        cdef bint is_scalar = True
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
@@ -3040,21 +3042,21 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> rng = np.random.default_rng()
-        >>> n, p, size = 10, .5, 10000  
+        >>> n, p, size = 10, .5, 10000
         >>> s = rng.binomial(n, p, 10000)
 
         Assume a company drills 9 wild-cat oil exploration wells, each with
-        an estimated probability of success of ``p=0.1``. All nine wells fail. 
+        an estimated probability of success of ``p=0.1``. All nine wells fail.
         What is the probability of that happening?
 
-        Over ``size = 20,000`` trials the probability of this happening 
+        Over ``size = 20,000`` trials the probability of this happening
         is on average:
 
         >>> n, p, size = 9, 0.1, 20000
         >>> np.sum(rng.binomial(n=n, p=p, size=size) == 0)/size
         0.39015  # may vary
 
-        The following can be used to visualize a sample with ``n=100``, 
+        The following can be used to visualize a sample with ``n=100``,
         ``p=0.4`` and the corresponding probability density function:
 
         >>> import matplotlib.pyplot as plt
@@ -3173,10 +3175,10 @@ cdef class Generator:
         appear before the third "1" is a negative binomial distribution.
 
         Because this method internally calls ``Generator.poisson`` with an
-        intermediate random value, a ValueError is raised when the choice of 
+        intermediate random value, a ValueError is raised when the choice of
         :math:`n` and :math:`p` would result in the mean + 10 sigma of the sampled
-        intermediate distribution exceeding the max acceptable value of the 
-        ``Generator.poisson`` method. This happens when :math:`p` is too low 
+        intermediate distribution exceeding the max acceptable value of the
+        ``Generator.poisson`` method. This happens when :math:`p` is too low
         (a lot of failures happen for every success) and :math:`n` is too big (
         a lot of successes are allowed).
         Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
@@ -3308,7 +3310,7 @@ cdef class Generator:
         >>> s = rng.poisson(lam=lam, size=size)
 
         Verify the mean and variance, which should be approximately ``lam``:
-        
+
         >>> s.mean(), s.var()
         (4.9917 5.1088311)  # may vary
 
@@ -3462,7 +3464,7 @@ cdef class Generator:
 
         Examples
         --------
-        Draw 10,000 values from the geometric distribution, with the 
+        Draw 10,000 values from the geometric distribution, with the
         probability of an individual success equal to ``p = 0.35``:
 
         >>> p, size = 0.35, 10000
@@ -3481,7 +3483,7 @@ cdef class Generator:
         >>> plt.plot(bins, (1-p)**(bins-1)*p)
         >>> plt.xlim([0, 25])
         >>> plt.show()
-        
+
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
                     p, 'p', CONS_BOUNDED_GT_0_1,
@@ -3595,7 +3597,6 @@ cdef class Generator:
 
         """
         cdef double HYPERGEOM_MAX = 10**9
-        cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
 
@@ -3670,8 +3671,8 @@ cdef class Generator:
 
         The log series distribution is frequently used to represent species
         richness and occurrence, first proposed by Fisher, Corbet, and
-        Williams in 1943 [2].  It may also be used to model the numbers of
-        occupants seen in cars [3].
+        Williams in 1943 [2]_.  It may also be used to model the numbers of
+        occupants seen in cars [3]_.
 
         References
         ----------
@@ -3699,7 +3700,7 @@ cdef class Generator:
         >>> bins = np.arange(-.5, max(s) + .5 )
         >>> count, bins, _ = plt.hist(s, bins=bins, label='Sample count')
 
-        #   plot against distribution
+        Plot against the distribution:
 
         >>> def logseries(k, p):
         ...     return -p**k/(k*np.log(1-p))
@@ -3773,7 +3774,7 @@ cdef class Generator:
 
         Covariance indicates the level to which two variables vary together.
         From the multivariate normal distribution, we draw N-dimensional
-        samples, :math:`X = [x_1, x_2, ... x_N]`.  The covariance matrix
+        samples, :math:`X = [x_1, x_2, ..., x_N]`.  The covariance matrix
         element :math:`C_{ij}` is the covariance of :math:`x_i` and :math:`x_j`.
         The element :math:`C_{ii}` is the variance of :math:`x_i` (i.e. its
         "spread").
@@ -3791,7 +3792,8 @@ cdef class Generator:
         >>> mean = [0, 0]
         >>> cov = [[1, 0], [0, 100]]  # diagonal covariance
 
-        Diagonal covariance means that points are oriented along x or y-axis:
+        Diagonal covariance means that the variables are independent, and the
+        probability density contours have their axes aligned with the coordinate axes:
 
         >>> import matplotlib.pyplot as plt
         >>> rng = np.random.default_rng()
@@ -3952,8 +3954,7 @@ cdef class Generator:
             _factor = u * np.sqrt(s)
 
         x = mean + x @ _factor.T
-        x.shape = tuple(final_shape)
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, object n, object pvals, size=None):
         """
@@ -4652,11 +4653,11 @@ cdef class Generator:
         --------
         shuffle
         permutation
-        
+
         Notes
         -----
-        An important distinction between methods ``shuffle``  and ``permuted`` is 
-        how they both treat the ``axis`` parameter which can be found at 
+        An important distinction between methods ``shuffle``  and ``permuted`` is
+        how they both treat the ``axis`` parameter which can be found at
         :ref:`generator-handling-axis-parameter`.
 
         Examples
@@ -4728,7 +4729,7 @@ cdef class Generator:
         if axis is None:
             if x.ndim > 1:
                 if not (np.PyArray_FLAGS(out) & (np.NPY_ARRAY_C_CONTIGUOUS |
-                                                 np.NPY_ARRAY_F_CONTIGUOUS)): 
+                                                 np.NPY_ARRAY_F_CONTIGUOUS)):
                     flags = (np.NPY_ARRAY_C_CONTIGUOUS |
                              NPY_ARRAY_WRITEBACKIFCOPY)
                     to_shuffle = PyArray_FromArray(<np.PyArrayObject *>out,
@@ -4808,8 +4809,8 @@ cdef class Generator:
 
         Notes
         -----
-        An important distinction between methods ``shuffle``  and ``permuted`` is 
-        how they both treat the ``axis`` parameter which can be found at 
+        An important distinction between methods ``shuffle``  and ``permuted`` is
+        how they both treat the ``axis`` parameter which can be found at
         :ref:`generator-handling-axis-parameter`.
 
         Examples
@@ -5017,11 +5018,11 @@ def default_rng(seed=None):
     Examples
     --------
     `default_rng` is the recommended constructor for the random number class
-    `Generator`. Here are several ways we can construct a random 
-    number generator using `default_rng` and the `Generator` class. 
+    `Generator`. Here are several ways we can construct a random
+    number generator using `default_rng` and the `Generator` class.
 
     Here we use `default_rng` to generate a random float:
- 
+
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
     >>> print(rng)
@@ -5031,10 +5032,10 @@ def default_rng(seed=None):
     0.22733602246716966
     >>> type(rfloat)
     <class 'float'>
-     
-    Here we use `default_rng` to generate 3 random integers between 0 
+
+    Here we use `default_rng` to generate 3 random integers between 0
     (inclusive) and 10 (exclusive):
-        
+
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
     >>> rints = rng.integers(low=0, high=10, size=3)
@@ -5042,9 +5043,9 @@ def default_rng(seed=None):
     array([6, 2, 7])
     >>> type(rints[0])
     <class 'numpy.int64'>
-    
+
     Here we specify a seed so that we have reproducible results:
-    
+
     >>> import numpy as np
     >>> rng = np.random.default_rng(seed=42)
     >>> print(rng)

@@ -80,8 +80,6 @@ numpy.polynomial
 
 """
 import numpy as np
-import numpy.linalg as la
-from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -676,7 +674,7 @@ def legder(c, m=1, scl=1, axis=0):
     iaxis = pu._as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -799,7 +797,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    iaxis = normalize_axis_index(iaxis, c.ndim)
+    iaxis = np.lib.array_utils.normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
@@ -1164,7 +1162,7 @@ def legvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, ... , c_{10}, c_{11}, c_{12}, ...
 
     and ``np.dot(V, c.flat)`` and ``legval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1464,7 +1462,7 @@ def legroots(c):
 
     # rotated companion matrix reduces error
     m = legcompanion(c)[::-1, ::-1]
-    r = la.eigvals(m)
+    r = np.linalg.eigvals(m)
     r.sort()
     return r
 
@@ -1510,7 +1508,7 @@ def leggauss(deg):
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0] * deg + [1])
     m = legcompanion(c)
-    x = la.eigvalsh(m)
+    x = np.linalg.eigvalsh(m)
 
     # improve roots by one application of Newton
     dy = legval(x, c)

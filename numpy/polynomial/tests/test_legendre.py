@@ -6,12 +6,7 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import (
-    assert_,
-    assert_almost_equal,
-    assert_equal,
-    assert_raises,
-)
+from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises
 
 L0 = np.array([1])
 L1 = np.array([0, 1])

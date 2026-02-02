@@ -1,6 +1,7 @@
 import mmap
 import os
 import sys
+import warnings
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryFile
 
@@ -26,17 +27,16 @@ from numpy.testing import (
     assert_array_equal,
     assert_equal,
     break_cycles,
-    suppress_warnings,
 )
 
 
+@pytest.mark.thread_unsafe(reason="setup & memmap is thread-unsafe (gh-29126)")
 class TestMemmap:
     def setup_method(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.shape = (3, 4)
         self.dtype = 'float32'
-        self.data = arange(12, dtype=self.dtype)
-        self.data.resize(self.shape)
+        self.data = arange(12, dtype=self.dtype).reshape(self.shape)
 
     def teardown_method(self):
         self.tmpfp.close()
@@ -167,8 +167,9 @@ class TestMemmap:
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
         fp[:] = self.data
 
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "np.average currently does not preserve")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "np.average currently does not preserve", FutureWarning)
             for unary_op in [sum, average, prod]:
                 result = unary_op(fp)
                 assert_(isscalar(result))
@@ -203,7 +204,7 @@ class TestMemmap:
         fp[:] = self.data
 
         # We keep previous behavior for subclasses of memmap, i.e. the
-        # ufunc and __getitem__ output is never turned into a ndarray
+        # ufunc and __getitem__ output is never turned into an ndarray
         assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
         assert_(sum(fp).__class__ is MemmapSubClass)
         assert_(fp[1:, :-1].__class__ is MemmapSubClass)
@@ -244,3 +245,51 @@ class TestMemmap:
         memmap(self.tmpfp, shape=self.shape, mode='w+')
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
+
+
+class TestPatternMatching:
+    """Tests for structural pattern matching support (PEP 634)."""
+
+    def test_match_sequence_pattern_1d(self):
+        with NamedTemporaryFile() as f:
+            arr = memmap(f, dtype='int64', mode='w+', shape=(3,))
+            arr[:] = [1, 2, 3]
+            match arr:
+                case [a, b, c]:
+                    assert a == 1
+                    assert b == 2
+                    assert c == 3
+                case _:
+                    raise AssertionError("1D memmap did not match sequence pattern")
+
+    def test_match_sequence_pattern_2d(self):
+        with NamedTemporaryFile() as f:
+            arr = memmap(f, dtype='int64', mode='w+', shape=(2, 2))
+            arr[:] = [[1, 2], [3, 4]]
+            match arr:
+                case [row1, row2]:
+                    assert_array_equal(row1, [1, 2])
+                    assert_array_equal(row2, [3, 4])
+                case _:
+                    raise AssertionError("2D memmap did not match sequence pattern")
+
+    def test_match_sequence_pattern_3d(self):
+        with NamedTemporaryFile() as f:
+            arr = memmap(f, dtype='int64', mode='w+', shape=(2, 2, 2))
+            arr[:] = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+            # outer matching
+            match arr:
+                case [plane1, plane2]:
+                    assert_array_equal(plane1, [[1, 2], [3, 4]])
+                    assert_array_equal(plane2, [[5, 6], [7, 8]])
+                case _:
+                    raise AssertionError("3D memmap did not match sequence pattern")
+            # inner matching
+            match arr:
+                case [[row1, row2], [row3, row4]]:
+                    assert_array_equal(row1, [1, 2])
+                    assert_array_equal(row2, [3, 4])
+                    assert_array_equal(row3, [5, 6])
+                    assert_array_equal(row4, [7, 8])
+                case _:
+                    raise AssertionError("3D memmap did not match sequence pattern")

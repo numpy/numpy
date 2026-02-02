@@ -2,13 +2,13 @@ import ctypes as ct
 import datetime as dt
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, Literal, LiteralString, TypeAlias, assert_type
+from typing import Any, Literal, LiteralString, assert_type
 
 import numpy as np
 from numpy.dtypes import StringDType
 
 # a combination of likely `object` dtype-like candidates (no `_co`)
-_PyObjectLike: TypeAlias = Decimal | Fraction | dt.datetime | dt.timedelta
+type _PyObjectLike = Decimal | Fraction | dt.datetime | dt.timedelta
 
 dtype_U: np.dtype[np.str_]
 dtype_V: np.dtype[np.void]
@@ -44,9 +44,9 @@ assert_type(np.dtype("str"), np.dtype[np.str_])
 
 # Python types
 assert_type(np.dtype(bool), np.dtype[np.bool])
-assert_type(np.dtype(int), np.dtype[np.int_ | np.bool])
-assert_type(np.dtype(float), np.dtype[np.float64 | np.int_ | np.bool])
-assert_type(np.dtype(complex), np.dtype[np.complex128 | np.float64 | np.int_ | np.bool])
+assert_type(np.dtype(int), np.dtype[np.int_ | Any])
+assert_type(np.dtype(float), np.dtype[np.float64 | Any])
+assert_type(np.dtype(complex), np.dtype[np.complex128 | Any])
 assert_type(np.dtype(py_object), np.dtype[np.object_])
 assert_type(np.dtype(str), np.dtype[np.str_])
 assert_type(np.dtype(bytes), np.dtype[np.bytes_])
@@ -64,10 +64,44 @@ assert_type(np.dtype(Fraction), np.dtype[np.object_])
 assert_type(np.dtype("?"), np.dtype[np.bool])
 assert_type(np.dtype("|b1"), np.dtype[np.bool])
 assert_type(np.dtype("u1"), np.dtype[np.uint8])
-assert_type(np.dtype("l"), np.dtype[np.long])
+assert_type(np.dtype("l"), np.dtype[np.int32 | np.int64])
 assert_type(np.dtype("longlong"), np.dtype[np.longlong])
 assert_type(np.dtype(">g"), np.dtype[np.longdouble])
 assert_type(np.dtype(cs_integer), np.dtype[np.integer])
+# char-codes - datetime64
+assert_type(np.dtype("datetime64[Y]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[M]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[W]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[D]"), np.dtype[np.datetime64[dt.date]])
+assert_type(np.dtype("datetime64[h]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[m]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[s]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[ms]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[us]"), np.dtype[np.datetime64[dt.datetime]])
+assert_type(np.dtype("datetime64[ns]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64[ps]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64[fs]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64[as]"), np.dtype[np.datetime64[int]])
+assert_type(np.dtype("datetime64"), np.dtype[np.datetime64])
+assert_type(np.dtype("M8"), np.dtype[np.datetime64])
+assert_type(np.dtype("M"), np.dtype[np.datetime64])
+# char-codes - timedelta64
+assert_type(np.dtype("timedelta64[Y]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[M]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[W]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[D]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[h]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[m]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[s]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[ms]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[us]"), np.dtype[np.timedelta64[dt.timedelta]])
+assert_type(np.dtype("timedelta64[ns]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[ps]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[fs]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64[as]"), np.dtype[np.timedelta64[int]])
+assert_type(np.dtype("timedelta64"), np.dtype[np.timedelta64])
+assert_type(np.dtype("m8"), np.dtype[np.timedelta64])
+assert_type(np.dtype("m"), np.dtype[np.timedelta64])
 
 # ctypes
 assert_type(np.dtype(ct.c_double), np.dtype[np.float64])  # see numpy/numpy#29155
@@ -125,3 +159,8 @@ assert_type(dtype_V["f0"], np.dtype)
 assert_type(dtype_V[0], np.dtype)
 assert_type(dtype_V[["f0", "f1"]], np.dtype[np.void])
 assert_type(dtype_V[["f0"]], np.dtype[np.void])
+
+class _D:
+    __numpy_dtype__: np.dtype[np.int8]
+
+assert_type(np.dtype(_D()), np.dtype[np.int8])

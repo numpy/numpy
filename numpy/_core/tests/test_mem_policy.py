@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from numpy._core.multiarray import get_handler_name
-from numpy.testing import IS_EDITABLE, IS_WASM, assert_warns, extbuild
+from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
 
 
 @pytest.fixture
@@ -343,9 +343,6 @@ async def async_test_context_locality(get_module):
 
 
 def test_context_locality(get_module):
-    if (sys.implementation.name == 'pypy'
-            and sys.pypy_version_info[:3] < (7, 3, 6)):
-        pytest.skip('no context-locality support in PyPy < 7.3.6')
     asyncio.run(async_test_context_locality(get_module))
 
 
@@ -411,10 +408,8 @@ def test_new_policy(get_module):
     assert np._core.multiarray.get_handler_name(c) == orig_policy_name
 
 
-@pytest.mark.xfail(sys.implementation.name == "pypy",
-                   reason=("bad interaction between getenv and "
-                           "os.environ inside pytest"))
 @pytest.mark.parametrize("policy", ["0", "1", None])
+@pytest.mark.thread_unsafe(reason="modifies environment variables")
 def test_switch_owner(get_module, policy):
     a = get_module.get_array()
     assert np._core.multiarray.get_handler_name(a) is None
@@ -432,7 +427,7 @@ def test_switch_owner(get_module, policy):
         # The policy should be NULL, so we have to assume we can call
         # "free".  A warning is given if the policy == "1"
         if policy:
-            with assert_warns(RuntimeWarning) as w:
+            with pytest.warns(RuntimeWarning) as w:
                 del a
                 gc.collect()
         else:

@@ -261,7 +261,7 @@ class NpzFile(Mapping):
                         max_header_size=self.max_header_size
                     )
                 else:
-                    return bytes.read(key)
+                    return bytes.read()
 
     def __contains__(self, key):
         return (key in self._files)
@@ -497,12 +497,12 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                     f"Failed to interpret file {file!r} as a pickle") from e
 
 
-def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
+def _save_dispatcher(file, arr, allow_pickle=None):
     return (arr,)
 
 
 @array_function_dispatch(_save_dispatcher)
-def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
+def save(file, arr, allow_pickle=True):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
 
@@ -523,12 +523,6 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
         require libraries that are not available, and not all pickled data is
         compatible between different versions of Python).
         Default: True
-    fix_imports : bool, optional
-        The `fix_imports` flag is deprecated and has no effect.
-
-        .. deprecated:: 2.1
-            This flag is ignored since NumPy 1.17 and was only needed to
-            support loading in Python 2 some files written in Python 3.
 
     See Also
     --------
@@ -565,12 +559,6 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
     >>> print(a, b)
     # [1 2] [1 3]
     """
-    if fix_imports is not np._NoValue:
-        # Deprecated 2024-05-16, NumPy 2.1
-        warnings.warn(
-            "The 'fix_imports' flag is deprecated and has no effect. "
-            "(Deprecated in NumPy 2.1)",
-            DeprecationWarning, stacklevel=2)
     if hasattr(file, 'write'):
         file_ctx = contextlib.nullcontext(file)
     else:
@@ -581,8 +569,7 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
 
     with file_ctx as fid:
         arr = np.asanyarray(arr)
-        format.write_array(fid, arr, allow_pickle=allow_pickle,
-                           pickle_kwargs={'fix_imports': fix_imports})
+        format.write_array(fid, arr, allow_pickle=allow_pickle)
 
 
 def _savez_dispatcher(file, *args, allow_pickle=True, **kwds):
@@ -1356,7 +1343,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     single escaped character:
 
     >>> s = StringIO('"Hello, my name is ""Monty""!"')
-    >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
+    >>> np.loadtxt(s, dtype=np.str_, delimiter=",", quotechar='"')
     array('Hello, my name is "Monty"!', dtype='<U26')
 
     Read subset of columns when all rows do not contain equal number of values:
@@ -1377,9 +1364,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             unpack=unpack, ndmin=ndmin, encoding=encoding,
             max_rows=max_rows
         )
-
-    if isinstance(delimiter, bytes):
-        delimiter.decode("latin1")
 
     if dtype is None:
         dtype = np.float64
@@ -1771,8 +1755,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
-        If None, the dtypes will be determined by the contents of each
-        column, individually.
+        If a structured dtype, the output array will be 1D and structured where
+        each field corresponds to one column.
+        If None, the dtype of each column will be inferred automatically, and
+        the output array will be structured only if either the dtypes are not
+        all the same or if `names` is not None.
     comments : str, optional
         The character used to indicate the start of a comment.
         All the characters occurring on a line after a comment are discarded.
@@ -1801,13 +1788,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. Any content before the comment delimiter is
-        discarded. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field
-        names in a structured dtype. If `names` is None, the names of the
-        dtype fields will be used, if any.
+        If `names` is True, the output will be a structured array whose field
+        names are read from the first line after the first `skip_header` lines.
+        This line can optionally be preceded by a comment delimiter. Any content
+        before the comment delimiter is discarded.
+        If `names` is a sequence or a single string of comma-separated names,
+        the output is a structured array whose field names are taken from
+        `names`.
+        If `names` is None, the output is structured only if `dtype` is
+        structured, in which case the field names are taken from `dtype`.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -2498,99 +2487,3 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 _genfromtxt_with_like = array_function_dispatch()(genfromtxt)
-
-
-def recfromtxt(fname, **kwargs):
-    """
-    Load ASCII data from a file and return it in a record array.
-
-    If ``usemask=False`` a standard `recarray` is returned,
-    if ``usemask=True`` a MaskedRecords array is returned.
-
-    .. deprecated:: 2.0
-        Use `numpy.genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function
-
-    Notes
-    -----
-    By default, `dtype` is None, which means that the data-type of the output
-    array will be determined from the data.
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`recfromtxt` is deprecated, "
-        "use `numpy.genfromtxt` instead."
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    kwargs.setdefault("dtype", None)
-    usemask = kwargs.get('usemask', False)
-    output = genfromtxt(fname, **kwargs)
-    if usemask:
-        from numpy.ma.mrecords import MaskedRecords
-        output = output.view(MaskedRecords)
-    else:
-        output = output.view(np.recarray)
-    return output
-
-
-def recfromcsv(fname, **kwargs):
-    """
-    Load ASCII data stored in a comma-separated file.
-
-    The returned array is a record array (if ``usemask=False``, see
-    `recarray`) or a masked record array (if ``usemask=True``,
-    see `ma.mrecords.MaskedRecords`).
-
-    .. deprecated:: 2.0
-        Use `numpy.genfromtxt` with comma as `delimiter` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function to load ASCII data.
-
-    Notes
-    -----
-    By default, `dtype` is None, which means that the data-type of the output
-    array will be determined from the data.
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`recfromcsv` is deprecated, "
-        "use `numpy.genfromtxt` with comma as `delimiter` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    # Set default kwargs for genfromtxt as relevant to csv import.
-    kwargs.setdefault("case_sensitive", "lower")
-    kwargs.setdefault("names", True)
-    kwargs.setdefault("delimiter", ",")
-    kwargs.setdefault("dtype", None)
-    output = genfromtxt(fname, **kwargs)
-
-    usemask = kwargs.get("usemask", False)
-    if usemask:
-        from numpy.ma.mrecords import MaskedRecords
-        output = output.view(MaskedRecords)
-    else:
-        output = output.view(np.recarray)
-    return output

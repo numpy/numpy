@@ -21,6 +21,7 @@ class TestNumPyConfigs:
     ]
 
     @patch("numpy.__config__._check_pyyaml")
+    @pytest.mark.thread_unsafe(reason="unittest.mock.patch updates global state")
     def test_pyyaml_not_found(self, mock_yaml_importer):
         mock_yaml_importer.side_effect = ModuleNotFoundError()
         with pytest.warns(UserWarning):

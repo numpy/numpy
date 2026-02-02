@@ -9,7 +9,7 @@ u4 = np.uint32(1)
 b_ = np.bool(1)
 
 b = bool(1)
-i = int(1)
+i = 1
 
 AR = np.array([0, 1, 2], dtype=np.int32)
 AR.setflags(write=False)
