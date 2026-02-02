@@ -35,67 +35,6 @@ def _maybe_view_as_subclass(original_array, new_array):
     return new_array
 
 
-def _compute_strided_offset_bounds(shape, strides):
-    """
-    Compute the minimum and maximum byte offsets for a strided array view.
-
-    Parameters
-    ----------
-    shape : tuple of int
-        The shape of the strided view.
-    strides : tuple of int
-        The strides (in bytes) of the view.
-
-    Returns
-    -------
-    min_offset : int
-        The minimum byte offset that would be accessed.
-    max_offset : int
-        The maximum byte offset that would be accessed (not including itemsize).
-
-    Notes
-    -----
-    This function computes the minimum and maximum byte offsets that could
-    be accessed by a strided view. For each dimension, the offset contribution
-    ranges from 0 to (shape[i] - 1) * strides[i] if strides[i] >= 0, or from
-    (shape[i] - 1) * strides[i] to 0 if strides[i] < 0.
-
-    Examples
-    --------
-    >>> shape = (5,)
-    >>> strides = (8,)
-    >>> _compute_strided_offset_bounds(shape, strides)
-    (0, 32)
-
-    >>> shape = (5,)
-    >>> strides = (-8,)
-    >>> _compute_strided_offset_bounds(shape, strides)
-    (-32, 0)
-
-    >>> shape = (2, 3)
-    >>> strides = (24, 8)
-    >>> _compute_strided_offset_bounds(shape, strides)
-    (0, 40)
-    """
-    min_offset = 0
-    max_offset = 0
-
-    for size, stride in zip(shape, strides):
-        if size == 0:
-            # Empty dimension, no access
-            continue
-
-        # The offset contribution from this dimension
-        contribution = (size - 1) * stride
-
-        if contribution > 0:
-            max_offset += contribution
-        else:
-            min_offset += contribution
-
-    return min_offset, max_offset
-
-
 @set_module("numpy.lib.stride_tricks")
 def as_strided_checked(x, shape=None, strides=None, subok=False, writeable=True):
     """

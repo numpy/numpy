@@ -4,7 +4,6 @@ import numpy as np
 from numpy._core._rational_tests import rational
 from numpy.lib._stride_tricks_impl import (
     _broadcast_shape,
-    _compute_strided_offset_bounds,
     as_strided,
     as_strided_checked,
     broadcast_arrays,
@@ -655,80 +654,6 @@ def test_reference_types():
 
     actual, _ = broadcast_arrays(input_array, np.ones(3))
     assert_array_equal(expected, actual)
-
-
-@pytest.mark.parametrize(
-    "shape,strides,expected_min,expected_max",
-    [
-        # Basic positive strides
-        ((5,), (8,), 0, 32),
-        ((10,), (4,), 0, 36),
-        ((3,), (16,), 0, 32),
-        # Basic negative strides
-        ((5,), (-8,), -32, 0),
-        ((10,), (-4,), -36, 0),
-        ((3,), (-16,), -32, 0),
-        # Zero strides (broadcasting)
-        ((5,), (0,), 0, 0),
-        ((10,), (0,), 0, 0),
-        ((100,), (0,), 0, 0),
-        # 2D arrays with positive strides
-        ((2, 3), (24, 8), 0, 40),
-        ((3, 4), (32, 8), 0, 88),
-        ((4, 5), (40, 8), 0, 152),
-        # 2D arrays with negative strides
-        ((2, 3), (-24, -8), -40, 0),
-        ((3, 4), (-32, -8), -88, 0),
-        # 2D arrays with mixed strides
-        ((2, 3), (24, -8), -16, 24),
-        ((3, 4), (-32, 8), -64, 24),
-        ((4, 3), (16, -8), -16, 48),
-        # 3D arrays
-        ((2, 3, 4), (96, 32, 8), 0, 184),
-        ((2, 2, 2), (32, 16, 8), 0, 56),
-        # Single element cases
-        ((1,), (8,), 0, 0),
-        ((1, 1), (8, 8), 0, 0),
-        ((1, 1, 1), (8, 8, 8), 0, 0),
-        # Empty dimensions
-        ((0,), (8,), 0, 0),
-        ((0, 5), (8, 8), 0, 32),
-        ((5, 0), (8, 8), 0, 32),
-        ((0, 0), (8, 8), 0, 0),
-        # Large dimensions
-        ((100,), (8,), 0, 792),
-        ((10, 10), (80, 8), 0, 792),
-        # Multiple zero strides
-        ((5, 3), (0, 0), 0, 0),
-        ((2, 3, 4), (0, 0, 0), 0, 0),
-        # Mixed zero and non-zero strides
-        ((5, 3), (8, 0), 0, 32),
-        ((3, 5), (0, 8), 0, 32),
-        ((2, 3, 4), (96, 0, 8), 0, 120),
-    ],
-)
-def test_compute_offset_bounds(shape, strides, expected_min, expected_max):
-    """Test offset bounds computation for various shape/stride combinations."""
-    min_offset, max_offset = _compute_strided_offset_bounds(shape, strides)
-    assert min_offset == expected_min
-    assert max_offset == expected_max
-
-
-@pytest.mark.parametrize(
-    "shape,strides",
-    [
-        # Verify that min <= max always holds
-        ((5,), (8,)),
-        ((5,), (-8,)),
-        ((3, 4), (32, -8)),
-        ((3, 4), (-32, 8)),
-        ((2, 3, 4), (96, -32, 8)),
-    ],
-)
-def test_compute_offset_bounds_min_max_relationship(shape, strides):
-    """Test that min_offset <= max_offset always."""
-    min_offset, max_offset = _compute_strided_offset_bounds(shape, strides)
-    assert min_offset <= max_offset
 
 
 @pytest.mark.parametrize(
