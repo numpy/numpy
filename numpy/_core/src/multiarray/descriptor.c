@@ -2510,12 +2510,15 @@ arraydescr_new(PyTypeObject *subtype,
                 return NULL;
             }
             Py_XINCREF(DType->scalar_type);
-            PyDataType_SET_TYPEOBJ(descr, DType->scalar_type);
-            PyDataType_SET_TYPENUM(descr, DType->type_num);
-            PyDataType_SET_FLAGS(descr, NPY_USE_GETITEM|NPY_USE_SETITEM);
-            PyDataType_SET_BYTEORDER(descr, '|');  /* If DType uses it, let it override */
-            PyDataType_SET_ELSIZE(descr, -1);  /* Initialize to invalid value */
-            ((PyArray_Descr_fields *)descr)->hash = -1;
+            // Initialize descriptor fields. We need to use indirection because
+            // PyArray_Descr is opaque.
+            PyArray_Descr_fields *fields = PyDataType_GET_ITEM_DATA(descr);
+            fields->typeobj = DType->scalar_type;
+            fields->type_num = DType->type_num;
+            fields->flags = NPY_USE_GETITEM|NPY_USE_SETITEM;
+            fields->byteorder = '|';
+            fields->elsize = -1;
+            fields->hash = -1;
             return (PyObject *)descr;
         }
         /* The DTypeMeta class should prevent this from happening. */

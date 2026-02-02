@@ -154,12 +154,6 @@ PyArray_ImportNumPyAPI(void)
         PyDataType_GET_ITEM_DATA(dtype)->elsize = size;
     }
 
-    static inline void
-    PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
-    {
-        PyDataType_GET_ITEM_DATA(dtype)->type = type;
-    }
-
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
@@ -180,24 +174,6 @@ PyArray_ImportNumPyAPI(void)
 #endif
     }
 
-    static inline void
-    PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
-    {
-        PyDataType_GET_ITEM_DATA(dtype)->byteorder = byteorder;
-    }
-
-    static inline void
-    PyDataType_SET_TYPEOBJ(PyArray_Descr *dtype, PyTypeObject *typeobj)
-    {
-        PyDataType_GET_ITEM_DATA(dtype)->typeobj = typeobj;
-    }
-
-    static inline void
-    PyDataType_SET_TYPENUM(PyArray_Descr *dtype, int type_num)
-    {
-        PyDataType_GET_ITEM_DATA(dtype)->type_num = type_num;
-    }
-
     #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)    \
         static inline type                                     \
         PyDataType_##FIELD(const PyArray_Descr *dtype) {       \
@@ -206,7 +182,7 @@ PyArray_ImportNumPyAPI(void)
             }                                                  \
             return ((_PyArray_LegacyDescr *)dtype)->field;     \
         }
-#else  /* compiling for both 1.x and 2.x */
+#    else /* compiling for both 1.x and 2.x */
 
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
@@ -230,6 +206,17 @@ PyArray_ImportNumPyAPI(void)
         }
     }
 
+    static inline void
+    PyDataType_SET_FLAGS(PyArray_Descr *dtype, npy_uint64 flags)
+    {
+        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
+            ((_PyArray_DescrNumPy2 *)dtype)->flags = flags;
+        }
+        else {
+            ((PyArray_DescrProto *)dtype)->flags = (npy_uint64)(unsigned char)flags
+        }
+    }
+
     /* Cast to LegacyDescr always fine but needed when `legacy_only` */
     #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)        \
         static inline type                                         \
@@ -245,6 +232,25 @@ PyArray_ImportNumPyAPI(void)
             }                                                      \
         }
 #endif
+
+static inline PyArray_Descr_fields *
+PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
+{
+    return (PyArray_Descr_fields *)dtype;
+}
+
+static inline void
+_PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
+{
+    PyDataType_GET_ITEM_DATA(dtype)->type = type;
+}
+
+static inline void
+PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
+{
+    PyDataType_GET_ITEM_DATA(dtype)->byteorder = byteorder;
+}
+
 
 DESCR_ACCESSOR(ELSIZE, elsize, npy_intp, 0)
 DESCR_ACCESSOR(ALIGNMENT, alignment, npy_intp, 0)

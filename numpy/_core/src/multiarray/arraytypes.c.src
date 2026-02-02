@@ -4288,7 +4288,7 @@ PyArray_DescrFromType(int type)
             return NULL;
         }
         PyDataType_SET_ELSIZE(ret, 1);
-        PyDataType_SET_TYPE(ret, NPY_CHARLTR);
+        _PyDataType_SET_TYPE(ret, NPY_CHARLTR);
         return ret;
     }
     else if (PyTypeNum_ISUSERDEF(type)) {
