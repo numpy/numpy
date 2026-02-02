@@ -165,7 +165,7 @@ For example, using Meson in a ``meson.build`` file:
 
 .. code-block:: meson
 
-   project(
+  project(
      'my_filter',
      'c', 'cython',
      version: '0.0.1',
@@ -186,9 +186,10 @@ For example, using Meson in a ``meson.build`` file:
   foreach pyx_file: pyx_files
     py.extension_module(
       pyx_file,
-      dependencies = [np_dep],
+      dependencies: [np_dep],
       install: true
     )
+  endforeach
 
 And a ``pyproject.toml`` file with the following content:
 
@@ -199,12 +200,14 @@ And a ``pyproject.toml`` file with the following content:
    requires = [
        "meson-python",
        "Cython>=3.0.0",
+       "numpy",
    ]
 
    [project]
    name = "my_filter"
    version = "0.0.1"
    license = "MIT"
+   dependencies = ["numpy"]
 
 Adding the a NumPy dependency to your Meson configuration is, only
 necessary if you are using NumPy arrays in the extension module (which
