@@ -583,6 +583,10 @@ _convert_from_array_descr(PyObject *obj, int align)
         new->flags |= NPY_ALIGNED_STRUCT;
         new->alignment = maxalign;
     }
+    /* Mark as not trivially copyable if layout is not simple (has padding) */
+    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
+        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
     return (PyArray_Descr *)new;
 
  fail:
@@ -690,6 +694,10 @@ _convert_from_list(PyObject *obj, int align)
         new->alignment = maxalign;
     }
     new->elsize = totalsize;
+    /* Mark as not trivially copyable if layout is not simple (has padding) */
+    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
+        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
+    }
     return (PyArray_Descr *)new;
 
  fail:
@@ -1316,6 +1324,11 @@ _convert_from_dict(PyObject *obj, int align)
         }
         /* Set the itemsize */
         new->elsize = itemsize;
+    }
+
+    /* Mark as not trivially copyable if layout is not simple (has padding) */
+    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
+        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
     }
 
     /* Add the metadata if provided */
