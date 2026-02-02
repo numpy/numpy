@@ -447,9 +447,9 @@ typedef void (PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,
  * is bumped. It used to be the separator.
  */
 typedef int (PyArray_ScanFunc)(FILE *fp, void *dptr,
-                               char *ignore,  struct _PyArray_Descr *);
+                               char *ignore, struct _PyArray_Descr *);
 typedef int (PyArray_FromStrFunc)(char *s, void *dptr, char **endptr,
-                                   struct _PyArray_Descr *);
+                                  struct _PyArray_Descr *);
 
 typedef int (PyArray_FillFunc)(void *, npy_intp, void *);
 
@@ -687,14 +687,13 @@ typedef struct {
         (NPY_NO_DEPRECATED_API < NPY_2_5_API_VERSION)
 typedef PyArray_Descr_fields PyArray_Descr;
 #else
+
 /*
  * Public version of the Descriptor struct
- * To hide implementation details, we only expose
- * the Python struct HEAD.
+ * is opaque. Use accessor functions to get data from
+ * the descriptor object
  */
-typedef struct _PyArray_Descr {
-    PyObject_HEAD
-} PyArray_Descr;
+typedef struct _PyArray_Descr PyArray_Descr;
 #endif
 
 

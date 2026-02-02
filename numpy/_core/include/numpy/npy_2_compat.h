@@ -143,7 +143,7 @@ PyArray_ImportNumPyAPI(void)
     /* Compiling for 1.x or 2.x only, direct field access is OK: */
 
     static inline PyArray_Descr_fields *
-    PyDataType_FIELDS_STRUCT(const PyArray_Descr *dtype)
+    PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
     {
         return (PyArray_Descr_fields *)dtype;
     }
@@ -151,20 +151,20 @@ PyArray_ImportNumPyAPI(void)
     static inline void
     PyDataType_SET_ELSIZE(PyArray_Descr *dtype, npy_intp size)
     {
-        PyDataType_FIELDS_STRUCT(dtype)->elsize = size;
+        PyDataType_GET_ITEM_DATA(dtype)->elsize = size;
     }
 
     static inline void
     PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
     {
-        PyDataType_FIELDS_STRUCT(dtype)->type = type;
+        PyDataType_GET_ITEM_DATA(dtype)->type = type;
     }
 
     static inline npy_uint64
     PyDataType_FLAGS(const PyArray_Descr *dtype)
     {
     #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-        return PyDataType_FIELDS_STRUCT(dtype)->flags;
+        return PyDataType_GET_ITEM_DATA(dtype)->flags;
     #else
         return (unsigned char)dtype->flags;  /* Need unsigned cast on 1.x */
     #endif
@@ -174,7 +174,7 @@ PyArray_ImportNumPyAPI(void)
     PyDataType_SET_FLAGS(PyArray_Descr *dtype, npy_uint64 flags)
     {
     #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
-        PyDataType_FIELDS_STRUCT(dtype)->flags = flags;
+        PyDataType_GET_ITEM_DATA(dtype)->flags = flags;
     #else
         dtype->flags = (unsigned char)flags;  /* Need unsigned cast on 1.x */
 #endif
@@ -183,19 +183,19 @@ PyArray_ImportNumPyAPI(void)
     static inline void
     PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
     {
-        PyDataType_FIELDS_STRUCT(dtype)->byteorder = byteorder;
+        PyDataType_GET_ITEM_DATA(dtype)->byteorder = byteorder;
     }
 
     static inline void
     PyDataType_SET_TYPEOBJ(PyArray_Descr *dtype, PyTypeObject *typeobj)
     {
-        PyDataType_FIELDS_STRUCT(dtype)->typeobj = typeobj;
+        PyDataType_GET_ITEM_DATA(dtype)->typeobj = typeobj;
     }
 
     static inline void
     PyDataType_SET_TYPENUM(PyArray_Descr *dtype, int type_num)
     {
-        PyDataType_FIELDS_STRUCT(dtype)->type_num = type_num;
+        PyDataType_GET_ITEM_DATA(dtype)->type_num = type_num;
     }
 
     #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)    \
