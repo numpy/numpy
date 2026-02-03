@@ -17,7 +17,6 @@ from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     _assert_valid_refcount,
     assert_,
@@ -1294,15 +1293,9 @@ class TestRegression:
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    if IS_PYPY:
-                        x.resize((m, 0), refcheck=False)
-                    else:
-                        x.resize((m, 0))
+                    x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    if IS_PYPY:
-                        y.resize((0, n), refcheck=False)
-                    else:
-                        y.resize((0, n))
+                    y.resize((0, n))
 
                     # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)
@@ -2008,7 +2001,6 @@ class TestRegression:
         a[...] = [[1, 2]]
         assert_equal(a, [[1, 2], [1, 2]])
 
-    @pytest.mark.slow_pypy
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
         for i in range(1000):
@@ -2354,16 +2346,6 @@ class TestRegression:
         assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
         assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
 
-    def test_structarray_title(self):
-        # The following used to segfault on pypy, due to NPY_TITLE_KEY
-        # not working properly and resulting to double-decref of the
-        # structured array field items:
-        # See: https://bitbucket.org/pypy/pypy/issues/2789
-        for j in range(5):
-            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
-            structure[0]['x'] = np.array([2])
-            gc.collect()
-
     def test_dtype_scalar_squeeze(self):
         # gh-11384
         values = {
@@ -2550,7 +2532,6 @@ class TestRegression:
         expected = np.ones(size, dtype=np.bool)
         assert_array_equal(np.logical_and(a, b), expected)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")
     def test_gh_23737(self):
         with pytest.raises(TypeError, match="not an acceptable base type"):
             class Y(np.flexible):

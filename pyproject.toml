@@ -192,7 +192,7 @@ skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
-enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
+enable = ["cpython-freethreading", "cpython-prerelease"]
 
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 [tool.cibuildwheel.config-settings]

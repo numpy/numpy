@@ -285,7 +285,6 @@ import numpy as np
 from numpy.lib import format
 from numpy.testing import (
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_array_equal,
@@ -943,7 +942,6 @@ def test_large_file_support(tmpdir):
     assert_array_equal(r, d)
 
 
-@pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
 @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)

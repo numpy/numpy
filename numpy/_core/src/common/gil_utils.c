@@ -16,9 +16,6 @@ npy_gil_error(PyObject *type, const char *format, ...)
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     if (!PyErr_Occurred()) {
-#if !defined(PYPY_VERSION)
-        PyErr_FormatV(type, format, va);
-#else
         PyObject *exc_str = PyUnicode_FromFormatV(format, va);
         if (exc_str == NULL) {
             // no reason to have special handling for this error case, since
@@ -29,7 +26,6 @@ npy_gil_error(PyObject *type, const char *format, ...)
         }
         PyErr_SetObject(type, exc_str);
         Py_DECREF(exc_str);
-#endif
     }
     NPY_DISABLE_C_API;
     va_end(va);

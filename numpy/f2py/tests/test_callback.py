@@ -9,7 +9,6 @@ import traceback
 import pytest
 
 import numpy as np
-from numpy.testing import IS_PYPY
 
 from . import util
 
@@ -22,8 +21,6 @@ class TestF77Callback(util.F2PyTest):
     def test_all(self, name):
         self.check_function(name)
 
-    @pytest.mark.xfail(IS_PYPY,
-                       reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_docstring(self):
         expected = textwrap.dedent("""\
         a = t(fun,[fun_extra_args])
