@@ -2,6 +2,7 @@
 
 """
 import functools
+import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
@@ -587,6 +588,9 @@ def typename(char):
     """
     Return a description for the given data type code.
 
+    .. deprecated:: 2.5
+        `numpy.typename` is deprecated. Use `numpy.dtype.name` instead.
+
     Parameters
     ----------
     char : str
@@ -633,6 +637,11 @@ def typename(char):
     q  :  long long integer
 
     """
+    warnings.warn(
+        "numpy.typename is deprecated. Use numpy.dtype.name instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return _namefromtype[char]
 
 #-----------------------------------------------------------------------------
