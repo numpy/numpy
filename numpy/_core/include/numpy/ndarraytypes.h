@@ -616,7 +616,7 @@ typedef struct {
 
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
 
-typedef struct tagPyArray_Descr_fields {
+typedef struct _PyArray_Descr {
     PyObject_HEAD
      /*
      * the type object representing an
@@ -654,7 +654,7 @@ typedef struct tagPyArray_Descr_fields {
 
 #else  /* 1.x and 2.x compatible version (only shared fields): */
 
-typedef struct tagPyArray_Descr_fields {
+typedef struct _PyArray_Descr {
         PyObject_HEAD
         PyTypeObject *typeobj;
         char kind;
