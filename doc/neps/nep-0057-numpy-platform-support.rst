@@ -87,11 +87,12 @@ General principles
      however they should disclose this to the Steering Council, and indicate
      whether long-term support is conditional on their employment or contractor
      status for the support tiers that include releasing wheels to PyPI.
+
      *Rationale: releasing wheels to PyPI is a long-term commitment by the
      project as a whole, see the backwards compatibility section below.*
 
-2. CI support with native runners for the platform is strongly preferred. Free
-   is best, however decisions on paid CI are up to the Steering Council.
+2. CI support for the platform is required, preferably with native runners.
+   Free is best, however decisions on paid CI are up to the Steering Council.
    Emulation for running the test suite (e.g., under QEMU) or self-hosted
    buildbots are slower and less reliable, hence not preferred.
 
@@ -100,6 +101,13 @@ General principles
 
    - A previously used rule of thumb: >=0.5% of the user base should be on this
      platform. There may be reasons to deviate from this rule of thumb.
+
+     *Note: finding clean data sources isn't always easy. If wheels are already
+     being shipped, for NumPy or for a comparable project, then download data
+     from PyPI may be obtained through BigQuery. For new platforms, sources
+     like the*
+     `Steam Hardware & Software Survey <https://store.steampowered.com/hwsurvey/?platform=combined>`__
+     *may have to be used.*
 
 4. Adding a non-wheel CI job for a platform to the NumPy CI matrix is much
    cheaper, and easily reverted in case of problems. The bar for adding such
@@ -113,11 +121,32 @@ General principles
 6. Decision making:
 
    - Moving a platform to a lower support tier must be discussed on the mailing list.
+     The circumstances for each platform are unique so the community will
+     evaluate each proposal to demote a platform on a case-by-case basis.
    - Moving a platform to a higher support tier this includes releasing wheels
      on PyPI for that platform must be discussed on the mailing list.
    - Adding an entry for a platform for an unsupported platform or one without
      wheels can be done on GitHub, assuming it's clear from the discussion that
      the relevant maintainers agree.
+
+
+Releasing wheels to PyPI
+''''''''''''''''''''''''
+
+The wheels that the NumPy team releases on PyPI for the ``numpy`` package get
+hundreds of millions of downloads a month. We therefore highly value both
+reliability and supply chain security of those release artifacts. Compromising
+on those aspects is unlikely to be acceptable for the NumPy team.
+
+The details of how wheels are produced, tested and distributed can be found in
+the `numpy/numpy-release <https://github.com/numpy/numpy-release>`__
+repository. Some key requirements of the current setup, which aren't likely to
+change soon, are:
+
+1. Must be buildable on publicly-visible CI infrastructure (i.e., GitHub).
+2. Must be tested well enough (meaning native runners are preferred; QEMU is quite slow).
+3. Must be publishable to PyPI automatically, through PyPI's trusted publishing
+   mechanism.
 
 
 Tier 1
@@ -126,10 +155,10 @@ Tier 1
 - Must have regular CI support on GitHub or (exceptionally) through another
   well-integrated CI platform that the release team and steering council deem
   acceptable.
-- The NumPy team releases wheels on PyPI for this platform
+- The NumPy team releases wheels on PyPI for this platform.
 - CI failures (either regular CI or wheel build CI) block releases.
-- All maintainers developers are responsible to keep the ``main`` branch and
-  wheel builds working.
+- All maintainers are responsible to keep the ``main`` branch and wheel builds
+  working.
 
 Tier 1 platforms:
 
@@ -147,7 +176,7 @@ Tier 2
 
 - Must have regular CI support, either as defined for Tier 1 or through a
   reliable self-hosted service.
-- The NumPy team releases wheels on PyPI for this platform
+- The NumPy team releases wheels on PyPI for this platform.
 - CI failures block releases.
 - Must have at least one maintainer who commits to take primary and long-term
   responsibility for keeping the ``main`` branch and wheel builds working.
@@ -164,7 +193,7 @@ Tier 3
 
 - Is supported as part of NumPy's regular CI setup for the ``main`` branch. CI
   support as defined for Tier 2.
-- No wheels are released on PyPI for this platform
+- No wheels are released on PyPI for this platform.
 - CI failures block releases (skips may be applied a bit more liberally).
 - Must have at least one maintainer or a regular contributor trusted by the
   NumPy maintainers who commits to take responsibility for CI on the ``main``
