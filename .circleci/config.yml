@@ -64,13 +64,6 @@ jobs:
             spin build --with-scipy-openblas=64 -j 2
 
       - run:
-          name: create release notes
-          command: |
-            . venv/bin/activate
-            VERSION=$(pip show numpy | grep Version: | cut -d ' ' -f 2 | cut -c 1-5)
-            spin notes --version-override $VERSION
-
-      - run:
           name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
