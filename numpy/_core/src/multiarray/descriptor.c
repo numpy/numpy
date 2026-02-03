@@ -3779,6 +3779,42 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
     }
 }
 
+static PyObject *
+array_typestr_get(PyArray_Descr *self)
+{
+    return arraydescr_protocol_typestr_get(self, NULL);
+}
+
+
+NPY_NO_EXPORT PyObject *
+array_protocol_descr_get(PyArray_Descr *self)
+{
+    PyObject *res;
+    PyObject *dobj;
+
+    res = arraydescr_protocol_descr_get(self, NULL);
+    if (res) {
+        return res;
+    }
+    PyErr_Clear();
+
+    /* get default */
+    dobj = PyTuple_New(2);
+    if (dobj == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
+    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+    res = PyList_New(1);
+    if (res == NULL) {
+        Py_DECREF(dobj);
+        return NULL;
+    }
+    PyList_SET_ITEM(res, 0, dobj);
+    return res;
+}
+
+
 static PySequenceMethods descr_as_sequence = {
     (lenfunc) descr_length,                  /* sq_length */
     (binaryfunc) NULL,                       /* sq_concat */

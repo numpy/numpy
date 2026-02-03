@@ -253,6 +253,7 @@ The rest of the story
    :maxdepth: 2
 
    development_environment
+   spin
    howto_build_docs
    development_workflow
    development_advanced_debugging

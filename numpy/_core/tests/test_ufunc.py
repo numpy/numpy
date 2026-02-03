@@ -17,7 +17,6 @@ import numpy.linalg._umath_linalg as uml
 from numpy.exceptions import AxisError
 from numpy.testing import (
     HAS_REFCOUNT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -215,7 +214,6 @@ class TestUfunc:
                    b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
-    @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
         # lead to allowing qualnames as names.  Future ufuncs should
@@ -2978,7 +2976,6 @@ def test_ufunc_input_floatingpoint_error(bad_offset):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 @pytest.mark.parametrize(
     "methodname",
     ["__call__", "accumulate", "at", "outer", "reduce", "reduceat", "resolve_dtypes"],

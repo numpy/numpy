@@ -75,15 +75,16 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
 
     /*
     In this binary search implementation, the candidate insertion indices for
-    the jth key are in the range [base_j, base_j+length] and on each iteration
-    we pick a pivot at the mid-point of the range to compare against the jth
-    key. Depending on the comparison result, we adjust the base_j and halve
-    the length of the interval.
+    the j-th key are in the range [base_j, base_j+length] and on each
+    iteration we pick a pivot at the mid-point of the range to compare against
+    the j-th key. Depending on the comparison result, we adjust the base_j and
+    halve the length of the interval.
 
-    To batch multiple queries, we do one pivot pass for each different length
-    for all keys, storing intermediate values of base_j for every key_j. To
-    avoid consuming extra memory, we use the ret array to store intermediate
-    values of each base until they become the final result in the last step.
+    To batch multiple queries, we process all bases with a fixed length. The
+    length is halved on each iteration of an outer loop and all bases are
+    updated in an inner loop. To avoid consuming extra memory, we use the
+    result array to store intermediate values of each base until they become
+    the final result in the last step.
 
     There are two benefits of this approach:
 
@@ -100,15 +101,25 @@ binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
     different keys. Meaning that the CPU can execute multiple keys
     out-of-order in parallel.
 
-    Invariant:
-    - cmp(arr[i], key_val) == true  for all i < base
-    - cmp(arr[i], key_val) == false for all i >= base + length
+    Invariant (for every j):
+    - cmp(arr[i], key_val_j) == true  for all i < base_j
+    - cmp(arr[i], key_val_j) == false for all i >= base_j + length
+
+    where cmp(a, b) operator depends on side input:
+    - For side = "left", cmp operator is <
+    - For side = "right", cmp operator is <=
 
     The insertion index candidates are in range [base, base+length] and
     on each iteration we shrink the range into either
         [base, ceil(length / 2)]
     or
         [base + floor(length / 2), ceil(length / 2)]
+
+    The outer loop terminates when length = 1. At that point, for each j
+    the insertion order is either base_j or base_j + 1. An additional
+    comparison is required to determine which of the two values.
+    If cmp(arr[base_j], key_val_j) == true, insertion index is base_j + 1.
+    Otherwise the insertion order is base_j.
 
     Optimization: we unroll the first iteration for the following reasons:
         1. ret is not initialized with the bases, so we save |keys| writes

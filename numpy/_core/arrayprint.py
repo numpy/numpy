@@ -964,7 +964,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
     finally:
         # recursive closures have a cyclic reference to themselves, which
         # requires gc to collect (gh-10620). To avoid this problem, for
-        # performance and PyPy friendliness, we break the cycle:
+        # performance, we break the cycle:
         recurser = None
 
 def _none_or_positive_arg(x, name):

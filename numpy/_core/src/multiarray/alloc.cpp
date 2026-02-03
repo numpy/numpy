@@ -176,9 +176,6 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #endif
     p = alloc(nelem * esz);
     if (p) {
-#ifdef _PyPyGC_AddMemoryPressure
-        _PyPyPyGC_AddMemoryPressure(nelem * esz);
-#endif
         indicate_hugepages(p, nelem * esz);
     }
     return p;
