@@ -610,8 +610,8 @@ typedef struct {
 
 /*
  * As of NumPy 2.5, direct access to descriptor object fields is
- * deprecated. Set NPY_NO_DEPRECATED_API to NPY_2_5_API_VERSION to ensure you
- * access descriptor struct members via accessor or setter macros.
+ * soft-deprecated. You can use accessor macros to access the fields
+ * instead. See npy_2_compat.h.
  */
 
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
@@ -683,13 +683,12 @@ typedef struct {
 
 #endif  /* 1.x and 2.x compatible version */
 
-#if !defined(NPY_NO_DEPRECATED_API) || \
-        (NPY_NO_DEPRECATED_API < NPY_2_5_API_VERSION)
+#if !defined(NPY_INTERNAL_BUILD) || (!NPY_INTERNAL_BUILD)
 typedef PyArray_Descr_fields PyArray_Descr;
 #else
 
 /*
- * Public version of the Descriptor struct
+ * Internal version of the Descriptor struct
  * is opaque. Use accessor functions to get data from
  * the descriptor object
  */
