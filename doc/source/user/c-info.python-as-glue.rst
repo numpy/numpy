@@ -159,14 +159,36 @@ work with multidimensional arrays.
 
 Notice that Cython is an extension-module generator only. Unlike f2py,
 it includes no automatic facility for compiling and linking
-the extension module.
+the extension module. However, many Python build tools have support for Cython.
 
-For example, using Meson in a ``meson.build`` file:
+Here is an example of how to set up a Python project that contains a Cython
+extension. The example uses the `meson-python Python build backend
+<https://mesonbuild.com/meson-python/>`_ and `the meson build system
+<https://mesonbuild.com>`_. This is the same build system NumPy itself uses.
+.
+
+First, create a file named ``my_extension.pyx``.
+
+.. code-block:: cython
+
+   cimport numpy as np
+
+   def say_hello():
+       print("Hello!")
+
+This file lives next to a ``__init__.py`` file with the following content:
+
+.. code-block:: python
+
+   from .my_extension import say_hello
+
+Now you need to create two more files to set up the build system. First, a
+``meson.build`` file:
 
 .. code-block:: meson
 
   project(
-     'my_filter',
+     'module_with_extension',
      'c', 'cython',
      version: '0.0.1',
      license: 'MIT',
@@ -174,22 +196,24 @@ For example, using Meson in a ``meson.build`` file:
 
   cython = find_program('cython')
   py = import('python').find_installation(pure: false)
-  py_dep = py.dependency()
 
   numpy_nodepr_api = ['-DNPY_NO_DEPRECATED_API=NPY_2_0_API_VERSION']
 
   np_dep = declare_dependency(dependencies: dependency('numpy'),
                               compile_args: numpy_nodepr_api)
 
-  pyx_files = ['yourmod.pyx']
+  py.extension_module(
+    'my_extension',
+    'my_extension.pyx',
+    dependencies: [np_dep],
+    install: true,
+    subdir: 'my_module_with_extension',
+  )
 
-  foreach pyx_file: pyx_files
-    py.extension_module(
-      pyx_file,
-      dependencies: [np_dep],
-      install: true
-    )
-  endforeach
+  py.install_sources(
+    '__init__.py',
+    subdir: 'my_module_with_extension',
+  )
 
 And a ``pyproject.toml`` file with the following content:
 
@@ -204,22 +228,33 @@ And a ``pyproject.toml`` file with the following content:
    ]
 
    [project]
-   name = "my_filter"
+   name = "my_module_with_extension"
    version = "0.0.1"
    license = "MIT"
    dependencies = ["numpy"]
 
-Adding the a NumPy dependency to your Meson configuration is, only
-necessary if you are using NumPy arrays in the extension module (which
-is what we assume you are using Cython for).  If you just use Cython to
-compile a standard Python module, then you will get a C extension module
-that typically runs a bit faster than the equivalent Python
-module. Further speed increases can be gained by using the ``cdef``
-keyword to statically define C variables.
+You should then be able to do the following command to build, install, and call
+the function defined in the extension from Python:
+
+.. code-block:: bash
+
+   $ pip install .
+   $ python -c "from my_module_with_extension import say_hello; say_hello()"
+   "Hello!"
+
+Adding a NumPy dependency to your Meson configuration is only necessary
+if you are using the NumPy C API in the extension module via ``cimport
+numpy`` (which is what we assume you are using Cython for).  If you just
+use Cython to compile a standard Python module, then you will get a C
+extension module that typically runs a bit faster than the equivalent
+Python module. Further speed increases can be gained by using the
+``cdef`` keyword to statically define C variables.
+
+See the meson and meson-python documentation for more details on how to
+build more complicated extensions.
 
 Let's look at two examples we've seen before to see how they might be
-implemented using Cython. These examples were compiled into extension
-modules using Cython 0.21.1.
+implemented using Cython.
 
 
 Complex addition in Cython
