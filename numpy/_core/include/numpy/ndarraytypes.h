@@ -616,7 +616,11 @@ typedef struct {
 
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
 
+#if !defined(NPY_INTERNAL_BUILD) || (!NPY_INTERNAL_BUILD)
 typedef struct _PyArray_Descr {
+#else
+typedef struct _PyArray_Descr_fields {
+#endif
         PyObject_HEAD
         /*
          * the type object representing an
