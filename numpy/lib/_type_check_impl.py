@@ -637,6 +637,7 @@ def typename(char):
     q  :  long long integer
 
     """
+    # Deprecated in NumPy 2.5, 2026-02-03
     warnings.warn(
         "numpy.typename is deprecated. Use numpy.dtype.name instead.",
         DeprecationWarning,

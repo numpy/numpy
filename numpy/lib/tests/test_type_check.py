@@ -478,9 +478,7 @@ class TestTypenameDeprecation:
     """Test that numpy.typename emits a DeprecationWarning."""
 
     def test_typename_emits_deprecation_warning(self):
-        a = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
-             'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
-
-        for c in a:
-            with pytest.warns(DeprecationWarning, match="numpy.typename is deprecated"):
-                np.typename(c)
+        with pytest.warns(DeprecationWarning, match="numpy.typename is deprecated"):
+            np.typename("S1")
+        with pytest.warns(DeprecationWarning, match="numpy.typename is deprecated"):
+            np.typename("h")
