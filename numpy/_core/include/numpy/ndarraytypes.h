@@ -617,39 +617,39 @@ typedef struct {
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
 
 typedef struct _PyArray_Descr {
-    PyObject_HEAD
-     /*
-     * the type object representing an
-     * instance of this type -- should not
-     * be two type_numbers with the same type
-     * object.
-     */
-    PyTypeObject *typeobj;
-    /* kind for this type */
-    char kind;
-    /* unique-character representing this type */
-    char type;
-    /*
-     * '>' (big), '<' (little), '|'
-     * (not-applicable), or '=' (native).
-     */
-    char byteorder;
-    /* Former flags flags space (unused) to ensure type_num is stable. */
-    char _former_flags;
-    /* number representing this type */
-    int type_num;
-    /* Space for dtype instance specific flags. */
-    npy_uint64 flags;
-    /* element size (itemsize) for this type */
-    npy_intp elsize;
-    /* alignment needed for this type */
-    npy_intp alignment;
-    /* metadata dict or NULL */
-    PyObject *metadata;
-    /* Cached hash value (-1 if not yet computed). */
-    npy_hash_t hash;
-    /* Unused slot (must be initialized to NULL) for future use */
-    void *reserved_null[2];
+        PyObject_HEAD
+        /*
+         * the type object representing an
+         * instance of this type -- should not
+         * be two type_numbers with the same type
+         * object.
+         */
+        PyTypeObject *typeobj;
+        /* kind for this type */
+        char kind;
+        /* unique-character representing this type */
+        char type;
+        /*
+         * '>' (big), '<' (little), '|'
+         * (not-applicable), or '=' (native).
+         */
+        char byteorder;
+        /* Former flags flags space (unused) to ensure type_num is stable. */
+        char _former_flags;
+        /* number representing this type */
+        int type_num;
+        /* Space for dtype instance specific flags. */
+        npy_uint64 flags;
+        /* element size (itemsize) for this type */
+        npy_intp elsize;
+        /* alignment needed for this type */
+        npy_intp alignment;
+        /* metadata dict or NULL */
+        PyObject *metadata;
+        /* Cached hash value (-1 if not yet computed). */
+        npy_hash_t hash;
+        /* Unused slot (must be initialized to NULL) for future use */
+        void *reserved_null[2];
 } PyArray_Descr_fields;
 
 #else  /* 1.x and 2.x compatible version (only shared fields): */
