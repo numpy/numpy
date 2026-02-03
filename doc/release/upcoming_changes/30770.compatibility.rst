@@ -2,7 +2,7 @@ Cython support
 --------------
 
 NumPy's Cython headers (accessed via ``cimport numpy``) now require
-Cython 3.0 or newer to build. If you try to a project that depends on
+Cython 3.0 or newer to build. If you try to compile a project that depends on
 NumPy's Cython headers using Cython 0.29 or older, you will see a message like
 this:
 
