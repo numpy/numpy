@@ -9,7 +9,7 @@ from numpy._core.numeric import normalize_axis_tuple
 from numpy._core.overrides import array_function_dispatch, set_module
 from numpy.lib._array_utils_impl import byte_bounds
 
-__all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes", "as_strided_checked"]
+__all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
 
 class DummyArray:
@@ -36,95 +36,9 @@ def _maybe_view_as_subclass(original_array, new_array):
 
 
 @set_module("numpy.lib.stride_tricks")
-def as_strided_checked(x, shape=None, strides=None, subok=False, writeable=True):
-    """
-    Create a view into the array with the given shape and strides, with bounds checking.
-
-    This is a safer version of :func:`as_strided` that validates the shape and
-    strides to ensure that all memory accesses will be within bounds of the
-    original array. If the bounds check fails, a ``ValueError`` is raised.
-
-    Parameters
-    ----------
-    x : ndarray
-        Array to create a new.
-    shape : sequence of int, optional
-        The shape of the new array. Defaults to ``x.shape``.
-    strides : sequence of int, optional
-        The strides of the new array. Defaults to ``x.strides``.
-    subok : bool, optional
-        If True, subclasses are preserved.
-    writeable : bool, optional
-        If set to False, the returned array will always be readonly.
-        Otherwise it will be writable if the original array was. It
-        is advisable to set this to False if possible (see Notes).
-
-    Returns
-    -------
-    view : ndarray
-
-    Raises
-    ------
-    ValueError
-        If the given shape and strides would result in out-of-bounds memory
-        access, or if the input cannot be converted to an array without copying.
-
-    See also
-    --------
-    as_strided : Create a view without bounds checking (unsafe).
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from numpy.lib.stride_tricks import as_strided_checked
-    >>> x = np.arange(10)
-    >>> y = as_strided_checked(x, shape=(5,), strides=(8,))
-    >>> y
-    array([0, 1, 2, 3, 4])
-
-    Attempting to create an out-of-bounds view raises an error:
-
-    >>> as_strided_checked(x, shape=(20,), strides=(8,))
-    Traceback (most recent call last):
-    ...
-    ValueError: Given shape and strides would access memory out of bounds...
-
-    When working with views, bounds are checked against the base array:
-
-    >>> a = np.arange(1000)
-    >>> b = a[:2]
-    >>> c = as_strided_checked(b, shape=(2,), strides=(400,))
-    >>> c[0], c[1]
-    (0, 50)
-    """
-
-    view = as_strided(x, shape=shape, strides=strides, subok=subok, writeable=writeable)
-
-    # Find the base array
-    base = np.array(x, copy=None, subok=subok)
-    while base.base is not None:
-        base = base.base
-
-    base_low, base_high = byte_bounds(base)
-    view_low, view_high = byte_bounds(view)
-
-    if view_low < base_low:
-        raise ValueError(
-            f"Given shape and strides would access memory out of bounds. "
-            f"View starts {base_low-view_low} before starts"
-        )
-
-    if view_high > base_high:
-        raise ValueError(
-            f"Given shape and strides would access memory out of bounds. "
-            f"View ends {view_high-base_high} after ends"
-        )
-
-    return view
-
-
-@set_module("numpy.lib.stride_tricks")
-def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
+def as_strided(
+    x, shape=None, strides=None, subok=False, writeable=True, *, check_bounds=None
+):
     """
     Create a view into the array with the given shape and strides.
 
@@ -144,14 +58,22 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
         If set to False, the returned array will always be readonly.
         Otherwise it will be writable if the original array was. It
         is advisable to set this to False if possible (see Notes).
+    check_bounds : bool or None
+        Check new stride and shape for potential out of bound memory
+        access.
 
     Returns
     -------
     view : ndarray
 
+    Raises
+    ------
+    ValueError
+        If `check_bounds` is True the given shape and strides could result in
+        out-of-bounds memory access.
+
     See also
     --------
-    as_strided_checked : Create a view with bounds checking (safer alternative).
     broadcast_to : broadcast an array to a given shape.
     reshape : reshape an array.
     lib.stride_tricks.sliding_window_view :
@@ -159,7 +81,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
 
     Notes
     -----
-    ``as_strided`` creates a view into the array given the exact strides
+    `as_strided` creates a view into the array given the exact strides
     and shape. This means it manipulates the internal data structure of
     ndarray and, if done incorrectly, the array elements can point to
     invalid memory and can corrupt results or crash your program.
@@ -177,26 +99,72 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     care, you may want to use ``writeable=False`` to avoid accidental write
     operations.
 
-    For these reasons it is advisable to avoid ``as_strided`` when
+    For these reasons it is advisable to avoid `as_strided` when
     possible.
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    ... from numpy.lib.stride_tricks import as_strided
+    ... x = np.arange(10)
+    ... y = as_strided(x, shape=(5,), strides=(8,), check_bounds=True)
+    ... y
+    array([0, 1, 2, 3, 4])
+
+    Attempting to create an out-of-bounds view and use ``check_bounds=True``
+    as_strided will raises an error:
+
+    >>> as_strided(x, shape=(20,), strides=(8,), check_bounds=True)
+    Traceback (most recent call last):
+    ...
+    ValueError: Given shape and strides would access memory out of bounds...
+
+    When working with views, bounds are checked against the base array:
+
+    >>> a = np.arange(1000)
+    ... b = a[:2]
+    ... c = as_strided(b, shape=(2,), strides=(400,), check_bounds=True)
+    ... c[0], c[1]
+    (0, 50)
     """
+
     # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=None, subok=subok)
-    interface = dict(x.__array_interface__)
+    base = np.array(x, copy=None, subok=subok)
+    interface = dict(base.__array_interface__)
     if shape is not None:
         interface['shape'] = tuple(shape)
     if strides is not None:
         interface['strides'] = tuple(strides)
 
-    array = np.asarray(DummyArray(interface, base=x))
+    array = np.asarray(DummyArray(interface, base=base))
     # The route via `__interface__` does not preserve structured
     # dtypes. Since dtype should remain unchanged, we set it explicitly.
-    array.dtype = x.dtype
+    array.dtype = base.dtype
 
-    view = _maybe_view_as_subclass(x, array)
+    view = _maybe_view_as_subclass(base, array)
 
     if view.flags.writeable and not writeable:
         view.flags.writeable = False
+
+    if check_bounds:
+        while base.base is not None:
+            base = base.base
+
+        base_low, base_high = byte_bounds(base)
+        view_low, view_high = byte_bounds(view)
+
+        if view_low < base_low:
+            raise ValueError(
+                f"Given shape and strides would access memory out of bounds. "
+                f"View starts {base_low-view_low} before starts"
+            )
+
+        if view_high > base_high:
+            raise ValueError(
+                f"Given shape and strides would access memory out of bounds. "
+                f"View ends {view_high-base_high} after ends"
+            )
 
     return view
 
@@ -258,9 +226,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
     See Also
     --------
     lib.stride_tricks.as_strided: A lower-level and less safe routine for
-        creating arbitrary views from custom shape and strides.
-    lib.stride_tricks.as_strided_checked: Similar to as_strided but with
-        bounds validation for safer usage.
+        creating arbitrary views from custom shape and strides. Use the
+        ``check_bounds`` parameter for bounds validation.
     broadcast_to: broadcast an array to a given shape.
 
     Notes
