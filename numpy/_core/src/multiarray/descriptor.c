@@ -408,7 +408,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_uint64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
     int totalsize = 0;
     PyObject *fields = PyDict_New();
@@ -583,10 +583,6 @@ _convert_from_array_descr(PyObject *obj, int align)
         new->flags |= NPY_ALIGNED_STRUCT;
         new->alignment = maxalign;
     }
-    /* Mark as not trivially copyable if layout is not simple (has padding) */
-    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
-        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
-    }
     return (PyArray_Descr *)new;
 
  fail:
@@ -634,7 +630,7 @@ _convert_from_list(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_unit64 dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 1;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
@@ -694,10 +690,6 @@ _convert_from_list(PyObject *obj, int align)
         new->alignment = maxalign;
     }
     new->elsize = totalsize;
-    /* Mark as not trivially copyable if layout is not simple (has padding) */
-    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
-        new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
-    }
     return (PyArray_Descr *)new;
 
  fail:
@@ -1107,7 +1099,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
+    npy_unit64 dtypeflags = NPY_NEEDS_PYAPI;
     int totalsize = 0;
     int maxalign = 1;
     int has_out_of_order_fields = 0;
@@ -1326,8 +1318,13 @@ _convert_from_dict(PyObject *obj, int align)
         new->elsize = itemsize;
     }
 
-    /* Mark as not trivially copyable if layout is not simple (has padding) */
-    if (!is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
+    /*
+     * Mark as not trivially copyable only if explicit offsets were provided
+     * and the layout has holes. Alignment padding (without explicit offsets)
+     * is safe to overwrite with memcpy.
+     */
+    if (offsets != NULL &&
+            !is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)new)) {
         new->flags |= NPY_NOT_TRIVIALLY_COPYABLE;
     }
 
@@ -2816,7 +2813,8 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyLong_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyLong_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyLong_FromUnsignedLongLong(
+            self->flags & ~NPY_NOT_TRIVIALLY_COPYABLE));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -3188,7 +3186,7 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
 
     /*
      * Mark as not trivially copyable if layout is not simple (has padding).
-     * Needed for pickles created before NPY_NOT_TRIVIALLY_COPYABLE existed.
+     * This flag is always recomputed on unpickle (not stored in pickle).
      */
     if (PyDataType_HASFIELDS((PyArray_Descr *)self) &&
             !is_dtype_struct_simple_unaligned_layout((PyArray_Descr *)self)) {

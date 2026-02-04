@@ -3275,12 +3275,11 @@ void_to_void_get_loop(
     if (PyDataType_NAMES(context->descriptors[0]) != NULL ||
             PyDataType_NAMES(context->descriptors[1]) != NULL) {
         /*
-         * Fast path: if dtypes are equivalent and trivially copyable,
-         * use memcpy instead of field-by-field transfer.
+         * Fast path: if dtypes are equivalent and the destination is
+         * trivially copyable, use memcpy instead of field-by-field transfer.
          */
         if ((context->descriptors[0] == context->descriptors[1] ||
                     PyArray_EquivTypes(context->descriptors[0], context->descriptors[1])) &&
-                PyDataType_ISTRIVIALLYCOPYABLE(context->descriptors[0]) &&
                 PyDataType_ISTRIVIALLYCOPYABLE(context->descriptors[1])) {
             if (PyArray_GetStridedZeroPadCopyFn(
                     0, 0, strides[0], strides[1],
