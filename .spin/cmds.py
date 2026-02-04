@@ -9,8 +9,6 @@ import click
 import spin
 from spin.cmds import meson
 
-IS_PYPY = (sys.implementation.name == 'pypy')
-
 # Check that the meson git submodule is present
 curdir = pathlib.Path(__file__).parent
 meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
@@ -129,10 +127,7 @@ def docs(*, parent_callback, **kwargs):
 jobs_param = next(p for p in docs.params if p.name == 'jobs')
 jobs_param.default = 1
 
-if IS_PYPY:
-    default = "not slow and not slow_pypy"
-else:
-    default = "not slow"
+default = "not slow"
 
 @click.option(
     "-m",

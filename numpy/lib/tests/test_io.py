@@ -1,4 +1,3 @@
-import gc
 import gzip
 import locale
 import os
@@ -26,7 +25,6 @@ from numpy.lib._iotools import ConversionWarning, ConverterError
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     HAS_REFCOUNT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -35,7 +33,6 @@ from numpy.testing import (
     assert_no_warnings,
     assert_raises,
     assert_raises_regex,
-    break_cycles,
     tempdir,
     temppath,
 )
@@ -231,7 +228,6 @@ class TestSavezLoad(RoundtripTest):
                 assert len(npz["test2"]) == 10
                 assert npz["metadata"] == b"Name: Test"
 
-    @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     @pytest.mark.thread_unsafe(reason="crashes with low memory")
@@ -320,7 +316,6 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -338,14 +333,7 @@ class TestSavezLoad(RoundtripTest):
                 # TODO: specify exact message
                 warnings.simplefilter('ignore', ResourceWarning)
                 for i in range(1, 1025):
-                    try:
-                        np.load(tmp)["data"]
-                    except Exception as e:
-                        msg = f"Failed to load data from a file: {e}"
-                        raise AssertionError(msg)
-                    finally:
-                        if IS_PYPY:
-                            gc.collect()
+                    np.load(tmp)["data"]
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -646,7 +634,7 @@ class TestSaveTxt:
             except MemoryError:
                 memoryerror_raised.value = True
                 raise
-        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        # run in a subprocess to ensure memory is released
         # Use an object in shared memory to re-raise the MemoryError exception
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
@@ -2542,9 +2530,6 @@ class TestPathUsage:
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
-            if IS_PYPY:
-                break_cycles()
-                break_cycles()
 
     @pytest.mark.xfail(IS_WASM, reason="memmap doesn't work correctly")
     @pytest.mark.parametrize("filename_type", [Path, str])
@@ -2557,9 +2542,6 @@ class TestPathUsage:
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
-            if IS_PYPY:
-                break_cycles()
-                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 

@@ -220,15 +220,6 @@ NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
     if (key == title) {
         return 1;
     }
-#ifdef PYPY_VERSION
-    /*
-     * On PyPy, dictionary keys do not always preserve object identity.
-     * Fall back to comparison by value.
-     */
-    if (PyUnicode_Check(title) && PyUnicode_Check(key)) {
-        return PyUnicode_Compare(title, key) == 0 ? 1 : 0;
-    }
-#endif
     return 0;
 }
 

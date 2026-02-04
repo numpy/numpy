@@ -1,7 +1,7 @@
 name: Linux tests
 
 # This file is meant for testing across supported Python versions, build types
-# and interpreters (PyPy, python-dbg, a pre-release Python in summer time),
+# and interpreters (python-dbg, a pre-release Python in summer time),
 # build-via-sdist, run benchmarks, measure code coverage, and other build
 # options.
 
@@ -53,7 +53,7 @@ jobs:
       env:
         BASE_REF: ${{ github.base_ref }}
       run:
-        python tools/linter.py
+        spin lint
     - name: Check Python.h is first file included
       run: |
         python tools/check_python_h_first.py

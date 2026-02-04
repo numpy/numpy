@@ -1020,7 +1020,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
         return -1;
     }
     for (i = 0; i < nin; ++i) {
-#if defined(PYPY_VERSION) || defined(Py_LIMITED_API)
+#if defined(Py_LIMITED_API)
         PyObject *obj = PyTuple_GetItem(args, i);
         if (obj == NULL) {
             return -1;
