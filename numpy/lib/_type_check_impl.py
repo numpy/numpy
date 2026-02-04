@@ -642,8 +642,7 @@ def typename(char):
     warnings.warn(
         "numpy.typename is deprecated. Use numpy.dtype.name instead.",
         DeprecationWarning,
-        skip_file_prefixes=(os.path.dirname(__file__),),
-        stacklevel=2,
+        skip_file_prefixes=(os.path.dirname(__file__),)
     )
     return _namefromtype[char]
 
