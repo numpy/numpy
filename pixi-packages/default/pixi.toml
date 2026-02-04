@@ -16,18 +16,17 @@ compilers = ["c", "cxx"]
 extra-args = ["-Csetup-args=-Dbuildtype=debug"]
 
 [package.host-dependencies]
-# FIXME https://github.com/numpy/numpy/issues/30561
+# FIXME https://github.com/numpy/numpy/issues/30478
 # python = "*" prevents downstream from building cpython from sources.
 # Workaround: fork numpy, then uncomment one of the following and
 # comment  out the other.
 
 # Use latest cpython release from conda-forge
-# python = "*"
+python = "*"
 
 # Use cpython git tip
-python.git = "https://github.com/crusaderky/cpython"
-python.subdirectory = "Tools/pixi-packages/default"
-python.rev = "tsan"
+# python.git = "https://github.com/python/cpython"
+# python.subdirectory = "Tools/pixi-packages/default"
 
 meson-python = "*"
 cython = "*"

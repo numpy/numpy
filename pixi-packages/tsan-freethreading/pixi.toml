@@ -17,9 +17,8 @@ env.TSAN_OPTIONS = "halt_on_error=0:allocator_may_return_null=1"
 extra-args = ["-Csetup-args=-Db_sanitize=thread", "-Csetup-args=-Dbuildtype=debug"]
 
 [package.host-dependencies]
-python.git = "https://github.com/crusaderky/cpython"
+python.git = "https://github.com/python/cpython"
 python.subdirectory = "Tools/pixi-packages/tsan-freethreading"
-python.rev = "tsan"
 
 meson-python = "*"
 cython = "*"
