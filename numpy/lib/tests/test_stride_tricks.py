@@ -781,7 +781,12 @@ def test_as_strided_checked_out_of_bounds_positive_strides(size, shape, strides)
 
 
 def test_as_strided_checked_view_of_larger_array():
-    """Test that as_strided with check_bounds=True considers the base array bounds, not just the view."""
+    """Test as_strided
+
+    - with check_bounds=True
+    - considers the base array bounds, not just the view.
+
+    """
     a = np.arange(1000, dtype=np.int64)
 
     b = a[:2]
@@ -794,7 +799,11 @@ def test_as_strided_checked_view_of_larger_array():
 
 
 def test_as_strided_checked_view_with_offset():
-    """Test as_strided with check_bounds=True on a view that doesn't start at the beginning."""
+    """Test as_strided
+
+    - with check_bounds=True
+    - on a view that doesn't start at the beginning.
+    """
     a = np.arange(1000, dtype=np.int64)
 
     b = a[100:102]
