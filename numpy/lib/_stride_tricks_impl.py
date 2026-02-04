@@ -148,7 +148,7 @@ def as_strided(
         view.flags.writeable = False
 
     if check_bounds:
-        while base.base is not None:
+        while isinstance(base.base, np.ndarray):
             base = base.base
 
         base_low, base_high = byte_bounds(base)
