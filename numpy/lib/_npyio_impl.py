@@ -8,7 +8,6 @@ import operator
 import os
 import pickle
 import re
-import sys
 import warnings
 import weakref
 from collections.abc import Mapping
@@ -714,7 +713,8 @@ def savez_compressed(file, *args, allow_pickle=True,
     zipfile_kwargs : dict, optional
         Dictionary of keyword arguments forwarded directly to
         ``zipfile.ZipFile`` when creating the ``.npz`` archive (for example:
-        ``compression``, ``compresslevel``). By default, ``compression`` is set to ``zipfile.ZIP_DEFLATED``.
+        ``compression``, ``compresslevel``). By default, ``compression`` is set
+        to ``zipfile.ZIP_DEFLATED``.
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
