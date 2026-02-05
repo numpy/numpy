@@ -1,3 +1,3 @@
 from .defmatrix import asmatrix, bmat, matrix
-
-__all__ = ["matrix", "bmat", "asmatrix"]
+from .modular import inv_mod
+__all__ = ["matrix", "bmat", "asmatrix","inv_mod"]
