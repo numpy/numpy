@@ -3,8 +3,9 @@
 """
 from . import defmatrix
 from .defmatrix import *
+from .modular import inv_mod
 
-__all__ = defmatrix.__all__
+__all__ = defmatrix.__all__ + ["inv_mod"]
 
 from numpy._pytesttester import PytestTester
 
