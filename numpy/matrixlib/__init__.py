@@ -5,7 +5,7 @@ from . import defmatrix
 from .defmatrix import *
 from .modular import matrix_inv_mod
 
-__all__ = defmatrix.__all__ + ["matrix_inv_mod"]
+__all__ = defmatrix.__all__
 
 from numpy._pytesttester import PytestTester
 
