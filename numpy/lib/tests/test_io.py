@@ -182,7 +182,7 @@ class RoundtripTest:
 
     @pytest.mark.slow
     def test_format_2_0(self):
-        dt = [(("%d" % i) * 100, float) for i in range(500)]
+        dt = [(f"{i}" * 100, float) for i in range(500)]
         a = np.ones(1000, dtype=dt)
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings('always', '', UserWarning)
@@ -202,7 +202,7 @@ class TestSavezLoad(RoundtripTest):
         arr, arr_reloaded = RoundtripTest.roundtrip(self, np.savez, *args, **kwargs)
         try:
             for n, a in enumerate(arr):
-                reloaded = arr_reloaded['arr_%d' % n]
+                reloaded = arr_reloaded[f'arr_{n}']
                 assert_equal(a, reloaded)
                 assert_equal(a.dtype, reloaded.dtype)
                 assert_equal(a.flags.fnc, reloaded.flags.fnc)
@@ -611,7 +611,7 @@ class TestSaveTxt:
         np.savetxt(s, a, fmt="%f")
         s.seek(0)
         if iotype is StringIO:
-            assert_equal(s.read(), "%f\n" % 1.)
+            assert_equal(s.read(), f"{1.:f}\n")
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
@@ -1167,7 +1167,7 @@ class TestLoadTxt(LoadTxtBase):
     def test_generator_source(self):
         def count():
             for i in range(10):
-                yield "%d" % i
+                yield f"{i}"
 
         res = np.loadtxt(count())
         assert_array_equal(res, np.arange(10))
@@ -2407,7 +2407,7 @@ M   33  21.99
         # gft doesn't work with unicode.
         def count():
             for i in range(10):
-                yield asbytes("%d" % i)
+                yield asbytes(f"{i}")
 
         res = np.genfromtxt(count())
         assert_array_equal(res, np.arange(10))
