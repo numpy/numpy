@@ -9,7 +9,7 @@ def inv_mod(A, m):
     if gcd(det, m) != 1:
         raise ValueError("Matrix not invertible modulo m")
 
-    det_inv = pow(det, -1, m)  # Python 3.8+
+    det_inv = pow(det, -1, m)
 
     cof = np.zeros((n, n), dtype=int)
     for i in range(n):
