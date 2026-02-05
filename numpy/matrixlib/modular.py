@@ -1,7 +1,7 @@
 import numpy as np
 from math import gcd
 
-def inv_mod(A, m):
+def matrix_inv_mod(A, m):
     A = np.asarray(A, dtype=int)
     n = A.shape[0]
 
