@@ -2190,17 +2190,17 @@ def _update_dim_sizes(dim_sizes, arg, core_dims):
     num_core_dims = len(core_dims)
     if arg.ndim < num_core_dims:
         raise ValueError(
-            '%d-dimensional argument does not have enough '
-            'dimensions for all core dimensions %r'
-            % (arg.ndim, core_dims))
+            f'{arg.ndim}-dimensional argument does not have enough '
+            f'dimensions for all core dimensions {core_dims!r}')
 
     core_shape = arg.shape[-num_core_dims:]
     for dim, size in zip(core_dims, core_shape):
         if dim in dim_sizes:
             if size != dim_sizes[dim]:
                 raise ValueError(
-                    'inconsistent size for core dimension %r: %r vs %r'
-                    % (dim, size, dim_sizes[dim]))
+                    f'inconsistent size for core dimension {dim!r}: {size!r} vs '
+                    f'{dim_sizes[dim]!r}'
+                )
         else:
             dim_sizes[dim] = size
 
@@ -2610,9 +2610,10 @@ class vectorize:
         input_core_dims, output_core_dims = self._in_and_out_core_dims
 
         if len(args) != len(input_core_dims):
-            raise TypeError('wrong number of positional arguments: '
-                            'expected %r, got %r'
-                            % (len(input_core_dims), len(args)))
+            raise TypeError(
+                'wrong number of positional arguments: '
+                f'expected {len(input_core_dims)!r}, got {len(args)!r}'
+            )
         args = tuple(asanyarray(arg) for arg in args)
 
         broadcast_shape, dim_sizes = _parse_input_dimensions(
@@ -2633,8 +2634,9 @@ class vectorize:
 
             if nout != n_results:
                 raise ValueError(
-                    'wrong number of outputs from pyfunc: expected %r, got %r'
-                    % (nout, n_results))
+                    f'wrong number of outputs from pyfunc: expected {nout!r}, '
+                    f'got {n_results!r}'
+                )
 
             if nout == 1:
                 results = (results,)

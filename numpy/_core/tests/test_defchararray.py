@@ -13,6 +13,11 @@ from numpy.testing import (
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
+ignore_charray_deprecation = pytest.mark.filterwarnings(
+    r"ignore:\w+ chararray \w+:DeprecationWarning"
+)
+
+
 class TestBasic:
     def test_from_object_array(self):
         A = np.array([['abc', 2],
@@ -134,6 +139,7 @@ class TestVecString:
 
         assert_raises(ValueError, fail)
 
+@ignore_charray_deprecation
 class TestWhitespace:
     def test1(self):
         A = np.array([['abc ', '123  '],
@@ -147,12 +153,14 @@ class TestWhitespace:
         assert_(not np.any(A < B))
         assert_(not np.any(A != B))
 
+@ignore_charray_deprecation
 class TestChar:
     def test_it(self):
         A = np.array('abc1', dtype='c').view(np.char.chararray)
         assert_equal(A.shape, (4,))
         assert_equal(A.upper()[:2].tobytes(), b'AB')
 
+@ignore_charray_deprecation
 class TestComparisons:
     def A(self):
         return np.array([['abc', 'abcc', '123'],
@@ -199,6 +207,7 @@ class TestComparisons:
         assert_(isinstance(out1, np.ndarray))
         assert_(isinstance(out2, np.ndarray))
 
+@ignore_charray_deprecation
 class TestComparisonsMixed1(TestComparisons):
     """Ticket #1276"""
 
@@ -207,6 +216,7 @@ class TestComparisonsMixed1(TestComparisons):
             [['efg', 'efg', '123  '],
              ['051', 'efgg', 'tuv']], np.str_).view(np.char.chararray)
 
+@ignore_charray_deprecation
 class TestComparisonsMixed2(TestComparisons):
     """Ticket #1276"""
 
@@ -215,6 +225,7 @@ class TestComparisonsMixed2(TestComparisons):
             [['abc', 'abcc', '123'],
              ['789', 'abc', 'xyz']], np.str_).view(np.char.chararray)
 
+@ignore_charray_deprecation
 class TestInformation:
     def A(self):
         return np.array([[' abc ', ''],
@@ -356,6 +367,7 @@ class TestInformation:
 
         assert_raises(TypeError, fail)
 
+@ignore_charray_deprecation
 class TestMethods:
     def A(self):
         return np.array([[' abc ', ''],
@@ -691,6 +703,7 @@ class TestMethods:
         assert_array_equal(B.isdecimal(), [
                 [False, False], [True, False], [False, False]])
 
+@ignore_charray_deprecation
 class TestOperations:
     def A(self):
         return np.array([['abc', '123'],
@@ -856,6 +869,7 @@ class TestMethodsScalarValues:
         assert_equal(np.char.replace('Python is good', 'good', 'great'),
                      'Python is great')
 
+@ignore_charray_deprecation
 def test_empty_indexing():
     """Regression test for ticket 1948."""
     # Check that indexing a chararray with an empty list/array returns an

@@ -20,6 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
+#include "descriptor.h" 
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -1788,23 +1789,75 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_dataptr_get(PyObject *self)
 {
-    PyArrayObject *arr;
-    PyObject *inter;
-
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
-    }
-    inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-    if (inter != NULL) {
-        PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
-    }
-    Py_DECREF(arr);
-    return inter;
+    return Py_BuildValue(
+        "NO",
+        PyLong_FromVoidPtr(scalar_value(self, NULL)),
+        Py_True
+    );
 }
 
+
+static PyObject *
+gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+{
+    PyObject *dataptr = NULL;
+    PyObject *strides = NULL;
+    PyObject *shape = NULL;
+    PyObject *descr = NULL;
+    PyObject *typestr = NULL;
+    PyArray_Descr *array_descr = NULL;
+    PyObject *inter = NULL;
+
+
+    array_descr = PyArray_DescrFromScalar(self);
+    if (array_descr == NULL) {
+        goto finish;
+    }
+
+    /* dataptr */
+    dataptr = gentype_dataptr_get(self);
+    if (dataptr == NULL) {
+        goto finish;
+    }
+
+    /* strides */
+    strides = gentype_shape_get(self, NULL);
+    if (strides == NULL) {
+        goto finish;
+    }
+    
+    /* descr */
+    descr = array_protocol_descr_get(array_descr);
+    if (descr == NULL) {
+        goto finish;
+    }
+
+    /* typestr */
+    typestr = arraydescr_protocol_typestr_get(array_descr, NULL);
+    if (typestr == NULL) {
+        goto finish;
+    }
+
+    /* shape */
+    shape = gentype_shape_get(self, NULL);
+    if (shape == NULL) {
+        goto finish;
+    }
+
+    inter = build_array_interface(dataptr, descr, strides, typestr, shape);
+    goto finish;
+
+finish:
+    Py_XDECREF(descr);
+    Py_XDECREF(dataptr);
+    Py_XDECREF(strides);
+    Py_XDECREF(shape);
+    Py_XDECREF(typestr);
+    Py_XDECREF(array_descr);
+    return inter;
+}
 
 
 static PyObject *

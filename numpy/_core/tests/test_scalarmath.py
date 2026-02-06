@@ -15,7 +15,6 @@ from numpy._core._rational_tests import rational
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (
-    IS_PYPY,
     _gen_alignment_data,
     assert_,
     assert_almost_equal,
@@ -520,14 +519,6 @@ class TestConversion:
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, int, x)
 
-    @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
-    def test_int_from_infinite_longdouble___int__(self):
-        x = np.longdouble(np.inf)
-        assert_raises(OverflowError, x.__int__)
-        with pytest.warns(ComplexWarning):
-            x = np.clongdouble(np.inf)
-            assert_raises(OverflowError, x.__int__)
-
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
     @pytest.mark.skipif(platform.machine().startswith("ppc"),
@@ -652,18 +643,16 @@ class TestRepr:
             self._test_type_repr(t)
 
 
-if not IS_PYPY:
-    # sys.getsizeof() is not valid on PyPy
-    class TestSizeOf:
+class TestSizeOf:
 
-        def test_equal_nbytes(self):
-            for type in types:
-                x = type(0)
-                assert_(sys.getsizeof(x) > x.nbytes)
+    def test_equal_nbytes(self):
+        for type in types:
+            x = type(0)
+            assert_(sys.getsizeof(x) > x.nbytes)
 
-        def test_error(self):
-            d = np.float32()
-            assert_raises(TypeError, d.__sizeof__, "a")
+    def test_error(self):
+        d = np.float32()
+        assert_raises(TypeError, d.__sizeof__, "a")
 
 
 class TestMultiply:

@@ -1346,7 +1346,7 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
                 Py_INCREF(tmp_fun);
                 tot = maxnofargs;
                 if (PyCFunction_Check(fun)) {
-                    /* In case the function has a co_argcount (like on PyPy) */
+                    /* In case the function has a co_argcount */
                     di = 0;
                 }
                 if (xa != NULL)

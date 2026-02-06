@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import random
-from numpy.testing import IS_PYPY, assert_, assert_array_equal, assert_raises
+from numpy.testing import assert_, assert_array_equal, assert_raises
 
 
 class TestRegression:
@@ -151,7 +151,6 @@ class TestRegression:
         assert_array_equal(m.__array__(), np.arange(5))
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
     @pytest.mark.parametrize(
         "cls",
         [

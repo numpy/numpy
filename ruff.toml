@@ -79,17 +79,11 @@ ignore = [
 "bench_*.py" = ["B015", "B018"]
 "test*.py" = ["B015", "B018", "E201", "E714"]
 
-"numpy/_core/tests/test_cpu_features.py" = ["E501"]
-"numpy/_core/tests/test_nditer*py" = ["E501"]
-"numpy/_core/tests/test_umath.py" = ["E501"]
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]
 "numpy/lib/tests/test_format.py" = ["E501"]
 "numpy/linalg/tests/test_linalg.py" = ["E501"]
 "numpy/f2py/*py" = ["E501"]
-# for typing related files we follow https://typing.python.org/en/latest/guides/writing_stubs.html#maximum-line-length
-"numpy/_typing/_array_like.py" = ["E501"]
-"numpy/_typing/_dtype_like.py" = ["E501"]
 "numpy*pyi" = ["E501"]
 # "useless assignments" aren't so useless when you're testing that they don't make type checkers scream
 "numpy/typing/tests/data/*" = ["B015", "B018", "E501"]

@@ -696,6 +696,7 @@ class TestUnique:
         types.append('timedelta64[D]')
         return types
 
+    @pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
     def test_unique_1d(self):
 
         a = [5, 7, 1, 2, 1, 5, 7] * 10

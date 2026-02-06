@@ -69,6 +69,7 @@ intern_strings(void)
     INTERN_STRING(copy, "copy");
     INTERN_STRING(dl_device, "dl_device");
     INTERN_STRING(max_version, "max_version");
+    INTERN_STRING(array_dealloc, "array_dealloc");
     return 0;
 }
 

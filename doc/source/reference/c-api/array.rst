@@ -2365,7 +2365,7 @@ Item selection and manipulation
 
     Return an array with the items of ``self`` sorted along ``axis``. The array
     is sorted using an algorithm whose properties are specified by the value of
-    ``kind``, an integer/enum specifying the reguirements of the sorting
+    ``kind``, an integer/enum specifying the requirements of the sorting
     algorithm used. If ``self* ->descr`` is a data-type with fields defined,
     then ``self->descr->names`` is used to determine the sort order. A comparison
     where the first field is equal will use the second field and so on. To
@@ -2382,7 +2382,7 @@ Item selection and manipulation
     Return an array of indices such that selection of these indices along the
     given ``axis`` would return a sorted version of ``self``.  The array is
     sorted using an algorithm whose properties are specified by ``kind``, an
-    integer/enum specifying the reguirements of the sorting algorithm used. If
+    integer/enum specifying the requirements of the sorting algorithm used. If
     ``self->descr`` is a data-type with fields defined, then
     ``self->descr->names`` is used to determine the sort order. A comparison
     where the first field is equal will use the second field and so on. To

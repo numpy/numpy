@@ -65,7 +65,6 @@ with suppress_obj as c3:
     assert_type(c3, np.testing.suppress_warnings)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
 assert_type(np.testing.verbose, int)
-assert_type(np.testing.IS_PYPY, bool)
 assert_type(np.testing.HAS_REFCOUNT, bool)
 assert_type(np.testing.HAS_LAPACK64, bool)
 

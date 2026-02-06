@@ -224,7 +224,7 @@ def mod(a, values):
 
     Parameters
     ----------
-    a : array_like, with `np.bytes_` or `np.str_` dtype
+    a : array_like, with ``bytes_`` or ``str_`` dtype
 
     values : array_like of values
        These values will be element-wise interpolated into the string.
@@ -263,7 +263,7 @@ def find(a, sub, start=0, end=None):
     ----------
     a : array_like, with ``StringDType``, ``bytes_`` or ``str_`` dtype
 
-    sub : array_like, with `np.bytes_` or `np.str_` dtype
+    sub : array_like, with ``bytes_`` or ``str_`` dtype
         The substring to search for.
 
     start, end : array_like, with any integer dtype
@@ -375,9 +375,9 @@ def rindex(a, sub, start=0, end=None):
 
     Parameters
     ----------
-    a : array-like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``bytes_`` or ``str_`` dtype
 
-    sub : array-like, with `np.bytes_` or `np.str_` dtype
+    sub : array-like, with ``bytes_`` or ``str_`` dtype
 
     start, end : array-like, with any integer dtype, optional
 
@@ -1689,7 +1689,7 @@ def translate(a, table, deletechars=None):
 
     Parameters
     ----------
-    a : array-like, with `np.bytes_` or `np.str_` dtype
+    a : array-like, with ``bytes_`` or ``str_`` dtype
 
     table : str of length 256
 
