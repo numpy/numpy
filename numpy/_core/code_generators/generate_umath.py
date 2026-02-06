@@ -1436,19 +1436,16 @@ def make_arrays(funcdict):
                 astype = ''
                 if t.astype is not None:
                     astype = f'_As_{thedict[t.astype]}'
-                astr = ('%s_functions[%d] = PyUFunc_%s%s;' %
-                           (name, k, thedict[t.type], astype))
+                astr = f'{name}_functions[{k}] = PyUFunc_{thedict[t.type]}{astype};'
                 code2list.append(astr)
                 if t.type == 'O':
-                    astr = ('%s_data[%d] = (void *) %s;' %
-                               (name, k, t.func_data))
+                    astr = f'{name}_data[{k}] = (void *) {t.func_data};'
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
                 elif t.type == 'P':
                     datalist.append(f'(void *)"{t.func_data}"')
                 else:
-                    astr = ('%s_data[%d] = (void *) %s;' %
-                               (name, k, t.func_data))
+                    astr = f'{name}_data[{k}] = (void *) {t.func_data};'
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
                     #datalist.append('(void *)%s' % t.func_data)
@@ -1471,12 +1468,9 @@ def make_arrays(funcdict):
             signames = ', '.join(siglist)
             datanames = ', '.join(datalist)
             code1list.append(
-                "static PyUFuncGenericFunction %s_functions[] = {%s};"
-                % (name, funcnames))
-            code1list.append("static void * %s_data[] = {%s};"
-                            % (name, datanames))
-            code1list.append("static const char %s_signatures[] = {%s};"
-                            % (name, signames))
+                f"static PyUFuncGenericFunction {name}_functions[] = {{{funcnames}}};")
+            code1list.append(f"static void * {name}_data[] = {{{datanames}}};")
+            code1list.append(f"static const char {name}_signatures[] = {{{signames}}};")
             uf.empty = False
         else:
             uf.empty = True
@@ -1546,8 +1540,7 @@ def make_ufuncs(funcdict):
 
         mlist.append(fmt.format(**args))
         if uf.typereso is not None:
-            mlist.append(
-                r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
+            mlist.append(rf"((PyUFuncObject *)f)->type_resolver = &{uf.typereso};")
         for c in uf.indexed:
             # Handle indexed loops by getting the underlying ArrayMethodObject
             # from the list in f._loops and setting its field appropriately
@@ -1582,7 +1575,7 @@ def make_ufuncs(funcdict):
                 funcname=f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
 
-        mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
+        mlist.append(rf"""PyDict_SetItemString(dictionary, "{name}", f);""")
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))
     return '\n'.join(code3list)

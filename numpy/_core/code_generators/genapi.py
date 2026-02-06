@@ -132,9 +132,9 @@ class StealRef:
 
     def __str__(self):
         try:
-            return ' '.join('NPY_STEALS_REF_TO_ARG(%d)' % x for x in self.arg)
+            return ' '.join(f'NPY_STEALS_REF_TO_ARG({x})' for x in self.arg)
         except TypeError:
-            return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
+            return f'NPY_STEALS_REF_TO_ARG({self.arg})'
 
 
 class Function:
@@ -337,10 +337,8 @@ class TypeApi:
         self.internal_type = internal_type
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                               self.ptr_cast,
-                                               self.api_name,
-                                               self.index)
+        return (f"#define {self.name} (*({self.ptr_cast} *)"
+                f"{self.api_name}[{self.index}])")
 
     def array_api_define(self):
         return f"        (void *) &{self.name}"
@@ -369,10 +367,7 @@ class GlobalVarApi:
         self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s (*(%s *)%s[%d])" % (self.name,
-                                                        self.type,
-                                                        self.api_name,
-                                                        self.index)
+        return f"#define {self.name} (*({self.type} *){self.api_name}[{self.index}])"
 
     def array_api_define(self):
         return f"        ({self.type} *) &{self.name}"
@@ -392,10 +387,7 @@ class BoolValuesApi:
         self.api_name = api_name
 
     def define_from_array_api_string(self):
-        return "#define %s ((%s *)%s[%d])" % (self.name,
-                                              self.type,
-                                              self.api_name,
-                                              self.index)
+        return f"#define {self.name} (({self.type} *){self.api_name}[{self.index}])"
 
     def array_api_define(self):
         return f"        (void *) &{self.name}"

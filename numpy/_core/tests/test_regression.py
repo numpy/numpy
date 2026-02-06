@@ -1199,8 +1199,8 @@ class TestRegression:
     def test_unaligned_unicode_access(self):
         # Ticket #825
         for i in range(1, 9):
-            msg = 'unicode offset: %d chars' % i
-            t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
+            msg = f'unicode offset: {i} chars'
+            t = np.dtype([('a', f'S{i}'), ('b', 'U2')])
             x = np.array([(b'a', 'b')], dtype=t)
             assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
 
@@ -1845,7 +1845,7 @@ class TestRegression:
         s = b'0123456789abcdef'
         a = np.array([s] * 5)
         for i in range(1, 17):
-            a1 = np.array(a, "|S%d" % i)
+            a1 = np.array(a, f"|S{i}")
             a2 = np.array([s[:i]] * 5)
             assert_equal(a1, a2)
 

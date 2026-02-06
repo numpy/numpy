@@ -169,8 +169,8 @@ def _commastring(astr):
                 mo = sep_re.match(astr, pos=startindex)
                 if not mo:
                     raise ValueError(
-                        'format number %d of "%s" is not recognized' %
-                        (len(result) + 1, astr))
+                        f'format number {len(result) + 1} of "{astr}" '
+                        'is not recognized')
                 startindex = mo.end()
                 islist = True
 
@@ -689,7 +689,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
             is_padding = (typechar == 'x')
             dtypechar = type_map[typechar]
             if dtypechar in 'USV':
-                dtypechar += '%d' % itemsize
+                dtypechar += f'{itemsize}'
                 itemsize = 1
             numpy_byteorder = {'@': '=', '^': '='}.get(
                 stream.byteorder, stream.byteorder)

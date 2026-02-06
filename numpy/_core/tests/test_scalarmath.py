@@ -69,8 +69,8 @@ class TestTypes:
                 # skipped ahead based on the first argument, but that
                 # does not produce properly symmetric results...
                 assert_equal(c_scalar.dtype, c_array.dtype,
-                           "error with types (%d/'%c' + %d/'%c')" %
-                            (k, np.dtype(atype).char, l, np.dtype(btype).char))
+                             f"error with types ({k}/'{np.dtype(atype).char}' + "
+                             f"{l}/'{np.dtype(btype).char}')")
 
     def test_type_create(self):
         for atype in types:

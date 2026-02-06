@@ -407,7 +407,7 @@ class iinfo:
             self.dtype = numeric.dtype(type(int_type))
         self.kind = self.dtype.kind
         self.bits = self.dtype.itemsize * 8
-        self.key = "%s%d" % (self.kind, self.bits)
+        self.key = f"{self.kind}{self.bits}"
         if self.kind not in 'iu':
             raise ValueError(f"Invalid integer data type {self.kind!r}.")
 
@@ -449,5 +449,5 @@ class iinfo:
         return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
 
     def __repr__(self):
-        return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
-                                    self.min, self.max, self.dtype)
+        return (f"{self.__class__.__name__}"
+                f"(min={self.min}, max={self.max}, dtype={self.dtype})")

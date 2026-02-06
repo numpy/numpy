@@ -1415,10 +1415,10 @@ class DatetimeFormat(_TimelikeFormat):
         return super().__call__(x)
 
     def _format_non_nat(self, x):
-        return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+        return f"'{datetime_as_string(x,
+                                      unit=self.unit,
+                                      timezone=self.timezone,
+                                      casting=self.casting)}'"
 
 
 class TimedeltaFormat(_TimelikeFormat):
