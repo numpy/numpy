@@ -51,3 +51,7 @@ option('test-simd', type: 'array',
        description: 'CPU SIMD feature sets to be tested by the NumPy SIMD test module')
 option('test-simd-args', type: 'string', value: '',
        description: 'Extra arguments passed to the internal `_simd` test module')
+
+# Debug / profiling
+option('enable-ctrace', type: 'boolean', value: false,
+       description: 'Enable debug-only C-level function call tracing (requires -finstrument-functions)')

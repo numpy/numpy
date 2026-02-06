@@ -110,6 +110,9 @@
 
 #mesondefine HAVE_EXTERNAL_LAPACK
 
+/* Debug-only C-level function call tracing */
+#mesondefine NUMPY_DEBUG_CTRACE
+
 #ifndef __cplusplus
 /* #undef inline */
 #endif

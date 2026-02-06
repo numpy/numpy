@@ -137,6 +137,16 @@ endif
 
 use_openmp = get_option('enable-openmp') and not get_option('disable-threading')
 
+# C-level tracing (debug builds only)
+use_ctrace = get_option('enable-ctrace')
+if use_ctrace
+  if get_option('buildtype') != 'debug'
+    warning('C-level tracing is intended for debug builds only. ' +
+            'Performance will be severely impacted.')
+  endif
+  cdata.set10('NUMPY_DEBUG_CTRACE', true)
+endif
+
 # Setup openmp flags for x86-simd-sort:
 omp = []
 omp_dep = []
@@ -746,6 +756,52 @@ py.extension_module('_multiarray_tests',
   install_tag: 'tests'
 )
 
+# Build ctrace module (debug tracing)
+# ------------------------------------
+# The ctrace implementation is split into two parts:
+# 1. npy_ctrace.c - The main implementation, compiled into _ctrace_impl
+# 2. npy_ctrace_hooks.c - Thin hooks compiled into _multiarray_umath that
+#    forward to the main implementation via dlsym
+#
+# This separation is necessary because:
+# - The hooks must NOT be compiled with -finstrument-functions (infinite recursion)
+# - The main implementation needs its own thread-local state
+# - The instrumented code (_multiarray_umath) needs to call the hooks
+ctrace_instrument_args = []
+ctrace_hooks_lib = []
+ctrace_lib = []
+if use_ctrace
+  ctrace_instrument_args = ['-finstrument-functions', '-fno-inline', '-fno-inline-functions']
+  # Hooks library - compiled WITHOUT instrumentation to avoid recursion
+  ctrace_hooks_lib = static_library('npyctrace_hooks',
+    'src/common/npy_ctrace_hooks.c',
+    c_args: c_args_common,  # No instrumentation!
+    include_directories: ['src/common'],
+    dependencies: [py_dep, np_core_dep],
+    install: false,
+  )
+  # Main ctrace library for _ctrace_impl
+  ctrace_lib = static_library('npyctrace',
+    'src/common/npy_ctrace.c',
+    c_args: c_args_common,  # No instrumentation!
+    include_directories: ['src/common'],
+    dependencies: [py_dep, np_core_dep],
+    install: false,
+    gnu_symbol_visibility: 'default',
+  )
+endif
+
+py.extension_module('_ctrace_impl',
+  ['src/multiarray/_ctrace_impl.c'],
+  c_args: c_args_common,  # No instrumentation flags here!
+  include_directories: ['src/common'],
+  dependencies: [py_dep, np_core_dep],
+  link_with: ctrace_lib,
+  gnu_symbol_visibility: 'default',
+  install: true,
+  subdir: 'numpy/_core',
+)
+
 _umath_tests_mtargets = mod_features.multi_targets(
   '_umath_tests.dispatch.h',
   'src/umath/_umath_tests.dispatch.c',
@@ -1278,8 +1334,8 @@ py.extension_module('_multiarray_umath',
     npy_math_internal_h,
   ],
   objects: svml_objects,
-  c_args: c_args_common,
-  cpp_args: cpp_args_common,
+  c_args: c_args_common + ctrace_instrument_args,
+  cpp_args: cpp_args_common + ctrace_instrument_args,
   include_directories: [
     'include',
     'src/common',
@@ -1293,7 +1349,7 @@ py.extension_module('_multiarray_umath',
     npymath_lib,
     unique_hash_so,
     multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')
-  ] + highway_lib,
+  ] + highway_lib + ctrace_hooks_lib,
   install: true,
   subdir: 'numpy/_core',
 )
@@ -1361,6 +1417,7 @@ python_sources = [
   '_add_newdocs_scalars.pyi',
   '_asarray.py',
   '_asarray.pyi',
+  '_ctrace.py',
   '_dtype.py',
   '_dtype.pyi',
   '_dtype_ctypes.py',
