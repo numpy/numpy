@@ -1,4 +1,4 @@
-.. _NEP47:
+.. _NEP57:
 
 ===============================
 NEP 57 — NumPy platform support
@@ -10,26 +10,11 @@ NEP 57 — NumPy platform support
 :Created: 2026-01-30
 :Resolution: -
 
-.. note::
-
-   This NEP is drafted as a policy specific to NumPy rather than a SPEC
-   for several reasons that are all project-specific:
-
-   * it involves committing to a nontrivial amount of maintainer effort,
-   * personal commitment from a maintainer may make the difference between a
-     yes and a no of supporting a platform (e.g., NumPy supported PyPy for a
-     long time because of the efforts of one maintainer)
-   * support for a platform being possible at all may depend on features of the
-     code base (e.g., NumPy supports 32-bit Python on Windows while SciPy does
-     not because there's no suitable compiler toolchain for it)
-   * the number of wheels depends on whether the Stable ABI can be used (NumPy
-     is more performance-sensitive for small arrays, so can't use it)
-
 
 Abstract
 --------
 
-This PEP documents how a platform - i.e., a specific operating system, CPU
+This NEP documents how a platform - i.e., a specific operating system, CPU
 architecture and CPython interpreter - becomes supported in NumPy, what
 platforms are currently supported, and were supported in the (recent) past.
 
@@ -37,8 +22,21 @@ platforms are currently supported, and were supported in the (recent) past.
 Motivation and scope
 --------------------
 
-*This policy is being drafted now because there is a lot of interest in
-extending the number of platforms NumPy supports through wheels in particular.*
+This policy is drafted now (early 2026) because there is a lot of interest in
+extending the number of platforms NumPy supports through wheels in particular.
+It is a policy specific to NumPy - even though other projects may possibly want
+to refer to it - for several reasons:
+
+* It involves committing to a nontrivial amount of maintainer effort,
+* Personal commitment from a maintainer may make the difference between a
+  yes and a no of supporting a platform (e.g., NumPy supported PyPy for a
+  long time because of the efforts of one maintainer)
+* Support for a platform being possible at all may depend on features of the
+  code base (e.g., NumPy supports 32-bit Python on Windows while SciPy does
+  not because there's no suitable compiler toolchain for it).
+* The number of wheels depends on whether the Stable ABI can be used (NumPy
+  is more performance-sensitive for small arrays, so can't use it)
+
 
 The scope of this NEP includes:
 
@@ -109,9 +107,10 @@ General principles
      `Steam Hardware & Software Survey <https://store.steampowered.com/hwsurvey/?platform=combined>`__
      *may have to be used.*
 
-4. Adding a non-wheel CI job for a platform to the NumPy CI matrix is much
-   cheaper, and easily reverted in case of problems. The bar for adding such
-   jobs is low, and assessed on a case-by-case basis.
+4. Adding a regular CI job (i.e., not aimed at uploading wheels to PyPI) for a
+   platform to the NumPy CI matrix is much cheaper, and easily reverted in case
+   of problems. The bar for adding such jobs is low, and assessed on a
+   case-by-case basis.
 
 5. For all platforms in any supported tier: the relevant prerequisites in our
    dependencies have been met. E.g., build tools have support, and for wheels
@@ -123,11 +122,14 @@ General principles
    - Moving a platform to a lower support tier must be discussed on the mailing list.
      The circumstances for each platform are unique so the community will
      evaluate each proposal to demote a platform on a case-by-case basis.
-   - Moving a platform to a higher support tier this includes releasing wheels
-     on PyPI for that platform must be discussed on the mailing list.
-   - Adding an entry for a platform for an unsupported platform or one without
-     wheels can be done on GitHub, assuming it's clear from the discussion that
-     the relevant maintainers agree.
+   - Moving a platform to a higher support tier, if that higher tier includes
+     releasing wheels on PyPI for that platform, must be discussed on the
+     mailing list.
+   - Adding an entry to a support tier in this NEP for (a) an unsupported
+     platform or (b) a tier which does not include uploading wheels to PyPI can
+     be done on GitHub through a regular pull request (assuming it's clear from
+     the discussion that the relevant maintainers agree it doesn't need to hit
+     the mailing list).
 
 
 Releasing wheels to PyPI
@@ -183,9 +185,9 @@ Tier 2
 
 Tier 2 platforms:
 
-- Linux x86-64 (musllinux)
-- Linux aarch64 (musllinux)
-- Free-threaded CPython
+- Linux x86-64 (musllinux), *Ralf Gommers*
+- Linux aarch64 (musllinux), *Ralf Gommers*
+- Free-threaded CPython, *Nathan Goldbaum, Ralf Gommers*
 
 
 Tier 3
@@ -194,16 +196,17 @@ Tier 3
 - Is supported as part of NumPy's regular CI setup for the ``main`` branch. CI
   support as defined for Tier 2.
 - No wheels are released on PyPI for this platform.
-- CI failures block releases (skips may be applied a bit more liberally).
+- CI failures block releases (skips may be applied when the failure is clearly
+  platform-specific and does not indicate a regression in core functionality).
 - Must have at least one maintainer or a regular contributor trusted by the
   NumPy maintainers who commits to take responsibility for CI on the ``main``
   branch working.
 
 Tier 3 platforms:
 
-- FreeBSD (note: runs on Cirrus CI)
-- Linux ppc64le (note: runs on IBM-provided self-hosted runners)
-- Emscripten/Pyodide
+- FreeBSD (note: runs on Cirrus CI), *Ralf Gommers*
+- Linux ppc64le (note: runs on IBM-provided self-hosted runners), *Sandeep Gupta*
+- Emscripten/Pyodide, *Agriya Khetarpal, Gyeongjae Choi*
 
 
 Unsupported platforms
@@ -241,7 +244,7 @@ Backward compatibility
 
 Moving a platform to a lower tier of support is generally backwards compatible.
 The exception is stopping to release wheels on PyPI for a platform. That causes
-signifcant disruption for existing users on that platform. Their install commands
+significant disruption for existing users on that platform. Their install commands
 (e.g., ``pip install numpy``) may stop working because if a new release no longer
 has wheels for the platform, by default ``pip`` will try to build from source rather
 than using a wheel from an older version of ``numpy``. Therefore, we should be very
