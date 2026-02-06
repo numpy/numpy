@@ -864,8 +864,8 @@ foreach gen_mtargets : [
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep],
-    c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    c_args: c_args_common + max_opt + ctrace_instrument_args,
+    cpp_args: cpp_args_common + max_opt + ctrace_instrument_args,
     include_directories: [
       'include',
       'src/common',
@@ -926,8 +926,8 @@ foreach gen_mtargets : [
     # baseline: CPU_BASELINE, it doesn't provide baseline fallback
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep, omp_dep],
-    c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    c_args: c_args_common + max_opt + ctrace_instrument_args,
+    cpp_args: cpp_args_common + max_opt + ctrace_instrument_args,
     include_directories: [
       'include',
       'src/common',
@@ -1117,8 +1117,8 @@ foreach gen_mtargets : [
     baseline: CPU_BASELINE,
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep],
-    c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    c_args: c_args_common + max_opt + ctrace_instrument_args,
+    cpp_args: cpp_args_common + max_opt + ctrace_instrument_args,
     include_directories: [
       'include',
       'src/common',
