@@ -859,17 +859,19 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
         return -1;
     }
 
+    PyVoidScalarObject_fields *fields = PyVoidScalar_GET_ITEM_DATA(scalar);
+
     view->ndim = 0;
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
-    view->len = scalar->descr->elsize;
-    view->itemsize = scalar->descr->elsize;
+    view->len = fields->descr->elsize;
+    view->itemsize = fields->descr->elsize;
     view->readonly = 1;
     view->suboffsets = NULL;
     Py_INCREF(self);
     view->obj = self;
-    view->buf = scalar->obval;
+    view->buf = fields->obval;
 
     if (((flags & PyBUF_FORMAT) != PyBUF_FORMAT)) {
         /* It is unnecessary to find the correct format */
@@ -884,7 +886,7 @@ void_getbuffer(PyObject *self, Py_buffer *view, int flags)
      */
     _buffer_info_t *info = NULL;
     Py_BEGIN_CRITICAL_SECTION(scalar);
-    info = _buffer_get_info(&scalar->_buffer_info, self, flags);
+    info = _buffer_get_info(&fields->_buffer_info, self, flags);
     Py_END_CRITICAL_SECTION();
     if (info == NULL) {
         Py_DECREF(self);

@@ -590,7 +590,7 @@ corrupt_or_fix_bufferinfo(PyObject *dummy, PyObject *obj)
         buffer_info_ptr = &((PyArrayObject_fields *)obj)->_buffer_info;
     }
     else if (PyArray_IsScalar(obj, Void)) {
-        buffer_info_ptr = &((PyVoidScalarObject *)obj)->_buffer_info;
+        buffer_info_ptr = &((PyVoidScalarObject_fields *)obj)->_buffer_info;
     }
     else {
         PyErr_SetString(PyExc_TypeError,

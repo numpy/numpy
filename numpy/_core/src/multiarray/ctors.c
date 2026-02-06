@@ -1642,7 +1642,7 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         goto cleanup;
     }
     else if (cache == NULL && PyArray_IsScalar(op, Void) &&
-            !(((PyVoidScalarObject *)op)->flags & NPY_ARRAY_OWNDATA) &&
+            !(PyVoidScalar_FLAGS((PyVoidScalarObject *)op) & NPY_ARRAY_OWNDATA) &&
              ((in_descr == NULL) && (in_DType == NULL))) {
         /*
          * Special case, we return a *view* into void scalars, mainly to
@@ -1659,8 +1659,8 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, dtype,
                 0, NULL, NULL,
-                ((PyVoidScalarObject *)op)->obval,
-                ((PyVoidScalarObject *)op)->flags,
+                PyArrayScalar_VAL((PyVoidScalarObject *)op, Void),
+                PyVoidScalar_FLAGS((PyVoidScalarObject *)op),
                 NULL, op);
         goto cleanup;
     }
