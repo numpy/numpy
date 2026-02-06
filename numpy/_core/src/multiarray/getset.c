@@ -515,7 +515,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
          // this will not emit deprecation warnings for all cases, but for most it will
          // we skip unique references, so that we will not get a deprecation warning
          // when array.view(new_dtype) is called
-         /* DEPRECATED 2025-06-20, NumPy 2.4 */
+         /* DEPRECATED 2026-02-06, NumPy 2.5 */
          int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
                     "Setting the dtype on a NumPy array has been deprecated in NumPy 2.4.\n"
                     "Instead of changing the dtype on an array x, create a new array with x.view(new_dtype)",
