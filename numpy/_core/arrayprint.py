@@ -540,10 +540,17 @@ def _get_format_function(data, **options):
         else:
             return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
-        if issubclass(dtypeobj, _nt.longdouble):
-            return formatdict['longfloat']()
+
+        # Defensive check: only use Dragon4 formatters for built-in floating types
+        # For custom floating types, fall back to numpystr (scalar string formatting)
+        
+        if dtypeobj in (_nt.float16, _nt.float32, _nt.float64, _nt.longdouble):
+            if issubclass(dtypeobj, _nt.longdouble):
+                return formatdict['longfloat']()
+            else:
+                return formatdict['float']()
         else:
-            return formatdict['float']()
+            return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.complexfloating):
         if issubclass(dtypeobj, _nt.clongdouble):
             return formatdict['longcomplexfloat']()
