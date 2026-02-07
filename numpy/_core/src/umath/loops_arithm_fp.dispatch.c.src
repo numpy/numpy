@@ -511,13 +511,47 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 loop_scalar:
 #endif
     for (; len > 0; --len, b_src0 += b_ssrc0, b_src1 += b_ssrc1, b_dst += b_sdst) {
-        const @ftype@ a_r = ((@ftype@ *)b_src0)[0];
-        const @ftype@ a_i = ((@ftype@ *)b_src0)[1];
-        const @ftype@ b_r = ((@ftype@ *)b_src1)[0];
-        const @ftype@ b_i = ((@ftype@ *)b_src1)[1];
+        @ftype@ a_r = ((@ftype@ *)b_src0)[0];
+        @ftype@ a_i = ((@ftype@ *)b_src0)[1];
+        @ftype@ b_r = ((@ftype@ *)b_src1)[0];
+        @ftype@ b_i = ((@ftype@ *)b_src1)[1];
     #if @is_mul@
-        ((@ftype@ *)b_dst)[0] = a_r*b_r - a_i*b_i;
-        ((@ftype@ *)b_dst)[1] = a_r*b_i + a_i*b_r;
+        @ftype@ rr = a_r*b_r - a_i*b_i;
+        @ftype@ ri = a_r*b_i + a_i*b_r;
+        /* Recover infinities that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cmultd(). */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            int recalc = 0;
+            if (npy_isinf(a_r) || npy_isinf(a_i)) {
+                a_r = npy_copysign@c@(npy_isinf(a_r) ? 1.0 : 0.0, a_r);
+                a_i = npy_copysign@c@(npy_isinf(a_i) ? 1.0 : 0.0, a_i);
+                if (npy_isnan(b_r)) b_r = npy_copysign@c@(0.0, b_r);
+                if (npy_isnan(b_i)) b_i = npy_copysign@c@(0.0, b_i);
+                recalc = 1;
+            }
+            if (npy_isinf(b_r) || npy_isinf(b_i)) {
+                b_r = npy_copysign@c@(npy_isinf(b_r) ? 1.0 : 0.0, b_r);
+                b_i = npy_copysign@c@(npy_isinf(b_i) ? 1.0 : 0.0, b_i);
+                if (npy_isnan(a_r)) a_r = npy_copysign@c@(0.0, a_r);
+                if (npy_isnan(a_i)) a_i = npy_copysign@c@(0.0, a_i);
+                recalc = 1;
+            }
+            if (!recalc && (npy_isinf(a_r*b_r) || npy_isinf(a_i*b_i)
+                         || npy_isinf(a_r*b_i) || npy_isinf(a_i*b_r)))
+            {
+                if (npy_isnan(a_r)) a_r = npy_copysign@c@(0.0, a_r);
+                if (npy_isnan(a_i)) a_i = npy_copysign@c@(0.0, a_i);
+                if (npy_isnan(b_r)) b_r = npy_copysign@c@(0.0, b_r);
+                if (npy_isnan(b_i)) b_i = npy_copysign@c@(0.0, b_i);
+                recalc = 1;
+            }
+            if (recalc) {
+                rr = NPY_INFINITY@C@ * (a_r*b_r - a_i*b_i);
+                ri = NPY_INFINITY@C@ * (a_r*b_i + a_i*b_r);
+            }
+        }
+        ((@ftype@ *)b_dst)[0] = rr;
+        ((@ftype@ *)b_dst)[1] = ri;
     #else
         ((@ftype@ *)b_dst)[0] = a_r @OP@ b_r;
         ((@ftype@ *)b_dst)[1] = a_i @OP@ b_i;
