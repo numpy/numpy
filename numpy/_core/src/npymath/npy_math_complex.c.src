@@ -77,16 +77,51 @@ static const @ctype@ c_1@c@ = 1.0@C@;
  * These are necessary because we do not count on using a
  * C99 compiler.
  *=========================================================*/
-static inline
 @ctype@
 cmul@c@(@ctype@ a, @ctype@ b)
 {
-    @type@ ar, ai, br, bi;
+    @type@ ar, ai, br, bi, rr, ri;
     ar = npy_creal@c@(a);
     ai = npy_cimag@c@(a);
     br = npy_creal@c@(b);
     bi = npy_cimag@c@(b);
-    return npy_cpack@c@(ar*br - ai*bi, ar*bi + ai*br);
+    rr = ar*br - ai*bi;
+    ri = ar*bi + ai*br;
+
+    /* Recover infinities that computed as nan+nanj.
+     * See e.g. the C11, Annex G.5.1, routine _Cmultd(). */
+    if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+        int recalc = 0;
+        if (npy_isinf(ar) || npy_isinf(ai)) {
+            ar = npy_copysign@c@(npy_isinf(ar) ? 1.0 : 0.0, ar);
+            ai = npy_copysign@c@(npy_isinf(ai) ? 1.0 : 0.0, ai);
+            if (npy_isnan(br)) br = npy_copysign@c@(0.0, br);
+            if (npy_isnan(bi)) bi = npy_copysign@c@(0.0, bi);
+            recalc = 1;
+        }
+        if (npy_isinf(br) || npy_isinf(bi)) {
+            br = npy_copysign@c@(npy_isinf(br) ? 1.0 : 0.0, br);
+            bi = npy_copysign@c@(npy_isinf(bi) ? 1.0 : 0.0, bi);
+            if (npy_isnan(ar)) ar = npy_copysign@c@(0.0, ar);
+            if (npy_isnan(ai)) ai = npy_copysign@c@(0.0, ai);
+            recalc = 1;
+        }
+        if (!recalc && (npy_isinf(ar*br) || npy_isinf(ai*bi)
+                     || npy_isinf(ar*bi) || npy_isinf(ai*br)))
+        {
+            if (npy_isnan(ar)) ar = npy_copysign@c@(0.0, ar);
+            if (npy_isnan(ai)) ai = npy_copysign@c@(0.0, ai);
+            if (npy_isnan(br)) br = npy_copysign@c@(0.0, br);
+            if (npy_isnan(bi)) bi = npy_copysign@c@(0.0, bi);
+            recalc = 1;
+        }
+        if (recalc) {
+            rr = NPY_INFINITY@C@ * (ar*br - ai*bi);
+            ri = NPY_INFINITY@C@ * (ar*bi + ai*br);
+        }
+    }
+
+    return npy_cpack@c@(rr, ri);
 }
 
 @ctype@
@@ -121,7 +156,7 @@ cdiv@c@(@ctype@ a, @ctype@ b)
 
     /* Recover infinities and zeros that computed as nan+nanj.
      * See e.g. the C11, Annex G.5.2, routine _Cdivd(). */
-    if (npy_isnan(rr) && npy_isnan(ri)) {
+    if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
         if ((abs_br == 0 && abs_bi == 0)
             && (!npy_isnan(ar) || !npy_isnan(ai)))
         {
