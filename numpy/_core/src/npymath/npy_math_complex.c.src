@@ -122,7 +122,13 @@ cdiv@c@(@ctype@ a, @ctype@ b)
     /* Recover infinities and zeros that computed as nan+nanj.
      * See e.g. the C11, Annex G.5.2, routine _Cdivd(). */
     if (npy_isnan(rr) && npy_isnan(ri)) {
-        if ((npy_isinf(ar) || npy_isinf(ai))
+        if ((abs_br == 0 && abs_bi == 0)
+            && (!npy_isnan(ar) || !npy_isnan(ai)))
+        {
+            rr = npy_copysign@c@(NPY_INFINITY@C@, br) * ar;
+            ri = npy_copysign@c@(NPY_INFINITY@C@, bi) * ai;
+        }
+        else if ((npy_isinf(ar) || npy_isinf(ai))
             && npy_isfinite(br) && npy_isfinite(bi))
         {
             @type@ x = npy_copysign@c@(npy_isinf(ar) ? 1.0 : 0.0, ar);
