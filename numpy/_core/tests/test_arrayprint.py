@@ -1321,3 +1321,33 @@ def test_multithreaded_array_printing():
     # reasons this test makes sure it is set up in a thread-safe manner
 
     run_threaded(TestPrintOptions().test_floatmode, 500)
+
+
+
+
+
+
+import numpy as np
+import pytest
+
+
+@pytest.mark.filterwarnings("ignore")
+def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
+    """
+    Ensure that array printing does not use NumPy Dragon4 formatting
+    for user-defined floating dtypes, which would silently truncate
+    precision to float64.
+    """
+    try:
+        from numpy_quaddtype import QuadPrecDType
+    except ImportError:
+        pytest.skip("numpy-quaddtype not installed")
+
+    pi_str = "3.14159265358979323846264338327950288"
+    arr = np.array([pi_str], dtype=QuadPrecDType())
+
+    np.set_printoptions(precision=34, floatmode="fixed")
+    s = repr(arr)
+
+    # Float64 artifact digits should not appear
+    assert "931159979" not in s
