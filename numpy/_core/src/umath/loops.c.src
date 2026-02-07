@@ -2132,7 +2132,13 @@ NPY_NO_EXPORT void
         /* Recover infinities and zeros that computed as nan+nanj.
          * See e.g. the C11, Annex G.5.1, routine _Cdivd(). */
         if (npy_isnan(rr) && npy_isnan(ri)) {
-            if ((npy_isinf(in1r) || npy_isinf(in1i))
+            if ((in2r_abs == 0 && in2i_abs == 0)
+                && (!npy_isnan(in1r) && !npy_isnan(in1i)))
+            {
+                rr = npy_copysign@c@(NPY_INFINITY@C@, in2r)*in1r;
+                ri = npy_copysign@c@(NPY_INFINITY@C@, in2r)*in1i;
+            }
+            else if ((npy_isinf(in1r) || npy_isinf(in1i))
                 && npy_isfinite(in2r) && npy_isfinite(in2i))
             {
                 @ftype@ x = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
