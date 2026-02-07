@@ -1961,6 +1961,17 @@ class TestNonzero:
         assert_raises(ValueError, np.nonzero, a)
 
     def test_nonzero_byteorder(self):
+        values = [np.array([0., -0., 1, float('nan')]), np.array([0, 1]),
+                  np.array([0, 12.3], dtype=np.float16)]
+        expected_values = [[2, 3], [1], [1]]
+
+        for A, expected in zip(values, expected_values):
+            A_byteswapped = (A.view(A.dtype.newbyteorder()).byteswap()).copy()
+
+            assert_equal(np.nonzero(A)[0], expected)
+            assert_equal(np.nonzero(A_byteswapped)[0], expected)
+
+    def test_count_nonzero_byteorder(self):
         values = [0., -0., 1, float('nan'), 0, 1,
                   np.float16(0), np.float16(12.3)]
         expected_values = [0, 0, 1, 1, 0, 1, 0, 1]
@@ -1971,6 +1982,22 @@ class TestNonzero:
 
             assert np.count_nonzero(A) == expected
             assert np.count_nonzero(A_byteswapped) == expected
+
+    def test_nonzero_non_aligned_array(self):
+        # gh-27523
+        b = np.zeros(64 + 1, dtype=np.int8)[1:]
+        b = b.view(int)
+        b[:] = np.arange(b.size) % 2
+        assert b.flags.aligned is False
+        expected = np.arange(1, b.size, 2)
+        assert_equal(np.nonzero(b)[0], expected)
+
+        b = np.zeros(64 + 1, dtype=np.float16)[1:]
+        b = b.view(float)
+        b[:] = np.arange(b.size) % 2
+        assert b.flags.aligned is False
+        expected = np.arange(1, b.size, 2)
+        assert_equal(np.nonzero(b)[0], expected)
 
     def test_count_nonzero_non_aligned_array(self):
         # gh-27523
