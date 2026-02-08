@@ -25,28 +25,27 @@
  * Returns -1 on failure.
  */
 static int
-get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args, PyObject *wheremask_obj,
+get_array_ufunc_overrides(PyObject *const *in_args, int nin,
+                          PyObject *const *out_args, int nout,
+                          PyObject *wheremask_obj,
                           PyObject **with_override, PyObject **methods)
 {
     int i;
     int num_override_args = 0;
-    int narg, nout, nwhere;
+    int nwhere;
 
-    narg = (int)PyTuple_GET_SIZE(in_args);
-    /* It is valid for out_args to be NULL: */
-    nout = (out_args != NULL) ? (int)PyTuple_GET_SIZE(out_args) : 0;
     nwhere = (wheremask_obj != NULL) ? 1: 0;
 
-    for (i = 0; i < narg + nout + nwhere; ++i) {
+    for (i = 0; i < nin + nout + nwhere; ++i) {
         PyObject *obj;
         int j;
         int new_class = 1;
 
-        if (i < narg) {
-            obj = PyTuple_GET_ITEM(in_args, i);
+        if (i < nin) {
+            obj = in_args[i];
         }
-        else if (i < narg + nout){
-            obj = PyTuple_GET_ITEM(out_args, i - narg);
+        else if (i < nin + nout){
+            obj = out_args[i - nin];
         }
         else {
             obj = wheremask_obj;
@@ -204,7 +203,10 @@ copy_positional_args_to_kwargs(const char **keywords,
  */
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-        PyObject *in_args, PyObject *out_args, PyObject *wheremask_obj,
+        PyObject *const *in_args, int nin,
+        PyObject *const *out_args, int nout,
+        PyObject *out_args_tuple,
+        PyObject *wheremask_obj,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
 {
@@ -223,7 +225,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Check inputs for overrides
      */
     num_override_args = get_array_ufunc_overrides(
-           in_args, out_args, wheremask_obj, with_override, array_ufunc_methods);
+           in_args, nin, out_args, nout, wheremask_obj, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -241,7 +243,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     if (normal_kwds == NULL) {
         goto fail;
     }
-    if (initialize_normal_kwds(out_args,
+    if (initialize_normal_kwds(out_args_tuple,
             args, len_args, kwnames, normal_kwds) < 0) {
         goto fail;
     }
@@ -303,7 +305,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    int len = (int)PyTuple_GET_SIZE(in_args);
+    int len = nin;
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {
@@ -355,7 +357,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         Py_INCREF(method_name);
         PyTuple_SET_ITEM(override_args, 2, method_name);
         for (int i = 0; i < len; i++) {
-            PyObject *item = PyTuple_GET_ITEM(in_args, i);
+            PyObject *item = in_args[i];
 
             Py_INCREF(item);
             PyTuple_SET_ITEM(override_args, i + 3, item);

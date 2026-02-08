@@ -84,24 +84,29 @@
 #endif
 /**********************************************/
 
+/*
+ * Lightweight structure to keep track of input and output arguments
+ */
 typedef struct {
-    PyObject *in;   /* The input arguments to the ufunc, a tuple */
-    PyObject *out;  /* The output arguments, a tuple. If no non-None outputs are
-                       provided, then this is NULL. */
-} ufunc_full_args;
+    PyObject **in;   /* Array of input arguments to the ufunc */
+    PyObject **out;  /* Array of output arguments. If no non-None outputs are
+                        provided, then this is NULL. */
+    npy_intp nin;    /* Number of input arguments */
+    npy_intp nout;   /* Number of output arguments (0 if out is NULL) */
+} ufunc_full_args_light;
 
 
 /* ---------------------------------------------------------------- */
 
-static PyObject *
-prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc);
+static int
+prepare_input_arguments_for_outer(ufunc_full_args_light *full_args_light, PyUFuncObject *ufunc);
 
 static int
 resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *inputs_tup, NPY_CASTING casting);
+        PyObject *const *inputs, int ninputs, NPY_CASTING casting);
 
 
 /*UFUNC_API*/
@@ -611,7 +616,7 @@ _wheremask_converter(PyObject *obj, PyArrayObject **wheremask)
  */
 static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
-        ufunc_full_args full_args, PyArrayObject *out_op[],
+        ufunc_full_args_light *full_args_light, PyArrayObject *out_op[],
         PyArray_DTypeMeta *out_op_DTypes[],
         npy_bool *force_legacy_promotion,
         npy_bool *promoting_pyscalars,
@@ -632,7 +637,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     *force_legacy_promotion = NPY_FALSE;
     *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
-        obj = PyTuple_GET_ITEM(full_args.in, i);
+        obj = full_args_light->in[i];
 
         if (PyArray_Check(obj)) {
             out_op[i] = (PyArrayObject *)obj;
@@ -708,9 +713,9 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
     /* Convert and fill in output arguments */
     memset(out_op_DTypes + nin, 0, nout * sizeof(*out_op_DTypes));
-    if (full_args.out != NULL) {
+    if (full_args_light->out != NULL) {
         for (int i = 0; i < nout; i++) {
-            obj = PyTuple_GET_ITEM(full_args.out, i);
+            obj = full_args_light->out[i];
             if (_set_out_array(obj, out_op + i + nin) < 0) {
                 goto fail;
             }
@@ -2355,7 +2360,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * (although this should possibly happen through a deprecation)
      */
     int res = resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, operation_DTypes, NULL, casting);
+            ops, out_descrs, signature, operation_DTypes, NULL, 0, casting);
 
     Py_XDECREF(operation_DTypes[0]);
     Py_XDECREF(operation_DTypes[1]);
@@ -3390,7 +3395,8 @@ tuple_all_none(PyObject *tup) {
 
 
 static int
-_set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
+_set_full_args_out(int nout, PyObject *out_obj, PyObject **out_tuple,
+                   ufunc_full_args_light *full_args_light)
 {
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
@@ -3404,7 +3410,16 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
         }
         else {
             Py_INCREF(out_obj);
-            full_args->out = out_obj;
+            *out_tuple = out_obj;
+            /* Also populate full_args_light if provided */
+            if (full_args_light != NULL && full_args_light->out != NULL) {
+                for (int i = 0; i < nout; i++) {
+                    PyObject *item = PyTuple_GET_ITEM(out_obj, i);
+                    full_args_light->out[i] = item;
+                    Py_INCREF(item);
+                }
+                full_args_light->nout = nout;
+            }
         }
     }
     else if (nout == 1) {
@@ -3412,9 +3427,15 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
             return 0;
         }
         /* Can be an array if it only has one output */
-        full_args->out = PyTuple_Pack(1, out_obj);
-        if (full_args->out == NULL) {
+        *out_tuple = PyTuple_Pack(1, out_obj);
+        if (*out_tuple == NULL) {
             return -1;
+        }
+        /* Also populate full_args_light if provided */
+        if (full_args_light != NULL && full_args_light->out != NULL) {
+            full_args_light->out[0] = out_obj;
+            Py_INCREF(out_obj);
+            full_args_light->nout = 1;
         }
     }
     else {
@@ -3443,7 +3464,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
 
-    ufunc_full_args full_args = {NULL, NULL};
+    PyObject *in_args[2] = {NULL, NULL};  /* Stack allocation for lightweight args */
+    PyObject *out_arg = NULL;
+    PyObject *out_tuple = NULL;
+    ufunc_full_args_light full_args_light = {in_args, &out_arg, 0, 0};
     PyObject *axes_obj = NULL;
     PyArrayObject *mp = NULL, *wheremask = NULL, *ret = NULL;
     PyObject *op = NULL;
@@ -3502,10 +3526,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare inputs for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(2, op, indices_obj);
-        if (full_args.in == NULL) {
-            goto fail;
-        }
+        in_args[0] = op;
+        in_args[1] = indices_obj;
+        Py_INCREF(op);
+        Py_INCREF(indices_obj);
+        full_args_light.nin = 2;
         out_is_passed_by_position = len_args >= 5;
     }
     else if (operation == UFUNC_ACCUMULATE) {
@@ -3520,10 +3545,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(1, op);
-        if (full_args.in == NULL) {
-            goto fail;
-        }
+        in_args[0] = Py_NewRef(op);
+        full_args_light.nin = 1;
         out_is_passed_by_position = len_args >= 4;
     }
     else {
@@ -3541,10 +3564,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(1, op);
-        if (full_args.in == NULL) {
-            goto fail;
-        }
+        in_args[0] = op;
+        Py_INCREF(op);
+        full_args_light.nin = 1;
         out_is_passed_by_position = len_args >= 4;
     }
 
@@ -3557,10 +3579,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         if (out_obj != Py_None) {
-            full_args.out = PyTuple_Pack(1, out_obj);
-            if (full_args.out == NULL) {
+            out_tuple = PyTuple_Pack(1, out_obj);
+            if (out_tuple == NULL) {
                 goto fail;
             }
+            out_arg = out_obj;
+            Py_INCREF(out_obj);
+            full_args_light.nout = 1;
         }
     }
     else if (out_obj) {
@@ -3568,25 +3593,36 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             out_obj = NULL;
             return_scalar = NPY_FALSE;
         }
-        else if (_set_full_args_out(1, out_obj, &full_args) < 0) {
+        else if (_set_full_args_out(1, out_obj, &out_tuple, NULL) < 0) {
             goto fail;
         }
         /* Ensure that out_obj is the array, not the tuple: */
-        if (full_args.out != NULL) {
-            out_obj = PyTuple_GET_ITEM(full_args.out, 0);
+        if (out_tuple != NULL) {
+            out_obj = PyTuple_GET_ITEM(out_tuple, 0);
+            out_arg = out_obj;
+            Py_INCREF(out_obj);
+            full_args_light.nout = 1;
         }
     }
 
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
     int errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
-            full_args.in, full_args.out, wheremask_obj, args, len_args, kwnames, &override);
+            full_args_light.in, full_args_light.nin,
+            full_args_light.out, full_args_light.nout,
+            out_tuple, wheremask_obj, args, len_args, kwnames, &override);
     if (errval) {
         return NULL;
     }
     else if (override) {
-        Py_XDECREF(full_args.in);
-        Py_XDECREF(full_args.out);
+        /* Clean up full_args_light references */
+        for (int j = 0; j < full_args_light.nin; j++) {
+            Py_XDECREF(in_args[j]);
+        }
+        if (full_args_light.nout > 0) {
+            Py_XDECREF(out_arg);
+        }
+        Py_XDECREF(out_tuple);
         return override;
     }
 
@@ -3731,8 +3767,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     Py_DECREF(signature[2]);
 
     Py_DECREF(mp);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+    /* Clean up full_args_light references */
+    for (int j = 0; j < full_args_light.nin; j++) {
+        Py_XDECREF(in_args[j]);
+    }
+    if (full_args_light.nout > 0) {
+        Py_XDECREF(out_arg);
+    }
+    Py_XDECREF(out_tuple);
 
     /* Wrap and return the output */
     PyObject *wrap, *wrap_type;
@@ -3760,8 +3802,14 @@ fail:
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
     Py_XDECREF(indices);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+    /* Clean up full_args_light references */
+    for (int j = 0; j < full_args_light.nin; j++) {
+        Py_XDECREF(in_args[j]);
+    }
+    if (full_args_light.nout > 0) {
+        Py_XDECREF(out_arg);
+    }
+    Py_XDECREF(out_tuple);
     return NULL;
 }
 
@@ -4026,7 +4074,7 @@ resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *inputs_tup, NPY_CASTING casting)
+        PyObject *const *inputs, int ninputs, NPY_CASTING casting)
 {
     int retval = -1;
     NPY_CASTING safety;
@@ -4058,8 +4106,8 @@ resolve_descriptors(int nop,
              * We leave it to resolve_descriptors_with_scalars to deal
              * with, e.g., only doing something special for python scalars.
              */
-            if (i < nin && inputs_tup != NULL) {
-                PyObject *input = PyTuple_GET_ITEM(inputs_tup, i);
+            if (i < nin && inputs != NULL) {
+                PyObject *input = inputs[i];
                 input_scalars[i] = signature[i]->scalar_type == Py_TYPE(input) ?
                     input : NULL;
             }
@@ -4103,11 +4151,11 @@ resolve_descriptors(int nop,
          */
         if ((PyArray_FLAGS(operands[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
             PyObject *input;
-            if (inputs_tup == NULL) {
+            if (inputs == NULL) {
                 input = NULL;
             }
             else {
-                input = PyTuple_GET_ITEM(inputs_tup, i);
+                input = inputs[i];
             }
 
             PyArray_Descr *new_descr = npy_find_descr_for_scalar(
@@ -4196,18 +4244,19 @@ resolve_descriptors(int nop,
  * method --- the __array_wrap__ method to call.
  *
  * @param ufunc The universal function to be wrapped
- * @param full_args Original inputs and outputs
+ * @param full_args_light Original inputs and outputs
  * @param subok Whether subclasses are allowed
  * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!
  * @param return_scalar Set to NPY_FALSE (out=...) to ensure array return.
  */
 static PyObject *
 replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
-        ufunc_full_args full_args, npy_bool subok,
+        ufunc_full_args_light *full_args_light, PyObject *out_tuple, npy_bool subok,
         PyArrayObject *result_arrays[], npy_bool return_scalar)
 {
     PyObject *result = NULL;
     PyObject *wrap, *wrap_type;
+    PyObject *in_tuple = NULL;
 
     if (!subok) {
         /* subok=False ignores input wrapping (but not output) */
@@ -4217,15 +4266,21 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         wrap_type = (PyObject *)&PyArray_Type;
     }
     else if (npy_find_array_wrap(
-            ufunc->nin, PySequence_Fast_ITEMS(full_args.in),
+            full_args_light->nin, full_args_light->in,
             &wrap, &wrap_type) < 0) {
+        goto fail;
+    }
+
+    /* Create tuple for wrapping context */
+    in_tuple = PyArray_TupleFromItems(full_args_light->nin, full_args_light->in, 0);
+    if (in_tuple == NULL) {
         goto fail;
     }
 
     /* wrap outputs */
     NpyUFuncContext context = {
             .ufunc = (PyObject *)ufunc,
-            .in = full_args.in, .out = full_args.out};
+            .in = in_tuple, .out = out_tuple};
 
     if (ufunc->nout != 1) {
         result = PyTuple_New(ufunc->nout);
@@ -4237,8 +4292,8 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     for (int out_i = 0; out_i < ufunc->nout; out_i++) {
         context.out_i = out_i;
         PyObject *original_out = NULL;
-        if (full_args.out) {
-            original_out = PyTuple_GET_ITEM(full_args.out, out_i);
+        if (full_args_light->out) {
+            original_out = full_args_light->out[out_i];
         }
 
         PyObject *ret_i = npy_apply_wrap(
@@ -4258,10 +4313,12 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     }
 
   finish:
+    Py_XDECREF(in_tuple);
     Py_DECREF(wrap);
     Py_DECREF(wrap_type);
     return result;
   fail:
+    Py_XDECREF(in_tuple);
     /* Fail path ensures result_arrays are fully cleared */
     Py_XDECREF(result);
     Py_DECREF(wrap);
@@ -4422,6 +4479,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 {
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
+    //printf("ufunc_generic_fastcall %d %d\n", nin, nout);
 
     if (len_args == 1 && kwnames == NULL && !PyArray_Check(args[0])
             && nin == 1 && nout == 1 && !ufunc->core_enabled) {
@@ -4432,30 +4490,39 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
     }
     /* All following variables are cleared in the `fail` error path */
-    ufunc_full_args full_args = {NULL, NULL};
+    PyObject *out_tuple = NULL;
     PyArrayObject *wheremask = NULL;
 
     /*
      * Scratch space for operands, dtypes, etc.  Note that operands and
      * operation_descrs may hold an entry for the wheremask.
+     * Also includes space for full_args_light.in and full_args_light.out arrays.
      */
-    NPY_ALLOC_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 4 + 2, nop * 4 + 2);
+    NPY_ALLOC_WORKSPACE(scratch_objs, void *,
+                        UFUNC_STACK_NARGS * 4 + 2,
+                        nop * 4 + 2 + nop + nin + nout);
     if (scratch_objs == NULL) {
         return NULL;
     }
-    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2));
+    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + nin + nout));
 
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
     PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
     PyArray_Descr **operation_descrs = (PyArray_Descr **)(operand_DTypes + nop);
 
+    /* Initialize full_args_light arrays using scratch space */
+    ufunc_full_args_light full_args_light = {NULL, NULL, nin, nout};
+    full_args_light.in = (PyObject **)(operation_descrs + nop + 1);
+    full_args_light.out = full_args_light.in + nin;
+
     /*
      * Note that the input (and possibly output) arguments are passed in as
      * positional arguments. We extract these first and check for `out`
      * passed by keyword later.
-     * Outputs and inputs are stored in `full_args.in` and `full_args.out`
-     * as tuples (or NULL when no outputs are passed).
+     * Outputs and inputs are stored in `ufunc_in` and `ufunc_out`
+     * as plain arrays (or NULL when no outputs are passed). The references are counted,
+     * but in the future we can switch to borrowed references.
      */
 
     /* Check number of arguments */
@@ -4468,22 +4535,21 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Fetch input arguments. */
-    full_args.in = PyArray_TupleFromItems(ufunc->nin, args, 0);
-    if (full_args.in == NULL) {
-        goto fail;
+    /* Fetch input arguments into full_args_light.in */
+    for (int i = 0; i < nin; i++) {
+        full_args_light.in[i] = Py_NewRef(args[i]);
     }
 
     /*
      * If there are more arguments, they define the out args. Otherwise
-     * full_args.out is NULL for now, and the `out` kwarg may still be passed.
+     * out_tuple is NULL for now, and the `out` kwarg may still be passed.
      */
     npy_bool out_is_passed_by_position = len_args > nin;
     if (out_is_passed_by_position) {
         npy_bool all_none = NPY_TRUE;
 
-        full_args.out = PyTuple_New(nout);
-        if (full_args.out == NULL) {
+        out_tuple = PyTuple_New(nout);
+        if (out_tuple == NULL) {
             goto fail;
         }
         for (int i = nin; i < nop; i++) {
@@ -4503,7 +4569,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 tmp = Py_None;
             }
             Py_INCREF(tmp);
-            PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
+            PyTuple_SET_ITEM(out_tuple, i-nin, tmp);
+            /* Also populate full_args_light.out (lightweight version) */
+            full_args_light.out[i-nin] = tmp;
         }
 
         /* Extra positional args but no keywords */
@@ -4521,11 +4589,15 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
 
         if (all_none) {
-            Py_SETREF(full_args.out, NULL);
+            Py_SETREF(out_tuple, NULL);
+            full_args_light.out = NULL;
+            full_args_light.nout = 0;
         }
     }
     else {
-        full_args.out = NULL;
+        out_tuple = NULL;
+        full_args_light.out = NULL;
+        full_args_light.nout = 0;
     }
 
     /*
@@ -4593,7 +4665,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             if (out_obj == Py_Ellipsis) {
                 return_scalar = NPY_FALSE;
             }
-            else if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
+            else if (_set_full_args_out(nout, out_obj, &out_tuple, &full_args_light) < 0) {
                 goto fail;
             }
         }
@@ -4618,19 +4690,29 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
     errval = PyUFunc_CheckOverride(ufunc, method,
-            full_args.in, full_args.out, where_obj,
+            full_args_light.in, full_args_light.nin,
+            full_args_light.out, full_args_light.nout,
+            out_tuple, where_obj,
             args, len_args, kwnames, &override);
     if (errval) {
         goto fail;
     }
     else if (override) {
-        Py_DECREF(full_args.in);
-        Py_XDECREF(full_args.out);
+        Py_XDECREF(out_tuple);
+        /* Clean up full_args_light references */
+        for (int i = 0; i < nin; i++) {
+            Py_XDECREF(full_args_light.in[i]);
+        }
+        if (full_args_light.out != NULL) {
+            for (int i = 0; i < full_args_light.nout; i++) {
+                Py_XDECREF(full_args_light.out[i]);
+            }
+        }
         return override;
     }
 
     /* Warn if "where" is used without "out", issue 29561 */
-    if ((where_obj != NULL) && (full_args.out == NULL) && (out_obj == NULL)) {
+    if ((where_obj != NULL) && (out_tuple == NULL) && (out_obj == NULL)) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "'where' used without 'out', expect unitialized memory in output. "
                 "If this is intentional, use out=None.", 1) < 0) {
@@ -4640,11 +4722,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     if (outer) {
         /* Outer uses special preparation of inputs (expand dims) */
-        PyObject *new_in = prepare_input_arguments_for_outer(full_args.in, ufunc);
-        if (new_in == NULL) {
+        if (prepare_input_arguments_for_outer(&full_args_light, ufunc) < 0) {
             goto fail;
         }
-        Py_SETREF(full_args.in, new_in);
     }
 
     /*
@@ -4664,7 +4744,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool promoting_pyscalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
-            full_args, operands,
+            &full_args_light, operands,
             operand_DTypes,
             &force_legacy_promotion,
             &promoting_pyscalars,
@@ -4696,7 +4776,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
             operands, operation_descrs, signature, operand_DTypes,
-            full_args.in, casting) < 0) {
+            full_args_light.in, full_args_light.nin, casting) < 0) {
         goto fail;
     }
 
@@ -4732,16 +4812,34 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     /* The following steals the references to the outputs: */
     PyObject *result = replace_with_wrapped_result_and_return(ufunc,
-            full_args, subok, operands+nin, return_scalar);
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+            &full_args_light, out_tuple, subok, operands+nin, return_scalar);
+    Py_XDECREF(out_tuple);
+
+    /* Clean up full_args_light references */
+    for (int i = 0; i < nin; i++) {
+        Py_XDECREF(full_args_light.in[i]);
+    }
+    if (full_args_light.out != NULL) {
+        for (int i = 0; i < full_args_light.nout; i++) {
+            Py_XDECREF(full_args_light.out[i]);
+        }
+    }
 
     npy_free_workspace(scratch_objs);
     return result;
 
 fail:
-    Py_XDECREF(full_args.in);
-    Py_XDECREF(full_args.out);
+    Py_XDECREF(out_tuple);
+
+    /* Clean up full_args_light references */
+    for (int i = 0; i < nin; i++) {
+        Py_XDECREF(full_args_light.in[i]);
+    }
+    if (full_args_light.out != NULL) {
+        for (int i = 0; i < full_args_light.nout; i++) {
+            Py_XDECREF(full_args_light.out[i]);
+        }
+    }
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
@@ -5432,8 +5530,8 @@ ufunc_outer(PyUFuncObject *ufunc,
 }
 
 
-static PyObject *
-prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
+static int
+prepare_input_arguments_for_outer(ufunc_full_args_light *full_args_light, PyUFuncObject *ufunc)
 {
     PyArrayObject *ap1 = NULL;
     PyObject *tmp;
@@ -5445,33 +5543,33 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
             "Special handling of matrix is removed. Convert to a "
             "ndarray via 'matrix.A' ");
 
-    tmp = PyTuple_GET_ITEM(args, 0);
+    tmp = full_args_light->in[0];
 
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "first");
-        return NULL;
+        return -1;
     }
     else {
         ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
     }
     if (ap1 == NULL) {
-        return NULL;
+        return -1;
     }
 
     PyArrayObject *ap2 = NULL;
-    tmp = PyTuple_GET_ITEM(args, 1);
+    tmp = full_args_light->in[1];
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
         PyErr_Format(PyExc_TypeError,
                 matrix_deprecation_msg, ufunc->name, "second");
-        return NULL;
+        return -1;
     }
     else {
         ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
     }
     if (ap2 == NULL) {
         Py_DECREF(ap1);
-        return NULL;
+        return -1;
     }
     /* Construct new shape from ap1 and ap2 and then reshape */
     PyArray_Dims newdims;
@@ -5514,13 +5612,20 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
         goto fail;
     }
 
+    /* Update full_args_light->in with the reshaped arrays */
     Py_DECREF(ap1);
-    return Py_BuildValue("(NN)", ap_new, ap2);
+    Py_DECREF(full_args_light->in[0]);
+    full_args_light->in[0] = (PyObject *)ap_new;
+
+    Py_DECREF(full_args_light->in[1]);
+    full_args_light->in[1] = (PyObject *)ap2;
+
+    return 0;
 
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
-    return NULL;
+    return -1;
 }
 
 
@@ -5934,8 +6039,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                         "second operand provided when ufunc is unary");
         return NULL;
     }
+    int nin_at = (int)PyTuple_GET_SIZE(args);
     errval = PyUFunc_CheckOverride(ufunc, "at",
-            args, NULL, NULL, NULL, 0, NULL, &override);
+            PySequence_Fast_ITEMS(args), nin_at,
+            NULL, 0, NULL, NULL, NULL, 0, NULL, &override);
 
     if (errval) {
         return NULL;
@@ -6018,7 +6125,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         /* Find the correct operation_descrs for the operation */
         int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, NPY_UNSAFE_CASTING);
+                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, 0, NPY_UNSAFE_CASTING);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
@@ -6342,7 +6449,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         /* Find the correct descriptors for the operation */
         if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
                 dummy_arrays, operation_descrs, signature, DTypes,
-                NULL, casting) < 0) {
+                NULL, 0, casting) < 0) {
             goto finish;
         }
 
