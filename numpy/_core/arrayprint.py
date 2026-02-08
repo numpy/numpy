@@ -544,7 +544,10 @@ def _get_format_function(data, **options):
         # Defensive check: only use Dragon4 formatters for built-in floating types
         # For custom floating types, fall back to numpystr (scalar string formatting)
 
-        if dtypeobj.builtin:
+        if (
+            issubclass(dtypeobj, _nt.floating)
+            and dtypeobj.__module__ == "numpy"
+        ):
             if issubclass(dtypeobj, _nt.longdouble):
                 return formatdict['longfloat']()
             else:
