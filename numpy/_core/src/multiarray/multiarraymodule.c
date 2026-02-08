@@ -3275,6 +3275,21 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     if (common_dt == NULL) {
         goto fail;
     }
+
+    if (PyArray_FLAGS(ax) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+        if (npy_update_operand_for_scalar(&ax, x, common_dt, NPY_SAFE_CASTING) < 0) {
+            goto fail;
+        }
+        op_in[2] = ax;
+    }
+
+    if (PyArray_FLAGS(ay) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+        if (npy_update_operand_for_scalar(&ay, y, common_dt, NPY_SAFE_CASTING) < 0) {
+            goto fail;
+        }
+        op_in[3] = ay;
+    }
+
     npy_intp itemsize = common_dt->elsize;
 
     // If x and y don't have references, we ask the iterator to create buffers
