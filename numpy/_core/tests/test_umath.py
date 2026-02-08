@@ -24,6 +24,7 @@ from numpy.testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_almost_equal_nulp,
+    assert_array_compare,
     assert_array_equal,
     assert_array_max_ulp,
     assert_equal,
@@ -653,6 +654,87 @@ class TestDivision:
             assert_(np.isinf(y)[0])
             y = 0.0 / x
             assert_(np.isnan(y)[0])
+
+    def test_division_annex_g_complex(self):
+        # C99 Annex G.5.1 recovery cases for complex division.
+        # Test cases from CPython 3.14 cmath tests.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_array_strict_equal(x, y):
+            def comparison(a, b):
+                return np.logical_and(
+                    a == b,
+                    (np.copysign(1., a) == np.copysign(1., b))
+                )
+            assert_array_compare(comparison, x.real, y.real, strict=True)
+            assert_array_compare(comparison, x.imag, y.imag, strict=True)
+
+        with np.errstate(all="ignore"):
+            x = np.array([
+                complex(INF, 1), complex(INF, -INF), complex(INF, INF),
+                complex(NAN, INF), complex(INF, NAN),
+                complex(1, 1), complex(1, 1), complex(1, 1), complex(1, 1),
+                complex(INF, 1), complex(1, INF), complex(INF, 1),
+            ], dtype=np.complex128)
+            y = np.array([
+                complex(0, 1), complex(1, 0), complex(0, 1),
+                complex(2**1000, 2**-1000), complex(2**1000, 2**-1000),
+                complex(INF, INF), complex(INF, -INF),
+                complex(-INF, INF), complex(-INF, -INF),
+                complex(INF, INF), complex(INF, INF), complex(1, INF),
+            ], dtype=np.complex128)
+            expected = np.array([
+                complex(NAN, -INF), complex(INF, -INF), complex(INF, -INF),
+                complex(INF, INF), complex(INF, -INF),
+                complex(0.0, 0.0), complex(0.0, 0.0),
+                complex(0.0, -0.0), complex(-0.0, 0.0),
+                complex(NAN, NAN), complex(NAN, NAN), complex(NAN, NAN),
+            ], dtype=np.complex128)
+            assert_array_strict_equal(x / y, expected)
+
+    def test_multiplication_annex_g_complex(self):
+        # C99 Annex G.5.1 recovery cases for complex multiplication.
+        # Test cases from CPython 3.14 cmath tests.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_array_strict_equal(x, y):
+            def comparison(a, b):
+                return np.logical_and(
+                    a == b,
+                    (np.copysign(1., a) == np.copysign(1., b))
+                )
+            assert_array_compare(comparison, x.real, y.real, strict=True)
+            assert_array_compare(comparison, x.imag, y.imag, strict=True)
+
+        with np.errstate(all="ignore"):
+            x = np.array([
+                complex(1e300, 1), complex(1e300, 1), complex(1e300, 1),
+                complex(INF, 1), complex(INF, 1),
+                complex(NAN, 1), complex(1, NAN),
+                complex(1e200, NAN), complex(1e200, NAN),
+                complex(NAN, 1e200), complex(NAN, 1e200),
+                complex(NAN, NAN),
+            ], dtype=np.complex128)
+            y = np.array([
+                complex(INF, INF), complex(NAN, INF), complex(INF, NAN),
+                complex(NAN, INF), complex(INF, NAN),
+                complex(1, INF), complex(1, INF),
+                complex(1e200, NAN), complex(NAN, 1e200),
+                complex(1e200, NAN), complex(NAN, 1e200),
+                complex(NAN, NAN),
+            ], dtype=np.complex128)
+            expected = np.array([
+                complex(NAN, INF), complex(-INF, INF), complex(INF, INF),
+                complex(NAN, INF), complex(INF, NAN),
+                complex(-INF, NAN), complex(NAN, INF),
+                complex(INF, NAN), complex(NAN, INF),
+                complex(NAN, INF), complex(-INF, NAN),
+                complex(NAN, NAN),
+            ], dtype=np.complex128)
+            assert_array_strict_equal(x * y, expected)
+            assert_array_strict_equal(y * x, expected)
 
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
