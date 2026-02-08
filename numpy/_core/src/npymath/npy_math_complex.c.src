@@ -77,6 +77,7 @@ static const @ctype@ c_1@c@ = 1.0@C@;
  * These are necessary because we do not count on using a
  * C99 compiler.
  *=========================================================*/
+static inline
 @ctype@
 cmul@c@(@ctype@ a, @ctype@ b)
 {
@@ -124,6 +125,7 @@ cmul@c@(@ctype@ a, @ctype@ b)
     return npy_cpack@c@(rr, ri);
 }
 
+static inline
 @ctype@
 cdiv@c@(@ctype@ a, @ctype@ b)
 {
