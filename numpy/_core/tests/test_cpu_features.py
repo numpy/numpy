@@ -391,6 +391,7 @@ class Test_POWER_Features(AbstractTest):
 
     def load_flags(self):
         self.load_flags_auxv()
+        self.features_flags.add("ARCH_2_06")
 
 
 is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
