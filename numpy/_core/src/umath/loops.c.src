@@ -2328,17 +2328,41 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        @ftype@ rr, ri;
         if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
             const @ftype@ r = in1i/in1r;
             const @ftype@ d = in1r + in1i*r;
-            ((@ftype@ *)op1)[0] = 1/d;
-            ((@ftype@ *)op1)[1] = -r/d;
+            rr = 1/d;
+            ri = -r/d;
         } else {
             const @ftype@ r = in1r/in1i;
             const @ftype@ d = in1r*r + in1i;
-            ((@ftype@ *)op1)[0] = r/d;
-            ((@ftype@ *)op1)[1] = -1/d;
+            rr = r/d;
+            ri = -1/d;
         }
+        /* Recover infinities and zeros that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cdivd().
+         * Numerator is the constant 1+0j, so case 2 (numerator
+         * infinite) can never trigger. */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            const @ftype@ in1r_abs = npy_fabs@c@(in1r);
+            const @ftype@ in1i_abs = npy_fabs@c@(in1i);
+            if ((in1r_abs == 0 && in1i_abs == 0)
+                && (!npy_isnan(in1r) || !npy_isnan(in1i)))
+            {
+                npy_set_floatstatus_divbyzero();
+                rr = npy_copysign@c@(NPY_INFINITY@C@, in1r) * 1.0@c@;
+                ri = npy_copysign@c@(NPY_INFINITY@C@, in1r) * 0.0@c@;
+            }
+            else if (npy_isinf(in1r_abs) || npy_isinf(in1i_abs)) {
+                @ftype@ x = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
+                @ftype@ y = npy_copysign@c@(npy_isinf(in1i) ? 1.0 : 0.0, in1i);
+                rr = 0.0@c@ * (1.0@c@*x + 0.0@c@*y);
+                ri = 0.0@c@ * (0.0@c@*x - 1.0@c@*y);
+            }
+        }
+        ((@ftype@ *)op1)[0] = rr;
+        ((@ftype@ *)op1)[1] = ri;
     }
 }
 
