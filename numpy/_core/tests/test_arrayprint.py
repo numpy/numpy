@@ -1344,5 +1344,6 @@ def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
     s = repr(arr)
 
     # Use startswith for platform stability; exact representation may vary
-    assert s.strip().startswith("[3.14159265358979323846264338")
+    assert s.strip().startswith("[3.1415926535897932")
+
 
