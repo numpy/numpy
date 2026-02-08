@@ -1322,14 +1322,8 @@ def test_multithreaded_array_printing():
 
     run_threaded(TestPrintOptions().test_floatmode, 500)
 
-
-
-
-
-
 import numpy as np
 import pytest
-
 
 @pytest.mark.filterwarnings("ignore")
 def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
@@ -1349,5 +1343,5 @@ def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
     np.set_printoptions(precision=34, floatmode="fixed")
     s = repr(arr)
 
-    # Float64 artifact digits should not appear
-    assert "931159979" not in s
+    assert s.strip() == "[3.14159265358979323846264338327950288]"
+
