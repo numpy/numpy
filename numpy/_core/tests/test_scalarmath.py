@@ -477,6 +477,81 @@ class TestComplexDivision:
                     assert_equal(result.real, ex[0])
                     assert_equal(result.imag, ex[1])
 
+    def test_annex_g(self):
+        # C99 Annex G.5.1 recovery cases for complex division.
+        # Test cases from CPython 3.14 cmath tests.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_strict_equal(x, y):
+            assert_equal(x, y)
+            assert_equal(np.copysign(1., x), np.copysign(1., y))
+
+        with np.errstate(all="ignore"):
+            data = (
+                (complex(INF, 1), complex(0, 1), complex(NAN, -INF)),
+                (complex(INF, -INF), complex(1, 0), complex(INF, -INF)),
+                (complex(INF, INF), complex(0, 1), complex(INF, -INF)),
+                (complex(NAN, INF), complex(2**1000, 2**-1000), complex(INF, INF)),
+                (complex(INF, NAN), complex(2**1000, 2**-1000), complex(INF, -INF)),
+                (complex(1, 1), complex(INF, INF), complex(0.0, 0.0)),
+                (complex(1, 1), complex(INF, -INF), complex(0.0, 0.0)),
+                (complex(1, 1), complex(-INF, INF), complex(0.0, -0.0)),
+                (complex(1, 1), complex(-INF, -INF), complex(-0.0, 0.0)),
+                (complex(INF, 1), complex(INF, INF), complex(NAN, NAN)),
+                (complex(1, INF), complex(INF, INF), complex(NAN, NAN)),
+                (complex(INF, 1), complex(1, INF), complex(NAN, NAN)),
+            )
+            for n, d, expected in data:
+                result = np.complex128(n) / np.complex128(d)
+                if np.isnan(expected.real):
+                    assert_(np.isnan(result.real))
+                else:
+                    assert_strict_equal(result.real, expected.real)
+                if np.isnan(expected.imag):
+                    assert_(np.isnan(result.imag))
+                else:
+                    assert_strict_equal(result.imag, expected.imag)
+
+
+class TestComplexMultiplication:
+    def test_annex_g(self):
+        # C99 Annex G.5.1 recovery cases for complex multiplication.
+        # Test cases from CPython 3.14 cmath tests.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_strict_equal(x, y):
+            assert_equal(x, y)
+            assert_equal(np.copysign(1., x), np.copysign(1., y))
+
+        with np.errstate(all="ignore"):
+            data = (
+                (complex(1e300, 1), complex(INF, INF), complex(NAN, INF)),
+                (complex(1e300, 1), complex(NAN, INF), complex(-INF, INF)),
+                (complex(1e300, 1), complex(INF, NAN), complex(INF, INF)),
+                (complex(INF, 1), complex(NAN, INF), complex(NAN, INF)),
+                (complex(INF, 1), complex(INF, NAN), complex(INF, NAN)),
+                (complex(NAN, 1), complex(1, INF), complex(-INF, NAN)),
+                (complex(1, NAN), complex(1, INF), complex(NAN, INF)),
+                (complex(1e200, NAN), complex(1e200, NAN), complex(INF, NAN)),
+                (complex(1e200, NAN), complex(NAN, 1e200), complex(NAN, INF)),
+                (complex(NAN, 1e200), complex(1e200, NAN), complex(NAN, INF)),
+                (complex(NAN, 1e200), complex(NAN, 1e200), complex(-INF, NAN)),
+                (complex(NAN, NAN), complex(NAN, NAN), complex(NAN, NAN)),
+            )
+            for z, w, expected in data:
+                for result in (np.complex128(z) * np.complex128(w),
+                               np.complex128(w) * np.complex128(z)):
+                    if np.isnan(expected.real):
+                        assert_(np.isnan(result.real))
+                    else:
+                        assert_strict_equal(result.real, expected.real)
+                    if np.isnan(expected.imag):
+                        assert_(np.isnan(result.imag))
+                    else:
+                        assert_strict_equal(result.imag, expected.imag)
+
 
 class TestConversion:
     def test_int_from_long(self):
