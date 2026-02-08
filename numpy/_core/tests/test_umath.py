@@ -736,6 +736,39 @@ class TestDivision:
             assert_array_strict_equal(x * y, expected)
             assert_array_strict_equal(y * x, expected)
 
+    def test_reciprocal_annex_g_complex(self):
+        # C99 Annex G.5.1 recovery cases for complex reciprocal (1/z).
+        # reciprocal is division with numerator 1+0j, so only
+        # cases 1 (denom zero) and 3 (denom infinite) apply.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_array_strict_equal(x, y):
+            def comparison(a, b):
+                return np.logical_and(
+                    a == b,
+                    (np.copysign(1., a) == np.copysign(1., b))
+                )
+            assert_array_compare(comparison, x.real, y.real, strict=True)
+            assert_array_compare(comparison, x.imag, y.imag, strict=True)
+
+        with np.errstate(all="ignore"):
+            x = np.array([
+                complex(INF, INF), complex(INF, -INF),
+                complex(-INF, INF), complex(-INF, -INF),
+            ], dtype=np.complex128)
+            expected = np.array([
+                complex(0.0, -0.0), complex(0.0, 0.0),
+                complex(-0.0, -0.0), complex(-0.0, 0.0),
+            ], dtype=np.complex128)
+            assert_array_strict_equal(np.reciprocal(x), expected)
+            assert_array_strict_equal(np.reciprocal(x), 1.0 / x)
+
+            x = np.array([complex(0.0, 0.0)], dtype=np.complex128)
+            expected = np.array([complex(INF, NAN)], dtype=np.complex128)
+            assert_array_strict_equal(np.reciprocal(x), expected)
+            assert_array_strict_equal(np.reciprocal(x), 1.0 / x)
+
     def test_floor_division_complex(self):
         # check that floor division, divmod and remainder raises type errors
         x = np.array(

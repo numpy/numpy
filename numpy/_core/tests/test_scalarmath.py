@@ -553,6 +553,47 @@ class TestComplexMultiplication:
                         assert_strict_equal(result.imag, expected.imag)
 
 
+class TestComplexReciprocal:
+    def test_annex_g(self):
+        # C99 Annex G.5.1 recovery cases for complex reciprocal (1/z).
+        # reciprocal is division with numerator 1+0j, so only
+        # cases 1 (denom zero) and 3 (denom infinite) apply.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_strict_equal(x, y):
+            assert_equal(x, y)
+            assert_equal(np.copysign(1., x), np.copysign(1., y))
+
+        with np.errstate(all="ignore"):
+            data = (
+                (complex(INF, INF), complex(0.0, -0.0)),
+                (complex(INF, -INF), complex(0.0, 0.0)),
+                (complex(-INF, INF), complex(-0.0, -0.0)),
+                (complex(-INF, -INF), complex(-0.0, 0.0)),
+                (complex(0.0, 0.0), complex(INF, NAN)),
+            )
+            for z, expected in data:
+                result = np.reciprocal(np.complex128(z))
+                if np.isnan(expected.real):
+                    assert_(np.isnan(result.real))
+                else:
+                    assert_strict_equal(result.real, expected.real)
+                if np.isnan(expected.imag):
+                    assert_(np.isnan(result.imag))
+                else:
+                    assert_strict_equal(result.imag, expected.imag)
+                div_result = np.complex128(1.0) / np.complex128(z)
+                if np.isnan(expected.real):
+                    assert_(np.isnan(div_result.real))
+                else:
+                    assert_strict_equal(div_result.real, result.real)
+                if np.isnan(expected.imag):
+                    assert_(np.isnan(div_result.imag))
+                else:
+                    assert_strict_equal(div_result.imag, result.imag)
+
+
 class TestConversion:
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
