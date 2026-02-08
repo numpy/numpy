@@ -387,11 +387,42 @@ is_power = re.match(r"^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
     features = ["VSX", "VSX2", "VSX3", "VSX4"]
-    features_map = { "VSX":  "ARCH_2_06", "VSX2": "ARCH_2_07", "VSX3": "ARCH_3_00", "VSX4": "ARCH_3_1"}
+    features_map = { 
+        "VSX":  "ARCH_2_06", 
+        "VSX2": "ARCH_2_07", 
+        "VSX3": "ARCH_3_00", 
+        "VSX4": "ARCH_3_1B"
+    }
 
     def load_flags(self):
         self.load_flags_auxv()
-        self.features_flags.add("ARCH_2_06")
+        platform = self._get_platform()
+        
+        if platform:
+            power_match = re.search(r'power(\d+)', platform, re.IGNORECASE)
+            if power_match:
+                power_gen = int(power_match.group(1))
+                if power_gen >= 7:
+                    self.features_flags.add("ARCH_2_06")
+                if power_gen >= 8:
+                    self.features_flags.add("ARCH_2_07")
+                if power_gen >= 9:
+                    self.features_flags.add("ARCH_3_00")
+                if power_gen >= 10:
+                    self.features_flags.add("ARCH_3_1B")
+    
+    def _get_platform(self):                         
+        """Get the AT_PLATFORM value from AUXV"""
+        try:
+            auxv = subprocess.check_output(['/bin/true'], env={"LD_SHOW_AUXV": "1"})
+            for line in auxv.split(b'\n'):
+                if line.startswith(b'AT_PLATFORM'):
+                    parts = line.split(b':', 1)
+                    if len(parts) == 2:
+                        return parts[1].strip().decode().lower()
+        except Exception:
+            pass
+        return None
 
 
 is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
