@@ -399,6 +399,19 @@ class TestMRecordsImport:
     nrec = recfromarrays((_a._data, _b._data, _c._data), dtype=ddtype)
     data = (mrec, nrec, ddtype)
 
+    def test_view_ndarray_subclass_resets_dtype(self):
+        mrec = self.data[0]
+
+        class MySub(np.ndarray):
+            pass
+
+        test = mrec.view(MySub)
+        assert_(isinstance(test, MySub))
+        assert_equal(test.dtype, mrec.dtype)
+        assert_equal(test._mask, mrec._mask)
+        assert_equal(test._fill_value, mrec._fill_value)
+
+
     def test_fromarrays(self):
         _a = ma.array([1, 2, 3], mask=[0, 0, 1], dtype=int)
         _b = ma.array([1.1, 2.2, 3.3], mask=[0, 0, 1], dtype=float)
