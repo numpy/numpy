@@ -594,6 +594,53 @@ class TestComplexReciprocal:
                     assert_strict_equal(div_result.imag, result.imag)
 
 
+class TestComplexSquare:
+    def test_annex_g(self):
+        # C99 Annex G.5.1 recovery cases for complex square (z*z).
+        # Since both operands are the same, cases 1 and 2 of multiply
+        # recovery are identical — only one check is needed.
+        INF = np.inf
+        NAN = np.nan
+
+        def assert_strict_equal(x, y):
+            assert_equal(x, y)
+            assert_equal(np.copysign(1., x), np.copysign(1., y))
+
+        with np.errstate(all="ignore"):
+            data = (
+                # Cases where recovery triggers (both rr and ri are NaN):
+                # Case 1&2: z has infinite component
+                (complex(INF, NAN), complex(INF, NAN)),
+                (complex(NAN, INF), complex(-INF, NAN)),
+                # Case 3: intermediate overflow
+                (complex(1e200, NAN), complex(INF, NAN)),
+                (complex(NAN, 1e200), complex(-INF, NAN)),
+                # No recovery possible (NaN stays)
+                (complex(NAN, 1), complex(NAN, NAN)),
+                (complex(1, NAN), complex(NAN, NAN)),
+                (complex(NAN, NAN), complex(NAN, NAN)),
+                # No recovery needed (not both NaN)
+                (complex(INF, 1), complex(INF, INF)),
+                (complex(-INF, 1), complex(INF, -INF)),
+                (complex(INF, INF), complex(NAN, INF)),
+                (complex(INF, -INF), complex(NAN, -INF)),
+            )
+            for z, expected in data:
+                z128 = np.complex128(z)
+                # np.square, scalar ** 2, np.power all reduce to z*z
+                for result in (np.square(z128), z128 ** 2,
+                               np.power(z128, 2),
+                               np.float_power(z128, 2)):
+                    if np.isnan(expected.real):
+                        assert_(np.isnan(result.real))
+                    else:
+                        assert_strict_equal(result.real, expected.real)
+                    if np.isnan(expected.imag):
+                        assert_(np.isnan(result.imag))
+                    else:
+                        assert_strict_equal(result.imag, expected.imag)
+
+
 class TestConversion:
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
