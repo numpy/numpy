@@ -187,7 +187,7 @@ Tier 2 platforms:
 
 - Linux x86-64 (musllinux), *Ralf Gommers*
 - Linux aarch64 (musllinux), *Ralf Gommers*
-- Free-threaded CPython, *Nathan Goldbaum, Ralf Gommers*
+- Free-threaded CPython, *Nathan Goldbaum, Kumar Aditya, Ralf Gommers*
 
 
 Tier 3
