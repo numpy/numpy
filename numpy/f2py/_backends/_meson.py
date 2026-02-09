@@ -47,6 +47,11 @@ class MesonTemplate:
             f"'{x}'" if not (x.startswith("'") and x.endswith("'")) else x
             for x in fortran_args
         ]
+               self.has_openmp = self._detect_openmp(fortran_args)
+        self.openmp_lib_dir = None
+        if self.has_openmp:
+            self.openmp_lib_dir = self._find_openmp_library()
+
         self.pipeline = [
             self.initialize_template,
             self.sources_substitution,
@@ -55,10 +60,65 @@ class MesonTemplate:
             self.include_substitution,
             self.libraries_substitution,
             self.fortran_args_substitution,
-        ]
+            self.rpath_substitution,  # NEW: Add rpath handling
+        ]    
         self.build_type = build_type
         self.python_exe = python_exe
         self.indent = " " * 21
+    
+    def _detect_openmp(self, fortran_args: list[str]) -> bool:
+        """Detect if OpenMP flags are present in fortran_args"""
+        openmp_flags = ['-fopenmp', '-qopenmp', '-openmp', '/Qopenmp']
+        return any(flag in fortran_args for flag in openmp_flags)
+    
+    def _find_openmp_library(self) -> Path | None:
+        """Try to find the OpenMP library directory from the compiler"""
+        try:
+            # Determine which compiler we're using
+            fc = os.environ.get('FC', 'gfortran')
+            
+            # Try to get library path from compiler
+            if 'gfortran' in fc or 'gcc' in fc:
+                # For GCC/gfortran, find libgomp
+                result = subprocess.run(
+                    [fc, '--print-file-name=libgomp.so'],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    lib_path = Path(result.stdout.strip())
+                    if lib_path.exists():
+                        return lib_path.parent
+                
+                # Try macOS dylib
+                result = subprocess.run(
+                    [fc, '--print-file-name=libgomp.dylib'],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    lib_path = Path(result.stdout.strip())
+                    if lib_path.exists():
+                        return lib_path.parent
+                        
+            elif 'ifort' in fc or 'ifx' in fc:
+                # For Intel Fortran, find libiomp5
+                result = subprocess.run(
+                    [fc, '--print-file-name=libiomp5.so'],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    lib_path = Path(result.stdout.strip())
+                    if lib_path.exists():
+                        return lib_path.parent
+        except Exception:
+            pass
+        return None
+        
 
     def meson_build_template(self) -> str:
         if not self.build_template_path.is_file():
@@ -86,9 +146,76 @@ class MesonTemplate:
         )
 
     def deps_substitution(self) -> None:
-        self.substitutions["dep_list"] = f",\n{self.indent}".join(
-            [f"{self.indent}dependency('{dep}')," for dep in self.deps]
-        )
+        # Handle OpenMP dependency with fallback
+        deps_list = []
+        openmp_handled = False
+        
+        for dep in self.deps:
+            if dep.lower() == 'openmp':
+                # Special handling for OpenMP
+                deps_list.append(
+                    f"{self.indent}openmp_dep,"
+                )
+                openmp_handled = True
+            else:
+                deps_list.append(
+                    f"{self.indent}dependency('{dep}'),"
+                )
+        
+        # If OpenMP was detected in flags but not explicitly in deps, add it
+        if self.has_openmp and not openmp_handled:
+            deps_list.append(f"{self.indent}openmp_dep,")
+        
+        self.substitutions["dep_list"] = f"\n".join(deps_list)
+        
+        #Add OpenMP dependency declaration with fallback
+        if self.has_openmp or openmp_handled:
+            openmp_fallback = self._generate_openmp_fallback()
+            self.substitutions["openmp_declaration"] = openmp_fallback
+        else:
+            self.substitutions["openmp_declaration"] = ""
+
+    def _generate_openmp_fallback(self) -> str:
+        """Generate OpenMP dependency with fallback for when Meson can't find it"""
+        lines = [
+            "# OpenMP dependency with fallback",
+            "openmp_dep = dependency('openmp', required: false)",
+            "if not openmp_dep.found()",
+            "  # Fallback: use compiler flags directly",
+        ]
+        
+        if self.openmp_lib_dir:
+            lines.append(f"  # Detected OpenMP library at: {self.openmp_lib_dir}")
+        
+        # Determine the OpenMP library based on compiler/flags
+        openmp_lib = 'gomp'  # Default for GCC
+        if any('ifort' in str(arg) or 'ifx' in str(arg) or 'qopenmp' in str(arg).lower() 
+               for arg in self.fortran_args):
+            openmp_lib = 'iomp5'  # Intel compiler
+        
+        lines.append("  openmp_dep = declare_dependency(")
+        
+        # Add compile args
+        compile_args = []
+        for arg in self.fortran_args:
+            arg_stripped = arg.strip("'\"")
+            if any(omp_flag in arg_stripped for omp_flag in ['-fopenmp', '-qopenmp', '-openmp', '/Qopenmp']):
+                compile_args.append(arg)
+        
+        if compile_args:
+            lines.append(f"    compile_args: [{', '.join(compile_args)}],")
+        
+        # Add link args
+        link_args = []
+        if self.openmp_lib_dir:
+            link_args.append(f"'-L{self.openmp_lib_dir}'")
+        link_args.append(f"'-l{openmp_lib}'")
+        
+        lines.append(f"    link_args: [{', '.join(link_args)}],")
+        lines.append("  )")
+        lines.append("endif")
+        
+        return "\n".join(lines)
 
     def libraries_substitution(self) -> None:
         self.substitutions["lib_dir_declarations"] = "\n".join(
@@ -125,6 +252,25 @@ class MesonTemplate:
         else:
             self.substitutions["fortran_args"] = ""
 
+    def rpath_substitution(self) -> None:
+        """NEW: Generate rpath configuration for runtime library loading"""
+        rpath_dirs = []
+        
+        # Add all library directories
+        rpath_dirs.extend([str(lib_dir) for lib_dir in self.library_dirs])
+        
+        # Add OpenMP library directory if detected
+        if self.openmp_lib_dir:
+            rpath_dirs.append(str(self.openmp_lib_dir))
+        
+        if rpath_dirs:
+            # Remove duplicates while preserving order
+            unique_rpath_dirs = list(dict.fromkeys(rpath_dirs))
+            rpath_list = ", ".join([f"'{path}'" for path in unique_rpath_dirs])
+            self.substitutions["rpath"] = f"{self.indent}install_rpath: [{rpath_list}],"
+        else:
+            self.substitutions["rpath"] = ""
+
     def generate_meson_build(self):
         for node in self.pipeline:
             node()
@@ -132,7 +278,6 @@ class MesonTemplate:
         meson_build = template.substitute(self.substitutions)
         meson_build = meson_build.replace(",,", ",")
         return meson_build
-
 
 class MesonBackend(Backend):
     def __init__(self, *args, **kwargs):
