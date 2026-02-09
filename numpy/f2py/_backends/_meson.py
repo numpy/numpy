@@ -47,7 +47,7 @@ class MesonTemplate:
             f"'{x}'" if not (x.startswith("'") and x.endswith("'")) else x
             for x in fortran_args
         ]
-               self.has_openmp = self._detect_openmp(fortran_args)
+        self.has_openmp = self._detect_openmp(fortran_args)
         self.openmp_lib_dir = None
         if self.has_openmp:
             self.openmp_lib_dir = self._find_openmp_library()
