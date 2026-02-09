@@ -63,8 +63,10 @@ example, the ``_core`` module, use the following::
 Running tests from the command line
 -----------------------------------
 
-If you want to build NumPy in order to work on NumPy itself, use the ``spin``
-utility. To run NumPy's full test suite::
+If you want to build NumPy in order to work on NumPy itself, use the
+:ref:`spin utility <spin_tool>`.
+
+To run NumPy's full test suite::
 
   $ spin test -m full
 
@@ -142,8 +144,6 @@ module called ``test_yyy.py``.  If you only need to test one aspect of
 
 More often, we need to group a number of tests together, so we create
 a test class::
-
-  import pytest
 
   # import xxx symbols
   from numpy.xxx.yyy import zzz

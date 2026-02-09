@@ -20,8 +20,6 @@ try:
 except ImportError:
     ctypes = None
 
-IS_PYPY = sys.implementation.name == 'pypy'
-
 if sys.byteorder == 'little':
     _nbo = '<'
 else:
@@ -855,6 +853,8 @@ def _ufunc_doc_signature_formatter(ufunc):
     Builds a signature string which resembles PEP 457
 
     This is used to construct the first line of the docstring
+
+    Keep in sync with `_ufunc_inspect_signature_builder`.
     """
 
     # input arguments are simple
@@ -893,18 +893,62 @@ def _ufunc_doc_signature_formatter(ufunc):
     return f'{ufunc.__name__}({in_args}{out_args}, *{kwargs})'
 
 
+def _ufunc_inspect_signature_builder(ufunc):
+    """
+    Builds a ``__signature__`` string.
+
+    Should be kept in sync with `_ufunc_doc_signature_formatter`.
+    """
+
+    from inspect import Parameter, Signature
+
+    params = []
+
+    # positional-only input parameters
+    if ufunc.nin == 1:
+        params.append(Parameter("x", Parameter.POSITIONAL_ONLY))
+    else:
+        params.extend(
+            Parameter(f"x{i}", Parameter.POSITIONAL_ONLY)
+            for i in range(1, ufunc.nin + 1)
+        )
+
+    # for the sake of simplicity, we only consider a single output parameter
+    if ufunc.nout == 1:
+        out_default = None
+    else:
+        out_default = (None,) * ufunc.nout
+    params.append(
+        Parameter("out", Parameter.POSITIONAL_OR_KEYWORD, default=out_default),
+    )
+
+    if ufunc.signature is None:
+        params.append(Parameter("where", Parameter.KEYWORD_ONLY, default=True))
+    else:
+        # NOTE: not all gufuncs support the `axis` parameters
+        params.append(Parameter("axes", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("axis", Parameter.KEYWORD_ONLY, default=_NoValue))
+        params.append(Parameter("keepdims", Parameter.KEYWORD_ONLY, default=False))
+
+    params.extend((
+        Parameter("casting", Parameter.KEYWORD_ONLY, default='same_kind'),
+        Parameter("order", Parameter.KEYWORD_ONLY, default='K'),
+        Parameter("dtype", Parameter.KEYWORD_ONLY, default=None),
+        Parameter("subok", Parameter.KEYWORD_ONLY, default=True),
+        Parameter("signature", Parameter.KEYWORD_ONLY, default=None),
+    ))
+
+    return Signature(params)
+
+
 def npy_ctypes_check(cls):
     # determine if a class comes from ctypes, in order to work around
     # a bug in the buffer protocol for those objects, bpo-10746
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        if IS_PYPY:
-            # (..., _ctypes.basics._CData, Bufferable, object)
-            ctype_base = cls.__mro__[-3]
-        else:
-            # # (..., _ctypes._CData, object)
-            ctype_base = cls.__mro__[-2]
+        # # (..., _ctypes._CData, object)
+        ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return '_ctypes' in ctype_base.__module__
     except Exception:

@@ -113,7 +113,7 @@ use more convenient operator notation in expressions). Note that when the
 output argument is used, the ufunc still returns a reference to the result.
 
  >>> x = np.arange(2)
- >>> np.add(np.arange(2, dtype=float), np.arange(2, dtype=float), x,
+ >>> np.add(np.arange(2, dtype=np.float64), np.arange(2, dtype=np.float64), x,
  ...        casting='unsafe')
  array([0, 2])
  >>> x

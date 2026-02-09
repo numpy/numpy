@@ -385,7 +385,7 @@ class MaskedRecords(ma.MaskedArray):
         if (getattr(output, '_mask', ma.nomask) is not ma.nomask):
             mdtype = ma.make_mask_descr(output.dtype)
             output._mask = self._mask.view(mdtype, np.ndarray)
-            output._mask.shape = output.shape
+            output._mask = output._mask.reshape(output.shape)
         return output
 
     def harden_mask(self):

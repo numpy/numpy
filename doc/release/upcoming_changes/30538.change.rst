@@ -1,0 +1,18 @@
+``numpy.ctypeslib.as_ctypes`` now does not support scalar types
+----------------------------------------------------------------
+The function ``numpy.ctypeslib.as_ctypes`` has been updated to only accept ``numpy.ndarray``.
+Passing a scalar type (e.g., ``numpy.int32(5)``) will now raise a ``TypeError``.
+This change was made to avoid the issue `gh-30354 <https://github.com/numpy/numpy/issues/30354>`__
+and to enforce the readonly nature of scalar types in NumPy.
+The previous behavior relied on undocumented implicit temporary arrays and was not well-defined.
+Users who need to convert scalar types to ctypes should first convert them to an array
+(e.g., ``numpy.asarray``) before passing them to ``numpy.ctypeslib.as_ctypes``.
+
+
+``__array_interface__`` changes on scalars
+------------------------------------------
+Scalars now export the ``__array_interface__`` directly rather than including
+an array copy as a ``__ref`` entry. This means that scalars are now exported
+as read-only while they previously exported as writeable.
+The path via ``__ref`` was undocumented and not consistently used even
+within NumPy itself.

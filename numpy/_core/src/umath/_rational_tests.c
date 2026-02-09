@@ -1097,7 +1097,7 @@ rational_ufunc_test_add_rationals(char** args, npy_intp const *dimensions,
 }
 
 
-PyMethodDef module_methods[] = {
+static PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
 

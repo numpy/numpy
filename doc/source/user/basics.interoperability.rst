@@ -65,6 +65,18 @@ and outputs a NumPy ndarray (which is generally a view of the input object's dat
 buffer). The :ref:`dlpack:python-spec` page explains the ``__dlpack__`` protocol
 in detail.
 
+``dtype`` interoperability
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Similar to ``__array__()`` for array objects, defining ``__numpy_dtype__``
+allows a custom dtype object to be interoperable with NumPy.
+The ``__numpy_dtype__`` must return a NumPy dtype instance (note that
+``np.float64`` is not a dtype instance, ``np.dtype(np.float64)`` is).
+
+.. versionadded:: 2.4
+   Before NumPy 2.4 a ``.dtype`` attribute was treated similarly. As of NumPy 2.4
+   both is accepted and implementing ``__numpy_dtype__`` prevents ``.dtype``
+   from being checked.
+
 The array interface protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -118,7 +130,7 @@ We can check that ``arr`` and ``new_arr`` share the same data buffer:
 The ``__array__()`` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``__array__()`` method ensures that any NumPy-like object (an array, any
+The `__array__() <../reference/arrays.classes.html#numpy.class.\_\_array\_\_>`__ method ensures that any NumPy-like object (an array, any
 object exposing the array interface, an object whose ``__array__()`` method
 returns an array or any nested sequence) that implements it can be used as a
 NumPy array. If possible, this will mean using ``__array__()`` to create a NumPy
@@ -136,9 +148,6 @@ is needed.
 
 If a class implements the old signature ``__array__(self)``, for ``np.array(a)``
 a warning will be raised saying that ``dtype`` and ``copy`` arguments are missing.
-
-To see an example of a custom array implementation including the use of
-``__array__()``, see :ref:`basics.dispatch`.
 
 The DLPack Protocol
 ~~~~~~~~~~~~~~~~~~~
@@ -204,7 +213,7 @@ The ``__array_ufunc__`` protocol
 A :ref:`universal function (or ufunc for short) <ufuncs-basics>` is a
 “vectorized” wrapper for a function that takes a fixed number of specific inputs
 and produces a fixed number of specific outputs. The output of the ufunc (and
-its methods) is not necessarily a ndarray, if not all input arguments are
+its methods) is not necessarily an ndarray, if not all input arguments are
 ndarrays. Indeed, if any input defines an ``__array_ufunc__`` method, control
 will be passed completely to that function, i.e., the ufunc is overridden. The
 ``__array_ufunc__`` method defined on that (non-ndarray) object has access to
@@ -274,10 +283,10 @@ Consider the following:
  >>> type(ser)
  pandas.core.series.Series
 
-Now, ``ser`` is **not** a ndarray, but because it
+Now, ``ser`` is **not** an ndarray, but because it
 `implements the __array_ufunc__ protocol
 <https://pandas.pydata.org/docs/user_guide/dsintro.html#dataframe-interoperability-with-numpy-functions>`__,
-we can apply ufuncs to it as if it were a ndarray:
+we can apply ufuncs to it as if it were an ndarray:
 
  >>> np.exp(ser)
     0     2.718282

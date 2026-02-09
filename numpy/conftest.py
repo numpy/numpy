@@ -66,8 +66,6 @@ def pytest_configure(config):
         "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
-    config.addinivalue_line("markers",
-        "slow_pypy: Tests that are very slow on pypy.")
     if not PARALLEL_RUN_AVALIABLE:
         config.addinivalue_line("markers",
             "parallel_threads(n): run the given test function in parallel "
@@ -183,9 +181,10 @@ if HAVE_SCPDT:
                 "numpy.core",
                 "Importing from numpy.matlib",
                 "This function is deprecated.",    # random_integers
-                "Data type alias 'a'",     # numpy.rec.fromfile
                 "Arrays of 2-dimensional vectors",   # matlib.cross
-                "NumPy warning suppression and assertion utilities are deprecated."
+                "NumPy warning suppression and assertion utilities are deprecated.",
+                "numpy.fix is deprecated",  # fix -> trunc
+                "The chararray class is deprecated",  # char.chararray
         ]
         msg = "|".join(msgs)
 

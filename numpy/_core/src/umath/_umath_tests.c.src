@@ -460,6 +460,15 @@ addUfuncs(PyObject *dictionary) {
     }
     PyDict_SetItemString(dictionary, "always_error", f);
     Py_DECREF(f);
+    f = PyUFunc_FromFuncAndData(always_error_functions, always_error_data,
+            always_error_signatures, 1, 1, 1, PyUFunc_None, "always_error_unary",
+            "simply, broken, ufunc that sets an error (but releases the GIL).",
+            0);
+    if (f == NULL) {
+        return -1;
+    }
+    PyDict_SetItemString(dictionary, "always_error_unary", f);
+    Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(always_error_functions,
             always_error_data, always_error_signatures, 1, 2, 1, PyUFunc_None,
             "always_error_gufunc",

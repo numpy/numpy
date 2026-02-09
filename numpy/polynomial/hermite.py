@@ -796,7 +796,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
 def hermval(x, c, tensor=True):
     """
-    Evaluate an Hermite series at points x.
+    Evaluate a Hermite series at points x.
 
     If `c` is of length ``n + 1``, this function returns the value:
 
@@ -1439,7 +1439,7 @@ def hermcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Hermite basis polynomial. This provides
+    symmetric when `c` is a Hermite basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1693,7 +1693,7 @@ def hermweight(x):
 #
 
 class Hermite(ABCPolyBase):
-    """An Hermite series class.
+    """A Hermite series class.
 
     The Hermite class provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' as well as the

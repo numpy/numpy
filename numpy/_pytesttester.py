@@ -123,8 +123,6 @@ class PytestTester:
         True
 
         """
-        import warnings
-
         import pytest
 
         module = sys.modules[self.module_name]
@@ -135,14 +133,6 @@ class PytestTester:
 
         # offset verbosity. The "-q" cancels a "-v".
         pytest_args += ["-q"]
-
-        if sys.version_info < (3, 12):
-            with warnings.catch_warnings():
-                warnings.simplefilter("always")
-                # Filter out distutils cpu warnings (could be localized to
-                # distutils tests). ASV has problems with top level import,
-                # so fetch module for suppression here.
-                from numpy.distutils import cpuinfo  # noqa: F401
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
@@ -172,12 +162,7 @@ class PytestTester:
             pytest_args += ["--cov=" + module_path]
 
         if label == "fast":
-            # not importing at the top level to avoid circular import of module
-            from numpy.testing import IS_PYPY
-            if IS_PYPY:
-                pytest_args += ["-m", "not slow and not slow_pypy"]
-            else:
-                pytest_args += ["-m", "not slow"]
+            pytest_args += ["-m", "not slow"]
 
         elif label != "full":
             pytest_args += ["-m", label]
