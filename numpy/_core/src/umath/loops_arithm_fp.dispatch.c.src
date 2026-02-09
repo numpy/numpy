@@ -818,8 +818,37 @@ loop_scalar:
         const @ftype@ rl = ((@ftype@ *)b_src)[0];
         const @ftype@ im = ((@ftype@ *)b_src)[1];
     #if @is_square@
-        ((@ftype@ *)b_dst)[0] = rl*rl - im*im;
-        ((@ftype@ *)b_dst)[1] = rl*im + im*rl;
+        @ftype@ rr = rl*rl - im*im;
+        @ftype@ ri = rl*im + im*rl;
+        /* Recover infinities that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cmultd().
+         * Both operands are the same (z*z), so cases 1 and 2
+         * are identical; only check once. */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            @ftype@ a_r = rl;
+            @ftype@ a_i = im;
+            int recalc = 0;
+            /* Case 1&2: z is infinite */
+            if (npy_isinf(a_r) || npy_isinf(a_i)) {
+                a_r = npy_copysign@c@(npy_isinf(a_r) ? 1.0 : 0.0, a_r);
+                a_i = npy_copysign@c@(npy_isinf(a_i) ? 1.0 : 0.0, a_i);
+                recalc = 1;
+            }
+            /* Case 3: intermediate overflow */
+            if (!recalc && (npy_isinf(rl*rl) || npy_isinf(im*im)
+                         || npy_isinf(rl*im)))
+            {
+                if (npy_isnan(a_r)) a_r = npy_copysign@c@(0.0, a_r);
+                if (npy_isnan(a_i)) a_i = npy_copysign@c@(0.0, a_i);
+                recalc = 1;
+            }
+            if (recalc) {
+                rr = NPY_INFINITY@C@ * (a_r*a_r - a_i*a_i);
+                ri = NPY_INFINITY@C@ * (a_r*a_i + a_i*a_r);
+            }
+        }
+        ((@ftype@ *)b_dst)[0] = rr;
+        ((@ftype@ *)b_dst)[1] = ri;
     #else
         ((@ftype@ *)b_dst)[0] = rl;
         ((@ftype@ *)b_dst)[1] = -im;
