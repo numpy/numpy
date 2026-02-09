@@ -388,16 +388,16 @@ is_power = re.match(r"^(powerpc|ppc)64", machine, re.IGNORECASE)
 class Test_POWER_Features(AbstractTest):
     features = ["VSX", "VSX2", "VSX3", "VSX4"]
     features_map = { 
-        "VSX":  "ARCH_2_06", 
-        "VSX2": "ARCH_2_07", 
-        "VSX3": "ARCH_3_00", 
+        "VSX":  "ARCH_2_06",
+        "VSX2": "ARCH_2_07",
+        "VSX3": "ARCH_3_00",
         "VSX4": "ARCH_3_1B"
     }
 
     def load_flags(self):
         self.load_flags_auxv()
         platform = self._get_platform()
-        
+
         if platform:
             power_match = re.search(r'power(\d+)', platform, re.IGNORECASE)
             if power_match:
@@ -410,8 +410,8 @@ class Test_POWER_Features(AbstractTest):
                     self.features_flags.add("ARCH_3_00")
                 if power_gen >= 10:
                     self.features_flags.add("ARCH_3_1B")
-    
-    def _get_platform(self):                         
+
+    def _get_platform(self):
         """Get the AT_PLATFORM value from AUXV"""
         try:
             auxv = subprocess.check_output(['/bin/true'], env={"LD_SHOW_AUXV": "1"})
