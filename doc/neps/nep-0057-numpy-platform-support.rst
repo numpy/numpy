@@ -164,13 +164,24 @@ Tier 1
 
 Tier 1 platforms:
 
-- Windows x86-64
-- Windows arm64
-- Windows x86 (32-bit Python: note this is shipped without BLAS, it's legacy)
-- Linux x86-64 (manylinux)
-- Linux aarch64 (manylinux)
-- macOS arm64
-- macOS x86-64 (expected to move to unsupported by 2027/28 once the platform is dropped by GitHub)
++---------------------------+--------------------------------------------------------------------------+
+| Platform                  | Notes                                                                    |
++===========================+==========================================================================+
+| Windows x86-64            |                                                                          |
++---------------------------+--------------------------------------------------------------------------+
+| Windows arm64             |                                                                          |
++---------------------------+--------------------------------------------------------------------------+
+| Windows x86               | 32-bit Python: note this is shipped without BLAS, it's legacy            |
++---------------------------+--------------------------------------------------------------------------+
+| Linux x86-64 (manylinux)  |                                                                          |
++---------------------------+--------------------------------------------------------------------------+
+| Linux aarch64 (manylinux) |                                                                          |
++---------------------------+--------------------------------------------------------------------------+
+| macOS arm64               |                                                                          |
++---------------------------+--------------------------------------------------------------------------+
+| macOS x86-64              | Expected to move to unsupported by 2027/28 once the platform is dropped  |
+|                           | by GitHub                                                                |
++---------------------------+--------------------------------------------------------------------------+
 
 
 Tier 2
@@ -185,9 +196,16 @@ Tier 2
 
 Tier 2 platforms:
 
-- Linux x86-64 (musllinux), *Ralf Gommers*
-- Linux aarch64 (musllinux), *Ralf Gommers*
-- Free-threaded CPython, *Nathan Goldbaum, Kumar Aditya, Ralf Gommers*
++---------------------------+-------+------------------------------------------+
+| Platform                  | Notes | Contacts                                 |
++===========================+=======+==========================================+
+| Linux x86-64 (musllinux)  |       | Ralf Gommers                             |
++---------------------------+-------+------------------------------------------+
+| Linux aarch64 (musllinux) |       | Ralf Gommers                             |
++---------------------------+-------+------------------------------------------+
+| Free-threaded CPython     |       | Nathan Goldbaum, Kumar Aditya,           |
+|                           |       | Ralf Gommers                             |
++---------------------------+-------+------------------------------------------+
 
 
 Tier 3
@@ -204,9 +222,17 @@ Tier 3
 
 Tier 3 platforms:
 
-- FreeBSD (note: runs on Cirrus CI), *Ralf Gommers*
-- Linux ppc64le (note: runs on IBM-provided self-hosted runners), *Sandeep Gupta*
-- Emscripten/Pyodide, *Agriya Khetarpal, Gyeongjae Choi*
++--------------------+----------------------------------------+----------------------------------+
+| Platform           | Notes                                  | Contacts                         |
++====================+========================================+==================================+
+| FreeBSD            | Runs on Cirrus CI                      | Ralf Gommers                     |
++--------------------+----------------------------------------+----------------------------------+
+| Linux ppc64le      | Runs on IBM-provided self-hosted       | Sandeep Gupta                    |
+|                    | runners, see gh-22318_                 |                                  |
++--------------------+----------------------------------------+----------------------------------+
+| Emscripten/Pyodide | We provide nightly wheels, used for    | Agriya Khetarpal, Gyeongjae Choi |
+|                    | interactive docs                       |                                  |
++--------------------+----------------------------------------+----------------------------------+
 
 
 Unsupported platforms
@@ -226,17 +252,31 @@ they:
 Unsupported platforms (previously in a supported tier, may be an incomplete
 list):
 
-- PyPy
-- macOS ppc64, universal, universal2
-- Linux i686
-- Linux on IBM Z (s390x)
++------------------------------------+--------------------------------+
+| Platform                           | Notes                          |
++====================================+================================+
+| PyPy                               | See gh-30416_                  |
++------------------------------------+--------------------------------+
+| macOS ppc64, universal, universal2 |                                |
++------------------------------------+--------------------------------+
+| Linux i686                         | Dropped in 1.22.0, low demand  |
++------------------------------------+--------------------------------+
+| Linux on IBM Z (s390x)             | CI jobs used to run on TravisCI|
++------------------------------------+--------------------------------+
 
 Unsupported platforms (known interest in moving to a higher tier):
 
-- iOS
-- Android
-- RISC-V
-- WASI
++----------+------------------+
+| Platform | Notes            |
++==========+==================+
+| iOS      | See gh-28759_    |
++----------+------------------+
+| Android  | See gh-30412_    |
++----------+------------------+
+| RISC-V   | See gh-30216_    |
++----------+------------------+
+| WASI     | See gh-25859_    |
++----------+------------------+
 
 
 Backward compatibility
@@ -270,6 +310,14 @@ Discussion
 
 References and footnotes
 ------------------------
+
+.. _gh-22318: https://github.com/numpy/numpy/issues/22318
+.. _gh-22530: https://github.com/numpy/numpy/issues/22530
+.. _gh-25859: https://github.com/numpy/numpy/issues/25859
+.. _gh-28759: https://github.com/numpy/numpy/pull/28759
+.. _gh-30216: https://github.com/numpy/numpy/issues/30216
+.. _gh-30412: https://github.com/numpy/numpy/pull/30412
+.. _gh-30416: https://github.com/numpy/numpy/issues/30416
 
 
 Copyright
