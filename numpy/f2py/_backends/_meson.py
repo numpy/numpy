@@ -187,7 +187,7 @@ class MesonTemplate:
         
         # Determine the OpenMP library based on compiler/flags
         openmp_lib = 'gomp'  # Default for GCC
-        is_intel ('ifort' in str(arg) or 'ifx' in str(arg) or 'qopenmp' in str(arg).lower() 
+        is_intel = any('ifort' in str(arg) or 'ifx' in str(arg) or 'qopenmp' in str(arg).lower() 
                for arg in self.fortran_args)
         if is_intel:
             openmp_lib = 'iomp5'
@@ -203,7 +203,7 @@ class MesonTemplate:
 
         if compile_args:
             lines.append(f"    compile_args: [{', '.join(compile_args)}],")
-        
+
         # Add link args
         link_args = []
         if self.openmp_lib_dir:
@@ -212,11 +212,11 @@ class MesonTemplate:
 
         if is_intel and compile_args:
             link_args.extend(compile_args)
-        
+
         lines.append(f"    link_args: [{', '.join(link_args)}],")
         lines.append("  )")
         lines.append("endif")
-        
+
         return "\n".join(lines)
 
     def libraries_substitution(self) -> None:
@@ -257,14 +257,14 @@ class MesonTemplate:
     def rpath_substitution(self) -> None:
         """NEW: Generate rpath configuration for runtime library loading"""
         rpath_dirs = []
-        
+
         # Add all library directories
         rpath_dirs.extend([str(lib_dir) for lib_dir in self.library_dirs])
-        
+
         # Add OpenMP library directory if detected
         if self.openmp_lib_dir:
             rpath_dirs.append(str(self.openmp_lib_dir))
-        
+
         if rpath_dirs:
             # Remove duplicates while preserving order
             unique_rpath_dirs = list(dict.fromkeys(rpath_dirs))
@@ -272,7 +272,7 @@ class MesonTemplate:
             self.substitutions["rpath"] = f"{self.indent}install_rpath: [{rpath_list}],"
         else:
             self.substitutions["rpath"] = ""
-    
+
     def link_language_substitution(self) -> None:
         """Force Fortran as link language when OpenMP is used with Intel compilers"""
         # Intel compilers need Fortran linker for OpenMP, not C linker
