@@ -60,8 +60,9 @@ class MesonTemplate:
             self.include_substitution,
             self.libraries_substitution,
             self.fortran_args_substitution,
-            self.rpath_substitution,  # NEW: Add rpath handling
-        ]    
+            self.rpath_substitution,  #Add rpath handling
+            self.link_language_substitution,  #For Intel compiler
+        ]
         self.build_type = build_type
         self.python_exe = python_exe
         self.indent = " " * 21
@@ -152,11 +153,8 @@ class MesonTemplate:
         
         for dep in self.deps:
             if dep.lower() == 'openmp':
-                # Special handling for OpenMP
-                deps_list.append(
-                    f"{self.indent}openmp_dep,"
-                )
-                openmp_handled = True
+                deps_list.append(f"{self.indent}openmp_dep,")
+                openmp_handled=True
             else:
                 deps_list.append(
                     f"{self.indent}dependency('{dep}'),"
@@ -189,19 +187,20 @@ class MesonTemplate:
         
         # Determine the OpenMP library based on compiler/flags
         openmp_lib = 'gomp'  # Default for GCC
-        if any('ifort' in str(arg) or 'ifx' in str(arg) or 'qopenmp' in str(arg).lower() 
-               for arg in self.fortran_args):
-            openmp_lib = 'iomp5'  # Intel compiler
-        
+        is_intel ('ifort' in str(arg) or 'ifx' in str(arg) or 'qopenmp' in str(arg).lower() 
+               for arg in self.fortran_args)
+        if is_intel:
+            openmp_lib = 'iomp5'
+
         lines.append("  openmp_dep = declare_dependency(")
-        
+
         # Add compile args
         compile_args = []
         for arg in self.fortran_args:
             arg_stripped = arg.strip("'\"")
             if any(omp_flag in arg_stripped for omp_flag in ['-fopenmp', '-qopenmp', '-openmp', '/Qopenmp']):
                 compile_args.append(arg)
-        
+
         if compile_args:
             lines.append(f"    compile_args: [{', '.join(compile_args)}],")
         
@@ -210,6 +209,9 @@ class MesonTemplate:
         if self.openmp_lib_dir:
             link_args.append(f"'-L{self.openmp_lib_dir}'")
         link_args.append(f"'-l{openmp_lib}'")
+
+        if is_intel and compile_args:
+            link_args.extend(compile_args)
         
         lines.append(f"    link_args: [{', '.join(link_args)}],")
         lines.append("  )")
@@ -270,6 +272,17 @@ class MesonTemplate:
             self.substitutions["rpath"] = f"{self.indent}install_rpath: [{rpath_list}],"
         else:
             self.substitutions["rpath"] = ""
+    
+    def link_language_substitution(self) -> None:
+        """Force Fortran as link language when OpenMP is used with Intel compilers"""
+        # Intel compilers need Fortran linker for OpenMP, not C linker
+        is_intel = any('ifort' in str(arg) or 'ifx' in str(arg) or 'qopenmp' in str(arg).lower() 
+                       for arg in self.fortran_args)
+
+        if self.has_openmp and is_intel:
+            self.substitutions["override_options"] = f"{self.indent}override_options: ['fortran_link_language=fortran'],"
+        else:
+            self.substitutions["override_options"] = ""
 
     def generate_meson_build(self):
         for node in self.pipeline:
