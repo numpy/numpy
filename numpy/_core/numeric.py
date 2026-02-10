@@ -2549,7 +2549,7 @@ def array_equal(a1, a2, equal_nan=False):
     if cannot_have_nan:
         return builtins.bool(asarray(a1 == a2).all())
 
-    # fast path for a1 and a2 being all NaN arrays
+    # Fast path for a1 and a2 being all NaN arrays
     a1nan = isnan(a1)
     if a1nan.all():
         return builtins.bool(isnan(a2).all())
