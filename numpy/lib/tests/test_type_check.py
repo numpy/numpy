@@ -1,5 +1,3 @@
-import pytest
-
 import numpy as np
 from numpy import (
     common_type,
@@ -473,12 +471,3 @@ class TestRealIfClose:
         assert_all(iscomplexobj(b))
         b = real_if_close(a + 1e-7j, tol=1e-6)
         assert_all(isrealobj(b))
-
-class TestTypenameDeprecation:
-    """Test that numpy.typename emits a DeprecationWarning."""
-
-    def test_typename_emits_deprecation_warning(self):
-        with pytest.warns(DeprecationWarning, match="numpy.typename is deprecated"):
-            np.typename("S1")
-        with pytest.warns(DeprecationWarning, match="numpy.typename is deprecated"):
-            np.typename("h")
