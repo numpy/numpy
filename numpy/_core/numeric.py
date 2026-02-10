@@ -2471,6 +2471,7 @@ _no_nan_types = {
 def _dtype_cannot_hold_nan(dtype):
     return type(dtype) in _no_nan_types
 
+
 @array_function_dispatch(_array_equal_dispatcher)
 def array_equal(a1, a2, equal_nan=False):
     """
@@ -2548,10 +2549,14 @@ def array_equal(a1, a2, equal_nan=False):
     if cannot_have_nan:
         return builtins.bool(asarray(a1 == a2).all())
 
-    # Optimized NaN handling: single vectorized predicate + reduction
-    # replaces the original boolean-mask + fancy-index approach
-    equal_or_both_nan = (a1 == a2) | (isnan(a1) & isnan(a2))
+    # fast path for a1 and a2 being all NaN arrays
+    a1nan = isnan(a1)
+    if a1nan.all():
+        return builtins.bool(isnan(a2).all())
+
+    equal_or_both_nan = (a1 == a2) | (a1nan & isnan(a2))
     return builtins.bool(equal_or_both_nan.all())
+
 
 def _array_equiv_dispatcher(a1, a2):
     return (a1, a2)
