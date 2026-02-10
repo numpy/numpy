@@ -61,15 +61,17 @@ CPython.*
 Platform support is broken down into tiers. Each tier comes with different
 requirements which lead to different promises being made about support.
 
-To be promoted to a tier, steering council support is required and is expected
-to be driven by team consensus. Demotion to a lower tier occurs when the
-requirements of the current tier are no longer met for a platform for an
-extended period of time based on the judgment of the steering council. For
-platforms which no longer meet the requirements of any tier by the middle of a
-new feature release cycle, an announcement will be made to warn the community
-of the pending removal of support for the platform. If the platform is not
-brought into line for at least one of the tiers by the first release candidate,
-it will be listed as unsupported in this NEP.
+To be promoted to a tier,
+`Steering council
+<https://numpy.org/doc/stable/dev/governance/governance.html#steering-council>`__
+support is required and is expected to be driven by team consensus. Demotion to
+a lower tier occurs when the requirements of the current tier are no longer met
+for a platform for an extended period of time based on the judgment of the
+Steering Council. For platforms which no longer meet the requirements of any
+tier by the middle of a new feature release cycle, an announcement will be made
+to warn the community of the pending removal of support for the platform. If
+the platform is not brought into line for at least one of the tiers by the
+first release candidate, it will be listed as unsupported in this NEP.
 
 
 General principles
@@ -113,7 +115,7 @@ General principles
    case-by-case basis.
 
 5. For all platforms in any supported tier: the relevant prerequisites in our
-   dependencies have been met. E.g., build tools have support, and for wheels
+   dependencies must be met. E.g., build tools have support, and for wheels
    there is support in CPython, PyPI, cibuildwheel, manylinux, and
    ``scipy-openblas64`` or another easily-integrated BLAS library.
 
@@ -155,7 +157,7 @@ Tier 1
 ~~~~~~
 
 - Must have regular CI support on GitHub or (exceptionally) through another
-  well-integrated CI platform that the release team and steering council deem
+  well-integrated CI platform that the release team and Steering Council deem
   acceptable.
 - The NumPy team releases wheels on PyPI for this platform.
 - CI failures (either regular CI or wheel build CI) block releases.
@@ -230,8 +232,8 @@ Tier 3 platforms:
 | Linux ppc64le      | Runs on IBM-provided self-hosted       | Sandeep Gupta                    |
 |                    | runners, see gh-22318_                 |                                  |
 +--------------------+----------------------------------------+----------------------------------+
-| Emscripten/Pyodide | We provide nightly wheels, used for    | Agriya Khetarpal, Gyeongjae Choi |
-|                    | interactive docs                       |                                  |
+| Emscripten/Pyodide | We currently provide nightly wheels,   | Agriya Khetarpal, Gyeongjae Choi |
+|                    | used for interactive docs              |                                  |
 +--------------------+----------------------------------------+----------------------------------+
 
 
@@ -252,17 +254,18 @@ they:
 Unsupported platforms (previously in a supported tier, may be an incomplete
 list):
 
-+------------------------------------+--------------------------------+
-| Platform                           | Notes                          |
-+====================================+================================+
-| PyPy                               | See gh-30416_                  |
-+------------------------------------+--------------------------------+
-| macOS ppc64, universal, universal2 |                                |
-+------------------------------------+--------------------------------+
-| Linux i686                         | Dropped in 1.22.0, low demand  |
-+------------------------------------+--------------------------------+
-| Linux on IBM Z (s390x)             | CI jobs used to run on TravisCI|
-+------------------------------------+--------------------------------+
++------------------------------------+--------------------------------------------------+
+| Platform                           | Notes                                            |
++====================================+==================================================+
+| PyPy                               | Was Tier 2 until the 2.4.x releases, see         |
+|                                    | gh-30416_                                        |
++------------------------------------+--------------------------------------------------+
+| macOS ppc64, universal, universal2 |                                                  |
++------------------------------------+--------------------------------------------------+
+| Linux i686                         | Dropped in 1.22.0, low demand                    |
++------------------------------------+--------------------------------------------------+
+| Linux on IBM Z (s390x)             | CI jobs used to run on TravisCI                  |
++------------------------------------+--------------------------------------------------+
 
 Unsupported platforms (known interest in moving to a higher tier):
 
