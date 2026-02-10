@@ -1012,6 +1012,19 @@ ndarray_from_pyobj(const int type_num,
             PyArray_ITEMSIZE(arr) == elsize &&
             ARRAY_ISCOMPATIBLE(arr,type_num) &&
             F2PY_CHECK_ALIGNMENT(arr, intent)) {
+            /* DEPRECATION WARNING for intent(inplace) - see gh-30809 */
+            if (intent & F2PY_INTENT_INPLACE) {
+                if (PyErr_WarnEx(PyExc_VisibleDeprecationWarning,
+                    "intent(inplace) behavior has changed in NumPy and may be "
+                    "deprecated in a future release. The previous implementation "
+                    "was unsafe and could corrupt data. Ensure your arrays have "
+                    "the correct dtype, or migrate to intent(in, out) for "
+                    "explicit behavior. See gh-30809 for details.",
+                    1) < 0) {
+                    Py_DECREF(descr);
+                    return NULL;
+                }
+            }
             if ((intent & F2PY_INTENT_INOUT || intent & F2PY_INTENT_INPLACE)
               ? ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY(arr) : PyArray_ISFARRAY(arr))
               : ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY_RO(arr) : PyArray_ISFARRAY_RO(arr))) {
