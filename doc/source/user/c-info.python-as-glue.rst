@@ -159,34 +159,102 @@ work with multidimensional arrays.
 
 Notice that Cython is an extension-module generator only. Unlike f2py,
 it includes no automatic facility for compiling and linking
-the extension module (which must be done in the usual fashion). It
-does provide a modified distutils class called ``build_ext`` which lets
-you build an extension module from a ``.pyx`` source. Thus, you could
-write in a ``setup.py`` file:
+the extension module. However, many Python build tools have support for Cython.
+
+Here is an example of how to set up a Python project that contains a Cython
+extension. The example uses the `meson-python Python build backend
+<https://mesonbuild.com/meson-python/>`_ and `the meson build system
+<https://mesonbuild.com>`_. This is the same build system NumPy itself uses.
+.
+
+First, create a file named ``my_extension.pyx``.
+
+.. code-block:: cython
+
+   cimport numpy as np
+
+   def say_hello():
+       print("Hello!")
+
+This file lives next to a ``__init__.py`` file with the following content:
 
 .. code-block:: python
 
-    from Cython.Distutils import build_ext
-    from distutils.extension import Extension
-    from distutils.core import setup
-    import numpy
+   from .my_extension import say_hello
 
-    setup(name='mine', description='Nothing',
-          ext_modules=[Extension('filter', ['filter.pyx'],
-                                 include_dirs=[numpy.get_include()])],
-          cmdclass = {'build_ext':build_ext})
+Now you need to create two more files to set up the build system. First, a
+``meson.build`` file:
 
-Adding the NumPy include directory is, of course, only necessary if
-you are using NumPy arrays in the extension module (which is what we
-assume you are using Cython for). 
-If you just use Cython to compile a standard Python module, then you
-will get a C extension module that typically runs a bit faster than the
-equivalent Python module. Further speed increases can be gained by using
-the ``cdef`` keyword to statically define C variables.
+.. code-block:: meson
+
+  project(
+     'module_with_extension',
+     'c', 'cython',
+     version: '0.0.1',
+     license: 'MIT',
+  )
+
+  cython = find_program('cython')
+  py = import('python').find_installation(pure: false)
+
+  numpy_nodepr_api = ['-DNPY_NO_DEPRECATED_API=NPY_2_0_API_VERSION']
+
+  np_dep = declare_dependency(dependencies: dependency('numpy'),
+                              compile_args: numpy_nodepr_api)
+
+  py.extension_module(
+    'my_extension',
+    'my_extension.pyx',
+    dependencies: [np_dep],
+    install: true,
+    subdir: 'my_module_with_extension',
+  )
+
+  py.install_sources(
+    '__init__.py',
+    subdir: 'my_module_with_extension',
+  )
+
+And a ``pyproject.toml`` file with the following content:
+
+.. code-block:: toml
+
+   [build-system]
+   build-backend = "mesonpy"
+   requires = [
+       "meson-python",
+       "Cython>=3.0.0",
+       "numpy",
+   ]
+
+   [project]
+   name = "my_module_with_extension"
+   version = "0.0.1"
+   license = "MIT"
+   dependencies = ["numpy"]
+
+You should then be able to do the following command to build, install, and call
+the function defined in the extension from Python:
+
+.. code-block:: bash
+
+   $ pip install .
+   $ python -c "from my_module_with_extension import say_hello; say_hello()"
+   "Hello!"
+
+Adding a NumPy dependency to your Meson configuration is only necessary
+if you are using the NumPy C API in the extension module via ``cimport
+numpy`` (which is what we assume you are using Cython for).  If you just
+use Cython to compile a standard Python module, then you will get a C
+extension module that typically runs a bit faster than the equivalent
+Python module. Further speed increases can be gained by using the
+``cdef`` keyword to statically define C variables.
+
+See the meson and meson-python documentation for more details on how to
+build more complicated extensions.
 
 Let's look at two examples we've seen before to see how they might be
-implemented using Cython. These examples were compiled into extension
-modules using Cython 0.21.1.
+implemented using Cython.
 
 
 Complex addition in Cython
