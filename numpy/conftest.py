@@ -185,6 +185,7 @@ if HAVE_SCPDT:
                 "NumPy warning suppression and assertion utilities are deprecated.",
                 "numpy.fix is deprecated",  # fix -> trunc
                 "The chararray class is deprecated",  # char.chararray
+                "numpy.typename is deprecated",  # typename -> dtype.name
         ]
         msg = "|".join(msgs)
 
