@@ -312,49 +312,45 @@ struct UnaryOpTraits<negative_t> {
     // Dispatch based on scalar type T
     template <typename T, typename SIMD>
     static NPY_INLINE SIMD simd_op(SIMD v) {
-        if constexpr (std::is_same_v<T, int8_t>) {
-            return npyv_negative_s8(v);
-        } else if constexpr (std::is_same_v<T, uint8_t>) {
-            return npyv_negative_u8(v);
-        } else if constexpr (std::is_same_v<T, int16_t>) {
-            return npyv_negative_s16(v);
-        } else if constexpr (std::is_same_v<T, uint16_t>) {
-            return npyv_negative_u16(v);
-        } else if constexpr (std::is_same_v<T, int32_t>) {
-            return npyv_negative_s32(v);
-        } else if constexpr (std::is_same_v<T, uint32_t>) {
-            return npyv_negative_u32(v);
-        } else if constexpr (std::is_same_v<T, int64_t>) {
-            return npyv_negative_s64(v);
-        } else if constexpr (std::is_same_v<T, uint64_t>) {
-            return npyv_negative_u64(v);
-        } else if constexpr (std::is_same_v<T, long>) {
-#if SIZEOF_LONG == 4
-            return npyv_negative_s32(v);
-#else
-            return npyv_negative_s64(v);
-#endif
-        } else if constexpr (std::is_same_v<T, unsigned long>) {
-#if SIZEOF_LONG == 4
-            return npyv_negative_u32(v);
-#else
-            return npyv_negative_u64(v);
-#endif
-        } else if constexpr (std::is_same_v<T, long long>) {
-            return npyv_negative_s64(v);
-        } else if constexpr (std::is_same_v<T, unsigned long long>) {
-            return npyv_negative_u64(v);
-        }
+        if constexpr (std::is_integral_v<T>) {
+            if constexpr (sizeof(T) == 1) {
+                if constexpr (std::is_signed_v<T>) {
+                    return npyv_negative_s8(v);
+                } else {
+                    return npyv_negative_u8(v);
+                }
+            } else if constexpr (sizeof(T) == 2) {
+                if constexpr (std::is_signed_v<T>) {
+                    return npyv_negative_s16(v);
+                } else {
+                    return npyv_negative_u16(v);
+                }
+            } else if constexpr (sizeof(T) == 4) {
+                if constexpr (std::is_signed_v<T>) {
+                    return npyv_negative_s32(v);
+                } else {
+                    return npyv_negative_u32(v);
+                }
+            } else if constexpr (sizeof(T) == 8) {
+                if constexpr (std::is_signed_v<T>) {
+                    return npyv_negative_s64(v);
+                } else {
+                    return npyv_negative_u64(v);
+                }
+            }
+        } else if constexpr (std::is_floating_point_v<T>) {
 #if NPY_SIMD_F32
-        else if constexpr (std::is_same_v<T, float>) {
-            return npyv_negative_f32(v);
-        }
+            if constexpr (std::is_same_v<T, float>) {
+                return npyv_negative_f32(v);
+            }
 #endif
 #if NPY_SIMD_F64
-        else if constexpr (std::is_same_v<T, double>) {
-            return npyv_negative_f64(v);
-        }
+            if constexpr (std::is_same_v<T, double>) {
+                return npyv_negative_f64(v);
+            }
 #endif
+        }
+        return v;
     }
 #endif // NPY_SIMD
 };
@@ -364,30 +360,27 @@ struct UnaryOpTraits<negative_t> {
 template<typename T>
 static constexpr int simd_nlanes() {
     // Dispatch on scalar type T
-    if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, uint8_t>) {
-        return npyv_nlanes_u8;
-    } else if constexpr (std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t>) {
-        return npyv_nlanes_u16;
-    } else if constexpr (std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t>) {
-        return npyv_nlanes_u32;
-    } else if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>) {
-        return npyv_nlanes_u64;
-    } else if constexpr (std::is_same_v<T, long>) {
-#if SIZEOF_LONG == 4
-        return npyv_nlanes_u32;
-#else
-        return npyv_nlanes_u64;
+    if constexpr (std::is_integral_v<T>) {
+        if constexpr (sizeof(T) == 1) {
+            return npyv_nlanes_u8;
+        } else if constexpr (sizeof(T) == 2) {
+            return npyv_nlanes_u16;
+        } else if constexpr (sizeof(T) == 4) {
+            return npyv_nlanes_u32;
+        } else if constexpr (sizeof(T) == 8) {
+            return npyv_nlanes_u64;
+        }
+    } else if constexpr (std::is_floating_point_v<T>) {
+#if NPY_SIMD_F32
+        if constexpr (sizeof(T) == 4) {
+            return npyv_nlanes_f32;
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, unsigned long>) {
-#if SIZEOF_LONG == 4
-        return npyv_nlanes_u32;
-#else
-        return npyv_nlanes_u64;
+#if NPY_SIMD_F64
+        if constexpr (sizeof(T) == 8) {
+            return npyv_nlanes_f64;
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, float>) {
-        return npyv_nlanes_f32;
-    } else if constexpr (std::is_same_v<T, double>) {
-        return npyv_nlanes_f64;
     }
     return 0; // Fallback
 }
@@ -395,38 +388,43 @@ static constexpr int simd_nlanes() {
 template <typename T>
 static NPY_INLINE auto simd_load(const T* ptr) {
     // Dispatch on scalar type T
-    if constexpr (std::is_same_v<T, int8_t>) {
-        return npyv_load_s8(reinterpret_cast<const npyv_lanetype_s8*>(ptr));
-    } else if constexpr (std::is_same_v<T, uint8_t>) {
-        return npyv_load_u8(reinterpret_cast<const npyv_lanetype_u8*>(ptr));
-    } else if constexpr (std::is_same_v<T, int16_t>) {
-        return npyv_load_s16(reinterpret_cast<const npyv_lanetype_s16*>(ptr));
-    } else if constexpr (std::is_same_v<T, uint16_t>) {
-        return npyv_load_u16(reinterpret_cast<const npyv_lanetype_u16*>(ptr));
-    } else if constexpr (std::is_same_v<T, int32_t>) {
-        return npyv_load_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr));
-    } else if constexpr (std::is_same_v<T, uint32_t>) {
-        return npyv_load_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr));
-    } else if constexpr (std::is_same_v<T, int64_t>) {
-        return npyv_load_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr));
-    } else if constexpr (std::is_same_v<T, uint64_t>) {
-        return npyv_load_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr));
-    } else if constexpr (std::is_same_v<T, long>) {
-#if SIZEOF_LONG == 4
-        return npyv_load_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr));
-#else
-        return npyv_load_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr));
+    if constexpr (std::is_integral_v<T>) {
+        if constexpr (sizeof(T) == 1) {
+            if constexpr (std::is_signed_v<T>) {
+                return npyv_load_s8(reinterpret_cast<const npyv_lanetype_s8*>(ptr));
+            } else {
+                return npyv_load_u8(reinterpret_cast<const npyv_lanetype_u8*>(ptr));
+            }
+        } else if constexpr (sizeof(T) == 2) {
+            if constexpr (std::is_signed_v<T>) {
+                return npyv_load_s16(reinterpret_cast<const npyv_lanetype_s16*>(ptr));
+            } else {
+                return npyv_load_u16(reinterpret_cast<const npyv_lanetype_u16*>(ptr));
+            }
+        } else if constexpr (sizeof(T) == 4) {
+            if constexpr (std::is_signed_v<T>) {
+                return npyv_load_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr));
+            } else {
+                return npyv_load_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr));
+            }
+        } else if constexpr (sizeof(T) == 8) {
+            if constexpr (std::is_signed_v<T>) {
+                return npyv_load_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr));
+            } else {
+                return npyv_load_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr));
+            }
+        }
+    } else if constexpr (std::is_floating_point_v<T>) {
+#if NPY_SIMD_F32
+        if constexpr (sizeof(T) == 4) {
+             return npyv_load_f32(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr));
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, unsigned long>) {
-#if SIZEOF_LONG == 4
-        return npyv_load_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr));
-#else
-        return npyv_load_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr));
+#if NPY_SIMD_F64
+        if constexpr (sizeof(T) == 8) {
+             return npyv_load_f64(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr));
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, float>) {
-        return npyv_load_f32(reinterpret_cast<const npyv_lanetype_f32*>(ptr));
-    } else if constexpr (std::is_same_v<T, double>) {
-        return npyv_load_f64(reinterpret_cast<const npyv_lanetype_f64*>(ptr));
     }
     using SIMD = typename SIMDTypeTraits<T>::simd_type;
     return SIMD{}; // Fallback
@@ -435,38 +433,43 @@ static NPY_INLINE auto simd_load(const T* ptr) {
 template<typename T>
 static NPY_INLINE void simd_store(T* ptr, typename SIMDTypeTraits<T>::simd_type v) {
     // Dispatch on scalar type T
-    if constexpr (std::is_same_v<T, int8_t>) {
-        npyv_store_s8(reinterpret_cast<npyv_lanetype_s8*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, uint8_t>) {
-        npyv_store_u8(reinterpret_cast<npyv_lanetype_u8*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, int16_t>) {
-        npyv_store_s16(reinterpret_cast<npyv_lanetype_s16*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, uint16_t>) {
-        npyv_store_u16(reinterpret_cast<npyv_lanetype_u16*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, int32_t>) {
-        npyv_store_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, uint32_t>) {
-        npyv_store_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, int64_t>) {
-        npyv_store_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, uint64_t>) {
-        npyv_store_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, long>) {
-#if SIZEOF_LONG == 4
-        npyv_store_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), v);
-#else
-        npyv_store_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), v);
+    if constexpr (std::is_integral_v<T>) {
+        if constexpr (sizeof(T) == 1) {
+            if constexpr (std::is_signed_v<T>) {
+                npyv_store_s8(reinterpret_cast<npyv_lanetype_s8*>(ptr), v);
+            } else {
+                npyv_store_u8(reinterpret_cast<npyv_lanetype_u8*>(ptr), v);
+            }
+        } else if constexpr (sizeof(T) == 2) {
+            if constexpr (std::is_signed_v<T>) {
+                npyv_store_s16(reinterpret_cast<npyv_lanetype_s16*>(ptr), v);
+            } else {
+                npyv_store_u16(reinterpret_cast<npyv_lanetype_u16*>(ptr), v);
+            }
+        } else if constexpr (sizeof(T) == 4) {
+            if constexpr (std::is_signed_v<T>) {
+                npyv_store_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), v);
+            } else {
+                npyv_store_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), v);
+            }
+        } else if constexpr (sizeof(T) == 8) {
+            if constexpr (std::is_signed_v<T>) {
+                npyv_store_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), v);
+            } else {
+                npyv_store_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), v);
+            }
+        }
+    } else if constexpr (std::is_floating_point_v<T>) {
+#if NPY_SIMD_F32
+        if constexpr (sizeof(T) == 4) {
+             npyv_store_f32(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), v);
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, unsigned long>) {
-#if SIZEOF_LONG == 4
-        npyv_store_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), v);
-#else
-        npyv_store_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), v);
+#if NPY_SIMD_F64
+        if constexpr (sizeof(T) == 8) {
+             npyv_store_f64(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), v);
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, float>) {
-        npyv_store_f32(reinterpret_cast<npyv_lanetype_f32*>(ptr), v);
-    } else if constexpr (std::is_same_v<T, double>) {
-        npyv_store_f64(reinterpret_cast<npyv_lanetype_f64*>(ptr), v);
     }
 }
 
@@ -474,34 +477,31 @@ static NPY_INLINE void simd_store(T* ptr, typename SIMDTypeTraits<T>::simd_type 
 template<typename T>
 static NPY_INLINE auto simd_loadn(const T* ptr, npy_intp stride) {
     // Dispatch on scalar type T
-    if constexpr (std::is_same_v<T, int32_t>) {
-        return npyv_loadn_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, uint32_t>) {
-        return npyv_loadn_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, int64_t>) {
-        return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, uint64_t>) {
-        return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, float>) {
-        return npyv_loadn_f32(reinterpret_cast<const npyv_lanetype_f32*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, double>) {
-        return npyv_loadn_f64(reinterpret_cast<const npyv_lanetype_f64*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, long>) {
-#if SIZEOF_LONG == 4
-        return npyv_loadn_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr), stride);
-#else
-        return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
+    if constexpr (std::is_integral_v<T>) {
+        if constexpr (sizeof(T) == 4) {
+            if constexpr (std::is_signed_v<T>) {
+                return npyv_loadn_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr), stride);
+            } else {
+                return npyv_loadn_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr), stride);
+            }
+        } else if constexpr (sizeof(T) == 8) {
+            if constexpr (std::is_signed_v<T>) {
+                return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
+            } else {
+                return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
+            }
+        }
+    } else if constexpr (std::is_floating_point_v<T>) {
+#if NPY_SIMD_F32
+        if constexpr (sizeof(T) == 4) {
+             return npyv_loadn_f32(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr), stride);
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, unsigned long>) {
-#if SIZEOF_LONG == 4
-        return npyv_loadn_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr), stride);
-#else
-        return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
+#if NPY_SIMD_F64
+        if constexpr (sizeof(T) == 8) {
+             return npyv_loadn_f64(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr), stride);
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, long long>) {
-        return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
-    } else if constexpr (std::is_same_v<T, unsigned long long>) {
-        return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
     }
     using SIMD = typename SIMDTypeTraits<T>::simd_type;
     return SIMD{};
@@ -511,34 +511,31 @@ static NPY_INLINE auto simd_loadn(const T* ptr, npy_intp stride) {
 template<typename T>
 static NPY_INLINE void simd_storen(T* ptr, npy_intp stride, typename SIMDTypeTraits<T>::simd_type v) {
     // Dispatch on scalar type T
-    if constexpr (std::is_same_v<T, int32_t>) {
-        npyv_storen_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, uint32_t>) {
-        npyv_storen_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, int64_t>) {
-        npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, uint64_t>) {
-        npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, float>) {
-        npyv_storen_f32(reinterpret_cast<npyv_lanetype_f32*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, double>) {
-        npyv_storen_f64(reinterpret_cast<npyv_lanetype_f64*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, long>) {
-#if SIZEOF_LONG == 4
-        npyv_storen_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), stride, v);
-#else
-        npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
+    if constexpr (std::is_integral_v<T>) {
+        if constexpr (sizeof(T) == 4) {
+            if constexpr (std::is_signed_v<T>) {
+                npyv_storen_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), stride, v);
+            } else {
+                npyv_storen_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), stride, v);
+            }
+        } else if constexpr (sizeof(T) == 8) {
+            if constexpr (std::is_signed_v<T>) {
+                npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
+            } else {
+                npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
+            }
+        }
+    } else if constexpr (std::is_floating_point_v<T>) {
+#if NPY_SIMD_F32
+        if constexpr (sizeof(T) == 4) {
+             npyv_storen_f32(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), stride, v);
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, unsigned long>) {
-#if SIZEOF_LONG == 4
-        npyv_storen_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), stride, v);
-#else
-        npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
+#if NPY_SIMD_F64
+        if constexpr (sizeof(T) == 8) {
+             npyv_storen_f64(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), stride, v);
+        }
 #endif
-    } else if constexpr (std::is_same_v<T, long long>) {
-        npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
-    } else if constexpr (std::is_same_v<T, unsigned long long>) {
-        npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
     }
 }
 #endif
