@@ -1,4 +1,4 @@
-name: Native ppc64le Linux Test
+name: Native ppc64le and s390x Linux Tests
 
 on:
   pull_request:
@@ -20,21 +20,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  native_ppc64le:
-    # This job runs only in the main NumPy repository.
-    # It requires a native ppc64le GHA runner, which is not available on forks.
+  native_ppc64le_and_s390x:
+    # These jobs runs only in the main NumPy repository.
+    # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
     # For more details, see: https://github.com/numpy/numpy/issues/29125
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-24.04-ppc64le-p10
+    runs-on: ${{ matrix.config.runner }}
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - name: "GCC"
+          - name: "GCC (ppc64le)"
             args: "-Dallow-noblas=false"
-          - name: "clang"
+            runner: ubuntu-24.04-ppc64le-p10
+            compiler: "gcc"
+          - name: "clang (ppc64le)"
             args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-ppc64le-p10
+            compiler: "clang"
+          - name: "GCC (s390x)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+            compiler: "gcc"
+          - name: "clang (s390x)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+            compiler: "clang"
+          - name: "GCC with zvector (s390x)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vx"
+            runner: ubuntu-24.04-s390x
+            compiler: "gcc"
+          - name: "clang with zvector (s390x)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vx"
+            runner: ubuntu-24.04-s390x
+            compiler: "clang"
 
     name: "${{ matrix.config.name }}"
     steps:
@@ -53,7 +73,7 @@ jobs:
         echo "/home/runner/.local/bin" >> $GITHUB_PATH
 
     - name: Install clang
-      if: matrix.config.name == 'clang'
+      if: matrix.config.compiler == 'clang'
       run: |
         sudo apt install -y clang
         export CC=clang
