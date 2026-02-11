@@ -645,8 +645,6 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
     
 #if NPY_SIMD
     if constexpr (Traits::has_simd) {
-        using Lane = typename Traits::lane_type;
-        
         if (!is_mem_overlap(ip, istep, op, ostep, len)) {
             if (IS_UNARY_CONT(T, T)) {
                 // Both contiguous
