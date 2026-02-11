@@ -786,7 +786,7 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
     }
     return;
     
-clear:
+clear: [[maybe_unused]]
     if constexpr (Traits::has_simd) {
         npyv_cleanup();
     }
