@@ -486,6 +486,22 @@ static NPY_INLINE auto simd_loadn(const T* ptr, npy_intp stride) {
         return npyv_loadn_f32(reinterpret_cast<const npyv_lanetype_f32*>(ptr), stride);
     } else if constexpr (std::is_same_v<T, double>) {
         return npyv_loadn_f64(reinterpret_cast<const npyv_lanetype_f64*>(ptr), stride);
+    } else if constexpr (std::is_same_v<T, long>) {
+#if SIZEOF_LONG == 4
+        return npyv_loadn_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr), stride);
+#else
+        return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
+#endif
+    } else if constexpr (std::is_same_v<T, unsigned long>) {
+#if SIZEOF_LONG == 4
+        return npyv_loadn_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr), stride);
+#else
+        return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
+#endif
+    } else if constexpr (std::is_same_v<T, long long>) {
+        return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
+    } else if constexpr (std::is_same_v<T, unsigned long long>) {
+        return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
     }
     using SIMD = typename SIMDTypeTraits<T>::simd_type;
     return SIMD{};
@@ -507,6 +523,22 @@ static NPY_INLINE void simd_storen(T* ptr, npy_intp stride, typename SIMDTypeTra
         npyv_storen_f32(reinterpret_cast<npyv_lanetype_f32*>(ptr), stride, v);
     } else if constexpr (std::is_same_v<T, double>) {
         npyv_storen_f64(reinterpret_cast<npyv_lanetype_f64*>(ptr), stride, v);
+    } else if constexpr (std::is_same_v<T, long>) {
+#if SIZEOF_LONG == 4
+        npyv_storen_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), stride, v);
+#else
+        npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
+#endif
+    } else if constexpr (std::is_same_v<T, unsigned long>) {
+#if SIZEOF_LONG == 4
+        npyv_storen_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), stride, v);
+#else
+        npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
+#endif
+    } else if constexpr (std::is_same_v<T, long long>) {
+        npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
+    } else if constexpr (std::is_same_v<T, unsigned long long>) {
+        npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
     }
 }
 #endif
