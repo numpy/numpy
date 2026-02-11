@@ -382,7 +382,6 @@ class Test_X86_Features(AbstractTest):
     def load_flags(self):
         self.load_flags_cpuinfo("flags")
 
-
 is_power = re.match(r"^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
