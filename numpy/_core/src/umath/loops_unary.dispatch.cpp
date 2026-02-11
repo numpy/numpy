@@ -136,127 +136,158 @@ npyv_negative_f64(npyv_f64 v)
 struct negative_t {};
 
 // SIMD Type Traits
-template<typename T>
-struct SIMDTypeTraits;
+template<typename T> struct SIMDTypeTraits;
 
-// 8-bit signed/unsigned
-template<> struct SIMDTypeTraits<int8_t> {
+template<> struct SIMDTypeTraits<signed char> {
+#if NPY_SIMD
     using simd_type = npyv_s8;
     using lane_type = npyv_lanetype_s8;
+#else
+    using simd_type = void;
+    using lane_type = npy_int8;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = false;
 };
-template<> struct SIMDTypeTraits<uint8_t> {
+template<> struct SIMDTypeTraits<unsigned char> {
+#if NPY_SIMD
     using simd_type = npyv_u8;
     using lane_type = npyv_lanetype_u8;
+#else
+    using simd_type = void;
+    using lane_type = npy_uint8;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = false;
 };
 
-// 16-bit signed/unsigned
-template<> struct SIMDTypeTraits<int16_t> {
+template<> struct SIMDTypeTraits<short> {
+#if NPY_SIMD
     using simd_type = npyv_s16;
     using lane_type = npyv_lanetype_s16;
+#else
+    using simd_type = void;
+    using lane_type = npy_int16;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = false;
 };
-template<> struct SIMDTypeTraits<uint16_t> {
+template<> struct SIMDTypeTraits<unsigned short> {
+#if NPY_SIMD
     using simd_type = npyv_u16;
     using lane_type = npyv_lanetype_u16;
+#else
+    using simd_type = void;
+    using lane_type = npy_uint16;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = false;
 };
 
-// 32-bit signed/unsigned
-template<> struct SIMDTypeTraits<int32_t> {
+template<> struct SIMDTypeTraits<int> {
+#if NPY_SIMD
     using simd_type = npyv_s32;
     using lane_type = npyv_lanetype_s32;
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<uint32_t> {
-    using simd_type = npyv_u32;
-    using lane_type = npyv_lanetype_u32;
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-
-// 64-bit signed/unsigned
-template<> struct SIMDTypeTraits<int64_t> {
-    using simd_type = npyv_s64;
-    using lane_type = npyv_lanetype_s64;
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<uint64_t> {
-    using simd_type = npyv_u64;
-    using lane_type = npyv_lanetype_u64;
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-
-// long/unsigned long
-#if SIZEOF_LONG == 4
-template<> struct SIMDTypeTraits<long> {
-    using simd_type = npyv_s32;
-    using lane_type = npyv_lanetype_s32;
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<unsigned long> {
-    using simd_type = npyv_u32;
-    using lane_type = npyv_lanetype_u32;
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
 #else
+    using simd_type = void;
+    using lane_type = npy_int32;
+#endif
+    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
+    static constexpr bool supports_ncontig = true;
+};
+template<> struct SIMDTypeTraits<unsigned int> {
+#if NPY_SIMD
+    using simd_type = npyv_u32;
+    using lane_type = npyv_lanetype_u32;
+#else
+    using simd_type = void;
+    using lane_type = npy_uint32;
+#endif
+    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
+    static constexpr bool supports_ncontig = true;
+};
+
 template<> struct SIMDTypeTraits<long> {
-    using simd_type = npyv_s64;
-    using lane_type = npyv_lanetype_s64;
+#if NPY_SIMD
+    #if NPY_SIZEOF_LONG == 4
+        using simd_type = npyv_s32;
+        using lane_type = npyv_lanetype_s32;
+    #else
+        using simd_type = npyv_s64;
+        using lane_type = npyv_lanetype_s64;
+    #endif
+#else
+    using simd_type = void;
+    using lane_type = long;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = true;
 };
 template<> struct SIMDTypeTraits<unsigned long> {
-    using simd_type = npyv_u64;
-    using lane_type = npyv_lanetype_u64;
+#if NPY_SIMD
+    #if NPY_SIZEOF_LONG == 4
+        using simd_type = npyv_u32;
+        using lane_type = npyv_lanetype_u32;
+    #else
+        using simd_type = npyv_u64;
+        using lane_type = npyv_lanetype_u64;
+    #endif
+#else
+    using simd_type = void;
+    using lane_type = unsigned long;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = true;
 };
-#endif
 
-// long long / unsigned long long
-// Only define if long long is NOT the same as int64_t
-#if !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(__MINGW64__)
 template<> struct SIMDTypeTraits<long long> {
+#if NPY_SIMD
     using simd_type = npyv_s64;
     using lane_type = npyv_lanetype_s64;
+#else
+    using simd_type = void;
+    using lane_type = long long;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = true;
 };
 template<> struct SIMDTypeTraits<unsigned long long> {
+#if NPY_SIMD
     using simd_type = npyv_u64;
     using lane_type = npyv_lanetype_u64;
+#else
+    using simd_type = void;
+    using lane_type = unsigned long long;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
     static constexpr bool supports_ncontig = true;
 };
-#endif
 
-// Floating point
 template<> struct SIMDTypeTraits<float> {
+#if NPY_SIMD_F32
     using simd_type = npyv_f32;
     using lane_type = npyv_lanetype_f32;
+#else
+    using simd_type = void;
+    using lane_type = float;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD_F32);
     static constexpr bool supports_ncontig = true;
 };
 template<> struct SIMDTypeTraits<double> {
+#if NPY_SIMD_F64
     using simd_type = npyv_f64;
     using lane_type = npyv_lanetype_f64;
+#else
+    using simd_type = void;
+    using lane_type = double;
+#endif
     static constexpr bool has_simd = static_cast<bool>(NPY_SIMD_F64);
     static constexpr bool supports_ncontig = true;
 };
-// long double has no SIMD support
+
 template<> struct SIMDTypeTraits<long double> {
-    using simd_type = void;  // No SIMD type for long double
+    using simd_type = void;
     using lane_type = long double;
     static constexpr bool has_simd = false;
     static constexpr bool supports_ncontig = false;
