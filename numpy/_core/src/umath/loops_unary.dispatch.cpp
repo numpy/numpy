@@ -7,9 +7,6 @@
 
 #include <type_traits>
 
-/* Make NumPy SIMD intrinsics available.
-   Can't be templated because it relies on C Macros.
-*/
 #if NPY_SIMD
 // 8-bit signed
 static NPY_INLINE npyv_s8
