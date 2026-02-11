@@ -996,7 +996,7 @@ foreach gen_mtargets : [
   ],
   [
     'loops_unary.dispatch.h',
-    src_file.process('src/umath/loops_unary.dispatch.c.src'),
+    'src/umath/loops_unary.dispatch.cpp',
     [
       ASIMD, NEON,
       X86_V4, X86_V3, X86_V2,
