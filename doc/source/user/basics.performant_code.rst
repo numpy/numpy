@@ -379,7 +379,8 @@ We will briefly introduce some third party libraries at the end of this introduc
 Dask
 ----
 
-Dask is an open-source library that provides advanced parallelism without requiring significant changes to existing code. It integrates seamlessly with NumPy and Pandas, allowing users to scale their computations from a single machine to a cluster.
+Dask is an open-source library that provides parallel compuing features not only for a single machine but also for a cluster of machines.
+It also provides ``DaskArray`` which has a similar API to NumPy's ``ndarray``. If you are familiar with NumPy, you can easily get started with ``DaskArray``.
 
 * Dask Documentaion: https://docs.dask.org/en/stable/
 * Dask GitHub Repository: https://github.com/dask/dask
