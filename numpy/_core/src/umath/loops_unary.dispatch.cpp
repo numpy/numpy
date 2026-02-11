@@ -340,6 +340,10 @@ struct UnaryOpTraits<negative_t> {
 #else
             return npyv_negative_u64(v);
 #endif
+        } else if constexpr (std::is_same_v<T, long long>) {
+            return npyv_negative_s64(v);
+        } else if constexpr (std::is_same_v<T, unsigned long long>) {
+            return npyv_negative_u64(v);
         }
 #if NPY_SIMD_F32
         else if constexpr (std::is_same_v<T, float>) {
