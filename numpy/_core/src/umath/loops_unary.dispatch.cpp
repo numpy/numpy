@@ -718,9 +718,10 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
                 simd_unary_cc<T, Op>(
                     reinterpret_cast<const T*>(ip),
                     reinterpret_cast<T*>(op),
-                    len
+                        len
                 );
-                goto clear;
+                npyv_cleanup();
+                return;
             }
             
             if constexpr (Traits::supports_ncontig) {
@@ -735,7 +736,8 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
                         ostride,
                         len
                     );
-                    goto clear;
+                    npyv_cleanup();
+                    return;
                 }
                 else if (istride != 1 && ostride == 1) {
                     // Non-contiguous input, contiguous output
@@ -745,7 +747,8 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
                         reinterpret_cast<T*>(op),
                         len
                     );
-                    goto clear;
+                    npyv_cleanup();
+                    return;
                 }
 #ifndef NPY_HAVE_SSE2
                 else if (istride != 1 && ostride != 1) {
@@ -757,7 +760,8 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
                         ostride,
                         len
                     );
-                    goto clear;
+                    npyv_cleanup();
+                    return;
                 }
 #endif
             }
@@ -785,11 +789,6 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
         npyv_cleanup();
     }
     return;
-    
-[[maybe_unused]] clear:
-    if constexpr (Traits::has_simd) {
-        npyv_cleanup();
-    }
 #endif
 }
 
