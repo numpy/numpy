@@ -9,7 +9,7 @@
 #include "npy_pycompat.h"
 #include "override.h"
 #include "ufunc_override.h"
-
+#include "common.h"
 
 /*
  * For each positional argument and each argument in a possible "out"
@@ -99,7 +99,7 @@ fail:
  * normalized version (and always pass it even if it was passed by position).
  */
 static int
-initialize_normal_kwds(PyObject *out_args,
+initialize_normal_kwds(PyObject *const *out_args, int nout,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject *normal_kwds)
 {
@@ -112,9 +112,14 @@ initialize_normal_kwds(PyObject *out_args,
         }
     }
 
-    if (out_args != NULL) {
+    if (out_args != NULL && nout > 0) {
         /* Replace `out` argument with the normalized version */
-        int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_args);
+        PyObject *out_tuple = PyArray_TupleFromItems(nout, out_args, 0);
+        if (out_tuple == NULL) {
+            return -1;
+        }
+        int res = PyDict_SetItem(normal_kwds, npy_interned_str.out, out_tuple);
+        Py_DECREF(out_tuple);
         if (res < 0) {
             return -1;
         }
@@ -205,7 +210,6 @@ NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         PyObject *const *in_args, int nin,
         PyObject *const *out_args, int nout,
-        PyObject *out_args_tuple,
         PyObject *wheremask_obj,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         PyObject **result)
@@ -243,7 +247,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     if (normal_kwds == NULL) {
         goto fail;
     }
-    if (initialize_normal_kwds(out_args_tuple,
+    if (initialize_normal_kwds(out_args, nout,
             args, len_args, kwnames, normal_kwds) < 0) {
         goto fail;
     }
