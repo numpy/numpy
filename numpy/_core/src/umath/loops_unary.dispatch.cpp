@@ -225,8 +225,8 @@ template<> struct SIMDTypeTraits<unsigned long> {
 #endif
 
 // long long / unsigned long long
-// On MSVC, long long is always the same as int64_t, so skip these specializations
-#ifndef _MSC_VER
+// Only define if long long is NOT the same as int64_t
+#if !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(__MINGW64__)
 template<> struct SIMDTypeTraits<long long> {
     using simd_type = npyv_s64;
     using lane_type = npyv_lanetype_s64;
@@ -714,6 +714,11 @@ unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
     }
 
 #if NPY_SIMD
+    if constexpr (Traits::has_simd) {
+        npyv_cleanup();
+    }
+    return;
+    
 clear:
     if constexpr (Traits::has_simd) {
         npyv_cleanup();
