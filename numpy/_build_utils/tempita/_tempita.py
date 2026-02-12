@@ -426,7 +426,7 @@ class bunch(dict):
             return dict.__getitem__(self, key)
 
     def __repr__(self):
-        items_str = " ".join([f"{k}={v!r}" for k, v in sorted(self.items())],)
+        items_str = " ".join([f"{k}={v!r}" for k, v in sorted(self.items())])
         return f"<{self.__class__.__name__} {items_str}>"
 
 
