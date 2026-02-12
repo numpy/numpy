@@ -5170,7 +5170,11 @@ _multiarray_umath_exec(PyObject *m) {
     if (PyDataMem_DefaultHandler == NULL) {
         return -1;
     }
-
+#ifdef Py_GIL_DISABLED
+    int rc = PyUnstable_SetImmortal(PyDataMem_DefaultHandler);
+    assert(rc == 1);
+    (void)rc;
+#endif
     /*
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
