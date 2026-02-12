@@ -16,7 +16,6 @@ In this section, we cover the following topics:
 
 * :ref:`General concepts for using multi-core processors in Python <basics.performant_code.general_concepts_for_multi_core_processors>`
 * :ref:`Using multi-core processors with Python standard libraries <basics.performant_code.multi_core_with_standard_libraries>`
-* :ref:`Other tips for writing performant NumPy code <basics.performant_code.other_tips>`
 * :ref:`Third party libraries for multi-core processing <basics.performant_code.third_party_libraries>`
 
 
@@ -321,52 +320,6 @@ This implementation shares several arrays between threads. For example, ``SHARED
 
         mandelbrot_set(SHARED_readonly_arr.size, max_iter, n_workers)
         mandelbrot_image = SHARED_updating_steps.reshape((nx, ny))
-
-
-
-.. _basics.performant_code.other_tips:
-
-Other Micro Tips for Writing Performant NumPy Code
-==================================================
-
-
-Use tuples for creating arrays
-------------------------------
-
-When creating NumPy arrays, using tuples instead of lists can lead to slight performance improvements.
-
-.. code-block:: python
-
-    # Using a list
-    arr_list = np.array([1, 2, 3, 4, 5])
-
-    # Using a tuple
-    arr_tuple = np.array((1, 2, 3, 4, 5))
-
-
-This is reported in https://github.com/numpy/numpy/pull/30514#issuecomment-3716554540
-
-Using tuples avoids critical sections in the array creation code path, resulting in faster execution. Critical sections are portions of code that must be executed by only one thread at a time to prevent data corruption. In NumPy, critical sections are managed using ``NPY_BEGIN_CRITICAL_SECTION_SEQUENCE_FAST`` and ``NPY_END_CRITICAL_SECTION_SEQUENCE_FAST``. You can refer to those macros if necessary for more details.
-
-
-
-Avoids module attribute lookups
--------------------------------
-
-Module attribute lookups can introduce overhead. To minimize this overhead, you can assign frequently used functions or attributes to local variables.
-This is reported in https://github.com/numpy/numpy/issues/30494#issuecomment-3700169826
-
-
-.. code-block:: python
-
-    import numpy as np
-
-    # Avoiding module attribute lookups
-    sin = np.sin
-
-    arr = array([1, 2, 3, 4, 5])
-    value = sin(arr)
-
 
 
 .. _basics.performant_code.third_party_libraries:
