@@ -1,10 +1,10 @@
 import io
-from typing import Any, TypeAlias, assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-_RecArray: TypeAlias = np.recarray[tuple[Any, ...], np.dtype[np.record]]
+type _RecArray = np.recarray[tuple[Any, ...], np.dtype[np.record]]
 
 AR_i8: npt.NDArray[np.int64]
 REC_AR_V: _RecArray

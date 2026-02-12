@@ -497,6 +497,14 @@ class TestAverage:
 
         assert_equal(type(np.average(a)), subclass)
         assert_equal(type(np.average(a, weights=w)), subclass)
+        # Ensure a possibly returned sum of weights is correct too.
+        ra, rw = np.average(a, weights=w, returned=True)
+        assert_equal(type(ra), subclass)
+        assert_equal(type(rw), subclass)
+        # Even if it needs to be broadcast.
+        ra, rw = np.average(a, weights=w[0], axis=1, returned=True)
+        assert_equal(type(ra), subclass)
+        assert_equal(type(rw), subclass)
 
     def test_upcasting(self):
         typs = [('i4', 'i4', 'f8'), ('i4', 'f4', 'f8'), ('f4', 'i4', 'f8'),
@@ -2794,6 +2802,12 @@ class TestMeshgrid:
         assert_array_equal(X, np.array([[1, 2, 3]]))
         assert_array_equal(Y, np.array([[4], [5], [6], [7]]))
 
+    def test_always_tuple(self):
+        A = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True, copy=False)
+        B = meshgrid([], sparse=True, copy=False)
+        assert isinstance(A, tuple)
+        assert isinstance(B, tuple)
+
     def test_invalid_arguments(self):
         # Test that meshgrid complains about invalid arguments
         # Regression test for issue #4755:
@@ -3057,6 +3071,11 @@ class TestBincount:
         with assert_raises(ValueError):
             np.bincount(vals)
 
+    @pytest.mark.parametrize("vals", [[1.0], [1j], ["1"], [b"1"]])
+    def test_error_not_int(self, vals):
+        with assert_raises(TypeError):
+            np.bincount(vals)
+
     @pytest.mark.parametrize("dt", np.typecodes["AllInteger"])
     def test_gh_28354(self, dt):
         a = np.array([0, 1, 1, 3, 2, 1, 7], dtype=dt)
@@ -3283,6 +3302,11 @@ quantile_methods = [
     'median_unbiased', 'normal_unbiased', 'nearest', 'lower', 'higher',
     'midpoint']
 
+# Note: Technically, averaged_inverted_cdf and midpoint are not interpolated.
+# but NumPy doesn't currently make a difference (at least w.r.t. to promotion).
+interpolating_quantile_methods = [
+    'averaged_inverted_cdf', 'interpolated_inverted_cdf', 'hazen', 'weibull',
+    'linear', 'median_unbiased', 'normal_unbiased', 'midpoint']
 
 methods_supporting_weights = ["inverted_cdf"]
 
@@ -3913,6 +3937,25 @@ class TestPercentile:
         assert z == one
         assert np.array(z).dtype == a.dtype
 
+    @pytest.mark.parametrize("method", interpolating_quantile_methods)
+    @pytest.mark.parametrize("q", [50, 10.0])
+    def test_q_weak_promotion(self, method, q):
+        a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
+        value = np.percentile(a, q, method=method)
+        assert value.dtype == np.float32
+
+    @pytest.mark.parametrize("method", interpolating_quantile_methods)
+    def test_q_strong_promotion(self, method):
+        # For interpolating methods, the dtype should be float64, for
+        # discrete ones the original int8.  (technically, mid-point has no
+        # reason to take into account `q`, but does so anyway.)
+        a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
+        value = np.percentile(a, np.float64(50), method=method)
+        assert value.dtype == np.float64
+        # Check that we don't do accidental promotion either:
+        value = np.percentile(a, np.float32(50), method=method)
+        assert value.dtype == np.float32
+
 
 class TestQuantile:
     # most of this is already tested by TestPercentile
@@ -4228,6 +4271,17 @@ class TestQuantile:
                 )
         assert_allclose(q, q_res)
 
+        # axis is a tuple of all axes
+        q = np.quantile(y, alpha, weights=w, method=method, axis=(0, 1, 2))
+        q_res = np.quantile(y, alpha, weights=w, method=method, axis=None)
+        assert_allclose(q, q_res)
+
+        q = np.quantile(y, alpha, weights=w, method=method, axis=(1, 2))
+        q_res = np.zeros(shape=(2,))
+        for i in range(2):
+            q_res[i] = np.quantile(y[i], alpha, weights=w[i], method=method)
+        assert_allclose(q, q_res)
+
     @pytest.mark.parametrize("method", methods_supporting_weights)
     def test_quantile_weights_min_max(self, method):
         # Test weighted quantile at 0 and 1 with leading and trailing zero
@@ -4277,6 +4331,37 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
+    @pytest.mark.parametrize("weights",
+            [[1, np.inf, 1, 1], [1, np.inf, 1, np.inf], [0, 0, 0, 0],
+             [np.finfo("float64").max] * 4])
+    @pytest.mark.parametrize("dty", ["f8", "O"])
+    def test_inf_zeroes_err(self, weights, dty):
+        m = "inverted_cdf"
+        q = 0.5
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(ValueError,
+                match=r"Weights included NaN, inf or were all zero"):
+            # We (currently) don't bother to check ahead so 0/0 or
+            # overflow to `inf` while summing weights, or `inf / inf`
+            # will all warn before the error is raised.
+            with np.errstate(all="ignore"):
+                a = np.quantile(arr, q, weights=wgts, method=m, axis=1)
+
+    @pytest.mark.parametrize("weights",
+            [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
+    @pytest.mark.parametrize(["err", "dty"],
+            [(ValueError, "f8"), ((RuntimeWarning, ValueError), "O")])
+    def test_nan_err(self, err, dty, weights):
+        m = "inverted_cdf"
+        q = 0.5
+        arr = np.array([[1, 2, 3, 4]] * 2)
+        # Make one entry have bad weights and another good ones.
+        wgts = np.array([weights, [0.5] * 4], dtype=dty)
+        with pytest.raises(err):
+            a = np.quantile(arr, q, weights=wgts, method=m)
+
     def test_quantile_gh_29003_Fraction(self):
         r = np.quantile([1, 2], q=Fraction(1))
         assert r == Fraction(2)
@@ -4292,6 +4377,26 @@ class TestQuantile:
         value = np.quantile(a, q)
         assert value == q * 50_000
         assert value.dtype == np.float16
+
+    @pytest.mark.parametrize("method", interpolating_quantile_methods)
+    @pytest.mark.parametrize("q", [0.5, 1])
+    def test_q_weak_promotion(self, method, q):
+        a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
+        value = np.quantile(a, q, method=method)
+        assert value.dtype == np.float32
+
+    @pytest.mark.parametrize("method", interpolating_quantile_methods)
+    def test_q_strong_promotion(self, method):
+        # For interpolating methods, the dtype should be float64, for
+        # discrete ones the original int8.  (technically, mid-point has no
+        # reason to take into account `q`, but does so anyway.)
+        a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
+        value = np.quantile(a, np.float64(0.5), method=method)
+        assert value.dtype == np.float64
+        # Check that we don't do accidental promotion either:
+        value = np.quantile(a, np.float32(0.5), method=method)
+        assert value.dtype == np.float32
+
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,

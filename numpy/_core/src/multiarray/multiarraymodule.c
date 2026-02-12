@@ -2338,6 +2338,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
             "The binary mode of fromstring is removed, use frombuffer instead");
+        Py_XDECREF(descr);
         return NULL;
     }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
@@ -2406,6 +2407,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
+        Py_XDECREF(type);
         goto cleanup;
     }
     if (type == NULL) {
@@ -4383,7 +4385,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     buffer_data = PyArray_BYTES(buffer_array);
     npy_intp elsize = PyArray_DESCR(buffer_array)->elsize;
 
-    for (int i = 0; i < n_finfo_constants; i++) 
+    for (int i = 0; i < n_finfo_constants; i++)
     {
         PyObject *value_obj;
         if (!finfo_constants[i].is_int) {
@@ -4436,8 +4438,8 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
     if (res < 0) {
         return NULL;
     }
-    int old_value = npy_thread_unsafe_state.warn_if_no_mem_policy;
-    npy_thread_unsafe_state.warn_if_no_mem_policy = res;
+    int old_value = npy_global_state.warn_if_no_mem_policy;
+    npy_global_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
@@ -4468,7 +4470,6 @@ _blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
 
 static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
-#if !defined(PYPY_VERSION)
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "NumPy was imported from a Python sub-interpreter but "
@@ -4483,11 +4484,10 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        npy_thread_unsafe_state.reload_guard_initialized = 1;
+        npy_global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
-#endif
-    if (npy_thread_unsafe_state.reload_guard_initialized) {
+    if (npy_global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4495,7 +4495,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    npy_thread_unsafe_state.reload_guard_initialized = 1;
+    npy_global_state.reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -4698,8 +4698,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"_set_numpy_warn_if_no_mem_policy",
          (PyCFunction)_set_numpy_warn_if_no_mem_policy,
          METH_O, "Change the warn if no mem policy flag for testing."},
-    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
         get_sfloat_dtype, METH_NOARGS, NULL},
     {"_get_madvise_hugepage", (PyCFunction)_get_madvise_hugepage,
@@ -4886,16 +4884,16 @@ set_flaginfo(PyObject *d)
 }
 
 // static variables are automatically zero-initialized
-NPY_VISIBILITY_HIDDEN npy_thread_unsafe_state_struct npy_thread_unsafe_state;
+NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
 
 static int
-initialize_thread_unsafe_state(void) {
+initialize_global_state(void) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        npy_thread_unsafe_state.warn_if_no_mem_policy = 1;
+        npy_global_state.warn_if_no_mem_policy = 1;
     }
     else {
-        npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
+        npy_global_state.warn_if_no_mem_policy = 0;
     }
 
     return 0;
@@ -4954,7 +4952,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_thread_unsafe_state() < 0) {
+    if (initialize_global_state() < 0) {
         return -1;
     }
 
@@ -4966,7 +4964,18 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    /* Set __signature__ to None on the type (the instance has a property) */
+    s = npy_import("numpy._globals", "_signature_descriptor");
+    if (s == NULL) {
+        return -1;
+    }
+    PyUFunc_Type.tp_dict = Py_BuildValue(
+        "{ON}", npy_interned_str.__signature__, s);
+    if (PyUFunc_Type.tp_dict == NULL) {
+        return -1;
+    }
     if (PyType_Ready(&PyUFunc_Type) < 0) {
+        Py_CLEAR(PyUFunc_Type.tp_dict);
         return -1;
     }
 

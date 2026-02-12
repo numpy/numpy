@@ -618,3 +618,27 @@ Utility method for typing:
    :toctree: generated/
 
    ndarray.__class_getitem__
+
+.. _arrays.ndarray.pattern-matching:
+
+Structural pattern matching
+===========================
+
+Arrays support :pep:`structural pattern matching <634>`. The array is matched
+as a sequence, so you can unpack arrays along the first dimension in
+``match``/``case`` statements::
+
+   >>> arr = np.array([[1, 2], [3, 4]])
+   >>> match arr:
+   ...     case [row1, row2]:
+   ...         print(f"row1={row1}, row2={row2}")
+   row1=[1 2], row2=[3 4]
+
+Nested patterns work too, matching inner dimensions::
+
+   >>> match arr:
+   ...     case [[a, b], [c, d]]:
+   ...         print(f"a={a}, b={b}, c={c}, d={d}")
+   a=1, b=2, c=3, d=4
+
+All ndarray subclasses inherit this behavior.

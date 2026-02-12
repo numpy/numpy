@@ -1786,9 +1786,9 @@ the functions that must be implemented for each slot.
    - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
      identity otherwise as it preserves the sign for ``sum([-0.0])``.
    - We use no identity for object, but return the default of ``0`` and
-     ``1`` for the empty ``sum([], dtype=object)`` and
-     ``prod([], dtype=object)``.
-     This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+     ``1`` for the empty ``sum([], dtype=np.object_)`` and
+     ``prod([], dtype=np.object_)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=np.object_))`` to work.
    - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
      ``INT_MIN`` not a good *default* when there are no items.
 
@@ -2365,7 +2365,7 @@ Item selection and manipulation
 
     Return an array with the items of ``self`` sorted along ``axis``. The array
     is sorted using an algorithm whose properties are specified by the value of
-    ``kind``, an integer/enum specifying the reguirements of the sorting
+    ``kind``, an integer/enum specifying the requirements of the sorting
     algorithm used. If ``self* ->descr`` is a data-type with fields defined,
     then ``self->descr->names`` is used to determine the sort order. A comparison
     where the first field is equal will use the second field and so on. To
@@ -2382,7 +2382,7 @@ Item selection and manipulation
     Return an array of indices such that selection of these indices along the
     given ``axis`` would return a sorted version of ``self``.  The array is
     sorted using an algorithm whose properties are specified by ``kind``, an
-    integer/enum specifying the reguirements of the sorting algorithm used. If
+    integer/enum specifying the requirements of the sorting algorithm used. If
     ``self->descr`` is a data-type with fields defined, then
     ``self->descr->names`` is used to determine the sort order. A comparison
     where the first field is equal will use the second field and so on. To
@@ -4271,6 +4271,8 @@ Memory management
     :c:func:`PyArray_DiscardWritebackIfCopy`.
 
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
+
+.. _array.ndarray.capi.threading:
 
 Threading support
 ~~~~~~~~~~~~~~~~~

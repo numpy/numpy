@@ -5,14 +5,8 @@ import pytest
 
 import numpy as np
 import numpy._core.numerictypes as nt
-from numpy._core.numerictypes import issctype, maximum_sctype, sctype2char, sctypes
-from numpy.testing import (
-    IS_PYPY,
-    assert_,
-    assert_equal,
-    assert_raises,
-    assert_raises_regex,
-)
+from numpy._core.numerictypes import issctype, sctype2char, sctypes
+from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
 
 # This is the structure of the table used for plain objects:
 #
@@ -66,9 +60,9 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
+    # depth1: x Info color info y z
+    # depth2: value y2 Info2 name z2 Name Value
+    # depth3: name value y3 z3
     ([3, 2], (6j, 6., (b'nn', [6j, 4j], [6., 4.], [1, 2]), b'NN', True),
      b'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., (b'oo', [7j, 5j], [7., 5.], [2, 1]), b'OO', False),
@@ -496,38 +490,6 @@ class TestSctypeDict:
         assert np.dtype(np.ulong).itemsize == np.dtype(np.long).itemsize
 
 
-@pytest.mark.filterwarnings("ignore:.*maximum_sctype.*:DeprecationWarning")
-class TestMaximumSctype:
-
-    # note that parametrizing with sctype['int'] and similar would skip types
-    # with the same size (gh-11923)
-
-    @pytest.mark.parametrize(
-        't', [np.byte, np.short, np.intc, np.long, np.longlong]
-    )
-    def test_int(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['int'][-1])
-
-    @pytest.mark.parametrize(
-        't', [np.ubyte, np.ushort, np.uintc, np.ulong, np.ulonglong]
-    )
-    def test_uint(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['uint'][-1])
-
-    @pytest.mark.parametrize('t', [np.half, np.single, np.double, np.longdouble])
-    def test_float(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['float'][-1])
-
-    @pytest.mark.parametrize('t', [np.csingle, np.cdouble, np.clongdouble])
-    def test_complex(self, t):
-        assert_equal(maximum_sctype(t), np._core.sctypes['complex'][-1])
-
-    @pytest.mark.parametrize('t', [np.bool, np.object_, np.str_, np.bytes_,
-                                   np.void])
-    def test_other(self, t):
-        assert_equal(maximum_sctype(t), t)
-
-
 class Test_sctype2char:
     # This function is old enough that we're really just documenting the quirks
     # at this point.
@@ -575,10 +537,10 @@ def test_issctype(rep, expected):
     assert_equal(actual, expected)
 
 
-@pytest.mark.skipif(sys.flags.optimize > 1,
-                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
-@pytest.mark.xfail(IS_PYPY,
-                   reason="PyPy cannot modify tp_doc after PyType_Ready")
+@pytest.mark.skipif(
+    sys.flags.optimize > 1,
+    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1",
+)
 class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:

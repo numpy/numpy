@@ -22,14 +22,11 @@ following steps:
 * F2PY compiles all sources and builds an extension module containing
   the wrappers.
 
-  * In building the extension modules, F2PY uses ``meson`` and used to use
-    ``numpy.distutils`` For different build systems, see :ref:`f2py-bldsys`.
+  * In building the extension modules, F2PY uses ``meson``. For different
+    build systems, see :ref:`f2py-bldsys`.
 
 
 .. note::
-
-   See :ref:`f2py-meson-distutils` for migration information.
-
 
   * Depending on your operating system, you may need to install the Python
     development headers (which provide the file ``Python.h``) separately. In
@@ -157,9 +154,8 @@ Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     Clearly, this is unexpected, as Fortran typically passes by reference. That
     the above example worked with ``dtype=float`` is considered accidental.
 
-    F2PY provides an ``intent(inplace)`` attribute that modifies the attributes
-    of an input array so that any changes made by the Fortran routine will be
-    reflected in the input argument. For example, if one specifies the
+    F2PY provides an ``intent(inplace)`` attribute that ensures that changes
+    are copied back to the input argument. For example, if one specifies the
     ``intent(inplace) a`` directive (see :ref:`f2py-attributes` for details),
     then the example above would read::
 
@@ -224,7 +220,7 @@ Fortran code, we can apply the wrapping steps one by one.
   .. literalinclude:: ./code/fib2.pyf
      :language: fortran
 
-* Finally, we build the extension module with ``numpy.distutils`` by running:
+* Finally, we build the extension module by running:
 
   ::
 

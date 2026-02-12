@@ -3,7 +3,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import IS_PYPY, assert_array_equal
+from numpy.testing import assert_array_equal
 
 
 def new_and_old_dlpack():
@@ -18,7 +18,6 @@ def new_and_old_dlpack():
 
 
 class TestDLPack:
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     @pytest.mark.parametrize("max_version", [(0, 0), None, (1, 0), (100, 3)])
     def test_dunder_dlpack_refcount(self, max_version):
         x = np.arange(5)
@@ -54,7 +53,6 @@ class TestDLPack:
         with pytest.raises(BufferError):
             np.from_dlpack(z)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
     @pytest.mark.parametrize("arr", new_and_old_dlpack())
     def test_from_dlpack_refcount(self, arr):
         arr = arr.copy()
@@ -184,7 +182,7 @@ class TestDLPack:
         np.from_dlpack(x, device="cpu")
         np.from_dlpack(x, device=None)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(BufferError):
             x.__dlpack__(dl_device=(10, 0))
         with pytest.raises(ValueError):
             np.from_dlpack(x, device="gpu")

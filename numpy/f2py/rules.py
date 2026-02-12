@@ -96,6 +96,7 @@ from .auxfuncs import (
     isintent_copy,
     isintent_hide,
     isintent_inout,
+    isintent_inplace,
     isintent_nothide,
     isintent_out,
     isintent_overwrite,
@@ -1015,8 +1016,8 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [{hasinitvalue: '    if (#varname#_capi==Py_None) {#varname#.r = #init.r#, #varname#.i = #init.i#;} else'},
                       {l_and(isoptional, l_not(hasinitvalue))
                              : '    if (#varname#_capi != Py_None)'},
-                      '        f2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
-                      '\n    if (f2py_success) {'],
+                      ('        f2py_success = #ctype#_from_pyobj(&#varname#,#varname#_capi,"#pyname#() #nth# (#varname#) can\'t be converted to #ctype#");'
+                       '\n    if (f2py_success) {')],
         'cleanupfrompyobj': '    }  /*if (f2py_success) of #varname# frompyobj*/',
         'need': ['#ctype#_from_pyobj'],
         '_check': l_and(iscomplex, isintent_nothide),
@@ -1057,13 +1058,13 @@ if (#varname#_cb.capi==Py_None) {
                  {l_and(isintent_out, l_not(isintent_c)): 'STRINGPADN'}],
         '_check': isstring
     }, {  # Common
-        'frompyobj': [
+        'frompyobj': [(
             """\
     slen(#varname#) = #elsize#;
     f2py_success = #ctype#_from_pyobj(&#varname#,&slen(#varname#),#init#,"""
 """#varname#_capi,\"#ctype#_from_pyobj failed in converting #nth#"""
 """`#varname#\' of #pyname# to C #ctype#\");
-    if (f2py_success) {""",
+    if (f2py_success) {"""),
             # The trailing null value for Fortran is blank.
             {l_not(isintent_c):
              "        STRINGPADN(#varname#, slen(#varname#), '\\0', ' ');"},
@@ -1200,9 +1201,20 @@ if (#varname#_cb.capi==Py_None) {
     }
     if (f2py_success) {"""]},
                       ],
+        'pyobjfrom': [
+            {l_and(isintent_inplace, l_not(isintent_out)): """\
+        f2py_success = (PyArray_ResolveWritebackIfCopy(capi_#varname#_as_array) >= 0);
+        if (f2py_success) { /* inplace array #varname# has been written back to */"""},
+            {l_and(isintent_inplace, isintent_out): """\
+        f2py_success = (PyArray_ResolveWritebackIfCopy(capi_#varname#_as_array) >= 0);
+        if (f2py_success) { /* return written-back-to inplace array #varname# */
+        Py_INCREF(#varname#_capi);
+        Py_SETREF(capi_#varname#_as_array, (PyArrayObject*)#varname#_capi);"""},
+            ],
+        'closepyobjfrom': {isintent_inplace: '    } /*if (f2py_success) of #varname# pyobjfrom*/'},
         'cleanupfrompyobj': [  # note that this list will be reversed
-            '    }  '
-            '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */',
+            ('    }  '
+             '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */'),
             {l_not(l_or(isintent_out, isintent_hide)): """\
     if((PyObject *)capi_#varname#_as_array!=#varname#_capi) {
         Py_XDECREF(capi_#varname#_as_array); }"""},

@@ -765,7 +765,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     namedict = kwds
     for i, val in enumerate(args):
-        key = 'arr_%d' % i
+        key = f'arr_{i}'
         if key in namedict.keys():
             raise ValueError(
                 f"Cannot use un-named variables and keyword {key}")
@@ -1343,7 +1343,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     single escaped character:
 
     >>> s = StringIO('"Hello, my name is ""Monty""!"')
-    >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
+    >>> np.loadtxt(s, dtype=np.str_, delimiter=",", quotechar='"')
     array('Hello, my name is "Monty"!', dtype='<U26')
 
     Read subset of columns when all rows do not contain equal number of values:
@@ -1364,9 +1364,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             unpack=unpack, ndmin=ndmin, encoding=encoding,
             max_rows=max_rows
         )
-
-    if isinstance(delimiter, bytes):
-        delimiter.decode("latin1")
 
     if dtype is None:
         dtype = np.float64
@@ -1564,7 +1561,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
             raise ValueError(
-                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
+                f"Expected 1D or 2D array, got {X.ndim}D array instead")
         elif X.ndim == 1:
             # Common case -- 1d array of numbers
             if X.dtype.names is None:
@@ -1617,9 +1614,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 try:
                     v = format % tuple(row) + newline
                 except TypeError as e:
-                    raise TypeError("Mismatch between array dtype ('%s') and "
-                                    "format specifier ('%s')"
-                                    % (str(X.dtype), format)) from e
+                    raise TypeError(
+                        f"Mismatch between array dtype ('{str(X.dtype)}') and "
+                        f"format specifier ('{format}')"
+                    ) from e
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1758,8 +1756,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
-        If None, the dtypes will be determined by the contents of each
-        column, individually.
+        If a structured dtype, the output array will be 1D and structured where
+        each field corresponds to one column.
+        If None, the dtype of each column will be inferred automatically, and
+        the output array will be structured only if either the dtypes are not
+        all the same or if `names` is not None.
     comments : str, optional
         The character used to indicate the start of a comment.
         All the characters occurring on a line after a comment are discarded.
@@ -1788,13 +1789,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first line after
-        the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. Any content before the comment delimiter is
-        discarded. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field
-        names in a structured dtype. If `names` is None, the names of the
-        dtype fields will be used, if any.
+        If `names` is True, the output will be a structured array whose field
+        names are read from the first line after the first `skip_header` lines.
+        This line can optionally be preceded by a comment delimiter. Any content
+        before the comment delimiter is discarded.
+        If `names` is a sequence or a single string of comma-separated names,
+        the output is a structured array whose field names are taken from
+        `names`.
+        If `names` is None, the output is structured only if `dtype` is
+        structured, in which case the field names are taken from `dtype`.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -1963,7 +1966,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if not isinstance(user_converters, dict):
         raise TypeError(
             "The input argument 'converter' should be a valid dictionary "
-            "(got '%s' instead)" % type(user_converters))
+            f"(got '{type(user_converters)}' instead)"
+        )
 
     if encoding == 'bytes':
         encoding = None
@@ -2485,99 +2489,3 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 _genfromtxt_with_like = array_function_dispatch()(genfromtxt)
-
-
-def recfromtxt(fname, **kwargs):
-    """
-    Load ASCII data from a file and return it in a record array.
-
-    If ``usemask=False`` a standard `recarray` is returned,
-    if ``usemask=True`` a MaskedRecords array is returned.
-
-    .. deprecated:: 2.0
-        Use `numpy.genfromtxt` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function
-
-    Notes
-    -----
-    By default, `dtype` is None, which means that the data-type of the output
-    array will be determined from the data.
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`recfromtxt` is deprecated, "
-        "use `numpy.genfromtxt` instead."
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    kwargs.setdefault("dtype", None)
-    usemask = kwargs.get('usemask', False)
-    output = genfromtxt(fname, **kwargs)
-    if usemask:
-        from numpy.ma.mrecords import MaskedRecords
-        output = output.view(MaskedRecords)
-    else:
-        output = output.view(np.recarray)
-    return output
-
-
-def recfromcsv(fname, **kwargs):
-    """
-    Load ASCII data stored in a comma-separated file.
-
-    The returned array is a record array (if ``usemask=False``, see
-    `recarray`) or a masked record array (if ``usemask=True``,
-    see `ma.mrecords.MaskedRecords`).
-
-    .. deprecated:: 2.0
-        Use `numpy.genfromtxt` with comma as `delimiter` instead.
-
-    Parameters
-    ----------
-    fname, kwargs : For a description of input parameters, see `genfromtxt`.
-
-    See Also
-    --------
-    numpy.genfromtxt : generic function to load ASCII data.
-
-    Notes
-    -----
-    By default, `dtype` is None, which means that the data-type of the output
-    array will be determined from the data.
-
-    """
-
-    # Deprecated in NumPy 2.0, 2023-07-11
-    warnings.warn(
-        "`recfromcsv` is deprecated, "
-        "use `numpy.genfromtxt` with comma as `delimiter` instead. "
-        "(deprecated in NumPy 2.0)",
-        DeprecationWarning,
-        stacklevel=2
-    )
-
-    # Set default kwargs for genfromtxt as relevant to csv import.
-    kwargs.setdefault("case_sensitive", "lower")
-    kwargs.setdefault("names", True)
-    kwargs.setdefault("delimiter", ",")
-    kwargs.setdefault("dtype", None)
-    output = genfromtxt(fname, **kwargs)
-
-    usemask = kwargs.get("usemask", False)
-    if usemask:
-        from numpy.ma.mrecords import MaskedRecords
-        output = output.view(MaskedRecords)
-    else:
-        output = output.view(np.recarray)
-    return output

@@ -7,13 +7,13 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.4.0.dev0"
+version = "2.5.0.dev0"
 description = "Fundamental package for array computing in Python"
 authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
     {name = "NumPy Developers", email="numpy-discussion@python.org"},
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 readme = "README.md"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -22,7 +22,6 @@ classifiers = [
     'Programming Language :: C',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
@@ -54,7 +53,7 @@ license-files = [
     'LICENSE.txt',                                       # BSD-3-Clause
     'numpy/_core/include/numpy/libdivide/LICENSE.txt',   # Zlib
     'numpy/_core/src/common/pythoncapi-compat/COPYING',  # 0BSD
-    'numpy/_core/src/highway/LICENSE-BSD3',              # BSD-3-Clause
+    'numpy/_core/src/highway/LICENSE',                   # Dual-licensed: Apache 2.0 or BSD 3-Clause
     'numpy/_core/src/multiarray/dragon4_LICENSE.txt',    # MIT
     'numpy/_core/src/npysort/x86-simd-sort/LICENSE.md',  # BSD-3-Clause
     'numpy/_core/src/umath/svml/LICENSE',                # BSD-3-Clause
@@ -175,6 +174,11 @@ tracker = "https://github.com/numpy/numpy/issues"
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "typing"
+        name = "Typing improvements and changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "change"
         name = "Changes"
         showcontent = true
@@ -188,7 +192,7 @@ skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
-enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
+enable = ["cpython-freethreading", "cpython-prerelease"]
 
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 [tool.cibuildwheel.config-settings]

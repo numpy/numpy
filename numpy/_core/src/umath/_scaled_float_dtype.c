@@ -787,8 +787,7 @@ sfloat_stable_sort_loop(
 {
     assert(data[0] == data[1]);
     assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
-    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
-    assert(parameters->flags == NPY_SORT_STABLE);
+    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_STABLE);
 
     npy_intp N = dimensions[0];
     char *in = data[0];
@@ -807,8 +806,7 @@ sfloat_default_sort_loop(
 {
     assert(data[0] == data[1]);
     assert(strides[0] == sizeof(npy_float64) && strides[1] == sizeof(npy_float64));
-    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
-    assert(parameters->flags == NPY_SORT_DEFAULT);
+    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_DEFAULT);
 
     npy_intp N = dimensions[0];
     char *in = data[0];
@@ -874,8 +872,7 @@ sfloat_stable_argsort_loop(
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
-    assert(parameters->flags == NPY_SORT_STABLE);
+    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_STABLE);
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
 
@@ -895,8 +892,7 @@ sfloat_default_argsort_loop(
         const npy_intp *strides,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArrayMethod_SortParameters *parameters = (PyArrayMethod_SortParameters *)context->parameters;
-    assert(parameters->flags == NPY_SORT_DEFAULT);
+    assert(((PyArrayMethod_SortParameters *)context->parameters)->flags == NPY_SORT_DEFAULT);
     assert(strides[0] == sizeof(npy_float64));
     assert(strides[1] == sizeof(npy_intp));
 
@@ -1081,7 +1077,7 @@ sfloat_init_ufuncs(void) {
 NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
-    if (npy_thread_unsafe_state.get_sfloat_dtype_initialized) {
+    if (npy_global_state.get_sfloat_dtype_initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -1110,6 +1106,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    npy_thread_unsafe_state.get_sfloat_dtype_initialized = NPY_TRUE;
+    npy_global_state.get_sfloat_dtype_initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

@@ -38,7 +38,7 @@ from itertools import cycle
 import re
 from secrets import randbits
 
-from threading import Lock
+from threading import RLock
 
 from cpython.pycapsule cimport PyCapsule_New
 
@@ -241,6 +241,8 @@ cdef class SeedlessSeedSequence:
         raise NotImplementedError('seedless SeedSequences cannot generate state')
 
     def spawn(self, n_children):
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         return [self] * n_children
 
 
@@ -476,6 +478,9 @@ cdef class SeedSequence:
         """
         cdef uint32_t i
 
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
+
         seqs = []
         for i in range(self.n_children_spawned,
                        self.n_children_spawned + n_children):
@@ -522,7 +527,7 @@ cdef class BitGenerator:
     """
 
     def __init__(self, seed=None):
-        self.lock = Lock()
+        self.lock = RLock()
         self._bitgen.state = <void *>0
         if type(self) is BitGenerator:
             raise NotImplementedError('BitGenerator is a base class and cannot be instantized')
@@ -626,6 +631,8 @@ cdef class BitGenerator:
             Equivalent method on the generator and seed sequence.
 
         """
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         if not isinstance(self._seed_seq, ISpawnableSeedSequence):
             raise TypeError(
                 "The underlying SeedSequence does not implement spawning.")
@@ -709,3 +716,8 @@ cdef class BitGenerator:
         if self._cffi is None:
             self._cffi = prepare_cffi(&self._bitgen)
         return self._cffi
+
+# NOTE: This has no implementation and should not be used. It purely exists for
+# backwards compatibility, see https://github.com/scipy/scipy/issues/24215.
+cdef class SeedlessSequence:
+    pass

@@ -10,16 +10,13 @@ from _typeshed import Incomplete
 from types import EllipsisType
 from typing import (
     Any,
-    Generic,
     Literal,
     LiteralString,
     Never,
     NoReturn,
     Protocol,
     SupportsIndex,
-    TypeAlias,
     TypedDict,
-    TypeVar,
     Unpack,
     overload,
     type_check_only,
@@ -27,31 +24,19 @@ from typing import (
 
 import numpy as np
 from numpy import _CastingKind, _OrderKACF, ufunc
-from numpy.typing import NDArray
 
-from ._array_like import ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co
+from ._array_like import ArrayLike, NDArray, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
 from ._scalars import _ScalarLike_co
 from ._shape import _ShapeLike
 
-_T = TypeVar("_T")
-_2Tuple: TypeAlias = tuple[_T, _T]
-_3Tuple: TypeAlias = tuple[_T, _T, _T]
-_4Tuple: TypeAlias = tuple[_T, _T, _T, _T]
+type _2Tuple[T] = tuple[T, T]
+type _3Tuple[T] = tuple[T, T, T]
+type _4Tuple[T] = tuple[T, T, T, T]
 
-_2PTuple: TypeAlias = tuple[_T, _T, *tuple[_T, ...]]
-_3PTuple: TypeAlias = tuple[_T, _T, _T, *tuple[_T, ...]]
-_4PTuple: TypeAlias = tuple[_T, _T, _T, _T, *tuple[_T, ...]]
-
-_NTypes = TypeVar("_NTypes", bound=int, covariant=True)
-_IDType = TypeVar("_IDType", covariant=True)
-_NameType = TypeVar("_NameType", bound=LiteralString, covariant=True)
-_Signature = TypeVar("_Signature", bound=LiteralString, covariant=True)
-
-_NIn = TypeVar("_NIn", bound=int, covariant=True)
-_NOut = TypeVar("_NOut", bound=int, covariant=True)
-_ReturnType_co = TypeVar("_ReturnType_co", covariant=True)
-_ArrayT = TypeVar("_ArrayT", bound=np.ndarray)
+type _2PTuple[T] = tuple[T, T, *tuple[T, ...]]
+type _3PTuple[T] = tuple[T, T, T, *tuple[T, ...]]
+type _4PTuple[T] = tuple[T, T, T, T, *tuple[T, ...]]
 
 @type_check_only
 class _SupportsArrayUFunc(Protocol):
@@ -89,15 +74,15 @@ class _ReduceKwargs(TypedDict, total=False):
 # pyright: reportIncompatibleMethodOverride=false
 
 @type_check_only
-class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
+class _UFunc_Nin1_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
     @property
-    def __name__(self) -> _NameType: ...
+    def __name__(self) -> NameT: ...
     @property
-    def __qualname__(self) -> _NameType: ...  # pyright: ignore[reportIncompatibleVariableOverride]
+    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
-    def ntypes(self) -> _NTypes: ...
+    def ntypes(self) -> NTypesT: ...
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[1]: ...
     @property
@@ -158,15 +143,15 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def at(self, a: np.ndarray | _SupportsArrayUFunc, indices: _ArrayLikeInt_co, /) -> None: ...  # type: ignore[override]
 
 @type_check_only
-class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
+class _UFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
     @property
-    def __name__(self) -> _NameType: ...
+    def __name__(self) -> NameT: ...
     @property
-    def __qualname__(self) -> _NameType: ...  # pyright: ignore[reportIncompatibleVariableOverride]
+    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
-    def ntypes(self) -> _NTypes: ...
+    def ntypes(self) -> NTypesT: ...
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[2]: ...
     @property
@@ -353,15 +338,15 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     ) -> None: ...
 
 @type_check_only
-class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
+class _UFunc_Nin1_Nout2[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
     @property
-    def __name__(self) -> _NameType: ...
+    def __name__(self) -> NameT: ...
     @property
-    def __qualname__(self) -> _NameType: ...  # pyright: ignore[reportIncompatibleVariableOverride]
+    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
-    def ntypes(self) -> _NTypes: ...
+    def ntypes(self) -> NTypesT: ...
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[1]: ...
     @property
@@ -427,15 +412,15 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def at(self, a: Never, indices: Never, /) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
-class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
+class _UFunc_Nin2_Nout2[NameT: LiteralString, NTypesT: int, IdentT](ufunc):  # type: ignore[misc]
     @property
-    def __name__(self) -> _NameType: ...
+    def __name__(self) -> NameT: ...
     @property
-    def __qualname__(self) -> _NameType: ...  # pyright: ignore[reportIncompatibleVariableOverride]
+    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
-    def ntypes(self) -> _NTypes: ...
+    def ntypes(self) -> NTypesT: ...
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[2]: ...
     @property
@@ -487,15 +472,15 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def at(self, a: Never, indices: Never, b: Never, /) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
-class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]):  # type: ignore[misc]
+class _GUFunc_Nin2_Nout1[NameT: LiteralString, NTypesT: int, IdentT, SignatureT: LiteralString](ufunc):  # type: ignore[misc]
     @property
-    def __name__(self) -> _NameType: ...
+    def __name__(self) -> NameT: ...
     @property
-    def __qualname__(self) -> _NameType: ...  # pyright: ignore[reportIncompatibleVariableOverride]
+    def __qualname__(self) -> NameT: ...  # pyright: ignore[reportIncompatibleVariableOverride]
     @property
-    def ntypes(self) -> _NTypes: ...
+    def ntypes(self) -> NTypesT: ...
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[2]: ...
     @property
@@ -503,7 +488,7 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]
     @property
     def nargs(self) -> Literal[3]: ...
     @property
-    def signature(self) -> _Signature: ...
+    def signature(self) -> SignatureT: ...
 
     # Scalar for 1D array-likes; ndarray otherwise
     @overload
@@ -580,9 +565,9 @@ class _PyFunc_Kwargs_Nargs4P(TypedDict, total=False):
     signature: str | _4PTuple[DTypeLike]
 
 @type_check_only
-class _PyFunc_Nin1_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: ignore[misc]
+class _PyFunc_Nin1_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[1]: ...
     @property
@@ -601,7 +586,7 @@ class _PyFunc_Nin1_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
-    ) -> _ReturnType_co: ...
+    ) -> ReturnT: ...
     @overload
     def __call__(
         self,
@@ -609,15 +594,15 @@ class _PyFunc_Nin1_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
-    ) -> _ReturnType_co | NDArray[np.object_]: ...
+    ) -> ReturnT | NDArray[np.object_]: ...
     @overload
-    def __call__(
+    def __call__[OutT: np.ndarray](
         self,
         x1: ArrayLike,
         /,
-        out: _ArrayT | tuple[_ArrayT],
+        out: OutT | tuple[OutT],
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
-    ) -> _ArrayT: ...
+    ) -> OutT: ...
     @overload
     def __call__(
         self,
@@ -635,9 +620,9 @@ class _PyFunc_Nin1_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
     def at(self, a: np.ndarray | _SupportsArrayUFunc, indices: _ArrayLikeInt_co, /) -> None: ...  # type: ignore[override]
 
 @type_check_only
-class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: ignore[misc]
+class _PyFunc_Nin2_Nout1[ReturnT, IdentT](ufunc):  # type: ignore[misc]
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
     def nin(self) -> Literal[2]: ...
     @property
@@ -657,7 +642,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
-    ) -> _ReturnType_co: ...
+    ) -> ReturnT: ...
     @overload
     def __call__(
         self,
@@ -666,16 +651,16 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         /,
         out: EllipsisType | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
-    ) -> _ReturnType_co | NDArray[np.object_]: ...
+    ) -> ReturnT | NDArray[np.object_]: ...
     @overload
-    def __call__(
+    def __call__[OutT: np.ndarray](
         self,
         x1: ArrayLike,
         x2: ArrayLike,
         /,
-        out: _ArrayT | tuple[_ArrayT],
+        out: OutT | tuple[OutT],
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
-    ) -> _ArrayT: ...
+    ) -> OutT: ...
     @overload
     def __call__(
         self,
@@ -705,28 +690,28 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         out: EllipsisType | None = None,
     ) -> NDArray[np.object_]: ...
     @overload
-    def accumulate(
+    def accumulate[OutT: np.ndarray](
         self,
         array: ArrayLike,
         /,
         axis: SupportsIndex = 0,
         dtype: DTypeLike | None = None,
         *,
-        out: _ArrayT,
-    ) -> _ArrayT: ...
+        out: OutT,
+    ) -> OutT: ...
 
     @overload  # type: ignore[override]
-    def reduce(  # out=array
+    def reduce[OutT: np.ndarray](  # out=array
         self,
         array: ArrayLike,
         /,
         axis: _ShapeLike | None = 0,
         dtype: DTypeLike | None = None,
         *,
-        out: _ArrayT | tuple[_ArrayT],
+        out: OutT | tuple[OutT],
         keepdims: bool = False,
         **kwargs: Unpack[_ReduceKwargs],
-    ) -> _ArrayT: ...
+    ) -> OutT: ...
     @overload  # out=...
     def reduce(
         self,
@@ -761,10 +746,10 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         out: EllipsisType | None = None,
         keepdims: bool = False,
         **kwargs: Unpack[_ReduceKwargs],
-    ) -> _ReturnType_co | NDArray[np.object_]: ...
+    ) -> ReturnT | NDArray[np.object_]: ...
 
     @overload  # type: ignore[override]
-    def reduceat(
+    def reduceat[OutT: np.ndarray](
         self,
         array: ArrayLike,
         /,
@@ -772,8 +757,8 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         axis: SupportsIndex = 0,
         dtype: DTypeLike | None = None,
         *,
-        out: _ArrayT | tuple[_ArrayT],
-    ) -> _ArrayT: ...
+        out: OutT | tuple[OutT],
+    ) -> OutT: ...
     @overload
     def reduceat(
         self,
@@ -804,7 +789,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         *,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
-    ) -> _ReturnType_co: ...
+    ) -> ReturnT: ...
     @overload
     def outer(
         self,
@@ -814,17 +799,17 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         *,
         out: EllipsisType | None = None,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
-    ) -> _ReturnType_co | NDArray[np.object_]: ...
+    ) -> ReturnT | NDArray[np.object_]: ...
     @overload
-    def outer(
+    def outer[OutT: np.ndarray](
         self,
         A: ArrayLike,
         B: ArrayLike,
         /,
         *,
-        out: _ArrayT,
+        out: OutT,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
-    ) -> _ArrayT: ...
+    ) -> OutT: ...
     @overload
     def outer(
         self,
@@ -855,11 +840,11 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
     ) -> None: ...
 
 @type_check_only
-class _PyFunc_Nin3P_Nout1(ufunc, Generic[_ReturnType_co, _IDType, _NIn]):  # type: ignore[misc]
+class _PyFunc_Nin3P_Nout1[ReturnT, IdentT, NInT: int](ufunc):  # type: ignore[misc]
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
-    def nin(self) -> _NIn: ...
+    def nin(self) -> NInT: ...
     @property
     def nout(self) -> Literal[1]: ...
     @property
@@ -877,7 +862,7 @@ class _PyFunc_Nin3P_Nout1(ufunc, Generic[_ReturnType_co, _IDType, _NIn]):  # typ
         *xs: _ScalarLike_co,
         out: EllipsisType | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
-    ) -> _ReturnType_co: ...
+    ) -> ReturnT: ...
     @overload
     def __call__(
         self,
@@ -888,18 +873,18 @@ class _PyFunc_Nin3P_Nout1(ufunc, Generic[_ReturnType_co, _IDType, _NIn]):  # typ
         *xs: ArrayLike,
         out: EllipsisType | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
-    ) -> _ReturnType_co | NDArray[np.object_]: ...
+    ) -> ReturnT | NDArray[np.object_]: ...
     @overload
-    def __call__(
+    def __call__[OutT: np.ndarray](
         self,
         x1: ArrayLike,
         x2: ArrayLike,
         x3: ArrayLike,
         /,
         *xs: ArrayLike,
-        out: _ArrayT | tuple[_ArrayT],
+        out: OutT | tuple[OutT],
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
-    ) -> _ArrayT: ...
+    ) -> OutT: ...
     @overload
     def __call__(
         self,
@@ -919,13 +904,13 @@ class _PyFunc_Nin3P_Nout1(ufunc, Generic[_ReturnType_co, _IDType, _NIn]):  # typ
     def at(self, a: Never, indices: Never, /, *args: Never) -> NoReturn: ...  # type: ignore[override]
 
 @type_check_only
-class _PyFunc_Nin1P_Nout2P(ufunc, Generic[_ReturnType_co, _IDType, _NIn, _NOut]):  # type: ignore[misc]
+class _PyFunc_Nin1P_Nout2P[ReturnT, IdentT, NInT: int, NOutT: int](ufunc):  # type: ignore[misc]
     @property
-    def identity(self) -> _IDType: ...
+    def identity(self) -> IdentT: ...
     @property
-    def nin(self) -> _NIn: ...
+    def nin(self) -> NInT: ...
     @property
-    def nout(self) -> _NOut: ...
+    def nout(self) -> NOutT: ...
     @property
     def ntypes(self) -> Literal[1]: ...
     @property
@@ -939,7 +924,7 @@ class _PyFunc_Nin1P_Nout2P(ufunc, Generic[_ReturnType_co, _IDType, _NIn, _NOut])
         *xs: _ScalarLike_co,
         out: EllipsisType | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
-    ) -> _2PTuple[_ReturnType_co]: ...
+    ) -> _2PTuple[ReturnT]: ...
     @overload
     def __call__(
         self,
@@ -948,16 +933,16 @@ class _PyFunc_Nin1P_Nout2P(ufunc, Generic[_ReturnType_co, _IDType, _NIn, _NOut])
         *xs: ArrayLike,
         out: EllipsisType | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
-    ) -> _2PTuple[_ReturnType_co | NDArray[np.object_]]: ...
+    ) -> _2PTuple[ReturnT | NDArray[np.object_]]: ...
     @overload
-    def __call__(
+    def __call__[OutT: np.ndarray](
         self,
         x1: ArrayLike,
         /,
         *xs: ArrayLike,
-        out: _2PTuple[_ArrayT],
+        out: _2PTuple[OutT],
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
-    ) -> _2PTuple[_ArrayT]: ...
+    ) -> _2PTuple[OutT]: ...
     @overload
     def __call__(
         self,

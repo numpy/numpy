@@ -1,22 +1,20 @@
-from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, NoReturn, assert_type
 
 import numpy as np
-from numpy import dtype, generic
 from numpy._typing import NDArray, _AnyShape
 
-_ScalarT = TypeVar("_ScalarT", bound=generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
+type MaskedArray[ScalarT: np.generic] = np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]
+type _NoMaskType = np.bool[Literal[False]]
+type _Array1D[ScalarT: np.generic] = np.ndarray[tuple[int], np.dtype[ScalarT]]
 
-MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
-_NoMaskType: TypeAlias = np.bool[Literal[False]]
-_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
+###
 
-class MaskedArraySubclass(MaskedArray[_ScalarT_co]): ...
+class MaskedArraySubclass[ScalarT: np.generic](np.ma.MaskedArray[_AnyShape, np.dtype[ScalarT]]): ...
 
-class IntoMaskedArraySubClass(Generic[_ScalarT_co]):
-    def __array__(self) -> MaskedArraySubclass[_ScalarT_co]: ...
+class IntoMaskedArraySubClass[ScalarT: np.generic]:
+    def __array__(self) -> MaskedArraySubclass[ScalarT]: ...
 
-MaskedArraySubclassC: TypeAlias = MaskedArraySubclass[np.complex128]
+type MaskedArraySubclassC = MaskedArraySubclass[np.complex128]
 
 AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
@@ -219,7 +217,10 @@ assert_type(MAR_f4.partition(1), None)
 assert_type(MAR_V.partition(1, axis=0, kind="introselect", order="K"), None)
 
 assert_type(MAR_f4.argpartition(1), MaskedArray[np.intp])
-assert_type(MAR_1d.argpartition(1, axis=0, kind="introselect", order="K"), MaskedArray[np.intp])
+assert_type(
+    MAR_1d.argpartition(1, axis=0, kind="introselect", order="K"),
+    np.ma.MaskedArray[tuple[int], np.dtype[np.intp]],
+)
 
 assert_type(np.ma.ndim(f4), int)
 assert_type(np.ma.ndim(MAR_b), int)

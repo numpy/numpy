@@ -2738,8 +2738,9 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     else {
         fixed_strides[0] = PyArray_STRIDES(op[0])[axis];
         fixed_strides[1] = PyArray_STRIDES(op[1])[axis];
-        fixed_strides[2] = fixed_strides[0];
     }
+    // First argument is also passed as output (e.g. see dataptr below).
+    fixed_strides[2] = fixed_strides[0];
 
 
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -4515,7 +4516,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 "use the `out` keyword argument instead. If you hoped to work with "
                 "more than 2 inputs, combine them into a single array and get the extrema "
                 "for the relevant axis.") < 0) {
-                return NULL;
+                goto fail;
             }
         }
 
@@ -6575,8 +6576,8 @@ static struct PyMethodDef ufunc_methods[] = {
 };
 
 
-/******************************************************************************
- ***                           UFUNC GETSET                                 ***
+/*****************************************************************************
+ ***                           UFUNC GETSET                                ***
  *****************************************************************************/
 
 
@@ -6725,6 +6726,9 @@ static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
         (getter)ufunc_get_doc, (setter)ufunc_set_doc,
         NULL, NULL},
+    {"__name__",
+        (getter)ufunc_get_name,
+        NULL, NULL, NULL},
     {"nin",
         (getter)ufunc_get_nin,
         NULL, NULL, NULL},
@@ -6740,15 +6744,13 @@ static PyGetSetDef ufunc_getset[] = {
     {"types",
         (getter)ufunc_get_types,
         NULL, NULL, NULL},
-    {"__name__",
-        (getter)ufunc_get_name,
-        NULL, NULL, NULL},
     {"identity",
         (getter)ufunc_get_identity,
         NULL, NULL, NULL},
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    // __signature__ stored in `__dict__`, see `_globals._SignatureDescriptor`
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 
