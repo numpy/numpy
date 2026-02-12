@@ -121,9 +121,9 @@ Avoid race conditions
 Race conditions occur when multiple threads update shared data simultaneously, leading to unpredictable results.
 To avoid race conditions, consider the following strategies:
 
-* Use thread-safe data structures or synchronization primitives like locks, semaphores, or condition variables to manage access to shared data.
 * Minimize the amount of shared data between threads by designing your program to use thread-local storage or by passing data explicitly to threads. 
 * Prefer immutable NumPy arrays or read-only access patterns when possible, since they reduce the need for explicit synchronization.
+* Use thread-safe data structures or synchronization primitives like locks, semaphores, or condition variables to manage access to shared data.
 
 
 .. _basics.performant_code.multi_core_with_standard_libraries:
