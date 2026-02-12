@@ -89,7 +89,7 @@ Multithreading
 -----------------
 
 Multithreading allows multiple threads to run within the same process, sharing the same memory space.
-Starting with Python 3.13, a free-threading build of Python is available. When combined with libraries that are explicitly designed to be thread-safe, this can enable true parallel execution with threads.
+Starting with Python 3.13, a free-threaded build of Python is available. When combined with libraries that are explicitly designed to be thread-safe, this can enable true parallel execution with threads.
 
 As a high-level API, Python provides the `concurrent.futures.ThreadPoolExecutor` class  for thread-based parallelism.
 Python also provides the `concurrent.futures.InterpreterPoolExecutor`, which uses multiple interpreters running in separate threads and avoids sharing Python objects between them. However, it is not yet available in NumPy. (See `gh-24755 <https://github.com/numpy/numpy/issues/24755>`__ for details.)
