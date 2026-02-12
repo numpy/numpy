@@ -104,7 +104,7 @@ Pros
 
 Cons
 ++++
-* Possibility of race conditions when accessing shared data accidentally
+* Possibility of race conditions when mutating shared data simultaneously with reads.
 * Limited performance improvement if using Python libraries are not thread-safe or have limited support for free-threaded Python builds
 
 General tips
