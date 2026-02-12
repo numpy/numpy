@@ -15,6 +15,7 @@
 #include "numpy/ufuncobject.h"
 
 #include "common.h"
+#include "npy_pycompat.h"
 
 
 #define UFUNC_ERR_IGNORE 0
@@ -145,6 +146,13 @@ init_extobj(void)
     if (npy_static_pydata.default_extobj_capsule == NULL) {
         return -1;
     }
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_SetImmortal(npy_static_pydata.default_extobj_capsule) == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Could not mark extobj capsule as immortal");
+        Py_CLEAR(npy_static_pydata.default_extobj_capsule);
+        return -1;
+    }
+#endif
     npy_static_pydata.npy_extobj_contextvar = PyContextVar_New(
             "numpy.ufunc.extobj", npy_static_pydata.default_extobj_capsule);
     if (npy_static_pydata.npy_extobj_contextvar == NULL) {
