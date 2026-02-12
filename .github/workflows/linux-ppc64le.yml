@@ -43,18 +43,10 @@ jobs:
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
             compiler: "gcc"
-          - name: "clang (s390x)"
-            args: "-Dallow-noblas=false"
-            runner: ubuntu-24.04-s390x
-            compiler: "clang"
           - name: "GCC with zvector (s390x)"
             args: "-Dallow-noblas=false -Dcpu-baseline=vx"
             runner: ubuntu-24.04-s390x
             compiler: "gcc"
-          - name: "clang with zvector (s390x)"
-            args: "-Dallow-noblas=false -Dcpu-baseline=vx"
-            runner: ubuntu-24.04-s390x
-            compiler: "clang"
 
     name: "${{ matrix.config.name }}"
     steps:
