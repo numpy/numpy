@@ -123,7 +123,7 @@ To avoid race conditions, consider the following strategies:
 
 * Minimize the amount of shared data between threads by designing your program to use thread-local storage or by passing data explicitly to threads. 
 * Prefer immutable NumPy arrays or read-only access patterns when possible, since they reduce the need for explicit synchronization.
-* Use thread-safe data structures or synchronization primitives like locks, semaphores, or condition variables to manage access to shared data.
+* Use thread-safe data structures or synchronization primitives like locks, semaphores, or condition variables to manage access to shared data. Note that improper use of these synchronization mechanisms can cause deadlocks, so they should be used with care.
 
 
 .. _basics.performant_code.multi_core_with_standard_libraries:
