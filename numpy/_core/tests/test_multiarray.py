@@ -9618,6 +9618,13 @@ class TestWhere:
         assert_raises(ValueError, np.where, c, a, a)
         assert_raises(ValueError, np.where, c[0], a, b)
 
+    def test_scalar_overflow(self):
+        c = [True]
+        a = np.array([1], dtype=np.uint8)
+        b = 1000
+        assert_raises(OverflowError, np.where, c, a, b)
+        assert_raises(OverflowError, np.where, c, b, a)
+
     def test_string(self):
         # gh-4778 check strings are properly filled with nulls
         a = np.array("abc")
