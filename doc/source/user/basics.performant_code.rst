@@ -218,6 +218,9 @@ This example prioritizes clarity over efficiency. In practice, transferring larg
 Multithreading Example
 ----------------------
 
+As in the multiprocessing example, we demonstrate how to use `concurrent.futures.ThreadPoolExecutor` to parallelize the Mandelbrot set generation across multiple threads.
+For more detailed explanations and additional examples, see `Examples Demonstrating Free-Threaded Python <https://py-free-threading.github.io/examples/>`__.
+
 Setup
 +++++
 
