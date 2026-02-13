@@ -171,7 +171,7 @@ class _SizedIterable[T](Protocol):
 
 class vectorize:
     __doc__: str | None
-    __module__: L["numpy"] = "numpy"
+    __module__: L["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
     pyfunc: Callable[..., Incomplete]
     cache: bool
     signature: str | None
