@@ -903,7 +903,7 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
                     np.clip(ar1_indices, 0, ar2_range + 2, out=ar1_indices)
 
                     return extended_table[ar1_indices]
-                    
+
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=bool)
             else:
