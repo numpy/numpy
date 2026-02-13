@@ -530,6 +530,11 @@ def _get_format_function(data, **options):
     dtype_ = data.dtype
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
+
+    # Fallback for non-NumPy (user defined) dtypes
+    if dtypeobj is not None and dtypeobj.__module__ != "numpy":
+        return formatdict["numpystr"]()
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
     elif issubclass(dtypeobj, _nt.bool):
@@ -540,20 +545,10 @@ def _get_format_function(data, **options):
         else:
             return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
-
-        # Defensive check: only use Dragon4 formatters for built-in floating types
-        # For custom floating types, fall back to numpystr (scalar string formatting)
-
-        if (
-            issubclass(dtypeobj, _nt.floating)
-            and dtypeobj.__module__ == "numpy"
-        ):
-            if issubclass(dtypeobj, _nt.longdouble):
-                return formatdict['longfloat']()
-            else:
-                return formatdict['float']()
+        if issubclass(dtypeobj, _nt.longdouble):
+            return formatdict['longfloat']()
         else:
-            return formatdict['numpystr']()
+            return formatdict['float']()
     elif issubclass(dtypeobj, _nt.complexfloating):
         if issubclass(dtypeobj, _nt.clongdouble):
             return formatdict['longcomplexfloat']()
@@ -572,7 +567,6 @@ def _get_format_function(data, **options):
             return formatdict['void']()
     else:
         return formatdict['numpystr']()
-
 
 def _recursive_guard(fillvalue='...'):
     """
@@ -1787,29 +1781,3 @@ _default_array_str = functools.partial(_array_str_implementation,
                                        array2string=_array2string_impl)
 _default_array_repr = functools.partial(_array_repr_implementation,
                                         array2string=_array2string_impl)
-
-#Testing
-import numpy as np
-import pytest
-
-
-@pytest.mark.filterwarnings("ignore")
-def test_user_defined_floating_dtype_printing_does_not_corrupt_precision():
-    """
-    Ensure that array printing does not use NumPy Dragon4 formatting
-    for user-defined floating dtypes, which would silently truncate
-    precision to float64.
-    """
-    try:
-        from numpy_quaddtype import QuadPrecDType
-    except ImportError:
-        pytest.skip("numpy-quaddtype not installed")
-
-    pi_str = "3.14159265358979323846264338327950288"
-    arr = np.array([pi_str], dtype=QuadPrecDType())
-
-    np.set_printoptions(precision=34, floatmode="fixed")
-    s = repr(arr)
-
-    # Float64 artifact digits should not appear
-    assert "931159979" not in s
