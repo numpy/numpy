@@ -608,8 +608,8 @@ def _parse_einsum_input(operands):
     # Make sure output subscripts are in the input
     for char in output_subscript:
         if output_subscript.count(char) != 1:
-            raise ValueError("Output character %s appeared more than once in "
-                             "the output." % char)
+            raise ValueError(f"Output character {char} appeared more than once in "
+                             "the output.")
         if char not in input_subscripts:
             raise ValueError(f"Output character {char} did not appear in the input")
 
@@ -790,9 +790,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     for tnum, term in enumerate(input_list):
         sh = operands[tnum].shape
         if len(sh) != len(term):
-            raise ValueError("Einstein sum subscript %s does not contain the "
-                             "correct number of indices for operand %d."
-                             % (input_subscripts[tnum], tnum))
+            raise ValueError(f"Einstein sum subscript {input_subscripts[tnum]} "
+                             "does not contain the "
+                             f"correct number of indices for operand {tnum}.")
         for cnum, char in enumerate(term):
             dim = sh[cnum]
 
@@ -801,9 +801,9 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
                 if dimension_dict[char] == 1:
                     dimension_dict[char] = dim
                 elif dim not in (1, dimension_dict[char]):
-                    raise ValueError("Size of label '%s' for operand %d (%d) "
-                                     "does not match previous terms (%d)."
-                                     % (char, tnum, dimension_dict[char], dim))
+                    raise ValueError(f"Size of label '{char}' for "
+                                     f"operand {tnum} ({dimension_dict[char]}) "
+                                     f"does not match previous terms ({dim}).")
             else:
                 dimension_dict[char] = dim
 
@@ -886,7 +886,6 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     # Return the path along with a nice string representation
     overall_contraction = input_subscripts + "->" + output_subscript
-    header = ("scaling", "current", "remaining")
 
     # Compute naive cost
     # This isn't quite right, need to look into exactly how einsum does this
@@ -903,20 +902,19 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     path_print = f"  Complete contraction:  {overall_contraction}\n"
     path_print += f"         Naive scaling:  {num_indices}\n"
-    path_print += "     Optimized scaling:  %d\n" % max(scale_list)
+    path_print += f"     Optimized scaling:  {max(scale_list)}\n"
     path_print += f"      Naive FLOP count:  {naive_cost:.3e}\n"
     path_print += f"  Optimized FLOP count:  {opt_cost:.3e}\n"
     path_print += f"   Theoretical speedup:  {speedup:3.3f}\n"
     path_print += f"  Largest intermediate:  {max_i:.3e} elements\n"
     path_print += "-" * 74 + "\n"
-    path_print += "%6s %24s %40s\n" % header
+    path_print += f"{'scaling':>6} {'current':>24} {'remaining':>40}\n"
     path_print += "-" * 74
 
     for n, contraction in enumerate(contraction_list):
         _, einsum_str, remaining = contraction
         remaining_str = ",".join(remaining) + "->" + output_subscript
-        path_run = (scale_list[n], einsum_str, remaining_str)
-        path_print += "\n%4d    %24s %40s" % path_run
+        path_print += f"\n{scale_list[n]:4d}    {einsum_str:>24} {remaining_str:>40}"
 
     path = ['einsum_path'] + path
     return (path, path_print)
