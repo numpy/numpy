@@ -38,7 +38,7 @@ jobs:
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
           - name: "GCC with zvector (s390x)"
-            args: "-Dallow-noblas=false -Dcpu-baseline=vx"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
             runner: ubuntu-24.04-s390x
 
     name: "${{ matrix.config.name }}"
@@ -84,7 +84,7 @@ jobs:
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
           - name: "clang with zvector (s390x)"
-            args: "-Dallow-noblas=false -Dcpu-baseline=vx"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
             runner: ubuntu-24.04-s390x
 
     name: "${{ matrix.config.name }}"
