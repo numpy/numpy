@@ -1638,8 +1638,16 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     array([0.+1.j , 1.+1.5j])
 
     """
-
+    x = np.asarray(x)
+    xp = np.asarray(xp)
     fp = np.asarray(fp)
+
+    # Handle empty x array: return empty array with appropriate dtype
+    if x.size == 0:
+        if np.iscomplexobj(fp):
+            return np.empty(x.shape, dtype=np.complex128)
+        else:
+            return np.empty(x.shape, dtype=np.float64)
 
     if np.iscomplexobj(fp):
         interp_func = compiled_interp_complex
