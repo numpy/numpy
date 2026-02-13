@@ -1,3 +1,4 @@
+import os
 import platform
 import re
 import shlex
@@ -831,7 +832,8 @@ def test_freethreading_compatible(hello_world_f90, monkeypatch):
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
         eout = ' Hello World\n'
         assert rout.stdout == eout
-        assert rout.stderr == ""
+        if "LSAN_OPTIONS" not in os.environ:
+            assert rout.stderr == ""
         assert rout.returncode == 0
 
 

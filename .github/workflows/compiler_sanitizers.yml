@@ -108,3 +108,73 @@ jobs:
           python -m spin test \
           `find numpy -name "test*.py" | xargs grep -E -l "import threading|ThreadPoolExecutor" | tr '\n' ' '` \
            -- -v -s --timeout=600 --durations=10
+
+  gcc_ASAN:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - name: Set up pyenv
+      run: |
+        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        PYENV_ROOT="$HOME/.pyenv"
+        PYENV_BIN="$PYENV_ROOT/bin"
+        PYENV_SHIMS="$PYENV_ROOT/shims"
+        echo "$PYENV_BIN" >> $GITHUB_PATH
+        echo "$PYENV_SHIMS" >> $GITHUB_PATH
+        echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
+
+    - name: Check pyenv is working
+      run: pyenv --version
+
+    - name: Install python & numpy build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq install \
+          libb2-dev \
+          libbz2-dev \
+          libffi-dev \
+          libgdbm-dev \
+          libgdbm-compat-dev \
+          liblzma-dev \
+          libncurses5-dev \
+          libopenblas-dev \
+          libreadline6-dev \
+          libsqlite3-dev \
+          libssl-dev \
+          libzstd-dev \
+          lzma-dev \
+          ninja-build \
+          tk-dev \
+          uuid-dev \
+          zlib1g-dev
+
+    - name: Build Python with address sanitizer
+      run: |
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14
+        pyenv global 3.14
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/ci_requirements.txt
+        pip install -r requirements/test_requirements.txt
+        # xdist captures stdout/stderr, but we want the ASAN output
+        pip uninstall -y pytest-xdist
+
+    - name: Build
+      run: python -m spin build -j4 -- -Db_sanitize=address,leak
+
+    - name: Test
+      run: |
+        # pass -s to pytest to see ASAN errors and warnings, otherwise pytest captures them
+        export ASAN_OPTIONS="detect_leaks=1:symbolize=1:strict_init_order=true:allocator_may_return_null=1:use_sigaltstack=0"
+        export LSAN_OPTIONS="suppressions=$GITHUB_WORKSPACE/tools/ci/lsan_suppressions.txt"
+        python -m spin test -- -v -s --timeout=600 --durations=10
