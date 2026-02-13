@@ -392,15 +392,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         mask[1:] = np.zeros(aux.shape[0] - 1, dtype=np.bool)
         for name in aux.dtype.names:
             col = aux[name]
+            col_diff = col[1:] != col[:-1]
             if col.dtype.kind in "cfmM":
                 # Floating, complex, or datetime/timedelta: handle NaN values
                 is_nan = np.isnan(col)
-                col_diff = (col[1:] != col[:-1]) | (is_nan[1:] != is_nan[:-1])
-                both_nan = is_nan[1:] & is_nan[:-1]
-                col_diff = col_diff & ~both_nan
-            else:
-                # Integer, string, or other type: simple comparison
-                col_diff = col[1:] != col[:-1]
+                col_diff = col_diff & ~(is_nan[1:] & is_nan[:-1])
             mask[1:] = mask[1:] | col_diff
     elif (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):

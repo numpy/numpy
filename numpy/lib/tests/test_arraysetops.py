@@ -845,6 +845,17 @@ class TestUnique:
         result = np.unique(a, equal_nan=True, axis=0)
         assert_equal(result, expected)
 
+        # issue 29336
+        a = np.array([[np.nan, 0, 0], [np.nan, 0, 0]])
+        expected = np.array([[np.nan, 0, 0]])
+        result = np.unique(a, axis=0, equal_nan=True)
+        assert_equal(result, expected)
+
+        a = np.array([np.nan, 0, 0, np.nan])
+        expected = np.array([0, np.nan])
+        result = np.unique(a, axis=0, equal_nan=True)
+        assert_equal(result, expected)
+
         # Extra case
         a = np.array([[0, np.nan, 2], [0, np.nan, 1], [0, np.nan, 2]])
         expected = np.array([[0, np.nan, 1], [0, np.nan, 2]])
