@@ -243,13 +243,13 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     }
 
     wrapped_dt_tuple = PyArray_TupleFromItems(
-            ufunc->nargs, (PyObject **)wrapped_dtypes, 1);
+            PyUFunc_NARGS(ufunc), (PyObject **)wrapped_dtypes, 1);
     if (wrapped_dt_tuple == NULL) {
         goto finish;
     }
 
     PyArrayMethodObject *wrapped_meth = NULL;
-    PyObject *loops = ufunc->_loops;
+    PyObject *loops = PyUFunc__LOOPS(ufunc);
     Py_ssize_t length = PyList_Size(loops);
     for (Py_ssize_t i = 0; i < length; i++) {
         PyObject *item = PyList_GetItemRef(loops, i);
@@ -304,7 +304,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     Py_SETREF(bmeth, NULL);
 
     /* Finalize the "wrapped" part of the new ArrayMethod */
-    meth->wrapped_dtypes = PyMem_Malloc(ufunc->nargs * sizeof(PyArray_DTypeMeta *));
+    meth->wrapped_dtypes = PyMem_Malloc(PyUFunc_NARGS(ufunc) * sizeof(PyArray_DTypeMeta *));
     if (meth->wrapped_dtypes == NULL) {
         goto finish;
     }
@@ -313,13 +313,13 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     meth->wrapped_meth = wrapped_meth;
     meth->translate_given_descrs = translate_given_descrs;
     meth->translate_loop_descrs = translate_loop_descrs;
-    for (int i = 0; i < ufunc->nargs; i++) {
+    for (int i = 0; i < PyUFunc_NARGS(ufunc); i++) {
         Py_XINCREF(wrapped_dtypes[i]);
         meth->wrapped_dtypes[i] = wrapped_dtypes[i];
     }
 
     new_dt_tuple = PyArray_TupleFromItems(
-            ufunc->nargs, (PyObject **)new_dtypes, 1);
+            PyUFunc_NARGS(ufunc), (PyObject **)new_dtypes, 1);
     if (new_dt_tuple == NULL) {
         goto finish;
     }

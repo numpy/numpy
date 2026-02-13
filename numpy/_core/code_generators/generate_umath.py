@@ -1547,7 +1547,7 @@ def make_ufuncs(funcdict):
         mlist.append(fmt.format(**args))
         if uf.typereso is not None:
             mlist.append(
-                r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
+                rf"PyUFunc_SET_TYPE_RESOLVER((PyUFuncObject *)f, &{uf.typereso});")
         for c in uf.indexed:
             # Handle indexed loops by getting the underlying ArrayMethodObject
             # from the list in f._loops and setting its field appropriately

@@ -1209,10 +1209,10 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
         if (!ufunc) { \
             goto fail; \
         } \
-        if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
+        if (sizeof(_types)/sizeof(int)!=PyUFunc_NARGS(ufunc)) {   \
             PyErr_Format(PyExc_AssertionError, \
                          "ufunc %s takes %d arguments, our loop takes %lu", \
-                         #name, ufunc->nargs, (unsigned long) \
+                         #name, PyUFunc_NARGS(ufunc), (unsigned long) \
                          (sizeof(_types)/sizeof(int))); \
             Py_DECREF(ufunc); \
             goto fail; \
