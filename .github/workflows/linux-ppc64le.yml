@@ -80,9 +80,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - name: "clang (ppc64le)"
-            args: "-Dallow-noblas=false"
-            runner: ubuntu-24.04-ppc64le-p10
           - name: "clang (s390x)"
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
