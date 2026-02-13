@@ -883,7 +883,6 @@ def _isin(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
                 _sample = ar1[::_stride]
                 _n_in = np.count_nonzero((_sample >= ar2_min) & (_sample <= ar2_max))
 
-                
                 # Threshold determined empirically: clipping beats
                 # masking when ≥ 5 % of ar1 falls inside
                 # [ar2_min, ar2_max].  Below this, masking's
