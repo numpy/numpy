@@ -54,7 +54,7 @@ npy_alloc_cache_zero(size_t nmemb, size_t size);
 NPY_NO_EXPORT void
 npy_free_cache(void * p, npy_uintp sz);
 
-NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[] = {
+NPY_NO_EXPORT PyBoolScalarObject_fields _PyArrayScalar_BoolValues[] = {
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 0},
     {PyObject_HEAD_INIT(&PyBoolArrType_Type) 1},
 };
@@ -609,7 +609,7 @@ static PyObject *
 genbool_type_str(PyObject *self)
 {
     return PyUnicode_FromString(
-            ((PyBoolScalarObject *)self)->obval ? "True" : "False");
+            PyArrayScalar_VAL((PyBoolScalarObject *)self, Bool) ? "True" : "False");
 }
 
 static PyObject *
@@ -623,7 +623,7 @@ genbool_type_repr(PyObject *self)
         return genbool_type_str(self);
     }
     return PyUnicode_FromString(
-            ((PyBoolScalarObject *)self)->obval ? "np.True_" : "np.False_");
+            PyArrayScalar_VAL((PyBoolScalarObject *)self, Bool) ? "np.True_" : "np.False_");
 }
 
 /*
@@ -876,7 +876,7 @@ static PyObject *
 voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
-    if (PyDataType_HASFIELDS(s->descr)) {
+    if (PyDataType_HASFIELDS(PyVoidScalar_DESCR(s))) {
         /* Python helper checks for the legacy mode printing */
         return _void_scalar_to_string(self, 1);
     }
@@ -885,10 +885,10 @@ voidtype_repr(PyObject *self)
         return NULL;
     }
     if (legacy_print_mode > 125) {
-        return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
+        return _void_to_hex(PyArrayScalar_VAL(s, Void), PyVoidScalar_DESCR(s)->elsize, "np.void(b'", "\\x", "')");
     }
     else {
-        return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
+        return _void_to_hex(PyArrayScalar_VAL(s, Void), PyVoidScalar_DESCR(s)->elsize, "void(b'", "\\x", "')");
     }
 }
 
@@ -896,10 +896,10 @@ static PyObject *
 voidtype_str(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
-    if (PyDataType_HASFIELDS(s->descr)) {
+    if (PyDataType_HASFIELDS(PyVoidScalar_DESCR(s))) {
         return _void_scalar_to_string(self, 0);
     }
-    return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
+    return _void_to_hex(PyArrayScalar_VAL(s, Void), PyVoidScalar_DESCR(s)->elsize, "b'", "\\x", "'");
 }
 
 static PyObject *
@@ -918,13 +918,14 @@ datetimetype_repr(PyObject *self)
     }
 
     scal = (PyDatetimeScalarObject *)self;
+    PyArray_DatetimeMetaData *obmeta = PyDatetimeScalar_OBMETA(scal);
+    npy_datetime obval = PyArrayScalar_VAL(scal, Datetime);
 
-    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&scal->obmeta,
-                scal->obval, &dts) < 0) {
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(obmeta, obval, &dts) < 0) {
         return NULL;
     }
 
-    unit = scal->obmeta.base;
+    unit = obmeta->base;
     if (NpyDatetime_MakeISO8601Datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
@@ -934,15 +935,15 @@ datetimetype_repr(PyObject *self)
      * For straight units or generic units, the unit will be deduced
      * from the string, so it's not necessary to specify it.
      */
-    if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
-            scal->obmeta.base == NPY_FR_GENERIC) {
+    if ((obmeta->num == 1 && obmeta->base != NPY_FR_h) ||
+            obmeta->base == NPY_FR_GENERIC) {
         int legacy_print_mode = get_legacy_print_mode();
         if (legacy_print_mode == -1) {
             return NULL;
         }
 
-        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
-        if((scal->obval == NPY_DATETIME_NAT) && (meta != NULL)){
+        PyObject *meta = metastr_to_unicode(obmeta, 1);
+        if((obval == NPY_DATETIME_NAT) && (meta != NULL)){
             if (legacy_print_mode > 125) {
                 ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
             } else {
@@ -959,7 +960,7 @@ datetimetype_repr(PyObject *self)
         Py_DECREF(meta);
     }
     else {
-        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        PyObject *meta = metastr_to_unicode(obmeta, 1);
         if (meta == NULL) {
             return NULL;
         }
@@ -992,17 +993,19 @@ timedeltatype_repr(PyObject *self)
     }
 
     scal = (PyTimedeltaScalarObject *)self;
+    PyArray_DatetimeMetaData *obmeta = PyTimedeltaScalar_OBMETA(scal);
+    npy_datetime obval = PyArrayScalar_VAL(scal, Timedelta);
 
     /* The value */
-    if (scal->obval == NPY_DATETIME_NAT) {
+    if (obval == NPY_DATETIME_NAT) {
         val = PyUnicode_FromString("'NaT'");
     }
     else {
          /* Can't use "%lld" if HAVE_LONG_LONG is not defined */
 #if defined(HAVE_LONG_LONG)
-        val = PyUnicode_FromFormat("%lld", (long long)scal->obval);
+        val = PyUnicode_FromFormat("%lld", (long long)obval);
 #else
-        val = PyUnicode_FromFormat("%ld", (long)scal->obval);
+        val = PyUnicode_FromFormat("%ld", (long)obval);
 #endif
     }
     if (val == NULL) {
@@ -1010,7 +1013,7 @@ timedeltatype_repr(PyObject *self)
     }
 
     /* The metadata unit */
-    if (scal->obmeta.base == NPY_FR_GENERIC) {
+    if (obmeta->base == NPY_FR_GENERIC) {
         int legacy_print_mode = get_legacy_print_mode();
         if (legacy_print_mode == -1) {
             return NULL;
@@ -1023,7 +1026,7 @@ timedeltatype_repr(PyObject *self)
         }
     }
     else {
-        PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
+        PyObject *meta = metastr_to_unicode(obmeta, 1);
         if (meta == NULL) {
             Py_DECREF(val);
             return NULL;
@@ -1060,13 +1063,15 @@ datetimetype_str(PyObject *self)
     }
 
     scal = (PyDatetimeScalarObject *)self;
+    PyArray_DatetimeMetaData *obmeta = PyDatetimeScalar_OBMETA(scal);
+    npy_datetime obval = PyArrayScalar_VAL(scal, Datetime);
 
-    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(&scal->obmeta, scal->obval,
-                                                            &dts) < 0) {
+    if (NpyDatetime_ConvertDatetime64ToDatetimeStruct(
+                obmeta, obval, &dts) < 0) {
         return NULL;
     }
 
-    unit = scal->obmeta.base;
+    unit = obmeta->base;
     if (NpyDatetime_MakeISO8601Datetime(&dts, iso, sizeof(iso), 0, 0,
                             unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
@@ -1107,9 +1112,11 @@ timedeltatype_str(PyObject *self)
     }
 
     scal = (PyTimedeltaScalarObject *)self;
+    PyArray_DatetimeMetaData *obmeta = PyTimedeltaScalar_OBMETA(scal);
+    npy_datetime obval = PyArrayScalar_VAL(scal, Timedelta);
 
-    if (scal->obmeta.base >= 0 && scal->obmeta.base < NPY_DATETIME_NUMUNITS) {
-        basestr = _datetime_verbose_strings[scal->obmeta.base];
+    if (obmeta->base >= 0 && obmeta->base < NPY_DATETIME_NUMUNITS) {
+        basestr = _datetime_verbose_strings[obmeta->base];
     }
     else {
         PyErr_SetString(PyExc_RuntimeError,
@@ -1117,7 +1124,7 @@ timedeltatype_str(PyObject *self)
         return NULL;
     }
 
-    if (scal->obval == NPY_DATETIME_NAT) {
+    if (obval == NPY_DATETIME_NAT) {
         ret = PyUnicode_FromString("NaT");
     }
     else {
@@ -1126,10 +1133,10 @@ timedeltatype_str(PyObject *self)
          */
 #if defined(HAVE_LONG_LONG)
         ret = PyUnicode_FromFormat("%lld %s",
-            (long long)(scal->obval * scal->obmeta.num), basestr);
+            (long long)(obval * obmeta->num), basestr);
 #else
         ret = PyUnicode_FromFormat("%ld %s",
-            (long)(scal->obval * scal->obmeta.num), basestr);
+            (long)(obval * obmeta->num), basestr);
 #endif
     }
 
@@ -1664,15 +1671,15 @@ voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
         return NULL;
     }
     ((PyArrayFlagsObject *)flagobj)->arr = NULL;
-    ((PyArrayFlagsObject *)flagobj)->flags = self->flags;
+    ((PyArrayFlagsObject *)flagobj)->flags = PyVoidScalar_FLAGS(self);
     return flagobj;
 }
 
 static PyObject *
 voidtype_dtypedescr_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
-    Py_INCREF(self->descr);
-    return (PyObject *)self->descr;
+    Py_INCREF(PyVoidScalar_DESCR(self));
+    return (PyObject *)PyVoidScalar_DESCR(self);
 }
 
 
@@ -1876,12 +1883,13 @@ gentype_base_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 static PyObject *
 voidtype_base_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 {
-    if (self->base == NULL) {
+    PyObject *base = PyVoidScalar_BASE(self);
+    if (base == NULL) {
         Py_RETURN_NONE;
     }
     else {
-        Py_INCREF(self->base);
-        return self->base;
+        Py_INCREF(base);
+        return base;
     }
 }
 
@@ -2990,12 +2998,12 @@ static PyMethodDef @name@type_methods[] = {
 static Py_ssize_t
 voidtype_length(PyVoidScalarObject *self)
 {
-    if (!PyDataType_HASFIELDS(self->descr)) {
+    if (!PyDataType_HASFIELDS(PyVoidScalar_DESCR(self))) {
         return 0;
     }
     else {
         /* return the number of fields */
-        return (Py_ssize_t) PyTuple_GET_SIZE(self->descr->names);
+        return (Py_ssize_t) PyTuple_GET_SIZE(PyVoidScalar_DESCR(self)->names);
     }
 }
 
@@ -3008,12 +3016,12 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
     npy_intp m;
     PyObject *flist=NULL;
 
-    if (!(PyDataType_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(PyVoidScalar_DESCR(self)))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return NULL;
     }
-    flist = self->descr->names;
+    flist = PyVoidScalar_DESCR(self)->names;
     m = PyTuple_GET_SIZE(flist);
     if (n < 0) {
         n += m;
@@ -3034,7 +3042,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
     PyObject *ret, *res;
 
     /* structured voids will accept an integer index */
-    if (PyDataType_HASFIELDS(self->descr)) {
+    if (PyDataType_HASFIELDS(PyVoidScalar_DESCR(self))) {
         n = PyArray_PyIntAsIntp(ind);
         if (!error_converting(n)) {
             return voidtype_item(self, (Py_ssize_t)n);
@@ -3067,13 +3075,13 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
     npy_intp m;
     PyObject *flist=NULL;
 
-    if (!(PyDataType_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(PyVoidScalar_DESCR(self)))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return -1;
     }
 
-    flist = self->descr->names;
+    flist = PyVoidScalar_DESCR(self)->names;
     m = PyTuple_GET_SIZE(flist);
     if (n < 0) {
         n += m;
@@ -3093,7 +3101,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
     char *msg = "invalid index";
     PyObject *args;
 
-    if (!PyDataType_HASFIELDS(self->descr)) {
+    if (!PyDataType_HASFIELDS(PyVoidScalar_DESCR(self))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return -1;
@@ -3254,15 +3262,15 @@ static int
     static char fmt[3] = "@fmt@";
 
     view->ndim = 0;
-    view->len = sizeof(scalar->obval);
-    view->itemsize = sizeof(scalar->obval);
+    view->len = sizeof(PyArrayScalar_VAL(scalar, @Name@));
+    view->itemsize = sizeof(PyArrayScalar_VAL(scalar, @Name@));
     view->shape = NULL;
     view->strides = NULL;
     view->suboffsets = NULL;
     view->readonly = 1;
     Py_INCREF(self);
     view->obj = self;
-    view->buf = &(scalar->obval);
+    view->buf = &PyArrayScalar_VAL(scalar, @Name@);
 
     if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
         /* It is unnecessary to find the correct format */
@@ -3302,7 +3310,7 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
     Py_INCREF(self);
     view->obj = self;
 
-    if (scalar->obval == NULL) {
+    if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
         /*
          * Unicode may not have the representation available, `scalar_value`
          * ensures materialization.
@@ -3310,13 +3318,13 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
         PyArray_Descr *descr = PyArray_DescrFromType(NPY_UNICODE);
         scalar_value(self, descr);
         Py_DECREF(descr);
-        if (scalar->obval == NULL) {
+        if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
             /* allocating memory failed */
             Py_SETREF(view->obj, NULL);
             return -1;
         }
     }
-    view->buf = scalar->obval;
+    view->buf = PyArrayScalar_VAL(scalar, Unicode);
 
     if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
         /* It is unnecessary to find the correct format */
@@ -3324,17 +3332,18 @@ unicode_getbuffer(PyObject *self, Py_buffer *view, int flags)
         return 0;
     }
 
-    if (scalar->buffer_fmt != NULL) {
-        view->format = scalar->buffer_fmt;
+    char *buffer_fmt = PyUnicodeScalar_BUFFER_FMT(scalar);
+    if (buffer_fmt != NULL) {
+        view->format = buffer_fmt;
     }
     else {
-        scalar->buffer_fmt = PyMem_Malloc(22);
-        if (scalar->buffer_fmt == NULL) {
+        buffer_fmt = PyMem_Malloc(22);
+        if (buffer_fmt == NULL) {
             Py_SETREF(view->obj, NULL);
             return -1;
         }
-        PyOS_snprintf(scalar->buffer_fmt, 22, "%" NPY_INTP_FMT "w", length);
-        view->format = scalar->buffer_fmt;
+        PyOS_snprintf(buffer_fmt, 22, "%" NPY_INTP_FMT "w", length);
+        view->format = buffer_fmt;
     }
 
     return 0;
@@ -3371,7 +3380,7 @@ static int
     Py_INCREF(self);
     view->obj = self;
 
-    view->buf = &(scalar->obval);
+    view->buf = &PyArrayScalar_VAL(scalar, @Name@);
 
     if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT) {
         /* It is unnecessary to find the correct format */
@@ -3411,12 +3420,13 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    if (v->flags & NPY_ARRAY_OWNDATA) {
-        npy_free_cache(v->obval, Py_SIZE(v));
+    PyVoidScalarObject_fields *f = PyVoidScalar_GET_ITEM_DATA(v);
+    if (f->flags & NPY_ARRAY_OWNDATA) {
+        npy_free_cache(f->obval, Py_SIZE(v));
     }
-    Py_XDECREF(v->descr);
-    Py_XDECREF(v->base);
-    if (_buffer_info_free(v->_buffer_info, (PyObject *)v) < 0) {
+    Py_XDECREF(f->descr);
+    Py_XDECREF(f->base);
+    if (_buffer_info_free(f->_buffer_info, (PyObject *)v) < 0) {
         PyErr_WriteUnraisable(NULL);
     }
     Py_TYPE(v)->tp_free(v);
@@ -3453,7 +3463,7 @@ unicode_arrtype_dealloc(PyObject *v)
 {
     /* note: may be null if it was never requested */
     PyMem_Free(PyArrayScalar_VAL(v, Unicode));
-    PyMem_Free(((PyUnicodeScalarObject *)v)->buffer_fmt);
+    PyMem_Free(PyUnicodeScalar_BUFFER_FMT((PyUnicodeScalarObject *)v));
     /* delegate to the base class */
     PyUnicode_Type.tp_dealloc(v);
 }
@@ -3641,7 +3651,7 @@ static PyObject *
 @name@_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj = NULL, *meta_obj = NULL;
-    Py@Name@ScalarObject *ret;
+    Py@Name@ScalarObject_fields *ret;
 
     static char *kwnames[] = {"", "", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwnames, &obj, &meta_obj)) {
@@ -3649,7 +3659,7 @@ static PyObject *
     }
 
     /* Allocate the return scalar */
-    ret = (Py@Name@ScalarObject *)Py@Name@ArrType_Type.tp_alloc(
+    ret = (Py@Name@ScalarObject_fields *)Py@Name@ArrType_Type.tp_alloc(
                                             &Py@Name@ArrType_Type, 0);
     if (ret == NULL) {
         return NULL;
@@ -3658,8 +3668,8 @@ static PyObject *
     /* Incorporate the metadata if its provided */
     if (meta_obj != NULL) {
         /* Parse the provided metadata input */
-        if (convert_pyobject_to_datetime_metadata(meta_obj, &ret->obmeta)
-                                                                    < 0) {
+        if (convert_pyobject_to_datetime_metadata(
+                    meta_obj, &ret->obmeta) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -3844,18 +3854,18 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             npy_free_cache(destptr, memu);
             return PyErr_NoMemory();
         }
-        ((PyVoidScalarObject *)ret)->obval = destptr;
-        Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
-        ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
+        ((PyVoidScalarObject_fields *)ret)->obval = destptr;
+        Py_SET_SIZE((PyVarObject *)ret, (Py_ssize_t) memu);
+        ((PyVoidScalarObject_fields *)ret)->flags = NPY_ARRAY_BEHAVED |
                                              NPY_ARRAY_OWNDATA;
-        ((PyVoidScalarObject *)ret)->base = NULL;
-        ((PyVoidScalarObject *)ret)->descr =
+        ((PyVoidScalarObject_fields *)ret)->base = NULL;
+        ((PyVoidScalarObject_fields *)ret)->descr =
             (_PyArray_LegacyDescr *)PyArray_DescrNewFromType(NPY_VOID);
-        if (((PyVoidScalarObject *)ret)->descr == NULL) {
+        if (((PyVoidScalarObject_fields *)ret)->descr == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
-        ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
+        ((PyVoidScalarObject_fields *)ret)->descr->elsize = (int) memu;
         return ret;
     }
 
@@ -3969,7 +3979,7 @@ static npy_hash_t
         return PyBaseObject_Type.tp_hash(obj);
     }
 
-    meta = &((PyDatetimeScalarObject *)obj)->obmeta;
+    meta = Py@name@Scalar_OBMETA((Py@name@ScalarObject *)obj);
 
     npy_hash_t res = @lname@_hash(meta, val);
     return res;
@@ -4042,7 +4052,7 @@ void_arrtype_hash(PyObject *obj)
     x = 0x345678L;
     p = (PyVoidScalarObject *)obj;
     /* Cannot hash mutable void scalars */
-    if (p->flags & NPY_ARRAY_WRITEABLE) {
+    if (PyVoidScalar_FLAGS(p) & NPY_ARRAY_WRITEABLE) {
        PyErr_SetString(PyExc_TypeError, "unhashable type: 'writeable void-scalar'");
        return -1;
     }
@@ -4069,7 +4079,7 @@ object_arrtype_getattro(PyObjectScalarObject *obj, PyObject *attr) {
 
     /* first look in object and then hand off to generic type */
 
-    res = PyObject_GenericGetAttr(obj->obval, attr);
+    res = PyObject_GenericGetAttr(PyArrayScalar_VAL(obj, Object), attr);
     if (res) {
         return res;
     }
@@ -4082,7 +4092,7 @@ object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val
     int res;
     /* first look in object and then hand off to generic type */
 
-    res = PyObject_GenericSetAttr(obj->obval, attr, val);
+    res = PyObject_GenericSetAttr(PyArrayScalar_VAL(obj, Object), attr, val);
     if (res >= 0) {
         return res;
     }
@@ -4093,50 +4103,50 @@ object_arrtype_setattro(PyObjectScalarObject *obj, PyObject *attr, PyObject *val
 static PyObject *
 object_arrtype_concat(PyObjectScalarObject *self, PyObject *other)
 {
-    return PySequence_Concat(self->obval, other);
+    return PySequence_Concat(PyArrayScalar_VAL(self, Object), other);
 }
 
 static Py_ssize_t
 object_arrtype_length(PyObjectScalarObject *self)
 {
-    return PyObject_Length(self->obval);
+    return PyObject_Length(PyArrayScalar_VAL(self, Object));
 }
 
 static PyObject *
 object_arrtype_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 {
-    return PySequence_Repeat(self->obval, count);
+    return PySequence_Repeat(PyArrayScalar_VAL(self, Object), count);
 }
 
 static PyObject *
 object_arrtype_subscript(PyObjectScalarObject *self, PyObject *key)
 {
-    return PyObject_GetItem(self->obval, key);
+    return PyObject_GetItem(PyArrayScalar_VAL(self, Object), key);
 }
 
 static int
 object_arrtype_ass_subscript(PyObjectScalarObject *self, PyObject *key,
                              PyObject *value)
 {
-    return PyObject_SetItem(self->obval, key, value);
+    return PyObject_SetItem(PyArrayScalar_VAL(self, Object), key, value);
 }
 
 static int
 object_arrtype_contains(PyObjectScalarObject *self, PyObject *ob)
 {
-    return PySequence_Contains(self->obval, ob);
+    return PySequence_Contains(PyArrayScalar_VAL(self, Object), ob);
 }
 
 static PyObject *
 object_arrtype_inplace_concat(PyObjectScalarObject *self, PyObject *o)
 {
-    return PySequence_InPlaceConcat(self->obval, o);
+    return PySequence_InPlaceConcat(PyArrayScalar_VAL(self, Object), o);
 }
 
 static PyObject *
 object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 {
-    return PySequence_InPlaceRepeat(self->obval, count);
+    return PySequence_InPlaceRepeat(PyArrayScalar_VAL(self, Object), count);
 }
 
 static PySequenceMethods object_arrtype_as_sequence = {
@@ -4157,26 +4167,26 @@ static PyMappingMethods object_arrtype_as_mapping = {
 static int
 object_arrtype_getbuffer(PyObjectScalarObject *self, Py_buffer *view, int flags)
 {
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
+    PyBufferProcs *pb = Py_TYPE(PyArrayScalar_VAL(self, Object))->tp_as_buffer;
     if (pb == NULL || pb->bf_getbuffer == NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "expected a readable buffer object");
         return -1;
     }
-    return (*pb->bf_getbuffer)(self->obval, view, flags);
+    return (*pb->bf_getbuffer)(PyArrayScalar_VAL(self, Object), view, flags);
 }
 
 static void
 object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
 {
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
+    PyBufferProcs *pb = Py_TYPE(PyArrayScalar_VAL(self, Object))->tp_as_buffer;
     if (pb == NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "expected a readable buffer object");
         return;
     }
     if (pb->bf_releasebuffer != NULL) {
-        (*pb->bf_releasebuffer)(self->obval, view);
+        (*pb->bf_releasebuffer)(PyArrayScalar_VAL(self, Object), view);
     }
 }
 
@@ -4188,13 +4198,13 @@ static PyBufferProcs object_arrtype_as_buffer = {
 static PyObject *
 object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 {
-    return PyObject_Call(obj->obval, args, kwds);
+    return PyObject_Call(PyArrayScalar_VAL(obj, Object), args, kwds);
 }
 
 NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy." NPY_OBJECT_name,
-    .tp_basicsize = sizeof(PyObjectScalarObject),
+    .tp_basicsize = sizeof(PyObjectScalarObject_fields),
     .tp_dealloc = (destructor)object_arrtype_dealloc,
     .tp_as_sequence = &object_arrtype_as_sequence,
     .tp_as_mapping = &object_arrtype_as_mapping,
@@ -4235,25 +4245,30 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
  *         UByte, UShort, UInt, ULong, ULongLong,
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble,
- *         String, Unicode, Void,
+ *         Unicode, Void,
  *         Datetime, Timedelta#
  * #NAME = BOOL,
  *         BYTE, SHORT, INT, LONG, LONGLONG,
  *         UBYTE, USHORT, UINT, ULONG, ULONGLONG,
  *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE,
- *         STRING, UNICODE, VOID,
+ *         UNICODE, VOID,
  *         DATETIME, TIMEDELTA#
  */
 
 NPY_NO_EXPORT PyTypeObject Py@Name@ArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy." NPY_@NAME@_name,
-    .tp_basicsize = sizeof(Py@Name@ScalarObject),
+    .tp_basicsize = sizeof(Py@Name@ScalarObject_fields),
 };
 
 /**end repeat**/
 
+NPY_NO_EXPORT PyTypeObject PyStringArrType_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "numpy." NPY_STRING_name,
+    .tp_basicsize = sizeof(PyBytesObject),
+};
 
 static PyMappingMethods gentype_as_mapping = {
     .mp_subscript = (binaryfunc)gen_arrtype_subscript,

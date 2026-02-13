@@ -13,10 +13,15 @@ h_template = r"""
 typedef struct {
         PyObject_HEAD
         npy_bool obval;
-} PyBoolScalarObject;
+} PyBoolScalarObject_fields;
+#if !defined(NPY_INTERNAL_BUILD) || (!NPY_INTERNAL_BUILD)
+typedef PyBoolScalarObject_fields PyBoolScalarObject;
+#else
+typedef struct PyBoolScalarObject PyBoolScalarObject;
+#endif
 
 extern NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type;
-extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
+extern NPY_NO_EXPORT PyBoolScalarObject_fields _PyArrayScalar_BoolValues[2];
 
 %s
 
