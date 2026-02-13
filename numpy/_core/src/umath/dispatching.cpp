@@ -747,12 +747,12 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
             if (ops[i] != NULL
                     && PyArray_EquivTypenums(
                             operation_DTypes[i]->type_num,
-                            PyArray_DESCR(ops[i])->type_num)) {
+                            PyDataType_TYPENUM(PyArray_DESCR(ops[i])))) {
                 continue;
             }
             /* Otherwise, warn if the dtype doesn't match */
             if (!PyArray_EquivTypenums(
-                    operation_DTypes[i]->type_num, out_descrs[i]->type_num)) {
+                    operation_DTypes[i]->type_num, PyDataType_TYPENUM(out_descrs[i]))) {
                 if (PyErr_WarnFormat(PyExc_UserWarning, 1,
                         "result dtype changed due to the removal of value-based "
                         "promotion from NumPy. Changed from %S to %S.",

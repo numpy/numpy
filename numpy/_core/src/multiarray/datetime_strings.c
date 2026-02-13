@@ -1375,7 +1375,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     if (op[0] == NULL) {
         goto fail;
     }
-    if (PyArray_DESCR(op[0])->type_num != NPY_DATETIME) {
+    if (PyDataType_TYPENUM(PyArray_DESCR(op[0])) != NPY_DATETIME) {
         PyErr_SetString(PyExc_TypeError,
                     "input must have type NumPy datetime");
         goto fail;
@@ -1508,7 +1508,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     if (op_dtypes[1] == NULL) {
         goto fail;
     }
-    op_dtypes[1]->elsize = strsize * 4;
+    PyDataType_SET_ELSIZE(op_dtypes[1], strsize * 4);
     /* This steals the UNICODE dtype reference in op_dtypes[1] */
     op[1] = (PyArrayObject *)PyArray_NewLikeArray(op[0],
                                         NPY_KEEPORDER, op_dtypes[1], 1);
@@ -1521,7 +1521,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     if (op_dtypes[1] == NULL) {
         goto fail;
     }
-    op_dtypes[1]->elsize = strsize;
+    PyDataType_SET_ELSIZE(op_dtypes[1], strsize);
 
     flags = NPY_ITER_ZEROSIZE_OK|
             NPY_ITER_BUFFERED;

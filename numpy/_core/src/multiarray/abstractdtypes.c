@@ -295,7 +295,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_IntAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._IntegerAbstractDType",
         .tp_base = &PyArrayDescr_Type,
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
         .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
@@ -312,7 +312,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyLongDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._PyLongDType",
         .tp_base = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
         .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
@@ -324,7 +324,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_FloatAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._FloatAbstractDType",
         .tp_base = &PyArrayDescr_Type,
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
        .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
@@ -341,7 +341,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._PyFloatDType",
         .tp_base = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
        .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
@@ -353,7 +353,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_ComplexAbstractDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._ComplexAbstractDType",
         .tp_base = &PyArrayDescr_Type,
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
          .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
@@ -370,7 +370,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexDType = {{{
         PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
         .tp_name = "numpy.dtypes._PyComplexDType",
         .tp_base = NULL,  /* set in initialize_and_map_pytypes_to_dtypes */
-        .tp_basicsize = sizeof(PyArray_Descr),
+        .tp_basicsize = sizeof(PyArray_Descr_fields),
          .tp_flags = Py_TPFLAGS_DEFAULT,
     },},
     .type_num = -1,
@@ -403,7 +403,7 @@ npy_update_operand_for_scalar(
         }
     }
     else if (NPY_UNLIKELY(casting == NPY_EQUIV_CASTING) &&
-             descr->type_num != NPY_OBJECT) {
+             PyDataType_TYPENUM(descr) != NPY_OBJECT) {
         /*
          * incredibly niche, but users could pass equiv casting and we
          * actually need to cast.  Let object pass (technically correct) but

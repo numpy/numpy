@@ -380,18 +380,18 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
      * Viewing as an unsized void implies a void dtype matching the size of the
      * current dtype.
      */
-    if (newtype->type_num == NPY_VOID &&
+    if (PyDataType_TYPENUM(newtype) == NPY_VOID &&
             PyDataType_ISUNSIZED(newtype) &&
-            newtype->elsize != PyArray_ITEMSIZE(self)) {
+            PyDataType_ELSIZE(newtype) != PyArray_ITEMSIZE(self)) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return -1;
         }
-        newtype->elsize = PyArray_ITEMSIZE(self);
+        PyDataType_SET_ELSIZE(newtype, PyArray_ITEMSIZE(self));
     }
 
     /* Changing the size of the dtype results in a shape change */
-    if (newtype->elsize != PyArray_ITEMSIZE(self)) {
+    if (PyDataType_ELSIZE(newtype) != PyArray_ITEMSIZE(self)) {
         /* forbidden cases */
         if (PyArray_NDIM(self) == 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -419,31 +419,31 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
 
         npy_intp newdim;
 
-        if (newtype->elsize < PyArray_ITEMSIZE(self)) {
+        if (PyDataType_ELSIZE(newtype) < PyArray_ITEMSIZE(self)) {
             /* if it is compatible, increase the size of the last axis */
-            if (newtype->elsize == 0 ||
-                    PyArray_ITEMSIZE(self) % newtype->elsize != 0) {
+            if (PyDataType_ELSIZE(newtype) == 0 ||
+                    PyArray_ITEMSIZE(self) % PyDataType_ELSIZE(newtype) != 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "When changing to a smaller dtype, its size must be a "
                         "divisor of the size of original dtype");
                 goto fail;
             }
-            newdim = PyArray_ITEMSIZE(self) / newtype->elsize;
+            newdim = PyArray_ITEMSIZE(self) / PyDataType_ELSIZE(newtype);
             PyArray_DIMS(self)[axis] *= newdim;
-            PyArray_STRIDES(self)[axis] = newtype->elsize;
+            PyArray_STRIDES(self)[axis] = PyDataType_ELSIZE(newtype);
         }
-        else /* newtype->elsize > PyArray_ITEMSIZE(self) */ {
+        else /* PyDataType_ELSIZE(newtype) > PyArray_ITEMSIZE(self) */ {
             /* if it is compatible, decrease the size of the relevant axis */
             newdim = PyArray_DIMS(self)[axis] * PyArray_ITEMSIZE(self);
-            if ((newdim % newtype->elsize) != 0) {
+            if ((newdim % PyDataType_ELSIZE(newtype)) != 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "When changing to a larger dtype, its size must be a "
                         "divisor of the total size in bytes of the last axis "
                         "of the array.");
                 goto fail;
             }
-            PyArray_DIMS(self)[axis] = newdim / newtype->elsize;
-            PyArray_STRIDES(self)[axis] = newtype->elsize;
+            PyArray_DIMS(self)[axis] = newdim / PyDataType_ELSIZE(newtype);
+            PyArray_STRIDES(self)[axis] = PyDataType_ELSIZE(newtype);
         }
     }
 
@@ -506,7 +506,7 @@ array_struct_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     }
     inter->two = 2;
     inter->nd = PyArray_NDIM(self);
-    inter->typekind = PyArray_DESCR(self)->kind;
+    inter->typekind = PyDataType_KIND(PyArray_DESCR(self));
     inter->itemsize = PyArray_ITEMSIZE(self);
     inter->flags = PyArray_FLAGS(self);
     if (inter->flags & NPY_ARRAY_WARN_ON_WRITE) {
@@ -585,7 +585,7 @@ _get_part(PyArrayObject *self, int imag)
     PyArrayObject *ret;
     int offset;
 
-    switch (PyArray_DESCR(self)->type_num) {
+    switch (PyDataType_TYPENUM(PyArray_DESCR(self))) {
         case NPY_CFLOAT:
             float_type_num = NPY_FLOAT;
             break;
@@ -598,7 +598,7 @@ _get_part(PyArrayObject *self, int imag)
         default:
             PyErr_Format(PyExc_ValueError,
                      "Cannot convert complex type number %d to float",
-                     PyArray_DESCR(self)->type_num);
+                     PyDataType_TYPENUM(PyArray_DESCR(self)));
             return NULL;
 
     }
@@ -607,14 +607,14 @@ _get_part(PyArrayObject *self, int imag)
         return NULL;
     }
 
-    offset = (imag ? type->elsize : 0);
+    offset = (imag ? PyDataType_ELSIZE(type) : 0);
 
-    if (!PyArray_ISNBO(PyArray_DESCR(self)->byteorder)) {
+    if (!PyArray_ISNBO(PyDataType_BYTEORDER(PyArray_DESCR(self)))) {
         Py_SETREF(type, PyArray_DescrNew(type));
         if (type == NULL) {
             return NULL;
         }
-        type->byteorder = PyArray_DESCR(self)->byteorder;
+        PyDataType_SET_BYTEORDER(type, PyDataType_BYTEORDER(PyArray_DESCR(self)));
     }
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(self),

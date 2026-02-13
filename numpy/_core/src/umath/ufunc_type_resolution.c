@@ -262,7 +262,7 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
 
     for (i = 0; i < nop; ++i) {
         if (operands[i] != NULL &&
-                PyTypeNum_ISOBJECT(PyArray_DESCR(operands[i])->type_num)) {
+                PyTypeNum_ISOBJECT(PyDataType_TYPENUM(PyArray_DESCR(operands[i])))) {
             any_object = 1;
             break;
         }
@@ -320,8 +320,8 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
      * Use the default type resolution if there's a custom data type
      * or object arrays.
      */
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
     if (type_num1 >= NPY_NTYPES_LEGACY || type_num2 >= NPY_NTYPES_LEGACY ||
             type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
@@ -419,7 +419,7 @@ PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
     }
 
     /* The type resolver would have upcast already */
-    if (out_dtypes[0]->type_num == NPY_BOOL) {
+    if (PyDataType_TYPENUM(out_dtypes[0]) == NPY_BOOL) {
         PyErr_Format(PyExc_TypeError,
             "The numpy boolean negative, the `-` operator, is not supported, "
             "use the `~` operator or the logical_not function instead.");
@@ -443,7 +443,7 @@ PyUFunc_SignTypeResolver(PyUFuncObject *ufunc,
                          PyObject *type_tup,
                          PyArray_Descr **out_dtypes)
 {
-    if (PyArray_DESCR(operands[0])->type_num == NPY_TIMEDELTA) {
+    if (PyDataType_TYPENUM(PyArray_DESCR(operands[0])) == NPY_TIMEDELTA) {
         out_dtypes[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(operands[0]));
         if (out_dtypes[0] == NULL) {
             return -1;
@@ -511,7 +511,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
      */
     bool has_custom_or_object = false;
     for (int iop = 0; iop < ufunc->nin; iop++) {
-        int type_num = PyArray_DESCR(operands[iop])->type_num;
+        int type_num = PyDataType_TYPENUM(PyArray_DESCR(operands[iop]));
         if (type_num >= NPY_NTYPES_LEGACY || type_num == NPY_OBJECT) {
             has_custom_or_object = true;
             break;
@@ -607,7 +607,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             return PyUFunc_DefaultTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
         }
-        else if (descr->type_num == PyArray_DESCR(operands[0])->type_num) {
+        else if (PyDataType_TYPENUM(descr) == PyDataType_TYPENUM(PyArray_DESCR(operands[0]))) {
             /* Prefer the input descriptor if it matches (preserve metadata) */
             descr = PyArray_DESCR(operands[0]);
         }
@@ -650,7 +650,7 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     /* Use the default for complex types, to find the loop producing float */
-    if (PyTypeNum_ISCOMPLEX(PyArray_DESCR(operands[0])->type_num)) {
+    if (PyTypeNum_ISCOMPLEX(PyDataType_TYPENUM(PyArray_DESCR(operands[0])))) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                     type_tup, out_dtypes);
     }
@@ -674,7 +674,7 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
                           PyObject *type_tup,
                           PyArray_Descr **out_dtypes)
 {
-    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+    if (!PyTypeNum_ISDATETIME(PyDataType_TYPENUM(PyArray_DESCR(operands[0])))) {
         PyErr_SetString(PyExc_TypeError,
                 "ufunc 'isnat' is only defined for np.datetime64 and np.timedelta64.");
         return -1;
@@ -697,7 +697,7 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
                           PyObject *type_tup,
                           PyArray_Descr **out_dtypes)
 {
-    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+    if (!PyTypeNum_ISDATETIME(PyDataType_TYPENUM(PyArray_DESCR(operands[0])))) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                                     type_tup, out_dtypes);
     }
@@ -766,8 +766,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     int i;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     /* Use the default when datetime, timedelta, string and unicode are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)
@@ -952,8 +952,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     int i;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
@@ -965,7 +965,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         }
 
         /* The type resolver would have upcast already */
-        if (out_dtypes[0]->type_num == NPY_BOOL) {
+        if (PyDataType_TYPENUM(out_dtypes[0]) == NPY_BOOL) {
             PyErr_Format(PyExc_TypeError,
                 "numpy boolean subtract, the `-` operator, is not supported, "
                 "use the bitwise_xor, the `^` operator, or the logical_xor "
@@ -1119,8 +1119,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     int i;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)
@@ -1285,8 +1285,8 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     int i;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     /* Use the default when datetime and timedelta are not involved */
     if ((!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) ||
@@ -1393,8 +1393,8 @@ PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     int i;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
@@ -1449,8 +1449,8 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     if (type_tup == NULL &&
             (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
@@ -1482,7 +1482,7 @@ find_userloop(PyUFuncObject *ufunc,
             break;
         }
 
-        type_num = dtypes[i]->type_num;
+        type_num = PyDataType_TYPENUM(dtypes[i]);
         if (type_num != last_userdef &&
                 (PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
             PyObject *key, *obj;
@@ -1509,7 +1509,7 @@ find_userloop(PyUFuncObject *ufunc,
                 int *types = funcdata->arg_types;
 
                 for (j = 0; j < nargs; ++j) {
-                    if (types[j] != dtypes[j]->type_num) {
+                    if (types[j] != PyDataType_TYPENUM(dtypes[j])) {
                         break;
                     }
                 }
@@ -1559,7 +1559,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     for (i = 0; i < ufunc->ntypes; ++i) {
         /* Copy the types into an int array for matching */
         for (j = 0; j < nargs; ++j) {
-            if (types[j] != dtypes[j]->type_num) {
+            if (types[j] != PyDataType_TYPENUM(dtypes[j])) {
                 break;
             }
         }
@@ -1673,8 +1673,8 @@ ufunc_loop_matches(PyUFuncObject *self,
                                                         output_casting)) {
                 if (!(*out_no_castable_output)) {
                     *out_no_castable_output = 1;
-                    *out_err_src_typecode = tmp->type;
-                    *out_err_dst_typecode = PyArray_DESCR(op[i])->type;
+                    *out_err_src_typecode = PyDataType_TYPE(tmp);
+                    *out_err_dst_typecode = PyDataType_TYPE(PyArray_DESCR(op[i]));
                 }
                 Py_DECREF(tmp);
                 return 0;
@@ -1708,7 +1708,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
          */
         }
         else if (op[i] != NULL &&
-                 PyArray_DESCR(op[i])->type_num == type_nums[i]) {
+                     PyDataType_TYPENUM(PyArray_DESCR(op[i])) == type_nums[i]) {
             out_dtypes[i] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(op[i]));
         }
@@ -1717,7 +1717,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
          * matches, similarly to preserve metadata.
          */
         else if (i >= nin && op[0] != NULL &&
-                            PyArray_DESCR(op[0])->type_num == type_nums[i]) {
+                     PyDataType_TYPENUM(PyArray_DESCR(op[0])) == type_nums[i]) {
             out_dtypes[i] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(op[0]));
         }
@@ -1769,7 +1769,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             break;
         }
 
-        type_num = PyArray_DESCR(op[i])->type_num;
+        type_num = PyDataType_TYPENUM(PyArray_DESCR(op[i]));
         if (type_num != last_userdef &&
                 (PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
             PyObject *key, *obj;
@@ -1841,7 +1841,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
     char err_src_typecode = '-', err_dst_typecode = '-';
 
     for (i = 0; i < nin; ++i) {
-        int type_num = PyArray_DESCR(op[i])->type_num;
+        int type_num = PyDataType_TYPENUM(PyArray_DESCR(op[i]));
         if (type_num != last_userdef && PyTypeNum_ISUSERDEF(type_num)) {
             PyObject *key, *obj;
 
@@ -2180,7 +2180,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
                     PyErr_SetString(PyExc_RuntimeError, bad_type_tup_msg);
                     return -1;
                 }
-                specified_types[i] = ((PyArray_Descr *)item)->type_num;
+                specified_types[i] = PyDataType_TYPENUM((PyArray_Descr *)item);
             }
         }
     }
@@ -2258,8 +2258,8 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
     int type_num1, type_num2;
     int i;
 
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
+    type_num1 = PyDataType_TYPENUM(PyArray_DESCR(operands[0]));
+    type_num2 = PyDataType_TYPENUM(PyArray_DESCR(operands[1]));
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
