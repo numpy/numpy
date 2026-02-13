@@ -855,7 +855,13 @@ typedef struct {
         void *ptr;
         npy_intp len;
         int flags;
-} PyArray_Chunk;
+} PyArray_Chunk_fields;
+
+#if defined(NPY_INTERNAL_BUILD) && (NPY_INTERNAL_BUILD)
+typedef struct PyArray_Chunk PyArray_Chunk;
+#else
+typedef PyArray_Chunk_fields PyArray_Chunk;
+#endif
 
 typedef struct {
     NPY_DATETIMEUNIT base;
