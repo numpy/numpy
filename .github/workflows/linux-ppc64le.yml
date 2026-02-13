@@ -34,19 +34,12 @@ jobs:
           - name: "GCC (ppc64le)"
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-ppc64le-p10
-            compiler: "gcc"
-          - name: "clang (ppc64le)"
-            args: "-Dallow-noblas=false"
-            runner: ubuntu-24.04-ppc64le-p10
-            compiler: "clang"
           - name: "GCC (s390x)"
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
-            compiler: "gcc"
           - name: "GCC with zvector (s390x)"
             args: "-Dallow-noblas=false -Dcpu-baseline=vx"
             runner: ubuntu-24.04-s390x
-            compiler: "gcc"
 
     name: "${{ matrix.config.name }}"
     steps:
@@ -64,13 +57,6 @@ jobs:
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         echo "/home/runner/.local/bin" >> $GITHUB_PATH
 
-    - name: Install clang
-      if: matrix.config.compiler == 'clang'
-      run: |
-        sudo apt install -y clang-20
-        echo CC=clang-20 >> $GITHUB_ENV
-        echo CXX=clang++-20 >> $GITHUB_ENV
-
     - name: Meson Build
       run: |
         spin build -- ${{ matrix.config.args }}
@@ -82,3 +68,72 @@ jobs:
     - name: Run Tests
       run: |
         spin test -- --timeout=60 --durations=10
+
+  docker_ppc64le_and_s390x:
+    # These jobs runs only in the main NumPy repository.
+    # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
+    # For more details, see: https://github.com/numpy/numpy/issues/29125
+    if: github.repository == 'numpy/numpy'
+    runs-on: ${{ matrix.config.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "clang (ppc64le)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-ppc64le-p10
+          - name: "clang (s390x)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+          - name: "clang with zvector (s390x)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vx"
+            runner: ubuntu-24.04-s390x
+
+    name: "${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Install dependencies
+      run: |
+        docker run --name the_container --interactive \
+          -v $(pwd):/numpy -w /numpy \
+          fedora:43 \
+          /bin/bash -c "
+          dnf update -y &&
+          dnf install -y gcc gcc-c++ gfortran ninja-build python3-pip python3-devel \
+                         openblas-devel lapack-devel pkg-config \
+                         clang &&
+          pip3 install --upgrade pip &&
+          pip3 install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        "
+        docker commit the_container the_container
+        echo CC=clang >> $GITHUB_ENV
+        echo CXX=clang++ >> $GITHUB_ENV
+
+    - name: Meson Build
+      run: |
+        BUILD_ARGS="${{ matrix.config.args }}"
+        docker run --rm -e "TERM=xterm-256color" -e "CC=$CC" -e "CXX=$CXX" \
+          -v $(pwd):/numpy -w /numpy \
+          the_container \
+          /bin/bash -c "
+            spin build -- ${BUILD_ARGS}
+          "
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: Run Tests
+      run: |
+        docker run --rm -e "TERM=xterm-256color" -e "CC=$CC" -e "CXX=$CXX" \
+          -v $(pwd):/numpy \
+          -w /numpy \
+          the_container \
+          /bin/bash -c "
+            spin test -- --timeout=60 --durations=10
+          "
