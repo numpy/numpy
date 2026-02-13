@@ -18,3 +18,4 @@ fundamental NumPy ideas and philosophy.
    basics.strings
    basics.rec
    basics.ufuncs
+   basics.parallel
