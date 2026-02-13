@@ -661,6 +661,7 @@ def str_len(A: UST_co) -> NDArray[int_]: ...
 # overload 5 and 6: arbitrary object with unicode=True  (-> str_)
 # overload 7: arbitrary object with unicode=None (default)  (-> str_ | bytes_)
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: U_co,
     itemsize: int | None = None,
@@ -669,6 +670,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: S_co,
     itemsize: int | None = None,
@@ -677,6 +679,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None,
@@ -685,6 +688,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None = None,
@@ -694,6 +698,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None,
@@ -702,6 +707,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None = None,
@@ -711,6 +717,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None = None,
@@ -720,6 +727,7 @@ def array(
 ) -> _CharArray[str_] | _CharArray[bytes_]: ...
 
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: U_co,
     itemsize: int | None = None,
@@ -727,6 +735,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: S_co,
     itemsize: int | None = None,
@@ -734,6 +743,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None,
@@ -741,6 +751,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None = None,
@@ -749,6 +760,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None,
@@ -756,6 +768,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None = None,
@@ -764,6 +777,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None = None,
