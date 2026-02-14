@@ -11057,7 +11057,6 @@ class TestTextSignatures:
         (np.frombuffer, ("buffer", "dtype", "count", "offset", "like")),
         (np.fromfile, ("file", "dtype", "count", "sep", "offset", "like")),
         (np.fromiter, ("iter", "dtype", "count", "like")),
-        (np.frompyfunc, ("func", "nin", "nout", "kwargs")),
         (np.fromstring, ("string", "dtype", "count", "sep", "like")),
         (np.nested_iters, (
             "op", "axes", "flags", "op_flags", "op_dtypes", "order", "casting",
@@ -11114,3 +11113,13 @@ class TestPatternMatching:
                 assert_array_equal(row4, [7, 8])
             case _:
                 raise AssertionError("3D ndarray did not match sequence pattern")
+
+def test_frompyfunc_nonfunction_callable():
+    class F:
+        def __call__(self, x):
+            return x
+
+    assert np.frompyfunc(F(), 1, 1)(42) == 42
+    assert np.frompyfunc(F(), 1)(42) == 42
+    assert np.frompyfunc(F())(42) == 42
+    assert np.frompyfunc(F(), nout=1)(42) == 42
