@@ -523,7 +523,6 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
                 formatdict[key] = indirect(formatter[key])
 
     return formatdict
-
 def _get_format_function(data, **options):
     """
     find the right formatting function for the dtype_
@@ -532,10 +531,12 @@ def _get_format_function(data, **options):
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
 
+    # Handle NumPy string types FIRST (must keep quotes)
+    if dtypeobj is not None and issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
+        return formatdict['numpystr']()
     # Fallback for non-NumPy (user defined) dtypes
-    # Fallback for non-NumPy (user defined) dtypes
-    if dtypeobj is not None and dtypeobj.__module__ != "numpy":
-       return formatdict["void"]()
+    if dtypeobj is not None and not issubclass(dtypeobj, np.generic):
+        return formatdict["void"]()
     if dtypeobj is None:
         return formatdict["numpystr"]()
     elif issubclass(dtypeobj, _nt.bool):
@@ -554,8 +555,6 @@ def _get_format_function(data, **options):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
-    elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
-        return formatdict['numpystr']()
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()
     elif issubclass(dtypeobj, _nt.object_):
