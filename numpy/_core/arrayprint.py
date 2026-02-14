@@ -494,8 +494,9 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        'numpystr': lambda: repr_format}
-
+        # Use str() for formatting; repr() often duplicates dtype information.
+        'numpystr': lambda: str_format,
+        }
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
     def indirect(x):
@@ -542,8 +543,7 @@ def _get_format_function(data, **options):
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
             return formatdict['timedelta']()
-        else:
-            return formatdict['int']()
+        return formatdict['int']()
     elif issubclass(dtypeobj, _nt.floating):
         if issubclass(dtypeobj, _nt.longdouble):
             return formatdict['longfloat']()
