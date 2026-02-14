@@ -355,3 +355,13 @@ class TestTypenameDeprecation(_DeprecationTestCase):
     def test_typename_emits_deprecation_warning(self):
         self.assert_deprecated(lambda: np.typename("S1"))
         self.assert_deprecated(lambda: np.typename("h"))
+
+class TestRoundDeprecation(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-02
+
+    def test_round_emits_deprecation_warning_array(self):
+        a = np.array([1.5, 2.7, -1.5, -2.7])
+        self.assert_deprecated(lambda: np.ma.round_(a))
+
+    def test_round_emits_deprecation_warning_scalar(self):
+        self.assert_deprecated(lambda: np.ma.round_(3.14))
