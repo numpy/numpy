@@ -194,6 +194,7 @@ def assert_equal(
     verbose: bool = True,
     *,
     strict: bool = False,
+    equal_mask: bool = False,
 ) -> None: ...
 
 def assert_almost_equal(
@@ -227,6 +228,7 @@ def assert_array_compare(
     *,
     strict: bool = False,
     names: tuple[str, str] = ("ACTUAL", "DESIRED"),
+    equal_mask: bool = False,
 ) -> None: ...
 
 #
@@ -237,6 +239,7 @@ def assert_array_equal(
     verbose: bool = True,
     *,
     strict: bool = False,
+    equal_mask: bool = False,
 ) -> None: ...
 
 #
