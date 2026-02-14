@@ -494,9 +494,9 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        # Use str() for formatting; repr() often duplicates dtype information.
-        'numpystr': lambda: str_format,
-        }
+        # Strings should keep quotes, so use repr()
+        'numpystr': lambda: repr_format,
+    }
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
     def indirect(x):
