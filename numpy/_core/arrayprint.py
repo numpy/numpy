@@ -531,39 +531,50 @@ def _get_format_function(data, **options):
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
 
-    # Fallback for non-NumPy (user defined) dtypes
-    if dtypeobj is not None and not issubclass(dtypeobj, np.generic):
-        return formatdict["void"]()
+    #Early detection of user-defined dtypes
+    if dtypeobj is not None and getattr(dtypeobj, '__module__', 'numpy') != 'numpy':
+        return formatdict['void']()
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
+
     elif issubclass(dtypeobj, _nt.bool):
         return formatdict['bool']()
+
     elif issubclass(dtypeobj, _nt.integer):
         if issubclass(dtypeobj, _nt.timedelta64):
             return formatdict['timedelta']()
         return formatdict['int']()
+
     elif issubclass(dtypeobj, _nt.floating):
         if issubclass(dtypeobj, _nt.longdouble):
             return formatdict['longfloat']()
         else:
             return formatdict['float']()
+
     elif issubclass(dtypeobj, _nt.complexfloating):
         if issubclass(dtypeobj, _nt.clongdouble):
             return formatdict['longcomplexfloat']()
         else:
             return formatdict['complexfloat']()
+
+    elif issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
+        return formatdict['numpystr']()
+
     elif issubclass(dtypeobj, _nt.datetime64):
         return formatdict['datetime']()
+
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
+
     elif issubclass(dtypeobj, _nt.void):
         if dtype_.names is not None:
             return StructuredVoidFormat.from_data(data, **options)
         else:
             return formatdict['void']()
+
     else:
         return formatdict['numpystr']()
-
 def _recursive_guard(fillvalue='...'):
     """
     Like the python 3.2 reprlib.recursive_repr, but forwards *args and **kwargs
