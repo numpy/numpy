@@ -533,9 +533,9 @@ def _get_format_function(data, **options):
     formatdict = _get_formatdict(data, **options)
 
     # Fallback for non-NumPy (user defined) dtypes
+    # Fallback for non-NumPy (user defined) dtypes
     if dtypeobj is not None and dtypeobj.__module__ != "numpy":
-        return formatdict["numpystr"]()
-
+       return formatdict["void"]()
     if dtypeobj is None:
         return formatdict["numpystr"]()
     elif issubclass(dtypeobj, _nt.bool):
