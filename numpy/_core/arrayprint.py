@@ -531,9 +531,6 @@ def _get_format_function(data, **options):
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
 
-    # Handle NumPy string types FIRST (must keep quotes)
-    if dtypeobj is not None and issubclass(dtypeobj, (_nt.str_, _nt.bytes_)):
-        return formatdict['numpystr']()
     # Fallback for non-NumPy (user defined) dtypes
     if dtypeobj is not None and not issubclass(dtypeobj, np.generic):
         return formatdict["void"]()
