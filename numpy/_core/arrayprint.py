@@ -531,10 +531,11 @@ def _get_format_function(data, **options):
     dtypeobj = dtype_.type
     formatdict = _get_formatdict(data, **options)
 
-    #Early detection of user-defined dtypes
-    if dtypeobj is not None and getattr(dtypeobj, '__module__', 'numpy') != 'numpy':
-        return formatdict['void']()
-
+    # NOTE: removed an overly-broad module-based early guard that routed
+    # non-`numpy`-module dtype classes (e.g. `StringDType`) to the `void`
+    # formatter. Such types can still be core NumPy dtypes and must use the
+    # appropriate formatter (e.g. `numpystr` for string dtypes). See PR
+    # discussion for a targeted strategy for user-defined floating dtypes.
     if dtypeobj is None:
         return formatdict["numpystr"]()
 
