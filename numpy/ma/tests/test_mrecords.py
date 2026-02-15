@@ -386,10 +386,10 @@ class TestView:
 
     def test_view_ndarray_subclass_resets_dtype(self):
         mrec = self._create_data()[0]
-        
+
         class MySub(np.ndarray):
             pass
-        
+
         test = mrec.view(MySub)
         assert_(isinstance(test, MySub))
         assert_equal(test.dtype, mrec.dtype)
