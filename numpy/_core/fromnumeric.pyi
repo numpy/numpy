@@ -78,6 +78,7 @@ __all__ = [
     "mean",
     "max",
     "min",
+    "minmax",
     "matrix_transpose",
     "ndim",
     "nonzero",
@@ -1128,6 +1129,22 @@ def amin[ArrayT: np.ndarray](
     initial: _NumberLike_co | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> ArrayT: ...
+
+
+@overload
+def minmax(
+    a: ArrayLike,
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
+@overload
+def minmax(
+    a: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> tuple[Any, Any]: ...
 
 # TODO: `np.prod()``: For object arrays `initial` does not necessarily
 # have to be a numerical scalar.

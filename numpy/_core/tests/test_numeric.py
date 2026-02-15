@@ -154,6 +154,41 @@ class TestNonarrayArgs:
         a = [3, 4, 5, 10, -3, -5, 6.0]
         assert_equal(np.ptp(a, axis=0), 15.0)
 
+
+    def test_minmax(self):
+        a = [3, 4, 5, 10, -3, -5, 6.0]
+        mn, mx = np.minmax(a)
+        assert_equal(mn, -5.0)
+        assert_equal(mx, 10.0)
+
+    def test_minmax_axis(self):
+        a = np.array([[3, 4, 5], [1, 9, 2]])
+        mn, mx = np.minmax(a, axis=0)
+        assert_equal(mn, [1, 4, 2])
+        assert_equal(mx, [3, 9, 5])
+        mn, mx = np.minmax(a, axis=1)
+        assert_equal(mn, [3, 1])
+        assert_equal(mx, [5, 9])
+
+    def test_minmax_keepdims(self):
+        a = np.array([[3, 4], [1, 9]])
+        mn, mx = np.minmax(a, axis=0, keepdims=True)
+        assert_equal(mn.shape, (1, 2))
+        assert_equal(mx.shape, (1, 2))
+        assert_equal(mn, [[1, 4]])
+        assert_equal(mx, [[3, 9]])
+
+    def test_minmax_nan(self):
+        a = np.array([1.0, np.nan, 3.0])
+        mn, mx = np.minmax(a)
+        assert_(np.isnan(mn))
+        assert_(np.isnan(mx))
+
+    def test_minmax_empty(self):
+        a = np.array([])
+        with assert_raises(ValueError):
+            np.minmax(a)
+
     def test_prod(self):
         arr = [[1, 2, 3, 4],
                [5, 6, 7, 9],

@@ -330,6 +330,7 @@ else:
         mean,
         memmap,
         min,
+        minmax,
         min_scalar_type,
         minimum,
         mod,

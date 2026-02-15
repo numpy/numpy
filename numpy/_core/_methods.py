@@ -250,3 +250,12 @@ def _bitwise_count(a, out=None, *, where=True, casting='same_kind',
           order='K', dtype=None, subok=True):
     return umr_bitwise_count(a, out, where=where, casting=casting,
             order=order, dtype=dtype, subok=subok)
+
+def _minmax(a, axis=None, out=None, keepdims=False):
+    mn = umr_minimum(a, axis, None, None, keepdims)
+    mx = umr_maximum(a, axis, None, None, keepdims)
+    if out is not None:
+        out[0][...] = mn
+        out[1][...] = mx
+        return out
+    return (mn, mx)

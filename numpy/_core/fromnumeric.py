@@ -19,7 +19,7 @@ __all__ = [
     'all', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumsum', 'cumulative_prod', 'cumulative_sum',
-    'diagonal', 'mean', 'max', 'min', 'matrix_transpose',
+    'diagonal', 'mean', 'max', 'min', 'minmax', 'matrix_transpose',
     'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sort', 'squeeze',
@@ -3277,6 +3277,88 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
                           keepdims=keepdims, initial=initial, where=where)
+
+
+def _minmax_dispatcher(a, axis=None, out=None, keepdims=None):
+    return (a,)
+
+
+@array_function_dispatch(_minmax_dispatcher)
+@set_module('numpy')
+def minmax(a, axis=None, out=None, keepdims=np._NoValue):
+    """
+    Return the minimum and maximum of an array or along an axis.
+
+    This is functionally equivalent to ``(np.min(a, ...), np.max(a, ...))``
+    but may be more efficient for large arrays since the intent to compute
+    both is known ahead of time.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to operate.  By default, flattened input is
+        used.
+
+        If this is a tuple of ints, the minimum and maximum are selected
+        over multiple axes, instead of a single axis or all the axes as
+        before.
+    out : tuple of two ndarrays, optional
+        Tuple ``(out_min, out_max)`` of alternative output arrays in which
+        to place the results.  They must have the same shape and buffer
+        length as the expected output.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+
+    Returns
+    -------
+    min : ndarray or scalar
+        Minimum of `a`. If `axis` is None, the result is a scalar value.
+        If `axis` is given, the result is an array of dimension
+        ``a.ndim - 1``.
+    max : ndarray or scalar
+        Maximum of `a`, same shape as `min`.
+
+    See Also
+    --------
+    min : Return the minimum of an array.
+    max : Return the maximum of an array.
+    ptp : Return the range (maximum - minimum) of an array.
+    nanmin : Return the minimum, ignoring NaN values.
+    nanmax : Return the maximum, ignoring NaN values.
+
+    Notes
+    -----
+    NaN values are propagated, that is if at least one item is NaN, the
+    corresponding min and max values will be NaN as well. To ignore NaN
+    values (MATLAB behavior), please use `nanmin` and `nanmax`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.arange(4).reshape((2, 2))
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+    >>> np.minmax(a)
+    (np.int64(0), np.int64(3))
+    >>> np.minmax(a, axis=0)
+    (array([0, 1]), array([2, 3]))
+    >>> np.minmax(a, axis=1)
+    (array([0, 2]), array([1, 3]))
+
+    >>> b = np.arange(5, dtype=np.float64)
+    >>> b[2] = np.nan
+    >>> np.minmax(b)
+    (np.float64(nan), np.float64(nan))
+    """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    return _methods._minmax(a, axis=axis, out=out, **kwargs)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
