@@ -765,7 +765,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
 
     namedict = kwds
     for i, val in enumerate(args):
-        key = 'arr_%d' % i
+        key = f'arr_{i}'
         if key in namedict.keys():
             raise ValueError(
                 f"Cannot use un-named variables and keyword {key}")
@@ -1561,7 +1561,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
             raise ValueError(
-                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
+                f"Expected 1D or 2D array, got {X.ndim}D array instead")
         elif X.ndim == 1:
             # Common case -- 1d array of numbers
             if X.dtype.names is None:
@@ -1614,9 +1614,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 try:
                     v = format % tuple(row) + newline
                 except TypeError as e:
-                    raise TypeError("Mismatch between array dtype ('%s') and "
-                                    "format specifier ('%s')"
-                                    % (str(X.dtype), format)) from e
+                    raise TypeError(
+                        f"Mismatch between array dtype ('{str(X.dtype)}') and "
+                        f"format specifier ('{format}')"
+                    ) from e
                 fh.write(v)
 
         if len(footer) > 0:
@@ -1965,7 +1966,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if not isinstance(user_converters, dict):
         raise TypeError(
             "The input argument 'converter' should be a valid dictionary "
-            "(got '%s' instead)" % type(user_converters))
+            f"(got '{type(user_converters)}' instead)"
+        )
 
     if encoding == 'bytes':
         encoding = None

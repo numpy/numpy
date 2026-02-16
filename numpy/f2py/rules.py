@@ -96,6 +96,7 @@ from .auxfuncs import (
     isintent_copy,
     isintent_hide,
     isintent_inout,
+    isintent_inplace,
     isintent_nothide,
     isintent_out,
     isintent_overwrite,
@@ -1200,6 +1201,17 @@ if (#varname#_cb.capi==Py_None) {
     }
     if (f2py_success) {"""]},
                       ],
+        'pyobjfrom': [
+            {l_and(isintent_inplace, l_not(isintent_out)): """\
+        f2py_success = (PyArray_ResolveWritebackIfCopy(capi_#varname#_as_array) >= 0);
+        if (f2py_success) { /* inplace array #varname# has been written back to */"""},
+            {l_and(isintent_inplace, isintent_out): """\
+        f2py_success = (PyArray_ResolveWritebackIfCopy(capi_#varname#_as_array) >= 0);
+        if (f2py_success) { /* return written-back-to inplace array #varname# */
+        Py_INCREF(#varname#_capi);
+        Py_SETREF(capi_#varname#_as_array, (PyArrayObject*)#varname#_capi);"""},
+            ],
+        'closepyobjfrom': {isintent_inplace: '    } /*if (f2py_success) of #varname# pyobjfrom*/'},
         'cleanupfrompyobj': [  # note that this list will be reversed
             ('    }  '
              '/* if (capi_#varname#_as_array == NULL) ... else of #varname# */'),
