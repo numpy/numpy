@@ -84,6 +84,18 @@ To achieve better load balancing, consider the following strategies:
 * Check ``chunksize`` parameter to ensure that tasks are neither too small (causing excessive overhead) nor too large (leading to load imbalance).
 
 
+Pickling considerations
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The worker function and its arguments must be picklable when using multiprocessing. This requirement can become a limitation when working with complex data structures or dynamically defined functions.
+
+If you encounter pickling-related issues, consider the following strategies:
+
+* Refactor your code to use simpler data structures or functions. For example, define worker functions at the top level of a module and avoid lambda or nested functions.
+* Consider third-party libraries such as `joblib <https://github.com/joblib/joblib>`__. ``joblib``'s default backend ``loky`` relies on `cloudpickle <https://github.com/cloudpipe/cloudpickle>`__ for serialization and can handle a wider range of Python objects than the standard ``pickle`` module. See the ``joblib`` documentaion on `Serialization of un-picklable objects <https://joblib.readthedocs.io/en/latest/auto_examples/serialization_and_wrappers.html>`__ for more details.
+
+
+
 Multithreading
 -----------------
 
