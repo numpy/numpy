@@ -1,4 +1,4 @@
-name: Native ppc64le and s390x Linux Tests
+name: Linux ppc64le and s390x native tests
 
 on:
   pull_request:
