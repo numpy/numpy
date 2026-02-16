@@ -406,6 +406,8 @@ foreach name, machine : machines
   conf_data.set(name + '_CPU_FAMILY', machine.cpu_family())
   conf_data.set(name + '_CPU_ENDIAN', machine.endian())
   conf_data.set(name + '_CPU_SYSTEM', machine.system())
+  conf_data.set(name + '_KERNEL', machine.kernel())
+  conf_data.set(name + '_SUBSYSTEM', machine.subsystem())
 endforeach
 
 conf_data.set('CROSS_COMPILED', meson.is_cross_build())
