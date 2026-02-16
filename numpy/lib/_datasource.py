@@ -328,7 +328,7 @@ class DataSource:
         if not os.path.exists(os.path.dirname(upath)):
             os.makedirs(os.path.dirname(upath))
 
-        # TODO: Doesn't handle compressed files!
+        # Compressed files (.gz, .zip, .tar, etc.) are not automatically decompressed.
         if self._isurl(path):
             with urlopen(path) as openedurl:
                 with _open(upath, 'wb') as f:
