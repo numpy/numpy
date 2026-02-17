@@ -406,8 +406,13 @@ foreach name, machine : machines
   conf_data.set(name + '_CPU_FAMILY', machine.cpu_family())
   conf_data.set(name + '_CPU_ENDIAN', machine.endian())
   conf_data.set(name + '_CPU_SYSTEM', machine.system())
-  conf_data.set(name + '_KERNEL', machine.kernel())
-  conf_data.set(name + '_SUBSYSTEM', machine.subsystem())
+  if meson.version().version_compare('>=1.2.0') and not meson.is_cross_build()
+    conf_data.set(name + '_KERNEL', machine.kernel())
+    conf_data.set(name + '_SUBSYSTEM', machine.subsystem())
+  else
+    conf_data.set(name + '_KERNEL', '')
+    conf_data.set(name + '_SUBSYSTEM', '')
+  endif
 endforeach
 
 conf_data.set('CROSS_COMPILED', meson.is_cross_build())
