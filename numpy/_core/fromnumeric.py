@@ -19,7 +19,7 @@ __all__ = [
     'all', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumsum', 'cumulative_prod', 'cumulative_sum',
-    'diagonal', 'mean', 'max', 'min', 'matrix_transpose',
+    'diagonal', 'mean', 'max', 'min', 'minmax', 'matrix_transpose',
     'ndim', 'nonzero', 'partition', 'prod', 'ptp', 'put',
     'ravel', 'repeat', 'reshape', 'resize', 'round',
     'searchsorted', 'shape', 'size', 'sort', 'squeeze',
@@ -3277,6 +3277,125 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
                           keepdims=keepdims, initial=initial, where=where)
+
+
+def _minmax_dispatcher(a, axis=None, keepdims=None, initial=None,
+                       where=None):
+    return (a,)
+
+
+@array_function_dispatch(_minmax_dispatcher)
+@set_module('numpy')
+def minmax(a, axis=None, keepdims=np._NoValue, initial=np._NoValue,
+           where=np._NoValue):
+    """
+    Return the minimum and maximum of an array or along an axis in a
+    single call.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to operate.  By default, flattened input
+        is used.  If this is a tuple of ints, the result is computed over
+        multiple axes.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the input array.
+    initial : scalar or tuple of scalars, optional
+        Initial values for the min and max reductions.  Must be present to
+        allow computation on empty slices.  When a tuple
+        ``(min_initial, max_initial)`` is given, separate initial values are
+        used for minimum and maximum (e.g., ``(np.inf, -np.inf)`` for an
+        empty array).  A single scalar is used as the initial for both
+        reductions.  See `~numpy.ufunc.reduce` for details.
+    where : array_like of bool, optional
+        Elements to include in the computation. See `~numpy.ufunc.reduce`
+        for details.
+
+    Returns
+    -------
+    minmax : tuple of ndarray or scalars
+        A ``(min, max)`` pair with the minimum and maximum values of `a`.
+        If `axis` is not None, a pair of arrays with the same shape as
+        ``np.min(a, axis=axis)`` is returned.
+
+    See Also
+    --------
+    min : Return the minimum of an array.
+    max : Return the maximum of an array.
+    ptp : Return the range (max - min) of values along an axis.
+    nanmin : Return the minimum ignoring NaN values.
+    nanmax : Return the maximum ignoring NaN values.
+
+    .. versionadded:: 2.5.0
+
+    Notes
+    -----
+    Combining minimum and maximum into a single function call can avoid
+    redundant passes over the data when both values are needed.
+
+    NaN values are propagated, that is if at least one item is NaN, the
+    corresponding min and max values will be NaN as well. To ignore NaN
+    values, use `nanmin` and `nanmax` separately.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.arange(4).reshape((2, 2))
+    >>> a
+    array([[0, 1],
+           [2, 3]])
+
+    >>> np.minmax(a)
+    (np.int64(0), np.int64(3))
+
+    >>> np.minmax(a, axis=0)
+    (array([0, 1]), array([2, 3]))
+
+    >>> np.minmax(a, axis=1)
+    (array([0, 2]), array([1, 3]))
+
+    >>> b = np.arange(5, dtype=np.float64)
+    >>> b[2] = np.nan
+    >>> np.minmax(b)
+    (np.float64(nan), np.float64(nan))
+
+    Use ``initial`` to provide a bound when the input might be empty:
+
+    >>> np.minmax([], initial=(np.inf, -np.inf))
+    (inf, -inf)
+
+    >>> np.minmax([[-50], [10]], axis=-1)
+    (array([-50,  10]), array([-50,  10]))
+    """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+
+    if initial is not np._NoValue:
+        if not isinstance(initial, tuple):
+            kwargs['initial'] = initial
+        else:
+            # Allow tuple (min_initial, max_initial) for empty-slice case
+            min_initial, max_initial = initial
+            a = np.asanyarray(a)
+            min_kwargs = dict(kwargs, initial=min_initial)
+            max_kwargs = dict(kwargs, initial=max_initial)
+            if where is not np._NoValue:
+                min_kwargs['where'] = where
+                max_kwargs['where'] = where
+            return (
+                _methods._amin(a, axis=axis, **min_kwargs),
+                _methods._amax(a, axis=axis, **max_kwargs),
+            )
+
+    if where is not np._NoValue:
+        kwargs['where'] = where
+
+    return _methods._minmax(a, axis=axis, **kwargs)
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

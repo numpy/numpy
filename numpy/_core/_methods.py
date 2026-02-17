@@ -235,6 +235,11 @@ def _ptp(a, axis=None, out=None, keepdims=False):
         out
     )
 
+def _minmax(a, axis=None, keepdims=False, initial=_NoValue, where=True):
+    mn = umr_minimum(a, axis, None, None, keepdims, initial, where)
+    mx = umr_maximum(a, axis, None, None, keepdims, initial, where)
+    return mn, mx
+
 def _dump(self, file, protocol=2):
     if hasattr(file, 'write'):
         ctx = nullcontext(file)
