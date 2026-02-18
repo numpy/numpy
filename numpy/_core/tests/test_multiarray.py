@@ -7348,9 +7348,9 @@ class TestDot:
     
     def test_user_defined_dtype_raises(self):
         # regression test for gh-30793
-        from numpy._core.tests.rational import rational
-        a = np.array([1, 2], dtype=rational)
-        b = np.array([3, 4], dtype=rational)
+        ml_dtypes = pytest.importorskip("ml_dtypes")
+        a = np.array([1, 2], dtype=ml_dtypes.bfloat16)
+        b = np.array([3, 4], dtype=ml_dtypes.bfloat16)
 
         with pytest.raises(TypeError, match="does not support user-defined dtypes"):
             np.dot(a, b)
@@ -7360,8 +7360,6 @@ class TestDot:
             np.vdot(a, b)
         with pytest.raises(TypeError, match="does not support user-defined dtypes"):
             np.correlate(a, b)
-
-
 class MatmulCommon:
     """Common tests for '@' operator and numpy.matmul.
 
