@@ -896,7 +896,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     }
     if (typenum >= NPY_NTYPES_LEGACY) {
     PyErr_SetString(PyExc_TypeError,
-        "dot() does not support user-defined dtypes. "
+        "inner() does not support user-defined dtypes. "
         "Consider using '@' (matmul), np.vecdot, np.matvec, or np.vecmat instead.");
     return NULL;
     }
