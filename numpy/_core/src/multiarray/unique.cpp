@@ -112,7 +112,7 @@ intp_container_to_pyarray(const T &container) {
 
 template <typename T>
 size_t hash_integer(const T *value, npy_bool NPY_UNUSED(equal_nan)) {
-    return std::hash<T>{}(*value);
+    return npy_fnv1a(reinterpret_cast<const unsigned char*>(value), sizeof(T));
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>

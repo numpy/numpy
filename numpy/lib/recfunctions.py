@@ -1532,9 +1532,9 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Check jointype
     if jointype not in ('inner', 'outer', 'leftouter'):
         raise ValueError(
-                "The 'jointype' argument should be in 'inner', "
-                "'outer' or 'leftouter' (got '%s' instead)" % jointype
-                )
+            "The 'jointype' argument should be in 'inner', "
+            f"'outer' or 'leftouter' (got '{jointype}' instead)"
+        )
     # If we have a single key, put it in a tuple
     if isinstance(key, str):
         key = (key,)

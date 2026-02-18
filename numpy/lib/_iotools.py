@@ -373,7 +373,7 @@ class NameValidator:
                 item += '_'
             cnt = seen.get(item, 0)
             if cnt > 0:
-                validatednames.append(item + '_%d' % cnt)
+                validatednames.append(f"{item}_{cnt}")
             else:
                 validatednames.append(item)
             seen[item] = cnt + 1

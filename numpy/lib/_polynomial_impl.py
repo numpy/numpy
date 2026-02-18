@@ -1323,9 +1323,9 @@ class poly1d:
             elif coefstr == '0':
                 newstr = ''
             elif coefstr == 'b':
-                newstr = '%s**%d' % (var, power,)
+                newstr = f'{var}**{power}'
             else:
-                newstr = '%s %s**%d' % (coefstr, var, power)
+                newstr = f'{coefstr} {var}**{power}'
 
             if k > 0:
                 if newstr != '':

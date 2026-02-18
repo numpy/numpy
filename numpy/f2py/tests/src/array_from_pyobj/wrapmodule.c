@@ -120,10 +120,37 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
                        PyArray_ITEMSIZE(arr));
 }
 
+static char doc_f2py_rout_wrap_resolve_write_back_if_copy[] = "\
+Function signature:\n\
+  resolvewritebackifcopy(arr)\n\
+  Calls PyArray_ResolveWriteBackIfCopy\n\
+Required arguments:\n"
+"  arr : input array object\n"
+"Return objects:\n"
+"  return_code : int\n"
+;
+static PyObject *f2py_rout_wrap_resolve_write_back_if_copy(PyObject *capi_self,
+                                      PyObject *capi_args) {
+  PyObject *arr_capi = Py_None;
+  PyArrayObject *arr = NULL;
+  if (!PyArg_ParseTuple(capi_args,"O!|:wrap.resolve_write_back_if_copy",
+                        &PyArray_Type,&arr_capi)) {
+    return NULL;
+  }
+  arr = (PyArrayObject *)arr_capi;
+  int res = PyArray_ResolveWritebackIfCopy(arr);
+  if (res < 0) {
+      return NULL;
+  }
+  return Py_BuildValue("i",res);
+}
+
 static PyMethodDef f2py_module_methods[] = {
 
   {"call",f2py_rout_wrap_call,METH_VARARGS,doc_f2py_rout_wrap_call},
   {"array_attrs",f2py_rout_wrap_attrs,METH_VARARGS,doc_f2py_rout_wrap_attrs},
+  {"resolve_write_back_if_copy",f2py_rout_wrap_resolve_write_back_if_copy,
+   METH_VARARGS,doc_f2py_rout_wrap_resolve_write_back_if_copy},
   {NULL,NULL}
 };
 

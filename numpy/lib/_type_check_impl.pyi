@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Container, Iterable
 from typing import Any, Literal as L, Protocol, overload, type_check_only
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy._typing import (
@@ -148,48 +149,70 @@ def real_if_close(a: ArrayLike, tol: float = 100) -> NDArray[Any]: ...
 
 #
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["S1"]) -> L["character"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["?"]) -> L["bool"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["b"]) -> L["signed char"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["B"]) -> L["unsigned char"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["h"]) -> L["short"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["H"]) -> L["unsigned short"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["i"]) -> L["integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["I"]) -> L["unsigned integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["l"]) -> L["long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["L"]) -> L["unsigned long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["q"]) -> L["long long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["Q"]) -> L["unsigned long long integer"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["f"]) -> L["single precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["d"]) -> L["double precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["g"]) -> L["long precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["F"]) -> L["complex single precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["D"]) -> L["complex double precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["G"]) -> L["complex long double precision"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["S"]) -> L["string"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["U"]) -> L["unicode"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["V"]) -> L["void"]: ...
 @overload
+@deprecated("numpy.typename is deprecated. Use numpy.dtype.name instead.")
 def typename(char: L["O"]) -> L["object"]: ...
 
 # NOTE: The [overload-overlap] mypy errors are false positives

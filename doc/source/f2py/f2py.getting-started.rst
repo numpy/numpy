@@ -154,9 +154,8 @@ Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     Clearly, this is unexpected, as Fortran typically passes by reference. That
     the above example worked with ``dtype=float`` is considered accidental.
 
-    F2PY provides an ``intent(inplace)`` attribute that modifies the attributes
-    of an input array so that any changes made by the Fortran routine will be
-    reflected in the input argument. For example, if one specifies the
+    F2PY provides an ``intent(inplace)`` attribute that ensures that changes
+    are copied back to the input argument. For example, if one specifies the
     ``intent(inplace) a`` directive (see :ref:`f2py-attributes` for details),
     then the example above would read::
 
