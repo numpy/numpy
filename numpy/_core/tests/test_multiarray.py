@@ -7345,7 +7345,7 @@ class TestDot:
 
         with pytest.raises(TypeError):
             np.dot(3.0, BadObject())
-    
+
     def test_user_defined_dtype_raises(self):
         # regression test for gh-30793
         ml_dtypes = pytest.importorskip("ml_dtypes")
