@@ -959,15 +959,15 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
 
     PyObject *result = NULL;
     try {
+        int type = PyArray_TYPE(arr);
+
         // For integer dtypes, use the sort-based implementation when only
         // return_counts is requested. Benchmarks indicate that this is currently
         // faster than the hash-based approach for this specific case.
-        if (PyDataType_ISINTEGER(arr) && return_counts && !return_index && !return_inverse) {
+        if (PyTypeNum_ISINTEGER(type) && return_counts && !return_index && !return_inverse) {
             result = Py_NewRef(Py_NotImplemented);
         }
         else {
-            int type = PyArray_TYPE(arr);
-
             // we only support data types present in our unique_funcs map
             auto unique_func = unique_funcs.find(type);
             if (unique_func == unique_funcs.end()) {
