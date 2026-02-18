@@ -7347,20 +7347,19 @@ class TestDot:
             np.dot(3.0, BadObject())
     
     def test_user_defined_dtype_raises(self):
-    # regression test for gh-30793
-    # dot family should raise TypeError with helpful message for user dtypes
-    from numpy._core.tests.rational import rational
-    a = np.array([1, 2], dtype=rational)
-    b = np.array([3, 4], dtype=rational)
+        # regression test for gh-30793
+        from numpy._core.tests.rational import rational
+        a = np.array([1, 2], dtype=rational)
+        b = np.array([3, 4], dtype=rational)
 
-    with pytest.raises(TypeError, match="does not support user-defined dtypes"):
-        np.dot(a, b)
-    with pytest.raises(TypeError, match="does not support user-defined dtypes"):
-        np.inner(a, b)
-    with pytest.raises(TypeError, match="does not support user-defined dtypes"):
-        np.vdot(a, b)
-    with pytest.raises(TypeError, match="does not support user-defined dtypes"):
-        np.correlate(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.dot(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.inner(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.vdot(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.correlate(a, b)
 
 
 class MatmulCommon:
