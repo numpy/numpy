@@ -277,6 +277,11 @@ cli = 'vendored-meson/meson/meson.py'
 project-includes = ["numpy/**/*.pyi"]
 project-excludes = ["numpy/typing/tests/**"]
 
+[tool.pyrefly.errors]
+implicit-any = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+
 [[tool.pyrefly.sub-config]]
 matches = "numpy/__init__.pyi"
 errors = { bad-override = "ignore" }
