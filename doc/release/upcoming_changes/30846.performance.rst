@@ -1,0 +1,18 @@
+Improved scaling of ufuncs on free-threading
+============================================
+
+NumPy's ufuncs now scale significantly better on free-threading builds
+of CPython due to the following optimizations:
+
+* **Lock-free dispatch table:** The ufuncs dispatch table is now
+  implemented as a lock-free concurrent hash map, allowing multiple threads
+  to call ufuncs without contention.
+
+* **Immortal shared objects:** Certain shared objects, such as global memory
+  handlers, have been made immortal. This effectively reduces reference
+  counting contention across threads.
+
+* **Optimized memory allocation:** NumPy now utilizes ``PyMem_RawMalloc`` and
+  ``PyMem_RawFree`` for memory allocation. On Python 3.15 and newer, this
+  leverages ``mimalloc`` and significantly reduces memory allocation overhead
+  in multi-threaded workloads.
