@@ -1,0 +1,3 @@
+# For testing types
+mypy==1.19.1
+types-PyYAML
