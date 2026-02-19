@@ -157,13 +157,13 @@ def as_strided(
         if view_low < base_low:
             raise ValueError(
                 f"Given shape and strides would access memory out of bounds. "
-                f"View starts {base_low - view_low} before starts"
+                f"View starts {base_low - view_low} bytes before lowest address"
             )
 
         if view_high > base_high:
             raise ValueError(
                 f"Given shape and strides would access memory out of bounds. "
-                f"View ends {view_high - base_high} after ends"
+                f"View ends {view_high - base_high} bytes after highest address"
             )
 
     return view
