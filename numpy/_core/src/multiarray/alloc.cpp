@@ -252,7 +252,7 @@ npy_alloc_cache_dim(npy_uintp sz)
         sz = 2;
     }
     return _npy_alloc_cache(sz, sizeof(npy_intp), NBUCKETS_DIM, dimcache,
-                            &PyArray_malloc);
+                            &PyMem_RawMalloc);
 }
 
 NPY_NO_EXPORT void
