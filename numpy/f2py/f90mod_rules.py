@@ -39,11 +39,11 @@ def findf90modules(m):
     return ret
 
 
-fgetdims1 = """\
+fgetdims1 = f"""\
       external f2pysetdata
       logical ns
       integer r,i
-      integer(%d) s(*)
+      integer({np.intp().itemsize}) s(*)
       ns = .FALSE.
       if (allocated(d)) then
          do i=1,r
@@ -55,7 +55,7 @@ fgetdims1 = """\
             deallocate(d)
          end if
       end if
-      if ((.not.allocated(d)).and.(s(1).ge.1)) then""" % np.intp().itemsize
+      if ((.not.allocated(d)).and.(s(1).ge.1)) then"""
 
 fgetdims2 = """\
       end if
@@ -136,8 +136,8 @@ def buildhooks(pymod):
             s[0] = f'{s[0]}\n{line}'
 
         vrd = capi_maps.modsign2map(m)
-        cadd('static FortranDataDef f2py_%s_def[] = {' % (m['name']))
-        dadd('\\subsection{Fortran 90/95 module \\texttt{%s}}\n' % (m['name']))
+        cadd(f"static FortranDataDef f2py_{m['name']}_def[] = {{")
+        dadd(f"\\subsection{{Fortran 90/95 module \\texttt{{{m['name']}}}}}\n")
         if hasnote(m):
             note = m['note']
             if isinstance(note, list):
@@ -156,11 +156,9 @@ def buildhooks(pymod):
             if not dms:
                 dms = '-1'
             use_fgetdims2 = fgetdims2
-            cadd('\t{"%s",%s,{{%s}},%s, %s},' %
-                 (undo_rmbadname1(n), dm['rank'], dms, at,
-                  capi_maps.get_elsize(var)))
-            dadd('\\item[]{{}\\verb@%s@{}}' %
-                 (capi_maps.getarrdocsign(n, var)))
+            cadd(f'\t{{"{undo_rmbadname1(n)}",{dm['rank']},{{{{{dms}}}}},{at}, '
+                 f'{capi_maps.get_elsize(var)}}},')
+            dadd(f'\\item[]{{{{}}\\verb@{capi_maps.getarrdocsign(n, var)}@{{}}}}')
             if hasnote(var):
                 note = var['note']
                 if isinstance(note, list):
@@ -178,8 +176,8 @@ def buildhooks(pymod):
                 fadd('integer flag\n')
                 fhooks[0] = fhooks[0] + fgetdims1
                 dms = range(1, int(dm['rank']) + 1)
-                fadd(' allocate(d(%s))\n' %
-                     (','.join(['s(%s)' % i for i in dms])))
+                alloc_args = ','.join([f's({i})' for i in dms])
+                fadd(f' allocate(d({alloc_args}))\n')
                 fhooks[0] = fhooks[0] + use_fgetdims2
                 fadd(f'end subroutine {fargs[-1]}')
             else:
@@ -215,33 +213,32 @@ def buildhooks(pymod):
                 ar['docs'] = []
                 ar['docshort'] = []
                 ret = dictappend(ret, ar)
-                cadd(('\t{"%s",-1,{{-1}},0,0,NULL,(void *)'
-                      'f2py_rout_#modulename#_%s_%s,'
-                      'doc_f2py_rout_#modulename#_%s_%s},')
-                     % (b['name'], m['name'], b['name'], m['name'], b['name']))
+                cadd(f'\t{{"{b["name"]}",-1,{{{{-1}}}},0,0,NULL,(void *)'
+                      f'f2py_rout_#modulename#_{m["name"]}_{b["name"]},'
+                      f'doc_f2py_rout_#modulename#_{m["name"]}_{b["name"]}}},')
                 sargs.append(f"char *{b['name']}")
                 sargsp.append('char *')
                 iadd(f"\tf2py_{m['name']}_def[i_f2py++].data = {b['name']};")
         cadd('\t{NULL}\n};\n')
         iadd('}')
-        ihooks[0] = 'static void f2py_setup_%s(%s) {\n\tint i_f2py=0;%s' % (
-            m['name'], ','.join(sargs), ihooks[0])
+        ihooks[0] = (f'static void f2py_setup_{m["name"]}({",".join(sargs)}) '
+                     f'{{\n\tint i_f2py=0;{ihooks[0]}')
         if '_' in m['name']:
             F_FUNC = 'F_FUNC_US'
         else:
             F_FUNC = 'F_FUNC'
-        iadd('extern void %s(f2pyinit%s,F2PYINIT%s)(void (*)(%s));'
-             % (F_FUNC, m['name'], m['name'].upper(), ','.join(sargsp)))
-        iadd('static void f2py_init_%s(void) {' % (m['name']))
-        iadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'
-             % (F_FUNC, m['name'], m['name'].upper(), m['name']))
+        iadd(f'extern void {F_FUNC}(f2pyinit{m["name"]},'
+             f'F2PYINIT{m["name"].upper()})(void (*)({','.join(sargsp)}));')
+        iadd(f'static void f2py_init_{m["name"]}(void) {{')
+        iadd(f'\t{F_FUNC}(f2pyinit{m["name"]},'
+             f'F2PYINIT{m["name"].upper()})(f2py_setup_{m["name"]});')
         iadd('}\n')
         ret['f90modhooks'] = ret['f90modhooks'] + chooks + ihooks
         ret['initf90modhooks'] = [
             '\t{',
-            '\t\tPyObject *tmp = PyFortranObject_New(f2py_%s_def,f2py_init_%s);'
-            % (m['name'], m['name']),
-            '\t\tPyDict_SetItemString(d, "%s", tmp);' % (m['name'],),
+            ('\t\tPyObject *tmp = '
+            f'PyFortranObject_New(f2py_{m["name"]}_def,f2py_init_{m["name"]});'),
+            f'\t\tPyDict_SetItemString(d, "{m["name"]}", tmp);',
             '\t\tPy_XDECREF(tmp);',
             '\t}',
         ] + ret["initf90modhooks"]

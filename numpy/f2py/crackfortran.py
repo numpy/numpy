@@ -413,9 +413,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 beginpattern = beginpattern77
             else:
                 beginpattern = beginpattern90
-            outmess('\tReading file %s (format:%s%s)\n'
-                    % (repr(currentfilename), sourcecodeform,
-                       (strictf77 and ',strict') or ''))
+            outmess(f"\tReading file {currentfilename!r} "
+                    f"(format:{sourcecodeform}{',strict' if strictf77 else ''})\n")
 
         l = l.expandtabs().replace('\xa0', ' ')
         # Get rid of newline characters
@@ -461,7 +460,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             if l[0] not in spacedigits:
                 raise Exception('readfortrancode: Found non-(space,digit) char '
                                 'in the first column.\n\tAre you sure that '
-                                'this code is in fix form?\n\tline=%s' % repr(l))
+                                f'this code is in fix form?\n\tline={l!r}')
 
             if (not cont or strictf77) and (len(l) > 5 and not l[5] == ' '):
                 # Continuation of a previous line
@@ -520,8 +519,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         else:
             raise ValueError(
                 f"Flag sourcecodeform must be either 'fix' or 'free': {repr(sourcecodeform)}")
-        filepositiontext = 'Line #%d in %s:"%s"\n\t' % (
-            fin.filelineno() - 1, currentfilename, l1)
+        filepositiontext = (f'Line #{fin.filelineno() - 1} '
+                            f'in {currentfilename}:"{l1}"\n\t')
         m = includeline.match(origfinalline)
         if m:
             fn = m.group('name')
@@ -538,8 +537,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                         readfortrancode(fn1, dowithline=dowithline, istop=0)
                         break
                 if not foundfile:
-                    outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n' % (
-                        repr(fn), os.pathsep.join(include_dirs)))
+                    outmess(f'readfortrancode: could not find include file {fn!r} '
+                            f'in {os.pathsep.join(include_dirs)}. Ignoring.\n')
         else:
             dowithline(finalline)
         l1 = ll
@@ -549,8 +548,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     else:
         finalline = ll
     origfinalline = ll
-    filepositiontext = 'Line #%d in %s:"%s"\n\t' % (
-        fin.filelineno() - 1, currentfilename, l1)
+    filepositiontext = f'Line #{fin.filelineno() - 1} in {currentfilename}:"{l1}"\n\t'
     m = includeline.match(origfinalline)
     if m:
         fn = m.group('name')
@@ -566,8 +564,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                     readfortrancode(fn1, dowithline=dowithline, istop=0)
                     break
             if not foundfile:
-                outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n' % (
-                    repr(fn), os.pathsep.join(include_dirs)))
+                outmess(f'readfortrancode: could not find include file {fn!r} '
+                        f'in {os.pathsep.join(include_dirs)}. Ignoring.\n')
     else:
         dowithline(finalline)
     filepositiontext = ''
@@ -735,8 +733,7 @@ def crackline(line, reset=0):
         if f77modulename and neededmodule == groupcounter:
             fl = 2
         while groupcounter > fl:
-            outmess('crackline: groupcounter=%s groupname=%s\n' %
-                    (repr(groupcounter), repr(groupname)))
+            outmess(f'crackline: groupcounter={groupcounter!r} groupname={groupname!r}\n')
             outmess(
                 'crackline: Mismatch of blocks encountered. Trying to fix it by assuming "end" statement.\n')
             grouplist[groupcounter - 1].append(groupcache[groupcounter])
@@ -786,7 +783,8 @@ def crackline(line, reset=0):
                 if 'interfaced' in groupcache[groupcounter] and name in groupcache[groupcounter]['interfaced']:
                     continue
                 m1 = re.match(
-                    r'(?P<before>[^"]*)\b%s\b\s*@\(@(?P<args>[^@]*)@\)@.*\Z' % name, markouterparen(line), re.I)
+                    rf'(?P<before>[^"]*)\b{name}\b\s*@\(@(?P<args>[^@]*)@\)@.*\Z',
+                    markouterparen(line), re.I)
                 if m1:
                     m2 = re_1.match(m1.group('before'))
                     a = _simplifyargs(m1.group('args'))
@@ -803,7 +801,7 @@ def crackline(line, reset=0):
                     return
         if verbose > 1 or (verbose == 1 and currentfilename.lower().endswith('.pyf')):
             previous_context = None
-            outmess('crackline:%d: No pattern for line\n' % (groupcounter))
+            outmess(f'crackline:{groupcounter}: No pattern for line\n')
         return
     elif pat[1] == 'end':
         if 0 <= skipblocksuntil < groupcounter:
@@ -811,16 +809,13 @@ def crackline(line, reset=0):
             if skipblocksuntil <= groupcounter:
                 return
         if groupcounter <= 0:
-            raise Exception('crackline: groupcounter(=%s) is nonpositive. '
-                            'Check the blocks.'
-                            % (groupcounter))
+            raise Exception(f'crackline: groupcounter(={groupcounter}) is nonpositive. '
+                            'Check the blocks.')
         m1 = beginpattern[0].match(line)
         if (m1) and (not m1.group('this') == groupname[groupcounter]):
-            raise Exception('crackline: End group %s does not match with '
-                            'previous Begin group %s\n\t%s' %
-                            (repr(m1.group('this')), repr(groupname[groupcounter]),
-                             filepositiontext)
-                            )
+            raise Exception(f'crackline: End group {m1.group("this")!r} '
+                            'does not match with previous Begin group '
+                            f'{groupname[groupcounter]!r}\n\t{filepositiontext}')
         if skipblocksuntil == groupcounter:
             skipblocksuntil = -1
         grouplist[groupcounter - 1].append(groupcache[groupcounter])
@@ -1086,8 +1081,7 @@ def analyzeline(m, case, line):
         grouplist[groupcounter] = []
         if needmodule:
             if verbose > 1:
-                outmess('analyzeline: Creating module block %s\n' %
-                        repr(f77modulename), 0)
+                outmess(f'analyzeline: Creating module block {f77modulename!r}\n', 0)
             groupname[groupcounter] = 'module'
             groupcache[groupcounter]['block'] = 'python module'
             groupcache[groupcounter]['name'] = f77modulename
@@ -1101,13 +1095,12 @@ def analyzeline(m, case, line):
             grouplist[groupcounter] = []
         if needinterface:
             if verbose > 1:
-                outmess('analyzeline: Creating additional interface block (groupcounter=%s).\n' % (
-                    groupcounter), 0)
+                outmess('analyzeline: Creating additional interface block '
+                        f'(groupcounter={groupcounter}).\n', 0)
             groupname[groupcounter] = 'interface'
             groupcache[groupcounter]['block'] = 'interface'
             groupcache[groupcounter]['name'] = 'unknown_interface'
-            groupcache[groupcounter]['from'] = '%s:%s' % (
-                groupcache[groupcounter - 1]['from'], groupcache[groupcounter - 1]['name'])
+            groupcache[groupcounter]['from'] = f"{groupcache[groupcounter - 1]['from']}:{groupcache[groupcounter - 1]['name']}"
             groupcache[groupcounter]['body'] = []
             groupcache[groupcounter]['externals'] = []
             groupcache[groupcounter]['interfaced'] = []
@@ -1125,11 +1118,9 @@ def analyzeline(m, case, line):
         if groupcounter == 1:
             groupcache[groupcounter]['from'] = currentfilename
         elif f77modulename and groupcounter == 3:
-            groupcache[groupcounter]['from'] = '%s:%s' % (
-                groupcache[groupcounter - 1]['from'], currentfilename)
+            groupcache[groupcounter]['from'] = f"{groupcache[groupcounter - 1]['from']}:{currentfilename}"
         else:
-            groupcache[groupcounter]['from'] = '%s:%s' % (
-                groupcache[groupcounter - 1]['from'], groupcache[groupcounter - 1]['name'])
+            groupcache[groupcounter]['from'] = f"{groupcache[groupcounter - 1]['from']}:{groupcache[groupcounter - 1]['name']}"
         for k in list(groupcache[groupcounter].keys()):
             if not groupcache[groupcounter][k]:
                 del groupcache[groupcounter][k]
@@ -1221,8 +1212,8 @@ def analyzeline(m, case, line):
             ll = ll[:i + 1] + '::' + ll[i + 1:]
             i = ll.find('::')
             if ll[i:] == '::' and 'args' in groupcache[groupcounter]:
-                outmess('All arguments will have attribute %s%s\n' %
-                        (m.group('this'), ll[:i]))
+                outmess('All arguments will have attribute '
+                        f'{m.group("this")}{ll[:i]}\n')
                 ll = ll + ','.join(groupcache[groupcounter]['args'])
         if i < 0:
             i = 0
@@ -1233,8 +1224,8 @@ def analyzeline(m, case, line):
         ch = markoutercomma(pl).split('@,@')
         if len(ch) > 1:
             pl = ch[0]
-            outmess('analyzeline: cannot handle multiple attributes without type specification. Ignoring %r.\n' % (
-                ','.join(ch[1:])))
+            outmess("analyzeline: cannot handle multiple attributes without "
+                    f"type specification. Ignoring {','.join(ch[1:])!r}.\n")
         last_name = None
 
         for e in [x.strip() for x in markoutercomma(ll).split('@,@')]:
@@ -1244,8 +1235,8 @@ def analyzeline(m, case, line):
                     k = ''
                 else:
                     print(m.groupdict())
-                    outmess('analyzeline: no name pattern found in %s statement for %s. Skipping.\n' % (
-                        case, repr(e)))
+                    outmess(f'analyzeline: no name pattern found in {case} statement '
+                            f'for {e!r}. Skipping.\n')
                     continue
             else:
                 k = rmbadname1(m1.group('name'))
@@ -1265,15 +1256,16 @@ def analyzeline(m, case, line):
                                     'analyzeline: missing __user__ module (could be nothing)\n')
                             # fixes ticket 1693
                             if k != groupcache[groupcounter]['name']:
-                                outmess('analyzeline: appending intent(callback) %s'
-                                        ' to %s arguments\n' % (k, groupcache[groupcounter]['name']))
+                                outmess(f"analyzeline: appending intent(callback) {k}"
+                                        f" to {groupcache[groupcounter]['name']} "
+                                        "arguments\n")
                                 groupcache[groupcounter]['args'].append(k)
                         else:
                             errmess(
                                 f'analyzeline: intent(callback) {k} is ignored\n')
                     else:
-                        errmess('analyzeline: intent(callback) %s is already'
-                                ' in argument list\n' % (k))
+                        errmess(f'analyzeline: intent(callback) {k} is already'
+                                ' in argument list\n')
             if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
@@ -1312,8 +1304,8 @@ def analyzeline(m, case, line):
             if k not in edecl:
                 edecl[k] = {}
             if '=' in edecl[k] and (not edecl[k]['='] == initexpr):
-                outmess('analyzeline: Overwriting the value of parameter "%s" ("%s") with "%s".\n' % (
-                    k, edecl[k]['='], initexpr))
+                outmess(f'analyzeline: Overwriting the value of parameter "{k}" '
+                        f'("{edecl[k]["="]}") with "{initexpr}".\n')
             t = determineexprtype(initexpr, params)
             if t:
                 if t.get('typespec') == 'real':
@@ -1328,8 +1320,8 @@ def analyzeline(m, case, line):
             try:
                 v = eval(initexpr, {}, params)
             except (SyntaxError, NameError, TypeError) as msg:
-                errmess('analyzeline: Failed to evaluate %r. Ignoring: %s\n'
-                        % (initexpr, msg))
+                errmess(f'analyzeline: Failed to evaluate {initexpr!r}. '
+                        f'Ignoring: {msg}\n')
                 continue
             edecl[k]['='] = repr(v)
             if 'attrspec' in edecl[k]:
@@ -1705,35 +1697,37 @@ def updatevars(typespec, selector, attrspec, entitydecl):
             if not_has_typespec:
                 edecl['typespec'] = typespec
             elif typespec and (not typespec == edecl['typespec']):
-                outmess('updatevars: attempt to change the type of "%s" ("%s") to "%s". Ignoring.\n' % (
-                    ename, edecl['typespec'], typespec))
+                outmess(f'updatevars: attempt to change the type of "{ename}" '
+                        f'("{edecl["typespec"]}") to "{typespec}". Ignoring.\n')
             if 'kindselector' not in edecl:
                 edecl['kindselector'] = copy.copy(kindselect)
             elif kindselect:
                 for k in list(kindselect.keys()):
                     if k in edecl['kindselector'] and (not kindselect[k] == edecl['kindselector'][k]):
-                        outmess('updatevars: attempt to change the kindselector "%s" of "%s" ("%s") to "%s". Ignoring.\n' % (
-                            k, ename, edecl['kindselector'][k], kindselect[k]))
+                        outmess('updatevars: attempt to change the kindselector '
+                                f'"{k}" of "{ename}" ("{edecl["kindselector"][k]}") to '
+                                f'"{kindselect[k]}". Ignoring.\n')
                     else:
                         edecl['kindselector'][k] = copy.copy(kindselect[k])
             if 'charselector' not in edecl and charselect:
                 if not_has_typespec:
                     edecl['charselector'] = charselect
                 else:
-                    errmess('updatevars:%s: attempt to change empty charselector to %r. Ignoring.\n'
-                            % (ename, charselect))
+                    errmess(f'updatevars:{ename}: attempt to change empty charselector '
+                            f'to {charselect!r}. Ignoring.\n')
             elif charselect:
                 for k in list(charselect.keys()):
                     if k in edecl['charselector'] and (not charselect[k] == edecl['charselector'][k]):
-                        outmess('updatevars: attempt to change the charselector "%s" of "%s" ("%s") to "%s". Ignoring.\n' % (
-                            k, ename, edecl['charselector'][k], charselect[k]))
+                        outmess(f'updatevars: attempt to change the charselector "{k}" '
+                                f'of "{ename}" ("{edecl["charselector"][k]}") to '
+                                f'"{charselect[k]}". Ignoring.\n')
                     else:
                         edecl['charselector'][k] = copy.copy(charselect[k])
             if 'typename' not in edecl:
                 edecl['typename'] = typename
             elif typename and (not edecl['typename'] == typename):
-                outmess('updatevars: attempt to change the typename of "%s" ("%s") to "%s". Ignoring.\n' % (
-                    ename, edecl['typename'], typename))
+                outmess(f'updatevars: attempt to change the typename of "{ename}" '
+                        f'("{edecl["typename"]}") to "{typename}". Ignoring.\n')
             if 'attrspec' not in edecl:
                 edecl['attrspec'] = copy.copy(attrspec)
             elif attrspec:
@@ -1778,8 +1772,8 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                     else:
                         d1['array'] = d1['array'] + ',' + d1['len']
                         del d1['len']
-                        errmess('updatevars: "%s %s" is mapped to "%s %s(%s)"\n' % (
-                            typespec, e, typespec, ename, d1['array']))
+                        errmess(f'updatevars: "{typespec} {e}" is mapped to '
+                                f'"{typespec} {ename}({d1["array"]})"\n')
 
                 if 'len' in d1:
                     if typespec in ['complex', 'integer', 'logical', 'real']:
@@ -1797,8 +1791,9 @@ def updatevars(typespec, selector, attrspec, entitydecl):
 
                 if 'init' in d1:
                     if '=' in edecl and (not edecl['='] == d1['init']):
-                        outmess('updatevars: attempt to change the init expression of "%s" ("%s") to "%s". Ignoring.\n' % (
-                            ename, edecl['='], d1['init']))
+                        outmess('updatevars: attempt to change the init expression of '
+                                f'"{ename}" ("{edecl["="]}") to "{d1["init"]}". '
+                                f'Ignoring.\n')
                     else:
                         edecl['='] = d1['init']
 
@@ -1811,8 +1806,8 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                         for dm1 in edecl['attrspec']:
                             if dm1[:9] == 'dimension' and dm1 != dm:
                                 del edecl['attrspec'][-1]
-                                errmess('updatevars:%s: attempt to change %r to %r. Ignoring.\n'
-                                        % (ename, dm1, dm))
+                                errmess(f'updatevars:{ename}: attempt to change '
+                                        f'{dm1!r} to {dm!r}. Ignoring.\n')
                                 break
 
             else:
@@ -1879,8 +1874,7 @@ def cracktypespec(typespec, selector):
             if typename:
                 typename = typename.group('name')
             else:
-                outmess('cracktypespec: no typename found in %s\n' %
-                        (repr(typespec + selector)))
+                outmess(f'cracktypespec: no typename found in {typespec + selector}\n')
         else:
             outmess(f'cracktypespec: no selector used for {repr(selector)}\n')
     return kindselect, charselect, typename
@@ -1980,8 +1974,8 @@ def get_useparameters(block, param_map=None):
     for usename, mapping in list(usedict.items()):
         usename = usename.lower()
         if usename not in f90modulevars:
-            outmess('get_useparameters: no module %s info used by %s\n' %
-                    (usename, block.get('name')))
+            outmess(f'get_useparameters: no module {usename} info used by '
+                    f'{block.get("name")}\n')
             continue
         mvars = f90modulevars[usename]
         params = get_parameters(mvars)
@@ -1992,8 +1986,8 @@ def get_useparameters(block, param_map=None):
             errmess(f'get_useparameters: mapping for {mapping} not impl.\n')
         for k, v in list(params.items()):
             if k in param_map:
-                outmess('get_useparameters: overriding parameter %s with'
-                        ' value from module %s\n' % (repr(k), repr(usename)))
+                outmess(f'get_useparameters: overriding parameter {k!r} with'
+                        f' value from module {usename!r}\n')
             param_map[k] = v
 
     return param_map
@@ -2561,9 +2555,8 @@ def _eval_scalar(value, params):
     except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
-        errmess('"%s" in evaluating %r '
-                '(available names: %s)\n'
-                % (msg, value, list(params.keys())))
+        errmess(f'"{msg}" in evaluating {value!r} '
+                f'(available names: {list(params.keys())})\n')
     return value
 
 
@@ -2611,7 +2604,7 @@ def analyzevars(block):
             try:
                 dep_matches[n]
             except KeyError:
-                dep_matches[n] = re.compile(r'.*\b%s\b' % (v), re.I).match
+                dep_matches[n] = re.compile(rf'.*\b{v}\b', re.I).match
     for n in svars:
         if n[0] in list(attrrules.keys()):
             vars[n] = setattrspec(vars[n], attrrules[n[0]])
@@ -2628,8 +2621,8 @@ def analyzevars(block):
                             for l in implicitrules[ln0][k]:
                                 vars[n] = setattrspec(vars[n], l)
                 elif n in block['args']:
-                    outmess('analyzevars: typespec of variable %s is not defined in routine %s.\n' % (
-                        repr(n), block['name']))
+                    outmess(f"analyzevars: typespec of variable {n!r} is not defined "
+                            f"in routine {block['name']}.\n")
         if 'charselector' in vars[n]:
             if 'len' in vars[n]['charselector']:
                 l = vars[n]['charselector']['len']
@@ -3263,15 +3256,14 @@ def crack2fortrangen(block, tab='\n', as_interface=False):
     f2pyenhancements = ''
     if 'f2pyenhancements' in block:
         for k in list(block['f2pyenhancements'].keys()):
-            f2pyenhancements = '%s%s%s %s' % (
-                f2pyenhancements, tab + tabchar, k, block['f2pyenhancements'][k])
+            f2pyenhancements = (f"{f2pyenhancements}{tab + tabchar}{k} "
+                                f"{block['f2pyenhancements'][k]}")
     intent_lst = block.get('intent', [])[:]
     if blocktype == 'function' and 'callback' in intent_lst:
         intent_lst.remove('callback')
     if intent_lst:
-        f2pyenhancements = '%s%sintent(%s) %s' %\
-                           (f2pyenhancements, tab + tabchar,
-                            ','.join(intent_lst), name)
+        f2pyenhancements = (f"{f2pyenhancements}{tab + tabchar}"
+                            f"intent({','.join(intent_lst)}) {name}")
     use = ''
     if 'use' in block:
         use = use2fortran(block['use'], tab + tabchar)
@@ -3298,8 +3290,9 @@ def crack2fortrangen(block, tab='\n', as_interface=False):
         body = body + entry_stmts
     if blocktype == 'block data' and name == '_BLOCK_DATA_':
         name = ''
-    ret = '%s%s%s %s%s%s %s%s%s%s%s%s%send %s %s' % (
-        tab, prefix, blocktype, name, args, result, mess, f2pyenhancements, use, vars, common, body, tab, blocktype, name)
+    ret = (f'{tab}{prefix}{blocktype} {name}{args}{result} '
+           f'{mess}{f2pyenhancements}{use}{vars}{common}{body}{tab}end '
+           f'{blocktype} {name}')
     return ret
 
 
@@ -3506,11 +3499,11 @@ def crack2fortran(block):
     header = """!    -*- f90 -*-
 ! Note: the context of this file is case sensitive.
 """
-    footer = """
-! This file was auto-generated with f2py (version:%s).
+    footer = f"""
+! This file was auto-generated with f2py (version:{f2py_version}).
 ! See:
 ! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e
-""" % (f2py_version)
+"""
     return header + pyf + footer
 
 

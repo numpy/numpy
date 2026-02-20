@@ -44,8 +44,8 @@ def run():
 
     if has_f2py2e:
         try:
-            print('Found f2py2e version %r in %s' %
-                  (f2py2e.__version__.version, f2py2e.__file__))
+            print(f'Found f2py2e version {f2py2e.__version__.version!r} in '
+                  f'{f2py2e.__file__}')
         except Exception as msg:
             print('error:', msg)
             print('------')

@@ -65,11 +65,11 @@ def buildhooks(m):
             else:
                 inames.append(n)
         if hnames:
-            outmess('\t\tConstructing COMMON block support for "%s"...\n\t\t  %s\n\t\t  Hidden: %s\n' % (
-                name, ','.join(inames), ','.join(hnames)))
+            outmess(f'\t\tConstructing COMMON block support for "{name}"...\n\t\t  '
+                    f'{",".join(inames)}\n\t\t  Hidden: {",".join(hnames)}\n')
         else:
-            outmess('\t\tConstructing COMMON block support for "%s"...\n\t\t  %s\n' % (
-                name, ','.join(inames)))
+            outmess(f'\t\tConstructing COMMON block support for "{name}"...\n\t\t  '
+                    f'{",".join(inames)}\n')
         fadd(f'subroutine f2pyinit{name}(setupfunc)')
         for usename in getuseblocks(m):
             fadd(f'use {usename}')
@@ -82,7 +82,7 @@ def buildhooks(m):
             fadd(f"common /{name}/ {','.join(vnames)}")
         fadd(f"call setupfunc({','.join(inames)})")
         fadd('end\n')
-        cadd('static FortranDataDef f2py_%s_def[] = {' % (name))
+        cadd(f'static FortranDataDef f2py_{name}_def[] = {{')
         idims = []
         for n in inames:
             ct = capi_maps.getctype(vars[n])
@@ -96,12 +96,11 @@ def buildhooks(m):
             dms = dm['dims'].strip()
             if not dms:
                 dms = '-1'
-            cadd('\t{\"%s\",%s,{{%s}},%s, %s},'
-                 % (n, dm['rank'], dms, at, elsize))
+            cadd(f'\t{{\"{n}\",{dm["rank"]},{{{{{dms}}}}},{at}, {elsize}}},')
         cadd('\t{NULL}\n};')
         inames1 = rmbadname(inames)
         inames1_tps = ','.join(['char *' + s for s in inames1])
-        cadd('static void f2py_setup_%s(%s) {' % (name, inames1_tps))
+        cadd(f'static void f2py_setup_{name}({inames1_tps}) {{')
         cadd('\tint i_f2py=0;')
         for n in inames1:
             cadd(f'\tf2py_{name}_def[i_f2py++].data = {n};')
@@ -110,23 +109,21 @@ def buildhooks(m):
             F_FUNC = 'F_FUNC_US'
         else:
             F_FUNC = 'F_FUNC'
-        cadd('extern void %s(f2pyinit%s,F2PYINIT%s)(void(*)(%s));'
-             % (F_FUNC, lower_name, name.upper(),
-                ','.join(['char*'] * len(inames1))))
-        cadd('static void f2py_init_%s(void) {' % name)
-        cadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'
-             % (F_FUNC, lower_name, name.upper(), name))
+        cadd(f"extern void {F_FUNC}(f2pyinit{lower_name},F2PYINIT{name.upper()})"
+             f"(void(*)({','.join(['char*'] * len(inames1))}));")
+        cadd(f'static void f2py_init_{name}(void) {{')
+        cadd(f'\t{F_FUNC}(f2pyinit{lower_name},F2PYINIT{name.upper()})'
+             f'(f2py_setup_{name});')
         cadd('}\n')
         iadd(f'\ttmp = PyFortranObject_New(f2py_{name}_def,f2py_init_{name});')
         iadd('\tif (tmp == NULL) return NULL;')
         iadd(f'\tif (F2PyDict_SetItemString(d, "{name}", tmp) == -1) return NULL;')
         iadd('\tPy_DECREF(tmp);')
         tname = name.replace('_', '\\_')
-        dadd('\\subsection{Common block \\texttt{%s}}\n' % (tname))
+        dadd(f'\\subsection{{Common block \\texttt{{{tname}}}}}\n')
         dadd('\\begin{description}')
         for n in inames:
-            dadd('\\item[]{{}\\verb@%s@{}}' %
-                 (capi_maps.getarrdocsign(n, vars[n])))
+            dadd(f'\\item[]{{{{}}\\verb@{capi_maps.getarrdocsign(n, vars[n])}@{{}}}}')
             if hasnote(vars[n]):
                 note = vars[n]['note']
                 if isinstance(note, list):
