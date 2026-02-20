@@ -567,9 +567,11 @@ def unique(
     return_inverse: L[True],
 ) -> tuple[_MArray[Incomplete], _IntArray, _IntArray]: ...
 
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+
 # keep in sync with `lib._arraysetops_impl.intersect1d`
 @overload  # known scalar-type, return_indices=False (default)
-def intersect1d(
+def intersect1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
 ) -> _MArray1D[_AnyScalarT]: ...
 @overload  # unknown scalar-type, return_indices=False (default)
@@ -577,7 +579,7 @@ def intersect1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> 
 
 # keep in sync with `lib._arraysetops_impl.setxor1d`
 @overload
-def setxor1d(
+def setxor1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
 ) -> _MArray1D[_AnyScalarT]: ...
 @overload
@@ -585,13 +587,13 @@ def setxor1d(ar1: ArrayLike, ar2: ArrayLike, assume_unique: bool = False) -> _MA
 
 # keep in sync with `lib._arraysetops_impl.union1d`
 @overload
-def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _MArray1D[_AnyScalarT]: ...
+def union1d(ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT]) -> _MArray1D[_AnyScalarT]: ...  # noqa: UP047
 @overload
 def union1d(ar1: ArrayLike, ar2: ArrayLike) -> _MArray1D[Incomplete]: ...
 
 # keep in sync with `lib._arraysetops_impl.setdiff1d`
 @overload
-def setdiff1d(
+def setdiff1d(  # noqa: UP047
     ar1: _ArrayLike[_AnyScalarT], ar2: _ArrayLike[_AnyScalarT], assume_unique: bool = False
 ) -> _MArray1D[_AnyScalarT]: ...
 @overload

@@ -3806,9 +3806,11 @@ def inner(a: ArrayLike, b: ArrayLike) -> Incomplete: ...
 
 innerproduct = inner
 
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+
 # keep in sync with `_core.numeric.outer`
 @overload
-def outer(a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT]) -> _Masked2D[_AnyNumericScalarT]: ...
+def outer(a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT]) -> _Masked2D[_AnyNumericScalarT]: ...  # noqa: UP047
 @overload
 def outer(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> _Masked2D[np.bool]: ...
 @overload
@@ -3824,7 +3826,7 @@ outerproduct = outer
 
 # keep in sync with `convolve` and `_core.numeric.correlate`
 @overload
-def correlate(
+def correlate(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT],
     v: _ArrayLike[_AnyNumericScalarT],
     mode: _CorrelateMode = "valid",
@@ -3868,7 +3870,7 @@ def correlate(
 
 # keep in sync with `correlate` and `_core.numeric.convolve`
 @overload
-def convolve(
+def convolve(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT],
     v: _ArrayLike[_AnyNumericScalarT],
     mode: _CorrelateMode = "full",

@@ -10,7 +10,6 @@ from pathlib import Path
 from re import Pattern
 from typing import (
     Any,
-    AnyStr,
     ClassVar,
     Final,
     Generic,
@@ -389,21 +388,21 @@ def tempdir(
     dir: None = None,
 ) -> _GeneratorContextManager[str]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     prefix: AnyStr | None = None,
     *,
     dir: GenericPath[AnyStr],
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     *,
     prefix: AnyStr,
     dir: GenericPath[AnyStr] | None = None,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr,
     prefix: AnyStr | None = None,
     dir: GenericPath[AnyStr] | None = None,
@@ -418,14 +417,14 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[str]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None,
     prefix: AnyStr | None,
     dir: GenericPath[AnyStr],
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     prefix: AnyStr | None = None,
     *,
@@ -433,14 +432,14 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None,
     prefix: AnyStr,
     dir: GenericPath[AnyStr] | None = None,
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     *,
     prefix: AnyStr,
@@ -448,7 +447,7 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr,
     prefix: AnyStr | None = None,
     dir: GenericPath[AnyStr] | None = None,

@@ -1046,9 +1046,11 @@ def isfortran(a: ndarray | generic) -> py_bool: ...
 def argwhere(a: ArrayLike) -> _Array2D[np.intp]: ...
 def flatnonzero(a: ArrayLike) -> _Array1D[np.intp]: ...
 
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+
 # keep in sync with `convolve` and `ma.core.correlate`
 @overload
-def correlate(
+def correlate(  # noqa: UP047
     a: _ArrayLike1D[_AnyNumericScalarT], v: _ArrayLike1D[_AnyNumericScalarT], mode: _CorrelateMode = "valid"
 ) -> _Array1D[_AnyNumericScalarT]: ...
 @overload
@@ -1068,7 +1070,7 @@ def correlate(
 
 # keep in sync with `correlate`
 @overload
-def convolve(
+def convolve(  # noqa: UP047
     a: _ArrayLike1D[_AnyNumericScalarT], v: _ArrayLike1D[_AnyNumericScalarT], mode: _CorrelateMode = "valid"
 ) -> _Array1D[_AnyNumericScalarT]: ...
 @overload
@@ -1089,7 +1091,7 @@ def convolve(
 # keep roughly in sync with `convolve` and `correlate`, but for 2-D output and an additional `out` overload,
 # and also keep in sync with `ma.core.outer` (minus `out`)
 @overload
-def outer(
+def outer(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT], out: None = None
 ) -> _Array2D[_AnyNumericScalarT]: ...
 @overload
@@ -1107,7 +1109,7 @@ def outer[ArrayT: np.ndarray](a: _ArrayLikeNumber_co | _ArrayLikeTD64_co, b: _Ar
 
 # keep in sync with numpy.linalg._linalg.tensordot (ignoring `/, *`)
 @overload
-def tensordot(
+def tensordot(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT], b: _ArrayLike[_AnyNumericScalarT], axes: int | tuple[_ShapeLike, _ShapeLike] = 2
 ) -> NDArray[_AnyNumericScalarT]: ...
 @overload
@@ -1127,7 +1129,7 @@ def tensordot(
 
 #
 @overload
-def cross(
+def cross(  # noqa: UP047
     a: _ArrayLike[_AnyNumericScalarT],
     b: _ArrayLike[_AnyNumericScalarT],
     axisa: int = -1,
