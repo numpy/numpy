@@ -143,37 +143,37 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload  # type: ignore[override]
-    def __ge__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __ge__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __ge__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __le__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __le__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __le__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __gt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __gt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __gt__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __lt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __lt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __lt__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __add__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...
+    def __add__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __add__(self: _CharArray[bytes_], other: S_co, /) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __radd__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...
+    def __radd__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __radd__(self: _CharArray[bytes_], other: S_co, /) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -241,7 +241,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload  # type: ignore[override]
-    def partition(self: _CharArray[str_], sep: U_co) -> _CharArray[str_]: ...
+    def partition(self: _CharArray[str_], sep: U_co) -> _CharArray[str_]: ...  # pyrefly: ignore[bad-override]
     @overload
     def partition(self: _CharArray[bytes_], sep: S_co) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 

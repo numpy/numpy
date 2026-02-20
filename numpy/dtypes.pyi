@@ -62,7 +62,7 @@ _NaObjectT_co = TypeVar("_NaObjectT_co", default=Never, covariant=True)
 
 @type_check_only
 class _SimpleDType[ScalarT: np.generic](np.dtype[ScalarT]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
-    names: None  # pyright: ignore[reportIncompatibleVariableOverride]
+    names: None  # pyright: ignore[reportIncompatibleVariableOverride]  # pyrefly: ignore[bad-override]
     def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
     @property
@@ -456,7 +456,7 @@ class VoidDType(  # type: ignore[misc]
     _TypeCodes[L["V"], L["V"], L[20]],
     _NoOrder,
     _NBit[L[1], _ItemSizeT_co],
-    np.dtype[np.void],  # pyright: ignore[reportGeneralTypeIssues]
+    np.dtype[np.void],  # pyright: ignore[reportGeneralTypeIssues]  # pyrefly: ignore[invalid-inheritance]
     Generic[_ItemSizeT_co],
 ):
     # NOTE: `VoidDType(...)` raises a `TypeError` at the moment

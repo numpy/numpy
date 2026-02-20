@@ -2220,7 +2220,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # Keep in-sync with np.ma.argmin
     @overload  # type: ignore[override]
-    def argmin(
+    def argmin(  # pyrefly: ignore[bad-param-name-override]
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -2258,7 +2258,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # Keep in-sync with np.ma.argmax
     @overload  # type: ignore[override]
-    def argmax(
+    def argmax(  # pyrefly: ignore[bad-param-name-override]
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,

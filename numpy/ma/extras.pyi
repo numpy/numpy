@@ -625,7 +625,7 @@ class MAxisConcatenator(AxisConcatenator):
     @override  # type: ignore[override]
     @overload
     @staticmethod
-    def concatenate[ScalarT: np.generic](arrays: _ArrayLike[ScalarT], axis: SupportsIndex | None = 0) -> _MArray[ScalarT]: ...
+    def concatenate[ScalarT: np.generic](arrays: _ArrayLike[ScalarT], axis: SupportsIndex | None = 0) -> _MArray[ScalarT]: ...  # pyrefly: ignore[bad-override]
     @overload
     @staticmethod
     def concatenate(arrays: SupportsLenAndGetItem[ArrayLike], axis: SupportsIndex | None = 0) -> _MArray[Incomplete]: ...  # pyright: ignore[reportIncompatibleMethodOverride]

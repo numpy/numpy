@@ -8,6 +8,7 @@ pytest-xdist
 pytest-timeout
 # For testing types
 mypy==1.19.1
+pyrefly==0.49.0
 # for optional f2py encoding detection
 charset-normalizer
 tzdata
