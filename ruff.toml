@@ -19,7 +19,7 @@ line-ending = "lf"
 
 [lint]
 preview = true
-extend-select = [
+select = [
     "B",    # flake8-bugbear
     "C4",   # flake8-comprehensions
     "ISC",  # flake8-implicit-str-concat
@@ -34,6 +34,7 @@ extend-select = [
     "PERF", # perflint
     "E",    # pycodestyle/error
     "W",    # pycodestyle/warning
+    "F",    # pyflakes
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
     "UP",   # pyupgrade
