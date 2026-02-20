@@ -1036,9 +1036,11 @@ _AnyScalarT = TypeVar(
     np.float16, np.float32, np.longdouble, np.complex64, np.clongdouble,
 )  # fmt: skip
 
+# NOTE: we ignore UP047 because inlining `_AnyScalarT` would result in a lot of code duplication
+
 #
 @overload  # ~T, ~T  (we use constraints instead of a `: np.number` bound to prevent joins/unions)
-def cross(
+def cross(  # noqa: UP047
     x1: _ArrayLike1D2D[_AnyScalarT],
     x2: _ArrayLike1D2D[_AnyScalarT],
     /,
@@ -1123,11 +1125,11 @@ def cross[ScalarT: np.number](
 # -  9 overloads for the scalar cases (both args 1d)
 # - 18 overloads for the non-scalar cases (at least one arg >1d)
 @overload  # ?d ~T, 1d ~T
-def matmul(
+def matmul(  # noqa: UP047
     x1: _SupportsArray[_JustAnyShape, np.dtype[_AnyScalarT]], x2: _ArrayLike1D[_AnyScalarT], /
 ) -> NDArray[_AnyScalarT] | Any: ...
 @overload  # 1d ~T, ?d ~T
-def matmul(
+def matmul(  # noqa: UP047
     x1: _ArrayLike1D[_AnyScalarT], x2: _SupportsArray[_JustAnyShape, np.dtype[_AnyScalarT]], /
 ) -> NDArray[_AnyScalarT] | Any: ...
 @overload  # ?d bool, 1d bool
@@ -1167,7 +1169,7 @@ def matmul(
     x1: _AsArrayC128_1d, x2: _SupportsArray[_JustAnyShape, np.dtype[_to_complex128_co]], /
 ) -> NDArray[np.complex128] | Any: ...  # end workaround
 @overload  # 1d ~T, 1d ~T
-def matmul(x1: _ArrayLike1D[_AnyScalarT], x2: _ArrayLike1D[_AnyScalarT], /) -> _AnyScalarT: ...
+def matmul(x1: _ArrayLike1D[_AnyScalarT], x2: _ArrayLike1D[_AnyScalarT], /) -> _AnyScalarT: ...  # noqa: UP047
 @overload  # 1d +bool, 1d +bool
 def matmul(x1: _ToArrayBool_1d, x2: _ToArrayBool_1d, /) -> np.bool: ...
 @overload  # 1d ~int, 1d +int
@@ -1185,9 +1187,9 @@ def matmul(x1: _ToArrayComplex_1d, x2: _AsArrayC128_1d, /) -> np.complex128: ...
 @overload  # 1d fallback, 1d fallback
 def matmul(x1: _ToArrayComplex_1d, x2: _ToArrayComplex_1d, /) -> Any: ...  # end 1d x 1d
 @overload  # >=1d ~T, >=2d ~T
-def matmul(x1: _ArrayLike1ND[_AnyScalarT], x2: _ArrayLike2ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...
+def matmul(x1: _ArrayLike1ND[_AnyScalarT], x2: _ArrayLike2ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
 @overload  # >=2d ~T, >=1d ~T
-def matmul(x1: _ArrayLike2ND[_AnyScalarT], x2: _ArrayLike1ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...
+def matmul(x1: _ArrayLike2ND[_AnyScalarT], x2: _ArrayLike1ND[_AnyScalarT], /) -> NDArray[_AnyScalarT]: ...  # noqa: UP047
 @overload  # >=1d +bool, >=2d +bool
 def matmul(x1: _ToArrayBool_1nd, x2: _ToArrayBool_2nd, /) -> NDArray[np.bool]: ...
 @overload  # >=2d +bool, >=1d +bool
