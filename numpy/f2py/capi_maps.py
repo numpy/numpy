@@ -215,8 +215,10 @@ def getctype(var):
                 try:
                     ctype = f2cmap[var['kindselector']['*']]
                 except KeyError:
-                    errmess(f'getctype: "{var["typespec"]} {"*"} '
-                            f'{var["kindselector"]["*"]}" not supported.\n')
+                    raw_typespec = var['typespec']
+                    star = var['kindselector']['*']
+                    errmess(f'getctype: "{raw_typespec} * '
+                            f'{star}" not supported.\n')
             elif 'kind' in var['kindselector']:
                 if typespec + 'kind' in f2cmap_all:
                     f2cmap = f2cmap_all[typespec + 'kind']
@@ -228,9 +230,9 @@ def getctype(var):
                     try:
                         ctype = f2cmap[str(var['kindselector']['kind'])]
                     except KeyError:
-                        kind = var["kindselector"]["kind"]
+                        kind = var['kindselector']['kind']
                         errmess(f'getctype: "{typespec}'
-                                f'(kind={kind})" is mapped to C '
+                                f'({kind=})" is mapped to C '
                                 f'"{ctype}" (to override define dict({typespec} = '
                                 f'dict({kind}="<C typespec>")) '
                                 f'in {os.getcwd()}/.f2py_f2cmap file).\n')
@@ -373,27 +375,27 @@ def getpydocsign(a, var):
     if isscalar(var):
         if isintent_inout(var):
             sig = (f"{a} : {opt} rank-0 array({c2py_map[ctype]},"
-                   f"\'{c2pycode_map[ctype]}\'){init}")
+                   f"'{c2pycode_map[ctype]}'){init}")
         else:
             sig = f'{a} : {opt} {c2py_map[ctype]}{init}'
         sigout = f'{out_a} : {c2py_map[ctype]}'
     elif isstring(var):
         if isintent_inout(var):
             sig = (f"{a} : {opt} rank-0 array(string(len={getstrlength(var)}),"
-                   f"\'c\'){init}")
+                   f"'c'){init}")
         else:
             sig = f'{a} : {opt} string(len={getstrlength(var)}){init}'
         sigout = f'{out_a} : string(len={getstrlength(var)})'
     elif isarray(var):
         dim = var['dimension']
         rank = repr(len(dim))
-        sig = (f"{a} : {opt} rank-{rank} array(\'{c2pycode_map[ctype]}\') with "
+        sig = (f"{a} : {opt} rank-{rank} array('{c2pycode_map[ctype]}') with "
                f"bounds ({','.join(dim)}){init}")
         if a == out_a:
-            sigout = (f"{a} : rank-{rank} array(\'{c2pycode_map[ctype]}\') with "
+            sigout = (f"{a} : rank-{rank} array('{c2pycode_map[ctype]}') with "
                       f"bounds ({','.join(dim)})")
         else:
-            sigout = (f"{out_a} : rank-{rank} array(\'{c2pycode_map[ctype]}\') with "
+            sigout = (f"{out_a} : rank-{rank} array('{c2pycode_map[ctype]}') with "
                       f"bounds ({','.join(dim)}) and {a} storage")
     elif isexternal(var):
         ua = ''
@@ -420,7 +422,7 @@ def getarrdocsign(a, var):
     elif isarray(var):
         dim = var['dimension']
         rank = repr(len(dim))
-        sig = (f"{a} : rank-{rank} array(\'{c2pycode_map[ctype]}\') with "
+        sig = (f"{a} : rank-{rank} array('{c2pycode_map[ctype]}') with "
                f"bounds ({','.join(dim)})")
     return sig
 
@@ -642,15 +644,15 @@ def routsign2map(rout):
             errmess(f"routsign2map: no c2buildvalue key for type {ret['ctype']!r}\n")
         if debugcapi(rout):
             if ret['ctype'] in cformat_map:
-                ret['routdebugshowvalue'] = ('debug-capi:'
+                ret['routdebugshowvalue'] = ("debug-capi:"
                                              f"{a}={cformat_map[ret['ctype']]}")
             if isstringfunction(rout):
                 ret['routdebugshowvalue'] = f'debug-capi:slen({a})=%d {a}=\\"%s\\"'
         if isstringfunction(rout):
             ret['rlength'] = getstrlength(rout['vars'][a])
             if ret['rlength'] == '-1':
-                errmess('routsign2map: expected explicit specification of the length '
-                        'of the string returned by the fortran function '
+                errmess("routsign2map: expected explicit specification of the length "
+                        "of the string returned by the fortran function "
                         f"{rout['name']!r}; taking 10.\n")
                 ret['rlength'] = '10'
     if hasnote(rout):
