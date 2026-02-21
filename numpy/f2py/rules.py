@@ -1527,8 +1527,10 @@ def buildapi(rout):
     var = rout['vars']
 
     if ismoduleroutine(rout):
+        module_name = rout['modulename']
+        name = rout['name']
         outmess('            Constructing wrapper function '
-                f'"{rout["modulename"]}.{rout["name"]}"...\n')
+                f'"{module_name}.{name}"...\n')
     else:
         outmess(f"        Constructing wrapper function \"{rout['name']}\"...\n")
     # Routine

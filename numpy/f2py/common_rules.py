@@ -96,7 +96,8 @@ def buildhooks(m):
             dms = dm['dims'].strip()
             if not dms:
                 dms = '-1'
-            cadd(f'\t{{\"{n}\",{dm["rank"]},{{{{{dms}}}}},{at}, {elsize}}},')
+            rank = dm['rank']
+            cadd(f'\t{{\"{n}\",{rank},{{{{{dms}}}}},{at}, {elsize}}},')
         cadd('\t{NULL}\n};')
         inames1 = rmbadname(inames)
         inames1_tps = ','.join(['char *' + s for s in inames1])

@@ -620,8 +620,9 @@ def routsign2map(rout):
                                 break
                     lcb_map[ln] = un[1]
     elif rout.get('externals'):
+        externals = rout['externals']
         errmess(f"routsign2map: Confused: function {ret['name']} has externals "
-                f'{rout["externals"]!r} but no "use" statement.\n')
+                f'{externals!r} but no "use" statement.\n')
     ret['callprotoargument'] = getcallprotoargument(rout, lcb_map) or ''
     if isfunction(rout):
         if 'result' in rout:
