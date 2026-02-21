@@ -1076,6 +1076,12 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
                  NPY_ITER_DELAY_BUFALLOC |
                  NPY_ITER_COPY_IF_OVERLAP;
 
+    if (context->method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        int i;
+        for (i =0; i < nop; i++) {
+            op_flags[i] |= NPY_ITER_CONTIG;
+        }
+    }
     /*
      * Allocate the iterator.  Because the types of the inputs
      * were already checked, we use the casting rule 'unsafe' which
@@ -1963,6 +1969,13 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                        NPY_ITER_WRITEONLY |
                        NPY_UFUNC_DEFAULT_OUTPUT_FLAGS,
                        op_flags);
+
+    if (ufuncimpl->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        PyErr_SetString(PyExc_ValueError,
+                "The generalized ufuncs do not support the NPY_METH_REQUIRES_CONTIGUOUS flag.");
+        retval = -1;
+        goto fail;
+    }
     /*
      * Set up the iterator per-op flags.  For generalized ufuncs, we
      * can't do buffering, so must COPY or UPDATEIFCOPY.
@@ -2653,6 +2666,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY;
 
+    if (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        op_flags[0] |= NPY_ITER_CONTIG;
+        op_flags[1] |= NPY_ITER_CONTIG;
+    }
     op[0] = out;
     op[1] = arr;
 
@@ -2661,7 +2678,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     if (!PyArray_ISALIGNED(arr) || (out && !PyArray_ISALIGNED(out)) ||
             !PyArray_EquivTypes(descrs[1], PyArray_DESCR(arr)) ||
             (out &&
-             !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out)))) {
+            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(out))) ||
+            (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
         need_outer_iterator = 1;
     }
     /* If input and output overlap in memory, use iterator to figure it out */
@@ -3091,7 +3109,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     op[2] = ind;
 
     if (out != NULL || ndim > 1 || !PyArray_ISALIGNED(arr) ||
-            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(arr))) {
+            !PyArray_EquivTypes(descrs[0], PyArray_DESCR(arr)) ||
+            (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS)) {
         need_outer_iterator = 1;
     }
 
@@ -3120,6 +3139,12 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                       NPY_ITER_COPY|
                       NPY_ITER_ALIGNED;
         op_flags[2] = NPY_ITER_READONLY;
+
+        if (context.method->flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+            op_flags[0] |= NPY_ITER_CONTIG;
+            op_flags[1] |= NPY_ITER_CONTIG;
+            op_flags[2] |= NPY_ITER_CONTIG;
+        }
 
         op_dtypes[1] = op_dtypes[0];
 
@@ -5749,6 +5774,12 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST|
                       NPY_ITER_NO_SUBTYPE;
+    }
+    if (flags & NPY_METH_REQUIRES_CONTIGUOUS) {
+        int i;
+        for (i = 0; i < nop; i++) {
+            op_flags[i] |= NPY_ITER_CONTIG;
+        }
     }
     /*
      * Create NpyIter object to "iterate" over single element of each input
