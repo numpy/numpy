@@ -93,3 +93,34 @@ def test_cleanup_with_refs_non_contig():
     actual_ref_obj = sys.getrefcount(obj)
     assert actual_ref_dtype == expected_ref_dtype
     assert actual_ref_obj == actual_ref_dtype
+
+def test_fromfile_out():
+    # Issue #30777: Test in-place file reading
+    import tempfile
+    import os
+    
+    expected = np.array([1.5, 2.5, 3.5, 4.5], dtype=np.float32)
+    fd, filepath = tempfile.mkstemp()
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(expected.tobytes())
+        
+        # Standard out mapping
+        buffer = np.empty(4, dtype=np.float32)
+        res = np.fromfile(filepath, dtype=np.float32, out=buffer)
+        assert res is buffer
+        assert_array_equal(res, expected)
+
+        # Using 'count' with 'out'
+        buffer2 = np.empty(4, dtype=np.float32)
+        res2 = np.fromfile(filepath, dtype=np.float32, count=2, out=buffer2)
+        assert res2 is buffer2
+        assert_array_equal(res2[:2], expected[:2])
+        
+        # Error on non-contiguous array
+        buffer3 = np.empty(8, dtype=np.float32)[::2]
+        with pytest.raises(ValueError, match="C-contiguous"):
+            np.fromfile(filepath, dtype=np.float32, out=buffer3)
+            
+    finally:
+        os.remove(filepath)

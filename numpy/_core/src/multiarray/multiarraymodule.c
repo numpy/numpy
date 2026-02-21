@@ -2353,16 +2353,17 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", "like", NULL};
+    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", "like", "out", NULL};
     PyObject *like = Py_None;
     PyArray_Descr *type = NULL;
+    PyArrayObject *out = NULL;
     int own;
     npy_off_t orig_pos = 0, offset = 0;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT "$O:fromfile", kwlist,
-                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset, &like)) {
+                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT "$OO:fromfile", kwlist,
+                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset, &like, &out)) {
         Py_XDECREF(type);
         return NULL;
     }
@@ -2373,6 +2374,24 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         if (deferred != Py_NotImplemented) {
             Py_XDECREF(type);
             return deferred;
+        }
+    }
+
+    if (out != NULL && (PyObject *)out != Py_None) {
+        if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            Py_XDECREF(type);
+            return NULL;
+        }
+        if (!PyArray_ISWRITEABLE(out)) {
+            PyErr_SetString(PyExc_ValueError, "'out' must be writable");
+            Py_XDECREF(type);
+            return NULL;
+        }
+        if (!PyArray_ISCONTIGUOUS(out)) {
+            PyErr_SetString(PyExc_ValueError, "'out' must be C-contiguous");
+            Py_XDECREF(type);
+            return NULL;
         }
     }
 
@@ -2410,10 +2429,45 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_XDECREF(type);
         goto cleanup;
     }
+
     if (type == NULL) {
-        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+        if (out != NULL && (PyObject *)out != Py_None) {
+            type = PyArray_DESCR(out);
+            Py_INCREF(type);
+        } else {
+            type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+        }
     }
-    ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
+
+    if (out != NULL && (PyObject *)out != Py_None) {
+        if (strcmp(sep, "") != 0) {
+            PyErr_SetString(PyExc_TypeError, "'out' argument not supported for text files");
+            goto cleanup;
+        }
+        
+        npy_intp n_to_read = (nin < 0) ? PyArray_SIZE(out) : nin;
+        if (n_to_read > PyArray_SIZE(out)) {
+            PyErr_SetString(PyExc_ValueError, "count is larger than 'out' array size");
+            goto cleanup;
+        }
+        
+        if (type->elsize != PyArray_DESCR(out)->elsize) {
+            PyErr_SetString(PyExc_TypeError, "'out' array element size must match requested dtype");
+            goto cleanup;
+        }
+
+        size_t read_count = fread(PyArray_DATA(out), type->elsize, n_to_read, fp);
+        if (read_count < (size_t)n_to_read && ferror(fp)) {
+            PyErr_SetString(PyExc_OSError, "Error reading file");
+            goto cleanup;
+        }
+        
+        ret = (PyObject *)out;
+        Py_INCREF(ret);
+    } 
+    else {
+        ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
+    }
 
     /* If an exception is thrown in the call to PyArray_FromFile
      * we need to clear it, and restore it later to ensure that
