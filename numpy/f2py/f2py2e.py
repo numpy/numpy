@@ -499,7 +499,7 @@ def run_main(comline_list):
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
             raise TypeError('All blocks must be python module blocks but got '
-                            f'{plist['block']!r}')
+                            f'{plist["block"]!r}')
     auxfuncs.debugoptions = options['debug']
     f90mod_rules.options = options
     auxfuncs.wrapfuncs = options['wrapfuncs']

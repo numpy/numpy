@@ -123,7 +123,8 @@ def buildhooks(m):
         dadd(f'\\subsection{{Common block \\texttt{{{tname}}}}}\n')
         dadd('\\begin{description}')
         for n in inames:
-            dadd(f'\\item[]{{{{}}\\verb@{capi_maps.getarrdocsign(n, vars[n])}@{{}}}}')
+            docsign = capi_maps.getarrdocsign(n, vars[n])
+            dadd(f'\\item[]{{{{}}\\verb@{docsign}@{{}}}}')
             if hasnote(vars[n]):
                 note = vars[n]['note']
                 if isinstance(note, list):

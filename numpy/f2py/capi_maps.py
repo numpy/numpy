@@ -228,10 +228,11 @@ def getctype(var):
                     try:
                         ctype = f2cmap[str(var['kindselector']['kind'])]
                     except KeyError:
+                        kind = var["kindselector"]["kind"]
                         errmess(f'getctype: "{typespec}'
-                                f'(kind={var["kindselector"]["kind"]})" is mapped to C '
+                                f'(kind={kind})" is mapped to C '
                                 f'"{ctype}" (to override define dict({typespec} = '
-                                f'dict({var["kindselector"]["kind"]}="<C typespec>")) '
+                                f'dict({kind}="<C typespec>")) '
                                 f'in {os.getcwd()}/.f2py_f2cmap file).\n')
     elif not isexternal(var):
         errmess(f'getctype: No C-type found in "{var}", assuming void.\n')
@@ -452,7 +453,8 @@ def getinit(a, var):
             if not init:
                 init, showinit = '""', "''"
             if init[0] == "'":
-                init = f'"{init[1:-1].replace('"', '\\"')}"'
+                escaped_init = init[1:-1].replace('"', '\\"')
+                init = f'"{escaped_init}"'
             if init[0] == '"':
                 showinit = f"'{init[1:-1]}'"
     return init, showinit
@@ -517,8 +519,9 @@ def sign2map(a, var):
             ret['cblatexdocstr'] = lcb2_map[lcb_map[a]]['latexdocstr']
         else:
             ret['cbname'] = a
+            lcb_map_keys = list(lcb_map.keys())
             errmess(f'sign2map: Confused: external {a} is not in '
-                    f'lcb_map{list(lcb_map.keys())}.\n')
+                    f'lcb_map{lcb_map_keys}.\n')
     if isstring(var):
         ret['length'] = getstrlength(var)
     if isarray(var):
@@ -561,14 +564,14 @@ def sign2map(a, var):
             if ret['ctype'] in cformat_map:
                 ret['vardebugshowvalue'] = f"debug-capi:{a}={cformat_map[ret['ctype']]}"
         if isstring(var):
-            ret['vardebugshowvalue'] = f'debug-capi:slen({a})=%%d {a}=\\"%%s\\"'
+            ret['vardebugshowvalue'] = f'debug-capi:slen({a})=%d {a}=\\"%s\\"'
         if isexternal(var):
             ret['vardebugshowvalue'] = f'debug-capi:{a}=%p'
     if ret['ctype'] in cformat_map:
         ret['varshowvalue'] = f"#name#:{a}={cformat_map[ret['ctype']]}"
         ret['showvalueformat'] = f"{cformat_map[ret['ctype']]}"
     if isstring(var):
-        ret['varshowvalue'] = f'#name#:slen({a})=%%d {a}=\\"%%s\\"'
+        ret['varshowvalue'] = f'#name#:slen({a})=%d {a}=\\"%s\\"'
     ret['pydocsign'], ret['pydocsignout'] = getpydocsign(a, var)
     if hasnote(var):
         ret['note'] = var['note']
@@ -641,7 +644,7 @@ def routsign2map(rout):
                 ret['routdebugshowvalue'] = ('debug-capi:'
                                              f"{a}={cformat_map[ret['ctype']]}")
             if isstringfunction(rout):
-                ret['routdebugshowvalue'] = f'debug-capi:slen({a})=%%d {a}=\\"%%s\\"'
+                ret['routdebugshowvalue'] = f'debug-capi:slen({a})=%d {a}=\\"%s\\"'
         if isstringfunction(rout):
             ret['rlength'] = getstrlength(rout['vars'][a])
             if ret['rlength'] == '-1':

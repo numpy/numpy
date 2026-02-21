@@ -996,9 +996,10 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose=False):
                     outmess(f'\tMapping "{k}(kind={k1})" to "{v1}\"\n')
                 f2cmap_mapped.append(v1)
             elif verbose:
+                c2py_map_keys = list(c2py_map.keys())
                 errmess(
                     f"\tIgnoring map {{'{k}':{{'{k1}':'{v1}'}}}}: '{v1}' "
-                    f"must be in {list(c2py_map.keys())}\n"
+                    f"must be in {c2py_map_keys}\n"
                 )
 
     return f2cmap_all, f2cmap_mapped

@@ -1096,11 +1096,12 @@ def analyzeline(m, case, line):
         if needinterface:
             if verbose > 1:
                 outmess('analyzeline: Creating additional interface block '
-                        f'(groupcounter={groupcounter}).\n', 0)
+                        f'({groupcounter=}).\n', 0)
             groupname[groupcounter] = 'interface'
             groupcache[groupcounter]['block'] = 'interface'
             groupcache[groupcounter]['name'] = 'unknown_interface'
-            groupcache[groupcounter]['from'] = f"{groupcache[groupcounter - 1]['from']}:{groupcache[groupcounter - 1]['name']}"
+            prev_group = groupcache[groupcounter - 1]
+            groupcache[groupcounter]['from'] = f"{prev_group['from']}:{prev_group['name']}"
             groupcache[groupcounter]['body'] = []
             groupcache[groupcounter]['externals'] = []
             groupcache[groupcounter]['interfaced'] = []
@@ -1120,7 +1121,8 @@ def analyzeline(m, case, line):
         elif f77modulename and groupcounter == 3:
             groupcache[groupcounter]['from'] = f"{groupcache[groupcounter - 1]['from']}:{currentfilename}"
         else:
-            groupcache[groupcounter]['from'] = f"{groupcache[groupcounter - 1]['from']}:{groupcache[groupcounter - 1]['name']}"
+            prev_group = groupcache[groupcounter - 1]
+            groupcache[groupcounter]['from'] = f"{prev_group['from']}:{prev_group['name']}"
         for k in list(groupcache[groupcounter].keys()):
             if not groupcache[groupcounter][k]:
                 del groupcache[groupcounter][k]
@@ -1697,15 +1699,17 @@ def updatevars(typespec, selector, attrspec, entitydecl):
             if not_has_typespec:
                 edecl['typespec'] = typespec
             elif typespec and (not typespec == edecl['typespec']):
+                current_typespec = edecl['typespec']
                 outmess(f'updatevars: attempt to change the type of "{ename}" '
-                        f'("{edecl["typespec"]}") to "{typespec}". Ignoring.\n')
+                        f'("{current_typespec}") to "{typespec}". Ignoring.\n')
             if 'kindselector' not in edecl:
                 edecl['kindselector'] = copy.copy(kindselect)
             elif kindselect:
                 for k in list(kindselect.keys()):
                     if k in edecl['kindselector'] and (not kindselect[k] == edecl['kindselector'][k]):
+                        current_kind = edecl['kindselector'][k]
                         outmess('updatevars: attempt to change the kindselector '
-                                f'"{k}" of "{ename}" ("{edecl["kindselector"][k]}") to '
+                                f'"{k}" of "{ename}" ("{current_kind}") to '
                                 f'"{kindselect[k]}". Ignoring.\n')
                     else:
                         edecl['kindselector'][k] = copy.copy(kindselect[k])
@@ -1772,8 +1776,9 @@ def updatevars(typespec, selector, attrspec, entitydecl):
                     else:
                         d1['array'] = d1['array'] + ',' + d1['len']
                         del d1['len']
+                        array_spec = d1['array']
                         errmess(f'updatevars: "{typespec} {e}" is mapped to '
-                                f'"{typespec} {ename}({d1["array"]})"\n')
+                                f'"{typespec} {ename}({array_spec})"\n')
 
                 if 'len' in d1:
                     if typespec in ['complex', 'integer', 'logical', 'real']:
@@ -1791,8 +1796,10 @@ def updatevars(typespec, selector, attrspec, entitydecl):
 
                 if 'init' in d1:
                     if '=' in edecl and (not edecl['='] == d1['init']):
+                        current_init = edecl['=']
+                        new_init = d1['init']
                         outmess('updatevars: attempt to change the init expression of '
-                                f'"{ename}" ("{edecl["="]}") to "{d1["init"]}". '
+                                f'"{ename}" ("{current_init}") to "{new_init}". '
                                 f'Ignoring.\n')
                     else:
                         edecl['='] = d1['init']
@@ -2556,7 +2563,7 @@ def _eval_scalar(value, params):
         return value
     except Exception as msg:
         errmess(f'"{msg}" in evaluating {value!r} '
-                f'(available names: {list(params.keys())})\n')
+                f'(available names: {list(params)})\n')
     return value
 
 
