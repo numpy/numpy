@@ -56,20 +56,15 @@ def build_and_import_extension(
     if include_dirs is None:
         include_dirs = []
     body = prologue + _make_methods(functions, modname)
-    init = """
-    PyObject *mod = PyModule_Create(&moduledef);
-    #ifdef Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
-    #endif
-           """
+    init = ""
     if not build_dir:
         build_dir = pathlib.Path('.')
     if more_init:
         init += """#define INITERROR return NULL
                 """
         init += more_init
-    init += "\nreturn mod;"
-    source_string = _make_source(modname, init, body)
+    init += "\nreturn 0;"
+    source_string = _make_source(modname, init, body, modname)
     mod_so = compile_extension_module(
         modname, build_dir, include_dirs, source_string)
     import importlib.util
@@ -154,18 +149,11 @@ def _make_methods(functions, modname):
     %(methods)s
     { NULL }
     };
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "%(modname)s",  /* m_name */
-        NULL,           /* m_doc */
-        -1,             /* m_size */
-        methods,        /* m_methods */
-    };
-    """ % {'methods': '\n'.join(methods_table), 'modname': modname}
+    """ % {'methods': '\n'.join(methods_table)}
     return body
 
 
-def _make_source(name, init, body):
+def _make_source(name, init, body, modname):
     """ Combines the code fragments into source code ready to be compiled
     """
     code = """
@@ -173,12 +161,37 @@ def _make_source(name, init, body):
 
     %(body)s
 
-    PyMODINIT_FUNC
-    PyInit_%(name)s(void) {
+    static int
+    %(name)s_exec(PyObject *m) {
     %(init)s
     }
+
+    static struct PyModuleDef_Slot %(name)s_slots[] = {
+        {Py_mod_exec, %(name)s_exec},
+    #if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+        {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+    #endif
+    #if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+        // signal that this module supports running without an active GIL
+        {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+    #endif
+        {0, NULL},
+    };
+
+    static struct PyModuleDef moduledef = {
+        .m_base = PyModuleDef_HEAD_INIT,
+        .m_name = "%(modname)s",
+        .m_size = 0,
+        .m_methods = methods,
+        .m_slots = %(name)s_slots,
+    };
+
+    PyMODINIT_FUNC
+    PyInit_%(name)s(void) {
+        return PyModuleDef_Init(&moduledef);
+    }
     """ % {
-        'name': name, 'init': init, 'body': body,
+        'name': name, 'init': init, 'body': body, 'modname': modname,
     }
     return code
 
