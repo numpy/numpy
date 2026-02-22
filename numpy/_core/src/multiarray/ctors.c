@@ -37,6 +37,7 @@
 
 #include "get_attr_string.h"
 #include "array_coercion.h"
+#include "scalartypes.h"
 
 #include "umathmodule.h"
 
@@ -1621,6 +1622,44 @@ PyArray_FromAny_int(PyObject *op, PyArray_Descr *in_descr,
                 "object too deep for desired array");
         npy_free_coercion_cache(cache);
         goto cleanup;
+    }
+
+    if (cache == NULL && !(flags & (NPY_ARRAY_WRITEABLE
+                                    | NPY_ARRAY_ENSURECOPY
+                                    | NPY_ARRAY_FORCECAST))) {
+        /*
+         * For scalar input and an array where no copy, no writeable, and no
+         * forced casting is requested, try a fast path for python float or
+         * numpy scalar: they can be the array base, as long as their dtype
+         * matches that requested.
+         *
+         * The no forced casting is to avoid returning a read-only array
+         * for np.asanyarray(scalar) -- this breaks lots of code.
+         * TODO: better as its own flag?
+         *
+         * Note: This does not work as trivially for PyLong and PyComplex.
+         */
+        assert(ndim == 0);
+        void *data = NULL;
+        int ok = 0;
+        if (PyFloat_CheckExact(op)) {
+            if ((ok = dtype->type_num == NPY_FLOAT64)) {
+                data = (void *)&(((PyFloatObject *)op)->ob_fval);
+            }
+        }
+        else if (is_anyscalar_exact(op)) {
+            if ((ok = _typenum_fromtypeobj((PyObject *)Py_TYPE(op), 0)
+                      == dtype->type_num)) {
+                data = scalar_value(op, dtype);
+            }
+        }
+        if (ok) {
+            Py_INCREF(dtype);
+            ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, dtype, 0, NULL, NULL,
+                data, flags, NULL, op);
+            goto cleanup;
+        }
     }
 
     /* Got the correct parameters, but the cache may already hold the result */
