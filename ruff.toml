@@ -38,6 +38,7 @@ select = [
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
     "UP",   # pyupgrade
+    "RUF100",  # ruff: unused-noqa
 ]
 ignore = [
     # flake8-bugbear
