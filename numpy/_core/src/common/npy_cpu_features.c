@@ -935,6 +935,16 @@ npy__cpu_init_features(void)
         // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
         #define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
     #endif
+
+    #ifdef __linux__
+        #include <asm/unistd.h>
+        #include <unistd.h>
+
+        #if defined(__has_include) && __has_include(<asm/hwprobe.h>)
+            #include <asm/hwprobe.h>
+            #define HAS_RISCV_HWPROBE
+        #endif
+    #endif
 #endif
 
 static void
@@ -943,14 +953,33 @@ npy__cpu_init_features(void)
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifdef __linux__
+    #ifdef HAS_RISCV_HWPROBE
+        struct riscv_hwprobe probe;
+        probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
+        probe.value = 0;
+
+        int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+        if (0 == ret) {
+            if (probe.value & RISCV_HWPROBE_IMA_V){
+                npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+            }
+            return;
+        }
+    #endif
+
     unsigned int hwcap = getauxval(AT_HWCAP);
-#else
-    unsigned long hwcap;
-    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
-#endif
     if (hwcap & COMPAT_HWCAP_ISA_V) {
         npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
     }
+
+#else         //  __FreeBSD__|| __OpenBSD__
+    unsigned long hwcap;
+    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+    if (hwcap & COMPAT_HWCAP_ISA_V) {
+        npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
+    }
+#endif
+
 #endif
 }
 
