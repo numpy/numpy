@@ -1060,6 +1060,70 @@ def test_longdouble_complex():
     assert x + 1j == 1 + 1j
     assert 1j + x == 1 + 1j
 
+class TestCLongDoubleSetItem:
+    def test_clongdouble_precision(self):
+        # This tests that the precision of a long double is equivalent to the
+        # precision of the fields of a complex long double
+        s = "0.333333333333333333333333"
+        assert np.longdouble(s) == np.clongdouble(s).real
+
+    def test_from_clongdouble_scalar(self):
+        x = np.zeros(1, dtype=np.clongdouble)
+        py_val = 1.5 + 2.5j
+        x[0] = np.clongdouble(py_val)
+        assert np.allclose(x[0].real, py_val.real)
+        assert np.allclose(x[0].imag, py_val.imag)
+
+    def test_from_none(self):
+        x = np.zeros(1, dtype=np.clongdouble)
+        x[0] = None
+        assert np.isnan(x[0].real)
+        assert np.isnan(x[0].imag)
+
+    def test_from_string_complex(self):
+        x = np.zeros(1, dtype=np.clongdouble)
+        s = " ( 1.5+2.5j ) "
+        py_val = complex(s)
+        x[0] = s
+        assert np.allclose(complex(x[0]), py_val)
+
+    def test_from_byte_string(self):
+        x = np.zeros(1, dtype=np.clongdouble)
+        s_bytes = b"1.25+3.75j"
+        x[0] = s_bytes
+        assert x[0].real == np.longdouble("1.25")
+        assert x[0].imag == np.longdouble("3.75")
+
+    def test_from_integer(self):
+        x = np.zeros(1, dtype=np.clongdouble)
+        py_val = 42
+        x[0] = py_val
+        assert x[0].real == np.longdouble(py_val)
+        assert x[0].imag == 0
+
+    @pytest.mark.parametrize("bad_str", [
+        "not a number",
+        "(2+2j",  # Missing closing brackets
+        "2+5j )",  # Missing opening brackets
+        "3+4k",
+        "1.2.3+4j",
+        "2++3j",
+        "3j+3",
+        "3+-1j",
+        "1-j",
+        "1_000"
+    ])
+    def test_error_on_bad_string(self, bad_str):
+        x = np.zeros(1, dtype=np.clongdouble)
+        with pytest.raises(ValueError):
+            x[0] = bad_str
+
+    def test_from_zerodim_array(self):
+        x = np.zeros(1, dtype=np.clongdouble)
+        py_val = 2.0 + 3.0j
+        y = np.array(np.clongdouble(py_val))
+        x[0] = y
+        assert np.allclose(complex(x[0]), py_val)
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
