@@ -1,792 +1,198 @@
 #include "numpy/npy_math.h"
-#include "simd/simd.h"
+#include "simd/simd.hpp"
 #include "loops.h"
 #include "loops_utils.h"
 #include "lowlevel_strided_loops.h"
 #include "fast_loop_macros.h"
+#include <hwy/highway.h>
 
 #include <type_traits>
 
-#if NPY_SIMD
-// 8-bit signed
-static NPY_INLINE npyv_s8
-npyv_negative_s8(npyv_s8 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 8 < 64)
-    return npyv_reinterpret_s8_s8(vnegq_s8(npyv_reinterpret_s8_s8(v)));
-#else
-    const npyv_s8 m1 = npyv_setall_s8((npyv_lanetype_s8)-1);
-    return npyv_sub_s8(npyv_xor_s8(v, m1), m1);
-#endif
-}
+namespace {
+using namespace np::simd;
 
-// 8-bit unsigned
-static NPY_INLINE npyv_u8
-npyv_negative_u8(npyv_u8 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 8 < 64)
-    return npyv_reinterpret_u8_s8(vnegq_s8(npyv_reinterpret_s8_u8(v)));
-#else
-    const npyv_u8 m1 = npyv_setall_u8((npyv_lanetype_u8)-1);
-    return npyv_sub_u8(npyv_xor_u8(v, m1), m1);
-#endif
-}
-
-// 16-bit signed
-static NPY_INLINE npyv_s16
-npyv_negative_s16(npyv_s16 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 16 < 64)
-    return npyv_reinterpret_s16_s16(vnegq_s16(npyv_reinterpret_s16_s16(v)));
-#else
-    const npyv_s16 m1 = npyv_setall_s16((npyv_lanetype_s16)-1);
-    return npyv_sub_s16(npyv_xor_s16(v, m1), m1);
-#endif
-}
-
-// 16-bit unsigned
-static NPY_INLINE npyv_u16
-npyv_negative_u16(npyv_u16 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 16 < 64)
-    return npyv_reinterpret_u16_s16(vnegq_s16(npyv_reinterpret_s16_u16(v)));
-#else
-    const npyv_u16 m1 = npyv_setall_u16((npyv_lanetype_u16)-1);
-    return npyv_sub_u16(npyv_xor_u16(v, m1), m1);
-#endif
-}
-
-// 32-bit signed
-static NPY_INLINE npyv_s32
-npyv_negative_s32(npyv_s32 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 32 < 64)
-    return npyv_reinterpret_s32_s32(vnegq_s32(npyv_reinterpret_s32_s32(v)));
-#else
-    const npyv_s32 m1 = npyv_setall_s32((npyv_lanetype_s32)-1);
-    return npyv_sub_s32(npyv_xor_s32(v, m1), m1);
-#endif
-}
-
-// 32-bit unsigned
-static NPY_INLINE npyv_u32
-npyv_negative_u32(npyv_u32 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 32 < 64)
-    return npyv_reinterpret_u32_s32(vnegq_s32(npyv_reinterpret_s32_u32(v)));
-#else
-    const npyv_u32 m1 = npyv_setall_u32((npyv_lanetype_u32)-1);
-    return npyv_sub_u32(npyv_xor_u32(v, m1), m1);
-#endif
-}
-
-// 64-bit signed
-static NPY_INLINE npyv_s64
-npyv_negative_s64(npyv_s64 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 64 < 64)
-    return npyv_reinterpret_s64_s64(vnegq_s64(npyv_reinterpret_s64_s64(v)));
-#else
-    const npyv_s64 m1 = npyv_setall_s64((npyv_lanetype_s64)-1);
-    return npyv_sub_s64(npyv_xor_s64(v, m1), m1);
-#endif
-}
-
-// 64-bit unsigned
-static NPY_INLINE npyv_u64
-npyv_negative_u64(npyv_u64 v)
-{
-#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || 64 < 64)
-    return npyv_reinterpret_u64_s64(vnegq_s64(npyv_reinterpret_s64_u64(v)));
-#else
-    const npyv_u64 m1 = npyv_setall_u64((npyv_lanetype_u64)-1);
-    return npyv_sub_u64(npyv_xor_u64(v, m1), m1);
-#endif
-}
-
-// 32-bit float
-#if NPY_SIMD_F32
-static NPY_INLINE npyv_f32
-npyv_negative_f32(npyv_f32 v)
-{
-#if defined(NPY_HAVE_NEON)
-    return vnegq_f32(v);
-#else
-    const npyv_f32 signmask = npyv_setall_f32(-0.f);
-    return npyv_xor_f32(v, signmask);
-#endif
-}
-#endif // NPY_SIMD_F32
-
-// 64-bit float
-#if NPY_SIMD_F64
-static NPY_INLINE npyv_f64
-npyv_negative_f64(npyv_f64 v)
-{
-#if defined(NPY_HAVE_NEON)
-    return vnegq_f64(v);
-#else
-    const npyv_f64 signmask = npyv_setall_f64(-0.);
-    return npyv_xor_f64(v, signmask);
-#endif
-}
-#endif // NPY_SIMD_F64
-#endif // NPY_SIMD
-
-struct negative_t {};
-
-// SIMD Type Traits
-template<typename T> struct SIMDTypeTraits;
-
-template<> struct SIMDTypeTraits<signed char> {
-#if NPY_SIMD
-    using simd_type = npyv_s8;
-    using lane_type = npyv_lanetype_s8;
-#else
-    using simd_type = void;
-    using lane_type = npy_int8;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = false;
-};
-template<> struct SIMDTypeTraits<unsigned char> {
-#if NPY_SIMD
-    using simd_type = npyv_u8;
-    using lane_type = npyv_lanetype_u8;
-#else
-    using simd_type = void;
-    using lane_type = npy_uint8;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = false;
-};
-
-template<> struct SIMDTypeTraits<short> {
-#if NPY_SIMD
-    using simd_type = npyv_s16;
-    using lane_type = npyv_lanetype_s16;
-#else
-    using simd_type = void;
-    using lane_type = npy_int16;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = false;
-};
-template<> struct SIMDTypeTraits<unsigned short> {
-#if NPY_SIMD
-    using simd_type = npyv_u16;
-    using lane_type = npyv_lanetype_u16;
-#else
-    using simd_type = void;
-    using lane_type = npy_uint16;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = false;
-};
-
-template<> struct SIMDTypeTraits<int> {
-#if NPY_SIMD
-    using simd_type = npyv_s32;
-    using lane_type = npyv_lanetype_s32;
-#else
-    using simd_type = void;
-    using lane_type = npy_int32;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<unsigned int> {
-#if NPY_SIMD
-    using simd_type = npyv_u32;
-    using lane_type = npyv_lanetype_u32;
-#else
-    using simd_type = void;
-    using lane_type = npy_uint32;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-
-template<> struct SIMDTypeTraits<long> {
-#if NPY_SIMD
-    #if NPY_SIZEOF_LONG == 4
-        using simd_type = npyv_s32;
-        using lane_type = npyv_lanetype_s32;
-    #else
-        using simd_type = npyv_s64;
-        using lane_type = npyv_lanetype_s64;
-    #endif
-#else
-    using simd_type = void;
-    using lane_type = long;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<unsigned long> {
-#if NPY_SIMD
-    #if NPY_SIZEOF_LONG == 4
-        using simd_type = npyv_u32;
-        using lane_type = npyv_lanetype_u32;
-    #else
-        using simd_type = npyv_u64;
-        using lane_type = npyv_lanetype_u64;
-    #endif
-#else
-    using simd_type = void;
-    using lane_type = unsigned long;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-
-template<> struct SIMDTypeTraits<long long> {
-#if NPY_SIMD
-    using simd_type = npyv_s64;
-    using lane_type = npyv_lanetype_s64;
-#else
-    using simd_type = void;
-    using lane_type = long long;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<unsigned long long> {
-#if NPY_SIMD
-    using simd_type = npyv_u64;
-    using lane_type = npyv_lanetype_u64;
-#else
-    using simd_type = void;
-    using lane_type = unsigned long long;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD);
-    static constexpr bool supports_ncontig = true;
-};
-
-template<> struct SIMDTypeTraits<float> {
-#if NPY_SIMD_F32
-    using simd_type = npyv_f32;
-    using lane_type = npyv_lanetype_f32;
-#else
-    using simd_type = void;
-    using lane_type = float;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD_F32);
-    static constexpr bool supports_ncontig = true;
-};
-template<> struct SIMDTypeTraits<double> {
-#if NPY_SIMD_F64
-    using simd_type = npyv_f64;
-    using lane_type = npyv_lanetype_f64;
-#else
-    using simd_type = void;
-    using lane_type = double;
-#endif
-    static constexpr bool has_simd = static_cast<bool>(NPY_SIMD_F64);
-    static constexpr bool supports_ncontig = true;
-};
-
-template<> struct SIMDTypeTraits<long double> {
-    using simd_type = void;
-    using lane_type = long double;
-    static constexpr bool has_simd = false;
-    static constexpr bool supports_ncontig = false;
-};
-
-/* Scalar Operations */
+#if NPY_HWY
 template <typename T>
-static constexpr T scalar_negative(T x) noexcept { return -x; }
-
-// Operation Traits
-template <typename Op>
-struct UnaryOpTraits;
-
-template <>
-struct UnaryOpTraits<negative_t> {
-    template <typename T>
-    static constexpr T scalar_op(T x) noexcept { 
-        return scalar_negative(x); 
+HWY_INLINE HWY_ATTR Vec<T> simd_neg(Vec<T> v)
+{
+    if constexpr (std::is_unsigned_v<T>) {
+        return hn::Sub(Zero<T>(), v);  
+    } else {
+        return hn::Neg(v);             
     }
-
-#if NPY_SIMD
-    // Dispatch based on scalar type T
-    template <typename T, typename SIMD>
-    static NPY_INLINE SIMD simd_op(SIMD v) {
-        if constexpr (std::is_integral_v<T>) {
-            if constexpr (sizeof(T) == 1) {
-                if constexpr (std::is_signed_v<T>) {
-                    return npyv_negative_s8(v);
-                } else {
-                    return npyv_negative_u8(v);
-                }
-            } else if constexpr (sizeof(T) == 2) {
-                if constexpr (std::is_signed_v<T>) {
-                    return npyv_negative_s16(v);
-                } else {
-                    return npyv_negative_u16(v);
-                }
-            } else if constexpr (sizeof(T) == 4) {
-                if constexpr (std::is_signed_v<T>) {
-                    return npyv_negative_s32(v);
-                } else {
-                    return npyv_negative_u32(v);
-                }
-            } else if constexpr (sizeof(T) == 8) {
-                if constexpr (std::is_signed_v<T>) {
-                    return npyv_negative_s64(v);
-                } else {
-                    return npyv_negative_u64(v);
-                }
-            }
-        } else if constexpr (std::is_floating_point_v<T>) {
-#if NPY_SIMD_F32
-            if constexpr (std::is_same_v<T, float>) {
-                return npyv_negative_f32(v);
-            }
-#endif
-#if NPY_SIMD_F64
-            if constexpr (std::is_same_v<T, double>) {
-                return npyv_negative_f64(v);
-            }
-#endif
-        }
-        return v;
-    }
-#endif // NPY_SIMD
-};
-
-/* SIMD helper utilities. */
-#if NPY_SIMD
-template<typename T>
-static constexpr int simd_nlanes() {
-    // Dispatch on scalar type T
-    if constexpr (std::is_integral_v<T>) {
-        if constexpr (sizeof(T) == 1) {
-            return npyv_nlanes_u8;
-        } else if constexpr (sizeof(T) == 2) {
-            return npyv_nlanes_u16;
-        } else if constexpr (sizeof(T) == 4) {
-            return npyv_nlanes_u32;
-        } else if constexpr (sizeof(T) == 8) {
-            return npyv_nlanes_u64;
-        }
-    } else if constexpr (std::is_floating_point_v<T>) {
-#if NPY_SIMD_F32
-        if constexpr (sizeof(T) == 4) {
-            return npyv_nlanes_f32;
-        }
-#endif
-#if NPY_SIMD_F64
-        if constexpr (sizeof(T) == 8) {
-            return npyv_nlanes_f64;
-        }
-#endif
-    }
-    return 0; // Fallback
 }
 
+// contiguous in, contiguous out
 template <typename T>
-static NPY_INLINE auto simd_load(const T* ptr) {
-    // Dispatch on scalar type T
-    if constexpr (std::is_integral_v<T>) {
-        if constexpr (sizeof(T) == 1) {
-            if constexpr (std::is_signed_v<T>) {
-                return npyv_load_s8(reinterpret_cast<const npyv_lanetype_s8*>(ptr));
-            } else {
-                return npyv_load_u8(reinterpret_cast<const npyv_lanetype_u8*>(ptr));
-            }
-        } else if constexpr (sizeof(T) == 2) {
-            if constexpr (std::is_signed_v<T>) {
-                return npyv_load_s16(reinterpret_cast<const npyv_lanetype_s16*>(ptr));
-            } else {
-                return npyv_load_u16(reinterpret_cast<const npyv_lanetype_u16*>(ptr));
-            }
-        } else if constexpr (sizeof(T) == 4) {
-            if constexpr (std::is_signed_v<T>) {
-                return npyv_load_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr));
-            } else {
-                return npyv_load_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr));
-            }
-        } else if constexpr (sizeof(T) == 8) {
-            if constexpr (std::is_signed_v<T>) {
-                return npyv_load_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr));
-            } else {
-                return npyv_load_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr));
-            }
-        }
-    } else if constexpr (std::is_floating_point_v<T>) {
-#if NPY_SIMD_F32
-        if constexpr (sizeof(T) == 4) {
-             return npyv_load_f32(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr));
-        }
-#endif
-#if NPY_SIMD_F64
-        if constexpr (sizeof(T) == 8) {
-             return npyv_load_f64(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr));
-        }
-#endif
-    }
-    using SIMD = typename SIMDTypeTraits<T>::simd_type;
-    return SIMD{}; // Fallback
-}
-
-template<typename T>
-static NPY_INLINE void simd_store(T* ptr, typename SIMDTypeTraits<T>::simd_type v) {
-    // Dispatch on scalar type T
-    if constexpr (std::is_integral_v<T>) {
-        if constexpr (sizeof(T) == 1) {
-            if constexpr (std::is_signed_v<T>) {
-                npyv_store_s8(reinterpret_cast<npyv_lanetype_s8*>(ptr), v);
-            } else {
-                npyv_store_u8(reinterpret_cast<npyv_lanetype_u8*>(ptr), v);
-            }
-        } else if constexpr (sizeof(T) == 2) {
-            if constexpr (std::is_signed_v<T>) {
-                npyv_store_s16(reinterpret_cast<npyv_lanetype_s16*>(ptr), v);
-            } else {
-                npyv_store_u16(reinterpret_cast<npyv_lanetype_u16*>(ptr), v);
-            }
-        } else if constexpr (sizeof(T) == 4) {
-            if constexpr (std::is_signed_v<T>) {
-                npyv_store_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), v);
-            } else {
-                npyv_store_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), v);
-            }
-        } else if constexpr (sizeof(T) == 8) {
-            if constexpr (std::is_signed_v<T>) {
-                npyv_store_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), v);
-            } else {
-                npyv_store_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), v);
-            }
-        }
-    } else if constexpr (std::is_floating_point_v<T>) {
-#if NPY_SIMD_F32
-        if constexpr (sizeof(T) == 4) {
-             npyv_store_f32(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), v);
-        }
-#endif
-#if NPY_SIMD_F64
-        if constexpr (sizeof(T) == 8) {
-             npyv_store_f64(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), v);
-        }
-#endif
-    }
-}
-
-// Load SIMD vector (strided/non-contiguous)
-template<typename T>
-static NPY_INLINE auto simd_loadn(const T* ptr, npy_intp stride) {
-    // Dispatch on scalar type T
-    if constexpr (std::is_integral_v<T>) {
-        if constexpr (sizeof(T) == 4) {
-            if constexpr (std::is_signed_v<T>) {
-                return npyv_loadn_s32(reinterpret_cast<const npyv_lanetype_s32*>(ptr), stride);
-            } else {
-                return npyv_loadn_u32(reinterpret_cast<const npyv_lanetype_u32*>(ptr), stride);
-            }
-        } else if constexpr (sizeof(T) == 8) {
-            if constexpr (std::is_signed_v<T>) {
-                return npyv_loadn_s64(reinterpret_cast<const npyv_lanetype_s64*>(ptr), stride);
-            } else {
-                return npyv_loadn_u64(reinterpret_cast<const npyv_lanetype_u64*>(ptr), stride);
-            }
-        }
-    } else if constexpr (std::is_floating_point_v<T>) {
-#if NPY_SIMD_F32
-        if constexpr (sizeof(T) == 4) {
-             return npyv_loadn_f32(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr), stride);
-        }
-#endif
-#if NPY_SIMD_F64
-        if constexpr (sizeof(T) == 8) {
-             return npyv_loadn_f64(reinterpret_cast<const typename SIMDTypeTraits<T>::lane_type*>(ptr), stride);
-        }
-#endif
-    }
-    using SIMD = typename SIMDTypeTraits<T>::simd_type;
-    return SIMD{};
-}
-
-// Store SIMD vector (strided/non-contiguous)
-template<typename T>
-static NPY_INLINE void simd_storen(T* ptr, npy_intp stride, typename SIMDTypeTraits<T>::simd_type v) {
-    // Dispatch on scalar type T
-    if constexpr (std::is_integral_v<T>) {
-        if constexpr (sizeof(T) == 4) {
-            if constexpr (std::is_signed_v<T>) {
-                npyv_storen_s32(reinterpret_cast<npyv_lanetype_s32*>(ptr), stride, v);
-            } else {
-                npyv_storen_u32(reinterpret_cast<npyv_lanetype_u32*>(ptr), stride, v);
-            }
-        } else if constexpr (sizeof(T) == 8) {
-            if constexpr (std::is_signed_v<T>) {
-                npyv_storen_s64(reinterpret_cast<npyv_lanetype_s64*>(ptr), stride, v);
-            } else {
-                npyv_storen_u64(reinterpret_cast<npyv_lanetype_u64*>(ptr), stride, v);
-            }
-        }
-    } else if constexpr (std::is_floating_point_v<T>) {
-#if NPY_SIMD_F32
-        if constexpr (sizeof(T) == 4) {
-             npyv_storen_f32(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), stride, v);
-        }
-#endif
-#if NPY_SIMD_F64
-        if constexpr (sizeof(T) == 8) {
-             npyv_storen_f64(reinterpret_cast<typename SIMDTypeTraits<T>::lane_type*>(ptr), stride, v);
-        }
-#endif
-    }
-}
-#endif
-
-/*
-Following are to be ported:
-
-// 1. contiguous-contiguous
-simd_unary_cc_@intrin@_@sfx@(...)
-
-// 2. contiguous-noncontiguous (only if @supports_ncontig@)
-simd_unary_cn_@intrin@_@sfx@(...)
-
-// 3. noncontiguous-contiguous (only if @supports_ncontig@)
-simd_unary_nc_@intrin@_@sfx@(...)
-
-// 4. noncontiguous-noncontiguous (only if @supports_ncontig@ and not SSE2)
-simd_unary_nn_@intrin@_@sfx@(...)
-*/
-#if NPY_SIMD
-template <typename T, typename Op>
-static NPY_INLINE void simd_unary_cc(const T* ip, T* op, npy_intp len) {
-    using SIMD = typename SIMDTypeTraits<T>::simd_type;
-    using Traits = UnaryOpTraits<Op>;
-
+HWY_ATTR SIMD_MSVC_NOINLINE
+static void simd_unary_negative_cc(const T* ip, T* op, npy_intp len)
+{
     constexpr int UNROLL = 4;
-
-    const int vstep = simd_nlanes<T>();
+    HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
     const int wstep = vstep * UNROLL;
-
-    // Unrolled vector loop
     for (; len >= wstep; len -= wstep, ip += wstep, op += wstep) {
-        for (int i = 0; i < UNROLL; i++) {
-            SIMD v = simd_load<T>(ip + i * vstep);
-            v = Traits::template simd_op<T>(v);
-            simd_store<T>(op + i * vstep, v);
-        }
+        for (int i = 0; i < UNROLL; ++i)
+            StoreU(simd_neg<T>(LoadU(ip + i * vstep)), op + i * vstep);
     }
-
-    // Single vector loop
-    for (; len >= vstep; len -= vstep, ip += vstep, op += vstep) {
-        SIMD v = simd_load<T>(ip);
-        SIMD r = Traits::template simd_op<T>(v);
-        simd_store<T>(op, r);
-    }
-
-    // Scalar finish up any remaining iterations
-    for (; len > 0; --len, ++ip, ++op) {
-        *op = Traits::scalar_op(*ip);
-    }
+    for (; len >= vstep; len -= vstep, ip += vstep, op += vstep)
+        StoreU(simd_neg<T>(LoadU(ip)), op);
+    for (; len > 0; --len, ++ip, ++op) { *op = -(*ip); }
 }
 
-// Contiguous input, non-contiguous output
-template <typename T, typename Op>
-static NPY_INLINE void
-simd_unary_cn(const T* ip, T* op, npy_intp ostride, npy_intp len)
+// contiguous in, strided out  (32/64-bit types only)
+template <typename T>
+HWY_ATTR SIMD_MSVC_NOINLINE
+static void simd_unary_negative_cn(
+        const T* ip, T* op, npy_intp ostride, npy_intp len)
 {
-    using SIMD = typename SIMDTypeTraits<T>::simd_type;
-    using Traits = UnaryOpTraits<Op>;
-    
+    using IdxT = std::conditional_t<sizeof(T) == 4, int32_t, int64_t>;
+    HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
+    const auto idx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
+                             hn::Set(_Tag<IdxT>(), static_cast<IdxT>(ostride)));
     constexpr int UNROLL = 4;
-    const int vstep = simd_nlanes<T>();
     const int wstep = vstep * UNROLL;
-    
-    // Unrolled vector loop
-    for (; len >= wstep; len -= wstep, ip += wstep, op += ostride * wstep) {
-        for (int i = 0; i < UNROLL; i++) {
-            SIMD v = simd_load<T>(ip + i * vstep);
-            SIMD r = Traits::template simd_op<T>(v);
-            simd_storen<T>(op + i * vstep * ostride, ostride, r);
-        }
+    for (; len >= wstep; len -= wstep, ip += static_cast<npy_intp>(wstep), op += ostride * wstep) {
+        for (int i = 0; i < UNROLL; ++i)
+            hn::ScatterIndex(simd_neg<T>(LoadU(ip + static_cast<npy_intp>(i) * vstep)),
+                             _Tag<T>(), op + static_cast<npy_intp>(i) * vstep * ostride, idx);
     }
-    
-    // Single vector loop
-    for (; len >= vstep; len -= vstep, ip += vstep, op += ostride * vstep) {
-        SIMD v = simd_load<T>(ip);
-        SIMD r = Traits::template simd_op<T>(v);
-        simd_storen<T>(op, ostride, r);
-    }
-    
-    // Scalar finish up
-    for (; len > 0; --len, ++ip, op += ostride) {
-        *op = Traits::scalar_op(*ip);
-    }
+    for (; len >= vstep; len -= vstep, ip += static_cast<npy_intp>(vstep), op += ostride * vstep)
+        hn::ScatterIndex(simd_neg<T>(LoadU(ip)), _Tag<T>(), op, idx);
+    for (; len > 0; --len, ++ip, op += ostride) { *op = -(*ip); }
 }
 
-// Non-contiguous input, contiguous output
-template <typename T, typename Op>
-static NPY_INLINE void
-simd_unary_nc(const T* ip, npy_intp istride, T* op, npy_intp len)
+// strided in, contiguous out  (32/64-bit types only)
+template <typename T>
+HWY_ATTR SIMD_MSVC_NOINLINE
+static void simd_unary_negative_nc(
+        const T* ip, npy_intp istride, T* op, npy_intp len)
 {
-    using SIMD = typename SIMDTypeTraits<T>::simd_type;
-    using Traits = UnaryOpTraits<Op>;
-    
+    using IdxT = std::conditional_t<sizeof(T) == 4, int32_t, int64_t>;
+    HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
+    const auto idx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
+                             hn::Set(_Tag<IdxT>(), static_cast<IdxT>(istride)));
     constexpr int UNROLL = 4;
-    const int vstep = simd_nlanes<T>();
     const int wstep = vstep * UNROLL;
-    
-    // Unrolled vector loop
-    for (; len >= wstep; len -= wstep, ip += istride * wstep, op += wstep) {
-        for (int i = 0; i < UNROLL; i++) {
-            SIMD v = simd_loadn<T>(ip + i * vstep * istride, istride);
-            SIMD r = Traits::template simd_op<T>(v);
-            simd_store<T>(op + i * vstep, r);
-        }
+    for (; len >= wstep; len -= wstep, ip += istride * static_cast<npy_intp>(wstep), op += static_cast<npy_intp>(wstep)) {
+        for (int i = 0; i < UNROLL; ++i)
+            StoreU(simd_neg<T>(
+                       hn::GatherIndex(_Tag<T>(), ip + static_cast<npy_intp>(i) * vstep * istride, idx)),
+                   op + static_cast<npy_intp>(i) * vstep);
     }
-    
-    // Single vector loop
-    for (; len >= vstep; len -= vstep, ip += istride * vstep, op += vstep) {
-        SIMD v = simd_loadn<T>(ip, istride);
-        SIMD r = Traits::template simd_op<T>(v);
-        simd_store<T>(op, r);
-    }
-    
-    // Scalar finish up
-    for (; len > 0; --len, ip += istride, ++op) {
-        *op = Traits::scalar_op(*ip);
-    }
+    for (; len >= vstep; len -= vstep, ip += istride * static_cast<npy_intp>(vstep), op += static_cast<npy_intp>(vstep))
+        StoreU(simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip, idx)), op);
+    for (; len > 0; --len, ip += istride, ++op) { *op = -(*ip); }
 }
 
-// Non-contiguous input and output
+// strided in, strided out  (32/64-bit types only, non-SSE2)
 #ifndef NPY_HAVE_SSE2
-template <typename T, typename Op>
-static NPY_INLINE void
-simd_unary_nn(const T* ip, npy_intp istride, T* op, npy_intp ostride, npy_intp len)
+template <typename T>
+HWY_ATTR SIMD_MSVC_NOINLINE
+static void simd_unary_negative_nn(
+        const T* ip, npy_intp istride, T* op, npy_intp ostride, npy_intp len)
 {
-    using SIMD = typename SIMDTypeTraits<T>::simd_type;
-    using Traits = UnaryOpTraits<Op>;
-    
+    using IdxT = std::conditional_t<sizeof(T) == 4, int32_t, int64_t>;
+    HWY_LANES_CONSTEXPR int vstep = Lanes<T>();
+    const auto iidx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
+                               hn::Set(_Tag<IdxT>(), static_cast<IdxT>(istride)));
+    const auto oidx = hn::Mul(hn::Iota(_Tag<IdxT>(), 0),
+                               hn::Set(_Tag<IdxT>(), static_cast<IdxT>(ostride)));
     constexpr int UNROLL = 2;
-    const int vstep = simd_nlanes<T>();
     const int wstep = vstep * UNROLL;
-    
-    // Unrolled vector loop
-    for (; len >= wstep; len -= wstep, ip += istride * wstep, op += ostride * wstep) {
-        for (int i = 0; i < UNROLL; i++) {
-            SIMD v = simd_loadn<T>(ip + i * vstep * istride, istride);
-            SIMD r = Traits::template simd_op<T>(v);
-            simd_storen<T>(op + i * vstep * ostride, ostride, r);
-        }
+    for (; len >= wstep; len -= wstep, ip += istride * static_cast<npy_intp>(wstep), op += ostride * static_cast<npy_intp>(wstep)) {
+        for (int i = 0; i < UNROLL; ++i)
+            hn::ScatterIndex(
+                simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip + static_cast<npy_intp>(i) * vstep * istride, iidx)),
+                _Tag<T>(), op + static_cast<npy_intp>(i) * vstep * ostride, oidx);
     }
-    
-    // Single vector loop
-    for (; len >= vstep; len -= vstep, ip += istride * vstep, op += ostride * vstep) {
-        SIMD v = simd_loadn<T>(ip, istride);
-        SIMD r = Traits::template simd_op<T>(v);
-        simd_storen<T>(op, ostride, r);
-    }
-    
-    // Scalar finish up
-    for (; len > 0; --len, ip += istride, op += ostride) {
-        *op = Traits::scalar_op(*ip);
-    }
+    for (; len >= vstep; len -= vstep, ip += istride * static_cast<npy_intp>(vstep), op += ostride * static_cast<npy_intp>(vstep))
+        hn::ScatterIndex(
+            simd_neg<T>(hn::GatherIndex(_Tag<T>(), ip, iidx)), _Tag<T>(), op, oidx);
+    for (; len > 0; --len, ip += istride, op += ostride) { *op = -(*ip); }
 }
 #endif // !NPY_HAVE_SSE2
-#endif // NPY_SIMD
 
-/* Dispatcher */
-template <typename T, typename Op>
-static NPY_INLINE void
-unary_ufunc_loop(char **args, npy_intp const *dimensions, npy_intp const *steps)
+template <typename T>
+static NPY_INLINE int
+run_simd_negative(char** args, npy_intp const* dimensions, npy_intp const* steps)
 {
-    char *ip = args[0], *op = args[1];
     npy_intp istep = steps[0], ostep = steps[1];
-    npy_intp len = dimensions[0];
-    
-    using Traits = SIMDTypeTraits<T>;
-    using OpTraits = UnaryOpTraits<Op>;
-    
-    constexpr int UNROLL = 8;
-    
-#if NPY_SIMD
-    if constexpr (Traits::has_simd) {
-        if (!is_mem_overlap(ip, istep, op, ostep, len)) {
-            if (IS_UNARY_CONT(T, T)) {
-                // Both contiguous
-                simd_unary_cc<T, Op>(
-                    reinterpret_cast<const T*>(ip),
-                    reinterpret_cast<T*>(op),
-                        len
-                );
-                npyv_cleanup();
-                return;
+    npy_intp len   = dimensions[0];
+    const npy_intp istride = istep / sizeof(T);
+    const npy_intp ostride = ostep / sizeof(T);
+    if (!is_mem_overlap(args[0], istep, args[1], ostep, len)) {
+        if (IS_UNARY_CONT(T, T)) {
+            simd_unary_negative_cc(
+                reinterpret_cast<const T*>(args[0]),
+                reinterpret_cast<T*>(args[1]), len);
+            return 1;
+        }
+        if constexpr (sizeof(T) >= 4) {
+            if (istride == 1 && ostride != 1) {
+                simd_unary_negative_cn(
+                    reinterpret_cast<const T*>(args[0]),
+                    reinterpret_cast<T*>(args[1]), ostride, len);
+                return 1;
             }
-            
-            if constexpr (Traits::supports_ncontig) {
-                const npy_intp istride = istep / sizeof(T);
-                const npy_intp ostride = ostep / sizeof(T);
-                
-                if (istride == 1 && ostride != 1) {
-                    // Contiguous input, non-contiguous output
-                    simd_unary_cn<T, Op>(
-                        reinterpret_cast<const T*>(ip),
-                        reinterpret_cast<T*>(op),
-                        ostride,
-                        len
-                    );
-                    npyv_cleanup();
-                    return;
-                }
-                else if (istride != 1 && ostride == 1) {
-                    // Non-contiguous input, contiguous output
-                    simd_unary_nc<T, Op>(
-                        reinterpret_cast<const T*>(ip),
-                        istride,
-                        reinterpret_cast<T*>(op),
-                        len
-                    );
-                    npyv_cleanup();
-                    return;
-                }
+            if (istride != 1 && ostride == 1) {
+                simd_unary_negative_nc(
+                    reinterpret_cast<const T*>(args[0]), istride,
+                    reinterpret_cast<T*>(args[1]), len);
+                return 1;
+            }
 #ifndef NPY_HAVE_SSE2
-                else if (istride != 1 && ostride != 1) {
-                    // Both non-contiguous
-                    simd_unary_nn<T, Op>(
-                        reinterpret_cast<const T*>(ip),
-                        istride,
-                        reinterpret_cast<T*>(op),
-                        ostride,
-                        len
-                    );
-                    npyv_cleanup();
-                    return;
-                }
-#endif
+            if (istride != 1 && ostride != 1) {
+                simd_unary_negative_nn(
+                    reinterpret_cast<const T*>(args[0]), istride,
+                    reinterpret_cast<T*>(args[1]), ostride, len);
+                return 1;
             }
+#endif
         }
     }
-#endif // NPY_SIMD
+    return 0;
+}
 
-// Scalar fallback with unrolling
-#ifndef NPY_DISABLE_OPTIMIZATION
-    for (; len >= UNROLL; len -= UNROLL, ip += istep * UNROLL, op += ostep * UNROLL) {
-        for (int i = 0; i < UNROLL; i++) {
-            const T in_val = *reinterpret_cast<const T*>(ip + i * istep);
-            *reinterpret_cast<T*>(op + i * ostep) = OpTraits::scalar_op(in_val);
-        }
+#endif // NPY_HWY
+
+// Since, Highway only knows fixed-width lane types, we map platform-dependent
+// integer types to fixed-width equivalents.
+template <typename T>
+struct SimdLaneType { using type = T; };
+template <> struct SimdLaneType<long> {
+    using type = std::conditional_t<sizeof(long) == 4, int32_t, int64_t>;
+};
+template <> struct SimdLaneType<unsigned long> {
+    using type = std::conditional_t<sizeof(unsigned long) == 4, uint32_t, uint64_t>;
+};
+template <> struct SimdLaneType<long double> {
+    using type = void;  // No HWY support for 80-bit extended precision
+};
+
+template <typename T>
+using SimdLaneType_t = typename SimdLaneType<T>::type;
+
+// Dispatcher
+template <typename T>
+static NPY_INLINE void
+unary_ufunc_loop(char** args, npy_intp const* dimensions, npy_intp const* steps)
+{
+#if NPY_HWY
+    using ST = SimdLaneType_t<T>;
+    if constexpr (!std::is_void_v<ST> && kSupportLane<ST>) {
+        if (run_simd_negative<ST>(args, dimensions, steps)) { return; }
     }
 #endif
-
-    // Scalar remainder
-    for (; len > 0; --len, ip += istep, op += ostep) {
-        *reinterpret_cast<T*>(op) = OpTraits::scalar_op(*reinterpret_cast<const T*>(ip));
+    char *ip = args[0], *op = args[1];
+    npy_intp istep = steps[0], ostep = steps[1], len = dimensions[0];
+    constexpr int UNROLL = 8;
+    for (; len >= UNROLL; len -= UNROLL, ip += istep*UNROLL, op += ostep*UNROLL) {
+        for (int i = 0; i < UNROLL; ++i)
+            *reinterpret_cast<T*>(op + i*ostep) = -(*reinterpret_cast<const T*>(ip + i*istep));
     }
-
-#if NPY_SIMD
-    if constexpr (Traits::has_simd) {
-        npyv_cleanup();
-    }
-    return;
-#endif
+    for (; len > 0; --len, ip += istep, op += ostep)
+        *reinterpret_cast<T*>(op) = -(*reinterpret_cast<const T*>(ip));
+}
 }
 
 // C API
@@ -795,68 +201,68 @@ extern "C" {
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(UBYTE_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<uint8_t, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<uint8_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(USHORT_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<uint16_t, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<uint16_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(UINT_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<uint32_t, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<uint32_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(ULONG_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<unsigned long, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<unsigned long>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(ULONGLONG_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<unsigned long long, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<unsigned long long>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BYTE_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<int8_t, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<int8_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(SHORT_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<int16_t, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<int16_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(INT_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<int32_t, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<int32_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(LONG_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<long, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<long>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(LONGLONG_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<long long, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<long long>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<float, negative_t>(args, dimensions, steps);
-#if NPY_SIMD_F32
+    unary_ufunc_loop<float>(args, dimensions, steps);
+#if NPY_HWY
     npy_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
@@ -864,8 +270,8 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_negative)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<double, negative_t>(args, dimensions, steps);
-#if NPY_SIMD_F64
+    unary_ufunc_loop<double>(args, dimensions, steps);
+#if NPY_HWY_F64
     npy_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
@@ -873,7 +279,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_negative)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(LONGDOUBLE_negative)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    unary_ufunc_loop<long double, negative_t>(args, dimensions, steps);
+    unary_ufunc_loop<long double>(args, dimensions, steps);
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
 } // extern "C"
