@@ -77,6 +77,7 @@ __all__ = [
     "append",
     "interp",
     "quantile",
+    "ismonotonic",
 ]
 
 type _ArrayLike1D[ScalarT: np.generic] = _SupportsArray[np.dtype[ScalarT]] | Sequence[ScalarT]
@@ -208,6 +209,13 @@ def flip(m: ArrayLike, axis: int | tuple[int, ...] | None = None) -> NDArray[Inc
 
 #
 def iterable(y: object) -> TypeIs[Iterable[Any]]: ...
+
+def ismonotonic(
+    arr: ArrayLike,
+    *,
+    direction: L["increasing", "decreasing"] = "increasing",
+    strict: bool = False,
+) -> bool: ...
 
 # NOTE: This assumes that if `axis` is given the input is at least 2d, and will
 # therefore always return an array.

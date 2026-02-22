@@ -43,6 +43,9 @@ from numpy._core.umath import (
     exp,
     floor,
     frompyfunc,
+    greater,
+    greater_equal,
+    less,
     less_equal,
     minimum,
     mod,
@@ -70,7 +73,7 @@ __all__ = [
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapezoid', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
-    'quantile'
+    'quantile', 'ismonotonic'
     ]
 
 # _QuantileMethods is a dictionary listing all the supported methods to
@@ -385,6 +388,7 @@ def iterable(y):
     >>> np.iterable(2)
     False
 
+
     Notes
     -----
     In most cases, the results of ``np.iterable(obj)`` are consistent with
@@ -404,6 +408,68 @@ def iterable(y):
     except TypeError:
         return False
     return True
+
+
+def _ismonotonic_dispatcher(arr, direction=None, strict=None):
+    return (arr,)
+
+
+@array_function_dispatch(_ismonotonic_dispatcher)
+def ismonotonic(arr, *, direction="increasing", strict=False):
+    """
+    Check whether the flattened input is monotonic in a given direction.
+
+    Parameters
+    ----------
+    arr : array_like
+        Input data to evaluate. Multi-dimensional arrays are interpreted by
+        flattening in row-major order.
+    direction : {'increasing', 'decreasing'}, optional
+        The monotonic trend to check for. Default is ``'increasing'``.
+    strict : bool, optional
+        If ``True``, elements must change strictly between positions.
+        Otherwise equality is allowed. Default is ``False``.
+
+    Returns
+    -------
+    out : bool
+        ``True`` if the flattened array follows the requested monotonic trend,
+        ``False`` otherwise.
+
+    Notes
+    -----
+    The check relies on pairwise comparisons. Inputs containing values that do
+    not define an order (such as ``NaN``) will cause the function to return
+    ``False``.
+
+    .. versionadded:: 2.4
+
+    Examples
+    --------
+    >>> np.ismonotonic([1, 2, 2, 3])
+    True
+    >>> np.ismonotonic([1, 2, 2, 3], strict=True)
+    False
+    >>> np.ismonotonic([5, 3, 1], direction="decreasing")
+    True
+    """
+    arr = asarray(arr).ravel()
+    if arr.size <= 1:
+        return True
+
+    try:
+        direction_key = direction.lower()
+    except AttributeError as exc:
+        raise TypeError("direction must be a string") from exc
+
+    if direction_key == "increasing":
+        comparator = less if strict else less_equal
+    elif direction_key == "decreasing":
+        comparator = greater if strict else greater_equal
+    else:
+        raise ValueError("direction must be either 'increasing' or 'decreasing'")
+
+    return bool(np.all(comparator(arr[:-1], arr[1:])))
 
 
 def _weights_are_valid(weights, a, axis):

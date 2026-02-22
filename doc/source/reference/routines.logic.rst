@@ -23,6 +23,13 @@ Array contents
    isneginf
    isposinf
 
+Monotonicity
+------------
+.. autosummary::
+   :toctree: generated/
+
+   ismonotonic
+
 Array type testing
 ------------------
 .. autosummary::
