@@ -38,6 +38,7 @@ select = [
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
     "UP",   # pyupgrade
+    "RUF012",  # ruff: mutable-class-default
     "RUF100",  # ruff: unused-noqa
 ]
 ignore = [
@@ -77,9 +78,9 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"_tempita.py" = ["B909"]
-"bench_*.py" = ["B015", "B018"]
-"test*.py" = ["B015", "B018", "E201", "E714"]
+"_tempita.py" = ["B909", "RUF012"]
+"bench_*.py" = ["B015", "B018", "RUF012"]
+"test*.py" = ["B015", "B018", "E201", "E714", "RUF012"]
 
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]
