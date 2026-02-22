@@ -23,6 +23,7 @@ from numpy import (
     vander,
     zeros,
 )
+from numpy.lib._twodim_base_impl import _min_int
 from numpy.testing import (
     assert_,
     assert_array_almost_equal,
@@ -557,3 +558,34 @@ class TestVander:
         # so assert_array_equal *should* be safe here (rather than, say,
         # assert_array_almost_equal).
         assert_array_equal(v, expected)
+
+def test_min_int():
+    # should pick smallest int that fits the range
+    assert _min_int(0, 100) == np.int8
+    assert _min_int(-50, 50) == np.int8
+    assert _min_int(100, 100) == np.int8
+
+    # int8 limits
+    assert _min_int(-128, 127) == np.int8
+    assert _min_int(-129, 100) == np.int16
+    assert _min_int(0, 128) == np.int16
+
+    # int16 range
+    assert _min_int(0, 1000) == np.int16
+    assert _min_int(-1000, 32000) == np.int16
+    assert _min_int(-32768, 32767) == np.int16
+
+    # int32 needed
+    assert _min_int(0, 100000) == np.int32
+    assert _min_int(-32769, 1000) == np.int32
+    assert _min_int(-1000, 32768) == np.int32
+
+    # larg values need int64
+    assert _min_int(0, 5000000000) == np.int64
+    assert _min_int(-2147483649, 0) == np.int64
+
+
+def test_min_int_edge_cases():
+    # test boundaries where dtype changes
+    assert _min_int(-2147483648, 2147483647) == np.int32
+    assert _min_int(-2147483649, 2147483648) == np.int64
