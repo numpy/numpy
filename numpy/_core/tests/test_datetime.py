@@ -2848,11 +2848,15 @@ class TestDateTime:
     def test_assert_all_close_with_timedelta_atol(
         self, atol: np.timedelta64 | datetime.timedelta
     ):
-        # gh-30382
-        a = np.array([1, 2], dtype="m8[s]")
-        b = np.array([3, 4], dtype="m8[s]")
-        with pytest.raises(AssertionError):
-            np.testing.assert_allclose(a, b, atol=atol)
+        with pytest.warns(
+            DeprecationWarning,
+            match="Using 'generic' unit for NumPy timedelta is deprecated",
+        ):
+            # gh-30382
+            a = np.array([1, 2], dtype="m8[s]")
+            b = np.array([3, 4], dtype="m8[s]")
+            with pytest.raises(AssertionError):
+                np.testing.assert_allclose(a, b, atol=atol)
 
 class TestDateTimeData:
 
