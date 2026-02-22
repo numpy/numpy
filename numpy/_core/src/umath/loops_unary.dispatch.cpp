@@ -168,6 +168,12 @@ template <> struct SimdLaneType<unsigned long> {
 template <> struct SimdLaneType<long double> {
     using type = void;  // No HWY support for 80-bit extended precision
 };
+template <> struct SimdLaneType<long long> {
+    using type = int64_t;
+};
+template <> struct SimdLaneType<unsigned long long> {
+    using type = uint64_t;
+};
 
 template <typename T>
 using SimdLaneType_t = typename SimdLaneType<T>::type;
