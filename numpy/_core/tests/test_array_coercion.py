@@ -840,7 +840,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self, dtype=None, copy=None):  # noqa: PLR0206
+        def __array__(self, dtype=None, copy=None):
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:

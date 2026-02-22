@@ -36,7 +36,7 @@ from numpy import (
     amax,
     amin,
     angle,
-    array as narray,  # noqa: F401
+    array as narray,
     bool_,
     expand_dims,
     finfo,  # noqa: F401

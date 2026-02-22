@@ -275,7 +275,7 @@ class TestPower:
         a = 5
         b = 4
         c = 10
-        expected = pow(a, b, c)  # noqa: F841
+        expected = pow(a, b, c)
         for t in (np.int32, np.float32, np.complex64):
             # note that 3-operand power only dispatches on the first argument
             assert_raises(TypeError, operator.pow, t(a), b, c)

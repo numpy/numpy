@@ -14,7 +14,7 @@ import numpy as np
 # Matlib.py contains all functions in the numpy namespace with a few
 # replacements. See doc/source/reference/routines.matlib.rst for details.
 # Need * as we're copying the numpy namespace.
-from numpy import *  # noqa: F403
+from numpy import *
 from numpy.matrixlib.defmatrix import asmatrix, matrix
 
 __version__ = np.__version__
