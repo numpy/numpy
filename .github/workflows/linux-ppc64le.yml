@@ -1,4 +1,4 @@
-name: Linux ppc64le and s390x native tests
+name: Linux IBM tests
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  native_ppc64le_and_s390x:
+  native_ibm:
     # These jobs runs only in the main NumPy repository.
     # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
     # For more details, see: https://github.com/numpy/numpy/issues/29125
@@ -31,13 +31,13 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - name: "GCC (ppc64le)"
+          - name: "ppc64le/gcc - baseline(default)"
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-ppc64le-p10
-          - name: "GCC (s390x)"
+          - name: "s390x/gcc - baseline(default)"
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
-          - name: "GCC with zvector (s390x)"
+          - name: "s390x/gcc - baseline(Z15/VXE2)"
             args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
             runner: ubuntu-24.04-s390x
 
@@ -69,7 +69,7 @@ jobs:
       run: |
         spin test -- --timeout=60 --durations=10
 
-  docker_ppc64le_and_s390x:
+  docker_ibm:
     # These jobs runs only in the main NumPy repository.
     # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
     # For more details, see: https://github.com/numpy/numpy/issues/29125
@@ -80,10 +80,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - name: "clang (s390x)"
+          - name: "s390x/clang - baseline(default)"
             args: "-Dallow-noblas=false"
             runner: ubuntu-24.04-s390x
-          - name: "clang with zvector (s390x)"
+          - name: "s390x/clang - baseline(Z15/VXE2)"
             args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
             runner: ubuntu-24.04-s390x
 
