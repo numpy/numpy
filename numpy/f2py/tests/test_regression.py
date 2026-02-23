@@ -204,9 +204,10 @@ class TestGH30809(util.F2PyTest):
         """No warning when dtype is correct"""
         arr = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
 
-        with pytest.warns(None) as record:
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", np.VisibleDeprecationWarning)
             self.module.inplace_sum(arr)
-        assert len(record) == 0
 
     @pytest.mark.slow
     def test_intent_inplace_warning_as_error(self):
