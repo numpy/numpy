@@ -312,12 +312,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         dtype = PyArray_DESCR(self);
         out_dtype = PyArray_DESCR(out);
         if (dtype != out_dtype) {
-            /*Deprecated NumPy 2.5, 2026-01*/
-            if (PyArray_CanCastTypeTo(dtype, out_dtype, NPY_SAME_KIND_CASTING) == 0) {
+            /* Deprecated NumPy 2.5, 2026-01 */
+            if (!PyArray_CanCastTypeTo(dtype, out_dtype, NPY_SAME_KIND_CASTING)) {
                 if (DEPRECATE(
-                            "Implicit casting of output to a different kind is "
-                            "deprecated. "
-                            "In a future version, this will result in an error. (Deprecated NumPy 2.5)") <
+                        "Implicit casting of output to a different kind is deprecated."
+                        "In a future version, this will result in an error. (Deprecated NumPy 2.5)") <
                     0) {
                     goto fail;
                 }
@@ -325,7 +324,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             flags |= NPY_ARRAY_FORCECAST;
         }
         Py_INCREF(dtype);
-        Py_INCREF(out_dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
             goto fail;
