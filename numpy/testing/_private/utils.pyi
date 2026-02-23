@@ -34,7 +34,7 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
 )
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "IS_EDITABLE",
     "IS_MUSL",
     "IS_PYPY",
@@ -495,7 +495,7 @@ def run_threaded[*Ts](
 ) -> None: ...
 
 #
-def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...  # noqa: ANN401
+def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...
 def rundocs(filename: StrPath | None = None, raise_on_error: bool = True) -> None: ...
 def measure(code_str: _StrLike | ast.AST, times: int = 1, label: str | None = None) -> float: ...
 def break_cycles() -> None: ...

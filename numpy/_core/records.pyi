@@ -1,4 +1,3 @@
-# ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
 from _typeshed import Incomplete, StrOrBytesPath
 from collections.abc import Buffer, Iterable, Sequence

@@ -1,4 +1,3 @@
-# ruff: noqa: ANN401
 from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import (

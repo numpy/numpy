@@ -1,4 +1,3 @@
-# ruff: noqa: ANN401
 # Aliases for builtins shadowed by classes to avoid annotations resolving to class members by ty
 from builtins import str as py_str, type as py_type
 from typing import (
@@ -17,7 +16,7 @@ from typing_extensions import TypeVar
 
 import numpy as np
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "BoolDType",
     "Int8DType",
     "ByteDType",
