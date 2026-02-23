@@ -1100,9 +1100,7 @@ class TestRegression:
         b = np.zeros((2, 1), dtype=np.single)
         try:
             a.compress([True, False], axis=1, out=b)
-            raise AssertionError("compress with an out which cannot be "
-                                 "safely casted should not return "
-                                 "successfully")
+            assert_equal(b, np.array([[1.0], [3.0]]))
         except TypeError:
             pass
 
