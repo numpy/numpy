@@ -297,6 +297,28 @@ class TestEvaluation:
         res = poly.polyval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
 
+    def test_polyvalnd(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+        pts = (x1, x2, x3)
+
+        # test exceptions
+        assert_raises_regex(ValueError, 'incompatible',
+                            poly.polyvalnd, (x1, x2, x3[:2]), self.c3d)
+
+        # test values
+        tgt = y1 * y2 * y3
+        res = poly.polyvalnd(pts, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        # test shape
+        z = np.ones((2, 3))
+        res = poly.polyvalnd((z, z, z), self.c3d)
+        assert_(res.shape == (2, 3))
+
+        # test 1D fallback
+        assert_almost_equal(poly.polyvalnd((x1,), self.c1d), y1)
+    
     def test_polygrid2d(self):
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
