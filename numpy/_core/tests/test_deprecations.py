@@ -374,8 +374,6 @@ class TestTakeOutDtype(_DeprecationTestCase):
     def test_out_dtype_deprecated(self):
         a = np.arange(3).astype(np.int32)
         indices = np.arange(2)
-        diffrent_dtype_out = np.zeros_like(indices, dtype=np.uint32)
+        different_dtype_out = np.zeros_like(indices, dtype=np.uint32)
 
-        self.assert_deprecated(
-            np.take, args=(a, indices), kwargs={"out": diffrent_dtype_out}
-        )
+        self.assert_deprecated(lambda: np.take(a, indices, out=different_dtype_out))
