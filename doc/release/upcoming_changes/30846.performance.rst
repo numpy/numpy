@@ -1,5 +1,5 @@
 Improved scaling of ufuncs on free-threading
-============================================
+--------------------------------------------
 
 NumPy's ufuncs now scale significantly better on free-threading builds
 of CPython due to the following optimizations:
