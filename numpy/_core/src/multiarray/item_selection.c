@@ -312,9 +312,9 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         dtype = PyArray_DESCR(self);
         Py_INCREF(dtype);
         out_dtype = PyArray_DESCR(out);
+        Py_INCREF(out_dtype);
         if (dtype == out_dtype) {
-            obj = (PyArrayObject *)out;
-            Py_INCREF(obj);
+            obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         }
         else {
             if (PyArray_CanCastTypeTo(dtype, out_dtype, NPY_SAME_KIND_CASTING) == 0) {
@@ -329,7 +329,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             }
             flags |= NPY_ARRAY_FORCECAST;
             obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
-            Py_INCREF(obj);
         }
         if (obj == NULL) {
             goto fail;
