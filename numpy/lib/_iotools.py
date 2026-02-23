@@ -497,7 +497,7 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool, str2bool, False),
+    _mapper = [(nx.bool, str2bool, False),  # noqa: RUF012
                (nx.int_, int, -1),]
 
     # On 32-bit systems, we need to make sure that we explicitly include
