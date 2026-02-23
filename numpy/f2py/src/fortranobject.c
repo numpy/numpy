@@ -1023,17 +1023,6 @@ ndarray_from_pyobj(const int type_num,
                 return arr;
             }
         }
-            if ((intent & F2PY_INTENT_INOUT || intent & F2PY_INTENT_INPLACE)
-              ? ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY(arr) : PyArray_ISFARRAY(arr))
-              : ((intent & F2PY_INTENT_C) ? PyArray_ISCARRAY_RO(arr) : PyArray_ISFARRAY_RO(arr))) {
-                if ((intent & F2PY_INTENT_OUT)) {
-                    Py_INCREF(arr);
-                }
-                /* Returning input array */
-                Py_DECREF(descr);
-                return arr;
-            }
-        }
         if (intent & F2PY_INTENT_INOUT) {
             strcpy(mess, "failed to initialize intent(inout) array");
             /* Must use PyArray_IS*ARRAY because intent(inout) requires
