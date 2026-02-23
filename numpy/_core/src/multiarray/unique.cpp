@@ -12,23 +12,26 @@
 #include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <variant>
 #include <vector>
+
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
+#include <absl/hash/hash.h>
+#include <absl/strings/string_view.h>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
 #include "gil_utils.h"
 #include "raii_utils.hpp"
 extern "C" {
-    #include "fnv.h"
     #include "npy_argparse.h"
     #include "numpy/npy_math.h"
     #include "numpy/halffloat.h"
 }
 
 // HASH_TABLE_INITIAL_BUCKETS is the reserve hashmap capacity used in the
-// std::unordered_set instances in the various unique_* functions.
+// absl::flat_hash_set instances in the various unique_* functions.
 // We use min(input_size, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket
 // count:
 // - Reserving for all elements (isize) may over-allocate when there are few
@@ -112,15 +115,16 @@ intp_container_to_pyarray(const T &container) {
 
 template <typename T>
 size_t hash_integer(const T *value, npy_bool NPY_UNUSED(equal_nan)) {
-    return npy_fnv1a(reinterpret_cast<const unsigned char*>(value), sizeof(T));
+    return absl::Hash<T>{}(*value);
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 size_t hash_complex(const T *value, npy_bool equal_nan) {
-    std::complex<S> z = *reinterpret_cast<const std::complex<S> *>(value);
+    S value_real = real(*value);
+    S value_imag = imag(*value);
 
     if (equal_nan) {
-        if (npy_isnan(z.real()) || npy_isnan(z.imag())) {
+        if (npy_isnan(value_real) || npy_isnan(value_imag)) {
             return 0;
         }
     }
@@ -129,23 +133,22 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
     // So we don't need to worry about NaN here.
 
     // Convert -0.0 to 0.0.
-    if (z.real() == 0.0) {
-        z.real(NPY_PZERO);
+    if (value_real == NPY_NZERO) {
+        value_real = NPY_PZERO;
     }
-    if (z.imag() == 0.0) {
-        z.imag(NPY_PZERO);
+    if (value_imag == NPY_NZERO) {
+        value_imag = NPY_PZERO;
     }
 
-    size_t hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
-    return hash;
+    return absl::HashOf(value_real, value_imag);
 }
 
 size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
-    std::complex<long double> z =
-        *reinterpret_cast<const std::complex<long double> *>(value);
+    npy_longdouble value_real = npy_creall(*value);
+    npy_longdouble value_imag = npy_cimagl(*value);
 
     if (equal_nan) {
-        if (npy_isnan(z.real()) || npy_isnan(z.imag())) {
+        if (npy_isnan(value_real) || npy_isnan(value_imag)) {
             return 0;
         }
     }
@@ -154,11 +157,11 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     // So we don't need to worry about NaN here.
 
     // Convert -0.0 to 0.0.
-    if (z.real() == 0.0) {
-        z.real(NPY_PZEROL);
+    if (value_real == NPY_NZEROL) {
+        value_real = NPY_PZEROL;
     }
-    if (z.imag() == 0.0) {
-        z.imag(NPY_PZEROL);
+    if (value_imag == NPY_NZEROL) {
+        value_imag = NPY_PZEROL;
     }
 
     // Some floating-point complex dtypes (e.g., npy_complex256) include undefined or
@@ -177,7 +180,7 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     constexpr size_t SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
     unsigned char buffer[SIZEOF_BUFFER];
 
-    union IEEEl2bitsrep bits_real{z.real()}, bits_imag{z.imag()};
+    union IEEEl2bitsrep bits_real{value_real}, bits_imag{value_imag};
     size_t offset = 0;
 
     for (const IEEEl2bitsrep &bits: {bits_real, bits_imag}) {
@@ -195,16 +198,15 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
         std::memcpy(buffer + offset, &sign, SIZEOF_LDOUBLE_SIGN);
         offset += SIZEOF_LDOUBLE_SIGN;
     }
+
+    auto span = absl::MakeConstSpan(buffer, SIZEOF_BUFFER);
+    return absl::Hash<decltype(span)>{}(span);
+
     #else
 
-    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(&z);
-    constexpr size_t SIZEOF_BUFFER = sizeof(z);
+    return absl::HashOf(value_real, value_imag);
 
     #endif
-
-    size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
-
-    return hash;
 }
 
 template <typename T>
@@ -282,7 +284,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     };
 
     if (!return_index && !return_inverse && !return_counts) {
-        using set_type = std::unordered_set<
+        using set_type = absl::flat_hash_set<
             T *,
             decltype(hash),
             decltype(equal)
@@ -323,7 +325,7 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
             PyTuple_SET_ITEM(res_obj, i, Py_None);
         }
     } else {
-        using map_type = std::unordered_map<
+        using map_type = absl::flat_hash_map<
             T *,
             npy_intp,
             decltype(hash),
@@ -451,7 +453,8 @@ unique_string(PyArrayObject *self, npy_bool NPY_UNUSED(equal_nan), npy_bool retu
     npy_intp num_chars = itemsize / sizeof(T);
 
     auto hash = [num_chars](const T *value) -> size_t {
-        return npy_fnv1a(value, num_chars * sizeof(T));
+        auto span = absl::MakeConstSpan(value, num_chars);
+        return absl::Hash<decltype(span)>{}(span);
     };
     auto equal = [itemsize](const T *lhs, const T *rhs) -> bool {
         return std::memcmp(lhs, rhs, itemsize) == 0;
@@ -461,7 +464,7 @@ unique_string(PyArrayObject *self, npy_bool NPY_UNUSED(equal_nan), npy_bool retu
     npy_intp isize = PyArray_SIZE(self);
 
     if (!return_index && !return_inverse && !return_counts) {
-        using set_type = std::unordered_set<
+        using set_type = absl::flat_hash_set<
             T *,
             decltype(hash),
             decltype(equal)
@@ -502,7 +505,7 @@ unique_string(PyArrayObject *self, npy_bool NPY_UNUSED(equal_nan), npy_bool retu
             PyTuple_SET_ITEM(res_obj, i, Py_None);
         }
     } else {
-        using map_type = std::unordered_map<
+        using map_type = absl::flat_hash_map<
             T *,
             npy_intp,
             decltype(hash),
@@ -629,10 +632,11 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
             if (equal_nan) {
                 return 0;
             } else {
-                return std::hash<const npy_static_string *>{}(value);
+                return absl::Hash<const npy_static_string *>{}(value);
             }
         }
-        return npy_fnv1a(value->buf, value->size * sizeof(char));
+        auto view = absl::string_view(value->buf, value->size);
+        return absl::Hash<absl::string_view>{}(view);
     };
     auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
         if (lhs->buf == NULL && rhs->buf == NULL) {
@@ -657,7 +661,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
 
     if (!return_index && !return_inverse && !return_counts) {
-        using set_type = std::unordered_set<
+        using set_type = absl::flat_hash_set<
             npy_static_string *,
             decltype(hash),
             decltype(equal)
@@ -726,7 +730,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
             PyTuple_SET_ITEM(res_obj, i, Py_None);
         }
     } else {
-        using map_type = std::unordered_map<
+        using map_type = absl::flat_hash_map<
             npy_static_string *,
             npy_intp,
             decltype(hash),

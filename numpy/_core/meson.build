@@ -1188,7 +1188,6 @@ src_multiarray = multiarray_gen_headers + [
   # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
   # links to the arm64 npymath library, see gh-22673
   'src/npymath/arm64_exports.c',
-  'src/multiarray/fnv.c',
 ]
 
 src_umath = umath_gen_headers + [
@@ -1249,6 +1248,9 @@ if use_svml
   endforeach
 endif
 
+absl_flat_hash_dep = dependency('absl_flat_hash_map', required: true)
+absl_flat_hash_set_dep = dependency('absl_flat_hash_set', required: true)
+
 unique_hash_so = static_library(
   'unique_hash',
   ['src/multiarray/unique.cpp'],
@@ -1262,6 +1264,8 @@ unique_hash_so = static_library(
   dependencies: [
     py_dep,
     np_core_dep,
+    absl_flat_hash_dep,
+    absl_flat_hash_set_dep,
   ],
 )
 
