@@ -88,9 +88,6 @@ class TestTake:
         out = np.zeros_like(indices, dtype=np.int64)
         np.take(a, indices, out=out)
         assert_array_equal(a[indices], out)
-        diffrent_dtype_out = np.zeros_like(indices, dtype=np.uint32)
-        with pytest.warns(DeprecationWarning):
-            np.take(a, indices, out=diffrent_dtype_out)
 
     def test_empty_argpartition(self):
         # In reference to github issue #6530
