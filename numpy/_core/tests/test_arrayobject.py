@@ -107,20 +107,30 @@ def test_fromfile_out():
         
         # Standard out mapping
         buffer = np.empty(4, dtype=np.float32)
-        res = np.fromfile(filepath, dtype=np.float32, out=buffer)
+        res = np.fromfile(filepath, out=buffer)
         assert res is buffer
         assert_array_equal(res, expected)
 
         # Using 'count' with 'out'
         buffer2 = np.empty(4, dtype=np.float32)
-        res2 = np.fromfile(filepath, dtype=np.float32, count=2, out=buffer2)
+        res2 = np.fromfile(filepath, count=4, out=buffer2)
         assert res2 is buffer2
-        assert_array_equal(res2[:2], expected[:2])
+        assert_array_equal(res2, expected)
         
+        # Error if count does not match out size
+        buffer_err = np.empty(4, dtype=np.float32)
+        with pytest.raises(ValueError, match="match its size"):
+            np.fromfile(filepath, count=2, out=buffer_err)
+
         # Error on non-contiguous array
         buffer3 = np.empty(8, dtype=np.float32)[::2]
         with pytest.raises(ValueError, match="C-contiguous"):
-            np.fromfile(filepath, dtype=np.float32, out=buffer3)
+            np.fromfile(filepath, out=buffer3)
+
+        # Error on non-1D array
+        buffer4 = np.empty((2, 2), dtype=np.float32)
+        with pytest.raises(ValueError, match="1-dimensional"):
+            np.fromfile(filepath, out=buffer4)
             
     finally:
         os.remove(filepath)

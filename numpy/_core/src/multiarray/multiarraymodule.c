@@ -2393,6 +2393,21 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
             Py_XDECREF(type);
             return NULL;
         }
+        if (PyArray_NDIM(out) != 1) {
+            PyErr_SetString(PyExc_ValueError, "'out' array must be 1-dimensional");
+            Py_XDECREF(type);
+            return NULL;
+        }
+        if (nin != -1 && nin != PyArray_SIZE(out)) {
+            PyErr_SetString(PyExc_ValueError, "when 'out' is provided, 'count' must match its size");
+            Py_XDECREF(type);
+            return NULL;
+        }
+        if (type != NULL && !PyArray_EquivTypes(type, PyArray_DESCR(out))) {
+            PyErr_SetString(PyExc_TypeError, "if 'dtype' is provided with 'out', they must strictly match");
+            Py_XDECREF(type);
+            return NULL;
+        }
     }
 
     file = NpyPath_PathlikeToFspath(file);
@@ -2445,16 +2460,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
             goto cleanup;
         }
         
-        npy_intp n_to_read = (nin < 0) ? PyArray_SIZE(out) : nin;
-        if (n_to_read > PyArray_SIZE(out)) {
-            PyErr_SetString(PyExc_ValueError, "count is larger than 'out' array size");
-            goto cleanup;
-        }
-        
-        if (type->elsize != PyArray_DESCR(out)->elsize) {
-            PyErr_SetString(PyExc_TypeError, "'out' array element size must match requested dtype");
-            goto cleanup;
-        }
+        npy_intp n_to_read = PyArray_SIZE(out);
 
         size_t read_count = fread(PyArray_DATA(out), type->elsize, n_to_read, fp);
         if (read_count < (size_t)n_to_read && ferror(fp)) {
