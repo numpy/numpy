@@ -49,7 +49,7 @@ class _Interface(NamedTuple):
 @type_check_only
 class _CythonMixin:
     def __setstate_cython__(self, pyx_state: object, /) -> None: ...
-    def __reduce_cython__(self) -> Any: ...  # noqa: ANN401
+    def __reduce_cython__(self) -> Any: ...
 
 @type_check_only
 class _GenerateStateMixin(_CythonMixin):

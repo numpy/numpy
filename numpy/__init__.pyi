@@ -594,7 +594,7 @@ from numpy.matrixlib import (
     matrix,
 )
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     # __numpy_submodules__
     "char", "core", "ctypeslib", "dtypes", "exceptions", "f2py", "fft", "lib", "linalg",
     "ma", "polynomial", "random", "rec", "strings", "test", "testing", "typing",
@@ -876,7 +876,7 @@ type _CastingKind = L["no", "equiv", "safe", "same_kind", "same_value", "unsafe"
 
 type _OrderKACF = L["K", "A", "C", "F"] | None
 type _OrderACF = L["A", "C", "F"] | None
-type _OrderCF = L["C", "F"] | None  # noqa: PYI047
+type _OrderCF = L["C", "F"] | None
 
 type _ModeKind = L["raise", "wrap", "clip"]
 type _PartitionKind = L["introselect"]
@@ -2767,9 +2767,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __abs__[ArrayT: NDArray[bool_ | integer | floating | timedelta64 | object_]](self: ArrayT, /) -> ArrayT: ...
 
-    def __invert__[ArrayT: NDArray[bool_ | integer | object_]](self: ArrayT, /) -> ArrayT: ...  # noqa: PYI019
-    def __neg__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...  # noqa: PYI019
-    def __pos__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...  # noqa: PYI019
+    def __invert__[ArrayT: NDArray[bool_ | integer | object_]](self: ArrayT, /) -> ArrayT: ...
+    def __neg__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...
+    def __pos__[ArrayT: _ArrayNumeric](self: ArrayT, /) -> ArrayT: ...
 
     # Binary ops
 

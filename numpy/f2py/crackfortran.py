@@ -1485,7 +1485,7 @@ def analyzeline(m, case, line):
             line = '//' + line
 
         cl = []
-        [_, bn, ol] = re.split('/', line, maxsplit=2)  # noqa: RUF039
+        [_, bn, ol] = re.split('/', line, maxsplit=2)
         bn = bn.strip()
         if not bn:
             bn = '_BLNK_'

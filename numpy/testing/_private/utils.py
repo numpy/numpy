@@ -66,7 +66,7 @@ else:
     try:
         if sys.version_info < (3, 13):
             # Backport importlib.metadata.Distribution.origin
-            import json  # noqa: E401
+            import json
             import types
             origin = json.loads(
                 np_dist.read_text('direct_url.json') or '{}',

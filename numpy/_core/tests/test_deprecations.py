@@ -347,3 +347,21 @@ class TestTooManyArgsExtremum(_DeprecationTestCase):
     @pytest.mark.parametrize("ufunc", [np.minimum, np.maximum])
     def test_extremem_3_args(self, ufunc):
         self.assert_deprecated(ufunc, args=(np.ones(1), np.zeros(1), np.empty(1)))
+
+
+class TestTypenameDeprecation(_DeprecationTestCase):
+    # Deprecation in Numpy 2.5, 2026-02
+
+    def test_typename_emits_deprecation_warning(self):
+        self.assert_deprecated(lambda: np.typename("S1"))
+        self.assert_deprecated(lambda: np.typename("h"))
+
+class TestRoundDeprecation(_DeprecationTestCase):
+    # Deprecation in NumPy 2.5, 2026-02
+
+    def test_round_emits_deprecation_warning_array(self):
+        a = np.array([1.5, 2.7, -1.5, -2.7])
+        self.assert_deprecated(lambda: np.ma.round_(a))
+
+    def test_round_emits_deprecation_warning_scalar(self):
+        self.assert_deprecated(lambda: np.ma.round_(3.14))

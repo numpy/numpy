@@ -1,0 +1,4 @@
+``numpy.ma.round_`` is deprecated
+---------------------------------
+``numpy.ma.round_`` is deprecated.
+``numpy.ma.round`` can be used as a replacement.

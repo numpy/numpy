@@ -250,6 +250,10 @@ def roots(p):
         A = diag(NX.ones((N - 2,), p.dtype), -1)
         A[0, :] = -p[1:] / p[0]
         roots = eigvals(A)
+
+        # backwards compat: return real values if possible
+        from numpy.linalg._linalg import _to_real_if_imag_zero
+        roots = _to_real_if_imag_zero(roots, A)
     else:
         roots = NX.array([])
 

@@ -1,4 +1,4 @@
-name: Run MyPy
+name: Type-checking
 
 # Mypy is too slow to run as part of regular CI. The purpose of the jobs in
 # this file is to cover running Mypy across:
@@ -89,3 +89,17 @@ jobs:
         --verifytypes numpy
         --ignoreexternal
         --exclude-like '*.tests.*' '*.conftest.*'
+
+  pyrefly:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      with:
+        activate-environment: true
+    - name: Install dependencies
+      run: >-
+        uv pip install
+        -r requirements/test_requirements.txt
+    - name: Run pyrefly
+      run: pyrefly check
