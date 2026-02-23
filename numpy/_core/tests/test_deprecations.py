@@ -365,3 +365,17 @@ class TestRoundDeprecation(_DeprecationTestCase):
 
     def test_round_emits_deprecation_warning_scalar(self):
         self.assert_deprecated(lambda: np.ma.round_(3.14))
+
+
+class TestTakeOutDtype(_DeprecationTestCase):
+    # Deprecated in Numpy 2.5, 2026-01
+    message = "Implicit casting of output to a different kind."
+
+    def test_out_dtype_deprecated(self):
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        diffrent_dtype_out = np.zeros_like(indices, dtype=np.uint32)
+
+        self.assert_deprecated(
+            np.take, args=(a, indices), kwargs={"out": diffrent_dtype_out}
+        )
