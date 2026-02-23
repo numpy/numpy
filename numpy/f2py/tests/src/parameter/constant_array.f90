@@ -43,3 +43,10 @@ subroutine foo_array_delims(x)
 
   return
 end subroutine
+
+module nested_math
+  implicit none
+  integer, parameter :: george = 5
+  integer, parameter :: wilma = 7
+  integer,dimension((george * wilma), george) :: x 
+end module nested_math

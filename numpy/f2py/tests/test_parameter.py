@@ -127,3 +127,7 @@ class TestParameters(util.F2PyTest):
     def test_constant_array_delims(self):
         x = self.module.foo_array_delims()
         assert x == 9
+
+    def test_module_nested_math(self):
+        x = self.module.nested_math.x
+        assert x.shape == (35, 5)
