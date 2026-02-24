@@ -1022,12 +1022,16 @@ def hermeval3d(x, y, z, c):
 
 
 def hermevalnd(pts, c):
-    """
+    r"""
     Evaluate an N-D Hermite_e series at points.
 
     This function returns the values:
 
-    .. math:: p(x_1, x_2, \\dots, x_n) = \\sum_{i_1, i_2, \\dots, i_n} c_{i_1, i_2, \\dots, i_n} * He_{i_1}(x_1) * He_{i_2}(x_2) \\dots He_{i_n}(x_n)
+    .. math::
+
+        p(x_1, x_2, \dots, x_n) =
+        \sum_{i_1, i_2, \dots, i_n} c_{i_1, i_2, \dots, i_n}
+        * He_{i_1}(x_1) * He_{i_2}(x_2) \dots He_{i_n}(x_n)
 
     The parameters in `pts` are converted to arrays only if they are
     tuples or lists, otherwise they are treated as scalars and

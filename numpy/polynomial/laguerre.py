@@ -1047,12 +1047,16 @@ def lagval3d(x, y, z, c):
 
 
 def lagvalnd(pts, c):
-    """
+    r"""
     Evaluate an N-D Laguerre series at points.
 
     This function returns the values:
 
-    .. math:: p(x_1, x_2, \\dots, x_n) = \\sum_{i_1, i_2, \\dots, i_n} c_{i_1, i_2, \\dots, i_n} * L_{i_1}(x_1) * L_{i_2}(x_2) \\dots L_{i_n}(x_n)
+    .. math::
+
+        p(x_1, x_2, \dots, x_n) =
+        \sum_{i_1, i_2, \dots, i_n} c_{i_1, i_2, \dots, i_n}
+        * L_{i_1}(x_1) * L_{i_2}(x_2) \dots L_{i_n}(x_n)
 
     The parameters in `pts` are converted to arrays only if they are
     tuples or lists, otherwise they are treated as scalars and

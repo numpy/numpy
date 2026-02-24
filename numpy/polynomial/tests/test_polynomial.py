@@ -318,7 +318,7 @@ class TestEvaluation:
 
         # test 1D fallback
         assert_almost_equal(poly.polyvalnd((x1,), self.c1d), y1)
-    
+
     def test_polygrid2d(self):
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y

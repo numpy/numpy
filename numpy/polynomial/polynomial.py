@@ -77,8 +77,8 @@ __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',
     'polyvalfromroots', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
-    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d', 'polyvalnd',
-    'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
+    'polyfit', 'polytrim', 'polyroots', 'Polynomial', 'polyval2d', 'polyval3d',
+    'polyvalnd', 'polygrid2d', 'polygrid3d', 'polyvander2d', 'polyvander3d',
     'polycompanion']
 
 import numpy as np
@@ -1017,12 +1017,16 @@ def _polyvalnd_dispatcher(pts, c):
 
 @_array_function_dispatch(_polyvalnd_dispatcher)
 def polyvalnd(pts, c):
-    """
+    r"""
     Evaluate an N-D polynomial at points.
 
     This function returns the values:
 
-    .. math:: p(x_1, x_2, \\dots, x_n) = \\sum_{i_1, i_2, \\dots, i_n} c_{i_1, i_2, \\dots, i_n} * x_1^{i_1} * x_2^{i_2} \\dots x_n^{i_n}
+    .. math::
+
+        p(x_1, x_2, \dots, x_n) =
+        \sum_{i_1, i_2, \dots, i_n} c_{i_1, i_2, \dots, i_n}
+        * x_1^{i_1} * x_2^{i_2} \dots x_n^{i_n}
 
     The parameters in `pts` are converted to arrays only if they are
     tuples or lists, otherwise they are treated as scalars and
