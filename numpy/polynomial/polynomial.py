@@ -40,6 +40,7 @@ Arithmetic
    polyval
    polyval2d
    polyval3d
+   polyvalnd
    polygrid2d
    polygrid3d
 
