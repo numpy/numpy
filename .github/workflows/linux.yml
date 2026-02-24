@@ -172,7 +172,7 @@ jobs:
     # running on aarch64 (ARM 64-bit) GitHub runners.
     needs: [smoke_test]
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-24.04.3-arm
     steps:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
