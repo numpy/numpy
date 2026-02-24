@@ -64,14 +64,7 @@ or explicitly type the array like object as `~typing.Any`:
 ndarray
 ~~~~~~~
 
-It's possible to mutate the dtype of an array at runtime. For example,
-the following code is valid:
-
-.. code-block:: python
-
-    >>> x = np.array([1, 2])
-    >>> x.dtype = np.bool
-
+It's possible (but deprecated) to mutate the dtype of an array at runtime.
 This sort of mutation is not allowed by the types. Users who want to
 write statically typed code should instead use the `numpy.ndarray.view`
 method to create a view of the array with a different dtype.
