@@ -67,14 +67,14 @@ jobs:
         activate-environment: true
         cache-dependency-glob: |
           requirements/build_requirements.txt
-          requirements/test_requirements.txt
+          requirements/typing_requirements.txt
     - name: Install dependencies
       # orjson makes mypy faster but the default requirements.txt
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
         uv pip install
         -r requirements/build_requirements.txt
-        -r requirements/test_requirements.txt
+        -r requirements/typing_requirements.txt
         orjson
         basedpyright
     - name: Build
@@ -100,6 +100,6 @@ jobs:
     - name: Install dependencies
       run: >-
         uv pip install
-        -r requirements/test_requirements.txt
+        -r requirements/typing_requirements.txt
     - name: Run pyrefly
       run: pyrefly check
