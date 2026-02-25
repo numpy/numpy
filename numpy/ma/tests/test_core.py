@@ -998,6 +998,13 @@ class TestMaskedArray:
         control = np.array([[[1., 1.], ], [[2., 2.], ]], dtype=float)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
+        # for strings
+        ndtype = [('a', 'U5'), ('b', [('c', 'U5')])]
+        arr = np.array([('NumPy', ('array',)), ('array', ('numpy',))], dtype=ndtype)
+        test = flatten_structured_array(arr)
+        control = np.array([['NumPy', 'array'], ['array', 'numpy']], dtype='U5')
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
 
     def test_void0d(self):
         # Test creating a mvoid object
