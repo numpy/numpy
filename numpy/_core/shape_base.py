@@ -118,6 +118,8 @@ def atleast_2d(*arys):
         result = asanyarray(arys[0])
         if result.ndim == 0:
             result = result.reshape(1, 1)
+        elif ary.ndim == 1:
+            result = ary[_nx.newaxis, :]
         return result
     res = []
     for ary in arys:
@@ -189,6 +191,10 @@ def atleast_3d(*arys):
         result = asanyarray(arys[0])
         if result.ndim == 0:
             result = result.reshape(1, 1, 1)
+        elif ary.ndim == 1:
+            result = ary[_nx.newaxis, :, _nx.newaxis]
+        elif ary.ndim == 2:
+            result = ary[:, :, _nx.newaxis]
         return result
     res = []
     for ary in arys:
