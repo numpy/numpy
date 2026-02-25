@@ -193,7 +193,7 @@ def atleast_3d(*arys):
             result = result.reshape(1, 1, 1)
         elif result.ndim == 1:
             result = result[_nx.newaxis, :, _nx.newaxis]
-        elif ary.ndim == 2:
+        elif result.ndim == 2:
             result = result[:, :, _nx.newaxis]
         return result
     res = []
