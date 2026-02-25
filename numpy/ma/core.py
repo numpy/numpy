@@ -2590,7 +2590,7 @@ def flatten_structured_array(a):
 
         """
         for elm in iter(iterable):
-            if not np.ndim(elm) == 0:
+            if hasattr(elm, "__iter__") and not isinstance(elm, (str, bytes)):
                 yield from flatten_sequence(elm)
             else:
                 yield elm
