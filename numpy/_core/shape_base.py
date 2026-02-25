@@ -125,7 +125,7 @@ def atleast_2d(*arys):
         if result.ndim == 0:
             result = result.reshape(1, 1)
         elif result.ndim == 1:
-            result = ary[_nx.newaxis, :]
+            result = result[_nx.newaxis, :]
         res.append(result)
     return tuple(res)
 
@@ -195,10 +195,10 @@ def atleast_3d(*arys):
         result = asanyarray(ary)
         if result.ndim == 0:
             result = result.reshape(1, 1, 1)
-        elif ary.ndim == 1:
-            result = ary[_nx.newaxis, :, _nx.newaxis]
-        elif ary.ndim == 2:
-            result = ary[:, :, _nx.newaxis]
+        elif result.ndim == 1:
+            result = result[_nx.newaxis, :, _nx.newaxis]
+        elif result.ndim == 2:
+            result = result[:, :, _nx.newaxis]
         res.append(result)
     return tuple(res)
 
