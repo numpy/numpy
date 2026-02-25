@@ -24,7 +24,8 @@ class TestTake:
         # default (non-specialized) path.
         types = int, object, np.dtype([('', 'i2', 3)])
         for t in types:
-            # ta works, even if the array may be odd if buffer interface is used
+            # ta works, even if the array may be odd if buffer interface is
+            # used
             ta = np.array(a if np.issubdtype(t, np.number) else a_str, dtype=t)
             tresult = list(ta.T.copy())
             for index_array in index_arrays:
@@ -165,3 +166,21 @@ class TestPut:
         # Allowing empty values like this is weird...
         np.put(arr, [1, 2, 3], [])
         assert_array_equal(arr, arr_copy)
+
+
+class TestSearchSorted:
+    def test_large_uint64(self):
+        a = np.arange(2**62, 2**62 + 100, 1, dtype=np.uint64)
+        result = np.searchsorted(a, 2**62 + 25)
+        assert result == 25
+
+    def test_python_int_scalar(self):
+        a = np.arange(-1 * 2**62, -1 * 2**62 + 100, 1, dtype=np.int64)
+        result = np.searchsorted(a, -1 * 2**62 + 25)
+        assert result == 25
+
+    def test_out_of_bounds(self):
+        a = np.arange(2 ** 7, 2 ** 7 + 100, 1, np.uint8)
+        # `uint8` overflow for 1000.
+        with pytest.raises(OverflowError):
+            result = np.searchsorted(a, 1000)
