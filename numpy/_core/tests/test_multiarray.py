@@ -9873,18 +9873,96 @@ class TestUnicodeArrayNonzero:
 class TestFormat:
 
     def test_0d(self):
+        # for now we are converting to Python type and calling its format
+        # ref: numpy/core/src/multiarray/scalartypes.c.src:gentype_format
         a = np.array(np.pi)
         assert_equal(f'{a:0.3g}', '3.14')
         assert_equal(f'{a[()]:0.3g}', '3.14')
+
+    def test_general_format(self):
+        a = np.array([np.pi])
+
+        try:
+            f'{a:.4g}'
+        except NotImplementedError:
+            pass
+        else:
+            # When the format character is implemented, the following
+            # tests should succeed.
+
+            # general format 'g' should behave the same as Python
+            # ref: https://docs.python.org/3/library/string.html#format-specification-mini-language
+            assert_equal(f'{a:.4g}', '3.142')
+            assert_equal(f'{10 * a:.4g}', '31.42')
+            assert_equal(f'{100 * a:.4g}', '314.2')
+            assert_equal(f'{1_000 * a:.2g}', '3.1e+03')
+            assert_equal(f'{1_000_000 * a:.4g}', '3.142e+06')
+            assert_equal(f'{1_000_000 * a:.4e}', '3.1416e+06')
+
+            a = np.array([1.001])
+            # Python trim trailing decimal points in general format
+            # but we should not do that in order to be explicit when
+            # using floats or integers as '1' should not be confused
+            # with '1.', the later being a float.
+            assert_equal(f'{a:.2g}', '1.')
 
     def test_1d_no_format(self):
         a = np.array([np.pi])
         assert_equal(f'{a}', str(a))
 
     def test_1d_format(self):
-        # until gh-5543, ensure that the behaviour matches what it used to be
-        a = np.array([np.pi])
-        assert_raises(TypeError, '{:30}'.format, a)
+        from numpy._core.arrayprint import _default_array_format
+        # gh-5543
+        fmtspc = "+.4f"
+
+        a = np.array([-1, 0, 1, 2], dtype="int")
+        with assert_raises(ValueError):
+            format(a, fmtspc)
+
+        a = np.array([-np.pi, np.pi],  dtype="float")
+        assert_equal(format(a, fmtspc), _default_array_format(a, fmtspc))
+
+        a = np.array([-np.pi, np.pi],  dtype=np.longdouble)
+        assert_equal(format(a, fmtspc), _default_array_format(a, fmtspc))
+
+        a = np.array([complex(-np.pi, np.pi)], dtype="complex")
+        assert_equal(format(a, fmtspc), _default_array_format(a, fmtspc))
+
+    def test_object_dtype(self):
+        # as suggested in gh-5543, if dtype is object treat it as such
+        a = np.array({}, dtype="object")
+        assert_equal(format(a, ""), str(a))
+        with assert_raises(TypeError):
+            format(a, "+.2f")
+
+        a = np.array([{}, {}], dtype="object")
+        assert_equal(format(a, ""), str(a))
+        with assert_raises(TypeError):
+            format(a, "+.2f")
+
+    def test_non_numeric(self):
+        fmtspc = "+.4f"
+
+        a = np.array([True], dtype="bool")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array(["wuju"], dtype="str")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array([b"wuju"], dtype="bytes")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array(["2021-12-12T10:10:10"], dtype="datetime64")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array([1, 2, 3], dtype="timedelta64[s]")
+        # it behaves as ints
+        with assert_raises(ValueError):
+            format(a, fmtspc)
 
 
 class TestCTypes:
