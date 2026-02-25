@@ -159,15 +159,15 @@ invalid_weekmask_string:
             int i;
 
             for (i = 0; i < 7; ++i) {
-                long val;
+                int val;
                 PyObject *f = PySequence_GetItem(obj, i);
                 if (f == NULL) {
                     Py_DECREF(obj);
                     return 0;
                 }
 
-                val = PyLong_AsLong(f);
-                if (error_converting(val)) {
+                val = PyObject_IsTrue(f);
+                if (val == -1) {
                     Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;
