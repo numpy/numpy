@@ -31,7 +31,7 @@ class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protoco
 
 class memmap(np.ndarray[_ShapeT_co, _DTypeT_co]):
     __module__: Literal["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
-    __array_priority__: ClassVar[float] = 100.0  # pyright: ignore[reportIncompatibleMethodOverride]
+    __array_priority__: ClassVar[float] = 100.0  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
 
     filename: Final[str | None]
     offset: Final[int]

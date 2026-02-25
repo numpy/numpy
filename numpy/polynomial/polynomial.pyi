@@ -104,6 +104,6 @@ polycompanion: Final[_FuncCompanion] = ...
 polyroots: Final[_FuncRoots] = ...
 
 class Polynomial(ABCPolyBase[None]):
-    basis_name: ClassVar[None] = None  # pyright: ignore[reportIncompatibleMethodOverride]
+    basis_name: ClassVar[None] = None  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
     domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
     window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
