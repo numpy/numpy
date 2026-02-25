@@ -604,7 +604,7 @@ class TestEigvals(EigvalsCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-        assert_equal(linalg.eigvals(x).dtype, dtype)
+        assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
         x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
         assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
 
@@ -614,7 +614,7 @@ class TestEigvals(EigvalsCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.eigvals(a)
-        assert_(res.dtype.type is np.float64)
+        assert_(res.dtype.type is np.complex128)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
         assert_(isinstance(res, np.ndarray))
@@ -643,8 +643,8 @@ class TestEig(EigCases):
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         w, v = np.linalg.eig(x)
-        assert_equal(w.dtype, dtype)
-        assert_equal(v.dtype, dtype)
+        assert_equal(w.dtype, get_complex_dtype(dtype))
+        assert_equal(v.dtype, get_complex_dtype(dtype))
 
         x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
         w, v = np.linalg.eig(x)
@@ -657,8 +657,8 @@ class TestEig(EigCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res, res_v = linalg.eig(a)
-        assert_(res_v.dtype.type is np.float64)
-        assert_(res.dtype.type is np.float64)
+        assert_(res_v.dtype.type is np.complex128)
+        assert_(res.dtype.type is np.complex128)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:

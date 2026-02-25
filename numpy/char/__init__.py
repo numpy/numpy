@@ -1,8 +1,10 @@
 from numpy._core.defchararray import __all__, __doc__
 
+__DEPRECATED = frozenset({"chararray", "array", "asarray"})
+
 
 def __getattr__(name: str):
-    if name == "chararray":
+    if name in __DEPRECATED:
         # Deprecated in NumPy 2.5, 2026-01-07
         import warnings
 
@@ -14,10 +16,6 @@ def __getattr__(name: str):
             DeprecationWarning,
             stacklevel=2,
         )
-
-        from numpy._core.defchararray import chararray
-
-        return chararray
 
     import numpy._core.defchararray as char
 

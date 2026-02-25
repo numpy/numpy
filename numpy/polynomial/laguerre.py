@@ -1525,6 +1525,10 @@ def lagroots(c):
     m = lagcompanion(c)[::-1, ::-1]
     r = np.linalg.eigvals(m)
     r.sort()
+
+    # backwards compat: return real values if possible
+    from numpy.linalg._linalg import _to_real_if_imag_zero
+    r = _to_real_if_imag_zero(r, m)
     return r
 
 

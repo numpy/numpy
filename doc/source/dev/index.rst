@@ -183,6 +183,8 @@ Guidelines
 * No changes are ever committed without review and approval by a core
   team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
+* Do not include copyright notices in source code without explicitly discussing the need first. 
+  In general, any code you contribute to the project is under the project `license <https://numpy.org/devdocs/license.html>`_.
 
 .. _stylistic-guidelines:
 

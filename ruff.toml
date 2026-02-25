@@ -19,7 +19,7 @@ line-ending = "lf"
 
 [lint]
 preview = true
-extend-select = [
+select = [
     "B",    # flake8-bugbear
     "C4",   # flake8-comprehensions
     "ISC",  # flake8-implicit-str-concat
@@ -34,9 +34,12 @@ extend-select = [
     "PERF", # perflint
     "E",    # pycodestyle/error
     "W",    # pycodestyle/warning
+    "F",    # pyflakes
     "PGH",  # pygrep-hooks
     "PLE",  # pylint/error
     "UP",   # pyupgrade
+    "RUF012",  # ruff: mutable-class-default
+    "RUF100",  # ruff: unused-noqa
 ]
 ignore = [
     # flake8-bugbear
@@ -75,9 +78,9 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"_tempita.py" = ["B909"]
-"bench_*.py" = ["B015", "B018"]
-"test*.py" = ["B015", "B018", "E201", "E714"]
+"_tempita.py" = ["B909", "RUF012"]
+"bench_*.py" = ["B015", "B018", "RUF012"]
+"test*.py" = ["B015", "B018", "E201", "E714", "RUF012"]
 
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]

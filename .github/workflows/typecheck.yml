@@ -1,4 +1,4 @@
-name: Run MyPy
+name: Type-checking
 
 # Mypy is too slow to run as part of regular CI. The purpose of the jobs in
 # this file is to cover running Mypy across:
@@ -67,14 +67,14 @@ jobs:
         activate-environment: true
         cache-dependency-glob: |
           requirements/build_requirements.txt
-          requirements/test_requirements.txt
+          requirements/typing_requirements.txt
     - name: Install dependencies
       # orjson makes mypy faster but the default requirements.txt
       # can't install it because orjson doesn't support 32 bit Linux
       run: >-
         uv pip install
         -r requirements/build_requirements.txt
-        -r requirements/test_requirements.txt
+        -r requirements/typing_requirements.txt
         orjson
         basedpyright
     - name: Build
@@ -89,3 +89,17 @@ jobs:
         --verifytypes numpy
         --ignoreexternal
         --exclude-like '*.tests.*' '*.conftest.*'
+
+  pyrefly:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      with:
+        activate-environment: true
+    - name: Install dependencies
+      run: >-
+        uv pip install
+        -r requirements/typing_requirements.txt
+    - name: Run pyrefly
+      run: pyrefly check

@@ -1,0 +1,4 @@
+Default memory allocator change
+-------------------------------
+NumPy now uses ``PyMem_RawMalloc`` and ``PyMem_RawFree`` as the default memory allocator,
+instead of system's ``malloc`` and ``free`` directly.
