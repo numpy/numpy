@@ -653,3 +653,231 @@ def test_reference_types():
 
     actual, _ = broadcast_arrays(input_array, np.ones(3))
     assert_array_equal(expected, actual)
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.float32,
+        np.float64,
+        np.complex64,
+        np.complex128,
+    ],
+)
+def test_as_strided_checked_different_dtypes(dtype):
+    """Test as_strided with check_bounds=True with different dtypes."""
+    x = np.arange(10, dtype=dtype)
+    y = as_strided(x, shape=(5,), strides=(x.itemsize * 2,), check_bounds=True)
+    assert y.shape == (5,)
+    assert y.dtype == dtype
+
+
+@pytest.mark.parametrize(
+    "size,view_size,stride_mult",
+    [
+        (10, 5, 1),  # Contiguous view
+        (10, 5, 2),  # Every other element
+        (20, 10, 2),  # Every other element
+        (100, 10, 10),  # Every 10th element
+    ],
+)
+def test_as_strided_checked_1d_positive_strides(size, view_size, stride_mult):
+    """Test 1D arrays with positive strides."""
+    x = np.arange(size, dtype=np.int64)
+    itemsize = x.itemsize
+    y = as_strided(
+        x, shape=(view_size,), strides=(itemsize * stride_mult,), check_bounds=True
+    )
+    assert y.shape == (view_size,)
+    # Verify data correctness
+    expected = x[::stride_mult][:view_size]
+    assert_array_equal(y, expected)
+
+
+@pytest.mark.parametrize(
+    "shape,window_shape",
+    [
+        ((10,), (3,)),
+        ((20,), (5,)),
+        ((100,), (10,)),
+    ],
+)
+def test_as_strided_checked_sliding_window_1d(shape, window_shape):
+    """Test sliding window views in 1D."""
+    x = np.arange(shape[0], dtype=np.int64)
+    itemsize = x.itemsize
+    n_windows = shape[0] - window_shape[0] + 1
+    view_shape = (n_windows, window_shape[0])
+    view_strides = (itemsize, itemsize)
+
+    y = as_strided(x, shape=view_shape, strides=view_strides, check_bounds=True)
+    assert y.shape == view_shape
+    # Check first and last windows
+    assert_array_equal(y[0], x[: window_shape[0]])
+    assert_array_equal(y[-1], x[-window_shape[0] :])
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [
+        (3, 4),
+        (5, 6),
+        (10, 10),
+    ],
+)
+def test_as_strided_checked_2d_default_strides(shape):
+    """Test 2D arrays with default strides."""
+    x = np.arange(np.prod(shape), dtype=np.int64).reshape(shape)
+    y = as_strided(x, check_bounds=True)  # Should use default shape and strides
+    assert_array_equal(y, x)
+
+
+@pytest.mark.parametrize("size", [0, 1, 2, 10, 100])
+def test_as_strided_checked_zero_stride_broadcasting(size):
+    """Test zero strides (broadcasting a single value)."""
+    x = np.array([42], dtype=np.int64)
+    y = as_strided(x, shape=(size,), strides=(0,), check_bounds=True)
+    assert y.shape == (size,)
+    if size > 0:
+        assert_(np.all(y == 42))
+
+
+@pytest.mark.parametrize(
+    "size,shape,strides",
+    [
+        # Strides too large
+        (10, (5,), (32,)),
+        (10, (10,), (16,)),
+        (20, (15,), (16,)),
+        # Shape too large for strides
+        (10, (20,), (8,)),
+        (10, (100,), (8,)),
+        # 2D out of bounds cases
+        (20, (5, 5), (80, 8)),
+        (20, (3, 10), (64, 8)),
+        # Negative strides that go before array start
+        (10, (5,), (-8,)),
+        (10, (10,), (-8,)),
+        (20, (5,), (-16,)),
+        # ND negative strides
+        (10, (2, 3, 4), (96, 32, -8)),
+        (20, (3, 4), (64, -8)),
+        (30, (2, 3, 4), (-96, 32, 8)),
+    ],
+)
+def test_as_strided_checked_out_of_bounds_positive_strides(size, shape, strides):
+    """Test that out-of-bounds positive strides raise ValueError."""
+    x = np.arange(size, dtype=np.int64)
+    with pytest.raises(ValueError, match="out of bounds"):
+        as_strided(x, shape=shape, strides=strides, check_bounds=True)
+
+
+def test_as_strided_checked_view_of_larger_array():
+    """Test as_strided
+
+    - with check_bounds=True
+    - considers the base array bounds, not just the view.
+
+    """
+    a = np.arange(1000, dtype=np.int64)
+
+    b = a[:2]
+
+    # This should succeed because the underlying array has enough memory
+    y = as_strided(b, shape=(2,), strides=(400,), check_bounds=True)
+    assert_equal(y.shape, (2,))
+    assert_equal(y[0], 0)
+    assert_equal(y[1], 50)
+
+
+def test_as_strided_checked_view_with_offset():
+    """Test as_strided
+
+    - with check_bounds=True
+    - on a view that doesn't start at the beginning.
+    """
+    a = np.arange(1000, dtype=np.int64)
+
+    b = a[100:102]
+
+    y = as_strided(b, shape=(2,), strides=(80,), check_bounds=True)
+    assert_equal(y.shape, (2,))
+    assert_equal(y[0], 100)
+    assert_equal(y[1], 110)
+
+
+def test_as_strided_checked_view_out_of_bounds_negative():
+    """Test that negative strides on a view correctly detect out of bounds."""
+    a = np.arange(1000, dtype=np.int64)
+
+    b = a[5:7]
+
+    with pytest.raises(ValueError, match="out of bounds"):
+        as_strided(b, shape=(2,), strides=(-48,), check_bounds=True)
+
+
+def test_as_strided_checked_view_out_of_bounds_positive():
+    """Test that positive strides on a view correctly detect out of bounds."""
+    a = np.arange(100, dtype=np.int64)
+
+    b = a[95:97]
+
+    with pytest.raises(ValueError, match="out of bounds"):
+        as_strided(b, shape=(2,), strides=(200,), check_bounds=True)
+
+
+def test_as_strided_checked_nested_views():
+    """Test as_strided with check_bounds=True on a view of a view."""
+    a = np.arange(1000, dtype=np.int64)
+    b = a[10:100]
+    c = b[5:10]
+
+    y = as_strided(c, shape=(2,), strides=(160,), check_bounds=True)
+    assert_equal(y.shape, (2,))
+    assert_equal(y[0], 15)
+    assert_equal(y[1], 35)
+
+
+def test_as_strided_checked_sliced_array():
+    """Test various slicing scenarios."""
+    a = np.arange(200, dtype=np.int64)
+
+    b = a[10:20]
+    y = as_strided(b, shape=(5,), strides=(16,), check_bounds=True)
+    assert_equal(y.shape, (5,))
+
+    c = a[::2]
+    y = as_strided(c, shape=(10,), strides=(16,), check_bounds=True)
+    assert_equal(y.shape, (10,))
+
+
+@pytest.mark.parametrize(
+    "start,stop,stride_bytes,should_pass",
+    [
+        (0, 10, 552, True),
+        (0, 10, 552 + 1, True),
+        (90, 95, 72, True),
+        (90, 95, 72 + 1, False),
+        (5, 7, -40, True),
+        (5, 7, -40 - 1, False),
+    ],
+)
+def test_as_strided_checked_view_parametrized(start, stop, stride_bytes, should_pass):
+    """Parametrized test for various view and stride combinations."""
+    a = np.arange(100, dtype=np.int64)
+    b = a[start:stop]
+
+    if should_pass:
+        y = as_strided(b, shape=(2,), strides=(stride_bytes,), check_bounds=True)
+        assert_equal(y.shape, (2,))
+    else:
+        with pytest.raises(ValueError, match="out of bounds"):
+            as_strided(b, shape=(2,), strides=(stride_bytes,), check_bounds=True)

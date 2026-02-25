@@ -22,6 +22,8 @@ def as_strided[ScalarT: np.generic](
     strides: Iterable[int] | None = None,
     subok: bool = False,
     writeable: bool = True,
+    *,
+    check_bounds: bool | None = None
 ) -> NDArray[ScalarT]: ...
 @overload
 def as_strided(
@@ -30,6 +32,8 @@ def as_strided(
     strides: Iterable[int] | None = None,
     subok: bool = False,
     writeable: bool = True,
+    *,
+    check_bounds: bool | None = None
 ) -> NDArray[Any]: ...
 
 @overload
