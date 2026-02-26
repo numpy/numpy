@@ -13,12 +13,12 @@ version = "*"
 [package.build.config]
 extra-input-globs = ["**/*.c.src"]
 compilers = ["c", "cxx"]
-env.ASAN_OPTIONS = "detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:use_sigaltstack=0"
-extra-args = ["-Csetup-args=-Db_sanitize=address", "-Csetup-args=-Dbuildtype=debug"] 
+env.TSAN_OPTIONS = "halt_on_error=0:allocator_may_return_null=1"
+extra-args = ["-Csetup-args=-Db_sanitize=thread", "-Csetup-args=-Dbuildtype=debug"]
 
 [package.host-dependencies]
 python.git = "https://github.com/python/cpython"
-python.subdirectory = "Tools/pixi-packages/asan"
+python.subdirectory = "Tools/pixi-packages/tsan-freethreading"
 
 meson-python = "*"
 cython = "*"
