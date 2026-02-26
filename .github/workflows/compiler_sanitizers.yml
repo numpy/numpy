@@ -156,6 +156,8 @@ jobs:
           uuid-dev \
           zlib1g-dev
 
+    # TODO install as a regular ubuntu package in the previous step once
+    # ubuntu 26.04 is available in GHA
     - name: Install clang 21
       run: |
         curl -fsSLo /tmp/llvm.sh https://apt.llvm.org/llvm.sh
