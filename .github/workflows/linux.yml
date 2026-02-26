@@ -94,18 +94,18 @@ jobs:
       with:
         python-version: '3.14'
         debug: true
-    - name: Build and install NumPy
+    - name: Install dependencies
       run: |
         python --version
         pip install -U pip
-        pip install . -v -Csetup-args=-Dbuildtype=debug -Csetup-args=-Dallow-noblas=true
-    - name: Install test dependencies
-      run: |
+        pip install -r requirements/build_requirements.txt
         pip install -r requirements/test_requirements.txt
+    - name: Build NumPy debug
+      run: |
+        spin build -- -Dbuildtype=debug -Dallow-noblas=true
     - name: Run test suite
       run: |
-        cd tools
-        pytest --timeout=600 --durations=10 --pyargs numpy -m "not slow"
+        spin test -- --timeout=600 --durations=10
 
   all_versions:
     # like the smoke tests but runs on more Python versions

@@ -136,7 +136,7 @@ def chebinterpolate[CoefScalarT: np.number | np.bool | np.object_](
 ) -> npt.NDArray[CoefScalarT]: ...
 
 class Chebyshev(ABCPolyBase[L["T"]]):
-    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride]
+    basis_name: ClassVar[L["T"]] = "T"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
     domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
     window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
