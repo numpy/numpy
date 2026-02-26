@@ -3,6 +3,7 @@
 """
 import functools
 import operator
+import warnings
 
 from numpy._core import iinfo, overrides
 from numpy._core._multiarray_umath import _array_converter
@@ -385,6 +386,13 @@ def diagflat(v, k=0):
 
     return conv.wrap(res)
 
+def _warn_if_float(n, stacklevel=3):
+    if isinstance(n, float):
+        warnings.warn(
+            f"Found {n} as an argument, floats as an input have been deprecated",
+            DeprecationWarning,
+            stacklevel=stacklevel
+        )
 
 @finalize_array_function_like
 @set_module('numpy')
@@ -429,11 +437,20 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
            [1.,  1.,  0.,  0.,  0.]])
 
     """
+    try:
+        N = operator.index(N)
+    except TypeError:
+        _warn_if_float(N, stacklevel=4)
     if like is not None:
         return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
 
     if M is None:
         M = N
+    else:
+        try:
+            M = operator.index(M)
+        except TypeError:
+            _warn_if_float(M, stacklevel=4)
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
                             arange(-k, M - k, dtype=_min_int(-k, M - k)))
@@ -1132,6 +1149,12 @@ def triu_indices(n, k=0, m=None):
            [ 12,  13,  14,  -1]])
 
     """
+
+    try:
+        k = operator.index(k)
+    except TypeError:
+        _warn_if_float(k)
+
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
     return tuple(broadcast_to(inds, tri_.shape)[tri_]
