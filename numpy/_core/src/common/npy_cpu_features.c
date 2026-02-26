@@ -447,7 +447,7 @@ npy__cpu_cpuid_count(int reg[4], int func_id, int count)
 static void
 npy__cpu_cpuid(int reg[4], int func_id)
 {
-    return npy__cpu_cpuid_count(reg, func_id, 0);
+    npy__cpu_cpuid_count(reg, func_id, 0);
 }
 
 static void
