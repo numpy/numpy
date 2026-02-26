@@ -217,8 +217,7 @@ def getctype(var):
                 except KeyError:
                     raw_typespec = var['typespec']
                     star = var['kindselector']['*']
-                    errmess(f'getctype: "{raw_typespec} * '
-                            f'{star}" not supported.\n')
+                    errmess(f'getctype: "{raw_typespec} * {star}" not supported.\n')
             elif 'kind' in var['kindselector']:
                 if typespec + 'kind' in f2cmap_all:
                     f2cmap = f2cmap_all[typespec + 'kind']
@@ -231,8 +230,7 @@ def getctype(var):
                         ctype = f2cmap[str(var['kindselector']['kind'])]
                     except KeyError:
                         kind = var['kindselector']['kind']
-                        errmess(f'getctype: "{typespec}'
-                                f'({kind=})" is mapped to C '
+                        errmess(f'getctype: "{typespec}({kind=})" is mapped to C '
                                 f'"{ctype}" (to override define dict({typespec} = '
                                 f'dict({kind}="<C typespec>")) '
                                 f'in {os.getcwd()}/.f2py_f2cmap file).\n')

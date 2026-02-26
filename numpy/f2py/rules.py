@@ -1443,8 +1443,7 @@ def buildmodule(m, um):
         with open(fn, 'w') as f:
             f.write('.. -*- rest -*-\n')
             f.write('\n'.join(ar['restdoc']))
-        outmess('    ReST Documentation is saved to file '
-                f'"{fn}"\n')
+        outmess(f'    ReST Documentation is saved to file "{fn}"\n')
     if options['dolatexdoc']:
         fn = os.path.join(
             options['buildpath'], vrd['modulename'] + 'module.tex')
@@ -1458,8 +1457,7 @@ def buildmodule(m, um):
                 f.write('\n'.join(ar['latexdoc']))
             if 'shortlatex' not in options:
                 f.write('\\end{document}')
-        outmess('    Documentation is saved to file '
-                f'"{fn}"\n')
+        outmess(f'    Documentation is saved to file "{fn}"\n')
     if funcwrappers:
         wn = os.path.join(options['buildpath'], vrd['f2py_wrapper_output'])
         ret['fsrc'] = wn
