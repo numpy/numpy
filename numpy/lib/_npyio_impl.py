@@ -121,19 +121,21 @@ class NpzFile(Mapping):
     archive provided on construction.
 
     `NpzFile` is used to load files in the NumPy ``.npz`` data archive
-    format. It assumes that files in the archive have a ``.npy`` extension,
-    other files are ignored.
+    format. Files in the archive with a ``.npy`` extension are loaded as
+    NumPy arrays; other files can be read as raw bytes.
 
     The arrays and file strings are lazily loaded on either
     getitem access using ``obj['key']`` or attribute lookup using
-    ``obj.f.key``. A list of all files (without ``.npy`` extensions) can
+    ``obj.f.key``. A list of all files (with ``.npy`` extensions removed where
+    present) can
     be obtained with ``obj.files`` and the ZipFile object itself using
     ``obj.zip``.
 
     Attributes
     ----------
     files : list of str
-        List of all files in the archive with a ``.npy`` extension.
+        List of all files in the archive, with ``.npy`` extensions removed
+        where present.
     zip : ZipFile instance
         The ZipFile object initialized with the zipped archive.
     f : BagObj instance
