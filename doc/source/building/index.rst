@@ -140,20 +140,12 @@ your system.
   .. tab-item:: Windows
     :sync: windows
 
-    On Windows, the use of a Fortran compiler is more tricky than on other
-    platforms, because MSVC does not support Fortran, and gfortran and MSVC
-    can't be used together. If you don't need to run the ``f2py`` tests, simply
-    using MSVC is easiest. Otherwise, you will need one of these sets of
-    compilers:
+    On Windows, if you don't need to run the ``f2py`` tests, using MSVC for C
+    and C++ is easiest.
 
-    1. MSVC + Intel Fortran (``ifort``)
-    2. Intel compilers (``icc``, ``ifort``)
-    3. Mingw-w64 compilers (``gcc``, ``g++``, ``gfortran``)
-
-    Compared to macOS and Linux, building NumPy on Windows is a little more
-    difficult, due to the need to set up these compilers. It is not possible to
-    just call a one-liner on the command prompt as you would on other
-    platforms.
+    If you do need a Fortran compiler (for example, to run ``f2py`` tests),
+    see the dedicated :ref:`f2py-windows` guide. It tracks supported Fortran +
+    C/C++ compiler combinations and setup steps for native Windows toolchains.
 
     First, install Microsoft Visual Studio - the 2019 Community Edition or any
     newer version will work (see the
@@ -164,61 +156,9 @@ your system.
     desired, to save disk space). The recommended version of the UCRT is
     >= 10.0.22621.0.
 
-    .. tab-set::
-
-      .. tab-item:: MSVC
-
-        The MSVC installer does not put the compilers on the system path, and
-        the install location may change. To query the install location, MSVC
-        comes with a ``vswhere.exe`` command-line utility. And to make the
-        C/C++ compilers available inside the shell you are using, you need to
-        run a ``.bat`` file for the correct bitness and architecture (e.g., for
-        64-bit Intel CPUs, use ``vcvars64.bat``).
-
-        If using a Conda environment while a version of Visual Studio 2019+ is
-        installed that includes the MSVC v142 package (VS 2019 C++ x86/x64
-        build tools), activating the conda environment should cause Visual
-        Studio to be found and the appropriate .bat file executed to set
-        these variables.
-
-        For detailed guidance, see `Use the Microsoft C++ toolset from the command line
-        <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
-
-      .. tab-item:: Intel
-
-        Similar to MSVC, the Intel compilers are designed to be used with an
-        activation script (``Intel\oneAPI\setvars.bat``) that you run in the
-        shell you are using. This makes the compilers available on the path.
-        For detailed guidance, see
-        `Get Started with the Intel® oneAPI HPC Toolkit for Windows
-        <https://www.intel.com/content/www/us/en/docs/oneapi-hpc-toolkit/get-started-guide-windows/2023-1/overview.html>`__.
-
-      .. tab-item:: MinGW-w64
-
-        There are several sources of binaries for MinGW-w64. We recommend the
-        RTools versions, which can be installed with Chocolatey (see
-        Chocolatey install instructions `here <https://chocolatey.org/install>`_)::
-
-            choco install rtools -y --no-progress --force --version=4.0.0.20220206
-
-    .. note::
-
-        Compilers should be on the system path (i.e., the ``PATH`` environment
-        variable should contain the directory in which the compiler executables
-        can be found) in order to be found, with the exception of MSVC which
-        will be found automatically if and only if there are no other compilers
-        on the ``PATH``. You can use any shell (e.g., Powershell, ``cmd`` or
-        Git Bash) to invoke a build. To check that this is the case, try
-        invoking a Fortran compiler in the shell you use (e.g., ``gfortran
-        --version`` or ``ifort --version``).
-
-    .. warning::
-
-        When using a conda environment it is possible that the environment
-        creation will not work due to an outdated Fortran compiler. If that
-        happens, remove the ``compilers`` entry from ``environment.yml`` and
-        try again. The Fortran compiler should be installed as described in
-        this section.
+    For detailed guidance on making the MSVC toolchain available in your shell,
+    see `Use the Microsoft C++ toolset from the command line
+    <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
 
   .. tab-item:: Windows on ARM64
     :sync: Windows on ARM64
