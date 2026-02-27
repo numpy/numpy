@@ -3276,6 +3276,21 @@ class MaskedArray(ndarray):
         # also make the mask be a view (so attr changes to the view's
         # mask do no affect original object's mask)
         # (especially important to avoid affecting np.masked singleton)
+        # ensure subclass views preserve mask and fill_value
+        
+        if not hasattr(output, "_mask"):
+            mask = getmask(self)
+            if mask is nomask:
+                output._mask = make_mask_none(output.shape)
+            else:
+                output._mask = mask.view()
+
+        if not hasattr(output, "_fill_value"):
+            output._fill_value = self._fill_value
+
+        # also make the mask be a view
+        # (so attr changes to the view's mask do no affect original object's mask)
+
         if getmask(output) is not nomask:
             output._mask = output._mask.view()
 
