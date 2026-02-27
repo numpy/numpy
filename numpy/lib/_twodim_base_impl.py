@@ -3,6 +3,7 @@
 """
 import functools
 import operator
+import os
 import warnings
 
 from numpy._core import iinfo, overrides
@@ -386,13 +387,21 @@ def diagflat(v, k=0):
 
     return conv.wrap(res)
 
-def _warn_if_float(n, stacklevel=3):
-    if isinstance(n, float):
+def _to_int(n):
+    a = int(n)
+    dtype_not_int = True
+
+    if hasattr(n, "dtype") and n.dtype.kind in "iu":
+        dtype_not_int = False
+
+    if dtype_not_int and not isinstance(n, int):
         warnings.warn(
-            f"Found {n} as an argument, floats as an input have been deprecated",
+            (f"Cannot convert {type(n).__name__} safely to an integer."
+             "This will raise an error in future versions(Deprecated NumPy 2.4)"),
             DeprecationWarning,
-            stacklevel=stacklevel
+            skip_file_prefixes=(os.path.dirname(__file__),),
         )
+    return a
 
 @finalize_array_function_like
 @set_module('numpy')
@@ -437,20 +446,20 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
            [1.,  1.,  0.,  0.,  0.]])
 
     """
-    try:
-        N = operator.index(N)
-    except TypeError:
-        _warn_if_float(N, stacklevel=4)
+
+    if not isinstance(N, int):
+        N = _to_int(N)
+
     if like is not None:
         return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
 
     if M is None:
         M = N
-    else:
-        try:
-            M = operator.index(M)
-        except TypeError:
-            _warn_if_float(M, stacklevel=4)
+    elif not isinstance(M, int):
+        M = _to_int(M)
+
+    if not isinstance(k, int):
+        k = _to_int(k)
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
                             arange(-k, M - k, dtype=_min_int(-k, M - k)))
@@ -1150,10 +1159,8 @@ def triu_indices(n, k=0, m=None):
 
     """
 
-    try:
-        k = operator.index(k)
-    except TypeError:
-        _warn_if_float(k)
+    if hasattr(k, "dtype") and k.dtype.kind == "u":
+        k = int(k)
 
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
