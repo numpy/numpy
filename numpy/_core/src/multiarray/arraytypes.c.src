@@ -1054,8 +1054,8 @@ VOID_setitem(PyArray_Descr *descr_, PyObject *op, char *ip)
                                     PyArray_DESCR(oparr), PyArray_DATA(oparr));
         }
         else if (PyArray_IsScalar(op, Void)) {
-            PyArray_Descr *srcdescr = (PyArray_Descr *)((PyVoidScalarObject *)op)->descr;
-            char *srcdata = ((PyVoidScalarObject *)op)->obval;
+            PyArray_Descr *srcdescr = (PyArray_Descr *)PyVoidScalar_DESCR((PyVoidScalarObject *)op);
+            char *srcdata = PyArrayScalar_VAL((PyVoidScalarObject *)op, Void);
             return _copy_and_return_void_setitem(descr, ip, srcdescr, srcdata);
         }
         else if (PyTuple_Check(op)) {
