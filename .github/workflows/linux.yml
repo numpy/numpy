@@ -130,7 +130,7 @@ jobs:
     - uses: ./.github/meson_actions
 
   full:
-    # Install as editable, then run the full test suite with code coverage
+    # Install as editable, then run the full test suite
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
@@ -162,8 +162,7 @@ jobs:
         pip install -e . --no-build-isolation
     - name: Run full test suite
       run: |
-        pytest numpy --durations=10 --timeout=600 --cov-report=html:build/coverage
-        # TODO: gcov
+        spin test -- --durations=10 --timeout=600
       env:
         PYTHONOPTIMIZE: 2
 
