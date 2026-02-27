@@ -130,9 +130,9 @@ F2PyGetThreadLocalCallbackPtr(char *key);
              : (F2PY_ALIGN8(intent) ? 8 : (F2PY_ALIGN16(intent) ? 16 : 1)))
 #define F2PY_CHECK_ALIGNMENT(arr, intent) \
     ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
-#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyArray_DESCR(arr)->type_num == NPY_STRING && PyArray_ITEMSIZE(arr) >= 1) \
-                                                 || PyArray_DESCR(arr)->type_num == NPY_UINT8)
-#define F2PY_IS_UNICODE_ARRAY(arr) (PyArray_DESCR(arr)->type_num == NPY_UNICODE)
+#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyDataType_TYPENUM(PyArray_DESCR(arr)) == NPY_STRING && PyArray_ITEMSIZE(arr) >= 1) \
+                                                 || PyDataType_TYPENUM(PyArray_DESCR(arr)) == NPY_UINT8)
+#define F2PY_IS_UNICODE_ARRAY(arr) (PyDataType_TYPENUM(PyArray_DESCR(arr)) == NPY_UNICODE)
 
 extern PyArrayObject *
 ndarray_from_pyobj(const int type_num, const int elsize_, npy_intp *dims,

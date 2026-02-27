@@ -355,7 +355,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     
     /* Avoid Ravel where possible for fewer copies. */
     if (!PyDataType_REFCHK(PyArray_DESCR(self)) && 
-        ((PyArray_DESCR(self)->flags & NPY_NEEDS_INIT) == 0)) {
+        ((PyDataType_FLAGS(PyArray_DESCR(self)) & NPY_NEEDS_INIT) == 0)) {
         
         /* Allocate final Bytes Object */
         ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
@@ -428,13 +428,13 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
      * not actually need a helping buffer, we always null it, just in case.
      * Use `long double` to ensure that the heap allocation is aligned.
      */
-    size_t n_max_align_t = (descr->elsize + sizeof(long double) - 1) / sizeof(long double);
+    size_t n_max_align_t = (PyDataType_ELSIZE(descr) + sizeof(long double) - 1) / sizeof(long double);
     NPY_ALLOC_WORKSPACE(value, long double, 2, n_max_align_t);
     if (value == NULL) {
         return -1;
     }
     if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-        memset(value, 0, descr->elsize);
+        memset(value, 0, PyDataType_ELSIZE(descr));
     }
 
     if (PyArray_Pack(descr, value, obj) < 0) {

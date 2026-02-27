@@ -56,8 +56,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
      * however it may be that this should be moved into `auxdata` eventually,
      * which may also be slightly faster/cleaner (but more involved).
      */
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -106,7 +106,7 @@ string_str_len_loop(PyArrayMethod_Context *context,
                     char *const data[], npy_intp const dimensions[],
                     npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     char *in = data[0];
     char *out = data[1];
@@ -135,7 +135,7 @@ string_unary_loop(PyArrayMethod_Context *context,
                   npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     buffer_method<enc> is_it = *(buffer_method<enc> *)(context->method->static_data);
-    int elsize = context->descriptors[0]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     char *in = data[0];
     char *out = data[1];
@@ -218,9 +218,9 @@ string_add_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
-    int outsize = context->descriptors[2]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[2]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -249,8 +249,8 @@ string_multiply_strint_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize;
-    int outsize = context->descriptors[2]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[2]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -280,8 +280,8 @@ string_multiply_intstr_loop(PyArrayMethod_Context *context,
                 char *const data[], npy_intp const dimensions[],
                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[1]->elsize;
-    int outsize = context->descriptors[2]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[1]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[2]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -316,8 +316,8 @@ string_findlike_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     findlike_function<enc> function = *(findlike_function<enc>)(context->method->static_data);
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -352,10 +352,10 @@ string_replace_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
-    int elsize3 = context->descriptors[2]->elsize;
-    int outsize = context->descriptors[4]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
+    int elsize3 = PyDataType_ELSIZE(context->descriptors[2]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[4]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -389,8 +389,8 @@ string_startswith_endswith_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -424,8 +424,8 @@ string_lrstrip_whitespace_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     STRIPTYPE striptype = *(STRIPTYPE *)(context->method->static_data);
-    int elsize = context->descriptors[0]->elsize;
-    int outsize = context->descriptors[1]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[1]);
 
     char *in = data[0];
     char *out = data[1];
@@ -452,9 +452,9 @@ string_lrstrip_chars_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     STRIPTYPE striptype = *(STRIPTYPE *)(context->method->static_data);
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
-    int outsize = context->descriptors[2]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[2]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -483,7 +483,7 @@ string_expandtabs_length_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -510,8 +510,8 @@ string_expandtabs_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize;
-    int outsize = context->descriptors[2]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[2]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -541,9 +541,9 @@ string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     JUSTPOSITION pos = *(JUSTPOSITION *)(context->method->static_data);
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize3 = context->descriptors[2]->elsize;
-    int outsize = context->descriptors[3]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize3 = PyDataType_ELSIZE(context->descriptors[2]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[3]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -582,8 +582,8 @@ string_zfill_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int elsize = context->descriptors[0]->elsize;
-    int outsize = context->descriptors[2]->elsize;
+    int elsize = PyDataType_ELSIZE(context->descriptors[0]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[2]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -616,11 +616,11 @@ string_partition_index_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
-    int elsize1 = context->descriptors[0]->elsize;
-    int elsize2 = context->descriptors[1]->elsize;
-    int outsize1 = context->descriptors[3]->elsize;
-    int outsize2 = context->descriptors[4]->elsize;
-    int outsize3 = context->descriptors[5]->elsize;
+    int elsize1 = PyDataType_ELSIZE(context->descriptors[0]);
+    int elsize2 = PyDataType_ELSIZE(context->descriptors[1]);
+    int outsize1 = PyDataType_ELSIZE(context->descriptors[3]);
+    int outsize2 = PyDataType_ELSIZE(context->descriptors[4]);
+    int outsize3 = PyDataType_ELSIZE(context->descriptors[5]);
 
     char *in1 = data[0];
     char *in2 = data[1];
@@ -666,8 +666,8 @@ string_slice_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    int insize = context->descriptors[0]->elsize;
-    int outsize = context->descriptors[4]->elsize;
+    int insize = PyDataType_ELSIZE(context->descriptors[0]);
+    int outsize = PyDataType_ELSIZE(context->descriptors[4]);
 
     char *in_ptr = data[0];
     char *start_ptr = data[1];
@@ -731,12 +731,12 @@ string_addition_resolve_descriptors(
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    npy_intp result_itemsize = given_descrs[0]->elsize + given_descrs[1]->elsize;
+    npy_intp result_itemsize = PyDataType_ELSIZE(given_descrs[0]) + PyDataType_ELSIZE(given_descrs[1]);
 
     /* NOTE: elsize can fit more than MAX_INT, but some code may still use ints */
     if (result_itemsize > NPY_MAX_INT || result_itemsize < 0) {
             npy_intp length = result_itemsize;
-            if (given_descrs[0]->type == NPY_UNICODE) {
+            if (PyDataType_TYPE(given_descrs[0]) == NPY_UNICODE) {
                 length /= 4;
             }
             PyErr_Format(PyExc_TypeError,
@@ -762,7 +762,8 @@ string_addition_resolve_descriptors(
         Py_DECREF(loop_descrs[1]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-    loop_descrs[2]->elsize += loop_descrs[1]->elsize;
+    npy_intp elsize_2 = PyDataType_ELSIZE(loop_descrs[2]);
+    PyDataType_SET_ELSIZE(loop_descrs[2], elsize_2 + PyDataType_ELSIZE(loop_descrs[1]));
 
     return NPY_NO_CASTING;
 }
@@ -1195,7 +1196,7 @@ string_slice_resolve_descriptors(
     if (loop_descrs[4] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-    loop_descrs[4]->elsize = loop_descrs[0]->elsize;
+    PyDataType_SET_ELSIZE(loop_descrs[4], PyDataType_ELSIZE(loop_descrs[0]));
 
     return NPY_NO_CASTING;
 }
@@ -2027,7 +2028,7 @@ _umath_strings_richcompare(
 
     if (rstrip == 0) {
         /* NOTE: Also used for VOID, so can be STRING, UNICODE, or VOID: */
-        if (descrs[0]->type_num != NPY_UNICODE) {
+        if (PyDataType_TYPENUM(descrs[0]) != NPY_UNICODE) {
             strided_loop = get_strided_loop<false, ENCODING::ASCII>(cmp_op);
         }
         else {
@@ -2035,7 +2036,7 @@ _umath_strings_richcompare(
         }
     }
     else {
-        if (descrs[0]->type_num != NPY_UNICODE) {
+        if (PyDataType_TYPENUM(descrs[0]) != NPY_UNICODE) {
             strided_loop = get_strided_loop<true, ENCODING::ASCII>(cmp_op);
         }
         else {

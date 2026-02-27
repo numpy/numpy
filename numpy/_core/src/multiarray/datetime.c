@@ -1627,8 +1627,8 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
     PyArray_Descr *dtype;
     int is_datetime;
 
-    type_num1 = type1->type_num;
-    type_num2 = type2->type_num;
+    type_num1 = PyDataType_TYPENUM(type1);
+    type_num2 = PyDataType_TYPENUM(type2);
 
     is_datetime = (type_num1 == NPY_DATETIME || type_num2 == NPY_DATETIME);
 
@@ -2404,8 +2404,8 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     }
     /* Datetime zero-dimensional array */
     else if (PyArray_Check(obj) &&
-              PyArray_NDIM((PyArrayObject *)obj) == 0 &&
-              PyArray_DESCR((PyArrayObject *)obj)->type_num == NPY_DATETIME) {
+             PyArray_NDIM((PyArrayObject *)obj) == 0 &&
+             PyDataType_TYPENUM(PyArray_DESCR((PyArrayObject *)obj)) == NPY_DATETIME) {
         PyArrayObject *arr = (PyArrayObject *)obj;
         PyArray_DatetimeMetaData *arr_meta;
         npy_datetime dt = 0;
@@ -2606,7 +2606,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
     /* Timedelta zero-dimensional array */
     else if (PyArray_Check(obj) &&
              PyArray_NDIM((PyArrayObject *)obj) == 0 &&
-             PyArray_DESCR((PyArrayObject *)obj)->type_num == NPY_TIMEDELTA) {
+             PyDataType_TYPENUM(PyArray_DESCR((PyArrayObject *)obj)) == NPY_TIMEDELTA) {
         PyArrayObject *arr = (PyArrayObject *)obj;
         PyArray_DatetimeMetaData *arr_meta;
         npy_timedelta dt = 0;
@@ -3065,10 +3065,10 @@ has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2)
 {
     PyArray_DatetimeMetaData *meta1, *meta2;
 
-    if ((type1->type_num != NPY_DATETIME &&
-                        type1->type_num != NPY_TIMEDELTA) ||
-                    (type2->type_num != NPY_DATETIME &&
-                        type2->type_num != NPY_TIMEDELTA)) {
+    if ((PyDataType_TYPENUM(type1) != NPY_DATETIME &&
+         PyDataType_TYPENUM(type1) != NPY_TIMEDELTA) ||
+        (PyDataType_TYPENUM(type2) != NPY_DATETIME &&
+         PyDataType_TYPENUM(type2) != NPY_TIMEDELTA)) {
         return 0;
     }
 
@@ -3176,9 +3176,8 @@ static NPY_GCC_NONNULL(1) npy_bool
 is_any_numpy_datetime(PyObject *obj)
 {
     return (PyArray_IsScalar(obj, Datetime) ||
-            (PyArray_Check(obj) && (
-                PyArray_DESCR((PyArrayObject *)obj)->type_num ==
-                                                        NPY_DATETIME)) ||
+            (PyArray_Check(obj) &&
+             (PyDataType_TYPENUM(PyArray_DESCR((PyArrayObject *)obj)) == NPY_DATETIME)) ||
             PyDate_Check(obj) ||
             PyDateTime_Check(obj));
 }
@@ -3192,7 +3191,7 @@ is_any_numpy_timedelta(PyObject *obj)
 {
     return (PyArray_IsScalar(obj, Timedelta) ||
         (PyArray_Check(obj) && (
-            PyArray_DESCR((PyArrayObject *)obj)->type_num == NPY_TIMEDELTA)) ||
+            PyDataType_TYPENUM(PyArray_DESCR((PyArrayObject *)obj)) == NPY_TIMEDELTA)) ||
         PyDelta_Check(obj));
 }
 
@@ -3385,7 +3384,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     if (dtype != NULL) {
         PyArray_DatetimeMetaData *meta_tmp;
 
-        type_nums[0] = dtype->type_num;
+        type_nums[0] = PyDataType_TYPENUM(dtype);
         if (type_nums[0] != NPY_DATETIME && type_nums[0] != NPY_TIMEDELTA) {
             PyErr_SetString(PyExc_ValueError,
                         "datetime_arange was given a non-datetime dtype");
@@ -3594,7 +3593,7 @@ find_string_array_datetime64_type(PyArrayObject *arr,
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
     /* Get the resulting string length */
-    maxlen = NpyIter_GetDescrArray(iter)[0]->elsize;
+    maxlen = PyDataType_ELSIZE(NpyIter_GetDescrArray(iter)[0]);
 
     /* Allocate a buffer for strings which fill the buffer completely */
     tmp_buffer = PyArray_malloc(maxlen+1);
@@ -3868,7 +3867,7 @@ time_to_time_resolve_descriptors(
         loop_descrs[1] = given_descrs[1];
     }
 
-    int is_timedelta = given_descrs[0]->type_num == NPY_TIMEDELTA;
+    int is_timedelta = PyDataType_TYPENUM(given_descrs[0]) == NPY_TIMEDELTA;
 
     if (given_descrs[0] == given_descrs[1]) {
         *view_offset = 0;
@@ -4052,7 +4051,7 @@ time_to_string_resolve_descriptors(
     else {
         /* Find the correct string length, possibly based on the unit */
         int size;
-        if (given_descrs[0]->type_num == NPY_DATETIME) {
+        if (PyDataType_TYPENUM(given_descrs[0]) == NPY_DATETIME) {
             PyArray_DatetimeMetaData *meta = get_datetime_metadata_from_dtype(given_descrs[0]);
             assert(meta != NULL);
             size = NpyDatetime_GetDatetimeISO8601StrLen(0, meta->base);
@@ -4071,7 +4070,7 @@ time_to_string_resolve_descriptors(
         if (loop_descrs[1] == NULL) {
             return -1;
         }
-        loop_descrs[1]->elsize = size;
+        PyDataType_SET_ELSIZE(loop_descrs[1], size);
     }
 
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
@@ -4093,7 +4092,7 @@ datetime_to_string_get_loop(
     PyArray_Descr *const *descrs = context->descriptors;
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
 
-    if (descrs[1]->type_num == NPY_STRING) {
+    if (PyDataType_TYPENUM(descrs[1]) == NPY_STRING) {
         if (get_nbo_datetime_to_string_transfer_function(
                 descrs[0], descrs[1],
                 out_loop, out_transferdata) == NPY_FAIL) {
@@ -4101,7 +4100,7 @@ datetime_to_string_get_loop(
         }
     }
     else {
-        assert(descrs[1]->type_num == NPY_UNICODE);
+        assert(PyDataType_TYPENUM(descrs[1]) == NPY_UNICODE);
         int out_needs_api;
         if (get_datetime_to_unicode_transfer_function(
                 aligned, strides[0], strides[1], descrs[0], descrs[1],
@@ -4153,14 +4152,14 @@ string_to_datetime_cast_get_loop(
     PyArray_Descr *const *descrs = context->descriptors;
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
 
-    if (descrs[0]->type_num == NPY_STRING) {
+    if (PyDataType_TYPENUM(descrs[0]) == NPY_STRING) {
         if (get_nbo_string_to_datetime_transfer_function(
                 descrs[0], descrs[1], out_loop, out_transferdata) == NPY_FAIL) {
             return -1;
         }
     }
     else {
-        assert(descrs[0]->type_num == NPY_UNICODE);
+        assert(PyDataType_TYPENUM(descrs[0]) == NPY_UNICODE);
         int out_needs_api;
         if (get_unicode_to_datetime_transfer_function(
                 aligned, strides[0], strides[1], descrs[0], descrs[1],
@@ -4267,7 +4266,7 @@ PyArray_InitializeDatetimeCasts()
         NPY_CASTING to_timedelta_casting = NPY_UNSAFE_CASTING;
         if (PyTypeNum_ISINTEGER(num) || num == NPY_BOOL) {
             /* timedelta casts like int64 right now... */
-            if (PyTypeNum_ISUNSIGNED(num) && tmp->singleton->elsize == 8) {
+            if (PyTypeNum_ISUNSIGNED(num) && PyDataType_ELSIZE(tmp->singleton) == 8) {
                 to_timedelta_casting = NPY_SAME_KIND_CASTING;
             }
             else {

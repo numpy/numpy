@@ -179,7 +179,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         return -1;
     }
     descr_proto->type_num = -1;
-    if (PyDataType_ISUNSIZED(descr_proto)) {
+    if (descr_proto->elsize == 0) {
         PyErr_SetString(PyExc_ValueError, "cannot register a" \
                         "flexible data-type");
         return -1;
@@ -437,7 +437,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
      * built-in types needs to be modified, as cancastto is
      * not checked for them.
      */
-    if (!PyTypeNum_ISUSERDEF(descr->type_num) &&
+    if (!PyDataType_ISUSERDEF(descr) &&
                                         !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_ValueError,
                         "At least one of the types provided to "
@@ -542,7 +542,7 @@ legacy_userdtype_common_dtype_function(
      */
 
     /* Convert the 'kind' char into a scalar kind */
-    switch (cls->singleton->kind) {
+    switch (PyDataType_KIND(cls->singleton)) {
         case 'b':
             skind1 = NPY_BOOL_SCALAR;
             break;
@@ -559,7 +559,7 @@ legacy_userdtype_common_dtype_function(
             skind1 = NPY_COMPLEX_SCALAR;
             break;
     }
-    switch (other->singleton->kind) {
+    switch (PyDataType_KIND(other->singleton)) {
         case 'b':
             skind2 = NPY_BOOL_SCALAR;
             break;

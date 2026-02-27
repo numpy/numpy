@@ -236,7 +236,7 @@ get_loop(PyArrayMethod_Context *context,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (context->descriptors[1]->type_num == context->descriptors[0]->type_num) {
+    if (PyDataType_TYPENUM(context->descriptors[1]) == PyDataType_TYPENUM(context->descriptors[0])) {
         /*
          * Fall back to the current implementation, which wraps legacy loops.
          */
@@ -246,11 +246,11 @@ get_loop(PyArrayMethod_Context *context,
     }
     else {
         PyArray_Descr *other_descr;
-        if (context->descriptors[1]->type_num == NPY_OBJECT) {
+        if (PyDataType_TYPENUM(context->descriptors[1]) == NPY_OBJECT) {
             other_descr = context->descriptors[1];
         }
         else {
-            assert(context->descriptors[0]->type_num == NPY_OBJECT);
+            assert(PyDataType_TYPENUM(context->descriptors[0]) == NPY_OBJECT);
             other_descr = context->descriptors[0];
         }
         /* HACK: If the descr is the singleton the result is smaller */

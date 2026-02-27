@@ -81,7 +81,7 @@ PyArray_ZeroContiguousBuffer(
             NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
     if (get_fill_zero_loop != NULL) {
         if (get_fill_zero_loop(
-                    NULL, descr, aligned, descr->elsize, &(zero_info.func),
+                    NULL, descr, aligned, PyDataType_ELSIZE(descr), &(zero_info.func),
                     &(zero_info.auxdata), &flags_unused) < 0) {
             return -1;
         }
@@ -126,7 +126,7 @@ PyArray_ZeroContiguousBuffer(
     int aligned = PyArray_ISALIGNED(arr);
     if (PyArray_ISCONTIGUOUS(arr) || PyArray_IS_F_CONTIGUOUS(arr)) {
         return PyArray_ClearBuffer(
-                descr, PyArray_BYTES(arr), descr->elsize,
+                descr, PyArray_BYTES(arr), PyDataType_ELSIZE(descr),
                 PyArray_SIZE(arr), aligned);
     }
     int idim, ndim;
@@ -176,7 +176,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
     if (!PyDataType_REFCHK(descr)) {
         return;
     }
-    if (descr->type_num == NPY_OBJECT) {
+    if (PyDataType_TYPENUM(descr) == NPY_OBJECT) {
         memcpy(&temp, data, sizeof(temp));
         Py_XINCREF(temp);
     }
@@ -200,13 +200,13 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
-        inner_elsize = PyDataType_SUBARRAY(descr)->base->elsize;
+        inner_elsize = PyDataType_ELSIZE(PyDataType_SUBARRAY(descr)->base);
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return;
         }
         /* Subarrays are always contiguous in memory */
-        size = descr->elsize / inner_elsize;
+        size = PyDataType_ELSIZE(descr) / inner_elsize;
 
         for (i = 0; i < size; i++){
             /* Recursively increment the reference count of subarray elements */
@@ -238,7 +238,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         return;
     }
 
-    if (descr->type_num == NPY_OBJECT) {
+    if (PyDataType_TYPENUM(descr) == NPY_OBJECT) {
         memcpy(&temp, data, sizeof(temp));
         Py_XDECREF(temp);
     }
@@ -262,13 +262,13 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
-        inner_elsize = PyDataType_SUBARRAY(descr)->base->elsize;
+        inner_elsize = PyDataType_ELSIZE(PyDataType_SUBARRAY(descr)->base);
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return;
         }
         /* Subarrays are always contiguous in memory */
-        size = descr->elsize / inner_elsize;
+        size = PyDataType_ELSIZE(descr) / inner_elsize;
 
         for (i = 0; i < size; i++){
             /* Recursively decrement the reference count of subarray elements */
@@ -299,7 +299,7 @@ PyArray_INCREF(PyArrayObject *mp)
     if (!PyDataType_REFCHK(PyArray_DESCR(mp))) {
         return 0;
     }
-    if (PyArray_DESCR(mp)->type_num != NPY_OBJECT) {
+    if (PyDataType_TYPENUM(PyArray_DESCR(mp)) != NPY_OBJECT) {
         it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
         if (it == NULL) {
             return -1;
@@ -366,7 +366,7 @@ PyArray_XDECREF(PyArrayObject *mp)
     if (!PyDataType_REFCHK(PyArray_DESCR(mp))) {
         return 0;
     }
-    if (PyArray_DESCR(mp)->type_num != NPY_OBJECT) {
+    if (PyDataType_TYPENUM(PyArray_DESCR(mp)) != NPY_OBJECT) {
         if (PyArray_NDIM(mp) > NPY_MAXDIMS_LEGACY_ITERS) {
             PyErr_Format(PyExc_RuntimeError,
                     "this function only supports up to 32 dimensions but "
@@ -442,7 +442,7 @@ PyArray_SetObjectsToNone(PyArrayObject *arr)
 
     npy_intp i,n;
     n = PyArray_SIZE(arr);
-    if (descr->type_num == NPY_OBJECT) {
+    if (PyDataType_TYPENUM(descr) == NPY_OBJECT) {
         PyObject **optr;
         optr = (PyObject **)(PyArray_DATA(arr));
         n = PyArray_SIZE(arr);
@@ -458,7 +458,7 @@ PyArray_SetObjectsToNone(PyArrayObject *arr)
             if (_fill_with_none(optr, descr) < 0) {
                 return -1;
             }
-            optr += descr->elsize;
+            optr += PyDataType_ELSIZE(descr);
         }
     }
     return 0;
@@ -472,7 +472,7 @@ _fill_with_none(char *optr, PyArray_Descr *dtype)
         return 0;
     }
     PyObject *None = Py_None;
-    if (dtype->type_num == NPY_OBJECT) {
+    if (PyDataType_TYPENUM(dtype) == NPY_OBJECT) {
         Py_XINCREF(Py_None);
         memcpy(optr, &None, sizeof(PyObject *));
     }
@@ -497,13 +497,13 @@ _fill_with_none(char *optr, PyArray_Descr *dtype)
     else if (PyDataType_HASSUBARRAY(dtype)) {
         int size, i, inner_elsize;
 
-        inner_elsize = PyDataType_SUBARRAY(dtype)->base->elsize;
+        inner_elsize = PyDataType_ELSIZE(PyDataType_SUBARRAY(dtype)->base);
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return 0;
         }
         /* Subarrays are always contiguous in memory */
-        size = dtype->elsize / inner_elsize;
+        size = PyDataType_ELSIZE(dtype) / inner_elsize;
 
         /* Call _fillobject on each item recursively. */
         for (i = 0; i < size; i++) {

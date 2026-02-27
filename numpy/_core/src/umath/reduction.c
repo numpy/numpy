@@ -237,7 +237,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         op[2] = wheremask;
         /* wheremask is guaranteed to be NPY_BOOL, so borrow its reference */
         op_dtypes[2] = PyArray_DESCR(wheremask);
-        assert(op_dtypes[2]->type_num == NPY_BOOL);
+        assert(PyDataType_TYPENUM(op_dtypes[2]) == NPY_BOOL);
         if (op_dtypes[2] == NULL) {
             goto fail;
         }
@@ -308,7 +308,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
     else {
         /* Not all functions will need initialization, but init always: */
-        initial_buf = PyMem_Calloc(1, op_dtypes[0]->elsize);
+        initial_buf = PyMem_Calloc(1, PyDataType_ELSIZE(op_dtypes[0]));
         if (initial_buf == NULL) {
             PyErr_NoMemory();
             goto fail;

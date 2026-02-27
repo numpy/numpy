@@ -361,7 +361,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             }
         }
     }
-    if (PyTypeNum_ISCOMPLEX(descr->type_num) &&
+    if (PyTypeNum_ISCOMPLEX(PyDataType_TYPENUM(descr)) &&
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
@@ -1055,7 +1055,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
              * no reliable byteorder.  Note: This path preserves metadata!
              */
             && NPY_DT_is_legacy(NPY_DTYPE(type1))
-            && PyArray_ISNBO(type1->byteorder) && type1->type_num != NPY_VOID) {
+            && PyArray_ISNBO(PyDataType_BYTEORDER(type1)) && PyDataType_TYPENUM(type1) != NPY_VOID) {
         Py_INCREF(type1);
         return type1;
     }
@@ -1416,20 +1416,20 @@ PyArray_MinScalarType(PyArrayObject *arr)
     /*
      * If the array isn't a numeric scalar, just return the array's dtype.
      */
-    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(PyDataType_TYPENUM(dtype))) {
         Py_INCREF(dtype);
         return dtype;
     }
     else {
         char *data = PyArray_BYTES(arr);
-        int swap = !PyArray_ISNBO(dtype->byteorder);
+        int swap = !PyArray_ISNBO(PyDataType_BYTEORDER(dtype));
         /* An aligned memory buffer large enough to hold any type */
         npy_longlong value[4];
         PyDataType_GetArrFuncs(dtype)->copyswap(&value, data, swap, NULL);
 
         return PyArray_DescrFromType(
                         min_scalar_type_num((char *)&value,
-                                dtype->type_num, &is_small_unsigned));
+                                PyDataType_TYPENUM(dtype), &is_small_unsigned));
 
     }
 }
@@ -1495,14 +1495,14 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
             }
             if (PyArray_NDIM(arr[i]) == 0) {
                 int kind = dtype_kind_to_simplified_ordering(
-                                    PyArray_DESCR(arr[i])->kind);
+                        PyDataType_KIND(PyArray_DESCR(arr[i])));
                 if (kind > max_scalar_kind) {
                     max_scalar_kind = kind;
                 }
             }
             else {
                 int kind = dtype_kind_to_simplified_ordering(
-                                    PyArray_DESCR(arr[i])->kind);
+                        PyDataType_KIND(PyArray_DESCR(arr[i])));
                 if (kind > max_array_kind) {
                     max_array_kind = kind;
                 }
@@ -1517,7 +1517,7 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
             if (!NPY_DT_is_legacy(NPY_DTYPE(dtypes[i]))) {
                 return 0;
             }
-            int kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
+            int kind = dtype_kind_to_simplified_ordering(PyDataType_KIND(dtypes[i]));
             if (kind > max_array_kind) {
                 max_array_kind = kind;
             }
@@ -1556,7 +1556,7 @@ should_use_min_scalar_weak_literals(int narrs, PyArrayObject **arr) {
         else {
             all_scalars = 0;
             int kind = dtype_kind_to_simplified_ordering(
-                    PyArray_DESCR(arr[i])->kind);
+                    PyDataType_KIND(PyArray_DESCR(arr[i])));
             if (kind > max_array_kind) {
                 max_array_kind = kind;
             }
@@ -1913,7 +1913,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
         ret = NPY_NOTYPE;
     }
     else {
-        ret = dtype->type_num;
+        ret = PyDataType_TYPENUM(dtype);
     }
 
     Py_XDECREF(dtype);
@@ -2123,7 +2123,7 @@ legacy_same_dtype_resolve_descriptors(
     }
 
     /* this function only makes sense for non-flexible legacy dtypes: */
-    assert(loop_descrs[0]->elsize == loop_descrs[1]->elsize);
+    assert(PyDataType_ELSIZE(loop_descrs[0]) == PyDataType_ELSIZE(loop_descrs[1]));
 
     /*
      * Legacy dtypes (except datetime) only have byte-order and elsize as
@@ -2211,12 +2211,12 @@ get_byteswap_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyArray_Descr *const *descrs = context->descriptors;
-    assert(descrs[0]->kind == descrs[1]->kind);
-    assert(descrs[0]->elsize == descrs[1]->elsize);
-    int itemsize = descrs[0]->elsize;
+    assert(PyDataType_KIND(descrs[0])== PyDataType_KIND(descrs[1]));
+    assert(PyDataType_ELSIZE(descrs[0]) == PyDataType_ELSIZE(descrs[1]));
+    int itemsize = PyDataType_ELSIZE(descrs[0]);
     *flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     *out_transferdata = NULL;
-    if (descrs[0]->kind == 'c') {
+    if (PyDataType_KIND(descrs[0])== 'c') {
         /*
          * TODO: we have an issue with complex, since the below loops
          *       use the itemsize, the complex alignment would be too small.
@@ -2230,7 +2230,7 @@ get_byteswap_loop(
         *out_loop = PyArray_GetStridedCopyFn(
                 aligned, strides[0], strides[1], itemsize);
     }
-    else if (!PyTypeNum_ISCOMPLEX(descrs[0]->type_num)) {
+    else if (!PyTypeNum_ISCOMPLEX(PyDataType_TYPENUM(descrs[0]))) {
         *out_loop = PyArray_GetStridedCopySwapFn(
                 aligned, strides[0], strides[1], itemsize);
     }
@@ -2278,8 +2278,8 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
             .slots = slots,
     };
 
-    npy_intp from_itemsize = from->singleton->elsize;
-    npy_intp to_itemsize = to->singleton->elsize;
+    npy_intp from_itemsize = PyDataType_ELSIZE(from->singleton);
+    npy_intp to_itemsize = PyDataType_ELSIZE(to->singleton);
 
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &simple_cast_resolve_descriptors;
@@ -2318,7 +2318,7 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     assert(slots[1].pfunc && slots[2].pfunc && slots[3].pfunc && slots[4].pfunc);
 
     /* Find the correct casting level, and special case no-cast */
-    if (dtypes[0]->singleton->kind == dtypes[1]->singleton->kind
+    if (PyDataType_KIND(dtypes[0]->singleton) == PyDataType_KIND(dtypes[1]->singleton)
             && from_itemsize == to_itemsize) {
         spec.casting = NPY_EQUIV_CASTING;
         spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
@@ -2339,8 +2339,8 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         spec.casting |= NPY_SAME_VALUE_CASTING_FLAG;
     }
     else {
-        if (dtype_kind_to_ordering(dtypes[0]->singleton->kind) <=
-                dtype_kind_to_ordering(dtypes[1]->singleton->kind)) {
+        if (dtype_kind_to_ordering(PyDataType_KIND(dtypes[0]->singleton)) <=
+                dtype_kind_to_ordering(PyDataType_KIND(dtypes[1]->singleton))) {
             spec.casting = NPY_SAME_KIND_CASTING;
         }
         else {
@@ -2401,7 +2401,7 @@ cast_to_string_resolve_descriptors(
      * a multiple of eight.
      */
     npy_intp size = -1;
-    switch (given_descrs[0]->type_num) {
+    switch (PyDataType_TYPENUM(given_descrs[0])) {
         case NPY_BOOL:
         case NPY_UBYTE:
         case NPY_BYTE:
@@ -2413,18 +2413,18 @@ cast_to_string_resolve_descriptors(
         case NPY_LONG:
         case NPY_ULONGLONG:
         case NPY_LONGLONG:
-            assert(given_descrs[0]->elsize <= 8);
-            assert(given_descrs[0]->elsize > 0);
-            if (given_descrs[0]->kind == 'b') {
+            assert(PyDataType_ELSIZE(given_descrs[0]) <= 8);
+            assert(PyDataType_ELSIZE(given_descrs[0]) > 0);
+            if (PyDataType_KIND(given_descrs[0]) == 'b') {
                 /* 5 chars needed for cast to 'True' or 'False' */
                 size = 5;
             }
-            else if (given_descrs[0]->kind == 'u') {
-                size = REQUIRED_STR_LEN[given_descrs[0]->elsize];
+            else if (PyDataType_KIND(given_descrs[0]) == 'u') {
+                size = REQUIRED_STR_LEN[PyDataType_ELSIZE(given_descrs[0])];
             }
-            else if (given_descrs[0]->kind == 'i') {
+            else if (PyDataType_KIND(given_descrs[0]) == 'i') {
                 /* Add character for sign symbol */
-                size = REQUIRED_STR_LEN[given_descrs[0]->elsize] + 1;
+                size = REQUIRED_STR_LEN[PyDataType_ELSIZE(given_descrs[0])] + 1;
             }
             break;
         case NPY_HALF:
@@ -2444,10 +2444,10 @@ cast_to_string_resolve_descriptors(
             break;
         case NPY_STRING:
         case NPY_VOID:
-            size = given_descrs[0]->elsize;
+            size = PyDataType_ELSIZE(given_descrs[0]);
             break;
         case NPY_UNICODE:
-            size = given_descrs[0]->elsize / 4;
+            size = PyDataType_ELSIZE(given_descrs[0]) / 4;
             break;
         default:
             PyErr_SetString(PyExc_SystemError,
@@ -2468,7 +2468,7 @@ cast_to_string_resolve_descriptors(
         if (loop_descrs[1] == NULL) {
             return -1;
         }
-        loop_descrs[1]->elsize = size;
+        PyDataType_SET_ELSIZE(loop_descrs[1], size);
     }
     else {
         /* The legacy loop can handle mismatching itemsizes */
@@ -2490,7 +2490,7 @@ cast_to_string_resolve_descriptors(
         return self->casting;
     }
 
-    if (loop_descrs[1]->elsize >= size) {
+    if (PyDataType_ELSIZE(loop_descrs[1]) >= size) {
         return NPY_SAFE_CASTING;
     }
     return NPY_SAME_KIND_CASTING;
@@ -2564,7 +2564,7 @@ string_to_string_resolve_descriptors(
         loop_descrs[1] = given_descrs[1];
     }
 
-    if (loop_descrs[0]->elsize < loop_descrs[1]->elsize) {
+    if (PyDataType_ELSIZE(loop_descrs[0]) < PyDataType_ELSIZE(loop_descrs[1])) {
         /* New string is longer: safe but cannot be a view */
         return NPY_SAFE_CASTING;
     }
@@ -2576,7 +2576,7 @@ string_to_string_resolve_descriptors(
             *view_offset = 0;
         }
 
-        if (loop_descrs[0]->elsize > loop_descrs[1]->elsize) {
+        if (PyDataType_ELSIZE(loop_descrs[0]) > PyDataType_ELSIZE(loop_descrs[1])) {
             return NPY_SAME_KIND_CASTING;
         }
         /* The strings have the same length: */
@@ -2602,7 +2602,7 @@ string_to_string_get_loop(
 
     assert(NPY_DTYPE(descrs[0]) == NPY_DTYPE(descrs[1]));
     *flags = context->method->flags & NPY_METH_RUNTIME_FLAGS;
-    if (descrs[0]->type_num == NPY_UNICODE) {
+    if (PyDataType_TYPENUM(descrs[0]) == NPY_UNICODE) {
         if (PyDataType_ISNOTSWAPPED(descrs[0]) !=
                 PyDataType_ISNOTSWAPPED(descrs[1])) {
             unicode_swap = 1;
@@ -2611,7 +2611,7 @@ string_to_string_get_loop(
 
     if (PyArray_GetStridedZeroPadCopyFn(
             aligned, unicode_swap, strides[0], strides[1],
-            descrs[0]->elsize, descrs[1]->elsize,
+            PyDataType_ELSIZE(descrs[0]), PyDataType_ELSIZE(descrs[1]),
             out_loop, out_transferdata) == NPY_FAIL) {
         return -1;
     }
@@ -2707,12 +2707,12 @@ cast_to_void_dtype_class(
     if (loop_descrs[1] == NULL) {
         return -1;
     }
-    loop_descrs[1]->elsize = given_descrs[0]->elsize;
+    PyDataType_SET_ELSIZE(loop_descrs[1], PyDataType_ELSIZE(given_descrs[0]));
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
 
     *view_offset = 0;
-    if (loop_descrs[0]->type_num == NPY_VOID &&
+    if (PyDataType_TYPENUM(loop_descrs[0]) == NPY_VOID &&
             PyDataType_SUBARRAY(loop_descrs[0]) == NULL &&
             PyDataType_NAMES(loop_descrs[1]) == NULL) {
         return NPY_NO_CASTING;
@@ -2752,7 +2752,7 @@ nonstructured_to_structured_resolve_descriptors(
         if (base_casting < 0) {
             return -1;
         }
-        if (to_descr->elsize == to_descr->subarray->base->elsize) {
+        if (to_descr->elsize == PyDataType_ELSIZE(to_descr->subarray->base)) {
             /* A single field, view is OK if sub-view is */
             *view_offset = sub_view_offset;
         }
@@ -2798,7 +2798,7 @@ nonstructured_to_structured_resolve_descriptors(
     }
     else {
         /* Plain void type. This behaves much like a "view" */
-        if (from_descr->elsize == to_descr->elsize &&
+        if (PyDataType_ELSIZE(from_descr) == to_descr->elsize &&
                 !PyDataType_REFCHK(from_descr)) {
             /*
              * A simple view, at the moment considered "safe" (the refcheck is
@@ -2807,7 +2807,7 @@ nonstructured_to_structured_resolve_descriptors(
             *view_offset = 0;
             casting = NPY_SAFE_CASTING;
         }
-        else if (from_descr->elsize <= to_descr->elsize) {
+        else if (PyDataType_ELSIZE(from_descr) <= to_descr->elsize) {
             casting = NPY_SAFE_CASTING;
         }
         else {
@@ -2909,7 +2909,7 @@ structured_to_nonstructured_resolve_descriptors(
     if (PyDataType_SUBARRAY(given_descrs[0]) != NULL) {
         base_descr = PyDataType_SUBARRAY(given_descrs[0])->base;
         /* A view is possible if the subarray has exactly one element: */
-        if (given_descrs[0]->elsize == PyDataType_SUBARRAY(given_descrs[0])->base->elsize) {
+        if (PyDataType_ELSIZE(given_descrs[0]) == PyDataType_ELSIZE(PyDataType_SUBARRAY(given_descrs[0])->base)) {
             struct_view_offset = 0;
         }
     }
@@ -2961,10 +2961,10 @@ structured_to_nonstructured_resolve_descriptors(
          * all parametric DTypes.
          */
         if (dtypes[1]->type_num == NPY_STRING) {
-            loop_descrs[1]->elsize = given_descrs[0]->elsize;
+            PyDataType_SET_ELSIZE(loop_descrs[1], PyDataType_ELSIZE(given_descrs[0]));
         }
         else if (dtypes[1]->type_num == NPY_UNICODE) {
-            loop_descrs[1]->elsize = given_descrs[0]->elsize * 4;
+            PyDataType_SET_ELSIZE(loop_descrs[1],  PyDataType_ELSIZE(given_descrs[0]) * 4);
         }
     }
     else {
@@ -3126,7 +3126,7 @@ can_cast_fields_safety(
         }
     }
 
-    if (*view_offset != 0 || from->elsize != to->elsize) {
+    if (*view_offset != 0 || PyDataType_ELSIZE(from) != PyDataType_ELSIZE(to)) {
         /* Can never be considered "no" casting. */
         casting = PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
     }
@@ -3136,7 +3136,7 @@ can_cast_fields_safety(
         /* negative offsets would give indirect access before original dtype */
         *view_offset = NPY_MIN_INTP;
     }
-    if (from->elsize < to->elsize + *view_offset) {
+    if (PyDataType_ELSIZE(from) < PyDataType_ELSIZE(to) + *view_offset) {
         /* new dtype has indirect access outside of the original dtype */
         *view_offset = NPY_MIN_INTP;
     }
@@ -3179,11 +3179,11 @@ void_to_void_resolve_descriptors(
     else if (PyDataType_SUBARRAY(given_descrs[0]) == NULL &&
                 PyDataType_SUBARRAY(given_descrs[1]) == NULL) {
         /* Both are plain void dtypes */
-        if (given_descrs[0]->elsize == given_descrs[1]->elsize) {
+        if (PyDataType_ELSIZE(given_descrs[0]) == PyDataType_ELSIZE(given_descrs[1])) {
             casting = NPY_NO_CASTING;
             *view_offset = 0;
         }
-        else if (given_descrs[0]->elsize < given_descrs[1]->elsize) {
+        else if (PyDataType_ELSIZE(given_descrs[0]) < PyDataType_ELSIZE(given_descrs[1])) {
             casting = NPY_SAFE_CASTING;
         }
         else {
@@ -3220,21 +3220,21 @@ void_to_void_resolve_descriptors(
                 /* Both are subarrays and the shape matches, could be no cast */
                 casting = NPY_NO_CASTING;
                 /* May be a view if there is one element or elsizes match */
-                if (from_sub->base->elsize == to_sub->base->elsize
-                        || given_descrs[0]->elsize == from_sub->base->elsize) {
+                if (PyDataType_ELSIZE(from_sub->base) == PyDataType_ELSIZE(to_sub->base)
+                        || PyDataType_ELSIZE(given_descrs[0]) == PyDataType_ELSIZE(from_sub->base)) {
                     subarray_layout_supports_view = NPY_TRUE;
                 }
             }
         }
         else if (from_sub) {
             /* May use a view if "from" has only a single element: */
-            if (given_descrs[0]->elsize == from_sub->base->elsize) {
+            if (PyDataType_ELSIZE(given_descrs[0]) == PyDataType_ELSIZE(from_sub->base)) {
                 subarray_layout_supports_view = NPY_TRUE;
             }
         }
         else {
             /* May use a view if "from" has only a single element: */
-            if (given_descrs[1]->elsize == to_sub->base->elsize) {
+            if (PyDataType_ELSIZE(given_descrs[1]) == PyDataType_ELSIZE(to_sub->base)) {
                 subarray_layout_supports_view = NPY_TRUE;
             }
         }
@@ -3299,7 +3299,7 @@ void_to_void_get_loop(
          */
         if (PyArray_GetStridedZeroPadCopyFn(
                 0, 0, strides[0], strides[1],
-                context->descriptors[0]->elsize, context->descriptors[1]->elsize,
+                PyDataType_ELSIZE(context->descriptors[0]), PyDataType_ELSIZE(context->descriptors[1]),
                 out_loop, out_transferdata) == NPY_FAIL) {
             return -1;
         }

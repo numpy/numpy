@@ -1092,7 +1092,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (obj == NULL) {
         goto fail;
     }
-    elsize = dtype->elsize;
+    elsize = PyDataType_ELSIZE(dtype);
     ret_data = PyArray_DATA(obj);
     npy_intp transfer_strides[2] = {elsize, elsize};
     npy_intp one = 1;
@@ -1102,8 +1102,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
         PyArray_GetDTypeTransferFunction(
                     is_aligned,
-                    dtype->elsize,
-                    obj_dtype->elsize,
+                    PyDataType_ELSIZE(dtype),
+                    PyDataType_ELSIZE(obj_dtype),
                     dtype,
                     obj_dtype, 0, &cast_info,
                     &transfer_flags);
@@ -2689,7 +2689,7 @@ PyArray_CountNonzero(PyArrayObject *self)
             PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype))) {
         return count_nonzero_int(
             PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
-            PyArray_STRIDES(self), dtype->elsize
+            PyArray_STRIDES(self), PyDataType_ELSIZE(dtype)
         );
     }
 
@@ -2714,7 +2714,7 @@ PyArray_CountNonzero(PyArrayObject *self)
             /* Special low-overhead version specific to the float types (and some others) */
             if (PyArray_ISNOTSWAPPED(self) && PyArray_ISALIGNED(self)) {
                 npy_intp dispatched_nonzero_count = count_nonzero_trivial_dispatcher(count,
-                                                        data, stride, dtype->type_num);
+                                                        data, stride, PyDataType_TYPENUM(dtype));
                 if (dispatched_nonzero_count >= 0) {
                     return dispatched_nonzero_count;
                 }
@@ -3182,7 +3182,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         context.method = sort_method;
 
         // Arrays are always contiguous for sorting
-        npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
+        npy_intp strides[2] = {PyDataType_ELSIZE(loop_descrs[0]), PyDataType_ELSIZE(loop_descrs[1])};
 
         if (sort_method->get_strided_loop(
             &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {
@@ -3294,7 +3294,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND flags)
         context.method = argsort_method;
 
         // Arrays are always contiguous for sorting
-        npy_intp strides[2] = {loop_descrs[0]->elsize, loop_descrs[1]->elsize};
+        npy_intp strides[2] = {PyDataType_ELSIZE(loop_descrs[0]), PyDataType_ELSIZE(loop_descrs[1])};
 
         if (argsort_method->get_strided_loop(
             &context, 1, 0, strides, &strided_loop, &auxdata, &method_flags) < 0) {

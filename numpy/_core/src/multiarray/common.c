@@ -94,8 +94,8 @@ PyArray_DTypeFromObjectStringDiscovery(
         return NULL;
     }
     if (last_dtype != NULL &&
-        last_dtype->type_num == string_type &&
-        last_dtype->elsize >= itemsize) {
+        PyDataType_TYPENUM(last_dtype) == string_type &&
+        PyDataType_ELSIZE(last_dtype) >= itemsize) {
         Py_INCREF(last_dtype);
         return last_dtype;
     }
@@ -103,7 +103,7 @@ PyArray_DTypeFromObjectStringDiscovery(
     if (dtype == NULL) {
         return NULL;
     }
-    dtype->elsize = itemsize;
+    PyDataType_SET_ELSIZE(dtype, itemsize);
     return dtype;
 }
 
