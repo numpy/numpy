@@ -51,10 +51,12 @@ class FindFuncs(ast.NodeVisitor):
             if len(node.args) == 3:
                 return
             args = {kw.arg for kw in node.keywords}
-            if "stacklevel" or "skip_file_prefixes" in args:
+            if "stacklevel" in args:
+                return
+            if "skip_file_prefixes" in args:
                 return
             raise AssertionError(
-                "warnings should have an appropriate stacklevel; "
+                "warnings should have an appropriate stacklevel or skip_file_prefixes; "
                 f"found in {self.__filename} on line {node.lineno}")
 
 

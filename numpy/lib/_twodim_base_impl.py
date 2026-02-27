@@ -25,6 +25,7 @@ from numpy._core.numeric import (
     nonzero,
     ones,
     promote_types,
+    unsignedinteger,
     where,
     zeros,
 )
@@ -388,20 +389,19 @@ def diagflat(v, k=0):
     return conv.wrap(res)
 
 def _to_int(n):
-    a = int(n)
-    dtype_not_int = True
 
-    if hasattr(n, "dtype") and n.dtype.kind in "iu":
-        dtype_not_int = False
-
-    if dtype_not_int and not isinstance(n, int):
+    try:
+        n = operator.index(n)
+    except TypeError:
+        # Deprecated NumPy 2.5, 2026-02
         warnings.warn(
             (f"Cannot convert {type(n).__name__} safely to an integer."
-             "This will raise an error in future versions(Deprecated NumPy 2.4)"),
+             "This will raise an error in future versions (Deprecated NumPy 2.5)"),
             DeprecationWarning,
             skip_file_prefixes=(os.path.dirname(__file__),),
         )
-    return a
+
+    return n
 
 @finalize_array_function_like
 @set_module('numpy')
@@ -1159,8 +1159,8 @@ def triu_indices(n, k=0, m=None):
 
     """
 
-    if hasattr(k, "dtype") and k.dtype.kind == "u":
-        k = int(k)
+    if isinstance(k, unsignedinteger):
+        k = operator.index(k)
 
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
