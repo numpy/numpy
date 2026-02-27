@@ -112,6 +112,11 @@ cdef class SFC64(BitGenerator):
         state : dict
             Dictionary containing the information required to describe the
             state of the PRNG
+
+        Notes
+        -----
+        Getting ``state`` returns a new dictionary snapshot of the current
+        state. It is not a live view into the bit generator's internal state.
         """
         cdef np.ndarray state_vec
         cdef int has_uint32

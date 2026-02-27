@@ -577,6 +577,11 @@ cdef class BitGenerator:
         state : dict
             Dictionary containing the information required to describe the
             state of the PRNG
+
+        Notes
+        -----
+        Getting ``state`` returns a new dictionary snapshot of the current
+        state. It is not a live view into the bit generator's internal state.
         """
         raise NotImplementedError('Not implemented in base BitGenerator')
 
