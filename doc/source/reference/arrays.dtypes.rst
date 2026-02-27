@@ -611,7 +611,7 @@ The type of the data is described by the following :class:`dtype`  attributes:
 
    dtype.type
    dtype.kind
-   dtype.char
+   numpy.dtype.char
    dtype.num
    dtype.str
 
