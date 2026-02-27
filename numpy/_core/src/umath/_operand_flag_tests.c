@@ -73,8 +73,8 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
      * Set flags to turn off buffering for first input operand,
      * so that result can be written back to input operand.
      */
-    ((PyUFuncObject*)ufunc)->op_flags[0] = NPY_ITER_READWRITE;
-    ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
+    PyUFunc_SET_OP_FLAGS((PyUFuncObject*)ufunc, 0, NPY_ITER_READWRITE);
+    PyUFunc_SET_ITER_FLAGS((PyUFuncObject*)ufunc, NPY_ITER_REDUCE_OK);
     PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
 
 #ifdef Py_GIL_DISABLED

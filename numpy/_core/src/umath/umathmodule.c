@@ -48,7 +48,7 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes)
 {
-    int i, nop = ufunc->nin + ufunc->nout;
+    int i, nop = PyUFunc_NIN(ufunc) + PyUFunc_NOUT(ufunc);
 
     out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
     if (out_dtypes[0] == NULL) {
@@ -154,10 +154,9 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
         return NULL;
     }
     Py_INCREF(function);
-    self->obj = function;
-    self->ptr = ptr;
-
-    self->type_resolver = &object_ufunc_type_resolver;
+    PyUFunc_SET_OBJ(self, function);
+    PyUFunc_SET_PTR(self, ptr);
+    PyUFunc_SET_TYPE_RESOLVER(self, &object_ufunc_type_resolver);
     PyObject_GC_Track(self);
 
     return (PyObject *)self;

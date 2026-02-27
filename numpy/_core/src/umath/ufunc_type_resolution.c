@@ -102,7 +102,7 @@ NPY_NO_EXPORT int
 raise_no_loop_found_error(
         PyUFuncObject *ufunc, PyObject **dtypes)
 {
-    PyObject *dtypes_tup = PyArray_TupleFromItems(ufunc->nargs, dtypes, 1);
+    PyObject *dtypes_tup = PyArray_TupleFromItems(PyUFunc_NARGS(ufunc), dtypes, 1);
     if (dtypes_tup == NULL) {
         return -1;
     }
@@ -199,7 +199,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             PyArrayObject **operands,
                             PyArray_Descr *const *dtypes)
 {
-    int i, nin = ufunc->nin, nop = nin + ufunc->nout;
+    int i, nin = PyUFunc_NIN(ufunc), nop = nin + PyUFunc_NOUT(ufunc);
 
     for (i = 0; i < nop; ++i) {
         if (i < nin) {
@@ -227,7 +227,7 @@ NPY_NO_EXPORT int
 PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
         NPY_CASTING casting, PyArrayObject **operands, PyArray_Descr **dtypes)
 {
-    int i, nin = ufunc->nin, nop = nin + ufunc->nout;
+    int i, nin = PyUFunc_NIN(ufunc), nop = nin + PyUFunc_NOUT(ufunc);
 
     for (i = nin; i < nop; ++i) {
         if (operands[i] == NULL) {
@@ -256,7 +256,7 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes)
 {
-    int i, nop = ufunc->nin + ufunc->nout;
+    int i, nop = PyUFunc_NIN(ufunc) + PyUFunc_NOUT(ufunc);
     int retval = 0, any_object = 0;
     NPY_CASTING input_casting;
 
@@ -308,7 +308,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     int i, type_num1, type_num2;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
-    if (ufunc->nin != 2 || ufunc->nout != 1) {
+    if (PyUFunc_NIN(ufunc) != 2 || PyUFunc_NOUT(ufunc) != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
                 "to use binary comparison type resolution but has "
                 "the wrong number of inputs or outputs",
@@ -497,20 +497,20 @@ PyUFunc_SimpleUniformOperationTypeResolver(
 {
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
-    if (ufunc->nin < 1) {
+    if (PyUFunc_NIN(ufunc) < 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
                 "to use uniform operation type resolution but has "
                 "no inputs",
                 ufunc_name);
         return -1;
     }
-    int nop = ufunc->nin + ufunc->nout;
+    int nop = PyUFunc_NIN(ufunc) + PyUFunc_NOUT(ufunc);
 
     /*
      * There's a custom data type or an object array
      */
     bool has_custom_or_object = false;
-    for (int iop = 0; iop < ufunc->nin; iop++) {
+    for (int iop = 0; iop < PyUFunc_NIN(ufunc); iop++) {
         int type_num = PyArray_DESCR(operands[iop])->type_num;
         if (type_num >= NPY_NTYPES_LEGACY || type_num == NPY_OBJECT) {
             has_custom_or_object = true;
@@ -525,7 +525,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
 
     if (type_tup == NULL) {
         /* PyArray_ResultType forgets to force a byte order when n == 1 */
-        if (ufunc->nin == 1){
+        if (PyUFunc_NIN(ufunc) == 1){
             out_dtypes[0] = NPY_DT_CALL_ensure_canonical(
                     PyArray_DESCR(operands[0]));
         }
@@ -533,7 +533,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             int iop;
             npy_bool has_flexible = 0;
             npy_bool has_object = 0;
-            for (iop = 0; iop < ufunc->nin; iop++) {
+            for (iop = 0; iop < PyUFunc_NIN(ufunc); iop++) {
                 if (PyArray_ISOBJECT(operands[iop])) {
                     has_object = 1;
                 }
@@ -548,18 +548,18 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                  * ResultType will give for number->string promotions.
                  * (We never supported flexible dtypes here.)
                  */
-                for (iop = 0; iop < ufunc->nin; iop++) {
+                for (iop = 0; iop < PyUFunc_NIN(ufunc); iop++) {
                     out_dtypes[iop] = PyArray_DESCR(operands[iop]);
                     Py_INCREF(out_dtypes[iop]);
                 }
                 raise_no_loop_found_error(ufunc, (PyObject **)out_dtypes);
-                for (iop = 0; iop < ufunc->nin; iop++) {
+                for (iop = 0; iop < PyUFunc_NIN(ufunc); iop++) {
                     Py_DECREF(out_dtypes[iop]);
                     out_dtypes[iop] = NULL;
                 }
                 return -1;
             }
-            out_dtypes[0] = PyArray_ResultType(ufunc->nin, operands, 0, NULL);
+            out_dtypes[0] = PyArray_ResultType(PyUFunc_NIN(ufunc), operands, 0, NULL);
         }
         if (out_dtypes[0] == NULL) {
             return -1;
@@ -582,7 +582,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             for (int i = 0; i < nop; i++) {
                 PyObject *item = PyTuple_GET_ITEM(type_tup, i);
                 if (item == Py_None) {
-                    if (i < ufunc->nin) {
+                    if (i < PyUFunc_NIN(ufunc)) {
                         continue;
                     }
                     /* All outputs must be set (this could be relaxed) */
@@ -1312,7 +1312,7 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             /*
              * TODO: split function into truediv and floordiv resolvers
              */
-            if (strcmp(ufunc->name, "floor_divide") == 0) {
+            if (strcmp(PyUFunc_NAME(ufunc), "floor_divide") == 0) {
                 out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
             }
             else {
@@ -1469,7 +1469,7 @@ find_userloop(PyUFuncObject *ufunc,
                 PyUFuncGenericFunction *out_innerloop,
                 void **out_innerloopdata)
 {
-    npy_intp i, nin = ufunc->nin, j, nargs = nin + ufunc->nout;
+    npy_intp i, nin = PyUFunc_NIN(ufunc), j, nargs = nin + PyUFunc_NOUT(ufunc);
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1493,7 +1493,7 @@ find_userloop(PyUFuncObject *ufunc,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(ufunc->userloops, key); // noqa: borrowed-ref - manual fix needed
+            obj = PyDict_GetItemWithError(PyUFunc_USERLOOPS(ufunc), key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1534,7 +1534,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                 void **out_innerloopdata,
                                 int *out_needs_api)
 {
-    int nargs = ufunc->nargs;
+    int nargs = PyUFunc_NARGS(ufunc);
     const char *types;
     int i, j;
 
@@ -1543,7 +1543,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
      * TODO: There needs to be a loop selection acceleration structure,
      *       like a hash table.
      */
-    if (ufunc->userloops) {
+    if (PyUFunc_USERLOOPS(ufunc)) {
         switch (find_userloop(ufunc, dtypes,
                     out_innerloop, out_innerloopdata)) {
             /* Error */
@@ -1555,8 +1555,8 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
     }
 
-    types = ufunc->types;
-    for (i = 0; i < ufunc->ntypes; ++i) {
+    types = PyUFunc_TYPES(ufunc);
+    for (i = 0; i < PyUFunc_NTYPES(ufunc); ++i) {
         /* Copy the types into an int array for matching */
         for (j = 0; j < nargs; ++j) {
             if (types[j] != dtypes[j]->type_num) {
@@ -1564,8 +1564,8 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
             }
         }
         if (j == nargs) {
-            *out_innerloop = ufunc->functions[i];
-            *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[i];
+            *out_innerloop = PyUFunc_FUNCTIONS(ufunc)[i];
+            *out_innerloopdata = (PyUFunc_DATA(ufunc) == NULL) ? NULL : PyUFunc_DATA(ufunc)[i];
             return 0;
         }
 
@@ -1588,7 +1588,7 @@ ufunc_loop_matches(PyUFuncObject *self,
                     char *out_err_src_typecode,
                     char *out_err_dst_typecode)
 {
-    npy_intp i, nin = self->nin, nop = nin + self->nout;
+    npy_intp i, nin = PyUFunc_NIN(self), nop = nin + PyUFunc_NOUT(self);
 
     /*
      * First check if all the inputs can be safely cast
@@ -1606,7 +1606,7 @@ ufunc_loop_matches(PyUFuncObject *self,
          * the object version of logical_or on float arguments doesn't
          * seem right.
          */
-        if (types[i] == NPY_OBJECT && !any_object && self->ntypes > 1) {
+        if (types[i] == NPY_OBJECT && !any_object && PyUFunc_NTYPES(self) > 1) {
             return 0;
         }
         if (types[i] == NPY_NOTYPE) {
@@ -1690,7 +1690,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
                     PyArray_Descr **out_dtypes,
                     int *type_nums, PyArray_Descr **dtypes)
 {
-    int i, nin = self->nin, nop = nin + self->nout;
+    int i, nin = PyUFunc_NIN(self), nop = nin + PyUFunc_NOUT(self);
 
     /*
      * Fill the dtypes array.
@@ -1756,7 +1756,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                         char *out_err_src_typecode,
                         char *out_err_dst_typecode)
 {
-    npy_intp i, nop = self->nin + self->nout;
+    npy_intp i, nop = PyUFunc_NIN(self) + PyUFunc_NOUT(self);
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
@@ -1780,7 +1780,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
+            obj = PyDict_GetItemWithError(PyUFunc_USERLOOPS(self), key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1830,7 +1830,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                         int use_min_scalar,
                         PyArray_Descr **out_dtype)
 {
-    int i, j, nin = self->nin, nop = nin + self->nout;
+    int i, j, nin = PyUFunc_NIN(self), nop = nin + PyUFunc_NOUT(self);
     assert(n_specified == nop);
     int types[NPY_MAXARGS];
 
@@ -1851,7 +1851,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
-            obj = PyDict_GetItemWithError(self->userloops, key); // noqa: borrowed-ref - manual fix needed
+            obj = PyDict_GetItemWithError(PyUFunc_USERLOOPS(self), key); // noqa: borrowed-ref - manual fix needed
             Py_DECREF(key);
             if (obj == NULL && PyErr_Occurred()){
                 return -1;
@@ -1904,7 +1904,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                          */
                         if (PyUFunc_ValidateCasting(self,
                                 casting, op, out_dtype) < 0) {
-                            for (j = 0; j < self->nargs; j++) {
+                            for (j = 0; j < PyUFunc_NARGS(self); j++) {
                                 Py_DECREF(out_dtype[j]);
                                 out_dtype[j] = NULL;
                             }
@@ -1947,7 +1947,7 @@ linear_search_type_resolver(PyUFuncObject *self,
                         int any_object,
                         PyArray_Descr **out_dtype)
 {
-    npy_intp i, j, nin = self->nin, nop = nin + self->nout;
+    npy_intp i, j, nin = PyUFunc_NIN(self), nop = nin + PyUFunc_NOUT(self);
     int types[NPY_MAXARGS];
     const char *ufunc_name;
     int no_castable_output = 0;
@@ -1960,7 +1960,7 @@ linear_search_type_resolver(PyUFuncObject *self,
     int use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
 
     /* If the ufunc has userloops, search for them. */
-    if (self->userloops) {
+    if (PyUFunc_USERLOOPS(self)) {
         switch (linear_search_userloop_type_resolver(self, op,
                                 input_casting, output_casting,
                                 any_object, use_min_scalar, out_dtype,
@@ -1992,8 +1992,8 @@ linear_search_type_resolver(PyUFuncObject *self,
      * coercion tables for np.add).
      */
     no_castable_output = 0;
-    for (i = 0; i < self->ntypes; ++i) {
-        const char *orig_types = self->types + i*self->nargs;
+    for (i = 0; i < PyUFunc_NTYPES(self); ++i) {
+        const char *orig_types = PyUFunc_TYPES(self) + i*PyUFunc_NARGS(self);
 
         /* Copy the types into an int array for matching */
         for (j = 0; j < nop; ++j) {
@@ -2052,14 +2052,14 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
         PyArray_Descr **out_dtype)
 {
     int i, j;
-    int nop = self->nargs;
+    int nop = PyUFunc_NARGS(self);
     int types[NPY_MAXARGS];
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
     /* If the ufunc has userloops, search for them. */
-    if (self->userloops) {
+    if (PyUFunc_USERLOOPS(self)) {
         switch (type_tuple_userloop_type_resolver(self,
                 nop, specified_types,
                 op, input_casting, casting,
@@ -2074,8 +2074,8 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
         }
     }
 
-    for (i = 0; i < self->ntypes; ++i) {
-        const char *orig_types = self->types + i*self->nargs;
+    for (i = 0; i < PyUFunc_NTYPES(self); ++i) {
+        const char *orig_types = PyUFunc_TYPES(self) + i*PyUFunc_NARGS(self);
 
         /*
          * Check specified types and copy into an int array for matching
@@ -2117,7 +2117,7 @@ type_tuple_type_resolver_core(PyUFuncObject *self,
                 set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
                 /* In principle, we only need to validate the NPY_NOTYPE ones */
                 if (PyUFunc_ValidateCasting(self, casting, op, out_dtype) < 0) {
-                    for (j = 0; j < self->nargs; j++) {
+                    for (j = 0; j < PyUFunc_NARGS(self); j++) {
                         Py_DECREF(out_dtype[j]);
                         out_dtype[j] = NULL;
                     }
@@ -2144,7 +2144,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
                         int any_object,
                         PyArray_Descr **out_dtype)
 {
-    int nin = self->nin, nop = nin + self->nout;
+    int nin = PyUFunc_NIN(self), nop = nin + PyUFunc_NOUT(self);
     int specified_types[NPY_MAXARGS];
     const char *ufunc_name;
     int no_castable_output = 0;
@@ -2212,7 +2212,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
      * a `signature` early on.
      */
     int homogeneous_type = NPY_NOTYPE;
-    if (self->nout > 0) {
+    if (PyUFunc_NOUT(self) > 0) {
         homogeneous_type = specified_types[nin];
         for (int i = nin+1; i < nop; i++) {
             if (specified_types[i] != homogeneous_type) {

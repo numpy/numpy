@@ -604,20 +604,22 @@ static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
     TRACE_TXT("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
-              ufunc->core_enabled? "generalized ufunc" : "scalar ufunc",
-              ufunc->name, ufunc->nin, ufunc->nout, ufunc->ntypes);
-    if (ufunc->core_enabled) {
+              PyUFunc_CORE_ENABLED(ufunc) ? "generalized ufunc" : "scalar ufunc",
+              PyUFunc_NAME(ufunc), PyUFunc_NIN(ufunc),
+              PyUFunc_NOUT(ufunc), PyUFunc_NTYPES(ufunc));
+    if (PyUFunc_CORE_ENABLED(ufunc)) {
         int arg;
         int dim;
         TRACE_TXT("\t%s (%d dimension(s) detected).\n",
-                  ufunc->core_signature, ufunc->core_num_dim_ix);
+                  PyUFunc_CORE_SIGNATURE(ufunc),
+                  PyUFunc_CORE_NUM_DIM_IX(ufunc);
 
-        for (arg = 0; arg < ufunc->nargs; arg++){
-            int * arg_dim_ix = ufunc->core_dim_ixs + ufunc->core_offsets[arg];
+        for (arg = 0; arg < PyUFunc_NARGS(ufunc); arg++){
+            int * arg_dim_ix = PyUFunc_CORE_DIM_IXS(ufunc) + PyUFunc_CORE_OFFSETS(ufunc)[arg];
             TRACE_TXT("\t\targ %d (%s) has %d dimension(s): (",
-                      arg, arg < ufunc->nin? "INPUT" : "OUTPUT",
-                      ufunc->core_num_dims[arg]);
-            for (dim = 0; dim < ufunc->core_num_dims[arg]; dim ++) {
+                      arg, arg < PyUFunc_NIN(ufunc)? "INPUT" : "OUTPUT",
+                      PyUFunc_CORE_NUM_DIMS(ufunc)[arg]);
+            for (dim = 0; dim < PyUFunc_CORE_NUM_DIMS(ufunc)[arg]; dim ++) {
                 TRACE_TXT(" %d", arg_dim_ix[dim]);
             }
             TRACE_TXT(" )\n");
