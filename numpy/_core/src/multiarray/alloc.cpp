@@ -294,6 +294,7 @@ PyDataMem_NEW(size_t size)
 
     assert(size != 0);
     result = PyMem_RawMalloc(size);
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         PyMem_RawFree(result);
@@ -311,6 +312,7 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
     void *result;
 
     result = PyMem_RawCalloc(nmemb, size);
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
         PyMem_RawFree(result);
@@ -340,6 +342,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
     assert(size != 0);
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = PyMem_RawRealloc(ptr, size);
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         PyMem_RawFree(result);
@@ -428,6 +431,7 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     }
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -446,6 +450,7 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
         return NULL;
     }
     result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -482,6 +487,7 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
     assert(size != 0);
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
