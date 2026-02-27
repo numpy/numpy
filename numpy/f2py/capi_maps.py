@@ -231,8 +231,8 @@ def getctype(var):
                     except KeyError:
                         kind = var['kindselector']['kind']
                         errmess(f'getctype: "{typespec}({kind=})" is mapped to C '
-                                f'"{ctype}" (to override define dict({typespec} = '
-                                f'dict({kind}="<C typespec>")) '
+                                f'"{ctype}" (to override define {{{typespec!r}: '
+                                f'{{{kind!r}: "<C typespec>"}}}} '
                                 f'in {os.getcwd()}/.f2py_f2cmap file).\n')
     elif not isexternal(var):
         errmess(f'getctype: No C-type found in "{var}", assuming void.\n')
@@ -387,14 +387,15 @@ def getpydocsign(a, var):
     elif isarray(var):
         dim = var['dimension']
         rank = repr(len(dim))
+        dim_str = ','.join(dim)
         sig = (f"{a} : {opt} rank-{rank} array('{c2pycode_map[ctype]}') with "
-               f"bounds ({','.join(dim)}){init}")
+               f"bounds ({dim_str}){init}")
         if a == out_a:
             sigout = (f"{a} : rank-{rank} array('{c2pycode_map[ctype]}') with "
-                      f"bounds ({','.join(dim)})")
+                      f"bounds ({dim_str})")
         else:
             sigout = (f"{out_a} : rank-{rank} array('{c2pycode_map[ctype]}') with "
-                      f"bounds ({','.join(dim)}) and {a} storage")
+                      f"bounds ({dim_str}) and {a} storage")
     elif isexternal(var):
         ua = ''
         if a in lcb_map and lcb_map[a] in lcb2_map and 'argname' in lcb2_map[lcb_map[a]]:
@@ -420,8 +421,9 @@ def getarrdocsign(a, var):
     elif isarray(var):
         dim = var['dimension']
         rank = repr(len(dim))
+        dim_str = ','.join(dim)
         sig = (f"{a} : rank-{rank} array('{c2pycode_map[ctype]}') with "
-               f"bounds ({','.join(dim)})")
+               f"bounds ({dim_str})")
     return sig
 
 
@@ -555,11 +557,12 @@ def sign2map(a, var):
             ddim = ','.join(
                 map(lambda x, y: f'{x}|{y}', var['dimension'], dim))
             rl.append(f'dims({ddim})')
+        rl_str = ','.join(rl)
         if isexternal(var):
-            ret['vardebuginfo'] = f"debug-capi:{a}=>{ret['cbname']}:{','.join(rl)}"
+            ret['vardebuginfo'] = f"debug-capi:{a}=>{ret['cbname']}:{rl_str}"
         else:
             ret['vardebuginfo'] = (f"debug-capi:{ret['ctype']} "
-                                   f"{a}={ret['showinit']}:{','.join(rl)}")
+                                   f"{a}={ret['showinit']}:{rl_str}")
         if isscalar(var):
             if ret['ctype'] in cformat_map:
                 ret['vardebugshowvalue'] = f"debug-capi:{a}={cformat_map[ret['ctype']]}"

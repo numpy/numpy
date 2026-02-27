@@ -48,7 +48,7 @@ def buildusevars(m, r):
     if 'map' in r:
         for k in r['map'].keys():
             mapped_name = r['map'][k]
-            if r['map'][k] in revmap:
+            if mapped_name in revmap:
                 outmess(f'\t\t\tVariable "{mapped_name}<={k}" is already mapped by '
                         f'"{revmap[mapped_name]}". Skipping.\n')
             else:

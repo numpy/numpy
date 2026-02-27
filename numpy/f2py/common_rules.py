@@ -64,12 +64,14 @@ def buildhooks(m):
                 hnames.append(n)
             else:
                 inames.append(n)
+        hnames_str = ','.join(hnames)
+        inames_str = ','.join(inames)
         if hnames:
             outmess(f'\t\tConstructing COMMON block support for "{name}"...\n\t\t  '
-                    f'{",".join(inames)}\n\t\t  Hidden: {",".join(hnames)}\n')
+                    f'{inames_str}\n\t\t  Hidden: {hnames_str}\n')
         else:
             outmess(f'\t\tConstructing COMMON block support for "{name}"...\n\t\t  '
-                    f'{",".join(inames)}\n')
+                    f'{inames_str}\n')
         fadd(f'subroutine f2pyinit{name}(setupfunc)')
         for usename in getuseblocks(m):
             fadd(f'use {usename}')
@@ -110,8 +112,9 @@ def buildhooks(m):
             F_FUNC = 'F_FUNC_US'
         else:
             F_FUNC = 'F_FUNC'
+        arg_types_str = ','.join(['char*'] * len(inames1))
         cadd(f"extern void {F_FUNC}(f2pyinit{lower_name},F2PYINIT{name.upper()})"
-             f"(void(*)({','.join(['char*'] * len(inames1))}));")
+             f"(void(*)({arg_types_str}));")
         cadd(f'static void f2py_init_{name}(void) {{')
         cadd(f'\t{F_FUNC}(f2pyinit{lower_name},F2PYINIT{name.upper()})'
              f'(f2py_setup_{name});')

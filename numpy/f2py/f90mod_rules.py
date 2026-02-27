@@ -227,14 +227,16 @@ def buildhooks(pymod):
         cadd('\t{NULL}\n};\n')
         iadd('}')
         m_name = m['name']
-        ihooks[0] = (f'static void f2py_setup_{m_name}({",".join(sargs)}) '
+        sargs_str = ','.join(sargs)
+        ihooks[0] = (f'static void f2py_setup_{m_name}({sargs_str}) '
                      f'{{\n\tint i_f2py=0;{ihooks[0]}')
         if '_' in m_name:
             F_FUNC = 'F_FUNC_US'
         else:
             F_FUNC = 'F_FUNC'
+        sargsp_str = ','.join(sargsp)
         iadd(f'extern void {F_FUNC}(f2pyinit{m_name},'
-             f'F2PYINIT{m_name.upper()})(void (*)({','.join(sargsp)}));')
+             f'F2PYINIT{m_name.upper()})(void (*)({sargsp_str}));')
         iadd(f'static void f2py_init_{m_name}(void) {{')
         iadd(f'\t{F_FUNC}(f2pyinit{m_name},'
              f'F2PYINIT{m_name.upper()})(f2py_setup_{m_name});')
@@ -267,7 +269,8 @@ def buildhooks(pymod):
             r'\subsection{', r'\subsubsection{'))
 
         ret['latexdoc'] = []
-        ret['docs'].append(f"\"\t{m_name} --- {','.join(undo_rmbadname(modobjs))}\"")
+        modobjs_str = ','.join(undo_rmbadname(modobjs))
+        ret['docs'].append(f"\"\t{m_name} --- {modobjs_str}\"")
 
     ret['routine_defs'] = ''
     ret['doc'] = []
