@@ -5975,6 +5975,53 @@ add_newdoc('numpy._core.multiarray', 'dtype',
     metadata : dict, optional
         An optional dictionary with dtype metadata.
 
+    Attributes
+    ----------
+    dtype.alignment : int
+        The required alignment (bytes) of this dtype.
+    dtype.base : dtype
+        The base dtype of this dtype, if any.
+    dtype.byteorder : str
+        Byte order code for this dtype.
+    dtype.char : str
+        Single-character code identifying this dtype.
+    dtype.descr : list
+        `__array_interface__` description of this dtype.
+    dtype.fields : dict or None
+        Field-name dictionary for structured dtypes.
+    dtype.flags : int
+        Bit flags describing this dtype.
+    dtype.hasobject : bool
+        Whether this dtype contains Python objects.
+    dtype.isalignedstruct : bool
+        Whether this structured dtype has aligned fields.
+    dtype.isbuiltin : int
+        Whether this dtype maps to a built-in dtype.
+    dtype.isnative : bool
+        Whether this dtype uses native byte order.
+    dtype.itemsize : int
+        Element size of this dtype in bytes.
+    dtype.kind : str
+        Kind code of this dtype.
+    dtype.metadata : mappingproxy or None
+        Optional metadata associated with this dtype.
+    dtype.name : str
+        Name of this dtype.
+    dtype.names : tuple or None
+        Field names for structured dtypes.
+    dtype.ndim : int
+        Number of dimensions for sub-array dtypes, else 0.
+    dtype.num : int
+        Integer code identifying this dtype.
+    dtype.shape : tuple
+        Shape for sub-array dtypes, else ``()``.
+    dtype.str : str
+        Array-protocol type string of this dtype.
+    dtype.subdtype : tuple or None
+        Base dtype and shape if this is a sub-array dtype.
+    dtype.type : type
+        Scalar type associated with this dtype.
+
     See also
     --------
     result_type
