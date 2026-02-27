@@ -5037,6 +5037,7 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
         ret = (d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0).sum(axis)
     except ValueError:
         # Operations didn't work, cast to ndarray
+        # maybe a subclass like matrix?
         d = np.asarray(d)
         y = np.asarray(y)
         ret = add.reduce(d * (y[tuple(slice1)] + y[tuple(slice2)]) / 2.0, axis)
