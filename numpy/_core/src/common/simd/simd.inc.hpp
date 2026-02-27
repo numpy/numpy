@@ -51,12 +51,33 @@ LoadU(const TLane *ptr)
     return hn::LoadU(_Tag<TLane>(), ptr);
 }
 
+template <typename TLane>
+HWY_API Vec<TLane>
+LoadN(const TLane *ptr, size_t n)
+{
+    return hn::LoadN(_Tag<TLane>(), ptr, n);
+}
+
+template <typename TLane>
+HWY_API Vec<TLane>
+LoadNOr(const Vec<TLane> &a, const TLane *ptr, size_t n)
+{
+    return hn::LoadNOr(a, _Tag<TLane>(), ptr, n);
+}
+
 /// Unaligned store of a vector to memory.
 template <typename TLane>
 HWY_API void
 StoreU(const Vec<TLane> &a, TLane *ptr)
 {
     hn::StoreU(a, _Tag<TLane>(), ptr);
+}
+
+template <typename TLane>
+HWY_API void
+StoreN(const Vec<TLane> &a, TLane *ptr, size_t n)
+{
+    hn::StoreN(a, _Tag<TLane>(), ptr, n);
 }
 
 /// Returns the number of vector lanes based on the lane type.
