@@ -5958,6 +5958,8 @@ add_newdoc('numpy._core.multiarray', 'dtype',
     dtype object. A dtype object can be constructed from different
     combinations of fundamental numeric types.
 
+    .. currentclass:: numpy.dtype
+
     Parameters
     ----------
     dtype
