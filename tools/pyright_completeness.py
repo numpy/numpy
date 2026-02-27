@@ -30,16 +30,51 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=str,
         help="Exclude symbols whose names matches this glob pattern",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Print detailed error diagnostics for symbols with unknown types",
+    )
     args, unknownargs = parser.parse_known_args(argv)
     pyright_args = list(unknownargs)
     if "--outputjson" not in pyright_args:
         pyright_args.append("--outputjson")
-    return run_pyright_with_coverage(pyright_args, args.exclude_like)
+    return run_pyright_with_coverage(pyright_args, args.exclude_like, args.verbose)
+
+
+def print_verbose_errors(matched_symbols: list[dict]) -> None:
+    """Print detailed diagnostics for symbols with unknown types."""
+    unknown_symbols = [s for s in matched_symbols if not s["isTypeKnown"]]
+    if not unknown_symbols:
+        return
+
+    print(f"\n{'=' * 60}")
+    print(f"Symbols with unknown types: {len(unknown_symbols)}")
+    print(f"{'=' * 60}\n")
+
+    for symbol in unknown_symbols:
+        print(f"[{symbol['category']}] {symbol['name']}")
+        if symbol.get("diagnostics"):
+            for diag in symbol["diagnostics"]:
+                severity = diag.get("severity", "info").upper()
+                message = diag.get("message", "").replace("\xa0", " ")
+                file_path = diag.get("file", "")
+                range_info = diag.get("range", {})
+                start = range_info.get("start", {})
+                line = start.get("line", 0) + 1  # Convert to 1-based
+                col = start.get("character", 0) + 1
+
+                print(f"  {severity}: {message}")
+                if file_path:
+                    print(f"    at {file_path}:{line}:{col}")
+        print()
 
 
 def run_pyright_with_coverage(
     pyright_args: list[str],
     exclude_like: Sequence[str],
+    verbose: bool = False,
 ) -> int:
     result = subprocess.run(
         ["basedpyright", *pyright_args],
@@ -63,6 +98,8 @@ def run_pyright_with_coverage(
             and x["isExported"]
         ]
         covered = sum(x["isTypeKnown"] for x in matched_symbols) / len(matched_symbols)
+        if verbose:
+            print_verbose_errors(matched_symbols)
     else:
         covered = data["typeCompleteness"]["completenessScore"]
     sys.stderr.write(result.stderr)
