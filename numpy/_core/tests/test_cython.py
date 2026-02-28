@@ -86,7 +86,12 @@ def install_temp(tmpdir_factory):
 def test_is_timedelta64_object(install_temp):
     import checks
 
-    assert checks.is_td64(np.timedelta64(1234))
+    with pytest.warns(
+        DeprecationWarning,
+        match="Using 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        assert checks.is_td64(np.timedelta64(1234))
+
     assert checks.is_td64(np.timedelta64(1234, "ns"))
     assert checks.is_td64(np.timedelta64("NaT", "ns"))
 
@@ -105,7 +110,12 @@ def test_is_datetime64_object(install_temp):
     assert not checks.is_dt64(1)
     assert not checks.is_dt64(None)
     assert not checks.is_dt64("foo")
-    assert not checks.is_dt64(np.timedelta64(1234))
+
+    with pytest.warns(
+        DeprecationWarning,
+        match="Using 'generic' unit for NumPy timedelta is deprecated",
+    ):
+        assert not checks.is_dt64(np.timedelta64(1234))
 
 
 def test_get_datetime64_value(install_temp):

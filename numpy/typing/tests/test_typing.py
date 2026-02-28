@@ -187,6 +187,7 @@ def test_reveal(path: str) -> None:
         pytest.fail(reasons, pytrace=False)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.mark.filterwarnings("ignore:numpy.fix is deprecated:DeprecationWarning")

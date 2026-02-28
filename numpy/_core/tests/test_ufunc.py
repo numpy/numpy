@@ -2760,21 +2760,27 @@ class TestUfunc:
         # minimally check the exception text
         assert exc.match('loop of ufunc does not support')
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_finite(self, nat):
         try:
             assert not np.isfinite(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_nan(self, nat):
         try:
             assert np.isnan(nat)
         except TypeError:
             pass  # ok, just not implemented
 
-    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    @pytest.mark.parametrize(
+        "nat", [np.datetime64("nat", "s"), np.timedelta64("nat", "ns")]
+    )
     def test_nat_is_not_inf(self, nat):
         try:
             assert not np.isinf(nat)
@@ -2840,7 +2846,14 @@ def test_ufunc_types(ufunc):
         if 'O' in typ or '?' in typ:
             continue
         inp, out = typ.split('->')
-        args = [np.ones((3, 3), t) for t in inp]
+        if 'm' in inp:
+            with pytest.warns(
+                DeprecationWarning,
+                match="Using 'generic' unit for NumPy timedelta is deprecated",
+            ):
+                args = [np.ones((3, 3), t) for t in inp]
+        else:
+            args = [np.ones((3, 3), t) for t in inp]
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res = ufunc(*args)

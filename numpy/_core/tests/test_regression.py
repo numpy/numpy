@@ -1,4 +1,5 @@
 import copy
+import datetime
 import gc
 import os
 import pickle
@@ -2328,6 +2329,7 @@ class TestRegression:
             np.bytes_: b"a",
             np.str_: "a",
             np.datetime64: "2017-08-25",
+            np.timedelta64: datetime.timedelta(days=1)
         }
         for sctype in scalar_types:
             item = sctype(values.get(sctype, 1))
@@ -2353,6 +2355,7 @@ class TestRegression:
         values = {
             'S': b"a",
             'M': "2018-06-20",
+            'm': datetime.timedelta(days=3),
         }
         for ch in np.typecodes['All']:
             if ch in 'O':

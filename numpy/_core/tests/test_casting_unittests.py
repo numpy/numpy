@@ -429,7 +429,6 @@ class TestCasting:
                   Casting.equiv, None, 1, 1),
              ("m8", "m8[ms]", Casting.safe, 0, 1, 1),
              # should be invalid cast:
-             ("m8[ms]", "m8", Casting.unsafe, None, 1, 1),
              ("m8[5ms]", "m8[5ms]", Casting.no, 0, 1, 1),
              ("m8[ns]", "m8[ms]", Casting.same_kind, None, 1, 10**6),
              ("m8[ms]", "m8[ns]", Casting.safe, None, 10**6, 1),

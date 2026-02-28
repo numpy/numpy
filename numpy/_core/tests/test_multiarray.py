@@ -2816,6 +2816,8 @@ class TestMethods:
         for dt in types:
             if dt == 'M':
                 dt = 'M8[D]'
+            if dt == 'm':
+                dt = 'm8[s]'
             if dt == '?':
                 a = np.arange(2, dtype=dt)
                 out = np.arange(2)
@@ -2916,6 +2918,8 @@ class TestMethods:
         for dt in types:
             if dt == 'M':
                 dt = 'M8[D]'
+            if dt == 'm':
+                dt = 'm8[s]'
             if dt == '?':
                 a = np.array([1, 0], dtype=dt)
                 # We want the sorter array to be of a type that is different
