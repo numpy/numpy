@@ -86,6 +86,14 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
         PyErr_SetString(PyExc_TypeError, "function must be callable");
         return NULL;
     }
+    if (nin <= 0) {
+        PyErr_SetString(PyExc_IndexError, "nin must be positive");
+        return NULL;
+    }
+    if (nout < 0) {
+        PyErr_SetString(PyExc_IndexError, "nout must be nonnegative");
+        return NULL;
+    }
 
     nargs = nin + nout;
 

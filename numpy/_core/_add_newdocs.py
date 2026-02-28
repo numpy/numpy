@@ -4873,68 +4873,6 @@ _array_method_doc('view', "*args, **kwargs",
             [5396, 5910]]], dtype=int16)
     """)
 
-
-##############################################################################
-#
-# umath functions
-#
-##############################################################################
-
-add_newdoc('numpy._core.umath', 'frompyfunc',
-    """
-    frompyfunc(func, /, nin, nout, **kwargs)
-    --
-
-    frompyfunc(func, /, nin, nout, *[, identity])
-
-    Takes an arbitrary Python function and returns a NumPy ufunc.
-
-    Can be used, for example, to add broadcasting to a built-in Python
-    function (see Examples section).
-
-    Parameters
-    ----------
-    func : Python function object
-        An arbitrary Python function.
-    nin : int
-        The number of input arguments.
-    nout : int
-        The number of objects returned by `func`.
-    identity : object, optional
-        The value to use for the `~numpy.ufunc.identity` attribute of the resulting
-        object. If specified, this is equivalent to setting the underlying
-        C ``identity`` field to ``PyUFunc_IdentityValue``.
-        If omitted, the identity is set to ``PyUFunc_None``. Note that this is
-        _not_ equivalent to setting the identity to ``None``, which implies the
-        operation is reorderable.
-
-    Returns
-    -------
-    out : ufunc
-        Returns a NumPy universal function (``ufunc``) object.
-
-    See Also
-    --------
-    vectorize : Evaluates pyfunc over input arrays using broadcasting rules of numpy.
-
-    Notes
-    -----
-    The returned ufunc always returns PyObject arrays.
-
-    Examples
-    --------
-    Use frompyfunc to add broadcasting to the Python function ``oct``:
-
-    >>> import numpy as np
-    >>> oct_array = np.frompyfunc(oct, 1, 1)
-    >>> oct_array(np.array((10, 30, 100)))
-    array(['0o12', '0o36', '0o144'], dtype=object)
-    >>> np.array((oct(10), oct(30), oct(100))) # for comparison
-    array(['0o12', '0o36', '0o144'], dtype='<U5')
-
-    """)
-
-
 ##############################################################################
 #
 # compiled_base functions
