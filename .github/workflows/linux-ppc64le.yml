@@ -1,4 +1,4 @@
-name: Native ppc64le Linux Test
+name: Linux IBM tests
 
 on:
   pull_request:
@@ -20,21 +20,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  native_ppc64le:
-    # This job runs only in the main NumPy repository.
-    # It requires a native ppc64le GHA runner, which is not available on forks.
+  native_ibm:
+    # These jobs runs only in the main NumPy repository.
+    # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
     # For more details, see: https://github.com/numpy/numpy/issues/29125
     if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-24.04-ppc64le-p10
+    runs-on: ${{ matrix.config.runner }}
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - name: "GCC"
+          - name: "ppc64le/gcc - baseline(default)"
             args: "-Dallow-noblas=false"
-          - name: "clang"
+            runner: ubuntu-24.04-ppc64le-p10
+          - name: "s390x/gcc - baseline(default)"
             args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+          - name: "s390x/gcc - baseline(Z15/VXE2)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
+            runner: ubuntu-24.04-s390x
 
     name: "${{ matrix.config.name }}"
     steps:
@@ -52,13 +57,6 @@ jobs:
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
         echo "/home/runner/.local/bin" >> $GITHUB_PATH
 
-    - name: Install clang
-      if: matrix.config.name == 'clang'
-      run: |
-        sudo apt install -y clang
-        export CC=clang
-        export CXX=clang++
-
     - name: Meson Build
       run: |
         spin build -- ${{ matrix.config.args }}
@@ -70,3 +68,69 @@ jobs:
     - name: Run Tests
       run: |
         spin test -- --timeout=60 --durations=10
+
+  docker_ibm:
+    # These jobs runs only in the main NumPy repository.
+    # It requires a native ppc64le and s390x GHA runners, which are not available on forks.
+    # For more details, see: https://github.com/numpy/numpy/issues/29125
+    if: github.repository == 'numpy/numpy'
+    runs-on: ${{ matrix.config.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "s390x/clang - baseline(default)"
+            args: "-Dallow-noblas=false"
+            runner: ubuntu-24.04-s390x
+          - name: "s390x/clang - baseline(Z15/VXE2)"
+            args: "-Dallow-noblas=false -Dcpu-baseline=vxe2"
+            runner: ubuntu-24.04-s390x
+
+    name: "${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Install dependencies
+      run: |
+        docker run --name the_container --interactive \
+          -v $(pwd):/numpy -w /numpy \
+          fedora:43 \
+          /bin/bash -c "
+          dnf update -y &&
+          dnf install -y gcc gcc-c++ gfortran ninja-build python3-pip python3-devel \
+                         openblas-devel lapack-devel pkg-config \
+                         clang &&
+          pip3 install --upgrade pip &&
+          pip3 install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
+        "
+        docker commit the_container the_container
+        echo CC=clang >> $GITHUB_ENV
+        echo CXX=clang++ >> $GITHUB_ENV
+
+    - name: Meson Build
+      run: |
+        BUILD_ARGS="${{ matrix.config.args }}"
+        docker run --rm -e "TERM=xterm-256color" -e "CC=$CC" -e "CXX=$CXX" \
+          -v $(pwd):/numpy -w /numpy \
+          the_container \
+          /bin/bash -c "
+            spin build -- ${BUILD_ARGS}
+          "
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: Run Tests
+      run: |
+        docker run --rm -e "TERM=xterm-256color" -e "CC=$CC" -e "CXX=$CXX" \
+          -v $(pwd):/numpy \
+          -w /numpy \
+          the_container \
+          /bin/bash -c "
+            spin test -- --timeout=60 --durations=10
+          "
