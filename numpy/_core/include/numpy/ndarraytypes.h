@@ -596,13 +596,16 @@ typedef struct {
 #define NPY_USE_SETITEM     0x40
 /* A sticky flag specifically for structured arrays */
 #define NPY_ALIGNED_STRUCT  0x80
+/* Structured dtype has non-contiguous field layout */
+#define NPY_NOT_TRIVIALLY_COPYABLE  0x100
 
 /*
  *These are inherited for global data-type if any data-types in the
  * field have them
  */
 #define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE | \
-                            NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
+                            NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI | \
+                            NPY_NOT_TRIVIALLY_COPYABLE)
 
 #define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | \
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \

@@ -3274,7 +3274,22 @@ void_to_void_get_loop(
 {
     if (PyDataType_NAMES(context->descriptors[0]) != NULL ||
             PyDataType_NAMES(context->descriptors[1]) != NULL) {
-        if (get_fields_transfer_function(
+        /*
+         * Fast path: if dtypes are equivalent and the destination is
+         * trivially copyable, use memcpy instead of field-by-field transfer.
+         */
+        if ((context->descriptors[0] == context->descriptors[1] ||
+                    PyArray_EquivTypes(context->descriptors[0], context->descriptors[1])) &&
+                PyDataType_ISTRIVIALLYCOPYABLE(context->descriptors[1])) {
+            if (PyArray_GetStridedZeroPadCopyFn(
+                    0, 0, strides[0], strides[1],
+                    context->descriptors[0]->elsize, context->descriptors[1]->elsize,
+                    out_loop, out_transferdata) == NPY_FAIL) {
+                return -1;
+            }
+            *flags = PyArrayMethod_MINIMAL_FLAGS;
+        }
+        else if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
