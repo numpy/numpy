@@ -19,3 +19,6 @@
 [submodule "numpy/_core/src/common/pythoncapi-compat"]
 	path = numpy/_core/src/common/pythoncapi-compat
 	url = https://github.com/python/pythoncapi-compat
+[submodule "subprojects/numpy-simd-routines/src"]
+	path = subprojects/numpy-simd-routines/src
+	url = https://github.com/numpy/numpy-simd-routines

@@ -2730,6 +2730,16 @@ def check_free_memory(free_bytes):
     return msg if mem_free < free_bytes else None
 
 
+# avx2 implies fma
+_fma_pattern = re.compile("fma|avx2|avx512|vsx|vx|asimd|vpfv4|rvv|lsx", re.IGNORECASE)
+
+def _ufunc_has_fma(ufunc, dtype) -> bool:
+    """Check if a ufunc has SIMD kernel with native FMA support for a given dtype."""
+    ufunc_name = ufunc.__name__
+    res = np.lib.introspect.opt_func_info(ufunc_name, signature=dtype.__name__)
+    dres = res[ufunc_name]
+    return all(bool(_fma_pattern.search(v["current"])) for v in dres.values())
+
 def _parse_size(size_str):
     """Convert memory size strings ('12 GB' etc.) to float"""
     suffixes = {'': 1, 'b': 1,
