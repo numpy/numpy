@@ -55,6 +55,7 @@
 #include "legacy_array_method.h"
 #include "ufunc_object.h"
 #include "ufunc_type_resolution.h"
+#include "abstractdtypes.h"
 
 
 #define PROMOTION_DEBUG_TRACING 0
@@ -1325,6 +1326,68 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
     Py_DECREF(info);
     return res;
+}
+
+NPY_NO_EXPORT int
+ldexp_promoter(PyObject *ufunc,
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    /* Promote integers (otherwise we do not match) to floating, i.e. double. */
+    new_op_dtypes[0] = PyArray_CommonDType(op_dtypes[0], &PyArray_FloatAbstractDType);
+    if (new_op_dtypes[0] == NULL) {
+        return -1;
+    }
+    new_op_dtypes[0] = ensure_concrete_dtype(new_op_dtypes[0]);
+    if (new_op_dtypes[0] == NULL) {
+        return -1;
+    }
+    /* Promote to at least int as we have int and int64 loops. */
+    new_op_dtypes[1] = PyArray_CommonDType(op_dtypes[1], &PyArray_IntDType);
+    if (new_op_dtypes[1] == NULL) {
+        Py_CLEAR(new_op_dtypes[0]);
+        return -1;
+    }
+    if (new_op_dtypes[2] == NULL) {
+        new_op_dtypes[2] = new_op_dtypes[0];
+    }
+    else {
+        new_op_dtypes[2] = op_dtypes[2];
+    }
+    Py_XINCREF(new_op_dtypes[2]);
+    return 0;
+}
+
+NPY_NO_EXPORT int
+init_ldexp(PyObject *ldexp)
+{
+    PyUFuncObject *ufunc = (PyUFuncObject *)ldexp;
+    if (ufunc == NULL) {
+        return -1;
+    }
+
+    /* Promote integer inputs to floats (mainly for first argument). */
+    PyObject *dtype_tuple = PyTuple_Pack(3,
+        &PyArray_IntAbstractDType, &PyArray_IntAbstractDType, Py_None);
+    if (dtype_tuple == NULL) {
+        return -1;
+    }
+
+    PyObject *promoter = PyCapsule_New((void *)&ldexp_promoter,
+            "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        Py_DECREF(dtype_tuple);
+        return -1;
+    }
+
+    PyObject *info = PyTuple_Pack(2, dtype_tuple, promoter);
+    Py_DECREF(dtype_tuple);
+    Py_DECREF(promoter);
+    if (info == NULL) {
+        return -1;
+    }
+
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }
 
 /*
