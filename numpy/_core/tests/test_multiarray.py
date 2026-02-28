@@ -7346,7 +7346,20 @@ class TestDot:
         with pytest.raises(TypeError):
             np.dot(3.0, BadObject())
 
+    def test_user_defined_dtype_raises(self):
+        # regression test for gh-30793
+        ml_dtypes = pytest.importorskip("ml_dtypes")
+        a = np.array([1, 2], dtype=ml_dtypes.bfloat16)
+        b = np.array([3, 4], dtype=ml_dtypes.bfloat16)
 
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.dot(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.inner(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.vdot(a, b)
+        with pytest.raises(TypeError, match="does not support user-defined dtypes"):
+            np.correlate(a, b)
 class MatmulCommon:
     """Common tests for '@' operator and numpy.matmul.
 
