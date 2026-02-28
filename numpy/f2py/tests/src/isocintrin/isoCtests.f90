@@ -31,4 +31,16 @@
             C(j) = A(j)+B(j)
          end do
       end subroutine
+
+      subroutine add_int8_arr(A, B, C)
+        use, intrinsic :: iso_c_binding, only: c_int8_t
+        implicit none
+        integer(c_int8_t), intent(in), dimension(3) :: A, B
+        integer(c_int8_t), intent(out), dimension(3) :: C
+        integer :: j
+
+        do j = 1, 3
+          C(j) = A(j) + B(j)
+        end do
+      end subroutine add_int8_arr
   end module coddity
