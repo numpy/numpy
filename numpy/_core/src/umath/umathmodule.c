@@ -31,6 +31,7 @@
 #include "string_ufuncs.h"
 #include "stringdtype_ufuncs.h"
 #include "special_integer_comparisons.h"
+#include "clog1p_wrappers.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 #include "ufunc_type_resolution.h"
 
