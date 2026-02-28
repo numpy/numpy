@@ -467,6 +467,7 @@ class TestTriuIndices:
         iu2 = triu_indices(4, k=2)
         iu3 = triu_indices(4, m=5)
         iu4 = triu_indices(4, k=2, m=5)
+        iu5 = triu_indices(np.uint64(4), m=np.uint8(4))
 
         a = np.array([[1, 2, 3, 4],
                       [5, 6, 7, 8],
@@ -510,6 +511,10 @@ class TestTriuIndices:
                                   [11, 12, -1, -1, -10],
                                   [16, 17, 18, -1, -1]]))
 
+        # For unsigned integer
+        assert_array_equal(iu5,
+                           (array([0, 0, 0, 0, 1, 1, 1, 2, 2, 3]),
+                            array([0, 1, 2, 3, 1, 2, 3, 2, 3, 3])))
 
 class TestTrilIndicesFrom:
     def test_exceptions(self):
