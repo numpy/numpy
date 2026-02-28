@@ -1,0 +1,3 @@
+``numpy.triu_indices`` now accepts ``unsigned integers``
+--------------------------------------------------------
+``numpy.triu_indices`` previously used to error in some cases when ``unsigned integers`` were given as arguments. Now, it accepts them in all cases.

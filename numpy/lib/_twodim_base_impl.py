@@ -20,12 +20,12 @@ from numpy._core.numeric import (
     int16,
     int32,
     int64,
+    integer,
     intp,
     multiply,
     nonzero,
     ones,
     promote_types,
-    unsignedinteger,
     where,
     zeros,
 )
@@ -388,21 +388,6 @@ def diagflat(v, k=0):
 
     return conv.wrap(res)
 
-def _to_int(n):
-
-    try:
-        n = operator.index(n)
-    except TypeError:
-        # Deprecated NumPy 2.5, 2026-02
-        warnings.warn(
-            (f"Cannot convert {type(n).__name__} safely to an integer."
-             "This will raise an error in future versions (Deprecated NumPy 2.5)"),
-            DeprecationWarning,
-            skip_file_prefixes=(os.path.dirname(__file__),),
-        )
-
-    return n
-
 @finalize_array_function_like
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
@@ -447,25 +432,42 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
     """
 
-    if not isinstance(N, int):
-        N = _to_int(N)
+    w = []
+    try:
+        N = operator.index(N)
+    except TypeError:
+        w.append(N)
 
     if like is not None:
         return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
 
     if M is None:
         M = N
-    elif not isinstance(M, int):
-        M = _to_int(M)
+    else:
+        try:
+            M = operator.index(M)
+        except TypeError:
+            w.append(M)
 
-    if not isinstance(k, int):
-        k = _to_int(k)
+    try:
+        k = operator.index(k)
+    except TypeError:
+        w.append(k)
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
                             arange(-k, M - k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
+
+    # warn for all deprecated
+    for i in w:
+        warnings.warn(
+            (f"Cannot convert {type(i).__name__} safely to an integer."
+             "This will raise an error in future versions (Deprecated NumPy 2.5)"),
+            DeprecationWarning,
+            skip_file_prefixes=(os.path.dirname(__file__),),
+        )
 
     return m
 
@@ -1159,7 +1161,8 @@ def triu_indices(n, k=0, m=None):
 
     """
 
-    if isinstance(k, unsignedinteger):
+    # To make sure unsigned integers, etc. get converted to int
+    if isinstance(k, integer):
         k = operator.index(k)
 
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
