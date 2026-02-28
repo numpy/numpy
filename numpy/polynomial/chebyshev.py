@@ -793,7 +793,7 @@ def chebdiv(c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError  # FIXME: add message with details to exception
+        raise ZeroDivisionError("The divisor cannot be the zero polynomial.")
 
     # note: this is more efficient than `pu._div(chebmul, c1, c2)`
     lc1 = len(c1)
