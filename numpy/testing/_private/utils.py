@@ -253,7 +253,8 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
     return '\n'.join(msg)
 
 
-def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
+def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False,
+                 equal_mask=False):
     """
     Raises an AssertionError if two objects are not equal.
 
@@ -283,6 +284,13 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
         parameter has no effect.
 
         .. versionadded:: 2.0.0
+
+    equal_mask : bool, optional
+        If True, masked arrays must have matching masks. When False (default),
+        mask differences are ignored for backward compatibility. Only applies
+        when comparing masked arrays.
+
+        .. versionadded:: 2.5.0
 
     Raises
     ------
@@ -362,19 +370,19 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
             if k not in actual:
                 raise AssertionError(repr(k))
             assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}',
-                         verbose)
+                         verbose, equal_mask=equal_mask)
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         assert_equal(len(actual), len(desired), err_msg, verbose)
         for k in range(len(desired)):
             assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
-                         verbose)
+                         verbose, equal_mask=equal_mask)
         return
     from numpy import imag, iscomplexobj, real
     from numpy._core import isscalar, ndarray, signbit
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose,
-                                  strict=strict)
+                                  strict=strict, equal_mask=equal_mask)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
 
     # Handle complex numbers: separate into real/imag to handle
@@ -733,12 +741,50 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
-                         *, strict=False, names=('ACTUAL', 'DESIRED')):
+                         *, strict=False, names=('ACTUAL', 'DESIRED'),
+                         equal_mask=False):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy._core import all, array2string, errstate, inf, isnan, max, object_
 
     x = np.asanyarray(x)
     y = np.asanyarray(y)
+
+    mask_to_ignore = None
+    if equal_mask and (np.ma.isMaskedArray(x) or np.ma.isMaskedArray(y)):
+        mx = np.ma.getmaskarray(x)
+        my = np.ma.getmaskarray(y)
+        try:
+            mx, my = np.broadcast_arrays(mx, my)
+        except ValueError:
+            msg = build_err_msg([x, y], err_msg
+                                + '\nmask broadcast mismatch:',
+                                verbose=verbose, header=header,
+                                names=names, precision=precision)
+            raise AssertionError(msg)
+
+        mask_diff = mx != my
+        if np.any(mask_diff):
+            positions = np.argwhere(np.asarray(mask_diff))
+            details = ''
+            if positions.size:
+                s = "\n".join(
+                    [
+                        f" {p.tolist()}" for p in positions[:5]
+                    ]
+                )
+                if len(positions) == 1:
+                    details = f"\nMask mismatch at index:\n{s}"
+                elif len(positions) <= 5:
+                    details = f"\nMask mismatches at indices:\n{s}"
+                else:
+                    details = f"\nFirst 5 mask mismatches are at indices:\n{s}"
+
+            msg = build_err_msg([x, y], err_msg + '\nmask mismatch:' + details,
+                                verbose=verbose, header=header,
+                                names=names, precision=precision)
+            raise AssertionError(msg)
+
+        mask_to_ignore = mx
 
     # original array for output formatting
     ox, oy = x, y
@@ -878,6 +924,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     flagged = func_assert_same_pos(
                         x, y, func=isnan, hasval=x.dtype.na_object)
 
+        if mask_to_ignore is not None:
+            flagged = np.logical_or(flagged, mask_to_ignore)
+
         if flagged.ndim > 0:
             x, y = x[~flagged], y[~flagged]
             # Only do the comparison if actual values are left
@@ -993,7 +1042,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
 
 def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
-                       strict=False):
+                       strict=False, equal_mask=False):
     """
     Raises an AssertionError if two array_like objects are not equal.
 
@@ -1035,6 +1084,14 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
         .. versionadded:: 1.24.0
 
+    equal_mask : bool, optional
+        If True, treat ``numpy.ma.MaskedArray`` mask positions as part of the
+        comparison: an AssertionError is raised when masks differ, and masked
+        positions are ignored when comparing the underlying data. When False
+        (default), mask differences are ignored and masked entries are filled
+        before comparison.
+
+        .. versionadded:: 2.5.0
     Raises
     ------
     AssertionError
@@ -1123,7 +1180,7 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
     __tracebackhide__ = True  # Hide traceback for py.test
     assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,
                          verbose=verbose, header='Arrays are not equal',
-                         strict=strict)
+                         strict=strict, equal_mask=equal_mask)
 
 
 def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
