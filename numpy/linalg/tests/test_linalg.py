@@ -157,7 +157,10 @@ CASES += apply_tag('square', [
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_2",
                array([[1. + 2j, 2 + 3j], [3 + 4j, 4 + 5j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]], dtype=cdouble)),
+               array(
+                   [[2. + 1j, 1. + 2j, 1 + 3j], [1 - 2j, 1 - 3j, 1 - 6j]],
+                   dtype=cdouble,
+               )),
     LinalgCase("0x0",
                np.empty((0, 0), dtype=double),
                np.empty((0,), dtype=double),
@@ -189,28 +192,43 @@ CASES += apply_tag('nonsquare', [
                array([2., 1., 3.], dtype=double)),
     LinalgCase("csingle_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=csingle),
+                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                   dtype=csingle,
+               ),
                array([2. + 1j, 1. + 2j], dtype=csingle)),
     LinalgCase("csingle_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=csingle),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=csingle,
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=csingle)),
     LinalgCase("cdouble_nsq_1",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble,
+                ),
                array([2. + 1j, 1. + 2j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble,
+                ),
                array([2. + 1j, 1. + 2j, 3. - 3j], dtype=cdouble)),
     LinalgCase("cdouble_nsq_1_2",
                array(
-                   [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]], dtype=cdouble),
+                    [[1. + 1j, 2. + 2j, 3. - 3j], [3. - 5j, 4. + 9j, 6. + 2j]],
+                    dtype=cdouble,
+                ),
                array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
     LinalgCase("cdouble_nsq_2_2",
                array(
-                   [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]], dtype=cdouble),
-               array([[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]], dtype=cdouble)),
+                    [[1. + 1j, 2. + 2j], [3. - 3j, 4. - 9j], [5. - 4j, 6. + 8j]],
+                    dtype=cdouble,
+                ),
+               array(
+                    [[2. + 1j, 1. + 2j], [1 - 1j, 2 - 2j], [1 - 1j, 2 - 2j]],
+                    dtype=cdouble,
+                )),
     LinalgCase("8x11",
                np.random.rand(8, 11),
                np.random.rand(8)),
@@ -633,8 +651,8 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         res = linalg.eig(a)
         eigenvalues, eigenvectors = res.eigenvalues, res.eigenvectors
         assert_allclose(matmul(a, eigenvectors),
-                        np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
-                        rtol=get_rtol(eigenvalues.dtype))
+            np.asarray(eigenvectors) * np.asarray(eigenvalues)[..., None, :],
+            rtol=get_rtol(eigenvalues.dtype))
         assert_(consistent_subclass(eigenvectors, a))
 
 
@@ -735,8 +753,10 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
             axes[-1], axes[-2] = axes[-2], axes[-1]
             return np.conj(np.transpose(mat, axes=axes))
 
-        assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
-        assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
+        expected = np.broadcast_to(np.eye(u.shape[-1]), u.shape)
+        assert_almost_equal(np.matmul(u, hermitian(u)), expected)
+        expected = np.broadcast_to(np.eye(vt.shape[-1]), vt.shape)
+        assert_almost_equal(np.matmul(vt, hermitian(vt)), expected)
         assert_equal(np.sort(s)[..., ::-1], s)
         assert_(consistent_subclass(u, a))
         assert_(consistent_subclass(vt, a))
@@ -881,7 +901,8 @@ class PinvCases(LinalgSquareTestCase,
         a_ginv = linalg.pinv(a)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = matmul
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        result = dot(dot(a, a_ginv), a)
+        assert_almost_equal(result, a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
@@ -895,7 +916,8 @@ class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         a_ginv = linalg.pinv(a, hermitian=True)
         # `a @ a_ginv == I` does not hold if a is singular
         dot = matmul
-        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        result = dot(dot(a, a_ginv), a)
+        assert_almost_equal(result, a, single_decimal=5, double_decimal=11)
         assert_(consistent_subclass(a_ginv, a))
 
 
