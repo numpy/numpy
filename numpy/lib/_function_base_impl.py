@@ -2,6 +2,8 @@ import builtins
 import collections.abc
 import functools
 import re
+import inspect
+import sys
 import warnings
 
 import numpy as np
@@ -2486,9 +2488,36 @@ class vectorize:
         `args` and `kwargs` not in `excluded`.
         """
         excluded = self.excluded
+        
+        try:
+            pyfunc_params = dict(inspect.signature(self.pyfunc).parameters.items())
+        except:
+            pyfunc_params = None
+
         if not kwargs and not excluded:
             func = self.pyfunc
             vargs = args
+        elif (not excluded and pyfunc_params is not None and
+              all([param.kind is param.POSITIONAL_ONLY or
+                   param.kind is param.POSITIONAL_OR_KEYWORD
+                   for param in pyfunc_params.values()])):
+            effective_args = []
+            ind = 0
+            nargs = len(args)
+            for name, param in pyfunc_params.items():
+                if ind < nargs:
+                    effective_args.append(args[ind])
+                    ind += 1
+                elif name in kwargs:
+                    if param.kind is inspect.Parameter.POSITIONAL_ONLY:
+                        raise TypeError(f"Param {name} is positional only")
+                    effective_args.append(kwargs[name])
+                elif param.default is not inspect.Parameter.empty:
+                    effective_args.append(param.default)
+                else:
+                    raise TypeError(f"Missing param: {name}")
+            func = self.pyfunc
+            vargs = effective_args
         else:
             # The wrapper accepts only positional arguments: we use `names` and
             # `inds` to mutate `the_args` and `kwargs` to pass to the original
