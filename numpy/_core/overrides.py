@@ -96,8 +96,8 @@ def verify_matching_signatures(implementation, dispatcher):
             (implementation_spec.defaults is not None and
              len(implementation_spec.defaults) !=
              len(dispatcher_spec.defaults))):
-        raise RuntimeError('implementation and dispatcher for %s have '
-                           'different function signatures' % implementation)
+        raise RuntimeError(f'implementation and dispatcher for {implementation} have '
+                           'different function signatures')
 
     if implementation_spec.defaults is not None:
         if dispatcher_spec.defaults != (None,) * len(dispatcher_spec.defaults):

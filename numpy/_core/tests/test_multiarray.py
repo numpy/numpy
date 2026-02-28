@@ -299,17 +299,17 @@ class TestHash:
                           (np.int64, np.uint64, 64)]:
             for i in range(1, s):
                 assert_equal(hash(st(-2**i)), hash(-2**i),
-                             err_msg="%r: -2**%d" % (st, i))
+                             err_msg=f"{st!r}: -2**{i}")
                 assert_equal(hash(st(2**(i - 1))), hash(2**(i - 1)),
-                             err_msg="%r: 2**%d" % (st, i - 1))
+                             err_msg=f"{st!r}: 2**{i - 1}")
                 assert_equal(hash(st(2**i - 1)), hash(2**i - 1),
-                             err_msg="%r: 2**%d - 1" % (st, i))
+                             err_msg=f"{st!r}: 2**{i} - 1")
 
                 i = max(i - 1, 1)
                 assert_equal(hash(ut(2**(i - 1))), hash(2**(i - 1)),
-                             err_msg="%r: 2**%d" % (ut, i - 1))
+                             err_msg=f"{ut!r}: 2**{i - 1}")
                 assert_equal(hash(ut(2**i - 1)), hash(2**i - 1),
-                             err_msg="%r: 2**%d - 1" % (ut, i))
+                             err_msg=f"{ut!r}: 2**{i} - 1")
 
 
 class TestAttributes:
@@ -3205,9 +3205,9 @@ class TestMethods:
                     aae(p[:, i], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:, :i].T <= p[:, i]).all(),
-                       msg="%d: %r <= %r" % (i, p[:, i], p[:, :i].T))
+                       msg=f"{i}: {p[:, i]!r} <= {p[:, :i].T!r}")
                     at((p[:, i + 1:].T > p[:, i]).all(),
-                       msg="%d: %r < %r" % (i, p[:, i], p[:, i + 1:].T))
+                       msg=f"{i}: {p[:, i]!r} < {p[:, i + 1:].T!r}")
                     for row in range(p.shape[0]):
                         self.assert_partitioned(p[row], [i])
                         self.assert_partitioned(parg[row], [i])
@@ -3218,9 +3218,9 @@ class TestMethods:
                     aae(p[i, :], np.array([i] * d1.shape[0], dtype=dt))
                     # array_less does not seem to work right
                     at((p[:i, :] <= p[i, :]).all(),
-                       msg="%d: %r <= %r" % (i, p[i, :], p[:i, :]))
+                       msg=f"{i}: {p[i, :]!r} <= {p[:i, :]!r}")
                     at((p[i + 1:, :] > p[i, :]).all(),
-                       msg="%d: %r < %r" % (i, p[i, :], p[:, i + 1:]))
+                       msg=f"{i}: {p[i, :]!r} < {p[:, i + 1:]!r}")
                     for col in range(p.shape[1]):
                         self.assert_partitioned(p[:, col], [i])
                         self.assert_partitioned(parg[:, col], [i])
@@ -3240,9 +3240,9 @@ class TestMethods:
         prev = 0
         for k in np.sort(kth):
             assert_array_compare(operator.__le__, d[prev:k], d[k],
-                    err_msg='kth %d' % k)
+                    err_msg=f'kth {k}')
             assert_((d[k:] >= d[k]).all(),
-                    msg="kth %d, %r not greater equal %r" % (k, d[k:], d[k]))
+                    msg=f"kth {k}, {d[k:]!r} not greater equal {d[k]!r}")
             prev = k + 1
 
     def test_partition_iterative(self):
@@ -4094,8 +4094,8 @@ class TestBinop:
         def check(obj, binop_override_expected, ufunc_override_expected,
                   inplace_override_expected, check_scalar=True):
             for op, (ufunc, has_inplace, dtype) in ops.items():
-                err_msg = ('op: %s, ufunc: %s, has_inplace: %s, dtype: %s'
-                           % (op, ufunc, has_inplace, dtype))
+                err_msg = (f'op: {op}, ufunc: {ufunc}, '
+                           f'has_inplace: {has_inplace}, dtype: {dtype}')
                 check_objs = [np.arange(3, 7, dtype=dtype).reshape(2, 2)]
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
@@ -4439,7 +4439,7 @@ class TestTemporaryElide:
         for dt in (np.complex64, np.complex128, np.clongdouble):
             c = np.ones(100000, dtype=dt)
             r = abs(c * 2.0)
-            assert_equal(r.dtype, np.dtype('f%d' % (c.itemsize // 2)))
+            assert_equal(r.dtype, np.dtype(f'f{c.itemsize // 2}'))
 
     def test_elide_broadcast(self):
         # test no elision on broadcast to higher dimension
@@ -5923,7 +5923,7 @@ class TestIO:
                 f.write(b'\0')
 
             for mode in ['rb', 'r+b']:
-                err_msg = "%d %s" % (size, mode)
+                err_msg = f"{size} {mode}"
 
                 with open(tmp_filename, mode) as f:
                     f.read(2)
@@ -5939,7 +5939,7 @@ class TestIO:
         tmp_filename = normalize_filename(tmp_path, param_filename)
 
         for size in sizes:
-            err_msg = "%d" % (size,)
+            err_msg = f"{size}"
 
             with open(tmp_filename, 'wb') as f:
                 f.seek(size - 1)
@@ -8329,7 +8329,7 @@ class TestPEP3118Dtype:
             if j == 0:
                 s = 'bi'
             else:
-                s = 'b%dxi' % j
+                s = f'b{j}xi'
             self._check('@' + s, {'f0': ('i1', 0),
                                 'f1': ('i', align * (1 + j // align))})
             self._check('=' + s, {'f0': ('i1', 0),
