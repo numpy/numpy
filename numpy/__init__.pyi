@@ -5079,6 +5079,9 @@ class floating(_RealMixin, _RoundMixin, inexact[_NBitT, float]):
     def is_integer(self, /) -> py_bool: ...
     def as_integer_ratio(self, /) -> tuple[int, int]: ...
 
+    @classmethod
+    def from_number(self, _ConvertibleToFloat, /) -> floating[_NBit]: ...
+
 float16 = floating[_16Bit]
 float32 = floating[_32Bit]
 
