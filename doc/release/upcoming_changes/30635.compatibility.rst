@@ -1,0 +1,10 @@
+``memmap`` objects are now pickled using their metadata
+-------------------------------------------------------
+
+When pickling a ``memmap`` provided it has a filename, it will now be reconstructed
+specifically as a ``memmap`` using the filename and other metadata.
+Previously, ``memmap`` objects were pickled as standard arrays (recovering the
+data, but not the memory map). This change allows for efficient sharing of
+large arrays across processes without copying, but it also means that the
+pickled file is no longer self-contained: the backing file must exist and be 
+accessible when unpickling.

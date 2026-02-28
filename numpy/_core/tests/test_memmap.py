@@ -1,5 +1,6 @@
 import mmap
 import os
+import pickle
 import sys
 import warnings
 from pathlib import Path
@@ -13,6 +14,7 @@ from numpy import (
     arange,
     asarray,
     average,
+    dtype,
     isscalar,
     memmap,
     multiply,
@@ -237,6 +239,49 @@ class TestMemmap:
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
 
+    @pytest.mark.parametrize("dtype_name", [">f8", "<f4"])
+    @pytest.mark.parametrize("order", ["C", "F"])
+    def test_pickle(self, dtype_name, order, tmp_path):
+        tmpname = tmp_path / 'mmap'
+        shape = (10, 10)
+
+        # Create and populate memmap
+        fp = memmap(tmpname, dtype=dtype_name, mode='w+', shape=shape, order=order)
+        data = arange(prod(shape), dtype=dtype_name).reshape(shape, order=order)
+        fp[:] = data
+        if sys.platform != 'emscripten':
+            fp.flush()
+
+        fp = memmap(tmpname, dtype=dtype_name, mode='r', shape=shape, order=order)
+
+        # Pickle and unpickle
+        pickled = pickle.dumps(fp)
+        fp_restored = pickle.loads(pickled)
+
+        # Verify it's still a memmap with correct data
+        assert_(isinstance(fp_restored, memmap))
+        assert_array_equal(fp, fp_restored)
+        assert_equal(fp_restored.mode, 'r')
+        assert_equal(fp_restored.dtype, dtype(dtype_name))
+        assert_equal(fp_restored.flags.f_contiguous, order == 'F')
+
+        # Verify pickle is metadata only
+        # 10x10 float64 is 800 bytes, float32 is 400.
+        # Metadata should be small.
+        assert len(pickled) < 1024
+
+        # Test sliced view
+        # Slice to start at element 1,1
+        fp_sliced = fp[1:-1, 1:-1]
+        pickled_sliced = pickle.dumps(fp_sliced)
+        fp_sliced_restored = pickle.loads(pickled_sliced)
+        assert_array_equal(fp_sliced, fp_sliced_restored)
+
+        # Test strided view
+        fp_strided = fp[::2, ::2]
+        pickled_strided = pickle.dumps(fp_strided)
+        fp_strided_restored = pickle.loads(pickled_strided)
+        assert_array_equal(fp_strided, fp_strided_restored)
 
 class TestPatternMatching:
     """Tests for structural pattern matching support (PEP 634)."""
