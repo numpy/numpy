@@ -232,7 +232,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
-    PyArray_Descr *dtype;
+    PyArray_Descr *dtype, *out_dtype;
     PyArrayObject *obj = NULL, *self, *indices;
     npy_intp nd, i, n, m, max_item, chunk, itemsize, nelem;
     npy_intp shape[NPY_MAXDIMS];
@@ -310,6 +310,19 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             flags |= NPY_ARRAY_ENSURECOPY;
         }
         dtype = PyArray_DESCR(self);
+        out_dtype = PyArray_DESCR(out);
+        if (dtype != out_dtype) {
+            /* Deprecated NumPy 2.5, 2026-01 */
+            if (!PyArray_CanCastTypeTo(dtype, out_dtype, NPY_SAME_KIND_CASTING)) {
+                if (DEPRECATE(
+                        "Implicit casting of output to a different kind is deprecated."
+                        "In a future version, this will result in an error. (Deprecated NumPy 2.5)") <
+                    0) {
+                    goto fail;
+                }
+            }
+            flags |= NPY_ARRAY_FORCECAST;
+        }
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {

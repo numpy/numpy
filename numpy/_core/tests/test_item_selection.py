@@ -81,6 +81,17 @@ class TestTake:
 
         assert_array_equal(a, a_original)
 
+    @pytest.mark.parametrize("dtype",
+            [np.int8, np.int16, np.int32, np.int64,
+             np.float16, np.float32, np.float64, np.longdouble])
+    def test_out_dtype(self, dtype):
+        # In reference to github issue #25588
+        a = np.arange(3).astype(np.int32)
+        indices = np.arange(2)
+        out = np.zeros_like(indices, dtype=dtype)
+        np.take(a, indices, out=out)
+        assert_array_equal(a[indices], out)
+
     def test_empty_argpartition(self):
         # In reference to github issue #6530
         a = np.array([0, 2, 4, 6, 8, 10])
