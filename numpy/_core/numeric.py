@@ -484,10 +484,10 @@ def _count_nonzero_dispatcher(a, axis=None, *, keepdims=None):
 def count_nonzero(a, axis=None, *, keepdims=False):
     """
     Counts the number of non-zero values in the array ``a``.
-    
+
     A non-zero value is one that evaluates to truthful in a boolean
-    context, including any non-zero number and any string that 
-    is not empty. This function recursively counts how many elements 
+    context, including any non-zero number and any string that
+    is not empty. This function recursively counts how many elements
     in ``a`` (and its sub-arrays) are non-zero values.
 
     Parameters
