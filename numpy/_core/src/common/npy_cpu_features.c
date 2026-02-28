@@ -235,14 +235,13 @@ npy__cpu_validate_baseline(void)
 
     #define NPY__CPU_VALIDATE_CB(FEATURE, DUMMY)                  \
         if (!npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)]) { \
-            const int size = sizeof(NPY_TOSTRING(FEATURE));       \
+            const int size = sizeof(NPY_TOSTRING(FEATURE)) - 1;       \
             memcpy(fptr, NPY_TOSTRING(FEATURE), size);            \
             fptr[size] = ' '; fptr += size + 1;                   \
         }
     NPY_WITH_CPU_BASELINE_CALL(NPY__CPU_VALIDATE_CB, DUMMY) // extra arg for msvc
-    *fptr = '\0';
 
-    if (baseline_failure[0] != '\0') {
+    if (fptr > baseline_failure) {
         *(fptr-1) = '\0'; // trim the last space
         PyErr_Format(PyExc_RuntimeError,
             "NumPy was built with baseline optimizations: \n"
@@ -448,7 +447,7 @@ npy__cpu_cpuid_count(int reg[4], int func_id, int count)
 static void
 npy__cpu_cpuid(int reg[4], int func_id)
 {
-    return npy__cpu_cpuid_count(reg, func_id, 0);
+    npy__cpu_cpuid_count(reg, func_id, 0);
 }
 
 static void
