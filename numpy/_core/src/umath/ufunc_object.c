@@ -1427,8 +1427,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             Py_INCREF(op_axes_tuple);
         }
         else if (op_ncore == 1) {
-            PyObject *tmp = op_axes_tuple;
-            op_axes_tuple = PyArray_TupleFromItems(1, &tmp, 0);
+            op_axes_tuple = PyArray_TupleFromItems(1, &op_axes_tuple, 0);
             if (op_axes_tuple == NULL) {
                 return -1;
             }
@@ -3437,6 +3436,8 @@ static int
 _set_full_args_out(int nout, PyObject *out_obj,
                    ufunc_full_args_light *full_args_light)
 {
+    assert(full_args_light != NULL);
+
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
             PyErr_SetString(PyExc_ValueError,
@@ -3448,8 +3449,8 @@ _set_full_args_out(int nout, PyObject *out_obj,
             return 0;
         }
         else {
-            /* Populate full_args_light if provided (owned refs) */
-            if (full_args_light != NULL && full_args_light->out != NULL) {
+            /* Populate full_args_light.out if provided (owned refs) */
+            if (full_args_light->out != NULL) {
                 for (int i = 0; i < nout; i++) {
                     PyObject *item = PyTuple_GET_ITEM(out_obj, i);
                     full_args_light->out[i] = Py_NewRef(item);
@@ -4571,7 +4572,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    printfd("populating full_args_light.in\n");
     if (outer) {
         /* outer modifies inputs, so we need owned refs in scratch space */
         full_args_light.in = args_scratch;
@@ -4708,6 +4708,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 if (_set_full_args_out(nout, out_obj, &full_args_light) < 0) {
                     goto fail;
                 }
+                /* If all outputs were None, _set_full_args_out leaves
+                 * nout == 0 without populating items. Reset out to NULL
+                 * so downstream code doesn't iterate over empty slots. */
+                if (full_args_light.nout == 0) {
+                    full_args_light.out = NULL;
+                }
             }
         }
         /*
@@ -4816,7 +4822,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     if (ufuncimpl == NULL) {
         goto fail;
     }
-    printfd("ufunc_generic_fastcall: after promote_and_get_ufuncimpl\n");
 
     /* Find the correct descriptors for the operation */
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
