@@ -980,7 +980,7 @@ array_boolean_subscript(PyArrayObject *self,
     /* not same as *dtype* if the DType class replaces dtypes */
     ret_dtype = PyArray_DESCR(ret);
 
-    itemsize = dtype->elsize;
+    itemsize = PyDataType_ELSIZE(dtype);
     ret_data = PyArray_DATA(ret);
 
     /* Create an iterator for the data */
@@ -1129,7 +1129,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
     char *v_data;
     npy_intp bmask_size;
 
-    if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
+    if (PyDataType_TYPENUM(PyArray_DESCR(bmask)) != NPY_BOOL) {
         PyErr_SetString(PyExc_TypeError,
                 "NumPy boolean array indexing assignment "
                 "requires a boolean index");
@@ -1601,7 +1601,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
         if (PyArray_TRIVIALLY_ITERABLE(ind) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
-                PyArray_DESCR(ind)->kind == 'i' &&
+                PyDataType_TYPENUM(PyArray_DESCR(ind)) == 'i' &&
                 IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
@@ -2043,7 +2043,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                         PyArray_TRIVIALLY_ITERABLE(ind))) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
-                PyArray_DESCR(ind)->kind == 'i' &&
+                PyDataType_KIND(PyArray_DESCR(ind)) == 'i' &&
                 IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
@@ -2666,7 +2666,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
         if (PyArray_TRIVIALLY_ITERABLE(op) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(op) == sizeof(npy_intp) &&
-                PyArray_DESCR(op)->kind == 'i' &&
+                PyDataType_KIND(PyArray_DESCR(op)) == 'i' &&
                 IsUintAligned(op) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(op))) {
             char *data;
@@ -3013,7 +3013,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
              * is limited to int.
              */
             if (!NpyIter_CreateCompatibleStrides(tmp_iter,
-                        extra_op_dtype->elsize * PyArray_SIZE(subspace),
+                        PyDataType_ELSIZE(extra_op_dtype) * PyArray_SIZE(subspace),
                         strides)) {
                 PyErr_SetString(PyExc_ValueError,
                         "internal error: failed to find output array strides");
@@ -3023,7 +3023,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         }
         else {
             /* Just use C-order strides (TODO: allow also F-order) */
-            stride = extra_op_dtype->elsize * PyArray_SIZE(subspace);
+            stride = PyDataType_ELSIZE(extra_op_dtype) * PyArray_SIZE(subspace);
             for (i=mit->nd_fancy - 1; i >= 0; i--) {
                 strides[i] = stride;
                 stride *= mit->dimensions[i];
@@ -3033,7 +3033,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         /* shape is set, and strides is set up to mit->nd, set rest */
         PyArray_CreateSortedStridePerm(PyArray_NDIM(subspace),
                                 PyArray_STRIDES(subspace), strideperm);
-        stride = extra_op_dtype->elsize;
+        stride = PyDataType_ELSIZE(extra_op_dtype);
         for (i=PyArray_NDIM(subspace) - 1; i >= 0; i--) {
             strides[mit->nd_fancy + strideperm[i].perm] = stride;
             stride *= PyArray_DIM(subspace, (int)strideperm[i].perm);

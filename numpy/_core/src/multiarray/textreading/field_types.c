@@ -34,11 +34,11 @@ field_types_xclear(int num_field_types, field_type *ft) {
 static set_from_ucs4_function *
 get_from_ucs4_function(PyArray_Descr *descr)
 {
-    if (descr->type_num == NPY_BOOL) {
+    if (PyDataType_TYPENUM(descr) == NPY_BOOL) {
         return &npy_to_bool;
     }
     else if (PyDataType_ISSIGNED(descr)) {
-        switch (descr->elsize) {
+        switch (PyDataType_ELSIZE(descr)) {
             case 1:
                 return &npy_to_int8;
             case 2:
@@ -52,7 +52,7 @@ get_from_ucs4_function(PyArray_Descr *descr)
         }
     }
     else if (PyDataType_ISUNSIGNED(descr)) {
-        switch (descr->elsize) {
+        switch (PyDataType_ELSIZE(descr)) {
             case 1:
                 return &npy_to_uint8;
             case 2:
@@ -65,22 +65,22 @@ get_from_ucs4_function(PyArray_Descr *descr)
                 assert(0);
         }
     }
-    else if (descr->type_num == NPY_FLOAT) {
+    else if (PyDataType_TYPENUM(descr) == NPY_FLOAT) {
         return &npy_to_float;
     }
-    else if (descr->type_num == NPY_DOUBLE) {
+    else if (PyDataType_TYPENUM(descr) == NPY_DOUBLE) {
         return &npy_to_double;
     }
-    else if (descr->type_num == NPY_CFLOAT) {
+    else if (PyDataType_TYPENUM(descr) == NPY_CFLOAT) {
         return &npy_to_cfloat;
     }
-    else if (descr->type_num == NPY_CDOUBLE) {
+    else if (PyDataType_TYPENUM(descr) == NPY_CDOUBLE) {
         return &npy_to_cdouble;
     }
-    else if (descr->type_num == NPY_STRING) {
+    else if (PyDataType_TYPENUM(descr) == NPY_STRING) {
         return &npy_to_string;
     }
-    else if (descr->type_num == NPY_UNICODE) {
+    else if (PyDataType_TYPENUM(descr) == NPY_UNICODE) {
         return &npy_to_unicode;
     }
     return &npy_to_generic;
@@ -109,7 +109,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
         for (npy_intp i = 0; i < size; i++) {
             num_field_types = field_type_grow_recursive(PyDataType_SUBARRAY(descr)->base,
                     num_field_types, ft, ft_size, field_offset);
-            field_offset += PyDataType_SUBARRAY(descr)->base->elsize;
+            field_offset += PyDataType_ELSIZE(PyDataType_SUBARRAY(descr)->base);
             if (num_field_types < 0) {
                 return -1;
             }

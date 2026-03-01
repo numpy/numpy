@@ -256,7 +256,7 @@ copy_cached_initial(
         void *initial)
 {
     memcpy(initial, context->method->legacy_initial,
-           context->descriptors[0]->elsize);
+           PyDataType_ELSIZE(context->descriptors[0]));
     return 1;
 }
 
@@ -294,7 +294,7 @@ get_initial_from_ufunc(
         Py_DECREF(identity_obj);
         return 0;
     }
-    if (PyTypeNum_ISUNSIGNED(context->descriptors[1]->type_num)
+    if (PyTypeNum_ISUNSIGNED(PyDataType_TYPENUM(context->descriptors[1]))
             && PyLong_CheckExact(identity_obj)) {
         /*
          * This is a bit of a hack until we have truly loop specific
@@ -310,7 +310,7 @@ get_initial_from_ufunc(
             return -1;
         }
     }
-    else if (context->descriptors[0]->type_num == NPY_OBJECT
+    else if (PyDataType_TYPENUM(context->descriptors[0]) == NPY_OBJECT
              && !reduction_is_empty) {
         /* Allows `sum([object()])` to work, but use 0 when empty. */
         Py_DECREF(identity_obj);
@@ -389,7 +389,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         }
     }
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
-        if (signature[i]->singleton->flags & (
+        if (PyDataType_FLAGS(signature[i]->singleton) & (
                 NPY_ITEM_REFCOUNT | NPY_ITEM_IS_POINTER | NPY_NEEDS_PYAPI)) {
             flags |= NPY_METH_REQUIRES_PYAPI;
         }

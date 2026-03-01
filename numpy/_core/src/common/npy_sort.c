@@ -32,7 +32,7 @@ npy_default_sort_loop(PyArrayMethod_Context *context,
     }
 
     return sort_func(data[0], dimensions[0], context,
-                     context->descriptors[0]->elsize, cmp);
+                     PyDataType_ELSIZE(context->descriptors[0]), cmp);
 }
 
 NPY_NO_EXPORT int
@@ -59,7 +59,7 @@ npy_default_argsort_loop(PyArrayMethod_Context *context,
     }
 
     return argsort_func(data[0], (npy_intp *)data[1], dimensions[0], context,
-                        context->descriptors[0]->elsize, cmp);
+                        PyDataType_ELSIZE(context->descriptors[0]), cmp);
 }
 
 #ifdef __cplusplus

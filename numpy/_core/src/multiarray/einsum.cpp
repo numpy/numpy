@@ -509,8 +509,8 @@ unbuffered_loop_nop1_ndim2(NpyIter *iter)
     memcpy(ptrs[1], ptrs[0], 2*sizeof(char*));
 
     sop = get_sum_of_products_function(1,
-                    NpyIter_GetDescrArray(iter)[0]->type_num,
-                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    PyDataType_TYPENUM(NpyIter_GetDescrArray(iter)[0]),
+                    PyDataType_ELSIZE(NpyIter_GetDescrArray(iter)[0]),
                     strides[0]);
 
     if (sop == NULL) {
@@ -572,8 +572,8 @@ unbuffered_loop_nop1_ndim3(NpyIter *iter)
     memcpy(ptrs[2], ptrs[0], 2*sizeof(char*));
 
     sop = get_sum_of_products_function(1,
-                    NpyIter_GetDescrArray(iter)[0]->type_num,
-                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    PyDataType_TYPENUM(NpyIter_GetDescrArray(iter)[0]),
+                    PyDataType_ELSIZE(NpyIter_GetDescrArray(iter)[0]),
                     strides[0]);
 
     if (sop == NULL) {
@@ -638,8 +638,8 @@ unbuffered_loop_nop2_ndim2(NpyIter *iter)
     memcpy(ptrs[1], ptrs[0], 3*sizeof(char*));
 
     sop = get_sum_of_products_function(2,
-                    NpyIter_GetDescrArray(iter)[0]->type_num,
-                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    PyDataType_TYPENUM(NpyIter_GetDescrArray(iter)[0]),
+                    PyDataType_ELSIZE(NpyIter_GetDescrArray(iter)[0]),
                     strides[0]);
 
     if (sop == NULL) {
@@ -703,8 +703,8 @@ unbuffered_loop_nop2_ndim3(NpyIter *iter)
     memcpy(ptrs[2], ptrs[0], 3*sizeof(char*));
 
     sop = get_sum_of_products_function(2,
-                    NpyIter_GetDescrArray(iter)[0]->type_num,
-                    NpyIter_GetDescrArray(iter)[0]->elsize,
+                    PyDataType_TYPENUM(NpyIter_GetDescrArray(iter)[0]),
+                    PyDataType_ELSIZE(NpyIter_GetDescrArray(iter)[0]),
                     strides[0]);
 
     if (sop == NULL) {
@@ -1113,9 +1113,9 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     stride = NpyIter_GetInnerStrideArray(iter);
 
     sop = get_sum_of_products_function(nop,
-                        NpyIter_GetDescrArray(iter)[0]->type_num,
-                        NpyIter_GetDescrArray(iter)[0]->elsize,
-                        stride);
+                    PyDataType_TYPENUM(NpyIter_GetDescrArray(iter)[0]),
+                    PyDataType_ELSIZE(NpyIter_GetDescrArray(iter)[0]),
+                    stride);
 
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);

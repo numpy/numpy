@@ -150,27 +150,27 @@ _is_natively_aligned_at(PyArray_Descr *descr,
          */
         assert(offset == 0);
         if (PyArray_ISALIGNED(arr)) {
-            assert(descr->elsize % descr->alignment == 0);
+            assert(PyDataType_ELSIZE(descr) % PyDataType_ALIGNMENT(descr) == 0);
             return 1;
         }
         return 0;
     }
 
-    if ((Py_ssize_t)(PyArray_DATA(arr)) % descr->alignment != 0) {
+    if ((Py_ssize_t)(PyArray_DATA(arr)) % PyDataType_ALIGNMENT(descr) != 0) {
         return 0;
     }
 
-    if (offset % descr->alignment != 0) {
+    if (offset % PyDataType_ALIGNMENT(descr) != 0) {
         return 0;
     }
 
-    if (descr->elsize % descr->alignment) {
+    if (PyDataType_ELSIZE(descr) % PyDataType_ALIGNMENT(descr)) {
         return 0;
     }
 
     for (k = 0; k < PyArray_NDIM(arr); ++k) {
         if (PyArray_DIM(arr, k) > 1) {
-            if (PyArray_STRIDE(arr, k) % descr->alignment != 0) {
+            if (PyArray_STRIDE(arr, k) % PyDataType_ALIGNMENT(descr) != 0) {
                 return 0;
             }
         }
@@ -182,7 +182,7 @@ _is_natively_aligned_at(PyArray_Descr *descr,
 /*
  * Fill in str with an appropriate PEP 3118 format string, based on
  * descr. For structured dtypes, calls itself recursively. Each call extends
- * str at offset then updates offset, and uses  descr->byteorder, (and
+ * str at offset then updates offset, and uses  PyDataType_BYTEORDER(descr), (and
  * possibly the byte order in obj) to determine the byte-order char.
  *
  * Returns 0 for success, -1 for failure
@@ -307,12 +307,12 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
     else {
         int is_standard_size = 1;
         int is_natively_aligned;
-        int is_native_only_type = (descr->type_num == NPY_LONGDOUBLE ||
-                                   descr->type_num == NPY_CLONGDOUBLE);
+        int is_native_only_type = (PyDataType_TYPENUM(descr) == NPY_LONGDOUBLE ||
+                                   PyDataType_TYPENUM(descr) == NPY_CLONGDOUBLE);
         if (sizeof(npy_longlong) != 8) {
             is_native_only_type = is_native_only_type || (
-                descr->type_num == NPY_LONGLONG ||
-                descr->type_num == NPY_ULONGLONG);
+                PyDataType_TYPENUM(descr) == NPY_LONGLONG ||
+                PyDataType_TYPENUM(descr) == NPY_ULONGLONG);
         }
 
         if (PyArray_IsScalar(obj, Generic)) {
@@ -324,9 +324,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                                               (PyArrayObject*)obj, *offset);
         }
 
-        *offset += descr->elsize;
+        *offset += PyDataType_ELSIZE(descr);
 
-        if (descr->byteorder == '=' && is_natively_aligned) {
+        if (PyDataType_BYTEORDER(descr) == '=' && is_natively_aligned) {
             /* Prefer native types, to cater for Cython */
             is_standard_size = 0;
             if (*active_byteorder != '@') {
@@ -334,7 +334,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 *active_byteorder = '@';
             }
         }
-        else if (descr->byteorder == '=' && is_native_only_type) {
+        else if (PyDataType_BYTEORDER(descr) == '=' && is_native_only_type) {
             /* Data types that have no standard size */
             is_standard_size = 0;
             if (*active_byteorder != '^') {
@@ -342,12 +342,12 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 *active_byteorder = '^';
             }
         }
-        else if (descr->byteorder == '<' || descr->byteorder == '>' ||
-                 descr->byteorder == '=') {
+        else if (PyDataType_BYTEORDER(descr) == '<' || PyDataType_BYTEORDER(descr) == '>' ||
+                 PyDataType_BYTEORDER(descr) == '=') {
             is_standard_size = 1;
-            if (*active_byteorder != descr->byteorder) {
-                if (_append_char(str, descr->byteorder) < 0) return -1;
-                *active_byteorder = descr->byteorder;
+            if (*active_byteorder != PyDataType_BYTEORDER(descr)) {
+                if (_append_char(str, PyDataType_BYTEORDER(descr)) < 0) return -1;
+                *active_byteorder = PyDataType_BYTEORDER(descr);
             }
 
             if (is_native_only_type) {
@@ -358,12 +358,12 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
                 PyErr_Format(PyExc_ValueError,
                              "cannot expose native-only dtype '%c' in "
                              "non-native byte order '%c' via buffer interface",
-                             descr->type, descr->byteorder);
+                             PyDataType_TYPE(descr), PyDataType_BYTEORDER(descr));
                 return -1;
             }
         }
 
-        switch (descr->type_num) {
+        switch (PyDataType_TYPENUM(descr)) {
         case NPY_BOOL:         if (_append_char(str, '?') < 0) return -1; break;
         case NPY_BYTE:         if (_append_char(str, 'b') < 0) return -1; break;
         case NPY_UBYTE:        if (_append_char(str, 'B') < 0) return -1; break;
@@ -401,22 +401,22 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_OBJECT:       if (_append_char(str, 'O') < 0) return -1; break;
         case NPY_STRING: {
             char buf[128];
-            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "s", descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "s", PyDataType_ELSIZE(descr));
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
         case NPY_UNICODE: {
             /* NumPy Unicode is always 4-byte */
             char buf[128];
-            assert(descr->elsize % 4 == 0);
-            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "w", descr->elsize / 4);
+            assert(PyDataType_ELSIZE(descr) % 4 == 0);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "w", PyDataType_ELSIZE(descr) / 4);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
         case NPY_VOID: {
             /* Insert padding bytes */
             char buf[128];
-            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "x", descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "x", PyDataType_ELSIZE(descr));
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
@@ -424,7 +424,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             if (PyDataType_ISLEGACY(descr)) {
                 PyErr_Format(PyExc_ValueError,
                              "cannot include dtype '%c' in a buffer",
-                             descr->type);
+                             PyDataType_TYPE(descr));
             }
             else {
                 PyErr_Format(PyExc_ValueError,
