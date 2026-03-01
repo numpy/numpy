@@ -2061,12 +2061,49 @@ NPY_NO_EXPORT void
 @TYPE@_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        const @ftype@ in2r = ((@ftype@ *)ip2)[0];
-        const @ftype@ in2i = ((@ftype@ *)ip2)[1];
-        ((@ftype@ *)op1)[0] = in1r*in2r - in1i*in2i;
-        ((@ftype@ *)op1)[1] = in1r*in2i + in1i*in2r;
+        @ftype@ in1r = ((@ftype@ *)ip1)[0];
+        @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        @ftype@ in2r = ((@ftype@ *)ip2)[0];
+        @ftype@ in2i = ((@ftype@ *)ip2)[1];
+        @ftype@ rr = in1r*in2r - in1i*in2i;
+        @ftype@ ri = in1r*in2i + in1i*in2r;
+        /* Recover infinities that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cmultd(). */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            int recalc = 0;
+            if (npy_isinf(in1r) || npy_isinf(in1i)) {
+                /* "Box" the infinity and change NaNs in the other factor to 0 */
+                in1r = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
+                in1i = npy_copysign@c@(npy_isinf(in1i) ? 1.0 : 0.0, in1i);
+                if (npy_isnan(in2r)) in2r = npy_copysign@c@(0.0, in2r);
+                if (npy_isnan(in2i)) in2i = npy_copysign@c@(0.0, in2i);
+                recalc = 1;
+            }
+            if (npy_isinf(in2r) || npy_isinf(in2i)) {
+                /* "Box" the infinity and change NaNs in the other factor to 0 */
+                in2r = npy_copysign@c@(npy_isinf(in2r) ? 1.0 : 0.0, in2r);
+                in2i = npy_copysign@c@(npy_isinf(in2i) ? 1.0 : 0.0, in2i);
+                if (npy_isnan(in1r)) in1r = npy_copysign@c@(0.0, in1r);
+                if (npy_isnan(in1i)) in1i = npy_copysign@c@(0.0, in1i);
+                recalc = 1;
+            }
+            if (!recalc && (npy_isinf(in1r*in2r) || npy_isinf(in1i*in2i)
+                         || npy_isinf(in1r*in2i) || npy_isinf(in1i*in2r)))
+            {
+                /* Recover infinities from overflow by changing NaNs to 0 */
+                if (npy_isnan(in1r)) in1r = npy_copysign@c@(0.0, in1r);
+                if (npy_isnan(in1i)) in1i = npy_copysign@c@(0.0, in1i);
+                if (npy_isnan(in2r)) in2r = npy_copysign@c@(0.0, in2r);
+                if (npy_isnan(in2i)) in2i = npy_copysign@c@(0.0, in2i);
+                recalc = 1;
+            }
+            if (recalc) {
+                rr = NPY_INFINITY@C@ * (in1r*in2r - in1i*in2i);
+                ri = NPY_INFINITY@C@ * (in1r*in2i + in1i*in2r);
+            }
+        }
+        ((@ftype@ *)op1)[0] = rr;
+        ((@ftype@ *)op1)[1] = ri;
     }
 }
 
@@ -2087,12 +2124,46 @@ NPY_NO_EXPORT int @TYPE@_multiply_indexed
             indx += shape;
         }
         indexed = (@ftype@ *)(ip1 + is1 * indx);
-        const @ftype@ a_r = indexed[0];
-        const @ftype@ a_i = indexed[1];
-        const @ftype@ b_r = ((@ftype@ *)value)[0];
-        const @ftype@ b_i = ((@ftype@ *)value)[1];
-        indexed[0] = a_r*b_r - a_i*b_i;
-        indexed[1] = a_r*b_i + a_i*b_r;
+        @ftype@ a_r = indexed[0];
+        @ftype@ a_i = indexed[1];
+        @ftype@ b_r = ((@ftype@ *)value)[0];
+        @ftype@ b_i = ((@ftype@ *)value)[1];
+        @ftype@ rr = a_r*b_r - a_i*b_i;
+        @ftype@ ri = a_r*b_i + a_i*b_r;
+        /* Recover infinities that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cmultd(). */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            int recalc = 0;
+            if (npy_isinf(a_r) || npy_isinf(a_i)) {
+                a_r = npy_copysign@c@(npy_isinf(a_r) ? 1.0 : 0.0, a_r);
+                a_i = npy_copysign@c@(npy_isinf(a_i) ? 1.0 : 0.0, a_i);
+                if (npy_isnan(b_r)) b_r = npy_copysign@c@(0.0, b_r);
+                if (npy_isnan(b_i)) b_i = npy_copysign@c@(0.0, b_i);
+                recalc = 1;
+            }
+            if (npy_isinf(b_r) || npy_isinf(b_i)) {
+                b_r = npy_copysign@c@(npy_isinf(b_r) ? 1.0 : 0.0, b_r);
+                b_i = npy_copysign@c@(npy_isinf(b_i) ? 1.0 : 0.0, b_i);
+                if (npy_isnan(a_r)) a_r = npy_copysign@c@(0.0, a_r);
+                if (npy_isnan(a_i)) a_i = npy_copysign@c@(0.0, a_i);
+                recalc = 1;
+            }
+            if (!recalc && (npy_isinf(a_r*b_r) || npy_isinf(a_i*b_i)
+                         || npy_isinf(a_r*b_i) || npy_isinf(a_i*b_r)))
+            {
+                if (npy_isnan(a_r)) a_r = npy_copysign@c@(0.0, a_r);
+                if (npy_isnan(a_i)) a_i = npy_copysign@c@(0.0, a_i);
+                if (npy_isnan(b_r)) b_r = npy_copysign@c@(0.0, b_r);
+                if (npy_isnan(b_i)) b_i = npy_copysign@c@(0.0, b_i);
+                recalc = 1;
+            }
+            if (recalc) {
+                rr = NPY_INFINITY@C@ * (a_r*b_r - a_i*b_i);
+                ri = NPY_INFINITY@C@ * (a_r*b_i + a_i*b_r);
+            }
+        }
+        indexed[0] = rr;
+        indexed[1] = ri;
     }
     return 0;
 }
@@ -2108,25 +2179,55 @@ NPY_NO_EXPORT void
         const @ftype@ in2i = ((@ftype@ *)ip2)[1];
         const @ftype@ in2r_abs = npy_fabs@c@(in2r);
         const @ftype@ in2i_abs = npy_fabs@c@(in2i);
+
+        @ftype@ rr, ri;
         if (in2r_abs >= in2i_abs) {
             if (in2r_abs == 0 && in2i_abs == 0) {
                 /* divide by zero should yield a complex inf or nan */
-                ((@ftype@ *)op1)[0] = in1r/in2r_abs;
-                ((@ftype@ *)op1)[1] = in1i/in2i_abs;
+                rr = in1r/in2r_abs;
+                ri = in1i/in2i_abs;
             }
             else {
                 const @ftype@ rat = in2i/in2r;
                 const @ftype@ scl = 1.0@c@/(in2r + in2i*rat);
-                ((@ftype@ *)op1)[0] = (in1r + in1i*rat)*scl;
-                ((@ftype@ *)op1)[1] = (in1i - in1r*rat)*scl;
+                rr = (in1r + in1i*rat)*scl;
+                ri = (in1i - in1r*rat)*scl;
             }
         }
         else {
             const @ftype@ rat = in2r/in2i;
             const @ftype@ scl = 1.0@c@/(in2i + in2r*rat);
-            ((@ftype@ *)op1)[0] = (in1r*rat + in1i)*scl;
-            ((@ftype@ *)op1)[1] = (in1i*rat - in1r)*scl;
+            rr = (in1r*rat + in1i)*scl;
+            ri = (in1i*rat - in1r)*scl;
         }
+        /* Recover infinities and zeros that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cdivd(). */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            if ((in2r_abs == 0 && in2i_abs == 0)
+                && (!npy_isnan(in1r) && !npy_isnan(in1i)))
+            {
+                rr = npy_copysign@c@(NPY_INFINITY@C@, in2r)*in1r;
+                ri = npy_copysign@c@(NPY_INFINITY@C@, in2r)*in1i;
+            }
+            else if ((npy_isinf(in1r) || npy_isinf(in1i))
+                && npy_isfinite(in2r) && npy_isfinite(in2i))
+            {
+                @ftype@ x = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
+                @ftype@ y = npy_copysign@c@(npy_isinf(in1i) ? 1.0 : 0.0, in1i);
+                rr = NPY_INFINITY@C@ * (x*in2r + y*in2i);
+                ri = NPY_INFINITY@C@ * (y*in2r - x*in2i);
+            }
+            else if ((npy_isinf(in2r_abs) || npy_isinf(in2i_abs))
+                     && npy_isfinite(in1r) && npy_isfinite(in1i))
+            {
+                @ftype@ x = npy_copysign@c@(npy_isinf(in2r) ? 1.0 : 0.0, in2r);
+                @ftype@ y = npy_copysign@c@(npy_isinf(in2i) ? 1.0 : 0.0, in2i);
+                rr = 0.0 * (in1r*x + in1i*y);
+                ri = 0.0 * (in1i*x - in1r*y);
+            }
+        }
+        ((@ftype@ *)op1)[0] = rr;
+        ((@ftype@ *)op1)[1] = ri;
     }
 }
 
@@ -2213,10 +2314,35 @@ NPY_NO_EXPORT void
 @TYPE@_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     UNARY_LOOP {
-        const @ftype@ in1r = ((@ftype@ *)ip1)[0];
-        const @ftype@ in1i = ((@ftype@ *)ip1)[1];
-        ((@ftype@ *)op1)[0] = in1r*in1r - in1i*in1i;
-        ((@ftype@ *)op1)[1] = in1r*in1i + in1i*in1r;
+        @ftype@ in1r = ((@ftype@ *)ip1)[0];
+        @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        @ftype@ rr = in1r*in1r - in1i*in1i;
+        @ftype@ ri = in1r*in1i + in1i*in1r;
+        /* Recover infinities that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cmultd().
+         * Both operands are the same (z*z), so cases 1 and 2
+         * are identical; only check once. */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            int recalc = 0;
+            if (npy_isinf(in1r) || npy_isinf(in1i)) {
+                in1r = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
+                in1i = npy_copysign@c@(npy_isinf(in1i) ? 1.0 : 0.0, in1i);
+                recalc = 1;
+            }
+            if (!recalc && (npy_isinf(in1r*in1r) || npy_isinf(in1i*in1i)
+                         || npy_isinf(in1r*in1i)))
+            {
+                if (npy_isnan(in1r)) in1r = npy_copysign@c@(0.0, in1r);
+                if (npy_isnan(in1i)) in1i = npy_copysign@c@(0.0, in1i);
+                recalc = 1;
+            }
+            if (recalc) {
+                rr = NPY_INFINITY@C@ * (in1r*in1r - in1i*in1i);
+                ri = NPY_INFINITY@C@ * (in1r*in1i + in1i*in1r);
+            }
+        }
+        ((@ftype@ *)op1)[0] = rr;
+        ((@ftype@ *)op1)[1] = ri;
     }
 }
 #endif
@@ -2227,17 +2353,41 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @ftype@ in1r = ((@ftype@ *)ip1)[0];
         const @ftype@ in1i = ((@ftype@ *)ip1)[1];
+        @ftype@ rr, ri;
         if (npy_fabs@c@(in1i) <= npy_fabs@c@(in1r)) {
             const @ftype@ r = in1i/in1r;
             const @ftype@ d = in1r + in1i*r;
-            ((@ftype@ *)op1)[0] = 1/d;
-            ((@ftype@ *)op1)[1] = -r/d;
+            rr = 1/d;
+            ri = -r/d;
         } else {
             const @ftype@ r = in1r/in1i;
             const @ftype@ d = in1r*r + in1i;
-            ((@ftype@ *)op1)[0] = r/d;
-            ((@ftype@ *)op1)[1] = -1/d;
+            rr = r/d;
+            ri = -1/d;
         }
+        /* Recover infinities and zeros that computed as nan+nanj.
+         * See e.g. the C11, Annex G.5.1, routine _Cdivd().
+         * Numerator is the constant 1+0j, so case 2 (numerator
+         * infinite) can never trigger. */
+        if (NPY_UNLIKELY(npy_isnan(rr) && npy_isnan(ri))) {
+            const @ftype@ in1r_abs = npy_fabs@c@(in1r);
+            const @ftype@ in1i_abs = npy_fabs@c@(in1i);
+            if ((in1r_abs == 0 && in1i_abs == 0)
+                && (!npy_isnan(in1r) || !npy_isnan(in1i)))
+            {
+                npy_set_floatstatus_divbyzero();
+                rr = npy_copysign@c@(NPY_INFINITY@C@, in1r) * 1.0@c@;
+                ri = npy_copysign@c@(NPY_INFINITY@C@, in1r) * 0.0@c@;
+            }
+            else if (npy_isinf(in1r_abs) || npy_isinf(in1i_abs)) {
+                @ftype@ x = npy_copysign@c@(npy_isinf(in1r) ? 1.0 : 0.0, in1r);
+                @ftype@ y = npy_copysign@c@(npy_isinf(in1i) ? 1.0 : 0.0, in1i);
+                rr = 0.0@c@ * (1.0@c@*x + 0.0@c@*y);
+                ri = 0.0@c@ * (0.0@c@*x - 1.0@c@*y);
+            }
+        }
+        ((@ftype@ *)op1)[0] = rr;
+        ((@ftype@ *)op1)[1] = ri;
     }
 }
 
