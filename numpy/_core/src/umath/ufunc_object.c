@@ -118,6 +118,20 @@ typedef struct {
     npy_intp nout;   /* Number of output arguments (0 if out is NULL) */
 } ufunc_full_args_light;
 
+/*
+ * Release all owned output references held by a ufunc_full_args_light
+ * and reset the output count.  Input references are not touched because
+ * they may be borrowed.
+ */
+static inline void
+ufunc_full_args_light_clear_out(ufunc_full_args_light *full_args)
+{
+    for (npy_intp i = 0; i < full_args->nout; i++) {
+        Py_XDECREF(full_args->out[i]);
+    }
+    full_args->nout = 0;
+}
+
 
 /* ---------------------------------------------------------------- */
 
@@ -3688,13 +3702,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         return NULL;
     }
     else if (override) {
-        /* Clean up full_args_light references */
         for (int j = 0; j < full_args_light.nin; j++) {
             Py_XDECREF(in_args[j]);
         }
-        if (full_args_light.nout > 0) {
-            Py_XDECREF(out_arg);
-        }
+        ufunc_full_args_light_clear_out(&full_args_light);
         Py_XDECREF(out_tuple);
         return override;
     }
@@ -3784,13 +3795,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     Py_DECREF(signature[2]);
 
     Py_DECREF(mp);
-    /* Clean up full_args_light references */
     for (int j = 0; j < full_args_light.nin; j++) {
         Py_XDECREF(in_args[j]);
     }
-    if (full_args_light.nout > 0) {
-        Py_XDECREF(out_arg);
-    }
+    ufunc_full_args_light_clear_out(&full_args_light);
     Py_XDECREF(out_tuple);
 
     /* Wrap and return the output */
@@ -3819,13 +3827,10 @@ fail:
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
     Py_XDECREF(indices);
-    /* Clean up full_args_light references */
     for (int j = 0; j < full_args_light.nin; j++) {
         Py_XDECREF(in_args[j]);
     }
-    if (full_args_light.nout > 0) {
-        Py_XDECREF(out_arg);
-    }
+    ufunc_full_args_light_clear_out(&full_args_light);
     Py_XDECREF(out_tuple);
     return NULL;
 }
@@ -4525,24 +4530,26 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /*
      * Scratch space for operands, dtypes, etc.  Note that operands and
      * operation_descrs may hold an entry for the wheremask.
-     * Also includes space for full_args_light.in and full_args_light.out arrays.
+     * Also includes space for full_args_light.out (nout slots) and,
+     * when outer is used, full_args_light.in (nin slots, owned refs).
      */
+    int extra_scratch = outer ? nin + nout : nout;
     NPY_ALLOC_WORKSPACE(scratch_objs, void *,
                         UFUNC_STACK_NARGS * 4 + 2,
-                        nop * 4 + 2 + nop + nin + nout);
+                        nop * 4 + 2 + extra_scratch);
     if (scratch_objs == NULL) {
         return NULL;
     }
-    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + nin + nout));
+    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2 + extra_scratch));
 
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
     PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
     PyArray_Descr **operation_descrs = (PyArray_Descr **)(operand_DTypes + nop);
 
-    /* Initialize full_args_light arrays using scratch space */
+    /* Initialize full_args_light: out from scratch, in from scratch only for outer */
+    PyObject **args_scratch = (PyObject **)(operation_descrs + nop + 1);
     ufunc_full_args_light full_args_light = {NULL, NULL, nin, nout};
-    full_args_light.in = (PyObject **)(operation_descrs + nop + 1);
     full_args_light.out = NULL;
 
     /*
@@ -4565,12 +4572,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
 
     printfd("populating full_args_light.in\n");
-    /* Fetch input arguments into full_args_light.in */
-    for (int i = 0; i < nin; i++) {
-        /* TODO: Switch to borrowed references by pointing directly to args */
-        ((PyObject **)full_args_light.in)[i] = Py_NewRef(args[i]);
+    if (outer) {
+        /* outer modifies inputs, so we need owned refs in scratch space */
+        full_args_light.in = args_scratch;
+        for (int i = 0; i < nin; i++) {
+            ((PyObject **)full_args_light.in)[i] = Py_NewRef(args[i]);
+        }
     }
-
+    else {
+        /* Borrowed references directly from vectorcall args */
+        full_args_light.in = args;
+    }
     /*
      * If there are more arguments, they define the out args. Otherwise
      * out_tuple is NULL for now, and the `out` kwarg may still be passed.
@@ -4578,7 +4590,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     npy_bool out_is_passed_by_position = len_args > nin;
     if (out_is_passed_by_position) {
         npy_bool all_none = NPY_TRUE;
-        full_args_light.out = full_args_light.in + nin; // allocate from scratch
+        full_args_light.out = args_scratch + (outer ? nin : 0);
 
         for (int i = nin; i < nop; i++) {
             PyObject *tmp;
@@ -4596,9 +4608,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             else {
                 tmp = Py_None;
             }
-            //Py_INCREF(tmp);
-            //PyTuple_SET_ITEM(out_tuple, i-nin, tmp);
-            /* Also populate full_args_light.out (lightweight version) */
             full_args_light.out[i-nin] = Py_NewRef(tmp);
         }
 
@@ -4617,14 +4626,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
 
         if (all_none) {
-            //Py_SETREF(out_tuple, NULL);
-            //full_args_light.out = NULL;
+            for (int i = 0; i < nout; i++) {
+                Py_DECREF(full_args_light.out[i]);
+            }
+            full_args_light.out = NULL;
             full_args_light.nout = 0;
         }
     }
     else {
-        //out_tuple = NULL;
-        //full_args_light.out = NULL;
         full_args_light.nout = 0;
     }
 
@@ -4691,12 +4700,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 goto fail;
             }
             printfd("ufunc_generic_fastcall: out via kwargs\n");
-            full_args_light.out = full_args_light.in + nin; // allocate from scratch
             if (out_obj == Py_Ellipsis) {
                 return_scalar = NPY_FALSE;
             }
-            else if (_set_full_args_out(nout, out_obj, &full_args_light) < 0) {
-                goto fail;
+            else {
+                full_args_light.out = args_scratch + (outer ? nin : 0);
+                if (_set_full_args_out(nout, out_obj, &full_args_light) < 0) {
+                    goto fail;
+                }
             }
         }
         /*
@@ -4730,15 +4741,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
     else if (override) {
-        /* Clean up full_args_light input references */
-        for (int i = 0; i < nin; i++) {
-            Py_XDECREF(full_args_light.in[i]);
-        }
-        if (full_args_light.out != NULL) {
-            for (int i = 0; i < nout; i++) {
-                Py_XDECREF(full_args_light.out[i]);
+        if (outer) {
+            for (int i = 0; i < nin; i++) {
+                Py_XDECREF(full_args_light.in[i]);
             }
         }
+        ufunc_full_args_light_clear_out(&full_args_light);
+        npy_free_workspace(scratch_objs);
         return override;
     }
 
@@ -4821,7 +4830,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     if (!ufunc->core_enabled) {
         errval = PyUFunc_GenericFunctionInternal(ufunc, ufuncimpl,
-            operation_descrs, operands, casting, order,
+                operation_descrs, operands, casting, order,
                 wheremask);
     }
     else {
@@ -4832,7 +4841,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     if (errval < 0) {
         goto fail;
     }
-    printfd("ufunc_generic_fastcall: after PyUFunc_GeneralizedFunctionInternal\n");
 
     /*
      * Clear all variables which are not needed any further.
@@ -4854,31 +4862,24 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             &full_args_light, subok, operands+nin, return_scalar);
     printfd("ufunc_generic_fastcall: after replace_with_wrapped_result_and_return\n");
 
-    /* Clean up full_args_light references */
-    for (int i = 0; i < nin; i++) {
-        Py_XDECREF(full_args_light.in[i]);
-    }
-    if (full_args_light.out != NULL) {
-        for (int i = 0; i < nout; i++) {
-            Py_XDECREF(full_args_light.out[i]);
+    if (outer) {
+        for (int i = 0; i < nin; i++) {
+            Py_XDECREF(full_args_light.in[i]);
         }
     }
+    ufunc_full_args_light_clear_out(&full_args_light);
 
     npy_free_workspace(scratch_objs);
-    printfd("ufunc_generic_fastcall: return result\n");
 
     return result;
 
 fail:
-    /* Clean up full_args_light input references */
-    for (int i = 0; i < nin; i++) {
-        Py_XDECREF(full_args_light.in[i]);
-    }
-    if (full_args_light.out != NULL) {
-        for (int i = 0; i < nout; i++) {
-            Py_XDECREF(full_args_light.out[i]);
+    if (outer) {
+        for (int i = 0; i < nin; i++) {
+            Py_XDECREF(full_args_light.in[i]);
         }
     }
+    ufunc_full_args_light_clear_out(&full_args_light);
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
