@@ -20,6 +20,7 @@
 #include "numpy/arrayobject.h"
 #include "gil_utils.h"
 #include "raii_utils.hpp"
+#include "fdw_indexer.h"
 extern "C" {
     #include "fnv.h"
     #include "npy_argparse.h"
@@ -111,12 +112,17 @@ intp_container_to_pyarray(const T &container) {
 }
 
 template <typename T>
-size_t hash_integer(const T *value, npy_bool NPY_UNUSED(equal_nan)) {
-    return npy_fnv1a(reinterpret_cast<const unsigned char*>(value), sizeof(T));
+uint64_t hash_integer(const T *value, npy_bool NPY_UNUSED(equal_nan)) {
+    uint64_t bits;
+    if constexpr (sizeof(T) <= 4)
+        bits = static_cast<uint64_t>(static_cast<std::make_unsigned_t<T>>(*value));
+    else
+        std::memcpy(&bits, value, sizeof(bits));
+    return bits;
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
-size_t hash_complex(const T *value, npy_bool equal_nan) {
+uint64_t hash_complex(const T *value, npy_bool equal_nan) {
     std::complex<S> z = *reinterpret_cast<const std::complex<S> *>(value);
 
     if (equal_nan) {
@@ -136,11 +142,11 @@ size_t hash_complex(const T *value, npy_bool equal_nan) {
         z.imag(NPY_PZERO);
     }
 
-    size_t hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
+    uint64_t hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
     return hash;
 }
 
-size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
+uint64_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
     std::complex<long double> z =
         *reinterpret_cast<const std::complex<long double> *>(value);
 
@@ -202,7 +208,7 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
 
     #endif
 
-    size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
+    uint64_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
 
     return hash;
 }
@@ -252,7 +258,7 @@ void copy_complex(char *data, T *value) {
 
 template <
     typename T,
-    size_t (*hash_func)(const T *, npy_bool),
+    uint64_t (*hash_func)(const T *, npy_bool),
     int (*equal_func)(const T *, const T *, npy_bool),
     void (*copy_func)(char *, T *)
 >
@@ -274,155 +280,111 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
 
-    auto hash = [equal_nan](const T *value) -> size_t {
+    auto hash = [equal_nan](const T *value) -> uint64_t {
         return hash_func(value, equal_nan);
     };
     auto equal = [equal_nan](const T *lhs, const T *rhs) -> bool {
         return equal_func(lhs, rhs, equal_nan);
     };
 
-    if (!return_index && !return_inverse && !return_counts) {
-        using set_type = std::unordered_set<
-            T *,
-            decltype(hash),
-            decltype(equal)
-        >;
-        set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+    FDWIndexer<T *, decltype(hash), decltype(equal)> indexer(isize, hash, equal);
+    std::vector<T *> unique_values;
+    std::vector<npy_intp> first_indices;
+    std::vector<npy_intp> inverse_indices;
+    std::vector<npy_intp> counts;
 
-        {
-            np::raii::SaveThreadState save_thread_state{};
+    unique_values.reserve(isize);
+    if (return_index) {
+        first_indices.reserve(isize);
+    }
+    if (return_inverse) {
+        inverse_indices.resize(isize);
+    }
+    if (return_counts) {
+        counts.reserve(isize);
+    }
 
-            char *idata = PyArray_BYTES(self);
-            npy_intp istride = PyArray_STRIDES(self)[0];
-            for (npy_intp i = 0; i < isize; i++, idata += istride) {
-                hashset.emplace((T *)idata);
-            }
-        }
+    {
+        np::raii::SaveThreadState save_thread_state{};
 
-        npy_intp num_unique = hashset.size();
-
-        PyArrayObject *unique_array = empty_array_like(self, num_unique);
-        if (unique_array == NULL) {
-            return NULL;
-        }
-
-        {
-            np::raii::SaveThreadState save_thread_state{};
-
-            char *odata = PyArray_BYTES(unique_array);
-            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
-            for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-                copy_func(odata, *it);
-            }
-        }
-        PyTuple_SET_ITEM(res_obj, 0, unique_array);
-
-        // Set None for index, inverse, counts
-        for (npy_intp i = 1; i < 4; i++) {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(res_obj, i, Py_None);
-        }
-    } else {
-        using map_type = std::unordered_map<
-            T *,
-            npy_intp,
-            decltype(hash),
-            decltype(equal)
-        >;
-        map_type hashmap(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
-
-        std::list<T *> unique_values;
-        std::list<npy_intp> first_indices;
-        std::vector<npy_intp> inverse_indices;
-        if (return_inverse) {
-            inverse_indices.resize(isize);
-        }
-        std::vector<npy_intp> counts;
-        if (return_counts) {
-            counts.reserve(std::min(isize, HASH_TABLE_INITIAL_BUCKETS));
-        }
-
-        {
-            np::raii::SaveThreadState save_thread_state{};
-
-            char *idata = PyArray_BYTES(self);
-            npy_intp istride = PyArray_STRIDES(self)[0];
-            for (npy_intp i = 0; i < isize; i++, idata += istride) {
-                auto [entry, inserted] = hashmap.emplace((T *)idata, hashmap.size());
-                if (inserted) {
-                    unique_values.emplace_back(entry->first);
-                    if (return_index) {
-                        first_indices.emplace_back(i);
-                    }
-                    if (return_counts) {
-                        counts.emplace_back(1);
-                    }
-                } else {
-                    if (return_counts) {
-                        counts[entry->second]++;
-                    }
+        char *idata = PyArray_BYTES(self);
+        npy_intp istride = PyArray_STRIDES(self)[0];
+        for (npy_intp i = 0; i < isize; i++, idata += istride) {
+            T *value = (T *)idata;
+            auto [index, inserted] = indexer.emplace(value);
+            if (inserted) {
+                unique_values.emplace_back(value);
+                if (return_index) {
+                    first_indices.emplace_back(i);
                 }
-                if (return_inverse) {
-                    inverse_indices[i] = entry->second;
+                if (return_counts) {
+                    counts.emplace_back(1);
+                }
+            } else {
+                if (return_counts) {
+                    counts[index]++;
                 }
             }
+            if (return_inverse) {
+                inverse_indices[i] = index;
+            }
         }
+    }
 
-        npy_intp num_unique = hashmap.size();
+    npy_intp num_unique = indexer.size();
 
-        PyArrayObject *unique_array = empty_array_like(self, num_unique);
-        if (unique_array == NULL) {
+    PyArrayObject *unique_array = empty_array_like(self, num_unique);
+    if (unique_array == NULL) {
+        Py_DECREF(res_obj);
+        return NULL;
+    }
+    
+    {
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *odata = PyArray_BYTES(unique_array);
+        npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+        for (auto it = unique_values.begin(); it != unique_values.end(); it++, odata += ostride) {
+            copy_func(odata, *it);
+        }
+    }
+
+    PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+    if (return_index) {
+        PyArrayObject *index_array = intp_container_to_pyarray(first_indices);
+        if (index_array == NULL) {
             Py_DECREF(res_obj);
             return NULL;
         }
-        
-        {
-            np::raii::SaveThreadState save_thread_state{};
+        PyTuple_SET_ITEM(res_obj, 1, index_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 1, Py_None);
+    }
 
-            char *odata = PyArray_BYTES(unique_array);
-            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
-            for (auto it = unique_values.begin(); it != unique_values.end(); it++, odata += ostride) {
-                copy_func(odata, *it);
-            }
+    if (return_inverse) {
+        PyArrayObject *inverse_array = intp_container_to_pyarray(inverse_indices);
+        if (inverse_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
         }
+        PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 2, Py_None);
+    }
 
-        PyTuple_SET_ITEM(res_obj, 0, unique_array);
-
-        if (return_index) {
-            PyArrayObject *index_array = intp_container_to_pyarray(first_indices);
-            if (index_array == NULL) {
-                Py_DECREF(res_obj);
-                return NULL;
-            }
-            PyTuple_SET_ITEM(res_obj, 1, index_array);
-        } else {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(res_obj, 1, Py_None);
+    if (return_counts) {
+        PyArrayObject *counts_array = intp_container_to_pyarray(counts);
+        if (counts_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
         }
-    
-        if (return_inverse) {
-            PyArrayObject *inverse_array = intp_container_to_pyarray(inverse_indices);
-            if (inverse_array == NULL) {
-                Py_DECREF(res_obj);
-                return NULL;
-            }
-            PyTuple_SET_ITEM(res_obj, 2, inverse_array);
-        } else {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(res_obj, 2, Py_None);
-        }
-
-        if (return_counts) {
-            PyArrayObject *counts_array = intp_container_to_pyarray(counts);
-            if (counts_array == NULL) {
-                Py_DECREF(res_obj);
-                return NULL;
-            }
-            PyTuple_SET_ITEM(res_obj, 3, counts_array);
-        } else {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(res_obj, 3, Py_None);
-        }
+        PyTuple_SET_ITEM(res_obj, 3, counts_array);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(res_obj, 3, Py_None);
     }
 
     return res_obj;
@@ -450,7 +412,7 @@ unique_string(PyArrayObject *self, npy_bool NPY_UNUSED(equal_nan), npy_bool retu
     npy_intp itemsize = descr->elsize;
     npy_intp num_chars = itemsize / sizeof(T);
 
-    auto hash = [num_chars](const T *value) -> size_t {
+    auto hash = [num_chars](const T *value) -> uint64_t {
         return npy_fnv1a(value, num_chars * sizeof(T));
     };
     auto equal = [itemsize](const T *lhs, const T *rhs) -> bool {
@@ -624,7 +586,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, n
     PyArray_StringDTypeObject *descr =
         reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
 
-    auto hash = [equal_nan](const npy_static_string *value) -> size_t {
+    auto hash = [equal_nan](const npy_static_string *value) -> uint64_t {
         if (value->buf == NULL) {
             if (equal_nan) {
                 return 0;
