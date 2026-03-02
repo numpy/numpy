@@ -143,6 +143,14 @@ class TestPolynomial:
             # to take into account numerical calculation error
             assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
 
+    @pytest.mark.parametrize("dtyp", [int, np.float32, np.float64])
+    def test_roots_dtype(self, dtyp):
+        coef = np.asarray([1, 0, -1], dtype=dtyp)   # x**2 - 1
+        r = np.roots(coef)
+        r.sort()
+        assert_allclose(r, np.asarray([-1, 1]))
+        assert r.dtype == {int: np.float64}.get(dtyp, dtyp)
+
     def test_str_leading_zeros(self):
         p = np.poly1d([4, 3, 2, 1])
         p[3] = 0

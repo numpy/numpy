@@ -123,6 +123,7 @@ get_legacy_print_mode(void) {
     PyObject *legacy_print_mode = NULL;
     if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
                           &legacy_print_mode) == -1) {
+        Py_DECREF(format_options);
         return -1;
     }
     Py_DECREF(format_options);
@@ -303,6 +304,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         n = PyArray_DIMS(ap)[0];
         ptr2 = (char **)PyArray_malloc(n * sizeof(char *));
         if (!ptr2) {
+            Py_DECREF(ap);
             PyErr_NoMemory();
             return -1;
         }
@@ -316,6 +318,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         m = PyArray_DIMS(ap)[1];
         ptr3 = (char ***)PyArray_malloc(n*(m+1) * sizeof(char *));
         if (!ptr3) {
+            Py_DECREF(ap);
             PyErr_NoMemory();
             return -1;
         }
@@ -2305,7 +2308,9 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
     if (descr == NULL) {
         return NULL;
     }
-    return PyArray_Scalar(&count, descr, NULL);
+    PyObject *result =  PyArray_Scalar(&count, descr, NULL);
+    Py_DECREF(descr);
+    return result;
 }
 
 static PyObject *
@@ -2338,6 +2343,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
             "The binary mode of fromstring is removed, use frombuffer instead");
+        Py_XDECREF(descr);
         return NULL;
     }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
@@ -2406,6 +2412,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
+        Py_XDECREF(type);
         goto cleanup;
     }
     if (type == NULL) {
@@ -3226,6 +3233,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     PyArrayObject *arr = NULL, *ax = NULL, *ay = NULL;
     PyObject *ret = NULL;
     PyArray_Descr *common_dt = NULL;
+    NpyIter *iter = NULL;
 
     arr = (PyArrayObject *)PyArray_FROM_O(condition);
     if (arr == NULL) {
@@ -3295,7 +3303,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
 
-    NpyIter * iter;
     NPY_BEGIN_THREADS_DEF;
 
     iter =  NpyIter_MultiNew(
@@ -3429,6 +3436,9 @@ fail:
     Py_XDECREF(common_dt);
     NPY_cast_info_xfree(&x_cast_info);
     NPY_cast_info_xfree(&y_cast_info);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
     return NULL;
 }
 
@@ -4468,7 +4478,6 @@ _blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
 
 static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
-#if !defined(PYPY_VERSION)
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "NumPy was imported from a Python sub-interpreter but "
@@ -4486,7 +4495,6 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
         npy_global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
-#endif
     if (npy_global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
@@ -4698,8 +4706,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"_set_numpy_warn_if_no_mem_policy",
          (PyCFunction)_set_numpy_warn_if_no_mem_policy,
          METH_O, "Change the warn if no mem policy flag for testing."},
-    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
         get_sfloat_dtype, METH_NOARGS, NULL},
     {"_get_madvise_hugepage", (PyCFunction)_get_madvise_hugepage,
@@ -5172,7 +5178,13 @@ _multiarray_umath_exec(PyObject *m) {
     if (PyDataMem_DefaultHandler == NULL) {
         return -1;
     }
-
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_SetImmortal(PyDataMem_DefaultHandler) == 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Could not mark memory handler capsule as immortal");
+        return -1;
+    }
+#endif
     /*
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.

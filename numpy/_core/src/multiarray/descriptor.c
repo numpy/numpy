@@ -844,7 +844,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         return (PyArray_Descr *)Py_NotImplemented;
     }
     if (!PyDataType_ISLEGACY(type) || !PyDataType_ISLEGACY(conv)) {
-        /* 
+        /*
          * This specification should probably be never supported, but
          * certainly not for new-style DTypes.
          */
@@ -1829,14 +1829,6 @@ _convert_from_str(PyObject *obj, int align)
                     check_num = NPY_STRING;
                     break;
 
-                case NPY_DEPRECATED_STRINGLTR2:
-                    if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                                  "Use the 'S' alias instead.") < 0) {
-                        return NULL;
-                    }
-                    check_num = NPY_STRING;
-                    break;
-
                 /*
                  * When specifying length of UNICODE
                  * the number of characters is given to match
@@ -1907,13 +1899,6 @@ _convert_from_str(PyObject *obj, int align)
             goto fail;
         }
 
-        if (strcmp(type, "a") == 0) {
-            if (DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
-                          "Use the 'S' alias instead.") < 0) {
-                return NULL;
-            }
-        }
-
         /*
          * Probably only ever dispatches to `_convert_from_type`, but who
          * knows what users are injecting into `np.typeDict`.
@@ -1966,7 +1951,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base_descr)
 {
     if (!PyDataType_ISLEGACY(base_descr)) {
-        /* 
+        /*
          * The main use of this function is mutating strings, so probably
          * disallowing this is fine in practice.
          */
@@ -2932,13 +2917,10 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
         }
         break;
     default:
-        /* raise an error */
-        if (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0)) > 5) {
-            version = PyLong_AsLong(PyTuple_GET_ITEM(args, 0));
-        }
-        else {
-            version = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                        "Invalid state while unpickling. Is the pickle corrupted "
+                        "or created with a newer NumPy version?");
+        return NULL;
     }
 
     /*
@@ -3796,6 +3778,42 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         return _subscript_by_index(lself, i);
     }
 }
+
+static PyObject *
+array_typestr_get(PyArray_Descr *self)
+{
+    return arraydescr_protocol_typestr_get(self, NULL);
+}
+
+
+NPY_NO_EXPORT PyObject *
+array_protocol_descr_get(PyArray_Descr *self)
+{
+    PyObject *res;
+    PyObject *dobj;
+
+    res = arraydescr_protocol_descr_get(self, NULL);
+    if (res) {
+        return res;
+    }
+    PyErr_Clear();
+
+    /* get default */
+    dobj = PyTuple_New(2);
+    if (dobj == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(dobj, 0, PyUnicode_FromString(""));
+    PyTuple_SET_ITEM(dobj, 1, array_typestr_get(self));
+    res = PyList_New(1);
+    if (res == NULL) {
+        Py_DECREF(dobj);
+        return NULL;
+    }
+    PyList_SET_ITEM(res, 0, dobj);
+    return res;
+}
+
 
 static PySequenceMethods descr_as_sequence = {
     (lenfunc) descr_length,                  /* sq_length */

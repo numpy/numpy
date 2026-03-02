@@ -29,6 +29,8 @@ NPY_NO_EXPORT PyObject *arraydescr_protocol_typestr_get(
 NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(
         PyArray_Descr *self, void *);
 
+NPY_NO_EXPORT PyObject *array_protocol_descr_get(PyArray_Descr *self);
+
 /*
  * offset:    A starting offset.
  * alignment: A power-of-two alignment.

@@ -192,7 +192,7 @@ skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
-enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
+enable = ["cpython-freethreading", "cpython-prerelease"]
 
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 [tool.cibuildwheel.config-settings]
@@ -251,6 +251,7 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:build",
   ".spin/cmds.py:test",
   ".spin/cmds.py:mypy",
+  ".spin/cmds.py:pyrefly",
   ".spin/cmds.py:stubtest",
   ".spin/cmds.py:config_openblas",
   ".spin/cmds.py:lint",
@@ -270,3 +271,29 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:check_tutorials",
 ]
 "Metrics" = [".spin/cmds.py:bench"]
+
+
+[tool.pyrefly]
+project-includes = ["numpy/**/*.pyi"]
+project-excludes = ["numpy/typing/tests/**"]
+
+[tool.pyrefly.errors]
+implicit-any = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/__init__.pyi"
+errors = { bad-override = "ignore" }
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/_typing/_nbit_base.pyi"
+errors = { invalid-inheritance = "ignore" }
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/ma/core.pyi"
+errors = { bad-override = "ignore" }
+
+[[tool.pyrefly.sub-config]]
+matches = "numpy/matrixlib/defmatrix.pyi"
+errors = { bad-override = "ignore" }

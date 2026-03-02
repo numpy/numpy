@@ -43,7 +43,7 @@ jobs:
 
     - name: Install pkg-config
       run: |
-        choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        python -m pip install pkgconf
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
 
     - name: Install NumPy (Clang-cl)
@@ -153,18 +153,19 @@ jobs:
 
       - name: pkg-config
         run: |
-          choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          python -m pip install pkgconf
 
       - name: Dependencies
         run: |
           python -m pip install -r requirements/test_requirements.txt
+          python -m pip install -r requirements/build_requirements.txt
 
       - name: Build and install
         run: |
           pip install -r requirements/ci_requirements.txt
           spin config-openblas --with-scipy-openblas=${{ matrix.BLAS }}
           $env:PKG_CONFIG_PATH="$pwd/.openblas"
-          python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
+          python -m pip install --no-build-isolation . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
 
       - name: Run test suite ${{ matrix.TEST_MODE }}
         run: |

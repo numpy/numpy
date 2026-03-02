@@ -1,6 +1,6 @@
 from collections.abc import Buffer
 from typing import Any, Literal as L, Self, SupportsIndex, SupportsInt, overload
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, deprecated
 
 import numpy as np
 from numpy import _OrderKACF, bytes_, dtype, int_, ndarray, object_, str_
@@ -78,7 +78,7 @@ __all__ = [
 _ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], default=dtype, covariant=True)
 
-type _CharArray[ScalarT: np.character] = chararray[_AnyShape, dtype[ScalarT]]
+type _CharArray[ScalarT: np.character] = chararray[_AnyShape, dtype[ScalarT]]  # type: ignore[deprecated]
 
 type _StringDTypeArray = np.ndarray[_AnyShape, np.dtypes.StringDType]
 type _StringDTypeOrUnicodeArray = _StringDTypeArray | NDArray[np.str_]
@@ -86,6 +86,10 @@ type _StringDTypeSupportsArray = _SupportsArray[np.dtypes.StringDType]
 
 ###
 
+@deprecated(
+    "The chararray class is deprecated and will be removed in a future release. "
+    "Use an ndarray with a string or bytes dtype instead."
+)
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload
     def __new__(
@@ -139,37 +143,37 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload  # type: ignore[override]
-    def __ge__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __ge__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __ge__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __le__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __le__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __le__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __gt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __gt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __gt__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __lt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...
+    def __lt__(self: _CharArray[str_], other: U_co, /) -> NDArray[np.bool]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __lt__(self: _CharArray[bytes_], other: S_co, /) -> NDArray[np.bool]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __add__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...
+    def __add__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __add__(self: _CharArray[bytes_], other: S_co, /) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
     #
     @overload  # type: ignore[override]
-    def __radd__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...
+    def __radd__(self: _CharArray[str_], other: U_co, /) -> _CharArray[str_]: ...  # pyrefly: ignore[bad-override]
     @overload
     def __radd__(self: _CharArray[bytes_], other: S_co, /) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -237,7 +241,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
 
     #
     @overload  # type: ignore[override]
-    def partition(self: _CharArray[str_], sep: U_co) -> _CharArray[str_]: ...
+    def partition(self: _CharArray[str_], sep: U_co) -> _CharArray[str_]: ...  # pyrefly: ignore[bad-override]
     @overload
     def partition(self: _CharArray[bytes_], sep: S_co) -> _CharArray[bytes_]: ...  # pyright: ignore[reportIncompatibleMethodOverride]
 
@@ -657,6 +661,7 @@ def str_len(A: UST_co) -> NDArray[int_]: ...
 # overload 5 and 6: arbitrary object with unicode=True  (-> str_)
 # overload 7: arbitrary object with unicode=None (default)  (-> str_ | bytes_)
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: U_co,
     itemsize: int | None = None,
@@ -665,6 +670,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: S_co,
     itemsize: int | None = None,
@@ -673,6 +679,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None,
@@ -681,6 +688,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None = None,
@@ -690,6 +698,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None,
@@ -698,6 +707,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None = None,
@@ -707,6 +717,7 @@ def array(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.array is deprecated and will be removed in a future release.")
 def array(
     obj: object,
     itemsize: int | None = None,
@@ -716,6 +727,7 @@ def array(
 ) -> _CharArray[str_] | _CharArray[bytes_]: ...
 
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: U_co,
     itemsize: int | None = None,
@@ -723,6 +735,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: S_co,
     itemsize: int | None = None,
@@ -730,6 +743,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None,
@@ -737,6 +751,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None = None,
@@ -745,6 +760,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[bytes_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None,
@@ -752,6 +768,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None = None,
@@ -760,6 +777,7 @@ def asarray(
     order: _OrderKACF = None,
 ) -> _CharArray[str_]: ...
 @overload
+@deprecated("numpy.char.asarray is deprecated and will be removed in a future release.")
 def asarray(
     obj: object,
     itemsize: int | None = None,

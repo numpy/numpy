@@ -226,7 +226,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
     'numpy.matlib.emath',
@@ -467,6 +466,7 @@ def test_core_shims_coherence():
             assert member is getattr(core, member_name)
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 def test_functions_single_location():
     """
     Check that each public function is available from one location only.
@@ -677,6 +677,7 @@ def _check_correct_qualname_and_module(obj) -> bool:
     )
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 def test___qualname___and___module___attribute():
     # NumPy messes with module and name/qualname attributes, but any object
     # should be discoverable based on its module and qualname, so test that.

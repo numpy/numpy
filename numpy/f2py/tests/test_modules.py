@@ -2,8 +2,6 @@ import textwrap
 
 import pytest
 
-from numpy.testing import IS_PYPY
-
 from . import util
 
 
@@ -42,7 +40,6 @@ class TestModuleWithoutPublicEntities(util.F2PyTest):
 class TestModuleDocString(util.F2PyTest):
     sources = [util.getpath("tests", "src", "modules", "module_data_docstring.f90")]
 
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_module_docstring(self):
         assert self.module.mod.__doc__ == textwrap.dedent(
             """\

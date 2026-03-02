@@ -241,6 +241,8 @@ cdef class SeedlessSeedSequence:
         raise NotImplementedError('seedless SeedSequences cannot generate state')
 
     def spawn(self, n_children):
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         return [self] * n_children
 
 
@@ -476,6 +478,9 @@ cdef class SeedSequence:
         """
         cdef uint32_t i
 
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
+
         seqs = []
         for i in range(self.n_children_spawned,
                        self.n_children_spawned + n_children):
@@ -626,6 +631,8 @@ cdef class BitGenerator:
             Equivalent method on the generator and seed sequence.
 
         """
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         if not isinstance(self._seed_seq, ISpawnableSeedSequence):
             raise TypeError(
                 "The underlying SeedSequence does not implement spawning.")

@@ -1,8 +1,8 @@
 import contextlib
 import ctypes
-import gc
 import inspect
 import operator
+import os
 import pickle
 import sys
 import types
@@ -20,7 +20,6 @@ from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -779,7 +778,7 @@ class TestSubarray:
         arr = np.ones(3, dtype=[("f", "i", 3)])
         cast = arr.astype(object)
         for fields in cast:
-            assert type(fields) == tuple and len(fields) == 1
+            assert type(fields) is tuple and len(fields) == 1
             subarr = fields[0]
             assert subarr.base is None
             assert subarr.flags.owndata
@@ -820,115 +819,6 @@ def iter_struct_object_dtypes():
                    ('b', [('ba', 'O'), ('bb', 'O')], (2, 3))])
     p = (0, [[(obj, obj)] * 3] * 2)
     yield pytest.param(dt, p, 12, obj, id="<structured subarray 2>")
-
-
-@pytest.mark.skipif(
-    sys.version_info >= (3, 12),
-    reason="Python 3.12 has immortal refcounts, this test will no longer "
-           "work. See gh-23986"
-)
-@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-class TestStructuredObjectRefcounting:
-    """These tests cover various uses of complicated structured types which
-    include objects and thus require reference counting.
-    """
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    @pytest.mark.parametrize(["creation_func", "creation_obj"], [
-        pytest.param(np.empty, None,
-             # None is probably used for too many things
-             marks=pytest.mark.skip("unreliable due to python's behaviour")),
-        (np.ones, 1),
-        (np.zeros, 0)])
-    def test_structured_object_create_delete(self, dt, pat, count, singleton,
-                                             creation_func, creation_obj):
-        """Structured object reference counting in creation and deletion"""
-        # The test assumes that 0, 1, and None are singletons.
-        gc.collect()
-        before = sys.getrefcount(creation_obj)
-        arr = creation_func(3, dt)
-
-        now = sys.getrefcount(creation_obj)
-        assert now - before == count * 3
-        del arr
-        now = sys.getrefcount(creation_obj)
-        assert now == before
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    def test_structured_object_item_setting(self, dt, pat, count, singleton):
-        """Structured object reference counting for simple item setting"""
-        one = 1
-
-        gc.collect()
-        before = sys.getrefcount(singleton)
-        arr = np.array([pat] * 3, dt)
-        assert sys.getrefcount(singleton) - before == count * 3
-        # Fill with `1` and check that it was replaced correctly:
-        before2 = sys.getrefcount(one)
-        arr[...] = one
-        after2 = sys.getrefcount(one)
-        assert after2 - before2 == count * 3
-        del arr
-        gc.collect()
-        assert sys.getrefcount(one) == before2
-        assert sys.getrefcount(singleton) == before
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    @pytest.mark.parametrize(
-        ['shape', 'index', 'items_changed'],
-        [((3,), ([0, 2],), 2),
-         ((3, 2), ([0, 2], slice(None)), 4),
-         ((3, 2), ([0, 2], [1]), 2),
-         ((3,), ([True, False, True]), 2)])
-    def test_structured_object_indexing(self, shape, index, items_changed,
-                                        dt, pat, count, singleton):
-        """Structured object reference counting for advanced indexing."""
-        # Use two small negative values (should be singletons, but less likely
-        # to run into race-conditions).  This failed in some threaded envs
-        # When using 0 and 1.  If it fails again, should remove all explicit
-        # checks, and rely on `pytest-leaks` reference count checker only.
-        val0 = -4
-        val1 = -5
-
-        arr = np.full(shape, val0, dt)
-
-        gc.collect()
-        before_val0 = sys.getrefcount(val0)
-        before_val1 = sys.getrefcount(val1)
-        # Test item getting:
-        part = arr[index]
-        after_val0 = sys.getrefcount(val0)
-        assert after_val0 - before_val0 == count * items_changed
-        del part
-        # Test item setting:
-        arr[index] = val1
-        gc.collect()
-        after_val0 = sys.getrefcount(val0)
-        after_val1 = sys.getrefcount(val1)
-        assert before_val0 - after_val0 == count * items_changed
-        assert after_val1 - before_val1 == count * items_changed
-
-    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
-                             iter_struct_object_dtypes())
-    def test_structured_object_take_and_repeat(self, dt, pat, count, singleton):
-        """Structured object reference counting for specialized functions.
-        The older functions such as take and repeat use different code paths
-        then item setting (when writing this).
-        """
-        indices = [0, 1]
-
-        arr = np.array([pat] * 3, dt)
-        gc.collect()
-        before = sys.getrefcount(singleton)
-        res = arr.take(indices)
-        after = sys.getrefcount(singleton)
-        assert after - before == count * 2
-        new = res.repeat(10)
-        gc.collect()
-        after_repeat = sys.getrefcount(singleton)
-        assert after_repeat - after == count * 2 * 10
 
 
 class TestStructuredDtypeSparseFields:
@@ -1451,6 +1341,29 @@ class TestPickling:
             assert roundtrip_dt == dt
             assert hash(roundtrip_dt) == pre_pickle_hash
 
+    @pytest.mark.parametrize('dt', [
+        np.dtype([('a', 'i4'), ('b', 'f8')]),
+        np.dtype('i4, i1', align=True),
+    ])
+    def test_setstate_invalid_tuple_size(self, dt):
+        # gh-30476
+        valid_state = dt.__reduce__()[2]
+        dt.__setstate__(valid_state)
+
+        for size in [1, 2, 3, 4]:
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(valid_state[:size])
+
+        min_extra = 10 - len(valid_state)
+        for extra in range(min_extra, min_extra + 5):
+            extended = valid_state + (None,) * extra
+            with pytest.raises(
+                ValueError, match="Invalid state while unpickling"
+            ):
+                dt.__setstate__(extended)
+
 
 class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
@@ -1606,6 +1519,7 @@ class TestFromDTypeAttribute:
         with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
             # This code path is fully untested before, so it is unclear
@@ -1985,6 +1899,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -2008,6 +1923,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
@@ -2067,7 +1983,6 @@ def test_creating_dtype_with_dtype_class_errors():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDTypeSignatures:
     def test_signature_dtype(self):
         sig = inspect.signature(np.dtype)

@@ -1619,7 +1619,7 @@ add_newdoc('numpy._core.umath', 'invert',
     returned. In a two's-complement system, this operation effectively flips
     all the bits, resulting in a representation that corresponds to the
     negative of the input plus one. This is the most common method of
-    representing signed integers on computers [1]_. A N-bit two's-complement
+    representing signed integers on computers [1]_. An N-bit two's-complement
     system can represent every integer in the range :math:`-2^{N-1}` to
     :math:`+2^{N-1}-1`.
 

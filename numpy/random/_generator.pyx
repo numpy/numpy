@@ -294,6 +294,8 @@ cdef class Generator:
         >>> nested_spawn = child_rng1.spawn(20)
 
         """
+        if n_children < 0:
+            raise ValueError("n_children must be non-negative")
         return [type(self)(g) for g in self._bit_generator.spawn(n_children)]
 
     def random(self, size=None, dtype=np.float64, out=None):
@@ -988,7 +990,7 @@ cdef class Generator:
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
                             _shuffle_int(&self._bitgen, size_i, 1, idx_data)
-                idx.shape = shape
+                idx = idx.reshape(shape)
 
         if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
@@ -3952,8 +3954,7 @@ cdef class Generator:
             _factor = u * np.sqrt(s)
 
         x = mean + x @ _factor.T
-        x.shape = tuple(final_shape)
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, object n, object pvals, size=None):
         """

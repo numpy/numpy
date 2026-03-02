@@ -81,7 +81,7 @@ __all__ = [
 # When the sample contains exactly the percentile wanted, the virtual_index is
 # an integer to the index of this element.
 # When the percentile wanted is in between two elements, the virtual_index
-# is made of a integer part (a.k.a 'i' or 'left') and a fractional part
+# is made of an integer part (a.k.a 'i' or 'left') and a fractional part
 # (a.k.a 'g' or 'gamma')
 #
 # Each method in _QuantileMethods has two properties
@@ -93,7 +93,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -105,7 +105,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -2190,17 +2190,17 @@ def _update_dim_sizes(dim_sizes, arg, core_dims):
     num_core_dims = len(core_dims)
     if arg.ndim < num_core_dims:
         raise ValueError(
-            '%d-dimensional argument does not have enough '
-            'dimensions for all core dimensions %r'
-            % (arg.ndim, core_dims))
+            f'{arg.ndim}-dimensional argument does not have enough '
+            f'dimensions for all core dimensions {core_dims!r}')
 
     core_shape = arg.shape[-num_core_dims:]
     for dim, size in zip(core_dims, core_shape):
         if dim in dim_sizes:
             if size != dim_sizes[dim]:
                 raise ValueError(
-                    'inconsistent size for core dimension %r: %r vs %r'
-                    % (dim, size, dim_sizes[dim]))
+                    f'inconsistent size for core dimension {dim!r}: {size!r} vs '
+                    f'{dim_sizes[dim]!r}'
+                )
         else:
             dim_sizes[dim] = size
 
@@ -2610,9 +2610,10 @@ class vectorize:
         input_core_dims, output_core_dims = self._in_and_out_core_dims
 
         if len(args) != len(input_core_dims):
-            raise TypeError('wrong number of positional arguments: '
-                            'expected %r, got %r'
-                            % (len(input_core_dims), len(args)))
+            raise TypeError(
+                'wrong number of positional arguments: '
+                f'expected {len(input_core_dims)!r}, got {len(args)!r}'
+            )
         args = tuple(asanyarray(arg) for arg in args)
 
         broadcast_shape, dim_sizes = _parse_input_dimensions(
@@ -2633,8 +2634,9 @@ class vectorize:
 
             if nout != n_results:
                 raise ValueError(
-                    'wrong number of outputs from pyfunc: expected %r, got %r'
-                    % (nout, n_results))
+                    f'wrong number of outputs from pyfunc: expected {nout!r}, '
+                    f'got {n_results!r}'
+                )
 
             if nout == 1:
                 results = (results,)
@@ -3071,15 +3073,14 @@ def blackman(M):
     "removing the foot", i.e. smoothing discontinuities at the beginning
     and end of the sampled signal) or tapering function. It is known as a
     "near optimal" tapering function, almost as good (by some measures)
-    as the kaiser window.
+    as the Kaiser window.
 
     References
     ----------
-    Blackman, R.B. and Tukey, J.W., (1958) The measurement of power spectra,
-    Dover Publications, New York.
-
-    Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
-    Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958)
+           The measurement of power spectra, Dover Publications, New York.
+    .. [2] Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
+           Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
 
     Examples
     --------
@@ -4227,6 +4228,7 @@ def percentile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
+    weak_q = type(q) in (int, float)  # use weak promotion for final result type
     q = np.true_divide(q, 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
@@ -4243,7 +4245,7 @@ def percentile(a,
             raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -4475,6 +4477,7 @@ def quantile(a,
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
+    weak_q = type(q) in (int, float)  # use weak promotion for final result type
     q = np.asanyarray(q)
 
     if not _quantile_is_valid(q):
@@ -4492,7 +4495,7 @@ def quantile(a,
             raise ValueError("Weights must be non-negative.")
 
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims, weights)
+        a, q, axis, out, overwrite_input, method, keepdims, weights, weak_q)
 
 
 def _quantile_unchecked(a,
@@ -4502,7 +4505,8 @@ def _quantile_unchecked(a,
                         overwrite_input=False,
                         method="linear",
                         keepdims=False,
-                        weights=None):
+                        weights=None,
+                        weak_q=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
     return _ureduce(a,
                     func=_quantile_ureduce_func,
@@ -4512,7 +4516,8 @@ def _quantile_unchecked(a,
                     axis=axis,
                     out=out,
                     overwrite_input=overwrite_input,
-                    method=method)
+                    method=method,
+                    weak_q=weak_q)
 
 
 def _quantile_is_valid(q):
@@ -4551,7 +4556,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
+def _get_gamma(virtual_indexes, previous_indexes, method):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
@@ -4572,7 +4577,7 @@ def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
     gamma = method["fix_gamma"](gamma, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
-    return np.asanyarray(gamma, dtype=dtype)
+    return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
 
 
 def _lerp(a, b, t, out=None):
@@ -4640,6 +4645,7 @@ def _quantile_ureduce_func(
     out: np.ndarray | None = None,
     overwrite_input: bool = False,
     method: str = "linear",
+    weak_q: bool = False,
 ) -> np.ndarray:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
@@ -4666,7 +4672,8 @@ def _quantile_ureduce_func(
                        axis=axis,
                        method=method,
                        out=out,
-                       weights=wgt)
+                       weights=wgt,
+                       weak_q=weak_q)
     return result
 
 
@@ -4712,6 +4719,7 @@ def _quantile(
     method: str = "linear",
     out: np.ndarray | None = None,
     weights: "np.typing.ArrayLike | None" = None,
+    weak_q: bool = False,
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
@@ -4790,18 +4798,13 @@ def _quantile(
             previous = arr[previous_indexes]
             next = arr[next_indexes]
             # --- Linear interpolation
-            if arr.dtype.kind in "iu":
-                gtype = None
-            elif arr.dtype.kind == "f":
-                # make sure the return value matches the input array type
-                gtype = arr.dtype
-            else:
-                gtype = virtual_indexes.dtype
-
             gamma = _get_gamma(virtual_indexes, previous_indexes,
-                               method_props, gtype)
-            result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
-            gamma = gamma.reshape(result_shape)
+                               method_props)
+            if weak_q:
+                gamma = float(gamma)
+            else:
+                result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
+                gamma = gamma.reshape(result_shape)
             result = _lerp(previous,
                         next,
                         gamma,
@@ -5183,8 +5186,8 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     if indexing == 'xy' and ndim > 1:
         # switch first and second axis
-        output[0].shape = (1, -1) + s0[2:]
-        output[1].shape = (-1, 1) + s0[2:]
+        output[0] = output[0].reshape((1, -1) + s0[2:])
+        output[1] = output[1].reshape((-1, 1) + s0[2:])
 
     if not sparse:
         # Return the full N-D matrix (not only the 1-D vector)
@@ -5192,6 +5195,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     if copy:
         output = tuple(x.copy() for x in output)
+
+    if sparse and not copy:
+        return tuple(output)
 
     return output
 

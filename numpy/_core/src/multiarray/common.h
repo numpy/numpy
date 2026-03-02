@@ -22,6 +22,10 @@ extern "C" {
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
 
+NPY_NO_EXPORT PyObject *
+build_array_interface(PyObject *dataptr, PyObject *descr, PyObject *strides,
+                      PyObject *typestr, PyObject *shape);
+
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type);

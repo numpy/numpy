@@ -1049,7 +1049,7 @@ cdef class RandomState:
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
-                idx.shape = shape
+                idx = idx.reshape(shape)
 
         if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
@@ -2421,11 +2421,14 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Pareto distribution is
+        The probability density for the Pareto II distribution is
 
-        .. math:: p(x) = \\frac{am^a}{x^{a+1}}
+        .. math:: p(x) = \\frac{a}{(x+1)^{a+1}} , x \ge 0
 
-        where :math:`a` is the shape and :math:`m` the scale.
+        where :math:`a > 0` is the shape.
+
+        The Pareto II distribution is a shifted and scaled version of the
+        Pareto I distribution, which can be found in `scipy.stats.pareto`.
 
         The Pareto distribution, named after the Italian economist
         Vilfredo Pareto, is a power law probability distribution
@@ -4268,8 +4271,7 @@ cdef class RandomState:
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
-        x.shape = tuple(final_shape)
-        return x
+        return x.reshape(tuple(final_shape))
 
     def multinomial(self, long n, object pvals, size=None):
         """

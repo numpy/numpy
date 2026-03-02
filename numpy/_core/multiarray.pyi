@@ -67,6 +67,7 @@ from numpy._typing import (
     _ArrayLikeStr_co,
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
+    _DT64Codes,
     _DTypeLike,
     _FloatLike_co,
     _IntLike_co,
@@ -709,7 +710,7 @@ def vdot(a: _ArrayLikeObject_co, b: object, /) -> Any: ...
 def vdot(a: object, b: _ArrayLikeObject_co, /) -> Any: ...
 
 #
-def bincount(x: ArrayLike, /, weights: ArrayLike | None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
+def bincount(x: _ArrayLikeInt_co, /, weights: ArrayLike | None = None, minlength: SupportsIndex = 0) -> _Array1D[intp]: ...
 
 #
 def copyto(dst: ndarray, src: ArrayLike, casting: _CastingKind = "same_kind", where: object = True) -> None: ...
@@ -1117,11 +1118,22 @@ def arange(
     device: L["cpu"] | None = None,
     like: _SupportsArrayFunc | None = None,
 ) -> _Array1D[np.datetime64[Incomplete]]: ...
+@overload  # (str, str, timedelta-like, dtype=dt64-like) (requires both start and stop)
+def arange(
+    start_or_stop: str,
+    /,
+    stop: str,
+    step: _TD64Like_co | None = 1,
+    *,
+    dtype: _DTypeLike[np.datetime64] | _DT64Codes,
+    device: L["cpu"] | None = None,
+    like: _SupportsArrayFunc | None = None,
+) -> _Array1D[np.datetime64[Incomplete]]: ...
 @overload  # dtype=<unknown>
 def arange(
-    start_or_stop: _ArangeScalar | float,
+    start_or_stop: _ArangeScalar | float | str,
     /,
-    stop: _ArangeScalar | float | None = None,
+    stop: _ArangeScalar | float | str | None = None,
     step: _ArangeScalar | float | None = 1,
     *,
     dtype: DTypeLike | None = None,

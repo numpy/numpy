@@ -568,6 +568,10 @@ Character arrays (:mod:`numpy.char`)
    `dtype` `object_`, `bytes_` or `str_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
 
+.. deprecated:: 2.5
+   ``numpy.char.chararray`` is deprecated. Use an ``ndarray`` with a string or
+   bytes dtype instead.
+
 These are enhanced arrays of either :class:`str_` type or
 :class:`bytes_` type.  These arrays inherit from the
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,

@@ -1,5 +1,6 @@
 import copy
 import gc
+import os
 import pickle
 import sys
 import tempfile
@@ -17,7 +18,6 @@ from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     _assert_valid_refcount,
     assert_,
@@ -35,6 +35,7 @@ from numpy.testing._private.utils import (
 )
 
 
+@pytest.mark.filterwarnings(r"ignore:\w+ chararray \w+:DeprecationWarning")
 class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
@@ -112,7 +113,8 @@ class TestRegression:
         def rs():
             b.shape = (10,)
 
-        assert_raises(AttributeError, rs)
+        with pytest.warns(DeprecationWarning):  # gh-29536
+            assert_raises(AttributeError, rs)
 
     def test_bool(self):
         # Ticket #60
@@ -653,7 +655,8 @@ class TestRegression:
     def test_reshape_zero_size(self):
         # GitHub Issue #2700, setting shape failed for 0-sized arrays
         a = np.ones((0, 2))
-        a.shape = (-1, 2)
+        with pytest.warns(DeprecationWarning):
+            a.shape = (-1, 2)
 
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
@@ -1291,15 +1294,9 @@ class TestRegression:
                 for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
-                    if IS_PYPY:
-                        x.resize((m, 0), refcheck=False)
-                    else:
-                        x.resize((m, 0))
+                    x.resize((m, 0))
                     y = np.array([123456789e199], dtype=np.float64)
-                    if IS_PYPY:
-                        y.resize((0, n), refcheck=False)
-                    else:
-                        y.resize((0, n))
+                    y.resize((0, n))
 
                     # `dot` should just return zero (m, n) matrix
                     z = np.dot(x, y)
@@ -1462,22 +1459,6 @@ class TestRegression:
         x[x.nonzero()] = x.ravel()[:1]
         assert_(x[0, 1] == x[0, 0])
 
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 12),
-        reason="Python 3.12 has immortal refcounts, this test no longer works."
-    )
-    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-    def test_structured_arrays_with_objects2(self):
-        # Ticket #1299 second test
-        stra = 'aaaa'
-        strb = 'bbbb'
-        numb = sys.getrefcount(strb)
-        numa = sys.getrefcount(stra)
-        x = np.array([[(0, stra), (1, strb)]], 'i8,O')
-        x[x.nonzero()] = x.ravel()[:1]
-        assert_(sys.getrefcount(strb) == numb)
-        assert_(sys.getrefcount(stra) == numa + 2)
-
     def test_duplicate_title_and_name(self):
         # Ticket #1254
         dtspec = [(('a', 'a'), 'i'), ('b', 'i')]
@@ -1585,8 +1566,7 @@ class TestRegression:
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_take_refcount(self):
         # ticket #939
-        a = np.arange(16, dtype=float)
-        a.shape = (4, 4)
+        a = np.arange(16, dtype=float).reshape((4, 4))
         lut = np.ones((5 + 3, 4), float)
         rgba = np.empty(shape=a.shape + (4,), dtype=lut.dtype)
         c1 = sys.getrefcount(rgba)
@@ -1929,6 +1909,7 @@ class TestRegression:
     @pytest.mark.filterwarnings(
         "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_pickle_py2_array_latin1_hack(self):
         # Check that unpickling hacks in Py3 that support
         # encoding='latin1' work correctly.
@@ -2022,7 +2003,6 @@ class TestRegression:
         a[...] = [[1, 2]]
         assert_equal(a, [[1, 2], [1, 2]])
 
-    @pytest.mark.slow_pypy
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
         for i in range(1000):
@@ -2368,16 +2348,6 @@ class TestRegression:
         assert_(np.array([b'abc'], 'V3').astype('O') == b'abc')
         assert_(np.array([b'abcd'], 'V4').astype('O') == b'abcd')
 
-    def test_structarray_title(self):
-        # The following used to segfault on pypy, due to NPY_TITLE_KEY
-        # not working properly and resulting to double-decref of the
-        # structured array field items:
-        # See: https://bitbucket.org/pypy/pypy/issues/2789
-        for j in range(5):
-            structure = np.array([1], dtype=[(('x', 'X'), np.object_)])
-            structure[0]['x'] = np.array([2])
-            gc.collect()
-
     def test_dtype_scalar_squeeze(self):
         # gh-11384
         values = {
@@ -2564,7 +2534,6 @@ class TestRegression:
         expected = np.ones(size, dtype=np.bool)
         assert_array_equal(np.logical_and(a, b), expected)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy issue 2742")
     def test_gh_23737(self):
         with pytest.raises(TypeError, match="not an acceptable base type"):
             class Y(np.flexible):

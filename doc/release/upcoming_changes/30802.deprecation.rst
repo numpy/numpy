@@ -1,0 +1,1 @@
+* The ``numpy.char.[as]array`` functions are deprecated. Use an ``numpy.[as]array`` with a string or bytes dtype instead.

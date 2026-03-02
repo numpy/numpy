@@ -381,3 +381,24 @@ class TestAsCtypesType:
             'formats': [np.uint32, np.uint32]
         })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)
+
+    def test_cannot_convert_to_ctypes(self):
+
+        _type_to_value = {
+            np.str_: "aa",
+            np.bool: True,
+            np.datetime64: "2026-01-01",
+        }
+        for _scalar_type in np.sctypeDict.values():
+            if _scalar_type == np.object_:
+                continue
+
+            if _scalar_type in _type_to_value:
+                numpy_scalar = _scalar_type(_type_to_value[_scalar_type])
+            else:
+                numpy_scalar = _scalar_type(1)
+
+            with pytest.raises(
+                TypeError, match="readonly arrays unsupported"
+            ):
+                np.ctypeslib.as_ctypes(numpy_scalar)

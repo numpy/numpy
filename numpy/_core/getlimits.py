@@ -16,16 +16,14 @@ from ._multiarray_umath import _populate_finfo_constants
 def _fr0(a):
     """fix rank-0 --> rank-1"""
     if a.ndim == 0:
-        a = a.copy()
-        a.shape = (1,)
+        a = a.reshape((1,))
     return a
 
 
 def _fr1(a):
     """fix rank > 0 --> rank-0"""
     if a.size == 1:
-        a = a.copy()
-        a.shape = ()
+        a = a.reshape(())
     return a
 
 
@@ -170,7 +168,7 @@ class finfo:
 
     """
 
-    _finfo_cache = {}
+    _finfo_cache = {}  # noqa: RUF012
 
     __class_getitem__ = classmethod(types.GenericAlias)
 
@@ -397,8 +395,8 @@ class iinfo:
 
     """
 
-    _min_vals = {}
-    _max_vals = {}
+    _min_vals = {}  # noqa: RUF012
+    _max_vals = {}  # noqa: RUF012
 
     __class_getitem__ = classmethod(types.GenericAlias)
 

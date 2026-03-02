@@ -1,10 +1,10 @@
-from numpy._core.defchararray import (
+from numpy._core.defchararray import (  # type: ignore[deprecated]
     add,
     array,
     asarray,
     capitalize,
     center,
-    chararray,
+    chararray,  # pyrefly: ignore[deprecated]
     compare_chararrays,
     count,
     decode,

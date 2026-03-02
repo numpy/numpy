@@ -180,16 +180,16 @@ class matrix(N.ndarray):
             newshape = tuple(x for x in self.shape if x > 1)
             ndim = len(newshape)
             if ndim == 2:
-                self.shape = newshape
+                self._set_shape(newshape)
                 return
             elif (ndim > 2):
                 raise ValueError("shape too large to be a matrix.")
         else:
             newshape = self.shape
         if ndim == 0:
-            self.shape = (1, 1)
+            self._set_shape((1, 1))
         elif ndim == 1:
-            self.shape = (1, newshape[0])
+            self._set_shape((1, newshape[0]))
         return
 
     def __getitem__(self, index):
@@ -213,9 +213,9 @@ class matrix(N.ndarray):
             except Exception:
                 n = 0
             if n > 1 and isscalar(index[1]):
-                out.shape = (sh, 1)
+                out = out.reshape((sh, 1))
             else:
-                out.shape = (1, sh)
+                out = out.reshape((1, sh))
         return out
 
     def __mul__(self, other):
