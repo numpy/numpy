@@ -36,7 +36,7 @@ jobs:
 
     - uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # v0.9.3
       with:
-        pixi-version: v0.63.2
+        pixi-version: v0.64.0
         run-install: false
 
     - name: Build
