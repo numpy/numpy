@@ -20,7 +20,6 @@ from numpy._core.numeric import (
     int16,
     int32,
     int64,
-    integer,
     intp,
     multiply,
     nonzero,
@@ -432,11 +431,11 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
     """
 
-    w = []
+    warning_for_type = None
     try:
         N = operator.index(N)
     except TypeError:
-        w.append(N)
+        warning_for_type = warning_for_type or type(N)
 
     if like is not None:
         return _tri_with_like(like, N, M=M, k=k, dtype=dtype)
@@ -447,12 +446,12 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         try:
             M = operator.index(M)
         except TypeError:
-            w.append(M)
+            warning_for_type = warning_for_type or type(M)
 
     try:
         k = operator.index(k)
     except TypeError:
-        w.append(k)
+        warning_for_type = warning_for_type or type(k)
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
                             arange(-k, M - k, dtype=_min_int(-k, M - k)))
@@ -460,10 +459,10 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
 
-    # warn for all deprecated
-    for i in w:
+    # Deprecation in NumPy 2.5, 2026-03
+    if warning_for_type:
         warnings.warn(
-            (f"Cannot convert {type(i).__name__} safely to an integer."
+            (f"Cannot convert {(warning_for_type).__name__} safely to an integer."
              "This will raise an error in future versions (Deprecated NumPy 2.5)"),
             DeprecationWarning,
             skip_file_prefixes=(os.path.dirname(__file__),),
@@ -1161,9 +1160,18 @@ def triu_indices(n, k=0, m=None):
 
     """
 
-    # To make sure unsigned integers, etc. get converted to int
-    if isinstance(k, integer):
+    try:
         k = operator.index(k)
+    except TypeError:
+        # If same instance,then warning will be given in tri
+        if not isinstance(k, type(k - 1)):
+            # Deprecated in NumPy 2.5, 2026-03
+            warnings.warn(
+                (f"Cannot convert {type(k).__name__} safely to an integer."
+                 "This will raise an error in future versions (Deprecated NumPy 2.5)"),
+                DeprecationWarning,
+                skip_file_prefixes=(os.path.dirname(__file__),),
+            )
 
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 

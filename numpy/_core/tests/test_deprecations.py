@@ -367,18 +367,17 @@ class TestRoundDeprecation(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.ma.round_(3.14))
 
 class TestTriDeprecationWithNonInteger(_DeprecationTestCase):
-    # Deprecation in NumPy 2.5, 2026-02
+    # Deprecation in NumPy 2.5, 2026-03
 
     def test_tri(self):
-        self.assert_deprecated(lambda: np.tri(M=2.3, k=3.14, N=np.object_(8)), num=2)
+        self.assert_deprecated(lambda: np.tri(M=2.3, k=3.14, N=np.object_(8)))
 
     def test_triu_indices(self):
-        self.assert_deprecated(
-                               lambda: np.triu_indices(n=np.float64(7.14), k=3.2),
-                               num=2)
+        self.assert_deprecated(lambda: np.triu_indices(n=np.float64(7.14), k=3.2))
+        self.assert_deprecated(lambda: np.triu_indices(n=4, k=np.bool(0)))
 
     def test_tril_indices(self):
-        self.assert_deprecated(lambda: np.tril_indices(n=np.array(3.14)), num=1)
+        self.assert_deprecated(lambda: np.tril_indices(n=np.array(3.14)))
 
     def test_triu_indices_from(self):
         a = np.array([[ 0,  1,  2,  3],
