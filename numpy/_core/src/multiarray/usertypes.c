@@ -179,7 +179,7 @@ PyArray_RegisterDataType(PyArray_DescrProto *descr_proto)
         return -1;
     }
     descr_proto->type_num = -1;
-    if (PyDataType_ISUNSIZED(descr_proto)) {
+    if (descr_proto->elsize == 0) {
         PyErr_SetString(PyExc_ValueError, "cannot register a " \
                         "flexible data-type");
         return -1;
