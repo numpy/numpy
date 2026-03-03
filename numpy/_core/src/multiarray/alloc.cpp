@@ -529,6 +529,7 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
                      "Could not get pointer to 'mem_handler' from PyCapsule");
         return;
     }
+    // ignore -2 return when tracemalloc is disabled
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     handler->allocator.free(handler->allocator.ctx, ptr, size);
 }
