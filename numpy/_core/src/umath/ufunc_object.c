@@ -90,6 +90,7 @@ static inline void printfd_handler (const char *file, const char *func, int line
         }
 }
 #define printfd(...) printfd_handler (__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define printfd(...) 
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
