@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           cd numpy_to_test
-          MYPY_VERSION=$(grep mypy== requirements/test_requirements.txt | sed -n 's/mypy==\([^;]*\).*/\1/p')
+          MYPY_VERSION=$(grep mypy== requirements/typing_requirements.txt | sed -n 's/mypy==\([^;]*\).*/\1/p')
 
           echo "new commit"
           git checkout $GITHUB_SHA

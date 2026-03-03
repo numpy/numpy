@@ -93,7 +93,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -105,7 +105,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -3073,15 +3073,14 @@ def blackman(M):
     "removing the foot", i.e. smoothing discontinuities at the beginning
     and end of the sampled signal) or tapering function. It is known as a
     "near optimal" tapering function, almost as good (by some measures)
-    as the kaiser window.
+    as the Kaiser window.
 
     References
     ----------
-    Blackman, R.B. and Tukey, J.W., (1958) The measurement of power spectra,
-    Dover Publications, New York.
-
-    Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
-    Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
+    .. [1] Blackman, R.B. and Tukey, J.W., (1958)
+           The measurement of power spectra, Dover Publications, New York.
+    .. [2] Oppenheim, A.V., and R.W. Schafer. Discrete-Time Signal Processing.
+           Upper Saddle River, NJ: Prentice-Hall, 1999, pp. 468-471.
 
     Examples
     --------

@@ -75,12 +75,12 @@ typedef struct cache_destructor {
     ~cache_destructor() {
         for (npy_uint i = 0; i < NBUCKETS; ++i) {
             while (datacache[i].available > 0) {
-                free(datacache[i].ptrs[--datacache[i].available]);
+                PyMem_RawFree(datacache[i].ptrs[--datacache[i].available]);
             }
         }
         for (npy_uint i = 0; i < NBUCKETS_DIM; ++i) {
             while (dimcache[i].available > 0) {
-                PyArray_free(dimcache[i].ptrs[--dimcache[i].available]);
+                PyMem_RawFree(dimcache[i].ptrs[--dimcache[i].available]);
             }
         }
     }
@@ -217,7 +217,6 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
 {
     void * p;
     size_t sz = nmemb * size;
-    NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
         p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyDataMem_NEW);
         if (p) {
@@ -225,9 +224,7 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
         }
         return p;
     }
-    NPY_BEGIN_THREADS;
     p = PyDataMem_NEW_ZEROED(nmemb, size);
-    NPY_END_THREADS;
     if (p) {
         indicate_hugepages(p, sz);
     }
@@ -255,7 +252,7 @@ npy_alloc_cache_dim(npy_uintp sz)
         sz = 2;
     }
     return _npy_alloc_cache(sz, sizeof(npy_intp), NBUCKETS_DIM, dimcache,
-                            &PyArray_malloc);
+                            &PyMem_RawMalloc);
 }
 
 NPY_NO_EXPORT void
@@ -296,10 +293,10 @@ PyDataMem_NEW(size_t size)
     void *result;
 
     assert(size != 0);
-    result = malloc(size);
+    result = PyMem_RawMalloc(size);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
-        free(result);
+        PyMem_RawFree(result);
         return NULL;
     }
     return result;
@@ -313,10 +310,10 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
 {
     void *result;
 
-    result = calloc(nmemb, size);
+    result = PyMem_RawCalloc(nmemb, size);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
-        free(result);
+        PyMem_RawFree(result);
         return NULL;
     }
     return result;
@@ -329,7 +326,7 @@ NPY_NO_EXPORT void
 PyDataMem_FREE(void *ptr)
 {
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    free(ptr);
+    PyMem_RawFree(ptr);
 }
 
 /*NUMPY_API
@@ -342,10 +339,10 @@ PyDataMem_RENEW(void *ptr, size_t size)
 
     assert(size != 0);
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
-    result = realloc(ptr, size);
+    result = PyMem_RawRealloc(ptr, size);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
-        free(result);
+        PyMem_RawFree(result);
         return NULL;
     }
     return result;
@@ -357,7 +354,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
 static inline void *
 default_malloc(void *NPY_UNUSED(ctx), size_t size)
 {
-    return _npy_alloc_cache(size, 1, NBUCKETS, datacache, &malloc);
+    return _npy_alloc_cache(size, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
 }
 
 // The default data mem allocator calloc routine does not make use of a ctx.
@@ -368,20 +365,17 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
 {
     void * p;
     size_t sz = nelem * elsize;
-    NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
-        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &malloc);
+        p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
         if (p) {
             memset(p, 0, sz);
         }
         return p;
     }
-    NPY_BEGIN_THREADS;
-    p = calloc(nelem, elsize);
+    p = PyMem_RawCalloc(nelem, elsize);
     if (p) {
         indicate_hugepages(p, sz);
     }
-    NPY_END_THREADS;
     return p;
 }
 
@@ -391,7 +385,7 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
 static inline void *
 default_realloc(void *NPY_UNUSED(ctx), void *ptr, size_t new_size)
 {
-    return realloc(ptr, new_size);
+    return PyMem_RawRealloc(ptr, new_size);
 }
 
 // The default data mem allocator free routine does not make use of a ctx.
@@ -400,7 +394,7 @@ default_realloc(void *NPY_UNUSED(ctx), void *ptr, size_t new_size)
 static inline void
 default_free(void *NPY_UNUSED(ctx), void *ptr, size_t size)
 {
-    _npy_free_cache(ptr, size, NBUCKETS, datacache, &free);
+    _npy_free_cache(ptr, size, NBUCKETS, datacache, &PyMem_RawFree);
 }
 
 /* Memory handler global default */

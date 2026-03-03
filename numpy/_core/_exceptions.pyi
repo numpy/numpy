@@ -15,7 +15,7 @@ class _UFuncNoLoopError(UFuncTypeError):
     def __init__(self, /, ufunc: np.ufunc, dtypes: Iterable[np.dtype]) -> None: ...
 
 class _UFuncBinaryResolutionError(_UFuncNoLoopError):
-    dtypes: tuple[np.dtype, np.dtype]
+    dtypes: tuple[np.dtype, np.dtype]  # pyrefly: ignore[bad-override]
     def __init__(self, /, ufunc: np.ufunc, dtypes: Iterable[np.dtype]) -> None: ...
 
 class _UFuncCastingError(UFuncTypeError):

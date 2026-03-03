@@ -785,30 +785,6 @@ dump_attrs(const PyArrayObject *obj)
 }
 #endif
 
-#define SWAPTYPE(a, b, t) \
-    {                     \
-        t c;              \
-        c = (a);          \
-        (a) = (b);        \
-        (b) = c;          \
-    }
-
-static int
-swap_arrays(PyArrayObject *obj1, PyArrayObject *obj2)
-{
-    PyArrayObject_fields *arr1 = (PyArrayObject_fields *)obj1,
-                         *arr2 = (PyArrayObject_fields *)obj2;
-    SWAPTYPE(arr1->data, arr2->data, char *);
-    SWAPTYPE(arr1->nd, arr2->nd, int);
-    SWAPTYPE(arr1->dimensions, arr2->dimensions, npy_intp *);
-    SWAPTYPE(arr1->strides, arr2->strides, npy_intp *);
-    SWAPTYPE(arr1->base, arr2->base, PyObject *);
-    SWAPTYPE(arr1->descr, arr2->descr, PyArray_Descr *);
-    SWAPTYPE(arr1->flags, arr2->flags, int);
-    /* SWAPTYPE(arr1->weakreflist,arr2->weakreflist,PyObject*); */
-    return 0;
-}
-
 #define ARRAY_ISCOMPATIBLE(arr,type_num)                                \
     ((PyArray_ISINTEGER(arr) && PyTypeNum_ISINTEGER(type_num)) ||     \
      (PyArray_ISFLOAT(arr) && PyTypeNum_ISFLOAT(type_num)) ||         \
@@ -1050,32 +1026,38 @@ ndarray_from_pyobj(const int type_num,
             return NULL;
         }
 
-        /* here we have always intent(in) or intent(inplace) */
+        /*
+         * Here, we have always intent(in) or intent(inplace)
+         * and require a copy for input.  We allow arbitrary casting for
+         * input, but for inplace we check that the types are equivalent.
+         */
 
         {
-          PyArrayObject * retarr = (PyArrayObject *)                    \
-            PyArray_NewFromDescr(&PyArray_Type, descr, PyArray_NDIM(arr), PyArray_DIMS(arr),
-                                 NULL, NULL, !(intent & F2PY_INTENT_C), NULL);
-          if (retarr==NULL) {
-            Py_DECREF(descr);
-            return NULL;
-          }
-          F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
-          if (PyArray_CopyInto(retarr, arr)) {
-            Py_DECREF(retarr);
-            return NULL;
-          }
+          int flags = NPY_ARRAY_FORCECAST | NPY_ARRAY_ENSURECOPY
+              | ((intent & F2PY_INTENT_C) ? NPY_ARRAY_IN_ARRAY
+                 : NPY_ARRAY_IN_FARRAY);
           if (intent & F2PY_INTENT_INPLACE) {
-            if (swap_arrays(arr,retarr)) {
-              Py_DECREF(retarr);
-              return NULL; /* XXX: set exception */
-            }
-            Py_XDECREF(retarr);
-            if (intent & F2PY_INTENT_OUT)
-              Py_INCREF(arr);
-          } else {
-            arr = retarr;
+              if (!(ARRAY_ISCOMPATIBLE(arr, type_num)) ||
+                  (PyArray_ISSIGNED(arr) && PyTypeNum_ISUNSIGNED(type_num)) ||
+                  (PyArray_ISUNSIGNED(arr) && PyTypeNum_ISSIGNED(type_num))
+                  ) {
+                  sprintf(mess, "failed to initialize intent(inplace) array"
+                          " -- input '%c' not compatible to '%c'",
+                          PyArray_DESCR(arr)->type, descr->type);
+                  PyErr_SetString(PyExc_ValueError, mess);
+                  Py_DECREF(descr);
+                  return NULL;
+              }
+              flags |= NPY_ARRAY_WRITEBACKIFCOPY;
           }
+          /* Steals reference to descr */
+          PyArrayObject *retarr = (PyArrayObject *)PyArray_FromArray(
+              arr, descr, flags);
+          if (retarr==NULL) {
+            return NULL;
+          }
+          arr = retarr;
+          F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
         }
         return arr;
     }

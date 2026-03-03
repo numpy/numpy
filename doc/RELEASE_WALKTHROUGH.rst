@@ -17,8 +17,6 @@ documentation. There are a few ways to streamline things:
 
 - Git can be set up to use a keyring to store your GitHub personal access token.
   Search online for the details.
-- You can use the ``keyring`` app to store the PyPI password for twine. See the
-  online twine documentation for details.
 
 
 Prior to release
