@@ -366,10 +366,6 @@ PyDataMem_RENEW(void *ptr, size_t size)
         return result;
     }
     ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
-    if (ret == -2) {
-        // tracemalloc is disabled
-        return result;
-    }
     ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         PyMem_RawFree(result);
