@@ -84,7 +84,7 @@ class SourceFiles:
             if self.prefix is None:
                 self.prefix = path
             else:
-                self.prefix = os.path.commonprefix([self.prefix, path])
+                self.prefix = os.path.commonpath([self.prefix, path])
         return self.files[path]
 
     def clean_path(self, path):

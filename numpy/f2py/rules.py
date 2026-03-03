@@ -1443,8 +1443,7 @@ def buildmodule(m, um):
         with open(fn, 'w') as f:
             f.write('.. -*- rest -*-\n')
             f.write('\n'.join(ar['restdoc']))
-        outmess('    ReST Documentation is saved to file "%s/%smodule.rest"\n' %
-                (options['buildpath'], vrd['modulename']))
+        outmess(f'    ReST Documentation is saved to file "{fn}"\n')
     if options['dolatexdoc']:
         fn = os.path.join(
             options['buildpath'], vrd['modulename'] + 'module.tex')
@@ -1458,8 +1457,7 @@ def buildmodule(m, um):
                 f.write('\n'.join(ar['latexdoc']))
             if 'shortlatex' not in options:
                 f.write('\\end{document}')
-        outmess('    Documentation is saved to file "%s/%smodule.tex"\n' %
-                (options['buildpath'], vrd['modulename']))
+        outmess(f'    Documentation is saved to file "{fn}"\n')
     if funcwrappers:
         wn = os.path.join(options['buildpath'], vrd['f2py_wrapper_output'])
         ret['fsrc'] = wn
@@ -1527,8 +1525,10 @@ def buildapi(rout):
     var = rout['vars']
 
     if ismoduleroutine(rout):
-        outmess('            Constructing wrapper function "%s.%s"...\n' %
-                (rout['modulename'], rout['name']))
+        module_name = rout['modulename']
+        name = rout['name']
+        outmess('            Constructing wrapper function '
+                f'"{module_name}.{name}"...\n')
     else:
         outmess(f"        Constructing wrapper function \"{rout['name']}\"...\n")
     # Routine
