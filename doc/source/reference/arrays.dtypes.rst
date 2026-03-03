@@ -298,10 +298,10 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Note on string types
 
-    For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes.
-    For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
-    need zero-termination ``b`` or ``i1`` can be used.
+    The ``S`` typestring for zero-terminated bytes is intended for backward 
+    compatibility and is not recommended to use.  For unicode strings, 
+    use ``U``, `numpy.str_`.  For signed bytes that do not need zero-termination, 
+    ``b`` or ``i1`` can be used.
 
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is
