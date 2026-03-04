@@ -1688,6 +1688,16 @@ class TestMatrixRank:
         assert_equal(4, matrix_rank(I, hermitian=True, tol=0.99e-8))
         assert_equal(3, matrix_rank(I, hermitian=True, tol=1.01e-8))
 
+    def test_empty_matrix(self):
+        # Empty matrices have rank 0
+        assert_equal(matrix_rank(np.empty((0, 3))), 0)
+        assert_equal(matrix_rank(np.empty((3, 0))), 0)
+        assert_equal(matrix_rank(np.empty((0, 0))), 0)
+        # Stacked empty matrices
+        assert_equal(matrix_rank(np.empty((2, 0, 3))), np.array([0, 0]))
+        # Empty matrix with custom tolerance (should still return 0)
+        assert_equal(matrix_rank(np.empty((0, 3)), tol=0.1), 0)
+
 
 def test_reduced_rank():
     # Test matrices with reduced rank
