@@ -87,7 +87,6 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
  *    total, required, and keyword arguments.
  * 3. Intern all keyword arguments strings to allow fast, identity based
  *    parsing and avoid string creation overhead on each call.
- * 4. Cache converter function pointers for the hot path.
  *
  * @param funcname Name of the function, mainly used for errors.
  * @param cache A cache object stored statically in the parsing function
@@ -192,9 +191,6 @@ initialize_keywords(const char *funcname,
 
     for (int i = 0; i < nspecs; i++) {
         const char *name = specs[i].name;
-
-        /* Cache converter function pointer */
-        cache->converters[i] = (npy_arg_converter)specs[i].converter;
 
         if (*name == '|' || *name == '$') {
             name++;  /* ignore | and $ */
@@ -374,7 +370,7 @@ _npy_parse_arguments(const char *funcname,
             continue;
         }
 
-        npy_arg_converter converter = cache->converters[i];
+        npy_arg_converter converter = (npy_arg_converter)specs[i].converter;
         void *data = specs[i].output;
 
         if (converter == NULL) {
