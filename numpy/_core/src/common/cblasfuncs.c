@@ -364,7 +364,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         }
     }
 
-    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, NULL, &result);
     if (out_buf == NULL) {
         goto fail;
     }

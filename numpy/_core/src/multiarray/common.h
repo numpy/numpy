@@ -339,7 +339,8 @@ check_is_convertible_to_scalar(PyArrayObject *v);
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
+                  int nd, npy_intp dimensions[], int typenum, PyArray_Descr *descr,
+                  PyArrayObject **result);
 
 
 /*

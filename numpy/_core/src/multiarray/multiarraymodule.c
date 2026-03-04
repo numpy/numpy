@@ -997,7 +997,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     }
 
     if (user_type) {
-        typenum = NULL;
+        typenum = NPY_NOTYPE;
     }
     else {
         typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
@@ -1078,7 +1078,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
     is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
-    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, typec, &result);
     if (out_buf == NULL) {
         goto fail;
     }
@@ -1219,7 +1219,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL);
+    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -2669,7 +2669,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     }
 
     /* array scalar output */
-    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, typenum, NULL);
+    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, typenum, NULL, NULL);
     if (ret == NULL) {
         goto fail;
     }
