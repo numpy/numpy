@@ -983,18 +983,34 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     npy_intp dimensions[NPY_MAXDIMS];
     PyArray_DotFunc *dot;
     PyArray_Descr *typec = NULL;
+    int user_type = 0;
     NPY_BEGIN_THREADS_DEF;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
-        return NULL;
-    }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
+    if (typec != NULL) {
+        if (NPY_DT_is_user_defined(typec)) {
+            user_type = 1;
+        }
+    }
+
+    if (user_type) {
+        typenum = NULL;
+    }
+    else {
+        typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+        if (typenum == NPY_NOTYPE) {
+            return NULL;
+        }
+        typenum = PyArray_ObjectType(op2, typenum);
+        if (typenum == NPY_NOTYPE) {
+            return NULL;
+        }
+
+        typec = PyArray_DescrFromType(typenum);
+    }
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_TypeError,
