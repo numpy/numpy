@@ -1,0 +1,7 @@
+Inputs other than ``integers`` is deprecated
+--------------------------------------------
+Inputs other than integers is deprecated for ``numpy.triu_indices`` and ``numpy.tril_indices``.  
+
+The ``M``, ``k`` and ``N`` parameters of ``numpy.tri`` also deprecate non-integer arguments.
+
+The ``k`` parameter of both ``numpy.tril_indices_from`` and ``numpy.triu_indices_from`` deprecates non-integer arguments.

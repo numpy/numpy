@@ -4716,7 +4716,7 @@ set_typeinfo(PyObject *dict)
       * #name = STRING, UNICODE, VOID#
       */
 
-    PyDataType_MAKEUNSIZED(&@name@_Descr);
+    PyDataType_MAKEUNSIZED((PyArray_Descr *)&@name@_Descr);
 
     /**end repeat**/
 

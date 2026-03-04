@@ -1428,7 +1428,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             Py_INCREF(op_axes_tuple);
         }
         else if (op_ncore == 1) {
-            op_axes_tuple = PyArray_TupleFromItems(1, &op_axes_tuple, 0);
+            op_axes_tuple = PyTuple_FromArray(&op_axes_tuple, 1);
             if (op_axes_tuple == NULL) {
                 return -1;
             }
@@ -6576,8 +6576,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         ((PyArray_Descr **)context->descriptors)[i] = operation_descrs[i];
     }
 
-    PyObject *result_items[2] = {result_dtype_tuple, capsule};
-    result = PyArray_TupleFromItems(2, result_items, 0);
+    PyObject *result_items[] = {result_dtype_tuple, capsule};
+    result = PyTuple_FromArray(result_items, 2);
     /* cleanup and return */
     Py_DECREF(capsule);
 
