@@ -86,9 +86,8 @@ class _DeprecationTestCase:
             if warning.category is self.warning_cls:
                 num_found += 1
             elif not ignore_others:
-                raise AssertionError(
-                        f"expected {self.warning_cls.__name__} but got: "
-                        f"{warning.category}")
+                name = self.warning_cls.__name__
+                raise AssertionError(f"expected {name} but got: {warning.category}")
         if num is not None and num_found != num:
             msg = f"{len(w_context)} warnings found but {num} expected."
             lst = [str(w) for w in w_context]

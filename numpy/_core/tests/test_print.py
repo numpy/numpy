@@ -180,7 +180,7 @@ def test_scalar_format():
                     f"failed with val {val}, type {valtype}")
         except ValueError as e:
             assert_(False,
-                    f"format raised exception (fmt='{fmat}', val={val!r}, "
+                    f"format raised exception (fmt='{fmat}', {val=}, "
                     f"type={valtype!r}, exc='{e}')")
 
 

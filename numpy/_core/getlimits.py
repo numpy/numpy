@@ -449,5 +449,5 @@ class iinfo:
         return fmt % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}"
-                f"(min={self.min}, max={self.max}, dtype={self.dtype})")
+        name = self.__class__.__name__
+        return f'{name}(min={self.min}, max={self.max}, dtype={self.dtype})'
