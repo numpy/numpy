@@ -123,6 +123,7 @@ get_legacy_print_mode(void) {
     PyObject *legacy_print_mode = NULL;
     if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
                           &legacy_print_mode) == -1) {
+        Py_DECREF(format_options);
         return -1;
     }
     Py_DECREF(format_options);
@@ -303,6 +304,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         n = PyArray_DIMS(ap)[0];
         ptr2 = (char **)PyArray_malloc(n * sizeof(char *));
         if (!ptr2) {
+            Py_DECREF(ap);
             PyErr_NoMemory();
             return -1;
         }
@@ -316,6 +318,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         m = PyArray_DIMS(ap)[1];
         ptr3 = (char ***)PyArray_malloc(n*(m+1) * sizeof(char *));
         if (!ptr3) {
+            Py_DECREF(ap);
             PyErr_NoMemory();
             return -1;
         }
@@ -2305,7 +2308,9 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
     if (descr == NULL) {
         return NULL;
     }
-    return PyArray_Scalar(&count, descr, NULL);
+    PyObject *result =  PyArray_Scalar(&count, descr, NULL);
+    Py_DECREF(descr);
+    return result;
 }
 
 static PyObject *
@@ -3228,6 +3233,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     PyArrayObject *arr = NULL, *ax = NULL, *ay = NULL;
     PyObject *ret = NULL;
     PyArray_Descr *common_dt = NULL;
+    NpyIter *iter = NULL;
 
     arr = (PyArrayObject *)PyArray_FROM_O(condition);
     if (arr == NULL) {
@@ -3297,7 +3303,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
 
-    NpyIter * iter;
     NPY_BEGIN_THREADS_DEF;
 
     iter =  NpyIter_MultiNew(
@@ -3431,6 +3436,9 @@ fail:
     Py_XDECREF(common_dt);
     NPY_cast_info_xfree(&x_cast_info);
     NPY_cast_info_xfree(&y_cast_info);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
     return NULL;
 }
 

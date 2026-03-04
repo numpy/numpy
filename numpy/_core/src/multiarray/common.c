@@ -418,8 +418,8 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             /* set copy-back */
             Py_INCREF(out);
             if (PyArray_SetWritebackIfCopyBase(out_buf, out) < 0) {
-                Py_DECREF(out);
                 Py_DECREF(out_buf);
+                // PyArray_SetWritebackIfCopyBase steals reference to second argument
                 return NULL;
             }
         }
