@@ -387,7 +387,8 @@ default_malloc(void *NPY_UNUSED(ctx), size_t size)
         return NULL;
     }
     // untrack the allocation from tracemalloc
-    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    // ignore return value, since we'd early return either way
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
     return result;
 }
 
