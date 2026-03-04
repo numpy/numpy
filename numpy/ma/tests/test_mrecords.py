@@ -394,6 +394,14 @@ class TestView:
         assert_(isinstance(test, MySub))
         assert_equal(test.dtype, mrec.dtype)
 
+    def test_view_maskedarray_preserves_fill_value(self):
+        mrec = self._create_data()[0]
+        original_fv = mrec.fill_value
+
+        test = mrec.view(ma.MaskedArray)
+        assert_(isinstance(test, ma.MaskedArray))
+        assert_equal(test.fill_value, original_fv)
+
 ##############################################################################
 class TestMRecordsImport:
 
