@@ -33,11 +33,10 @@ argparse_example_function(PyObject *NPY_UNUSED(mod),
     int arg1;
     PyObject *arg2, *arg3, *arg4;
     if (npy_parse_arguments("func", args, len_args, kwnames,
-            "", &PyArray_PythonPyIntFromInt, &arg1,
-            "arg2", NULL, &arg2,
-            "|arg3", NULL, &arg3,
-            "$arg3", NULL, &arg4,
-            NULL, NULL, NULL) < 0) {
+            {"", &PyArray_PythonPyIntFromInt, &arg1},
+            {"arg2", NULL, &arg2},
+            {"|arg3", NULL, &arg3},
+            {"$arg3", NULL, &arg4}) < 0) {
         return NULL;
     }
     Py_RETURN_NONE;
@@ -57,9 +56,8 @@ threaded_argparse_example_function(PyObject *NPY_UNUSED(mod),
     int arg1;
     PyObject *arg2;
     if (npy_parse_arguments("thread_func", args, len_args, kwnames,
-            "$arg1", &PyArray_PythonPyIntFromInt, &arg1,
-            "$arg2", NULL, &arg2,
-            NULL, NULL, NULL) < 0) {
+            {"$arg1", &PyArray_PythonPyIntFromInt, &arg1},
+            {"$arg2", NULL, &arg2}) < 0) {
         return NULL;
     }
     Py_RETURN_NONE;
