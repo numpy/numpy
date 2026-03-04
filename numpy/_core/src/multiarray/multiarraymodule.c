@@ -989,6 +989,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        return NULL;
+    }
 
     if (typec != NULL) {
         if (NPY_DT_is_user_defined(typec)) {
