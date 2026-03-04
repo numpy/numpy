@@ -1384,7 +1384,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             Py_INCREF(op_axes_tuple);
         }
         else if (op_ncore == 1) {
-            op_axes_tuple = PyTuple_Pack(1, op_axes_tuple);
+            op_axes_tuple = PyTuple_FromArray(&op_axes_tuple, 1);
             if (op_axes_tuple == NULL) {
                 return -1;
             }
@@ -3412,7 +3412,7 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
             return 0;
         }
         /* Can be an array if it only has one output */
-        full_args->out = PyTuple_Pack(1, out_obj);
+        full_args->out = PyTuple_FromArray(&out_obj, 1);
         if (full_args->out == NULL) {
             return -1;
         }
@@ -3502,7 +3502,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare inputs for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(2, op, indices_obj);
+        PyObject *reduce_in[] = {op, indices_obj};
+        full_args.in = PyTuple_FromArray(reduce_in, 2);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -3520,7 +3521,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(1, op);
+        full_args.in = PyTuple_FromArray(&op, 1);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -3541,7 +3542,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
-        full_args.in = PyTuple_Pack(1, op);
+        full_args.in = PyTuple_FromArray(&op, 1);
         if (full_args.in == NULL) {
             goto fail;
         }
@@ -3557,7 +3558,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         if (out_obj != Py_None) {
-            full_args.out = PyTuple_Pack(1, out_obj);
+            full_args.out = PyTuple_FromArray(&out_obj, 1);
             if (full_args.out == NULL) {
                 goto fail;
             }
@@ -6422,7 +6423,8 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         ((PyArray_Descr **)context->descriptors)[i] = operation_descrs[i];
     }
 
-    result = PyTuple_Pack(2, result_dtype_tuple, capsule);
+    PyObject *result_items[] = {result_dtype_tuple, capsule};
+    result = PyTuple_FromArray(result_items, 2);
     /* cleanup and return */
     Py_DECREF(capsule);
 
