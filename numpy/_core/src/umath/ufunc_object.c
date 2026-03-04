@@ -3427,6 +3427,72 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
     return 0;
 }
 
+static inline int
+/* Convert the 'axis' parameter into a list of axes */
+_parse_axis(PyObject *axes_obj, int ndim, int *axes)
+{
+   int naxes = 0;
+   if (axes_obj == NULL) {
+        /* apply defaults */
+        if (ndim == 0) {
+            naxes = 0;
+        }
+        else {
+            naxes = 1;
+            axes[0] = 0;
+        }
+    }
+    else if (axes_obj == Py_None) {
+        /* Convert 'None' into all the axes */
+        naxes = ndim;
+        for (int i = 0; i < naxes; ++i) {
+            axes[i] = i;
+        }
+    }
+    else if (PyTuple_Check(axes_obj)) {
+        naxes = PyTuple_Size(axes_obj);
+        if (naxes < 0 || naxes > NPY_MAXDIMS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "too many values for 'axis'");
+            return -1;
+        }
+        for (int i = 0; i < naxes; ++i) {
+            PyObject *tmp = PyTuple_GET_ITEM(axes_obj, i);
+            int axis = PyArray_PyIntAsInt(tmp);
+            if (error_converting(axis)) {
+                return -1;
+            }
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
+                return -1;
+            }
+            axes[i] = (int)axis;
+        }
+    }
+    else {
+        /* Try to interpret axis as an integer */
+        int axis = PyArray_PyIntAsInt(axes_obj);
+        /* TODO: PyNumber_Index would be good to use here */
+        if (error_converting(axis)) {
+            return -1;
+        }
+        /*
+        * As a special case for backwards compatibility in 'sum',
+        * 'prod', et al, also allow a reduction for scalars even
+        * though this is technically incorrect.
+        */
+        if (ndim == 0 && (axis == 0 || axis == -1)) {
+            naxes = 0;
+        }
+        else if (check_and_adjust_axis(&axis, ndim) < 0) {
+            return -1;
+        }
+        else {
+            axes[0] = (int)axis;
+            naxes = 1;
+        }
+    }
+    return naxes;
+}
 
 /* forward declaration */
 static PyArray_DTypeMeta * _get_dtype(PyObject *dtype_obj);
@@ -3440,7 +3506,7 @@ static PyObject *
 PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames, int operation)
 {
-    int i, naxes=0, ndim;
+    int ndim;
     int axes[NPY_MAXDIMS];
 
     ufunc_full_args full_args = {NULL, NULL};
@@ -3625,65 +3691,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
 
     ndim = PyArray_NDIM(mp);
 
-    /* Convert the 'axis' parameter into a list of axes */
-    if (axes_obj == NULL) {
-        /* apply defaults */
-        if (ndim == 0) {
-            naxes = 0;
-        }
-        else {
-            naxes = 1;
-            axes[0] = 0;
-        }
-    }
-    else if (axes_obj == Py_None) {
-        /* Convert 'None' into all the axes */
-        naxes = ndim;
-        for (i = 0; i < naxes; ++i) {
-            axes[i] = i;
-        }
-    }
-    else if (PyTuple_Check(axes_obj)) {
-        naxes = PyTuple_Size(axes_obj);
-        if (naxes < 0 || naxes > NPY_MAXDIMS) {
-            PyErr_SetString(PyExc_ValueError,
-                    "too many values for 'axis'");
-            goto fail;
-        }
-        for (i = 0; i < naxes; ++i) {
-            PyObject *tmp = PyTuple_GET_ITEM(axes_obj, i);
-            int axis = PyArray_PyIntAsInt(tmp);
-            if (error_converting(axis)) {
-                goto fail;
-            }
-            if (check_and_adjust_axis(&axis, ndim) < 0) {
-                goto fail;
-            }
-            axes[i] = (int)axis;
-        }
-    }
-    else {
-        /* Try to interpret axis as an integer */
-        int axis = PyArray_PyIntAsInt(axes_obj);
-        /* TODO: PyNumber_Index would be good to use here */
-        if (error_converting(axis)) {
-            goto fail;
-        }
-        /*
-         * As a special case for backwards compatibility in 'sum',
-         * 'prod', et al, also allow a reduction for scalars even
-         * though this is technically incorrect.
-         */
-        if (ndim == 0 && (axis == 0 || axis == -1)) {
-            naxes = 0;
-        }
-        else if (check_and_adjust_axis(&axis, ndim) < 0) {
-            goto fail;
-        }
-        else {
-            axes[0] = (int)axis;
-            naxes = 1;
-        }
+    /* Extract the axis argument */
+    int naxes = _parse_axis(axes_obj, ndim, axes);
+    if (naxes < 0) {
+        goto fail;
     }
 
     switch(operation) {
