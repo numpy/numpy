@@ -1419,7 +1419,7 @@ class DatetimeFormat(_TimelikeFormat):
                                           unit=self.unit,
                                           timezone=self.timezone,
                                           casting=self.casting)
-        return repr(datetime_str)
+        return f"'{datetime_str}'"
 
 
 class TimedeltaFormat(_TimelikeFormat):
