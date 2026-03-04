@@ -5939,7 +5939,7 @@ class TestIO:
         tmp_filename = normalize_filename(tmp_path, param_filename)
 
         for size in sizes:
-            err_msg = f"{size}"
+            err_msg = str(size)
 
             with open(tmp_filename, 'wb') as f:
                 f.seek(size - 1)

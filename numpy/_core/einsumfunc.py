@@ -801,7 +801,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
                 if dimension_dict[char] == 1:
                     dimension_dict[char] = dim
                 elif dim not in (1, dimension_dict[char]):
-                    raise ValueError(f"Size of label '{char}' for "
+                    raise ValueError(f"Size of label {char!r} for "
                                      f"operand {tnum} ({dimension_dict[char]}) "
                                      f"does not match previous terms ({dim}).")
             else:
