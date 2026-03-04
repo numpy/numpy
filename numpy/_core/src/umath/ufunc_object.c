@@ -4280,8 +4280,6 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
 {
     PyObject *result = NULL;
     PyObject *wrap, *wrap_type;
-    PyObject *in_tuple = NULL;
-    PyObject *out_tuple = NULL;
 
     if (!subok) {
         /* subok=False ignores input wrapping (but not output) */
@@ -4296,24 +4294,14 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Create tuples for wrapping context */
-    in_tuple = PyArray_TupleFromItems(full_args_light->nin, full_args_light->in, 0);
-    if (in_tuple == NULL) {
-        goto fail;
-    }
-
-    /* Create out_tuple from full_args_light if outputs are present */
-    if (full_args_light->out != NULL && full_args_light->nout > 0) {
-        out_tuple = PyArray_TupleFromItems(full_args_light->nout, full_args_light->out, 0);
-        if (out_tuple == NULL) {
-            goto fail;
-        }
-    }
-
     /* wrap outputs */
     NpyUFuncContext context = {
             .ufunc = (PyObject *)ufunc,
-            .in = in_tuple, .out = out_tuple};
+            .in = full_args_light->in,
+            .nin = (int)full_args_light->nin,
+            .out = full_args_light->out,
+            .nout = (int)full_args_light->nout,
+    };
 
     if (ufunc->nout != 1) {
         result = PyTuple_New(ufunc->nout);
@@ -4346,14 +4334,10 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
     }
 
   finish:
-    Py_XDECREF(in_tuple);
-    Py_XDECREF(out_tuple);
     Py_DECREF(wrap);
     Py_DECREF(wrap_type);
     return result;
   fail:
-    Py_XDECREF(in_tuple);
-    Py_XDECREF(out_tuple);
     /* Fail path ensures result_arrays are fully cleared */
     Py_XDECREF(result);
     Py_DECREF(wrap);
@@ -4514,7 +4498,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 {
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
-    printfd("ufunc_generic_fastcall %d %d\n", nin, nout);
+    //printf("ufunc_generic_fastcall %d %d outer %d\n", nin, nout, outer);
 
     if (len_args == 1 && kwnames == NULL && !PyArray_Check(args[0])
             && nin == 1 && nout == 1 && !ufunc->core_enabled) {
@@ -4526,7 +4510,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
     }
     /* All following variables are cleared in the `fail` error path */
-    //PyObject *out_tuple = NULL;
     PyArrayObject *wheremask = NULL;
 
     /*
@@ -4552,7 +4535,6 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     /* Initialize full_args_light: out from scratch, in from scratch only for outer */
     PyObject **args_scratch = (PyObject **)(operation_descrs + nop + 1);
     ufunc_full_args_light full_args_light = {NULL, NULL, nin, nout};
-    full_args_light.out = NULL;
 
     /*
      * Note that the input (and possibly output) arguments are passed in as
