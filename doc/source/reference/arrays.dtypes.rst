@@ -294,15 +294,6 @@ Array-protocol type strings (see :ref:`arrays.interface`)
          >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
          >>> dt = np.dtype('U25')  # 25-character string
 
-   .. _string-dtype-note:
-
-   .. admonition:: Note on string types
-
-    The ``S`` typestring for zero-terminated bytes is intended for backward 
-    compatibility and is not recommended to use.  For unicode strings, 
-    use ``U``, `numpy.str_`.  For signed bytes that do not need zero-termination, 
-    ``b`` or ``i1`` can be used.
-
 String with comma-separated fields
    A short-hand notation for specifying the format of a structured data type is
    a comma-separated string of basic formats.
