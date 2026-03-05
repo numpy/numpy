@@ -7259,6 +7259,13 @@ class TestDot:
         assert_equal(np.dot(b, a), res)
         assert_equal(np.dot(b, b), res)
 
+    def test_dot_has_native_byteorder(self):
+        # gh-30931
+        a = np.array([1, 2, 3], ">f8")
+        dot = a.dot([[], [], []])
+
+        assert_equal(dot.dtype, np.dtype("=f8"))
+
     def test_accelerate_framework_sgemv_fix(self):
 
         def aligned_array(shape, align, dtype, order='C'):
