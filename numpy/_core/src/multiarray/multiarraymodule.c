@@ -983,29 +983,28 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     npy_intp dimensions[NPY_MAXDIMS];
     PyArray_DotFunc *dot;
     PyArray_Descr *typec = NULL;
-    int user_type = 0;
     NPY_BEGIN_THREADS_DEF;
 
     if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
     if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
     if (typec != NULL) {
         if (NPY_DT_is_user_defined(typec)) {
-            user_type = 1;
-
-            // in new_array_for_sum we steal a reference
+            // we steal a reference in new_array_for_sum
             Py_INCREF(typec);
+            typenum = NPY_NOTYPE;
+        }
+        else {
+            Py_DECREF(typec);
+            typec = NULL;
         }
     }
-
-    if (user_type) {
-        typenum = NPY_NOTYPE;
-    }
-    else {
+    if (typec == NULL) {
         typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
         if (typenum == NPY_NOTYPE) {
             return NULL;
