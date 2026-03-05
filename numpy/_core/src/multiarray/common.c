@@ -381,22 +381,16 @@ _may_have_objects(PyArray_Descr *dtype)
  */
 NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArray_Descr *descr,
-                  PyArrayObject **result)
+                  int nd, npy_intp dimensions[], PyArray_Descr *descr, PyArrayObject **result)
 {
     PyArrayObject *out_buf;
 
     if (out) {
         int d;
-        int typenum_check = typenum;
-        if (typenum == NPY_NOTYPE) {
-            // user-defined dtype
-            typenum_check = descr->type_num;
-        }
 
         /* verify that out is usable */
         if (PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != typenum_check ||
+            PyArray_TYPE(out) != descr->type_num ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
                 "output array is not acceptable (must have the right datatype, "
@@ -458,19 +452,11 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             subtype = Py_TYPE(ap1);
         }
 
-        // to accomodate user-defined dtypes, use descriptor when typenum is NPY_NOTYPE
-        if (typenum == NPY_NOTYPE) {
-            out_buf = (PyArrayObject *)PyArray_NewFromDescr(subtype, descr, nd, dimensions,
-                                                            NULL, NULL, 0,
-                                                            (PyObject *)
-                                                            (prior2 > prior1 ? ap2 : ap1));
-        }
-        else {
-            out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                                   typenum, NULL, NULL, 0, 0,
-                                                   (PyObject *)
-                                                   (prior2 > prior1 ? ap2 : ap1));
-        }
+        Py_INCREF(descr);
+        out_buf = (PyArrayObject *)PyArray_NewFromDescr(subtype, descr, nd, dimensions,
+                                                        NULL, NULL, 0,
+                                                        (PyObject *)
+                                                        (prior2 > prior1 ? ap2 : ap1));
 
         if (out_buf != NULL && result) {
             Py_INCREF(out_buf);

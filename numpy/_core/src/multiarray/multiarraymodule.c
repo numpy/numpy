@@ -881,7 +881,6 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
-    int typenum;
     PyArray_Descr *typec = NULL;
     PyObject* ap2t = NULL;
     npy_intp dims[NPY_MAXDIMS];
@@ -889,16 +888,17 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     int i;
     PyObject* ret = NULL;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
             PyErr_SetString(PyExc_TypeError,
@@ -914,6 +914,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         Py_DECREF(typec);
         goto fail;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                            NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
@@ -947,6 +949,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     Py_DECREF(ap2t);
+    Py_DECREF(typec);
     return ret;
 
 fail:
@@ -954,6 +957,7 @@ fail:
     Py_XDECREF(ap2);
     Py_XDECREF(ap2t);
     Py_XDECREF(ret);
+    Py_XDECREF(typec);
     return NULL;
 }
 
@@ -993,28 +997,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         return NULL;
     }
 
-    if (typec != NULL) {
-        if (NPY_DT_is_user_defined(typec)) {
-            // we steal a reference in new_array_for_sum
-            Py_INCREF(typec);
-            typenum = NPY_NOTYPE;
-        }
-        else {
-            Py_DECREF(typec);
-            typec = NULL;
-        }
-    }
     if (typec == NULL) {
-        typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-        if (typenum == NPY_NOTYPE) {
-            return NULL;
-        }
-        typenum = PyArray_ObjectType(op2, typenum);
-        if (typenum == NPY_NOTYPE) {
-            return NULL;
-        }
-
-        typec = PyArray_DescrFromType(typenum);
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
@@ -1023,6 +1007,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         }
         return NULL;
     }
+    typenum = typec->type_num;
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
@@ -1031,6 +1016,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(typec);
         return NULL;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
@@ -1042,7 +1029,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
             (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
              NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
-        return cblas_matrixproduct(typenum, ap1, ap2, out);
+        return cblas_matrixproduct(typec, ap1, ap2, out);
     }
 #endif
 
@@ -1083,7 +1070,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
     is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
-    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, typec, &result);
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typec, &result);
     if (out_buf == NULL) {
         goto fail;
     }
@@ -1145,6 +1132,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     /* Trigger possible copy-back into `result` */
     PyArray_ResolveWritebackIfCopy(out_buf);
     Py_DECREF(out_buf);
+    Py_DECREF(typec);
 
     return (PyObject *)result;
 
@@ -1153,6 +1141,7 @@ fail:
     Py_XDECREF(ap2);
     Py_XDECREF(out_buf);
     Py_XDECREF(result);
+    Py_XDECREF(typec);
     return NULL;
 }
 
@@ -1164,7 +1153,7 @@ fail:
  * inverted is set to 1 if computed correlate(ap2, ap1), 0 otherwise
  */
 static PyArrayObject*
-_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
+_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
                    int mode, int *inverted)
 {
     PyArrayObject *ret;
@@ -1224,7 +1213,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL, NULL);
+    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typec, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -1344,21 +1333,22 @@ NPY_NO_EXPORT PyObject *
 PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
-    int typenum;
-    PyArray_Descr *typec;
+    PyArray_Descr *typec = NULL;
     int inverted;
     int st;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
@@ -1366,6 +1356,8 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         Py_DECREF(typec);
         return NULL;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
@@ -1382,7 +1374,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         ap2 = cap2;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &inverted);
+    ret = _pyarray_correlate(ap1, ap2, typec, mode, &inverted);
     if (ret == NULL) {
         goto clean_ap2;
     }
@@ -1400,6 +1392,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);
+    Py_DECREF(typec);
     return (PyObject *)ret;
 
 clean_ret:
@@ -1408,6 +1401,8 @@ clean_ap2:
     Py_DECREF(ap2);
 clean_ap1:
     Py_DECREF(ap1);
+
+    Py_DECREF(typec);
     return NULL;
 }
 
@@ -1418,20 +1413,21 @@ NPY_NO_EXPORT PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
-    int typenum;
     int unused;
-    PyArray_Descr *typec;
+    PyArray_Descr *typec = NULL;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                             NPY_ARRAY_DEFAULT, NULL);
@@ -1439,24 +1435,28 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         Py_DECREF(typec);
         return NULL;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
                                            NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &unused);
+    ret = _pyarray_correlate(ap1, ap2, typec, mode, &unused);
     if (ret == NULL) {
         goto fail;
     }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
+    Py_DECREF(typec);
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
+    Py_XDECREF(typec);
     return NULL;
 }
 
@@ -2631,16 +2631,19 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
      * Conjugating dot product using the BLAS for vectors.
      * Flattens both op1 and op2 before dotting.
      */
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &type) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &type) < 0) {
+        Py_XDECREF(type);
         return NULL;
     }
 
-    type = PyArray_DescrFromType(typenum);
+    if (type == NULL) {
+        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    typenum = type->type_num;
+
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1 == NULL) {
@@ -2656,6 +2659,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
 
+    Py_INCREF(type);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
     if (ap2 == NULL) {
         goto fail;
@@ -2674,7 +2678,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     }
 
     /* array scalar output */
-    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, typenum, NULL, NULL);
+    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, type, NULL);
     if (ret == NULL) {
         goto fail;
     }
@@ -2719,11 +2723,13 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
 
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
+    Py_XDECREF(type);
     return PyArray_Return(ret);
 fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
+    Py_XDECREF(type);
     return NULL;
 }
 
