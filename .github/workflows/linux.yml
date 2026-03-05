@@ -354,7 +354,7 @@ jobs:
       run: |
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/test_requirements.txt
-        pip install vulture
+        pip install "vulture!=2.15"
     - name: Build and install NumPy
       run: |
         # Install using the fastest way to build (no BLAS, no SIMD)
