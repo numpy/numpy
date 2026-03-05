@@ -996,6 +996,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (typec != NULL) {
         if (NPY_DT_is_user_defined(typec)) {
             user_type = 1;
+
+            // in new_array_for_sum we steal a reference
+            Py_INCREF(typec);
         }
     }
 

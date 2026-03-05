@@ -460,7 +460,6 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
         // to accomodate user-defined dtypes, use descriptor when typenum is NPY_NOTYPE
         if (typenum == NPY_NOTYPE) {
-            Py_INCREF(descr);
             out_buf = (PyArrayObject *)PyArray_NewFromDescr(subtype, descr, nd, dimensions,
                                                             NULL, NULL, 0,
                                                             (PyObject *)
