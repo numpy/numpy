@@ -472,7 +472,7 @@ Convert a PyTorch CPU tensor to NumPy array:
 
 The imported arrays are read-only so writing or operating in-place will fail:
 
- >>> x.flags.writeable
+ >>> x_np.flags.writeable
  False
  >>> x_np[1] = 1
  Traceback (most recent call last):
