@@ -2594,7 +2594,6 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
 static PyObject *
 array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
-    int typenum;
     char *ip1, *ip2, *op;
     npy_intp n, stride1, stride2;
     PyObject *op1, *op2;
