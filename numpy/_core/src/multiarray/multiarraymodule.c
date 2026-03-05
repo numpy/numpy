@@ -899,13 +899,6 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-    if (typec == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Cannot find a common data type.");
-        }
-        goto fail;
-    }
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
@@ -999,13 +992,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-    }
-    if (typec == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Cannot find a common data type.");
-        }
-        return NULL;
     }
     typenum = typec->type_num;
 
@@ -2615,7 +2601,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     npy_intp newdimptr[1] = {-1};
     PyArray_Dims newdims = {newdimptr, 1};
     PyArrayObject *ap1 = NULL, *ap2  = NULL, *ret = NULL;
-    PyArray_Descr *type;
+    PyArray_Descr *type = NULL;
     PyArray_DotFunc *vdot;
     NPY_BEGIN_THREADS_DEF;
 
@@ -2642,7 +2628,6 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-    typenum = type->type_num;
 
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
@@ -2690,7 +2675,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     ip2 = PyArray_DATA(ap2);
     op = PyArray_DATA(ret);
 
-    switch (typenum) {
+    switch (type->type_num) {
         case NPY_CFLOAT:
             vdot = (PyArray_DotFunc *)CFLOAT_vdot;
             break;
