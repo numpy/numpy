@@ -38,7 +38,7 @@ jobs:
         persist-credentials: false
     - name: Set up pyenv
       run: |
-        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        git clone --branch v2.6.25 --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
         PYENV_ROOT="$HOME/.pyenv"
         PYENV_BIN="$PYENV_ROOT/bin"
         PYENV_SHIMS="$PYENV_ROOT/shims"
