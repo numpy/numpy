@@ -390,7 +390,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 
         /* verify that out is usable */
         if (PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != descr->type_num ||
+            !PyArray_EquivTypes(PyArray_DESCR(out), descr) ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
                 "output array is not acceptable (must have the right datatype, "
