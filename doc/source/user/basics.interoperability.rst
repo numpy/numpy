@@ -139,7 +139,9 @@ new ndarray object. This is not optimal, as coercing arrays into ndarrays may
 cause performance problems or create the need for copies and loss of metadata,
 as the original object and any attributes/behavior it may have had, is lost.
 
-The signature of the method should be ``__array__(self, dtype=None, copy=None)``.
+The signature of the method should be
+``__array__(self, dtype=None, *, copy=None)``.
+The ``copy`` argument is keyword-only, matching ``ndarray.__array__``.
 If a passed ``dtype`` isn't ``None`` and different than the object's data type,
 a casting should happen to a specified type. If ``copy`` is ``None``, a copy
 should be made only if ``dtype`` argument enforces it. For ``copy=True``, a copy
