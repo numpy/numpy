@@ -1,5 +1,9 @@
 name: Linux SIMD tests
 
+# To update Intel SDE (not handled by Dependabot): download new version from
+# https://www.intel.com/content/www/us/en/developer/articles/tool/software-development-emulator.html
+# and update SDE_URL and SDE_SHA256 (curl -sL <url> | sha256sum)
+#
 # This file is meant for testing different SIMD-related build options and
 # optimization levels. See `meson_options.txt` for the available build options.
 #

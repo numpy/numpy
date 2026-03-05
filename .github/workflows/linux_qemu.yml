@@ -1,3 +1,8 @@
+# To update pinned container digests and uv version: not handled by Dependabot.
+# Containers: change tag and get new digest with
+#   docker pull <image>:<tag> && docker inspect --format='{{index .RepoDigests 0}}' <image>:<tag>
+# uv: change version in URL and update checksum (curl -sL <url> | sha256sum)
+#
 # Meson's Python module doesn't support crosscompiling,
 # and python dependencies may be another potential hurdle.
 # There might also be a need to run runtime tests during configure time.
@@ -88,7 +93,6 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-        # see https://hub.docker.com/r/tonistiigi/binfmt for available versions
         docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52@sha256:1b804311fe87047a4c96d38b4b3ef6f62fca8cd125265917a9e3dc3c996c39e6 --install all
 
     - name: Install GCC cross-compilers

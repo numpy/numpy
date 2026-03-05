@@ -1,3 +1,7 @@
+# To update pinned container digests and pyenv version (not handled by Dependabot):
+# Containers: change tag and get new digest with
+#   docker pull <image>:<tag> && docker inspect --format='{{index .RepoDigests 0}}' <image>:<tag>
+# pyenv: see https://github.com/pyenv/pyenv/releases
 name: Test with compiler sanitizers
 
 on:
