@@ -899,7 +899,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-    typec = NPY_DT_CALL_ensure_canonical(typec);
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
@@ -994,7 +994,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-    typec = NPY_DT_CALL_ensure_canonical(typec);
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
     typenum = typec->type_num;
 
     Py_INCREF(typec);
@@ -1336,7 +1336,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-    typec = NPY_DT_CALL_ensure_canonical(typec);
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
@@ -1416,7 +1416,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     if (typec == NULL) {
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-    typec = NPY_DT_CALL_ensure_canonical(typec);
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
