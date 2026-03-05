@@ -487,14 +487,20 @@ will mean duplicating the memory. Do not do this for very large arrays:
 
 .. note::
 
-  Note that GPU tensors can't be converted to NumPy arrays since NumPy doesn't
-  support GPU devices:
+  NumPy arrays are CPU-only. Calling ``np.from_dlpack`` on a GPU tensor without
+  selecting a device will fail:
 
    >>> x_torch = torch.arange(5, device='cuda')
    >>> np.from_dlpack(x_torch)
    Traceback (most recent call last):
      File "<stdin>", line 1, in <module>
    RuntimeError: Unsupported device in DLTensor.
+
+  If the producer library supports it, data can be copied to CPU during
+  conversion:
+
+   >>> np.from_dlpack(x_torch, device='cpu')
+   array([0, 1, 2, 3, 4])
 
   But, if both libraries support the device the data buffer is on, it is
   possible to use the ``__dlpack__`` protocol (e.g. PyTorch_ and CuPy_):
