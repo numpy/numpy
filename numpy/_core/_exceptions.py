@@ -101,7 +101,10 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         i_str = f"{self.out_i} " if self.ufunc.nout != 1 else ""
         return (
             f"Cannot cast ufunc {self.ufunc.__name__!r} output {i_str}from "
-            f"{self.from_!r} to {self.to!r} with casting rule {self.casting!r}"
+            f"{self.from_!r} to {self.to!r} with casting rule {self.casting!r}. "
+            f"This means the resolved dtype for the ufunc result is "
+            f"{self.from_!r}, which cannot be safely stored in an output "
+            f"array of dtype {self.to!r}."
         )
 
 
