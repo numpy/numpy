@@ -1084,7 +1084,7 @@ class _DTypeMeta(type):
     def _legacy(cls, /) -> bool: ...
 
 @final
-class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):  # noqa: UP046
+class dtype(Generic[_ScalarT_co], metaclass=_DTypeMeta):
     names: tuple[py_str, ...] | None
     def __hash__(self) -> int: ...
 
