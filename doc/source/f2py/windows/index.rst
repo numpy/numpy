@@ -58,8 +58,9 @@ Windows Subsystem for Linux
    Windows applications, but is significantly more complicated.
 
 Conda
-   Windows support for compilers in ``conda`` is facilitated by pulling MSYS2
-   binaries, however these `are outdated`_, and therefore not recommended (as of 30-01-2022).
+   Windows support for compilers in ``conda`` is facilitated by packages from
+   ``conda-forge``. These toolchains are generally up to date and can be a
+   convenient option in managed Python environments.
 
 PGI Compilers (commercial)
    Unmaintained but sufficient if an existing license is present. Works
