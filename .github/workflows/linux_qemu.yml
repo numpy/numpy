@@ -89,7 +89,7 @@ jobs:
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
         # see https://hub.docker.com/r/tonistiigi/binfmt for available versions
-        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52 --install all
+        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52@sha256:1b804311fe87047a4c96d38b4b3ef6f62fca8cd125265917a9e3dc3c996c39e6 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -177,7 +177,7 @@ jobs:
           - [
               "loongarch64",
               "loongarch64-linux-gnu",
-              "cnclarechen/numpy-loong64-debian:v1",
+              "cnclarechen/numpy-loong64-debian:v1@sha256:1f35e614955fa9cba890172a73a068120f25f1cfcd59ad5521995e37cb7e2c3f",
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "loong64"
@@ -199,7 +199,7 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56 --install all
+          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56@sha256:30cc9a4d03765acac9be2ed0afc23af1ad018aed2c28ea4be8c2eb9afe03fbd1 --install all
 
     - name: Install GCC cross-compilers
       run: |
