@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-depth: 0
@@ -69,7 +69,7 @@ jobs:
       matrix:
         version: ["3.12", "3.14t"]
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -119,7 +119,7 @@ jobs:
       matrix:
         version: ["3.13", "3.14", "3.15-dev", "3.15t-dev"]
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -134,7 +134,7 @@ jobs:
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -174,7 +174,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -219,7 +219,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -258,7 +258,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -299,13 +299,13 @@ jobs:
     if: github.event_name != 'push'
     steps:
     - name: Checkout NumPy
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Checkout array-api-tests
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: data-apis/array-api-tests
         ref: '3c273cd34d51c64ed893737306d36adab23a94a1'  # v2025.05.23
@@ -337,7 +337,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -345,7 +345,7 @@ jobs:
     - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.12'
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: numpy/numpy-release
         path: numpy-release
