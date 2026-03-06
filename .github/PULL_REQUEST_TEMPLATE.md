@@ -1,11 +1,10 @@
 ## PR summary
 <!-- Please take some time to make it easier for us maintainers to understand
- and review your PR. Describe the pull
-  request, using the questions below as guidance, and link to any relevant issues
-  and PRs:
+  and review your PR. Describe the pull request, using the questions below as
+  guidance, and link to any relevant issues and PRs:
 
 - Why is this change necessary?
-- What problem does it solve?
+- How does the change affect existing code or documentation?
 - What is the reasoning for this implementation?
 
 Also:
@@ -24,7 +23,7 @@ Also:
 
 ## First time committer introduction
 <!-- If you are new to the NumPy community, please introduce yourself. How do you
- use NumPy, what prompted you to make this contribution. We are a community of
+ use NumPy, what prompted you to make this contribution? We are a community of
  mostly volunteers, and getting to know you helps us trust your judgement
  and welcome you into the community.
 -->
