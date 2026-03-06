@@ -829,6 +829,8 @@ typedef struct tagPyArrayObject_fields {
  * PyArrayObject field access is deprecated as of NumPy 1.7.
  */
 typedef PyArrayObject_fields PyArrayObject;
+#elif defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+typedef struct tagPyArrayObject PyArrayObject;
 #else
 typedef struct tagPyArrayObject {
         PyObject_HEAD
