@@ -1412,7 +1412,7 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
         return NPY_SUCCEED;
     }
 
-    PyErr_Format(PyExc_ValueError,
+    PyErr_Format(PyExc_BufferError,
             "Device not understood. Only \"cpu\" is allowed, "
             "but received: %S", object);
     return NPY_FAIL;

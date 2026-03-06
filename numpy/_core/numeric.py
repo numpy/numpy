@@ -2669,7 +2669,7 @@ def astype(x, dtype, /, *, copy=True, device=None):
             f"It is a {type(x)} instead."
         )
     if device is not None and device != "cpu":
-        raise ValueError(
+        raise BufferError(
             'Device not understood. Only "cpu" is allowed, but received:'
             f' {device}'
         )

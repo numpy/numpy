@@ -172,7 +172,7 @@ class __array_namespace_info__:
 
         """
         if device not in ["cpu", None]:
-            raise ValueError(
+            raise BufferError(
                 'Device not understood. Only "cpu" is allowed, but received:'
                 f' {device}'
             )
@@ -239,7 +239,7 @@ class __array_namespace_info__:
 
         """
         if device not in ["cpu", None]:
-            raise ValueError(
+            raise BufferError(
                 'Device not understood. Only "cpu" is allowed, but received:'
                 f' {device}'
             )

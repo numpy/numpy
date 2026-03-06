@@ -184,5 +184,5 @@ class TestDLPack:
 
         with pytest.raises(BufferError):
             x.__dlpack__(dl_device=(10, 0))
-        with pytest.raises(ValueError):
+        with pytest.raises(BufferError, match="Device not understood"):
             np.from_dlpack(x, device="gpu")

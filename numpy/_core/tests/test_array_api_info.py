@@ -30,7 +30,7 @@ def test_default_dtypes():
     assert dtypes["integral"] == np.intp == np.asarray(0).dtype
     assert dtypes["indexing"] == np.intp == np.argmax(np.zeros(10)).dtype
 
-    with pytest.raises(ValueError, match="Device not understood"):
+    with pytest.raises(BufferError, match="Device not understood"):
         info.default_dtypes(device="gpu")
 
 
@@ -105,7 +105,7 @@ def test_dtypes_invalid_kind():
 
 
 def test_dtypes_invalid_device():
-    with pytest.raises(ValueError, match="Device not understood"):
+    with pytest.raises(BufferError, match="Device not understood"):
         info.dtypes(device="gpu")
 
 

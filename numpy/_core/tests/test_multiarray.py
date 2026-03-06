@@ -10961,7 +10961,7 @@ class TestDevice:
         assert arr.device == "cpu"
 
         with assert_raises_regex(
-            ValueError,
+            BufferError,
             r"Device not understood. Only \"cpu\" is allowed, "
             r"but received: nonsense"
         ):
@@ -10978,6 +10978,12 @@ class TestDevice:
         arr = np.arange(5)
 
         assert arr.to_device("cpu") is arr
+        with assert_raises_regex(
+            BufferError,
+            r"Unsupported device: gpu. Only 'cpu' is accepted."
+        ):
+            arr.to_device("gpu")
+
         with assert_raises_regex(
             ValueError,
             r"The stream argument in to_device\(\) is not supported"
