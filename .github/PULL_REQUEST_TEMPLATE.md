@@ -25,6 +25,6 @@ Also:
 ## First time committer introduction
 <!-- If you are new to the NumPy community, please introduce yourself. How do you
  use NumPy, what prompted you to make this contribution. We are a community of
- mostly volunteers, and much of what we accept into is based around trust of your
- judgement. Help us believe in you.
+ mostly volunteers, and getting to know you helps us trust your judgement
+ and welcome you into the community.
 -->
