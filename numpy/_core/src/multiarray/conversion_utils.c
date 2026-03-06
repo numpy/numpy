@@ -297,9 +297,11 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
     Py_buffer view;
 
-    buf->ptr = NULL;
-    buf->flags = NPY_ARRAY_BEHAVED;
-    buf->base = NULL;
+    PyArray_Chunk_fields *_buf = (PyArray_Chunk_fields *)buf;
+
+    _buf->ptr = NULL;
+    _buf->flags = NPY_ARRAY_BEHAVED;
+    _buf->base = NULL;
     if (obj == Py_None) {
         return NPY_SUCCEED;
     }
@@ -307,15 +309,15 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     if (PyObject_GetBuffer(obj, &view,
                 PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE|PyBUF_SIMPLE) != 0) {
         PyErr_Clear();
-        buf->flags &= ~NPY_ARRAY_WRITEABLE;
+        _buf->flags &= ~NPY_ARRAY_WRITEABLE;
         if (PyObject_GetBuffer(obj, &view,
                 PyBUF_ANY_CONTIGUOUS|PyBUF_SIMPLE) != 0) {
             return NPY_FAIL;
         }
     }
 
-    buf->ptr = view.buf;
-    buf->len = (npy_intp) view.len;
+    _buf->ptr = view.buf;
+    _buf->len = (npy_intp) view.len;
 
     /*
      * Both of the deprecated functions PyObject_AsWriteBuffer and
@@ -327,10 +329,10 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 
     /* Point to the base of the buffer object if present */
     if (PyMemoryView_Check(obj)) {
-        buf->base = PyMemoryView_GET_BASE(obj);
+        _buf->base = PyMemoryView_GET_BASE(obj);
     }
-    if (buf->base == NULL) {
-        buf->base = obj;
+    if (_buf->base == NULL) {
+        _buf->base = obj;
     }
     return NPY_SUCCEED;
 }
