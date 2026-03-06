@@ -392,7 +392,8 @@ device_converter(PyObject *obj, DLDevice *result_device)
         return NPY_SUCCEED;
     }
 
-    PyErr_SetString(PyExc_ValueError, "unsupported device requested");
+    /* Must be a BufferError */
+    PyErr_SetString(PyExc_BufferError, "unsupported device requested");
     return NPY_FAIL;
 }
 

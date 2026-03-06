@@ -1,3 +1,0 @@
-* Multiplication between a string and integer now raises OverflowError instead
-  of MemoryError if the result of the multiplication would create a string that
-  is too large to be represented. This follows Python's behavior.

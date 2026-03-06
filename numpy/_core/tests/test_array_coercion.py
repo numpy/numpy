@@ -12,7 +12,7 @@ from pytest import param
 import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
-from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
+from numpy.testing import IS_64BIT, assert_array_equal
 
 
 def arraylikes():
@@ -282,7 +282,6 @@ class TestScalarDiscovery:
         assert_array_equal(arr, arr3)
         assert_array_equal(arr, arr4)
 
-    @pytest.mark.xfail(IS_PYPY, reason="`int(np.complex128(3))` fails on PyPy")
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("cast_to", scalar_instances())
     def test_scalar_coercion_same_as_cast_and_assignment(self, cast_to):
@@ -712,6 +711,7 @@ class TestArrayLikes:
         assert arr[0] is ArrayLike
 
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    @pytest.mark.thread_unsafe(reason="large slow test in parallel")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")
@@ -840,7 +840,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self, dtype=None, copy=None):  # noqa: PLR0206
+        def __array__(self, dtype=None, copy=None):
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:

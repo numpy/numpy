@@ -9,6 +9,11 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
   workflow_dispatch:
 
 concurrency:
@@ -38,13 +43,13 @@ jobs:
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp311"]
+        python: ["cp312"]
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: true
           persist-credentials: false
@@ -94,11 +99,11 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93  # v3.2.0
+        uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e  # v3.3.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl

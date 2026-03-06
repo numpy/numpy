@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy._core._exceptions import _UFuncNoLoopError
-from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
+from numpy.testing import assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
@@ -18,8 +18,6 @@ COMPARISONS = [
 ]
 
 MAX = np.iinfo(np.int64).max
-
-IS_PYPY_LT_7_3_16 = IS_PYPY and sys.implementation.version < (7, 3, 16)
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -136,6 +134,7 @@ def test_string_size_dtype_large_repr(str_dt):
 @pytest.mark.slow
 @requires_memory(2 * np.iinfo(np.intc).max)
 @pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_string_coercion_error(str_dt):
     very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
     try:
@@ -163,6 +162,7 @@ def test_large_string_coercion_error(str_dt):
 @pytest.mark.slow
 @requires_memory(2 * np.iinfo(np.intc).max)
 @pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.thread_unsafe(reason="crashes with low memory")
 def test_large_string_addition_error(str_dt):
     very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
 
@@ -190,6 +190,14 @@ def test_large_string_cast():
     # (this happens due clunky code and/or buffer setup.)
     with pytest.raises((TypeError, MemoryError)):
         a.astype("U")
+
+
+@pytest.mark.parametrize("dt", ["S1", "U1"])
+def test_in_place_mutiply_no_overflow(dt):
+    # see gh-30495
+    a = np.array("a", dtype=dt)
+    a *= 20
+    assert_array_equal(a, np.array("a", dtype=dt))
 
 
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
@@ -975,17 +983,39 @@ class TestMethods:
 
     @pytest.mark.parametrize("args", [
         (None,),
+        (None, None),
+        (None, None, -1),
         (0,),
+        (0, None),
+        (0, None, -1),
         (1,),
+        (1, None),
+        (1, None, -1),
         (3,),
+        (3, None),
         (5,),
+        (5, None),
+        (5, 5),
+        (5, 5, -1),
         (6,),  # test index past the end
+        (6, None),
+        (6, None, -1),
+        (6, 7),  # test start and stop index past the end
+        (4, 3),  # test start > stop index
         (-1,),
+        (-1, None),
+        (-1, None, -1),
         (-3,),
+        (-3, None),
         ([3, 4],),
+        ([3, 4], None),
         ([2, 4],),
         ([-3, 5],),
+        ([-3, 5], None),
+        ([-3, 5], None, -1),
         ([0, -5],),
+        ([0, -5], None),
+        ([0, -5], None, -1),
         (1, 4),
         (-3, 5),
         (None, -1),
@@ -995,8 +1025,16 @@ class TestMethods:
         (None, None, -1),
         ([0, 6], [-1, 0], [2, -1]),
     ])
-    def test_slice(self, args, dt):
-        buf = np.array(["hello", "world"], dtype=dt)
+    @pytest.mark.parametrize("buf", [
+        ["hello", "world"],
+        ['hello world', 'γεια σου κόσμε', '你好世界', '👋 🌍'],
+    ])
+    def test_slice(self, args, buf, dt):
+        if dt == "S" and "你好世界" in buf:
+            pytest.skip("Bytes dtype does not support non-ascii input")
+        if len(buf) == 4:
+            args = tuple(s * 2 if isinstance(s, list) else s for s in args)
+        buf = np.array(buf, dtype=dt)
         act = np.strings.slice(buf, *args)
         bcast_args = tuple(np.broadcast_to(arg, buf.shape) for arg in args)
         res = np.array([s[slice(*arg)]
@@ -1091,10 +1129,7 @@ class TestMethodsWithUnicode:
         '\U0001D7F6',
         '\U00011066',
         '\U000104A0',
-        pytest.param('\U0001F107', marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISALNUM",
-            strict=True)),
+        '\U0001F107',
     ])
     def test_isalnum_unicode(self, in_, dt):
         in_ = np.array(in_, dtype=dt)
@@ -1108,10 +1143,7 @@ class TestMethodsWithUnicode:
         ('\U0001F40D', False),
         ('\U0001F46F', False),
         ('\u2177', True),
-        pytest.param('\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISLOWER",
-            strict=True)),
+        ('\U00010429', True),
         ('\U0001044E', True),
     ])
     def test_islower_unicode(self, in_, out, dt):
@@ -1126,10 +1158,7 @@ class TestMethodsWithUnicode:
         ('\U0001F40D', False),
         ('\U0001F46F', False),
         ('\u2177', False),
-        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISUPPER",
-            strict=True)),
+        ('\U00010429', False),
         ('\U0001044E', False),
     ])
     def test_isupper_unicode(self, in_, out, dt):
@@ -1139,15 +1168,9 @@ class TestMethodsWithUnicode:
     @pytest.mark.parametrize("in_,out", [
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
-        pytest.param('\U00010401\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISISTITLE",
-            strict=True)),
+        ('\U00010401\U00010429', True),
         ('\U00010427\U0001044E', True),
-        pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
-            reason="PYPY bug in Py_UNICODE_ISISTITLE",
-            strict=True)),
+        ('\U00010429', False),
         ('\U0001044E', False),
         ('\U0001F40D', False),
         ('\U0001F46F', False),

@@ -1,4 +1,5 @@
 import functools
+import inspect
 import operator
 import sys
 import warnings
@@ -1672,3 +1673,18 @@ class TestFlatiterIndexing:
                 match=r"only integers, slices \(`:`\), ellipsis \(`\.\.\.`\) "
                       r"and integer or boolean arrays are valid indices"):
             a.flat[b.flat]
+
+
+@pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+@pytest.mark.parametrize("methodname", ["__array__", "copy"])
+def test_flatiter_method_signatures(methodname: str):
+    method = getattr(np.flatiter, methodname)
+    assert callable(method)
+
+    try:
+        sig = inspect.signature(method)
+    except ValueError as e:
+        pytest.fail(f"Could not get signature for np.flatiter.{methodname}: {e}")
+
+    assert "self" in sig.parameters
+    assert sig.parameters["self"].kind is inspect.Parameter.POSITIONAL_ONLY

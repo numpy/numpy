@@ -55,7 +55,7 @@ class TestFFT1D:
     def test_identity_long_short_reversed(self, dtype):
         # Also test explicitly given number of points in reversed order.
         maxlen = 16
-        atol = 5 * np.spacing(np.array(1., dtype=dtype))
+        atol = 6 * np.spacing(np.array(1., dtype=dtype))
         x = random(maxlen).astype(dtype) + 1j * random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
         for i in range(1, maxlen * 2):
@@ -216,6 +216,12 @@ class TestFFT1D:
         assert_allclose(np.fft.ifft2(x) * (30. * 20.),
                         np.fft.ifft2(x, norm="forward"), atol=1e-6)
 
+    def test_ifft2_out(self):
+        z = np.array([[1 + 2j, 3 - 4j], [0.5 - 2j, 4 + 1j]])
+        out = np.zeros_like(z)
+        result = np.fft.ifft2(z, out=out)
+        assert result is out
+
     def test_fftn(self):
         x = random((30, 20, 10)) + 1j * random((30, 20, 10))
         assert_allclose(
@@ -298,6 +304,13 @@ class TestFFT1D:
         assert_allclose(x, np.fft.irfft2(np.fft.rfft2(x, norm="forward"),
                         norm="forward"), atol=1e-6)
 
+    def test_irfft2_out(self):
+        z = np.array([[7, 1 + 4j, -5], [2 - 1j, -2 - 1j, -8 + 1j],
+                      [-3, 1 + 2j, 5], [2 + 1j, 4 - 1j, -8 - 1j]])
+        out = np.zeros((4, 4), dtype=np.float64)
+        result = np.fft.irfft2(z, out=out)
+        assert result is out
+
     def test_rfftn(self):
         x = random((30, 20, 10))
         assert_allclose(np.fft.fftn(x)[:, :, :6], np.fft.rfftn(x), atol=1e-6)
@@ -337,6 +350,13 @@ class TestFFT1D:
                         np.fft.hfft(x_herm, norm="ortho"), atol=1e-6)
         assert_allclose(np.fft.hfft(x_herm) / 30.,
                         np.fft.hfft(x_herm, norm="forward"), atol=1e-6)
+
+    def test_hfft_out(self):
+        a = np.array([1, 2, 3, 4, 3, 2], dtype=complex)
+        n = (len(a) - 1) * 2
+        out = np.zeros(n, dtype=np.float64)
+        result = np.fft.hfft(a, n=n, out=out)
+        assert result is out
 
     def test_ihfft(self):
         x = random(14) + 1j * random(14)

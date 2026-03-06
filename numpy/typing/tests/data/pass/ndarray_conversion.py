@@ -74,14 +74,8 @@ complex_array.getfield(float, offset=8)
 
 # setflags
 nd.setflags()
-
-nd.setflags(True)
 nd.setflags(write=True)
-
-nd.setflags(True, True)
 nd.setflags(write=True, align=True)
-
-nd.setflags(True, True, False)
 nd.setflags(write=True, align=True, uic=False)
 
 # fill is pretty simple

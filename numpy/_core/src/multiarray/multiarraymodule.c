@@ -123,6 +123,7 @@ get_legacy_print_mode(void) {
     PyObject *legacy_print_mode = NULL;
     if (PyDict_GetItemRef(format_options, npy_interned_str.legacy,
                           &legacy_print_mode) == -1) {
+        Py_DECREF(format_options);
         return -1;
     }
     Py_DECREF(format_options);
@@ -303,6 +304,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         n = PyArray_DIMS(ap)[0];
         ptr2 = (char **)PyArray_malloc(n * sizeof(char *));
         if (!ptr2) {
+            Py_DECREF(ap);
             PyErr_NoMemory();
             return -1;
         }
@@ -316,6 +318,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         m = PyArray_DIMS(ap)[1];
         ptr3 = (char ***)PyArray_malloc(n*(m+1) * sizeof(char *));
         if (!ptr3) {
+            Py_DECREF(ap);
             PyErr_NoMemory();
             return -1;
         }
@@ -878,7 +881,6 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
-    int typenum;
     PyArray_Descr *typec = NULL;
     PyObject* ap2t = NULL;
     npy_intp dims[NPY_MAXDIMS];
@@ -886,23 +888,18 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     int i;
     PyObject* ret = NULL;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Cannot find a common data type.");
-        }
-        goto fail;
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
@@ -911,6 +908,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         Py_DECREF(typec);
         goto fail;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                            NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
@@ -944,6 +943,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     Py_DECREF(ap2t);
+    Py_DECREF(typec);
     return ret;
 
 fail:
@@ -951,6 +951,7 @@ fail:
     Py_XDECREF(ap2);
     Py_XDECREF(ap2t);
     Py_XDECREF(ret);
+    Py_XDECREF(typec);
     return NULL;
 }
 
@@ -982,23 +983,19 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     PyArray_Descr *typec = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_TypeError,
-                            "Cannot find a common data type.");
-        }
-        return NULL;
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
+    typenum = typec->type_num;
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
@@ -1007,6 +1004,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(typec);
         return NULL;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
                                         NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
@@ -1018,7 +1017,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
             (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
              NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
-        return cblas_matrixproduct(typenum, ap1, ap2, out);
+        return cblas_matrixproduct(typec, ap1, ap2, out);
     }
 #endif
 
@@ -1059,7 +1058,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1];
     is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
-    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum, &result);
+    out_buf = new_array_for_sum(ap1, ap2, out, nd, dimensions, typec, &result);
     if (out_buf == NULL) {
         goto fail;
     }
@@ -1121,6 +1120,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     /* Trigger possible copy-back into `result` */
     PyArray_ResolveWritebackIfCopy(out_buf);
     Py_DECREF(out_buf);
+    Py_DECREF(typec);
 
     return (PyObject *)result;
 
@@ -1129,6 +1129,7 @@ fail:
     Py_XDECREF(ap2);
     Py_XDECREF(out_buf);
     Py_XDECREF(result);
+    Py_XDECREF(typec);
     return NULL;
 }
 
@@ -1140,7 +1141,7 @@ fail:
  * inverted is set to 1 if computed correlate(ap2, ap1), 0 otherwise
  */
 static PyArrayObject*
-_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
+_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArray_Descr *typec,
                    int mode, int *inverted)
 {
     PyArrayObject *ret;
@@ -1200,7 +1201,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL);
+    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typec, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -1320,21 +1321,23 @@ NPY_NO_EXPORT PyObject *
 PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
-    int typenum;
-    PyArray_Descr *typec;
+    PyArray_Descr *typec = NULL;
     int inverted;
     int st;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
+
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
@@ -1342,6 +1345,8 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         Py_DECREF(typec);
         return NULL;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
@@ -1358,7 +1363,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         ap2 = cap2;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &inverted);
+    ret = _pyarray_correlate(ap1, ap2, typec, mode, &inverted);
     if (ret == NULL) {
         goto clean_ap2;
     }
@@ -1376,6 +1381,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);
+    Py_DECREF(typec);
     return (PyObject *)ret;
 
 clean_ret:
@@ -1384,6 +1390,8 @@ clean_ap2:
     Py_DECREF(ap2);
 clean_ap1:
     Py_DECREF(ap1);
+
+    Py_DECREF(typec);
     return NULL;
 }
 
@@ -1394,20 +1402,22 @@ NPY_NO_EXPORT PyObject *
 PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
-    int typenum;
     int unused;
-    PyArray_Descr *typec;
+    PyArray_Descr *typec = NULL;
 
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &typec) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &typec) < 0) {
+        Py_XDECREF(typec);
         return NULL;
     }
 
-    typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
+
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                             NPY_ARRAY_DEFAULT, NULL);
@@ -1415,24 +1425,28 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         Py_DECREF(typec);
         return NULL;
     }
+
+    Py_INCREF(typec);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
                                            NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &unused);
+    ret = _pyarray_correlate(ap1, ap2, typec, mode, &unused);
     if (ret == NULL) {
         goto fail;
     }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
+    Py_DECREF(typec);
     return (PyObject *)ret;
 
 fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
+    Py_XDECREF(typec);
     return NULL;
 }
 
@@ -2305,7 +2319,9 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
     if (descr == NULL) {
         return NULL;
     }
-    return PyArray_Scalar(&count, descr, NULL);
+    PyObject *result =  PyArray_Scalar(&count, descr, NULL);
+    Py_DECREF(descr);
+    return result;
 }
 
 static PyObject *
@@ -2338,6 +2354,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     if (sep == NULL || strlen(sep) == 0) {
         PyErr_SetString(PyExc_ValueError,
             "The binary mode of fromstring is removed, use frombuffer instead");
+        Py_XDECREF(descr);
         return NULL;
     }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
@@ -2406,6 +2423,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
+        Py_XDECREF(type);
         goto cleanup;
     }
     if (type == NULL) {
@@ -2580,14 +2598,13 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
 static PyObject *
 array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
-    int typenum;
     char *ip1, *ip2, *op;
     npy_intp n, stride1, stride2;
     PyObject *op1, *op2;
     npy_intp newdimptr[1] = {-1};
     PyArray_Dims newdims = {newdimptr, 1};
     PyArrayObject *ap1 = NULL, *ap2  = NULL, *ret = NULL;
-    PyArray_Descr *type;
+    PyArray_Descr *type = NULL;
     PyArray_DotFunc *vdot;
     NPY_BEGIN_THREADS_DEF;
 
@@ -2603,16 +2620,19 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
      * Conjugating dot product using the BLAS for vectors.
      * Flattens both op1 and op2 before dotting.
      */
-    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op1, NPY_MAXDIMS, &type) < 0) {
         return NULL;
     }
-    typenum = PyArray_ObjectType(op2, typenum);
-    if (typenum == NPY_NOTYPE) {
+    if (PyArray_DTypeFromObject(op2, NPY_MAXDIMS, &type) < 0) {
+        Py_XDECREF(type);
         return NULL;
     }
 
-    type = PyArray_DescrFromType(typenum);
+    if (type == NULL) {
+        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+   Py_SETREF(type, NPY_DT_CALL_ensure_canonical(type));
+
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1 == NULL) {
@@ -2628,6 +2648,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     Py_DECREF(ap1);
     ap1 = (PyArrayObject *)op1;
 
+    Py_INCREF(type);
     ap2 = (PyArrayObject *)PyArray_FromAny(op2, type, 0, 0, 0, NULL);
     if (ap2 == NULL) {
         goto fail;
@@ -2646,7 +2667,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     }
 
     /* array scalar output */
-    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, typenum, NULL);
+    ret = new_array_for_sum(ap1, ap2, NULL, 0, (npy_intp *)NULL, type, NULL);
     if (ret == NULL) {
         goto fail;
     }
@@ -2658,7 +2679,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     ip2 = PyArray_DATA(ap2);
     op = PyArray_DATA(ret);
 
-    switch (typenum) {
+    switch (type->type_num) {
         case NPY_CFLOAT:
             vdot = (PyArray_DotFunc *)CFLOAT_vdot;
             break;
@@ -2691,11 +2712,13 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
 
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
+    Py_XDECREF(type);
     return PyArray_Return(ret);
 fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
     Py_XDECREF(ret);
+    Py_XDECREF(type);
     return NULL;
 }
 
@@ -3226,6 +3249,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     PyArrayObject *arr = NULL, *ax = NULL, *ay = NULL;
     PyObject *ret = NULL;
     PyArray_Descr *common_dt = NULL;
+    NpyIter *iter = NULL;
 
     arr = (PyArrayObject *)PyArray_FROM_O(condition);
     if (arr == NULL) {
@@ -3273,6 +3297,21 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     if (common_dt == NULL) {
         goto fail;
     }
+
+    if (PyArray_FLAGS(ax) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+        if (npy_update_operand_for_scalar(&ax, x, common_dt, NPY_SAFE_CASTING) < 0) {
+            goto fail;
+        }
+        op_in[2] = ax;
+    }
+
+    if (PyArray_FLAGS(ay) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+        if (npy_update_operand_for_scalar(&ay, y, common_dt, NPY_SAFE_CASTING) < 0) {
+            goto fail;
+        }
+        op_in[3] = ay;
+    }
+
     npy_intp itemsize = common_dt->elsize;
 
     // If x and y don't have references, we ask the iterator to create buffers
@@ -3295,7 +3334,6 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
     /* `PyArray_DescrFromType` cannot fail for simple builtin types: */
     PyArray_Descr * op_dt[4] = {common_dt, PyArray_DescrFromType(NPY_BOOL), x_dt, y_dt};
 
-    NpyIter * iter;
     NPY_BEGIN_THREADS_DEF;
 
     iter =  NpyIter_MultiNew(
@@ -3429,6 +3467,9 @@ fail:
     Py_XDECREF(common_dt);
     NPY_cast_info_xfree(&x_cast_info);
     NPY_cast_info_xfree(&y_cast_info);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
     return NULL;
 }
 
@@ -4383,7 +4424,7 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
     buffer_data = PyArray_BYTES(buffer_array);
     npy_intp elsize = PyArray_DESCR(buffer_array)->elsize;
 
-    for (int i = 0; i < n_finfo_constants; i++) 
+    for (int i = 0; i < n_finfo_constants; i++)
     {
         PyObject *value_obj;
         if (!finfo_constants[i].is_int) {
@@ -4429,7 +4470,6 @@ _populate_finfo_constants(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 
-
 static PyObject *
 _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 {
@@ -4437,8 +4477,8 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
     if (res < 0) {
         return NULL;
     }
-    int old_value = npy_thread_unsafe_state.warn_if_no_mem_policy;
-    npy_thread_unsafe_state.warn_if_no_mem_policy = res;
+    int old_value = npy_global_state.warn_if_no_mem_policy;
+    npy_global_state.warn_if_no_mem_policy = res;
     if (old_value) {
         Py_RETURN_TRUE;
     }
@@ -4449,8 +4489,26 @@ _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 
 
 static PyObject *
+_blas_supports_fpe(PyObject *NPY_UNUSED(self), PyObject *arg) {
+    if (arg == Py_None) {
+        return PyBool_FromLong(npy_blas_supports_fpe());
+    }
+    else if (arg == Py_True) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(true));
+    }
+    else if (arg == Py_False) {
+        return PyBool_FromLong(npy_set_blas_supports_fpe(false));
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "BLAS FPE support must be None, True, or False");
+        return NULL;
+    }
+}
+
+
+static PyObject *
 _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
-#if !defined(PYPY_VERSION)
     if (PyThreadState_Get()->interp != PyInterpreterState_Main()) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "NumPy was imported from a Python sub-interpreter but "
@@ -4465,11 +4523,10 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
         /* No need to give the other warning in a sub-interpreter as well... */
-        npy_thread_unsafe_state.reload_guard_initialized = 1;
+        npy_global_state.reload_guard_initialized = 1;
         Py_RETURN_NONE;
     }
-#endif
-    if (npy_thread_unsafe_state.reload_guard_initialized) {
+    if (npy_global_state.reload_guard_initialized) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "The NumPy module was reloaded (imported a second time). "
                 "This can in some cases result in small but subtle issues "
@@ -4477,7 +4534,7 @@ _reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
             return NULL;
         }
     }
-    npy_thread_unsafe_state.reload_guard_initialized = 1;
+    npy_global_state.reload_guard_initialized = 1;
     Py_RETURN_NONE;
 }
 
@@ -4680,14 +4737,14 @@ static struct PyMethodDef array_module_methods[] = {
     {"_set_numpy_warn_if_no_mem_policy",
          (PyCFunction)_set_numpy_warn_if_no_mem_policy,
          METH_O, "Change the warn if no mem policy flag for testing."},
-    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
         get_sfloat_dtype, METH_NOARGS, NULL},
     {"_get_madvise_hugepage", (PyCFunction)_get_madvise_hugepage,
         METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
+    {"_blas_supports_fpe", (PyCFunction)_blas_supports_fpe,
+        METH_O, "BLAS FPE support pass None, True, or False and returns new value"},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
@@ -4866,16 +4923,16 @@ set_flaginfo(PyObject *d)
 }
 
 // static variables are automatically zero-initialized
-NPY_VISIBILITY_HIDDEN npy_thread_unsafe_state_struct npy_thread_unsafe_state;
+NPY_VISIBILITY_HIDDEN npy_global_state_struct npy_global_state;
 
 static int
-initialize_thread_unsafe_state(void) {
+initialize_global_state(void) {
     char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
     if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-        npy_thread_unsafe_state.warn_if_no_mem_policy = 1;
+        npy_global_state.warn_if_no_mem_policy = 1;
     }
     else {
-        npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
+        npy_global_state.warn_if_no_mem_policy = 0;
     }
 
     return 0;
@@ -4903,10 +4960,6 @@ _multiarray_umath_exec(PyObject *m) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         return -1;
     }
-
-#if NPY_BLAS_CHECK_FPE_SUPPORT
-    npy_blas_init();
-#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
@@ -4938,7 +4991,7 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
-    if (initialize_thread_unsafe_state() < 0) {
+    if (initialize_global_state() < 0) {
         return -1;
     }
 
@@ -4950,7 +5003,18 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+    /* Set __signature__ to None on the type (the instance has a property) */
+    s = npy_import("numpy._globals", "_signature_descriptor");
+    if (s == NULL) {
+        return -1;
+    }
+    PyUFunc_Type.tp_dict = Py_BuildValue(
+        "{ON}", npy_interned_str.__signature__, s);
+    if (PyUFunc_Type.tp_dict == NULL) {
+        return -1;
+    }
     if (PyType_Ready(&PyUFunc_Type) < 0) {
+        Py_CLEAR(PyUFunc_Type.tp_dict);
         return -1;
     }
 
@@ -5145,7 +5209,13 @@ _multiarray_umath_exec(PyObject *m) {
     if (PyDataMem_DefaultHandler == NULL) {
         return -1;
     }
-
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_SetImmortal(PyDataMem_DefaultHandler) == 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Could not mark memory handler capsule as immortal");
+        return -1;
+    }
+#endif
     /*
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.

@@ -20,6 +20,7 @@
 #include "mapping.h"
 #include "ctors.h"
 #include "dtypemeta.h"
+#include "descriptor.h" 
 #include "usertypes.h"
 #include "number.h"
 #include "numpyos.h"
@@ -160,7 +161,7 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  * valid self (a generic scalar) and an other item.
  * May fill self_item and/or other_arr (but not both) with non-NULL values.
  *
- * Why this dance?  When the other object is a exactly Python scalar something
+ * Why this dance?  When the other object is exactly a Python scalar something
  * awkward happens historically in NumPy.
  * NumPy doesn't define a result, but the ufunc would cast to `astype(object)`
  * which is the same as `scalar.item()`.  And that operation converts e.g.
@@ -955,7 +956,7 @@ datetimetype_repr(PyObject *self)
                 ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
             }
         }
-
+        Py_DECREF(meta);
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -1788,23 +1789,75 @@ gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_dataptr_get(PyObject *self)
 {
-    PyArrayObject *arr;
-    PyObject *inter;
-
-    arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
-    if (arr == NULL) {
-        return NULL;
-    }
-    inter = PyObject_GetAttrString((PyObject *)arr, "__array_interface__");
-    if (inter != NULL) {
-        PyDict_SetItemString(inter, "__ref", (PyObject *)arr);
-    }
-    Py_DECREF(arr);
-    return inter;
+    return Py_BuildValue(
+        "NO",
+        PyLong_FromVoidPtr(scalar_value(self, NULL)),
+        Py_True
+    );
 }
 
+
+static PyObject *
+gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+{
+    PyObject *dataptr = NULL;
+    PyObject *strides = NULL;
+    PyObject *shape = NULL;
+    PyObject *descr = NULL;
+    PyObject *typestr = NULL;
+    PyArray_Descr *array_descr = NULL;
+    PyObject *inter = NULL;
+
+
+    array_descr = PyArray_DescrFromScalar(self);
+    if (array_descr == NULL) {
+        goto finish;
+    }
+
+    /* dataptr */
+    dataptr = gentype_dataptr_get(self);
+    if (dataptr == NULL) {
+        goto finish;
+    }
+
+    /* strides */
+    strides = gentype_shape_get(self, NULL);
+    if (strides == NULL) {
+        goto finish;
+    }
+    
+    /* descr */
+    descr = array_protocol_descr_get(array_descr);
+    if (descr == NULL) {
+        goto finish;
+    }
+
+    /* typestr */
+    typestr = arraydescr_protocol_typestr_get(array_descr, NULL);
+    if (typestr == NULL) {
+        goto finish;
+    }
+
+    /* shape */
+    shape = gentype_shape_get(self, NULL);
+    if (shape == NULL) {
+        goto finish;
+    }
+
+    inter = build_array_interface(dataptr, descr, strides, typestr, shape);
+    goto finish;
+
+finish:
+    Py_XDECREF(descr);
+    Py_XDECREF(dataptr);
+    Py_XDECREF(strides);
+    Py_XDECREF(shape);
+    Py_XDECREF(typestr);
+    Py_XDECREF(array_descr);
+    return inter;
+}
 
 
 static PyObject *
@@ -1940,33 +1993,6 @@ gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
     return self;
 }
 
-static PyObject *
-gentype_newbyteorder(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`newbyteorder` was removed from scalar types in NumPy 2.0. "
-                    "Use `sc.view(sc.dtype.newbyteorder(order))` instead.");
-    return NULL;
-}
-
-static PyObject *
-gentype_itemset(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`itemset` was removed from scalar types in NumPy 2.0 "
-                    "because scalars are immutable.");
-    return NULL;
-}
-
-static PyObject *
-gentype_ptp(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    PyErr_SetString(PyExc_AttributeError, 
-                    "`ptp` was removed from scalar types in NumPy 2.0. "
-                    "For a scalar, the range of values always equals 0.");
-    return NULL;
-}
-
 
 static PyGetSetDef gentype_getsets[] = {
     {"ndim",
@@ -2010,15 +2036,6 @@ static PyGetSetDef gentype_getsets[] = {
         (setter)0, NULL, NULL},
     {"T",
         (getter)gentype_transpose_get,
-        (setter)0, NULL, NULL},
-    {"newbyteorder",
-        (getter)gentype_newbyteorder,
-        (setter)0, NULL, NULL},
-    {"itemset",
-        (getter)gentype_itemset,
-        (setter)0, NULL, NULL},
-    {"ptp",
-        (getter)gentype_ptp,
         (setter)0, NULL, NULL},
     {"device",
         (getter)array_device,
@@ -2185,7 +2202,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
  *         round, argmax, argmin, max, min, any, all, astype, resize,
- *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
+ *         reshape, choose, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
 static PyObject *
@@ -2642,9 +2659,6 @@ static PyMethodDef gentype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"tofile",
         (PyCFunction)gentype_tofile,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"tostring",
-        (PyCFunction)gentype_tostring,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"byteswap",
         (PyCFunction)gentype_byteswap,

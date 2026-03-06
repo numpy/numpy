@@ -10,17 +10,13 @@ from pathlib import Path
 from re import Pattern
 from typing import (
     Any,
-    AnyStr,
     ClassVar,
     Final,
     Generic,
     Literal as L,
     NoReturn,
-    ParamSpec,
     Self,
     SupportsIndex,
-    TypeAlias,
-    TypeVarTuple,
     overload,
     type_check_only,
 )
@@ -38,15 +34,19 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
 )
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "IS_EDITABLE",
     "IS_MUSL",
     "IS_PYPY",
     "IS_PYSTON",
     "IS_WASM",
+    "IS_INSTALLED",
+    "IS_64BIT",
     "HAS_LAPACK64",
     "HAS_REFCOUNT",
+    "BLAS_SUPPORTS_FPE",
     "NOGIL_BUILD",
+    "NUMPY_ROOT",
     "assert_",
     "assert_array_almost_equal_nulp",
     "assert_raises_regex",
@@ -87,26 +87,20 @@ __all__ = [  # noqa: RUF022
 
 ###
 
-_T = TypeVar("_T")
-_Ts = TypeVarTuple("_Ts")
-_Tss = ParamSpec("_Tss")
-_ET = TypeVar("_ET", bound=BaseException, default=BaseException)
-_FT = TypeVar("_FT", bound=Callable[..., Any])
 _W_co = TypeVar("_W_co", bound=_WarnLog | None, default=_WarnLog | None, covariant=True)
-_T_or_bool = TypeVar("_T_or_bool", default=bool)
 
-_StrLike: TypeAlias = str | bytes
-_RegexLike: TypeAlias = _StrLike | Pattern[Any]
-_NumericArrayLike: TypeAlias = _ArrayLikeNumber_co | _ArrayLikeObject_co
+type _StrLike = str | bytes
+type _RegexLike = _StrLike | Pattern[Any]
+type _NumericArrayLike = _ArrayLikeNumber_co | _ArrayLikeObject_co
 
-_ExceptionSpec: TypeAlias = type[_ET] | tuple[type[_ET], ...]
-_WarningSpec: TypeAlias = type[Warning]
-_WarnLog: TypeAlias = list[warnings.WarningMessage]
-_ToModules: TypeAlias = Iterable[types.ModuleType]
+type _ExceptionSpec[ExceptionT: BaseException] = type[ExceptionT] | tuple[type[ExceptionT], ...]
+type _WarningSpec = type[Warning]
+type _WarnLog = list[warnings.WarningMessage]
+type _ToModules = Iterable[types.ModuleType]
 
 # Must return a bool or an ndarray/generic type that is supported by `np.logical_and.reduce`
-_ComparisonFunc: TypeAlias = Callable[
-    [NDArray[Any], NDArray[Any]],
+type _ComparisonFunc = Callable[
+    [np.ndarray, np.ndarray],
     bool | np.bool | np.number | NDArray[np.bool | np.number | np.object_],
 ]
 
@@ -130,8 +124,10 @@ IS_MUSL: Final[bool] = ...
 IS_PYPY: Final[bool] = ...
 IS_PYSTON: Final[bool] = ...
 IS_WASM: Final[bool] = ...
+IS_64BIT: Final[bool] = ...
 HAS_REFCOUNT: Final[bool] = ...
 HAS_LAPACK64: Final[bool] = ...
+BLAS_SUPPORTS_FPE: Final[bool] = ...
 NOGIL_BUILD: Final[bool] = ...
 
 class KnownFailureException(Exception): ...
@@ -153,7 +149,7 @@ class suppress_warnings:
     def __init__(self, /, forwarding_rule: L["always", "module", "once", "location"] = "always") -> None: ...
     def __enter__(self) -> Self: ...
     def __exit__(self, cls: type[BaseException] | None, exc: BaseException | None, tb: types.TracebackType | None, /) -> None: ...
-    def __call__(self, /, func: _FT) -> _FT: ...
+    def __call__[FuncT: Callable[..., Any]](self, /, func: FuncT) -> FuncT: ...
 
     #
     def filter(self, /, category: type[Warning] = ..., message: str = "", module: types.ModuleType | None = None) -> None: ...
@@ -284,36 +280,36 @@ def assert_string_equal(actual: str, desired: str) -> None: ...
 
 #
 @overload
-def assert_raises(
-    exception_class: _ExceptionSpec[_ET],
+def assert_raises[ExceptionT: BaseException](
+    exception_class: _ExceptionSpec[ExceptionT],
     /,
     *,
     msg: str | None = None,
-) -> unittest.case._AssertRaisesContext[_ET]: ...
+) -> unittest.case._AssertRaisesContext[ExceptionT]: ...
 @overload
-def assert_raises(
-    exception_class: _ExceptionSpec,
-    callable: Callable[_Tss, Any],
+def assert_raises[**Tss](
+    exception_class: _ExceptionSpec[BaseException],
+    callable: Callable[Tss, Any],
     /,
-    *args: _Tss.args,
-    **kwargs: _Tss.kwargs,
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
 ) -> None: ...
 
 #
 @overload
-def assert_raises_regex(
-    exception_class: _ExceptionSpec[_ET],
+def assert_raises_regex[ExceptionT: BaseException](
+    exception_class: _ExceptionSpec[ExceptionT],
     expected_regexp: _RegexLike,
     *,
     msg: str | None = None,
-) -> unittest.case._AssertRaisesContext[_ET]: ...
+) -> unittest.case._AssertRaisesContext[ExceptionT]: ...
 @overload
-def assert_raises_regex(
-    exception_class: _ExceptionSpec,
+def assert_raises_regex[**Tss](
+    exception_class: _ExceptionSpec[BaseException],
     expected_regexp: _RegexLike,
-    callable: Callable[_Tss, Any],
-    *args: _Tss.args,
-    **kwargs: _Tss.kwargs,
+    callable: Callable[Tss, Any],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
 ) -> None: ...
 
 #
@@ -322,7 +318,7 @@ def assert_allclose(
     actual: _ArrayLikeTD64_co,
     desired: _ArrayLikeTD64_co,
     rtol: float = 1e-7,
-    atol: float = 0,
+    atol: float | np.timedelta64 = 0,
     equal_nan: bool = True,
     err_msg: object = "",
     verbose: bool = True,
@@ -363,19 +359,24 @@ def assert_array_max_ulp(
 def assert_warns(warning_class: _WarningSpec) -> _GeneratorContextManager[None]: ...
 @overload
 @deprecated("Please use warnings.catch_warnings or pytest.warns instead")
-def assert_warns(warning_class: _WarningSpec, func: Callable[_Tss, _T], *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
+def assert_warns[**Tss, ReturnT](
+    warning_class: _WarningSpec,
+    func: Callable[Tss, ReturnT],
+    *args: Tss.args,
+    **kwargs: Tss.kwargs,
+) -> ReturnT: ...
 
 #
 @overload
 def assert_no_warnings() -> _GeneratorContextManager[None]: ...
 @overload
-def assert_no_warnings(func: Callable[_Tss, _T], /, *args: _Tss.args, **kwargs: _Tss.kwargs) -> _T: ...
+def assert_no_warnings[**Tss, ReturnT](func: Callable[Tss, ReturnT], /, *args: Tss.args, **kwargs: Tss.kwargs) -> ReturnT: ...
 
 #
 @overload
 def assert_no_gc_cycles() -> _GeneratorContextManager[None]: ...
 @overload
-def assert_no_gc_cycles(func: Callable[_Tss, Any], /, *args: _Tss.args, **kwargs: _Tss.kwargs) -> None: ...
+def assert_no_gc_cycles[**Tss](func: Callable[Tss, Any], /, *args: Tss.args, **kwargs: Tss.kwargs) -> None: ...
 
 ###
 
@@ -387,21 +388,21 @@ def tempdir(
     dir: None = None,
 ) -> _GeneratorContextManager[str]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     prefix: AnyStr | None = None,
     *,
     dir: GenericPath[AnyStr],
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     *,
     prefix: AnyStr,
     dir: GenericPath[AnyStr] | None = None,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def tempdir(
+def tempdir[AnyStr: (bytes, str)](
     suffix: AnyStr,
     prefix: AnyStr | None = None,
     dir: GenericPath[AnyStr] | None = None,
@@ -416,14 +417,14 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[str]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None,
     prefix: AnyStr | None,
     dir: GenericPath[AnyStr],
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     prefix: AnyStr | None = None,
     *,
@@ -431,14 +432,14 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None,
     prefix: AnyStr,
     dir: GenericPath[AnyStr] | None = None,
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr | None = None,
     *,
     prefix: AnyStr,
@@ -446,7 +447,7 @@ def temppath(
     text: bool = False,
 ) -> _GeneratorContextManager[AnyStr]: ...
 @overload
-def temppath(
+def temppath[AnyStr: (bytes, str)](
     suffix: AnyStr,
     prefix: AnyStr | None = None,
     dir: GenericPath[AnyStr] | None = None,
@@ -454,7 +455,7 @@ def temppath(
 ) -> _GeneratorContextManager[AnyStr]: ...
 
 #
-def check_support_sve(__cache: list[_T_or_bool] = []) -> _T_or_bool: ...  # noqa: PYI063
+def check_support_sve(__cache: list[bool] = ..., /) -> bool: ...  # stubdefaulter: ignore[missing-default]
 
 #
 def decorate_methods(
@@ -474,27 +475,27 @@ def run_threaded(
     prepare_args: None = None,
 ) -> None: ...
 @overload
-def run_threaded(
-    func: Callable[[*_Ts], None],
+def run_threaded[*Ts](
+    func: Callable[[*Ts], None],
     max_workers: int,
     pass_count: bool,
     pass_barrier: bool,
     outer_iterations: int,
-    prepare_args: tuple[*_Ts],
+    prepare_args: tuple[*Ts],
 ) -> None: ...
 @overload
-def run_threaded(
-    func: Callable[[*_Ts], None],
+def run_threaded[*Ts](
+    func: Callable[[*Ts], None],
     max_workers: int = 8,
     pass_count: bool = False,
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     *,
-    prepare_args: tuple[*_Ts],
+    prepare_args: tuple[*Ts],
 ) -> None: ...
 
 #
-def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...  # noqa: ANN401
+def runstring(astr: _StrLike | types.CodeType, dict: dict[str, Any] | None) -> Any: ...
 def rundocs(filename: StrPath | None = None, raise_on_error: bool = True) -> None: ...
 def measure(code_str: _StrLike | ast.AST, times: int = 1, label: str | None = None) -> float: ...
 def break_cycles() -> None: ...

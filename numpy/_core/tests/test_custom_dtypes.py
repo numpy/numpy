@@ -327,6 +327,9 @@ class TestSFloat:
         assert np.zeros(3, dtype=SF).dtype == SF(1.)
         assert np.zeros_like(arr1, dtype=SF).dtype == SF(1.)
 
+    @pytest.mark.thread_unsafe(
+        reason="_ScaledFloatTestDType setup is thread-unsafe (gh-29850)"
+    )
     def test_np_save_load(self):
         # this monkeypatch is needed because pickle
         # uses the repr of a type to reconstruct it
@@ -370,6 +373,9 @@ class TestSFloat:
         np.testing.assert_array_equal(
             arr.view(np.float64), arr2.view(np.float64))
 
+@pytest.mark.thread_unsafe(
+    reason="_ScaledFloatTestDType setup is thread-unsafe (gh-29850)"
+)
 def test_type_pickle():
     # can't actually unpickle, but we can pickle (if in namespace)
     import pickle

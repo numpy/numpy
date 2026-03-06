@@ -33,11 +33,9 @@ EXCLUDE_LIST = {
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
         "_core",
-        "get_array_wrap",
         "int_asbuffer",
         "numarray",
         "oldnumeric",
-        "safe_eval",
         "test",
         "typeDict",
         # Builtins

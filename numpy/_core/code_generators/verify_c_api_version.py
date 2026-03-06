@@ -45,7 +45,7 @@ def check_api_version(apiversion):
                f"{apiversion}, with checksum {curapi_hash}, but recorded "
                f"checksum in _core/codegen_dir/cversions.txt is {api_hash}. "
                "If functions were added in the C API, you have to update "
-               f"C_API_VERSION in {__file__}."
+               f"C_API_VERSION in numpy/core/meson.build."
                )
         raise MismatchCAPIError(msg)
 

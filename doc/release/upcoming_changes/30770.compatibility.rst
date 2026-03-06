@@ -1,0 +1,28 @@
+Cython support
+--------------
+
+NumPy's Cython headers (accessed via ``cimport numpy``) now require
+Cython 3.0 or newer to build. If you try to compile a project that depends on
+NumPy's Cython headers using Cython 0.29 or older, you will see a message like
+this:
+
+::
+
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    # versions.
+    #
+    # See __init__.cython-30.pxd for the real Cython header
+    #
+
+    DEF err = int('Build aborted: the NumPy Cython headers require Cython 3.0.0 or newer.')
+      ------------------------------------------------------------
+
+      /path/to/site-packages/numpy/__init__.pxd:11:13: Error in compile-time expression: ValueError: invalid literal for int() with base 10: 'Build aborted: the NumPy Cython headers require Cython 3.0.0 or newer.'
+
+
+Note that the invalid integer is not a bug in NumPy - we are intentionally
+generating this error to avoid triggering a more obscure error later in the
+build when an older Cython version tries to use a Cython feature that was not
+available in the old Cython version.

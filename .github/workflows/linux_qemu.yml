@@ -1,3 +1,8 @@
+# To update pinned container digests and uv version: not handled by Dependabot.
+# Containers: change tag and get new digest with
+#   docker pull <image>:<tag> && docker inspect --format='{{index .RepoDigests 0}}' <image>:<tag>
+# uv: change version in URL and update checksum (curl -sL <url> | sha256sum)
+#
 # Meson's Python module doesn't support crosscompiling,
 # and python dependencies may be another potential hurdle.
 # There might also be a need to run runtime tests during configure time.
@@ -14,6 +19,11 @@ on:
     branches:
       - main
       - maintenance/**
+    paths-ignore:
+      - '**.pyi'
+      - '**.md'
+      - '**.rst'
+      - 'tools/stubtest/**'
   workflow_dispatch:
 
 defaults:
@@ -38,22 +48,6 @@ jobs:
       fail-fast: false
       matrix:
         BUILD_PROP:
-          - [
-              "ppc64le",
-              "powerpc64le-linux-gnu",
-              "ppc64le/ubuntu:22.04",
-              "-Dallow-noblas=true",
-              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
-              "ppc64le"
-            ]
-          - [
-              "ppc64le - baseline(Power9)",
-              "powerpc64le-linux-gnu",
-              "ppc64le/ubuntu:22.04",
-              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
-              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
-              "ppc64le"
-            ]
           - [
               "s390x",
               "s390x-linux-gnu",
@@ -91,7 +85,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -99,8 +93,7 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-        # see https://hub.docker.com/r/tonistiigi/binfmt for available versions
-        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52 --install all
+        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52@sha256:1b804311fe87047a4c96d38b4b3ef6f62fca8cd125265917a9e3dc3c996c39e6 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -108,7 +101,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -120,7 +113,11 @@ jobs:
         docker run --platform=linux/${ARCH} --name the_container --interactive \
           -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
           apt update &&
-          apt install -y cmake git python3 python-is-python3 python3-dev python3-pip &&
+          apt install -y cmake git curl ca-certificates &&
+          curl -LsSf https://astral.sh/uv/0.10.8/install.sh -o /tmp/uv-install.sh &&
+          echo 'eae5e1dae89cd0b74d357f549ccd6faa94b2ad6c1d89d78972a625655a4556ae  /tmp/uv-install.sh' | sha256sum -c - &&
+          sh /tmp/uv-install.sh &&
+          export PATH="/root/.local/bin:$PATH" &&
           mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           rm -rf /usr/${TOOLCHAIN_NAME} && ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
@@ -136,8 +133,9 @@ jobs:
           git config --global --add safe.directory /numpy &&
           # No need to build ninja from source, the host ninja is used for the build
           grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
-          python -m pip install -r /tmp/build_requirements.txt &&
-          python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout &&
+          uv venv --python 3.12 .venv &&
+          source .venv/bin/activate &&
+          uv pip install -r /tmp/build_requirements.txt pytest pytest-xdist hypothesis pytest-timeout
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
@@ -153,7 +151,7 @@ jobs:
         docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy && spin build --clean -- ${MESON_OPTIONS}
+            source .venv/bin/activate && cd /numpy && spin build --clean -- ${MESON_OPTIONS}
           '"
 
     - name: Meson Log
@@ -166,7 +164,7 @@ jobs:
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
             export F90=/usr/bin/gfortran
-            cd /numpy && spin test -- --timeout=600 --durations=10 -k \"${RUNTIME_TEST_FILTER}\"
+            source .venv/bin/activate && cd /numpy && spin test -- --timeout=600 --durations=10 -k \"${RUNTIME_TEST_FILTER}\"
           '"
 
 
@@ -183,7 +181,7 @@ jobs:
           - [
               "loongarch64",
               "loongarch64-linux-gnu",
-              "cnclarechen/numpy-loong64-debian:v1",
+              "cnclarechen/numpy-loong64-debian:v1@sha256:1f35e614955fa9cba890172a73a068120f25f1cfcd59ad5521995e37cb7e2c3f",
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "loong64"
@@ -198,14 +196,14 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56 --install all
+          docker run --rm --privileged tonistiigi/binfmt:qemu-v10.0.4-56@sha256:30cc9a4d03765acac9be2ed0afc23af1ad018aed2c28ea4be8c2eb9afe03fbd1 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -213,7 +211,7 @@ jobs:
         sudo apt install -y ninja-build gcc-14-${TOOLCHAIN_NAME} g++-14-${TOOLCHAIN_NAME} gfortran-14-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -228,6 +226,8 @@ jobs:
           ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
           ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
           ln -s /host/usr/lib/gcc-cross/${TOOLCHAIN_NAME} /usr/lib/gcc/${TOOLCHAIN_NAME} &&
+          mkdir -p /usr/libexec/gcc &&
+          rm -rf /usr/libexec/gcc/${TOOLCHAIN_NAME} && ln -s /host/usr/libexec/gcc/${TOOLCHAIN_NAME} /usr/libexec/gcc/${TOOLCHAIN_NAME} &&
           rm -f /usr/bin/gcc && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gcc-14 /usr/bin/gcc &&
           rm -f /usr/bin/g++ && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-g++-14 /usr/bin/g++ &&
           rm -f /usr/bin/gfortran && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gfortran-14 /usr/bin/gfortran &&
@@ -237,8 +237,14 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install --break-system-packages -r /numpy/requirements/build_requirements.txt &&
-          python -m pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
+          # No need to build ninja from source, the host ninja is used for the build
+          grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
+          python -m pip install --break-system-packages uv --extra-index-url https://mirrors.loong64.com/pypi/simple &&
+          export PATH="/root/.local/bin:$PATH" &&
+          uv venv --python 3.12 .venv &&
+          source .venv/bin/activate &&
+          uv pip install -r /tmp/build_requirements.txt pytest pytest-xdist hypothesis &&
+          rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
         mkdir -p "~/docker_${TOOLCHAIN_NAME}"
@@ -253,7 +259,7 @@ jobs:
         docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy/ && spin build --clean -- ${MESON_OPTIONS}
+            source .venv/bin/activate && cd /numpy/ && spin build --clean -- ${MESON_OPTIONS}
           '"
 
     - name: Meson Log
@@ -265,5 +271,5 @@ jobs:
         docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
         -v $(pwd):/numpy -v /:/host the_container \
         /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
-          cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+          source .venv/bin/activate && cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
         '"

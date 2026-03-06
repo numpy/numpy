@@ -69,6 +69,9 @@ def float64_ma():
     'machep', 'negep', 'minexp', 'maxexp', 'nmant', 'iexp',
     'eps', 'epsneg', 'precision', 'resolution'
 ])
+@pytest.mark.thread_unsafe(
+    reason="complex fixture setup is thread-unsafe (pytest-dev/pytest#13768.)"
+)
 def test_finfo_properties(dtype, ma_fixture, prop, request):
     """Test that finfo properties match expected machine arithmetic values."""
     ma = request.getfixturevalue(ma_fixture)
