@@ -211,8 +211,7 @@ def concatenate(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     Join a sequence of arrays along an existing axis.
 
     .. versionadded:: 2.0
-    ``numpy.concat`` added as a shorthand for ``numpy.concatenate``.
-
+        ``numpy.concat`` added as a shorthand for ``numpy.concatenate``.
 
     Parameters
     ----------
