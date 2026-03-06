@@ -955,7 +955,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
-                    nonzero = np.bool(y != 0)
+                    nonzero = np.bool(y != np.zeros_like(y))
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
 
                     if all(~nonzero_and_invalid):
