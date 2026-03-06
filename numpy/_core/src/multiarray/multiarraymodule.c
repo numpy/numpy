@@ -2631,7 +2631,7 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_ar
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
-   Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
+   Py_SETREF(type, NPY_DT_CALL_ensure_canonical(type));
 
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
