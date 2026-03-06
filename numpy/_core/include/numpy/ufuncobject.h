@@ -47,11 +47,11 @@ struct _tagPyUFuncObject;
  *
  * ufunc:             The ufunc object.
  * casting:           The 'casting' parameter provided to the ufunc.
- * operands:          An array of length (ufunc->nin + ufunc->nout),
+ * operands:          An array of length (PyUFunc_NIN(ufunc) + PyUFunc_NOUT(ufunc)),
  *                    with the output parameters possibly NULL.
  * type_tup:          Either NULL, or the type_tup passed to the ufunc.
  * out_dtypes:        An array which should be populated with new
- *                    references to (ufunc->nin + ufunc->nout) new
+ *                    references to (PyUFunc_NIN(ufunc) + PyUFunc_NOUT(ufunc)) new
  *                    dtypes, one for each input and output. These
  *                    dtypes should all be in native-endian format.
  *
@@ -82,7 +82,7 @@ typedef int (PyUFunc_TypeResolutionFunc)(
  * Parameter       Description
  * --------------- ------------------------------------------------------
  * ufunc           The ufunc object
- * core_dim_sizes  An array with length `ufunc->core_num_dim_ix`.
+ * core_dim_sizes  An array with length `PyUfuncObject_CORE_NUM_DIM_IX(ufunc)`.
  *                 The core dimensions of the arrays passed to the ufunc
  *                 will have been set.  If the caller of the ufunc didn't
  *                 provide the output array(s), the output-only core
@@ -99,7 +99,11 @@ typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 npy_intp *core_dim_sizes);
 
+#if !defined(NPY_INTERNAL_BUILD) || !(NPY_INTERNAL_BUILD)
 typedef struct _tagPyUFuncObject {
+#else
+typedef struct _tagPyUFunc_fields {
+#endif
         PyObject_HEAD
         /*
          * nin: Number of inputs
@@ -178,13 +182,14 @@ typedef struct _tagPyUFuncObject {
          * This was blocked off to be the "new" inner loop selector in 1.7,
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
+         *
+         * vectorcallfunc is in the limited API starting in Python 3.12
          */
-        #ifndef Py_LIMITED_API
+        #if !defined(Py_LIMITED_API) || PY_LIMITED_API >= 0x030C0000
             vectorcallfunc vectorcall;
         #else
             void *vectorcall;
         #endif
-
         /* Was previously the `PyUFunc_MaskedInnerLoopSelectionFunc` */
         void *reserved3;
 
@@ -232,7 +237,91 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
-} PyUFuncObject;
+} PyUFunc_fields;
+
+#if !defined(NPY_INTERNAL_BUILD) || (!NPY_INTERNAL_BUILD)
+typedef PyUFunc_fields PyUFuncObject;
+#else
+/*
+ * Internal version of the ufunc object struct is opaque.
+ * Use accessors to get data from the ufunc object.
+ */
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#endif
+
+static inline PyUFunc_fields *
+PyUFunc_GET_ITEM_DATA(const PyUFuncObject *ufunc)
+{
+    return (PyUFunc_fields *)ufunc;
+}
+
+#define UFUNC_ACCESSOR(FIELD, field, type)                  \
+    static inline type                                      \
+    PyUFunc_##FIELD(const PyUFuncObject *ufunc)       \
+    {                                                       \
+        return PyUFunc_GET_ITEM_DATA(ufunc)->field;   \
+    }
+
+#define UFUNC_SETTER(FIELD, field, type)                        \
+    static inline void                                          \
+    PyUFunc_SET_##FIELD(PyUFuncObject *ufunc, type field) \
+    {                                                           \
+        PyUFunc_GET_ITEM_DATA(ufunc)->field = field;      \
+    }
+
+#define UFUNC_SETTER_INDEX(FIELD, field, type)                          \
+    static inline void                                                  \
+    PyUFunc_SET_##FIELD(                                          \
+        PyUFuncObject *ufunc, int index, type field)                    \
+        {                                                               \
+            PyUFunc_GET_ITEM_DATA(ufunc)->field[index] = field;   \
+        }
+
+UFUNC_ACCESSOR(NIN, nin, int);
+UFUNC_ACCESSOR(NOUT, nout, int);
+UFUNC_ACCESSOR(NARGS, nargs, int);
+UFUNC_ACCESSOR(IDENTITY, identity, int);
+UFUNC_ACCESSOR(FUNCTIONS, functions, PyUFuncGenericFunction *);
+UFUNC_SETTER_INDEX(FUNCTIONS, functions, PyUFuncGenericFunction);
+UFUNC_ACCESSOR(DATA, data, void *const *);
+UFUNC_ACCESSOR(NTYPES, ntypes, int);
+UFUNC_ACCESSOR(NAME, name, const char *);
+UFUNC_ACCESSOR(TYPES, types, const char *);
+UFUNC_ACCESSOR(DOC, doc, const char *);
+UFUNC_ACCESSOR(PTR, ptr, void *);
+UFUNC_SETTER(PTR, ptr, void *);
+UFUNC_ACCESSOR(OBJ, obj, PyObject *);
+UFUNC_SETTER(OBJ, obj, PyObject *);
+UFUNC_ACCESSOR(USERLOOPS, userloops, PyObject *);
+UFUNC_SETTER(USERLOOPS, userloops, PyObject *);
+UFUNC_ACCESSOR(CORE_ENABLED, core_enabled, int);
+UFUNC_ACCESSOR(CORE_NUM_DIM_IX, core_num_dim_ix, int);
+UFUNC_ACCESSOR(CORE_NUM_DIMS, core_num_dims, int *);
+UFUNC_ACCESSOR(CORE_DIM_IXS, core_dim_ixs, int *);
+UFUNC_ACCESSOR(CORE_OFFSETS, core_offsets, int *);
+UFUNC_ACCESSOR(CORE_SIGNATURE, core_signature, char *);
+UFUNC_ACCESSOR(TYPE_RESOLVER, type_resolver, PyUFunc_TypeResolutionFunc *);
+UFUNC_SETTER(TYPE_RESOLVER, type_resolver, PyUFunc_TypeResolutionFunc *);
+UFUNC_ACCESSOR(DICT, dict, PyObject *);
+#if !defined(Py_LIMITED_API) || PY_LIMITED_API >= 0x030C0000
+UFUNC_ACCESSOR(VECTORCALL, vectorcall, vectorcallfunc);
+#else
+UFUNC_ACCESSOR(VECTORCALL, vectorcall, void*);
+#endif
+UFUNC_ACCESSOR(OP_FLAGS, op_flags, npy_uint32 *);
+UFUNC_SETTER_INDEX(OP_FLAGS, op_flags, npy_uint32);
+UFUNC_ACCESSOR(ITER_FLAGS, iter_flags, npy_uint32);
+UFUNC_SETTER(ITER_FLAGS, iter_flags, npy_uint32);
+#if NPY_FEATURE_VERSION >= NPY_1_16_API_VERSION
+UFUNC_ACCESSOR(CORE_DIM_SIZES, core_dim_sizes, npy_intp *);
+UFUNC_ACCESSOR(CORE_DIM_FLAGS, core_dim_flags, npy_uint32 *);
+UFUNC_ACCESSOR(IDENTITY_VALUE, identity_value, PyObject *);
+#endif
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+UFUNC_ACCESSOR(_DISPATCH_CACHE, _dispatch_cache, void *);
+UFUNC_ACCESSOR(_LOOPS, _loops, PyObject *);
+UFUNC_SETTER(_LOOPS, _loops, PyObject *);
+#endif
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
