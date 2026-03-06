@@ -1,6 +1,6 @@
 ## PR summary
-<!-- Take some time to get this right. You are asking us to review and commit
-  this, so be thoughtful of those who need to review. Describe the pull
+<!-- Please take some time to make it easier for us maintainers to understand
+ and review your PR. Describe the pull
   request, using the questions below as guidance, and link to any relevant issues
   and PRs:
 
