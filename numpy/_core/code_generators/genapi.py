@@ -402,7 +402,7 @@ class BoolValuesApi:
 
     def internal_define(self):
         astr = """\
-extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
+extern NPY_NO_EXPORT PyBoolScalarObject_fields _PyArrayScalar_BoolValues[2];
 """
         return astr
 

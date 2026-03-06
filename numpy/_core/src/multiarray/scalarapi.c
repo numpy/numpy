@@ -220,13 +220,13 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         return NULL;
     }
     if ((typecode->type_num == NPY_VOID) &&
-            !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
+            !(PyVoidScalar_FLAGS((PyVoidScalarObject *)scalar) & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
         return PyArray_NewFromDescrAndBase(
                 &PyArray_Type, typecode,
                 0, NULL, NULL,
-                ((PyVoidScalarObject *)scalar)->obval,
-                ((PyVoidScalarObject *)scalar)->flags,
+                PyArrayScalar_VAL((PyVoidScalarObject *)scalar, Void),
+                PyVoidScalar_FLAGS((PyVoidScalarObject *)scalar),
                 NULL, (PyObject *)scalar);
     }
 
@@ -406,7 +406,7 @@ PyArray_DescrFromScalar(PyObject *sc)
     PyArray_Descr *descr;
 
     if (PyArray_IsScalar(sc, Void)) {
-        descr = (PyArray_Descr *)((PyVoidScalarObject *)sc)->descr;
+        descr = (PyArray_Descr *)PyVoidScalar_DESCR((PyVoidScalarObject *)sc);
         Py_INCREF(descr);
         return descr;
     }
@@ -425,7 +425,7 @@ PyArray_DescrFromScalar(PyObject *sc)
             return NULL;
         }
         dt_data = &(((PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)descr)->c_metadata)->meta);
-        memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
+        memcpy(dt_data, PyDatetimeScalar_OBMETA((PyDatetimeScalarObject *)sc),
                sizeof(PyArray_DatetimeMetaData));
 
         return descr;
@@ -575,7 +575,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         PyArray_DatetimeMetaData *dt_data;
 
         dt_data = &(((PyArray_DatetimeDTypeMetaData *)((_PyArray_LegacyDescr *)descr)->c_metadata)->meta);
-        memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
+        memcpy(PyDatetimeScalar_OBMETA(((PyDatetimeScalarObject *)obj)), dt_data,
                sizeof(PyArray_DatetimeMetaData));
     }
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
@@ -585,7 +585,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             return obj;
         }
         else {
-            PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
+            PyVoidScalarObject_fields *vobj = (PyVoidScalarObject_fields *)obj;
             vobj->base = NULL;
             vobj->descr = (_PyArray_LegacyDescr *)descr;
             Py_INCREF(descr);

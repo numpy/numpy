@@ -544,8 +544,8 @@ void_discover_descr_from_pyobject(
 {
     if (PyArray_IsScalar(obj, Void)) {
         PyVoidScalarObject *void_obj = (PyVoidScalarObject *)obj;
-        Py_INCREF(void_obj->descr);
-        return (PyArray_Descr *)void_obj->descr;
+        Py_INCREF(PyVoidScalar_DESCR(void_obj));
+        return (PyArray_Descr *)PyVoidScalar_DESCR(void_obj);
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
