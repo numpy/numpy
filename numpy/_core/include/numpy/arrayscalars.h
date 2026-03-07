@@ -1,184 +1,141 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 
+#ifndef _Py_OPAQUE_PYOBJECT
 #ifndef _MULTIARRAYMODULE
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_bool obval;
 } PyBoolScalarObject;
 #endif
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         signed char obval;
 } PyByteScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         short obval;
 } PyShortScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         int obval;
 } PyIntScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         long obval;
 } PyLongScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_longlong obval;
 } PyLongLongScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         unsigned char obval;
 } PyUByteScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         unsigned short obval;
 } PyUShortScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         unsigned int obval;
 } PyUIntScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         unsigned long obval;
 } PyULongScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_ulonglong obval;
 } PyULongLongScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_half obval;
 } PyHalfScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         float obval;
 } PyFloatScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         double obval;
 } PyDoubleScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_longdouble obval;
 } PyLongDoubleScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_cfloat obval;
 } PyCFloatScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_cdouble obval;
 } PyCDoubleScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_clongdouble obval;
 } PyCLongDoubleScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         PyObject * obval;
 } PyObjectScalarObject;
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_datetime obval;
         PyArray_DatetimeMetaData obmeta;
 } PyDatetimeScalarObject;
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         npy_timedelta obval;
         PyArray_DatetimeMetaData obmeta;
 } PyTimedeltaScalarObject;
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
-#endif
         char obval;
 } PyScalarObject;
 
-#define PyStringScalarObject PyBytesObject
+
 #ifndef Py_LIMITED_API
 typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
@@ -192,9 +149,7 @@ typedef struct {
 
 
 typedef struct {
-#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_VAR_HEAD
-#endif
         char *obval;
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
         /* Internally use the subclass to allow accessing names/fields */
@@ -208,6 +163,34 @@ typedef struct {
         void *_buffer_info;  /* private buffer info, tagged to allow warning */
     #endif
 } PyVoidScalarObject;
+#else
+typedef struct PyBoolScalarObject PyBoolScalarObject;
+typedef struct PyByteScalarObject PyByteScalarObject;
+typedef struct PyShortScalarObject PyShortScalarObject;
+typedef struct PyIntScalarObject PyIntScalarObject;
+typedef struct PyLongScalarObject PyLongScalarObject;
+typedef struct PyLongLongScalarObject PyLongLongScalarObject;
+typedef struct PyUByteScalarObject PyUByteScalarObject;
+typedef struct PyUShortScalarObject PyUShortScalarObject;
+typedef struct PyUIntScalarObject PyUIntScalarObject;
+typedef struct PyULongScalarObject PyULongScalarObject;
+typedef struct PyULongLongScalarObject PyULongLongScalarObject;
+typedef struct PyHalfScalarObject PyHalfScalarObject;
+typedef struct PyFloatScalarObject PyFloatScalarObject;
+typedef struct PyDoubleScalarObject PyDoubleScalarObject;
+typedef struct PyLongDoubleScalarObject PyLongDoubleScalarObject;
+typedef struct PyCFloatScalarObject PyCFloatScalarObject;
+typedef struct PyCDoubleScalarObject PyCDoubleScalarObject;
+typedef struct PyCLongDoubleScalarObject PyCLongDoubleScalarObject;
+typedef struct PyObjectScalarObject PyObjectScalarObject;
+typedef struct PyDatetimeScalarObject PyDatetimeScalarObject;
+typedef struct PyTimedeltaScalarObject PyTimedeltaScalarObject;
+typedef struct PyScalarObject PyScalarObject;
+typedef struct PyVoidScalarObject PyVoidScalarObject;
+#endif
+
+#define PyStringScalarObject PyBytesObject
+
 
 /* Macros
      Py<Cls><bitsize>ScalarObject

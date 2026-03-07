@@ -1311,3 +1311,9 @@ _PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter
 {
     return ((PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + sizeof(PyObject)));
 }
+/*NUMPY_API*/
+NPY_NO_EXPORT NPY_DATETIMEUNIT
+_PyDatetimeScalarObject_GetUnit(PyObject *self)
+{
+    return ((PyDatetimeScalarObject *)self)->obmeta.base;
+}
