@@ -2130,6 +2130,10 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     if A.ndim < 2:
         return int(not all(A == 0))
 
+    # Handle empty matrices - rank is 0
+    if _is_empty_2d(A):
+        return zeros(A.shape[:-2], dtype=intp)
+
     S = svd(A, compute_uv=False, hermitian=hermitian)
 
     if tol is None:
