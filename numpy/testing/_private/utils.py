@@ -743,7 +743,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     ox, oy = x, y
 
     def isnumber(x):
-        return x.dtype.char in '?bhilqpBHILQPefdgFDG'
+        return type(x.dtype)._is_numeric
 
     def istime(x):
         return x.dtype.char in "Mm"
