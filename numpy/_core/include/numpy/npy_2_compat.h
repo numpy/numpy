@@ -141,20 +141,6 @@ PyArray_ImportNumPyAPI(void)
  */
 
 
-static inline void
-_PyDataType_SET_TYPE(PyArray_Descr *dtype, char type)
-{
-    PyDataType_GET_ITEM_DATA(dtype)->type = type;
-}
-
-static inline void
-PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
-{
-    PyDataType_GET_ITEM_DATA(dtype)->byteorder = byteorder;
-}
-
-
-
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || NPY_ABI_VERSION < 0x02000000 || defined(_Py_OPAQUE_PYOBJECT)
     /* Compiling for 1.x or 2.x only, direct field access is OK: */
 
@@ -174,15 +160,6 @@ PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
     #endif
     }
 
-    static inline void
-    PyDataType_SET_FLAGS(PyArray_Descr *dtype, npy_uint64 flags)
-    {
-    #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || defined(_Py_OPAQUE_PYOBJECT)
-        PyDataType_GET_ITEM_DATA(dtype)->flags = flags;
-    #else
-        dtype->flags = (unsigned char)flags;  /* Need unsigned cast on 1.x */
-#endif
-    }
     #define DESCR_ACCESSOR(FIELD, field, type, legacy_only)    \
         static inline type                                     \
         PyDataType_##FIELD(const PyArray_Descr *dtype) {       \
@@ -212,17 +189,6 @@ PyDataType_SET_BYTEORDER(PyArray_Descr *dtype, char byteorder)
         }
         else {
             return (unsigned char)((PyArray_DescrProto *)dtype)->flags;
-        }
-    }
-
-    static inline void
-    PyDataType_SET_FLAGS(PyArray_Descr *dtype, npy_uint64 flags)
-    {
-        if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
-            ((_PyArray_DescrNumPy2 *)dtype)->flags = flags;
-        }
-        else {
-            ((PyArray_DescrProto *)dtype)->flags = (npy_uint64)(unsigned char)flags;
         }
     }
 
