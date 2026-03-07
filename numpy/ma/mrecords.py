@@ -364,6 +364,7 @@ class MaskedRecords(ma.MaskedArray):
             try:
                 if issubclass(dtype, np.ndarray):
                     output = np.ndarray.view(self, dtype)
+                    dtype = None
                 else:
                     output = np.ndarray.view(self, dtype)
             # OK, there's the change
@@ -386,6 +387,10 @@ class MaskedRecords(ma.MaskedArray):
             mdtype = ma.make_mask_descr(output.dtype)
             output._mask = self._mask.view(mdtype, np.ndarray)
             output._mask = output._mask.reshape(output.shape)
+        # Make sure to reset the _fill_value if needed
+        if getattr(output, '_fill_value', None) is not None:
+            if dtype is not None:
+                output._fill_value = None
         return output
 
     def harden_mask(self):
