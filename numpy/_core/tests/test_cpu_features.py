@@ -400,7 +400,7 @@ class Test_ZARCH_Features(AbstractTest):
     features = ["VX", "VXE", "VXE2"]
 
     def load_flags(self):
-        self.load_flags_auxv()
+        self.load_flags_cpuinfo("features")
 
 
 is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
