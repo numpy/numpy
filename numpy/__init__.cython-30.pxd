@@ -918,12 +918,58 @@ cdef extern from "numpy/arrayobject.h":
 cdef extern from "numpy/ufuncobject.h":
 
     ctypedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *)
+    int PyUFunc_NIN(ufunc) nogil
+    int PyUFunc_NOUT(ufunc) nogil
+    int PyUFunc_NARGS(ufunc) nogil
+    PyUFuncGenericFunction* PyUFunc_FUNCTIONS(ufunc) nogil
+    void ** PyUFunc_DATA(ufunc) nogil
+    int PyUFunc_NTYPES(ufunc) nogil
+    const char* PyUFunc_TYPES(ufunc) nogil
+    const char* PyUFunc_NAME(ufunc) nogil
+    const char* PyUFunc_DOC(ufunc) nogil
+    void* PyUFunc_PTR(ufunc) nogil
+    PyObject *PyUFunc_OBJ(ufunc) nogil
+    PyObject *PyUFunc_USERLOOPS(ufunc) nogil
 
     ctypedef struct PyUFuncObject:
         pass
     ctypedef class numpy.ufunc [object PyUFuncObject, check_size ignore]:
-        pass
-
+        @property
+        cdef inline int nin(self) nogil:
+            return PyUFunc_NIN(self)
+        @property
+        cdef inline int nout(self) nogil:
+            return PyUFunc_NOUT(self)
+        @property
+        cdef inline int nargs(self) nogil:
+            return PyUFunc_NARGS(self)
+        @property
+        cdef inline PyUFuncGenericFunction* functions(self) nogil:
+            return PyUFunc_FUNCTIONS(self)
+        @property
+        cdef inline void ** data(self) nogil:
+            return PyUFunc_DATA(self)
+        @property
+        cdef inline int ntypes(self) nogil:
+            return PyUFunc_NTYPES(self)
+        @property
+        cdef inline const char* types(self) nogil:
+            return PyUFunc_TYPES(self)
+        @property
+        cdef inline const char* name(self) nogil:
+            return PyUFunc_NAME(self)
+        @property
+        cdef inline const char* doc(self) nogil:
+            return PyUFunc_DOC(self)
+        @property
+        cdef inline void* ptr(self) nogil:
+            return PyUFunc_PTR(self)
+        @property
+        cdef inline PyObject* obj(self) nogil:
+            return PyUFunc_OBJ(self)
+        @property
+        cdef inline PyObject* userloops(self) nogil:
+            return PyUFunc_USERLOOPS(self)
 
     cdef enum:
         PyUFunc_Zero

@@ -98,9 +98,10 @@ typedef int (PyUFunc_TypeResolutionFunc)(
 typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 npy_intp *core_dim_sizes);
-#ifndef _Py_OPAQUE_PYOBJECT
 typedef struct _tagPyUFuncObject {
+#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
+#endif
         /*
          * nin: Number of inputs
          * nout: Number of outputs
@@ -232,10 +233,19 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
-} PyUFuncObject;
-#else
+} PyUFuncObject_fields;
+
+#ifndef _Py_OPAQUE_PYOBJECT
 typedef struct _tagPyUFuncObject PyUFuncObject;
+static inline PyUFuncObject_fields *
+PyUFuncObject_GET_ITEM_DATA(PyUFuncObject *obj) {
+    return (PyUFuncObject_fields *)(obj);
+}
+#else
+typedef struct tagPyUFuncObject PyUFuncObject;
+#define PyUFuncObject_GET_ITEM_DATA(obj) _PyUFuncObject_GET_ITEM_DATA(obj)
 #endif
+
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */
@@ -338,6 +348,63 @@ typedef struct _loop1d_info {
 #endif
 
 #include "__ufunc_api.h"
+
+static inline int
+PyUFunc_NIN(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->nin;
+}
+static inline int
+PyUFunc_NOUT(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->nout;
+}
+static inline int
+PyUFunc_NARGS(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->nargs;
+}
+static inline PyUFuncGenericFunction *
+PyUFunc_FUNCTIONS(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->functions;
+}
+
+static inline void **
+PyUFunc_DATA(PyUFuncObject *ufunc) {
+    return (void **)PyUFuncObject_GET_ITEM_DATA(ufunc)->data;
+}
+
+static inline int
+PyUFunc_NTYPES(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->ntypes;
+}
+
+static inline const char *
+PyUFunc_NAME(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->name;
+}
+
+static inline const char *
+PyUFunc_TYPES(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->types;
+}
+
+static inline const char *
+PyUFunc_DOC(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->doc;
+}
+
+static inline void *
+PyUFunc_PTR(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->ptr;
+}
+
+static inline PyObject *
+PyUFunc_OBJ(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->obj;
+}
+
+static inline PyObject *
+PyUFunc_USERLOOPS(PyUFuncObject *ufunc) {
+    return PyUFuncObject_GET_ITEM_DATA(ufunc)->userloops;
+}
 
 #ifdef __cplusplus
 }

@@ -5363,6 +5363,12 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 
 #undef _SETCPTR
 
+/*UFUNC_API*/
+NPY_NO_EXPORT PyUFuncObject_fields *
+_PyUFuncObject_GET_ITEM_DATA(const PyUFuncObject *obj)
+{
+    return (PyUFuncObject_fields *)((char *)obj + sizeof(PyObject));
+}
 
 static void
 ufunc_dealloc(PyUFuncObject *ufunc)

@@ -1279,13 +1279,13 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
 NPY_NO_EXPORT PyArray_Descr_fields *
 _PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
 {
-    return ((PyArray_Descr_fields *)(((char *)dtype) + sizeof(PyObject)));
+    return (PyArray_Descr_fields *)(((char *)dtype) + sizeof(PyObject));
 }
 /*NUMPY_API*/
 NPY_NO_EXPORT _PyArray_LegacyDescr_fields *
 _PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
 {
-    return ((_PyArray_LegacyDescr_fields *)(((char *)dtype) + sizeof(PyObject)));
+    return (_PyArray_LegacyDescr_fields *)(((char *)dtype) + sizeof(PyObject));
 }
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayObject_fields *
@@ -1297,19 +1297,19 @@ _PyArray_GET_ITEM_DATA(const PyArrayObject *arr)
 NPY_NO_EXPORT PyArrayMultiIterObject_fields *
 _PyArrayMultiIter_GET_ITEM_DATA(const PyArrayMultiIterObject *multi)
 {
-    return ((PyArrayMultiIterObject_fields *)(((char *)multi) + sizeof(PyObject)));
+    return (PyArrayMultiIterObject_fields *)(((char *)multi) + sizeof(PyObject));
 }
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayIterObject_fields *
 _PyArrayIter_GET_ITEM_DATA(const PyArrayIterObject *iter)
 {
-    return ((PyArrayIterObject_fields *)(((char *)iter) + sizeof(PyObject)));
+    return (PyArrayIterObject_fields *)(((char *)iter) + sizeof(PyObject));
 }
 /*NUMPY_API*/
 NPY_NO_EXPORT PyArrayNeighborhoodIterObject_fields *
 _PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter)
 {
-    return ((PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + sizeof(PyObject)));
+    return (PyArrayNeighborhoodIterObject_fields *)(((char *)iter) + sizeof(PyObject));
 }
 /*NUMPY_API*/
 NPY_NO_EXPORT NPY_DATETIMEUNIT

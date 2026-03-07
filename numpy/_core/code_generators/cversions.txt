@@ -85,4 +85,4 @@
 # General loop registration for ufuncs, sort, and argsort
 0x00000015 = fbd24fc5b2ba4f7cd3606ec6128de7a5
 # Version 22 (NumPy 2.5.0) Opaque PyObject ABI support
-0x00000016 = aec6a8887fc635d63e05b47115c8f4a9
+0x00000016 = 496f9af066ea33b77bb3e4df557bda33
