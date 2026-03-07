@@ -1,0 +1,5 @@
+``numpy.lib.stride_tricks.sliding_window_view`` supports ``steps``
+------------------------------------------------------------------
+`numpy.lib.stride_tricks.sliding_window_view` now has a ``steps`` argument to
+specify non-unit strides for the windows. Currently only positive strides are
+supported for simplicity.

@@ -169,7 +169,7 @@ def as_strided(
     return view
 
 
-def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
+def _sliding_window_view_dispatcher(x, window_shape, axis=None, steps=None, *,
                                     subok=None, writeable=None):
     return (x,)
 
@@ -177,7 +177,7 @@ def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
 @array_function_dispatch(
     _sliding_window_view_dispatcher, module="numpy.lib.stride_tricks"
 )
-def sliding_window_view(x, window_shape, axis=None, *,
+def sliding_window_view(x, window_shape, axis=None, steps=None, *,
                         subok=False, writeable=False):
     """
     Create a sliding window view into the array with the given window shape.
@@ -204,6 +204,11 @@ def sliding_window_view(x, window_shape, axis=None, *,
         If `axis` is given as a `tuple of int`, `window_shape[i]` will refer to
         the axis `axis[i]` of `x`.
         Single integers `i` are treated as if they were the tuple `(i,)`.
+    steps: int or tuple of int, optional
+        Size of hops between successive windows. If `axis` is not present,
+        must have same length as the number of input array dimensions. Single
+        integers `i` are treated as if they were the tuple `(i,)`. Default is
+        a single element in each dimension. Only positive steps are supported.
     subok : bool, optional
         If True, sub-classes will be passed-through, otherwise the returned
         array will be forced to be a base-class array (default).
@@ -220,8 +225,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
         inserted at the end, and the original dimensions are trimmed as
         required by the size of the sliding window.
         That is, ``view.shape = x_shape_trimmed + window_shape``, where
-        ``x_shape_trimmed`` is ``x.shape`` with every entry reduced by one less
-        than the corresponding window size.
+        ``x_shape_trimmed`` is ``x.shape`` with every entry reduced to
+        accommodate the corresponding window and step sizes.
 
     See Also
     --------
@@ -364,6 +369,19 @@ def sliding_window_view(x, window_shape, axis=None, *,
     >>> moving_average
     array([1., 2., 3., 4.])
 
+    Elements can be skipped with the `steps` argument:
+
+    >>> x = np.arange(10)
+    >>> x.shape
+    (10,)
+    >>> v = sliding_window_view(x, 5, steps=2)
+    >>> v.shape
+    (4, 5)
+    >>> v
+    array([[0, 1, 2, 3, 4],
+           [2, 3, 4, 5, 6],
+           [4, 5, 6, 7, 8]])
+
     The two examples below demonstrate the effect of ``writeable=True``.
 
     Creating a view with the default ``writeable=False`` and then writing to
@@ -415,15 +433,30 @@ def sliding_window_view(x, window_shape, axis=None, *,
                              f'axis; got {len(window_shape)} window_shape '
                              f'elements and {len(axis)} axes elements.')
 
-    out_strides = x.strides + tuple(x.strides[ax] for ax in axis)
+    if steps is None:
+        steps = (1,) * (x.ndim if axis is None else len(axis))
+    else:
+        steps = tuple(steps) if np.iterable(steps) else (steps,)
+
+    if len(steps) != len(axis):
+        raise ValueError(f'Number of steps must match axis; got {len(steps)} '
+                         f'steps elements and {len(axis)} axes elements.')
+
+    if np.any(np.array(steps) < 1):
+        raise ValueError('`steps` must be at least one in all dimensions')
+
+    adjusted_strides = np.array(x.strides)
+    for step, ax in zip(steps, axis):
+        adjusted_strides[ax] *= step
+    out_strides = tuple(adjusted_strides) + tuple(x.strides[ax] for ax in axis)
 
     # note: same axis can be windowed repeatedly
     x_shape_trimmed = list(x.shape)
-    for ax, dim in zip(axis, window_shape):
+    for ax, dim, step in zip(axis, window_shape, steps):
         if x_shape_trimmed[ax] < dim:
             raise ValueError(
                 'window shape cannot be larger than input array shape')
-        x_shape_trimmed[ax] -= dim - 1
+        x_shape_trimmed[ax] = (x_shape_trimmed[ax] - dim) // step + 1
     out_shape = tuple(x_shape_trimmed) + window_shape
     return as_strided(x, strides=out_strides, shape=out_shape,
                       subok=subok, writeable=writeable)
