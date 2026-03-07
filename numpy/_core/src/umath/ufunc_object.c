@@ -3559,12 +3559,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         NPY_PREPARE_ARGPARSER;
 
         if (npy_parse_arguments("reduceat", args, len_args, kwnames,
-                "array", NULL, &op,
-                "indices", NULL, &indices_obj,
-                "|axis", NULL, &axes_obj,
-                "|dtype", NULL, &otype_obj,
-                "|out", NULL, &out_obj,
-                NULL, NULL, NULL) < 0) {
+                {"array", NULL, &op},
+                {"indices", NULL, &indices_obj},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj}) < 0) {
             goto fail;
         }
         /* Prepare inputs for PyUfunc_CheckOverride */
@@ -3579,11 +3578,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         NPY_PREPARE_ARGPARSER;
 
         if (npy_parse_arguments("accumulate", args, len_args, kwnames,
-                "array", NULL, &op,
-                "|axis", NULL, &axes_obj,
-                "|dtype", NULL, &otype_obj,
-                "|out", NULL, &out_obj,
-                NULL, NULL, NULL) < 0) {
+                {"array", NULL, &op},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj}) < 0) {
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
@@ -3597,14 +3595,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         NPY_PREPARE_ARGPARSER;
 
         if (npy_parse_arguments("reduce", args, len_args, kwnames,
-                "array", NULL, &op,
-                "|axis", NULL, &axes_obj,
-                "|dtype", NULL, &otype_obj,
-                "|out", NULL, &out_obj,
-                "|keepdims", NULL, &keepdims_obj,
-                "|initial", &_not_NoValue, &initial,
-                "|where", NULL, &wheremask_obj,
-                NULL, NULL, NULL) < 0) {
+                {"array", NULL, &op},
+                {"|axis", NULL, &axes_obj},
+                {"|dtype", NULL, &otype_obj},
+                {"|out", NULL, &out_obj},
+                {"|keepdims", NULL, &keepdims_obj},
+                {"|initial", &_not_NoValue, &initial},
+                {"|where", NULL, &wheremask_obj}) < 0) {
             goto fail;
         }
         /* Prepare input for PyUfunc_CheckOverride */
@@ -4558,15 +4555,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             NPY_PREPARE_ARGPARSER;
 
             if (npy_parse_arguments(ufunc->name, args + len_args, 0, kwnames,
-                    "$out", NULL, &out_obj,
-                    "$where", NULL, &where_obj,
-                    "$casting", NULL, &casting_obj,
-                    "$order", NULL, &order_obj,
-                    "$subok", NULL, &subok_obj,
-                    "$dtype", NULL, &dtype_obj,
-                    "$signature", NULL, &signature_obj,
-                    "$sig", NULL, &sig_obj,
-                    NULL, NULL, NULL) < 0) {
+                    {"$out", NULL, &out_obj},
+                    {"$where", NULL, &where_obj},
+                    {"$casting", NULL, &casting_obj},
+                    {"$order", NULL, &order_obj},
+                    {"$subok", NULL, &subok_obj},
+                    {"$dtype", NULL, &dtype_obj},
+                    {"$signature", NULL, &signature_obj},
+                    {"$sig", NULL, &sig_obj}) < 0) {
                 goto fail;
             }
         }
@@ -4574,17 +4570,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             NPY_PREPARE_ARGPARSER;
 
             if (npy_parse_arguments(ufunc->name, args + len_args, 0, kwnames,
-                    "$out", NULL, &out_obj,
-                    "$axes", NULL, &axes_obj,
-                    "$axis", NULL, &axis_obj,
-                    "$keepdims", NULL, &keepdims_obj,
-                    "$casting", NULL, &casting_obj,
-                    "$order", NULL, &order_obj,
-                    "$subok", NULL, &subok_obj,
-                    "$dtype", NULL, &dtype_obj,
-                    "$signature", NULL, &signature_obj,
-                    "$sig", NULL, &sig_obj,
-                    NULL, NULL, NULL) < 0) {
+                    {"$out", NULL, &out_obj},
+                    {"$axes", NULL, &axes_obj},
+                    {"$axis", NULL, &axis_obj},
+                    {"$keepdims", NULL, &keepdims_obj},
+                    {"$casting", NULL, &casting_obj},
+                    {"$order", NULL, &order_obj},
+                    {"$subok", NULL, &subok_obj},
+                    {"$dtype", NULL, &dtype_obj},
+                    {"$signature", NULL, &signature_obj},
+                    {"$sig", NULL, &sig_obj}) < 0) {
                 goto fail;
             }
             if (NPY_UNLIKELY((axes_obj != NULL) && (axis_obj != NULL))) {
@@ -6223,11 +6218,10 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     npy_bool reduction = NPY_FALSE;
 
     if (npy_parse_arguments("resolve_dtypes", args, len_args, kwnames,
-            "", NULL, &descrs_tuple,
-            "$signature", NULL, &signature_obj,
-            "$casting", &PyArray_CastingConverter, &casting,
-            "$reduction", &PyArray_BoolConverter, &reduction,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &descrs_tuple},
+            {"$signature", NULL, &signature_obj},
+            {"$casting", &PyArray_CastingConverter, &casting},
+            {"$reduction", &PyArray_BoolConverter, &reduction}) < 0) {
         return NULL;
     }
 
@@ -6479,9 +6473,8 @@ py_get_strided_loop(PyUFuncObject *ufunc,
     npy_intp fixed_strides[NPY_MAXARGS];
 
     if (npy_parse_arguments("_get_strided_loop", args, len_args, kwnames,
-            "", NULL, &call_info_obj,
-            "$fixed_strides", NULL, &fixed_strides_obj,
-            NULL, NULL, NULL) < 0) {
+            {"", NULL, &call_info_obj},
+            {"$fixed_strides", NULL, &fixed_strides_obj}) < 0) {
         return NULL;
     }
 

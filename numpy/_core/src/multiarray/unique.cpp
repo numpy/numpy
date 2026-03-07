@@ -493,11 +493,13 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
     npy_bool equal_nan = NPY_TRUE;  // default to True
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
-                            "arr", &PyArray_Converter, &arr,
-                            "|equal_nan",  &PyArray_BoolConverter, &equal_nan,
-                            NULL, NULL, NULL
-                            ) < 0
+    npy_arg_spec parse_specs[] = {
+        {"arr", (void *)&PyArray_Converter, &arr},
+        {"|equal_nan", (void *)&PyArray_BoolConverter, &equal_nan},
+    };
+    if (_npy_parse_arguments("_unique_hash", &__argparse_cache,
+                            args, len_args, kwnames,
+                            parse_specs, 2) < 0
     ) {
         Py_XDECREF(arr);
         return NULL;
