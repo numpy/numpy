@@ -1340,7 +1340,7 @@ class TestLog2:
         # a good log2 implementation should provide this,
         # might fail on OS with bad libm
         v = np.log2(2.**i)
-        assert_equal(v, float(i), err_msg='at exponent %d' % i)
+        assert_equal(v, float(i), err_msg=f'at exponent {i}')
 
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_log2_special(self):

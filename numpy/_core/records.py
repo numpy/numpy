@@ -163,7 +163,7 @@ class format_parser:
         #  "f0, f1, f2,..."
         # if not enough names are specified, they will be assigned as "f[n],
         # f[n+1],..." etc. where n is the number of specified names..."
-        self._names += ['f%d' % i for i in range(len(self._names),
+        self._names += [f'f{i}' for i in range(len(self._names),
                                                  self._nfields)]
         # check for redundant names
         _dup = find_duplicate(self._names)
@@ -263,8 +263,7 @@ class record(nt.void):
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max(len(name) for name in names)
-        fmt = '%% %ds: %%s' % maxlen
-        rows = [fmt % (name, getattr(self, name)) for name in names]
+        rows = [f"{name:>{maxlen}}: {getattr(self, name)}" for name in names]
         return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
