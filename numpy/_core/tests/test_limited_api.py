@@ -4,7 +4,6 @@ import sys
 import sysconfig
 
 import pytest
-from pathlib import Path
 
 from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
 
@@ -34,13 +33,13 @@ if IS_EDITABLE:
 
 
 @pytest.fixture(scope='module')
-def install_temp():
+def install_temp(tmpdir_factory):
     # Based in part on test_cython from random.tests.test_extending
     if IS_WASM:
         pytest.skip("No subprocess")
 
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'limited_api')
-    build_dir = Path('/tmp') / "limited_api" / "build"
+    build_dir = tmpdir_factory.mktemp("limited_api") / "build"
     os.makedirs(build_dir, exist_ok=True)
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
