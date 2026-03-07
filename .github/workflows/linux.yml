@@ -167,6 +167,51 @@ jobs:
       env:
         PYTHONOPTIMIZE: 2
 
+  coverage:
+    needs: [smoke_test]
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      with:
+        python-version: '3.13'
+    - name: Install build and test dependencies from PyPI
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
+    - name: Install gfortran and setup OpenBLAS (MacPython build)
+      run: |
+        set -xe
+        sudo apt update
+        sudo apt install gfortran libgfortran5 gcovr
+        python -m pip install -r requirements/ci32_requirements.txt
+    - name: Build
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        spin build --with-scipy-openblas 32 --gcov
+    - name: Run tests with coverage
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        spin test --gcov --gcov-format text --coverage -- --cov-report markdown:/tmp/cov.md --timeout=600 --durations=10
+    - name: Upload Python coverage report
+      uses: actions/upload-artifact@v7
+      with:
+        name: python-coverage-report
+        path: /tmp/cov.md
+        archive: false
+    - name: Upload C coverage report
+      uses: actions/upload-artifact@v7
+      with:
+        name: c-coverage-report
+        path: build/meson-logs/coverage.txt
+        archive: false
+
   armhf_test:
     # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
     # running on aarch64 (ARM 64-bit) GitHub runners.
