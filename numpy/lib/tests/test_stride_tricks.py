@@ -494,6 +494,74 @@ class TestSlidingWindowView:
         view[0, 1] = 3
         assert_array_equal(arr, np.array([0, 3, 2, 3, 4]))
 
+    def test_1d_with_steps(self):
+        arr = np.arange(10)
+        arr_view = sliding_window_view(arr, 3, steps=2)
+        expected = np.array([[0, 1, 2],
+                             [2, 3, 4],
+                             [4, 5, 6],
+                             [6, 7, 8]])
+        assert_array_equal(arr_view, expected)
+
+    def test_1d_with_large_step(self):
+        arr = np.arange(10)
+        arr_view = sliding_window_view(arr, 3, steps=5)
+        expected = np.array([[0, 1, 2],
+                             [5, 6, 7]])
+        assert_array_equal(arr_view, expected)
+
+    def test_1d_with_step_exact_fit(self):
+        arr = np.arange(7)
+        arr_view = sliding_window_view(arr, 3, steps=2)
+        expected = np.array([[0, 1, 2],
+                             [2, 3, 4],
+                             [4, 5, 6]])
+        assert_array_equal(arr_view, expected)
+
+    def test_1d_with_step_larger_than_array(self):
+        arr = np.arange(5)
+        arr_view = sliding_window_view(arr, 3, steps=10)
+        assert arr_view.shape == (1, 3)
+        expected = np.array([[0, 1, 2]])
+        assert_array_equal(arr_view, expected)
+
+    def test_2d_with_steps(self):
+        i, j = np.ogrid[:5, :5]
+        arr = 10 * i + j
+        arr_view = sliding_window_view(arr, (2, 2), steps=(2, 2))
+        assert arr_view.shape == (2, 2, 2, 2)
+        expected = np.array([[[[0, 1], [10, 11]],
+                              [[2, 3], [12, 13]]],
+                             [[[20, 21], [30, 31]],
+                              [[22, 23], [32, 33]]]])
+        assert_array_equal(arr_view, expected)
+
+    def test_2d_with_steps_and_axis(self):
+        arr = np.arange(20).reshape(4, 5)
+        arr_view = sliding_window_view(arr, 3, axis=1, steps=2)
+        assert arr_view.shape == (4, 2, 3)
+        assert_array_equal(arr_view[0], [[0, 1, 2], [2, 3, 4]])
+
+    def test_steps_shape(self):
+        arr = np.arange(20).reshape(4, 5)
+        # axis 0: (4-2)//2+1 = 2, axis 1: (5-3)//2+1 = 2
+        arr_view = sliding_window_view(arr, (2, 3), steps=(2, 2))
+        assert arr_view.shape == (2, 2, 2, 3)
+
+    def test_steps_errors(self):
+        arr = np.arange(10)
+        with pytest.raises(ValueError, match='`steps` must be at least one'):
+            sliding_window_view(arr, 3, steps=0)
+        with pytest.raises(ValueError, match='`steps` must be at least one'):
+            sliding_window_view(arr, 3, steps=-1)
+
+    def test_steps_length_mismatch(self):
+        arr = np.arange(20).reshape(4, 5)
+        with pytest.raises(ValueError, match='Number of steps must match axis'):
+            sliding_window_view(arr, (2, 2), steps=(1,))
+        with pytest.raises(ValueError, match='Number of steps must match axis'):
+            sliding_window_view(arr, (2, 2), axis=(0, 1), steps=(1,))
+
     def test_subok(self):
         class MyArray(np.ndarray):
             pass
