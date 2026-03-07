@@ -7,24 +7,31 @@
 #include <complex>
 #include <cstring>
 #include <functional>
+#include <map>
+#include <list>
 #include <stdexcept>
+#include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
+#include <variant>
 #include <vector>
+
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
+#include <absl/hash/hash.h>
+#include <absl/strings/string_view.h>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
 #include "gil_utils.h"
 #include "raii_utils.hpp"
 extern "C" {
-    #include "fnv.h"
     #include "npy_argparse.h"
     #include "numpy/npy_math.h"
     #include "numpy/halffloat.h"
 }
 
-// HASH_TABLE_INITIAL_BUCKETS is the reserve hashset capacity used in the
-// std::unordered_set instances in the various unique_* functions.
+// HASH_TABLE_INITIAL_BUCKETS is the reserve hashmap capacity used in the
+// absl::flat_hash_set instances in the various unique_* functions.
 // We use min(input_size, HASH_TABLE_INITIAL_BUCKETS) as the initial bucket
 // count:
 // - Reserving for all elements (isize) may over-allocate when there are few
@@ -33,6 +40,16 @@ extern "C" {
 //   memory usage reasonable (4 KiB for pointers).
 // See https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
 const npy_intp HASH_TABLE_INITIAL_BUCKETS = 1024;
+
+static inline PyTupleObject *
+create_empty_tuple(npy_intp size)
+{
+    PyTupleObject *res_obj =
+        reinterpret_cast<PyTupleObject *>(
+            PyTuple_New(size)
+        );
+    return res_obj;
+}
 
 //
 // Create a 1-d array with the given length that has the same
@@ -62,50 +79,89 @@ empty_array_like(PyArrayObject *arr, npy_intp length)
 }
 
 template <typename T>
-size_t hash_integer(const T *value, npy_bool equal_nan) {
-    return npy_fnv1a(reinterpret_cast<const unsigned char*>(value), sizeof(T));
+static inline PyArrayObject *
+intp_container_to_pyarray(const T &container) {
+    npy_intp length = container.size();
+    // Create the output array.
+    PyArrayObject *res_obj =
+        reinterpret_cast<PyArrayObject *>(
+            PyArray_NewFromDescr(
+                &PyArray_Type,
+                PyArray_DescrFromType(NPY_INTP),
+                1,                      // ndim
+                &length,                // shape
+                NULL,                   // strides
+                NULL,                   // data
+                NPY_ARRAY_WRITEABLE,    // flags
+                NULL                    // obj
+            )
+        );
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    {
+        np::raii::SaveThreadState save_thread_state{};
+
+        char *odata = PyArray_BYTES(res_obj);
+        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
+        for (auto it = container.begin(); it != container.end(); it++, odata += ostride) {
+            *((npy_intp *)odata) = *it;
+        }
+    }
+
+    return res_obj;
+}
+
+template <typename T>
+size_t hash_integer(const T *value, npy_bool NPY_UNUSED(equal_nan)) {
+    return absl::Hash<T>{}(*value);
 }
 
 template <typename S, typename T, S (*real)(T), S (*imag)(T)>
 size_t hash_complex(const T *value, npy_bool equal_nan) {
-    std::complex<S> z = *reinterpret_cast<const std::complex<S> *>(value);
-    int hasnan = npy_isnan(z.real()) || npy_isnan(z.imag());
-    if (equal_nan && hasnan) {
-        return 0;
+    S value_real = real(*value);
+    S value_imag = imag(*value);
+
+    if (equal_nan) {
+        if (npy_isnan(value_real) || npy_isnan(value_imag)) {
+            return 0;
+        }
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
     // So we don't need to worry about NaN here.
 
     // Convert -0.0 to 0.0.
-    if (z.real() == 0.0) {
-        z.real(NPY_PZERO);
+    if (value_real == NPY_NZERO) {
+        value_real = NPY_PZERO;
     }
-    if (z.imag() == 0.0) {
-        z.imag(NPY_PZERO);
+    if (value_imag == NPY_NZERO) {
+        value_imag = NPY_PZERO;
     }
 
-    size_t hash = npy_fnv1a(reinterpret_cast<const unsigned char*>(&z), sizeof(z));
-    return hash;
+    return absl::HashOf(value_real, value_imag);
 }
 
 size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan) {
-    std::complex<long double> z =
-        *reinterpret_cast<const std::complex<long double> *>(value);
-    int hasnan = npy_isnan(z.real()) || npy_isnan(z.imag());
-    if (equal_nan && hasnan) {
-        return 0;
+    npy_longdouble value_real = npy_creall(*value);
+    npy_longdouble value_imag = npy_cimagl(*value);
+
+    if (equal_nan) {
+        if (npy_isnan(value_real) || npy_isnan(value_imag)) {
+            return 0;
+        }
     }
 
     // Now, equal_nan is false or neither of the values is not NaN.
     // So we don't need to worry about NaN here.
 
     // Convert -0.0 to 0.0.
-    if (z.real() == 0.0) {
-        z.real(NPY_PZEROL);
+    if (value_real == NPY_NZEROL) {
+        value_real = NPY_PZEROL;
     }
-    if (z.imag() == 0.0) {
-        z.imag(NPY_PZEROL);
+    if (value_imag == NPY_NZEROL) {
+        value_imag = NPY_PZEROL;
     }
 
     // Some floating-point complex dtypes (e.g., npy_complex256) include undefined or
@@ -124,7 +180,7 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
     constexpr size_t SIZEOF_BUFFER = 2 * (SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_MAN + SIZEOF_LDOUBLE_EXP + SIZEOF_LDOUBLE_SIGN);
     unsigned char buffer[SIZEOF_BUFFER];
 
-    union IEEEl2bitsrep bits_real{z.real()}, bits_imag{z.imag()};
+    union IEEEl2bitsrep bits_real{value_real}, bits_imag{value_imag};
     size_t offset = 0;
 
     for (const IEEEl2bitsrep &bits: {bits_real, bits_imag}) {
@@ -142,20 +198,19 @@ size_t hash_complex_clongdouble(const npy_clongdouble *value, npy_bool equal_nan
         std::memcpy(buffer + offset, &sign, SIZEOF_LDOUBLE_SIGN);
         offset += SIZEOF_LDOUBLE_SIGN;
     }
+
+    auto span = absl::MakeConstSpan(buffer, SIZEOF_BUFFER);
+    return absl::Hash<decltype(span)>{}(span);
+
     #else
 
-    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(&z);
-    constexpr size_t SIZEOF_BUFFER = sizeof(z);
+    return absl::HashOf(value_real, value_imag);
 
     #endif
-
-    size_t hash = npy_fnv1a(buffer, SIZEOF_BUFFER);
-
-    return hash;
 }
 
 template <typename T>
-int equal_integer(const T *lhs, const T *rhs, npy_bool equal_nan) {
+int equal_integer(const T *lhs, const T *rhs, npy_bool NPY_UNUSED(equal_nan)) {
     return *lhs == *rhs;
 }
 
@@ -167,7 +222,6 @@ int equal_complex(const T *lhs, const T *rhs, npy_bool equal_nan) {
     S rhs_real = real(*rhs);
     S rhs_imag = imag(*rhs);
     int rhs_isnan = npy_isnan(rhs_real) || npy_isnan(rhs_imag);
-
     if (lhs_isnan && rhs_isnan) {
         return equal_nan;
     }
@@ -204,14 +258,23 @@ template <
     int (*equal_func)(const T *, const T *, npy_bool),
     void (*copy_func)(char *, T *)
 >
-static PyObject*
-unique_numeric(PyArrayObject *self, npy_bool equal_nan)
+static PyTupleObject*
+unique_numeric(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
 {
     /*
      * Returns a new NumPy array containing the unique values of the input
      * array of numeric (integer or complex).
      * This function uses hashing to identify uniqueness efficiently.
      */
+
+    // Always return a tuple of 4 elements: (unique, index, inverse, counts)
+    PyTupleObject *res_obj = create_empty_tuple(4);
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    // number of elements in the input array
+    npy_intp isize = PyArray_SIZE(self);
 
     auto hash = [equal_nan](const T *value) -> size_t {
         return hash_func(value, equal_nan);
@@ -220,43 +283,157 @@ unique_numeric(PyArrayObject *self, npy_bool equal_nan)
         return equal_func(lhs, rhs, equal_nan);
     };
 
-    using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
+    if (!return_index && !return_inverse && !return_counts) {
+        using set_type = absl::flat_hash_set<
+            T *,
+            decltype(hash),
+            decltype(equal)
+        >;
+        set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-    // number of elements in the input array
-    npy_intp isize = PyArray_SIZE(self);
-    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+        {
+            np::raii::SaveThreadState save_thread_state{};
 
-    {
-        np::raii::SaveThreadState save_thread_state{};
+            char *idata = PyArray_BYTES(self);
+            npy_intp istride = PyArray_STRIDES(self)[0];
+            for (npy_intp i = 0; i < isize; i++, idata += istride) {
+                hashset.emplace((T *)idata);
+            }
+        }
 
-        char *idata = PyArray_BYTES(self);
-        npy_intp istride = PyArray_STRIDES(self)[0];
-        for (npy_intp i = 0; i < isize; i++, idata += istride) {
-            hashset.insert(reinterpret_cast<T *>(idata));
+        npy_intp num_unique = hashset.size();
+
+        PyArrayObject *unique_array = empty_array_like(self, num_unique);
+        if (unique_array == NULL) {
+            return NULL;
+        }
+
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *odata = PyArray_BYTES(unique_array);
+            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+            for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+                copy_func(odata, *it);
+            }
+        }
+        PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+        // Set None for index, inverse, counts
+        for (npy_intp i = 1; i < 4; i++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, i, Py_None);
+        }
+    } else {
+        using map_type = absl::flat_hash_map<
+            T *,
+            npy_intp,
+            decltype(hash),
+            decltype(equal)
+        >;
+        map_type hashmap(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+
+        std::list<T *> unique_values;
+        std::list<npy_intp> first_indices;
+        std::vector<npy_intp> inverse_indices;
+        if (return_inverse) {
+            inverse_indices.resize(isize);
+        }
+        std::vector<npy_intp> counts;
+        if (return_counts) {
+            counts.reserve(std::min(isize, HASH_TABLE_INITIAL_BUCKETS));
+        }
+
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *idata = PyArray_BYTES(self);
+            npy_intp istride = PyArray_STRIDES(self)[0];
+            for (npy_intp i = 0; i < isize; i++, idata += istride) {
+                auto [entry, inserted] = hashmap.emplace((T *)idata, hashmap.size());
+                if (inserted) {
+                    unique_values.emplace_back(entry->first);
+                    if (return_index) {
+                        first_indices.emplace_back(i);
+                    }
+                    if (return_counts) {
+                        counts.emplace_back(1);
+                    }
+                } else {
+                    if (return_counts) {
+                        counts[entry->second]++;
+                    }
+                }
+                if (return_inverse) {
+                    inverse_indices[i] = entry->second;
+                }
+            }
+        }
+
+        npy_intp num_unique = hashmap.size();
+
+        PyArrayObject *unique_array = empty_array_like(self, num_unique);
+        if (unique_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *odata = PyArray_BYTES(unique_array);
+            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+            for (auto it = unique_values.begin(); it != unique_values.end(); it++, odata += ostride) {
+                copy_func(odata, *it);
+            }
+        }
+
+        PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+        if (return_index) {
+            PyArrayObject *index_array = intp_container_to_pyarray(first_indices);
+            if (index_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 1, index_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 1, Py_None);
+        }
+    
+        if (return_inverse) {
+            PyArrayObject *inverse_array = intp_container_to_pyarray(inverse_indices);
+            if (inverse_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 2, Py_None);
+        }
+
+        if (return_counts) {
+            PyArrayObject *counts_array = intp_container_to_pyarray(counts);
+            if (counts_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 3, counts_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 3, Py_None);
         }
     }
 
-    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
-    if (res_obj == NULL) {
-        return NULL;
-    }
-
-    {
-        np::raii::SaveThreadState save_thread_state{};
-
-        char *odata = PyArray_BYTES(res_obj);
-        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
-        for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-            copy_func(odata, *it);
-        }
-    }
-
-    return reinterpret_cast<PyObject *>(res_obj);
+    return res_obj;
 }
 
+
 template <typename T>
-static PyObject*
-unique_string(PyArrayObject *self, npy_bool equal_nan)
+static PyTupleObject*
+unique_string(PyArrayObject *self, npy_bool NPY_UNUSED(equal_nan), npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
 {
     /*
      * Returns a new NumPy array containing the unique values of the input
@@ -264,69 +441,202 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
      * This function uses hashing to identify uniqueness efficiently.
      */
 
+    // Always return a tuple of 4 elements: (unique, index, inverse, counts)
+    PyTupleObject *res_obj = create_empty_tuple(4);
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
     PyArray_Descr *descr = PyArray_DESCR(self);
     // variables for the string
     npy_intp itemsize = descr->elsize;
     npy_intp num_chars = itemsize / sizeof(T);
 
     auto hash = [num_chars](const T *value) -> size_t {
-        return npy_fnv1a(value, num_chars * sizeof(T));
+        auto span = absl::MakeConstSpan(value, num_chars);
+        return absl::Hash<decltype(span)>{}(span);
     };
     auto equal = [itemsize](const T *lhs, const T *rhs) -> bool {
         return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
-    using set_type = std::unordered_set<T *, decltype(hash), decltype(equal)>;
-
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
-    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-    {
-        np::raii::SaveThreadState save_thread_state{};
+    if (!return_index && !return_inverse && !return_counts) {
+        using set_type = absl::flat_hash_set<
+            T *,
+            decltype(hash),
+            decltype(equal)
+        >;
+        set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-        char *idata = PyArray_BYTES(self);
-        npy_intp istride = PyArray_STRIDES(self)[0];
-        for (npy_intp i = 0; i < isize; i++, idata += istride) {
-            hashset.insert(reinterpret_cast<T *>(idata));
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *idata = PyArray_BYTES(self);
+            npy_intp istride = PyArray_STRIDES(self)[0];
+            for (npy_intp i = 0; i < isize; i++, idata += istride) {
+                hashset.emplace((T *)idata);
+            }
+        }
+
+        npy_intp num_unique = hashset.size();
+
+        PyArrayObject *unique_array = empty_array_like(self, num_unique);
+        if (unique_array == NULL) {
+            return NULL;
+        }
+
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *odata = PyArray_BYTES(unique_array);
+            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+            for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+                std::memcpy(odata, *it, itemsize);
+            }
+        }
+        PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+        // Set None for index, inverse, counts
+        for (npy_intp i = 1; i < 4; i++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, i, Py_None);
+        }
+    } else {
+        using map_type = absl::flat_hash_map<
+            T *,
+            npy_intp,
+            decltype(hash),
+            decltype(equal)
+        >;
+        map_type hashmap(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+
+        std::list<T *> unique_values;
+        std::list<npy_intp> first_indices;
+        std::vector<npy_intp> inverse_indices;
+        if (return_inverse) {
+            inverse_indices.resize(isize);
+        }
+        std::vector<npy_intp> counts;
+        if (return_counts) {
+            counts.reserve(std::min(isize, HASH_TABLE_INITIAL_BUCKETS));
+        }
+
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *idata = PyArray_BYTES(self);
+            npy_intp istride = PyArray_STRIDES(self)[0];
+            for (npy_intp i = 0; i < isize; i++, idata += istride) {
+                auto [entry, inserted] = hashmap.emplace((T *)idata, hashmap.size());
+                if (inserted) {
+                    unique_values.emplace_back(entry->first);
+                    if (return_index) {
+                        first_indices.emplace_back(i);
+                    }
+                    if (return_counts) {
+                        counts.emplace_back(1);
+                    }
+                } else {
+                    if (return_counts) {
+                        counts[entry->second]++;
+                    }
+                }
+                if (return_inverse) {
+                    inverse_indices[i] = entry->second;
+                }
+            }
+        }
+
+        npy_intp num_unique = hashmap.size();
+
+        PyArrayObject *unique_array = empty_array_like(self, num_unique);
+        if (unique_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        
+        {
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *odata = PyArray_BYTES(unique_array);
+            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+            for (auto it = unique_values.begin(); it != unique_values.end(); it++, odata += ostride) {
+                std::memcpy(odata, *it, itemsize);
+            }
+        }
+
+        PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+        if (return_index) {
+            PyArrayObject *index_array = intp_container_to_pyarray(first_indices);
+            if (index_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 1, index_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 1, Py_None);
+        }
+    
+        if (return_inverse) {
+            PyArrayObject *inverse_array = intp_container_to_pyarray(inverse_indices);
+            if (inverse_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 2, Py_None);
+        }
+
+        if (return_counts) {
+            PyArrayObject *counts_array = intp_container_to_pyarray(counts);
+            if (counts_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 3, counts_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 3, Py_None);
         }
     }
 
-    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
-    if (res_obj == NULL) {
-        return NULL;
-    }
-
-    {
-        np::raii::SaveThreadState save_thread_state{};
-
-        char *odata = PyArray_BYTES(res_obj);
-        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
-        for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-            std::memcpy(odata, *it, itemsize);
-        }
-    }
-
-    return reinterpret_cast<PyObject *>(res_obj);
+    return res_obj;
 }
 
-static PyObject*
-unique_vstring(PyArrayObject *self, npy_bool equal_nan)
+static PyTupleObject*
+unique_vstring(PyArrayObject *self, npy_bool equal_nan, npy_bool return_index, npy_bool return_inverse, npy_bool return_counts)
 {
     /*
      * Returns a new NumPy array containing the unique values of the input array.
      * This function uses hashing to identify uniqueness efficiently.
      */
 
+    // Always return a tuple of 4 elements: (unique, index, inverse, counts)
+    PyTupleObject *res_obj = create_empty_tuple(4);
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    PyArray_StringDTypeObject *descr =
+        reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
+
     auto hash = [equal_nan](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
             if (equal_nan) {
                 return 0;
             } else {
-                return std::hash<const npy_static_string *>{}(value);
+                return absl::Hash<const npy_static_string *>{}(value);
             }
         }
-        return npy_fnv1a(value->buf, value->size * sizeof(char));
+        auto view = absl::string_view(value->buf, value->size);
+        return absl::Hash<absl::string_view>{}(view);
     };
     auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
         if (lhs->buf == NULL && rhs->buf == NULL) {
@@ -346,74 +656,216 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     };
 
     npy_intp isize = PyArray_SIZE(self);
-    // unpacked_strings must live as long as hashset because hashset points
+    // unpacked_strings must live longer than hashmap because hashmap points
     // to values in this vector.
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
 
-    using set_type = std::unordered_set<npy_static_string *,
-                                        decltype(hash), decltype(equal)>;
-    set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+    if (!return_index && !return_inverse && !return_counts) {
+        using set_type = absl::flat_hash_set<
+            npy_static_string *,
+            decltype(hash),
+            decltype(equal)
+        >;
+        set_type hashset(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
 
-    {
-        PyArray_StringDTypeObject *descr =
-            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(self));
-        np::raii::NpyStringAcquireAllocator alloc(descr);
-        np::raii::SaveThreadState save_thread_state{};
+        {
+            np::raii::NpyStringAcquireAllocator alloc(descr);
+            np::raii::SaveThreadState save_thread_state{};
 
-        char *idata = PyArray_BYTES(self);
-        npy_intp istride = PyArray_STRIDES(self)[0];
+            char *idata = PyArray_BYTES(self);
+            npy_intp istride = PyArray_STRIDES(self)[0];
 
-        for (npy_intp i = 0; i < isize; i++, idata += istride) {
-            npy_packed_static_string *packed_string =
-                reinterpret_cast<npy_packed_static_string *>(idata);
-            int is_null = NpyString_load(alloc.allocator(), packed_string,
-                                         &unpacked_strings[i]);
-            if (is_null == -1) {
-                // Unexpected error. Throw a C++ exception that will be caught
-                // by the caller of unique_vstring() and converted into a Python
-                // RuntimeError.
-                throw std::runtime_error("Failed to load string from packed "
-                                         "static string.");
+            for (npy_intp i = 0; i < isize; i++, idata += istride) {
+                npy_packed_static_string *packed_string =
+                    reinterpret_cast<npy_packed_static_string *>(idata);
+                int is_null = NpyString_load(alloc.allocator(), packed_string,
+                                            &unpacked_strings[i]);
+                if (is_null == -1) {
+                    // Unexpected error. Throw a C++ exception that will be caught
+                    // by the caller of unique_vstring() and converted into a Python
+                    // RuntimeError.
+                    throw std::runtime_error("Failed to load string from packed "
+                                            "static string.");
+                }
+                hashset.emplace(&unpacked_strings[i]);
             }
-            hashset.insert(&unpacked_strings[i]);
         }
-    }
 
-    PyArrayObject *res_obj = empty_array_like(self, hashset.size());
-    if (res_obj == NULL) {
-        return NULL;
-    }
+        npy_intp num_unique = hashset.size();
 
-    {
-        PyArray_StringDTypeObject *res_descr =
-            reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(res_obj));
-        np::raii::NpyStringAcquireAllocator alloc(res_descr);
-        np::raii::SaveThreadState save_thread_state{};
+        PyArrayObject *unique_array = empty_array_like(self, num_unique);
+        if (unique_array == NULL) {
+            return NULL;
+        }
 
-        char *odata = PyArray_BYTES(res_obj);
-        npy_intp ostride = PyArray_STRIDES(res_obj)[0];
-        for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-            npy_packed_static_string *packed_string =
-                reinterpret_cast<npy_packed_static_string *>(odata);
-            int pack_status = 0;
-            if ((*it)->buf == NULL) {
-                pack_status = NpyString_pack_null(alloc.allocator(), packed_string);
-            } else {
-                pack_status = NpyString_pack(alloc.allocator(), packed_string,
-                                             (*it)->buf, (*it)->size);
+        {
+            PyArray_StringDTypeObject *unique_array_descr =
+                reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(unique_array));
+            np::raii::NpyStringAcquireAllocator alloc(unique_array_descr);
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *odata = PyArray_BYTES(unique_array);
+            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+            for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+                npy_packed_static_string *packed_string =
+                    reinterpret_cast<npy_packed_static_string *>(odata);
+                int pack_status = 0;
+                if ((*it)->buf == NULL) {
+                    pack_status = NpyString_pack_null(alloc.allocator(), packed_string);
+                } else {
+                    pack_status = NpyString_pack(alloc.allocator(), packed_string,
+                                                (*it)->buf, (*it)->size);
+                }
+                if (pack_status == -1) {
+                    // string packing failed
+                    return NULL;
+                }
             }
-            if (pack_status == -1) {
-                // string packing failed
+        }
+        PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+        // Set None for index, inverse, counts
+        for (npy_intp i = 1; i < 4; i++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, i, Py_None);
+        }
+    } else {
+        using map_type = absl::flat_hash_map<
+            npy_static_string *,
+            npy_intp,
+            decltype(hash),
+            decltype(equal)
+        >;
+        map_type hashmap(std::min(isize, HASH_TABLE_INITIAL_BUCKETS), hash, equal);
+
+        std::list<npy_static_string *> unique_values;
+        std::list<npy_intp> first_indices;
+        std::vector<npy_intp> inverse_indices;
+        if (return_inverse) {
+            inverse_indices.resize(isize);
+        }
+        std::vector<npy_intp> counts;
+        if (return_counts) {
+            counts.reserve(std::min(isize, HASH_TABLE_INITIAL_BUCKETS));
+        }
+
+        {
+            np::raii::NpyStringAcquireAllocator alloc(descr);
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *idata = PyArray_BYTES(self);
+            npy_intp istride = PyArray_STRIDES(self)[0];
+
+            for (npy_intp i = 0; i < isize; i++, idata += istride) {
+                npy_packed_static_string *packed_string =
+                    reinterpret_cast<npy_packed_static_string *>(idata);
+                int is_null = NpyString_load(alloc.allocator(), packed_string,
+                                            &unpacked_strings[i]);
+                if (is_null == -1) {
+                    // Unexpected error. Throw a C++ exception that will be caught
+                    // by the caller of unique_vstring() and converted into a Python
+                    // RuntimeError.
+                    throw std::runtime_error("Failed to load string from packed "
+                                            "static string.");
+                }
+
+                auto [entry, inserted] = hashmap.emplace(&unpacked_strings[i], hashmap.size());
+                if (inserted) {
+                    unique_values.emplace_back(entry->first);
+                    if (return_index) {
+                        first_indices.emplace_back(i);
+                    }
+                    if (return_counts) {
+                        counts.emplace_back(1);
+                    }
+                } else {
+                    if (return_counts) {
+                        counts[entry->second]++;
+                    }
+                }
+                if (return_inverse) {
+                    inverse_indices[i] = entry->second;
+                }
+            }
+        }
+
+        npy_intp num_unique = hashmap.size();
+
+        PyArrayObject *unique_array = empty_array_like(self, num_unique);
+        if (unique_array == NULL) {
+            Py_DECREF(res_obj);
+            return NULL;
+        }
+        
+        {
+            PyArray_StringDTypeObject *unique_array_descr =
+                reinterpret_cast<PyArray_StringDTypeObject *>(PyArray_DESCR(unique_array));
+            np::raii::NpyStringAcquireAllocator alloc(unique_array_descr);
+            np::raii::SaveThreadState save_thread_state{};
+
+            char *odata = PyArray_BYTES(unique_array);
+            npy_intp ostride = PyArray_STRIDES(unique_array)[0];
+            for (auto it = hashmap.begin(); it != hashmap.end(); it++, odata += ostride) {
+                npy_packed_static_string *packed_string =
+                    reinterpret_cast<npy_packed_static_string *>(odata);
+                int pack_status = 0;
+                if (it->first->buf == NULL) {
+                    pack_status = NpyString_pack_null(alloc.allocator(), packed_string);
+                } else {
+                    pack_status = NpyString_pack(alloc.allocator(), packed_string,
+                                                it->first->buf, it->first->size);
+                }
+                if (pack_status == -1) {
+                    // string packing failed
+                    return NULL;
+                }
+            }
+        }
+        PyTuple_SET_ITEM(res_obj, 0, unique_array);
+
+        if (return_index) {
+            PyArrayObject *index_array = intp_container_to_pyarray(first_indices);
+            if (index_array == NULL) {
+                Py_DECREF(res_obj);
                 return NULL;
             }
+            PyTuple_SET_ITEM(res_obj, 1, index_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 1, Py_None);
+        }
+    
+        if (return_inverse) {
+            PyArrayObject *inverse_array = intp_container_to_pyarray(inverse_indices);
+            if (inverse_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 2, inverse_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 2, Py_None);
+        }
+
+        if (return_counts) {
+            PyArrayObject *counts_array = intp_container_to_pyarray(counts);
+            if (counts_array == NULL) {
+                Py_DECREF(res_obj);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(res_obj, 3, counts_array);
+        } else {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(res_obj, 3, Py_None);
         }
     }
-    return reinterpret_cast<PyObject *>(res_obj);
+
+    return res_obj;
 }
 
 
 // this map contains the functions used for each item size.
-typedef std::function<PyObject *(PyArrayObject *, npy_bool)> function_type;
+typedef std::function<PyTupleObject *(PyArrayObject *, npy_bool, npy_bool, npy_bool, npy_bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
     {NPY_BYTE, unique_numeric<npy_byte, hash_integer<npy_byte>, equal_integer<npy_byte>, copy_integer<npy_byte>>},
     {NPY_UBYTE, unique_numeric<npy_ubyte, hash_integer<npy_ubyte>, equal_integer<npy_ubyte>, copy_integer<npy_ubyte>>},
@@ -491,11 +943,17 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
 {
     PyArrayObject *arr = NULL;
     npy_bool equal_nan = NPY_TRUE;  // default to True
+    npy_bool return_index = NPY_FALSE;
+    npy_bool return_inverse = NPY_FALSE;
+    npy_bool return_counts = NPY_FALSE;
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
                             "arr", &PyArray_Converter, &arr,
                             "|equal_nan",  &PyArray_BoolConverter, &equal_nan,
+                            "|return_index", &PyArray_BoolConverter, &return_index,
+                            "|return_inverse", &PyArray_BoolConverter, &return_inverse,
+                            "|return_counts", &PyArray_BoolConverter, &return_counts,
                             NULL, NULL, NULL
                             ) < 0
     ) {
@@ -505,13 +963,23 @@ array__unique_hash(PyObject *NPY_UNUSED(module),
 
     PyObject *result = NULL;
     try {
-        auto type = PyArray_TYPE(arr);
-        // we only support data types present in our unique_funcs map
-        if (unique_funcs.find(type) == unique_funcs.end()) {
+        int type = PyArray_TYPE(arr);
+
+        // For integer dtypes, use the sort-based implementation when only
+        // return_counts is requested. Benchmarks indicate that this is currently
+        // faster than the hash-based approach for this specific case.
+        if (PyTypeNum_ISINTEGER(type) && return_counts && !return_index && !return_inverse) {
             result = Py_NewRef(Py_NotImplemented);
         }
         else {
-            result = unique_funcs[type](arr, equal_nan);
+            // we only support data types present in our unique_funcs map
+            auto unique_func = unique_funcs.find(type);
+            if (unique_func == unique_funcs.end()) {
+                result = Py_NewRef(Py_NotImplemented);
+            }
+            else {
+                result = reinterpret_cast<PyObject *>(unique_func->second(arr, equal_nan, return_index, return_inverse, return_counts));
+            }
         }
     }
     catch (const std::bad_alloc &e) {
