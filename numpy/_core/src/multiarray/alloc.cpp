@@ -294,7 +294,15 @@ PyDataMem_NEW(size_t size)
 
     assert(size != 0);
     result = PyMem_RawMalloc(size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (result == NULL) {
+        return NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         PyMem_RawFree(result);
         return NULL;
@@ -311,7 +319,15 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
     void *result;
 
     result = PyMem_RawCalloc(nmemb, size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    if (result == NULL) {
+        return NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
         PyMem_RawFree(result);
         return NULL;
@@ -338,9 +354,19 @@ PyDataMem_RENEW(void *ptr, size_t size)
     void *result;
 
     assert(size != 0);
-    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+
     result = PyMem_RawRealloc(ptr, size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (result == NULL) {
+        // ptr is still valid here
+        return  NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         PyMem_RawFree(result);
         return NULL;
@@ -354,7 +380,16 @@ PyDataMem_RENEW(void *ptr, size_t size)
 static inline void *
 default_malloc(void *NPY_UNUSED(ctx), size_t size)
 {
-    return _npy_alloc_cache(size, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
+    void *result;
+    result = _npy_alloc_cache(size, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
+    if (result == NULL) {
+        // alloc failed, nothing more to do
+        return NULL;
+    }
+    // untrack the allocation from tracemalloc
+    // ignore return value, since we'd early return either way
+    PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    return result;
 }
 
 // The default data mem allocator calloc routine does not make use of a ctx.
@@ -367,14 +402,22 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
     size_t sz = nelem * elsize;
     if (sz < NBUCKETS) {
         p = _npy_alloc_cache(sz, 1, NBUCKETS, datacache, &PyMem_RawMalloc);
-        if (p) {
-            memset(p, 0, sz);
+        if (p == NULL) {
+            return NULL;
         }
-        return p;
-    }
-    p = PyMem_RawCalloc(nelem, elsize);
-    if (p) {
+        memset(p, 0, sz);
+    } else {
+        p = PyMem_RawCalloc(nelem, elsize);
+        if (p == NULL) {
+            return NULL;
+        }
         indicate_hugepages(p, sz);
+    }
+    // untrack the allocation from tracemalloc
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)p);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return p;
     }
     return p;
 }
@@ -385,7 +428,19 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
 static inline void *
 default_realloc(void *NPY_UNUSED(ctx), void *ptr, size_t new_size)
 {
-    return PyMem_RawRealloc(ptr, new_size);
+    void *result;
+    result = PyMem_RawRealloc(ptr, new_size);
+    if (result == NULL) {
+        // realloc failed, nothing more to do
+        return NULL;
+    }
+    // untrack the reallocation from tracemalloc
+    int ret = PyTraceMalloc_Untrack(PYMEM_DOMAIN_RAW, (npy_uintp)result);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    return result;
 }
 
 // The default data mem allocator free routine does not make use of a ctx.
@@ -428,6 +483,9 @@ PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
     }
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
+    if (result == NULL) {
+        return NULL;
+    }
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -446,6 +504,9 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
         return NULL;
     }
     result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
+    if (result == NULL) {
+        return NULL;
+    }
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
@@ -465,6 +526,7 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
                      "Could not get pointer to 'mem_handler' from PyCapsule");
         return;
     }
+    // ignore -2 return when tracemalloc is disabled
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     handler->allocator.free(handler->allocator.ctx, ptr, size);
 }
@@ -480,9 +542,17 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
     }
 
     assert(size != 0);
-    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
-    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (result == NULL) {
+        // ptr is still valid here
+        return NULL;
+    }
+    int ret = PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    if (ret == -2) {
+        // tracemalloc is disabled
+        return result;
+    }
+    ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
         handler->allocator.free(handler->allocator.ctx, result, size);
         return NULL;

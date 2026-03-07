@@ -28,15 +28,16 @@ jobs:
         shard-index: [0]  # e.g. change this to [0, 1, 2] and --num-shards below to 3
       fail-fast: false
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: numpy_to_test
           fetch-depth: 0
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install git+https://github.com/hauntsaninja/mypy_primer.git
+        # To update: replace commit hash (no tags/releases available, use HEAD of master)
+        run: pip install git+https://github.com/hauntsaninja/mypy_primer.git@05f73ec3d85bb4f55676f3c57f2c3e5136228977  # HEAD of master on 2026-03-04
       - name: Run mypy_primer
         shell: bash
         run: |
@@ -75,7 +76,7 @@ jobs:
         run: |
           echo ${{ github.event.pull_request.number }} | tee pr_number.txt
       - name: Upload mypy_primer diff + PR number
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: ${{ matrix.shard-index == 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -83,7 +84,7 @@ jobs:
             diff_${{ matrix.shard-index }}.txt
             pr_number.txt
       - name: Upload mypy_primer diff
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: ${{ matrix.shard-index != 0 }}
         with:
           name: mypy_primer_diffs-${{ matrix.shard-index }}
@@ -97,7 +98,7 @@ jobs:
       contents: read
     steps:
       - name: Merge artifacts
-        uses: actions/upload-artifact/merge@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact/merge@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: mypy_primer_diffs
           pattern: mypy_primer_diffs-*

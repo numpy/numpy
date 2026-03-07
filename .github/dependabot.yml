@@ -12,7 +12,6 @@ updates:
       - "03 - Maintenance"
     ignore:
       - dependency-name: "bus1/cabuild"
-updates:
   - package-ecosystem: pip
     directory: /requirements
     schedule:
