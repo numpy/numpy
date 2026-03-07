@@ -1851,20 +1851,20 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 } while (0)
 
 #define _PyArray_ITER_NEXT1(it) do { \
-        (it)->dataptr += _PyAIT(it)->strides[0]; \
-        (it)->coordinates[0]++; \
+        _PyAIT(it)->dataptr += _PyAIT(it)->strides[0]; \
+        _PyAIT(it)->coordinates[0]++; \
 } while (0)
 
 #define _PyArray_ITER_NEXT2(it) do { \
-        if ((it)->coordinates[1] < (it)->dims_m1[1]) { \
-                (it)->coordinates[1]++; \
-                (it)->dataptr += (it)->strides[1]; \
+        if (_PyAIT(it)->coordinates[1] < _PyAIT(it)->dims_m1[1]) { \
+                _PyAIT(it)->coordinates[1]++; \
+                _PyAIT(it)->dataptr += _PyAIT(it)->strides[1]; \
         } \
         else { \
-                (it)->coordinates[1] = 0; \
-                (it)->coordinates[0]++; \
-                (it)->dataptr += (it)->strides[0] - \
-                        (it)->backstrides[1]; \
+                _PyAIT(it)->coordinates[1] = 0; \
+                _PyAIT(it)->coordinates[0]++; \
+                _PyAIT(it)->dataptr += _PyAIT(it)->strides[0] - \
+                        _PyAIT(it)->backstrides[1]; \
         } \
 } while (0)
 
