@@ -1058,6 +1058,31 @@ ndarray_from_pyobj(const int type_num,
           }
           arr = retarr;
           F2PY_REPORT_ON_ARRAY_COPY_FROMARR;
+          if (PyArray_CopyInto(retarr, arr)) {
+            Py_DECREF(retarr);
+            return NULL;
+          }
+          if (intent & F2PY_INTENT_INPLACE) {
+            /* DEPRECATION WARNING for intent(inplace) with casting - see gh-30809 */
+            if (PyErr_WarnEx(PyExc_VisibleDeprecationWarning,
+                "intent(inplace) array argument required casting, which is unsafe. "
+                "The previous implementation could corrupt data. "
+                "Use intent(in, out) instead, or ensure the array has the correct dtype.",
+                1) < 0) {
+              Py_DECREF(retarr);
+              return NULL;
+            }
+            
+            if (swap_arrays(arr,retarr)) {
+              Py_DECREF(retarr);
+              return NULL; /* XXX: set exception */
+            }
+            Py_XDECREF(retarr);
+            if (intent & F2PY_INTENT_OUT)
+              Py_INCREF(arr);
+          } else {
+            arr = retarr;
+          }
         }
         return arr;
     }

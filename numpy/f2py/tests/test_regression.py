@@ -185,3 +185,40 @@ class TestAssignmentOnlyModules(util.F2PyTest):
         assert (self.module.f_globals.n_max == 16)
         assert (self.module.f_globals.i_max == 18)
         assert (self.module.f_globals.j_max == 72)
+
+class TestGH30809(util.F2PyTest):
+    """Tests for gh-30809: intent(inplace) deprecation warning"""
+    sources = [util.getpath("tests", "src", "regression", "gh30809.f90")]
+
+    @pytest.mark.slow
+    def test_intent_inplace_warns_on_cast(self):
+        """Warn when dtype mismatch requires casting"""
+        arr = np.array([1, 2, 3, 4], dtype=np.int32)
+
+        with pytest.warns(np.VisibleDeprecationWarning,
+                         match="intent\\(inplace\\).*casting"):
+            self.module.inplace_sum(arr)
+
+    @pytest.mark.slow
+    def test_intent_inplace_no_warn_correct_dtype(self):
+        """No warning when dtype is correct"""
+        arr = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", np.VisibleDeprecationWarning)
+            self.module.inplace_sum(arr)
+
+    @pytest.mark.slow
+    def test_intent_inplace_warning_as_error(self):
+        """Test warning can be converted to error"""
+        import warnings
+
+        arr = np.array([1, 2, 3, 4], dtype=np.int32)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', category=np.VisibleDeprecationWarning)
+
+            with pytest.raises(np.VisibleDeprecationWarning,
+                             match="intent\\(inplace\\).*casting"):
+                self.module.inplace_sum(arr)
