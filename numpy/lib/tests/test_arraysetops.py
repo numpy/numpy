@@ -831,6 +831,37 @@ class TestUnique:
             c = np.array([], np.int64)
             self.check_all(a, b, i1, i2, c, dt)
 
+    def test_unique_nan_with_axis(self):
+
+        # issue 23286
+        a = np.array([0., np.nan, 2., np.nan, 2., 1., 0., 1., 2., 0.])
+        expected = np.array([0., 1., 2., np.nan])
+        result = np.unique(a, equal_nan=True, axis=0)
+        assert_equal(result, expected)
+
+        # issue 20873
+        a = np.array([[np.nan, 2.], [np.nan, 2.]])
+        expected = np.array([[np.nan, 2.]])
+        result = np.unique(a, equal_nan=True, axis=0)
+        assert_equal(result, expected)
+
+        # issue 29336
+        a = np.array([[np.nan, 0, 0], [np.nan, 0, 0]])
+        expected = np.array([[np.nan, 0, 0]])
+        result = np.unique(a, axis=0, equal_nan=True)
+        assert_equal(result, expected)
+
+        a = np.array([np.nan, 0, 0, np.nan])
+        expected = np.array([0, np.nan])
+        result = np.unique(a, axis=0, equal_nan=True)
+        assert_equal(result, expected)
+
+        # Extra case
+        a = np.array([[0, np.nan, 2], [0, np.nan, 1], [0, np.nan, 2]])
+        expected = np.array([[0, np.nan, 1], [0, np.nan, 2]])
+        result = np.unique(a, axis=0)
+        assert_equal(result, expected)
+
     def test_unique_subclass(self):
         class Subclass(np.ndarray):
             pass
