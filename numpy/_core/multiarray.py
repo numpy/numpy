@@ -9,7 +9,7 @@ namespace by importing from the extension module.
 import functools
 
 from . import _multiarray_umath, overrides
-from ._multiarray_umath import *  # noqa: F403
+from ._multiarray_umath import *
 
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
@@ -899,7 +899,7 @@ def vdot(a, b, /):
     >>> 1*4 + 4*1 + 5*2 + 6*2
     30
 
-    """  # noqa: E501
+    """
     return (a, b)
 
 

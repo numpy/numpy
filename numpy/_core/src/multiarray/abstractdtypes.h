@@ -43,7 +43,7 @@ npy_mark_tmp_array_if_pyscalar(
         PyObject *obj, PyArrayObject *arr, PyArray_DTypeMeta **dtype)
 {
     if (PyLong_CheckExact(obj)) {
-        ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
+        PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyLongDType);
             Py_SETREF(*dtype, &PyArray_PyLongDType);
@@ -51,7 +51,7 @@ npy_mark_tmp_array_if_pyscalar(
         return 1;
     }
     else if (PyFloat_CheckExact(obj)) {
-        ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
+        PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyFloatDType);
             Py_SETREF(*dtype, &PyArray_PyFloatDType);
@@ -59,7 +59,7 @@ npy_mark_tmp_array_if_pyscalar(
         return 1;
     }
     else if (PyComplex_CheckExact(obj)) {
-        ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
+        PyArray_GET_ITEM_DATA(arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyComplexDType);
             Py_SETREF(*dtype, &PyArray_PyComplexDType);

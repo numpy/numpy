@@ -15,6 +15,7 @@
 #include "numpy/ufuncobject.h"
 
 #include "common.h"
+#include "npy_pycompat.h"
 
 
 #define UFUNC_ERR_IGNORE 0

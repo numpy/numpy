@@ -13,7 +13,6 @@ from numpy import all, arange, array, nditer
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_array_equal,
@@ -2206,7 +2205,6 @@ def test_buffered_cast_error_paths():
             buf[...] = "a"  # cannot be converted to int.
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
-@pytest.mark.skipif(not HAS_REFCOUNT, reason="PyPy seems to not hit this.")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that
     # (depending python and/or pytest version). So with Python>=3.8 this can
@@ -3640,7 +3638,6 @@ def test_debug_print(capfd):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 def test_signature_constructor():
     sig = inspect.signature(np.nditer)
 
@@ -3651,7 +3648,6 @@ def test_signature_constructor():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 @pytest.mark.parametrize(
     "method",
     [fn for name, fn in vars(np.nditer).items() if callable(fn) and name[0] != "_"],

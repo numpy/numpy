@@ -173,7 +173,7 @@ enum NPY_TYPECHAR {
  * should be downstream compatible, but the actual algorithms used may be
  * different than before. The new approach should be more flexible and easier
  * to update.
- * 
+ *
  * Names with a leading underscore are private, and should only be used
  * internally by NumPy.
  *
@@ -187,7 +187,7 @@ typedef enum {
         NPY_HEAPSORT = 1,
         NPY_MERGESORT = 2,
         NPY_STABLESORT = 2,
-        // new style names 
+        // new style names
         _NPY_SORT_HEAPSORT = 1,
         NPY_SORT_DEFAULT = 0,
         NPY_SORT_STABLE = 2,
@@ -608,12 +608,20 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
 /*
- * Public version of the Descriptor struct as of 2.x
+ * As of NumPy 2.5, direct access to descriptor object fields is
+ * soft-deprecated. You can use accessor macros to access the fields
+ * instead. See npy_2_compat.h.
  */
+
+#if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION || defined(_Py_OPAQUE_PYOBJECT)
+
+#if !defined(_Py_OPAQUE_PYOBJECT)
 typedef struct _PyArray_Descr {
         PyObject_HEAD
+#else
+typedef struct _PyArray_Descr_fields {
+#endif
         /*
          * the type object representing an
          * instance of this type -- should not
@@ -646,7 +654,7 @@ typedef struct _PyArray_Descr {
         npy_hash_t hash;
         /* Unused slot (must be initialized to NULL) for future use */
         void *reserved_null[2];
-} PyArray_Descr;
+} PyArray_Descr_fields;
 
 #else  /* 1.x and 2.x compatible version (only shared fields): */
 
@@ -658,7 +666,7 @@ typedef struct _PyArray_Descr {
         char byteorder;
         char _former_flags;
         int type_num;
-} PyArray_Descr;
+} PyArray_Descr_fields;
 
 /* To access modified fields, define the full 2.0 struct: */
 typedef struct {
@@ -679,13 +687,27 @@ typedef struct {
 
 #endif  /* 1.x and 2.x compatible version */
 
+typedef struct _PyArray_Descr PyArray_Descr;
+
+#ifndef _Py_OPAQUE_PYOBJECT
+static inline PyArray_Descr_fields *
+PyDataType_GET_ITEM_DATA(const PyArray_Descr *dtype)
+{
+    return (PyArray_Descr_fields *)dtype;
+}
+
+#endif
+
 /*
  * Semi-private struct with additional field of legacy descriptors (must
  * check NPY_DT_is_legacy before casting/accessing).  The struct is also not
  * valid when running on 1.x (i.e. in public API use).
  */
+
 typedef struct {
+#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
+#endif
         PyTypeObject *typeobj;
         char kind;
         char type;
@@ -702,9 +724,21 @@ typedef struct {
         PyObject *fields;
         PyObject *names;
         NpyAuxData *c_metadata;
-} _PyArray_LegacyDescr;
+} _PyArray_LegacyDescr_fields;
+
+#ifdef _Py_OPAQUE_PYOBJECT
+typedef struct _PyArray_LegacyDescrTag _PyArray_LegacyDescr;
+#else
+typedef _PyArray_LegacyDescr_fields _PyArray_LegacyDescr;
+static inline _PyArray_LegacyDescr_fields *
+PyArray_LegacyDescr_GET_ITEM_DATA(const _PyArray_LegacyDescr *dtype)
+{
+    return (_PyArray_LegacyDescr_fields *)dtype;
+}
+#endif
 
 
+#if !defined(_Py_OPAQUE_PYOBJECT)
 /*
  * Umodified PyArray_Descr struct identical to NumPy 1.x.  This struct is
  * used as a prototype for registering a new legacy DType.
@@ -728,7 +762,7 @@ typedef struct {
         NpyAuxData *c_metadata;
         npy_hash_t hash;
 } PyArray_DescrProto;
-
+#endif
 
 typedef struct _arr_descr {
         PyArray_Descr *base;
@@ -770,7 +804,9 @@ typedef struct {
  */
 /* This struct will be moved to a private header in a future release */
 typedef struct tagPyArrayObject_fields {
+#ifndef _Py_OPAQUE_PYOBJECT
     PyObject_HEAD
+#endif
     /* Pointer to the raw data buffer */
     char *data;
     /* The number of dimensions, also called 'ndim' */
@@ -822,17 +858,26 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
+#ifndef _Py_OPAQUE_PYOBJECT
 #if !defined(NPY_NO_DEPRECATED_API) || \
     (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
-/*
- * Can't put this in npy_deprecated_api.h like the others.
- * PyArrayObject field access is deprecated as of NumPy 1.7.
- */
+
 typedef PyArrayObject_fields PyArrayObject;
 #else
 typedef struct tagPyArrayObject {
         PyObject_HEAD
 } PyArrayObject;
+#endif
+#else
+typedef struct tagPyArrayObjectOpaque PyArrayObject;
+#endif
+
+#ifndef _Py_OPAQUE_PYOBJECT
+static inline PyArrayObject_fields *
+PyArray_GET_ITEM_DATA(const PyArrayObject *arr)
+{
+    return (PyArrayObject_fields *)arr;
+}
 #endif
 
 /*
@@ -848,7 +893,7 @@ typedef struct tagPyArrayObject {
  */
 
 /* Mirrors buffer object to ptr */
-
+#ifndef _Py_OPAQUE_PYOBJECT
 typedef struct {
         PyObject_HEAD
         PyObject *base;
@@ -856,6 +901,7 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
+#endif
 
 typedef struct {
     NPY_DATETIMEUNIT base;
@@ -1171,13 +1217,16 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
 
-
 /*****************************
  * Basic iterator object
  *****************************/
 
 /* FWD declaration */
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef struct PyArrayIterObject_fields PyArrayIterObject;
+#else
 typedef struct PyArrayIterObject_tag PyArrayIterObject;
+#endif
 
 /*
  * type of the function which translates a set of coordinates to a
@@ -1186,8 +1235,10 @@ typedef struct PyArrayIterObject_tag PyArrayIterObject;
 typedef char* (*npy_iter_get_dataptr_t)(
         PyArrayIterObject* iter, const npy_intp*);
 
-struct PyArrayIterObject_tag {
+typedef struct PyArrayIterObject_fields {
+#ifndef _Py_OPAQUE_PYOBJECT
         PyObject_HEAD
+#endif
         int               nd_m1;            /* number of dimensions - 1 */
         npy_intp          index, size;
         npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
@@ -1203,13 +1254,595 @@ struct PyArrayIterObject_tag {
         npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
         npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
         npy_iter_get_dataptr_t translate;
-} ;
+} PyArrayIterObject_fields;
+
+#ifndef _Py_OPAQUE_PYOBJECT
+static inline PyArrayIterObject_fields *
+PyArrayIter_GET_ITEM_DATA(const PyArrayIterObject *iter)
+{
+    return (PyArrayIterObject_fields *)iter;
+}
+#endif
+
+/*
+ * Any object passed to PyArray_Broadcast must be binary compatible
+ * with this structure.
+ */
+typedef struct {
+#ifndef _Py_OPAQUE_PYOBJECT
+        PyObject_HEAD
+#endif
+        int                  numiter;                 /* number of iters */
+        npy_intp             size;                    /* broadcasted size */
+        npy_intp             index;                   /* current index */
+        int                  nd;                      /* number of dims */
+        npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
+        /*
+         * Space for the individual iterators, do not specify size publicly
+         * to allow changing it more easily.
+         * One reason is that Cython uses this for checks and only allows
+         * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
+         * to be runtime dependent.
+         */
+#if (defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
+        PyArrayIterObject    *iters[64];
+#elif defined(__cplusplus)
+        /*
+         * C++ doesn't strictly support flexible members and gives compilers
+         * warnings (pedantic only), so we lie.  We can't make it 64 because
+         * then Cython is unhappy (larger struct at runtime is OK smaller not).
+         */
+        PyArrayIterObject    *iters[32];
+#else
+        PyArrayIterObject    *iters[];
+#endif
+} PyArrayMultiIterObject_fields;
+
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef PyArrayMultiIterObject_fields PyArrayMultiIterObject;
+static inline PyArrayMultiIterObject_fields *PyArrayMultiIter_GET_ITEM_DATA(const PyArrayMultiIterObject *multi)
+{
+    return (PyArrayMultiIterObject_fields *)multi;
+}
+#else
+typedef struct PyArrayMultiIterObject_tag PyArrayMultiIterObject;
+#endif
+
+enum {
+    NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,
+    NPY_NEIGHBORHOOD_ITER_ONE_PADDING,
+    NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING,
+    NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING,
+    NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING
+};
+
+typedef struct {
+#ifndef _Py_OPAQUE_PYOBJECT
+    PyObject_HEAD
+#endif
+    /*
+     * PyArrayIterObject part: keep this in this exact order
+     */
+    int               nd_m1;            /* number of dimensions - 1 */
+    npy_intp          index, size;
+    npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
+    npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
+    npy_intp          strides[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->strides or fake */
+    npy_intp          backstrides[NPY_MAXDIMS_LEGACY_ITERS];/* how far to jump back */
+    npy_intp          factors[NPY_MAXDIMS_LEGACY_ITERS];     /* shape factors */
+    PyArrayObject     *ao;
+    char              *dataptr;        /* pointer to current item*/
+    npy_bool          contiguous;
+
+    npy_intp          bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+    npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+    npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
+    npy_iter_get_dataptr_t translate;
+
+    /*
+     * New members
+     */
+    npy_intp nd;
+
+    /* Dimensions is the dimension of the array */
+    npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
+
+    /*
+     * Neighborhood points coordinates are computed relatively to the
+     * point pointed by _internal_iter
+     */
+    PyArrayIterObject* _internal_iter;
+    /*
+     * To keep a reference to the representation of the constant value
+     * for constant padding
+     */
+    char* constant;
+
+    int mode;
+} PyArrayNeighborhoodIterObject_fields;
+
+#ifndef _Py_OPAQUE_PYOBJECT
+typedef PyArrayNeighborhoodIterObject_fields PyArrayNeighborhoodIterObject;
+static inline PyArrayNeighborhoodIterObject_fields *PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter)
+{
+    return (PyArrayNeighborhoodIterObject_fields *)iter;
+}
+#else
+typedef struct PyArrayNeighborhoodIterObject_tag PyArrayNeighborhoodIterObject;
+
+PyArrayNeighborhoodIterObject_fields *_PyArrayNeighborhoodIter_GET_ITEM_DATA(const PyArrayNeighborhoodIterObject *iter);
+#define PyArrayNeighborhoodIter_GET_ITEM_DATA(iter) _PyArrayNeighborhoodIter_GET_ITEM_DATA((PyArrayNeighborhoodIterObject *)(iter))
+#endif
+
+/*
+ * Neighborhood iterator API
+ */
+
+/* General: those work for any mode */
+static inline int
+PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
+static inline int
+PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
+#if 0
+static inline int
+PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
+#endif
+
+/*
+ * Include inline implementations - functions defined there are not
+ * considered public API
+ */
+#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+#include "_neighborhood_iterator_imp.h"
+#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
+
+
+
+/* The default array type */
+#define NPY_DEFAULT_TYPE NPY_DOUBLE
+/* default integer type defined in npy_2_compat header */
+
+/************************************************************
+ * A struct used by PyArray_CreateSortedStridePerm, new in 1.7.
+ ************************************************************/
+
+typedef struct {
+    npy_intp perm, stride;
+} npy_stride_sort_item;
+
+/************************************************************
+ * This is the form of the struct that's stored in the
+ * PyCapsule returned by an array's __array_struct__ attribute. See
+ * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
+ * documentation.
+ ************************************************************/
+typedef struct {
+    int two;              /*
+                           * contains the integer 2 as a sanity
+                           * check
+                           */
+
+    int nd;               /* number of dimensions */
+
+    char typekind;        /*
+                           * kind in array --- character code of
+                           * typestr
+                           */
+
+    int itemsize;         /* size of each element */
+
+    int flags;            /*
+                           * how should be data interpreted. Valid
+                           * flags are CONTIGUOUS (1), F_CONTIGUOUS (2),
+                           * ALIGNED (0x100), NOTSWAPPED (0x200), and
+                           * WRITEABLE (0x400).  ARR_HAS_DESCR (0x800)
+                           * states that arrdescr field is present in
+                           * structure
+                           */
+
+    npy_intp *shape;       /*
+                            * A length-nd array of shape
+                            * information
+                            */
+
+    npy_intp *strides;    /* A length-nd array of stride information */
+
+    void *data;           /* A pointer to the first element of the array */
+
+    PyObject *descr;      /*
+                           * A list of fields or NULL (ignored if flags
+                           * does not have ARR_HAS_DESCR flag set)
+                           */
+} PyArrayInterface;
+
+
+/****************************************
+ * NpyString
+ *
+ * Types used by the NpyString API.
+ ****************************************/
+
+/*
+ * A "packed" encoded string. The string data must be accessed by first unpacking the string.
+ */
+typedef struct npy_packed_static_string npy_packed_static_string;
+
+/*
+ * An unpacked read-only view onto the data in a packed string
+ */
+typedef struct npy_unpacked_static_string {
+    size_t size;
+    const char *buf;
+} npy_static_string;
+
+/*
+ * Handles heap allocations for static strings.
+ */
+typedef struct npy_string_allocator npy_string_allocator;
+
+typedef struct {
+    PyArray_Descr_fields base;
+    // The object representing a null value
+    PyObject *na_object;
+    // Flag indicating whether or not to coerce arbitrary objects to strings
+    char coerce;
+    // Flag indicating the na object is NaN-like
+    char has_nan_na;
+    // Flag indicating the na object is a string
+    char has_string_na;
+    // If nonzero, indicates that this instance is owned by an array already
+    char array_owned;
+    // The string data to use when a default string is needed
+    npy_static_string default_string;
+    // The name of the missing data object, if any
+    npy_static_string na_name;
+    // the allocator should only be directly accessed after
+    // acquiring the allocator_lock and the lock should
+    // be released immediately after the allocator is
+    // no longer needed
+    npy_string_allocator *allocator;
+} PyArray_StringDTypeObject;
+
+/*
+ * PyArray_DTypeMeta related definitions.
+ *
+ * As of now, this API is preliminary and will be extended as necessary.
+ */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+    /*
+     * The Structures defined in this block are currently considered
+     * private API and may change without warning!
+     * Part of this (at least the size) is expected to be public API without
+     * further modifications.
+     */
+    /* TODO: Make this definition public in the API, as soon as its settled */
+    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
+
+    /*
+     * While NumPy DTypes would not need to be heap types the plan is to
+     * make DTypes available in Python at which point they will be heap types.
+     * Since we also wish to add fields to the DType class, this looks like
+     * a typical instance definition, but with PyHeapTypeObject instead of
+     * only the PyObject_HEAD.
+     * This must only be exposed very extremely careful consideration, since
+     * it is a fairly complex construct which may be better to allow
+     * refactoring of.
+     */
+    typedef struct {
+        PyHeapTypeObject super;
+
+        /*
+         * Most DTypes will have a singleton default instance, for the
+         * parametric legacy DTypes (bytes, string, void, datetime) this
+         * may be a pointer to the *prototype* instance?
+         */
+        PyArray_Descr *singleton;
+        /* Copy of the legacy DTypes type number, usually invalid. */
+        int type_num;
+
+        /* The type object of the scalar instances (may be NULL?) */
+        PyTypeObject *scalar_type;
+        /*
+         * DType flags to signal legacy, parametric, or
+         * abstract.  But plenty of space for additional information/flags.
+         */
+        npy_uint64 flags;
+
+        /*
+         * Use indirection in order to allow a fixed size for this struct.
+         * A stable ABI size makes creating a static DType less painful
+         * while also ensuring flexibility for all opaque API (with one
+         * indirection due the pointer lookup).
+         */
+        void *dt_slots;
+        void *reserved[3];
+    } PyArray_DTypeMeta;
+
+#endif  /* NPY_INTERNAL_BUILD */
+
+/* Includes the "function" C-API -- these are all stored in a
+   list of pointers --- one for each file
+   The two lists are concatenated into one in multiarray.
+
+   They are available as import_array()
+*/
+
+#include "dtype_api.h"
+#include "__multiarray_api.h"
+
+#ifdef _Py_OPAQUE_PYOBJECT
+#define PyArray_GET_ITEM_DATA(arr) _PyArray_GET_ITEM_DATA((PyArrayObject *)(arr))
+#define PyArrayIter_GET_ITEM_DATA(iter) _PyArrayIter_GET_ITEM_DATA((PyArrayIterObject *)(iter))
+#define PyArrayMultiIter_GET_ITEM_DATA(multi) _PyArrayMultiIter_GET_ITEM_DATA((PyArrayMultiIterObject *)(multi))
+#define PyArrayNeighborhoodIter_GET_ITEM_DATA(iter) _PyArrayNeighborhoodIter_GET_ITEM_DATA((PyArrayNeighborhoodIterObject *)(iter))
+#define PyDataType_GET_ITEM_DATA(descr) _PyDataType_GET_ITEM_DATA((PyArray_Descr *)(descr))
+#define PyArray_LegacyDescr_GET_ITEM_DATA(descr) _PyArray_LegacyDescr_GET_ITEM_DATA((_PyArray_LegacyDescr *)(descr))
+#endif
+/*
+ * All sorts of useful ways to look into a PyArrayObject. It is recommended
+ * to use PyArrayObject * objects instead of always casting from PyObject *,
+ * for improved type checking.
+ *
+ * In many cases here the macro versions of the accessors are deprecated,
+ * but can't be immediately changed to inline functions because the
+ * preexisting macros accept PyObject * and do automatic casts. Inline
+ * functions accepting PyArrayObject * provides for some compile-time
+ * checking of correctness when working with these objects in C.
+ */
+#define PyDataType_TYPENUM(descr) (PyDataType_GET_ITEM_DATA((PyArray_Descr *)(descr))->type_num)
+
+#define PyArray_ISONESEGMENT(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
+                                 PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
+
+#define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) && \
+                             (!PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)))
+
+#define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
+                               NPY_ARRAY_F_CONTIGUOUS : 0))
+static inline int
+PyArray_NDIM(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->nd;
+}
+
+static inline void *
+PyArray_DATA(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->data;
+}
+
+static inline char *
+PyArray_BYTES(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->data;
+}
+
+static inline npy_intp *
+PyArray_DIMS(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->dimensions;
+}
+
+static inline npy_intp *
+PyArray_STRIDES(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->strides;
+}
+
+static inline npy_intp
+PyArray_DIM(const PyArrayObject *arr, int idim)
+{
+    return PyArray_GET_ITEM_DATA(arr)->dimensions[idim];
+}
+
+static inline npy_intp
+PyArray_STRIDE(const PyArrayObject *arr, int istride)
+{
+    return PyArray_GET_ITEM_DATA(arr)->strides[istride];
+}
+
+static inline NPY_RETURNS_BORROWED_REF PyObject *
+PyArray_BASE(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->base;
+}
+
+static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
+PyArray_DESCR(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->descr;
+}
+
+static inline int
+PyArray_FLAGS(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->flags;
+}
+
+static inline int
+PyArray_TYPE(const PyArrayObject *arr)
+{
+    return PyDataType_TYPENUM(PyArray_GET_ITEM_DATA(arr)->descr);
+}
+
+static inline int
+PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
+{
+    return (PyArray_FLAGS(arr) & flags) == flags;
+}
+
+static inline PyArray_Descr *
+PyArray_DTYPE(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->descr;
+}
+
+static inline npy_intp *
+PyArray_SHAPE(const PyArrayObject *arr)
+{
+    return PyArray_GET_ITEM_DATA(arr)->dimensions;
+}
+
+/*
+ * Enables the specified array flags. Does no checking,
+ * assumes you know what you're doing.
+ */
+static inline void
+PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
+{
+    PyArray_GET_ITEM_DATA(arr)->flags |= flags;
+}
+
+/*
+ * Clears the specified array flags. Does no checking,
+ * assumes you know what you're doing.
+ */
+static inline void
+PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
+{
+    PyArray_GET_ITEM_DATA(arr)->flags &= ~flags;
+}
+
+#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
+    static inline NPY_RETURNS_BORROWED_REF PyObject *
+    PyArray_HANDLER(PyArrayObject *arr)
+    {
+        return PyArray_GET_ITEM_DATA(arr)->mem_handler;
+    }
+#endif
+
+#define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
+
+#define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) ||   \
+                                 ((type) == NPY_USHORT) ||     \
+                                 ((type) == NPY_UINT) ||       \
+                                 ((type) == NPY_ULONG) ||      \
+                                 ((type) == NPY_ULONGLONG))
+
+#define PyTypeNum_ISSIGNED(type) (((type) == NPY_BYTE) ||      \
+                               ((type) == NPY_SHORT) ||        \
+                               ((type) == NPY_INT) ||          \
+                               ((type) == NPY_LONG) ||         \
+                               ((type) == NPY_LONGLONG))
+
+#define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&     \
+                                ((type) <= NPY_ULONGLONG))
+
+#define PyTypeNum_ISFLOAT(type) ((((type) >= NPY_FLOAT) && \
+                              ((type) <= NPY_LONGDOUBLE)) || \
+                              ((type) == NPY_HALF))
+
+#define PyTypeNum_ISNUMBER(type) (((type) <= NPY_CLONGDOUBLE) || \
+                                  ((type) == NPY_HALF))
+
+#define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
+                                  ((type) == NPY_UNICODE))
+
+#define PyTypeNum_ISCOMPLEX(type) (((type) >= NPY_CFLOAT) &&   \
+                                ((type) <= NPY_CLONGDOUBLE))
+
+#define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
+                                    ((type) <=NPY_VOID))
+
+#define PyTypeNum_ISDATETIME(type) (((type) >=NPY_DATETIME) &&  \
+                                    ((type) <=NPY_TIMEDELTA))
+
+#define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
+                                   ((type) < NPY_USERDEF+     \
+                                    NPY_NUMUSERTYPES))
+
+#define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
+                                    PyTypeNum_ISUSERDEF(type))
+
+#define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
+
+
+#define PyDataType_ISLEGACY(dtype) (PyDataType_TYPENUM(dtype) < NPY_VSTRING && (PyDataType_TYPENUM(dtype) >= 0))
+#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(PyDataType_TYPENUM((PyArray_Descr*)(obj)) )
+#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyDataType_TYPENUM((PyArray_Descr*)(obj)))
+#define PyDataType_MAKEUNSIZED(dtype) (PyDataType_SET_ELSIZE(dtype, 0))
+/*
+ * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
+ * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
+ * lookup and are defined in npy_2_compat.h.
+ */
+
+
+#define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
+#define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
+#define PyArray_ISSIGNED(obj) PyTypeNum_ISSIGNED(PyArray_TYPE(obj))
+#define PyArray_ISINTEGER(obj) PyTypeNum_ISINTEGER(PyArray_TYPE(obj))
+#define PyArray_ISFLOAT(obj) PyTypeNum_ISFLOAT(PyArray_TYPE(obj))
+#define PyArray_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyArray_TYPE(obj))
+#define PyArray_ISSTRING(obj) PyTypeNum_ISSTRING(PyArray_TYPE(obj))
+#define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
+#define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
+#define PyArray_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyArray_TYPE(obj))
+#define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
+#define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
+#define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
+#define PyArray_HASFIELDS(obj) PyDataType_HASFIELDS(PyArray_DESCR(obj))
+
+    /*
+     * FIXME: This should check for a flag on the data-type that
+     * states whether or not it is variable length.  Because the
+     * ISFLEXIBLE check is hard-coded to the built-in data-types.
+     */
+#define PyArray_ISVARIABLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
+
+#define PyArray_SAFEALIGNEDCOPY(obj) (PyArray_ISALIGNED(obj) && !PyArray_ISVARIABLE(obj))
+
+
+#define NPY_LITTLE '<'
+#define NPY_BIG '>'
+#define NPY_NATIVE '='
+#define NPY_SWAP 's'
+#define NPY_IGNORE '|'
+
+#if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+#define NPY_NATBYTE NPY_BIG
+#define NPY_OPPBYTE NPY_LITTLE
+#else
+#define NPY_NATBYTE NPY_LITTLE
+#define NPY_OPPBYTE NPY_BIG
+#endif
+
+#define PyArray_ISNBO(arg) ((arg) != NPY_OPPBYTE)
+#define PyArray_IsNativeByteOrder PyArray_ISNBO
+#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyDataType_BYTEORDER(PyArray_DESCR(m)))
+#define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
+
+#define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&       \
+                                    PyArray_ISNOTSWAPPED(m))
+
+#define PyArray_ISCARRAY(m) PyArray_FLAGSWAP(m, NPY_ARRAY_CARRAY)
+#define PyArray_ISCARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_CARRAY_RO)
+#define PyArray_ISFARRAY(m) PyArray_FLAGSWAP(m, NPY_ARRAY_FARRAY)
+#define PyArray_ISFARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_FARRAY_RO)
+#define PyArray_ISBEHAVED(m) PyArray_FLAGSWAP(m, NPY_ARRAY_BEHAVED)
+#define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_ALIGNED)
+
+
+#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(PyDataType_BYTEORDER((PyArray_Descr *)(d)))
+#define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
+
 
 
 /* Iterator API */
 #define PyArrayIter_Check(op) PyObject_TypeCheck((op), &PyArrayIter_Type)
 
-#define _PyAIT(it) ((PyArrayIterObject *)(it))
+#define _PyAIT(it) PyArrayIter_GET_ITEM_DATA(it)
 #define PyArray_ITER_RESET(it) do { \
         _PyAIT(it)->index = 0; \
         _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
@@ -1314,40 +1947,7 @@ struct PyArrayIterObject_tag {
 #define PyArray_ITER_NOTDONE(it) (_PyAIT(it)->index < _PyAIT(it)->size)
 
 
-/*
- * Any object passed to PyArray_Broadcast must be binary compatible
- * with this structure.
- */
-
-typedef struct {
-        PyObject_HEAD
-        int                  numiter;                 /* number of iters */
-        npy_intp             size;                    /* broadcasted size */
-        npy_intp             index;                   /* current index */
-        int                  nd;                      /* number of dims */
-        npy_intp             dimensions[NPY_MAXDIMS_LEGACY_ITERS]; /* dimensions */
-        /*
-         * Space for the individual iterators, do not specify size publicly
-         * to allow changing it more easily.
-         * One reason is that Cython uses this for checks and only allows
-         * growing structs (as of Cython 3.0.6).  It also allows NPY_MAXARGS
-         * to be runtime dependent.
-         */
-#if (defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
-        PyArrayIterObject    *iters[64];
-#elif defined(__cplusplus)
-        /*
-         * C++ doesn't strictly support flexible members and gives compilers
-         * warnings (pedantic only), so we lie.  We can't make it 64 because
-         * then Cython is unhappy (larger struct at runtime is OK smaller not).
-         */
-        PyArrayIterObject    *iters[32];
-#else
-        PyArrayIterObject    *iters[];
-#endif
-} PyArrayMultiIterObject;
-
-#define _PyMIT(m) ((PyArrayMultiIterObject *)(m))
+#define _PyMIT(m) (PyArrayMultiIter_GET_ITEM_DATA((PyArrayMultiIterObject *)m))
 #define PyArray_MultiIter_RESET(multi) do {                                   \
         int __npy_mi;                                                         \
         _PyMIT(multi)->index = 0;                                             \
@@ -1393,542 +1993,43 @@ typedef struct {
 static NPY_INLINE int
 PyArray_MultiIter_NUMITER(PyArrayMultiIterObject *multi)
 {
-    return multi->numiter;
+    return _PyMIT(multi)->numiter;
 }
 
 
 static NPY_INLINE npy_intp
 PyArray_MultiIter_SIZE(PyArrayMultiIterObject *multi)
 {
-    return multi->size;
+    return _PyMIT(multi)->size;
 }
 
 
 static NPY_INLINE npy_intp
 PyArray_MultiIter_INDEX(PyArrayMultiIterObject *multi)
 {
-    return multi->index;
+    return _PyMIT(multi)->index;
 }
 
 
 static NPY_INLINE int
 PyArray_MultiIter_NDIM(PyArrayMultiIterObject *multi)
 {
-    return multi->nd;
+    return _PyMIT(multi)->nd;
 }
 
 
 static NPY_INLINE npy_intp *
 PyArray_MultiIter_DIMS(PyArrayMultiIterObject *multi)
 {
-    return multi->dimensions;
+    return _PyMIT(multi)->dimensions;
 }
 
 
 static NPY_INLINE void **
 PyArray_MultiIter_ITERS(PyArrayMultiIterObject *multi)
 {
-    return (void**)multi->iters;
+    return (void**)_PyMIT(multi)->iters;
 }
-
-
-enum {
-    NPY_NEIGHBORHOOD_ITER_ZERO_PADDING,
-    NPY_NEIGHBORHOOD_ITER_ONE_PADDING,
-    NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING,
-    NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING,
-    NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING
-};
-
-typedef struct {
-    PyObject_HEAD
-
-    /*
-     * PyArrayIterObject part: keep this in this exact order
-     */
-    int               nd_m1;            /* number of dimensions - 1 */
-    npy_intp          index, size;
-    npy_intp          coordinates[NPY_MAXDIMS_LEGACY_ITERS];/* N-dimensional loop */
-    npy_intp          dims_m1[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->dimensions - 1 */
-    npy_intp          strides[NPY_MAXDIMS_LEGACY_ITERS];    /* ao->strides or fake */
-    npy_intp          backstrides[NPY_MAXDIMS_LEGACY_ITERS];/* how far to jump back */
-    npy_intp          factors[NPY_MAXDIMS_LEGACY_ITERS];     /* shape factors */
-    PyArrayObject     *ao;
-    char              *dataptr;        /* pointer to current item*/
-    npy_bool          contiguous;
-
-    npy_intp          bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
-    npy_intp          limits[NPY_MAXDIMS_LEGACY_ITERS][2];
-    npy_intp          limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
-    npy_iter_get_dataptr_t translate;
-
-    /*
-     * New members
-     */
-    npy_intp nd;
-
-    /* Dimensions is the dimension of the array */
-    npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
-
-    /*
-     * Neighborhood points coordinates are computed relatively to the
-     * point pointed by _internal_iter
-     */
-    PyArrayIterObject* _internal_iter;
-    /*
-     * To keep a reference to the representation of the constant value
-     * for constant padding
-     */
-    char* constant;
-
-    int mode;
-} PyArrayNeighborhoodIterObject;
-
-/*
- * Neighborhood iterator API
- */
-
-/* General: those work for any mode */
-static inline int
-PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
-static inline int
-PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
-#if 0
-static inline int
-PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
-#endif
-
-/*
- * Include inline implementations - functions defined there are not
- * considered public API
- */
-#define NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
-#include "_neighborhood_iterator_imp.h"
-#undef NUMPY_CORE_INCLUDE_NUMPY__NEIGHBORHOOD_IMP_H_
-
-
-
-/* The default array type */
-#define NPY_DEFAULT_TYPE NPY_DOUBLE
-/* default integer type defined in npy_2_compat header */
-
-/*
- * All sorts of useful ways to look into a PyArrayObject. It is recommended
- * to use PyArrayObject * objects instead of always casting from PyObject *,
- * for improved type checking.
- *
- * In many cases here the macro versions of the accessors are deprecated,
- * but can't be immediately changed to inline functions because the
- * preexisting macros accept PyObject * and do automatic casts. Inline
- * functions accepting PyArrayObject * provides for some compile-time
- * checking of correctness when working with these objects in C.
- */
-
-#define PyArray_ISONESEGMENT(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
-                                 PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
-
-#define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) && \
-                             (!PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)))
-
-#define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
-                               NPY_ARRAY_F_CONTIGUOUS : 0))
-
-static inline int
-PyArray_NDIM(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->nd;
-}
-
-static inline void *
-PyArray_DATA(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->data;
-}
-
-static inline char *
-PyArray_BYTES(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->data;
-}
-
-static inline npy_intp *
-PyArray_DIMS(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->dimensions;
-}
-
-static inline npy_intp *
-PyArray_STRIDES(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->strides;
-}
-
-static inline npy_intp
-PyArray_DIM(const PyArrayObject *arr, int idim)
-{
-    return ((PyArrayObject_fields *)arr)->dimensions[idim];
-}
-
-static inline npy_intp
-PyArray_STRIDE(const PyArrayObject *arr, int istride)
-{
-    return ((PyArrayObject_fields *)arr)->strides[istride];
-}
-
-static inline NPY_RETURNS_BORROWED_REF PyObject *
-PyArray_BASE(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->base;
-}
-
-static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
-PyArray_DESCR(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->descr;
-}
-
-static inline int
-PyArray_FLAGS(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->flags;
-}
-
-
-static inline int
-PyArray_TYPE(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->descr->type_num;
-}
-
-static inline int
-PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
-{
-    return (PyArray_FLAGS(arr) & flags) == flags;
-}
-
-static inline PyArray_Descr *
-PyArray_DTYPE(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->descr;
-}
-
-static inline npy_intp *
-PyArray_SHAPE(const PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->dimensions;
-}
-
-/*
- * Enables the specified array flags. Does no checking,
- * assumes you know what you're doing.
- */
-static inline void
-PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
-{
-    ((PyArrayObject_fields *)arr)->flags |= flags;
-}
-
-/*
- * Clears the specified array flags. Does no checking,
- * assumes you know what you're doing.
- */
-static inline void
-PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
-{
-    ((PyArrayObject_fields *)arr)->flags &= ~flags;
-}
-
-#if NPY_FEATURE_VERSION >= NPY_1_22_API_VERSION
-    static inline NPY_RETURNS_BORROWED_REF PyObject *
-    PyArray_HANDLER(PyArrayObject *arr)
-    {
-        return ((PyArrayObject_fields *)arr)->mem_handler;
-    }
-#endif
-
-#define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
-
-#define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) ||   \
-                                 ((type) == NPY_USHORT) ||     \
-                                 ((type) == NPY_UINT) ||       \
-                                 ((type) == NPY_ULONG) ||      \
-                                 ((type) == NPY_ULONGLONG))
-
-#define PyTypeNum_ISSIGNED(type) (((type) == NPY_BYTE) ||      \
-                               ((type) == NPY_SHORT) ||        \
-                               ((type) == NPY_INT) ||          \
-                               ((type) == NPY_LONG) ||         \
-                               ((type) == NPY_LONGLONG))
-
-#define PyTypeNum_ISINTEGER(type) (((type) >= NPY_BYTE) &&     \
-                                ((type) <= NPY_ULONGLONG))
-
-#define PyTypeNum_ISFLOAT(type) ((((type) >= NPY_FLOAT) && \
-                              ((type) <= NPY_LONGDOUBLE)) || \
-                              ((type) == NPY_HALF))
-
-#define PyTypeNum_ISNUMBER(type) (((type) <= NPY_CLONGDOUBLE) || \
-                                  ((type) == NPY_HALF))
-
-#define PyTypeNum_ISSTRING(type) (((type) == NPY_STRING) ||    \
-                                  ((type) == NPY_UNICODE))
-
-#define PyTypeNum_ISCOMPLEX(type) (((type) >= NPY_CFLOAT) &&   \
-                                ((type) <= NPY_CLONGDOUBLE))
-
-#define PyTypeNum_ISFLEXIBLE(type) (((type) >=NPY_STRING) &&  \
-                                    ((type) <=NPY_VOID))
-
-#define PyTypeNum_ISDATETIME(type) (((type) >=NPY_DATETIME) &&  \
-                                    ((type) <=NPY_TIMEDELTA))
-
-#define PyTypeNum_ISUSERDEF(type) (((type) >= NPY_USERDEF) && \
-                                   ((type) < NPY_USERDEF+     \
-                                    NPY_NUMUSERTYPES))
-
-#define PyTypeNum_ISEXTENDED(type) (PyTypeNum_ISFLEXIBLE(type) ||  \
-                                    PyTypeNum_ISUSERDEF(type))
-
-#define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
-
-
-#define PyDataType_ISLEGACY(dtype) ((dtype)->type_num < NPY_VSTRING && ((dtype)->type_num >= 0))
-#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)(obj))->type_num )
-#define PyDataType_ISFLOAT(obj) PyTypeNum_ISFLOAT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISNUMBER(obj) PyTypeNum_ISNUMBER(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISSTRING(obj) PyTypeNum_ISSTRING(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISDATETIME(obj) PyTypeNum_ISDATETIME(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
-#define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
-/*
- * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
- * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
- * lookup and are defined in npy_2_compat.h.
- */
-
-
-#define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
-#define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))
-#define PyArray_ISSIGNED(obj) PyTypeNum_ISSIGNED(PyArray_TYPE(obj))
-#define PyArray_ISINTEGER(obj) PyTypeNum_ISINTEGER(PyArray_TYPE(obj))
-#define PyArray_ISFLOAT(obj) PyTypeNum_ISFLOAT(PyArray_TYPE(obj))
-#define PyArray_ISNUMBER(obj) PyTypeNum_ISNUMBER(PyArray_TYPE(obj))
-#define PyArray_ISSTRING(obj) PyTypeNum_ISSTRING(PyArray_TYPE(obj))
-#define PyArray_ISCOMPLEX(obj) PyTypeNum_ISCOMPLEX(PyArray_TYPE(obj))
-#define PyArray_ISFLEXIBLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
-#define PyArray_ISDATETIME(obj) PyTypeNum_ISDATETIME(PyArray_TYPE(obj))
-#define PyArray_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyArray_TYPE(obj))
-#define PyArray_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyArray_TYPE(obj))
-#define PyArray_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyArray_TYPE(obj))
-#define PyArray_HASFIELDS(obj) PyDataType_HASFIELDS(PyArray_DESCR(obj))
-
-    /*
-     * FIXME: This should check for a flag on the data-type that
-     * states whether or not it is variable length.  Because the
-     * ISFLEXIBLE check is hard-coded to the built-in data-types.
-     */
-#define PyArray_ISVARIABLE(obj) PyTypeNum_ISFLEXIBLE(PyArray_TYPE(obj))
-
-#define PyArray_SAFEALIGNEDCOPY(obj) (PyArray_ISALIGNED(obj) && !PyArray_ISVARIABLE(obj))
-
-
-#define NPY_LITTLE '<'
-#define NPY_BIG '>'
-#define NPY_NATIVE '='
-#define NPY_SWAP 's'
-#define NPY_IGNORE '|'
-
-#if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
-#define NPY_NATBYTE NPY_BIG
-#define NPY_OPPBYTE NPY_LITTLE
-#else
-#define NPY_NATBYTE NPY_LITTLE
-#define NPY_OPPBYTE NPY_BIG
-#endif
-
-#define PyArray_ISNBO(arg) ((arg) != NPY_OPPBYTE)
-#define PyArray_IsNativeByteOrder PyArray_ISNBO
-#define PyArray_ISNOTSWAPPED(m) PyArray_ISNBO(PyArray_DESCR(m)->byteorder)
-#define PyArray_ISBYTESWAPPED(m) (!PyArray_ISNOTSWAPPED(m))
-
-#define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&       \
-                                    PyArray_ISNOTSWAPPED(m))
-
-#define PyArray_ISCARRAY(m) PyArray_FLAGSWAP(m, NPY_ARRAY_CARRAY)
-#define PyArray_ISCARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_CARRAY_RO)
-#define PyArray_ISFARRAY(m) PyArray_FLAGSWAP(m, NPY_ARRAY_FARRAY)
-#define PyArray_ISFARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_FARRAY_RO)
-#define PyArray_ISBEHAVED(m) PyArray_FLAGSWAP(m, NPY_ARRAY_BEHAVED)
-#define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_ALIGNED)
-
-
-#define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
-#define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
-
-/************************************************************
- * A struct used by PyArray_CreateSortedStridePerm, new in 1.7.
- ************************************************************/
-
-typedef struct {
-    npy_intp perm, stride;
-} npy_stride_sort_item;
-
-/************************************************************
- * This is the form of the struct that's stored in the
- * PyCapsule returned by an array's __array_struct__ attribute. See
- * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
- * documentation.
- ************************************************************/
-typedef struct {
-    int two;              /*
-                           * contains the integer 2 as a sanity
-                           * check
-                           */
-
-    int nd;               /* number of dimensions */
-
-    char typekind;        /*
-                           * kind in array --- character code of
-                           * typestr
-                           */
-
-    int itemsize;         /* size of each element */
-
-    int flags;            /*
-                           * how should be data interpreted. Valid
-                           * flags are CONTIGUOUS (1), F_CONTIGUOUS (2),
-                           * ALIGNED (0x100), NOTSWAPPED (0x200), and
-                           * WRITEABLE (0x400).  ARR_HAS_DESCR (0x800)
-                           * states that arrdescr field is present in
-                           * structure
-                           */
-
-    npy_intp *shape;       /*
-                            * A length-nd array of shape
-                            * information
-                            */
-
-    npy_intp *strides;    /* A length-nd array of stride information */
-
-    void *data;           /* A pointer to the first element of the array */
-
-    PyObject *descr;      /*
-                           * A list of fields or NULL (ignored if flags
-                           * does not have ARR_HAS_DESCR flag set)
-                           */
-} PyArrayInterface;
-
-
-/****************************************
- * NpyString
- *
- * Types used by the NpyString API.
- ****************************************/
-
-/*
- * A "packed" encoded string. The string data must be accessed by first unpacking the string.
- */
-typedef struct npy_packed_static_string npy_packed_static_string;
-
-/*
- * An unpacked read-only view onto the data in a packed string
- */
-typedef struct npy_unpacked_static_string {
-    size_t size;
-    const char *buf;
-} npy_static_string;
-
-/*
- * Handles heap allocations for static strings.
- */
-typedef struct npy_string_allocator npy_string_allocator;
-
-typedef struct {
-    PyArray_Descr base;
-    // The object representing a null value
-    PyObject *na_object;
-    // Flag indicating whether or not to coerce arbitrary objects to strings
-    char coerce;
-    // Flag indicating the na object is NaN-like
-    char has_nan_na;
-    // Flag indicating the na object is a string
-    char has_string_na;
-    // If nonzero, indicates that this instance is owned by an array already
-    char array_owned;
-    // The string data to use when a default string is needed
-    npy_static_string default_string;
-    // The name of the missing data object, if any
-    npy_static_string na_name;
-    // the allocator should only be directly accessed after
-    // acquiring the allocator_lock and the lock should
-    // be released immediately after the allocator is
-    // no longer needed
-    npy_string_allocator *allocator;
-} PyArray_StringDTypeObject;
-
-/*
- * PyArray_DTypeMeta related definitions.
- *
- * As of now, this API is preliminary and will be extended as necessary.
- */
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-    /*
-     * The Structures defined in this block are currently considered
-     * private API and may change without warning!
-     * Part of this (at least the size) is expected to be public API without
-     * further modifications.
-     */
-    /* TODO: Make this definition public in the API, as soon as its settled */
-    NPY_NO_EXPORT extern PyTypeObject PyArrayDTypeMeta_Type;
-
-    /*
-     * While NumPy DTypes would not need to be heap types the plan is to
-     * make DTypes available in Python at which point they will be heap types.
-     * Since we also wish to add fields to the DType class, this looks like
-     * a typical instance definition, but with PyHeapTypeObject instead of
-     * only the PyObject_HEAD.
-     * This must only be exposed very extremely careful consideration, since
-     * it is a fairly complex construct which may be better to allow
-     * refactoring of.
-     */
-    typedef struct {
-        PyHeapTypeObject super;
-
-        /*
-         * Most DTypes will have a singleton default instance, for the
-         * parametric legacy DTypes (bytes, string, void, datetime) this
-         * may be a pointer to the *prototype* instance?
-         */
-        PyArray_Descr *singleton;
-        /* Copy of the legacy DTypes type number, usually invalid. */
-        int type_num;
-
-        /* The type object of the scalar instances (may be NULL?) */
-        PyTypeObject *scalar_type;
-        /*
-         * DType flags to signal legacy, parametric, or
-         * abstract.  But plenty of space for additional information/flags.
-         */
-        npy_uint64 flags;
-
-        /*
-         * Use indirection in order to allow a fixed size for this struct.
-         * A stable ABI size makes creating a static DType less painful
-         * while also ensuring flexibility for all opaque API (with one
-         * indirection due the pointer lookup).
-         */
-        void *dt_slots;
-        void *reserved[3];
-    } PyArray_DTypeMeta;
-
-#endif  /* NPY_INTERNAL_BUILD */
 
 
 /*
@@ -1957,7 +2058,7 @@ typedef struct {
  * #endif
  * #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
  * #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
- * 
+ *
  * #ifndef NPY_NO_DEPRECATED_API
  * #if defined(_WIN32)
  * #define _WARN___STR2__(x) #x

@@ -676,7 +676,7 @@ npy_create_writebackifcopy(PyObject* NPY_UNUSED(self), PyObject* args)
     return array;
 }
 
-/* used to test WRITEBACKIFCOPY without resolution emits runtime warning */
+/* used to test WRITEBACKIFCOPY without resolution, emits runtime warning */
 static PyObject*
 npy_abuse_writebackifcopy(PyObject* NPY_UNUSED(self), PyObject* args)
 {
@@ -690,7 +690,7 @@ npy_abuse_writebackifcopy(PyObject* NPY_UNUSED(self), PyObject* args)
     array = PyArray_FromArray((PyArrayObject*)args, NULL, flags);
     if (array == NULL)
         return NULL;
-    Py_DECREF(array); /* calls array_dealloc even on PyPy */
+    Py_DECREF(array); /* calls array_dealloc */
     Py_RETURN_NONE;
 }
 

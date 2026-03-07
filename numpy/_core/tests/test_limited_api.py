@@ -4,8 +4,9 @@ import sys
 import sysconfig
 
 import pytest
+from pathlib import Path
 
-from numpy.testing import IS_EDITABLE, IS_PYPY, IS_WASM, NOGIL_BUILD
+from numpy.testing import IS_EDITABLE, IS_WASM, NOGIL_BUILD
 
 # This import is copied from random.tests.test_extending
 try:
@@ -33,13 +34,13 @@ if IS_EDITABLE:
 
 
 @pytest.fixture(scope='module')
-def install_temp(tmpdir_factory):
+def install_temp():
     # Based in part on test_cython from random.tests.test_extending
     if IS_WASM:
         pytest.skip("No subprocess")
 
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'limited_api')
-    build_dir = tmpdir_factory.mktemp("limited_api") / "build"
+    build_dir = Path('/tmp') / "limited_api" / "build"
     os.makedirs(build_dir, exist_ok=True)
     # Ensure we use the correct Python interpreter even when `meson` is
     # installed in a different Python environment (see gh-24956)
@@ -91,7 +92,6 @@ def install_temp(tmpdir_factory):
     NOGIL_BUILD,
     reason="Py_GIL_DISABLED builds do not currently support the limited API",
 )
-@pytest.mark.skipif(IS_PYPY, reason="no support for limited API in PyPy")
 def test_limited_api(install_temp):
     """Test building a third-party C extension with the limited API
     and building a cython extension with the limited API
@@ -100,3 +100,9 @@ def test_limited_api(install_temp):
     import limited_api1  # Earliest (3.6)  # noqa: F401
     import limited_api2  # cython  # noqa: F401
     import limited_api_latest  # Latest version (current Python)  # noqa: F401
+
+def test_limited_opaque(install_temp):
+    import limited_api_opaque
+    import numpy as np
+    arr = np.ones((200, 200))
+    assert limited_api_opaque.nonzero(arr) == 200*200

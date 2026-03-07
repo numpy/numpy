@@ -2,6 +2,7 @@ import contextlib
 import ctypes
 import inspect
 import operator
+import os
 import pickle
 import sys
 import types
@@ -19,7 +20,6 @@ from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     assert_,
     assert_array_equal,
     assert_equal,
@@ -1519,6 +1519,7 @@ class TestFromDTypeAttribute:
         with pytest.raises(ValueError):
             np.dtype(dt_instance)
 
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_void_subtype(self):
         class dt(np.void):
             # This code path is fully untested before, so it is unclear
@@ -1898,6 +1899,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype(self):
         class mytype:
             pass
@@ -1921,6 +1923,7 @@ class TestUserDType:
     @pytest.mark.thread_unsafe(
         reason="crashes when GIL disabled, dtype setup is thread-unsafe",
     )
+    @pytest.mark.xfail("LSAN_OPTIONS" in os.environ, reason="known leak", run=False)
     def test_custom_structured_dtype_errors(self):
         class mytype:
             pass
@@ -1980,7 +1983,6 @@ def test_creating_dtype_with_dtype_class_errors():
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDTypeSignatures:
     def test_signature_dtype(self):
         sig = inspect.signature(np.dtype)

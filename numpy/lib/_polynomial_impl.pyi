@@ -57,7 +57,7 @@ __all__ = [
 ]
 
 class poly1d:
-    __module__: L["numpy"] = "numpy"
+    __module__: L["numpy"] = "numpy"  # pyrefly: ignore[bad-override]
 
     __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
 

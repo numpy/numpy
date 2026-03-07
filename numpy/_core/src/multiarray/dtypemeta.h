@@ -287,7 +287,7 @@ PyDataType_GetArrFuncs(const PyArray_Descr *descr)
 static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
-    return PyDataType_GetArrFuncs(((PyArrayObject_fields *)arr)->descr)->getitem(
+    return PyDataType_GetArrFuncs(PyArray_GET_ITEM_DATA(arr)->descr)->getitem(
             (void *)itemptr, (PyArrayObject *)arr);
 }
 

@@ -21,13 +21,7 @@ from numpy import (
     subtract,
     sum,
 )
-from numpy.testing import (
-    IS_PYPY,
-    assert_,
-    assert_array_equal,
-    assert_equal,
-    break_cycles,
-)
+from numpy.testing import assert_, assert_array_equal, assert_equal
 
 
 @pytest.mark.thread_unsafe(reason="setup & memmap is thread-unsafe (gh-29126)")
@@ -41,9 +35,6 @@ class TestMemmap:
     def teardown_method(self):
         self.tmpfp.close()
         self.data = None
-        if IS_PYPY:
-            break_cycles()
-            break_cycles()
 
     def test_roundtrip(self):
         # Write data to file

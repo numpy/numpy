@@ -82,7 +82,7 @@ def run_mypy() -> None:
     """
     if (
         os.path.isdir(CACHE_DIR)
-        and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True))  # noqa: PLW1508
+        and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True))
     ):
         shutil.rmtree(CACHE_DIR)
 

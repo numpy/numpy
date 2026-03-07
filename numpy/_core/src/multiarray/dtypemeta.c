@@ -1142,7 +1142,7 @@ dtypemeta_wrap_legacy_descriptor(
      * a prototype instances for everything except our own fields which
      * vary between the DTypes.
      * In particular any Object initialization must be strictly copied from
-     * the untouched prototype to avoid complexities (e.g. with PyPy).
+     * the untouched prototype to avoid complexities.
      * Any Type slots need to be fixed before PyType_Ready, although most
      * will be inherited automatically there.
      */

@@ -627,16 +627,16 @@ class throw_error:
 def l_and(*f):
     l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l1 = '%s,f%d=f[%d]' % (l1, i, i)
-        l2.append('f%d(v)' % (i))
+        l1 = f'{l1},f{i}=f[{i}]'
+        l2.append(f'f{i}(v)')
     return eval(f"{l1}:{' and '.join(l2)}")
 
 
 def l_or(*f):
     l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l1 = '%s,f%d=f[%d]' % (l1, i, i)
-        l2.append('f%d(v)' % (i))
+        l1 = f'{l1},f{i}=f[{i}]'
+        l2.append(f'f{i}(v)')
     return eval(f"{l1}:{' or '.join(l2)}")
 
 
@@ -988,17 +988,18 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose=False):
             if v1 in c2py_map:
                 if k1 in f2cmap_all[k]:
                     outmess(
-                        "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
-                        % (k, k1, f2cmap_all[k][k1], v1)
+                        "\tWarning: redefinition of "
+                        f"{{'{k}':{{'{k1}':'{f2cmap_all[k][k1]}'->'{v1}'}}}}\n"
                     )
                 f2cmap_all[k][k1] = v1
                 if verbose:
                     outmess(f'\tMapping "{k}(kind={k1})" to "{v1}\"\n')
                 f2cmap_mapped.append(v1)
             elif verbose:
+                c2py_map_keys = list(c2py_map.keys())
                 errmess(
-                    "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                    % (k, k1, v1, v1, list(c2py_map.keys()))
+                    f"\tIgnoring map {{'{k}':{{'{k1}':'{v1}'}}}}: '{v1}' "
+                    f"must be in {c2py_map_keys}\n"
                 )
 
     return f2cmap_all, f2cmap_mapped

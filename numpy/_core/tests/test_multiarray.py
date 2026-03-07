@@ -37,7 +37,6 @@ from numpy.testing import (
     BLAS_SUPPORTS_FPE,
     HAS_REFCOUNT,
     IS_64BIT,
-    IS_PYPY,
     IS_WASM,
     assert_,
     assert_allclose,
@@ -180,7 +179,6 @@ class TestFlags:
         vals.setflags(write=True)
         assert_(vals.flags.writeable)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PyPy always copies")
     def test_writeable_pickle(self):
         import pickle
         # Small arrays will be copied without setting base.
@@ -599,7 +597,6 @@ class TestArrayConstruction:
             func(a=3)
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     @pytest.mark.parametrize("func",
             [np.array,
              np.asarray,
@@ -4023,7 +4020,6 @@ class TestBinop:
     #   - defer if other has __array_ufunc__ and it is None
     #           or other is not a subclass and has higher array priority
     #   - else, call ufunc
-    @pytest.mark.xfail(IS_PYPY, reason="Bug in pypy, #24862")
     def test_ufunc_binop_interaction(self):
         # Python method name (without underscores)
         #   -> (numpy ufunc, has_in_place_version, preferred_dtype)
@@ -4507,8 +4503,6 @@ class TestCAPI:
     @pytest.mark.parametrize("converter",
              [_multiarray_tests.run_scalar_intp_converter,
               _multiarray_tests.run_scalar_intp_from_sequence])
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-            reason="PyPy bug in error formatting")
     def test_intp_sequence_converters_errors(self, converter):
         with pytest.raises(TypeError,
                 match="expected a sequence of integers or a single integer, "):
@@ -6253,9 +6247,6 @@ class TestFromBuffer:
     def test_empty(self):
         assert_array_equal(np.frombuffer(b''), np.array([]))
 
-    @pytest.mark.skipif(IS_PYPY,
-            reason="PyPy's memoryview currently does not track exports. See: "
-                   "https://foss.heptapod.net/pypy/pypy/-/issues/3724")
     def test_mmap_close(self):
         # The old buffer protocol was not safe for some things that the new
         # one is.  But `frombuffer` always used the old one for a long time.
@@ -6361,10 +6352,7 @@ class TestResize:
     @_no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        if IS_PYPY:
-            x.resize((5, 5), refcheck=False)
-        else:
-            x.resize((5, 5))
+        x.resize((5, 5))
         assert_array_equal(x.flat[:9],
                 np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
         assert_array_equal(x[9:].flat, 0)
@@ -6384,10 +6372,7 @@ class TestResize:
     @_no_tracing
     def test_int_shape(self):
         x = np.eye(3)
-        if IS_PYPY:
-            x.resize(3, refcheck=False)
-        else:
-            x.resize(3)
+        x.resize(3)
         assert_array_equal(x, np.eye(3)[0, :])
 
     def test_none_shape(self):
@@ -6418,19 +6403,13 @@ class TestResize:
     @_no_tracing
     def test_freeform_shape(self):
         x = np.eye(3)
-        if IS_PYPY:
-            x.resize(3, 2, 1, refcheck=False)
-        else:
-            x.resize(3, 2, 1)
+        x.resize(3, 2, 1)
         assert_(x.shape == (3, 2, 1))
 
     @_no_tracing
     def test_zeros_appended(self):
         x = np.eye(3)
-        if IS_PYPY:
-            x.resize(2, 3, 3, refcheck=False)
-        else:
-            x.resize(2, 3, 3)
+        x.resize(2, 3, 3)
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
@@ -6438,10 +6417,7 @@ class TestResize:
     def test_obj_obj(self):
         # check memory is initialized on resize, gh-4857
         a = np.ones(10, dtype=[('k', object, 2)])
-        if IS_PYPY:
-            a.resize(15, refcheck=False)
-        else:
-            a.resize(15,)
+        a.resize(15,)
         assert_equal(a.shape, (15,))
         assert_array_equal(a['k'][-5:], 0)
         assert_array_equal(a['k'][:-5], 1)
@@ -9148,8 +9124,7 @@ class TestArrayCreationCopyArgument:
                 for copy in self.if_needed_vals + self.false_vals:
                     res = np.array(view, copy=copy, order=order2)
                     # res.base.obj refers to the memoryview
-                    if not IS_PYPY:
-                        assert res is arr or res.base.obj is arr
+                    assert res is arr or res.base.obj is arr
             else:
                 for copy in self.if_needed_vals:
                     res = np.array(arr, copy=copy, order=order2)
@@ -9681,59 +9656,57 @@ class TestWhere:
             np.where(a, x=a, y=a)
 
 
-if not IS_PYPY:
-    # sys.getsizeof() is not valid on PyPy
-    class TestSizeOf:
+class TestSizeOf:
 
-        def test_empty_array(self):
-            x = np.array([])
-            assert_(sys.getsizeof(x) > 0)
+    def test_empty_array(self):
+        x = np.array([])
+        assert_(sys.getsizeof(x) > 0)
 
-        def check_array(self, dtype):
-            elem_size = dtype(0).itemsize
+    def check_array(self, dtype):
+        elem_size = dtype(0).itemsize
 
-            for length in [10, 50, 100, 500]:
-                x = np.arange(length, dtype=dtype)
-                assert_(sys.getsizeof(x) > length * elem_size)
+        for length in [10, 50, 100, 500]:
+            x = np.arange(length, dtype=dtype)
+            assert_(sys.getsizeof(x) > length * elem_size)
 
-        def test_array_int32(self):
-            self.check_array(np.int32)
+    def test_array_int32(self):
+        self.check_array(np.int32)
 
-        def test_array_int64(self):
-            self.check_array(np.int64)
+    def test_array_int64(self):
+        self.check_array(np.int64)
 
-        def test_array_float32(self):
-            self.check_array(np.float32)
+    def test_array_float32(self):
+        self.check_array(np.float32)
 
-        def test_array_float64(self):
-            self.check_array(np.float64)
+    def test_array_float64(self):
+        self.check_array(np.float64)
 
-        def test_view(self):
-            d = np.ones(100)
-            assert_(sys.getsizeof(d[...]) < sys.getsizeof(d))
+    def test_view(self):
+        d = np.ones(100)
+        assert_(sys.getsizeof(d[...]) < sys.getsizeof(d))
 
-        def test_reshape(self):
-            d = np.ones(100)
-            assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
+    def test_reshape(self):
+        d = np.ones(100)
+        assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
 
-        @_no_tracing
-        def test_resize(self):
-            d = np.ones(100)
-            old = sys.getsizeof(d)
-            d.resize(50)
-            assert_(old > sys.getsizeof(d))
-            d.resize(150)
-            assert_(old < sys.getsizeof(d))
+    @_no_tracing
+    def test_resize(self):
+        d = np.ones(100)
+        old = sys.getsizeof(d)
+        d.resize(50)
+        assert_(old > sys.getsizeof(d))
+        d.resize(150)
+        assert_(old < sys.getsizeof(d))
 
-        @pytest.mark.parametrize("dtype", ["u4,f4", "u4,O"])
-        def test_resize_structured(self, dtype):
-            a = np.array([(0, 0.0) for i in range(5)], dtype=dtype)
-            a.resize(1000)
-            assert_array_equal(a, np.zeros(1000, dtype=dtype))
+    @pytest.mark.parametrize("dtype", ["u4,f4", "u4,O"])
+    def test_resize_structured(self, dtype):
+        a = np.array([(0, 0.0) for i in range(5)], dtype=dtype)
+        a.resize(1000)
+        assert_array_equal(a, np.zeros(1000, dtype=dtype))
 
-        def test_error(self):
-            d = np.ones(100)
-            assert_raises(TypeError, d.__sizeof__, "a")
+    def test_error(self):
+        d = np.ones(100)
+        assert_raises(TypeError, d.__sizeof__, "a")
 
 
 class TestHashing:
@@ -9981,11 +9954,6 @@ class TestCTypes:
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
-        if IS_PYPY:
-            # Pypy does not recycle arr objects immediately. Trigger gc to
-            # release arr. Cpython uses refcounts. An explicit call to gc
-            # should not be needed here.
-            break_cycles()
         assert_(
             arr_ref() is None,
             "unknowable whether ctypes pointer holds a reference",
@@ -10006,8 +9974,6 @@ class TestCTypes:
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
-        if IS_PYPY:
-            break_cycles()
         assert_(
             arr_ref() is None,
             "unknowable whether ctypes pointer holds a reference",
@@ -11024,7 +10990,6 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
-@pytest.mark.skipif(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestTextSignatures:
     @pytest.mark.parametrize(
         "methodname",

@@ -605,7 +605,7 @@ from pygments.token import Comment
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = {
+    tokens = {  # noqa: RUF012
         'statements': [
             (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
             inherit,

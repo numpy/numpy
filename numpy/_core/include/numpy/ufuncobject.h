@@ -98,7 +98,7 @@ typedef int (PyUFunc_TypeResolutionFunc)(
 typedef int (PyUFunc_ProcessCoreDimsFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 npy_intp *core_dim_sizes);
-
+#ifndef _Py_OPAQUE_PYOBJECT
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
         /*
@@ -233,6 +233,9 @@ typedef struct _tagPyUFuncObject {
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
 } PyUFuncObject;
+#else
+typedef struct _tagPyUFuncObject PyUFuncObject;
+#endif
 
 #include "arrayobject.h"
 /* Generalized ufunc; 0x0001 reserved for possible use as CORE_ENABLED */

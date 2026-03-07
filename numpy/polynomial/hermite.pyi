@@ -102,6 +102,6 @@ hermgauss: Final[_FuncGauss] = ...
 hermweight: Final[_FuncWeight] = ...
 
 class Hermite(ABCPolyBase[L["H"]]):
-    basis_name: ClassVar[L["H"]] = "H"  # pyright: ignore[reportIncompatibleMethodOverride]
+    basis_name: ClassVar[L["H"]] = "H"  # pyright: ignore[reportIncompatibleMethodOverride] # pyrefly: ignore[bad-override]
     domain: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
     window: _Array2[np.float64 | Any] = ...  # pyright: ignore[reportIncompatibleMethodOverride]
