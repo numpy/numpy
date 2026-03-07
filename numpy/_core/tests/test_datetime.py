@@ -1105,16 +1105,12 @@ class TestDateTime:
         a = np.array([3], dtype='m8[4D]')
         b = np.array(['2012-12-21'], dtype='M8[D]')
 
-        with pytest.warns(
-            DeprecationWarning,
-            match="Using 'generic' unit for NumPy timedelta is deprecated",
-        ):
-            assert_equal(np.ones_like(a).dtype, a.dtype)
-            assert_equal(np.zeros_like(a).dtype, a.dtype)
-            assert_equal(np.empty_like(a).dtype, a.dtype)
-            assert_equal(np.ones_like(b).dtype, b.dtype)
-            assert_equal(np.zeros_like(b).dtype, b.dtype)
-            assert_equal(np.empty_like(b).dtype, b.dtype)
+        assert_equal(np.ones_like(a).dtype, a.dtype)
+        assert_equal(np.zeros_like(a).dtype, a.dtype)
+        assert_equal(np.empty_like(a).dtype, a.dtype)
+        assert_equal(np.ones_like(b).dtype, b.dtype)
+        assert_equal(np.zeros_like(b).dtype, b.dtype)
+        assert_equal(np.empty_like(b).dtype, b.dtype)
 
     def test_timedelta64_unary(self):
         for tda, tdb, tdzero in \
