@@ -1,0 +1,33 @@
+name: AI Slop Detection
+
+on:
+  pull_request_target:
+    types: [opened, reopened, edited]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  anti-slop:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect AI Slop
+        uses: peakoss/anti-slop@v0
+        with:
+          max-failures: 5
+          close-pr: false
+          failure-add-pr-labels: 'AI slop?'
+          failure-pr-message: |
+            This PR has been automatically flagged by the [anti-slop](https://github.com/peakoss/anti-slop) action as potentially containing AI-generated content or low-quality descriptions.
+
+            A maintainer will review this PR shortly. If this is a false positive, please ignore this message and wait for a human reviewer.
+          blocked-terms: |
+            streamline
+            facilitate
+            comprehensive
+            "A key takeaway is"
+            "This underscores the importance of"
+          exempt-author-association: 'OWNER,MEMBER,COLLABORATOR'

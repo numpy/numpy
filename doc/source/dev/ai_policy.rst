@@ -37,6 +37,17 @@ meet our standards.
 
 .. _AI slop: https://en.wikipedia.org/wiki/AI_slop
 
+Automated Checks
+----------------
+
+NumPy uses automated tools (such as `anti-slop`_) to assist in detecting
+potentially AI-generated content or low-quality descriptions in pull requests.
+If a pull request is flagged, it will be labeled for manual review by a
+maintainer. This does not necessarily mean the pull request will be rejected,
+but it highlights content that may require closer inspection.
+
+.. _anti-slop: https://github.com/peakoss/anti-slop
+
 Copyright
 ---------
 
