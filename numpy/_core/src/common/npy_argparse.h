@@ -94,11 +94,22 @@ _npy_parse_arguments(const char *funcname,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         npy_arg_spec *specs, int nspecs) NPY_GCC_NONNULL(1);
 
+#ifdef __cplusplus
+#define npy_parse_arguments(funcname, args, len_args, kwnames, ...)       \
+        [&]() -> int {                                                     \
+            npy_arg_spec _npy_specs_[] = {__VA_ARGS__};                   \
+            return _npy_parse_arguments(funcname, &__argparse_cache,       \
+                    args, len_args, kwnames,                               \
+                    _npy_specs_,                                           \
+                    (int)(sizeof(_npy_specs_) / sizeof(npy_arg_spec)));    \
+        }()
+#else
 #define npy_parse_arguments(funcname, args, len_args, kwnames, ...)       \
         _npy_parse_arguments(funcname, &__argparse_cache,                 \
                 args, len_args, kwnames,                                  \
                 (npy_arg_spec[]){__VA_ARGS__},                            \
                 (int)(sizeof((npy_arg_spec[]){__VA_ARGS__})               \
                       / sizeof(npy_arg_spec)))
+#endif
 
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H */
