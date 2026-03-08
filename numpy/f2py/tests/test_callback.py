@@ -216,6 +216,108 @@ class TestF90Callback(util.F2PyTest):
         assert r == 123 + 1 + 2 + 3
 
 
+class TestF90CallbackCodegen:
+    """Verify that generated Fortran 90 callback wrappers do not contain
+    conflicting ``external`` declarations when an interface block for the
+    same name already exists (gh-20157).
+
+    Strict Fortran compilers (e.g. Intel ifort/ifx >= 2019) reject code
+    where a dummy procedure is both declared ``external`` and given an
+    explicit interface in the same scope.
+    """
+
+    def test_gh20157_no_conflicting_external(self):
+        """The wrapper for a function with a callback and assumed-shape
+        array should use an interface block for the callback instead of
+        a bare ``external`` declaration."""
+        import os
+        import subprocess
+        import tempfile
+
+        src = textwrap.dedent("""\
+            function gh17797(f, y) result(r)
+              external f
+              integer(8) :: r, f
+              integer(8), dimension(:) :: y
+              r = f(0)
+              r = r + sum(y)
+            end function gh17797
+        """)
+        with tempfile.NamedTemporaryFile(
+            suffix='.f90', mode='w', delete=False
+        ) as tf:
+            tf.write(src)
+            tf.flush()
+            tmpdir = tempfile.mkdtemp()
+            # Run f2py in a subprocess to avoid polluting crackfortran
+            # global state in the test process.
+            code = (
+                "import sys; sys.path = %r; "
+                "import numpy.f2py; numpy.f2py.main()"
+            ) % sys.path
+            cmd = [
+                sys.executable, "-c", code,
+                tf.name, '--build-dir', tmpdir, '-m', '_test_gh20157'
+            ]
+            p = subprocess.run(
+                cmd, capture_output=True, text=True
+            )
+            assert p.returncode == 0, (
+                f"f2py failed:\n{p.stdout}\n{p.stderr}"
+            )
+
+        wrapper_file = os.path.join(
+            tmpdir, '_test_gh20157-f2pywrappers2.f90')
+        assert os.path.exists(wrapper_file), (
+            "F90 wrapper file was not generated")
+
+        with open(wrapper_file) as fh:
+            wrapper = fh.read()
+
+        # Split the wrapper into lines for analysis
+        lines = wrapper.split('\n')
+
+        # Find the outer wrapper subroutine scope and check that there
+        # is no bare ``external f`` at the top level.  The callback's
+        # interface should be provided via an interface block instead.
+        in_outer_sub = False
+        interface_depth = 0
+        found_external_f = False
+        found_interface_f = False
+
+        for line in lines:
+            stripped = line.strip().lower()
+            if 'subroutine f2pywrap' in stripped:
+                in_outer_sub = True
+                continue
+            if not in_outer_sub:
+                continue
+            # Track interface block nesting
+            if stripped.startswith('interface'):
+                interface_depth += 1
+            if stripped.startswith('end interface'):
+                interface_depth -= 1
+                continue
+            # Only inspect the outermost scope
+            if interface_depth == 0:
+                if stripped == 'external f':
+                    found_external_f = True
+            # Check for interface block containing function f
+            if interface_depth == 1:
+                if 'function f(' in stripped:
+                    found_interface_f = True
+
+        assert not found_external_f, (
+            "Wrapper must not use bare 'external f' when an "
+            "interface block for f exists (gh-20157). "
+            "Generated wrapper:\n" + wrapper
+        )
+        assert found_interface_f, (
+            "Wrapper should contain an interface block defining "
+            "callback f. Generated wrapper:\n" + wrapper
+        )
+
+
 class TestGH18335(util.F2PyTest):
     """The reproduction of the reported issue requires specific input that
     extensions may break the issue conditions, so the reproducer is
