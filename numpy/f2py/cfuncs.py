@@ -353,15 +353,15 @@ static inline double _f2py_cimag_as_double(const void *p, int typenum) {
     if (typenum == NPY_CLONGDOUBLE) return (double)npy_cimagl(*(const npy_clongdouble *)p);
     return npy_cimag(*(const npy_cdouble *)p);
 }
-#define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typecode)\\
+#define TRYCOMPLEXPYARRAYTEMPLATE(ctype,typenum)\\
         PyArrayObject *arr = NULL;\\
         double _re, _im;\\
         if (!obj) return -2;\\
         if (!PyArray_Check(obj)) return -1;\\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYCOMPLEXPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
-        _re = _f2py_creal_as_double(v, typecode == 'F' ? NPY_CFLOAT : (typecode == 'D' ? NPY_CDOUBLE : NPY_CLONGDOUBLE));\\
-        _im = _f2py_cimag_as_double(v, typecode == 'F' ? NPY_CFLOAT : (typecode == 'D' ? NPY_CDOUBLE : NPY_CLONGDOUBLE));\\
-        if (PyArray_DESCR(arr)->type==typecode) {\\
+        _re = _f2py_creal_as_double(v, typenum);\\
+        _im = _f2py_cimag_as_double(v, typenum);\\
+        if (PyArray_TYPE(arr)==typenum) {\\
             *(ctype *)(PyArray_DATA(arr))=(ctype)_re;\\
             *(ctype *)(PyArray_DATA(arr)+sizeof(ctype))=(ctype)_im;\\
             return 1;\\
@@ -1322,11 +1322,11 @@ cfuncs[
 needs['try_pyarr_from_complex_float'] = [
     'pyobj_from_complex_float1', 'TRYCOMPLEXPYARRAYTEMPLATE', 'complex_float']
 cfuncs[
-    'try_pyarr_from_complex_float'] = 'static int try_pyarr_from_complex_float(PyObject* obj,complex_float* v) {\n    TRYCOMPLEXPYARRAYTEMPLATE(float,\'F\');\n}\n'
+    'try_pyarr_from_complex_float'] = 'static int try_pyarr_from_complex_float(PyObject* obj,complex_float* v) {\n    TRYCOMPLEXPYARRAYTEMPLATE(float,NPY_CFLOAT);\n}\n'
 needs['try_pyarr_from_complex_double'] = [
     'pyobj_from_complex_double1', 'TRYCOMPLEXPYARRAYTEMPLATE', 'complex_double']
 cfuncs[
-    'try_pyarr_from_complex_double'] = 'static int try_pyarr_from_complex_double(PyObject* obj,complex_double* v) {\n    TRYCOMPLEXPYARRAYTEMPLATE(double,\'D\');\n}\n'
+    'try_pyarr_from_complex_double'] = 'static int try_pyarr_from_complex_double(PyObject* obj,complex_double* v) {\n    TRYCOMPLEXPYARRAYTEMPLATE(double,NPY_CDOUBLE);\n}\n'
 
 
 needs['create_cb_arglist'] = ['CFUNCSMESS', 'PRINTPYOBJERR', 'MINMAX']
