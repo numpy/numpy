@@ -1473,7 +1473,7 @@ def buildmodule(m, um):
                     # don't split comment lines
                     lines.append(l + '\n')
                 elif l and l[0] == ' ':
-                    while len(l) >= 66:
+                    while len(l) > 66:
                         lines.append(l[:66] + '\n     &')
                         l = l[66:]
                     lines.append(l + '\n')
@@ -1506,7 +1506,7 @@ def buildmodule(m, um):
                     lines.append(l + '\n')
                 else:
                     lines.append(l + '\n')
-            lines = ''.join(lines).replace('\n     &\n', '\n')
+            lines = ''.join(lines).replace('&\n     &\n', '\n')
             f.write(lines)
         outmess(f'    Fortran 90 wrappers are saved to "{wn}\"\n')
     return ret

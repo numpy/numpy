@@ -185,3 +185,90 @@ class TestAssignmentOnlyModules(util.F2PyTest):
         assert (self.module.f_globals.n_max == 16)
         assert (self.module.f_globals.i_max == 18)
         assert (self.module.f_globals.j_max == 72)
+
+
+def _wrap_f90(funcwrappers2):
+    """Reproduce the F90 line-wrapping logic from rules.py buildmodule."""
+    lines = []
+    for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
+        if 0 <= l.find('!') < 72:
+            lines.append(l + '\n')
+        elif len(l) > 72 and l[0] == ' ':
+            lines.append(l[:72] + '&\n     &')
+            l = l[72:]
+            while len(l) > 66:
+                lines.append(l[:66] + '&\n     &')
+                l = l[66:]
+            lines.append(l + '\n')
+        else:
+            lines.append(l + '\n')
+    return ''.join(lines).replace('&\n     &\n', '\n')
+
+
+def _wrap_f77(funcwrappers):
+    """Reproduce the F77 line-wrapping logic from rules.py buildmodule."""
+    lines = []
+    for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
+        if 0 <= l.find('!') < 66:
+            lines.append(l + '\n')
+        elif l and l[0] == ' ':
+            while len(l) > 66:
+                lines.append(l[:66] + '\n     &')
+                l = l[66:]
+            lines.append(l + '\n')
+        else:
+            lines.append(l + '\n')
+    return ''.join(lines).replace('\n     &\n', '\n')
+
+
+class TestLineWrapping:
+    """Test that F77/F90 line wrapping does not produce invalid continuations.
+
+    Regression tests for gh-28474.
+    """
+
+    def test_f90_no_empty_continuation(self):
+        # Build a line that is exactly 72 + 66 = 138 chars (spaces included)
+        # so the remainder after the first split is exactly 66 chars,
+        # which previously produced an empty continuation line with a
+        # trailing ampersand on the preceding line.
+        name = 'a' * 120
+        wrapper = f'      subroutine f2pywrap_{name}()'
+        result = _wrap_f90([wrapper])
+        for line in result.split('\n'):
+            stripped = line.rstrip()
+            # No line should end with & unless followed by a continuation
+            if stripped.endswith('&'):
+                # Find this line's position and check next line exists
+                idx = result.index(line + '\n')
+                rest = result[idx + len(line) + 1:]
+                assert rest.startswith('     &'), (
+                    f"Line ends with '&' but next line is not a continuation:\n"
+                    f"  {stripped!r}"
+                )
+
+    def test_f90_long_line_wraps_correctly(self):
+        # A line longer than 72 + 66 chars should wrap without issues
+        name = 'b' * 200
+        wrapper = f'      subroutine f2pywrap_{name}()'
+        result = _wrap_f90([wrapper])
+        assert '&\n     &\n' not in result
+        # Each line should be at most 73 chars (72 content + trailing &)
+        for line in result.split('\n'):
+            assert len(line) <= 73, f"Line too long: {line!r}"
+
+    def test_f77_no_empty_continuation(self):
+        # A line of exactly 66 chars should not enter the wrapping loop
+        line_66 = ' ' + 'x' * 65  # 66 chars, starts with space
+        result = _wrap_f77([line_66])
+        assert '\n     &' not in result, (
+            "Line of exactly 66 chars should not be wrapped"
+        )
+
+    def test_f77_boundary_67(self):
+        # A line of 67 chars should wrap into 66 + 1
+        line_67 = ' ' + 'y' * 66  # 67 chars
+        result = _wrap_f77([line_67])
+        assert '\n     &' in result
+        for line in result.strip().split('\n'):
+            assert len(line) <= 66 or line.startswith('     &')
