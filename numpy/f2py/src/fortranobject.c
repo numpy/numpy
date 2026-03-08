@@ -412,9 +412,13 @@ fortran_getattr(PyFortranObject *fp, char *name)
             else
                 k = fp->defs[i].rank;
             if (fp->defs[i].data != NULL) { /* array is allocated */
-                PyObject *v = PyArray_New(
-                        &PyArray_Type, k, fp->defs[i].dims.d, fp->defs[i].type,
-                        NULL, fp->defs[i].data, 0, NPY_ARRAY_FARRAY, NULL);
+                PyArray_Descr *descr = get_descr_from_type_and_elsize(
+                        fp->defs[i].type, fp->defs[i].elsize);
+                if (descr == NULL)
+                    return NULL;
+                PyObject *v = PyArray_NewFromDescr(
+                        &PyArray_Type, descr, k, fp->defs[i].dims.d,
+                        NULL, fp->defs[i].data, NPY_ARRAY_FARRAY, NULL);
                 if (v == NULL)
                     return NULL;
                 /* Py_INCREF(v); */
