@@ -33,6 +33,9 @@ NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
 
 NPY_NO_EXPORT int
+PyArray_BufferConverter_Impl(PyObject *obj, PyArray_Chunk *buf);
+
+NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val);
 
 NPY_NO_EXPORT int

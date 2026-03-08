@@ -850,8 +850,6 @@ typedef struct tagPyArrayObject {
 /* Legacy structure for buffer protocol support */
 
 #if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-typedef struct _PyArray_Chunk PyArray_Chunk;
-#else
 typedef struct {
         PyObject_HEAD
         PyObject *base;
@@ -859,6 +857,8 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
+#else
+typedef struct _PyArray_Chunk PyArray_Chunk;
 #endif
 
 typedef struct {

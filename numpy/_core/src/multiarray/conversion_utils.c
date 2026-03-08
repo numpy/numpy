@@ -293,14 +293,9 @@ PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
  * memory...
  */
 NPY_NO_EXPORT int
-PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
+PyArray_BufferConverter_Impl(PyObject *obj, PyArray_Chunk *buf)
 {
     Py_buffer view;
-
-    if (DEPRECATE("PyArray_BufferConverter is deprecated in NumPy 2.5. "
-                  "Use the standard buffer protocol instead.") < 0) {
-        return NPY_FAIL;
-    }
 
     buf->ptr = NULL;
     buf->flags = NPY_ARRAY_BEHAVED;
@@ -338,6 +333,20 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
         buf->base = obj;
     }
     return NPY_SUCCEED;
+}
+
+
+/*NUMPY_API
+ * This function will warn. Internally we prefer the _Impl version.
+ */
+NPY_NO_EXPORT int
+PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
+{
+    if (DEPRECATE("PyArray_BufferConverter is deprecated in NumPy 2.5. "
+                  "Use the standard buffer protocol instead.") < 0) {
+        return NPY_FAIL;
+    }
+    return PyArray_BufferConverter_Impl(obj, buf);
 }
 
 /*NUMPY_API

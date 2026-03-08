@@ -1133,7 +1133,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      &dims,
                                      PyArray_DescrConverter,
                                      &descr,
-                                     PyArray_BufferConverter,
+                                     PyArray_BufferConverter_Impl,
                                      &buffer,
                                      &offset,
                                      &PyArray_OptionalIntpConverter,
