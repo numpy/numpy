@@ -297,6 +297,11 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
     Py_buffer view;
 
+    if (DEPRECATE("PyArray_BufferConverter is deprecated in NumPy 2.5. "
+                  "Use the standard buffer protocol instead.") < 0) {
+        return NPY_FAIL;
+    }
+
     buf->ptr = NULL;
     buf->flags = NPY_ARRAY_BEHAVED;
     buf->base = NULL;

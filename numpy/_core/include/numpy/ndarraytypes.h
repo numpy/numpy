@@ -847,8 +847,11 @@ typedef struct tagPyArrayObject {
  * compatible with multiple NumPy versions.
  */
 
-/* Mirrors buffer object to ptr */
+/* Legacy structure for buffer protocol support */
 
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+typedef struct _PyArray_Chunk PyArray_Chunk;
+#else
 typedef struct {
         PyObject_HEAD
         PyObject *base;
@@ -856,6 +859,7 @@ typedef struct {
         npy_intp len;
         int flags;
 } PyArray_Chunk;
+#endif
 
 typedef struct {
     NPY_DATETIMEUNIT base;

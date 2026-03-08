@@ -19,6 +19,19 @@
 extern "C" {
 #endif
 
+/*
+ * The following is the internal definition of PyArray_Chunk. It is made
+ * opaque in the public headers (ndarraytypes.h) to prevent use by
+ * downstream projects and to eventually remove it from NumPy internals.
+ */
+struct _PyArray_Chunk {
+        PyObject_HEAD
+        PyObject *base;
+        void *ptr;
+        npy_intp len;
+        int flags;
+};
+
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
 

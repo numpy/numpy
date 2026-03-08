@@ -595,14 +595,13 @@ From other objects
         PyObject* buf, PyArray_Descr* dtype, npy_intp count, npy_intp offset)
 
     Construct a one-dimensional ndarray of a single type from an
-    object, ``buf``, that exports the (single-segment) buffer protocol
-    (or has an attribute __buffer\__ that returns an object that
-    exports the buffer protocol). A writeable buffer will be tried
-    first followed by a read- only buffer. The :c:data:`NPY_ARRAY_WRITEABLE`
+    object, ``buf``, that exports the modern buffer protocol.
+    A writeable buffer will be tried
+    first followed by a read-only buffer. The :c:data:`NPY_ARRAY_WRITEABLE`
     flag of the returned array will reflect which one was
     successful. The data is assumed to start at ``offset`` bytes from
     the start of the memory location for the object. The type of the
-    data in the buffer will be interpreted depending on the data- type
+    data in the buffer will be interpreted depending on the data-type
     descriptor, ``dtype.`` If ``count`` is negative then it will be
     determined from the size of the buffer and the requested itemsize,
     otherwise, ``count`` represents how many elements should be
@@ -3858,6 +3857,9 @@ to.
     interpreted as array shapes.
 
 .. c:function:: int PyArray_BufferConverter(PyObject* obj, PyArray_Chunk* buf)
+
+.. deprecated:: 2.5
+    PyArray_BufferConverter is deprecated. Use the standard buffer protocol instead.
 
     Convert any Python object, *obj*, with a (single-segment) buffer
     interface to a variable with members that detail the object's use
