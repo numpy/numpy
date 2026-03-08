@@ -1,0 +1,44 @@
+project('fib_wrapper', 'c',
+  version : '0.1.0',
+  meson_version: '>=1.1.0',
+  default_options : ['warning_level=2'],
+)
+
+add_languages('fortran')
+
+py = import('python').find_installation(pure: false)
+py_dep = py.dependency()
+
+incdir_numpy = run_command(py,
+  ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'],
+  check : true
+).stdout().strip()
+
+incdir_f2py = run_command(py,
+  ['-c', 'import os; os.chdir(".."); import numpy.f2py; print(numpy.f2py.get_include())'],
+  check : true
+).stdout().strip()
+
+inc_np = include_directories(incdir_numpy, incdir_f2py)
+
+# Generate the f2py wrappers
+fib_source = custom_target('fibmodule.c',
+  input : ['fib.f90'],
+  output : ['fibmodule.c', 'fib-f2pywrappers2.f90'],
+  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'fib', '--lower']
+)
+
+py.extension_module('fib',
+  ['fib.f90', fib_source],
+  incdir_f2py / 'fortranobject.c',
+  include_directories: inc_np,
+  dependencies : py_dep,
+  subdir: 'fib_wrapper',
+  install : true,
+)
+
+# Install the Python package files
+py.install_sources(
+  'fib_wrapper/__init__.py',
+  subdir: 'fib_wrapper',
+)
