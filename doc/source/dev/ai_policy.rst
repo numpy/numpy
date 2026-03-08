@@ -63,6 +63,10 @@ AI Agents
 The use of an AI agent that writes code and then submits a pull request autonomously is
 not permitted. A human must check any generated code and submit a pull request according
 to the 'Responsibility' section above.
+The only exception to this rule is `Dependabot`_, which is used for automated dependency 
+updates.
+
+.. _Dependabot: https://github.com/dependabot
 
 Other Resources
 ---------------
