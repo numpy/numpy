@@ -1429,6 +1429,7 @@ array_argsort(PyArrayObject *self,
             {"|kind", &PyArray_SortkindConverter, &sortkind},
             {"|order", NULL, &order},
             {"$stable", &PyArray_OptionalBoolConverter, &stable}
+            // TODO: add descending sorts, gh-14728
             // {"$descending", &PyArray_OptionalBoolConverter, &descending}
             ) < 0) {
         return NULL;
