@@ -338,7 +338,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[])
 {
     char method_name[101];
-    const char *name = ufunc->name ? ufunc->name : "<unknown>";
+    const char *name = PyUFunc_NAME(ufunc) ? PyUFunc_NAME(ufunc) : "<unknown>";
     snprintf(method_name, 100, "legacy_ufunc_wrapper_for_%s", name);
 
     /*
@@ -347,13 +347,13 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
      */
     int any_output_flexible = 0;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
-    if (ufunc->nargs == 3 &&
+    if (PyUFunc_NARGS(ufunc) == 3 &&
             signature[0]->type_num == NPY_BOOL &&
             signature[1]->type_num == NPY_BOOL &&
             signature[2]->type_num == NPY_BOOL && (
-                strcmp(ufunc->name, "logical_or") == 0 ||
-                strcmp(ufunc->name, "logical_and") == 0 ||
-                strcmp(ufunc->name, "logical_xor") == 0)) {
+                strcmp(PyUFunc_NAME(ufunc), "logical_or") == 0 ||
+                strcmp(PyUFunc_NAME(ufunc), "logical_and") == 0 ||
+                strcmp(PyUFunc_NAME(ufunc), "logical_xor") == 0)) {
         /*
          * This is a logical ufunc, and the `??->?` loop`. It is always OK
          * to cast any input to bool, because that cast is defined by
@@ -368,7 +368,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     }
 
     PyArrayMethod_GetReductionInitial *get_reduction_intial = NULL;
-    if (ufunc->nin == 2 && ufunc->nout == 1) {
+    if (PyUFunc_NIN(ufunc) == 2 && PyUFunc_NOUT(ufunc) == 1) {
         npy_bool reorderable = NPY_FALSE;
         PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
                 ufunc, &reorderable);
@@ -388,7 +388,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             get_reduction_intial = &get_initial_from_ufunc;
         }
     }
-    for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
+    for (int i = 0; i < PyUFunc_NIN(ufunc)+PyUFunc_NOUT(ufunc); i++) {
         if (signature[i]->singleton->flags & (
                 NPY_ITEM_REFCOUNT | NPY_ITEM_IS_POINTER | NPY_NEEDS_PYAPI)) {
             flags |= NPY_METH_REQUIRES_PYAPI;
@@ -411,8 +411,8 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
 
     PyArrayMethod_Spec spec = {
         .name = method_name,
-        .nin = ufunc->nin,
-        .nout = ufunc->nout,
+        .nin = PyUFunc_NIN(ufunc),
+        .nout = PyUFunc_NOUT(ufunc),
         .casting = NPY_NO_CASTING,
         .flags = flags,
         .dtypes = signature,
@@ -429,7 +429,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     // set cached initial value for numeric reductions to avoid creating
     // a python int in every reduction
     if (PyTypeNum_ISNUMBER(bound_res->dtypes[0]->type_num) &&
-        ufunc->nin == 2 && ufunc->nout == 1) {
+        PyUFunc_NIN(ufunc) == 2 && PyUFunc_NOUT(ufunc) == 1) {
 
         PyArray_Descr *descrs[3];
 
