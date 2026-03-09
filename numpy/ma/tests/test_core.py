@@ -1013,13 +1013,24 @@ class TestMaskedArray:
                             dtype=object)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
-        ndtype = [('a', ([('c', int), ('d', 'U2')])),
-                  ('b', ([('c', float), ('d', 'U2')]))]
-        arr = np.array([((1, 'ab'), (3.14, 'ab')), ((1, 'cd'), (9.18, 'cd'))],
+        ndtype = [('a', ([('c', object), ('d', list)])),
+                  ('b', ([('ab', tuple), ('ac', 'U2')]))]
+        arr = np.array([(([[1, 2]], [1, 2]), (([2, 4],), 'ab')),
+                       (([[1, 4]], [1, 8]), (([3, 4],), 'cd'))],
                        dtype=ndtype)
         test = flatten_structured_array(arr)
-        control = np.array([['1', 'ab', '3.14', 'ab'], ['1', 'cd', '9.18', 'cd']],
-                           dtype='<U32')
+        control = np.array([[[[1, 2]], [1, 2], ([2, 4],), 'ab'],
+                           [[[1, 4]], [1, 8], ([3, 4],), 'cd']],
+                           dtype=object)
+
+        assert_equal(test, control)
+        assert_equal(test.dtype, control.dtype)
+        ndtype = [('a', object), ('b', [('c', int), ('d', float)])]
+        arr = np.array([([[1, 2, 3]], (3, 3.14)), ([[4, 5, 6]], (2, 2.7))],
+                       dtype=ndtype)
+        control = np.array([[[[1, 2, 3]], 3, 3.14], [[[4, 5, 6]], 2, 2.7]],
+                           dtype=object)
+        test = flatten_structured_array(arr)
         assert_equal(test, control)
         assert_equal(test.dtype, control.dtype)
 
