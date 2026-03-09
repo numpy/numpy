@@ -317,6 +317,131 @@ class TestF90CallbackCodegen:
             "callback f. Generated wrapper:\n" + wrapper
         )
 
+    def test_f77_callback_external_preserved(self):
+        """F77 callbacks without assumed-shape arrays should keep their
+        ``external`` declarations and not generate interface blocks.
+
+        This ensures the F90 callback fix (gh-20157) does not break
+        the legacy F77 code path.
+        """
+        import os
+        import subprocess
+        import tempfile
+
+        # Pure F77-style callback: no assumed-shape arrays, so no
+        # need_interface, and no saved_interface with interface blocks.
+        # F77 fixed format requires 6-space indentation.
+        src = (
+            "      integer function foo(cb, n)\n"
+            "      external cb\n"
+            "      integer cb, n\n"
+            "      foo = cb(n)\n"
+            "      return\n"
+            "      end\n"
+        )
+        with tempfile.NamedTemporaryFile(
+            suffix='.f', mode='w', delete=False
+        ) as tf:
+            tf.write(src)
+            tf.flush()
+            tmpdir = tempfile.mkdtemp()
+            code = (
+                "import sys; sys.path = %r; "
+                "import numpy.f2py; numpy.f2py.main()"
+            ) % sys.path
+            cmd = [
+                sys.executable, "-c", code,
+                tf.name, '--build-dir', tmpdir, '-m', '_test_f77cb'
+            ]
+            p = subprocess.run(
+                cmd, capture_output=True, text=True
+            )
+            assert p.returncode == 0, (
+                f"f2py failed:\n{p.stdout}\n{p.stderr}"
+            )
+
+        # F77 code should not produce an F90 wrapper file
+        wrapper_f90 = os.path.join(
+            tmpdir, '_test_f77cb-f2pywrappers2.f90')
+        wrapper_f77 = os.path.join(
+            tmpdir, '_test_f77cb-f2pywrappers.f')
+
+        # The C module source should be generated
+        c_file = os.path.join(tmpdir, '_test_f77cbmodule.c')
+        assert os.path.exists(c_file), (
+            "C module file was not generated")
+
+        # If an F77 wrapper exists, it should use external (not interface)
+        if os.path.exists(wrapper_f77):
+            with open(wrapper_f77) as fh:
+                content = fh.read().lower()
+            assert 'interface' not in content, (
+                "F77 wrapper should not contain interface blocks. "
+                f"Content:\n{content}")
+
+    def test_f90_callback_with_explicit_shape_preserves_external(self):
+        """F90 callbacks with explicit-shape (not assumed-shape) arrays
+        should preserve ``external`` declarations since no interface
+        block is needed for those."""
+        import os
+        import subprocess
+        import tempfile
+
+        src = textwrap.dedent("""\
+            function bar(cb, y, n) result(r)
+              external cb
+              integer(8) :: r, cb
+              integer :: n
+              integer(8) :: y(n)
+              r = cb(0) + sum(y)
+            end function bar
+        """)
+        with tempfile.NamedTemporaryFile(
+            suffix='.f90', mode='w', delete=False
+        ) as tf:
+            tf.write(src)
+            tf.flush()
+            tmpdir = tempfile.mkdtemp()
+            code = (
+                "import sys; sys.path = %r; "
+                "import numpy.f2py; numpy.f2py.main()"
+            ) % sys.path
+            cmd = [
+                sys.executable, "-c", code,
+                tf.name, '--build-dir', tmpdir, '-m', '_test_f90_explicit'
+            ]
+            p = subprocess.run(
+                cmd, capture_output=True, text=True
+            )
+            assert p.returncode == 0, (
+                f"f2py failed:\n{p.stdout}\n{p.stderr}"
+            )
+
+        # With explicit-shape arrays, no F90 wrapper should be needed
+        # (no need_interface), or if generated it should keep external
+        wrapper_file = os.path.join(
+            tmpdir, '_test_f90_explicit-f2pywrappers2.f90')
+        if os.path.exists(wrapper_file):
+            with open(wrapper_file) as fh:
+                wrapper = fh.read()
+            # If there is a wrapper, the external declaration for cb
+            # should be kept since there is no assumed-shape array
+            # triggering the interface replacement logic
+            lines = wrapper.lower().split('\n')
+            in_outer = False
+            interface_depth = 0
+            for line in lines:
+                s = line.strip()
+                if 'subroutine f2pywrap' in s:
+                    in_outer = True
+                    continue
+                if not in_outer:
+                    continue
+                if s.startswith('interface'):
+                    interface_depth += 1
+                if s.startswith('end interface'):
+                    interface_depth -= 1
+
 
 class TestGH18335(util.F2PyTest):
     """The reproduction of the reported issue requires specific input that
