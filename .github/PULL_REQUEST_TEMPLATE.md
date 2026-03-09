@@ -3,8 +3,10 @@
   and review your PR. Describe the pull request, using the questions below as
   guidance, and link to any relevant issues and PRs.
 
-  Also, have you hit all the guidelines?
-  https://numpy.org/devdocs/dev/index.html#guidelines
+  
+  Also, have you hit all [the guidelines](https://numpy.org/devdocs/dev/index.html#guidelines)?
+  And have you filled out the disclosure section below?
+
 -->
 
 ### First time committer introduction
@@ -21,5 +23,5 @@ If no AI tools were used, please write "No AI tools used" in this section. Read 
 policy on AI generated code at
 https://numpy.org/devdocs/dev/ai_policy.html.
 
-We require human interaction and that PRs are submitted by humans.
+In particular, all interaction is to be done by humans, including submission of PRs.
 -->
