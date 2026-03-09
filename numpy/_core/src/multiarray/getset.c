@@ -22,6 +22,7 @@
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
+#include "number.h"
 #include "alloc.h"
 #include "npy_buffer.h"
 #include "shape.h"
@@ -573,145 +574,105 @@ array_base_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     }
 }
 
-/*
- * Create a view of a complex array with an equivalent data-type
- * except it is real instead of complex.
- */
-static PyArrayObject *
-_get_part(PyArrayObject *self, int imag)
-{
-    int float_type_num;
-    PyArray_Descr *type;
-    PyArrayObject *ret;
-    int offset;
-
-    switch (PyArray_DESCR(self)->type_num) {
-        case NPY_CFLOAT:
-            float_type_num = NPY_FLOAT;
-            break;
-        case NPY_CDOUBLE:
-            float_type_num = NPY_DOUBLE;
-            break;
-        case NPY_CLONGDOUBLE:
-            float_type_num = NPY_LONGDOUBLE;
-            break;
-        default:
-            PyErr_Format(PyExc_ValueError,
-                     "Cannot convert complex type number %d to float",
-                     PyArray_DESCR(self)->type_num);
-            return NULL;
-
-    }
-    type = PyArray_DescrFromType(float_type_num);
-    if (type == NULL) {
-        return NULL;
-    }
-
-    offset = (imag ? type->elsize : 0);
-
-    if (!PyArray_ISNBO(PyArray_DESCR(self)->byteorder)) {
-        Py_SETREF(type, PyArray_DescrNew(type));
-        if (type == NULL) {
-            return NULL;
-        }
-        type->byteorder = PyArray_DESCR(self)->byteorder;
-    }
-    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
-            Py_TYPE(self),
-            type,
-            PyArray_NDIM(self),
-            PyArray_DIMS(self),
-            PyArray_STRIDES(self),
-            PyArray_BYTES(self) + offset,
-            PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
-    if (ret == NULL) {
-        return NULL;
-    }
-    return ret;
-}
-
-/* For Object arrays, we need to get and set the
-   real part of each element.
- */
 
 static PyObject *
 array_real_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *ret;
+    PyObject *ret;
 
-    if (PyArray_ISCOMPLEX(self)) {
-        ret = _get_part(self, 0);
-        return (PyObject *)ret;
+    // NOTE(seberg): Would be nice to refine this via abstract dtype
+    // presumably replacing the error catching below.
+    // That can also transition/change so `string_arr.real` can raise.
+    int known_real = (PyArray_TYPE(self) < NPY_NTYPES_LEGACY
+        && !PyArray_ISCOMPLEX(self) && !PyArray_ISOBJECT(self));
+
+    if (!known_real) {
+        ret = PyArray_GenericUnaryFunction(self, n_ops.real);
+        if (ret == NULL) {
+            if (!PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError)) {
+                return NULL;
+            }
+            PyErr_Clear();
+        }
+        else {
+            return ret;
+        }
     }
-    else {
-        Py_INCREF(self);
-        return (PyObject *)self;
-    }
+
+    // We assume this is a real type, so return a view into self.
+    return PyArray_View(self, NULL, NULL);
 }
-
 
 static int
 array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *ret;
-    PyArrayObject *new;
-    int retcode;
-
     if (val == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array real part");
+                "Cannot delete array imaginary part");
         return -1;
     }
-    if (PyArray_ISCOMPLEX(self)) {
-        ret = _get_part(self, 0);
-        if (ret == NULL) {
-            return -1;
-        }
+    PyArrayObject *real_part = (PyArrayObject *)array_real_get(self, NULL);
+
+    PyArrayObject *rbase = real_part;
+    while (PyArray_BASE(rbase) != NULL && PyArray_Check(PyArray_BASE(rbase))) {
+        rbase = (PyArrayObject *)PyArray_BASE(rbase);
     }
-    else {
-        Py_INCREF(self);
-        ret = self;
+    PyArrayObject *sbase = self;
+    while (PyArray_BASE(sbase) != NULL && PyArray_Check(PyArray_BASE(sbase))) {
+        sbase = (PyArrayObject *)PyArray_BASE(sbase);
     }
-    new = (PyArrayObject *)PyArray_FROM_O(val);
-    if (new == NULL) {
-        Py_DECREF(ret);
+    // After collapsing bases, they should be identical (one base of real must be
+    // either self or self.base).
+    if (rbase != sbase) {
+        PyErr_SetString(PyExc_TypeError,
+            "Cannot set real part when `arr.real` is not a view.");
         return -1;
     }
-    retcode = PyArray_CopyInto(ret, new);
-    Py_DECREF(ret);
-    Py_DECREF(new);
-    return retcode;
+
+    return PyArray_CopyObject(real_part, val);
 }
 
-/* For Object arrays we need to get
-   and set the imaginary part of
-   each element
-*/
 
 static PyObject *
 array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
-    PyArrayObject *ret;
+    PyObject *ret;
 
-    if (PyArray_ISCOMPLEX(self)) {
-        ret = _get_part(self, 1);
-    }
-    else {
-        Py_INCREF(PyArray_DESCR(self));
-        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-                Py_TYPE(self),
-                PyArray_DESCR(self),
-                PyArray_NDIM(self),
-                PyArray_DIMS(self),
-                NULL, NULL,
-                PyArray_ISFORTRAN(self),
-                (PyObject *)self, NULL, _NPY_ARRAY_ZEROED);
+    // NOTE(seberg): Would be nice to refine this via abstract dtype
+    // presumably replacing the error catching below.
+    // That can also transition/change so `string_arr.imag` can raise.
+    int known_real = (PyArray_TYPE(self) < NPY_NTYPES_LEGACY
+        && !PyArray_ISCOMPLEX(self) && !PyArray_ISOBJECT(self));
+
+    if (!known_real) {
+        ret = PyArray_GenericUnaryFunction(self, n_ops.imag);
         if (ret == NULL) {
-            return NULL;
+            if (!PyErr_ExceptionMatches(npy_static_pydata._UFuncNoLoopError)) {
+                return NULL;
+            }
+            PyErr_Clear();
         }
-        PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
+        else {
+            return ret;
+        }
     }
-    return (PyObject *) ret;
+
+    // We assume this is a real type, so return a zeroed+broadcast array.
+    Py_INCREF(PyArray_DESCR(self));
+    ret = PyArray_NewFromDescr_int(
+            Py_TYPE(self),
+            PyArray_DESCR(self),
+            PyArray_NDIM(self),
+            PyArray_DIMS(self),
+            NULL, NULL,
+            PyArray_ISFORTRAN(self),
+            (PyObject *)self, NULL, _NPY_ARRAY_ZEROED);
+    if (ret == NULL) {
+        return NULL;
+    }
+    PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
+
+    return (PyObject *)ret;
 }
 
 static int
@@ -722,30 +683,31 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
                 "Cannot delete array imaginary part");
         return -1;
     }
-    if (PyArray_ISCOMPLEX(self)) {
-        PyArrayObject *ret;
-        PyArrayObject *new;
-        int retcode;
+    PyArrayObject *imag_part = (PyArrayObject *)array_imag_get(self, NULL);
 
-        ret = _get_part(self, 1);
-        if (ret == NULL) {
-            return -1;
-        }
-        new = (PyArrayObject *)PyArray_FROM_O(val);
-        if (new == NULL) {
-            Py_DECREF(ret);
-            return -1;
-        }
-        retcode = PyArray_CopyInto(ret, new);
-        Py_DECREF(ret);
-        Py_DECREF(new);
-        return retcode;
+    PyArrayObject *ibase = imag_part;
+    while (PyArray_BASE(ibase) != NULL && PyArray_Check(PyArray_BASE(ibase))) {
+        ibase = (PyArrayObject *)PyArray_BASE(ibase);
     }
-    else {
-        PyErr_SetString(PyExc_TypeError,
+    PyArrayObject *sbase = self;
+    while (PyArray_BASE(sbase) != NULL && PyArray_Check(PyArray_BASE(sbase))) {
+        sbase = (PyArrayObject *)PyArray_BASE(sbase);
+    }
+    // After collapsing bases, they should be identical (one base of imag must be
+    // either self or self.base).
+    if (ibase != sbase) {
+        if (PyArray_DTYPE(self) == PyArray_DTYPE(imag_part)) {
+            PyErr_SetString(PyExc_TypeError,
                 "array does not have imaginary part to set");
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                "Cannot set imagine part when `arr.imag` is not a view.");
+        }
         return -1;
     }
+
+    return PyArray_CopyObject(imag_part, val);
 }
 
 static PyObject *
