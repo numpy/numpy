@@ -414,11 +414,10 @@ array_dlpack(PyArrayObject *self,
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
-            "$stream", NULL, &stream,
-            "$max_version", NULL, &max_version,
-            "$dl_device", &device_converter, &result_device,
-            "$copy", &PyArray_CopyConverter, &copy_mode,
-            NULL, NULL, NULL)) {
+            {"$stream", NULL, &stream},
+            {"$max_version", NULL, &max_version},
+            {"$dl_device", &device_converter, &result_device},
+            {"$copy", &PyArray_CopyConverter, &copy_mode})) {
         return NULL;
     }
 
@@ -493,10 +492,9 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     PyObject *obj, *copy = Py_None, *device = Py_None;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
-            "obj", NULL, &obj,
-            "$copy", NULL, &copy,
-            "$device", NULL, &device,
-            NULL, NULL, NULL) < 0) {
+            {"obj", NULL, &obj},
+            {"$copy", NULL, &copy},
+            {"$device", NULL, &device}) < 0) {
         return NULL;
     }
 
