@@ -975,7 +975,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     PyArrayObject *ap1, *ap2, *out_buf = NULL, *result = NULL;
     PyArrayIterObject *it1, *it2;
     npy_intp i, j, l;
-    int typenum, nd, axis, matchDim;
+    int nd, axis, matchDim;
     npy_intp is1, is2, os;
     char *op;
     npy_intp dimensions[NPY_MAXDIMS];
@@ -995,7 +995,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         typec = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     Py_SETREF(typec, NPY_DT_CALL_ensure_canonical(typec));
-    typenum = typec->type_num;
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
@@ -1015,8 +1014,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
 
 #if defined(HAVE_CBLAS)
     if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
-            (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
-             NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
+            (NPY_DOUBLE == typec->type_num || NPY_CDOUBLE == typec->type_num ||
+             NPY_FLOAT == typec->type_num || NPY_CFLOAT == typec->type_num)) {
         return cblas_matrixproduct(typec, ap1, ap2, out);
     }
 #endif
