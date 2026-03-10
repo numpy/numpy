@@ -600,6 +600,11 @@ _get_part(PyArrayObject *self, PyObject *ufunc, PyBoundArrayMethodObject *meth, 
         // resolve_descriptors was successful, but view_offset is not set so we call
         // the ufunc to let it deal with the (potential) complexity.
         ret = PyArray_GenericUnaryFunction(self, ufunc);
+        if (ret != NULL && PyArray_Check(ret)) {
+            // Make result read-only, since otherwise `arr.imag[...] = val`
+            // would for example work.
+            PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
+        }
     }
 
     Py_DECREF(loop_descrs[0]);
@@ -663,7 +668,7 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     PyBoundArrayMethodObject *meth = NPY_DT_SLOTS(NPY_DTYPE(PyArray_DTYPE(self)))->imag_meth;
 
     if (meth == NULL) {
-        // We assume this is a real type, so return a zeroed+broadcast array.
+        // We assume this is a real type, so return a zeroed array.
         Py_INCREF(PyArray_DESCR(self));
         PyObject *ret = PyArray_NewFromDescr_int(
                 Py_TYPE(self),
