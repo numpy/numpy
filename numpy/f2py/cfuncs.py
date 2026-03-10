@@ -89,9 +89,9 @@ typedefs['long_double'] = """
 typedef long double long_double;
 #endif
 """
-typedefs['complex_long_double'] = 'typedef npy_clongdouble complex_long_double;'
-typedefs['complex_float'] = 'typedef npy_cfloat complex_float;'
-typedefs['complex_double'] = 'typedef npy_cdouble complex_double;'
+typedefs['complex_long_double'] = 'typedef union { struct {long double r,i;}; npy_clongdouble _npy; } complex_long_double;'
+typedefs['complex_float'] = 'typedef union { struct {float r,i;}; npy_cfloat _npy; } complex_float;'
+typedefs['complex_double'] = 'typedef union { struct {double r,i;}; npy_cdouble _npy; } complex_double;'
 typedefs['string'] = """typedef char * string;"""
 typedefs['character'] = """typedef char character;"""
 
@@ -289,13 +289,13 @@ cppmacros['pyobj_from_float1'] = """
 #define pyobj_from_float1(v) (PyFloat_FromDouble(v))"""
 needs['pyobj_from_complex_long_double1'] = ['complex_long_double', 'npy_math.h']
 cppmacros['pyobj_from_complex_long_double1'] = """
-#define pyobj_from_complex_long_double1(v) (PyComplex_FromDoubles((double)npy_creall(v),(double)npy_cimagl(v)))"""
+#define pyobj_from_complex_long_double1(v) (PyComplex_FromDoubles((double)npy_creall(v._npy),(double)npy_cimagl(v._npy)))"""
 needs['pyobj_from_complex_double1'] = ['complex_double', 'npy_math.h']
 cppmacros['pyobj_from_complex_double1'] = """
-#define pyobj_from_complex_double1(v) (PyComplex_FromDoubles(npy_creal(v),npy_cimag(v)))"""
+#define pyobj_from_complex_double1(v) (PyComplex_FromDoubles(npy_creal(v._npy),npy_cimag(v._npy)))"""
 needs['pyobj_from_complex_float1'] = ['complex_float', 'npy_math.h']
 cppmacros['pyobj_from_complex_float1'] = """
-#define pyobj_from_complex_float1(v) (PyComplex_FromDoubles((double)npy_crealf(v),(double)npy_cimagf(v)))"""
+#define pyobj_from_complex_float1(v) (PyComplex_FromDoubles((double)npy_crealf(v._npy),(double)npy_cimagf(v._npy)))"""
 needs['pyobj_from_string1'] = ['string']
 cppmacros['pyobj_from_string1'] = """
 #define pyobj_from_string1(v) (PyUnicode_FromString((char *)v))"""
@@ -1146,7 +1146,7 @@ cfuncs['complex_long_double_from_pyobj'] = """
 static int
 complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char *errmess)
 {
-    complex_double cd = npy_cpack(0.0, 0.0);
+    complex_double cd = {.r=0, .i=0};
     if (PyArray_CheckScalar(obj)){
         if PyArray_IsScalar(obj, CLongDouble) {
             PyArray_ScalarAsCtype(obj, v);
@@ -1156,15 +1156,15 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
             PyArrayObject *arr = (PyArrayObject *)obj;
             if (PyArray_TYPE(arr)==NPY_CLONGDOUBLE) {
                 npy_clongdouble tmp = *(npy_clongdouble *)PyArray_DATA(arr);
-                npy_csetreall(v, npy_creall(tmp));
-                npy_csetimagl(v, npy_cimagl(tmp));
+                npy_csetreall(&v->_npy, npy_creall(tmp));
+                npy_csetimagl(&v->_npy, npy_cimagl(tmp));
                 return 1;
             }
         }
     }
     if (complex_double_from_pyobj(&cd,obj,errmess)) {
-        npy_csetreall(v, (long_double)npy_creal(cd));
-        npy_csetimagl(v, (long_double)npy_cimag(cd));
+        npy_csetreall(&v->_npy, (long_double)npy_creal(cd._npy));
+        npy_csetimagl(&v->_npy, (long_double)npy_cimag(cd._npy));
         return 1;
     }
     return 0;
@@ -1179,22 +1179,22 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
     Py_complex c;
     if (PyComplex_Check(obj)) {
         c = PyComplex_AsCComplex(obj);
-        npy_csetreal(v, c.real);
-        npy_csetimag(v, c.imag);
+        npy_csetreal(&v->_npy, c.real);
+        npy_csetimag(&v->_npy, c.imag);
         return 1;
     }
     if (PyArray_IsScalar(obj, ComplexFloating)) {
         if (PyArray_IsScalar(obj, CFloat)) {
             npy_cfloat tmp;
             PyArray_ScalarAsCtype(obj, &tmp);
-            npy_csetreal(v, (double)npy_crealf(tmp));
-            npy_csetimag(v, (double)npy_cimagf(tmp));
+            npy_csetreal(&v->_npy, (double)npy_crealf(tmp));
+            npy_csetimag(&v->_npy, (double)npy_cimagf(tmp));
         }
         else if (PyArray_IsScalar(obj, CLongDouble)) {
             npy_clongdouble tmp;
             PyArray_ScalarAsCtype(obj, &tmp);
-            npy_csetreal(v, (double)npy_creall(tmp));
-            npy_csetimag(v, (double)npy_cimagl(tmp));
+            npy_csetreal(&v->_npy, (double)npy_creall(tmp));
+            npy_csetimag(&v->_npy, (double)npy_cimagl(tmp));
         }
         else { /* if (PyArray_IsScalar(obj, CDouble)) */
             PyArray_ScalarAsCtype(obj, v);
@@ -1213,20 +1213,20 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
             return 0;
         }
         npy_cdouble tmp = *(npy_cdouble *)PyArray_DATA(arr);
-        npy_csetreal(v, npy_creal(tmp));
-        npy_csetimag(v, npy_cimag(tmp));
+        npy_csetreal(&v->_npy, npy_creal(tmp));
+        npy_csetimag(&v->_npy, npy_cimag(tmp));
         Py_DECREF(arr);
         return 1;
     }
     /* Python does not provide PyNumber_Complex function :-( */
-    npy_csetimag(v, 0.0);
+    npy_csetimag(&v->_npy, 0.0);
     if (PyFloat_Check(obj)) {
-        npy_csetreal(v, PyFloat_AsDouble(obj));
-        return !(npy_creal(*v) == -1.0 && PyErr_Occurred());
+        npy_csetreal(&v->_npy, PyFloat_AsDouble(obj));
+        return !(npy_creal(v->_npy) == -1.0 && PyErr_Occurred());
     }
     if (PyLong_Check(obj)) {
-        npy_csetreal(v, PyLong_AsDouble(obj));
-        return !(npy_creal(*v) == -1.0 && PyErr_Occurred());
+        npy_csetreal(&v->_npy, PyLong_AsDouble(obj));
+        return !(npy_creal(v->_npy) == -1.0 && PyErr_Occurred());
     }
     if (PySequence_Check(obj) && !(PyBytes_Check(obj) || PyUnicode_Check(obj))) {
         PyObject *tmp = PySequence_GetItem(obj,0);
@@ -1255,10 +1255,10 @@ cfuncs['complex_float_from_pyobj'] = """
 static int
 complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess)
 {
-    complex_double cd = npy_cpack(0.0, 0.0);
+    complex_double cd = {.r=0, .i=0};
     if (complex_double_from_pyobj(&cd,obj,errmess)) {
-        npy_csetrealf(v, (float)npy_creal(cd));
-        npy_csetimagf(v, (float)npy_cimag(cd));
+        npy_csetrealf(&v->_npy, (float)npy_creal(cd._npy));
+        npy_csetimagf(&v->_npy, (float)npy_cimag(cd._npy));
         return 1;
     }
     return 0;
