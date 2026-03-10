@@ -1,7 +1,8 @@
 /*
- * real/imag ufuncs: 1 input (complex), 1 output (float).
- * No dedicated loops: either a view is returned (view_offset path in ufunc
- * fast path) or the get_loop returns a copy loop for the real/imag part.
+ * This file implements the real and imag ufuncs which are in turn used
+ * for the `.imag` and `.real` attributes of arrays.
+ * The ArrayMethods are primarily stored on the DType for `.real` and `.imag`
+ * while the ufunc uses a promoter to access these dynamically.
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -134,14 +135,17 @@ register_one_for_type(const char *name)
         {NPY_METH_strided_loop, (void *)&extract_complex_part_loop<real_type, real_part>},
         {0, NULL}
     };
-    PyArrayMethod_Spec meth_spec = {
-        .nin = 1,
-        .nout = 1,
-        .dtypes = dtypes,
-        .slots = meth_slots,
-    };
+    PyArrayMethod_Spec meth_spec;
+    meth_spec.name = "generic_real_imag_loop";
+    meth_spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
+    meth_spec.nin = 1;
+    meth_spec.nout = 1;
+    meth_spec.dtypes = dtypes;
+    meth_spec.slots = meth_slots;
+    meth_spec.casting = NPY_NO_CASTING;
+
     PyUFunc_LoopSlot slots[] = {
-        {.name = name, .spec = &meth_spec},
+        {name, &meth_spec},
         {0, nullptr}
     };
     int res = PyUFunc_AddLoopsFromSpecs(slots);
@@ -173,14 +177,17 @@ register_one_object_loop(const char *name)
         {NPY_METH_strided_loop, (void *)&object_get_comp_strided_loop<component>},
         {0, nullptr}
     };
-    PyArrayMethod_Spec meth_spec = {
-        .nin = 1,
-        .nout = 1,
-        .dtypes = dtypes,
-        .slots = meth_slots,
-    };
+    PyArrayMethod_Spec meth_spec;
+    meth_spec.name = "object_real_imag_loop";
+    meth_spec.flags = (NPY_ARRAYMETHOD_FLAGS)(
+        NPY_METH_NO_FLOATINGPOINT_ERRORS|NPY_METH_REQUIRES_PYAPI);
+    meth_spec.nin = 1;
+    meth_spec.nout = 1;
+    meth_spec.dtypes = dtypes;
+    meth_spec.slots = meth_slots;
+    meth_spec.casting = NPY_NO_CASTING;
     PyUFunc_LoopSlot slots[] = {
-        {.name = name, .spec = &meth_spec},
+        {name, &meth_spec},
         {0, nullptr}
     };
     return PyUFunc_AddLoopsFromSpecs(slots);
