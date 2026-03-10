@@ -1942,6 +1942,22 @@ with the rest of the ArrayMethod API.
    attempt a search for a new loop or promoter that can accomplish the operation
    by casting the inputs to the "promoted" DTypes.
 
+    A promoter should honor ``signature[]`` (if set). A promoter must return ``-1``
+    on failure. A Python error may be set but is not required (a general error is
+    set in either paths, although the original error is chained).
+    A promoter must return ``0`` or ``1`` on success.  NumPy normally checks that
+    ``new_op_dtypes`` are different from ``op_dtypes`` to prevent recursion.
+    This check is skipped if the promoter returns ``1``, which allows the promoter
+    to add a new loop (when adding a new loop, ``new_op_dtypes`` should be identical
+    to ``op_dtypes``).
+
+    .. versionchanged:: 2.5
+        After 2.5 a return of ``1`` indicates that the promoter was successful
+        skipping a recursion protection step.
+        This mainly allows the promoter to add new loop to the ufunc that must
+        now match instead of the promoter itself.
+        (Normally, a promoter must modify)
+
 .. c:function:: int PyUFunc_GiveFloatingpointErrors( \
                         const char *name, int fpe_errors)
 
