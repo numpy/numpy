@@ -67,14 +67,12 @@ static int extract_complex_part_loop(
     npy_intp istride = strides[0];
     npy_intp ostride = strides[1];
 
+    if constexpr (!real_part) {
+        in += sizeof(real_type);
+    }
+
     while (N--) {
-        real_type value;
-        if constexpr (real_part) {
-            value = *reinterpret_cast<real_type *>(in);
-        }
-        else {
-            value = *reinterpret_cast<real_type *>(in + sizeof(real_type));
-        }
+        real_type value = *reinterpret_cast<real_type *>(in);
         *reinterpret_cast<real_type *>(out) = value;
         in += istride;
         out += ostride;
