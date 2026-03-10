@@ -224,6 +224,22 @@ jobs:
         path: build/meson-logs/coverage.txt
         archive: false
 
+  github_artifacts_redirector_job:
+    needs: [coverage]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      actions: read
+    steps:
+      - uses: agriyakhetarpal/github-actions-artifacts-redirector-action@683d25ace2cb0aefe8e6719c39c2ac7f3d22dd8c # v1.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name: python-coverage-report # matches the uploaded filename (without .html)
+          job-title: Check the Python coverage report here
+
+      - name: Check the URL
+        run: echo "${{ steps.redirect.outputs.url }}"
+
   armhf_test:
     # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
     # running on aarch64 (ARM 64-bit) GitHub runners.
