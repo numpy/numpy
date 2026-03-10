@@ -1026,8 +1026,9 @@ sfloat_init_ufuncs(void) {
     PyUFunc_LoopSlot loops[] = {
         {"multiply", &multiply_spec},
         {"_core._multiarray_umath.add", &add_spec},
+        // These names must match exactly right now (not ufuncs)
         {"numpy:sort", &sort_spec},
-        {"numpy._core.fromnumeric:argsort", &argsort_spec},
+        {"numpy:argsort", &argsort_spec},
         {NULL, NULL}
     };
     if (PyUFunc_AddLoopsFromSpecs(loops) < 0) {

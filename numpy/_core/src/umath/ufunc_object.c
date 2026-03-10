@@ -101,7 +101,7 @@ resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *inputs_tup, NPY_CASTING casting, npy_intp *view_offset);
+        PyObject *inputs_tup, NPY_CASTING casting);
 
 
 /*UFUNC_API*/
@@ -615,7 +615,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *out_op_DTypes[],
         npy_bool *force_legacy_promotion,
         npy_bool *promoting_pyscalars,
-        npy_bool *all_input_scalars,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
         PyObject *subok_obj, npy_bool *out_subok,
@@ -629,12 +628,10 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
     /* Convert and fill in input arguments */
     npy_bool all_scalar = NPY_TRUE;
-    npy_bool any_scalar = NPY_FALSE;  /* any 0-D object, legacy scalar */
-    *all_input_scalars = NPY_TRUE;
+    npy_bool any_scalar = NPY_FALSE;
     *force_legacy_promotion = NPY_FALSE;
     *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
-        int was_pyscalar = 0;
         obj = PyTuple_GET_ITEM(full_args.in, i);
 
         if (PyArray_Check(obj)) {
@@ -643,18 +640,13 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         }
         else {
             /* Convert the input to an array and check for special cases */
-            out_op[i] = (PyArrayObject *)PyArray_FromAny_int(
-                    obj, NULL, NULL, 0, NPY_MAXDIMS, 0, NULL, &was_pyscalar);
+            out_op[i] = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
             if (out_op[i] == NULL) {
                 goto fail;
             }
         }
         out_op_DTypes[i] = NPY_DTYPE(PyArray_DESCR(out_op[i]));
         Py_INCREF(out_op_DTypes[i]);
-
-        if (!was_pyscalar) {
-            *all_input_scalars = NPY_FALSE;
-        }
 
         if (nin == 1) {
             /*
@@ -687,8 +679,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
          * necessary to propagate the information to the legacy type resolution.
          */
-        if (was_pyscalar &&
-                npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
+        if (npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
             if (PyArray_FLAGS(out_op[i]) & NPY_ARRAY_WAS_PYTHON_INT
                     && PyArray_TYPE(out_op[i]) != NPY_LONG) {
                 /*
@@ -2363,10 +2354,8 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * casting safety could in principle be set to the default same-kind.
      * (although this should possibly happen through a deprecation)
      */
-    npy_intp view_offset = NPY_MIN_INTP;  // ignored, not sensible for reductions
     int res = resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, operation_DTypes, NULL,
-            casting, &view_offset);
+            ops, out_descrs, signature, operation_DTypes, NULL, casting);
 
     Py_XDECREF(operation_DTypes[0]);
     Py_XDECREF(operation_DTypes[1]);
@@ -4046,7 +4035,7 @@ resolve_descriptors(int nop,
         PyUFuncObject *ufunc, PyArrayMethodObject *ufuncimpl,
         PyArrayObject *operands[], PyArray_Descr *dtypes[],
         PyArray_DTypeMeta *signature[], PyArray_DTypeMeta *original_DTypes[],
-        PyObject *inputs_tup, NPY_CASTING casting, npy_intp *view_offset)
+        PyObject *inputs_tup, NPY_CASTING casting)
 {
     int retval = -1;
     NPY_CASTING safety;
@@ -4089,9 +4078,10 @@ resolve_descriptors(int nop,
         }
         n_cleanup = nop;
 
+        npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
         safety = ufuncimpl->resolve_descriptors_with_scalars(
             ufuncimpl, signature, original_descrs, input_scalars,
-            dtypes, view_offset
+            dtypes, &view_offset
         );
 
         /* For scalars, replace the operand if needed (scalars can't be out) */
@@ -4158,8 +4148,10 @@ resolve_descriptors(int nop,
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
         /* The default: use the `ufuncimpl` as nature intended it */
+        npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
+
         safety = ufuncimpl->resolve_descriptors(ufuncimpl,
-                signature, original_descrs, dtypes, view_offset);
+                signature, original_descrs, dtypes, &view_offset);
         goto check_safety;
     }
     else {
@@ -4677,14 +4669,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int keepdims = -1;  /* We need to know if it was passed */
     npy_bool force_legacy_promotion;
     npy_bool promoting_pyscalars;
-    npy_bool all_input_scalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
             operand_DTypes,
             &force_legacy_promotion,
             &promoting_pyscalars,
-            &all_input_scalars,
             /* extract general information: */
             order_obj, &order,
             casting_obj, &casting,
@@ -4711,37 +4701,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
 
     /* Find the correct descriptors for the operation */
-    npy_intp view_offset = NPY_MIN_INTP;
     if (resolve_descriptors(nop, ufunc, ufuncimpl,
             operands, operation_descrs, signature, operand_DTypes,
-            full_args.in, casting, &view_offset) < 0) {
+            full_args.in, casting) < 0) {
         goto fail;
     }
 
     /*
-     * If it is just a view, do that (mainly/only `arr.real` and `arr.image`).
+     * Do the final preparations and call the inner-loop.
      */
-    if (view_offset != NPY_MIN_INTP
-            && !ufunc->core_enabled
-            && ufunc->nin == 1 && ufunc->nout == 1
-            && operands[1] == NULL && where_obj == NULL) {
-        return_scalar = all_input_scalars;  // disable the typical 0-D->scalar
-
-        Py_INCREF(operation_descrs[1]);
-        operands[1] = (PyArrayObject *)PyArray_NewFromDescr_int(
-                &PyArray_Type, operation_descrs[1],
-                PyArray_NDIM(operands[0]), PyArray_DIMS(operands[0]),
-                PyArray_STRIDES(operands[0]), PyArray_BYTES(operands[0]) + view_offset,
-                PyArray_FLAGS(operands[0]), NULL, (PyObject *)operands[0],
-                _NPY_ARRAY_ENSURE_DTYPE_IDENTITY);
-        if (operands[1] == NULL) {
-            goto fail;
-        }
-    }
-    /*
-     * Otherwise do the final preparations and call the inner-loop.
-     */
-    else if (!ufunc->core_enabled) {
+    if (!ufunc->core_enabled) {
         errval = PyUFunc_GenericFunctionInternal(ufunc, ufuncimpl,
                 operation_descrs, operands, casting, order,
                 wheremask);
@@ -6055,10 +6024,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
 
         /* Find the correct operation_descrs for the operation */
-        npy_intp view_offset = NPY_MIN_INTP;  // ignored, not sensible for ufunc.at
         int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
-                tmp_operands, operation_descrs, signature, operand_DTypes, NULL,
-                NPY_UNSAFE_CASTING, &view_offset);
+                tmp_operands, operation_descrs, signature, operand_DTypes, NULL, NPY_UNSAFE_CASTING);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(signature[i]);
             Py_XDECREF(operand_DTypes[i]);
@@ -6379,10 +6346,9 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
 
         /* Find the correct descriptors for the operation */
-        npy_intp view_offset = NPY_MIN_INTP;  // ignored, not sensible for reductions
         if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
                 dummy_arrays, operation_descrs, signature, DTypes,
-                NULL, casting, &view_offset) < 0) {
+                NULL, casting) < 0) {
             goto finish;
         }
 
