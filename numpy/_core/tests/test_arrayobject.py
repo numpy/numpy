@@ -3,8 +3,8 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import HAS_REFCOUNT, assert_array_equal
 from numpy._core._rational_tests import rational
+from numpy.testing import HAS_REFCOUNT, assert_array_equal
 
 
 def test_matrix_transpose_raises_error_for_1d():
@@ -136,7 +136,6 @@ def test_real_imag_attributes_complex(dtype, real_dt, variation):
     elif variation == "set_writeable":
         a.flags.writeable = False
 
-
     assert_array_equal(a.real, real)
     assert_array_equal(a.imag, imag)
     assert a.real.dtype == real_dt
@@ -156,7 +155,7 @@ def test_real_imag_attributes_complex(dtype, real_dt, variation):
 
 
 def test_real_imag_attributes_object():
-    a = np.array([[1, 0.5+2j, 3, int], [4, 5j, "string", {}]], dtype=object)
+    a = np.array([[1, 0.5 + 2j, 3, int], [4, 5j, "string", {}]], dtype=object)
 
     # NOTE(seberg): doing something for non-numbers is guesswork...
     real = np.array([[1, 0.5, 3, int.real], [4, 0, "string", {}]], dtype=object)
@@ -189,10 +188,10 @@ def test_real_imag_ufunc_minimal(ufunc, attr):
     with pytest.raises(TypeError):
         ufunc(np.array([1, 2, 3]))  # non-complex or object raises
 
-    arr = np.array([1+2j, 3+4j])
+    arr = np.array([1 + 2j, 3 + 4j])
     res = ufunc(arr)
     assert_array_equal(res, getattr(arr, attr), strict=True)
 
-    arr = np.array([1+2j, 3+4j], dtype=object)
+    arr = np.array([1 + 2j, 3 + 4j], dtype=object)
     res = ufunc(arr)
     assert_array_equal(res, getattr(arr, attr), strict=True)
