@@ -80,6 +80,7 @@ typedef enum {
      * assume that if set, it also applies to normal operations though!
      */
     NPY_METH_IS_REORDERABLE = 1 << 3,
+    _NPY_METH_IS_CAST = 1 << 4,  /* automatically set for casts */
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans
@@ -114,18 +115,18 @@ typedef struct PyArrayMethod_Context_tag {
     PyArray_Descr *const *descriptors;
  #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
     void * _reserved;
-    /* 
+    /*
      * Optional flag to pass information into the inner loop
      * NPY_ARRAYMETHOD_CONTEXT_FLAGS
      */
     uint64_t flags;
-    
+
     /*
      * Optional run-time parameters to pass to the loop (currently used in sorting).
      * Fixed parameters are expected to be passed via auxdata.
      */
     void *parameters;
-    
+
     /* Structure may grow (this is harmless for DType authors) */
  #endif
 } PyArrayMethod_Context;
