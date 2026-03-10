@@ -622,7 +622,6 @@ array_real_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return _get_part(self, n_ops.real, meth, /* need_view */ 0);
 }
 
-
 static int
 array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 {
@@ -652,7 +651,9 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         }
     }
 
-    return PyArray_CopyObject(part, val);
+    int ret = PyArray_CopyObject(part, val);
+    Py_DECREF(part);
+    return ret;
 }
 
 
@@ -682,7 +683,6 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return _get_part(self, n_ops.imag, meth, /* need_view */ 0);
 }
 
-
 static int
 array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 {
@@ -710,7 +710,9 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         return -1;
     }
 
-    return PyArray_CopyObject(part, val);
+    int ret = PyArray_CopyObject(part, val);
+    Py_DECREF(part);
+    return ret;
 }
 
 static PyObject *
