@@ -2087,7 +2087,6 @@ PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
 {
     /* Create a bound method, unbind and store it */
     PyBoundArrayMethodObject *meth = PyArrayMethod_FromSpec_int(spec, private);
-    meth->method->flags |= _NPY_METH_IS_CAST;
     if (meth == NULL) {
         return -1;
     }

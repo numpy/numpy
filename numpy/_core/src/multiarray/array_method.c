@@ -86,7 +86,7 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
-    if (method->casting == NPY_NO_CASTING && (method->flags & _NPY_METH_IS_CAST)) {
+    if (method->casting == NPY_NO_CASTING) {
         /*
          * By (current) definition no-casting should imply viewable.  This
          * is currently indicated for example for object to object cast.
@@ -129,9 +129,9 @@ is_contiguous(
  * param move_references UNUSED -- listed below but doxygen doesn't see as a parameter
  * @param strides Array of step sizes for each dimension of the arrays involved
  * @param out_loop Output pointer to the function that will perform the strided loop.
- * @param out_transferdata Output pointer to auxiliary data (if any)
+ * @param out_transferdata Output pointer to auxiliary data (if any) 
  *        needed by the out_loop function.
- * @param flags Output pointer to additional flags (if any)
+ * @param flags Output pointer to additional flags (if any) 
  *        needed by the out_loop function
  * @returns 0 on success -1 on failure.
  */
