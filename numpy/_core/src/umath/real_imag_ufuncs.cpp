@@ -24,7 +24,7 @@
 #include "real_imag_ufuncs.h"
 
 
-template <int real_num, bool real_part>
+template <bool real_part>
 static NPY_CASTING
 complex_to_real_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
@@ -35,7 +35,8 @@ complex_to_real_resolve_descriptors(
 {
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
-    loop_descrs[1] = PyArray_DescrFromType(real_num);
+    Py_INCREF(dtypes[1]->singleton);
+    loop_descrs[1] = dtypes[1]->singleton;
 
     if (PyDataType_ISBYTESWAPPED(loop_descrs[0])) {
         Py_SETREF(
@@ -122,16 +123,14 @@ object_get_comp_strided_loop(
 }
 
 
-template <int complex_num, typename real_type, int real_num, bool real_part>
+template <typename real_type, bool real_part>
 static int
-register_one_for_type(const char *name)
+register_one_for_type(
+    const char *name, PyArray_DTypeMeta *complex_dtype, PyArray_DTypeMeta *real_dtype)
 {
-    PyArray_DTypeMeta *dtypes[2] = {
-        PyArray_DTypeFromTypeNum(complex_num),
-        PyArray_DTypeFromTypeNum(real_num),
-    };
+    PyArray_DTypeMeta *dtypes[2] = {complex_dtype, real_dtype};
     PyType_Slot meth_slots[] = {
-        {NPY_METH_resolve_descriptors, (void *)&complex_to_real_resolve_descriptors<real_num, real_part>},
+        {NPY_METH_resolve_descriptors, (void *)&complex_to_real_resolve_descriptors<real_part>},
         {NPY_METH_strided_loop, (void *)&extract_complex_part_loop<real_type, real_part>},
         {0, NULL}
     };
@@ -148,20 +147,17 @@ register_one_for_type(const char *name)
         {name, &meth_spec},
         {0, nullptr}
     };
-    int res = PyUFunc_AddLoopsFromSpecs(slots);
-    Py_DECREF(dtypes[0]);
-    Py_DECREF(dtypes[1]);
-    return res;
+    return PyUFunc_AddLoopsFromSpecs(slots);
 }
 
 
-template <int complex_num, typename real_type, int real_num>
+template <typename real_type>
 static int
-register_both_for_type() {
-    if (register_one_for_type<complex_num, real_type, real_num, true>(".real") < 0) {
+register_both_for_type(PyArray_DTypeMeta *complex_dtype, PyArray_DTypeMeta *real_dtype) {
+    if (register_one_for_type<real_type, true>(".real", complex_dtype, real_dtype) < 0) {
         return -1;
     }
-    if (register_one_for_type<complex_num, real_type, real_num, false>(".imag") < 0) {
+    if (register_one_for_type<real_type, false>(".imag", complex_dtype, real_dtype) < 0) {
         return -1;
     }
     return 0;
@@ -265,13 +261,13 @@ init_real_imag_ufuncs(PyObject *umath)
         goto finish;
     }
 
-    if (register_both_for_type<NPY_CFLOAT, npy_float32, NPY_FLOAT>() < 0) {
+    if (register_both_for_type<npy_float32>(&PyArray_CFloatDType, &PyArray_FloatDType) < 0) {
         goto finish;
     }
-    if (register_both_for_type<NPY_CDOUBLE, npy_float64, NPY_DOUBLE>() < 0) {
+    if (register_both_for_type<npy_float64>(&PyArray_CDoubleDType, &PyArray_DoubleDType) < 0) {
         goto finish;
     }
-    if (register_both_for_type<NPY_CLONGDOUBLE, npy_longdouble, NPY_LONGDOUBLE>() < 0) {
+    if (register_both_for_type<npy_longdouble>(&PyArray_CLongDoubleDType, &PyArray_LongDoubleDType) < 0) {
         goto finish;
     }
     if (register_one_object_loop<&npy_interned_str_struct::real>(".real") < 0) {
