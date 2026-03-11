@@ -242,10 +242,10 @@ PyUFunc_AddLoopsFromSpecs(PyUFunc_LoopSlot *slots)
         else if (strcmp(slot->name, ".imag") == 0) {
             Py_XSETREF(ufunc, npy_interned_str.imag);
         }
-        else if (strcmp(slot->name, "numpy:sort") == 0) {
+        else if (strcmp(slot->name, "sort") == 0) {
             Py_XSETREF(ufunc, npy_interned_str.sort);
         }
-        else if (strcmp(slot->name, "numpy:argsort") == 0) {
+        else if (strcmp(slot->name, "argsort") == 0) {
             Py_XSETREF(ufunc, npy_interned_str.argsort);
         }
         else {

@@ -1899,6 +1899,8 @@ with the rest of the ArrayMethod API.
             entry points, ``(module ':')? (object '.')* name``, with ``numpy``
             the default module. Examples: ``sin``, ``strings.str_len``,
             ``numpy.strings:str_len``.
+            ``"sort"``, ``"argsort"``, ``".real"``, ``".imag"`` and specific names
+            as they do not correspond directly to ufuncs.
 
         .. c:member:: PyArrayMethod_Spec *spec
 
@@ -1912,6 +1914,8 @@ with the rest of the ArrayMethod API.
     Add multiple loops to ufuncs from ArrayMethod specs. This also
     handles the registration of methods for the ufunc-like functions
     ``sort`` and ``argsort``. See :ref:`array-methods-sorting` for details.
+    As well as for the array attributes ``.real`` and ``.imag`` needed
+    for user defined complex DTypes (with ``".real"`` and ``".imag"`` as names).
 
     The ``slots`` argument must be a  NULL-terminated array of
     `PyUFunc_LoopSlot` (see above), which give the name of the
