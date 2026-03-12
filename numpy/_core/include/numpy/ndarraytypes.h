@@ -1708,7 +1708,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISUSERDEF(obj) PyTypeNum_ISUSERDEF(PyDataType_TYPENUM(obj))
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(PyDataType_TYPENUM(obj))
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(PyDataType_TYPENUM(obj))
-#define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
+#define PyDataType_MAKEUNSIZED(dtype) PyDataType_SET_ELSIZE(dtype, 0)
 /*
  * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
  * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
