@@ -2585,21 +2585,24 @@ def flatten_structured_array(a):
 
     """
 
-    def flatten_sequence(iterable, dtype=None):
+    def flatten_sequence(iterable, dtype=None, whole=False):
         """
         Flattens a compound of nested iterables.
 
         """
         if dtype:
-            for i, name in enumerate(dtype.names):
-                if dtype[name].names:
+            for i, element in enumerate(iterable):
+                if whole:
+                    # same data type as the original array for non subarrays
+                    yield from [tuple(flatten_sequence(element.item(), dtype))]
+                elif dtype[i].names:
                     # it should have subarrays else structured array would have errored
                     # while declaration
-                    yield from flatten_sequence(iterable[i], dtype[name])
+                    yield from flatten_sequence(element, dtype[i])
                 else:
                     # dtype does not have subfields, and it should represent the correct
                     # data type as it is a structured array
-                    yield iterable[i]
+                    yield element
         else:
             # the case when list of numbers needs to be flattened
             for i in iter(iterable):
@@ -2615,14 +2618,13 @@ def flatten_structured_array(a):
     result_type = np.result_type(*flattened_dtype)
 
     if isinstance(a, MaskedArray):
-        out = np.array([tuple(flatten_sequence(d.item(), a._data.dtype))
-                        for d in a._data], result_type)
+        out = np.array(tuple(flatten_sequence(a._data, a._data.dtype, True)),
+                       result_type)
         out = out.view(MaskedArray)
         maskarray = getmaskarray(a)
-        out._mask = np.array([tuple(flatten_sequence(d.item(), maskarray.dtype))
-                              for d in maskarray])
+        out._mask = np.array(tuple(flatten_sequence(maskarray, maskarray.dtype, True)))
     else:
-        out = np.array([tuple(flatten_sequence(d.item(), a.dtype)) for d in a],
+        out = np.array(tuple(flatten_sequence(a, a.dtype, True)),
                         result_type)
     if len(inishape) > 1:
         newshape = list(out.shape)
