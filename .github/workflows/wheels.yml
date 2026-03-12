@@ -39,6 +39,7 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
+          - [ubuntu-24.04-riscv, manylinux_riscv64, ""]
           - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
@@ -48,6 +49,12 @@ jobs:
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
+      - name: Setup Python for riscv64
+        if: matrix.buildplat[1] == 'manylinux_riscv64'
+        run: |
+          echo "/opt/python-3.12/bin" >> "$GITHUB_PATH"
+          /opt/python-3.12/bin/python3.12 -m pip install cibuildwheel==3.4.1
+
       - name: Checkout numpy
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -102,9 +109,17 @@ jobs:
           fi
 
       - name: Build wheels
+        if: matrix.buildplat[1] != 'manylinux_riscv64'
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+
+      - name: Build wheels (riscv64)
+        if: matrix.buildplat[1] == 'manylinux_riscv64'
+        run: python3 -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_TEST_COMMAND: "python -c \"import numpy; print(numpy.__version__); numpy.show_config()\""
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
