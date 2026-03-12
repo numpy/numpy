@@ -853,9 +853,9 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
             PyErr_Clear();
         }
         size_t len = strlen(mess);
-        snprintf(mess + len, F2PY_MESSAGE_BUFFER_SIZE - len),
+        snprintf(mess + len, F2PY_MESSAGE_BUFFER_SIZE - len,
                 " -- expected str|bytes|sequence-of-str-or-bytes, got ");
-        f2py_describe(obj, mess + strlen(mess));
+        f2py_describe(obj, mess + len);
         PyErr_SetString(err, mess);
         Py_DECREF(err);
     }
