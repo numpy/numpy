@@ -576,6 +576,47 @@ fortran_repr(PyFortranObject *fp)
     return repr;
 }
 
+static PyObject *
+fortran_dir(PyFortranObject *fp, PyObject *Py_UNUSED(args))
+{
+    int i;
+    PyObject *dir_list = PyDict_Keys(fp->dict);
+    if (dir_list == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < fp->len; i++) {
+        PyObject *name = PyUnicode_FromString(fp->defs[i].name);
+        if (name == NULL) {
+            Py_DECREF(dir_list);
+            return NULL;
+        }
+        int contains = PySequence_Contains(dir_list, name);
+        if (contains == -1) {
+            Py_DECREF(name);
+            Py_DECREF(dir_list);
+            return NULL;
+        }
+        if (!contains) {
+            if (PyList_Append(dir_list, name) < 0) {
+                Py_DECREF(name);
+                Py_DECREF(dir_list);
+                return NULL;
+            }
+        }
+        Py_DECREF(name);
+    }
+    if (PyList_Sort(dir_list) < 0) {
+        Py_DECREF(dir_list);
+        return NULL;
+    }
+    return dir_list;
+}
+
+static PyMethodDef fortran_methods[] = {
+        {"__dir__", (PyCFunction)fortran_dir, METH_NOARGS, NULL},
+        {NULL, NULL, 0, NULL}
+};
+
 PyTypeObject PyFortran_Type = {
         PyVarObject_HEAD_INIT(NULL, 0).tp_name = "fortran",
         .tp_basicsize = sizeof(PyFortranObject),
@@ -583,6 +624,7 @@ PyTypeObject PyFortran_Type = {
         .tp_getattr = (getattrfunc)fortran_getattr,
         .tp_setattr = (setattrfunc)fortran_setattr,
         .tp_repr = (reprfunc)fortran_repr,
+        .tp_methods = fortran_methods,
         .tp_call = (ternaryfunc)fortran_call,
 };
 
