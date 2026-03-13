@@ -15,9 +15,10 @@ import pickle
 import re
 import sys
 import tempfile
+import tracemalloc
 import warnings
 import weakref
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
@@ -1039,6 +1040,20 @@ class TestCreation:
         # This test is guaranteed to fail due to a too large allocation
         with assert_raises(np._core._exceptions._ArrayMemoryError):
             np.empty(np.iinfo(np.intp).max, dtype=np.uint8)
+
+    @pytest.mark.thread_unsafe(reason="tracemalloc is not thread-safe")
+    def test_tracemalloc(self):
+        with ExitStack() as ctx:
+            if not tracemalloc.is_tracing():
+                tracemalloc.start()
+                ctx.callback(tracemalloc.stop)
+            pre_snapshot = tracemalloc.take_snapshot()
+            arr = np.zeros(1000000, dtype="uint8")
+            post_snapshot = tracemalloc.take_snapshot()
+            diff = post_snapshot.compare_to(pre_snapshot, "filename")
+        allocated_bytes = sum(d.size_diff for d in diff)
+        # Allow for some non-data allocations
+        assert_allclose(allocated_bytes, arr.nbytes, 1000)
 
     def test_zeros(self):
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
@@ -7259,6 +7274,13 @@ class TestDot:
         assert_equal(np.dot(b, a), res)
         assert_equal(np.dot(b, b), res)
 
+    def test_dot_has_native_byteorder(self):
+        # gh-30931
+        a = np.array([1, 2, 3], ">f8")
+        dot = a.dot([[], [], []])
+
+        assert_equal(dot.dtype, np.dtype("=f8"))
+
     def test_accelerate_framework_sgemv_fix(self):
 
         def aligned_array(shape, align, dtype, order='C'):
@@ -9617,6 +9639,13 @@ class TestWhere:
         b = np.ones((5, 5))
         assert_raises(ValueError, np.where, c, a, a)
         assert_raises(ValueError, np.where, c[0], a, b)
+
+    def test_scalar_overflow(self):
+        c = [True]
+        a = np.array([1], dtype=np.uint8)
+        b = 1000
+        assert_raises(OverflowError, np.where, c, a, b)
+        assert_raises(OverflowError, np.where, c, b, a)
 
     def test_string(self):
         # gh-4778 check strings are properly filled with nulls

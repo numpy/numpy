@@ -1,0 +1,4 @@
+``f2py`` modules now show allocatable arrays in ``dir()``
+---------------------------------------------------------
+Allocatable module variables wrapped by ``f2py`` now appear in ``dir()``
+output, matching their accessibility by name.

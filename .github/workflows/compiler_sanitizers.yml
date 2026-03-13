@@ -1,3 +1,7 @@
+# To update pinned container digests and pyenv version (not handled by Dependabot):
+# Containers: change tag and get new digest with
+#   docker pull <image>:<tag> && docker inspect --format='{{index .RepoDigests 0}}' <image>:<tag>
+# pyenv: see https://github.com/pyenv/pyenv/releases
 name: Test with compiler sanitizers
 
 on:
@@ -31,14 +35,14 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
     - name: Set up pyenv
       run: |
-        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        git clone --branch v2.6.25 --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
         PYENV_ROOT="$HOME/.pyenv"
         PYENV_BIN="$PYENV_ROOT/bin"
         PYENV_SHIMS="$PYENV_ROOT/shims"
@@ -83,11 +87,11 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container:
-        image: ghcr.io/nascheme/numpy-tsan:3.14t
+        image: ghcr.io/nascheme/numpy-tsan:3.14t@sha256:1ec427e2e480cc373d0fecbf21b8ac590fb94119fb81d18489945cd0afd04dd3
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy
@@ -114,11 +118,11 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container:
-        image: ghcr.io/nascheme/cpython-asan:3.14
+        image: ghcr.io/nascheme/cpython-asan:3.14@sha256:b5bfbcdca07e86d22afaf66e3b57959e1c44756452dcabda1efde7711fd0bdde
         options: --shm-size=2g # increase memory for large matrix ops
 
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Trust working directory and initialize submodules
         run: |
           git config --global --add safe.directory /__w/numpy/numpy

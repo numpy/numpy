@@ -7,13 +7,34 @@ permissions: {}
 
 jobs:
   pr-labeler:
+    if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write  # to add labels
     steps:
     - name: Label the PR
-      uses: gerrymanoim/pr-prefix-labeler@c8062327f6de59a9ae1c19f7f07cacd0b976b6fa # v3
       continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: github.repository == 'numpy/numpy'
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8.0.0
+      with:
+        script: |
+          const yaml = require('js-yaml');
+          const {data} = await github.rest.repos.getContent({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            path: '.github/pr-prefix-labeler.yml',
+          });
+          const prefixToLabel = yaml.load(
+            Buffer.from(data.content, data.encoding).toString()
+          );
+          const title = context.payload.pull_request.title;
+          for (const [prefix, label] of Object.entries(prefixToLabel)) {
+            if (title.startsWith(prefix)) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: [label],
+              });
+              break;
+            }
+          }
