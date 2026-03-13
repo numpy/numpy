@@ -133,6 +133,19 @@ ufunc_full_args_light_clear_out(ufunc_full_args_light *full_args)
     full_args->nout = 0;
 }
 
+/*
+ * Release all owned input references held by a ufunc_full_args_light
+ * and reset the input count.
+ */
+static inline void
+ufunc_full_args_light_clear_in(ufunc_full_args_light *full_args)
+{
+    for (npy_intp i = 0; i < full_args->nin; i++) {
+        Py_XDECREF(full_args->in[i]);
+    }
+    full_args->nin = 0;
+}
+
 
 /* ---------------------------------------------------------------- */
 
@@ -3689,6 +3702,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         else if (_set_full_args_out(1, out_obj, &full_args_light) < 0) {
             goto fail;
         }
+        /* Ensure that out_obj is the array, not the tuple: */
+        if (full_args_light.nout != 0) {
+            out_obj = full_args_light.out[0];
+        }
     }
 
     /* We now have all the information required to check for Overrides */
@@ -3701,9 +3718,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         return NULL;
     }
     else if (override) {
-        for (int j = 0; j < full_args_light.nin; j++) {
-            Py_XDECREF(in_args[j]);
-        }
+        ufunc_full_args_light_clear_in(&full_args_light);
         ufunc_full_args_light_clear_out(&full_args_light);
         Py_XDECREF(out_tuple);
         return override;
@@ -3794,9 +3809,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     Py_DECREF(signature[2]);
 
     Py_DECREF(mp);
-    for (int j = 0; j < full_args_light.nin; j++) {
-        Py_XDECREF(in_args[j]);
-    }
+    ufunc_full_args_light_clear_in(&full_args_light);
     ufunc_full_args_light_clear_out(&full_args_light);
     Py_XDECREF(out_tuple);
 
@@ -3826,9 +3839,7 @@ fail:
     Py_XDECREF(mp);
     Py_XDECREF(wheremask);
     Py_XDECREF(indices);
-    for (int j = 0; j < full_args_light.nin; j++) {
-        Py_XDECREF(in_args[j]);
-    }
+    ufunc_full_args_light_clear_in(&full_args_light);
     ufunc_full_args_light_clear_out(&full_args_light);
     Py_XDECREF(out_tuple);
     return NULL;
@@ -4726,9 +4737,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     else if (override) {
         if (outer) {
-            for (int i = 0; i < nin; i++) {
-                Py_XDECREF(full_args_light.in[i]);
-            }
+            ufunc_full_args_light_clear_in(&full_args_light);
         }
         ufunc_full_args_light_clear_out(&full_args_light);
         npy_free_workspace(scratch_objs);
@@ -4846,9 +4855,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     printfd("ufunc_generic_fastcall: after replace_with_wrapped_result_and_return\n");
 
     if (outer) {
-        for (int i = 0; i < nin; i++) {
-            Py_XDECREF(full_args_light.in[i]);
-        }
+        ufunc_full_args_light_clear_in(&full_args_light);
     }
     ufunc_full_args_light_clear_out(&full_args_light);
 
@@ -4858,9 +4865,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
 fail:
     if (outer) {
-        for (int i = 0; i < nin; i++) {
-            Py_XDECREF(full_args_light.in[i]);
-        }
+        ufunc_full_args_light_clear_in(&full_args_light);
     }
     ufunc_full_args_light_clear_out(&full_args_light);
     Py_XDECREF(wheremask);
@@ -5638,11 +5643,8 @@ prepare_input_arguments_for_outer(ufunc_full_args_light *full_args_light, PyUFun
     /* Update full_args_light->in with the reshaped arrays */
     /* TODO: Refactor to avoid modifying const array once we switch to borrowed refs */
     Py_DECREF(ap1);
-    Py_DECREF(full_args_light->in[0]);
-    ((PyObject **)full_args_light->in)[0] = (PyObject *)ap_new;
-
-    Py_DECREF(full_args_light->in[1]);
-    ((PyObject **)full_args_light->in)[1] = (PyObject *)ap2;
+    Py_SETREF(((PyObject **)full_args_light->in)[0], (PyObject *)ap_new);
+    Py_SETREF(((PyObject **)full_args_light->in)[1], (PyObject *)ap2);
 
     return 0;
 

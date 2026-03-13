@@ -4,9 +4,9 @@
 
 typedef struct {
     PyObject *ufunc;
-    PyObject *const *in;    /* borrowed refs array */
+    PyObject *const *in;
     int nin;
-    PyObject *const *out;   /* borrowed refs array, or NULL */
+    PyObject *const *out;
     int nout;
     int out_i;
 } NpyUFuncContext;

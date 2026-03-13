@@ -114,7 +114,7 @@ initialize_normal_kwds(PyObject *const *out_args, int nout,
 
     if (out_args != NULL && nout > 0) {
         /* Replace `out` argument with the normalized version */
-        PyObject *out_tuple = PyArray_TupleFromItems(nout, out_args, 0);
+        PyObject *out_tuple = PyTuple_FromArray(out_args, nout);
         if (out_tuple == NULL) {
             return -1;
         }
@@ -363,8 +363,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         for (int i = 0; i < len; i++) {
             PyObject *item = in_args[i];
 
-            Py_INCREF(item);
-            PyTuple_SET_ITEM(override_args, i + 3, item);
+            PyTuple_SET_ITEM(override_args, i + 3, Py_NewRef(item));
         }
 
         /* Check if there is a method left to call */
