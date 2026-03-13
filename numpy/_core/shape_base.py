@@ -554,7 +554,7 @@ def _block_format_index(index):
     return 'arrays' + idx_str
 
 
-def _block_check_depths_match(arrays, parent_index=[]):
+def _block_check_depths_match(arrays, parent_index=None):
     """
     Recursive function checking that the depths of nested lists in `arrays`
     all match. Mismatch raises a ValueError as described in the block
@@ -585,6 +585,8 @@ def _block_check_depths_match(arrays, parent_index=[]):
         the choice of algorithm used using benchmarking wisdom.
 
     """
+    if parent_index is None:
+        parent_index = []
     if isinstance(arrays, tuple):
         # not strictly necessary, but saves us from:
         #  - more than one way to do things - no point treating tuples like

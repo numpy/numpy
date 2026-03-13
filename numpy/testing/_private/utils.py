@@ -210,7 +210,7 @@ else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
     # was suspended or sleeping.
-    def jiffies(_load_time=[]):
+    def jiffies(_load_time=None):
         """
         Return number of jiffies elapsed.
 
@@ -218,6 +218,8 @@ else:
         process has been scheduled in user mode. See man 5 proc.
 
         """
+        if _load_time is None:
+            _load_time = []
         import time
         if not _load_time:
             _load_time.append(time.time())
@@ -1468,10 +1470,12 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def check_support_sve(__cache=[]):
+def check_support_sve(__cache=None):
     """
     gh-22982
     """
+    if __cache is None:
+        __cache = []
 
     if __cache:
         return __cache[0]

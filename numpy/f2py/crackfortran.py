@@ -2442,7 +2442,9 @@ def _selected_real_kind_func(p, r=0, radix=0):
     return -1
 
 
-def get_parameters(vars, global_params={}):
+def get_parameters(vars, global_params=None):
+    if global_params is None:
+        global_params = {}
     params = copy.copy(global_params)
     g_params = copy.copy(global_params)
     for name, func in [('kind', _kind_func),
@@ -3103,7 +3105,9 @@ def param_parse(d, params):
         return d
 
 
-def expr2name(a, block, args=[]):
+def expr2name(a, block, args=None):
+    if args is None:
+        args = []
     orig_a = a
     a_is_expr = not analyzeargs_re_1.match(a)
     if a_is_expr:  # `a` is an expression
@@ -3184,7 +3188,9 @@ def _ensure_exprdict(r):
     raise AssertionError(repr(r))
 
 
-def determineexprtype(expr, vars, rules={}):
+def determineexprtype(expr, vars, rules=None):
+    if rules is None:
+        rules = {}
     if expr in vars:
         return _ensure_exprdict(vars[expr])
     expr = expr.strip()
@@ -3520,7 +3526,7 @@ def _is_visit_pair(obj):
             and isinstance(obj[0], (int, str)))
 
 
-def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
+def traverse(obj, visit, parents=None, result=None, *args, **kwargs):
     '''Traverse f2py data structure with the following visit function:
 
     def visit(item, parents, result, *args, **kwargs):
@@ -3547,6 +3553,8 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
         traversed, otherwise not.
         """
     '''
+    if parents is None:
+        parents = []
 
     if _is_visit_pair(obj):
         if obj[0] == 'parent_block':

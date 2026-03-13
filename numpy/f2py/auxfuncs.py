@@ -697,7 +697,9 @@ def getcallstatement(rout):
     return getmultilineblock(rout, 'callstatement')
 
 
-def getcallprotoargument(rout, cb_map={}):
+def getcallprotoargument(rout, cb_map=None):
+    if cb_map is None:
+        cb_map = {}
     r = getmultilineblock(rout, 'callprotoargument', comment=0)
     if r:
         return r
@@ -854,7 +856,9 @@ def dictappend(rd, ar):
     return rd
 
 
-def applyrules(rules, d, var={}):
+def applyrules(rules, d, var=None):
+    if var is None:
+        var = {}
     ret = {}
     if isinstance(rules, list):
         for r in rules:

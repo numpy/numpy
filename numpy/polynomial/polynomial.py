@@ -542,7 +542,7 @@ def polyder(c, m=1, scl=1, axis=0):
     return c
 
 
-def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def polyint(c, m=1, k=None, lbnd=0, scl=1, axis=0):
     """
     Integrate a polynomial.
 
@@ -618,6 +618,8 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 0., -2., -2., -2.])
 
     """
+    if k is None:
+        k = []
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype doesn't preserve mask attribute.

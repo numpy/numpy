@@ -842,7 +842,7 @@ class ABCPolyBase(abc.ABC):
         """
         return pu.mapparms(self.domain, self.window)
 
-    def integ(self, m=1, k=[], lbnd=None):
+    def integ(self, m=1, k=None, lbnd=None):
         """Integrate.
 
         Return a series instance that is the definite integral of the
@@ -867,6 +867,8 @@ class ABCPolyBase(abc.ABC):
             as the domain of the integrated series.
 
         """
+        if k is None:
+            k = []
         off, scl = self.mapparms()
         if lbnd is None:
             lbnd = 0
