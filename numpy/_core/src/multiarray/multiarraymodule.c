@@ -1979,9 +1979,16 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     Py_INCREF(DType);
     if (npy_mark_tmp_array_if_pyscalar(src_obj, src, &DType)) {
         /* The user passed a Python scalar */
-        PyArray_Descr *descr = npy_find_descr_for_scalar(
-                src_obj, PyArray_DESCR(src), DType,
-                NPY_DTYPE(PyArray_DESCR(dst)));
+        PyArray_Descr *descr;
+        PyArray_DTypeMeta *dst_DType = NPY_DTYPE(PyArray_DESCR(dst));
+        bool is_npy_nan = PyFloat_Check(src_obj) && npy_isnan(PyFloat_AsDouble(src_obj));
+        if (!is_npy_nan && dst_DType->type_num == NPY_TIMEDELTA) {
+            descr = PyArray_DESCR(dst); 
+            Py_INCREF(descr);
+        } else {
+            descr = npy_find_descr_for_scalar(src_obj, PyArray_DESCR(src), DType,
+                                              dst_DType);
+        }
         Py_DECREF(DType);
         if (descr == NULL) {
             goto fail;

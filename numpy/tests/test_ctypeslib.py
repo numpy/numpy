@@ -385,16 +385,17 @@ class TestAsCtypesType:
     def test_cannot_convert_to_ctypes(self):
 
         _type_to_value = {
-            np.str_: "aa",
-            np.bool: True,
-            np.datetime64: "2026-01-01",
+            np.str_: ("aa",),
+            np.bool: (True,),
+            np.datetime64: ("2026-01-01",),
+            np.timedelta64: (1, "s")
         }
         for _scalar_type in np.sctypeDict.values():
             if _scalar_type == np.object_:
                 continue
 
             if _scalar_type in _type_to_value:
-                numpy_scalar = _scalar_type(_type_to_value[_scalar_type])
+                numpy_scalar = _scalar_type(*_type_to_value[_scalar_type])
             else:
                 numpy_scalar = _scalar_type(1)
 
