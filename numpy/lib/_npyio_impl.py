@@ -386,15 +386,16 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     - If the file contains pickle data, then whatever object is stored
       in the pickle is returned.
     - If the file is a ``.npy`` file, then a single array is returned.
-        - If the file is a ``.npz`` file, then a dictionary-like object is
-            returned, containing ``{filename: array}`` key-value pairs, one for
-            each file in the archive.
-        - In ``.npz`` files, arrays are loaded lazily on access, not when
-            calling `load`.
-        - For ``.npz`` files, each array is read atomically when accessed;
-            partial row-wise loading is not supported.
-        - If the underlying ``.npz`` file is modified after `load` returns,
-            later array access on the returned `NpzFile` may fail.
+    - If the file is a ``.npz`` file, then a dictionary-like object is
+      returned, containing ``{filename: array}`` key-value pairs, one for
+      each file in the archive:
+
+      - In ``.npz`` files, arrays are loaded lazily on access, not when
+        calling `load`.
+      - For ``.npz`` files, each array is read atomically when accessed;
+        partial row-wise loading is not supported.
+      - If the underlying ``.npz`` file is modified after `load` returns,
+        later array access on the returned `NpzFile` may fail.
     - If the file is a ``.npz`` file, the returned value supports the
       context manager protocol in a similar fashion to the open function::
 
