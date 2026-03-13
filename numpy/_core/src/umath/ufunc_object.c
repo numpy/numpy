@@ -4536,7 +4536,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
 
     /* Initialize full_args_light: out from scratch, in from scratch only for outer */
     PyObject **args_scratch = (PyObject **)(operation_descrs + nop + 1);
-    ufunc_full_args_light full_args_light = {NULL, NULL, nin, nout};
+    ufunc_full_args_light full_args_light = {NULL, NULL, nin, 0};
 
     /*
      * Note that the input (and possibly output) arguments are passed in as
@@ -4595,6 +4595,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             }
             full_args_light.out[i-nin] = Py_NewRef(tmp);
         }
+        full_args_light.nout = nout;
 
         /* Extra positional args but no keywords */
         /* DEPRECATED NumPy 2.4, 2025-08 */
@@ -4737,7 +4738,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
 
     /* Warn if "where" is used without "out", issue 29561 */
-    if ((where_obj != NULL) && (nout == 0) && (out_obj == NULL)) {
+    if ((where_obj != NULL) && (full_args_light.out == NULL) && (out_obj == NULL)) {
         if (PyErr_WarnEx(PyExc_UserWarning,
                 "'where' used without 'out', expect unitialized memory in output. "
                 "If this is intentional, use out=None.", 1) < 0) {
