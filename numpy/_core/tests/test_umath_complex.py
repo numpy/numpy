@@ -389,7 +389,7 @@ class TestCpow:
 
         n_r = [x[i] ** y[i] for i in lx]
         for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+            assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
     def test_array(self):
         x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
@@ -409,7 +409,7 @@ class TestCpow:
 
         n_r = x ** y
         for i in lx:
-            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
+            assert_almost_equal(n_r[i], p_r[i], err_msg=f'Loop {i}\n')
 
 class TestCabs:
     def setup_method(self):
