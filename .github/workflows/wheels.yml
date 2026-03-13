@@ -39,6 +39,7 @@ jobs:
           - [ubuntu-22.04, musllinux_x86_64, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
+          - [ubuntu-22.04, manylinux_riscv64, ""]
           - [macos-15-intel, macosx_x86_64, openblas]
           - [macos-14, macosx_arm64, openblas]
           - [windows-2022, win_amd64, ""]
@@ -48,6 +49,12 @@ jobs:
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}  # used in cibw_test_command.sh
     steps:
+      - name: Set up QEMU
+        if: matrix.buildplat[1] == 'manylinux_riscv64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/riscv64
+
       - name: Checkout numpy
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
