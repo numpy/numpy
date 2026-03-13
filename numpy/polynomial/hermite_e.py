@@ -672,7 +672,7 @@ def hermeder(c, m=1, scl=1, axis=0):
     return c
 
 
-def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def hermeint(c, m=1, k=None, lbnd=0, scl=1, axis=0):
     """
     Integrate a Hermite_e series.
 
@@ -753,6 +753,8 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 1.83333333,  0.        ,  0.5       ,  0.33333333,  0.25      ]) # may vary
 
     """
+    if k is None:
+        k = []
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)

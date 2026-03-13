@@ -674,7 +674,7 @@ def hermder(c, m=1, scl=1, axis=0):
     return c
 
 
-def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def hermint(c, m=1, k=None, lbnd=0, scl=1, axis=0):
     """
     Integrate a Hermite series.
 
@@ -755,6 +755,8 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ]) # may vary
 
     """
+    if k is None:
+        k = []
     c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
